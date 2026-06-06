@@ -1,1 +1,964 @@
-[]
+[
+  {
+    "id": "nestjs-q-1",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are NestJS decorators and how do they differ from regular TypeScript decorators? Give an example of @Controller and @Get decorators.",
+      "ru": "Что такое декораторы в NestJS и чем они отличаются от обычных TypeScript декораторов? Приведите пример декораторов @Controller и @Get."
+    },
+    "answer": {
+      "en": "### NestJS Decorators Fundamentals\n\nNestJS decorators are metadata annotations that attach information to classes, methods, and parameters. They extend TypeScript's decorator functionality to provide framework-specific behavior like routing, dependency injection, and request handling.\n\n@Controller marks a class as a controller that handles HTTP requests, while @Get defines a route handler for GET requests.\n\ntypescript\nimport { Controller, Get, Param } from '@nestjs/common';\n\n@Controller('users')\nexport class UsersController {\n  @Get(':id')\n  getUser(@Param('id') id: string) {\n    return { id, name: 'John' };\n  }\n}\n\n\n**Common interview trap:** Candidates confuse decorators with simple annotations—they actually modify class behavior and register routes at runtime.",
+      "ru": "### Основы декораторов NestJS\n\nДекораторы NestJS — это аннотации метаданных, которые присваивают информацию классам, методам и параметрам. Они расширяют функциональность TypeScript декораторов для предоставления поведения, специфичного для фреймворка: маршрутизация, внедрение зависимостей, обработка запросов.\n\n@Controller отмечает класс как контроллер, обрабатывающий HTTP запросы, а @Get определяет обработчик маршрута для GET запросов.\n\ntypescript\nimport { Controller, Get, Param } from '@nestjs/common';\n\n@Controller('users')\nexport class UsersController {\n  @Get(':id')\n  getUser(@Param('id') id: string) {\n    return { id, name: 'John' };\n  }\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты путают декораторы с простыми аннотациями — они действительно изменяют поведение класса и регистрируют маршруты во время выполнения."
+    },
+    "tags": [
+      "decorators",
+      "controllers",
+      "routing"
+    ]
+  },
+  {
+    "id": "nestjs-q-2",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain NestJS modules and their role. What should be included in a module's metadata (imports, providers, controllers, exports)?",
+      "ru": "Объясните, что такое модули в NestJS и их роль. Что должно быть включено в метаданные модуля (imports, providers, controllers, exports)?"
+    },
+    "answer": {
+      "en": "### NestJS Modules Architecture\n\nModules organize application code into cohesive blocks with encapsulation. Each module contains controllers, providers, and can import/export dependencies. This creates a clear structure and enables feature-based organization.\n\nThe @Module decorator accepts: `imports` (other modules), `controllers` (request handlers), `providers` (services/utilities), and `exports` (providers available to other modules).\n\ntypescript\nimport { Module } from '@nestjs/common';\nimport { UsersService } from './users.service';\nimport { UsersController } from './users.controller';\n\n@Module({\n  imports: [DatabaseModule],\n  controllers: [UsersController],\n  providers: [UsersService],\n  exports: [UsersService]\n})\nexport class UsersModule {}\n\n\n**Common interview trap:** Confusing what modules export—only providers in `exports` are available externally, not controllers.",
+      "ru": "### Архитектура модулей NestJS\n\nМодули организуют код приложения в связные блоки с инкапсуляцией. Каждый модуль содержит контроллеры, провайдеры и может импортировать/экспортировать зависимости. Это создает четкую структуру и позволяет организовать код по функциям.\n\nДекоратор @Module принимает: `imports` (другие модули), `controllers` (обработчики запросов), `providers` (сервисы/утилиты) и `exports` (провайдеры доступные другим модулям).\n\ntypescript\nimport { Module } from '@nestjs/common';\nimport { UsersService } from './users.service';\nimport { UsersController } from './users.controller';\n\n@Module({\n  imports: [DatabaseModule],\n  controllers: [UsersController],\n  providers: [UsersService],\n  exports: [UsersService]\n})\nexport class UsersModule {}\n\n\n**Типичная ошибка на интервью:** Путаница в том, что экспортируют модули — только провайдеры в `exports` доступны снаружи, а не контроллеры."
+    },
+    "tags": [
+      "modules",
+      "encapsulation",
+      "feature-organization"
+    ]
+  },
+  {
+    "id": "nestjs-q-3",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are NestJS providers and services? How does dependency injection work in NestJS? Show a simple example with constructor injection.",
+      "ru": "Что такое провайдеры и сервисы в NestJS? Как работает внедрение зависимостей в NestJS? Покажите простой пример с инъекцией через конструктор."
+    },
+    "answer": {
+      "en": "### Providers and Dependency Injection\n\nProviders are classes marked with @Injectable() that can be injected into controllers and other services. Services contain business logic and data access. NestJS uses constructor-based dependency injection—declare dependencies as constructor parameters and the framework automatically instantiates and injects them.\n\nThe IoC container manages provider lifecycles and resolves dependencies at runtime.\n\ntypescript\nimport { Injectable } from '@nestjs/common';\n\n@Injectable()\nexport class UsersService {\n  getUser(id: string) {\n    return { id, name: 'John' };\n  }\n}\n\n@Controller('users')\nexport class UsersController {\n  constructor(private usersService: UsersService) {}\n\n  @Get(':id')\n  getUser(@Param('id') id: string) {\n    return this.usersService.getUser(id);\n  }\n}\n\n\n**Common interview trap:** Forgetting @Injectable() decorator prevents the service from being injectable by NestJS.",
+      "ru": "### Провайдеры и внедрение зависимостей\n\nПровайдеры — это классы, отмеченные @Injectable(), которые могут быть внедрены в контроллеры и другие сервисы. Сервисы содержат бизнес-логику и доступ к данным. NestJS использует внедрение зависимостей через конструктор — объявите зависимости как параметры конструктора, и фреймворк автоматически создаст и внедрит их.\n\nКонтейнер IoC управляет жизненным циклом провайдеров и разрешает зависимости во время выполнения.\n\ntypescript\nimport { Injectable } from '@nestjs/common';\n\n@Injectable()\nexport class UsersService {\n  getUser(id: string) {\n    return { id, name: 'John' };\n  }\n}\n\n@Controller('users')\nexport class UsersController {\n  constructor(private usersService: UsersService) {}\n\n  @Get(':id')\n  getUser(@Param('id') id: string) {\n    return this.usersService.getUser(id);\n  }\n}\n\n\n**Типичная ошибка на интервью:** Забывают декоратор @Injectable() — без него сервис не может быть внедрен в NestJS."
+    },
+    "tags": [
+      "dependency-injection",
+      "providers",
+      "services",
+      "ioc-container"
+    ]
+  },
+  {
+    "id": "nestjs-q-4",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are NestJS pipes and how do they work? Give an example of using a built-in pipe like ParseIntPipe or ValidationPipe.",
+      "ru": "Что такое pipes в NestJS и как они работают? Приведите пример использования встроенного pipe, такого как ParseIntPipe или ValidationPipe."
+    },
+    "answer": {
+      "en": "### NestJS Pipes\n\nPipes are classes with the @Injectable() decorator that transform or validate data before it reaches route handlers. They implement the PipeTransform interface. NestJS provides built-in pipes like ParseIntPipe (converts string to integer) and ValidationPipe (validates against DTOs).\n\nPipes are applied using decorators on parameters or globally.\n\ntypescript\nimport { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';\n\n@Controller('users')\nexport class UsersController {\n  @Get(':id')\n  getUser(@Param('id', ParseIntPipe) id: number) {\n    return { id, name: 'John' };\n  }\n}\n\n\nParseIntPipe automatically converts the string `id` parameter to a number, throwing an error if conversion fails.\n\n**Common interview trap:** Pipes execute before the handler—errors thrown in pipes prevent handler execution.",
+      "ru": "### Pipes в NestJS\n\nPipes — это классы с декоратором @Injectable(), которые трансформируют или валидируют данные перед попаданием в обработчик маршрута. Они реализуют интерфейс PipeTransform. NestJS предоставляет встроенные pipes, такие как ParseIntPipe (преобразует строку в число) и ValidationPipe (валидирует против DTO).\n\nPipes применяются с помощью декораторов на параметрах или глобально.\n\ntypescript\nimport { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';\n\n@Controller('users')\nexport class UsersController {\n  @Get(':id')\n  getUser(@Param('id', ParseIntPipe) id: number) {\n    return { id, name: 'John' };\n  }\n}\n\n\nParseIntPipe автоматически преобразует строковый параметр `id` в число, выбрасывая ошибку, если преобразование неудачно.\n\n**Типичная ошибка на интервью:** Pipes выполняются до обработчика — ошибки в pipes предотвращают выполнение обработчика."
+    },
+    "tags": [
+      "pipes",
+      "validation",
+      "data-transformation",
+      "built-in-pipes"
+    ]
+  },
+  {
+    "id": "nestjs-q-5",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are NestJS guards and what is their primary purpose? Explain the difference between guards and middleware with a basic authentication guard example.",
+      "ru": "Что такое guards в NestJS и какова их основная цель? Объясните разницу между guards и middleware с примером базового guard для аутентификации."
+    },
+    "answer": {
+      "en": "### NestJS Guards\n\nGuards are classes implementing CanActivate interface that determine if a request should proceed to the handler. They execute after middleware and before pipes, making them ideal for authorization checks. Guards return boolean or throw ForbiddenException.\n\nUnlike middleware (which runs for all routes), guards are method/controller-specific via decorators.\n\ntypescript\nimport { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';\n\n@Injectable()\nexport class AuthGuard implements CanActivate {\n  canActivate(context: ExecutionContext): boolean {\n    const request = context.switchToHttp().getRequest();\n    return !!request.headers.authorization;\n  }\n}\n\n@Controller('users')\nexport class UsersController {\n  @Get()\n  @UseGuards(AuthGuard)\n  getUsers() {\n    return [];\n  }\n}\n\n\n**Common interview trap:** Guards check *authorization* (can this user access this?), not *authentication* (is this user who they claim?). Middleware handles general request processing.",
+      "ru": "### Guards в NestJS\n\nGuards — это классы, реализующие интерфейс CanActivate, которые определяют, должен ли запрос продолжиться до обработчика. Они выполняются после middleware и перед pipes, что делает их идеальными для проверок авторизации. Guards возвращают boolean или выбрасывают ForbiddenException.\n\nВ отличие от middleware (которое работает для всех маршрутов), guards специфичны для метода/контроллера через декораторы.\n\ntypescript\nimport { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';\n\n@Injectable()\nexport class AuthGuard implements CanActivate {\n  canActivate(context: ExecutionContext): boolean {\n    const request = context.switchToHttp().getRequest();\n    return !!request.headers.authorization;\n  }\n}\n\n@Controller('users')\nexport class UsersController {\n  @Get()\n  @UseGuards(AuthGuard)\n  getUsers() {\n    return [];\n  }\n}\n\n\n**Типичная ошибка на интервью:** Guards проверяют *авторизацию* (может ли этот пользователь получить доступ?), а не *аутентификацию* (это тот пользователь, кем он себя выдает?). Middleware обрабатывает общую обработку запросов."
+    },
+    "tags": [
+      "guards",
+      "authorization",
+      "canactivate",
+      "request-lifecycle"
+    ]
+  },
+  {
+    "id": "nestjs-q-6",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between REQUEST, TRANSIENT, and DEFAULT scopes in NestJS dependency injection. When would you use each one?",
+      "ru": "Объясните различие между REQUEST, TRANSIENT и DEFAULT scopes в dependency injection NestJS. Когда вы используете каждый?"
+    },
+    "answer": {
+      "en": "### Dependency Injection Scopes\n\nDEFAULT (Singleton) scope creates a single instance shared across the entire application. TRANSIENT scope creates a new instance every time it's requested. REQUEST scope creates a new instance for each incoming HTTP request.\n\nUse DEFAULT for stateless services (repositories, utilities). Use REQUEST for request-scoped data (current user, request context). Use TRANSIENT when you need isolated state between requests or for expensive resources.\n\ntypescript\n@Injectable({ scope: Scope.DEFAULT })\nexport class SingletonService {}\n\n@Injectable({ scope: Scope.REQUEST })\nexport class RequestService {\n  constructor(@Inject(REQUEST) private req: Request) {}\n}\n\n@Injectable({ scope: Scope.TRANSIENT })\nexport class TransientService {}\n\n\n**Common interview trap:** Candidates often use REQUEST scope unnecessarily, causing performance degradation. DEFAULT should be your first choice for most services.",
+      "ru": "### Scopes в Dependency Injection\n\nDEFAULT (Singleton) создаёт один экземпляр на всё приложение. TRANSIENT создаёт новый экземпляр при каждом запросе. REQUEST создаёт новый экземпляр для каждого HTTP запроса.\n\nИспользуйте DEFAULT для stateless сервисов (репозитории, утилиты). REQUEST для данных запроса (текущий пользователь). TRANSIENT когда нужно изолированное состояние.\n\ntypescript\n@Injectable({ scope: Scope.DEFAULT })\nexport class SingletonService {}\n\n@Injectable({ scope: Scope.REQUEST })\nexport class RequestService {\n  constructor(@Inject(REQUEST) private req: Request) {}\n}\n\n@Injectable({ scope: Scope.TRANSIENT })\nexport class TransientService {}\n\n\n**Типичная ошибка:** Кандидаты часто используют REQUEST scope повсюду, что снижает производительность."
+    },
+    "tags": [
+      "dependency-injection",
+      "scopes",
+      "singleton-pattern"
+    ]
+  },
+  {
+    "id": "nestjs-q-7",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you resolve circular dependencies in NestJS? Provide a practical example.",
+      "ru": "Как вы разрешаете циклические зависимости в NestJS? Приведите практический пример."
+    },
+    "answer": {
+      "en": "### Resolving Circular Dependencies\n\nCircular dependencies occur when ServiceA depends on ServiceB and ServiceB depends on ServiceA. NestJS provides `forwardRef()` to lazy-load modules, breaking the circular reference.\n\nUse `forwardRef()` in the injection decorator and module imports. This defers resolution until all modules are loaded. Another solution is restructuring services using a shared third service.\n\ntypescript\n// service-a.ts\n@Injectable()\nexport class ServiceA {\n  constructor(\n    @Inject(forwardRef(() => ServiceB))\n    private serviceB: ServiceB\n  ) {}\n}\n\n// service-b.ts\n@Injectable()\nexport class ServiceB {\n  constructor(private serviceA: ServiceA) {}\n}\n\n// app.module.ts\nimports: [\n  forwardRef(() => ModuleB)\n]\n\n\n**Common interview trap:** Candidates often add `forwardRef()` everywhere when it's only needed for circular references. Also, circular dependencies usually indicate poor architecture.",
+      "ru": "### Разрешение циклических зависимостей\n\nЦиклические зависимости возникают когда ServiceA зависит от ServiceB и наоборот. NestJS предоставляет `forwardRef()` для ленивой загрузки, разрывая циклическую ссылку.\n\nИспользуйте `forwardRef()` в декораторе injection и imports модуля. Это отсрочивает разрешение до загрузки всех модулей.\n\ntypescript\n// service-a.ts\n@Injectable()\nexport class ServiceA {\n  constructor(\n    @Inject(forwardRef(() => ServiceB))\n    private serviceB: ServiceB\n  ) {}\n}\n\n// service-b.ts\n@Injectable()\nexport class ServiceB {\n  constructor(private serviceA: ServiceA) {}\n}\n\n// app.module.ts\nimports: [forwardRef(() => ModuleB)]\n\n\n**Типичная ошибка:** Кандидаты часто злоупотребляют `forwardRef()`. Циклические зависимости - признак плохой архитектуры."
+    },
+    "tags": [
+      "circular-dependencies",
+      "forwardref",
+      "module-resolution"
+    ]
+  },
+  {
+    "id": "nestjs-q-8",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are interceptors in NestJS? Show how to implement request/response logging and timing interceptor.",
+      "ru": "Что такое interceptors в NestJS? Покажите как реализовать логирование запроса/ответа и timing interceptor."
+    },
+    "answer": {
+      "en": "### Interceptors\n\nInterceptors are middleware-like components that bind additional logic before and after method execution. They can transform request/response, handle errors, and add cross-cutting concerns. Use `@UseInterceptors()` decorator or register globally.\n\nImplement `NestInterceptor` interface with `intercept()` method. Use RxJS operators to wrap the handler call. Common uses: logging, timing, caching, error handling.\n\ntypescript\n@Injectable()\nexport class LoggingInterceptor implements NestInterceptor {\n  intercept(ctx: ExecutionContext, next: CallHandler) {\n    const req = ctx.switchToHttp().getRequest();\n    const start = Date.now();\n    console.log(`${req.method} ${req.url}`);\n\n    return next.handle().pipe(\n      tap(() => {\n        const duration = Date.now() - start;\n        console.log(`Response time: ${duration}ms`);\n      })\n    );\n  }\n}\n\n@Controller('cats')\n@UseInterceptors(LoggingInterceptor)\nexport class CatsController {}\n\n\n**Common interview trap:** Candidates forget that interceptors work with Observables (RxJS), not Promises. Order matters when using multiple interceptors.",
+      "ru": "### Interceptors\n\nInterceptors - это компоненты, похожие на middleware, которые добавляют логику до и после выполнения метода. Могут трансформировать запрос/ответ, обрабатывать ошибки.\n\nРеализуйте интерфейс `NestInterceptor` с методом `intercept()`. Используйте RxJS операторы для обёртывания вызова handler.\n\ntypescript\n@Injectable()\nexport class LoggingInterceptor implements NestInterceptor {\n  intercept(ctx: ExecutionContext, next: CallHandler) {\n    const req = ctx.switchToHttp().getRequest();\n    const start = Date.now();\n    console.log(`${req.method} ${req.url}`);\n\n    return next.handle().pipe(\n      tap(() => {\n        const duration = Date.now() - start;\n        console.log(`Response time: ${duration}ms`);\n      })\n    );\n  }\n}\n\n@Controller('cats')\n@UseInterceptors(LoggingInterceptor)\nexport class CatsController {}\n\n\n**Типичная ошибка:** Кандидаты забывают что interceptors работают с Observables, не Promises."
+    },
+    "tags": [
+      "interceptors",
+      "rxjs",
+      "cross-cutting-concerns"
+    ]
+  },
+  {
+    "id": "nestjs-q-9",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain exception filters in NestJS. Create a custom exception filter that catches all errors and formats them consistently.",
+      "ru": "Объясните exception filters в NestJS. Создайте кастомный exception filter который ловит все ошибки и форматирует их согласованно."
+    },
+    "answer": {
+      "en": "### Exception Filters\n\nException filters catch and process thrown exceptions. They catch any `HttpException` or custom exceptions and transform them into formatted responses. Implement `ExceptionFilter` interface with `catch()` method. Register with `@UseFilters()` or globally.\n\nCommon use: standardized error responses, logging errors, handling different exception types. Filter catches exceptions from controllers, services, and other application layers.\n\ntypescript\n@Catch()\nexport class AllExceptionsFilter implements ExceptionFilter {\n  catch(exception: any, host: ArgumentsHost) {\n    const ctx = host.switchToHttp();\n    const response = ctx.getResponse();\n    const status = exception instanceof HttpException \n      ? exception.getStatus() \n      : 500;\n\n    response.status(status).json({\n      statusCode: status,\n      message: exception.message,\n      timestamp: new Date().toISOString()\n    });\n  }\n}\n\n@Controller('cats')\n@UseFilters(AllExceptionsFilter)\nexport class CatsController {}\n\n\n**Common interview trap:** Candidates often forget to handle both `HttpException` and generic errors. Filter order matters - catch all filter should be last.",
+      "ru": "### Exception Filters\n\nException filters ловят и обрабатывают выброшенные исключения. Они ловят любое `HttpException` или кастомные исключения и трансформируют их в форматированные ответы.\n\nРеализуйте интерфейс `ExceptionFilter` с методом `catch()`. Регистрируйте с `@UseFilters()` или глобально.\n\ntypescript\n@Catch()\nexport class AllExceptionsFilter implements ExceptionFilter {\n  catch(exception: any, host: ArgumentsHost) {\n    const ctx = host.switchToHttp();\n    const response = ctx.getResponse();\n    const status = exception instanceof HttpException \n      ? exception.getStatus() \n      : 500;\n\n    response.status(status).json({\n      statusCode: status,\n      message: exception.message,\n      timestamp: new Date().toISOString()\n    });\n  }\n}\n\n@Controller('cats')\n@UseFilters(AllExceptionsFilter)\nexport class CatsController {}\n\n\n**Типичная ошибка:** Кандидаты забывают обрабатывать как `HttpException` так и обычные ошибки."
+    },
+    "tags": [
+      "exception-filters",
+      "error-handling",
+      "http-exceptions"
+    ]
+  },
+  {
+    "id": "nestjs-q-10",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Create a custom decorator that validates request body against a schema. Show how to use it on a controller method.",
+      "ru": "Создайте кастомный декоратор который валидирует request body против schema. Покажите как его использовать в методе контроллера."
+    },
+    "answer": {
+      "en": "### Custom Decorators\n\nCustom decorators use `@createParamDecorator()` to extract and process request data. Combine with pipes for validation. Decorators receive `ExecutionContext` to access request/response objects.\n\nYou can chain decorators with validation pipes like `ValidationPipe` or create custom pipes. This approach keeps controllers clean and reusable.\n\ntypescript\nexport const ValidateBody = createParamDecorator(\n  (data: unknown, ctx: ExecutionContext) => {\n    const request = ctx.switchToHttp().getRequest();\n    return request.body;\n  }\n);\n\nexport class ValidateBodyPipe implements PipeTransform {\n  constructor(private schema: any) {}\n  \n  transform(value: any) {\n    const { error } = this.schema.validate(value);\n    if (error) throw new BadRequestException(error.message);\n    return value;\n  }\n}\n\n@Post('cats')\ncreate(@ValidateBody(new ValidateBodyPipe(schema)) body: CreateCatDto) {\n  return this.catsService.create(body);\n}\n\n\n**Common interview trap:** Candidates mix up parameter decorators with class decorators. Custom decorators should be composable with pipes for better separation of concerns.",
+      "ru": "### Кастомные декораторы\n\nКастомные декораторы используют `@createParamDecorator()` для извлечения и обработки данных запроса. Комбинируйте с pipes для валидации.\n\nВы можете цепить декораторы с pipes валидации. Это держит контроллеры чистыми и переиспользуемыми.\n\ntypescript\nexport const ValidateBody = createParamDecorator(\n  (data: unknown, ctx: ExecutionContext) => {\n    const request = ctx.switchToHttp().getRequest();\n    return request.body;\n  }\n);\n\nexport class ValidateBodyPipe implements PipeTransform {\n  constructor(private schema: any) {}\n  \n  transform(value: any) {\n    const { error } = this.schema.validate(value);\n    if (error) throw new BadRequestException(error.message);\n    return value;\n  }\n}\n\n@Post('cats')\ncreate(@ValidateBody(new ValidateBodyPipe(schema)) body: CreateCatDto) {\n  return this.catsService.create(body);\n}\n\n\n**Типичная ошибка:** Кандидаты путают parameter decorators с class decorators."
+    },
+    "tags": [
+      "custom-decorators",
+      "validation",
+      "pipes"
+    ]
+  },
+  {
+    "id": "nestjs-q-11",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain middleware in NestJS. What's the difference between middleware and interceptors? Implement a request ID middleware.",
+      "ru": "Объясните middleware в NestJS. Какая разница между middleware и interceptors? Реализуйте request ID middleware."
+    },
+    "answer": {
+      "en": "### Middleware vs Interceptors\n\nMiddleware executes before route handlers and has access to request/response objects. It cannot access route parameters or ExecutionContext. Middleware is useful for cross-cutting concerns like CORS, logging, request parsing. Interceptors work after middleware and have richer context access.\n\nImplement `NestMiddleware` interface. Register in module using `configure()` method. Middleware executes in order, interceptors in reverse order on response.\n\ntypescript\n@Injectable()\nexport class RequestIdMiddleware implements NestMiddleware {\n  use(req: Request, res: Response, next: NextFunction) {\n    const requestId = uuid();\n    req['id'] = requestId;\n    res.setHeader('X-Request-ID', requestId);\n    console.log(`Request ${requestId}: ${req.method} ${req.url}`);\n    next();\n  }\n}\n\n@Module({})\nexport class AppModule implements NestModule {\n  configure(consumer: MiddlewareConsumer) {\n    consumer.apply(RequestIdMiddleware).forRoutes('*');\n  }\n}\n\n\n**Common interview trap:** Candidates use interceptors when middleware would be more appropriate. Middleware is lighter and executes earlier in the request lifecycle.",
+      "ru": "### Middleware vs Interceptors\n\nMiddleware выполняется перед route handlers и имеет доступ к request/response объектам. Он не может получить доступ к параметрам маршрута. Middleware полезен для logging, CORS. Interceptors работают после middleware с более богатым контекстом.\n\nРеализуйте интерфейс `NestMiddleware`. Регистрируйте в модуле используя `configure()` метод.\n\ntypescript\n@Injectable()\nexport class RequestIdMiddleware implements NestMiddleware {\n  use(req: Request, res: Response, next: NextFunction) {\n    const requestId = uuid();\n    req['id'] = requestId;\n    res.setHeader('X-Request-ID', requestId);\n    console.log(`Request ${requestId}: ${req.method} ${req.url}`);\n    next();\n  }\n}\n\n@Module({})\nexport class AppModule implements NestModule {\n  configure(consumer: MiddlewareConsumer) {\n    consumer.apply(RequestIdMiddleware).forRoutes('*');\n  }\n}\n\n\n**Типичная ошибка:** Кандидаты используют interceptors когда middleware было бы правильнее."
+    },
+    "tags": [
+      "middleware",
+      "interceptors",
+      "request-lifecycle"
+    ]
+  },
+  {
+    "id": "nestjs-q-12",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe NestJS lifecycle hooks. In which order do they execute and what's the purpose of each?",
+      "ru": "Опишите NestJS lifecycle hooks. В каком порядке они выполняются и какова цель каждого?"
+    },
+    "answer": {
+      "en": "### Lifecycle Hooks\n\nNestJS has 7 lifecycle hooks: `OnModuleInit`, `OnApplicationBootstrap`, `OnModuleDestroy`, `beforeApplicationShutdown`, `onApplicationShutdown`. They execute in order during app startup and shutdown.\n\n`OnModuleInit` runs after module dependencies are resolved. `OnApplicationBootstrap` runs after all modules are initialized. `OnModuleDestroy` runs during shutdown. Use hooks for initialization logic, database connections, resource cleanup.\n\ntypescript\n@Injectable()\nexport class CatsService implements OnModuleInit, OnModuleDestroy {\n  onModuleInit() {\n    console.log('Module initialized');\n    this.initializeDatabase();\n  }\n\n  onModuleDestroy() {\n    console.log('Module destroyed');\n    this.closeDatabase();\n  }\n\n  private initializeDatabase() {}\n  private closeDatabase() {}\n}\n\n\n**Common interview trap:** Candidates confuse the order of hooks or use them incorrectly. Async operations in hooks require returning a Promise. Not all services need all hooks - use only what's necessary.",
+      "ru": "### Lifecycle Hooks\n\nNestJS имеет 7 lifecycle hooks: `OnModuleInit`, `OnApplicationBootstrap`, `OnModuleDestroy`. Они выполняются в порядке при старте и завершении приложения.\n\n`OnModuleInit` запускается после разрешения зависимостей модуля. `OnApplicationBootstrap` запускается после инициализации всех модулей.\n\ntypescript\n@Injectable()\nexport class CatsService implements OnModuleInit, OnModuleDestroy {\n  onModuleInit() {\n    console.log('Module initialized');\n    this.initializeDatabase();\n  }\n\n  onModuleDestroy() {\n    console.log('Module destroyed');\n    this.closeDatabase();\n  }\n\n  private initializeDatabase() {}\n  private closeDatabase() {}\n}\n\n\n**Типичная ошибка:** Кандидаты путают порядок hooks. Асинхронные операции в hooks требуют возврата Promise."
+    },
+    "tags": [
+      "lifecycle-hooks",
+      "initialization",
+      "shutdown"
+    ]
+  },
+  {
+    "id": "nestjs-q-13",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you manage configuration in NestJS? Show how to use ConfigModule with environment variables.",
+      "ru": "Как вы управляете конфигурацией в NestJS? Покажите как использовать ConfigModule с переменными окружения."
+    },
+    "answer": {
+      "en": "### Configuration Management\n\nNestJS provides `@nestjs/config` module for managing environment variables. Use `ConfigModule.forRoot()` to load `.env` files. Access config via `ConfigService` in services. Supports validation and different environments.\n\nImport globally in AppModule. Use `ConfigService.get()` to access values. Optional validation with schema (Joi). Supports nested configuration objects.\n\ntypescript\n// .env\nDATABASE_URL=postgres://localhost\nPORT=3000\n\n// app.module.ts\n@Module({\n  imports: [\n    ConfigModule.forRoot({ isGlobal: true })\n  ]\n})\nexport class AppModule {}\n\n// cat.service.ts\n@Injectable()\nexport class CatsService {\n  constructor(private configService: ConfigService) {}\n\n  getDatabaseUrl(): string {\n    return this.configService.get<string>('DATABASE_URL');\n  }\n}\n\n\n**Common interview trap:** Candidates forget to mark `isGlobal: true` and need to import ConfigModule in every module. Use type generics with `.get<T>()` for better type safety.",
+      "ru": "### Управление конфигурацией\n\nNestJS предоставляет `@nestjs/config` модуль для управления переменными окружения. Используйте `ConfigModule.forRoot()` для загрузки `.env` файлов. Получайте доступ через `ConfigService`.\n\nИмпортируйте глобально в AppModule. Используйте `ConfigService.get()` для доступа к значениям.\n\ntypescript\n// .env\nDATABASE_URL=postgres://localhost\nPORT=3000\n\n// app.module.ts\n@Module({\n  imports: [\n    ConfigModule.forRoot({ isGlobal: true })\n  ]\n})\nexport class AppModule {}\n\n// cat.service.ts\n@Injectable()\nexport class CatsService {\n  constructor(private configService: ConfigService) {}\n\n  getDatabaseUrl(): string {\n    return this.configService.get<string>('DATABASE_URL');\n  }\n}\n\n\n**Типичная ошибка:** Кандидаты забывают установить `isGlobal: true` и нужно импортировать ConfigModule в каждый модуль."
+    },
+    "tags": [
+      "configuration",
+      "environment-variables",
+      "config-module"
+    ]
+  },
+  {
+    "id": "nestjs-q-14",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how to integrate TypeORM with NestJS. Show how to define entities, repositories, and use them in services.",
+      "ru": "Объясните как интегрировать TypeORM с NestJS. Покажите как определять entities, repositories и использовать их в services."
+    },
+    "answer": {
+      "en": "### TypeORM Integration\n\nUse `@nestjs/typeorm` to integrate TypeORM. Import `TypeOrmModule.forRoot()` in AppModule with database config. Define entities with `@Entity()` decorator. Inject repositories using `@InjectRepository()` to access database.\n\nRepositories provide query methods like `find()`, `findOne()`, `save()`, `delete()`. Services use repositories for data access logic. Transaction support available via `EntityManager`.\n\ntypescript\n// cat.entity.ts\n@Entity()\nexport class Cat {\n  @PrimaryGeneratedColumn()\n  id: number;\n  @Column()\n  name: string;\n}\n\n// cats.service.ts\n@Injectable()\nexport class CatsService {\n  constructor(\n    @InjectRepository(Cat)\n    private catRepository: Repository<Cat>\n  ) {}\n\n  create(name: string) {\n    return this.catRepository.save({ name });\n  }\n\n  findAll() {\n    return this.catRepository.find();\n  }\n}\n\n// app.module.ts\n@Module({\n  imports: [\n    TypeOrmModule.forRoot({\n      type: 'postgres',\n      database: 'cats'\n    }),\n    TypeOrmModule.forFeature([Cat])\n  ]\n})\nexport class AppModule {}\n\n\n**Common interview trap:** Candidates forget to register entities in `forFeature()`. Repositories are injected, not instantiated manually.",
+      "ru": "### Интеграция TypeORM\n\nИспользуйте `@nestjs/typeorm` для интеграции. Импортируйте `TypeOrmModule.forRoot()` в AppModule с конфигом БД. Определяйте entities с декоратором `@Entity()`. Инжектируйте repositories используя `@InjectRepository()`.\n\nRepositories предоставляют методы запросов как `find()`, `findOne()`, `save()`. Services используют repositories для логики доступа к данным.\n\ntypescript\n// cat.entity.ts\n@Entity()\nexport class Cat {\n  @PrimaryGeneratedColumn()\n  id: number;\n  @Column()\n  name: string;\n}\n\n// cats.service.ts\n@Injectable()\nexport class CatsService {\n  constructor(\n    @InjectRepository(Cat)\n    private catRepository: Repository<Cat>\n  ) {}\n\n  create(name: string) {\n    return this.catRepository.save({ name });\n  }\n\n  findAll() {\n    return this.catRepository.find();\n  }\n}\n\n// app.module.ts\n@Module({\n  imports: [\n    TypeOrmModule.forRoot({\n      type: 'postgres',\n      database: 'cats'\n    }),\n    TypeOrmModule.forFeature([Cat])\n  ]\n})\nexport class AppModule {}\n\n\n**Типичная ошибка:** Кандидаты забывают регистрировать entities в `forFeature()`."
+    },
+    "tags": [
+      "typeorm",
+      "entities",
+      "repositories",
+      "database"
+    ]
+  },
+  {
+    "id": "nestjs-q-15",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you use Prisma ORM with NestJS? Compare with TypeORM approach.",
+      "ru": "Как вы используете Prisma ORM с NestJS? Сравните с подходом TypeORM."
+    },
+    "answer": {
+      "en": "### Prisma Integration\n\nPrisma uses schema-first approach vs TypeORM's decorator-based. Create `schema.prisma` file defining models. Generate Prisma client. Create `PrismaService` wrapping Prisma client for dependency injection. Inject service into repositories/services.\n\nPrisma advantages: better type safety, simpler API, automatic migrations. TypeORM advantages: more features, raw SQL support, better performance control. Both work well with NestJS.\n\ntypescript\n// prisma.service.ts\n@Injectable()\nexport class PrismaService extends PrismaClient implements OnModuleInit {\n  async onModuleInit() {\n    await this.$connect();\n  }\n  async onModuleDestroy() {\n    await this.$disconnect();\n  }\n}\n\n// cats.service.ts\n@Injectable()\nexport class CatsService {\n  constructor(private prisma: PrismaService) {}\n\n  async create(name: string) {\n    return this.prisma.cat.create({ data: { name } });\n  }\n\n  async findAll() {\n    return this.prisma.cat.findMany();\n  }\n}\n\n\n**Common interview trap:** Prisma generates client automatically - no manual repository pattern needed. Type inference is built-in, unlike TypeORM.",
+      "ru": "### Интеграция Prisma\n\nPrisma использует schema-first подход против decorator-based TypeORM. Создайте `schema.prisma` файл определяющий модели. Создайте `PrismaService` для dependency injection.\n\nПреимущества Prisma: лучшая type safety, более простой API. TypeORM: больше функций, raw SQL, лучший контроль производительности.\n\ntypescript\n// prisma.service.ts\n@Injectable()\nexport class PrismaService extends PrismaClient implements OnModuleInit {\n  async onModuleInit() {\n    await this.$connect();\n  }\n  async onModuleDestroy() {\n    await this.$disconnect();\n  }\n}\n\n// cats.service.ts\n@Injectable()\nexport class CatsService {\n  constructor(private prisma: PrismaService) {}\n\n  async create(name: string) {\n    return this.prisma.cat.create({ data: { name } });\n  }\n\n  async findAll() {\n    return this.prisma.cat.findMany();\n  }\n}\n\n\n**Типичная ошибка:** Prisma генерирует client автоматически - не нужен manual repository pattern."
+    },
+    "tags": [
+      "prisma",
+      "orm-comparison",
+      "schema-first"
+    ]
+  },
+  {
+    "id": "nestjs-q-31",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how to implement a microservice using TCP transport in Nest.js. What are the key differences between TCP and Redis transports in terms of scalability?",
+      "ru": "Объясните, как реализовать микросервис с использованием TCP-транспорта в Nest.js. Какие основные различия между TCP и Redis-транспортами с точки зрения масштабируемости?"
+    },
+    "answer": {
+      "en": "### TCP vs Redis Transport\n\nTCP transport uses direct socket connections between services, offering low latency but limited scalability. Redis acts as a message broker, enabling horizontal scaling and pub/sub patterns. TCP requires knowing service addresses upfront, while Redis abstracts service discovery through the broker.\n\ntypescript\n// TCP Transport (main.ts)\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.TCP,\n  options: { host: 'localhost', port: 3001 }\n});\nawait app.listen();\n\n// Redis Transport\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.REDIS,\n  options: { host: 'localhost', port: 6379 }\n});\n\n\n**Common interview trap:** Candidates often overlook that TCP doesn't persist messages—if a service crashes, messages are lost. Redis provides durability and queue management, making it better for production systems.",
+      "ru": "### TCP vs Redis Транспорт\n\nTCP использует прямые сокет-соединения между сервисами, обеспечивая низкую задержку, но ограниченную масштабируемость. Redis работает как message broker, позволяя горизонтальное масштабирование и паттерны pub/sub. TCP требует знания адресов сервисов заранее, Redis абстрагирует service discovery через broker.\n\ntypescript\n// TCP Transport (main.ts)\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.TCP,\n  options: { host: 'localhost', port: 3001 }\n});\nawait app.listen();\n\n// Redis Transport\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.REDIS,\n  options: { host: 'localhost', port: 6379 }\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты часто забывают, что TCP не сохраняет сообщения—если сервис упадёт, сообщения потеряются. Redis обеспечивает долговечность и управление очередями."
+    },
+    "tags": [
+      "microservices",
+      "TCP-transport",
+      "Redis-transport",
+      "message-brokers"
+    ]
+  },
+  {
+    "id": "nestjs-q-32",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you implement the CQRS pattern in Nest.js using the @nestjs/cqrs module? Walk through a complete example with commands and queries.",
+      "ru": "Как реализовать паттерн CQRS в Nest.js, используя модуль @nestjs/cqrs? Пройдите через полный пример с командами и запросами."
+    },
+    "answer": {
+      "en": "### CQRS Implementation\n\nCQRS separates read (Query) and write (Command) operations. Commands modify state, queries retrieve it. The @nestjs/cqrs module provides decorators and bus patterns to handle this separation cleanly. Commands are dispatched through CommandBus, queries through QueryBus.\n\ntypescript\nexport class CreateUserCommand {\n  constructor(public name: string) {}\n}\n\n@CommandHandler(CreateUserCommand)\nexport class CreateUserHandler implements ICommandHandler<CreateUserCommand> {\n  async execute(command: CreateUserCommand) {\n    // save user\n    return { id: 1, name: command.name };\n  }\n}\n\nexport class GetUsersQuery {}\n\n@QueryHandler(GetUsersQuery)\nexport class GetUsersHandler implements IQueryHandler<GetUsersQuery> {\n  async execute() { return [{ id: 1, name: 'John' }]; }\n}\n\n\n**Common interview trap:** Developers confuse command handlers with event handlers. Commands execute and emit events; event handlers are separate subscribers that react to domain events.",
+      "ru": "### Реализация CQRS\n\nCQRS разделяет операции чтения (Query) и записи (Command). Команды изменяют состояние, запросы его получают. Модуль @nestjs/cqrs предоставляет декораторы и паттерны bus для чистого разделения. Команды отправляются через CommandBus, запросы через QueryBus.\n\ntypescript\nexport class CreateUserCommand {\n  constructor(public name: string) {}\n}\n\n@CommandHandler(CreateUserCommand)\nexport class CreateUserHandler implements ICommandHandler<CreateUserCommand> {\n  async execute(command: CreateUserCommand) {\n    // save user\n    return { id: 1, name: command.name };\n  }\n}\n\nexport class GetUsersQuery {}\n\n@QueryHandler(GetUsersQuery)\nexport class GetUsersHandler implements IQueryHandler<GetUsersQuery> {\n  async execute() { return [{ id: 1, name: 'John' }]; }\n}\n\n\n**Типичная ошибка на интервью:** Разработчики путают обработчики команд с обработчиками событий. Команды выполняются и излучают события; обработчики событий—это отдельные подписчики, которые реагируют на события домена."
+    },
+    "tags": [
+      "CQRS-pattern",
+      "command-bus",
+      "query-bus",
+      "architecture"
+    ]
+  },
+  {
+    "id": "nestjs-q-33",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe event sourcing in Nest.js. How would you store and replay events to reconstruct application state?",
+      "ru": "Опишите event sourcing в Nest.js. Как вы сохраняли бы и воспроизводили события для восстановления состояния приложения?"
+    },
+    "answer": {
+      "en": "### Event Sourcing Pattern\n\nEvent sourcing stores all state changes as immutable events. The current state is reconstructed by replaying events in order. Instead of persisting the latest state, you persist every change event. This enables full audit trails, time travel debugging, and complex temporal queries.\n\ntypescript\nexport class UserCreatedEvent {\n  constructor(public userId: string, public name: string) {}\n}\n\n@EventsHandler(UserCreatedEvent)\nexport class UserCreatedHandler implements IEventHandler<UserCreatedEvent> {\n  async handle(event: UserCreatedEvent) {\n    // Update read model or aggregate state\n    await this.repository.save({ id: event.userId, name: event.name });\n  }\n}\n\n// Replay events\nconst events = await eventStore.getEvents(userId);\nconst state = events.reduce((acc, event) => {\n  if (event instanceof UserCreatedEvent) return { id: event.userId, name: event.name };\n  return acc;\n}, {});\n\n\n**Common interview trap:** Candidates forget that replaying events can be slow at scale. Implement snapshots: periodically save the state so you only replay recent events, not the entire history.",
+      "ru": "### Паттерн Event Sourcing\n\nEvent sourcing сохраняет все изменения состояния как неизменяемые события. Текущее состояние восстанавливается воспроизведением событий по порядку. Вместо сохранения последнего состояния вы сохраняете каждое изменение. Это позволяет полные аудит-логи, отладку во времени и сложные темпоральные запросы.\n\ntypescript\nexport class UserCreatedEvent {\n  constructor(public userId: string, public name: string) {}\n}\n\n@EventsHandler(UserCreatedEvent)\nexport class UserCreatedHandler implements IEventHandler<UserCreatedEvent> {\n  async handle(event: UserCreatedEvent) {\n    // Update read model or aggregate state\n    await this.repository.save({ id: event.userId, name: event.name });\n  }\n}\n\n// Replay events\nconst events = await eventStore.getEvents(userId);\nconst state = events.reduce((acc, event) => {\n  if (event instanceof UserCreatedEvent) return { id: event.userId, name: event.name };\n  return acc;\n}, {});\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают, что воспроизведение событий может быть медленным в масштабе. Реализуйте снимки (snapshots): периодически сохраняйте состояние, чтобы воспроизводить только последние события."
+    },
+    "tags": [
+      "event-sourcing",
+      "event-store",
+      "snapshots",
+      "audit-trail"
+    ]
+  },
+  {
+    "id": "nestjs-q-34",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain Kafka transport in Nest.js microservices. When would you choose Kafka over Redis, and what are the performance implications?",
+      "ru": "Объясните Kafka-транспорт в микросервисах Nest.js. Когда вы выбрали бы Kafka вместо Redis и каковы последствия для производительности?"
+    },
+    "answer": {
+      "en": "### Kafka Transport\n\nKafka is a distributed event streaming platform supporting high-throughput, fault-tolerant messaging with consumer groups and partitioning. Choose Kafka for: high-volume event streams, event replay, consumer group scaling, and complex event processing. Redis is simpler but less scalable for massive throughput.\n\ntypescript\n// Kafka Microservice\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.KAFKA,\n  options: {\n    client: { brokers: ['localhost:9092'] },\n    consumer: { groupId: 'orders-service' }\n  }\n});\n\n@MessagePattern('order.created')\nhandleOrderCreated(@Payload() data: OrderDto) {\n  console.log('New order:', data);\n}\n\n\n**Common interview trap:** Candidates underestimate Kafka's operational complexity. It requires ZooKeeper/Kraft controllers, monitoring, and configuration tuning. For simple use cases, Redis or RabbitMQ are easier to operate.",
+      "ru": "### Kafka Транспорт\n\nKafka—это распределённая платформа потоков событий, поддерживающая высокопроизводительный, устойчивый к сбоям обмен сообщениями с группами потребителей и партиционированием. Выбирайте Kafka для: высокопроизводительных потоков событий, воспроизведения событий, масштабирования групп потребителей. Redis проще, но менее масштабируем для больших объёмов.\n\ntypescript\n// Kafka Микросервис\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.KAFKA,\n  options: {\n    client: { brokers: ['localhost:9092'] },\n    consumer: { groupId: 'orders-service' }\n  }\n});\n\n@MessagePattern('order.created')\nhandleOrderCreated(@Payload() data: OrderDto) {\n  console.log('New order:', data);\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты недооценивают операционную сложность Kafka. Требуется ZooKeeper/Kraft, мониторинг и настройка конфигурации. Для простых случаев Redis или RabbitMQ проще."
+    },
+    "tags": [
+      "Kafka-transport",
+      "event-streaming",
+      "consumer-groups",
+      "partitioning"
+    ]
+  },
+  {
+    "id": "nestjs-q-35",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you create and use dynamic modules in Nest.js? Provide an example of a module that accepts configuration and registers providers conditionally.",
+      "ru": "Как создавать и использовать динамические модули в Nest.js? Предоставьте пример модуля, который принимает конфигурацию и регистрирует поставщиков условно."
+    },
+    "answer": {
+      "en": "### Dynamic Modules\n\nDynamic modules use the `forRoot()` or `forFeature()` pattern to accept configuration and return customized ModuleMetadata. They enable conditional provider registration, configuration-driven module behavior, and reusable configurable modules across applications.\n\ntypescript\nexport interface DatabaseConfig { host: string; port: number; }\n\n@Module({})\nexport class DatabaseModule {\n  static forRoot(config: DatabaseConfig): DynamicModule {\n    return {\n      module: DatabaseModule,\n      providers: [\n        { provide: 'DB_CONFIG', useValue: config },\n        {\n          provide: DatabaseService,\n          useFactory: (cfg: DatabaseConfig) => new DatabaseService(cfg),\n          inject: ['DB_CONFIG']\n        }\n      ],\n      exports: [DatabaseService]\n    };\n  }\n}\n\n// Usage in AppModule\n@Module({\n  imports: [DatabaseModule.forRoot({ host: 'localhost', port: 5432 })]\n})\nexport class AppModule {}\n\n\n**Common interview trap:** Developers forget to export providers from dynamic modules. If consumers need to inject DatabaseService, remember to add it to the `exports` array.",
+      "ru": "### Динамические модули\n\nДинамические модули используют паттерн `forRoot()` или `forFeature()` для принятия конфигурации и возврата кастомизированной ModuleMetadata. Они позволя��т условную регистрацию поставщиков, поведение, управляемое конфигурацией, и переиспользуемые настраиваемые модули.\n\ntypescript\nexport interface DatabaseConfig { host: string; port: number; }\n\n@Module({})\nexport class DatabaseModule {\n  static forRoot(config: DatabaseConfig): DynamicModule {\n    return {\n      module: DatabaseModule,\n      providers: [\n        { provide: 'DB_CONFIG', useValue: config },\n        {\n          provide: DatabaseService,\n          useFactory: (cfg: DatabaseConfig) => new DatabaseService(cfg),\n          inject: ['DB_CONFIG']\n        }\n      ],\n      exports: [DatabaseService]\n    };\n  }\n}\n\n// Usage in AppModule\n@Module({\n  imports: [DatabaseModule.forRoot({ host: 'localhost', port: 5432 })]\n})\nexport class AppModule {}\n\n\n**Типичная ошибка на интервью:** Разработчики забывают экспортировать поставщиков из динамических модулей. Если потребители должны внедрить DatabaseService, не забудьте добавить его в массив `exports`."
+    },
+    "tags": [
+      "dynamic-modules",
+      "forRoot-pattern",
+      "configuration",
+      "module-metadata"
+    ]
+  },
+  {
+    "id": "nestjs-q-36",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain custom providers in Nest.js: useValue, useFactory, and useExisting. When would you use each one, and what are the trade-offs?",
+      "ru": "Объясните пользовательские поставщики в Nest.js: useValue, useFactory и useExisting. Когда вы использовали бы каждый из них и каковы компромиссы?"
+    },
+    "answer": {
+      "en": "### Custom Providers\n\n**useValue**: Provides a static value; fastest, no computation. **useFactory**: Lazily creates instances with logic; supports async initialization and dependencies. **useExisting**: Aliases one provider to another; saves memory for shared implementations.\n\ntypescript\n// useValue: Simple constant\n{ provide: 'API_KEY', useValue: 'secret123' }\n\n// useFactory: Dynamic creation with dependencies\n{\n  provide: 'DATABASE',\n  useFactory: (config: ConfigService) => {\n    return new Database(config.get('DB_HOST'));\n  },\n  inject: [ConfigService]\n}\n\n// useExisting: Alias one provider\nproviders: [\n  { provide: Logger, useClass: CustomLogger },\n  { provide: 'APP_LOGGER', useExisting: Logger } // Points to CustomLogger\n]\n\n\n**Common interview trap:** Candidates mix up useExisting with useFactory. useExisting must reference another provider (by token), while useFactory can define entirely new logic. useExisting is ideal for multi-token access to the same instance.",
+      "ru": "### Пользовательские поставщики\n\n**useValue**: Предоставляет статическое значение; быстро, без вычислений. **useFactory**: Лениво создаёт экземпляры с логикой; поддерживает асинхронную инициализацию и зависимости. **useExisting**: Создаёт псевдоним одного поставщика на другой; экономит память для общих реализаций.\n\ntypescript\n// useValue: Простая константа\n{ provide: 'API_KEY', useValue: 'secret123' }\n\n// useFactory: Динамическое создание с зависимостями\n{\n  provide: 'DATABASE',\n  useFactory: (config: ConfigService) => {\n    return new Database(config.get('DB_HOST'));\n  },\n  inject: [ConfigService]\n}\n\n// useExisting: Псевдоним одного поставщика\nproviders: [\n  { provide: Logger, useClass: CustomLogger },\n  { provide: 'APP_LOGGER', useExisting: Logger } // Points to CustomLogger\n]\n\n\n**Типичная ошибка на интервью:** Кандидаты путают useExisting с useFactory. useExisting должен ссылаться на другого поставщика (по токену), а useFactory может определить совершенно новую логику. useExisting идеален для многотокенного доступа к одному экземпляру."
+    },
+    "tags": [
+      "custom-providers",
+      "useValue",
+      "useFactory",
+      "useExisting",
+      "dependency-injection"
+    ]
+  },
+  {
+    "id": "nestjs-q-37",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you test Nest.js services with Jest? Explain mocking dependencies, testing async code, and handling database mocks.",
+      "ru": "Как тестировать сервисы Nest.js с Jest? Объясните мокирование зависимостей, тестирование асинхронного кода и обработку моков базы данных."
+    },
+    "answer": {
+      "en": "### Jest Testing in Nest.js\n\nUse the Testing module to create isolated test instances with mocked dependencies. Mock repositories, services, and external APIs using `jest.mock()` or provider overrides. Use `async/await` for async tests and `Done` callback for complex scenarios.\n\ntypescript\ndescribe('UserService', () => {\n  let service: UserService;\n  let repository: Repository<User>;\n\n  beforeEach(async () => {\n    const module = await Test.createTestingModule({\n      providers: [\n        UserService,\n        {\n          provide: getRepositoryToken(User),\n          useValue: { findOne: jest.fn(), save: jest.fn() }\n        }\n      ]\n    }).compile();\n\n    service = module.get<UserService>(UserService);\n    repository = module.get<Repository<User>>(getRepositoryToken(User));\n  });\n\n  it('should create user', async () => {\n    const user = { id: 1, name: 'John' };\n    jest.spyOn(repository, 'save').mockResolvedValue(user);\n    expect(await service.create('John')).toEqual(user);\n  });\n});\n\n\n**Common interview trap:** Forgetting to mock nested dependencies. If UserService depends on EmailService, mock EmailService in the testing module or tests fail with provider not found errors.",
+      "ru": "### Jest тестирование в Nest.js\n\nИспользуйте Testing модуль для создания изолированных тестовых экземпляров с замокированными зависимостями. Мокируйте репозитории, сервисы и внешние API, используя `jest.mock()` или переопределение поставщиков. Используйте `async/await` для асинхронных тестов.\n\ntypescript\ndescribe('UserService', () => {\n  let service: UserService;\n  let repository: Repository<User>;\n\n  beforeEach(async () => {\n    const module = await Test.createTestingModule({\n      providers: [\n        UserService,\n        {\n          provide: getRepositoryToken(User),\n          useValue: { findOne: jest.fn(), save: jest.fn() }\n        }\n      ]\n    }).compile();\n\n    service = module.get<UserService>(UserService);\n    repository = module.get<Repository<User>>(getRepositoryToken(User));\n  });\n\n  it('should create user', async () => {\n    const user = { id: 1, name: 'John' };\n    jest.spyOn(repository, 'save').mockResolvedValue(user);\n    expect(await service.create('John')).toEqual(user);\n  });\n});\n\n\n**Типичная ошибка на интервью:** Забывают мокировать вложенные зависимости. Если UserService зависит от EmailService, мокируйте EmailService в модуле тестирования или тесты падают с ошибками поставщика не найден."
+    },
+    "tags": [
+      "Jest",
+      "testing",
+      "mocking",
+      "Test-module",
+      "async-testing"
+    ]
+  },
+  {
+    "id": "nestjs-q-38",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are the main performance optimization techniques in Nest.js? Cover caching, lazy loading modules, query optimization, and connection pooling.",
+      "ru": "Каковы основные методы оптимизации производительности в Nest.js? Охватите кэширование, ленивую загрузку модулей, оптимизацию запросов и пулинг соединений."
+    },
+    "answer": {
+      "en": "### Performance Optimization\n\n**Caching**: Use @nestjs/cache-manager with Redis to cache frequent queries. **Lazy loading**: Import modules only when needed. **Query optimization**: Use database indexes, select specific columns, paginate large datasets. **Connection pooling**: Configure database pool size to reuse connections.\n\ntypescript\n// Caching with Redis\nimport { CACHE_MANAGER } from '@nestjs/cache-manager';\n\n@Get('/users/:id')\n@UseInterceptors(CacheInterceptor)\ngetUser(@Param('id') id: string, @Inject(CACHE_MANAGER) cache) {\n  return this.userService.findOne(id);\n}\n\n// Query optimization with TypeORM\nthis.repo.createQueryBuilder('user')\n  .select(['user.id', 'user.name']) // only needed fields\n  .take(10) // pagination\n  .skip(0)\n  .leftJoinAndSelect('user.posts', 'posts')\n  .getMany();\n\n// Connection pooling (TypeORM)\n{ host: 'localhost', database: 'db', max: 20, min: 5 } // pool size\n\n\n**Common interview trap:** Candidates cache without TTL (time-to-live), causing stale data. Always set appropriate expiration: `cache.set(key, value, 3600)` for 1-hour cache.",
+      "ru": "### Оптимизация производительности\n\n**Кэширование**: Используйте @nestjs/cache-manager с Redis для кэширования частых запросов. **Ленивая загрузка**: Импортируйте модули только когда нужно. **Оптимизация запросов**: Используйте индексы БД, выбирайте конкретные колонки, разбивайте большие наборы. **Пулинг соединений**: Настройте размер пула БД для переиспользования соединений.\n\ntypescript\n// Кэширование с Redis\nimport { CACHE_MANAGER } from '@nestjs/cache-manager';\n\n@Get('/users/:id')\n@UseInterceptors(CacheInterceptor)\ngetUser(@Param('id') id: string, @Inject(CACHE_MANAGER) cache) {\n  return this.userService.findOne(id);\n}\n\n// Оптимизация запросов с TypeORM\nthis.repo.createQueryBuilder('user')\n  .select(['user.id', 'user.name']) // only needed fields\n  .take(10) // pagination\n  .skip(0)\n  .leftJoinAndSelect('user.posts', 'posts')\n  .getMany();\n\n// Пулинг соединений (TypeORM)\n{ host: 'localhost', database: 'db', max: 20, min: 5 } // pool size\n\n\n**Типичная ошибка на интервью:** Кандидаты кэшируют без TTL (времени жизни), вызывая устаревшие данные. Всегда устанавливайте подходящее истечение: `cache.set(key, value, 3600)` на 1 час."
+    },
+    "tags": [
+      "caching",
+      "lazy-loading",
+      "query-optimization",
+      "connection-pooling",
+      "performance"
+    ]
+  },
+  {
+    "id": "nestjs-q-39",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a multi-service Nest.js architecture using microservices with Redis and Kafka transports. How would you handle inter-service communication and ensure consistency?",
+      "ru": "Спроектируйте многосервисную архитектуру Nest.js, используя микросервисы с Redis и Kafka-транспортами. Как вы обеспечили бы общение между сервисами и консистентность?"
+    },
+    "answer": {
+      "en": "### Multi-Service Architecture\n\nUse Redis for synchronous request-response patterns (fast, low latency) and Kafka for asynchronous event streaming (scalable, event replay). Implement saga pattern for distributed transactions. Use unique request IDs for tracing across services.\n\ntypescript\n// Service A: Emit event via Kafka\n@MessagePattern('create-order')\nasync createOrder(@Payload() order: OrderDto) {\n  const result = await this.service.save(order);\n  this.eventBus.publish(new OrderCreatedEvent(result.id));\n  return result;\n}\n\n// Service B: Listen to Kafka event\n@EventPattern('order.created')\nasync onOrderCreated(@Payload() event: OrderCreatedEvent) {\n  await this.inventory.reserve(event.orderId);\n}\n\n// Service A: Sync call via Redis\nconst user = await this.client.send('get-user', userId).toPromise();\n\n// Saga for consistency\n@CommandHandler(CreateOrderCommand)\nasync handle(cmd: CreateOrderCommand) {\n  const order = await this.orderService.create(cmd);\n  const success = await this.paymentService.charge(order.id);\n  if (!success) await this.orderService.cancel(order.id);\n}\n\n\n**Common interview trap:** Not handling failures. If a service crashes mid-transaction, implement compensating transactions (sagas) or distributed transactional outbox pattern to ensure eventual consistency.",
+      "ru": "### Многосервисная архитектура\n\nИспользуйте Redis для синхронных паттернов request-response (быстро, низкая задержка) и Kafka для асинхронного потока событий (масштабируемо, воспроизведение событий). Реализуйте паттерн saga для распределённых транзакций. Используйте уникальные ID запросов для отслеживания.\n\ntypescript\n// Service A: Emit event via Kafka\n@MessagePattern('create-order')\nasync createOrder(@Payload() order: OrderDto) {\n  const result = await this.service.save(order);\n  this.eventBus.publish(new OrderCreatedEvent(result.id));\n  return result;\n}\n\n// Service B: Listen to Kafka event\n@EventPattern('order.created')\nasync onOrderCreated(@Payload() event: OrderCreatedEvent) {\n  await this.inventory.reserve(event.orderId);\n}\n\n// Service A: Sync call via Redis\nconst user = await this.client.send('get-user', userId).toPromise();\n\n// Saga for consistency\n@CommandHandler(CreateOrderCommand)\nasync handle(cmd: CreateOrderCommand) {\n  const order = await this.orderService.create(cmd);\n  const success = await this.paymentService.charge(order.id);\n  if (!success) await this.orderService.cancel(order.id);\n}\n\n\n**Типичная ошибка на интервью:** Не обработка сбоев. Если сервис упадёт посередине транзакции, реализуйте компенсирующие транзакции (sagas) или паттерн распределённого transactional outbox для обеспечения итоговой консистентности."
+    },
+    "tags": [
+      "microservices-architecture",
+      "Redis",
+      "Kafka",
+      "distributed-transactions",
+      "saga-pattern"
+    ]
+  },
+  {
+    "id": "nestjs-q-40",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement error handling and resilience patterns in Nest.js microservices. How would you handle service failures, timeouts, retries, and circuit breakers?",
+      "ru": "Реализуйте обработку ошибок и паттерны устойчивости в микросервисах Nest.js. Как вы обработали бы сбои сервисов, таймауты, повторы и circuit breakers?"
+    },
+    "answer": {
+      "en": "### Error Handling & Resilience\n\nUse @nestjs/microservices timeout options, RxJS operators (retry, timeout), and circuit breaker libraries (opossum). Implement fallbacks and graceful degradation. Log errors with correlation IDs for debugging.\n\ntypescript\n// Service call with timeout and retry\nimport { timeout, retry, catchError } from 'rxjs';\n\nthis.client.send('get-user', userId).pipe(\n  timeout(5000), // 5 second timeout\n  retry(3), // retry 3 times\n  catchError(err => {\n    this.logger.error(`Failed to get user: ${err}`, userId);\n    return of({ id: userId, name: 'Unknown' }); // fallback\n  })\n).toPromise();\n\n// Circuit breaker pattern\nimport CircuitBreaker from 'opossum';\nconst breaker = new CircuitBreaker(\n  async () => this.paymentService.charge(),\n  { threshold: 5, timeout: 10000 }\n);\n\ntry {\n  return await breaker.fire();\n} catch (err) {\n  if (err.message === 'Circuit breaker is open') {\n    // Circuit is open, use fallback\n  }\n}\n\n\n**Common interview trap:** Retrying without exponential backoff causes thundering herd. Use exponential backoff: `retry({ delay: (err, count) => 2 ** count * 1000 })` to avoid overwhelming the target service.",
+      "ru": "### Обработка ошибок и устойчивость\n\nИспользуйте параметры timeout в @nestjs/microservices, RxJS операторы (retry, timeout) и библиотеки circuit breaker (opossum). Реализуйте fallbacks и graceful degradation. Логируйте ошибки с ID корреляции.\n\ntypescript\n// Service call с timeout и retry\nimport { timeout, retry, catchError } from 'rxjs';\n\nthis.client.send('get-user', userId).pipe(\n  timeout(5000), // 5 second timeout\n  retry(3), // retry 3 times\n  catchError(err => {\n    this.logger.error(`Failed to get user: ${err}`, userId);\n    return of({ id: userId, name: 'Unknown' }); // fallback\n  })\n).toPromise();\n\n// Circuit breaker pattern\nimport CircuitBreaker from 'opossum';\nconst breaker = new CircuitBreaker(\n  async () => this.paymentService.charge(),\n  { threshold: 5, timeout: 10000 }\n);\n\ntry {\n  return await breaker.fire();\n} catch (err) {\n  if (err.message === 'Circuit breaker is open') {\n    // Circuit is open, use fallback\n  }\n}\n\n\n**Типичная ошибка на интервью:** Повтор без exponential backoff вызывает thundering herd. Используйте exponential backoff: `retry({ delay: (err, count) => 2 ** count * 1000 })` чтобы не перегружать целевой сервис."
+    },
+    "tags": [
+      "error-handling",
+      "resilience",
+      "circuit-breaker",
+      "retry",
+      "timeout",
+      "fallback"
+    ]
+  },
+  {
+    "id": "nestjs-q-26",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what NestJS decorators are and give an example of how @Controller and @Get decorators work together.",
+      "ru": "Объясните, что такое декораторы в NestJS, и приведите пример того, как работают декораторы @Controller и @Get вместе."
+    },
+    "answer": {
+      "en": "### NestJS Decorators\n\nDecorators are TypeScript functions that modify classes, methods, or properties. @Controller defines a route prefix, while @Get maps HTTP GET requests to handler methods.\n\n```typescript\n@Controller('users')\nexport class UsersController {\n  @Get()\n  findAll() {\n    return 'All users';\n  }\n\n  @Get(':id')\n  findOne(@Param('id') id: string) {\n    return `User ${id}`;\n  }\n}\n```\n\n**Common interview trap:** Confusing decorators with simple functions—they're actually metadata providers that NestJS processes at runtime.",
+      "ru": "### Декораторы NestJS\n\nДекораторы — это функции TypeScript, которые модифицируют классы, методы или свойства. @Controller определяет префикс маршрута, а @Get связывает HTTP GET запросы с методами обработчиками.\n\n```typescript\n@Controller('users')\nexport class UsersController {\n  @Get()\n  findAll() {\n    return 'All users';\n  }\n\n  @Get(':id')\n  findOne(@Param('id') id: string) {\n    return `User ${id}`;\n  }\n}\n```\n\n**Типичная ошибка:** Путать декораторы с обычными функциями — на самом деле это поставщики метаданных, которые NestJS обрабатывает во время выполнения."
+    },
+    "tags": [
+      "decorators",
+      "controllers",
+      "routing"
+    ]
+  },
+  {
+    "id": "nestjs-q-27",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the purpose of a Module in NestJS and what are the main properties in the @Module decorator?",
+      "ru": "Какова цель модуля в NestJS и какие основные свойства есть в декораторе @Module?"
+    },
+    "answer": {
+      "en": "### NestJS Modules\n\nModules organize code into logical units and manage dependency injection scope. The @Module decorator accepts four main properties: controllers, providers, imports, and exports.\n\n```typescript\n@Module({\n  controllers: [UsersController],\n  providers: [UsersService],\n  imports: [DatabaseModule],\n  exports: [UsersService]\n})\nexport class UsersModule {}\n```\n\n**Common interview trap:** Thinking modules are just folders—they're actual NestJS abstractions that control DI container scope.",
+      "ru": "### Модули NestJS\n\nМодули организуют код в логические блоки и управляют областью внедрения зависимостей. Декоратор @Module принимает четыре основных свойства: controllers, providers, imports и exports.\n\n```typescript\n@Module({\n  controllers: [UsersController],\n  providers: [UsersService],\n  imports: [DatabaseModule],\n  exports: [UsersService]\n})\nexport class UsersModule {}\n```\n\n**Типичная ошибка:** Думать, что модули — это просто папки; на самом деле это абстракции NestJS, которые контролируют область контейнера DI."
+    },
+    "tags": [
+      "modules",
+      "dependency-injection",
+      "organization"
+    ]
+  },
+  {
+    "id": "nestjs-q-28",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between Providers and Services in NestJS. How does dependency injection make them work together?",
+      "ru": "Объясните разницу между Providers и Services в NestJS. Как внедрение зависимостей заставляет их работать вместе?"
+    },
+    "answer": {
+      "en": "### Providers and Services\n\nProviders are injectable classes registered in a module's providers array—services are a common type of provider. Dependency injection automatically injects instances into controllers via constructor parameters.\n\n```typescript\n@Injectable()\nexport class UsersService {\n  findAll() { return ['user1', 'user2']; }\n}\n\n@Controller('users')\nexport class UsersController {\n  constructor(private usersService: UsersService) {}\n  \n  @Get()\n  getUsers() {\n    return this.usersService.findAll();\n  }\n}\n```\n\n**Common interview trap:** Thinking services and providers are different things—services are just a pattern, providers is the NestJS concept.",
+      "ru": "### Providers и Services\n\nProviders — это внедряемые классы, зарегистрированные в массиве providers модуля; services — это распространённый тип provider. Внедрение зависимостей автоматически внедряет экземпляры в контроллеры через параметры конструктора.\n\n```typescript\n@Injectable()\nexport class UsersService {\n  findAll() { return ['user1', 'user2']; }\n}\n\n@Controller('users')\nexport class UsersController {\n  constructor(private usersService: UsersService) {}\n  \n  @Get()\n  getUsers() {\n    return this.usersService.findAll();\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что services и providers — это разные вещи; services — это просто паттерн, provider — это концепция NestJS."
+    },
+    "tags": [
+      "providers",
+      "services",
+      "dependency-injection"
+    ]
+  },
+  {
+    "id": "nestjs-q-29",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are Pipes in NestJS and how would you use a built-in pipe like ParseIntPipe to validate route parameters?",
+      "ru": "Что такое Pipes в NestJS и как вы используете встроенный pipe вроде ParseIntPipe для валидации параметров маршрута?"
+    },
+    "answer": {
+      "en": "### NestJS Pipes\n\nPipes are used to transform or validate data before it reaches a route handler. ParseIntPipe automatically converts string parameters to integers and throws a 400 error if conversion fails.\n\n```typescript\n@Controller('users')\nexport class UsersController {\n  @Get(':id')\n  findOne(@Param('id', ParseIntPipe) id: number) {\n    return `User ${id}`;\n  }\n}\n// GET /users/abc → 400 Bad Request\n// GET /users/123 → 'User 123'\n```\n\n**Common interview trap:** Confusing pipes with middleware—pipes work on method parameters, middleware works on the entire request.",
+      "ru": "### Pipes в NestJS\n\nPipes используются для преобразования или валидации данных перед попаданием в обработчик маршрута. ParseIntPipe автоматически конвертирует строковые параметры в целые числа и выбрасывает ошибку 400 при неудаче конвертации.\n\n```typescript\n@Controller('users')\nexport class UsersController {\n  @Get(':id')\n  findOne(@Param('id', ParseIntPipe) id: number) {\n    return `User ${id}`;\n  }\n}\n// GET /users/abc → 400 Bad Request\n// GET /users/123 → 'User 123'\n```\n\n**Типичная ошибка:** Путать pipes с middleware — pipes работают на параметрах метода, middleware работает на всём запросе."
+    },
+    "tags": [
+      "pipes",
+      "validation",
+      "parameter-transformation"
+    ]
+  },
+  {
+    "id": "nestjs-q-30",
+    "topicId": "nestjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what Guards are in NestJS and provide a simple example of how @UseGuards works with authentication.",
+      "ru": "Объясните, что такое Guards в NestJS, и приведите простой пример того, как работает @UseGuards с аутентификацией."
+    },
+    "answer": {
+      "en": "### NestJS Guards\n\nGuards determine whether a request should be handled or rejected before reaching the handler. They implement CanActivate interface and return true/false. @UseGuards decorator applies guards to methods or entire controllers.\n\n```typescript\n@Injectable()\nexport class AuthGuard implements CanActivate {\n  canActivate(context: ExecutionContext): boolean {\n    const request = context.switchToHttp().getRequest();\n    return !!request.headers.authorization;\n  }\n}\n\n@Controller('admin')\nexport class AdminController {\n  @UseGuards(AuthGuard)\n  @Get()\n  secret() { return 'Secret data'; }\n}\n```\n\n**Common interview trap:** Thinking guards are the same as middleware—guards have access to ExecutionContext, middleware doesn't.",
+      "ru": "### Guards в NestJS\n\nGuards определяют, должен ли запрос быть обработан или отклонен перед попаданием в обработчик. Они реализуют интерфейс CanActivate и возвращают true/false. Декоратор @UseGuards применяет guards к методам или целым контроллерам.\n\n```typescript\n@Injectable()\nexport class AuthGuard implements CanActivate {\n  canActivate(context: ExecutionContext): boolean {\n    const request = context.switchToHttp().getRequest();\n    return !!request.headers.authorization;\n  }\n}\n\n@Controller('admin')\nexport class AdminController {\n  @UseGuards(AuthGuard)\n  @Get()\n  secret() { return 'Secret data'; }\n}\n```\n\n**Типичная ошибка:** Думать, что guards — это то же самое, что middleware; guards имеют доступ к ExecutionContext, middleware нет."
+    },
+    "tags": [
+      "guards",
+      "authentication",
+      "authorization"
+    ]
+  },
+  {
+    "id": "nestjs-q-31",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how to handle circular dependencies in NestJS dependency injection and what scopes would you use to resolve them?",
+      "ru": "Объясните, как обрабатывать циклические зависимости в системе внедрения зависимостей NestJS и какие области видимости вы будете использовать для их разрешения?"
+    },
+    "answer": {
+      "en": "### Circular Dependency Resolution\n\nCircular dependencies occur when two providers depend on each other. Use `forwardRef()` to break the cycle by deferring provider resolution. REQUEST or TRANSIENT scopes can also help as they create new instances per request.\n\n```typescript\n@Injectable()\nexport class AService {\n  constructor(@Inject(forwardRef(() => BService)) private bService: BService) {}\n}\n\n@Injectable()\nexport class BService {\n  constructor(@Inject(forwardRef(() => AService)) private aService: AService) {}\n}\n```\n\n**Common interview trap:** Ignoring that `forwardRef()` must wrap the provider reference, not the injection token.",
+      "ru": "### Разрешение циклических зависимостей\n\nЦиклические зависимости возникают, когда два провайдера зависят друг от друга. Используйте `forwardRef()` для разрыва цикла путем отсрочки разрешения провайдера. Области видимости REQUEST или TRANSIENT также могут помочь, создавая новые экземпляры для каждого запроса.\n\n```typescript\n@Injectable()\nexport class AService {\n  constructor(@Inject(forwardRef(() => BService)) private bService: BService) {}\n}\n\n@Injectable()\nexport class BService {\n  constructor(@Inject(forwardRef(() => AService)) private aService: AService) {}\n}\n```\n\n**Типичная ошибка:** Забыли, что `forwardRef()` должен обернуть ссылку на провайдера, а не токен инъекции."
+    },
+    "tags": [
+      "dependency-injection",
+      "circular-deps",
+      "forwardRef",
+      "scopes"
+    ]
+  },
+  {
+    "id": "nestjs-q-32",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you create a custom decorator that combines both class and method-level decorators to validate request parameters?",
+      "ru": "Как создать пользовательский декоратор, который объединяет декораторы уровня класса и методов для проверки параметров запроса?"
+    },
+    "answer": {
+      "en": "### Custom Decorator with Metadata\n\nCreate a decorator using `SetMetadata()` and a custom interceptor or guard that reads the metadata. The decorator can be applied at class or method level, with method-level metadata overriding class-level.\n\n```typescript\nexport const ValidateParams = (schema: any) => SetMetadata('validate-schema', schema);\n\n@Injectable()\nexport class ValidationInterceptor implements NestInterceptor {\n  intercept(context: ExecutionContext, next: CallHandler) {\n    const schema = this.reflector.get('validate-schema', context.getHandler());\n    // validate request using schema\n    return next.handle();\n  }\n}\n```\n\n**Common interview trap:** Not understanding that metadata set at method level shadows class-level metadata.",
+      "ru": "### Пользовательский декоратор с метаданными\n\nСоздайте декоратор с использованием `SetMetadata()` и пользовательского интерцептора или гварда, который читает метаданные. Декоратор можно применять на уровне класса или метода, причем метаданные на уровне метода переопределяют метаданные уровня класса.\n\n```typescript\nexport const ValidateParams = (schema: any) => SetMetadata('validate-schema', schema);\n\n@Injectable()\nexport class ValidationInterceptor implements NestInterceptor {\n  intercept(context: ExecutionContext, next: CallHandler) {\n    const schema = this.reflector.get('validate-schema', context.getHandler());\n    // validate request using schema\n    return next.handle();\n  }\n}\n```\n\n**Типичная ошибка:** Не понимание того, что метаданные на уровне метода скрывают метаданные на уровне класса."
+    },
+    "tags": [
+      "custom-decorators",
+      "metadata",
+      "SetMetadata",
+      "reflection"
+    ]
+  },
+  {
+    "id": "nestjs-q-33",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the order of execution for middleware, guards, interceptors (before), pipes, and exception filters in a NestJS request lifecycle.",
+      "ru": "Опишите порядок выполнения middleware, guards, interceptors (before), pipes и exception filters в жизненном цикле запроса NestJS."
+    },
+    "answer": {
+      "en": "### NestJS Request Lifecycle Order\n\nThe execution order is: Middleware → Guards → Interceptors (before) → Pipes → Route Handler → Interceptors (after) → Exception Filters (if error). Exception filters catch errors from any earlier stage and short-circuit the response.\n\n```typescript\n// Execution order visualization\n1. Middleware\n2. Guards (canActivate)\n3. Interceptors (intercept - before)\n4. Pipes (transform/validate)\n5. Route Handler\n6. Interceptors (intercept - after)\n7. Exception Filters (if error occurs)\n```\n\n**Common interview trap:** Thinking exception filters run before interceptors instead of catching errors throughout the pipeline.",
+      "ru": "### Порядок жизненного цикла запроса NestJS\n\nПорядок выполнения: Middleware → Guards → Interceptors (before) → Pipes → Route Handler → Interceptors (after) → Exception Filters (если ошибка). Фильтры исключений перехватывают ошибки на любом этапе и прерывают ответ.\n\n```typescript\n// Визуализация порядка выполнения\n1. Middleware\n2. Guards (canActivate)\n3. Interceptors (intercept - before)\n4. Pipes (transform/validate)\n5. Route Handler\n6. Interceptors (intercept - after)\n7. Exception Filters (if error occurs)\n```\n\n**Типичная ошибка:** Мышление о том, что фильтры исключений выполняются перед интерцепторами, вместо того чтобы перехватывать ошибки во всем конвейере."
+    },
+    "tags": [
+      "lifecycle-hooks",
+      "request-pipeline",
+      "middleware",
+      "guards",
+      "interceptors",
+      "pipes",
+      "exception-filters"
+    ]
+  },
+  {
+    "id": "nestjs-q-34",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you configure and use the ConfigModule in NestJS, and what are the differences between global and local configuration?",
+      "ru": "Как настроить и использовать ConfigModule в NestJS и каковы различия между глобальной и локальной конфигурацией?"
+    },
+    "answer": {
+      "en": "### ConfigModule Configuration\n\nThe ConfigModule loads environment variables using `dotenv`. Use `isGlobal: true` to make it available application-wide without re-importing. Local modules must explicitly import ConfigModule if not global.\n\n```typescript\nConfigModule.forRoot({\n  isGlobal: true,\n  envFilePath: '.env',\n  validationSchema: Joi.object({\n    DATABASE_URL: Joi.string().required(),\n  }),\n})\n\n// Usage in any service:\nconstructor(private configService: ConfigService) {}\nconst dbUrl = this.configService.get<string>('DATABASE_URL');\n```\n\n**Common interview trap:** Forgetting that non-global ConfigModule must be re-imported in every feature module.",
+      "ru": "### Конфигурация ConfigModule\n\nConfigModule загружает переменные окружения с помощью `dotenv`. Используйте `isGlobal: true`, чтобы сделать его доступным для всего приложения без повторного импорта. Локальные модули должны явно импортировать ConfigModule, если он не глобален.\n\n```typescript\nConfigModule.forRoot({\n  isGlobal: true,\n  envFilePath: '.env',\n  validationSchema: Joi.object({\n    DATABASE_URL: Joi.string().required(),\n  }),\n})\n\n// Использование в любом сервисе:\nconstructor(private configService: ConfigService) {}\nconst dbUrl = this.configService.get<string>('DATABASE_URL');\n```\n\n**Типичная ошибка:** Забыли, что нелокальный ConfigModule должен быть повторно импортирован в каждом модуле функций."
+    },
+    "tags": [
+      "configuration-module",
+      "ConfigService",
+      "environment-variables",
+      "dotenv",
+      "global-providers"
+    ]
+  },
+  {
+    "id": "nestjs-q-35",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how TypeORM and Prisma integrate with NestJS and what are the key differences in how repositories/clients are injected?",
+      "ru": "Объясните, как TypeORM и Prisma интегрируются с NestJS и каковы ключевые различия в способе внедрения репозиториев/клиентов?"
+    },
+    "answer": {
+      "en": "### TypeORM vs Prisma Integration\n\nTypeORM uses the Repository pattern with `@InjectRepository()` decorator and database connections. Prisma provides a client-based approach with `PrismaService` as a singleton. TypeORM repositories are tied to entities; Prisma client is agnostic and auto-generated.\n\n```typescript\n// TypeORM\n@Injectable()\nexport class UserService {\n  constructor(@InjectRepository(User) private repo: Repository<User>) {}\n}\n\n// Prisma\n@Injectable()\nexport class UserService {\n  constructor(private prisma: PrismaService) {}\n  async getUser(id: string) { return this.prisma.user.findUnique({ where: { id } }); }\n}\n```\n\n**Common interview trap:** Thinking both ORMs have identical injection patterns—TypeORM requires entity-specific decorators, Prisma uses a generic service.",
+      "ru": "### Интеграция TypeORM vs Prisma\n\nTypeORM использует паттерн Repository с декоратором `@InjectRepository()` и подключениями к базе данных. Prisma предоставляет подход на основе клиента с `PrismaService` как синглтон. Репозитории TypeORM привязаны к сущностям; клиент Prisma агностичен и автогенерирован.\n\n```typescript\n// TypeORM\n@Injectable()\nexport class UserService {\n  constructor(@InjectRepository(User) private repo: Repository<User>) {}\n}\n\n// Prisma\n@Injectable()\nexport class UserService {\n  constructor(private prisma: PrismaService) {}\n  async getUser(id: string) { return this.prisma.user.findUnique({ where: { id } }); }\n}\n```\n\n**Типичная ошибка:** Мышление о том, что оба ORM имеют одинаковые паттерны инъекции — TypeORM требует декораторов для конкретных сущностей, Prisma использует универсальный сервис."
+    },
+    "tags": [
+      "TypeORM",
+      "Prisma",
+      "ORM-integration",
+      "repositories",
+      "database-connection"
+    ]
+  },
+  {
+    "id": "nestjs-q-36",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you resolve circular dependencies in NestJS dependency injection, and what are the trade-offs of each approach?",
+      "ru": "Как разрешить циклические зависимости в NestJS, и какие компромиссы у каждого подхода?"
+    },
+    "answer": {
+      "en": "### Circular Dependencies Resolution\n\nUse forward references with `forwardRef()` to defer resolution, or refactor using a shared module. Forward references work but add complexity; refactoring is cleaner but requires architectural changes.\n\n```typescript\n@Module({\n  providers: [\n    { provide: 'A', useFactory: (b) => new A(b), inject: [forwardRef(() => 'B')] },\n    { provide: 'B', useFactory: (a) => new B(a), inject: [forwardRef(() => 'A')] }\n  ]\n})\nexport class CircularModule {}\n```\n\n**Common interview trap:** Overusing `forwardRef()` instead of restructuring the module hierarchy.",
+      "ru": "### Разрешение циклических зависимостей\n\nИспользуйте `forwardRef()` для отложенного разрешения, или рефакторьте через общий модуль. Forward reference работает, но усложняет код; рефакторинг чище, но требует архитектурных изменений.\n\n```typescript\n@Module({\n  providers: [\n    { provide: 'A', useFactory: (b) => new A(b), inject: [forwardRef(() => 'B')] },\n    { provide: 'B', useFactory: (a) => new B(a), inject: [forwardRef(() => 'A')] }\n  ]\n})\nexport class CircularModule {}\n```\n\n**Типичная ошибка:** Злоупотребление `forwardRef()` вместо перестройки иерархии модулей."
+    },
+    "tags": [
+      "circular-dependencies",
+      "dependency-injection",
+      "module-design"
+    ]
+  },
+  {
+    "id": "nestjs-q-37",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between REQUEST, TRANSIENT, and SINGLETON scopes in NestJS. When would you use each?",
+      "ru": "Объясните различия между REQUEST, TRANSIENT и SINGLETON scopes в NestJS. Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Dependency Injection Scopes\n\nSINGLETON (default) creates one instance globally, TRANSIENT creates a new instance per injection, REQUEST creates one per HTTP request. Use SINGLETON for stateless services, TRANSIENT for stateful utilities, REQUEST for context-aware services.\n\n```typescript\n@Injectable({ scope: Scope.REQUEST })\nexport class RequestService {\n  constructor(private req: Request) {}\n}\n\n@Injectable({ scope: Scope.TRANSIENT })\nexport class TransientService {}\n```\n\n**Common interview trap:** Assuming all services should be SINGLETON without considering request context.",
+      "ru": "### Scopes в зависимостях\n\nSINGLETON (по умолчанию) создаёт один экземпляр глобально, TRANSIENT создаёт новый на каждую инъекцию, REQUEST создаёт один на HTTP-запрос. Используйте SINGLETON для stateless сервисов, TRANSIENT для stateful утилит, REQUEST для контекстных сервисов.\n\n```typescript\n@Injectable({ scope: Scope.REQUEST })\nexport class RequestService {\n  constructor(private req: Request) {}\n}\n\n@Injectable({ scope: Scope.TRANSIENT })\nexport class TransientService {}\n```\n\n**Типичная ошибка:** Предполагать, что все сервисы должны быть SINGLETON без учёта контекста запроса."
+    },
+    "tags": [
+      "scopes",
+      "singleton",
+      "request-context",
+      "dependency-injection"
+    ]
+  },
+  {
+    "id": "nestjs-q-38",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do custom decorators and interceptors work together? Create an example that combines both to extract and validate user roles.",
+      "ru": "Как работают пользовательские декораторы и интерцепторы вместе? Создайте пример, комбинирующий их для извлечения и валидации ролей пользователя."
+    },
+    "answer": {
+      "en": "### Custom Decorators + Interceptors\n\nDecorators attach metadata to route handlers, interceptors read that metadata and enforce logic. Combine them to enforce role-based access by decorating handlers with roles and validating in an interceptor.\n\n```typescript\n@SetMetadata('roles', ['admin'])\n@Get()\ngetUsers() { return []; }\n\n@Injectable()\nexport class RoleInterceptor implements NestInterceptor {\n  intercept(ctx: ExecutionContext, next: CallHandler) {\n    const roles = this.reflector.get('roles', ctx.getHandler());\n    const user = ctx.switchToHttp().getRequest().user;\n    if (!roles.includes(user.role)) throw new ForbiddenException();\n    return next.handle();\n  }\n}\n```\n\n**Common interview trap:** Placing validation logic only in decorators without explaining how metadata flows to interceptors.",
+      "ru": "### Декораторы + интерцепторы\n\nДекораторы присоединяют метаданные к обработчикам маршрутов, интерцепторы читают эти метаданные и применяют логику. Комбинируйте их для ролевого контроля доступа через декорирование и валидацию в интерцепторе.\n\n```typescript\n@SetMetadata('roles', ['admin'])\n@Get()\ngetUsers() { return []; }\n\n@Injectable()\nexport class RoleInterceptor implements NestInterceptor {\n  intercept(ctx: ExecutionContext, next: CallHandler) {\n    const roles = this.reflector.get('roles', ctx.getHandler());\n    const user = ctx.switchToHttp().getRequest().user;\n    if (!roles.includes(user.role)) throw new ForbiddenException();\n    return next.handle();\n  }\n}\n```\n\n**Типичная ошибка:** Размещение валидации только в декораторах без объяснения потока метаданных в интерцепторы."
+    },
+    "tags": [
+      "decorators",
+      "interceptors",
+      "metadata",
+      "access-control"
+    ]
+  },
+  {
+    "id": "nestjs-q-39",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the execution order of middleware, guards, interceptors (pre-handler), exception filters, and interceptors (post-handler). How does this order affect error handling?",
+      "ru": "Объясните порядок выполнения middleware, guards, интерцепторов (pre-handler), exception filters и интерцепторов (post-handler). Как это влияет на обработку ошибок?"
+    },
+    "answer": {
+      "en": "### NestJS Execution Pipeline\n\nOrder: Middleware → Guards → Interceptors (pre) → Handler → Interceptors (post) → Exception Filters. Exception filters catch errors from any stage before the response; interceptors can transform both request and response.\n\n```typescript\n@UseGuards(AuthGuard)\n@UseInterceptors(LoggingInterceptor)\n@Post()\n@UsePipes(ValidationPipe)\ncreatUser(dto) {\n  // Handler executes here\n  // Interceptor post-processing happens on response\n}\n```\n\n**Common interview trap:** Thinking exception filters run during handler execution rather than after catching errors.",
+      "ru": "### Pipeline выполнения NestJS\n\nПорядок: Middleware → Guards → Интерцепторы (pre) → Handler → Интерцепторы (post) → Exception Filters. Exception filters ловят ошибки на любом этапе перед ответом; интерцепторы трансформируют запрос и ответ.\n\n```typescript\n@UseGuards(AuthGuard)\n@UseInterceptors(LoggingInterceptor)\n@Post()\n@UsePipes(ValidationPipe)\ncreatUser(dto) {\n  // Handler выполняется здесь\n  // Post-processing интерцептора на ответе\n}\n```\n\n**Типичная ошибка:** Думать, что exception filters запускаются во время выполнения handler вместо ловли ошибок после."
+    },
+    "tags": [
+      "execution-order",
+      "pipeline",
+      "guards",
+      "interceptors",
+      "exception-filters"
+    ]
+  },
+  {
+    "id": "nestjs-q-40",
+    "topicId": "nestjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do module lifecycle hooks (OnModuleInit, OnModuleDestroy, OnApplicationBootstrap) differ, and how would you integrate TypeORM/Prisma initialization in them?",
+      "ru": "Чем отличаются lifecycle hooks модуля (OnModuleInit, OnModuleDestroy, OnApplicationBootstrap), и как интегрировать инициализацию TypeORM/Prisma в них?"
+    },
+    "answer": {
+      "en": "### Module Lifecycle Hooks\n\nOnModuleInit runs after module dependencies resolve, OnApplicationBootstrap runs after all modules initialize (use for DB migrations), OnModuleDestroy cleans up on shutdown. Integrate TypeORM by running migrations in OnApplicationBootstrap and closing connections in OnModuleDestroy.\n\n```typescript\n@Injectable()\nexport class DatabaseService implements OnModuleInit, OnApplicationBootstrap {\n  async onModuleInit() { await this.prisma.$connect(); }\n  async onApplicationBootstrap() { await this.prisma.$runDatabaseMigrations(); }\n  async onModuleDestroy() { await this.prisma.$disconnect(); }\n}\n```\n\n**Common interview trap:** Using OnModuleInit for migrations instead of OnApplicationBootstrap, causing race conditions.",
+      "ru": "### Lifecycle hooks модуля\n\nOnModuleInit запускается после разрешения зависимостей модуля, OnApplicationBootstrap запускается после инициализации всех модулей (используйте для миграций БД), OnModuleDestroy очищает при завершении. Интегрируйте TypeORM, запуская миграции в OnApplicationBootstrap и закрывая соединения в OnModuleDestroy.\n\n```typescript\n@Injectable()\nexport class DatabaseService implements OnModuleInit, OnApplicationBootstrap {\n  async onModuleInit() { await this.prisma.$connect(); }\n  async onApplicationBootstrap() { await this.prisma.$runDatabaseMigrations(); }\n  async onModuleDestroy() { await this.prisma.$disconnect(); }\n}\n```\n\n**Типичная ошибка:** Использование OnModuleInit для миграций вместо OnApplicationBootstrap, вызывающее race conditions."
+    },
+    "tags": [
+      "lifecycle-hooks",
+      "module-initialization",
+      "database-integration",
+      "prisma",
+      "typeorm"
+    ]
+  },
+  {
+    "id": "nestjs-q-41",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement a microservice communication pattern using Nest.js that supports multiple transports (TCP, Redis, Kafka) with automatic failover and load balancing?",
+      "ru": "Как вы реализуете паттерн микросервисной коммуникации в Nest.js, который поддерживает несколько транспортов (TCP, Redis, Kafka) с автоматическим переключением и балансировкой нагрузки?"
+    },
+    "answer": {
+      "en": "### Multi-Transport Microservices with Failover\n\nCreate a custom transport provider that wraps multiple transports with health checks and fallback logic. Use ClientProxy with hybrid transport strategy and implement circuit breaker pattern to handle failures gracefully.\n\n```typescript\n@Injectable()\nexport class HybridMicroserviceClient {\n  constructor(@Inject('HYBRID_CLIENT') private client: ClientProxy) {}\n  \n  async send(pattern: any, data: any, timeout = 5000) {\n    return this.client.send(pattern, data).pipe(\n      timeout(timeout),\n      catchError(() => this.client.emit('fallback', data))\n    ).toPromise();\n  }\n}\n```\n\n**Common interview trap:** Assuming all transports should be used simultaneously—explain load distribution strategy per request type.",
+      "ru": "### Микросервисы с несколькими транспортами и отказоустойчивостью\n\nСоздайте пользовательского поставщика транспорта, который оборачивает несколько транспортов с проверками здоровья и логикой fallback. Используйте ClientProxy с гибридной стратегией транспорта и реализуйте паттерн circuit breaker для graceful обработки ошибок.\n\n```typescript\n@Injectable()\nexport class HybridMicroserviceClient {\n  constructor(@Inject('HYBRID_CLIENT') private client: ClientProxy) {}\n  \n  async send(pattern: any, data: any, timeout = 5000) {\n    return this.client.send(pattern, data).pipe(\n      timeout(timeout),\n      catchError(() => this.client.emit('fallback', data))\n    ).toPromise();\n  }\n}\n```\n\n**Типичная ошибка:** Предположение, что все транспорты должны использоваться одновременно—объясните стратегию распределения нагрузки по типам запросов."
+    },
+    "tags": [
+      "microservices",
+      "tcp-transport",
+      "redis-transport",
+      "kafka-transport",
+      "circuit-breaker",
+      "failover"
+    ]
+  },
+  {
+    "id": "nestjs-q-42",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how you would architect a CQRS + Event Sourcing system in Nest.js, including command handling, event store persistence, and event replay for state reconstruction.",
+      "ru": "Объясните, как вы бы архитектировали систему CQRS + Event Sourcing в Nest.js, включая обработку команд, сохранение хранилища событий и воспроизведение событий для восстановления состояния."
+    },
+    "answer": {
+      "en": "### CQRS + Event Sourcing Architecture\n\nUse Nest.js CQRS module with command bus and event bus for separation of concerns. Implement EventStore to persist events, and use event subscribers to rebuild aggregate root state. The read model derives from events through projections.\n\n```typescript\n@CommandHandler(CreateUserCommand)\nexport class CreateUserHandler implements ICommandHandler<CreateUserCommand> {\n  constructor(private eventBus: EventBus) {}\n  \n  async execute(command: CreateUserCommand) {\n    const user = User.create(command);\n    const events = user.getUncommittedEvents();\n    await this.eventBus.publishAll(events);\n  }\n}\n```\n\n**Common interview trap:** Storing events without versioning leads to deserialization issues during replay—always version your events.",
+      "ru": "### Архитектура CQRS + Event Sourcing\n\nИспользуйте модуль CQRS Nest.js с command bus и event bus для разделения ответственности. Реализуйте EventStore для сохранения событий и используйте event subscribers для восстановления состояния aggregate root. Модель чтения получается из событий через проекции.\n\n```typescript\n@CommandHandler(CreateUserCommand)\nexport class CreateUserHandler implements ICommandHandler<CreateUserCommand> {\n  constructor(private eventBus: EventBus) {}\n  \n  async execute(command: CreateUserCommand) {\n    const user = User.create(command);\n    const events = user.getUncommittedEvents();\n    await this.eventBus.publishAll(events);\n  }\n}\n```\n\n**Типичная ошибка:** Сохранение событий без версионирования приводит к проблемам десериализации при воспроизведении—всегда версионируйте свои события."
+    },
+    "tags": [
+      "cqrs",
+      "event-sourcing",
+      "command-bus",
+      "event-bus",
+      "event-store",
+      "aggregate-root"
+    ]
+  },
+  {
+    "id": "nestjs-q-43",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you create dynamic Nest.js modules that accept runtime configuration and register providers conditionally based on environment or feature flags?",
+      "ru": "Как вы создаёте динамические модули Nest.js, которые принимают конфигурацию во время выполнения и условно регистрируют поставщиков на основе окружения или feature флагов?"
+    },
+    "answer": {
+      "en": "### Dynamic Modules with Conditional Providers\n\nImplement `forRoot()` and `forFeature()` static methods that return DynamicModule. Use conditional registration to include providers based on config. Custom providers with useFactory allow dependency injection during registration.\n\n```typescript\nexport class DatabaseModule {\n  static forRoot(config: DbConfig): DynamicModule {\n    const dbProvider = {\n      provide: 'DB_CONNECTION',\n      useFactory: async () => new Connection(config),\n    };\n    return {\n      module: DatabaseModule,\n      providers: config.enableCache ? [dbProvider, CacheService] : [dbProvider],\n      exports: ['DB_CONNECTION'],\n    };\n  }\n}\n```\n\n**Common interview trap:** Not exporting providers from dynamic modules causes NestJS not to find them—always use the exports array.",
+      "ru": "### Динамические модули с условной регистрацией поставщиков\n\nРеализуйте статические методы `forRoot()` и `forFeature()`, которые возвращают DynamicModule. Используйте условную регистрацию для включения поставщиков на основе конфигурации. Пользовательские поставщики с useFactory позволяют внедрение зависимостей во время регистрации.\n\n```typescript\nexport class DatabaseModule {\n  static forRoot(config: DbConfig): DynamicModule {\n    const dbProvider = {\n      provide: 'DB_CONNECTION',\n      useFactory: async () => new Connection(config),\n    };\n    return {\n      module: DatabaseModule,\n      providers: config.enableCache ? [dbProvider, CacheService] : [dbProvider],\n      exports: ['DB_CONNECTION'],\n    };\n  }\n}\n```\n\n**Типичная ошибка:** Неэкспортирование поставщиков из динамических модулей приводит к тому, что NestJS их не находит—всегда используйте массив exports."
+    },
+    "tags": [
+      "dynamic-modules",
+      "forRoot",
+      "forFeature",
+      "custom-providers",
+      "conditional-registration"
+    ]
+  },
+  {
+    "id": "nestjs-q-44",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare useFactory, useValue, and useExisting custom providers in Nest.js. When would you use each, and how do they differ in dependency injection resolution?",
+      "ru": "Сравните пользовательские поставщики useFactory, useValue и useExisting в Nest.js. Когда вы бы использовали каждый, и чем они отличаются в разрешении внедрения зависимостей?"
+    },
+    "answer": {
+      "en": "### Custom Provider Types Comparison\n\n`useValue` returns a static value (good for config), `useFactory` executes a function with injected dependencies (async initialization), `useExisting` aliases an existing provider token (reuses instances). Factory is called per request unless isGlobal, others are singletons by default.\n\n```typescript\nconst providers = [\n  { provide: 'CONFIG', useValue: { port: 3000 } },\n  { provide: 'DB', useFactory: (config) => new DB(config), inject: ['CONFIG'] },\n  { provide: 'ALIAS_DB', useExisting: 'DB' }\n];\n```\n\n**Common interview trap:** useExisting doesn't lazy-load—the referenced provider must be registered first, causing initialization order issues.",
+      "ru": "### Сравнение типов пользовательских поставщиков\n\n`useValue` возвращает статическое значение (хорошо для конфига), `useFactory` выполняет функцию с инъецированными зависимостями (асинхронная инициализация), `useExisting` дает псевдоним существующему токену поставщика (переиспользует экземпляры). Factory вызывается при каждом запросе, если не isGlobal, остальные по умолчанию синглтоны.\n\n```typescript\nconst providers = [\n  { provide: 'CONFIG', useValue: { port: 3000 } },\n  { provide: 'DB', useFactory: (config) => new DB(config), inject: ['CONFIG'] },\n  { provide: 'ALIAS_DB', useExisting: 'DB' }\n];\n```\n\n**Типичная ошибка:** useExisting не лениво загружает—ссылаемый поставщик должен быть зарегистрирован первым, вызывая проблемы с порядком инициализации."
+    },
+    "tags": [
+      "custom-providers",
+      "useFactory",
+      "useValue",
+      "useExisting",
+      "dependency-injection",
+      "provider-scope"
+    ]
+  },
+  {
+    "id": "nestjs-q-45",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you test a Nest.js service that uses multiple microservice transports and CQRS with Jest, including mocking transports and event verification?",
+      "ru": "Как бы вы протестировали сервис Nest.js, который использует несколько микросервисных транспортов и CQRS с Jest, включая мокирование транспортов и проверку событий?"
+    },
+    "answer": {
+      "en": "### Testing Microservices & CQRS with Jest\n\nUse `Test.createTestingModule()` to mock ClientProxy and EventBus. Verify command execution through event emissions and mock transport responses. Spy on bus methods to assert event publishing without actual transport calls.\n\n```typescript\nconst module = await Test.createTestingModule({\n  providers: [\n    UserService,\n    { provide: ClientProxy, useValue: { send: jest.fn().mockReturnValue(of({})) } },\n    { provide: EventBus, useValue: { publishAll: jest.fn() } }\n  ]\n}).compile();\n\nconst eventBus = module.get(EventBus);\nawait service.createUser(data);\nexpect(eventBus.publishAll).toHaveBeenCalledWith(expect.any(Array));\n```\n\n**Common interview trap:** Not waiting for async operations in tests causes false positives—use `await` and proper promise handling.",
+      "ru": "### Тестирование микросервисов и CQRS с Jest\n\nИспользуйте `Test.createTestingModule()` для мокирования ClientProxy и EventBus. Проверьте выполнение команд через эмиссию событий и мокируйте ответы транспорта. Шпионьте за методами bus для проверки публикации событий без реальных вызовов транспорта.\n\n```typescript\nconst module = await Test.createTestingModule({\n  providers: [\n    UserService,\n    { provide: ClientProxy, useValue: { send: jest.fn().mockReturnValue(of({})) } },\n    { provide: EventBus, useValue: { publishAll: jest.fn() } }\n  ]\n}).compile();\n\nconst eventBus = module.get(EventBus);\nawait service.createUser(data);\nexpect(eventBus.publishAll).toHaveBeenCalledWith(expect.any(Array));\n```\n\n**Типичная ошибка:** Неожидание асинхронных операций в тестах вызывает ложные срабатывания—используйте `await` и правильную обработку обещаний."
+    },
+    "tags": [
+      "jest",
+      "testing",
+      "mocking",
+      "microservices",
+      "cqrs",
+      "event-bus",
+      "client-proxy"
+    ]
+  },
+  {
+    "id": "nestjs-q-46",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement a microservice architecture in Nest.js using multiple transport layers (TCP, Redis, Kafka)? Explain the trade-offs between them.",
+      "ru": "Как вы реализуете архитектуру микросервисов в Nest.js, используя несколько транспортных слоёв (TCP, Redis, Kafka)? Объясните компромиссы между ними."
+    },
+    "answer": {
+      "en": "### Microservice Transports\n\nEach transport has different performance and reliability characteristics: TCP is fastest but lacks persistence, Redis provides simple pub/sub with some durability, Kafka offers event streaming with consumer groups and guaranteed delivery. Choose based on throughput requirements and failure recovery needs.\n\n```typescript\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.TCP,\n  options: { host: 'localhost', port: 3001 }\n});\n\n// Or Redis\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.REDIS,\n  options: { host: 'localhost', port: 6379 }\n});\n```\n\n**Common interview trap:** Assuming all transports have equal message delivery guarantees—they don't.",
+      "ru": "### Транспорты микросервисов\n\nКаждый транспорт имеет разные характеристики производительности и надёжности: TCP самый быстрый, но не сохраняет сообщения, Redis обеспечивает простой pub/sub с определённой долговечностью, Kafka предлагает потоковую передачу событий с группами потребителей и гарантированной доставкой.\n\n```typescript\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.TCP,\n  options: { host: 'localhost', port: 3001 }\n});\n\n// Или Redis\nconst app = await NestFactory.createMicroservice(AppModule, {\n  transport: Transport.REDIS,\n  options: { host: 'localhost', port: 6379 }\n});\n```\n\n**Типичная ошибка:** Предположение, что все транспорты имеют одинаковые гарантии доставки."
+    },
+    "tags": [
+      "microservices",
+      "tcp-transport",
+      "redis-transport",
+      "kafka-transport",
+      "message-delivery"
+    ]
+  },
+  {
+    "id": "nestjs-q-47",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain CQRS and Event Sourcing patterns in Nest.js. How do you handle command validation, event store persistence, and eventual consistency?",
+      "ru": "Объясните паттерны CQRS и Event Sourcing в Nest.js. Как вы обрабатываете валидацию команд, сохранение событий и итоговую согласованность?"
+    },
+    "answer": {
+      "en": "### CQRS & Event Sourcing\n\nCQRS separates reads (queries) from writes (commands), and Event Sourcing stores state as immutable events rather than snapshots. Commands are validated and produce events; separate read models are eventually consistent. Use Nest's built-in event emitter or EventStore library for event persistence.\n\n```typescript\n@CommandHandler(CreateUserCommand)\nexport class CreateUserHandler {\n  constructor(private eventBus: EventBus) {}\n  \n  async execute(command: CreateUserCommand) {\n    // Validate\n    if (!command.email) throw new BadRequestException();\n    // Emit event\n    this.eventBus.publish(new UserCreatedEvent(command.email));\n  }\n}\n```\n\n**Common interview trap:** Trying to maintain strong consistency with Event Sourcing—it's eventually consistent by design.",
+      "ru": "### CQRS и Event Sourcing\n\nCQRS разделяет чтение (запросы) и запись (команды), а Event Sourcing хранит состояние как неизменяемые события вместо снимков. Команды валидируются и создают события; отдельные модели чтения в конечном счёте согласованы.\n\n```typescript\n@CommandHandler(CreateUserCommand)\nexport class CreateUserHandler {\n  constructor(private eventBus: EventBus) {}\n  \n  async execute(command: CreateUserCommand) {\n    if (!command.email) throw new BadRequestException();\n    this.eventBus.publish(new UserCreatedEvent(command.email));\n  }\n}\n```\n\n**Типичная ошибка:** Попытка поддерживать строгую согласованность с Event Sourcing—это по определению итоговая согласованность."
+    },
+    "tags": [
+      "cqrs-pattern",
+      "event-sourcing",
+      "command-validation",
+      "event-store",
+      "eventual-consistency"
+    ]
+  },
+  {
+    "id": "nestjs-q-48",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are dynamic modules in Nest.js and how would you use them to create reusable, configurable feature modules with async initialization?",
+      "ru": "Что такое динамические модули в Nest.js и как вы их используете для создания переиспользуемых, настраиваемых модулей функций с асинхронной инициализацией?"
+    },
+    "answer": {
+      "en": "### Dynamic Modules\n\nDynamic modules allow parametric module configuration at import time using static methods. They enable async initialization (e.g., database connections) and deferred provider registration. Return a `DynamicModule` object with `module`, `providers`, `exports`, and optional `imports`.\n\n```typescript\n@Module({})\nexport class DatabaseModule {\n  static forRoot(config: DbConfig): DynamicModule {\n    return {\n      module: DatabaseModule,\n      providers: [\n        { provide: 'DB_CONFIG', useValue: config },\n        DatabaseService\n      ],\n      exports: [DatabaseService]\n    };\n  }\n}\n```\n\n**Common interview trap:** Forgetting to return the module itself in the DynamicModule object—it's required for Nest's metadata resolution.",
+      "ru": "### Динамические модули\n\nДинамические модули позволяют параметрическую конфигурацию модуля во время импорта с использованием статических методов. Они включают асинхронную инициализацию и отложенную регистрацию провайдеров. Возвращают объект `DynamicModule` с `module`, `providers`, `exports` и опциональными `imports`.\n\n```typescript\n@Module({})\nexport class DatabaseModule {\n  static forRoot(config: DbConfig): DynamicModule {\n    return {\n      module: DatabaseModule,\n      providers: [\n        { provide: 'DB_CONFIG', useValue: config },\n        DatabaseService\n      ],\n      exports: [DatabaseService]\n    };\n  }\n}\n```\n\n**Типичная ошибка:** Забыть вернуть сам модуль в объекте DynamicModule—это требуется для разрешения метаданных Nest."
+    },
+    "tags": [
+      "dynamic-modules",
+      "module-configuration",
+      "async-initialization",
+      "provider-registration"
+    ]
+  },
+  {
+    "id": "nestjs-q-49",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare useFactory, useValue, and useExisting custom providers in Nest.js. When would you use each and what are performance implications?",
+      "ru": "Сравните пользовательские провайдеры useFactory, useValue и useExisting в Nest.js. Когда вы используете каждый и каковы последствия для производительности?"
+    },
+    "answer": {
+      "en": "### Custom Providers Comparison\n\n`useValue` is fastest (instant assignment), `useExisting` references existing tokens (zero overhead), `useFactory` is slowest (executes function at startup). Use `useValue` for static config, `useExisting` for aliasing, `useFactory` for dynamic initialization or dependency-based creation.\n\n```typescript\n// useValue: O(1)\n{ provide: 'CONFIG', useValue: { timeout: 5000 } }\n\n// useExisting: alias\n{ provide: 'Logger', useExisting: CustomLogger }\n\n// useFactory: O(n) dependencies\n{ provide: 'Cache', useFactory: (config) => new Cache(config.ttl), inject: ['CONFIG'] }\n```\n\n**Common interview trap:** Using useFactory when useValue would suffice—unnecessary overhead for static data.",
+      "ru": "### Сравнение пользовательских провайдеров\n\n`useValue` самый быстрый (мгновенное присваивание), `useExisting` ссылается на существующие токены (нулевые накладные расходы), `useFactory` самый медленный (выполняет функцию при запуске). Используйте `useValue` для статической конфигурации, `useExisting` для создания псевдонимов, `useFactory` для динамической инициализации.\n\n```typescript\n// useValue: O(1)\n{ provide: 'CONFIG', useValue: { timeout: 5000 } }\n\n// useExisting: псевдоним\n{ provide: 'Logger', useExisting: CustomLogger }\n\n// useFactory: O(n) зависимостей\n{ provide: 'Cache', useFactory: (config) => new Cache(config.ttl), inject: ['CONFIG'] }\n```\n\n**Типичная ошибка:** Использование useFactory когда useValue был бы достаточен—ненужные накладные расходы."
+    },
+    "tags": [
+      "custom-providers",
+      "useFactory",
+      "useValue",
+      "useExisting",
+      "dependency-injection",
+      "performance"
+    ]
+  },
+  {
+    "id": "nestjs-q-50",
+    "topicId": "nestjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you structure Jest tests for Nest.js services with mocked repositories and event emitters? Discuss test isolation and async testing best practices.",
+      "ru": "Как вы структурируете Jest тесты для сервисов Nest.js с моками репозиториев и event emitter'ов? Обсудите изоляцию тестов и лучшие практики асинхронного тестирования."
+    },
+    "answer": {
+      "en": "### Jest Testing in Nest.js\n\nUse `Test.createTestingModule()` to build an isolated module with mocked dependencies. Mock repositories with `jest.fn()`, event emitters with `jest.spyOn()`. Always await async operations and use `waitFor()` for eventual consistency. Isolate tests with `beforeEach` to reset mocks.\n\n```typescript\ndescribe('UserService', () => {\n  let service: UserService;\n  let mockRepo = { save: jest.fn() };\n\n  beforeEach(async () => {\n    const module = await Test.createTestingModule({\n      providers: [UserService, { provide: UserRepo, useValue: mockRepo }]\n    }).compile();\n    service = module.get(UserService);\n  });\n\n  it('should create user', async () => {\n    await service.create({ name: 'John' });\n    expect(mockRepo.save).toHaveBeenCalled();\n  });\n});\n```\n\n**Common interview trap:** Forgetting to reset mocks between tests causing cross-test contamination.",
+      "ru": "### Jest тестирование в Nest.js\n\nИспользуйте `Test.createTestingModule()` для создания изолированного модуля с моками зависимостей. Мокируйте репозитории с `jest.fn()`, event emitter'ы с `jest.spyOn()`. Всегда ждите асинхронных операций и используйте `waitFor()` для итоговой согласованности.\n\n```typescript\ndescribe('UserService', () => {\n  let service: UserService;\n  let mockRepo = { save: jest.fn() };\n\n  beforeEach(async () => {\n    const module = await Test.createTestingModule({\n      providers: [UserService, { provide: UserRepo, useValue: mockRepo }]\n    }).compile();\n    service = module.get(UserService);\n  });\n\n  it('should create user', async () => {\n    await service.create({ name: 'John' });\n    expect(mockRepo.save).toHaveBeenCalled();\n  });\n});\n```\n\n**Типичная ошибка:** Забыть сбросить моки между тестами, вызывая загрязнение между тестами."
+    },
+    "tags": [
+      "jest-testing",
+      "test-module",
+      "mocking",
+      "async-testing",
+      "test-isolation",
+      "eventbus"
+    ]
+  }
+]

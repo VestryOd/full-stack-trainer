@@ -1,1 +1,375 @@
-[]
+[
+  {
+    "id": "bundlers-q-1",
+    "topicId": "bundlers",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the main purpose of a bundler like Webpack or Vite, and why do we need them in modern web development?",
+      "ru": "Какова основная цель бандлера, такого как Webpack или Vite, и почему они нужны в современной веб-разработке?"
+    },
+    "answer": {
+      "en": "### Purpose of Bundlers\n\nBundlers combine multiple JavaScript modules and assets into optimized files that browsers can load efficiently. They resolve module dependencies, apply transformations (like transpilation), and enable code splitting to reduce initial load time.\n\n```typescript\n// Without bundler: multiple HTTP requests\n<script src=\"utils.js\"></script>\n<script src=\"app.js\"></script>\n\n// With bundler: single optimized file with all dependencies\n<script src=\"dist/bundle.js\"></script>\n```\n\n**Common interview trap:** Thinking bundlers only concatenate files—they actually resolve dependencies, apply loaders/plugins, and optimize the output.",
+      "ru": "### Назначение бандлеров\n\nБандлеры объединяют несколько модулей JavaScript и ресурсов в оптимизированные файлы, которые браузер может эффективно загружать. Они разрешают зависимости модулей, применяют трансформации и позволяют разделять код для уменьшения времени загрузки.\n\n```typescript\n// Без бандлера: несколько HTTP-запросов\n<script src=\"utils.js\"></script>\n<script src=\"app.js\"></script>\n\n// С бандлером: единый оптимизированный файл\n<script src=\"dist/bundle.js\"></script>\n```\n\n**Типичная ошибка:** Думать, что бандлеры только объединяют файлы—они разрешают зависимости, применяют лоадеры и оптимизируют вывод."
+    },
+    "tags": [
+      "bundler-purpose",
+      "module-resolution",
+      "optimization"
+    ]
+  },
+  {
+    "id": "bundlers-q-2",
+    "topicId": "bundlers",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the concepts of entry, output, loaders, and plugins in Webpack configuration. Provide a simple example.",
+      "ru": "Объясните концепции entry, output, loaders и plugins в конфигурации Webpack с простым примером."
+    },
+    "answer": {
+      "en": "### Webpack Configuration Components\n\n**Entry** is the starting point file, **output** defines where bundles go, **loaders** transform specific file types, and **plugins** perform broader operations on the bundle. Loaders work per-file, plugins work on the whole bundle.\n\n```typescript\nmodule.exports = {\n  entry: './src/index.js',\n  output: { filename: 'bundle.js', path: __dirname + '/dist' },\n  module: {\n    rules: [{ test: /\\.css$/, use: ['style-loader', 'css-loader'] }]\n  },\n  plugins: [new HtmlWebpackPlugin({ template: './index.html' })]\n};\n```\n\n**Common interview trap:** Confusing loaders and plugins—loaders transform files, plugins extend webpack's functionality globally.",
+      "ru": "### Компоненты конфигурации Webpack\n\n**Entry** — точка входа, **output** — где сохраняются бандлы, **loaders** трансформируют файлы конкретных типов, **plugins** выполняют операции над всем бандлом. Лоадеры работают для каждого файла, плагины—для всего бандла.\n\n```typescript\nmodule.exports = {\n  entry: './src/index.js',\n  output: { filename: 'bundle.js', path: __dirname + '/dist' },\n  module: {\n    rules: [{ test: /\\.css$/, use: ['style-loader', 'css-loader'] }]\n  },\n  plugins: [new HtmlWebpackPlugin({ template: './index.html' })]\n};\n```\n\n**Типичная ошибка:** Путать лоадеры и плагины—лоадеры трансформируют файлы, плагины расширяют функциональность webpack."
+    },
+    "tags": [
+      "entry-output",
+      "loaders",
+      "plugins",
+      "webpack-config"
+    ]
+  },
+  {
+    "id": "bundlers-q-3",
+    "topicId": "bundlers",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are the key differences between development and production builds in Webpack/Vite? How do you configure them?",
+      "ru": "Какие ключевые различия между development и production сборками в Webpack/Vite? Как их настраивают?"
+    },
+    "answer": {
+      "en": "### Development vs Production Builds\n\nDevelopment builds include source maps for debugging and skip minification for faster builds. Production builds minify code, remove dead code, and optimize bundle size. Use `mode` option or environment variables to switch between them.\n\n```typescript\n// webpack.config.js\nmodule.exports = (env) => ({\n  mode: env.production ? 'production' : 'development',\n  devtool: env.production ? false : 'source-map',\n  optimization: {\n    minimize: env.production ? true : false\n  }\n});\n```\n\n**Common interview trap:** Forgetting that `mode: 'production'` automatically enables tree-shaking and minification without additional configuration.",
+      "ru": "### Development vs Production сборки\n\nDevelopment сборки включают source maps для отладки и пропускают минификацию для ускорения. Production сборки минифицируют код, удаляют мертвый код и оптимизируют размер. Используйте опцию `mode` или переменные окружения для переключения.\n\n```typescript\n// webpack.config.js\nmodule.exports = (env) => ({\n  mode: env.production ? 'production' : 'development',\n  devtool: env.production ? false : 'source-map',\n  optimization: {\n    minimize: env.production ? true : false\n  }\n});\n```\n\n**Типичная ошибка:** Забыть, что `mode: 'production'` автоматически включает tree-shaking и минификацию без дополнительной настройки."
+    },
+    "tags": [
+      "dev-vs-prod",
+      "optimization",
+      "minification",
+      "source-maps"
+    ]
+  },
+  {
+    "id": "bundlers-q-4",
+    "topicId": "bundlers",
+    "difficulty": "junior",
+    "question": {
+      "en": "How does Vite differ from Webpack in terms of development experience and build approach?",
+      "ru": "Чем Vite отличается от Webpack с точки зрения опыта разработки и подхода к сборке?"
+    },
+    "answer": {
+      "en": "### Vite vs Webpack\n\nVite uses native ES modules in development for instant server startup and Hot Module Replacement (HMR), while Webpack bundles everything upfront. For production, Vite uses Rollup for optimized bundling. Vite is faster for development but less flexible.\n\n```typescript\n// Vite: dev server uses ES modules\n<script type=\"module\" src=\"/src/main.js\"></script>\n\n// Webpack: always bundles first, then serves\n// Both use Rollup/esbuild for production optimization\n```\n\n**Common interview trap:** Assuming Vite doesn't bundle for production—it does, using Rollup for more optimized output than Webpack.",
+      "ru": "### Vite vs Webpack\n\nVite использует нативные ES модули в разработке для мгновенного запуска сервера и Hot Module Replacement, а Webpack всё бандлит заранее. Для production Vite использует Rollup. Vite быстрее в разработке, но менее гибкий.\n\n```typescript\n// Vite: dev сервер использует ES modules\n<script type=\"module\" src=\"/src/main.js\"></script>\n\n// Webpack: всегда бандлит сначала\n// Оба используют Rollup для оптимизации production\n```\n\n**Типичная ошибка:** Думать, что Vite не бандлит для production—он использует Rollup для более оптимизированного вывода, чем Webpack."
+    },
+    "tags": [
+      "vite-vs-webpack",
+      "es-modules",
+      "hmr",
+      "build-performance"
+    ]
+  },
+  {
+    "id": "bundlers-q-5",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between static and dynamic imports in the context of code splitting. When would you use dynamic imports and what does Webpack's SplitChunksPlugin do?",
+      "ru": "Объясните разницу между статическим и динамическим импортом в контексте разделения кода. Когда вы используете динамические импорты и что делает SplitChunksPlugin в Webpack?"
+    },
+    "answer": {
+      "en": "### Static vs Dynamic Imports\n\nStatic imports are analyzed at build time and included in the main bundle, while dynamic imports create separate chunks loaded on demand. SplitChunksPlugin automatically extracts shared dependencies into separate bundles to avoid duplication.\n\n```typescript\n// Static import - bundled immediately\nimport { utility } from './utils';\n\n// Dynamic import - creates separate chunk\nconst module = await import('./heavy-feature');\n\n// SplitChunksPlugin config\nsplitChunks: {\n  chunks: 'all',\n  minSize: 20000,\n  cacheGroups: {\n    vendors: { test: /[\\\\/]node_modules[\\\\/]/ }\n  }\n}\n```\n\n**Common interview trap:** Thinking all imports should be dynamic for smaller initial bundles—this hurts performance by creating too many requests.",
+      "ru": "### Статические и динамические импорты\n\nСтатические импорты анализируются во время сборки и включаются в основной пакет, а динамические импорты создают отдельные части, загружаемые по требованию. SplitChunksPlugin автоматически извлекает общие зависимости в отдельные пакеты, чтобы избежать дублирования.\n\n```typescript\n// Статический импорт - сразу в бандл\nimport { utility } from './utils';\n\n// Динамический импорт - отдельный чанк\nconst module = await import('./heavy-feature');\n\n// Конфиг SplitChunksPlugin\nsplitChunks: {\n  chunks: 'all',\n  minSize: 20000,\n  cacheGroups: {\n    vendors: { test: /[\\\\/]node_modules[\\\\/]/ }\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что все импорты должны быть динамическими для меньшего начального бандла—это ухудшает производительность, создавая слишком много запросов."
+    },
+    "tags": [
+      "code-splitting",
+      "dynamic-import",
+      "webpack"
+    ]
+  },
+  {
+    "id": "bundlers-q-6",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "What conditions must be met for tree shaking to work properly? Why might unused exports still be included in the final bundle?",
+      "ru": "Какие условия необходимы для правильной работы tree shaking? Почему неиспользуемый код все еще может быть включен в итоговый пакет?"
+    },
+    "answer": {
+      "en": "### Tree Shaking Requirements\n\nTree shaking requires ES6 module syntax (import/export) and production mode to enable dead code elimination. Side effects, CommonJS modules, and complex control flow prevent bundlers from safely removing code.\n\n```typescript\n// ✓ Treeshakeable - pure ES6\nexport const used = () => {};\nexport const unused = () => {};\nimport { used } from './module';\n\n// ✗ Not treeshakeable - side effects\nexport const config = (() => {\n  console.log('side effect'); // bundler won't remove this\n  return {};\n})();\n```\n\n**Common interview trap:** Assuming all unused code is removed—side effects, indirect dependencies, and unclear control flow can prevent dead code elimination."
+    },
+    "answer_ru": "### Требования для tree shaking\n\nTree shaking требует синтаксиса ES6 модулей (import/export) и production mode для включения удаления мертвого кода. Побочные эффекты, CommonJS модули и сложный control flow предотвращают безопасное удаление кода.\n\n```typescript\n// ✓ Treeshakeable - чистый ES6\nexport const used = () => {};\nexport const unused = () => {};\nimport { used } from './module';\n\n// ✗ Not treeshakeable - побочные эффекты\nexport const config = (() => {\n  console.log('side effect'); // bundler не удалит\n  return {};\n})();\n```\n\n**Типичная ошибка:** Предположение, что весь неиспользуемый код удаляется—побочные эффекты, косвенные зависимости и неясный control flow могут помешать удалению мертвого кода.",
+    "tags": [
+      "tree-shaking",
+      "dead-code-elimination",
+      "es6-modules"
+    ]
+  },
+  {
+    "id": "bundlers-q-7",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the purpose of source maps and explain the difference between eval, cheap-source-map, and source-map in Webpack. When would you use each?",
+      "ru": "Опишите назначение source maps и объясните разницу между eval, cheap-source-map и source-map в Webpack. Когда использовать каждый из них?"
+    },
+    "answer": {
+      "en": "### Source Maps Explained\n\nSource maps map minified code back to original sources for debugging. `eval` is fastest but least accurate, `cheap-source-map` is fast with line-only info, and `source-map` is slowest but most accurate. Use eval in dev, cheap-source-map for balance, source-map for production.\n\n```typescript\n// Webpack config\ndevtool: 'eval' // development - fastest\ndevtool: 'cheap-source-map' // balance speed and detail\ndevtool: 'source-map' // production - accurate debugging\n\n// In code\nconsole.log('line 1'); // eval shows as eval code\nconsole.log('line 2'); // cheap-source-map shows line only\n```\n\n**Common interview trap:** Using source-map in development (too slow) or eval in production (security risk and poor debugging)."
+    },
+    "answer_ru": "### Source Maps объяснение\n\nSource maps связывают минифицированный код с исходными источниками для отладки. `eval` самый быстрый, но наименее точный; `cheap-source-map` быстрый с информацией только о строках; `source-map` самый точный. Используйте eval в dev, cheap-source-map для баланса, source-map в production.\n\n```typescript\n// Webpack конфиг\ndevtool: 'eval' // development - самый быстрый\ndevtool: 'cheap-source-map' // баланс скорости и деталей\ndevtool: 'source-map' // production - точная отладка\n\n// В коде\nconsole.log('line 1'); // eval показывает как eval код\nconsole.log('line 2'); // cheap-source-map только линию\n```\n\n**Типичная ошибка:** Использование source-map в разработке (слишком медленно) или eval в production (риск безопасности и плохая отладка).",
+    "tags": [
+      "source-maps",
+      "debugging",
+      "webpack-devtool"
+    ]
+  },
+  {
+    "id": "bundlers-q-8",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does Hot Module Replacement (HMR) work in Webpack? What are the limitations and when does a full page reload occur despite HMR being enabled?",
+      "ru": "Как работает Hot Module Replacement (HMR) в Webpack? Каковы ограничения и когда происходит полная перезагрузка страницы, несмотря на включенный HMR?"
+    },
+    "answer": {
+      "en": "### Hot Module Replacement\n\nHMR enables live module updates without full reload by keeping app state. However, HMR fails for styles in some loaders, stateful components without boundaries, and changes requiring re-execution of module-level code. Full reloads occur when HMR can't patch changes safely.\n\n```typescript\n// HMR setup\nif (module.hot) {\n  module.hot.accept('./feature', () => {\n    const newFeature = require('./feature');\n    app.update(newFeature); // custom update logic\n  });\n}\n\n// ✗ This requires full reload - top-level side effects\nconst globalState = initializeState();\n```\n\n**Common interview trap:** Thinking HMR always works—CSS-in-JS, complex state management, and some build configurations require full reloads."
+    },
+    "answer_ru": "### Hot Module Replacement\n\nHMR позволяет обновлять модули в реальном времени без полной перезагрузки, сохраняя состояние приложения. Однако HMR может не работать для стилей в некоторых loaders, stateful компонентов без границ и изменений, требующих переисполнения кода на уровне модуля. Полные перезагрузки происходят, когда HMR не может безопасно применить изменения.\n\n```typescript\n// HMR настройка\nif (module.hot) {\n  module.hot.accept('./feature', () => {\n    const newFeature = require('./feature');\n    app.update(newFeature); // пользовательская логика обновления\n  });\n}\n\n// ✗ Это требует полной перезагрузки - побочные эффекты на уровне модуля\nconst globalState = initializeState();\n```\n\n**Типичная ошибка:** Думать, что HMR всегда работает—CSS-in-JS, сложное управление состоянием и некоторые конфиги требуют полной перезагрузки.",
+    "tags": [
+      "hmr",
+      "hot-module-replacement",
+      "webpack-dev-server"
+    ]
+  },
+  {
+    "id": "bundlers-q-9",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare Vite and Webpack in terms of dev server speed, build output, and bundling approach. What are the trade-offs and when would you choose one over the other?",
+      "ru": "Сравните Vite и Webpack с точки зрения скорости dev сервера, output сборки и подхода к бандлингу. Каковы компромиссы и когда выбрать один вместо другого?"
+    },
+    "answer": {
+      "en": "### Vite vs Webpack Trade-offs\n\nVite uses native ES modules for instant dev server startup and HMR, but requires modern browser support and has less mature plugin ecosystem. Webpack handles complex configurations, legacy browsers, and has extensive middleware. Choose Vite for modern SPAs, Webpack for legacy/complex projects.\n\n```typescript\n// Vite config - minimal\nimport { defineConfig } from 'vite';\nexport default defineConfig({\n  plugins: [vue()]\n});\n\n// Webpack - more verbose\nmodule.exports = {\n  entry: './src/index.js',\n  module: { rules: [...] },\n  plugins: [...]\n};\n```\n\n**Common interview trap:** Assuming Vite is always faster—its advantages fade in large builds, and Webpack is better for complex splitting strategies and older browser targets."
+    },
+    "answer_ru": "### Vite vs Webpack компромиссы\n\nVite использует нативные ES модули для мгновенного запуска dev сервера и HMR, но требует поддержки современных браузеров и имеет менее зрелую экосистему плагинов. Webpack обрабатывает сложные конфиги, legacy браузеры и имеет обширный middleware. Выбирайте Vite для современных SPA, Webpack для legacy/сложных проектов.\n\n```typescript\n// Vite конфиг - минимальный\nimport { defineConfig } from 'vite';\nexport default defineConfig({\n  plugins: [vue()]\n});\n\n// Webpack - более многословный\nmodule.exports = {\n  entry: './src/index.js',\n  module: { rules: [...] },\n  plugins: [...]\n};\n```\n\n**Типичная ошибка:** Предположение, что Vite всегда быстрее—его преимущества уменьшаются в больших сборках, а Webpack лучше для сложных стратегий разделения и старых браузеров.",
+    "tags": [
+      "vite",
+      "webpack-comparison",
+      "bundler-trade-offs"
+    ]
+  },
+  {
+    "id": "bundlers-q-10",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how dynamic imports enable code splitting and what role SplitChunksPlugin plays in optimizing the output. How would you configure it to create a separate chunk for vendor dependencies?",
+      "ru": "Объясните, как динамические импорты включают разделение кода и какую роль играет SplitChunksPlugin в оптимизации вывода. Как вы бы настроили его для создания отдельного чанка для зависимостей vendor?"
+    },
+    "answer": {
+      "en": "### Dynamic Imports and Code Splitting\n\nDynamic imports using `import()` create separate chunks that load on-demand, reducing initial bundle size. SplitChunksPlugin automatically extracts common dependencies into shared chunks to avoid duplication.\n\n```typescript\n// webpack.config.js\nmodule.exports = {\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      cacheGroups: {\n        vendor: {\n          test: /[\\\\/]node_modules[\\\\/]/,\n          name: 'vendors',\n          priority: 10,\n        },\n      },\n    },\n  },\n};\n\n// Usage\nconst module = await import('./heavy-module');\n```\n\n**Common interview trap:** Forgetting that `chunks: 'all'` must be set for SplitChunksPlugin to work with both sync and async imports.",
+      "ru": "### Динамические импорты и разделение кода\n\nДинамические импорты с использованием `import()` создают отдельные чанки, которые загружаются по требованию, уменьшая размер начального бандла. SplitChunksPlugin автоматически извлекает общие зависимости в общие чанки, чтобы избежать дублирования.\n\n```typescript\n// webpack.config.js\nmodule.exports = {\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      cacheGroups: {\n        vendor: {\n          test: /[\\\\/]node_modules[\\\\/]/,\n          name: 'vendors',\n          priority: 10,\n        },\n      },\n    },\n  },\n};\n\n// Использование\nconst module = await import('./heavy-module');\n```\n\n**Типичная ошибка:** Забыть установить `chunks: 'all'`, чтобы SplitChunksPlugin работал с синхронными и асинхронными импортами."
+    },
+    "tags": [
+      "code-splitting",
+      "dynamic-imports",
+      "SplitChunksPlugin",
+      "webpack-optimization"
+    ]
+  },
+  {
+    "id": "bundlers-q-11",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the requirements for effective tree shaking, and why might unused exports not be eliminated even when tree shaking is enabled? Provide an example of code that would and wouldn't be tree-shaken.",
+      "ru": "Каковы требования для эффективного tree shaking и почему неиспользуемые экспорты могут не быть удалены даже при включенном tree shaking? Приведите пример кода, который будет и не будет удален при tree shaking."
+    },
+    "answer": {
+      "en": "### Tree Shaking Requirements\n\nTree shaking requires ES6 modules and side-effect-free code marked with `sideEffects: false` in package.json. Code with side effects (global mutations, function calls) won't be removed even if unused, because bundlers can't safely determine if executing those side effects is necessary.\n\n```typescript\n// Will be tree-shaken (pure function, not used)\nexport const unusedHelper = () => 42;\n\n// Won't be tree-shaken (has side effects)\nexport const initGlobal = () => {\n  window.config = { loaded: true };\n};\n\n// package.json\n{ \"sideEffects\": false }\n```\n\n**Common interview trap:** Thinking that marking `sideEffects: false` automatically makes code tree-shakeable—it just allows bundlers to analyze and remove unused exports.",
+      "ru": "### Требования для Tree Shaking\n\nTree shaking требует модулей ES6 и кода без побочных эффектов, отмеченного с помощью `sideEffects: false` в package.json. Код с побочными эффектами (глобальные мутации, вызовы функций) не будет удален, даже если не используется, потому что bundlers не могут безопасно определить, необходимо ли выполнять эти побочные эффекты.\n\n```typescript\n// Будет удален при tree shaking (чистая функция, не используется)\nexport const unusedHelper = () => 42;\n\n// Не будет удален при tree shaking (имеет побочные эффекты)\nexport const initGlobal = () => {\n  window.config = { loaded: true };\n};\n\n// package.json\n{ \"sideEffects\": false }\n```\n\n**Типичная ошибка:** Думать, что отметка `sideEffects: false` автоматически делает код пригодным для tree shaking—она просто позволяет bundlers анализировать и удалять неиспользуемые экспорты."
+    },
+    "tags": [
+      "tree-shaking",
+      "ES6-modules",
+      "side-effects",
+      "dead-code-elimination"
+    ]
+  },
+  {
+    "id": "bundlers-q-12",
+    "topicId": "bundlers",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare Webpack and Vite in terms of development experience (HMR, startup time) and production build characteristics. When would you choose one over the other, and what trade-offs exist?",
+      "ru": "Сравните Webpack и Vite с точки зрения опыта разработки (HMR, время запуска) и характеристик производственной сборки. Когда вы бы выбрали один вместо другого и какие компромиссы существуют?"
+    },
+    "answer": {
+      "en": "### Webpack vs Vite Trade-offs\n\nVite provides instant HMR and fast dev startup using native ES modules, while Webpack bundles everything upfront (slower but more predictable). Vite's production build relies on Rollup and is generally smaller, but Webpack offers more mature plugin ecosystem and finer control over chunking. Choose Vite for rapid iteration, Webpack for complex legacy projects or custom optimization needs.\n\n```typescript\n// vite.config.ts - Fast HMR\nexport default {\n  server: { hmr: true },\n};\n\n// webpack.config.js - Production optimized\nmodule.exports = {\n  mode: 'production',\n  optimization: { minimize: true },\n};\n```\n\n**Common interview trap:** Assuming Vite is always faster—it excels in dev but production builds are similar; plugin maturity and customization favor Webpack for enterprise projects.",
+      "ru": "### Сравнение Webpack и Vite\n\nVite обеспечивает мгновенное HMR и быстрый запуск разработки с использованием встроенных модулей ES, в то время как Webpack объединяет все заранее (медленнее, но более предсказуемо). Производственная сборка Vite основана на Rollup и обычно меньше, но Webpack предлагает более зрелую экосистему плагинов и более точный контроль над разделением на чанки. Выбирайте Vite для быстрой итерации, Webpack для сложных унаследованных проектов или пользовательских потребностей оптимизации.\n\n```typescript\n// vite.config.ts - Быстрое HMR\nexport default {\n  server: { hmr: true },\n};\n\n// webpack.config.js - Оптимизация для production\nmodule.exports = {\n  mode: 'production',\n  optimization: { minimize: true },\n};\n```\n\n**Типичная ошибка:** Предположить, что Vite всегда быстрее—она превосходна в разработке, но производственные сборки похожи; зрелость плагинов и настраиваемость отдают предпочтение Webpack для корпоративных проектов."
+    },
+    "tags": [
+      "vite",
+      "webpack",
+      "HMR",
+      "dev-server",
+      "bundler-comparison"
+    ]
+  },
+  {
+    "id": "bundlers-q-13",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how Webpack builds its dependency graph and how the compilation lifecycle works. What happens between entry point discovery and chunk generation?",
+      "ru": "Объясните, как Webpack строит граф зависимостей и как работает жизненный цикл компиляции. Что происходит между обнаружением точки входа и генерацией чанков?"
+    },
+    "answer": {
+      "en": "### Webpack Dependency Graph & Compilation Lifecycle\n\nWebpack starts from entry points, parses each module, and recursively resolves imports to build a directed acyclic graph (DAG). The compilation lifecycle has phases: entry resolution → module parsing → dependency collection → optimization → chunk generation → asset emission. Loaders transform source code during parsing, plugins hook into compiler events.\n\n```typescript\nconst compiler = webpack(config);\ncompiler.hooks.compilation.tap('Plugin', (compilation) => {\n  compilation.hooks.optimizeChunks.tap('Plugin', (chunks) => {\n    chunks.forEach(chunk => {\n      console.log(chunk.getModules()); // Access dependency graph\n    });\n  });\n});\n```\n\n**Common interview trap:** Confusing the dependency graph construction with optimization phases—they're distinct stages.",
+      "ru": "### Граф зависимостей Webpack и жизненный цикл\n\nWebpack начинает с точек входа, парсит каждый модуль и рекурсивно разрешает импорты для построения направленного ациклического графа (DAG). Жизненный цикл включает фазы: разрешение входа → парсинг модулей → сбор зависимостей → оптимизация → генерация чанков → эмиссия ассетов. Лоадеры трансформируют исходный код при парсинге, плагины подключаются к событиям компилятора.\n\n```typescript\nconst compiler = webpack(config);\ncompiler.hooks.compilation.tap('Plugin', (compilation) => {\n  compilation.hooks.optimizeChunks.tap('Plugin', (chunks) => {\n    chunks.forEach(chunk => {\n      console.log(chunk.getModules()); // Доступ к графу зависимостей\n    });\n  });\n});\n```\n\n**Типичная ошибка:** Смешивание построения графа зависимостей с фазами оптимизации—это разные стадии."
+    },
+    "tags": [
+      "webpack-internals",
+      "dependency-graph",
+      "compilation-lifecycle"
+    ]
+  },
+  {
+    "id": "bundlers-q-14",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you create a custom Webpack loader that transforms specific file types? Walk through the loader API, handling async operations, and passing data to the next loader.",
+      "ru": "Как бы вы создали пользовательский Webpack лоадер для трансформации специфических типов файлов? Пройдитесь по API лоадера, обработке асинхронных операций и передаче данных следующему лоадеру."
+    },
+    "answer": {
+      "en": "### Custom Webpack Loader Implementation\n\nA loader is a Node.js module exporting a function that receives source code as input and returns transformed code. Use `this.callback()` for async operations or `this.async()` to get a callback. Loaders are chained—each output becomes the next loader's input. Access loader options via `this.query` or `loader-utils`.\n\n```typescript\nmodule.exports = function(source) {\n  const callback = this.async();\n  const options = this.query;\n  \n  someAsyncTransform(source, options).then(result => {\n    callback(null, result);\n  }).catch(err => callback(err));\n};\n\nmodule.exports.raw = true; // Handle binary files\n```\n\n**Common interview trap:** Forgetting that loaders are synchronous by default—you must explicitly call `this.async()` for async operations.",
+      "ru": "### Реализация пользовательского Webpack лоадера\n\nЛоадер—это модуль Node.js, экспортирующий функцию, которая получает исходный код на входе и возвращает трансформированный код. Используйте `this.callback()` для асинхронных операций или `this.async()` для получения колбэка. Лоадеры связаны в цепь—выход одного становится входом следующего. Получите опции лоадера через `this.query` или `loader-utils`.\n\n```typescript\nmodule.exports = function(source) {\n  const callback = this.async();\n  const options = this.query;\n  \n  someAsyncTransform(source, options).then(result => {\n    callback(null, result);\n  }).catch(err => callback(err));\n};\n\nmodule.exports.raw = true; // Обработка бинарных файлов\n```\n\n**Типичная ошибка:** Забывание того, что лоадеры синхронны по умолчанию—нужно явно вызвать `this.async()` для асинхронных операций."
+    },
+    "tags": [
+      "webpack-loaders",
+      "loader-api",
+      "async-operations"
+    ]
+  },
+  {
+    "id": "bundlers-q-15",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is Webpack Module Federation and how would you use it to share code between micro-frontends? Explain the difference between host and remote applications.",
+      "ru": "Что такое Webpack Module Federation и как бы вы использовали её для совместного использования кода между микрофронтендами? Объясните разницу между хостом и удалённым приложением."
+    },
+    "answer": {
+      "en": "### Webpack Module Federation\n\nModule Federation enables multiple independent builds to work together as a single application. A host app dynamically loads modules from remote apps at runtime. The host declares dependencies it needs, remotes expose shared modules. Shared dependencies are deduplicated at runtime—if both need the same library, only one instance loads.\n\n```typescript\n// Host webpack.config.js\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'host',\n      remotes: { remote: 'remote@http://localhost:3001' },\n      shared: ['react']\n    })\n  ]\n};\n\n// Remote webpack.config.js\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'remote',\n      exposes: { './Button': './src/Button' },\n      shared: ['react']\n    })\n  ]\n};\n```\n\n**Common interview trap:** Assuming all dependencies are automatically shared—you must explicitly declare what to share to avoid duplication and version conflicts.",
+      "ru": "### Webpack Module Federation\n\nModule Federation позволяет нескольким независимым сборкам работать вместе как единое приложение. Хост-приложение динамически загружает модули из удалённых приложений во время выполнения. Хост объявляет нужные ему зависимости, удалённые приложения экспортируют модули. Общие зависимости дедуплицируются во время выполнения—если обе нужны одной библиотеке, загружается только один экземпляр.\n\n```typescript\n// Host webpack.config.js\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'host',\n      remotes: { remote: 'remote@http://localhost:3001' },\n      shared: ['react']\n    })\n  ]\n};\n\n// Remote webpack.config.js\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'remote',\n      exposes: { './Button': './src/Button' },\n      shared: ['react']\n    })\n  ]\n};\n```\n\n**Типичная ошибка:** Предположение, что все зависимости автоматически общие—нужно явно объявить, что делиться, чтобы избежать дублирования и конфликтов версий."
+    },
+    "tags": [
+      "module-federation",
+      "micro-frontends",
+      "dependency-sharing"
+    ]
+  },
+  {
+    "id": "bundlers-q-16",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you analyze and optimize Webpack bundle size? What tools would you use and what are the key metrics to watch? Provide a concrete example of identifying and fixing a problem.",
+      "ru": "Как вы анализируете и оптимизируете размер Webpack бандла? Какие инструменты вы бы использовали и какие ключевые метрики нужно отслеживать? Приведите конкретный пример определения и исправления проблемы."
+    },
+    "answer": {
+      "en": "### Bundle Analysis & Optimization\n\nUse `webpack-bundle-analyzer` to visualize bundle composition, identifying large dependencies and duplicates. Key metrics: gzip size, chunk count, and unused code. `source-map-explorer` shows what contributes to each line. Tree-shaking removes unused exports if using ES modules. Code-splitting with dynamic imports defers loading of non-critical chunks.\n\n```typescript\n// webpack.config.js\nconst BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;\n\nmodule.exports = {\n  entry: './src/index.js',\n  optimization: {\n    splitChunks: { chunks: 'all' },\n    usedExports: true // Enable tree-shaking\n  },\n  plugins: [new BundleAnalyzerPlugin()]\n};\n\n// app.js\nconst HeavyComponent = lazy(() => import('./HeavyComponent')); // Code-split\n```\n\n**Common interview trap:** Assuming all unused code is tree-shaken—side effects in `package.json` prevent removal; also dynamic imports must be statically analyzable.",
+      "ru": "### Анализ и оптимизация размера бандла\n\nИспользуйте `webpack-bundle-analyzer` для визуализации состава бандла и определения крупных зависимостей и дубликатов. Ключевые метрики: gzip размер, количество чанков, неиспользуемый код. `source-map-explorer` показывает, что вносит вклад в каждую строку. Tree-shaking удаляет неиспользуемые экспорты при использовании ES модулей. Code-splitting с динамическими импортами откладывает загрузку некритичных чанков.\n\n```typescript\n// webpack.config.js\nconst BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;\n\nmodule.exports = {\n  entry: './src/index.js',\n  optimization: {\n    splitChunks: { chunks: 'all' },\n    usedExports: true // Включить tree-shaking\n  },\n  plugins: [new BundleAnalyzerPlugin()]\n};\n\n// app.js\nconst HeavyComponent = lazy(() => import('./HeavyComponent')); // Code-split\n```\n\n**Типичная ошибка:** Предположение, что весь неиспользуемый код удаляется—побочные эффекты в `package.json` препятствуют удалению; также динамические импорты должны быть статически анализируемы."
+    },
+    "tags": [
+      "bundle-analysis",
+      "build-optimization",
+      "tree-shaking",
+      "code-splitting"
+    ]
+  },
+  {
+    "id": "bundlers-q-17",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare Vite's architecture with Webpack. How does Vite leverage esbuild and Rollup? What are the performance implications of Vite's approach during development and production builds?",
+      "ru": "Сравните архитектуру Vite с Webpack. Как Vite использует esbuild и Rollup? Какие последствия для производительности имеет подход Vite при разработке и production сборке?"
+    },
+    "answer": {
+      "en": "### Vite vs Webpack Architecture\n\nVite uses esbuild for pre-bundling dependencies (10-100x faster than Webpack) and serves unbundled ES modules during dev, avoiding full rebuilds. In production, Rollup handles bundling for optimized output. Webpack bundles everything upfront, causing slower startup on large projects. Vite's approach trades initial bundle size complexity for dev speed via HTTP/2 multiplexing and native ES module support.\n\n```typescript\n// vite.config.js\nimport { defineConfig } from 'vite';\n\nexport default defineConfig({\n  build: {\n    rollupOptions: {\n      output: {\n        manualChunks: id => {\n          if (id.includes('node_modules')) return 'vendor';\n        }\n      }\n    }\n  },\n  optimizeDeps: { include: ['react'] } // esbuild pre-bundle\n});\n```\n\n**Common interview trap:** Thinking Vite doesn't need bundling in production—it does via Rollup, but dev mode is unbundled for speed.",
+      "ru": "### Архитектура Vite vs Webpack\n\nVite использует esbuild для предварительной группировки зависимостей (в 10-100 раз быстрее, чем Webpack) и обслуживает развязанные ES модули при разработке, избегая полной пересборки. В production Rollup обрабатывает группировку для оптимизированного вывода. Webpack групп��рует всё сразу, вызывая медленный старт на больших проектах. Подход Vite обменивает сложность начального размера бандла на скорость разработки через HTTP/2 мультиплексирование и встроенную поддержку ES модулей.\n\n```typescript\n// vite.config.js\nimport { defineConfig } from 'vite';\n\nexport default defineConfig({\n  build: {\n    rollupOptions: {\n      output: {\n        manualChunks: id => {\n          if (id.includes('node_modules')) return 'vendor';\n        }\n      }\n    }\n  },\n  optimizeDeps: { include: ['react'] } // esbuild предварительная группировка\n});\n```\n\n**Типичная ошибка:** Думать, что Vite не требует группировки в production—требует через Rollup, но режим разработки развязан для скорости."
+    },
+    "tags": [
+      "vite-internals",
+      "esbuild",
+      "rollup",
+      "dev-performance",
+      "architecture-comparison"
+    ]
+  },
+  {
+    "id": "bundlers-q-18",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how Webpack constructs and traverses the dependency graph during compilation. What happens if you have circular dependencies, and how does Webpack handle them?",
+      "ru": "Объясните, как Webpack строит и обходит граф зависимостей во время компиляции. Что происходит при циклических зависимостях и как их обрабатывает Webpack?"
+    },
+    "answer": {
+      "en": "### Dependency Graph & Circular Dependencies\n\nWebpack starts from entry points and recursively resolves imports using loaders to build an acyclic dependency graph. Circular dependencies are allowed at runtime—Webpack detects them during traversal and breaks cycles by partially evaluating modules, but this can cause undefined exports if not handled carefully.\n\n```typescript\n// Module A imports B, B imports A\n// a.js\nexport const valueA = 'A';\nimport { valueB } from './b';\n\n// b.js\nexport const valueB = 'B';\nimport { valueA } from './a'; // Circular!\n\n// Webpack handles this, but valueA may be undefined in b.js initially\n```\n\n**Common interview trap:** Thinking Webpack errors on circular deps—it doesn't, but you must understand the evaluation order implications.",
+      "ru": "### Граф зависимостей и циклические зависимости\n\nWebpack начинает с точек входа и рекурсивно разрешает импорты через загрузчики, строя ациклический граф зависимостей. Циклические зависимости допускаются на этапе выполнения—Webpack обнаруживает их во время обхода и разрывает циклы, частично вычисляя модули, но это может привести к неопределённым экспортам.\n\n```typescript\n// Module A импортирует B, B импортирует A\n// a.js\nexport const valueA = 'A';\nimport { valueB } from './b';\n\n// b.js\nexport const valueB = 'B';\nimport { valueA } from './a'; // Циклическая зависимость!\n\n// Webpack обрабатывает это, но valueA может быть undefined в b.js\n```\n\n**Типичная ошибка:** Думать, что Webpack выдаёт ошибку на циклических зависимостях—он их обрабатывает, но нужно понимать последовательность вычислений."
+    },
+    "tags": [
+      "webpack-internals",
+      "dependency-graph",
+      "circular-dependencies",
+      "module-resolution"
+    ]
+  },
+  {
+    "id": "bundlers-q-19",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a custom Webpack loader that transforms markdown files into React components. What are the key lifecycle methods/hooks you'd implement, and how would you handle caching for performance?",
+      "ru": "Разработайте пользовательский загрузчик Webpack, который преобразует markdown-файлы в React-компоненты. Какие ключевые методы жизненного цикла вы реализуете и как обработаете кеширование для производительности?"
+    },
+    "answer": {
+      "en": "### Custom Markdown Loader with Caching\n\nImplement a loader that parses markdown, converts it to JSX, and uses Webpack's caching API via `this.cacheable()` to avoid re-processing unchanged files. Mark the loader as stateless to enable persistent caching across builds.\n\n```typescript\nmodule.exports = function(source) {\n  this.cacheable(); // Enable caching\n  const parsed = markdownToJsx(source);\n  return `export default ${JSON.stringify(parsed)}`;\n};\n\nmodule.exports.raw = true; // Accept Buffer input\nmodule.exports.pitch = function(remaining) {\n  // Optional: early return before main execution\n};\n```\n\n**Common interview trap:** Forgetting `this.cacheable()` means Webpack reprocesses files unnecessarily, killing build performance. Also, ignoring loader context methods like `this.addDependency()` for fine-grained invalidation.",
+      "ru": "### Пользовательский загрузчик Markdown с кешированием\n\nРеализуйте загрузчик, который парсит markdown, преобразует его в JSX и использует API кеширования Webpack через `this.cacheable()` для избежания переработки неизменённых файлов. Отметьте загрузчик как stateless для включения постоянного кеша между сборками.\n\n```typescript\nmodule.exports = function(source) {\n  this.cacheable(); // Включить кеширование\n  const parsed = markdownToJsx(source);\n  return `export default ${JSON.stringify(parsed)}`;\n};\n\nmodule.exports.raw = true; // Принимать Buffer\nmodule.exports.pitch = function(remaining) {\n  // Опционально: ранний возврат перед основным выполнением\n};\n```\n\n**Типичная ошибка:** Забыть `this.cacheable()` означает, что Webpack переработает файлы без необходимости, снизив производительность сборки. Также игнорирование методов контекста загрузчика вроде `this.addDependency()` для точной инвалидации."
+    },
+    "tags": [
+      "webpack-loaders",
+      "caching",
+      "performance-optimization",
+      "custom-loaders"
+    ]
+  },
+  {
+    "id": "bundlers-q-20",
+    "topicId": "bundlers",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare Webpack Module Federation with traditional code splitting. When would you use Module Federation for micro-frontends, and what are the runtime overhead and version mismatch risks?",
+      "ru": "Сравните Webpack Module Federation с традиционным разделением кода. Когда вы используете Module Federation для микрофронтендов и каковы риски runtime-оверхеда и несовместимости версий?"
+    },
+    "answer": {
+      "en": "### Module Federation vs Code Splitting\n\nModule Federation enables true federated architecture where separate builds share modules at runtime, unlike code splitting which bundles everything upfront. Use it for independent micro-frontends needing shared libraries—but watch for version conflicts: if Host and Remote use different React versions, you'll get duplicate bundles or runtime errors unless you configure `shareScope` and `singleton` flags correctly.\n\n```typescript\n// webpack.config.js\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'host',\n      remotes: { app: 'app@http://localhost:3001/remoteEntry.js' },\n      shared: {\n        react: { singleton: true, strictVersion: false },\n        'react-dom': { singleton: true }\n      }\n    })\n  ]\n};\n```\n\n**Common interview trap:** Assuming Module Federation is always better—it adds runtime overhead and complexity. Use it only for truly independent deployments; regular code splitting is simpler for monorepos.",
+      "ru": "### Module Federation против разделения кода\n\nModule Federation включает истинную федеративную архитектуру, где отдельные сборки делят модули во время выполнения, в отличие от разделения кода, которое бандлирует всё заранее. Используйте её для независимых микрофронтендов, требующих общих библиотек—но следите за конфликтами версий: если Host и Remote используют разные версии React, вы получите дублирование бандлов или ошибки runtime, если не настроите правильно `shareScope` и флаги `singleton`.\n\n```typescript\n// webpack.config.js\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'host',\n      remotes: { app: 'app@http://localhost:3001/remoteEntry.js' },\n      shared: {\n        react: { singleton: true, strictVersion: false },\n        'react-dom': { singleton: true }\n      }\n    })\n  ]\n};\n```\n\n**Типичная ошибка:** Думать, что Module Federation всегда лучше—она добавляет runtime-оверхед и сложность. Используйте её только для действительно независимых развёртываний; обычное разделение кода проще для монорепозиториев."
+    },
+    "tags": [
+      "module-federation",
+      "micro-frontends",
+      "webpack-plugins",
+      "version-management"
+    ]
+  }
+]

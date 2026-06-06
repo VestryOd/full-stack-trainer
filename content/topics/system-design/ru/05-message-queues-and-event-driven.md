@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Message Queues и Event Driven Architecture
 
 ## Почему очереди так популярны

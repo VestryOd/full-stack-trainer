@@ -1,1 +1,375 @@
-[]
+[
+  {
+    "id": "git-q-1",
+    "topicId": "git",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the basic workflow of staging changes, committing them, and pushing to a remote repository. What's the difference between git add and git commit?",
+      "ru": "Объясните базовый рабочий процесс подготовки изменений, их фиксации и отправки в удалённый репозиторий. В чём разница между git add и git commit?"
+    },
+    "answer": {
+      "en": "### Staging vs Committing\n\ngit add stages changes to the index (preparation phase), while git commit creates a snapshot of staged changes in local history. Push then sends commits to the remote repository.\n\n```typescript\ngit add src/app.ts          // Stage specific file\ngit add .                   // Stage all changes\ngit commit -m \"Add auth\"   // Create snapshot with message\ngit push origin main        // Send to remote\n```\n\n**Common interview trap:** Confusing git add with git commit—add doesn't save anything, it just prepares changes for the commit.",
+      "ru": "### Подготовка vs Фиксация\n\ngit add подготавливает изменения к индексу (фаза подготовки), а git commit создаёт снимок подготовленных изменений в локальной истории. Push отправляет коммиты в удалённый репозиторий.\n\n```typescript\ngit add src/app.ts          // Подготовить конкретный файл\ngit add .                   // Подготовить все изменения\ngit commit -m \"Add auth\"   // Создать снимок с сообщением\ngit push origin main        // Отправить на удалённый репозиторий\n```\n\n**Типичная ошибка:** Путаница между git add и git commit—add не сохраняет, он только подготавливает изменения к коммиту."
+    },
+    "tags": [
+      "add-commit-push",
+      "staging-area",
+      "basic-workflow"
+    ]
+  },
+  {
+    "id": "git-q-2",
+    "topicId": "git",
+    "difficulty": "junior",
+    "question": {
+      "en": "What does git clone do, and how does it differ from git pull? When would you use each command?",
+      "ru": "Что делает git clone и чем он отличается от git pull? Когда вы используете каждую команду?"
+    },
+    "answer": {
+      "en": "### Clone vs Pull\n\ngit clone downloads an entire remote repository for the first time, creating a new local copy with full history. git pull fetches updates from a remote and merges them into your current branch.\n\n```typescript\ngit clone https://github.com/user/repo.git  // First-time setup\ncd repo\ngit pull origin main                        // Update existing repo\n```\n\n**Common interview trap:** Thinking clone and pull are interchangeable—clone creates a new local repo, pull updates an existing one.",
+      "ru": "### Клонирование vs Обновление\n\ngit clone загружает весь удалённый репозиторий впервые, создавая новую локальную копию с полной историей. git pull получает обновления из удалённого хранилища и объединяет их с текущей веткой.\n\n```typescript\ngit clone https://github.com/user/repo.git  // Первая установка\ncd repo\ngit pull origin main                        // Обновить существующий репозиторий\n```\n\n**Типичная ошибка:** Думать, что clone и pull взаимозаменяемы—clone создаёт новый локальный репозиторий, pull обновляет существующий."
+    },
+    "tags": [
+      "clone-pull",
+      "remote-operations",
+      "repository-setup"
+    ]
+  },
+  {
+    "id": "git-q-3",
+    "topicId": "git",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what a .gitignore file does and provide an example configuration for a Node.js project. Why is it important?",
+      "ru": "Объясните, что делает файл .gitignore и приведите пример конфигурации для проекта Node.js. Почему это важно?"
+    },
+    "answer": {
+      "en": "### .gitignore Purpose\n\n.gitignore specifies files and directories that Git should ignore and not track. It prevents committing sensitive data, dependencies, and build artifacts to the repository.\n\n```typescript\n// .gitignore example for Node.js\nnode_modules/\n.env\n.env.local\ndist/\nbuild/\n*.log\n.DS_Store\n```\n\n**Common interview trap:** Forgetting that .gitignore must be committed itself; ignoring files that are already tracked requires git rm --cached.",
+      "ru": "### Назначение .gitignore\n\n.gitignore определяет файлы и директории, которые Git должен игнорировать и не отслеживать. Он предотвращает коммит конфиденциальных данных, зависимостей и артефактов сборки в репозиторий.\n\n```typescript\n// Пример .gitignore для Node.js\nnode_modules/\n.env\n.env.local\ndist/\nbuild/\n*.log\n.DS_Store\n```\n\n**Типичная ошибка:** Забывают, что сам .gitignore должен быть закоммичен; игнорирование уже отслеживаемых файлов требует git rm --cached."
+    },
+    "tags": [
+      "gitignore",
+      "file-exclusion",
+      "project-configuration"
+    ]
+  },
+  {
+    "id": "git-q-4",
+    "topicId": "git",
+    "difficulty": "junior",
+    "question": {
+      "en": "Describe the Git Flow branching model. What are the main branch types and how do you create and merge a feature branch?",
+      "ru": "Опишите модель ветвления Git Flow. Каковы основные типы веток и как вы создаёте и объединяете ветку функции?"
+    },
+    "answer": {
+      "en": "### Git Flow Model\n\nGit Flow uses main (production), develop (integration), and feature/bugfix branches. Feature branches are created from develop, developed independently, and merged back via pull requests.\n\n```typescript\ngit checkout -b feature/user-auth develop   // Create feature branch\n// Make changes and commits\ngit push origin feature/user-auth\n// Create pull request and review\ngit checkout develop\ngit pull origin develop\ngit merge feature/user-auth\n```\n\n**Common interview trap:** Confusing which branch to base feature branches on—they should come from develop, not main.",
+      "ru": "### Модель Git Flow\n\nGit Flow использует main (продакшн), develop (интеграция) и ветки feature/bugfix. Ветки функций создаются из develop, разрабатываются независимо и объединяются обратно через pull requests.\n\n```typescript\ngit checkout -b feature/user-auth develop   // Создать ветку функции\n// Внесите изменения и коммиты\ngit push origin feature/user-auth\n// Создайте pull request и проверку\ngit checkout develop\ngit pull origin develop\ngit merge feature/user-auth\n```\n\n**Типичная ошибка:** Путаница, из какой ветки создавать feature branches—они должны быть из develop, не из main."
+    },
+    "tags": [
+      "git-flow",
+      "branching-strategy",
+      "feature-branches"
+    ]
+  },
+  {
+    "id": "git-q-5",
+    "topicId": "git",
+    "difficulty": "junior",
+    "question": {
+      "en": "What does git log do and how would you use it to inspect commit history? Show how to view commits with their diffs.",
+      "ru": "Что делает git log и как вы его используете для проверки истории коммитов? Покажите, как просмотреть коммиты с их различиями."
+    },
+    "answer": {
+      "en": "### git log for History Inspection\n\ngit log displays commit history with authors, timestamps, and messages. You can use flags to view diffs, limit output, and format results for better readability.\n\n```typescript\ngit log                           // Show all commits\ngit log --oneline               // Compact format\ngit log -p                       // Show full diffs\ngit log -p --follow src/app.ts  // Diffs for specific file\ngit log --graph --all --decorate // Visual branch structure\n```\n\n**Common interview trap:** Not knowing that git log shows local history only; use git log origin/main to see remote commits.",
+      "ru": "### git log для проверки истории\n\ngit log отображает историю коммитов с авторами, временными метками и сообщениями. Вы можете использовать флаги для просмотра различий, ограничения вывода и форматирования результатов.\n\n```typescript\ngit log                           // Показать все коммиты\ngit log --oneline               // Компактный формат\ngit log -p                       // Показать полные различия\ngit log -p --follow src/app.ts  // Различия для конкретного файла\ngit log --graph --all --decorate // Визуальная структура веток\n```\n\n**Типичная ошибка:** Не знать, что git log показывает только локальную историю; используйте git log origin/main для просмотра удалённых коммитов."
+    },
+    "tags": [
+      "git-log",
+      "commit-history",
+      "diff-inspection"
+    ]
+  },
+  {
+    "id": "git-q-6",
+    "topicId": "git",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the Git Flow workflow. What are the main branches, and how do you create and merge a feature branch?",
+      "ru": "Объясните рабочий процесс Git Flow. Какие основные ветки существуют и как создать и слить ветку функции?"
+    },
+    "answer": {
+      "en": "### Git Flow Workflow\n\nGit Flow uses two main branches: `main` (production-ready) and `develop` (integration branch). Feature branches are created from `develop`, worked on, then merged back via pull requests. This maintains clean history and stable production code.\n\n```typescript\n// Create and work on a feature branch\ngit checkout develop\ngit pull origin develop\ngit checkout -b feature/user-authentication\n// Make commits\ngit add .\ngit commit -m \"Add login form\"\ngit push origin feature/user-authentication\n// Then create PR and merge back to develop\n```\n\n**Common interview trap:** Confusing `develop` with `main`—develop is for integration, main is for production releases only.",
+      "ru": "### Рабочий процесс Git Flow\n\nGit Flow использует две основные ветки: `main` (для production) и `develop` (для интеграции). Ветки функций создаются от `develop`, разрабатываются, а затем сливаются обратно через pull requests. Это сохраняет чистую историю и стабильный код production.\n\n```typescript\n// Создайте и работайте над веткой функции\ngit checkout develop\ngit pull origin develop\ngit checkout -b feature/user-authentication\n// Делайте коммиты\ngit add .\ngit commit -m \"Add login form\"\ngit push origin feature/user-authentication\n// Затем создайте PR и слейте обратно в develop\n```\n\n**Типичная ошибка:** Путаница между `develop` и `main`—develop для интеграции, main только для production-релизов."
+    },
+    "tags": [
+      "git-flow",
+      "branching",
+      "merging",
+      "workflow"
+    ]
+  },
+  {
+    "id": "git-q-7",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the trade-offs between rebasing and merging. When would you choose one over the other in a team environment?",
+      "ru": "Объясните компромиссы между rebase и merge. Когда вы выбрали бы один вариант вместо другого в командной среде?"
+    },
+    "answer": {
+      "en": "### Rebase vs Merge Trade-offs\n\nRebasing rewrites history creating a linear timeline but risks conflicts if others pulled the branch. Merging preserves history with merge commits but creates a complex graph. Use rebase for local unpushed branches, merge for shared/pushed branches to avoid rewriting others' history.\n\n```typescript\n// Rebase: linear history, risky on shared branches\ngit rebase main\n\n// Merge: preserves history, safe for shared work\ngit merge main\n\n// Best practice: rebase before push, merge after\ngit rebase main && git push\n```\n\n**Common interview trap:** Saying rebase is always better; it breaks collaboration when used on shared branches.",
+      "ru": "### Компромиссы Rebase vs Merge\n\nRebase переписывает историю, создавая линейную временную шкалу, но рискует конфликтами, если другие потянули ветку. Merge сохраняет историю с коммитами слияния, но создает сложный граф. Используйте rebase для локальных непубликуемых веток, merge для общих/опубликованных веток, чтобы избежать переписания истории других.\n\n```typescript\n// Rebase: линейная история, опасно на общих ветках\ngit rebase main\n\n// Merge: сохраняет историю, безопасно для совместной работы\ngit merge main\n\n// Лучшая практика: rebase перед push, merge после\ngit rebase main && git push\n```\n\n**Типичная ошибка:** Говорить, что rebase всегда лучше; это нарушает сотрудничество при использовании на общих ветках."
+    },
+    "tags": [
+      "rebase-vs-merge",
+      "git-workflow",
+      "history-management"
+    ]
+  },
+  {
+    "id": "git-q-8",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is interactive rebase and how would you use it to clean up commits before a pull request?",
+      "ru": "Что такое интерактивный rebase и как вы его используете для очистки коммитов перед pull request?"
+    },
+    "answer": {
+      "en": "### Interactive Rebase\n\nInteractive rebase allows you to edit, squash, reorder, or drop commits before pushing. Use `git rebase -i HEAD~n` to rebase the last n commits, then select actions (reword, squash, drop) for each commit. This keeps history clean and creates meaningful commits.\n\n```typescript\n// Interactive rebase last 3 commits\ngit rebase -i HEAD~3\n\n// In editor:\n// pick abc123 Fix bug\n// squash def456 Add test\n// reword ghi789 Update docs\n```\n\n**Common interview trap:** Forgetting that interactive rebase rewrites history; never use it on pushed shared branches.",
+      "ru": "### Интерактивный Rebase\n\nИнтерактивный rebase позволяет редактировать, объединять, переупорядочивать или удалять коммиты перед отправкой. Используйте `git rebase -i HEAD~n` для переbase последних n коммитов, затем выберите действия (reword, squash, drop) для каждого. Это сохраняет историю чистой и создает значимые коммиты.\n\n```typescript\n// Интерактивный rebase последних 3 коммитов\ngit rebase -i HEAD~3\n\n// В редакторе:\n// pick abc123 Fix bug\n// squash def456 Add test\n// reword ghi789 Update docs\n```\n\n**Типичная ошибка:** Забывать, что интерактивный rebase переписывает историю; никогда не используйте его на опубликованных общих ветках."
+    },
+    "tags": [
+      "interactive-rebase",
+      "commit-cleanup",
+      "history-rewriting"
+    ]
+  },
+  {
+    "id": "git-q-9",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you resolve merge conflicts during a rebase or merge? Walk through your approach step by step.",
+      "ru": "Как вы разрешаете конфликты слияния при rebase или merge? Пройдитесь по вашему подходу шаг за шагом."
+    },
+    "answer": {
+      "en": "### Resolving Merge Conflicts\n\nWhen conflicts occur, git pauses and marks conflicted sections with `<<<<<<<`, `=======`, `>>>>>>>`. Open each file, manually choose or combine changes, remove markers, then stage and continue. For rebase add `--continue`, for merge create a commit.\n\n```typescript\n// During merge/rebase, conflicts appear:\n// <<<<<<< HEAD\n// const x = 1;\n// =======\n// const x = 2;\n// >>>>>>> branch\n\n// Fix conflicts, remove markers:\nconst x = 1; // or merge both\n\ngit add .\ngit merge --continue  // or rebase --continue\n```\n\n**Common interview trap:** Not mentioning tools like `git mergetool` or asking teammates before resolving complex conflicts.",
+      "ru": "### Разрешение Конфликтов Слияния\n\nКогда возникают конфликты, git паузирует и отмечает конфликтные секции с `<<<<<<<`, `=======`, `>>>>>>>`. Откройте каждый файл, вручную выберите или объедините изменения, удалите маркеры, затем этапируйте и продолжите. Для rebase добавьте `--continue`, для merge создайте коммит.\n\n```typescript\n// Во время merge/rebase конфликты появляются:\n// <<<<<<< HEAD\n// const x = 1;\n// =======\n// const x = 2;\n// >>>>>>> branch\n\n// Исправьте конфликты, удалите маркеры:\nconst x = 1; // или объедините оба\n\ngit add .\ngit merge --continue  // или rebase --continue\n```\n\n**Типичная ошибка:** Не упоминать инструменты вроде `git mergetool` или не спрашивать коллег перед разрешением сложных конфликтов."
+    },
+    "tags": [
+      "merge-conflicts",
+      "conflict-resolution",
+      "rebase-merge"
+    ]
+  },
+  {
+    "id": "git-q-10",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare Git Flow and trunk-based development. Which would you recommend for a fast-moving startup and why?",
+      "ru": "Сравните Git Flow и trunk-based development. Какой вы бы рекомендовали для быстро развивающегося стартапа и почему?"
+    },
+    "answer": {
+      "en": "### Git Flow vs Trunk-Based Development\n\nGit Flow (develop, release, hotfix branches) suits stable products with planned releases but creates integration delays. Trunk-based (short-lived feature branches merged to main) enables rapid iteration and CI/CD. For startups, trunk-based is faster; Git Flow better for coordinated releases.\n\n```typescript\n// Git Flow: feature → develop → release → main\ngit checkout -b feature/new-feature develop\n\n// Trunk-based: feature → main (within hours)\ngit checkout -b feature/new-feature main\ngit push && create PR\ngit merge main\n```\n\n**Common interview trap:** Not considering team size and release cycle; trunk-based requires strong CI/CD and testing practices.",
+      "ru": "### Git Flow vs Trunk-Based Development\n\nGit Flow (ветки develop, release, hotfix) подходит для стабильных продуктов с плановыми выпусками, но создает задержки интеграции. Trunk-based (короткоживущие ветки функций, объединенные в main) позволяет быстро итерировать и использовать CI/CD. Для стартапов trunk-based быстрее; Git Flow лучше для координированных выпусков.\n\n```typescript\n// Git Flow: feature → develop → release → main\ngit checkout -b feature/new-feature develop\n\n// Trunk-based: feature → main (в течение часов)\ngit checkout -b feature/new-feature main\ngit push && create PR\ngit merge main\n```\n\n**Типичная ошибка:** Не учитывать размер команды и цикл выпуска; trunk-based требует надежного CI/CD и практик тестирования."
+    },
+    "tags": [
+      "git-flow",
+      "trunk-based-development",
+      "branching-strategy"
+    ]
+  },
+  {
+    "id": "git-q-11",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain cherry-pick and stash. Give practical examples of when you'd use each and potential pitfalls.",
+      "ru": "Объясните cherry-pick и stash. Приведите практические примеры того, когда вы используете каждый, и потенциальные опасности."
+    },
+    "answer": {
+      "en": "### Cherry-pick and Stash\n\nCherry-pick copies specific commits to current branch; useful for selective backports. Stash temporarily saves uncommitted changes without committing. Cherry-pick on shared branches risks duplicate commits; stash can lose changes if not reapplied. Use cherry-pick for bug fixes across branches, stash for WIP context-switching.\n\n```typescript\n// Cherry-pick: copy specific commit\ngit cherry-pick abc123\n\n// Stash: save WIP, switch branch, restore\ngit stash\ngit checkout other-branch\ngit stash pop\n```\n\n**Common interview trap:** Using cherry-pick for merging entire branches (use merge instead) or forgetting dropped stashes with `git stash drop`.",
+      "ru": "### Cherry-pick и Stash\n\nCherry-pick копирует конкретные коммиты в текущую ветку; полезно для выборочных обратных портов. Stash временно сохраняет незафиксированные изменения без фиксации. Cherry-pick на общих ветках рискует дублировать коммиты; stash может потерять изменения, если не переприменить. Используйте cherry-pick для исправления ошибок между ветками, stash для переключения контекста WIP.\n\n```typescript\n// Cherry-pick: копировать конкретный коммит\ngit cherry-pick abc123\n\n// Stash: сохранить WIP, переключить ветку, восстановить\ngit stash\ngit checkout other-branch\ngit stash pop\n```\n\n**Типичная ошибка:** Использование cherry-pick для объединения целых веток (используйте merge вместо) или забывание удаленного stash с `git stash drop`."
+    },
+    "tags": [
+      "cherry-pick",
+      "stash",
+      "selective-commits"
+    ]
+  },
+  {
+    "id": "git-q-12",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the trade-offs between rebasing and merging. When would you choose rebase over merge in a team environment, and what are the risks?",
+      "ru": "Объясните компромиссы между rebase и merge. Когда вы выберете rebase вместо merge в командной среде и какие риски это несет?"
+    },
+    "answer": {
+      "en": "### Rebase vs Merge Trade-offs\n\nRebase rewrites history creating a linear timeline but risks breaking shared branches if used on published commits. Merge preserves history but creates noise with merge commits. Use rebase on feature branches before merging to main; never rebase shared/public branches.\n\n```typescript\n// Feature branch: safe to rebase\ngit checkout feature\ngit rebase main\n\n// Then merge to main\ngit checkout main\ngit merge feature\n\n// Never do this on main if others pulled it\ngit rebase origin/main\n```\n\n**Common interview trap:** Developers rebase after pushing to shared branches, causing conflicts for teammates.",
+      "ru": "### Компромиссы Rebase vs Merge\n\nRebase переписывает историю, создавая линейную временную шкалу, но рискует нарушить общие ветки если использовать на опубликованных коммитах. Merge сохраняет историю, но создает шум от merge-коммитов. Используйте rebase на feature ветках перед merge в main; никогда не используйте rebase на общих ветках.\n\n```typescript\n// Feature ветка: безопасно делать rebase\ngit checkout feature\ngit rebase main\n\n// Затем merge в main\ngit checkout main\ngit merge feature\n\n// Никогда на main если другие его pulled\ngit rebase origin/main\n```\n\n**Типичная ошибка:** Разработчики делают rebase после push на общие ветки, вызывая конфликты у коллег."
+    },
+    "tags": [
+      "rebase-vs-merge",
+      "git-workflow",
+      "shared-branches"
+    ]
+  },
+  {
+    "id": "git-q-13",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "You have uncommitted changes in your working directory that you need to save temporarily, and a colleague's changes need to be urgently pulled. Explain your approach using stash and interactive rebase if needed.",
+      "ru": "У вас есть незакоммиченные изменения, которые нужно сохранить временно, а изменения коллеги нужно срочно pull. Объясните ваш подход используя stash и интерактивный rebase если нужно."
+    },
+    "answer": {
+      "en": "### Stash and Reapply Workflow\n\nUse `git stash` to save uncommitted work, pull urgent changes, then reapply stashed changes. If conflicts occur, resolve them and use `git stash pop`. For complex scenarios, use `git stash apply` to keep stash, then manually resolve.\n\n```typescript\n// Save uncommitted changes\ngit stash\n\n// Pull urgent changes\ngit pull origin main\n\n// Reapply stashed changes\ngit stash pop\n\n// If conflicts occur during pop, resolve and continue\ngit stash drop  // Remove stash after successful reapply\n```\n\n**Common interview trap:** Forgetting to drop stash after applying or using pop without checking conflicts first.",
+      "ru": "### Workflow Stash и Reapply\n\nИспользуйте `git stash` для сохранения незакоммиченной работы, pull срочные изменения, затем переприменяйте сохраненные изменения. Если возникнут конфликты, разрешите их и используйте `git stash pop`. Для сложных сценариев используйте `git stash apply` чтобы сохранить stash.\n\n```typescript\n// Сохранить незакоммиченные изменения\ngit stash\n\n// Pull срочные изменения\ngit pull origin main\n\n// Переприменить сохраненные изменения\ngit stash pop\n\n// После успешного применения\ngit stash drop\n```\n\n**Типичная ошибка:** Забыть удалить stash после применения или использовать pop без проверки конфликтов."
+    },
+    "tags": [
+      "stash",
+      "workflow-management",
+      "conflict-resolution"
+    ]
+  },
+  {
+    "id": "git-q-14",
+    "topicId": "git",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare Git Flow and trunk-based development approaches. Which would you recommend for a startup with 5 developers, and why?",
+      "ru": "Сравните подходы Git Flow и trunk-based development. Какой бы вы рекомендовали для стартапа с 5 разработчиками и почему?"
+    },
+    "answer": {
+      "en": "### Git Flow vs Trunk-Based Development\n\nGit Flow uses long-lived develop/release branches with formal releases—better for versioned products. Trunk-based keeps main deployable with short-lived branches and frequent releases—better for continuous delivery. For a 5-dev startup, trunk-based is recommended: faster feedback, fewer merge conflicts, and lower overhead.\n\n```typescript\n// Git Flow: longer cycle\ngit checkout -b release/1.0.0\ngit merge --no-ff develop\n\n// Trunk-based: short-lived feature branch\ngit checkout -b feature/user-auth\ngit commit && git push\ngit pull request -> merge to main -> deploy\n```\n\n**Common interview trap:** Choosing Git Flow for small teams, causing unnecessary process overhead and slower iterations.",
+      "ru": "### Git Flow vs Trunk-Based Development\n\nGit Flow использует долгоживущие develop/release ветки с формальными релизами—лучше для версионированных продуктов. Trunk-based держит main deployable с короткоживущими ветками и частыми релизами—лучше для continuous delivery. Для стартапа из 5 разработчиков рекомендуется trunk-based: быстрая обратная связь, меньше конфликтов слияния.\n\n```typescript\n// Git Flow: долгий цикл\ngit checkout -b release/1.0.0\ngit merge --no-ff develop\n\n// Trunk-based: короткоживущая feature ветка\ngit checkout -b feature/user-auth\ngit commit && git push\ngit pull request -> merge to main -> deploy\n```\n\n**Типичная ошибка:** Выбрать Git Flow для малых команд, вызывая излишние процессные затраты и медленные итерации."
+    },
+    "tags": [
+      "git-flow",
+      "trunk-based-development",
+      "team-strategy"
+    ]
+  },
+  {
+    "id": "git-q-15",
+    "topicId": "git",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the internal structure of Git objects (blob, tree, commit, tag) and how they form a directed acyclic graph (DAG). How would you manually inspect these objects?",
+      "ru": "Объясните внутреннюю структуру Git объектов (blob, tree, commit, tag) и как они образуют направленный ациклический граф. Как вы вручную проверите эти объекты?"
+    },
+    "answer": {
+      "en": "### Git Object Types and DAG Structure\n\nGit stores all data as objects: blobs (file contents), trees (directory structure), commits (snapshots + metadata), and tags (references). They form a DAG where commits point to parent commits and tree objects, creating an immutable history.\n\n```bash\ngit cat-file -p <hash>          # inspect object content\ngit cat-file -t <hash>          # check object type\ngit rev-parse HEAD^{tree}       # get tree of current commit\ngit ls-tree -r HEAD             # recursively list tree contents\n```\n\n**Common interview trap:** Confusing blobs with trees—blobs contain file content, trees map filenames to blob/tree hashes.",
+      "ru": "### Типы Git объектов и структура DAG\n\nGit хранит все данные как объекты: blobs (содержимое файлов), trees (структура директорий), commits (снимки + метаданные) и tags (ссылки). Они образуют DAG, где commits указывают на родительские commits и tree объекты, создавая неизменяемую историю.\n\n```bash\ngit cat-file -p <hash>          # посмотреть содержимое объекта\ngit cat-file -t <hash>          # проверить тип объекта\ngit rev-parse HEAD^{tree}       # получить tree текущего commit\ngit ls-tree -r HEAD             # рекурсивно вывести содержимое tree\n```\n\n**Типичная ошибка:** Смешивание blobs с trees—blobs содержат содержимое файлов, trees связывают имена файлов с хешами blob/tree."
+    },
+    "tags": [
+      "git-internals",
+      "objects",
+      "dag",
+      "blob",
+      "tree",
+      "commit"
+    ]
+  },
+  {
+    "id": "git-q-16",
+    "topicId": "git",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does git reflog work and when would you use it to recover lost commits? Explain the difference between reflog and regular git log.",
+      "ru": "Как работает git reflog и когда вы его используете для восстановления потерянных commits? Объясните разницу между reflog и обычным git log."
+    },
+    "answer": {
+      "en": "### Reflog: Local Reference History\n\nReflog tracks all HEAD movements (commits, checkouts, resets) locally for 90 days. Unlike git log which shows commit history, reflog shows your local branch navigation history, allowing recovery of accidentally deleted commits.\n\n```bash\ngit reflog                      # show all ref movements\ngit reflog show branch-name     # reflog for specific branch\ngit reset --hard HEAD@{5}       # recover to 5th HEAD position\ngit show HEAD@{2}               # inspect commit at position 2\n```\n\n**Common interview trap:** Reflog is local-only and doesn't sync to remote—it won't help recover commits on another developer's machine.",
+      "ru": "### Reflog: История локальных ссылок\n\nReflog отслеживает все движения HEAD (commits, checkouts, resets) локально в течение 90 дней. В отличие от git log, который показывает историю commits, reflog показывает историю навигации вашей локальной ветки, позволяя восстановить случайно удалённые commits.\n\n```bash\ngit reflog                      # показать все движения ref\ngit reflog show branch-name     # reflog для конкретной ветки\ngit reset --hard HEAD@{5}       # восстановить к 5й позиции HEAD\ngit show HEAD@{2}               # посмотреть commit на позиции 2\n```\n\n**Типичная ошибка:** Reflog только локальный и не синхронизируется с remote—не поможет восстановить commits на машине другого разработчика."
+    },
+    "tags": [
+      "reflog",
+      "recovery",
+      "local-history",
+      "head-movements"
+    ]
+  },
+  {
+    "id": "git-q-17",
+    "topicId": "git",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe git bisect and how you would use it to find the commit that introduced a bug. What are the limitations of binary search in this context?",
+      "ru": "Опишите git bisect и как вы его используете для поиска commit, который внёс ошибку. Каковы ограничения бинарного поиска в этом контексте?"
+    },
+    "answer": {
+      "en": "### Git Bisect: Binary Search for Bugs\n\nBisect performs binary search between a known-good and known-bad commit to isolate the culprit. You mark commits as good/bad, and Git automatically checks out midpoints, reducing search from O(n) to O(log n). Limitation: requires automated tests or manual verification at each step; skipping commits can corrupt the search.\n\n```bash\ngit bisect start\ngit bisect bad HEAD              # mark current as broken\ngit bisect good v1.0             # mark v1.0 as working\n# Git checks out middle commit; test and run:\ngit bisect good                  # or 'bad' if still broken\n# Repeat until Git identifies culprit commit\ngit bisect reset                 # cleanup\n```\n\n**Common interview trap:** Thinking bisect is instant—you still need to verify each midpoint manually unless you script it with git bisect run.",
+      "ru": "### Git Bisect: Бинарный поиск багов\n\nBisect выполняет бинарный поиск между известным рабочим и известным поломанным commit для изоляции причины. Вы отмечаете commits как good/bad, и Git автоматически проверяет midpoints, сокращая поиск с O(n) до O(log n). Ограничение: требует автоматизированные тесты или ручную проверку на каждом шаге; пропуск commits может испортить поиск.\n\n```bash\ngit bisect start\ngit bisect bad HEAD              # отметить текущий как поломанный\ngit bisect good v1.0             # отметить v1.0 как рабочий\n# Git проверяет middle commit; тестируем и запускаем:\ngit bisect good                  # или 'bad' если ещё поломан\n# Повторяем пока Git не найдёт виновный commit\ngit bisect reset                 # очистка\n```\n\n**Типичная ошибка:** Думать, что bisect мгновенный—вам всё равно нужно вручную проверить каждый midpoint, если не напишете скрипт с git bisect run."
+    },
+    "tags": [
+      "bisect",
+      "binary-search",
+      "bug-hunting",
+      "debugging"
+    ]
+  },
+  {
+    "id": "git-q-18",
+    "topicId": "git",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are Git submodules and how do they differ from Git subtree? Discuss when you would use each approach in a monorepo or multi-repo strategy.",
+      "ru": "Что такое Git submodules и чем они отличаются от Git subtree? Обсудите, когда вы используете каждый подход в monorepo или multi-repo стратегии."
+    },
+    "answer": {
+      "en": "### Submodules vs Subtree\n\nSubmodules are references to external repos at a specific commit; they require manual pulls and are error-prone (detached HEAD). Subtree merges external code into your repo as a subdirectory—easier for collaborators but harder to push changes upstream. Use submodules for true dependencies (third-party libs), subtree for owned code you want to merge back.\n\n```bash\n# Submodule: pointer to external repo\ngit submodule add <url> <path>\ngit submodule update --init --recursive\n\n# Subtree: copy external repo code\ngit subtree add --prefix=vendor <url> main\ngit subtree push --prefix=vendor <url> main  # push changes back\n```\n\n**Common interview trap:** Submodules auto-update on clone—they don't; you must run git submodule update explicitly, confusing many teams.",
+      "ru": "### Submodules vs Subtree\n\nSubmodules — это ссылки на внешние repos на конкретный commit; требуют ручных pulls и подвержены ошибкам (detached HEAD). Subtree объединяет внешний код в ваш repo как подпапку—проще для коллаборантов, но сложнее пушить изменения upstream. Используйте submodules для истинных зависимостей (third-party libs), subtree для собственного кода, который хотите объединить обратно.\n\n```bash\n# Submodule: ссылка на внешний repo\ngit submodule add <url> <path>\ngit submodule update --init --recursive\n\n# Subtree: копировать код внешнего repo\ngit subtree add --prefix=vendor <url> main\ngit subtree push --prefix=vendor <url> main  # пушить изменения обратно\n```\n\n**Типичная ошибка:** Submodules автоматически обновляются при clone—не обновляются; вы должны явно запустить git submodule update, что путает многие команды."
+    },
+    "tags": [
+      "submodules",
+      "subtree",
+      "monorepo",
+      "multi-repo",
+      "dependencies"
+    ]
+  },
+  {
+    "id": "git-q-19",
+    "topicId": "git",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain cryptographic signing of commits using GPG and why it matters for CI/CD pipelines. How would you enforce signed commits in a Git Flow workflow?",
+      "ru": "Объясните криптографическое подписание commits с помощью GPG и почему это важно для CI/CD pipelines. Как вы бы обеспечили подписанные commits в Git Flow workflow?"
+    },
+    "answer": {
+      "en": "### GPG-Signed Commits\n\nSigned commits prove authorship using cryptographic keys, preventing impersonation. GitHub/GitLab verify signatures and display 'Verified' badges. Enforce signing in CI: reject unsigned commits, require signature verification before merge, and rotate keys regularly in team policies.\n\n```bash\n# Generate GPG key and configure Git\ngit config --global user.signingkey <key-id>\ngit commit -S -m \"Signed commit\"        # create signed commit\ngit commit -S --amend                   # sign previous commit\ngit log --show-signature                # view commit signatures\n\n# Enforce in CI/CD: pre-receive hook\nif ! git verify-commit \"$commit_hash\"; then exit 1; fi\n```\n\n**Common interview trap:** Signed commits don't encrypt commit content—only prove author identity; compromise doesn't auto-revoke past signatures, requiring manual intervention.",
+      "ru": "### GPG-подписанные Commits\n\nПодписанные commits доказывают авторство, используя криптографические ключи, предотвращая выдачу себя за другого. GitHub/GitLab проверяют сигнатуры и показывают 'Verified' badges. Обеспечьте подписание в CI: отклоняйте неподписанные commits, требуйте проверку сигнатуры перед merge, регулярно ротируйте ключи в политиках команды.\n\n```bash\n# Генерировать GPG ключ и настроить Git\ngit config --global user.signingkey <key-id>\ngit commit -S -m \"Signed commit\"        # создать подписанный commit\ngit commit -S --amend                   # подписать предыдущий commit\ngit log --show-signature                # показать сигнатуры commits\n\n# Обеспечить в CI/CD: pre-receive hook\nif ! git verify-commit \"$commit_hash\"; then exit 1; fi\n```\n\n**Типичная ошибка:** Подписанные commits не шифруют содержимое commit—только доказывают личность автора; компрометация не автоматически отзывает прошлые сигнатуры, требуя ручного вмешательства."
+    },
+    "tags": [
+      "gpg",
+      "signed-commits",
+      "security",
+      "ci-cd",
+      "authentication"
+    ]
+  },
+  {
+    "id": "git-q-20",
+    "topicId": "git",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain Git's internal object model and how blob, tree, commit, and tag objects relate to each other. Then describe how you would use git reflog and git bisect to recover from a mistake where you accidentally reset to the wrong commit in a monorepo with submodules.",
+      "ru": "Объясните внутреннюю объектную модель Git и взаимосвязь объектов blob, tree, commit и tag. Затем опишите, как бы вы использовали git reflog и git bisect для восстановления после ошибки, когда вы случайно выполнили reset на неправильный коммит в монорепозитории с подмодулями."
+    },
+    "answer": {
+      "en": "### Git Object Model & Recovery Strategy\n\nGit stores data as four object types: blobs (file content), trees (directory snapshots), commits (pointers to tree + metadata), and tags (named references). When you reset incorrectly, git reflog shows all HEAD movements, and git bisect performs binary search to find the problematic commit. For monorepos with submodules, ensure each submodule's state is tracked in the parent commit's tree object.\n\n```typescript\n// Recover from wrong reset\ngit reflog  // Find correct commit hash\ngit reset --hard <correct-hash>\n\n// Binary search for breaking commit\ngit bisect start\ngit bisect bad HEAD\ngit bisect good v1.0.0\n// Git checks out middle commit; test and run:\ngit bisect good  // or 'bad' based on test result\n```\n\n**Common interview trap:** Assuming reflog shows all commits—it only tracks HEAD movements, not dangling commits from other branches.",
+      "ru": "### Объектная модель Git и стратегия восстановления\n\nGit хранит данные в четырёх типах объектов: blobs (содержимое файлов), trees (снимки директорий), commits (указатели на tree + метаданные) и tags (именованные ссылки). При неправильном reset git reflog показывает все движения HEAD, а git bisect выполняет бинарный поиск для нахождения проблемного коммита. В монорепозиториях с подмодулями убедитесь, что состояние каждого подмодуля отслеживается в объекте tree родительского коммита.\n\n```typescript\n// Восстановление после неправильного reset\ngit reflog  // Найти правильный хеш коммита\ngit reset --hard <correct-hash>\n\n// Бинарный поиск ломающего коммита\ngit bisect start\ngit bisect bad HEAD\ngit bisect good v1.0.0\n// Git проверяет средний коммит; тестируем и выполняем:\ngit bisect good  // или 'bad' в зависимости от результата\n```\n\n**Типичная ошибка:** Предположение, что reflog показывает все коммиты—он отслеживает только движения HEAD, не зависающие коммиты из других ветвей."
+    },
+    "tags": [
+      "git-objects",
+      "reflog",
+      "bisect",
+      "monorepo",
+      "submodules",
+      "git-internals"
+    ]
+  }
+]

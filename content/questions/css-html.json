@@ -1,1 +1,770 @@
-[]
+[
+  {
+    "id": "css-html-q-1",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the CSS box model and the difference between content-box and border-box. How does padding affect element sizing?",
+      "ru": "Объясните модель CSS box model и разницу между content-box и border-box. Как padding влияет на размер элемента?"
+    },
+    "answer": {
+      "en": "### CSS Box Model Explained\n\nThe box model consists of content, padding, border, and margin (from inside out). By default, `box-sizing: content-box` means width/height apply only to content—padding and border are added on top, increasing total size. With `box-sizing: border-box`, width/height include padding and border, making sizing predictable and easier to manage.\n\nPadding creates internal spacing inside the element. With content-box, padding increases the element's rendered size. With border-box, padding reduces available content space while keeping total size constant.\n\nhtml\n<style>\n  .content-box {\n    box-sizing: content-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Total width: 244px (200 + 40 + 4) */\n  }\n  \n  .border-box {\n    box-sizing: border-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Total width: 200px (constant) */\n  }\n</style>\n\n\n**Common interview trap:** Candidates often forget that margin is outside the box and doesn't affect `box-sizing`. Always use `border-box` for modern layouts—it's more intuitive.",
+      "ru": "### Модель CSS Box Model\n\nМодель состоит из content, padding, border и margin (от центра наружу). По умолчанию `box-sizing: content-box` означает, что width/height применяются только к содержимому—padding и border добавляются сверху, увеличивая общий размер. С `box-sizing: border-box` width/height включают padding и border, делая размер предсказуемым.\n\nPadding создаёт внутренний отступ. С content-box он увеличивает размер элемента. С border-box он уменьшает доступное место для контента, но общий размер остаётся постоянным.\n\nhtml\n<style>\n  .content-box {\n    box-sizing: content-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Общая ширина: 244px (200 + 40 + 4) */\n  }\n  \n  .border-box {\n    box-sizing: border-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Общая ширина: 200px (постоянна) */\n  }\n</style>\n\n\n**Типичная ошибка на интервью:** Забывают, что margin находится вне box и не влияет на `box-sizing`. Используйте `border-box` для современных макетов."
+    },
+    "tags": [
+      "box-model",
+      "sizing",
+      "css-fundamentals"
+    ]
+  },
+  {
+    "id": "css-html-q-2",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is CSS specificity? How do selectors like ID, class, and element affect specificity? Give an example where higher specificity wins.",
+      "ru": "Что такое CSS specificity? Как селекторы ID, класс и элемент влияют на specificity? Приведите пример, где более высокая specificity побеждает."
+    },
+    "answer": {
+      "en": "### CSS Specificity Hierarchy\n\nSpecificity determines which CSS rule applies when multiple rules target the same element. It's calculated as: IDs (100) > classes/attributes/pseudo-classes (10) > elements/pseudo-elements (1). Inline styles (1000) and !important override everything.\n\nExample: `#header .nav a` has specificity 101 (1 ID + 1 class + 1 element), while `.nav a` has 11 (1 class + 1 element). The first rule wins even if it appears first in the stylesheet.\n\ncss\n/* Specificity: 1 (element) */\na { color: blue; }\n\n/* Specificity: 11 (1 class + 1 element) */\n.nav a { color: green; }\n\n/* Specificity: 101 (1 ID + 1 class + 1 element) - WINS */\n#header .nav a { color: red; }\n\n/* This link will be red */\n\n\n**Common interview trap:** Candidates miscalculate specificity by not counting all selectors. Remember: specificity is NOT a single number but three values (ID, class, element).",
+      "ru": "### Специфичность CSS\n\nСпецифичность определяет, какое правило CSS применяется при наличии нескольких правил для одного элемента. Она рассчитывается так: ID (100) > классы/атрибуты/псевдо-классы (10) > элементы/псевдо-элементы (1). Inline стили (1000) и !important переопределяют всё.\n\nПример: `#header .nav a` имеет specificity 101 (1 ID + 1 класс + 1 элемент), а `.nav a` имеет 11 (1 класс + 1 элемент). Первое правило победит, даже если оно появится позже в таблице стилей.\n\ncss\n/* Specificity: 1 (элемент) */\na { color: blue; }\n\n/* Specificity: 11 (1 класс + 1 элемент) */\n.nav a { color: green; }\n\n/* Specificity: 101 (1 ID + 1 класс + 1 элемент) - ПОБЕДИТ */\n#header .nav a { color: red; }\n\n/* Этот link будет красным */\n\n\n**Типичная ошибка на интервью:** Неправильно считают specificity, не учитывая все селекторы. Помните: specificity—это не одно число, а три значения."
+    },
+    "tags": [
+      "specificity",
+      "selectors",
+      "cascade"
+    ]
+  },
+  {
+    "id": "css-html-q-3",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "How does CSS Flexbox work? Explain justify-content, align-items, and the difference between flex-direction row and column.",
+      "ru": "Как работает CSS Flexbox? Объясните justify-content, align-items и разницу между flex-direction row и column."
+    },
+    "answer": {
+      "en": "### Flexbox Layout System\n\nFlexbox is a 1D layout model for distributing space and aligning items in a container. The container becomes a flex context with `display: flex`. Properties like `justify-content` (main axis) and `align-items` (cross axis) control alignment. `flex-direction` determines the main axis: `row` (horizontal, left-to-right) or `column` (vertical, top-to-bottom).\n\nWith `flex-direction: row`, justify-content aligns horizontally and align-items vertically. With `column`, it's reversed. `flex-grow`, `flex-shrink`, and `flex-basis` control item sizing and growth behavior.\n\ncss\n.flex-container {\n  display: flex;\n  flex-direction: row; /* or column */\n  justify-content: center; /* main axis alignment */\n  align-items: center; /* cross axis alignment */\n  gap: 10px; /* space between items */\n}\n\n.flex-item {\n  flex: 1; /* shorthand: grow, shrink, basis */\n}\n\n\n**Common interview trap:** Confusing which axis `justify-content` and `align-items` control. Remember: justify is always main axis, align is cross axis. Direction determines what \"main\" means.",
+      "ru": "### Система Flexbox\n\nFlexbox—это 1D модель макета для распределения пространства и выравнивания элементов в контейнере. Контейнер становится flex-контекстом с `display: flex`. Свойства `justify-content` (основная ось) и `align-items` (поперечная ось) управляют выравниванием. `flex-direction` определяет основную ось: `row` (горизонтально) или `column` (вертикально).\n\nС `flex-direction: row` justify-content выравнивает горизонтально, align-items вертикально. С `column` наоборот. `flex-grow`, `flex-shrink` и `flex-basis` управляют размером и поведением роста элемента.\n\ncss\n.flex-container {\n  display: flex;\n  flex-direction: row; /* или column */\n  justify-content: center; /* выравнивание основной оси */\n  align-items: center; /* выравнивание поперечной оси */\n  gap: 10px; /* пространство между элементами */\n}\n\n.flex-item {\n  flex: 1; /* сокращение: grow, shrink, basis */\n}\n\n\n**Типичная ошибка на интервью:** Путают, какую ось контролирует justify-content и align-items. Помните: justify всегда основная ось, align поперечная ось."
+    },
+    "tags": [
+      "flexbox",
+      "layout",
+      "alignment"
+    ]
+  },
+  {
+    "id": "css-html-q-4",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain CSS Grid basics: grid-template-columns, grid-template-rows, and grid-gap. How is Grid different from Flexbox?",
+      "ru": "Объясните основы CSS Grid: grid-template-columns, grid-template-rows и grid-gap. Чем Grid отличается от Flexbox?"
+    },
+    "answer": {
+      "en": "### CSS Grid Fundamentals\n\nCSS Grid is a 2D layout system that divides a container into rows and columns. `grid-template-columns` defines column widths, `grid-template-rows` defines row heights, and `grid-gap` (or `gap`) adds space between cells. Unlike Flexbox (1D, distributes items along one axis), Grid controls positioning in both dimensions simultaneously.\n\nGrid excels at creating structured layouts like dashboards, galleries, and forms. Items can span multiple rows/columns with `grid-column` and `grid-row`. Flexbox is better for components and flexible item distribution.\n\ncss\n.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr; /* 3 columns */\n  grid-template-rows: 100px auto; /* 2 rows */\n  gap: 15px;\n}\n\n.grid-item {\n  grid-column: span 2; /* spans 2 columns */\n}\n\n\n**Common interview trap:** Candidates think Grid replaces Flexbox. They're complementary—use Grid for page layouts and Flexbox for component-level alignment. Grid has steeper learning curve but more control.",
+      "ru": "### Основы CSS Grid\n\nCSS Grid—это 2D система макета, которая делит контейнер на строки и столбцы. `grid-template-columns` определяет ширину столбцов, `grid-template-rows` определяет высоту строк, `grid-gap` (или `gap`) добавляет пространство между ячейками. В отличие от Flexbox (1D, распределяет элементы по одной оси), Grid управляет позиционированием в обоих измерениях одновременно.\n\nGrid отлично подходит для структурированных макетов как дашборды, галереи и формы. Элементы могут охватывать несколько строк/столбцов с `grid-column` и `grid-row`.\n\ncss\n.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr; /* 3 столбца */\n  grid-template-rows: 100px auto; /* 2 строки */\n  gap: 15px;\n}\n\n.grid-item {\n  grid-column: span 2; /* охватывает 2 столбца */\n}\n\n\n**Типичная ошибка на интервью:** Думают, что Grid заменяет Flexbox. Они дополняют друг друга—используйте Grid для макетов страниц, Flexbox для компонентов."
+    },
+    "tags": [
+      "grid",
+      "layout",
+      "2d-layout"
+    ]
+  },
+  {
+    "id": "css-html-q-5",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are CSS positioning properties (static, relative, absolute, fixed)? When would you use absolute positioning? What's the difference with fixed?",
+      "ru": "Что такое CSS свойства позиционирования (static, relative, absolute, fixed)? Когда вы бы использовали absolute? Чем fixed отличается?"
+    },
+    "answer": {
+      "en": "### CSS Positioning Methods\n\n`static` (default) respects document flow. `relative` offsets element from its normal position but maintains space. `absolute` removes element from flow and positions relative to nearest positioned ancestor (non-static). `fixed` removes from flow and positions relative to viewport—stays in place during scrolling.\n\nUse `absolute` for overlays, modals, or tooltips when you have a positioned parent. Use `fixed` for sticky headers, floating buttons, or notifications. Always set a positioning context (parent with `position: relative`) to control `absolute` child positioning.\n\ncss\n.parent {\n  position: relative; /* creates positioning context */\n}\n\n.absolute-child {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  /* positioned relative to .parent */\n}\n\n.fixed-element {\n  position: fixed;\n  top: 0;\n  right: 0;\n  /* stays at viewport top-right during scroll */\n}\n\n\n**Common interview trap:** Forgetting to set `position: relative` on the parent. Without it, `absolute` positions relative to the next positioned ancestor, often causing unpredictable placement.",
+      "ru": "### Методы CSS позиционирования\n\n`static` (по умолчанию) уважает flow документа. `relative` смещает элемент от нормальной позиции, но сохраняет пространство. `absolute` удаляет элемент из flow и позиционирует его относительно ближайшего позиционированного предка (non-static). `fixed` удаляет из flow и позиционирует относительно viewport���остаётся на месте при прокрутке.\n\nИспользуйте `absolute` для оверлеев, модалей или tooltips с позиционированным родителем. Используйте `fixed` для sticky хедеров, плавающих кнопок или уведомлений. Всегда устанавливайте контекст позиционирования (родитель с `position: relative`).\n\ncss\n.parent {\n  position: relative; /* создаёт контекст позиционирования */\n}\n\n.absolute-child {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  /* позиционируется относительно .parent */\n}\n\n.fixed-element {\n  position: fixed;\n  top: 0;\n  right: 0;\n  /* остаётся в top-right viewport при прокрутке */\n}\n\n\n**Типичная ошибка на интервью:** Забывают установить `position: relative` на родитель. Без этого `absolute` позиционируется относительно следующего предка."
+    },
+    "tags": [
+      "positioning",
+      "layout",
+      "static-relative-absolute-fixed"
+    ]
+  },
+  {
+    "id": "css-html-q-6",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Create a simple CSS animation using @keyframes and animation properties. What's the difference between animation and transition? When would you use each?",
+      "ru": "Создайте простую CSS анимацию, используя @keyframes и animation свойства. В чём разница между animation и transition? Когда вы бы использовали каждую?"
+    },
+    "answer": {
+      "en": "### CSS Animations vs Transitions\n\nTransitions smoothly change property values over time, triggered by state change (hover, focus, class toggle). Animations use @keyframes to define multi-step sequences and run automatically or loop. Transitions are implicit (start and end states), animations are explicit (full timeline).\n\nUse transitions for simple property changes (color on hover, width on click). Use animations for complex sequences, continuous loops (loading spinners), or effects independent of user action.\n\ncss\n@keyframes slide {\n  0% { transform: translateX(0); }\n  50% { transform: translateX(100px); }\n  100% { transform: translateX(0); }\n}\n\n.animated-box {\n  animation: slide 2s ease-in-out infinite;\n  /* name, duration, timing, iteration */\n}\n\n.transition-box {\n  transition: background-color 0.3s ease;\n}\n\n.transition-box:hover {\n  background-color: red;\n}\n\n\n**Common interview trap:** Overusing animations for simple interactions. Transitions are usually better for responsiveness. Animations have overhead—use sparingly to avoid performance issues.",
+      "ru": "### CSS Анимации vs Переходы\n\nПереходы плавно изменяют значения свойств во времени, триггер срабатывает при изменении состояния (hover, focus, toggle класса). Анимации используют @keyframes для определения многошаговых последовательностей и запускаются автоматически или циклятся. Переходы неявные (начало и конец), анимации явные (полная временная шкала).\n\nИспользуйте переходы для простых изменений свойств (цвет при hover, ширина при click). Используйте анимации для сложных последовательностей, непрерывных циклов (спиннеры загрузки) или эффектов независимо от действий пользователя.\n\ncss\n@keyframes slide {\n  0% { transform: translateX(0); }\n  50% { transform: translateX(100px); }\n  100% { transform: translateX(0); }\n}\n\n.animated-box {\n  animation: slide 2s ease-in-out infinite;\n  /* имя, длительность, timing, итерация */\n}\n\n.transition-box {\n  transition: background-color 0.3s ease;\n}\n\n.transition-box:hover {\n  background-color: red;\n}\n\n\n**Типичная ошибка на интервью:** Используют анимации для простых взаимодействий. Переходы обычно лучше для responsiveness. Анимации требуют ресурсы—используйте экономно."
+    },
+    "tags": [
+      "animations",
+      "keyframes",
+      "transitions",
+      "performance"
+    ]
+  },
+  {
+    "id": "css-html-q-7",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is semantic HTML? Give examples of semantic elements like <article>, <header>, <nav>, <section>. Why should you use semantic HTML in forms?",
+      "ru": "Что такое semantic HTML? Приведите примеры семантических элементов вроде <article>, <header>, <nav>, <section>. Почему вы должны использовать semantic HTML в формах?"
+    },
+    "answer": {
+      "en": "### Semantic HTML Importance\n\nSemantic HTML uses meaningful elements that describe content purpose—`<article>`, `<header>`, `<nav>`, `<section>`, `<main>`, `<footer>`. Non-semantic alternatives like nested `<div>` lack meaning. Semantic elements improve accessibility (screen readers), SEO, code readability, and maintainability.\n\nFor forms, use `<form>`, `<fieldset>`, `<legend>`, `<label>` (with `for` attribute), and `<input type=\"...\">`. Proper structure ensures keyboard navigation and assistive technology support. `<label>` increases click area for inputs and helps users understand field purpose.\n\nhtml\n<form>\n  <fieldset>\n    <legend>Contact Information</legend>\n    <label for=\"email\">Email:</label>\n    <input id=\"email\" type=\"email\" required>\n    \n    <label for=\"message\">Message:</label>\n    <textarea id=\"message\"></textarea>\n  </fieldset>\n  <button type=\"submit\">Send</button>\n</form>\n\n\n**Common interview trap:** Using `<div>` everywhere instead of semantic elements. Semantic HTML isn't just for SEO—it's essential for accessibility and code quality. Always use the most specific element available.",
+      "ru": "### Важность Semantic HTML\n\nSemantic HTML использует значащие элементы, описывающие назначение контента—`<article>`, `<header>`, `<nav>`, `<section>`, `<main>`, `<footer>`. Несемантические вложенные `<div>` лишены смысла. Семантические элементы улучшают доступность (screen readers), SEO, читаемость кода и поддерживаемость.\n\nДля форм используйте `<form>`, `<fieldset>`, `<legend>`, `<label>` (с атрибутом `for`) и `<input type=\"...\">`. Правильная структура обеспечивает навигацию клавиатурой и поддержку вспомогательных технологий. `<label>` увеличивает область клика для inputs и помогает пользователям понять назначение поля.\n\nhtml\n<form>\n  <fieldset>\n    <legend>Контактная информация</legend>\n    <label for=\"email\">Email:</label>\n    <input id=\"email\" type=\"email\" required>\n    \n    <label for=\"message\">Сообщение:</label>\n    <textarea id=\"message\"></textarea>\n  </fieldset>\n  <button type=\"submit\">Отправить</button>\n</form>\n\n\n**Типичная ошибка на интервью:** Везде используют `<div>` вместо семантических элементов. Semantic HTML нужен не только для SEO—это критично для доступности и качества кода."
+    },
+    "tags": [
+      "semantic-html",
+      "accessibility",
+      "forms",
+      "best-practices"
+    ]
+  },
+  {
+    "id": "css-html-q-8",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the CSS box model and how margin, padding, and border interact. What happens when you set box-sizing to border-box?",
+      "ru": "Объясните модель коробки CSS и как взаимодействуют margin, padding и border. Что происходит, когда вы устанавливаете box-sizing на border-box?"
+    },
+    "answer": {
+      "en": "### CSS Box Model\n\nThe box model consists of content, padding, border, and margin layers. By default (content-box), width only includes content. With border-box, width includes padding and border, making sizing more predictable.\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 5px solid black;\n  margin: 10px;\n  box-sizing: border-box; /* Total width stays 200px */\n}\n```\n\n**Common interview trap:** Forgetting that margin is outside the border and doesn't affect element width.",
+      "ru": "### Модель коробки CSS\n\nМодель коробки состоит из слоёв content, padding, border и margin. По умолчанию (content-box) ширина включает только содержимое. С border-box ширина включает padding и border, что делает размеры более предсказуемыми.\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 5px solid black;\n  margin: 10px;\n  box-sizing: border-box; /* Общая ширина остаётся 200px */\n}\n```\n\n**Типичная ошибка:** Забыть, что margin находится за пределами border и не влияет на ширину элемента."
+    },
+    "tags": [
+      "box-model",
+      "padding-margin-border",
+      "box-sizing"
+    ]
+  },
+  {
+    "id": "css-html-q-9",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a flexbox layout with a header, sidebar, and main content area. How would you make the main content flexible?",
+      "ru": "Напишите макет flexbox с заголовком, боковой панелью и основным контентом. Как вы сделаете основной контент гибким?"
+    },
+    "answer": {
+      "en": "### Flexbox Layout\n\nUse flex-direction: column for the container and flex: 1 on the main content to make it grow. The sidebar stays fixed width while main expands to fill remaining space.\n\n```css\n.container { display: flex; flex-direction: column; height: 100vh; }\n.header { height: 60px; background: #333; }\n.content { display: flex; flex: 1; }\n.sidebar { width: 200px; background: #eee; }\n.main { flex: 1; overflow: auto; }\n```\n\n**Common interview trap:** Not setting height/flex: 1 on parent containers, so children can't expand.",
+      "ru": "### Макет Flexbox\n\nИспользуйте flex-direction: column для контейнера и flex: 1 для основного контента, чтобы он растягивался. Боковая панель остаётся фиксированной, а основное содержимое расширяется.\n\n```css\n.container { display: flex; flex-direction: column; height: 100vh; }\n.header { height: 60px; background: #333; }\n.content { display: flex; flex: 1; }\n.sidebar { width: 200px; background: #eee; }\n.main { flex: 1; overflow: auto; }\n```\n\n**Типичная ошибка:** Не установить height/flex: 1 на родительские контейнеры, поэтому дети не могут расширяться."
+    },
+    "tags": [
+      "flexbox",
+      "layout",
+      "flex-grow"
+    ]
+  },
+  {
+    "id": "css-html-q-10",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain CSS selector specificity. Which selector wins: class, ID, or element? Show an example where specificity causes unexpected behavior.",
+      "ru": "Объясните специфичность селектора CSS. Какой селектор побеждает: класс, ID или элемент? Покажите пример, где специфичность вызывает неожиданное поведение."
+    },
+    "answer": {
+      "en": "### CSS Specificity\n\nSpecificity determines which rule applies: ID (100) > class (10) > element (1). Higher specificity wins. Even a general ID selector beats multiple class selectors.\n\n```css\n#header { color: red; } /* Specificity: 100 */\n.nav { color: blue; } /* Specificity: 10 */\np { color: green; } /* Specificity: 1 */\n/* #header wins - element becomes red */\n```\n\n**Common interview trap:** Thinking !important should always be used to fix styling issues instead of understanding specificity.",
+      "ru": "### Специфичность CSS\n\nСпецифичность определяет, какое правило применяется: ID (100) > класс (10) > элемент (1). Выше специфичность побеждает. Даже один общий селектор ID побивает несколько селекторов класса.\n\n```css\n#header { color: red; } /* Specificity: 100 */\n.nav { color: blue; } /* Specificity: 10 */\np { color: green; } /* Specificity: 1 */\n/* #header побеждает - элемент становится красным */\n```\n\n**Типичная ошибка:** Думать, что !important всегда следует использовать для исправления стилей вместо понимания специфичности."
+    },
+    "tags": [
+      "specificity",
+      "selectors",
+      "cascade"
+    ]
+  },
+  {
+    "id": "css-html-q-11",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a semantic HTML form with proper labels, input types, and validation attributes. Why is semantic HTML important?",
+      "ru": "Напишите семантическую HTML форму с правильными метками, типами ввода и атрибутами валидации. Почему семантический HTML важен?"
+    },
+    "answer": {
+      "en": "### Semantic HTML Form\n\nSemantic HTML improves accessibility, SEO, and code readability. Use proper input types, labels with for attribute, and validation attributes like required, type, and pattern.\n\n```html\n<form>\n  <label for=\"email\">Email:</label>\n  <input type=\"email\" id=\"email\" required />\n  \n  <label for=\"password\">Password:</label>\n  <input type=\"password\" id=\"password\" minlength=\"8\" />\n  \n  <button type=\"submit\">Login</button>\n</form>\n```\n\n**Common interview trap:** Using div instead of form, or input without label element.",
+      "ru": "### Семантическая HTML форма\n\nСемантический HTML улучшает доступность, SEO и читаемость кода. Используйте правильные типы input, метки с атрибутом for и атрибуты валидации как required, type и pattern.\n\n```html\n<form>\n  <label for=\"email\">Email:</label>\n  <input type=\"email\" id=\"email\" required />\n  \n  <label for=\"password\">Пароль:</label>\n  <input type=\"password\" id=\"password\" minlength=\"8\" />\n  \n  <button type=\"submit\">Вход</button>\n</form>\n```\n\n**Типичная ошибка:** Использование div вместо form или input без элемента label."
+    },
+    "tags": [
+      "semantic-html",
+      "forms",
+      "accessibility"
+    ]
+  },
+  {
+    "id": "css-html-q-12",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between position: relative, absolute, and fixed. When would you use each?",
+      "ru": "Объясните разницу между position: relative, absolute и fixed. Когда вы бы использовали каждый?"
+    },
+    "answer": {
+      "en": "### CSS Positioning\n\nRelative positions element relative to its normal flow (doesn't remove it). Absolute removes element from flow, positioned relative to nearest positioned parent. Fixed removes from flow, positioned relative to viewport.\n\n```css\n.relative { position: relative; top: 10px; } /* Stays in flow, shifts down */\n.absolute { position: absolute; top: 10px; } /* Removed from flow, positioned */\n.fixed { position: fixed; top: 10px; } /* Sticky to viewport, always visible */\n```\n\n**Common interview trap:** Thinking absolute and fixed behave the same way; fixed stays on screen during scroll, absolute doesn't.",
+      "ru": "### CSS Позиционирование\n\nRelative позиционирует элемент относительно нормального потока (не удаляет его). Absolute удаляет элемент из потока, позиционируется относительно ближайшего позиционированного родителя. Fixed удаляет из потока, позиционируется относительно viewport.\n\n```css\n.relative { position: relative; top: 10px; } /* Остаётся в потоке, смещается */\n.absolute { position: absolute; top: 10px; } /* Удалено из потока, позиционировано */\n.fixed { position: fixed; top: 10px; } /* Прилипает к viewport, всегда видимо */\n```\n\n**Типичная ошибка:** Думать, что absolute и fixed ведут себя одинаково; fixed остаётся на экране при прокрутке, absolute нет."
+    },
+    "tags": [
+      "positioning",
+      "relative",
+      "absolute",
+      "fixed"
+    ]
+  },
+  {
+    "id": "css-html-q-13",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the CSS box model and how padding, margin, and border affect element sizing. How does box-sizing property change this behavior?",
+      "ru": "Объясните CSS box model и как padding, margin и border влияют на размер элемента. Как свойство box-sizing меняет это поведение?"
+    },
+    "answer": {
+      "en": "### Box Model Components\n\nThe box model consists of content, padding (inside spacing), border, and margin (outside spacing). By default, width/height only apply to content, and padding/border add to the total size. The `box-sizing: border-box` includes padding and border in the width/height calculation.\n\n```typescript\n/* Default: width = 100px + 20px padding + 2px border */\n.box {\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n\n/* With border-box: width = 100px total */\n.box-sized {\n  box-sizing: border-box;\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n```\n\n**Common interview trap:** Forgetting that margin doesn't affect box-sizing in either mode—it's always outside.",
+      "ru": "### Компоненты Box Model\n\nBox model состоит из контента, padding (внутренний отступ), border и margin (внешний отступ). По умолчанию width/height применяются только к контенту, а padding/border добавляются к общему размеру. Свойство `box-sizing: border-box` включает padding и border в расчет width/height.\n\n```typescript\n/* По умолчанию: width = 100px + 20px padding + 2px border */\n.box {\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n\n/* С border-box: width = 100px итого */\n.box-sized {\n  box-sizing: border-box;\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n```\n\n**Типичная ошибка:** Забывают, что margin не влияет на box-sizing в обоих режимах—он всегда снаружи."
+    },
+    "tags": [
+      "box-model",
+      "padding-margin-border",
+      "box-sizing"
+    ]
+  },
+  {
+    "id": "css-html-q-14",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is CSS specificity and how does it determine which styles are applied? Give examples of selector specificity calculation.",
+      "ru": "Что такое CSS specificity и как она определяет, какие стили применяются? Приведите примеры расчета specificity селекторов."
+    },
+    "answer": {
+      "en": "### Specificity Calculation\n\nSpecificity is calculated as (inline styles, IDs, classes/attributes/pseudo-classes, elements). Higher specificity wins in cascade conflicts. Inline styles (1,0,0,0) beat IDs (0,1,0,0), which beat classes (0,0,1,0), which beat elements (0,0,0,1).\n\n```typescript\np { color: blue; }              /* (0,0,0,1) */\n.class { color: green; }       /* (0,0,1,0) wins */\n#id { color: red; }            /* (0,1,0,0) wins all */\nstyle=\"color: yellow;\"         /* (1,0,0,0) wins all */\np.class#id { color: purple; }  /* (0,1,1,1) */\n```\n\n**Common interview trap:** !important overrides specificity but should be avoided—focus on proper selector structure instead.",
+      "ru": "### Расчет Specificity\n\nSpecificity рассчитывается как (inline стили, IDs, классы/атрибуты/псевдо-классы, элементы). Более высокая specificity побеждает в конфликтах каскада. Inline стили (1,0,0,0) бьют IDs (0,1,0,0), которые бьют классы (0,0,1,0), которые бьют элементы (0,0,0,1).\n\n```typescript\np { color: blue; }              /* (0,0,0,1) */\n.class { color: green; }       /* (0,0,1,0) побеждает */\n#id { color: red; }            /* (0,1,0,0) побеждает все */\nstyle=\"color: yellow;\"         /* (1,0,0,0) побеждает все */\np.class#id { color: purple; }  /* (0,1,1,1) */\n```\n\n**Типичная ошибка:** !important переопределяет specificity, но его следует избегать—лучше сосредоточиться на правильной структуре селекторов."
+    },
+    "tags": [
+      "specificity",
+      "cascade",
+      "selectors"
+    ]
+  },
+  {
+    "id": "css-html-q-15",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how CSS Grid's `auto-fit` and `auto-fill` differ, and when would you use each one in a responsive layout?",
+      "ru": "Объясните разницу между `auto-fit` и `auto-fill` в CSS Grid и когда использовать каждый из них в адаптивной верстке?"
+    },
+    "answer": {
+      "en": "### auto-fit vs auto-fill\n\n`auto-fit` collapses empty tracks, reducing grid container width, while `auto-fill` keeps them, maintaining full width. Use `auto-fit` for flexible layouts that shrink with content, and `auto-fill` for consistent spacing.\n\n```typescript\n/* auto-fit: collapses empty tracks */\n.gallery { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }\n\n/* auto-fill: keeps empty tracks */\n.grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }\n```\n\n**Common interview trap:** Thinking they behave identically until items no longer fill the row.",
+      "ru": "### auto-fit vs auto-fill\n\n`auto-fit` схлопывает пустые дорожки, сжимая контейнер, а `auto-fill` их сохраняет, поддерживая полную ширину. Используйте `auto-fit` для гибких макетов, а `auto-fill` для постоянного промежутка.\n\n```typescript\n/* auto-fit: схлопывает пустые дорожки */\n.gallery { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }\n\n/* auto-fill: сохраняет пустые дорожки */\n.grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }\n```\n\n**Типичная ошибка:** Считать их идентичными, пока элементы не перестанут заполнять ряд."
+    },
+    "tags": [
+      "css-grid",
+      "responsive-design",
+      "layout"
+    ]
+  },
+  {
+    "id": "css-html-q-16",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use CSS custom properties with BEM methodology to create a maintainable theme system for a component library?",
+      "ru": "Как использовать CSS переменные вместе с BEM для создания поддерживаемой системы тем в библиотеке компонентов?"
+    },
+    "answer": {
+      "en": "### CSS Variables + BEM for Theming\n\nDefine theme tokens as CSS variables at the root level and scope them to BEM blocks for modularity. This allows easy theme switching and override at component level without duplicating styles.\n\n```typescript\n:root { --color-primary: #007bff; --color-spacing: 8px; }\n.button { --btn-bg: var(--color-primary); padding: var(--color-spacing); }\n.button.button--dark { --btn-bg: #222; }\n.button__text { color: var(--btn-bg); }\n```\n\n**Common interview trap:** Mixing theme variables globally without block scoping causes naming conflicts.",
+      "ru": "### CSS Variables + BEM для тем\n\nОпределяйте токены тем как CSS переменные на уровне root и привязывайте их к BEM блокам для модульности. Это позволяет легко переключать темы и переопределять стили на уровне компонента.\n\n```typescript\n:root { --color-primary: #007bff; --color-spacing: 8px; }\n.button { --btn-bg: var(--color-primary); padding: var(--color-spacing); }\n.button.button--dark { --btn-bg: #222; }\n.button__text { color: var(--btn-bg); }\n```\n\n**Типичная ошибка:** Смешивание переменных тем глобально без привязки к блокам вызывает конфликты имён."
+    },
+    "tags": [
+      "css-variables",
+      "bem-methodology",
+      "component-design"
+    ]
+  },
+  {
+    "id": "css-html-q-17",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Write a media query strategy that handles both touch and non-touch devices, and explain how `@supports` fits into responsive design.",
+      "ru": "Напишите стратегию media queries для сенсорных и не сенсорных устройств и объясните роль `@supports` в адаптивной верстке."
+    },
+    "answer": {
+      "en": "### Touch Device Detection & Feature Queries\n\nUse `@media (hover: none)` for touch devices and `@supports` to detect CSS feature availability before using advanced properties. This ensures graceful degradation across browsers.\n\n```typescript\n@media (hover: hover) { .button:hover { background: blue; } }\n@media (hover: none) { .button:active { background: blue; } }\n@supports (display: grid) { .layout { display: grid; } }\n@supports not (display: grid) { .layout { display: flex; } }\n```\n\n**Common interview trap:** Forgetting `@supports` causes layout breaks in older browsers without fallbacks.",
+      "ru": "### Обнаружение сенсорных устройств и feature queries\n\nИспользуйте `@media (hover: none)` для сенсорных устройств и `@supports` для проверки поддержки CSS свойств перед их использованием. Это обеспечивает graceful degradation.\n\n```typescript\n@media (hover: hover) { .button:hover { background: blue; } }\n@media (hover: none) { .button:active { background: blue; } }\n@supports (display: grid) { .layout { display: grid; } }\n@supports not (display: grid) { .layout { display: flex; } }\n```\n\n**Типичная ошибка:** Забыть `@supports` приводит к нарушениям в старых браузерах без fallback."
+    },
+    "tags": [
+      "media-queries",
+      "responsive-design",
+      "feature-detection"
+    ]
+  },
+  {
+    "id": "css-html-q-18",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Demonstrate the difference between `::before` and `:before` pseudo-elements and explain when you'd use `::before` with accessibility considerations (ARIA).",
+      "ru": "Покажите разницу между `::before` и `:before` и объясните, когда использовать `::before` с учётом доступности (ARIA)."
+    },
+    "answer": {
+      "en": "### ::before vs :before & Accessibility\n\n`::before` is the modern CSS3 syntax (preferred), while `:before` is legacy CSS2. Both work identically, but `::` clarifies pseudo-element usage. Never hide critical content in pseudo-elements; use ARIA labels for screen readers.\n\n```typescript\n/* Modern syntax */\n.label::before { content: '✓'; }\n\n/* Use aria-label for screen readers */\n<button aria-label=\"Checkbox checked\"><span class=\"checkbox\"></span></button>\n\n.checkbox::before { content: '✓'; } /* Decorative only */\n```\n\n**Common interview trap:** Using pseudo-elements for critical content hides it from screen readers.",
+      "ru": "### ::before vs :before и доступность\n\n`::before` — современный синтаксис CSS3 (предпочтителен), `:before` — наследие CSS2. Оба работают одинаково, но `::` уточняет псевдоэлемент. Никогда не скрывайте критичный контент в псевдоэлементах; используйте ARIA для скринридеров.\n\n```typescript\n/* Современный синтаксис */\n.label::before { content: '✓'; }\n\n/* Используйте aria-label для скринридеров */\n<button aria-label=\"Чекбокс отмечен\"><span class=\"checkbox\"></span></button>\n\n.checkbox::before { content: '✓'; } /* Только декоративно */\n```\n\n**Типичная ошибка:** Использование псевдоэлементов для критичного контента скрывает его от скринридеров."
+    },
+    "tags": [
+      "pseudo-elements",
+      "accessibility",
+      "aria"
+    ]
+  },
+  {
+    "id": "css-html-q-19",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how `transform: translateZ()` with `perspective` creates layered UI effects, and when should you prefer this over absolute positioning for animations?",
+      "ru": "Объясните, как `transform: translateZ()` с `perspective` создаёт многоуровневые эффекты, и когда это лучше абсолютного позиционирования для анимаций?"
+    },
+    "answer": {
+      "en": "### 3D Transforms vs Positioning\n\n`translateZ()` with `perspective` enables GPU acceleration and 3D effects without triggering layout recalculations. Use transforms for animations and interactions—they're smoother than position changes and maintain document flow.\n\n```typescript\n.container { perspective: 1000px; }\n.card { transform: translateZ(0); transition: transform 0.3s; }\n.card:hover { transform: translateZ(50px) rotateX(10deg); }\n\n/* Better for animation than: */\n.card { position: absolute; top: 0; left: 0; } /* Causes reflow */\n```\n\n**Common interview trap:** Overusing `transform` on non-animated elements wastes memory; reserve for interactive elements.",
+      "ru": "### 3D Transforms vs Позиционирование\n\n`translateZ()` с `perspective` включает GPU ускорение и 3D эффекты без пересчёта макета. Используйте transforms для анимаций—они плавнее, чем изменения position и сохраняют flow документа.\n\n```typescript\n.container { perspective: 1000px; }\n.card { transform: translateZ(0); transition: transform 0.3s; }\n.card:hover { transform: translateZ(50px) rotateX(10deg); }\n\n/* Хуже для анимации, чем: */\n.card { position: absolute; top: 0; left: 0; } /* Вызывает reflow */\n```\n\n**Типичная ошибка:** Переиспользование `transform` на статичных элементах тратит память; используйте для интерактивных элементов."
+    },
+    "tags": [
+      "css-transforms",
+      "performance",
+      "animation"
+    ]
+  },
+  {
+    "id": "css-html-q-20",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how CSS Grid auto-placement algorithm works and how you would create a responsive grid without media queries using `auto-fit` and `minmax()`.",
+      "ru": "Объясните, как работает алгоритм автоматического размещения в CSS Grid и как создать адаптивную сетку без медиа-запросов, используя `auto-fit` и `minmax()`."
+    },
+    "answer": {
+      "en": "### CSS Grid Auto-Placement with minmax()\n\nThe `auto-fit` keyword automatically fits as many grid items as possible in a single row based on the container width. Combined with `minmax()`, it creates a truly fluid responsive grid without media queries.\n\n```typescript\n.grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n  gap: 20px;\n}\n```\n\n**Common interview trap:** Confusing `auto-fit` with `auto-fill` — auto-fill collapses empty tracks, auto-fit removes them.",
+      "ru": "### CSS Grid Автоматическое размещение с minmax()\n\nКлючевое слово `auto-fit` автоматически вмещает столько элементов сетки, сколько возможно в одну строку на основе ширины контейнера. В сочетании с `minmax()` это создает адаптивную сетку без медиа-запросов.\n\n```typescript\n.grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n  gap: 20px;\n}\n```\n\n**Типичная ошибка:** Путаница между `auto-fit` и `auto-fill` — auto-fill коллапсирует пустые треки, auto-fit их удаляет."
+    },
+    "tags": [
+      "css-grid",
+      "responsive-design",
+      "auto-fit-minmax"
+    ]
+  },
+  {
+    "id": "css-html-q-21",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use CSS custom properties (variables) to implement a dynamic theme system that supports light and dark modes? Show how to toggle between them.",
+      "ru": "Как бы вы использовали CSS-переменные для реализации динамической системы тем с поддержкой светлого и темного режимов? Покажите, как переключаться между ними."
+    },
+    "answer": {
+      "en": "### CSS Custom Properties for Theme Switching\n\nDefine CSS variables at the root level and override them on a theme class. This allows dynamic theme switching without reloading styles. JavaScript can toggle the class to apply different variable values.\n\n```typescript\n:root {\n  --color-bg: #ffffff;\n  --color-text: #000000;\n}\n\n[data-theme=\"dark\"] {\n  --color-bg: #1a1a1a;\n  --color-text: #ffffff;\n}\n\nbody {\n  background: var(--color-bg);\n  color: var(--color-text);\n}\n```\n\n**Common interview trap:** Not using custom properties cascading — values must be defined before use.",
+      "ru": "### CSS-переменные для переключения тем\n\nОпределите переменные CSS на уровне root и переопределите их в классе темы. Это позволяет динамически переключать темы без перезагрузки стилей. JavaScript может переключать класс для применения разных значений переменных.\n\n```typescript\n:root {\n  --color-bg: #ffffff;\n  --color-text: #000000;\n}\n\n[data-theme=\"dark\"] {\n  --color-bg: #1a1a1a;\n  --color-text: #ffffff;\n}\n\nbody {\n  background: var(--color-bg);\n  color: var(--color-text);\n}\n```\n\n**Типичная ошибка:** Неправильное использование каскада переменных — значения должны быть определены перед использованием."
+    },
+    "tags": [
+      "css-variables",
+      "theme-system",
+      "dark-mode"
+    ]
+  },
+  {
+    "id": "css-html-q-22",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the BEM methodology and show how you would structure a card component with modifier and element classes. Why is it important for maintainability?",
+      "ru": "Опишите методологию BEM и покажите, как вы структурировали бы компонент карточки с модификатором и классами элементов. Почему это важно для поддерживаемости?"
+    },
+    "answer": {
+      "en": "### BEM Methodology Structure\n\nBEM stands for Block, Element, Modifier. It creates predictable class names and prevents CSS conflicts. A block is independent, elements belong to blocks, modifiers represent states or variations.\n\n```typescript\n<div class=\"card card--featured\">\n  <img class=\"card__image\" src=\"\" />\n  <h2 class=\"card__title\">Title</h2>\n  <p class=\"card__description\">Description</p>\n</div>\n\n.card { }\n.card--featured { background: gold; }\n.card__title { font-weight: bold; }\n```\n\n**Common interview trap:** Using nested selectors like `.card .title` instead of `.card__title` breaks the predictability.",
+      "ru": "### Структура методологии BEM\n\nBEM расшифровывается как Block, Element, Modifier. Это создает предсказуемые имена классов и предотвращает конфликты CSS. Блок независим, элементы принадлежат блокам, модификаторы представляют состояния или вариации.\n\n```typescript\n<div class=\"card card--featured\">\n  <img class=\"card__image\" src=\"\" />\n  <h2 class=\"card__title\">Заголовок</h2>\n  <p class=\"card__description\">Описание</p>\n</div>\n\n.card { }\n.card--featured { background: gold; }\n.card__title { font-weight: bold; }\n```\n\n**Типичная ошибка:** Использование вложенных селекторов типа `.card .title` вместо `.card__title` нарушает предсказуемость."
+    },
+    "tags": [
+      "bem-methodology",
+      "css-architecture",
+      "scalability"
+    ]
+  },
+  {
+    "id": "css-html-q-23",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between `::before` and `::after` pseudo-elements and provide a practical example of using them for decorative content with CSS transforms. Should they ever be used for critical content?",
+      "ru": "Объясните разницу между `::before` и `::after` и дайте практический пример их использования для декоративного контента с CSS-трансформациями. Должны ли они когда-либо использоваться для критического контента?"
+    },
+    "answer": {
+      "en": "### Pseudo-Elements ::before and ::after\n\n`::before` inserts content before element's content, `::after` after it. Both are generated content and should only be used for decorative purposes, never for critical content that needs accessibility or SEO. They work perfectly with transforms for visual effects.\n\n```typescript\n.button::before {\n  content: \"→ \";\n  display: inline-block;\n  transform: translateX(0);\n  transition: transform 0.3s;\n}\n\n.button:hover::before {\n  transform: translateX(5px);\n}\n```\n\n**Common interview trap:** Using pseudo-elements for SEO-important text — screen readers ignore generated content.",
+      "ru": "### Псевдо-элементы ::before и ::after\n\n`::before` вставляет контент перед содержимым элемента, `::after` — после него. Оба это сгенерированный контент и должны использоваться только в декоративных целях, никогда для критического контента, требующего доступности или SEO. Они хорошо работают с трансформациями для визуальных эффектов.\n\n```typescript\n.button::before {\n  content: \"→ \";\n  display: inline-block;\n  transform: translateX(0);\n  transition: transform 0.3s;\n}\n\n.button:hover::before {\n  transform: translateX(5px);\n}\n```\n\n**Типичная ошибка:** Использование псевдо-элементов для важного для SEO текста — скринридеры игнорируют сгенерированный контент."
+    },
+    "tags": [
+      "pseudo-elements",
+      "css-transforms",
+      "accessibility"
+    ]
+  },
+  {
+    "id": "css-html-q-24",
+    "topicId": "css-html",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement an accessible modal dialog using semantic HTML and ARIA attributes? What are the key accessibility considerations like focus management and keyboard navigation?",
+      "ru": "Как бы вы реализовали доступный модальный диалог, используя семантический HTML и атрибуты ARIA? Какие ключевые соображения доступности, такие как управление фокусом и навигация с клавиатуры?"
+    },
+    "answer": {
+      "en": "### Accessible Modal Dialog\n\nUse semantic `<dialog>` element or `role=\"dialog\"` with `aria-labelledby` and `aria-modal=\"true\"`. Focus must be trapped inside the modal, and Escape key should close it. Use `aria-hidden=\"true\"` to hide background content from screen readers.\n\n```typescript\n<div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"dialog-title\">\n  <h2 id=\"dialog-title\">Confirm Action</h2>\n  <p>Are you sure?</p>\n  <button>Cancel</button>\n  <button>Confirm</button>\n</div>\n\n// Focus trap: cycle through focusable elements on Tab\n// Close on Escape key\n```\n\n**Common interview trap:** Forgetting focus management — users can tab outside modal or lose focus context.",
+      "ru": "### Доступный модальный диалог\n\nИспользуйте семантический элемент `<dialog>` или `role=\"dialog\"` с `aria-labelledby` и `aria-modal=\"true\"`. Фокус должен быть заблокирован внутри модали, и клавиша Escape должна ее закрывать. Используйте `aria-hidden=\"true\"` для скрытия фонового контента от скринридеров.\n\n```typescript\n<div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"dialog-title\">\n  <h2 id=\"dialog-title\">Подтверждение действия</h2>\n  <p>Вы уверены?</p>\n  <button>Отмена</button>\n  <button>Подтвердить</button>\n</div>\n\n// Фокус ловушка: цикл по фокусируемым элементам на Tab\n// Закрыть на клавишу Escape\n```\n\n**Типичная ошибка:** Забыть управление фокусом — пользователи могут нажимать Tab вне модали или терять контекст фокуса."
+    },
+    "tags": [
+      "aria-attributes",
+      "accessibility",
+      "semantic-html",
+      "focus-management"
+    ]
+  },
+  {
+    "id": "css-html-q-25",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how stacking context works in CSS and how z-index interacts with it. Can a child element with z-index: 9999 ever appear above a sibling with z-index: 1 but in a different stacking context?",
+      "ru": "Объясните, как работает контекст наложения (stacking context) в CSS и как z-index взаимодействует с ним. Может ли дочерний элемент с z-index: 9999 когда-либо отображаться выше соседа с z-index: 1, но в другом контексте наложения?"
+    },
+    "answer": {
+      "en": "### Stacking Context Isolation\n\nA stacking context is an atomic unit that groups elements together. Once a stacking context is established, z-index values only matter within that context. A child with z-index: 9999 cannot exceed its parent's stacking position relative to elements outside that context.\n\n```typescript\n/* Parent creates stacking context with opacity */\n.parent { opacity: 0.99; z-index: 1; }\n.child { z-index: 9999; } /* Still below .sibling */\n.sibling { z-index: 1; position: relative; }\n```\n\n**Common interview trap:** Thinking z-index is a global property—it's relative to the nearest stacking context ancestor.",
+      "ru": "### Изоляция контекста наложения\n\nКонтекст наложения — это атомарная единица, которая группирует элементы вместе. После создания контекста наложения значения z-index работают только внутри этого контекста. Дочерний элемент с z-index: 9999 не может превысить позицию наложения своего родителя относительно внешних элементов.\n\n```typescript\n/* Родитель создаёт контекст наложения через opacity */\n.parent { opacity: 0.99; z-index: 1; }\n.child { z-index: 9999; } /* Всё равно ниже .sibling */\n.sibling { z-index: 1; position: relative; }\n```\n\n**Типичная ошибка:** Думать, что z-index — это глобальное свойство, а не относительное к ближайшему предку с контекстом наложения."
+    },
+    "tags": [
+      "stacking-context",
+      "z-index",
+      "paint-order"
+    ]
+  },
+  {
+    "id": "css-html-q-26",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is the CSS `contain` property and how does it improve rendering performance? Demonstrate with a real-world example where layout containment would be beneficial.",
+      "ru": "Что такое CSS свойство `contain` и как оно улучшает производительность рендеринга? Покажите реальный пример, где containment для layout был бы полезен."
+    },
+    "answer": {
+      "en": "### Performance Through Containment\n\nThe `contain` property tells the browser that an element's internals won't affect the outside layout, paint, or size. This allows the browser to skip recalculations for the entire document. Layout containment is especially useful for independent component grids or lists that reflow independently.\n\n```typescript\n.card { \n  contain: layout style paint; \n  width: 200px;\n}\n/* Browser skips recalc when card content changes */\n```\n\n**Common interview trap:** Assuming `contain: strict` is always safe—it can break position: fixed and certain positioning contexts.",
+      "ru": "### Производительность через содержание\n\nСвойство `contain` говорит браузеру, что внутреннее содержимое элемента не влияет на внешний layout, paint или размер. Это позволяет браузеру пропустить пересчёты для всего документа. Layout containment особенно полезен для независимых компонент-сеток или списков, которые переходят независимо.\n\n```typescript\n.card { \n  contain: layout style paint; \n  width: 200px;\n}\n/* Браузер пропускает пересчёт при изменении содержимого карточки */\n```\n\n**Типичная ошибка:** Предположить, что `contain: strict` всегда безопасен — он может нарушить position: fixed и некоторые контексты позиционирования."
+    },
+    "tags": [
+      "contain-property",
+      "rendering-performance",
+      "layout-containment"
+    ]
+  },
+  {
+    "id": "css-html-q-27",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain CSS `@layer` and its specificity rules. How would you structure layers for a design system with reset, utilities, and component styles? Does a layer declared later override an earlier layer?",
+      "ru": "Объясните CSS `@layer` и его правила специфичности. Как бы вы структурировали слои для дизайн-системы с reset, utilities и component стилями? Переопределяет ли слой, объявленный позже, более ранний слой?"
+    },
+    "answer": {
+      "en": "### Cascade Layers for Intentional Specificity\n\n`@layer` establishes a declaration order independent of selector specificity. Layers declared first have lowest priority, and later layers override earlier ones. This lets you prevent utility classes from being overridden by component styles without raising specificity.\n\n```typescript\n@layer reset, utilities, components;\n@layer reset { * { margin: 0; } }\n@layer components { .btn { padding: 10px; } }\n@layer utilities { .m-0 { margin: 0 !important; } }\n```\n\n**Common interview trap:** Confusing layer order with CSS source order—layer priority is determined by declaration order in @layer, not file order.",
+      "ru": "### Слои каскада для намеренной специфичности\n\n`@layer` устанавливает порядок объявления, независимый от специфичности селектора. Слои, объявленные первыми, имеют наименьший приоритет, а более поздние слои переопределяют ранние. Это позволяет вам предотвратить переопределение utility классов компонентными стилями без повышения специфичности.\n\n```typescript\n@layer reset, utilities, components;\n@layer reset { * { margin: 0; } }\n@layer components { .btn { padding: 10px; } }\n@layer utilities { .m-0 { margin: 0 !important; } }\n```\n\n**Типичная ошибка:** Путать порядок слоёв с порядком исходного кода CSS — приоритет слоя определяется порядком объявления в @layer, а не порядком файлов."
+    },
+    "tags": [
+      "css-layers",
+      "cascade",
+      "specificity-management"
+    ]
+  },
+  {
+    "id": "css-html-q-28",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are CSS logical properties and why would you use them over physical properties like margin-left? Provide an example of how logical properties adapt to writing-mode changes.",
+      "ru": "Что такое логические свойства CSS и почему вы бы использовали их вместо физических свойств типа margin-left? Приведите пример того, как логические свойства адаптируются к изменениям writing-mode."
+    },
+    "answer": {
+      "en": "### Logical Properties for Directional Agility\n\nLogical properties (margin-block, margin-inline, inset-block) map to document flow instead of physical directions. They automatically adapt when writing-mode or direction changes, making layouts work across languages like Arabic (RTL) without duplicating styles.\n\n```typescript\n.box {\n  margin-inline-start: 20px;  /* Left in LTR, right in RTL */\n  padding-block: 10px;         /* Top/bottom padding */\n  inset-inline-end: 0;         /* Right in LTR, left in RTL */\n}\n```\n\n**Common interview trap:** Thinking logical properties replace all physical properties—you still use them for absolute positioning with fixed directions.",
+      "ru": "### Логические свойства для направленной гибкости\n\nЛогические свойства (margin-block, margin-inline, inset-block) соответствуют потоку документа вместо физических направлений. Они автоматически адаптируются при изменении writing-mode или direction, позволяя макетам работать на разных языках, например на арабском (RTL), без дублирования стилей.\n\n```typescript\n.box {\n  margin-inline-start: 20px;  /* Left в LTR, right в RTL */\n  padding-block: 10px;        /* Верхний/нижний padding */\n  inset-inline-end: 0;        /* Right в LTR, left в RTL */\n}\n```\n\n**Типичная ошибка:** Думать, что логические свойства заменяют все физические свойства — вы все ещё используете их для абсолютного позиционирования с фиксированными направлениями."
+    },
+    "tags": [
+      "logical-properties",
+      "i18n",
+      "writing-mode"
+    ]
+  },
+  {
+    "id": "css-html-q-29",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe container queries and their advantages over media queries. How would you use @container with size and style conditions to create responsive components that adapt to their parent container rather than viewport?",
+      "ru": "Опишите container queries и их преимущества перед media queries. Как бы вы использовали @container с условиями size и style для создания отзывчивых компонентов, которые адаптируются к своему родительскому контейнеру, а не к viewport?"
+    },
+    "answer": {
+      "en": "### Container Queries for True Component Autonomy\n\nContainer queries let components respond to their parent container's dimensions or computed styles, not the viewport. This enables truly reusable components that adapt whether in a sidebar or main content area without relying on global breakpoints.\n\n```typescript\n@container (width < 300px) {\n  .card { grid-template-columns: 1fr; }\n}\n@container style(--primary: blue) {\n  .text { color: var(--primary); }\n}\n```\n\n**Common interview trap:** Forgetting to set `container-type: size` or `inline-size` on the parent—without it, @container queries won't trigger.",
+      "ru": "### Container Queries для истинной автономии компонентов\n\nContainer queries позволяют компонентам реагировать на размеры или вычисленные стили родительского контейнера, а не viewport. Это обеспечивает действительно переиспользуемые компоненты, которые адаптируются в боковой панели или основной области контента без привязки к глобальным точкам останова.\n\n```typescript\n@container (width < 300px) {\n  .card { grid-template-columns: 1fr; }\n}\n@container style(--primary: blue) {\n  .text { color: var(--primary); }\n}\n```\n\n**Типичная ошибка:** Забыть установить `container-type: size` или `inline-size` на родителе — без него @container запросы не сработают."
+    },
+    "tags": [
+      "container-queries",
+      "responsive-design",
+      "component-adaptivity"
+    ]
+  },
+  {
+    "id": "css-html-q-30",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how stacking context works with z-index and why setting z-index on a positioned element doesn't always bring it to the front. Provide an example where z-index fails.",
+      "ru": "Объясните, как работает контекст наложения (stacking context) с z-index и почему установка z-index на позиционированный элемент не всегда переносит его на передний план. Приведите пример, когда z-index не срабатывает."
+    },
+    "answer": {
+      "en": "### Stacking Context Isolation\n\nA new stacking context is created by elements with certain CSS properties (opacity, transform, filter). Once inside a stacking context, z-index values are only compared within that context, not globally. A child with z-index: 9999 inside a parent with opacity: 0.9 will never appear above a sibling with z-index: 1 outside that context.\n\n```typescript\n// Parent with opacity creates new stacking context\n<div style=\"opacity: 0.9; z-index: 1\">\n  <div style=\"z-index: 9999\">Child (trapped in parent context)</div>\n</div>\n<div style=\"z-index: 2\">This will be above the 9999 child</div>\n```\n\n**Common interview trap:** Candidates assume z-index compares globally—it doesn't when stacking contexts are involved.",
+      "ru": "### Изоляция контекста наложения\n\nНовый контекст наложения создается элементами с определенными CSS-свойствами (opacity, transform, filter). После создания контекста значения z-index сравниваются только внутри этого контекста, а не глобально. Потомок с z-index: 9999 внутри родителя с opacity: 0.9 никогда не появится выше родственника с z-index: 1 вне этого контекста.\n\n```typescript\n// Родитель с opacity создает новый контекст наложения\n<div style=\"opacity: 0.9; z-index: 1\">\n  <div style=\"z-index: 9999\">Потомок (заперт в контексте родителя)</div>\n</div>\n<div style=\"z-index: 2\">Это будет выше потомка с 9999</div>\n```\n\n**Типичная ошибка:** Кандидаты предполагают, что z-index сравнивается глобально—это не так при наличии контекстов наложения."
+    },
+    "tags": [
+      "stacking-context",
+      "z-index",
+      "paint-order"
+    ]
+  },
+  {
+    "id": "css-html-q-31",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "What does the CSS `contain` property do and how can it improve performance? Name at least two types of containment.",
+      "ru": "Что делает CSS-свойство `contain` и как оно может улучшить производительность? Назовите как минимум два типа containment."
+    },
+    "answer": {
+      "en": "### Layout and Paint Containment\n\nThe `contain` property tells the browser that an element is independent and its internal changes won't affect the outside layout or paint. Common types: `layout` (prevents layout recalculations outside), `paint` (prevents painting outside boundaries), `content` (enables all containments), and `strict` (applies layout, paint, size, and style).\n\n```typescript\n// Isolated component won't trigger parent reflows\n<div style=\"contain: content; width: 300px; height: 300px\">\n  <button>Click me</button>\n</div>\n// Browser knows changes inside don't affect external layout\n```\n\n**Common interview trap:** Confusing `contain: content` with `overflow: hidden`—they serve different purposes.",
+      "ru": "### Содержание макета и рисования\n\nСвойство `contain` сообщает браузеру, что элемент независим и его внутренние изменения не повлияют на внешний макет или рисование. Распространенные типы: `layout` (предотвращает пересчет макета снаружи), `paint` (предотвращает рисование за границами), `content` (включает все containments) и `strict` (применяет layout, paint, size и style).\n\n```typescript\n// Изолированный компонент не вызовет переполнение родителя\n<div style=\"contain: content; width: 300px; height: 300px\">\n  <button>Нажми на меня</button>\n</div>\n// Браузер знает, что изменения внутри не влияют на внешний макет\n```\n\n**Типичная ошибка:** Путаница между `contain: content` и `overflow: hidden`—они служат разным целям."
+    },
+    "tags": [
+      "contain-property",
+      "performance-optimization",
+      "rendering"
+    ]
+  },
+  {
+    "id": "css-html-q-32",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain CSS @layer (cascade layers) and how it changes specificity precedence. How does @layer interact with !important?",
+      "ru": "Объясните CSS @layer (каскадные слои) и как это изменяет приоритет специфичности. Как @layer взаимодействует с !important?"
+    },
+    "answer": {
+      "en": "### Cascade Layer Precedence\n\n`@layer` defines cascade layers that override specificity rules—later layers win regardless of selector specificity. With `!important`, the precedence reverses: earlier `!important` declarations win. Layers without `!important` follow normal layer order, but `!important` rules in earlier layers take precedence over later layers.\n\n```typescript\n@layer base, theme, utilities;\n\n@layer theme {\n  .button { color: blue; }\n}\n\n@layer utilities {\n  .button { color: red; } /* Wins (later layer) */\n}\n\n@layer base {\n  .button { color: green !important; } /* Wins (important in earlier layer) */\n}\n```\n\n**Common interview trap:** Assuming `!important` preserves layer order—it actually reverses it for important declarations.",
+      "ru": "### Приоритет каскадного слоя\n\n`@layer` определяет каскадные слои, которые переопределяют правила специфичности—более поздние слои выигрывают независимо от специфичности селектора. С `!important` приоритет меняется на противоположный: более ранние объявления `!important` выигрывают. Слои без `!important` следуют нормальному порядку слоев, но правила `!important` в более ранних слоях имеют приоритет над более поздними.\n\n```typescript\n@layer base, theme, utilities;\n\n@layer theme {\n  .button { color: blue; }\n}\n\n@layer utilities {\n  .button { color: red; } /* Выигрывает (более поздний слой) */\n}\n\n@layer base {\n  .button { color: green !important; } /* Выигрывает (important в более раннем слое) */\n}\n```\n\n**Типичная ошибка:** Предположение, что `!important` сохраняет порядок слоев—на самом деле это его меняет для важных объявлений."
+    },
+    "tags": [
+      "cascade-layers",
+      "@layer",
+      "specificity"
+    ]
+  },
+  {
+    "id": "css-html-q-33",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are CSS logical properties and how do they differ from physical properties? Provide an example with margin or padding in a right-to-left (RTL) context.",
+      "ru": "Что такое CSS логические свойства и чем они отличаются от физических свойств? Приведите пример с margin или padding в контексте справа налево (RTL)."
+    },
+    "answer": {
+      "en": "### Logical Properties for Direction-Agnostic Styling\n\nLogical properties (margin-inline, padding-block, etc.) adapt to writing direction automatically. Physical properties (margin-left, padding-top) are fixed. In RTL languages, `margin-inline-start` applies to the right side, while `margin-left` always applies to the left regardless of direction.\n\n```typescript\n/* Physical: always applies to left */\n.box { margin-left: 20px; }\n\n/* Logical: adapts to direction */\n.box { margin-inline-start: 20px; }\n/* LTR: applies to left, RTL: applies to right */\n```\n\n**Common interview trap:** Assuming logical properties replace direction—they enhance flexibility for multi-directional layouts.",
+      "ru": "### Логические свойства для независимого от направления стилизирования\n\nЛогические свойства (margin-inline, padding-block и т.д.) автоматически адаптируются к направлению письма. Физические свойства (margin-left, padding-top) фиксированы. В языках справа налево `margin-inline-start` применяется к правой стороне, в то время как `margin-left` всегда применяется к левой независимо от направления.\n\n```typescript\n/* Физические: всегда применяются к левой стороне */\n.box { margin-left: 20px; }\n\n/* Логические: адаптируются к направлению */\n.box { margin-inline-start: 20px; }\n/* LTR: применяется к левой, RTL: применяется к правой */\n```\n\n**Типичная ошибка:** Предположение, что логические свойства заменяют направление—они повышают гибкость для многонаправленных макетов."
+    },
+    "tags": [
+      "logical-properties",
+      "internationalization",
+      "writing-direction"
+    ]
+  },
+  {
+    "id": "css-html-q-34",
+    "topicId": "css-html",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe CSS container queries. How do they differ from media queries? Provide an example of using container queries for responsive component styling.",
+      "ru": "Опишите CSS контейнерные запросы (container queries). Чем они отличаются от медиа-запросов? Приведите пример использования контейнерных запросов для адаптивного стилизирования компонентов."
+    },
+    "answer": {
+      "en": "### Container-Based Responsive Design\n\nContainer queries apply styles based on the size of a parent container, not the viewport. This enables true component-level responsiveness. Media queries adapt to viewport size globally; container queries adapt to component context independently, allowing reusable responsive components.\n\n```typescript\n/* Parent must be a container */\n.card-container { container-type: inline-size; }\n\n/* Styles apply based on container size */\n@container (min-width: 400px) {\n  .card { display: grid; grid-template-columns: 1fr 1fr; }\n}\n\n@container (max-width: 399px) {\n  .card { display: block; }\n}\n```\n\n**Common interview trap:** Container queries require explicit `container-type` declaration—they don't work without it.",
+      "ru": "### Адаптивный дизайн на основе контейнера\n\nКонтейнерные запросы применяют стили на основе размера родительского контейнера, а не размера окна просмотра. Это обеспечивает истинную адаптивность на уровне компонентов. Медиа-запросы адаптируются к размеру окна просмотра глобально; контейнерные запросы адаптируются к контексту компонента независимо, что позволяет создавать переиспользуемые адаптивные компоненты.\n\n```typescript\n/* Родитель должен быть контейнером */\n.card-container { container-type: inline-size; }\n\n/* Стили применяются на основе размера контейнера */\n@container (min-width: 400px) {\n  .card { display: grid; grid-template-columns: 1fr 1fr; }\n}\n\n@container (max-width: 399px) {\n  .card { display: block; }\n}\n```\n\n**Типичная ошибка:** Контейнерные запросы требуют явного объявления `container-type`—они не работают без него."
+    },
+    "tags": [
+      "container-queries",
+      "responsive-design",
+      "component-responsiveness"
+    ]
+  },
+  {
+    "id": "css-html-q-35",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the browser rendering pipeline stages and how will-change affects GPU compositing. When would you use will-change and what are its performance implications?",
+      "ru": "Объясните этапы конвейера рендеринга браузера и как will-change влияет на композитинг GPU. Когда вы используете will-change и каковы его последствия для производительности?"
+    },
+    "answer": {
+      "en": "### Browser Rendering Pipeline & will-change\n\nThe pipeline has four stages: style calculation → layout → paint → composite. The will-change property hints to the browser to create a new compositing layer, bypassing paint for subsequent changes. Overusing will-change wastes memory and causes jank because layer creation itself is expensive.\n\n```typescript\n/* Good: Animate transform only */\n.element {\n  will-change: transform;\n  transition: transform 0.3s;\n}\n\n/* Bad: Too many will-change declarations */\n.element {\n  will-change: opacity, transform, left, top;\n}\n```\n\n**Common interview trap:** Believing will-change magically speeds up all CSS properties—it only helps with properties that create layers (transform, opacity).",
+      "ru": "### Конвейер рендеринга браузера и will-change\n\nКонвейер состоит из четырёх этапов: вычисление стилей → разметка → отрисовка → композитинг. Свойство will-change подсказывает браузеру создать новый слой композитинга, пропуская отрисовку для последующих изменений. Избыточное использование will-change расходует память и вызывает рывки, так как само создание слоя дорого обходится.\n\n```typescript\n/* Хорошо: анимируем только transform */\n.element {\n  will-change: transform;\n  transition: transform 0.3s;\n}\n\n/* Плохо: слишком много will-change */\n.element {\n  will-change: opacity, transform, left, top;\n}\n```\n\n**Типичная ошибка:** Вера в то, что will-change ускоряет все CSS свойства—помогает только для свойств, создающих слои (transform, opacity)."
+    },
+    "tags": [
+      "rendering-pipeline",
+      "gpu-compositing",
+      "will-change",
+      "performance-optimization"
+    ]
+  },
+  {
+    "id": "css-html-q-36",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What are CSS Houdini APIs and how do they enable custom rendering logic? Give a practical example of using paint() or layout() API.",
+      "ru": "Что такое CSS Houdini API и как они позволяют реализовать пользовательскую логику рендеринга? Приведите практический пример использования paint() или layout() API."
+    },
+    "answer": {
+      "en": "### CSS Houdini APIs\n\nHoudini APIs allow developers to hook into the browser's rendering pipeline with custom JavaScript worklets. The Paint API lets you draw custom backgrounds; the Layout API enables custom layout algorithms. These run on a separate thread, preventing main-thread blocking.\n\n```typescript\n// Register a custom paint worklet\nCSS.paintWorklet.addModule('gradient-paint.js');\n\n// Use it in CSS\n.element {\n  background-image: paint(custom-gradient);\n}\n\n// In gradient-paint.js worklet\nregisterPaint('custom-gradient', class {\n  paint(ctx, geometry) {\n    ctx.fillStyle = '#0f0';\n    ctx.fillRect(0, 0, geometry.width, geometry.height);\n  }\n});\n```\n\n**Common interview trap:** Confusing Houdini with CSS variables—Houdini enables procedural rendering, not just value substitution.",
+      "ru": "### CSS Houdini API\n\nHoudini API позволяет разработчикам подключиться к конвейеру рендеринга браузера с помощью пользовательских рабочих процессов JavaScript. Paint API позволяет рисовать пользовательские фоны; Layout API включает пользовательские алгоритмы разметки. Они работают в отдельном потоке, предотвращая блокировку главного потока.\n\n```typescript\n// Зарегистрируйте пользовательский рабочий процесс paint\nCSS.paintWorklet.addModule('gradient-paint.js');\n\n// Используйте в CSS\n.element {\n  background-image: paint(custom-gradient);\n}\n\n// В worklet gradient-paint.js\nregisterPaint('custom-gradient', class {\n  paint(ctx, geometry) {\n    ctx.fillStyle = '#0f0';\n    ctx.fillRect(0, 0, geometry.width, geometry.height);\n  }\n});\n```\n\n**Типичная ошибка:** Путание Houdini с CSS переменными—Houdini позволяет процедурный рендеринг, а не просто подстановку значений."
+    },
+    "tags": [
+      "css-houdini",
+      "paint-api",
+      "custom-rendering",
+      "worklets"
+    ]
+  },
+  {
+    "id": "css-html-q-37",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Shadow DOM styling work and what are the key differences between :host, ::slotted(), and piercing selectors? When would you use each?",
+      "ru": "Как работает стилизация Shadow DOM и какие ключевые различия между :host, ::slotted() и piercing селекторами? Когда вы бы использовали каждый?"
+    },
+    "answer": {
+      "en": "### Shadow DOM Styling Scoping\n\n:host targets the shadow host element itself from within the shadow tree; ::slotted() targets elements passed as light DOM children into slots; piercing selectors (>>>) are deprecated due to style encapsulation concerns. Use :host for component defaults, ::slotted() for slotted content styling, and rely on CSS custom properties for theme customization.\n\n```typescript\n/* Shadow tree styles */\n:host {\n  display: block;\n  background: #fff;\n}\n\n::slotted(h1) {\n  font-size: 1.5rem;\n  color: #333;\n}\n\n/* From light DOM, pass custom property */\n<my-component style=\"--primary: blue;\"></my-component>\n```\n\n**Common interview trap:** Thinking shadow DOM styles leak into light DOM or vice versa—they're encapsulated unless explicitly exposed via custom properties.",
+      "ru": "### Стилизация Shadow DOM\n\n:host нацеливает элемент host shadow из shadow tree; ::slotted() нацеливает элементы light DOM, переданные в слоты; piercing селекторы (>>>) устарели из-за опасений по поводу инкапсуляции стилей. Используйте :host для стилей компонента по умолчанию, ::slotted() для стилизации slotted контента и полагайтесь на CSS пользовательские свойства для настройки темы.\n\n```typescript\n/* Стили shadow tree */\n:host {\n  display: block;\n  background: #fff;\n}\n\n::slotted(h1) {\n  font-size: 1.5rem;\n  color: #333;\n}\n\n/* Из light DOM, передайте пользовательское свойство */\n<my-component style=\"--primary: blue;\"></my-component>\n```\n\n**Типичная ошибка:** Мысль о том, что стили shadow DOM просочатся в light DOM или наоборот—они инкапсулированы, если не явно раскрыты через пользовательские свойства."
+    },
+    "tags": [
+      "shadow-dom",
+      "encapsulation",
+      "host-selector",
+      "slotted-selector"
+    ]
+  },
+  {
+    "id": "css-html-q-38",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Compare CSS-in-JS libraries with traditional CSS. What are the trade-offs regarding bundle size, runtime performance, SSR, and styling approach?",
+      "ru": "Сравните CSS-in-JS библиотеки с традиционным CSS. Каковы компромиссы в отношении размера пакета, производительности во время выполнения, SSR и подхода к стилизации?"
+    },
+    "answer": {
+      "en": "### CSS-in-JS vs Traditional CSS\n\nCSS-in-JS (styled-components, Emotion) offers scoped styling and dynamic values but adds JavaScript runtime overhead and larger bundles. Traditional CSS is faster and smaller but lacks dynamic scoping without BEM/naming conventions. CSS-in-JS has SSR complexity requiring serialization; CSS is trivial for SSR.\n\n```typescript\n// CSS-in-JS: Dynamic, scoped, runtime cost\nconst StyledButton = styled.button`\n  background: ${props => props.primary ? 'blue' : 'gray'};\n  padding: 10px;\n`;\n\n// Traditional CSS: Static, shared, no runtime cost\n/* button.css */\n.btn--primary { background: blue; }\n.btn { padding: 10px; }\n```\n\n**Common interview trap:** Assuming CSS-in-JS is always slower—zero-runtime solutions (Vanilla Extract, Linaria) bridge this gap by extracting styles at build time.",
+      "ru": "### CSS-in-JS vs Традиционный CSS\n\nCSS-in-JS (styled-components, Emotion) предлагает scoped стилизацию и динамические значения, но добавляет накладные расходы JavaScript и увеличивает пакеты. Традиционный CSS быстрее и меньше, но не имеет динамического scoping без BEM/соглашений по именованию. CSS-in-JS имеет сложность SSR, требующую сериализации; CSS тривиален для SSR.\n\n```typescript\n// CSS-in-JS: Динамический, scoped, runtime расходы\nconst StyledButton = styled.button`\n  background: ${props => props.primary ? 'blue' : 'gray'};\n  padding: 10px;\n`;\n\n// Традиционный CSS: Статический, общий, без runtime расходов\n/* button.css */\n.btn--primary { background: blue; }\n.btn { padding: 10px; }\n```\n\n**Типичная ошибка:** Предположение, что CSS-in-JS всегда медленнее—zero-runtime решения (Vanilla Extract, Linaria) преодолевают этот разрыв, извлекая стили во время сборки."
+    },
+    "tags": [
+      "css-in-js",
+      "bundle-size",
+      "runtime-performance",
+      "ssr-considerations"
+    ]
+  },
+  {
+    "id": "css-html-q-39",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how browser paint, layout thrashing, and reflow cycles impact performance. How would you debug rendering performance issues using DevTools?",
+      "ru": "Объясните, как отрисовка браузера, layout thrashing и циклы reflow влияют на производительность. Как бы вы отлаживали проблемы производительности рендеринга, используя DevTools?"
+    },
+    "answer": {
+      "en": "### Paint, Layout Thrashing & DevTools Debugging\n\nLayout thrashing occurs when you read DOM properties (offsetHeight) then write (style changes), forcing repeated reflows. Use DevTools Performance tab to record, then check for long purple bars (rendering) and green bars (layout recalcs). Batch DOM reads/writes and use requestAnimationFrame to coalesce updates.\n\n```typescript\n// Bad: Layout thrashing\nfor (let el of elements) {\n  el.style.width = el.offsetWidth + 10 + 'px';\n}\n\n// Good: Batch reads then writes\nconst widths = elements.map(el => el.offsetWidth);\nelements.forEach((el, i) => {\n  el.style.width = widths[i] + 10 + 'px';\n});\n```\n\n**Common interview trap:** Confusing paint (pixels on screen) with layout (element dimensions)—both are expensive, but layout is costlier because it affects dependent elements.",
+      "ru": "### Отрисовка, Layout Thrashing и отладка DevTools\n\nLayout thrashing происходит, когда вы читаете свойства DOM (offsetHeight), а затем пишете (изменения стиля), вынуждая повторные reflow. Используйте вкладку Performance в DevTools для записи, затем проверьте длинные фиолетовые полосы (рендеринг) и зелёные полосы (пересчёты макета). Пакетируйте чтение/запись DOM и используйте requestAnimationFrame для объединения обновлений.\n\n```typescript\n// Плохо: Layout thrashing\nfor (let el of elements) {\n  el.style.width = el.offsetWidth + 10 + 'px';\n}\n\n// Хорошо: Пакетное чтение, затем запись\nconst widths = elements.map(el => el.offsetWidth);\nelements.forEach((el, i) => {\n  el.style.width = widths[i] + 10 + 'px';\n});\n```\n\n**Типичная ошибка:** Путаница отрисовки (пиксели на экране) с разметкой (размеры элемента)—обе дорогие, но разметка дороже, так как влияет на зависимые элементы."
+    },
+    "tags": [
+      "layout-thrashing",
+      "reflow-cycles",
+      "paint-performance",
+      "devtools-debugging"
+    ]
+  },
+  {
+    "id": "css-html-q-40",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the browser rendering pipeline and how will-change affects GPU compositing layers. When should you use will-change and what are the performance implications?",
+      "ru": "Объясните конвейер рендеринга браузера и как will-change влияет на слои GPU compositing. Когда следует использовать will-change и какие это имеет последствия для производительности?"
+    },
+    "answer": {
+      "en": "### Browser Rendering Pipeline and will-change\n\nThe browser goes through style → layout → paint → composite phases. The will-change property creates a new stacking context and GPU layer, bypassing paint operations for transform/opacity changes. Overusing will-change wastes GPU memory and can degrade performance.\n\n```typescript\n/* Good: will-change for frequently transformed elements */\n.animated-box {\n  will-change: transform;\n  animation: slideIn 0.3s ease-out;\n}\n\n/* Bad: will-change on too many elements */\n.item { will-change: transform; } /* memory overhead */\n\n/* Remove will-change after animation */\n.animated-box:not(:hover) { will-change: auto; }\n```\n\n**Common interview trap:** Assuming will-change improves all animations—it only helps with specific properties (transform, opacity) and creates memory overhead if overused.",
+      "ru": "### Конвейер рендеринга и will-change\n\nБраузер проходит через фазы style → layout → paint → composite. Свойство will-change создает новый контекст укладки и GPU-слой, обходя операции рисования для изменений transform/opacity. Чрезмерное использование will-change тратит GPU-память и может снизить производительность.\n\n```typescript\n/* Хорошо: will-change для часто трансформируемых элементов */\n.animated-box {\n  will-change: transform;\n  animation: slideIn 0.3s ease-out;\n}\n\n/* Плохо: will-change на слишком много элементов */\n.item { will-change: transform; } /* накладные расходы памяти */\n\n/* Удалите will-change после анимации */\n.animated-box:not(:hover) { will-change: auto; }\n```\n\n**Типичная ошибка:** Предположение, что will-change улучшает все анимации—он работает только с определенными свойствами (transform, opacity) и создает накладные расходы памяти при чрезмерном использовании."
+    },
+    "tags": [
+      "rendering-pipeline",
+      "gpu-compositing",
+      "will-change",
+      "performance"
+    ]
+  },
+  {
+    "id": "css-html-q-41",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Shadow DOM styling work and what are the main limitations when styling shadow DOM from the light DOM? Discuss ::part and ::slotted pseudo-elements.",
+      "ru": "Как работает стилизация Shadow DOM и каковы основные ограничения при стилизации shadow DOM из light DOM? Обсудите псевдо-элементы ::part и ::slotted."
+    },
+    "answer": {
+      "en": "### Shadow DOM Styling Isolation\n\nShadow DOM creates style encapsulation—external styles don't pierce the shadow boundary by default. Use ::part to expose internal elements for styling, and ::slotted to style light DOM children within slots. CSS custom properties can cross the boundary.\n\n```typescript\n/* Component internal styles (shadow DOM) */\n::part(button) { background: blue; }\n\n/* Host/light DOM styling it */\nmy-component::part(button) { background: green; }\n\n/* Style slotted content */\n::slotted(h2) { color: red; }\n\n/* Custom properties cross the boundary */\n:host { --primary-color: blue; }\n```\n\n**Common interview trap:** Thinking all shadow DOM can be styled externally—you must explicitly export parts; CSS properties don't inherit into shadow DOM by default (only custom properties do).",
+      "ru": "### Инкапсуляция стилей Shadow DOM\n\nShadow DOM создает инкапсуляцию стилей—внешние стили по умолчанию не проникают через границу shadow. Используйте ::part для экспорта внутренних элементов для стилизации и ::slotted для стилизации потомков light DOM внутри слотов. CSS-переменные могут пересекать границу.\n\n```typescript\n/* Внутренние стили компонента (shadow DOM) */\n::part(button) { background: blue; }\n\n/* Стилизация из light DOM */\nmy-component::part(button) { background: green; }\n\n/* Стилизация слотированного контента */\n::slotted(h2) { color: red; }\n\n/* CSS-переменные пересекают границу */\n:host { --primary-color: blue; }\n```\n\n**Типичная ошибка:** Думать, что весь shadow DOM можно стилизовать снаружи—вы должны явно экспортировать части; CSS-свойства не наследуются в shadow DOM по умолчанию (только пользовательские переменные)."
+    },
+    "tags": [
+      "shadow-dom",
+      "encapsulation",
+      "part-pseudo-element",
+      "slotted-pseudo-element"
+    ]
+  },
+  {
+    "id": "css-html-q-42",
+    "topicId": "css-html",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Compare CSS-in-JS solutions (styled-components, Emotion) vs traditional CSS for rendering performance and developer experience. When should you use each approach?",
+      "ru": "Сравните решения CSS-in-JS (styled-components, Emotion) и традиционный CSS с точки зрения производительности рендеринга и опыта разработчика. Когда использовать каждый подход?"
+    },
+    "answer": {
+      "en": "### CSS-in-JS vs Traditional CSS Trade-offs\n\nCSS-in-JS provides component scoping, dynamic styling, and critical CSS extraction but adds runtime overhead and larger bundles. Traditional CSS is faster initially but requires careful naming conventions and manual tree-shaking. Choose CSS-in-JS for design systems; use CSS modules for performance-critical apps.\n\n```typescript\n/* CSS-in-JS: Dynamic styling, scope isolation */\nconst Button = styled.button`\n  background: ${props => props.primary ? 'blue' : 'gray'};\n`;\n\n/* Traditional CSS: Zero runtime overhead */\n/* button.module.css */\n.button { background: gray; }\n.button.primary { background: blue; }\n\n/* Trade-off: Bundle size vs runtime performance */\n```\n\n**Common interview trap:** CSS-in-JS is always faster—it adds 10-30KB overhead and runtime parsing; traditional CSS modules with static extraction often outperform for non-interactive styles.",
+      "ru": "### Компромиссы CSS-in-JS vs традиционный CSS\n\nCSS-in-JS обеспечивает изоляцию компонентов, динамическую стилизацию и извлечение критического CSS, но добавляет накладные расходы выполнения и большие пакеты. Традиционный CSS быстрее изначально, но требует осторожного именования и ручного tree-shaking. Выбирайте CSS-in-JS для дизайн-систем; используйте CSS-модули для приложений критичных по производительности.\n\n```typescript\n/* CSS-in-JS: Динамическая стилизация, изоляция области видимости */\nconst Button = styled.button`\n  background: ${props => props.primary ? 'blue' : 'gray'};\n`;\n\n/* Традиционный CSS: Нулевые накладные расходы выполнения */\n/* button.module.css */\n.button { background: gray; }\n.button.primary { background: blue; }\n\n/* Компромисс: Размер пакета vs производительность выполнения */\n```\n\n**Типичная ошибка:** CSS-in-JS всегда быстрее—он добавляет накладные расходы 10-30KB и парсинг во время выполнения; традиционные CSS-модули со статическим извлечением часто превосходят по производительности для неинтерактивных стилей."
+    },
+    "tags": [
+      "css-in-js",
+      "styled-components",
+      "css-modules",
+      "performance-tradeoffs"
+    ]
+  }
+]

@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Request Scope и Performance
 
 ## Самый популярный Senior вопрос

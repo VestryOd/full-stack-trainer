@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # SQS и Event-Driven Architecture
 
 ## Что такое SQS

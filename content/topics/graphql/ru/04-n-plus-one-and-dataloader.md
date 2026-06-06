@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # N+1 Problem и DataLoader
 
 ## Самая известная проблема GraphQL

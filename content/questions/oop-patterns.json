@@ -1,1 +1,554 @@
-[]
+[
+  {
+    "id": "oop-patterns-q-1",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Singleton pattern and implement it in TypeScript. When would you use it instead of a simple module export?",
+      "ru": "Объясните паттерн Singleton и реализуйте его на TypeScript. Когда вы бы использовали его вместо простого экспорта модуля?"
+    },
+    "answer": {
+      "en": "### Singleton Pattern\n\nSingleton ensures a class has only one instance and provides a global access point. Use it when you need lazy initialization, control over instantiation timing, or need to prevent multiple instances at runtime.\n\n```typescript\nclass DatabaseConnection {\n  private static instance: DatabaseConnection;\n  private constructor() {}\n  \n  static getInstance(): DatabaseConnection {\n    if (!this.instance) {\n      this.instance = new DatabaseConnection();\n    }\n    return this.instance;\n  }\n}\n\nconst db1 = DatabaseConnection.getInstance();\nconst db2 = DatabaseConnection.getInstance();\nconsole.log(db1 === db2); // true\n```\n\n**Common interview trap:** Confusing Singleton with a module export—ES6 modules are already singletons, so true Singleton is rarely needed in modern JavaScript.",
+      "ru": "### Паттерн Singleton\n\nSingleton гарантирует, что класс имеет только один экземпляр и предоставляет глобальную точку доступа. Используйте его, когда нужна ленивая инициализация, контроль над моментом создания или предотвращение множественных экземпляров.\n\n```typescript\nclass DatabaseConnection {\n  private static instance: DatabaseConnection;\n  private constructor() {}\n  \n  static getInstance(): DatabaseConnection {\n    if (!this.instance) {\n      this.instance = new DatabaseConnection();\n    }\n    return this.instance;\n  }\n}\n\nconst db1 = DatabaseConnection.getInstance();\nconst db2 = DatabaseConnection.getInstance();\nconsole.log(db1 === db2); // true\n```\n\n**Типичная ошибка:** Путать Singleton с экспортом модуля—ES6 модули уже являются синглтонами, поэтому истинный Singleton редко нужен в современном JavaScript."
+    },
+    "tags": [
+      "singleton",
+      "creational-patterns",
+      "lazy-initialization"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-2",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement the Factory pattern to create different types of notifications (Email, SMS, Push). How does it differ from the Abstract Factory?",
+      "ru": "Реализуйте паттерн Factory для создания разных типов уведомлений (Email, SMS, Push). Чем он отличается от Abstract Factory?"
+    },
+    "answer": {
+      "en": "### Factory Pattern\n\nFactory provides a method to create objects without specifying exact classes. It encapsulates object creation logic and allows runtime selection of the type. Abstract Factory creates families of related objects, while Factory creates individual types.\n\n```typescript\ninterface Notification {\n  send(message: string): void;\n}\nclass EmailNotification implements Notification {\n  send(msg: string) { console.log(`Email: ${msg}`); }\n}\nclass SMSNotification implements Notification {\n  send(msg: string) { console.log(`SMS: ${msg}`); }\n}\n\nclass NotificationFactory {\n  static create(type: string): Notification {\n    if (type === 'email') return new EmailNotification();\n    if (type === 'sms') return new SMSNotification();\n    throw new Error('Unknown type');\n  }\n}\n```\n\n**Common interview trap:** Thinking Factory and Abstract Factory are the same—Abstract Factory creates multiple related product families.",
+      "ru": "### Паттерн Factory\n\nFactory предоставляет метод для создания объектов без указания точных классов. Он инкапсулирует логику создания и позволяет выбирать тип во время выполнения. Abstract Factory создает семейства связанных объектов, а Factory создает отдельные типы.\n\n```typescript\ninterface Notification {\n  send(message: string): void;\n}\nclass EmailNotification implements Notification {\n  send(msg: string) { console.log(`Email: ${msg}`); }\n}\nclass SMSNotification implements Notification {\n  send(msg: string) { console.log(`SMS: ${msg}`); }\n}\n\nclass NotificationFactory {\n  static create(type: string): Notification {\n    if (type === 'email') return new EmailNotification();\n    if (type === 'sms') return new SMSNotification();\n    throw new Error('Unknown type');\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что Factory и Abstract Factory одно и то же—Abstract Factory создает семейства связанных продуктов."
+    },
+    "tags": [
+      "factory-pattern",
+      "creational-patterns",
+      "encapsulation"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-3",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design an Abstract Factory pattern for creating UI components across different themes (Light/Dark). When would you choose this over Factory?",
+      "ru": "Спроектируйте паттерн Abstract Factory для создания UI компонентов под разные темы (Light/Dark). Когда вы выберете его вместо Factory?"
+    },
+    "answer": {
+      "en": "### Abstract Factory Pattern\n\nAbstract Factory creates families of related objects (e.g., entire UI theme with button, input, dialog). Use it when you need to swap entire product families at runtime. Choose it over Factory when products are interdependent and must work together.\n\n```typescript\ninterface Theme { button(): Button; input(): Input; }\ninterface Button { render(): string; }\ninterface Input { render(): string; }\n\nclass LightButton implements Button { render() { return 'Light Button'; } }\nclass DarkButton implements Button { render() { return 'Dark Button'; } }\n\nclass LightTheme implements Theme {\n  button() { return new LightButton(); }\n  input() { return new LightInput(); }\n}\n\nconst theme: Theme = new LightTheme();\ntheme.button().render();\n```\n\n**Common interview trap:** Overusing Abstract Factory for unrelated objects—it's only beneficial when products form a cohesive family.",
+      "ru": "### Паттерн Abstract Factory\n\nAbstract Factory создает семейства связанных объектов (например, всю тему UI с кнопкой, инпутом, диалогом). Используйте его, когда нужно менять целые семейства продуктов во время выполнения. Выбирайте его вместо Factory, когда продукты взаимозависимы.\n\n```typescript\ninterface Theme { button(): Button; input(): Input; }\ninterface Button { render(): string; }\ninterface Input { render(): string; }\n\nclass LightButton implements Button { render() { return 'Light Button'; } }\nclass DarkButton implements Button { render() { return 'Dark Button'; } }\n\nclass LightTheme implements Theme {\n  button() { return new LightButton(); }\n  input() { return new LightInput(); }\n}\n\nconst theme: Theme = new LightTheme();\ntheme.button().render();\n```\n\n**Типичная ошибка:** Перегружать Abstract Factory для несвязанных объектов—это полезно только когда продукты образуют связную семью."
+    },
+    "tags": [
+      "abstract-factory",
+      "creational-patterns",
+      "theme-management"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-4",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement the Builder pattern for constructing complex objects like API requests with optional fields. Compare it with factory methods.",
+      "ru": "Реализуйте паттерн Builder для конструирования сложных объектов, таких как API запросы с опциональными полями. Сравните с factory методами."
+    },
+    "answer": {
+      "en": "### Builder Pattern\n\nBuilder separates object construction from its representation, allowing step-by-step assembly of complex objects with many optional parameters. Use it instead of Factory when you have numerous optional fields and need readable construction chains.\n\n```typescript\nclass RequestBuilder {\n  private url: string = '';\n  private method: string = 'GET';\n  private headers: Record<string, string> = {};\n  \n  setUrl(url: string) { this.url = url; return this; }\n  setMethod(method: string) { this.method = method; return this; }\n  addHeader(key: string, value: string) { this.headers[key] = value; return this; }\n  build() { return { url: this.url, method: this.method, headers: this.headers }; }\n}\n\nconst req = new RequestBuilder().setUrl('/api').setMethod('POST').addHeader('Auth', 'token').build();\n```\n\n**Common interview trap:** Using Builder for objects with few fields—it adds complexity without benefit; use constructors or Factory instead.",
+      "ru": "### Паттерн Builder\n\nBuilder разделяет конструирование объекта от его представления, позволяя пошагово собирать сложные объекты со множеством опциональных параметров. Используйте его вместо Factory, когда много опциональных полей и нужны читаемые цепочки.\n\n```typescript\nclass RequestBuilder {\n  private url: string = '';\n  private method: string = 'GET';\n  private headers: Record<string, string> = {};\n  \n  setUrl(url: string) { this.url = url; return this; }\n  setMethod(method: string) { this.method = method; return this; }\n  addHeader(key: string, value: string) { this.headers[key] = value; return this; }\n  build() { return { url: this.url, method: this.method, headers: this.headers }; }\n}\n\nconst req = new RequestBuilder().setUrl('/api').setMethod('POST').addHeader('Auth', 'token').build();\n```\n\n**Типичная ошибка:** Использовать Builder для объектов с несколькими полями—это добавляет сложность без пользы; используйте конструкторы или Factory."
+    },
+    "tags": [
+      "builder-pattern",
+      "creational-patterns",
+      "fluent-interface"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-5",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Prototype pattern and demonstrate deep cloning in TypeScript. How does it differ from object assignment or Object.assign()?",
+      "ru": "Объясните паттерн Prototype и покажите глубокое клонирование на TypeScript. Чем он отличается от присваивания объекта или Object.assign()?"
+    },
+    "answer": {
+      "en": "### Prototype Pattern\n\nPrototype creates new objects by cloning an existing object instead of instantiating from scratch. Use it when object creation is expensive or when you need independent copies with nested structures. Object.assign() creates shallow copies; Prototype requires deep cloning for nested objects.\n\n```typescript\ninterface Cloneable {\n  clone(): Cloneable;\n}\nclass User implements Cloneable {\n  constructor(public name: string, public address: { city: string }) {}\n  clone(): User {\n    return new User(this.name, JSON.parse(JSON.stringify(this.address)));\n  }\n}\n\nconst user1 = new User('John', { city: 'NYC' });\nconst user2 = user1.clone();\nuser2.address.city = 'LA';\nconsole.log(user1.address.city); // 'NYC' - independent copy\n```\n\n**Common interview trap:** Using Object.assign() for deep cloning—it only copies top-level properties; nested objects remain referenced.",
+      "ru": "### Паттерн Prototype\n\nPrototype создает новые объекты путем клонирования существующего объекта вместо создания с нуля. Используйте его, когда создание объекта дорого или когда нужны независимые копии с вложенными структурами. Object.assign() создает поверхностные копии; Prototype требует глубокого клонирования.\n\n```typescript\ninterface Cloneable {\n  clone(): Cloneable;\n}\nclass User implements Cloneable {\n  constructor(public name: string, public address: { city: string }) {}\n  clone(): User {\n    return new User(this.name, JSON.parse(JSON.stringify(this.address)));\n  }\n}\n\nconst user1 = new User('John', { city: 'NYC' });\nconst user2 = user1.clone();\nuser2.address.city = 'LA';\nconsole.log(user1.address.city); // 'NYC' - независимая копия\n```\n\n**Типичная ошибка:** Использовать Object.assign() для глубокого клонирования—он копирует только свойства верхнего уровня; вложенные объекты остаются ссылками."
+    },
+    "tags": [
+      "prototype-pattern",
+      "creational-patterns",
+      "deep-cloning"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-6",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Singleton pattern and provide a TypeScript implementation. When would you use it instead of a module-level export?",
+      "ru": "Объясните паттерн Singleton и предоставьте реализацию на TypeScript. Когда вы бы использовали его вместо экспорта на уровне модуля?"
+    },
+    "answer": {
+      "en": "### Singleton Pattern\n\nSingleton ensures only one instance of a class exists globally with lazy initialization. Use it when you need controlled access, lazy loading, or thread-safe initialization that static exports don't provide.\n\n```typescript\nclass Database {\n  private static instance: Database;\n  private constructor() {}\n  static getInstance(): Database {\n    if (!this.instance) {\n      this.instance = new Database();\n    }\n    return this.instance;\n  }\n}\nconst db1 = Database.getInstance();\nconst db2 = Database.getInstance();\nconsole.log(db1 === db2); // true\n```\n\n**Common interview trap:** Forgetting private constructor allows multiple instances via `new`.",
+      "ru": "### Паттерн Singleton\n\nSingleton гарантирует, что существует только один экземпляр класса с ленивой инициализацией. Используйте его, когда нужен контролируемый доступ, ленивая загрузка или потокобезопасная инициализация, которые не обеспечивают статические экспорты.\n\n```typescript\nclass Database {\n  private static instance: Database;\n  private constructor() {}\n  static getInstance(): Database {\n    if (!this.instance) {\n      this.instance = new Database();\n    }\n    return this.instance;\n  }\n}\nconst db1 = Database.getInstance();\nconst db2 = Database.getInstance();\nconsole.log(db1 === db2); // true\n```\n\n**Типичная ошибка:** Забыли приватный конструктор — позволяет создавать множество экземпляров через `new`."
+    },
+    "tags": [
+      "singleton",
+      "lazy-initialization",
+      "instance-control"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-7",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between Factory and Abstract Factory patterns? Provide examples in TypeScript.",
+      "ru": "В чём разница между паттернами Factory и Abstract Factory? Приведите примеры на TypeScript."
+    },
+    "answer": {
+      "en": "### Factory vs Abstract Factory\n\nFactory creates single product types, Abstract Factory creates families of related products. Use Factory for simple object creation, Abstract Factory when you need coordinated creation of multiple related objects.\n\n```typescript\n// Factory: single product\nclass ButtonFactory {\n  static create(type: 'ios' | 'android') {\n    return type === 'ios' ? new IosButton() : new AndroidButton();\n  }\n}\n// Abstract Factory: product families\ninterface UIFactory {\n  createButton(): Button;\n  createInput(): Input;\n}\nclass IosFactory implements UIFactory {\n  createButton() { return new IosButton(); }\n  createInput() { return new IosInput(); }\n}\n```\n\n**Common interview trap:** Confusing them as the same pattern—Abstract Factory coordinates multiple products.",
+      "ru": "### Factory vs Abstract Factory\n\nFactory создаёт единственный тип продукта, Abstract Factory создаёт семейства связанных продуктов. Используйте Factory для простого создания объектов, Abstract Factory когда нужно скоординированное создание нескольких связанных объектов.\n\n```typescript\n// Factory: один продукт\nclass ButtonFactory {\n  static create(type: 'ios' | 'android') {\n    return type === 'ios' ? new IosButton() : new AndroidButton();\n  }\n}\n// Abstract Factory: семейства продуктов\ninterface UIFactory {\n  createButton(): Button;\n  createInput(): Input;\n}\nclass IosFactory implements UIFactory {\n  createButton() { return new IosButton(); }\n  createInput() { return new IosInput(); }\n}\n```\n\n**Типичная ошибка:** Путание их как одного паттерна—Abstract Factory координирует несколько продуктов."
+    },
+    "tags": [
+      "factory",
+      "abstract-factory",
+      "product-families"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-8",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement the Builder pattern for creating complex objects. When is it better than a constructor with many parameters?",
+      "ru": "Реализуйте паттерн Builder для создания сложных объектов. Когда это лучше, чем конструктор с множеством параметров?"
+    },
+    "answer": {
+      "en": "### Builder Pattern\n\nBuilder separates object construction from its representation, enabling step-by-step creation of complex objects. Use it when objects have many optional parameters or complex initialization logic.\n\n```typescript\nclass UserBuilder {\n  private user: any = {};\n  setName(name: string) { this.user.name = name; return this; }\n  setEmail(email: string) { this.user.email = email; return this; }\n  setRole(role: string) { this.user.role = role; return this; }\n  build() { return this.user; }\n}\nconst user = new UserBuilder()\n  .setName('John')\n  .setEmail('john@example.com')\n  .build();\n```\n\n**Common interview trap:** Forgetting to return `this` for method chaining breaks fluent interface.",
+      "ru": "### Паттерн Builder\n\nBuilder разделяет конструирование объекта от его представления, позволяя создавать сложные объекты пошагово. Используйте его когда объекты имеют много опциональных параметров или сложную логику инициализации.\n\n```typescript\nclass UserBuilder {\n  private user: any = {};\n  setName(name: string) { this.user.name = name; return this; }\n  setEmail(email: string) { this.user.email = email; return this; }\n  setRole(role: string) { this.user.role = role; return this; }\n  build() { return this.user; }\n}\nconst user = new UserBuilder()\n  .setName('John')\n  .setEmail('john@example.com')\n  .build();\n```\n\n**Типичная ошибка:** Забыли вернуть `this` для цепочки методов—ломает fluent interface."
+    },
+    "tags": [
+      "builder",
+      "method-chaining",
+      "optional-parameters"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-9",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Prototype pattern and how it differs from deep cloning. Provide a practical TypeScript example.",
+      "ru": "Объясните паттерн Prototype и как он отличается от глубокого клонирования. Приведите практический пример на TypeScript."
+    },
+    "answer": {
+      "en": "### Prototype Pattern\n\nPrototype creates new objects by cloning an existing instance rather than creating from scratch. It's faster than construction when object creation is expensive and allows variation through cloning.\n\n```typescript\ninterface Cloneable {\n  clone(): this;\n}\nclass User implements Cloneable {\n  constructor(public name: string, public settings: {}) {}\n  clone(): this {\n    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);\n  }\n}\nconst user1 = new User('John', { theme: 'dark' });\nconst user2 = user1.clone();\nuser2.name = 'Jane'; // Only user2 affected\n```\n\n**Common interview trap:** Shallow clone copies nested objects by reference—use `JSON.parse(JSON.stringify())` for deep cloning.",
+      "ru": "### Паттерн Prototype\n\nPrototype создаёт новые объекты клонированием существующего экземпляра вместо создания с нуля. Это быстрее конструктора когда создание объекта дорогое и позволяет вариации через клонирование.\n\n```typescript\ninterface Cloneable {\n  clone(): this;\n}\nclass User implements Cloneable {\n  constructor(public name: string, public settings: {}) {}\n  clone(): this {\n    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);\n  }\n}\nconst user1 = new User('John', { theme: 'dark' });\nconst user2 = user1.clone();\nuser2.name = 'Jane'; // Только user2 изменен\n```\n\n**Типичная ошибка:** Поверхностное клонирование копирует вложенные объекты по ссылке—используйте `JSON.parse(JSON.stringify())` для глубокого клонирования."
+    },
+    "tags": [
+      "prototype",
+      "cloning",
+      "object-creation"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-10",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare Singleton and Factory patterns in practical scenarios. When would you choose one over the other in a Node.js application?",
+      "ru": "Сравните паттерны Singleton и Factory в практических сценариях. Когда вы выбрали бы один вместо другого в приложении Node.js?"
+    },
+    "answer": {
+      "en": "### Singleton vs Factory\n\nSingleton provides one shared instance across the app (ideal for shared resources like configs), while Factory creates new instances on demand (useful for flexible object types). Use Singleton for stateful resources, Factory for stateless services or multiple variants.\n\n```typescript\n// Singleton: shared config\nclass Config {\n  private static instance: Config;\n  static getInstance() { return this.instance ??= new Config(); }\n}\n// Factory: multiple service variants\nclass ServiceFactory {\n  static create(type: 'sql' | 'nosql') {\n    return type === 'sql' ? new SqlService() : new NoSqlService();\n  }\n}\nconst config = Config.getInstance();\nconst service = ServiceFactory.create('sql');\n```\n\n**Common interview trap:** Using Singleton for everything makes testing harder—Factory allows dependency injection and mocking.",
+      "ru": "### Singleton vs Factory\n\nSingleton обеспечивает один общий экземпляр в приложении (идеален для общих ресурсов как конфиги), Factory создаёт новые экземпляры по требованию (полезно для гибких типов объектов). Используйте Singleton для состояния ресурсов, Factory для без состояния сервисов или множественных вариантов.\n\n```typescript\n// Singleton: общая конфигурация\nclass Config {\n  private static instance: Config;\n  static getInstance() { return this.instance ??= new Config(); }\n}\n// Factory: множественные варианты сервиса\nclass ServiceFactory {\n  static create(type: 'sql' | 'nosql') {\n    return type === 'sql' ? new SqlService() : new NoSqlService();\n  }\n}\nconst config = Config.getInstance();\nconst service = ServiceFactory.create('sql');\n```\n\n**Типичная ошибка:** Singleton везде усложняет тестирование—Factory позволяет dependency injection и mocking."
+    },
+    "tags": [
+      "singleton",
+      "factory",
+      "comparison",
+      "testing"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-11",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between Factory and Abstract Factory patterns. Provide TypeScript examples showing when you would use each pattern in a real application.",
+      "ru": "Объясните разницу между паттернами Factory и Abstract Factory. Приведите примеры на TypeScript, показывающие, когда использовать каждый паттерн в реальном приложении."
+    },
+    "answer": {
+      "en": "### Factory vs Abstract Factory\n\nFactory creates single product types, while Abstract Factory creates families of related products. Use Factory for simple object creation; use Abstract Factory when you need to ensure consistency across multiple related product types (e.g., different UI themes or database drivers).\n\n```typescript\n// Factory - single product\nclass CarFactory {\n  static createCar(type: string) {\n    return type === 'sedan' ? new Sedan() : new SUV();\n  }\n}\n\n// Abstract Factory - product families\ninterface ThemeFactory {\n  createButton(): Button;\n  createInput(): Input;\n}\nclass DarkTheme implements ThemeFactory {\n  createButton() { return new DarkButton(); }\n  createInput() { return new DarkInput(); }\n}\n```\n\n**Common interview trap:** Confusing Abstract Factory with a generic \"factory of factories\" — it's about creating families of related objects, not just multiple factories.",
+      "ru": "### Factory vs Abstract Factory\n\nFactory создаёт объекты одного типа, а Abstract Factory создаёт семейства связанных объектов. Используйте Factory для простого создания объектов; используйте Abstract Factory, когда нужна согласованность между несколькими типами (например, различные темы UI или драйверы БД).\n\n```typescript\n// Factory - один тип продукта\nclass CarFactory {\n  static createCar(type: string) {\n    return type === 'sedan' ? new Sedan() : new SUV();\n  }\n}\n\n// Abstract Factory - семейства продуктов\ninterface ThemeFactory {\n  createButton(): Button;\n  createInput(): Input;\n}\nclass DarkTheme implements ThemeFactory {\n  createButton() { return new DarkButton(); }\n  createInput() { return new DarkInput(); }\n}\n```\n\n**Типичная ошибка:** Путаница между Abstract Factory и обычной «фабрикой фабрик» — это о создании семейств связанных объектов, а не просто нескольких фабрик."
+    },
+    "tags": [
+      "factory-pattern",
+      "abstract-factory",
+      "object-creation",
+      "design-patterns"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-12",
+    "topicId": "oop-patterns",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare Singleton and Builder patterns. When would you use Singleton for configuration objects, and when is Builder better? Provide a TypeScript example.",
+      "ru": "Сравните паттерны Singleton и Builder. Когда вы используете Singleton для объектов конфигурации, а когда Builder лучше? Приведите пример на TypeScript."
+    },
+    "answer": {
+      "en": "### Singleton vs Builder\n\nSingleton ensures one global instance (e.g., logger, config), while Builder constructs complex objects step-by-step. Use Singleton for stateless shared resources; use Builder when you need flexible, multi-step construction with optional parameters.\n\n```typescript\n// Singleton - single global instance\nclass Logger {\n  private static instance: Logger;\n  private constructor() {}\n  static getInstance() {\n    return this.instance ??= new Logger();\n  }\n}\n\n// Builder - flexible construction\nclass ConfigBuilder {\n  private config = {};\n  setDatabase(db: string) { this.config.db = db; return this; }\n  setPort(port: number) { this.config.port = port; return this; }\n  build() { return this.config; }\n}\n```\n\n**Common interview trap:** Using Singleton for everything with configuration — this breaks testability; Builder is better for mutable config objects.",
+      "ru": "### Singleton vs Builder\n\nSingleton гарантирует один глобальный экземпляр (например, логгер, конфиг), а Builder создаёт сложные объекты пошагово. Используйте Singleton для без­состояния общих ресурсов; используйте Builder, когда нужна гибкая, многошаговая конструкция с опциональными параметрами.\n\n```typescript\n// Singleton - один глобальный экземпляр\nclass Logger {\n  private static instance: Logger;\n  private constructor() {}\n  static getInstance() {\n    return this.instance ??= new Logger();\n  }\n}\n\n// Builder - гибкая конструкция\nclass ConfigBuilder {\n  private config = {};\n  setDatabase(db: string) { this.config.db = db; return this; }\n  setPort(port: number) { this.config.port = port; return this; }\n  build() { return this.config; }\n}\n```\n\n**Типичная ошибка:** Использование Singleton для всех конфигураций — это снижает тестируемость; Builder лучше для изменяемых объектов конфиг."
+    },
+    "tags": [
+      "singleton-pattern",
+      "builder-pattern",
+      "creational-patterns",
+      "testability"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-13",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Decorator pattern and show how it differs from inheritance. When would you use Decorator over subclassing in a real TypeScript application?",
+      "ru": "Объясните паттерн Decorator и покажите, чем он отличается от наследования. Когда вы бы использовали Decorator вместо подклассов в реальном приложении на TypeScript?"
+    },
+    "answer": {
+      "en": "### Decorator Pattern: Composition Over Inheritance\n\nDecorator wraps an object to add behavior dynamically without modifying its structure. Unlike inheritance, it allows combining multiple features at runtime through composition, avoiding the fragile base class problem and class explosion.\n\n```typescript\nclass Coffee {\n  cost(): number { return 5; }\n}\n\nclass MilkDecorator {\n  constructor(private coffee: Coffee) {}\n  cost(): number { return this.coffee.cost() + 2; }\n}\n\nconst drink = new MilkDecorator(new Coffee());\nconsole.log(drink.cost()); // 7\n```\n\n**Common interview trap:** Confusing Decorator with simple wrapper functions; Decorator maintains the interface while adding responsibilities.",
+      "ru": "### Паттерн Decorator: Композиция вместо наследования\n\nDecorator оборачивает объект для добавления функциональности во время выполнения без изменения его структуры. В отличие от наследования, он позволяет комбинировать несколько возможностей через композицию, избегая проблемы хрупкого базового класса и взрывного роста классов.\n\n```typescript\nclass Coffee {\n  cost(): number { return 5; }\n}\n\nclass MilkDecorator {\n  constructor(private coffee: Coffee) {}\n  cost(): number { return this.coffee.cost() + 2; }\n}\n\nconst drink = new MilkDecorator(new Coffee());\nconsole.log(drink.cost()); // 7\n```\n\n**Типичная ошибка:** Путаница Decorator с простыми функциями-обертками; Decorator сохраняет интерфейс при добавлении ответственности."
+    },
+    "tags": [
+      "structural-patterns",
+      "composition",
+      "runtime-behavior"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-14",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the Observer pattern and explain how you would implement it in TypeScript to handle real-time data updates without creating memory leaks.",
+      "ru": "Опишите паттерн Observer и объясните, как вы бы реализовали его на TypeScript для обработки обновлений данных в реальном времени без утечек памяти."
+    },
+    "answer": {
+      "en": "### Observer Pattern: Event-Driven Architecture\n\nObserver establishes a one-to-many dependency where multiple observers subscribe to state changes. To prevent memory leaks, always unsubscribe observers when they're no longer needed, typically using a cleanup function or WeakMap for weak references.\n\n```typescript\nclass Subject {\n  private observers = new Set<(data: any) => void>();\n  subscribe(observer: (data: any) => void) { this.observers.add(observer); }\n  unsubscribe(observer: (data: any) => void) { this.observers.delete(observer); }\n  notify(data: any) { this.observers.forEach(obs => obs(data)); }\n}\n```\n\n**Common interview trap:** Forgetting to implement unsubscribe method, leading to dangling references and memory leaks in long-lived applications.",
+      "ru": "### Паттерн Observer: Архитектура на основе событий\n\nObserver устанавливает зависимость один-ко-многим, где несколько наблюдателей подписываются на изменения состояния. Чтобы предотвратить утечки памяти, всегда отписывайте наблюдателей, когда они больше не нужны, обычно используя функцию очистки или WeakMap для слабых ссылок.\n\n```typescript\nclass Subject {\n  private observers = new Set<(data: any) => void>();\n  subscribe(observer: (data: any) => void) { this.observers.add(observer); }\n  unsubscribe(observer: (data: any) => void) { this.observers.delete(observer); }\n  notify(data: any) { this.observers.forEach(obs => obs(data)); }\n}\n```\n\n**Типичная ошибка:** Забывают реализовать метод unsubscribe, что приводит к зависаниям и утечкам памяти в долгоживущих приложениях."
+    },
+    "tags": [
+      "behavioral-patterns",
+      "event-driven",
+      "memory-management"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-15",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare the Adapter and Bridge patterns. Show a TypeScript example where Bridge would be superior to Adapter for handling multiple incompatible hierarchies.",
+      "ru": "Сравните паттерны Adapter и Bridge. Покажите пример на TypeScript, где Bridge был бы лучше Adapter для работы с несколькими несовместимыми иерархиями."
+    },
+    "answer": {
+      "en": "### Bridge vs Adapter: Different Intents\n\nAdapter fixes incompatibility between existing interfaces after-the-fact, while Bridge decouples abstraction from implementation upfront to avoid combinatorial explosion. Bridge is superior when you have two independent hierarchies (e.g., Shape × Color) that need flexible combinations.\n\n```typescript\ninterface Color { fill(): string; }\nclass RedColor implements Color { fill() { return 'red'; } }\n\nabstract class Shape {\n  constructor(protected color: Color) {}\n  abstract draw(): string;\n}\n\nclass Circle extends Shape {\n  draw() { return `Circle in ${this.color.fill()}`; }\n}\n```\n\n**Common interview trap:** Thinking Bridge and Adapter are the same because both involve composition; Adapter is about compatibility, Bridge is about preventing design fragility.",
+      "ru": "### Bridge vs Adapter: Разные цели\n\nAdapter исправляет несовместимость между существующими интерфейсами постфактум, а Bridge отделяет абстракцию от реализации изначально, чтобы избежать комбинаторного взрыва. Bridge превосходит Adapter, когда у вас есть две независимые иерархии (например, Shape × Color), требующие гибких комбинаций.\n\n```typescript\ninterface Color { fill(): string; }\nclass RedColor implements Color { fill() { return 'red'; } }\n\nabstract class Shape {\n  constructor(protected color: Color) {}\n  abstract draw(): string;\n}\n\nclass Circle extends Shape {\n  draw() { return `Circle in ${this.color.fill()}`; }\n}\n```\n\n**Типичная ошибка:** Думают, что Bridge и Adapter одинаковы, потому что оба используют композицию; Adapter о совместимости, Bridge о предотвращении хрупкости дизайна."
+    },
+    "tags": [
+      "structural-patterns",
+      "abstraction-decoupling",
+      "design-comparison"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-16",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement the Strategy pattern in TypeScript for a payment processor that supports multiple algorithms (credit card, PayPal, crypto). How would you ensure type safety and extensibility?",
+      "ru": "Реализуйте паттерн Strategy на TypeScript для процессора платежей, поддерживающего несколько алгоритмов (кредитная карта, PayPal, крипто). Как бы вы обеспечили типобезопасность и расширяемость?"
+    },
+    "answer": {
+      "en": "### Strategy Pattern: Pluggable Algorithms\n\nStrategy encapsulates interchangeable algorithms behind a common interface. Use generic types and discriminated unions in TypeScript to maintain type safety while allowing runtime algorithm switching without conditional logic.\n\n```typescript\ninterface PaymentStrategy {\n  pay(amount: number): Promise<boolean>;\n}\n\nclass CreditCardStrategy implements PaymentStrategy {\n  async pay(amount: number) { return true; }\n}\n\nclass PaymentProcessor {\n  constructor(private strategy: PaymentStrategy) {}\n  async process(amount: number) { return this.strategy.pay(amount); }\n}\n```\n\n**Common interview trap:** Creating strategies without a common interface or using `any` type, defeating TypeScript's type safety benefits.",
+      "ru": "### Паттерн Strategy: Подменяемые алгоритмы\n\nStrategy инкапсулирует взаимозаменяемые алгоритмы за общим интерфейсом. Используйте дженерики и размеченные объединения в TypeScript для поддержания типобезопасности при переключении алгоритмов во время выполнения без условной логики.\n\n```typescript\ninterface PaymentStrategy {\n  pay(amount: number): Promise<boolean>;\n}\n\nclass CreditCardStrategy implements PaymentStrategy {\n  async pay(amount: number) { return true; }\n}\n\nclass PaymentProcessor {\n  constructor(private strategy: PaymentStrategy) {}\n  async process(amount: number) { return this.strategy.pay(amount); }\n}\n```\n\n**Типичная ошибка:** Создание стратегий без общего интерфейса или использование `any`, что лишает TypeScript преимуществ типобезопасности."
+    },
+    "tags": [
+      "behavioral-patterns",
+      "type-safety",
+      "runtime-polymorphism"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-17",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Command pattern and show how it enables undo/redo functionality. What are the memory trade-offs when storing command history in a large application?",
+      "ru": "Объясните паттерн Command и покажите, как он обеспечивает функциональность отката/повтора. Какие компромиссы памяти возникают при хранении истории команд в большом приложении?"
+    },
+    "answer": {
+      "en": "### Command Pattern: Encapsulated Actions\n\nCommand wraps requests as objects, enabling undo/redo by storing command history and re-executing or reversing them. Trade-off: storing all command objects consumes memory; optimize by implementing Memento pattern or using command compression strategies for high-frequency operations.\n\n```typescript\ninterface Command { execute(): void; undo(): void; }\n\nclass IncrementCommand implements Command {\n  constructor(private value: { num: number }, private amount = 1) {}\n  execute() { this.value.num += this.amount; }\n  undo() { this.value.num -= this.amount; }\n}\n\nclass CommandHistory {\n  private history: Command[] = [];\n  executeCommand(cmd: Command) { cmd.execute(); this.history.push(cmd); }\n  undo() { this.history.pop()?.undo(); }\n}\n```\n\n**Common interview trap:** Not implementing undo properly or assuming unlimited memory for command history without considering application scale.",
+      "ru": "### Паттерн Command: Инкапсулированные действия\n\nCommand оборачивает запросы как объекты, обеспечивая отката/повтор путем хранения истории команд и их повторного выполнения или отмены. Компромисс: хранение всех объектов команд потребляет память; оптимизируйте, реализуя паттерн Memento или используя стратегии сжатия команд для высокочастотных операций.\n\n```typescript\ninterface Command { execute(): void; undo(): void; }\n\nclass IncrementCommand implements Command {\n  constructor(private value: { num: number }, private amount = 1) {}\n  execute() { this.value.num += this.amount; }\n  undo() { this.value.num -= this.amount; }\n}\n\nclass CommandHistory {\n  private history: Command[] = [];\n  executeCommand(cmd: Command) { cmd.execute(); this.history.push(cmd); }\n  undo() { this.history.pop()?.undo(); }\n}\n```\n\n**Типичная ошибка:** Неправильная реализация undo или предположение о неограниченной памяти для истории команд без учета масштаба приложения."
+    },
+    "tags": [
+      "behavioral-patterns",
+      "undo-redo",
+      "memory-optimization"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-18",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Adapter pattern and demonstrate how you'd use it to make incompatible interfaces work together in TypeScript. When would you choose Adapter over simply modifying the original class?",
+      "ru": "Объясните паттерн Adapter и покажите, как вы бы использовали его для работы несовместимых интерфейсов в TypeScript. Когда вы выберете Adapter вместо простого изменения исходного класса?"
+    },
+    "answer": {
+      "en": "### Adapter Pattern for Interface Compatibility\n\nAdapter converts one interface to another expected by clients, allowing incompatible classes to work together. Use it when you can't modify existing code but need integration.\n\n```typescript\ninterface OldAPI { getData(): string; }\nclass NewAPI { fetchData(): Promise<string> { return Promise.resolve('data'); } }\n\nclass APIAdapter implements OldAPI {\n  constructor(private newAPI: NewAPI) {}\n  getData(): string { return 'sync-wrapped'; }\n}\n```\n\n**Common interview trap:** Confusing Adapter with Decorator—Adapter changes interfaces, Decorator adds behavior.",
+      "ru": "### Паттерн Adapter для совместимости интерфейсов\n\nAdapter преобразует один интерфейс в другой, ожидаемый клиентами, позволяя несовместимым классам работать вместе. Используйте его, когда вы не можете изменить существующий код, но нужна интеграция.\n\n```typescript\ninterface OldAPI { getData(): string; }\nclass NewAPI { fetchData(): Promise<string> { return Promise.resolve('data'); } }\n\nclass APIAdapter implements OldAPI {\n  constructor(private newAPI: NewAPI) {}\n  getData(): string { return 'sync-wrapped'; }\n}\n```\n\n**Типичная ошибка:** Путаница Adapter с Decorator—Adapter меняет интерфейсы, Decorator добавляет поведение."
+    },
+    "tags": [
+      "adapter-pattern",
+      "interface-compatibility",
+      "structural-patterns"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-19",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the Bridge pattern and explain how it decouples abstraction from implementation. Provide a TypeScript example with a Device and RemoteControl hierarchy.",
+      "ru": "Описните паттерн Bridge и объясните, как он отделяет абстракцию от реализации. Приведите пример на TypeScript с иерархией Device и RemoteControl."
+    },
+    "answer": {
+      "en": "### Bridge Pattern for Decoupling\n\nBridge separates abstraction from implementation into independent hierarchies, preventing class explosion. Changes to implementation don't affect the abstraction and vice versa.\n\n```typescript\ninterface Device { on(): void; off(): void; }\nclass TV implements Device { on() { console.log('TV on'); } off() { console.log('TV off'); } }\n\nclass RemoteControl { constructor(private device: Device) {} pressOn() { this.device.on(); } }\nconst remote = new RemoteControl(new TV());\n```\n\n**Common interview trap:** Thinking Bridge is just injecting a dependency—it's about maintaining two separate hierarchies independently.",
+      "ru": "### Паттерн Bridge для отделения\n\nBridge разделяет абстракцию и реализацию в независимые иерархии, предотвращая взрыв классов. Изменения в реализации не влияют на абстракцию и наоборот.\n\n```typescript\ninterface Device { on(): void; off(): void; }\nclass TV implements Device { on() { console.log('TV on'); } off() { console.log('TV off'); } }\n\nclass RemoteControl { constructor(private device: Device) {} pressOn() { this.device.on(); } }\nconst remote = new RemoteControl(new TV());\n```\n\n**Типичная ошибка:** Думать, что Bridge—это просто внедрение зависимости—речь идет о поддержании двух отдельных иерархий независимо."
+    },
+    "tags": [
+      "bridge-pattern",
+      "decoupling",
+      "abstraction-implementation"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-20",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does the Observer pattern enable loose coupling in event-driven systems? Write a TypeScript example with a Subject and multiple Observers. What are the pitfalls of naive Observer implementations?",
+      "ru": "Как паттерн Observer обеспечивает слабую связь в системах, управляемых событиями? Напишите пример на TypeScript с Subject и несколькими Observers. Какие подводные камни наивных реализаций Observer?"
+    },
+    "answer": {
+      "en": "### Observer Pattern for Event Coupling\n\nObserver establishes one-to-many relationships where subjects notify observers of state changes without tight coupling. Multiple observers react independently to notifications.\n\n```typescript\nclass Subject {\n  private observers: Observer[] = [];\n  subscribe(obs: Observer) { this.observers.push(obs); }\n  notify(data: string) { this.observers.forEach(o => o.update(data)); }\n}\ninterface Observer { update(data: string): void; }\nclass ConcreteObserver implements Observer { update(data: string) { console.log(data); } }\n```\n\n**Common interview trap:** Memory leaks from unsubscribed observers—always implement unsubscribe and clean up listeners.",
+      "ru": "### Паттерн Observer для слабой связи событий\n\nObserver устанавливает отношения «один ко многим», где субъекты уведомляют наблюдателей об изменениях состояния без тесной связи. Несколько наблюдателей реагируют независимо на уведомления.\n\n```typescript\nclass Subject {\n  private observers: Observer[] = [];\n  subscribe(obs: Observer) { this.observers.push(obs); }\n  notify(data: string) { this.observers.forEach(o => o.update(data)); }\n}\ninterface Observer { update(data: string): void; }\nclass ConcreteObserver implements Observer { update(data: string) { console.log(data); } }\n```\n\n**Типичная ошибка:** Утечки памяти из неподписанных наблюдателей—всегда реализуйте unsubscribe и очистку слушателей."
+    },
+    "tags": [
+      "observer-pattern",
+      "event-driven",
+      "loose-coupling"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-21",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Decorator pattern and contrast it with inheritance. Create a TypeScript example of decorating a Component with additional behavior dynamically. When is Decorator preferable to subclassing?",
+      "ru": "Объясните паттерн Decorator и сравните его с наследованием. Создайте пример на TypeScript декорирования компонента дополнительным поведением динамически. Когда Decorator предпочтительнее подклассирования?"
+    },
+    "answer": {
+      "en": "### Decorator Pattern for Dynamic Behavior\n\nDecorator wraps objects to add behavior dynamically without altering their structure. It's more flexible than inheritance because you can combine decorators at runtime and avoid class explosion.\n\n```typescript\ninterface Component { operation(): string; }\nclass ConcreteComponent implements Component { operation() { return 'Base'; } }\nclass Decorator implements Component {\n  constructor(private component: Component) {}\n  operation() { return this.component.operation() + ' + Extra'; }\n}\nconst decorated = new Decorator(new ConcreteComponent());\n```\n\n**Common interview trap:** Using Decorator when simple inheritance would suffice—Decorator adds complexity; use it for multiple optional combinations.",
+      "ru": "### Паттерн Decorator для динамического поведения\n\nDecorator оборачивает объекты для добавления поведения динамически без изменения их структуры. Он более гибкий, чем наследование, потому что вы можете комбинировать декораторы во время выполнения и избежать взрыва классов.\n\n```typescript\ninterface Component { operation(): string; }\nclass ConcreteComponent implements Component { operation() { return 'Base'; } }\nclass Decorator implements Component {\n  constructor(private component: Component) {}\n  operation() { return this.component.operation() + ' + Extra'; }\n}\nconst decorated = new Decorator(new ConcreteComponent());\n```\n\n**Типичная ошибка:** Использование Decorator, когда простого наследования было бы достаточно—Decorator добавляет сложность; используйте его для множественных дополнительных комбинаций."
+    },
+    "tags": [
+      "decorator-pattern",
+      "dynamic-behavior",
+      "composition-over-inheritance"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-22",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the Strategy pattern and demonstrate how it enables selecting algorithms at runtime. Show a TypeScript example with different sorting strategies. How does it improve testability and flexibility compared to conditional branching?",
+      "ru": "Опишите паттерн Strategy и покажите, как он позволяет выбирать алгоритмы во время выполнения. Покажите пример на TypeScript с разными стратегиями сортировки. Как он улучшает тестируемость и гибкость по сравнению с условными ветвлениями?"
+    },
+    "answer": {
+      "en": "### Strategy Pattern for Runtime Algorithm Selection\n\nStrategy encapsulates interchangeable algorithms into separate classes, allowing clients to choose at runtime. It eliminates conditional logic and makes testing individual algorithms independent.\n\n```typescript\ninterface SortStrategy { sort(arr: number[]): number[]; }\nclass QuickSort implements SortStrategy { sort(arr: number[]) { return arr.sort((a, b) => a - b); } }\nclass BubbleSort implements SortStrategy { sort(arr: number[]) { return [...arr]; } }\n\nclass Sorter { constructor(private strategy: SortStrategy) {} execute(arr: number[]) { return this.strategy.sort(arr); } }\n```\n\n**Common interview trap:** Over-engineering with Strategy for single algorithm—use it only when you have multiple variants or frequent changes.",
+      "ru": "### Паттерн Strategy для выбора алгоритма во время выполнения\n\nStrategy инкапсулирует взаимозаменяемые алгоритмы в отдельные классы, позволяя клиентам выбирать во время выполнения. Он устраняет условную логику и делает тестирование отдельных алгоритмов независимым.\n\n```typescript\ninterface SortStrategy { sort(arr: number[]): number[]; }\nclass QuickSort implements SortStrategy { sort(arr: number[]) { return arr.sort((a, b) => a - b); } }\nclass BubbleSort implements SortStrategy { sort(arr: number[]) { return [...arr]; } }\n\nclass Sorter { constructor(private strategy: SortStrategy) {} execute(arr: number[]) { return this.strategy.sort(arr); } }\n```\n\n**Типичная ошибка:** Переинжиниринг со Strategy для одного алгоритма—используйте его только при множественных вариантах или частых изменениях."
+    },
+    "tags": [
+      "strategy-pattern",
+      "runtime-selection",
+      "algorithm-encapsulation"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-23",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a system where you need to add logging, caching, and validation to an API client without modifying its core implementation. Which structural patterns would you combine and why? Provide a TypeScript example.",
+      "ru": "Спроектируйте систему, где нужно добавить логирование, кеширование и валидацию к API-клиенту без изменения его основной реализации. Какие структурные паттерны вы комбинировали бы и почему? Предоставьте пример на TypeScript."
+    },
+    "answer": {
+      "en": "### Decorator + Adapter Pattern\n\nUse Decorator to wrap the API client with cross-cutting concerns (logging, caching), and Adapter to normalize incompatible interfaces. Decorators stack independently without modifying the original class, while Adapter bridges interface gaps when integrating third-party clients.\n\n```typescript\nclass LoggingDecorator {\n  constructor(private client: ApiClient) {}\n  async request(url: string) {\n    console.log(`Requesting ${url}`);\n    return this.client.request(url);\n  }\n}\n\nclass CachingDecorator {\n  private cache = new Map();\n  constructor(private decorated: LoggingDecorator) {}\n  async request(url: string) {\n    if (this.cache.has(url)) return this.cache.get(url);\n    const result = await this.decorated.request(url);\n    this.cache.set(url, result);\n    return result;\n  }\n}\n```\n\n**Common interview trap:** Confusing Decorator with inheritance; decorators compose behavior dynamically at runtime, not compile time.",
+      "ru": "### Паттерны Decorator + Adapter\n\nИспользуйте Decorator для обёртывания API-клиента с перекрёстными требованиями (логирование, кеширование), и Adapter для нормализации несовместимых интерфейсов. Декораторы складываются независимо без изменения исходного класса, а Adapter связывает интерфейсы при интеграции сторонних клиентов.\n\n```typescript\nclass LoggingDecorator {\n  constructor(private client: ApiClient) {}\n  async request(url: string) {\n    console.log(`Requesting ${url}`);\n    return this.client.request(url);\n  }\n}\n\nclass CachingDecorator {\n  private cache = new Map();\n  constructor(private decorated: LoggingDecorator) {}\n  async request(url: string) {\n    if (this.cache.has(url)) return this.cache.get(url);\n    const result = await this.decorated.request(url);\n    this.cache.set(url, result);\n    return result;\n  }\n}\n```\n\n**Типичная ошибка:** Путаница между Decorator и наследованием; декораторы компонуют поведение динамически во время выполнения, а не во время компиляции."
+    },
+    "tags": [
+      "decorator-pattern",
+      "adapter-pattern",
+      "cross-cutting-concerns",
+      "composition-over-inheritance"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-24",
+    "topicId": "oop-patterns",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how you would implement a DOM tree rendering system where different node types (elements, text, components) need different rendering strategies. Which behavioral and structural patterns apply? Show a TypeScript implementation.",
+      "ru": "Объясните, как вы реализовали бы систему рендеринга DOM-дерева, где разные типы узлов (элементы, текст, компоненты) требуют разных стратегий рендеринга. Какие поведенческие и структурные паттерны применяются? Покажите реализацию на TypeScript."
+    },
+    "answer": {
+      "en": "### Composite + Strategy + Observer\n\nComposite treats individual nodes and tree structures uniformly via a common interface. Strategy encapsulates rendering logic per node type. Observer notifies subscribers when state changes. This allows flexible, tree-like component hierarchies with pluggable rendering.\n\n```typescript\ninterface Node {\n  render(): string;\n}\n\nclass Element implements Node {\n  constructor(private strategy: RenderStrategy) {}\n  render() { return this.strategy.render(this); }\n}\n\nclass CompositeNode implements Node {\n  children: Node[] = [];\n  render() { return this.children.map(c => c.render()).join(''); }\n}\n\ninterface RenderStrategy { render(node: Node): string; }\nclass HtmlStrategy implements RenderStrategy {\n  render(node: Node) { return `<div>${node.render()}</div>`; }\n}\n```\n\n**Common interview trap:** Forgetting that Composite requires identical interfaces for leaf and composite nodes; mixing concerns instead of separating rendering strategy.",
+      "ru": "### Паттерны Composite + Strategy + Observer\n\nComposite обрабатывает отдельные узлы и структуры деревьев единообразно через общий интерфейс. Strategy инкапсулирует логику рендеринга для каждого типа узла. Observer уведомляет подписчиков при изменении состояния. Это позволяет гибкие иерархии компонентов, похожие на деревья, с подключаемым рендерингом.\n\n```typescript\ninterface Node {\n  render(): string;\n}\n\nclass Element implements Node {\n  constructor(private strategy: RenderStrategy) {}\n  render() { return this.strategy.render(this); }\n}\n\nclass CompositeNode implements Node {\n  children: Node[] = [];\n  render() { return this.children.map(c => c.render()).join(''); }\n}\n\ninterface RenderStrategy { render(node: Node): string; }\nclass HtmlStrategy implements RenderStrategy {\n  render(node: Node) { return `<div>${node.render()}</div>`; }\n}\n```\n\n**Типичная ошибка:** Забыть, что Composite требует идентичных интерфейсов для листов и составных узлов; смешивание ответственности вместо разделения стратегии рендеринга."
+    },
+    "tags": [
+      "composite-pattern",
+      "strategy-pattern",
+      "observer-pattern",
+      "tree-structures",
+      "virtual-dom"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-25",
+    "topicId": "oop-patterns",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how Higher-Order Components (HOC) implement the Decorator pattern in React. What are the key differences from classical OOP decorators?",
+      "ru": "Объясните, как Higher-Order Components (HOC) реализуют паттерн Decorator в React. Какие ключевые различия от классических декораторов ООП?"
+    },
+    "answer": {
+      "en": "### HOC as Decorator Pattern\n\nHOCs wrap a component to enhance its behavior without modifying the original. Unlike classical decorators that modify objects at runtime, HOCs return a new component, enabling composition at the component tree level.\n\n```typescript\nconst withAuth = (WrappedComponent) => (props) => {\n  const [isAuth, setIsAuth] = useState(false);\n  return isAuth ? <WrappedComponent {...props} /> : <Login />;\n};\nconst SecurePage = withAuth(Dashboard);\n```\n\n**Common interview trap:** Confusing HOCs with render props; HOCs create wrapper components while render props use function children.",
+      "ru": "### HOC как паттерн Decorator\n\nHOCs оборачивают компонент для усиления его поведения без изменения оригинала. В отличие от классических декораторов, которые модифицируют объекты во время выполнения, HOCs возвращают новый компонент, позволяя композицию на уровне дерева компонентов.\n\n```typescript\nconst withAuth = (WrappedComponent) => (props) => {\n  const [isAuth, setIsAuth] = useState(false);\n  return isAuth ? <WrappedComponent {...props} /> : <Login />;\n};\nconst SecurePage = withAuth(Dashboard);\n```\n\n**Типичная ошибка:** Путаница между HOCs и render props; HOCs создают компоненты-обертки, а render props используют функции-потомки."
+    },
+    "tags": [
+      "higher-order-components",
+      "decorator-pattern",
+      "react-composition"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-26",
+    "topicId": "oop-patterns",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Express middleware implement the Chain of Responsibility pattern? Give an example combining multiple middleware to solve a real authentication flow.",
+      "ru": "Как Express middleware реализует паттерн Chain of Responsibility? Приведите пример комбинирования нескольких middleware для реального потока аутентификации."
+    },
+    "answer": {
+      "en": "### Middleware as Chain of Responsibility\n\nExpress middleware forms a chain where each middleware can handle a request, pass it to the next handler via `next()`, or terminate the chain. Each middleware is responsible for a single concern (logging, auth, validation).\n\n```typescript\napp.use(logger); // 1st handler\napp.use(parseJson); // 2nd handler\napp.use(authenticate); // 3rd handler\napp.use((req, res, next) => res.send('Protected'));\n\nconst authenticate = (req, res, next) => {\n  if (req.headers.auth) next();\n  else res.status(401).send('Unauthorized');\n};\n```\n\n**Common interview trap:** Thinking middleware always proceeds; handlers can also terminate the chain by sending a response without calling `next()`.",
+      "ru": "### Middleware как Chain of Responsibility\n\nExpress middleware формирует цепь, где каждый middleware может обработать запрос, передать его следующему обработчику через `next()` или прервать цепь. Каждый middleware отвечает за одно направление.\n\n```typescript\napp.use(logger); // 1-й обработчик\napp.use(parseJson); // 2-й обработчик\napp.use(authenticate); // 3-й обработчик\napp.use((req, res, next) => res.send('Protected'));\n\nconst authenticate = (req, res, next) => {\n  if (req.headers.auth) next();\n  else res.status(401).send('Unauthorized');\n};\n```\n\n**Типичная ошибка:** Думать, что middleware всегда продолжает цепь; обработчики могут прервать цепь отправкой ответа без вызова `next()`."
+    },
+    "tags": [
+      "chain-of-responsibility",
+      "middleware",
+      "node-patterns"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-27",
+    "topicId": "oop-patterns",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Discuss anti-patterns when combining Observer and Singleton patterns. How can tight coupling in event systems become problematic at scale?",
+      "ru": "Обсудите антипаттерны при комбинировании паттернов Observer и Singleton. Как тесная связь в системах событий может стать проблематичной при масштабировании?"
+    },
+    "answer": {
+      "en": "### Observer + Singleton Anti-Pattern\n\nCombining a global Singleton event emitter with Observer pattern creates hidden dependencies and memory leaks if subscribers aren't unsubscribed. This violates the dependency inversion principle and makes testing difficult.\n\n```typescript\nclass EventBus {\n  static instance = new EventBus();\n  subscribers = [];\n  on(event, callback) { this.subscribers.push(callback); } // Memory leak risk\n  emit(event, data) { this.subscribers.forEach(cb => cb(data)); }\n}\n// Hard to test, debug, and unsubscribe at cleanup\nEventBus.instance.on('update', updateUI);\n```\n\n**Common interview trap:** Ignoring unsubscribe mechanisms; global singletons with observers cause memory leaks in SPAs if cleanup isn't enforced.",
+      "ru": "### Антипаттерн Observer + Singleton\n\nКомбинирование глобального Singleton event emitter с паттерном Observer создает скрытые зависимости и утечки памяти, если подписчики не отписаны. Это нарушает принцип инверсии зависимостей и затрудняет тестирование.\n\n```typescript\nclass EventBus {\n  static instance = new EventBus();\n  subscribers = [];\n  on(event, callback) { this.subscribers.push(callback); } // Риск утечки\n  emit(event, data) { this.subscribers.forEach(cb => cb(data)); }\n}\n// Сложно тестировать, отлаживать и отписываться при очистке\nEventBus.instance.on('update', updateUI);\n```\n\n**Типичная ошибка:** Игнорирование механизмов отписки; глобальные сingletons с observers вызывают утечки памяти в SPA, если очистка не обеспечена."
+    },
+    "tags": [
+      "observer-pattern",
+      "singleton-pattern",
+      "anti-patterns",
+      "memory-leaks"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-28",
+    "topicId": "oop-patterns",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Compare Render Props and Compound Components patterns in React. When should you choose one over the other, and how do they differ from the classical Strategy pattern?",
+      "ru": "Сравните паттерны Render Props и Compound Components в React. Когда выбирать один вместо другого и чем они отличаются от классического паттерна Strategy?"
+    },
+    "answer": {
+      "en": "### Render Props vs Compound Components\n\nRender Props pass rendering logic via a function prop, enabling behavior flexibility. Compound Components share state implicitly through context, providing better API ergonomics. Both implement Strategy pattern but differ in state coupling and composition model.\n\n```typescript\n// Render Props\n<DataFetcher render={data => <div>{data}</div>} />\n\n// Compound Components\n<Tabs>\n  <Tabs.Panel>Content</Tabs.Panel>\n</Tabs>\n\n// Strategy differs: these manage rendering, not algorithm selection\n```\n\n**Common interview trap:** Thinking they're equivalent; Compound Components offer implicit coupling via context while Render Props require explicit prop drilling.",
+      "ru": "### Render Props vs Compound Components\n\nRender Props передают логику рендеринга через функцию-проп, обеспечивая гибкость поведения. Compound Components неявно делят состояние через контекст, обеспечивая лучшую эргономику API. Оба реализуют паттерн Strategy, но отличаются связанностью состояния и моделью композиции.\n\n```typescript\n// Render Props\n<DataFetcher render={data => <div>{data}</div>} />\n\n// Compound Components\n<Tabs>\n  <Tabs.Panel>Content</Tabs.Panel>\n</Tabs>\n\n// Strategy отличается: они управляют рендерингом, а не выбором алгоритма\n```\n\n**Типичная ошибка:** Думать, что они эквивалентны; Compound Components предлагают неявную связь через контекст, а Render Props требуют явной передачи пропсов."
+    },
+    "tags": [
+      "render-props",
+      "compound-components",
+      "strategy-pattern",
+      "react-patterns"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-29",
+    "topicId": "oop-patterns",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a pattern combination using Factory and Strategy to handle payment processing with different providers (Stripe, PayPal). How would you avoid the anti-pattern of the God Object?",
+      "ru": "Спроектируйте комбинацию паттернов Factory и Strategy для обработки платежей разными провайдерами (Stripe, PayPal). Как избежать антипаттерна God Object?"
+    },
+    "answer": {
+      "en": "### Factory + Strategy for Payments\n\nFactory creates strategy instances based on provider type, separating creation from usage. Each strategy handles a single payment provider's logic, avoiding a monolithic payment handler.\n\n```typescript\nclass PaymentFactory {\n  static create(provider: string): PaymentStrategy {\n    return provider === 'stripe' ? new StripePayment() : new PayPalPayment();\n  }\n}\ninterface PaymentStrategy { process(amount: number): Promise<void>; }\nclass StripePayment implements PaymentStrategy { /* ... */ }\nconst strategy = PaymentFactory.create('stripe');\nawait strategy.process(100);\n```\n\n**Common interview trap:** Mixing creation logic with payment logic in one class; this violates Single Responsibility Principle and makes testing harder.",
+      "ru": "### Factory + Strategy для платежей\n\nFactory создает экземпляры стратегии на основе типа провайдера, разделяя создание от использования. Каждая стратегия обрабатывает логику одного провайдера платежей, избегая монолитного обработчика платежей.\n\n```typescript\nclass PaymentFactory {\n  static create(provider: string): PaymentStrategy {\n    return provider === 'stripe' ? new StripePayment() : new PayPalPayment();\n  }\n}\ninterface PaymentStrategy { process(amount: number): Promise<void>; }\nclass StripePayment implements PaymentStrategy { /* ... */ }\nconst strategy = PaymentFactory.create('stripe');\nawait strategy.process(100);\n```\n\n**Типичная ошибка:** Смешивание логики создания с логикой платежей в одном классе; это нарушает принцип единственной ответственности и затрудняет тестирование."
+    },
+    "tags": [
+      "factory-pattern",
+      "strategy-pattern",
+      "pattern-combination",
+      "god-object-anti-pattern"
+    ]
+  },
+  {
+    "id": "oop-patterns-q-30",
+    "topicId": "oop-patterns",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a middleware chain system for Express that combines Chain of Responsibility with Decorator pattern. Show how you'd structure it to allow both pre- and post-processing hooks, and explain how this differs from naively stacking middlewares.",
+      "ru": "Разработайте систему цепочки middleware для Express, комбинирующую паттерны Chain of Responsibility и Decorator. Покажите, как её структурировать для поддержки обработки до и после основной логики, и объясните отличие от простого наложения middleware."
+    },
+    "answer": {
+      "en": "### Chain of Responsibility + Decorator Pattern\n\nCombine middleware as a linked chain where each handler can intercept requests/responses. Decorators wrap handlers to add cross-cutting concerns (logging, auth, validation) before delegating to the next handler.\n\n```typescript\ninterface Middleware {\n  execute(ctx: Context, next: () => Promise<void>): Promise<void>;\n}\n\nclass MiddlewareChain {\n  private handlers: Middleware[] = [];\n  add(handler: Middleware) { this.handlers.push(handler); }\n  async execute(ctx: Context) {\n    let index = 0;\n    const next = async () => {\n      if (index < this.handlers.length) {\n        await this.handlers[index++].execute(ctx, next);\n      }\n    };\n    await next();\n  }\n}\n```\n\n**Common interview trap:** Confusing \"pre/post hooks\" with simply calling next() — true pattern allows decorators to intercept both directions of the call stack.",
+      "ru": "### Комбинирование Chain of Responsibility и Decorator\n\nСтруктурируйте middleware как связанную цепь, где каждый обработчик может перехватывать запросы/ответы. Декораторы оборачивают обработчики, добавляя cross-cutting concerns (логирование, аутентификация) перед делегированием следующему обработчику.\n\n```typescript\ninterface Middleware {\n  execute(ctx: Context, next: () => Promise<void>): Promise<void>;\n}\n\nclass MiddlewareChain {\n  private handlers: Middleware[] = [];\n  add(handler: Middleware) { this.handlers.push(handler); }\n  async execute(ctx: Context) {\n    let index = 0;\n    const next = async () => {\n      if (index < this.handlers.length) {\n        await this.handlers[index++].execute(ctx, next);\n      }\n    };\n    await next();\n  }\n}\n```\n\n**Типичная ошибка:** Путаница между «pre/post hooks» и просто вызовом next() — правильный паттерн позволяет декораторам перехватывать обе стороны стека вызовов."
+    },
+    "tags": [
+      "chain-of-responsibility",
+      "decorator-pattern",
+      "middleware",
+      "express",
+      "composition",
+      "pattern-combination"
+    ]
+  }
+]

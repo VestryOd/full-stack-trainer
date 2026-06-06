@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # System Design Interview Questions
 
 ## Самые популярные задачи Senior Fullstack интервью

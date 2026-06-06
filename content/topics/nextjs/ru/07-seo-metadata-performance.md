@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # SEO, Metadata и Performance
 
 ## Почему SEO важен для Next.js

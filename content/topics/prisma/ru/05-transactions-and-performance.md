@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Prisma Transactions and Performance
 
 ## Главное правило

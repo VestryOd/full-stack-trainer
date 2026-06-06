@@ -1,1 +1,735 @@
-[]
+[
+  {
+    "id": "prisma-q-1",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you define a basic schema in Prisma? Create a simple User model with id, email, and name fields.",
+      "ru": "Как определить базовую схему в Prisma? Создайте простую модель User с полями id, email и name."
+    },
+    "answer": {
+      "en": "### Schema Definition in Prisma\n\nPrisma schema is defined in a `.prisma` file that describes your database structure. Each model represents a database table. You specify datasource (database type), generator (Prisma Client), and models with fields and their types.\n\nField types include String, Int, Boolean, DateTime. Use `@id` for primary key, `@default()` for default values, and `@unique` for unique constraints.\n\ntypescript\n// schema.prisma\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\ngenerator client {\n  provider = \"prisma-client-js\"\n}\n\nmodel User {\n  id    Int     @id @default(autoincrement())\n  email String  @unique\n  name  String\n}\n\n\n**Common interview trap:** Forgetting to specify the datasource provider or generator. These are mandatory for Prisma to work correctly.",
+      "ru": "### Определение схемы в Prisma\n\nСхема Prisma определяется в файле `.prisma`, который описывает структуру базы данных. Каждая модель представляет таблицу БД. Вы указываете источник данных (тип БД), генератор (Prisma Client) и модели с полями и их типами.\n\nТипы полей включают String, Int, Boolean, DateTime. Используйте `@id` для первичного ключа, `@default()` для значений по умолчанию и `@unique` для уникальных ограничений.\n\ntypescript\n// schema.prisma\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\ngenerator client {\n  provider = \"prisma-client-js\"\n}\n\nmodel User {\n  id    Int     @id @default(autoincrement())\n  email String  @unique\n  name  String\n}\n\n\n**Типичная ошибка на интервью:** Забывают указать provider источника данных или generator. Это обязательно для работы Prisma."
+    },
+    "tags": [
+      "schema-definition",
+      "model-fields",
+      "datasource"
+    ]
+  },
+  {
+    "id": "prisma-q-2",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write the basic CRUD operations using Prisma Client. Create, read, update, and delete a User record.",
+      "ru": "Напишите базовые CRUD операции с использованием Prisma Client. Создайте, прочитайте, обновите и удалите запись User."
+    },
+    "answer": {
+      "en": "### CRUD Operations with Prisma Client\n\nPrisma Client provides methods for Create (create), Read (findUnique, findMany), Update (update), and Delete (delete). Each method returns the affected records. Use `await` since all operations are async.\n\nFor Create use `create()` with data object. For Read use `findUnique()` with unique fields or `findMany()` to get all records. Update uses `update()` with where and data. Delete uses `delete()` with where clause.\n\ntypescript\nconst prisma = new PrismaClient();\n\n// CREATE\nconst user = await prisma.user.create({\n  data: { email: \"john@example.com\", name: \"John\" }\n});\n\n// READ\nconst foundUser = await prisma.user.findUnique({\n  where: { id: 1 }\n});\n\n// UPDATE\nconst updated = await prisma.user.update({\n  where: { id: 1 },\n  data: { name: \"Jane\" }\n});\n\n// DELETE\nawait prisma.user.delete({ where: { id: 1 } });\n\n\n**Common interview trap:** Forgetting to use `await` with async operations or not handling errors with try-catch blocks.",
+      "ru": "### CRUD Операции с Prisma Client\n\nPrisma Client предоставляет методы для Create (create), Read (findUnique, findMany), Update (update) и Delete (delete). Каждый метод возвращает затронутые записи. Используйте `await` так как все операции асинхронные.\n\nДля Create используйте `create()` с объектом данных. Для Read используйте `findUnique()` с уникальными полями или `findMany()` для получения всех записей. Update использует `update()` с where и data. Delete использует `delete()` с where.\n\ntypescript\nconst prisma = new PrismaClient();\n\n// CREATE\nconst user = await prisma.user.create({\n  data: { email: \"john@example.com\", name: \"John\" }\n});\n\n// READ\nconst foundUser = await prisma.user.findUnique({\n  where: { id: 1 }\n});\n\n// UPDATE\nconst updated = await prisma.user.update({\n  where: { id: 1 },\n  data: { name: \"Jane\" }\n});\n\n// DELETE\nawait prisma.user.delete({ where: { id: 1 } });\n\n\n**Типичная ошибка на интервью:** Забывают использовать `await` при асинхронных операциях или не обрабатывают ошибки с try-catch блоками."
+    },
+    "tags": [
+      "CRUD-operations",
+      "Prisma-Client",
+      "async-await"
+    ]
+  },
+  {
+    "id": "prisma-q-3",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "Define one-to-one and one-to-many relationships in Prisma. Show an example with User and Profile (one-to-one) and User and Post (one-to-many).",
+      "ru": "Определите отношения один-к-одному и один-ко-многим в Prisma. Покажите пример с User и Profile (один-к-одному) и User и Post (один-ко-многим)."
+    },
+    "answer": {
+      "en": "### One-to-One and One-to-Many Relations\n\nOne-to-one relations link two models where one record of Model A relates to exactly one record of Model B. Use a foreign key in one model. One-to-many means one record in Model A relates to multiple records in Model B. The foreign key goes in the \"many\" side.\n\nUse `@relation` attribute to define the relationship. For one-to-one, add optional field in one model. For one-to-many, the \"many\" side holds the foreign key.\n\ntypescript\nmodel User {\n  id      Int     @id @default(autoincrement())\n  email   String  @unique\n  profile Profile?\n  posts   Post[]\n}\n\nmodel Profile {\n  id     Int  @id @default(autoincrement())\n  bio    String\n  userId Int  @unique\n  user   User @relation(fields: [userId], references: [id])\n}\n\nmodel Post {\n  id     Int  @id @default(autoincrement())\n  title  String\n  userId Int\n  user   User @relation(fields: [userId], references: [id])\n}\n\n\n**Common interview trap:** Forgetting `@relation` attributes or putting foreign keys in the wrong model for one-to-many relations.",
+      "ru": "### Отношения Один-к-одному и Один-ко-многим\n\nОтношения один-к-одному связывают две модели, где одна запись Model A связана ровно с одной записью Model B. Используйте внешний ключ в одной модели. Один-ко-многим означает, что одна запись в Model A связана с несколькими записями в Model B. Внешний ключ находится на стороне \"много\".\n\nИспользуйте атрибут `@relation` для определения отношения. Для один-к-одному добавьте опциональное поле в одну модель. Для один-ко-многим, сторона \"много\" содержит внешний ключ.\n\ntypescript\nmodel User {\n  id      Int     @id @default(autoincrement())\n  email   String  @unique\n  profile Profile?\n  posts   Post[]\n}\n\nmodel Profile {\n  id     Int  @id @default(autoincrement())\n  bio    String\n  userId Int  @unique\n  user   User @relation(fields: [userId], references: [id])\n}\n\nmodel Post {\n  id     Int  @id @default(autoincrement())\n  title  String\n  userId Int\n  user   User @relation(fields: [userId], references: [id])\n}\n\n\n**Типичная ошибка на интервью:** Забывают атрибуты `@relation` или размещают внешние ключи в неправильной модели для отношений один-ко-многим."
+    },
+    "tags": [
+      "one-to-one-relations",
+      "one-to-many-relations",
+      "foreign-keys"
+    ]
+  },
+  {
+    "id": "prisma-q-4",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you create and run database migrations in Prisma? What command initializes Prisma and what command applies schema changes?",
+      "ru": "Как создавать и запускать миграции БД в Prisma? Какая команда инициализирует Prisma и какая команда применяет изменения схемы?"
+    },
+    "answer": {
+      "en": "### Database Migrations in Prisma\n\nMigrations track schema changes and maintain database consistency. Use `prisma migrate dev` during development to create named migrations and apply them. This command generates SQL migration files in the `prisma/migrations` folder.\n\nFor initial setup, use `prisma init` to create `.env` and `schema.prisma` files. In production, use `prisma migrate deploy` to apply pre-generated migrations without prompts. Each migration is reversible and tracked.\n\nbash\n# Initialize Prisma\nprisma init\n\n# Create and apply migration\nprisma migrate dev --name add_user_model\n\n# View migration history\nprisma migrate status\n\n# Apply existing migrations (production)\nprisma migrate deploy\n\n# Rollback migration\nprisma migrate resolve --rolled-back migration_name\n\n\n**Common interview trap:** Confusing `prisma migrate dev` (development, interactive) with `prisma migrate deploy` (production, non-interactive). Using the wrong command in the wrong environment can cause issues.",
+      "ru": "### Миграции БД в Prisma\n\nМиграции отслеживают изменения схемы и поддерживают консистентность БД. Используйте `prisma migrate dev` во время разработки для создания именованных миграций и их применения. Эта команда генерирует SQL файлы миграций в папке `prisma/migrations`.\n\nДля начальной настройки используйте `prisma init` для создания файлов `.env` и `schema.prisma`. В production используйте `prisma migrate deploy` для применения предгенерированных миграций без подсказок. Каждая миграция обратима и отслеживается.\n\nbash\n# Инициализировать Prisma\nprisma init\n\n# Создать и применить миграцию\nprisma migrate dev --name add_user_model\n\n# Просмотреть историю миграций\nprisma migrate status\n\n# Применить существующие миграции (production)\nprisma migrate deploy\n\n# Откатить миграцию\nprisma migrate resolve --rolled-back migration_name\n\n\n**Типичная ошибка на интервью:** Путают `prisma migrate dev` (разработка, интерактивно) с `prisma migrate deploy` (production, неинтерактивно). Использование неправильной команды в неправильной среде может вызвать проблемы."
+    },
+    "tags": [
+      "migrations",
+      "database-schema",
+      "prisma-commands"
+    ]
+  },
+  {
+    "id": "prisma-q-5",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "Set up Prisma Client in a Node.js application. How do you initialize it and what's the best practice to avoid creating multiple instances?",
+      "ru": "Настройте Prisma Client в приложении Node.js. Как его инициализировать и какой лучший способ избежать создания нескольких экземпляров?"
+    },
+    "answer": {
+      "en": "### Prisma Client Setup\n\nPrisma Client is the type-safe database client generated from your schema. Initialize it with `new PrismaClient()` and use it to query your database. The best practice is to create a single instance and reuse it across your application to avoid connection pool exhaustion.\n\nCreate a dedicated file (e.g., `prisma.ts`) that exports a singleton instance. This prevents multiple `PrismaClient` instances from being created. Disconnect when the application shuts down using process event listeners.\n\ntypescript\n// lib/prisma.ts\nimport { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nexport default prisma;\n\n// main.ts\nimport prisma from './lib/prisma';\n\nconst user = await prisma.user.findUnique({\n  where: { id: 1 }\n});\n\nprocess.on('SIGINT', async () => {\n  await prisma.$disconnect();\n  process.exit(0);\n});\n\n\n**Common interview trap:** Creating a new `PrismaClient()` instance in every route handler or function call. This exhausts database connections and causes performance issues.",
+      "ru": "### Настройка Prisma Client\n\nPrisma Client - это type-safe клиент БД, сгенерированный из вашей схемы. Инициализируйте его с `new PrismaClient()` и используйте для запросов к БД. Лучший способ - создать один экземпляр и переиспользовать его во всем приложении, чтобы избежать истощения пула соедине��ий.\n\nСоздайте отдельный файл (например, `prisma.ts`), который экспортирует singleton экземпляр. Это предотвращает создание нескольких экземпляров `PrismaClient`. Отключитесь при завершении приложения, используя процесс event listeners.\n\ntypescript\n// lib/prisma.ts\nimport { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nexport default prisma;\n\n// main.ts\nimport prisma from './lib/prisma';\n\nconst user = await prisma.user.findUnique({\n  where: { id: 1 }\n});\n\nprocess.on('SIGINT', async () => {\n  await prisma.$disconnect();\n  process.exit(0);\n});\n\n\n**Типичная ошибка на интервью:** Создание новый экземпляра `PrismaClient()` в каждом route handler или функции. Это истощает соединения БД и вызывает проблемы производительности."
+    },
+    "tags": [
+      "Prisma-Client-setup",
+      "singleton-pattern",
+      "connection-management"
+    ]
+  },
+  {
+    "id": "prisma-q-6",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement nested writes in Prisma to create a user with multiple posts in a single operation? What are the limitations?",
+      "ru": "Как реализовать вложенные записи в Prisma для создания пользователя с несколькими постами в одной операции? Какие ограничения существуют?"
+    },
+    "answer": {
+      "en": "### Nested Writes with Create\n\nNested writes allow you to create related records in one query using the `create` field within relations. This is powerful for maintaining data consistency. However, nested creates only work on one-to-many and one-to-one relations where you're creating the parent first, then children. You cannot create in reverse (child creating parent), and deeply nested operations have limitations.\n\ntypescript\nconst user = await prisma.user.create({\n  data: {\n    email: 'user@example.com',\n    posts: {\n      create: [\n        { title: 'Post 1', content: 'Content 1' },\n        { title: 'Post 2', content: 'Content 2' }\n      ]\n    }\n  },\n  include: { posts: true }\n});\n\n\n**Common interview trap:** Candidates often try to use nested creates for many-to-many relations without junction tables, or attempt to create in both directions simultaneously.",
+      "ru": "### Вложенные записи с Create\n\nВложенные записи позволяют создавать связанные записи в одном запросе, используя поле `create` внутри отношений. Это мощный инструмент для обеспечения целостности данных. Однако вложенные создания работают только для отношений один-ко-многим и один-к-одному, когда вы сначала создаёте родителя, а затем детей. Вы не можете создавать в обратном направлении (дочерний создаёт родителя), и глубоко вложенные операции имеют ограничения.\n\ntypescript\nconst user = await prisma.user.create({\n  data: {\n    email: 'user@example.com',\n    posts: {\n      create: [\n        { title: 'Post 1', content: 'Content 1' },\n        { title: 'Post 2', content: 'Content 2' }\n      ]\n    }\n  },\n  include: { posts: true }\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты часто пытаются использовать вложенные создания для отношений многие-ко-многим без промежуточных таблиц или пытаются создавать в обоих направлениях одновременно."
+    },
+    "tags": [
+      "nested-writes",
+      "create-operations",
+      "relations"
+    ]
+  },
+  {
+    "id": "prisma-q-7",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between `select` and `include` in Prisma queries. When would you use one over the other?",
+      "ru": "Объясните разницу между `select` и `include` в запросах Prisma. Когда вы используете один вместо другого?"
+    },
+    "answer": {
+      "en": "### Select vs Include\n\n`include` returns all fields from the model plus specified relations. `select` returns ONLY the fields you explicitly specify. Use `include` when you want everything except specific relations, and `select` for fine-grained control. `select` is more performant when you need only certain fields, while `include` is convenient for relations without excluding base fields.\n\ntypescript\n// include - all fields + relations\nconst user = await prisma.user.findUnique({\n  where: { id: 1 },\n  include: { posts: true }\n});\n\n// select - only specified fields\nconst user = await prisma.user.findUnique({\n  where: { id: 1 },\n  select: { email: true, posts: true }\n});\n\n\n**Common interview trap:** Candidates forget that `select` excludes ALL unselected fields, making required fields inaccessible. You must explicitly select required fields when using `select`.",
+      "ru": "### Select vs Include\n\n`include` возвращает все поля модели плюс указанные отношения. `select` возвращает ТОЛЬКО явно указанные вами поля. Используйте `include`, когда хотите всё кроме конкретных отношений, и `select` для точного контроля. `select` более эффективен, когда нужны только определённые поля, а `include` удобен для отношений без исключения базовых полей.\n\ntypescript\n// include - все поля + отношения\nconst user = await prisma.user.findUnique({\n  where: { id: 1 },\n  include: { posts: true }\n});\n\n// select - только указанные поля\nconst user = await prisma.user.findUnique({\n  where: { id: 1 },\n  select: { email: true, posts: true }\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают, что `select` исключает ВСЕ неуказанные поля, делая обязательные поля недоступными. Вы должны явно выбрать обязательные поля при использовании `select`."
+    },
+    "tags": [
+      "select-include",
+      "query-optimization",
+      "field-selection"
+    ]
+  },
+  {
+    "id": "prisma-q-8",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you implement pagination in Prisma? What's the difference between offset-based and cursor-based pagination?",
+      "ru": "Как реализовать пагинацию в Prisma? Какая разница между пагинацией на основе смещения и курсора?"
+    },
+    "answer": {
+      "en": "### Pagination Strategies\n\nOffset-based pagination uses `skip` and `take` but becomes inefficient with large offsets due to database processing. Cursor-based pagination uses `cursor` and `take` to fetch records after a specific point, avoiding offset overhead. Cursor-based is better for large datasets and real-time data where rows might shift between requests.\n\ntypescript\n// Offset-based\nconst posts = await prisma.post.findMany({\n  skip: 10,\n  take: 10\n});\n\n// Cursor-based\nconst posts = await prisma.post.findMany({\n  cursor: { id: lastPostId },\n  take: 10,\n  skip: 1\n});\n\n\n**Common interview trap:** Candidates use offset-based pagination for all scenarios without considering performance. Large `skip` values force databases to scan many rows before returning results.",
+      "ru": "### Стратегии пагинации\n\nПагинация на основе смещения использует `skip` и `take`, но становится неэффективной при больших смещениях из-за обработки базы данных. Пагинация на основе курсора использует `cursor` и `take` для получения записей после определённой точки, избегая затрат смещения. Пагинация на основе курсора лучше для больших наборов данных и данных в реальном времени, где строки могут смещаться между запросами.\n\ntypescript\n// На основе смещения\nconst posts = await prisma.post.findMany({\n  skip: 10,\n  take: 10\n});\n\n// На основе курсора\nconst posts = await prisma.post.findMany({\n  cursor: { id: lastPostId },\n  take: 10,\n  skip: 1\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты используют пагинацию на основе смещения для всех сценариев без учёта производительности. Большие значения `skip` заставляют базы данных сканировать много строк перед возвратом результатов."
+    },
+    "tags": [
+      "pagination",
+      "offset-based",
+      "cursor-based",
+      "performance"
+    ]
+  },
+  {
+    "id": "prisma-q-9",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "Write a Prisma transaction that updates a user's balance and creates a transaction record. What happens if the second operation fails?",
+      "ru": "Напишите транзакцию Prisma, которая обновляет баланс пользователя и создаёт запись о транзакции. Что происходит, если вторая операция не удаётся?"
+    },
+    "answer": {
+      "en": "### Transactions in Prisma\n\nTransactions ensure atomic operations—either all succeed or all fail. If any operation fails, Prisma automatically rolls back all changes. Use `prisma.$transaction()` to wrap multiple operations. This prevents inconsistent states like updating a balance without recording the transaction.\n\ntypescript\ntry {\n  await prisma.$transaction(async (tx) => {\n    await tx.user.update({\n      where: { id: userId },\n      data: { balance: { decrement: amount } }\n    });\n    await tx.transactionRecord.create({\n      data: { userId, amount, type: 'PAYMENT' }\n    });\n  });\n} catch (error) {\n  // Both operations rolled back automatically\n  console.log('Transaction failed and rolled back');\n}\n\n\n**Common interview trap:** Candidates forget that if the second operation fails, BOTH operations are rolled back. They also don't consider that transactions have timeout limits and don't work across multiple database connections.",
+      "ru": "### Транзакции в Prisma\n\nТранзакции обеспечивают атомарные операции — либо все успешны, либо все не успешны. Если любая операция не удаётся, Prisma автоматически откатывает все изменения. Используйте `prisma.$transaction()` для обёртывания нескольких операций. Это предотвращает несогласованные состояния, такие как обновление баланса без записи транзакции.\n\ntypescript\ntry {\n  await prisma.$transaction(async (tx) => {\n    await tx.user.update({\n      where: { id: userId },\n      data: { balance: { decrement: amount } }\n    });\n    await tx.transactionRecord.create({\n      data: { userId, amount, type: 'PAYMENT' }\n    });\n  });\n} catch (error) {\n  // Обе операции автоматически откачены\n  console.log('Транзакция не удалась и откачена');\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают, что если вторая операция не удаётся, обе операции откатываются. Они также не учитывают, что транзакции имеют ограничения по времени и не работают через несколько соединений базы данных."
+    },
+    "tags": [
+      "transactions",
+      "atomicity",
+      "rollback",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "prisma-q-10",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you filter records in Prisma using complex conditions? Show an example with AND, OR, and NOT operators.",
+      "ru": "Как фильтровать записи в Prisma, используя сложные условия? Покажите пример с операторами AND, OR и NOT."
+    },
+    "answer": {
+      "en": "### Complex Filtering in Prisma\n\nPrisma supports logical operators through `AND`, `OR`, and `NOT` in the `where` clause. Nest conditions for complex queries. `AND` is the default when you list multiple conditions. Use `OR` for alternative conditions and `NOT` to negate filters.\n\ntypescript\nconst posts = await prisma.post.findMany({\n  where: {\n    AND: [\n      { published: true },\n      { OR: [\n        { title: { contains: 'Prisma' } },\n        { content: { contains: 'Prisma' } }\n      ]}\n    ],\n    NOT: {\n      authorId: 5\n    }\n  }\n});\n\n\n**Common interview trap:** Candidates forget that `AND` is implicit, leading to verbosity. They also struggle with nesting multiple `OR` conditions and understanding operator precedence.",
+      "ru": "### Сложная фильтрация в Prisma\n\nPrisma поддерживает логические операторы через `AND`, `OR` и `NOT` в предложении `where`. Вложите условия для сложных запросов. `AND` используется по умолчанию, когда вы указываете несколько условий. Используйте `OR` для альтернативных условий и `NOT` для отрицания фильтров.\n\ntypescript\nconst posts = await prisma.post.findMany({\n  where: {\n    AND: [\n      { published: true },\n      { OR: [\n        { title: { contains: 'Prisma' } },\n        { content: { contains: 'Prisma' } }\n      ]}\n    ],\n    NOT: {\n      authorId: 5\n    }\n  }\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают, что `AND` неявный, что приводит к многословности. Они также испытывают затруднения с вложением нескольких условий `OR` и пониманием приоритета операторов."
+    },
+    "tags": [
+      "filtering",
+      "where-clause",
+      "logical-operators",
+      "complex-queries"
+    ]
+  },
+  {
+    "id": "prisma-q-11",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "When would you use raw SQL queries in Prisma instead of the query builder? What are the security considerations?",
+      "ru": "Когда бы вы использовали сырые SQL-запросы в Prisma вместо построителя запросов? Какие соображения безопасности существуют?"
+    },
+    "answer": {
+      "en": "### Raw Queries in Prisma\n\nUse raw queries for complex operations the ORM can't express, database-specific features, or performance-critical code. Use `prisma.$queryRaw` for read-only queries and `prisma.$executeRaw` for modifications. Always use parameterized queries with template literals to prevent SQL injection. Avoid string concatenation with user input.\n\ntypescript\n// Safe with parameters\nconst users = await prisma.$queryRaw`\n  SELECT * FROM User WHERE email = ${email} AND status = ${status}\n`;\n\n// Unsafe - avoid this\nconst users = await prisma.$queryRaw(\n  'SELECT * FROM User WHERE email = ' + email\n);\n\n\n**Common interview trap:** Candidates use string concatenation for user input instead of parameterized queries, creating SQL injection vulnerabilities.",
+      "ru": "### Сырые запросы в Prisma\n\nИспользуйте сырые запросы для сложных операций, которые ORM не может выразить, функций базы данных или критичного по производительности кода. Используйте `prisma.$queryRaw` для запросов только для чтения и `prisma.$executeRaw` для изменений. Всегда используйте параметризованные запросы с шаблонными строками, чтобы предотвратить SQL-инъекцию. Избегайте конкатенации строк с пользовательским вводом.\n\ntypescript\n// Безопасно с параметрами\nconst users = await prisma.$queryRaw`\n  SELECT * FROM User WHERE email = ${email} AND status = ${status}\n`;\n\n// Небезопасно - избегайте\nconst users = await prisma.$queryRaw(\n  'SELECT * FROM User WHERE email = ' + email\n);\n\n\n**Типичная ошибка на интервью:** Кандидаты используют конкатенацию строк для пользовательского ввода вместо параметризованных запросов, создавая уязвимости SQL-инъекции."
+    },
+    "tags": [
+      "raw-queries",
+      "sql-injection",
+      "security",
+      "performance"
+    ]
+  },
+  {
+    "id": "prisma-q-12",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you validate Prisma schema to prevent common issues? What tools or practices would you recommend?",
+      "ru": "Как вы проверяете схему Prisma, чтобы предотвратить распространённые проблемы? Какие инструменты или практики вы бы рекомендовали?"
+    },
+    "answer": {
+      "en": "### Schema Validation\n\nValidate your Prisma schema by running `prisma format` to check syntax, `prisma validate` to catch errors, and `prisma migrate diff` to review migrations before applying. Use type generation with `prisma generate` to ensure TypeScript types match the schema. Implement relations properly with `@relation` attributes and foreign key constraints. Run migrations in development to catch schema issues early.\n\ntypescript\n// In schema.prisma\nmodel User {\n  id      Int     @id @default(autoincrement())\n  email   String  @unique\n  posts   Post[]  @relation(\"UserPosts\")\n}\n\nmodel Post {\n  id     Int    @id @default(autoincrement())\n  user   User   @relation(\"UserPosts\", fields: [userId], references: [id])\n  userId Int\n}\n\n\n**Common interview trap:** Candidates forget to use `@relation` with explicit foreign keys, leading to ambiguous relations when multiple relations exist between models.",
+      "ru": "### Валидация схемы\n\nПроверьте вашу схему Prisma, запустив `prisma format` для проверки синтаксиса, `prisma validate` для перехвата ошибок и `prisma migrate diff` для проверки миграций перед применением. Используйте генерацию типов с `prisma generate` для обеспечения соответствия типов TypeScript схеме. Реализуйте отношения правильно с атрибутами `@relation` и ограничениями внешних ключей. Запускайте миграции в разработке, чтобы выявить проблемы схемы на раннем этапе.\n\ntypescript\n// В schema.prisma\nmodel User {\n  id      Int     @id @default(autoincrement())\n  email   String  @unique\n  posts   Post[]  @relation(\"UserPosts\")\n}\n\nmodel Post {\n  id     Int    @id @default(autoincrement())\n  user   User   @relation(\"UserPosts\", fields: [userId], references: [id])\n  userId Int\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают использовать `@relation` с явными внешними ключами, что приводит к неоднозначным отношениям, когда между моделями существует несколько отношений."
+    },
+    "tags": [
+      "schema-validation",
+      "migrations",
+      "type-safety",
+      "best-practices"
+    ]
+  },
+  {
+    "id": "prisma-q-13",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain Prisma middleware and show how you'd use it to log queries or enforce permissions before operations.",
+      "ru": "Объясните middleware Prisma и покажите, как вы бы его использовали для логирования запросов или принудительного соблюдения разрешений перед операциями."
+    },
+    "answer": {
+      "en": "### Prisma Middleware\n\nMiddleware intercepts Prisma operations before and after execution. Use `prisma.$use()` to add logging, enforce permissions, or modify queries. Middleware receives the operation params and can throw errors to prevent execution. Common uses include audit trails, access control, and query modification.\n\ntypescript\nprisma.$use(async (params, next) => {\n  const start = Date.now();\n  const result = await next(params);\n  const duration = Date.now() - start;\n  \n  console.log(`${params.model}.${params.action} took ${duration}ms`);\n  \n  if (params.model === 'User' && params.action === 'delete') {\n    throw new Error('User deletion forbidden');\n  }\n  \n  return result;\n});\n\n\n**Common interview trap:** Candidates apply middleware globally without performance considerations. Middleware runs on EVERY operation—add conditions to avoid unnecessary overhead on high-traffic endpoints.",
+      "ru": "### Middleware Prisma\n\nMiddleware перехватывает операции Prisma перед и после выполнения. Используйте `prisma.$use()` для добавления логирования, принудительного соблюдения разрешений или модификации запросов. Middleware получает параметры операции и может выбросить ошибки для предотвращения выполнения. Частые использования включают журналы аудита, управление доступом и модификацию запросов.\n\ntypescript\nprisma.$use(async (params, next) => {\n  const start = Date.now();\n  const result = await next(params);\n  const duration = Date.now() - start;\n  \n  console.log(`${params.model}.${params.action} took ${duration}ms`);\n  \n  if (params.model === 'User' && params.action === 'delete') {\n    throw new Error('User deletion forbidden');\n  }\n  \n  return result;\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты применяют middleware глобально без учёта производительности. Middleware запускается при КАЖДОЙ операции — добавьте условия, чтобы избежать ненужных затрат на конечных точках с высоким трафиком."
+    },
+    "tags": [
+      "middleware",
+      "logging",
+      "authorization",
+      "interceptors"
+    ]
+  },
+  {
+    "id": "prisma-q-14",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the N+1 query problem in Prisma and demonstrate how to solve it using relation loading strategies.",
+      "ru": "Объясните проблему N+1 в Prisma и покажите, как её решить, используя стратегии загрузки отношений."
+    },
+    "answer": {
+      "en": "### N+1 Problem and Solution\n\nThe N+1 problem occurs when fetching parent records requires an additional query for each child relation. Prisma solves this with `include()` and `select()` to eagerly load relations in a single optimized query.\n\nWithout optimization, querying 100 users with their posts executes 101 queries (1 for users + 100 for posts). Using `include()` reduces this to 2 queries.\n\ntypescript\n// ❌ N+1 Problem\nconst users = await prisma.user.findMany();\nfor (const user of users) {\n  const posts = await prisma.post.findMany({\n    where: { authorId: user.id }\n  }); // 100 additional queries\n}\n\n// ✅ Solution with include()\nconst users = await prisma.user.findMany({\n  include: { posts: true }\n});\n\n// ✅ Solution with select()\nconst users = await prisma.user.findMany({\n  select: {\n    id: true,\n    email: true,\n    posts: { select: { id: true, title: true } }\n  }\n});\n\n\n**Common interview trap:** Candidates confuse `include()` and `select()`. Remember: `include()` returns all parent fields plus relations, while `select()` requires explicit field enumeration.",
+      "ru": "### Проблема N+1 и её решение\n\nПроблема N+1 возникает, когда загрузка родительских записей требует дополнительного запроса для каждого дочернего отношения. Prisma решает это через `include()` и `select()` для нетерпеливой загрузки отношений в одном оптимизированном запросе.\n\nБез оптимизации запрос 100 пользователей с их постами выполняет 101 запрос (1 для пользователей + 100 для постов). Использование `include()` сокращает это до 2 запросов.\n\ntypescript\n// ❌ Проблема N+1\nconst users = await prisma.user.findMany();\nfor (const user of users) {\n  const posts = await prisma.post.findMany({\n    where: { authorId: user.id }\n  }); // 100 дополнительных запросов\n}\n\n// ✅ Решение с include()\nconst users = await prisma.user.findMany({\n  include: { posts: true }\n});\n\n// ✅ Решение с select()\nconst users = await prisma.user.findMany({\n  select: {\n    id: true,\n    email: true,\n    posts: { select: { id: true, title: true } }\n  }\n});\n\n\n**Типичная ошибка на интервью:** Кандидаты путают `include()` и `select()`. Помните: `include()` возвращает все поля родителя плюс отношения, а `select()` требует явного перечисления полей."
+    },
+    "tags": [
+      "n-plus-one-problem",
+      "query-optimization",
+      "eager-loading"
+    ]
+  },
+  {
+    "id": "prisma-q-15",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you optimize Prisma queries for large datasets? Discuss pagination, filtering, and field selection strategies.",
+      "ru": "Как оптимизировать запросы Prisma для больших наборов данных? Обсудите стратегии пагинации, фильтрации и выбора полей."
+    },
+    "answer": {
+      "en": "### Large Dataset Optimization\n\nOptimizing for large datasets requires three strategies: cursor-based pagination (more efficient than offset), selective field retrieval with `select()`, and filtered WHERE clauses to reduce result sets.\n\nCursor-based pagination avoids expensive OFFSET calculations. Use `take` (limit) and `skip` (cursor position) with indexed fields. Always select only required fields to reduce memory and transfer overhead.\n\ntypescript\n// ✅ Optimized query for large datasets\nconst page = await prisma.post.findMany({\n  take: 20,\n  skip: 1, // cursor offset\n  cursor: { id: lastPostId },\n  where: {\n    published: true,\n    createdAt: { gte: new Date('2024-01-01') }\n  },\n  select: {\n    id: true,\n    title: true,\n    author: { select: { name: true } }\n  },\n  orderBy: { createdAt: 'desc' }\n});\n\n\n**Common interview trap:** Using `skip()` with large offsets kills performance. Interviewers test if you know cursor-based pagination is superior. Also, don't select all fields—always be explicit.",
+      "ru": "### Оптимизация больших наборов данных\n\nОптимизация для больших наборов требует трёх стратегий: курсорная пагинация (эффективнее, чем смещение), выборочное получение полей через `select()` и фильтрация WHERE для сокращения результатов.\n\nКурсорная пагинация избегает дорогостоящих вычислений OFFSET. Используйте `take` (лимит) и `skip` (позиция курсора) с индексированными полями. Всегда выбирайте только необходимые поля для снижения памяти и трафика.\n\ntypescript\n// ✅ Оптимизированный запрос для больших данных\nconst page = await prisma.post.findMany({\n  take: 20,\n  skip: 1, // смещение курсора\n  cursor: { id: lastPostId },\n  where: {\n    published: true,\n    createdAt: { gte: new Date('2024-01-01') }\n  },\n  select: {\n    id: true,\n    title: true,\n    author: { select: { name: true } }\n  },\n  orderBy: { createdAt: 'desc' }\n});\n\n\n**Типичная ошибка на интервью:** Использование `skip()` с большими смещениями убивает производительность. Интервьюеры проверяют, знаете ли вы, что курсорная пагинация превосходит смещение. Также не выбирайте все поля—будьте явными."
+    },
+    "tags": [
+      "pagination",
+      "cursor-based-pagination",
+      "field-selection",
+      "large-datasets"
+    ]
+  },
+  {
+    "id": "prisma-q-16",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe connection pooling in Prisma and how to manage database connections in production environments.",
+      "ru": "Опишите пулинг соединений в Prisma и управление соединениями БД в production окружении."
+    },
+    "answer": {
+      "en": "### Connection Pooling in Prisma\n\nPrisma uses PrismaClient as a singleton managing a connection pool. The pool limits concurrent connections to prevent database exhaustion. Connection pooling is configured via `datasource` in `schema.prisma` using the `connection_limit` parameter.\n\nIn production, reuse PrismaClient instances across requests (especially in serverless). Create a singleton to prevent connection leaks. Set appropriate timeouts and idle connection limits based on load.\n\ntypescript\n// ✅ Singleton pattern for production\nconst globalForPrisma = global as unknown as { prisma: PrismaClient };\n\nexport const prisma =\n  globalForPrisma.prisma ||\n  new PrismaClient({\n    log: ['warn', 'error']\n  });\n\nif (process.env.NODE_ENV !== 'production')\n  globalForPrisma.prisma = prisma;\n\n// schema.prisma\n// datasource db {\n//   provider = \"postgresql\"\n//   url = env(\"DATABASE_URL\")\n//   // Add ?connection_limit=5 to DATABASE_URL\n// }\n\n\n**Common interview trap:** Creating new PrismaClient instances per request exhausts connections. Always use singleton. Also, test connection limits under load before deploying.",
+      "ru": "### Пулинг соединений в Prisma\n\nPrisma использует PrismaClient как синглтон, управляющий пулом соединений. Пул ограничивает количество одновременных соединений, чтобы предотвратить исчерпание БД. Пулинг настраивается через `datasource` в `schema.prisma` параметром `connection_limit`.\n\nВ production переиспользуйте экземпляры PrismaClient во всех запросах (особенно в serverless). Создайте синглтон для предотвращения утечек соединений. Установите подходящие таймауты и лимиты неактивных соединений на основе нагрузки.\n\ntypescript\n// ✅ Паттерн синглтона для production\nconst globalForPrisma = global as unknown as { prisma: PrismaClient };\n\nexport const prisma =\n  globalForPrisma.prisma ||\n  new PrismaClient({\n    log: ['warn', 'error']\n  });\n\nif (process.env.NODE_ENV !== 'production')\n  globalForPrisma.prisma = prisma;\n\n// schema.prisma\n// datasource db {\n//   provider = \"postgresql\"\n//   url = env(\"DATABASE_URL\")\n//   // Добавьте ?connection_limit=5 в DATABASE_URL\n// }\n\n\n**Типичная ошибка на интервью:** Создание новых экземпляров PrismaClient per запрос исчерпывает соединения. Всегда используйте синглтон. Также тестируйте лимиты соединений под нагрузкой перед развёртыванием."
+    },
+    "tags": [
+      "connection-pooling",
+      "production-deployment",
+      "singleton-pattern"
+    ]
+  },
+  {
+    "id": "prisma-q-17",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you create and use custom generators in Prisma? Provide an example of generating type-safe database utilities.",
+      "ru": "Как создавать и использовать пользовательские генераторы в Prisma? Приведите пример генерирования type-safe утилит БД."
+    },
+    "answer": {
+      "en": "### Custom Prisma Generators\n\nCustom generators extend Prisma's code generation by running custom scripts during `prisma generate`. Define generators in `schema.prisma` using the `generator` block. Use the `@prisma/internals` package to parse the schema and generate type-safe utilities.\n\nGenerators run after schema parsing, allowing you to generate helper functions, validators, or API types based on your data model. This ensures generated code stays synchronized with schema changes.\n\ntypescript\n// schema.prisma\ngenerator custom {\n  provider = \"node ./prisma/generators/custom.ts\"\n  output   = \"./src/generated\"\n}\n\n// prisma/generators/custom.ts\nimport { generatorHandler } from '@prisma/internals';\n\ngeneratorHandler({\n  onManifest: () => ({\n    version: '1.0.0',\n    defaultOutput: './src/generated'\n  }),\n  onGenerate: async (options) => {\n    const { datamodel } = options.dmmf;\n    const output = datamodel.models\n      .map(m => `export type ${m.name}Query = {}`)\n      .join('\\n');\n    await fs.writeFile(`${options.generator.output}/types.ts`, output);\n  }\n});\n\n\n**Common interview trap:** Generators don't have type safety out of the box—you must manually use the DMMF API. Also, ensure idempotency: running generators twice should produce identical output.",
+      "ru": "### Пользовательские генераторы Prisma\n\nПользовательские генераторы расширяют генерацию кода Prisma, запуская пользовательские скрипты во время `prisma generate`. Определяйте генераторы в `schema.prisma` через блок `generator`. Используйте пакет `@prisma/internals` для разбора схемы и генерирования type-safe утилит.\n\nГенераторы запускаются после разбора схемы, позволяя генерировать вспомогательные функции, валидаторы или типы API на основе вашей модели данных. Это гарантирует, что сгенерированный код синхронизируется с изменениями схемы.\n\ntypescript\n// schema.prisma\ngenerator custom {\n  provider = \"node ./prisma/generators/custom.ts\"\n  output   = \"./src/generated\"\n}\n\n// prisma/generators/custom.ts\nimport { generatorHandler } from '@prisma/internals';\n\ngeneratorHandler({\n  onManifest: () => ({\n    version: '1.0.0',\n    defaultOutput: './src/generated'\n  }),\n  onGenerate: async (options) => {\n    const { datamodel } = options.dmmf;\n    const output = datamodel.models\n      .map(m => `export type ${m.name}Query = {}`)\n      .join('\\n');\n    await fs.writeFile(`${options.generator.output}/types.ts`, output);\n  }\n});\n\n\n**Типичная ошибка на интервью:** Генераторы не имеют type-safety из коробки—вы должны вручную использовать DMMF API. Также обеспечьте идемпотентность: двойной запуск должен создать идентичный вывод."
+    },
+    "tags": [
+      "custom-generators",
+      "code-generation",
+      "dmmf-api",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "prisma-q-18",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain multi-schema support in Prisma. How would you handle multiple databases or schemas in a single application?",
+      "ru": "Объясните поддержку нескольких схем в Prisma. Как обрабатывать несколько БД или схем в одном приложении?"
+    },
+    "answer": {
+      "en": "### Multi-Schema Support in Prisma\n\nPrisma supports multiple databases through multiple `datasource` definitions in `schema.prisma`. Each datasource can point to different databases or schemas. To switch between them, create separate PrismaClient instances or use database-agnostic query builders.\n\nFor multi-tenant applications, use database-per-tenant approach with dynamic datasources, or implement schema-per-tenant using a single database with row-level security. The tradeoff: multi-db increases operational complexity but improves isolation.\n\ntypescript\n// ✅ Multiple datasources in schema.prisma\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\ndatasource analytics {\n  provider = \"postgresql\"\n  url      = env(\"ANALYTICS_DATABASE_URL\")\n}\n\n// Use with separate clients\nexport const prismaMain = new PrismaClient({\n  datasources: { db: { url: process.env.DATABASE_URL } }\n});\n\nexport const prismaAnalytics = new PrismaClient({\n  datasources: { analytics: { url: process.env.ANALYTICS_DATABASE_URL } }\n});\n\n\n**Common interview trap:** Prisma doesn't support runtime datasource switching easily. You must create separate clients or use raw SQL. Candidates often overlook this limitation.",
+      "ru": "### Поддержка нескольких схем в Prisma\n\nPrisma поддерживает несколько БД через множественные определения `datasource` в `schema.prisma`. Каждый datasource может указывать на разные БД или схемы. Для переключения между ними создавайте отдельные экземпляры PrismaClient или используйте query builders, независимые от БД.\n\nДля multi-tenant приложений используйте подход database-per-tenant с динамическими datasources или реализуйте schema-per-tenant в одной БД с row-level security. Компромисс: multi-db увеличивает операционную сложность, но улучшает изоляцию.\n\ntypescript\n// ✅ Множественные datasources в schema.prisma\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\ndatasource analytics {\n  provider = \"postgresql\"\n  url      = env(\"ANALYTICS_DATABASE_URL\")\n}\n\n// Использование с отдельными клиентами\nexport const prismaMain = new PrismaClient({\n  datasources: { db: { url: process.env.DATABASE_URL } }\n});\n\nexport const prismaAnalytics = new PrismaClient({\n  datasources: { analytics: { url: process.env.ANALYTICS_DATABASE_URL } }\n});\n\n\n**Типичная ошибка на интервью:** Prisma не поддерживает легко runtime переключение datasource. Вы должны создавать отдельные клиенты или использовать raw SQL. Кандидаты часто упускают это ограничение."
+    },
+    "tags": [
+      "multi-schema",
+      "multi-database",
+      "multi-tenant",
+      "datasources"
+    ]
+  },
+  {
+    "id": "prisma-q-19",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare Prisma and TypeORM. Discuss their trade-offs in terms of developer experience, performance, flexibility, and ecosystem.",
+      "ru": "Сравните Prisma и TypeORM. Обсудите их компромиссы по DX, производительности, гибкости и экосистеме."
+    },
+    "answer": {
+      "en": "### Prisma vs TypeORM Trade-offs\n\n**Prisma:** Schema-first, type-safe by design, auto-generated client, simpler API, but less control over queries. Better DX. Limited raw query customization.\n\n**TypeORM:** Code-first using decorators, full SQL control via QueryBuilder, supports more databases, more mature ecosystem, steeper learning curve, verbose setup.\n\nChoose Prisma for rapid development with excellent type safety. Choose TypeORM when you need fine-grained control, complex queries, or existing codebase integration.\n\ntypescript\n// Prisma: Simple, type-safe\nconst users = await prisma.user.findMany({\n  include: { posts: true }\n});\n\n// TypeORM: More control, verbose\nconst users = await dataSource\n  .getRepository(User)\n  .createQueryBuilder('user')\n  .leftJoinAndSelect('user.posts', 'post')\n  .getMany();\n\n// TypeORM advantage: complex dynamic queries\nconst query = dataSource.createQueryBuilder();\nif (filters.published) query.where('post.published = :pub', { pub: true });\nif (filters.author) query.andWhere('user.id = :id', { id: filters.author });\n\n\n**Common interview trap:** Both are valid—there's no universally \"better\" choice. Interviewers test judgment: when would you choose each? Know your project constraints (timeline, team expertise, query complexity).",
+      "ru": "### Prisma vs TypeORM: Компромиссы\n\n**Prisma:** Schema-first, type-safe по дизайну, auto-generated клиент, простой API, но меньше контроля над запросами. Лучший DX. Ограниченная кастомизация raw запросов.\n\n**TypeORM:** Code-first через декораторы, полный SQL контроль via QueryBuilder, поддерживает больше БД, более зрелая экосистема, крутая кривая обучения, многословная настройка.\n\nВыбирайте Prisma для быстрой разработки с отличной type-safety. Выбирайте TypeORM когда нужен fine-grained контроль, сложные запросы или интеграция с существующей кодовой базой.\n\ntypescript\n// Prisma: Простой, type-safe\nconst users = await prisma.user.findMany({\n  include: { posts: true }\n});\n\n// TypeORM: Больше контроля, многословный\nconst users = await dataSource\n  .getRepository(User)\n  .createQueryBuilder('user')\n  .leftJoinAndSelect('user.posts', 'post')\n  .getMany();\n\n// TypeORM преимущество: сложные динамические запросы\nconst query = dataSource.createQueryBuilder();\nif (filters.published) query.where('post.published = :pub', { pub: true });\nif (filters.author) query.andWhere('user.id = :id', { id: filters.author });\n\n\n**Типичная ошибка на интервью:** Оба валидны—нет универсально \"лучшего\" выбора. Интервьюеры проверяют суждение: когда вы выберете каждый? Знайте ограничения вашего проекта (timeline, опыт команды, сложность запросов)."
+    },
+    "tags": [
+      "prisma-vs-typeorm",
+      "orm-comparison",
+      "architecture-decisions",
+      "trade-offs"
+    ]
+  },
+  {
+    "id": "prisma-q-20",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a comprehensive strategy for handling Prisma migrations in a distributed team environment with CI/CD pipelines.",
+      "ru": "Разработайте комплексную стратегию управления миграциями Prisma в распределённой команде с CI/CD конвейерами."
+    },
+    "answer": {
+      "en": "### Prisma Migrations Strategy for Teams\n\nImplement migration workflows: 1) Developers create migrations locally with `prisma migrate dev`, 2) Commit migrations to git, 3) CI/CD runs `prisma migrate deploy` before app startup, 4) Rollback strategy using `prisma migrate resolve`.\n\nUse shadow databases for CI testing to validate migrations without touching production. Enable `--create-only` flag for reviewing migrations before applying. Document rollback procedures and maintain migration version history.\n\ntypescript\n// prisma/.env.test\nDATABASE_URL=\"postgresql://..._shadow\"\n\n// CI/CD pipeline (GitHub Actions)\n- name: Run migrations\n  run: npx prisma migrate deploy\n  env:\n    DATABASE_URL: ${{ secrets.DATABASE_URL }}\n\n// Validate in test environment\n- name: Validate migrations\n  run: npx prisma migrate deploy\n  env:\n    DATABASE_URL: ${{ secrets.SHADOW_DATABASE_URL }}\n\n// Rollback if needed\nnpx prisma migrate resolve --rolled-back \"20240101120000_migration_name\"\n\n\n**Common interview trap:** Assume migrations always succeed—they don't. Plan for rollbacks, data conflicts, and failed deployments. Lock table during migrations to prevent concurrent writes. Test long-running migrations impact on production.",
+      "ru": "### Стратегия миграций Prisma для команд\n\nРеализуйте workflow миграций: 1) Разработчики создают миграции локально с `prisma migrate dev`, 2) Коммитят миграции в git, 3) CI/CD запускает `prisma migrate deploy` перед стартом приложения, 4) Стратегия rollback через `prisma migrate resolve`.\n\nИспользуйте shadow БД для CI тестирования валидации миграций без touching production. Включите флаг `--create-only` для review миграций перед применением. Документируйте процедуры rollback и ведите историю версий миграций.\n\ntypescript\n// prisma/.env.test\nDATABASE_URL=\"postgresql://..._shadow\"\n\n// CI/CD pipeline (GitHub Actions)\n- name: Run migrations\n  run: npx prisma migrate deploy\n  env:\n    DATABASE_URL: ${{ secrets.DATABASE_URL }}\n\n// Validate in test environment\n- name: Validate migrations\n  run: npx prisma migrate deploy\n  env:\n    DATABASE_URL: ${{ secrets.SHADOW_DATABASE_URL }}\n\n// Rollback if needed\nnpx prisma migrate resolve --rolled-back \"20240101120000_migration_name\"\n\n\n**Типичная ошибка на интервью:** Предполагайте, что миграции всегда успешны—они нет. Планируйте rollbacks, конфликты данных и failed deployments. Блокируйте таблицу во время миграций для предотвращения concurrent writes. Тестируйте влияние долгих миграций на production."
+    },
+    "tags": [
+      "migrations",
+      "ci-cd-pipelines",
+      "team-workflows",
+      "distributed-development"
+    ]
+  },
+  {
+    "id": "prisma-q-21",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you define a basic schema in Prisma with a User model that has id, email, and name fields?",
+      "ru": "Как определить базовую схему в Prisma с моделью User, содержащей поля id, email и name?"
+    },
+    "answer": {
+      "en": "### Schema Definition\n\nThe schema.prisma file defines your data models with field types and attributes. Each field must have a type, and primary keys are typically marked with @id and @default directives.\n\n```typescript\nmodel User {\n  id    Int     @id @default(autoincrement())\n  email String  @unique\n  name  String\n}\n```\n\n**Common interview trap:** Forgetting @unique on email or omitting @default(autoincrement()) for the id field.",
+      "ru": "### Определение схемы\n\nФайл schema.prisma определяет ваши модели данных с типами полей и атрибутами. Каждое поле должно иметь тип, а первичные ключи обычно отмечаются директивами @id и @default.\n\n```typescript\nmodel User {\n  id    Int     @id @default(autoincrement())\n  email String  @unique\n  name  String\n}\n```\n\n**Типичная ошибка:** Забыть @unique на email или пропустить @default(autoincrement()) для поля id."
+    },
+    "tags": [
+      "schema-definition",
+      "model-basics",
+      "primary-key"
+    ]
+  },
+  {
+    "id": "prisma-q-22",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a simple CREATE operation using Prisma Client to add a new user with email and name.",
+      "ru": "Напишите простую операцию CREATE с использованием Prisma Client для добавления нового пользователя с email и name."
+    },
+    "answer": {
+      "en": "### Create Operation\n\nUse prisma.model.create() to insert a new record. Pass an object with the data field containing your values. This returns the created record including the generated id.\n\n```typescript\nconst newUser = await prisma.user.create({\n  data: {\n    email: 'john@example.com',\n    name: 'John Doe'\n  }\n});\n```\n\n**Common interview trap:** Forgetting to await the async operation or not wrapping it in a try-catch for error handling.",
+      "ru": "### Операция Create\n\nИспользуйте prisma.model.create() для вставки новой записи. Передайте объект с полем data, содержащим ваши значения. Это возвращает созданную запись, включая сгенерированный id.\n\n```typescript\nconst newUser = await prisma.user.create({\n  data: {\n    email: 'john@example.com',\n    name: 'John Doe'\n  }\n});\n```\n\n**Типичная ошибка:** Забыть await для асинхронной операции или не обернуть в try-catch для обработки ошибок."
+    },
+    "tags": [
+      "crud-create",
+      "prisma-client",
+      "data-insertion"
+    ]
+  },
+  {
+    "id": "prisma-q-23",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you define a one-to-many relationship in Prisma? For example, a User can have many Posts.",
+      "ru": "Как определить отношение один-ко-многим в Prisma? Например, User может иметь много Posts."
+    },
+    "answer": {
+      "en": "### One-to-Many Relationship\n\nDefine a foreign key field on the 'many' side and use relation fields with @relation directive on both sides. The foreign key points to the parent's id.\n\n```typescript\nmodel User {\n  id    Int    @id @default(autoincrement())\n  posts Post[]\n}\n\nmodel Post {\n  id     Int  @id @default(autoincrement())\n  userId Int\n  user   User @relation(fields: [userId], references: [id])\n}\n```\n\n**Common interview trap:** Placing the foreign key on the wrong model or forgetting the @relation directive.",
+      "ru": "### Отношение один-ко-многим\n\nОпределите поле внешнего ключа на стороне 'многих' и используйте поля отношений с директивой @relation на обеих сторонах. Внешний ключ указывает на id родителя.\n\n```typescript\nmodel User {\n  id    Int    @id @default(autoincrement())\n  posts Post[]\n}\n\nmodel Post {\n  id     Int  @id @default(autoincrement())\n  userId Int\n  user   User @relation(fields: [userId], references: [id])\n}\n```\n\n**Типичная ошибка:** Поместить внешний ключ на неправильную модель или забыть директиву @relation."
+    },
+    "tags": [
+      "one-to-many",
+      "relations",
+      "foreign-key"
+    ]
+  },
+  {
+    "id": "prisma-q-24",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the purpose of Prisma migrations and how do you create one?",
+      "ru": "Какова цель миграций Prisma и как их создать?"
+    },
+    "answer": {
+      "en": "### Prisma Migrations\n\nMigrations track schema changes over time and sync your database with your schema.prisma file. Run `prisma migrate dev --name migration_name` to create and apply a migration.\n\n```bash\nprx migrate dev --name add_user_table\n```\n\nThis creates a migration file in the prisma/migrations folder and updates your database schema.\n\n**Common interview trap:** Confusing `prisma migrate dev` with `prisma db push`—the former creates versioned migrations, the latter directly pushes changes.",
+      "ru": "### Миграции Prisma\n\nМиграции отслеживают изменения схемы со временем и синхронизируют вашу базу данных с файлом schema.prisma. Запустите `prisma migrate dev --name migration_name` для создания и применения миграции.\n\n```bash\nprx migrate dev --name add_user_table\n```\n\nЭто создает файл миграции в папке prisma/migrations и обновляет схему базы данных.\n\n**Типичная ошибка:** Путать `prisma migrate dev` с `prisma db push`—первая создает версионированные миграции, вторая напрямую применяет изменения."
+    },
+    "tags": [
+      "migrations",
+      "schema-sync",
+      "database-versioning"
+    ]
+  },
+  {
+    "id": "prisma-q-25",
+    "topicId": "prisma",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you set up Prisma Client in your application and fetch a user by id?",
+      "ru": "Как настроить Prisma Client в вашем приложении и получить пользователя по id?"
+    },
+    "answer": {
+      "en": "### Prisma Client Setup and Read\n\nInstantiate PrismaClient and use findUnique() with the unique field filter to retrieve a single record. Always handle potential null returns.\n\n```typescript\nimport { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nconst user = await prisma.user.findUnique({\n  where: { id: 1 }\n});\n```\n\n**Common interview trap:** Not checking if the returned user is null before accessing its properties, or creating multiple PrismaClient instances instead of reusing one.",
+      "ru": "### Настройка Prisma Client и чтение\n\nСоздайте экземпляр PrismaClient и используйте findUnique() с фильтром уникального поля для получения одной записи. Всегда обрабатывайте потенциальное возвращение null.\n\n```typescript\nimport { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nconst user = await prisma.user.findUnique({\n  where: { id: 1 }\n});\n```\n\n**Типичная ошибка:** Не проверить, является ли возвращаемый пользователь null перед доступом к его свойствам, или создать несколько экземпляров PrismaClient вместо повторного использования одного."
+    },
+    "tags": [
+      "prisma-client-setup",
+      "read-operations",
+      "findUnique"
+    ]
+  },
+  {
+    "id": "prisma-q-26",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement a nested write operation to create a user with multiple posts in a single transaction?",
+      "ru": "Как реализовать вложенную операцию записи для создания пользователя с несколькими постами в одной транзакции?"
+    },
+    "answer": {
+      "en": "### Nested Writes with Create\n\nUse the `create` method with nested `connect` or `create` fields to establish relationships. Prisma automatically wraps this in a transaction.\n\n```typescript\nconst user = await prisma.user.create({\n  data: {\n    email: 'john@example.com',\n    posts: {\n      create: [\n        { title: 'Post 1', content: 'Content 1' },\n        { title: 'Post 2', content: 'Content 2' }\n      ]\n    }\n  },\n  include: { posts: true }\n});\n```\n\n**Common interview trap:** Forgetting that nested writes are atomic by default—no explicit transaction wrapper needed for a single operation.",
+      "ru": "### Вложенные операции создания\n\nИспользуйте метод `create` с вложенными полями `connect` или `create` для установления связей. Prisma автоматически оборачивает это в транзакцию.\n\n```typescript\nconst user = await prisma.user.create({\n  data: {\n    email: 'john@example.com',\n    posts: {\n      create: [\n        { title: 'Post 1', content: 'Content 1' },\n        { title: 'Post 2', content: 'Content 2' }\n      ]\n    }\n  },\n  include: { posts: true }\n});\n```\n\n**Типичная ошибка:** Забыть, что вложенные записи атомарны по умолчанию — явная обёртка транзакции не требуется для одной операции."
+    },
+    "tags": [
+      "nested-writes",
+      "transactions",
+      "atomic-operations"
+    ]
+  },
+  {
+    "id": "prisma-q-27",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between `select` and `include` in Prisma queries. When would you use each one?",
+      "ru": "Объясните разницу между `select` и `include` в запросах Prisma. Когда вы будете использовать каждый?"
+    },
+    "answer": {
+      "en": "### Select vs Include\n\n`include` returns the base model fields plus relations, while `select` requires explicit field specification and is more memory-efficient. Use `include` for convenience, `select` when you need strict control over returned data.\n\n```typescript\n// include: returns user + posts\nconst user1 = await prisma.user.findUnique({\n  where: { id: 1 },\n  include: { posts: true }\n});\n\n// select: only specified fields\nconst user2 = await prisma.user.findUnique({\n  where: { id: 1 },\n  select: { email: true, posts: true }\n});\n```\n\n**Common interview trap:** Thinking `include` and `select` can be used together—they're mutually exclusive.",
+      "ru": "### Select против Include\n\n`include` возвращает поля базовой модели плюс отношения, а `select` требует явного указания полей и более эффективен по памяти. Используйте `include` для удобства, `select` когда нужен точный контроль над возвращаемыми данными.\n\n```typescript\n// include: возвращает пользователя + посты\nconst user1 = await prisma.user.findUnique({\n  where: { id: 1 },\n  include: { posts: true }\n});\n\n// select: только указанные поля\nconst user2 = await prisma.user.findUnique({\n  where: { id: 1 },\n  select: { email: true, posts: true }\n});\n```\n\n**Типичная ошибка:** Думать, что `include` и `select` можно использовать вместе—они взаимоисключающи."
+    },
+    "tags": [
+      "select",
+      "include",
+      "query-optimization"
+    ]
+  },
+  {
+    "id": "prisma-q-28",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you implement pagination with filtering in Prisma? Show an example with skip, take, and where clauses.",
+      "ru": "Как реализовать пагинацию с фильтрацией в Prisma? Покажите пример с skip, take и where."
+    },
+    "answer": {
+      "en": "### Pagination with Filtering\n\nCombine `skip` and `take` for pagination with `where` for filtering. `skip` offsets results, `take` limits them per page.\n\n```typescript\nconst page = 2;\nconst pageSize = 10;\n\nconst posts = await prisma.post.findMany({\n  where: {\n    published: true,\n    author: { email: { contains: 'example' } }\n  },\n  skip: (page - 1) * pageSize,\n  take: pageSize,\n  orderBy: { createdAt: 'desc' }\n});\n```\n\n**Common interview trap:** Using `skip` with large offsets without proper indexing leads to poor query performance.",
+      "ru": "### Пагинация с фильтрацией\n\nОбъедините `skip` и `take` для пагинации с `where` для фильтрации. `skip` смещает результаты, `take` ограничивает их на странице.\n\n```typescript\nconst page = 2;\nconst pageSize = 10;\n\nconst posts = await prisma.post.findMany({\n  where: {\n    published: true,\n    author: { email: { contains: 'example' } }\n  },\n  skip: (page - 1) * pageSize,\n  take: pageSize,\n  orderBy: { createdAt: 'desc' }\n});\n```\n\n**Типичная ошибка:** Использование `skip` с большими смещениями без правильного индексирования ведёт к плохой производительности запроса."
+    },
+    "tags": [
+      "pagination",
+      "filtering",
+      "where-clause"
+    ]
+  },
+  {
+    "id": "prisma-q-29",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "When would you use `prisma.$executeRaw` instead of standard Prisma query methods? Provide a practical example.",
+      "ru": "Когда вы будете использовать `prisma.$executeRaw` вместо стандартных методов запросов Prisma? Дайте практический пример."
+    },
+    "answer": {
+      "en": "### Raw Queries for Complex Logic\n\nUse `$executeRaw` for complex aggregate functions, window functions, or database-specific features not supported by Prisma's API. Always use parameterized queries to prevent SQL injection.\n\n```typescript\nconst result = await prisma.$executeRaw`\n  UPDATE users \n  SET score = score + ${points} \n  WHERE id = ${userId}\n`;\n\nconst topUsers = await prisma.$queryRaw`\n  SELECT email, ROW_NUMBER() OVER (ORDER BY score DESC) \n  FROM users\n`;\n```\n\n**Common interview trap:** Concatenating strings into SQL queries instead of using template literals for parameterization.",
+      "ru": "### Raw запросы для сложной логики\n\nИспользуйте `$executeRaw` для сложных функций агрегирования, оконных функций или функций, специфичных для БД, не поддерживаемых API Prisma. Всегда используйте параметризованные запросы для предотвращения SQL-инъекций.\n\n```typescript\nconst result = await prisma.$executeRaw`\n  UPDATE users \n  SET score = score + ${points} \n  WHERE id = ${userId}\n`;\n\nconst topUsers = await prisma.$queryRaw`\n  SELECT email, ROW_NUMBER() OVER (ORDER BY score DESC) \n  FROM users\n`;\n```\n\n**Типичная ошибка:** Конкатенация строк в SQL-запросы вместо использования шаблонных литералов для параметризации."
+    },
+    "tags": [
+      "raw-queries",
+      "executeRaw",
+      "sql-injection"
+    ]
+  },
+  {
+    "id": "prisma-q-30",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use Prisma middleware to validate data before writes or to automatically format fields on read?",
+      "ru": "Как вы будете использовать Prisma middleware для валидации данных перед записью или автоматического форматирования полей при чтении?"
+    },
+    "answer": {
+      "en": "### Middleware for Data Validation and Transformation\n\nMiddleware intercepts queries before execution. Use `action === 'create'` or `'update'` for write validation, and `action === 'findMany'` for read transformations.\n\n```typescript\nprisma.$use(async (params, next) => {\n  if (params.action === 'create' && params.model === 'User') {\n    if (!params.args.data.email?.includes('@')) {\n      throw new Error('Invalid email');\n    }\n  }\n  if (params.action === 'findMany') {\n    const result = await next(params);\n    return result.map(r => ({ ...r, email: r.email.toLowerCase() }));\n  }\n  return next(params);\n});\n```\n\n**Common interview trap:** Not awaiting `next(params)` or forgetting to return the modified result in middleware.",
+      "ru": "### Middleware для валидации и преобразования данных\n\nMiddleware перехватывает запросы перед выполнением. Используйте `action === 'create'` или `'update'` для валидации записей, и `action === 'findMany'` для преобразования чтения.\n\n```typescript\nprisma.$use(async (params, next) => {\n  if (params.action === 'create' && params.model === 'User') {\n    if (!params.args.data.email?.includes('@')) {\n      throw new Error('Invalid email');\n    }\n  }\n  if (params.action === 'findMany') {\n    const result = await next(params);\n    return result.map(r => ({ ...r, email: r.email.toLowerCase() }));\n  }\n  return next(params);\n});\n```\n\n**Типичная ошибка:** Не ожидание `next(params)` или забывание вернуть изменённый результат в middleware."
+    },
+    "tags": [
+      "middleware",
+      "validation",
+      "data-transformation"
+    ]
+  },
+  {
+    "id": "prisma-q-31",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how to perform nested writes in Prisma and what are the limitations when creating related records in a single operation?",
+      "ru": "Объясните, как выполнять вложенные записи в Prisma и какие существуют ограничения при создании связанных записей в одной операции?"
+    },
+    "answer": {
+      "en": "### Nested Writes with Create and Connect\n\nNested writes allow you to create parent and child records simultaneously using `create` or `connect` operations. However, you cannot use nested writes to create relations to records that don't exist yet in a many-to-many relationship—you must create them separately or use `connect`.\n\n```typescript\nconst user = await prisma.user.create({\n  data: {\n    email: 'john@example.com',\n    posts: {\n      create: [\n        { title: 'First Post', content: 'Content' }\n      ]\n    }\n  },\n  include: { posts: true }\n});\n```\n\n**Common interview trap:** Assuming you can create deeply nested relations without hitting database constraints or circular dependencies.",
+      "ru": "### Вложенные записи с Create и Connect\n\nВложенные записи позволяют создавать родительские и дочерние записи одновременно, используя операции `create` или `connect`. Однако вы не можете использовать вложенные записи для создания отношений с записями, которые еще не существуют в отношении \"многие ко многим\"—вы должны создать их отдельно или использовать `connect`.\n\n```typescript\nconst user = await prisma.user.create({\n  data: {\n    email: 'john@example.com',\n    posts: {\n      create: [\n        { title: 'First Post', content: 'Content' }\n      ]\n    }\n  },\n  include: { posts: true }\n});\n```\n\n**Типичная ошибка:** Предположение, что вы можете создавать глубоко вложенные отношения без учета ограничений базы данных или циклических зависимостей."
+    },
+    "tags": [
+      "nested-writes",
+      "create-operations",
+      "relations"
+    ]
+  },
+  {
+    "id": "prisma-q-32",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you implement pagination with filtering in Prisma, and what's the difference between using `skip` and `cursor`-based pagination?",
+      "ru": "Как реализовать пагинацию с фильтрацией в Prisma, и в чем разница между использованием пагинации на основе `skip` и `cursor`?"
+    },
+    "answer": {
+      "en": "### Skip vs Cursor Pagination\n\n`skip`-based pagination is simple but inefficient for large datasets because it recalculates from the beginning each time. Cursor-based pagination is more efficient as it uses a pointer to resume from a specific record, making it ideal for offset queries and avoiding duplicate results in fast-moving datasets.\n\n```typescript\n// Skip pagination\nconst posts = await prisma.post.findMany({\n  where: { published: true },\n  skip: 10,\n  take: 20,\n  orderBy: { createdAt: 'desc' }\n});\n\n// Cursor pagination\nconst posts = await prisma.post.findMany({\n  where: { published: true },\n  cursor: { id: lastPostId },\n  skip: 1,\n  take: 20,\n  orderBy: { createdAt: 'desc' }\n});\n```\n\n**Common interview trap:** Using `skip` for high-page numbers without considering database performance degradation.",
+      "ru": "### Пагинация Skip vs Cursor\n\nПагинация на основе `skip` проста, но неэффективна для больших наборов данных, поскольку пересчитывается с начала каждый раз. Пагинация на основе курсора более эффективна, так как использует указатель для возобновления с определенной записи, что идеально подходит для запросов смещения и предотвращения дублирования результатов в быстро меняющихся наборах данных.\n\n```typescript\n// Skip пагинация\nconst posts = await prisma.post.findMany({\n  where: { published: true },\n  skip: 10,\n  take: 20,\n  orderBy: { createdAt: 'desc' }\n});\n\n// Cursor пагинация\nconst posts = await prisma.post.findMany({\n  where: { published: true },\n  cursor: { id: lastPostId },\n  skip: 1,\n  take: 20,\n  orderBy: { createdAt: 'desc' }\n});\n```\n\n**Типичная ошибка:** Использование `skip` для больших номеров страниц без учета деградации производительности базы данных."
+    },
+    "tags": [
+      "pagination",
+      "filtering",
+      "cursor-based",
+      "performance"
+    ]
+  },
+  {
+    "id": "prisma-q-33",
+    "topicId": "prisma",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe how to use Prisma transactions to ensure data consistency when performing multiple database operations, and when would you use `$transaction` with raw queries?",
+      "ru": "Опишите, как использовать транзакции Prisma для обеспечения согласованности данных при выполнении нескольких операций базы данных, и когда вы бы использовали `$transaction` с необработанными запросами?"
+    },
+    "answer": {
+      "en": "### Prisma Transactions for Data Consistency\n\nTransactions ensure all operations succeed or all fail atomically, preventing partial updates. Use sequential transactions for dependent queries and `$transaction` with raw queries when you need specific SQL logic or better control over execution order that Prisma ORM doesn't provide.\n\n```typescript\nawait prisma.$transaction(async (tx) => {\n  const user = await tx.user.update({\n    where: { id: 1 },\n    data: { balance: { decrement: 100 } }\n  });\n  await tx.transaction.create({\n    data: { userId: user.id, amount: 100 }\n  });\n});\n\n// With raw query\nawait prisma.$transaction([\n  prisma.$executeRaw`UPDATE users SET balance = balance - 100 WHERE id = 1`,\n  prisma.transaction.create({ data: { userId: 1, amount: 100 } })\n]);\n```\n\n**Common interview trap:** Assuming nested transactions are supported (they're not in most databases); Prisma only supports sequential execution.",
+      "ru": "### Транзакции Prisma для согласованности данных\n\nТранзакции гарантируют, что все операции либо успешны, либо все не срабатывают атомарно, предотвращая частичные обновления. Используйте последовательные транзакции для зависимых запросов и `$transaction` с необработанными запросами, когда вам нужна определенная логика SQL или лучший контроль над порядком выполнения, который не предоставляет Prisma ORM.\n\n```typescript\nawait prisma.$transaction(async (tx) => {\n  const user = await tx.user.update({\n    where: { id: 1 },\n    data: { balance: { decrement: 100 } }\n  });\n  await tx.transaction.create({\n    data: { userId: user.id, amount: 100 }\n  });\n});\n\n// С необработанным запросом\nawait prisma.$transaction([\n  prisma.$executeRaw`UPDATE users SET balance = balance - 100 WHERE id = 1`,\n  prisma.transaction.create({ data: { userId: 1, amount: 100 } })\n]);\n```\n\n**Типичная ошибка:** Предположение, что поддерживаются вложенные транзакции (они не поддерживаются в большинстве баз данных); Prisma поддерживает только последовательное выполнение."
+    },
+    "tags": [
+      "transactions",
+      "data-consistency",
+      "raw-queries",
+      "atomicity"
+    ]
+  },
+  {
+    "id": "prisma-q-34",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the N+1 query problem in Prisma and demonstrate how to solve it using include() and select(). What are the performance implications?",
+      "ru": "Объясните проблему N+1 запросов в Prisma и покажите, как её решить с помощью include() и select(). Какие последствия для производительности?"
+    },
+    "answer": {
+      "en": "### N+1 Problem and Solution\n\nThe N+1 problem occurs when you query a parent entity and then loop to fetch related entities individually, resulting in 1 + N queries. Use `include()` or `select()` to eagerly load relations in a single query.\n\n```typescript\n// BAD: N+1 queries\nconst users = await prisma.user.findMany();\nfor (const user of users) {\n  user.posts = await prisma.post.findMany({ where: { userId: user.id } });\n}\n\n// GOOD: Single query\nconst users = await prisma.user.findMany({\n  include: { posts: true }\n});\n```\n\n**Common interview trap:** Assuming `select()` and `include()` have identical performance—`select()` excludes unselected fields, potentially reducing payload size.",
+      "ru": "### Проблема N+1 и её решение\n\nПроблема N+1 возникает при запросе родительской сущности и последующих индивидуальных запросах для связанных данных, что даёт 1 + N запросов. Используйте `include()` или `select()` для eager loading связей в одном запросе.\n\n```typescript\n// ПЛОХО: N+1 запросов\nconst users = await prisma.user.findMany();\nfor (const user of users) {\n  user.posts = await prisma.post.findMany({ where: { userId: user.id } });\n}\n\n// ХОРОШО: Один запрос\nconst users = await prisma.user.findMany({\n  include: { posts: true }\n});\n```\n\n**Типичная ошибка:** Предположение, что `select()` и `include()` имеют одинаковую производительность—`select()` исключает незапрошенные поля, потенциально снижая размер payload."
+    },
+    "tags": [
+      "n-plus-one",
+      "query-optimization",
+      "eager-loading"
+    ]
+  },
+  {
+    "id": "prisma-q-35",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does Prisma handle database connection pooling and what are best practices for managing connections in production environments?",
+      "ru": "Как Prisma управляет пулингом соединений с базой данных и какие лучшие практики для управления соединениями в production?"
+    },
+    "answer": {
+      "en": "### Connection Pooling Management\n\nPrisma uses PrismaClient as a singleton that maintains a connection pool. Set `connection_limit` in your DATABASE_URL and configure `pool` settings to optimize for your workload. Use connection timeouts and reconnection strategies for resilience.\n\n```typescript\n// Configure connection pool in .env\n// DATABASE_URL=\"postgresql://user:password@localhost:5432/db?connection_limit=5\"\n\n// Best practice: Singleton pattern\nconst prisma = global.prisma || new PrismaClient({\n  errorFormat: 'pretty',\n});\nif (process.env.NODE_ENV !== 'production') global.prisma = prisma;\nexport default prisma;\n```\n\n**Common interview trap:** Creating a new PrismaClient instance per request exhausts connections—always use singleton pattern in production.",
+      "ru": "### Управление пулингом соединений\n\nPrisma использует PrismaClient как синглтон, который поддерживает пул соединений. Установите `connection_limit` в DATABASE_URL и настройте параметры `pool` для оптимизации под вашу нагрузку. Используйте timeout соединений и стратегии переподключения для надёжности.\n\n```typescript\n// Настройка пула в .env\n// DATABASE_URL=\"postgresql://user:password@localhost:5432/db?connection_limit=5\"\n\n// Лучшая практика: Паттерн синглтон\nconst prisma = global.prisma || new PrismaClient({\n  errorFormat: 'pretty',\n});\nif (process.env.NODE_ENV !== 'production') global.prisma = prisma;\nexport default prisma;\n```\n\n**Типичная ошибка:** Создание нового экземпляра PrismaClient на каждый запрос исчерпывает соединения—всегда используйте синглтон в production."
+    },
+    "tags": [
+      "connection-pooling",
+      "production-deployment",
+      "database-management"
+    ]
+  },
+  {
+    "id": "prisma-q-36",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe how to implement custom Prisma generators and provide an example of generating type-safe API routes from your schema.",
+      "ru": "Опишите, как реализовать пользовательские генераторы Prisma и приведите пример генерации type-safe API маршрутов из вашей схемы."
+    },
+    "answer": {
+      "en": "### Custom Prisma Generators\n\nCustom generators run during `prisma generate` and can parse your schema to generate code artifacts. Create a generator in `prisma/schema.prisma` that outputs type-safe route definitions based on your models.\n\n```typescript\n// prisma/schema.prisma\ngenerator customRoutes {\n  provider = \"node ./prisma/generators/routeGenerator.js\"\n  output   = \"./src/generated\"\n}\n\n// prisma/generators/routeGenerator.js\nconst { generatorHandler } = require('@prisma/internals');\ngenerator.handler = async (options) => {\n  const { dmmf } = options;\n  dmmf.datamodel.models.forEach(model => {\n    // Generate type-safe routes for each model\n  });\n};\n```\n\n**Common interview trap:** Not handling generator errors properly—generators must validate schema and provide meaningful diagnostics.",
+      "ru": "### Пользовательские генераторы Prisma\n\nПользовательские генераторы запускаются при `prisma generate` и могут парсить вашу схему для генерации кода. Создайте генератор в `prisma/schema.prisma`, который выводит type-safe определения маршрутов на основе моделей.\n\n```typescript\n// prisma/schema.prisma\ngenerator customRoutes {\n  provider = \"node ./prisma/generators/routeGenerator.js\"\n  output   = \"./src/generated\"\n}\n\n// prisma/generators/routeGenerator.js\nconst { generatorHandler } = require('@prisma/internals');\ngenerator.handler = async (options) => {\n  const { dmmf } = options;\n  dmmf.datamodel.models.forEach(model => {\n    // Generate type-safe routes for each model\n  });\n};\n```\n\n**Типичная ошибка:** Неправильная обработка ошибок генератора—генераторы должны валидировать схему и предоставлять понятные диагностики."
+    },
+    "tags": [
+      "custom-generators",
+      "code-generation",
+      "schema-parsing"
+    ]
+  },
+  {
+    "id": "prisma-q-37",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are the advantages and trade-offs between Prisma and TypeORM? When would you choose one over the other in a new project?",
+      "ru": "Каковы преимущества и компромиссы между Prisma и TypeORM? Когда вы выбрали бы один над другим в новом проекте?"
+    },
+    "answer": {
+      "en": "### Prisma vs TypeORM Trade-offs\n\nPrisma offers declarative schema and auto-generated migrations, making rapid development easier, but has less fine-grained control. TypeORM provides more flexibility with decorators and raw queries but requires more boilerplate. Choose Prisma for rapid prototyping; TypeORM for complex legacy systems.\n\n```typescript\n// Prisma: Simple, declarative\nconst user = await prisma.user.findUnique({\n  where: { id: 1 },\n  include: { posts: true }\n});\n\n// TypeORM: Decorator-based, more verbose\nconst user = await userRepository.findOne(1, {\n  relations: ['posts']\n});\n```\n\n**Common interview trap:** Thinking Prisma can't handle complex queries—use `$queryRaw` for advanced scenarios or `prisma.$transaction` for atomicity.",
+      "ru": "### Prisma vs TypeORM: компромиссы\n\nPrisma предлагает декларативную схему и автогенерацию миграций, что облегчает быструю разработку, но имеет меньше тонкого управления. TypeORM обеспечивает большую гибкость с декораторами и raw запросами, но требует больше boilerplate. Выбирайте Prisma для быстрого прототипирования; TypeORM для сложных legacy систем.\n\n```typescript\n// Prisma: Простой, декларативный\nconst user = await prisma.user.findUnique({\n  where: { id: 1 },\n  include: { posts: true }\n});\n\n// TypeORM: На основе декораторов, более многословный\nconst user = await userRepository.findOne(1, {\n  relations: ['posts']\n});\n```\n\n**Типичная ошибка:** Думать, что Prisma не может обрабатывать сложные запросы—используйте `$queryRaw` для продвинутых сценариев или `prisma.$transaction` для атомарности."
+    },
+    "tags": [
+      "prisma-vs-typeorm",
+      "orm-comparison",
+      "technology-selection"
+    ]
+  },
+  {
+    "id": "prisma-q-38",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement multi-schema support in Prisma for a multi-tenant application? What are the architectural considerations?",
+      "ru": "Как бы вы реализовали поддержку multi-schema в Prisma для multi-tenant приложения? Какие архитектурные соображения?"
+    },
+    "answer": {
+      "en": "### Multi-Schema Support in Prisma\n\nUse dynamic schema generation or environment-based schema selection with separate PrismaClient instances per tenant. Alternatively, use PostgreSQL schemas with `search_path` parameter or implement row-level security (RLS) for isolation.\n\n```typescript\n// Option 1: Dynamic connection per tenant\nconst getPrismaClient = (tenantId: string) => {\n  const dbUrl = process.env.DATABASE_URL.replace(\n    'mydb',\n    `mydb_${tenantId}`\n  );\n  return new PrismaClient({ datasources: { db: { url: dbUrl } } });\n};\n\n// Option 2: PostgreSQL schema with search_path\nconst prisma = new PrismaClient();\nawait prisma.$executeRawUnsafe(`SET search_path TO tenant_${tenantId}`);\n```\n\n**Common interview trap:** Not considering data isolation security—ensure proper authentication and authorization before switching schemas/databases.",
+      "ru": "### Поддержка multi-schema в Prisma\n\nИспользуйте динамическую генерацию схемы или выбор схемы на основе окружения с отдельными экземплярами PrismaClient на тенанта. Или используйте PostgreSQL схемы с параметром `search_path` или реализуйте row-level security (RLS) для изоляции.\n\n```typescript\n// Вариант 1: Динамическое соединение на тенанта\nconst getPrismaClient = (tenantId: string) => {\n  const dbUrl = process.env.DATABASE_URL.replace(\n    'mydb',\n    `mydb_${tenantId}`\n  );\n  return new PrismaClient({ datasources: { db: { url: dbUrl } } });\n};\n\n// Вариант 2: PostgreSQL схема с search_path\nconst prisma = new PrismaClient();\nawait prisma.$executeRawUnsafe(`SET search_path TO tenant_${tenantId}`);\n```\n\n**Типичная ошибка:** Не учитывать изоляцию данных безопасности—обеспечьте правильную аутентификацию и авторизацию перед переключением схем/баз."
+    },
+    "tags": [
+      "multi-tenancy",
+      "multi-schema",
+      "database-isolation"
+    ]
+  },
+  {
+    "id": "prisma-q-39",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the N+1 query problem in Prisma and demonstrate how to solve it using include() vs select(). When would you choose one over the other for performance-critical endpoints?",
+      "ru": "Объясните проблему N+1 запросов в Prisma и продемонстрируйте, как её решить с помощью include() vs select(). Когда вы выберете один подход над другим для критичных по производительности endpoints?"
+    },
+    "answer": {
+      "en": "### N+1 Prevention with Include vs Select\n\nThe N+1 problem occurs when you fetch a parent entity then loop through children, causing N additional queries. Use `include()` for eager loading all relations, or `select()` when you need specific fields only—select() is more efficient as it avoids loading unnecessary data.\n\n```typescript\n// N+1: Avoid this\nconst users = await prisma.user.findMany();\nfor (const user of users) {\n  user.posts = await prisma.post.findMany({ where: { userId: user.id } });\n}\n\n// Correct: Use include\nconst users = await prisma.user.findMany({ include: { posts: true } });\n\n// Optimized: Use select for specific fields\nconst users = await prisma.user.findMany({\n  select: { id: true, email: true, posts: { select: { id: true, title: true } } }\n});\n```\n\n**Common interview trap:** Thinking include() and select() have the same performance—select() is more efficient when you don't need all columns.",
+      "ru": "### Предотвращение N+1 с Include vs Select\n\nПроблема N+1 возникает, когда вы загружаете родителя, а затем в цикле загружаете дочерние сущности—это вызывает N дополнительных запросов. Используйте `include()` для eager loading всех отношений или `select()` когда нужны конкретные поля—select() эффективнее, так как избегает загрузки ненужных данных.\n\n```typescript\n// N+1: Избегайте этого\nconst users = await prisma.user.findMany();\nfor (const user of users) {\n  user.posts = await prisma.post.findMany({ where: { userId: user.id } });\n}\n\n// Правильно: Используйте include\nconst users = await prisma.user.findMany({ include: { posts: true } });\n\n// Оптимизировано: Используйте select для конкретных полей\nconst users = await prisma.user.findMany({\n  select: { id: true, email: true, posts: { select: { id: true, title: true } } }\n});\n```\n\n**Типичная ошибка:** Думать, что include() и select() имеют одинаковую производительность—select() эффективнее, когда не нужны все столбцы."
+    },
+    "tags": [
+      "n-plus-one-problem",
+      "eager-loading",
+      "query-optimization"
+    ]
+  },
+  {
+    "id": "prisma-q-40",
+    "topicId": "prisma",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does Prisma's connection pooling work, and what strategies would you use to manage connection limits in a high-traffic serverless environment? What are the key differences between Prisma vs TypeORM in connection management?",
+      "ru": "Как работает пулинг соединений в Prisma, и какие стратегии вы используете для управления лимитами соединений в высоконагруженной serverless среде? Какие ключевые различия между Prisma и TypeORM в управлении соединениями?"
+    },
+    "answer": {
+      "en": "### Connection Pooling in Serverless\n\nPrisma relies on the database's native connection pool (or PgBouncer for PostgreSQL). In serverless, instantiate a single PrismaClient globally and reuse it across invocations. TypeORM offers more granular pool configuration but requires manual management; Prisma abstracts this away, making it simpler but less flexible.\n\n```typescript\n// Correct: Global client instance\nconst prisma = new PrismaClient();\nexport const handler = async () => {\n  const users = await prisma.user.findMany();\n  // Don't disconnect—reuse across invocations\n};\n\n// For connection limits, use datasource config\n// datasource db { provider = \"postgresql\"; url = env(\"DATABASE_URL\") }\n// Add connection pool params to URL: ?schema=public&connection_limit=5\n```\n\n**Common interview trap:** Calling disconnect() after every serverless request kills the pool—connections are reused across warm invocations.",
+      "ru": "### Пулинг соединений в Serverless\n\nPrisma полагается на встроенный пул соединений базы данных (или PgBouncer для PostgreSQL). В serverless создайте единственный экземпляр PrismaClient глобально и переиспользуйте его между вызовами. TypeORM предлагает более детальную конфигурацию пула, но требует ручного управления; Prisma это абстрагирует, делая проще, но менее гибко.\n\n```typescript\n// Правильно: Глобальный экземпляр клиента\nconst prisma = new PrismaClient();\nexport const handler = async () => {\n  const users = await prisma.user.findMany();\n  // Не отключайте—переиспользуйте между вызовами\n};\n\n// Для лимитов соединений используйте конфиг datasource\n// datasource db { provider = \"postgresql\"; url = env(\"DATABASE_URL\") }\n// Добавьте параметры пула в URL: ?schema=public&connection_limit=5\n```\n\n**Типичная ошибка:** Вызов disconnect() после каждого serverless запроса разрушает пул—соединения переиспользуются между теплыми вызовами."
+    },
+    "tags": [
+      "connection-pooling",
+      "serverless-optimization",
+      "prisma-vs-typeorm"
+    ]
+  }
+]

@@ -1,1 +1,488 @@
-[]
+[
+  {
+    "id": "web-performance-q-1",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between LCP and INP metrics. When would you optimize for one over the other?",
+      "ru": "Объясните разницу между метриками LCP и INP. Когда вы бы оптимизировали один показатель над другим?"
+    },
+    "answer": {
+      "en": "### LCP vs INP\n\nLCP (Largest Contentful Paint) measures when the largest visual element loads, while INP (Interaction to Next Paint) measures responsiveness to user interactions. Optimize LCP for initial load experience and INP for interactive performance during user engagement.\n\n```typescript\n// Monitor both metrics\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log('LCP:', entry.startTime);\n  }\n});\nobserver.observe({ entryTypes: ['largest-contentful-paint'] });\n```\n\n**Common interview trap:** Confusing LCP with FCP (First Contentful Paint) or treating INP the same as FID.",
+      "ru": "### LCP против INP\n\nLCP (Largest Contentful Paint) измеряет, когда загружается самый большой визуальный элемент, а INP (Interaction to Next Paint) измеряет отзывчивость на взаимодействие пользователя. Оптимизируйте LCP для первоначального опыта загрузки и INP для интерактивной производительности.\n\n```typescript\n// Мониторим оба показателя\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log('LCP:', entry.startTime);\n  }\n});\nobserver.observe({ entryTypes: ['largest-contentful-paint'] });\n```\n\n**Типичная ошибка:** Путаница LCP с FCP или одинаковое отношение к INP и FID."
+    },
+    "tags": [
+      "core-web-vitals",
+      "lcp",
+      "inp",
+      "performance-metrics"
+    ]
+  },
+  {
+    "id": "web-performance-q-2",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use resource hints (preload, prefetch, preconnect) to optimize loading of critical third-party scripts?",
+      "ru": "Как вы бы использовали resource hints (preload, prefetch, preconnect) для оптимизации загрузки критичных скриптов третьих сторон?"
+    },
+    "answer": {
+      "en": "### Resource Hints Strategy\n\nUse preconnect for DNS/TLS handshakes on critical domains, preload for essential resources needed soon, and prefetch for lower-priority resources. Preconnect is fastest for third-party scripts since it establishes the connection early.\n\n```typescript\n// In HTML head\n<link rel=\"preconnect\" href=\"https://api.analytics.com\" />\n<link rel=\"preload\" href=\"https://api.analytics.com/script.js\" as=\"script\" />\n<link rel=\"prefetch\" href=\"https://cdn.example.com/future-resource.js\" />\n```\n\n**Common interview trap:** Using preload for everything instead of reserving it for truly critical resources.",
+      "ru": "### Стратегия Resource Hints\n\nИспользуйте preconnect для DNS/TLS рукопожатий на критичных доменах, preload для необходимых ресурсов и prefetch для низкоприоритетных ресурсов. Preconnect самый быстрый для скриптов третьих сторон.\n\n```typescript\n// В HTML head\n<link rel=\"preconnect\" href=\"https://api.analytics.com\" />\n<link rel=\"preload\" href=\"https://api.analytics.com/script.js\" as=\"script\" />\n<link rel=\"prefetch\" href=\"https://cdn.example.com/future-resource.js\" />\n```\n\n**Типичная ошибка:** Использование preload для всего вместо резервирования для действительно критичных ресурсов."
+    },
+    "tags": [
+      "resource-hints",
+      "preload",
+      "prefetch",
+      "preconnect",
+      "third-party-scripts"
+    ]
+  },
+  {
+    "id": "web-performance-q-3",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "What strategies would you use to implement effective lazy loading for images while maintaining CLS (Cumulative Layout Shift)?",
+      "ru": "Какие стратегии вы бы использовали для эффективной ленивой загрузки изображений, сохраняя низкий CLS?"
+    },
+    "answer": {
+      "en": "### Lazy Loading with CLS Control\n\nReserve space for images using aspect-ratio CSS or explicit width/height to prevent layout shifts when they load. Use native loading=\"lazy\" or Intersection Observer API for dynamic loading without CLS impact.\n\n```typescript\n// Reserve space to prevent CLS\n<img loading=\"lazy\" src=\"image.jpg\" width=\"800\" height=\"600\" alt=\"content\" />\n\n// CSS alternative\nimg { aspect-ratio: 16 / 9; }\n\n// Intersection Observer approach\nconst observer = new IntersectionObserver((entries) => {\n  entries.forEach(entry => {\n    if (entry.isIntersecting) entry.target.src = entry.target.dataset.src;\n  });\n});\n```\n\n**Common interview trap:** Implementing lazy loading without reserving space, causing visible CLS.",
+      "ru": "### Ленивая загрузка с контролем CLS\n\nЗарезервируйте место для изображений, используя aspect-ratio CSS или явные width/height, чтобы предотвратить сдвиги при загрузке. Используйте native loading=\"lazy\" или Intersection Observer API.\n\n```typescript\n// Зарезервируйте место для предотвращения CLS\n<img loading=\"lazy\" src=\"image.jpg\" width=\"800\" height=\"600\" alt=\"content\" />\n\n// CSS альтернатива\nimg { aspect-ratio: 16 / 9; }\n\n// Intersection Observer подход\nconst observer = new IntersectionObserver((entries) => {\n  entries.forEach(entry => {\n    if (entry.isIntersecting) entry.target.src = entry.target.dataset.src;\n  });\n});\n```\n\n**Типичная ошибка:** Реализация ленивой загрузки без резервирования места, вызывающая видимый CLS."
+    },
+    "tags": [
+      "lazy-loading",
+      "image-optimization",
+      "cls",
+      "layout-shift",
+      "intersection-observer"
+    ]
+  },
+  {
+    "id": "web-performance-q-4",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do code splitting and tree shaking work together to optimize bundle size? Provide a practical example with webpack.",
+      "ru": "Как code splitting и tree shaking работают вместе для оптимизации размера бандла? Приведите практический пример с webpack."
+    },
+    "answer": {
+      "en": "### Code Splitting + Tree Shaking\n\nTree shaking removes unused exports during build time, while code splitting separates code into chunks for lazy loading. Together they minimize main bundle and load features on-demand. Webpack requires ES6 modules and production mode.\n\n```typescript\n// webpack.config.js\nmodule.exports = {\n  mode: 'production',\n  optimization: {\n    usedExports: true,\n    splitChunks: { chunks: 'all' }\n  }\n};\n\n// Dynamic import for splitting\nconst module = await import('./heavy-feature');\n// Unused exports in heavy-feature are tree-shaken\n```\n\n**Common interview trap:** Forgetting that tree shaking only works with ES6 modules and production mode.",
+      "ru": "### Code Splitting + Tree Shaking\n\nTree shaking удаляет неиспользуемые экспорты во время сборки, а code splitting разделяет код на чанки для ленивой загрузки. Вместе они минимизируют основной бандл и загружают функции по требованию.\n\n```typescript\n// webpack.config.js\nmodule.exports = {\n  mode: 'production',\n  optimization: {\n    usedExports: true,\n    splitChunks: { chunks: 'all' }\n  }\n};\n\n// Динамический импорт для разделения\nconst module = await import('./heavy-feature');\n// Неиспользуемые экспорты удаляются\n```\n\n**Типичная ошибка:** Забыть, что tree shaking работает только с ES6 модулями и в режиме production."
+    },
+    "tags": [
+      "code-splitting",
+      "tree-shaking",
+      "bundle-optimization",
+      "webpack",
+      "dynamic-imports"
+    ]
+  },
+  {
+    "id": "web-performance-q-5",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe a complete image optimization strategy covering formats, responsive images, and modern delivery methods.",
+      "ru": "Опишите полную стратегию оптимизации изображений, охватывающую форматы, адаптивные изображения и современные методы доставки."
+    },
+    "answer": {
+      "en": "### Complete Image Optimization\n\nCombine modern formats (WebP/AVIF with fallbacks), srcset for responsive sizing, and lazy loading for performance. Use CDN with automatic format selection and compression. This minimizes bandwidth while maintaining quality across devices.\n\n```typescript\n<picture>\n  <source srcset=\"image.avif\" type=\"image/avif\" />\n  <source srcset=\"image.webp\" type=\"image/webp\" />\n  <source srcset=\"image.jpg\" type=\"image/jpeg\" />\n  <img src=\"image.jpg\" loading=\"lazy\" alt=\"content\" \n       srcset=\"small.jpg 480w, medium.jpg 1024w\" />\n</picture>\n```\n\n**Common interview trap:** Using only one format or ignoring browser support fallbacks.",
+      "ru": "### Полная оптимизация изображений\n\nСочетайте современные форматы (WebP/AVIF с fallback'ами), srcset для адаптивного размера и ленивую загрузку. Используйте CDN с автоматическим выбором формата и сжатием.\n\n```typescript\n<picture>\n  <source srcset=\"image.avif\" type=\"image/avif\" />\n  <source srcset=\"image.webp\" type=\"image/webp\" />\n  <source srcset=\"image.jpg\" type=\"image/jpeg\" />\n  <img src=\"image.jpg\" loading=\"lazy\" alt=\"content\" \n       srcset=\"small.jpg 480w, medium.jpg 1024w\" />\n</picture>\n```\n\n**Типичная ошибка:** Использование только одного формата или игнорирование поддержки браузерами."
+    },
+    "tags": [
+      "image-optimization",
+      "responsive-images",
+      "modern-formats",
+      "picture-element",
+      "srcset"
+    ]
+  },
+  {
+    "id": "web-performance-q-6",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between LCP and INP in Core Web Vitals. When would you optimize for one over the other?",
+      "ru": "Объясните разницу между LCP и INP в Core Web Vitals. Когда бы вы оптимизировали один вместо другого?"
+    },
+    "answer": {
+      "en": "### LCP vs INP\n\nLCP (Largest Contentful Paint) measures loading performance—when the largest visual element appears. INP (Interaction to Next Paint) measures responsiveness—how long the page takes to respond to user interactions. Optimize LCP first for initial load perception, then focus on INP if interactions feel sluggish.\n\n```typescript\n// Monitor both metrics\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    if (entry.name === 'largest-contentful-paint') {\n      console.log('LCP:', entry.startTime);\n    }\n  }\n});\nobserver.observe({ entryTypes: ['largest-contentful-paint', 'interaction'] });\n```\n\n**Common interview trap:** Confusing LCP with FCP (First Contentful Paint)—LCP specifically targets the largest element.",
+      "ru": "### LCP против INP\n\nLCP (Largest Contentful Paint) измеряет производительность загрузки — когда появляется самый крупный визуальный элемент. INP (Interaction to Next Paint) измеряет отзывчивость — как долго страница реагирует на взаимодействие пользователя. Сначала оптимизируйте LCP для восприятия начальной загрузки, затем сосредоточьтесь на INP, если взаимодействия кажутся медленными.\n\n```typescript\n// Мониторинг обоих метрик\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    if (entry.name === 'largest-contentful-paint') {\n      console.log('LCP:', entry.startTime);\n    }\n  }\n});\nobserver.observe({ entryTypes: ['largest-contentful-paint', 'interaction'] });\n```\n\n**Типичная ошибка:** Путаница между LCP и FCP (First Contentful Paint) — LCP конкретно нацелена на самый крупный элемент."
+    },
+    "tags": [
+      "core-web-vitals",
+      "lcp",
+      "inp",
+      "performance-metrics"
+    ]
+  },
+  {
+    "id": "web-performance-q-7",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use resource hints (preload, prefetch, preconnect) to optimize a page that loads third-party fonts and analytics scripts?",
+      "ru": "Как вы используете подсказки ресурсов (preload, prefetch, preconnect) для оптимизации страницы, которая загружает сторонние шрифты и скрипты аналитики?"
+    },
+    "answer": {
+      "en": "### Resource Hints Strategy\n\nUse `preconnect` for third-party domains to establish early connections, `preload` for critical resources needed soon, and `prefetch` for lower-priority assets loaded later. For fonts, preload the subset; for analytics, prefetch the script after critical resources.\n\n```typescript\n// In HTML head\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n<link rel=\"preload\" href=\"/fonts/main.woff2\" as=\"font\" type=\"font/woff2\" crossorigin />\n<link rel=\"prefetch\" href=\"https://analytics.google.com/analytics.js\" />\n<link rel=\"dns-prefetch\" href=\"https://cdn.example.com\" />\n```\n\n**Common interview trap:** Using preload for everything—it blocks rendering; reserve it only for critical above-the-fold resources.",
+      "ru": "### Стратегия подсказок ресурсов\n\nИспользуйте `preconnect` для установления ранних соединений с доменами третьих сторон, `preload` для критических ресурсов, необходимых вскоре, и `prefetch` для низкоприоритетных активов, загруженных позже. Для шрифтов предварительно загружайте подмножество; для аналитики предварительно загружайте скрипт после критических ресурсов.\n\n```typescript\n// В head HTML\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n<link rel=\"preload\" href=\"/fonts/main.woff2\" as=\"font\" type=\"font/woff2\" crossorigin />\n<link rel=\"prefetch\" href=\"https://analytics.google.com/analytics.js\" />\n<link rel=\"dns-prefetch\" href=\"https://cdn.example.com\" />\n```\n\n**Типичная ошибка:** Использование preload для всего — это блокирует рендеринг; зарезервируйте его только для критических ресурсов выше линии сгиба."
+    },
+    "tags": [
+      "resource-hints",
+      "preload",
+      "prefetch",
+      "preconnect",
+      "optimization"
+    ]
+  },
+  {
+    "id": "web-performance-q-8",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe a practical approach to image optimization. How would you handle different screen sizes and formats (WebP, JPEG)?",
+      "ru": "Опишите практический подход к оптимизации изображений. Как вы обрабатываете различные размеры экрана и форматы (WebP, JPEG)?"
+    },
+    "answer": {
+      "en": "### Image Optimization Approach\n\nUse `<picture>` element with `srcset` to serve WebP to modern browsers and JPEG fallbacks to older ones. Resize images for different breakpoints using responsive image techniques. Lazy-load off-screen images with `loading=\"lazy\"` attribute.\n\n```typescript\n<picture>\n  <source srcset=\"image.webp\" type=\"image/webp\" />\n  <source srcset=\"image-large.jpg 1200w, image-medium.jpg 768w\" />\n  <img src=\"image.jpg\" alt=\"desc\" loading=\"lazy\" />\n</picture>\n```\n\n**Common interview trap:** Forgetting that `<img>` tag fallback is still necessary in `<picture>` element for browsers that don't support it.",
+      "ru": "### Подход к оптимизации изображений\n\nИспользуйте элемент `<picture>` с `srcset` для подачи WebP современным браузерам и резервных JPEG для старых. Измените размер изображений для разных контрольных точек, используя методы адаптивного изображения. Ленивая загрузка внеэкранных изображений с атрибутом `loading=\"lazy\"`.\n\n```typescript\n<picture>\n  <source srcset=\"image.webp\" type=\"image/webp\" />\n  <source srcset=\"image-large.jpg 1200w, image-medium.jpg 768w\" />\n  <img src=\"image.jpg\" alt=\"desc\" loading=\"lazy\" />\n</picture>\n```\n\n**Типичная ошибка:** Забывание того, что тег `<img>` все еще необходим в качестве резервного варианта в элементе `<picture>` для браузеров, которые его не поддерживают."
+    },
+    "tags": [
+      "image-optimization",
+      "responsive-images",
+      "webp",
+      "lazy-loading",
+      "srcset"
+    ]
+  },
+  {
+    "id": "web-performance-q-9",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does code splitting work in modern bundlers? What's the difference between route-based and component-based splitting?",
+      "ru": "Как работает разделение кода в современных бандлерах? В чем разница между разделением на основе маршрутов и на основе компонентов?"
+    },
+    "answer": {
+      "en": "### Code Splitting Strategies\n\nRoute-based splitting loads only the code needed for the current page route, reducing initial bundle size. Component-based splitting lazy-loads individual components, useful for modals or tabs that appear conditionally. Route-based is typically more effective for SPA performance.\n\n```typescript\n// Route-based with React Router\nconst Home = lazy(() => import('./pages/Home'));\nconst About = lazy(() => import('./pages/About'));\n\n// Component-based\nconst Modal = lazy(() => import('./Modal'));\n\n<Suspense fallback={<Loader />}>\n  <Home />\n</Suspense>\n```\n\n**Common interview trap:** Not mentioning that dynamic imports `import()` return Promises, requiring error boundaries and Suspense fallbacks.",
+      "ru": "### Стратегии разделения кода\n\nРазделение на основе маршрутов загружает только код, необходимый для текущего маршрута страницы, уменьшая размер начального пакета. Разделение на основе компонентов ленивой загрузки отдельных компонентов, полезно для модальных окон или вкладок, которые появляются условно. Разделение на основе маршрутов обычно более эффективно для производительности SPA.\n\n```typescript\n// Разделение на основе маршрутов с React Router\nconst Home = lazy(() => import('./pages/Home'));\nconst About = lazy(() => import('./pages/About'));\n\n// На основе компонентов\nconst Modal = lazy(() => import('./Modal'));\n\n<Suspense fallback={<Loader />}>\n  <Home />\n</Suspense>\n```\n\n**Типичная ошибка:** Неупоминание того, что динамические импорты `import()` возвращают Promises, требующие Error Boundaries и Suspense fallbacks."
+    },
+    "tags": [
+      "code-splitting",
+      "lazy-loading",
+      "bundling",
+      "dynamic-imports",
+      "route-based"
+    ]
+  },
+  {
+    "id": "web-performance-q-10",
+    "topicId": "web-performance",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain tree shaking and how it works with bundlers like Webpack or Vite. What are common pitfalls that prevent effective tree shaking?",
+      "ru": "Объясните tree shaking и как он работает с бандлерами, такими как Webpack или Vite. Какие частые ошибки препятствуют эффективному tree shaking?"
+    },
+    "answer": {
+      "en": "### Tree Shaking Mechanics\n\nTree shaking removes unused code by analyzing ES6 module imports statically. It only works with ES modules (not CommonJS) and requires the bundler to identify unused exports. Pitfalls include side effects (code that runs on import), default exports, and dynamic imports which can't be statically analyzed.\n\n```typescript\n// Good: Named exports, tree-shakeable\nexport const used = () => {};\nexport const unused = () => {};\n\n// Bad: Default export, entire module imported\nexport default { used, unused };\n\n// Prevent tree shaking with side effects\nexport const effect = () => console.log('runs on import');\n```\n\n**Common interview trap:** Assuming all unused code is removed—side effects in modules prevent tree shaking; mark truly side-effect-free modules with `\"sideEffects\": false` in package.json.",
+      "ru": "### Механика Tree Shaking\n\nTree shaking удаляет неиспользуемый код путем статического анализа импортов модулей ES6. Он работает только с модулями ES (не CommonJS) и требует, чтобы бандлер идентифицировал неиспользуемые экспорты. Ошибки включают побочные эффекты (код, который запускается при импорте), экспорты по умолчанию и динамические импорты, которые не могут быть статически анализированы.\n\n```typescript\n// Хорошо: Именованные экспорты, можно удалить\nexport const used = () => {};\nexport const unused = () => {};\n\n// Плохо: Экспорт по умолчанию, весь модуль импортирован\nexport default { used, unused };\n\n// Препятствие tree shaking побочными эффектами\nexport const effect = () => console.log('запускается при импорте');\n```\n\n**Типичная ошибка:** Предположение, что весь неиспользуемый код удаляется — побочные эффекты в модулях препятствуют tree shaking; пометьте действительно свободные от побочных эффектов модули с `\"sideEffects\": false` в package.json."
+    },
+    "tags": [
+      "tree-shaking",
+      "bundling",
+      "es-modules",
+      "webpack",
+      "vite",
+      "dead-code-elimination"
+    ]
+  },
+  {
+    "id": "web-performance-q-11",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you identify and optimize Long Tasks in Chrome DevTools? Walk us through the process and explain why they matter for Core Web Vitals.",
+      "ru": "Как вы идентифицируете и оптимизируете Long Tasks в Chrome DevTools? Объясните процесс и почему они важны для Core Web Vitals."
+    },
+    "answer": {
+      "en": "### Identifying Long Tasks\n\nUse Chrome DevTools Performance panel to record and look for tasks exceeding 50ms. Long Tasks block the main thread, degrading INP (Interaction to Next Paint). Break them into smaller chunks using setTimeout or requestIdleCallback.\n\n```typescript\n// Instead of blocking work\nfunction processLargeData(items) {\n  items.forEach(item => expensiveOperation(item));\n}\n\n// Split into chunks\nfunction* chunkWork(items) {\n  for (let item of items) {\n    yield expensiveOperation(item);\n  }\n}\n\nfunction scheduleWork(items) {\n  const generator = chunkWork(items);\n  requestIdleCallback(() => generator.next());\n}\n```\n\n**Common interview trap:** Confusing Long Tasks with slow rendering—Long Tasks are CPU-bound JavaScript execution, not paint times.",
+      "ru": "### Определение Long Tasks\n\nИспользуйте вкладку Performance в Chrome DevTools для записи и поиска задач, превышающих 50ms. Long Tasks блокируют основной поток, ухудшая INP. Разбейте их на меньшие части используя setTimeout или requestIdleCallback.\n\n```typescript\n// Вместо блокирующей работы\nfunction processLargeData(items) {\n  items.forEach(item => expensiveOperation(item));\n}\n\n// Разбить на куски\nfunction* chunkWork(items) {\n  for (let item of items) {\n    yield expensiveOperation(item);\n  }\n}\n\nfunction scheduleWork(items) {\n  const generator = chunkWork(items);\n  requestIdleCallback(() => generator.next());\n}\n```\n\n**Типичная ошибка:** Путаница между Long Tasks и медленной отрисовкой—Long Tasks это CPU-зависимое выполнение JavaScript, не время рендеринга."
+    },
+    "tags": [
+      "long-tasks",
+      "chrome-devtools",
+      "core-web-vitals",
+      "main-thread-blocking"
+    ]
+  },
+  {
+    "id": "web-performance-q-12",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe your strategy for optimizing font loading to minimize CLS (Cumulative Layout Shift) and improve perceived performance. What tools would you use?",
+      "ru": "Опишите вашу стратегию оптимизации загрузки шрифтов для минимизации CLS и улучшения воспринимаемой производительности. Какие инструменты вы используете?"
+    },
+    "answer": {
+      "en": "### Font Loading Strategy\n\nUse font-display descriptor and preload critical fonts with high priority. Prefer system fonts for fast initial render, then swap web fonts to avoid layout shift. Use font-display: swap or optional depending on your use case.\n\n```typescript\n// Preload critical font\n<link rel=\"preload\" as=\"font\" href=\"critical.woff2\" type=\"font/woff2\" crossorigin>\n\n// CSS with font-display\n@font-face {\n  font-family: 'MyFont';\n  src: url('font.woff2') format('woff2');\n  font-display: swap; // Show fallback, swap when ready\n}\n\n// font-display values: auto, block, swap, fallback, optional\n```\n\n**Common interview trap:** Not mentioning font-display descriptor—it's essential for CLS control, not just preload.",
+      "ru": "### Стратегия загрузки шрифтов\n\nИспользуйте дескриптор font-display и предварительно загружайте критические шрифты с высоким приоритетом. Отдавайте предпочтение системным шрифтам для быстрого начального рендеринга, затем подменяйте веб-шрифты для избежания сдвига макета.\n\n```typescript\n// Предварительная загрузка критического шрифта\n<link rel=\"preload\" as=\"font\" href=\"critical.woff2\" type=\"font/woff2\" crossorigin>\n\n// CSS с font-display\n@font-face {\n  font-family: 'MyFont';\n  src: url('font.woff2') format('woff2');\n  font-display: swap; // Показать fallback, подменить при готовности\n}\n\n// Значения font-display: auto, block, swap, fallback, optional\n```\n\n**Типичная ошибка:** Не упомянуть дескриптор font-display—это критично для контроля CLS, а не просто preload."
+    },
+    "tags": [
+      "font-loading",
+      "cls",
+      "font-display",
+      "preload"
+    ]
+  },
+  {
+    "id": "web-performance-q-13",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how you would use service workers to implement an effective caching strategy. What are the trade-offs between cache-first, network-first, and stale-while-revalidate approaches?",
+      "ru": "Объясните, как вы используете service workers для реализации эффективной стратегии кэширования. Каковы компромиссы между cache-first, network-first и stale-while-revalidate подходами?"
+    },
+    "answer": {
+      "en": "### Service Worker Caching Strategies\n\nEach strategy has trade-offs: cache-first is fastest but may serve stale content; network-first prioritizes freshness but slower offline; stale-while-revalidate balances both by serving cached content immediately while updating. Choose based on content volatility.\n\n```typescript\n// Stale-while-revalidate: best for most assets\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    caches.match(event.request).then((cached) => {\n      const fetched = fetch(event.request).then((response) => {\n        const cache = caches.open('v1');\n        cache.then((c) => c.put(event.request, response.clone()));\n        return response;\n      });\n      return cached || fetched;\n    })\n  );\n});\n```\n\n**Common interview trap:** Assuming cache-first is always best—it's dangerous for critical resources that update frequently.",
+      "ru": "### Стратегии кэширования Service Worker\n\nКаждая стратегия имеет компромиссы: cache-first самая быстрая но может возвращать устаревший контент; network-first приоритизирует свежесть но медленнее оффлайн; stale-while-revalidate балансирует оба подхода. Выбирайте на основе частоты обновлений.\n\n```typescript\n// Stale-while-revalidate: лучше для большинства ассетов\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    caches.match(event.request).then((cached) => {\n      const fetched = fetch(event.request).then((response) => {\n        const cache = caches.open('v1');\n        cache.then((c) => c.put(event.request, response.clone()));\n        return response;\n      });\n      return cached || fetched;\n    })\n  );\n});\n```\n\n**Типичная ошибка:** Предположение, что cache-first всегда лучший подход—это опасно для критических ресурсов, которые часто обновляются."
+    },
+    "tags": [
+      "service-workers",
+      "caching-strategies",
+      "stale-while-revalidate",
+      "offline-first"
+    ]
+  },
+  {
+    "id": "web-performance-q-14",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you analyze bundle size and identify optimization opportunities? Walk through your approach using bundle analysis tools and explain what metrics matter most.",
+      "ru": "Как вы анализируете размер бандла и идентифицируете возможности оптимизации? Объясните ваш подход с использованием инструментов анализа бандла и какие метрики наиболее важны."
+    },
+    "answer": {
+      "en": "### Bundle Analysis Approach\n\nUse tools like webpack-bundle-analyzer, source-map-explorer, or esbuild's analyze plugin to visualize bundle composition. Focus on gzip/brotli sizes (not raw), identify duplicate dependencies, and prioritize removing large unused packages. Main metrics: total gzip size, main chunk size, and lazy-loaded chunk count.\n\n```typescript\n// webpack.config.js with bundle analyzer\nconst BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;\n\nmodule.exports = {\n  plugins: [\n    new BundleAnalyzerPlugin({\n      analyzerMode: 'static',\n      reportFilename: 'bundle-report.html'\n    })\n  ]\n};\n```\n\n**Common interview trap:** Optimizing raw bundle size instead of gzip/brotli—network transfer uses compression, making it the real metric that matters.",
+      "ru": "### Подход к анализу бандла\n\nИспользуйте инструменты типа webpack-bundle-analyzer, source-map-explorer или плагин analyze в esbuild для визуализации композиции бандла. Сосредоточьтесь на размерах gzip/brotli, определите дублирующиеся зависимости и приоритизируйте удаление крупных неиспользуемых пакетов.\n\n```typescript\n// webpack.config.js с bundle analyzer\nconst BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;\n\nmodule.exports = {\n  plugins: [\n    new BundleAnalyzerPlugin({\n      analyzerMode: 'static',\n      reportFilename: 'bundle-report.html'\n    })\n  ]\n};\n```\n\n**Типичная ошибка:** Оптимизация сырого размера бандла вместо gzip/brotli—передача по сети использует сжатие, что делает это реальной метрикой."
+    },
+    "tags": [
+      "bundle-analysis",
+      "tree-shaking",
+      "code-splitting",
+      "dependency-optimization"
+    ]
+  },
+  {
+    "id": "web-performance-q-15",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is a reasonable JavaScript execution budget for a modern web application? How do you enforce it and handle trade-offs when budget is exceeded?",
+      "ru": "Какой разумный бюджет выполнения JavaScript для современного веб-приложения? Как вы его соблюдаете и справляетесь с компромиссами при превышении бюджета?"
+    },
+    "answer": {
+      "en": "### JavaScript Execution Budget\n\nAim for 50-100ms total JS on initial load (for INP < 200ms target). Split across code-splitting: main chunk 30-50KB gzip, lazy routes 20-30KB each. Monitor using DevTools Performance panel and CI tools like bundlesize or performance budgets in webpack. Trade-offs: accept critical features in main bundle, defer nice-to-haves.\n\n```typescript\n// webpack performance budget\nmodule.exports = {\n  performance: {\n    maxEntrypointSize: 51200,  // 50KB\n    maxAssetSize: 30720,       // 30KB per lazy chunk\n    hints: 'error'             // fail build if exceeded\n  },\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      minSize: 20000\n    }\n  }\n};\n```\n\n**Common interview trap:** Setting budget too aggressively (10-20KB)—modern frameworks require more; focus on gzip size and real-world execution time, not just bundle size.",
+      "ru": "### Бюджет выполнения JavaScript\n\nСтремитесь к 50-100ms общего JS на начальной загрузке (для цели INP < 200ms). Распределите через code-splitting: основной чанк 30-50KB gzip, ленивые маршруты 20-30KB каждый. Мониторьте DevTools Performance и CI-инструменты типа bundlesize. Компромиссы: критические функции в основном бандле, отложите дополнительное.\n\n```typescript\n// webpack performance budget\nmodule.exports = {\n  performance: {\n    maxEntrypointSize: 51200,  // 50KB\n    maxAssetSize: 30720,       // 30KB per lazy chunk\n    hints: 'error'             // fail build if exceeded\n  },\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      minSize: 20000\n    }\n  }\n};\n```\n\n**Типичная ошибка:** Установка бюджета слишком агрессивно (10-20KB)—современные фреймворки требуют больше; фокусируйтесь на размере gzip и реальном времени выполнения."
+    },
+    "tags": [
+      "execution-budget",
+      "code-splitting",
+      "performance-monitoring",
+      "webpack-optimization"
+    ]
+  },
+  {
+    "id": "web-performance-q-16",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you identify and optimize Long Tasks using Chrome DevTools Performance panel? Walk through your approach and explain how Long Tasks impact user experience.",
+      "ru": "Как вы выявляете и оптимизируете Long Tasks с помощью Chrome DevTools Performance panel? Объясните влияние Long Tasks на пользовательский опыт."
+    },
+    "answer": {
+      "en": "### Identifying Long Tasks in Performance Panel\n\nLong Tasks (>50ms) block the main thread and degrade responsiveness. Use the Performance tab to record, look for yellow/red blocks in the Main thread, and break tasks using requestIdleCallback or setTimeout.\n\n```typescript\n// Instead of blocking code\nfunction processLargeArray(items) {\n  items.forEach(item => heavyComputation(item));\n}\n\n// Split into chunks\nfunction processInChunks(items, callback) {\n  let index = 0;\n  function processChunk() {\n    const end = Math.min(index + 10, items.length);\n    for (; index < end; index++) heavyComputation(items[index]);\n    if (index < items.length) requestIdleCallback(processChunk);\n    else callback();\n  }\n  processChunk();\n}\n```\n\n**Common interview trap:** Confusing Long Tasks with slow API calls—Long Tasks are CPU-bound, not network-bound.",
+      "ru": "### Выявление Long Tasks в Performance Panel\n\nLong Tasks (>50ms) блокируют главный поток и снижают отзывчивость. Используйте вкладку Performance для записи, ищите жёлтые/красные блоки на Main thread и разделяйте задачи с помощью requestIdleCallback или setTimeout.\n\n```typescript\n// Вместо блокирующего кода\nfunction processLargeArray(items) {\n  items.forEach(item => heavyComputation(item));\n}\n\n// Разделение на части\nfunction processInChunks(items, callback) {\n  let index = 0;\n  function processChunk() {\n    const end = Math.min(index + 10, items.length);\n    for (; index < end; index++) heavyComputation(items[index]);\n    if (index < items.length) requestIdleCallback(processChunk);\n    else callback();\n  }\n  processChunk();\n}\n```\n\n**Типичная ошибка:** Путаница между Long Tasks и медленными API запросами—Long Tasks привязаны к CPU, а не сети."
+    },
+    "tags": [
+      "long-tasks",
+      "chrome-devtools",
+      "main-thread",
+      "requestIdleCallback"
+    ]
+  },
+  {
+    "id": "web-performance-q-17",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the JavaScript execution budget concept. How would you allocate and monitor a 100ms budget across initial load, TTI, and interaction handlers?",
+      "ru": "Объясните концепцию JavaScript execution budget. Как вы распределили бы и контролировали бюджет 100ms между загрузкой, TTI и обработчиками взаимодействий?"
+    },
+    "answer": {
+      "en": "### JavaScript Execution Budget Strategy\n\nAllocate the 100ms budget: ~50ms for initial parsing/execution, ~30ms for TTI work, ~20ms for interaction handlers. Monitor using performance.measure() and set thresholds to warn when exceeded.\n\n```typescript\nfunction measureJSExecution(label, fn) {\n  performance.mark(`${label}-start`);\n  const result = fn();\n  performance.mark(`${label}-end`);\n  performance.measure(label, `${label}-start`, `${label}-end`);\n  \n  const measure = performance.getEntriesByName(label)[0];\n  if (measure.duration > 20) console.warn(`${label} exceeded budget: ${measure.duration}ms`);\n  return result;\n}\n\nmeasureJSExecution('init-scripts', () => initializeApp());\nmeasureJSExecution('event-handler', () => handleUserClick());\n```\n\n**Common interview trap:** Treating the budget as a single pool instead of distributing it across lifecycle phases.",
+      "ru": "### Стратегия JavaScript Execution Budget\n\nРаспределите 100ms бюджет: ~50ms на парсинг/выполнение, ~30ms на TTI работу, ~20ms на обработчики. Контролируйте через performance.measure() и устанавливайте пороги предупреждений.\n\n```typescript\nfunction measureJSExecution(label, fn) {\n  performance.mark(`${label}-start`);\n  const result = fn();\n  performance.mark(`${label}-end`);\n  performance.measure(label, `${label}-start`, `${label}-end`);\n  \n  const measure = performance.getEntriesByName(label)[0];\n  if (measure.duration > 20) console.warn(`${label} exceeded: ${measure.duration}ms`);\n  return result;\n}\n\nmeasureJSExecution('init-scripts', () => initializeApp());\nmeasureJSExecution('event-handler', () => handleUserClick());\n```\n\n**Типичная ошибка:** Рассмотрение бюджета как одного пула вместо распределения по фазам жизненного цикла."
+    },
+    "tags": [
+      "js-budget",
+      "performance-api",
+      "ttl",
+      "monitoring"
+    ]
+  },
+  {
+    "id": "web-performance-q-18",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare different font loading strategies (font-display properties, FOUT vs FOIT, preloading). Which strategy would you use for a critical UI font and why?",
+      "ru": "Сравните стратегии загрузки шрифтов (font-display, FOUT vs FOIT, preloading). Какую стратегию вы выберете для критичного UI шрифта и почему?"
+    },
+    "answer": {
+      "en": "### Optimal Font Loading Strategy\n\nFor critical UI fonts, use `font-display: swap` with preload. This shows fallback immediately (FOUT) while loading the custom font, avoiding invisible text (FOIT). Use `font-display: optional` for non-critical fonts.\n\n```html\n<!-- Preload critical font -->\n<link rel=\"preload\" as=\"font\" href=\"/fonts/critical.woff2\" type=\"font/woff2\" crossorigin>\n\n<style>\n  @font-face {\n    font-family: 'CriticalFont';\n    src: url('/fonts/critical.woff2') format('woff2');\n    font-display: swap; /* Show fallback immediately */\n  }\n  @font-face {\n    font-family: 'NonCritical';\n    src: url('/fonts/decorative.woff2') format('woff2');\n    font-display: optional; /* Skip if not loaded quickly */\n  }\n</style>\n```\n\n**Common interview trap:** Assuming `font-display: auto` is best—it defaults to FOIT which causes layout shift.",
+      "ru": "### Оптимальная стратегия загрузки шрифтов\n\nДля критичных UI шрифтов используйте `font-display: swap` с preload. Это показывает fallback сразу (FOUT) при загрузке шрифта, избегая невидимого текста (FOIT). Для некритичных используйте `font-display: optional`.\n\n```html\n<!-- Preload критичного шрифта -->\n<link rel=\"preload\" as=\"font\" href=\"/fonts/critical.woff2\" type=\"font/woff2\" crossorigin>\n\n<style>\n  @font-face {\n    font-family: 'CriticalFont';\n    src: url('/fonts/critical.woff2') format('woff2');\n    font-display: swap; /* Показать fallback сразу */\n  }\n  @font-face {\n    font-family: 'NonCritical';\n    src: url('/fonts/decorative.woff2') format('woff2');\n    font-display: optional; /* Пропустить если не загружено */\n  }\n</style>\n```\n\n**Типичная ошибка:** Предположение что `font-display: auto` лучший вариант—он по умолчанию FOIT с layout shift."
+    },
+    "tags": [
+      "font-loading",
+      "font-display",
+      "fout-foit",
+      "preload"
+    ]
+  },
+  {
+    "id": "web-performance-q-19",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you use a Service Worker to implement an effective caching strategy for static assets, API responses, and third-party resources? Explain your cache invalidation approach.",
+      "ru": "Как использовать Service Worker для реализации эффективной стратегии кеширования статических ресурсов, API ответов и внешних ресурсов? Объясните подход инвалидации кеша."
+    },
+    "answer": {
+      "en": "### Service Worker Caching Strategy\n\nUse cache-first for static assets (fonts, images), network-first for API responses (with timeout), and stale-while-revalidate for third-party resources. Invalidate by versioning cache names or cleaning old caches on activation.\n\n```typescript\nconst CACHE_V1 = 'assets-v1';\nconst CACHE_API = 'api-v1';\n\nself.addEventListener('fetch', (event) => {\n  if (event.request.url.includes('/api/')) {\n    // Network-first with timeout\n    event.respondWith(\n      Promise.race([\n        fetch(event.request),\n        new Promise(r => setTimeout(() => caches.match(event.request).then(r), 2000))\n      ])\n    );\n  } else {\n    // Cache-first for assets\n    event.respondWith(\n      caches.match(event.request)\n        .then(r => r || fetch(event.request).then(res => {\n          caches.open(CACHE_V1).then(c => c.put(event.request, res.clone()));\n          return res;\n        }))\n    );\n  }\n});\n\nself.addEventListener('activate', (event) => {\n  event.waitUntil(caches.keys().then(names => \n    Promise.all(names.filter(n => !n.includes('v1')).map(n => caches.delete(n)))\n  ));\n});\n```\n\n**Common interview trap:** Not cleaning old caches on activation, leading to unbounded storage growth.",
+      "ru": "### Service Worker стратегия кеширования\n\nИспользуйте cache-first для статических ресурсов (шрифты, изображения), network-first для API (с timeout) и stale-while-revalidate для внешних. Инвалидируйте через версионирование имён кеша или очистку на activate.\n\n```typescript\nconst CACHE_V1 = 'assets-v1';\nconst CACHE_API = 'api-v1';\n\nself.addEventListener('fetch', (event) => {\n  if (event.request.url.includes('/api/')) {\n    event.respondWith(\n      Promise.race([\n        fetch(event.request),\n        new Promise(r => setTimeout(() => caches.match(event.request).then(r), 2000))\n      ])\n    );\n  } else {\n    event.respondWith(\n      caches.match(event.request)\n        .then(r => r || fetch(event.request).then(res => {\n          caches.open(CACHE_V1).then(c => c.put(event.request, res.clone()));\n          return res;\n        }))\n    );\n  }\n});\n\nself.addEventListener('activate', (event) => {\n  event.waitUntil(caches.keys().then(names => \n    Promise.all(names.filter(n => !n.includes('v1')).map(n => caches.delete(n)))\n  ));\n});\n```\n\n**Типичная ошибка:** Неочистка старых кешей на activate, приводящая к неограниченному росту хранилища."
+    },
+    "tags": [
+      "service-worker",
+      "caching-strategy",
+      "cache-invalidation",
+      "offline"
+    ]
+  },
+  {
+    "id": "web-performance-q-20",
+    "topicId": "web-performance",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do render-blocking resources affect Core Web Vitals? Describe your workflow for identifying and eliminating them using bundle analysis and DevTools.",
+      "ru": "Как render-blocking ресурсы влияют на Core Web Vitals? Опишите рабочий процесс выявления и устранения через bundle analysis и DevTools."
+    },
+    "answer": {
+      "en": "### Eliminating Render-Blocking Resources\n\nRender-blocking CSS/JS delays FCP and LCP. Use bundle analysis tools (Webpack Bundle Analyzer) to identify large chunks, defer non-critical JS, inline critical CSS, and use async/defer attributes. Check Network tab in DevTools filtered by 'CSS' and 'JS'.\n\n```typescript\n// Bad: Blocks rendering\n<script src=\"analytics.js\"></script>\n<link rel=\"stylesheet\" href=\"all-styles.css\">\n\n// Good: Optimize blocking\n<link rel=\"preload\" as=\"script\" href=\"critical.js\">\n<script src=\"critical.js\" defer></script>\n<script src=\"analytics.js\" async></script>\n<link rel=\"stylesheet\" href=\"critical.css\" media=\"screen\"\n<link rel=\"stylesheet\" href=\"print.css\" media=\"print\">\n\n// Inline critical styles\n<style>\n  /* Critical above-fold styles only */\n</style>\n```\n\n**Common interview trap:** Deferring all JS equally—some must load synchronously for critical functionality.",
+      "ru": "### Устранение Render-Blocking ресурсов\n\nRender-blocking CSS/JS задерживает FCP и LCP. Используйте bundle analysis (Webpack Bundle Analyzer) для идентификации крупных chunks, отложите некритичный JS, встройте критичный CSS, используйте async/defer. Проверьте Network tab в DevTools.\n\n```typescript\n// Плохо: Блокирует рендеринг\n<script src=\"analytics.js\"></script>\n<link rel=\"stylesheet\" href=\"all-styles.css\">\n\n// Хорошо: Оптимизировано\n<link rel=\"preload\" as=\"script\" href=\"critical.js\">\n<script src=\"critical.js\" defer></script>\n<script src=\"analytics.js\" async></script>\n<link rel=\"stylesheet\" href=\"critical.css\" media=\"screen\"\n<link rel=\"stylesheet\" href=\"print.css\" media=\"print\">\n\n// Встроить критичные стили\n<style>\n  /* Только критичные выше fold */\n</style>\n```\n\n**Типичная ошибка:** Отложение всех JS одинаково—некоторые должны загружаться синхронно для критичной функциональности."
+    },
+    "tags": [
+      "render-blocking",
+      "core-web-vitals",
+      "bundle-analysis",
+      "fcp-lcp"
+    ]
+  },
+  {
+    "id": "web-performance-q-21",
+    "topicId": "web-performance",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how the browser rendering pipeline works and what optimizations you would apply to ensure consistent 60 FPS performance with a 16ms frame budget.",
+      "ru": "Объясните, как работает конвейер рендеринга браузера и какие оптимизации вы бы применили, чтобы обеспечить стабильную производительность 60 FPS в рамках бюджета в 16 мс."
+    },
+    "answer": {
+      "en": "### Rendering Pipeline & Frame Budget\n\nThe browser must complete Parse → Compile → Render → Paint → Composite within 16ms. Use `requestAnimationFrame` for animations, batch DOM changes, avoid layout thrashing by reading then writing DOM properties, and leverage GPU acceleration with `transform` and `opacity`.\n\n```typescript\n// BAD: Layout thrashing\nfor (let i = 0; i < elements.length; i++) {\n  elements[i].style.height = elements[i].offsetHeight + 10 + 'px';\n}\n\n// GOOD: Batch reads then writes\nconst heights = Array.from(elements).map(el => el.offsetHeight);\nheights.forEach((h, i) => {\n  elements[i].style.height = (h + 10) + 'px';\n});\n```\n\n**Common interview trap:** Thinking `transform` and layout changes have identical performance cost—only transforms skip layout recalculation.",
+      "ru": "### Конвейер рендеринга и бюджет кадра\n\nБраузер должен завершить Parse → Compile → Render → Paint → Composite за 16мс. Используйте `requestAnimationFrame` для анимаций, группируйте изменения DOM, избегайте layout thrashing путём чтения и затем записи свойств DOM, и используйте GPU-ускорение с `transform` и `opacity`.\n\n```typescript\n// ПЛОХО: Layout thrashing\nfor (let i = 0; i < elements.length; i++) {\n  elements[i].style.height = elements[i].offsetHeight + 10 + 'px';\n}\n\n// ХОРОШО: Группировка чтений и записей\nconst heights = Array.from(elements).map(el => el.offsetHeight);\nheights.forEach((h, i) => {\n  elements[i].style.height = (h + 10) + 'px';\n});\n```\n\n**Типичная ошибка:** Думать, что `transform` и изменение layout имеют одинаковую стоимость—только transform пропускает пересчёт layout."
+    },
+    "tags": [
+      "rendering-pipeline",
+      "frame-budget",
+      "layout-thrashing",
+      "gpu-acceleration"
+    ]
+  },
+  {
+    "id": "web-performance-q-22",
+    "topicId": "web-performance",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How would you use memory profiling tools to identify and fix memory leaks in a long-running Single Page Application? What patterns commonly cause leaks?",
+      "ru": "Как вы используете инструменты профилирования памяти для выявления и исправления утечек памяти в долгоживущем Single Page Application? Какие паттерны обычно вызывают утечки?"
+    },
+    "answer": {
+      "en": "### Memory Leak Detection & Prevention\n\nUse Chrome DevTools Heap Snapshots to compare snapshots over time and identify detached DOM nodes or retained objects. Common leak patterns: event listeners without cleanup, circular references in closures, global scope pollution, and timers/intervals not cleared on component unmount.\n\n```typescript\n// LEAK: Listener never removed\ncomponent.addEventListener('click', handler);\n\n// FIX: Cleanup on unmount\ncomponent.addEventListener('click', handler);\ncomponent.removeEventListener('click', handler);\n// Or use AbortController:\nconst controller = new AbortController();\ncomponent.addEventListener('click', handler, { signal: controller.signal });\ncontroller.abort(); // Cleanup\n```\n\n**Common interview trap:** Assuming all detached DOM nodes in snapshots are leaks—the garbage collector will eventually clean them if no references exist.",
+      "ru": "### Обнаружение и предотвращение утечек памяти\n\nИспользуйте Heap Snapshots в Chrome DevTools для сравнения снимков во времени и выявления отсоединённых узлов DOM или удерживаемых объектов. Типичные паттерны утечек: обработчики событий без очистки, циклические ссылки в замыканиях, загрязнение глобальной области видимости и таймеры/интервалы, не очищенные при демонтировании компонента.\n\n```typescript\n// УТЕЧКА: Listener никогда не удаляется\ncomponent.addEventListener('click', handler);\n\n// ИСПРАВЛЕНИЕ: Очистка при демонтировании\ncomponent.addEventListener('click', handler);\ncomponent.removeEventListener('click', handler);\n// Или используйте AbortController:\nconst controller = new AbortController();\ncomponent.addEventListener('click', handler, { signal: controller.signal });\ncontroller.abort(); // Очистка\n```\n\n**Типичная ошибка:** Думать, что все отсоединённые узлы DOM в снимках—это утечки; сборщик мусора их очистит, если нет ссылок."
+    },
+    "tags": [
+      "memory-profiling",
+      "memory-leaks",
+      "event-listeners",
+      "garbage-collection"
+    ]
+  },
+  {
+    "id": "web-performance-q-23",
+    "topicId": "web-performance",
+    "difficulty": "advanced",
+    "question": {
+      "en": "When would you use WebAssembly to optimize performance-critical code? Provide an example and explain the overhead of WebAssembly vs JavaScript trade-offs.",
+      "ru": "Когда вы бы использовали WebAssembly для оптимизации критичного по производительности кода? Приведите пример и объясните компромисс между издержками WebAssembly и JavaScript."
+    },
+    "answer": {
+      "en": "### WebAssembly for Performance-Critical Code\n\nUse WebAssembly for CPU-intensive, compute-heavy tasks like image processing, cryptography, or physics simulations where the cost of compilation is amortized over many invocations. The overhead includes module loading, memory copying at boundaries, and JavaScript-to-WebAssembly calls—only worthwhile if computation time vastly outweighs marshalling cost.\n\n```typescript\n// WASM for heavy computation\nconst wasmModule = await WebAssembly.instantiate(wasmBinary);\nconst result = wasmModule.instance.exports.processImage(buffer, width, height);\n\n// Overhead: Copying data to WASM linear memory\nconst wasmMemory = new Uint8Array(wasmModule.instance.memory.buffer);\nwasmMemory.set(imageData); // Copy cost\nconst processed = wasmModule.instance.exports.filter();\n```\n\n**Common interview trap:** Assuming WebAssembly is always faster—it's slower than JS for small computations due to marshalling and memory copying overhead.",
+      "ru": "### WebAssembly для критичного по производительности кода\n\nИспользуйте WebAssembly для вычислительно интенсивных задач, таких как обработка изображений, криптография или физические симуляции, где стоимость компиляции амортизируется на множестве вызовов. Издержки включают загрузку модуля, копирование памяти на границах и вызовы JavaScript-в-WebAssembly—имеет смысл только если время вычислений намного превышает стоимость маршалинга.\n\n```typescript\n// WASM для интенсивных вычислений\nconst wasmModule = await WebAssembly.instantiate(wasmBinary);\nconst result = wasmModule.instance.exports.processImage(buffer, width, height);\n\n// Издержки: Копирование данных в линейную память WASM\nconst wasmMemory = new Uint8Array(wasmModule.instance.memory.buffer);\nwasmMemory.set(imageData); // Стоимость копирования\nconst processed = wasmModule.instance.exports.filter();\n```\n\n**Типичная ошибка:** Предполагать, что WebAssembly всегда быстрее—он медленнее JS для малых вычислений из-за издержек маршалинга и копирования памяти."
+    },
+    "tags": [
+      "webassembly",
+      "performance-critical",
+      "cpu-intensive",
+      "marshalling-overhead"
+    ]
+  },
+  {
+    "id": "web-performance-q-24",
+    "topicId": "web-performance",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Compare HTTP/2 and HTTP/3 performance characteristics. How do multiplexing, header compression, and connection establishment differ, and what are the real-world performance implications?",
+      "ru": "Сравните характеристики производительности HTTP/2 и HTTP/3. Чем отличаются мультиплексирование, сжатие заголовков и установление соединения, и какие практические последствия для производительности?"
+    },
+    "answer": {
+      "en": "### HTTP/2 vs HTTP/3 Performance\n\nHTTP/2 uses TCP multiplexing and HPACK header compression but suffers from head-of-line blocking at the TCP layer. HTTP/3 runs over QUIC (UDP-based), eliminating head-of-line blocking, enabling faster connection establishment (0-RTT), and improving performance on high-loss networks. HTTP/3's real benefit appears in high-latency or lossy connections; HTTP/2 dominates for wired, low-latency links.\n\n```typescript\n// HTTP/2: Connection setup ~1 RTT + TLS\n// Multiplexed but TCP HOL blocking on packet loss\nfetch('/resource1.js');\nfetch('/resource2.css'); // Blocked if packet lost\n\n// HTTP/3: 0-RTT resumption, no HOL blocking\n// Each stream independent, survives packet loss\nfetch('/resource1.js');\nfetch('/resource2.css'); // Unaffected by resource1 loss\n```\n\n**Common interview trap:** Thinking HTTP/3 is universally faster—it only wins on high-latency, lossy networks; low-latency wired connections see minimal difference.",
+      "ru": "### Производительность HTTP/2 vs HTTP/3\n\nHTTP/2 использует мультиплексирование TCP и сжатие заголовков HPACK, но страдает от блокировки head-of-line на уровне TCP. HTTP/3 работает через QUIC (на основе UDP), устраняя HOL блокировку, включая быстрое установление соединения (0-RTT) и улучшая производительность на сетях с потерями. Реальная выгода HTTP/3 видна на высоколатентных или нестабильных сетях; HTTP/2 доминирует на проводных, низколатентных каналах.\n\n```typescript\n// HTTP/2: Установка соединения ~1 RTT + TLS\n// Мультиплексировано, но TCP HOL блокировка при потере пакета\nfetch('/resource1.js');\nfetch('/resource2.css'); // Заблокирован при потере пакета\n\n// HTTP/3: 0-RTT возобновление, без HOL блокировки\n// Каждый поток независимый, переживает потерю пакета\nfetch('/resource1.js');\nfetch('/resource2.css'); // Не затронут потерей resource1\n```\n\n**Типичная ошибка:** Думать, что HTTP/3 везде быстрее—выигрывает только на высоколатентных, нестабильных сетях; низколатентные проводные соединения видят минимальную разницу."
+    },
+    "tags": [
+      "http2",
+      "http3",
+      "quic",
+      "head-of-line-blocking",
+      "multiplexing"
+    ]
+  },
+  {
+    "id": "web-performance-q-25",
+    "topicId": "web-performance",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a comprehensive performance monitoring strategy for a production web application. What metrics would you track, what tools would you use, and how would you set up alerting for regressions?",
+      "ru": "Разработайте комплексную стратегию мониторинга производительности для production веб-приложения. Какие метрики вы отслеживали бы, какие инструменты использовали бы и как бы вы настроили алерты для регрессий?"
+    },
+    "answer": {
+      "en": "### Performance Monitoring Strategy\n\nTrack Core Web Vitals (LCP, FID/INP, CLS), Time to Interactive, and custom business metrics. Use RUM (Real User Monitoring) with tools like Sentry, DataDog, or custom instrumentation via `PerformanceObserver`. Set up automated budgets in CI/CD (Lighthouse, Bundle Analyzer) and alert on regressions exceeding thresholds, tracking metric distributions percentiles (p50, p75, p95).\n\n```typescript\n// Custom performance observer\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(`${entry.name}: ${entry.duration}ms`);\n    sendToAnalytics({ metric: entry.name, value: entry.duration });\n  }\n});\nobserver.observe({ entryTypes: ['largest-contentful-paint', 'first-input'] });\n// Alert on p95 > threshold\n```\n\n**Common interview trap:** Only monitoring average metrics—percentiles (p95, p99) reveal real user experience degradation better than mean values.",
+      "ru": "### Стратегия мониторинга производительности\n\nОтслежи��айте Core Web Vitals (LCP, FID/INP, CLS), Time to Interactive и пользовательские метрики бизнеса. Используйте RUM (Real User Monitoring) с инструментами вроде Sentry, DataDog или собственной инструментации через `PerformanceObserver`. Установите автоматические бюджеты в CI/CD (Lighthouse, Bundle Analyzer) и алерты на регрессии, превышающие пороги, отслеживая распределение метрик по процентилям (p50, p75, p95).\n\n```typescript\n// Собственный наблюдатель производительности\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(`${entry.name}: ${entry.duration}ms`);\n    sendToAnalytics({ metric: entry.name, value: entry.duration });\n  }\n});\nobserver.observe({ entryTypes: ['largest-contentful-paint', 'first-input'] });\n// Алерт при p95 > порога\n```\n\n**Типичная ошибка:** Мониторить только средние метрики—процентили (p95, p99) лучше показывают деградацию UX реальных пользователей, чем средние значения."
+    },
+    "tags": [
+      "core-web-vitals",
+      "rum",
+      "performance-monitoring",
+      "alerting",
+      "metrics"
+    ]
+  }
+]

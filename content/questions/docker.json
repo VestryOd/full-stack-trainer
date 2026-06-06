@@ -1,1 +1,372 @@
-[]
+[
+  {
+    "id": "docker-q-1",
+    "topicId": "docker",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the key difference between a Docker container and a virtual machine?",
+      "ru": "В чём ключевое отличие Docker контейнера от виртуальной машины?"
+    },
+    "answer": {
+      "en": "### Containers vs VMs\n\nContainers share the host OS kernel and are lightweight, while VMs include a full guest OS and are heavier. Containers start in milliseconds, VMs in seconds.\n\n```typescript\n// Container: shares kernel\ndocker run -d nginx\n\n// VM: runs full OS (slower, more resources)\nvirtualbox start ubuntu-vm\n```\n\n**Common interview trap:** Saying containers are just \"lightweight VMs\" — they actually share the kernel, not emulate it.",
+      "ru": "### Контейнеры vs ВМ\n\nКонтейнеры используют ядро хоста и занимают мало ресурсов, а ВМ включают полную ОС гостя и требуют больше ресурсов. Контейнеры запускаются за миллисекунды, ВМ за секунды.\n\n```typescript\n// Контейнер: использует ядро хоста\ndocker run -d nginx\n\n// ВМ: полная ОС (медленнее, больше ресурсов)\nvirtualbox start ubuntu-vm\n```\n\n**Типичная ошибка:** Говорить, что контейнеры — это просто \"легкие ВМ\" — они делят ядро, а не эмулируют его."
+    },
+    "tags": [
+      "container-vs-vm",
+      "architecture",
+      "fundamentals"
+    ]
+  },
+  {
+    "id": "docker-q-2",
+    "topicId": "docker",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what image layers are and how they work in Docker.",
+      "ru": "Объясните, что такое слои образа в Docker и как они работают."
+    },
+    "answer": {
+      "en": "### Image Layers\n\nEach line in a Dockerfile creates a new layer that is cached independently. Docker reuses layers when building images, making builds faster and storage efficient. Layers are read-only except the topmost container layer.\n\n```dockerfile\nFROM ubuntu:20.04      # Layer 1\nRUN apt-get update     # Layer 2 (cached)\nCOPY app.js /app/      # Layer 3\nRUN npm install        # Layer 4\n```\n\n**Common interview trap:** Thinking every RUN command is merged — each creates a separate cacheable layer.",
+      "ru": "### Слои образа\n\nКаждая строка в Dockerfile создаёт новый слой, который кешируется отдельно. Docker переиспользует слои при сборке, что ускоряет процесс и экономит место. Слои доступны только для чтения, кроме верхнего слоя контейнера.\n\n```dockerfile\nFROM ubuntu:20.04      # Слой 1\nRUN apt-get update     # Слой 2 (кеш)\nCOPY app.js /app/      # Слой 3\nRUN npm install        # Слой 4\n```\n\n**Типичная ошибка:** Думать, что каждый RUN объединяется в один слой — на самом деле каждый создаёт отдельный кешируемый слой."
+    },
+    "tags": [
+      "image-layers",
+      "dockerfile",
+      "caching"
+    ]
+  },
+  {
+    "id": "docker-q-3",
+    "topicId": "docker",
+    "difficulty": "junior",
+    "question": {
+      "en": "What does 'docker run' do and what are the key flags used with it?",
+      "ru": "Что делает команда 'docker run' и какие основные флаги с ней используются?"
+    },
+    "answer": {
+      "en": "### Docker Run\n\nThe 'docker run' command creates and starts a new container from an image. Common flags: -d (detached), -p (port mapping), -e (environment variables), -v (volume), --name (container name).\n\n```bash\n# Run nginx in background, map port 8080 to 80\ndocker run -d -p 8080:80 --name web nginx\n\n# Run with environment variable\ndocker run -e DATABASE_URL=postgres://... myapp\n```\n\n**Common interview trap:** Confusing 'docker run' with 'docker start' — run creates a new container, start restarts an existing one.",
+      "ru": "### Docker Run\n\nКоманда 'docker run' создаёт и запускает новый контейнер из образа. Основные флаги: -d (фоновый режим), -p (проброс портов), -e (переменные окружения), -v (том), --name (имя контейнера).\n\n```bash\n# Запустить nginx в фоне, проброс порта 8080 на 80\ndocker run -d -p 8080:80 --name web nginx\n\n# Запуск с переменной окружения\ndocker run -e DATABASE_URL=postgres://... myapp\n```\n\n**Типичная ошибка:** Путать 'docker run' с 'docker start' — run создаёт новый контейнер, start перезапускает существующий."
+    },
+    "tags": [
+      "docker-run",
+      "basic-commands",
+      "flags"
+    ]
+  },
+  {
+    "id": "docker-q-4",
+    "topicId": "docker",
+    "difficulty": "junior",
+    "question": {
+      "en": "How would you view logs and execute a command inside a running container?",
+      "ru": "Как просмотреть логи и выполнить команду внутри работающего контейнера?"
+    },
+    "answer": {
+      "en": "### Logs and Exec\n\nUse 'docker logs' to view container output with -f flag for live streaming. Use 'docker exec' to run commands inside a running container, typically with -it flags for interactive access.\n\n```bash\n# View logs with follow (live streaming)\ndocker logs -f container-name\n\n# Execute bash shell inside container\ndocker exec -it container-name bash\n\n# Run single command\ndocker exec container-name npm test\n```\n\n**Common interview trap:** Using 'docker run' instead of 'docker exec' — exec runs inside existing container, run creates a new one.",
+      "ru": "### Логи и Exec\n\nИспользуйте 'docker logs' для просмотра вывода контейнера с флагом -f для прямой трансляции. Используйте 'docker exec' для выполнения команд внутри работающего контейнера, обычно с флагами -it для интерактивного доступа.\n\n```bash\n# Просмотр логов с live-трансляцией\ndocker logs -f container-name\n\n# Запустить bash внутри контейнера\ndocker exec -it container-name bash\n\n# Запустить одну команду\ndocker exec container-name npm test\n```\n\n**Типичная ошибка:** Использовать 'docker run' вместо 'docker exec' — exec работает внутри существующего контейнера, run создаёт новый."
+    },
+    "tags": [
+      "docker-logs",
+      "docker-exec",
+      "debugging"
+    ]
+  },
+  {
+    "id": "docker-q-5",
+    "topicId": "docker",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a simple Dockerfile for a Node.js application and explain what each line does.",
+      "ru": "Напишите простой Dockerfile для Node.js приложения и объясните, что делает каждая строка."
+    },
+    "answer": {
+      "en": "### Dockerfile Basics\n\nFROM specifies base image, WORKDIR sets working directory, COPY adds files, RUN executes commands, EXPOSE declares port, CMD specifies default command when container starts.\n\n```dockerfile\nFROM node:16-alpine              # Base image (lightweight)\nWORKDIR /app                     # Set working directory\nCOPY package*.json ./            # Copy dependencies\nRUN npm install                  # Install packages\nCOPY . .                         # Copy application code\nEXPOSE 3000                      # Document port (info only)\nCMD [\"node\", \"server.js\"]       # Default command\n```\n\n**Common interview trap:** Thinking EXPOSE actually opens the port — it only documents it, -p flag in 'docker run' actually maps ports.",
+      "ru": "### Основы Dockerfile\n\nFROM указывает базовый образ, WORKDIR устанавливает рабочую директорию, COPY добавляет файлы, RUN выполняет команды, EXPOSE объявляет порт, CMD указывает команду по умолчанию при запуске контейнера.\n\n```dockerfile\nFROM node:16-alpine              # Базовый образ (лёгкий)\nWORKDIR /app                     # Рабочая директория\nCOPY package*.json ./            # Копирование зависимостей\nRUN npm install                  # Установка пакетов\nCOPY . .                         # Копирование кода\nEXPOSE 3000                      # Документирование порта\nCMD [\"node\", \"server.js\"]       # Команда по умолчанию\n```\n\n**Типичная ошибка:** Думать, что EXPOSE открывает порт — он только документирует его, -p флаг в 'docker run' реально проксирует порты."
+    },
+    "tags": [
+      "dockerfile",
+      "node-js",
+      "image-build"
+    ]
+  },
+  {
+    "id": "docker-q-6",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the benefits of multi-stage Docker builds and provide an example of reducing image size for a Node.js application.",
+      "ru": "Объясните преимущества многоэтапной сборки Docker и приведите пример уменьшения размера образа для приложения Node.js."
+    },
+    "answer": {
+      "en": "### Multi-stage builds reduce final image size\n\nMulti-stage builds allow you to use one image for building and another for runtime, excluding build dependencies from the final image. This significantly reduces image size and attack surface.\n\n```dockerfile\nFROM node:18 AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nWORKDIR /app\nCOPY --from=builder /app/dist ./dist\nCOPY package*.json ./\nRUN npm ci --only=production\nCMD [\"node\", \"dist/index.js\"]\n```\n\n**Common interview trap:** Forgetting to use `--only=production` in the final stage, leaving dev dependencies in production.",
+      "ru": "### Многоэтапная сборка уменьшает размер образа\n\nМногоэтапная сборка позволяет использовать один образ для компиляции и другой для runtime, исключая зависимости сборки из финального образа. Это значительно уменьшает размер и поверхность атаки.\n\n```dockerfile\nFROM node:18 AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nWORKDIR /app\nCOPY --from=builder /app/dist ./dist\nCOPY package*.json ./\nRUN npm ci --only=production\nCMD [\"node\", \"dist/index.js\"]\n```\n\n**Типичная ошибка:** Забыть использовать `--only=production` на финальном этапе, оставляя dev-зависимости в production."
+    },
+    "tags": [
+      "multi-stage-builds",
+      "image-optimization",
+      "node-js"
+    ]
+  },
+  {
+    "id": "docker-q-7",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you configure a docker-compose service with environment variables from both .env file and command-line, and which takes precedence?",
+      "ru": "Как вы настроите сервис docker-compose с переменными окружения из файла .env и командной строки, и какой имеет приоритет?"
+    },
+    "answer": {
+      "en": "### Precedence order for environment variables\n\nCommand-line variables override compose file variables, which override .env file variables. Use `env_file` directive in compose and pass CLI vars with `-e` flag.\n\n```yaml\nversion: '3.8'\nservices:\n  api:\n    image: myapp:latest\n    env_file: .env\n    environment:\n      - NODE_ENV=production\n      - LOG_LEVEL=${LOG_LEVEL:-info}\n```\n\n```bash\ndocker-compose up -e LOG_LEVEL=debug\n```\n\n**Common interview trap:** Assuming all environment sources have equal priority instead of understanding the override hierarchy.",
+      "ru": "### Порядок приоритета переменных окружения\n\nПеременные командной строки переопределяют переменные файла compose, которые переопределяют переменные из .env. Используйте директиву `env_file` и передавайте CLI переменные с флагом `-e`.\n\n```yaml\nversion: '3.8'\nservices:\n  api:\n    image: myapp:latest\n    env_file: .env\n    environment:\n      - NODE_ENV=production\n      - LOG_LEVEL=${LOG_LEVEL:-info}\n```\n\n```bash\ndocker-compose up -e LOG_LEVEL=debug\n```\n\n**Типичная ошибка:** Предположение, что все источники окружения имеют одинаковый приоритет вместо понимания иерархии переопределения."
+    },
+    "tags": [
+      "docker-compose",
+      "environment-variables",
+      "configuration"
+    ]
+  },
+  {
+    "id": "docker-q-8",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare bridge, host, and overlay networks in Docker. When would you use each and what are the trade-offs?",
+      "ru": "Сравните bridge, host и overlay сети в Docker. Когда вы будете использовать каждую и какие компромиссы существуют?"
+    },
+    "answer": {
+      "en": "### Docker network types comparison\n\nBridge networks isolate containers (default, best for single host), host networks share the host's network stack (lowest latency), and overlay networks connect multiple Docker hosts (required for Swarm). Bridge provides isolation but adds overhead; host exposes containers but is fastest; overlay enables clustering but adds complexity.\n\n```bash\ndocker network create --driver bridge mybridge\ndocker run --network host myapp\ndocker network create --driver overlay myoverlay\n```\n\n**Common interview trap:** Confusing overlay networks with bridge networks or claiming overlay works without Docker Swarm.",
+      "ru": "### Сравнение типов сетей Docker\n\nBridge сети изолируют контейнеры (по умолчанию, лучше для одного хоста), host сети совместно используют сетевой стек хоста (наименьшая задержка), а overlay сети подключают несколько хостов Docker (требуется для Swarm). Bridge обеспечивает изоляцию, но добавляет накладные расходы; host открывает контейнеры, но самый быстрый; overlay обеспечивает кластеризацию, но добавляет сложность.\n\n```bash\ndocker network create --driver bridge mybridge\ndocker run --network host myapp\ndocker network create --driver overlay myoverlay\n```\n\n**Типичная ошибка:** Путаница между overlay и bridge сетями или утверждение, что overlay работает без Docker Swarm."
+    },
+    "tags": [
+      "docker-networking",
+      "bridge-network",
+      "overlay-network",
+      "host-network"
+    ]
+  },
+  {
+    "id": "docker-q-9",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between named volumes and bind mounts in Docker. When should you use each in production?",
+      "ru": "Объясните разницу между именованными томами и bind mounts в Docker. Когда вы должны использовать каждый в production?"
+    },
+    "answer": {
+      "en": "### Named volumes vs bind mounts\n\nNamed volumes are managed by Docker and stored in `/var/lib/docker/volumes/` (portable, easier backup), while bind mounts link to host paths directly (host-dependent, flexible). Use named volumes for production data and databases; use bind mounts for development code sharing.\n\n```yaml\nversion: '3.8'\nservices:\n  db:\n    image: postgres\n    volumes:\n      - db_data:/var/lib/postgresql/data\n  app:\n    image: myapp\n    volumes:\n      - ./src:/app/src\nvolumes:\n  db_data:\n```\n\n**Common interview trap:** Using bind mounts in production without considering host OS differences and data portability issues.",
+      "ru": "### Именованные тома и bind mounts\n\nИменованные тома управляются Docker и хранятся в `/var/lib/docker/volumes/` (портативны, легче резервировать), а bind mounts связывают хост-пути напрямую (зависят от хоста, гибкие). Используйте именованные тома для production данных и БД; используйте bind mounts для развития с общей кодовой базой.\n\n```yaml\nversion: '3.8'\nservices:\n  db:\n    image: postgres\n    volumes:\n      - db_data:/var/lib/postgresql/data\n  app:\n    image: myapp\n    volumes:\n      - ./src:/app/src\nvolumes:\n  db_data:\n```\n\n**Типичная ошибка:** Использование bind mounts в production без учета различий ОС хоста и проблем переносимости данных."
+    },
+    "tags": [
+      "docker-volumes",
+      "named-volumes",
+      "bind-mounts",
+      "data-persistence"
+    ]
+  },
+  {
+    "id": "docker-q-10",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement health checks in Docker for a Node.js API and handle failed containers in docker-compose?",
+      "ru": "Как вы реализуете проверку здоровья контейнера в Docker для Node.js API и обрабатываете неудачные контейнеры в docker-compose?"
+    },
+    "answer": {
+      "en": "### Docker health checks\n\nDefine a HEALTHCHECK instruction in Dockerfile or use `healthcheck` in docker-compose to periodically verify container status. Failed health checks mark containers as unhealthy; docker-compose can restart unhealthy services automatically with `restart_policy`.\n\n```dockerfile\nHEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\\n  CMD curl -f http://localhost:3000/health || exit 1\n```\n\n```yaml\nservices:\n  api:\n    image: myapp\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:3000/health\"]\n      interval: 30s\n      retries: 3\n    restart_policy:\n      condition: on-failure\n```\n\n**Common interview trap:** Forgetting to implement the actual health endpoint or using overly aggressive health check intervals that stress the application.",
+      "ru": "### Health checks в Docker\n\nОпределите инструкцию HEALTHCHECK в Dockerfile или используйте `healthcheck` в docker-compose для периодической проверки статуса контейнера. Неудачные проверки отмечают контейнеры как нездоровые; docker-compose может автоматически перезапускать нездоровые сервисы с помощью `restart_policy`.\n\n```dockerfile\nHEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \\\n  CMD curl -f http://localhost:3000/health || exit 1\n```\n\n```yaml\nservices:\n  api:\n    image: myapp\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:3000/health\"]\n      interval: 30s\n      retries: 3\n    restart_policy:\n      condition: on-failure\n```\n\n**Типичная ошибка:** Забыть реализовать сам health endpoint или использовать чрезмерно агрессивные интервалы проверки здоровья, которые нагружают приложение."
+    },
+    "tags": [
+      "health-checks",
+      "container-monitoring",
+      "restart-policy",
+      "node-js"
+    ]
+  },
+  {
+    "id": "docker-q-11",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain multi-stage builds in Docker and why they're important for reducing image size. Provide an example with a Node.js application.",
+      "ru": "Объясните многоэтапные сборки в Docker и почему они важны для уменьшения размера образа. Приведите пример с приложением Node.js."
+    },
+    "answer": {
+      "en": "### Multi-stage builds reduce final image size\n\nMulti-stage builds use multiple FROM statements to compile/build in one stage and copy only artifacts to the final stage, eliminating build dependencies. This dramatically reduces image size by excluding build tools from production.\n\n```typescript\n// Dockerfile\nFROM node:18 AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci && npm run build\n\nFROM node:18-alpine\nWORKDIR /app\nCOPY --from=builder /app/dist ./dist\nCOPY package*.json ./\nRUN npm ci --production\nCMD [\"node\", \"dist/index.js\"]\n```\n\n**Common interview trap:** Forgetting to use --production flag in final stage, which unnecessarily includes dev dependencies.",
+      "ru": "### Многоэтапные сборки уменьшают размер образа\n\nМногоэтапные сборки используют несколько инструкций FROM для компиляции на одном этапе и копирования только артефактов на финальный этап, исключая зависимости сборки из production.\n\n```typescript\n// Dockerfile\nFROM node:18 AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci && npm run build\n\nFROM node:18-alpine\nWORKDIR /app\nCOPY --from=builder /app/dist ./dist\nCOPY package*.json ./\nRUN npm ci --production\nCMD [\"node\", \"dist/index.js\"]\n```\n\n**Типичная ошибка:** Забыть флаг --production на финальном этапе, что включает dev зависимости в образ."
+    },
+    "tags": [
+      "multi-stage-builds",
+      "image-optimization",
+      "node-js"
+    ]
+  },
+  {
+    "id": "docker-q-12",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the difference between bridge, host, and overlay networks in Docker. When would you use each one and what are the networking implications?",
+      "ru": "Опишите разницу между сетями bridge, host и overlay в Docker. Когда вы используете каждую и каковы последствия для сетевого взаимодействия?"
+    },
+    "answer": {
+      "en": "### Network types serve different use cases\n\nBridge network (default) isolates containers with a virtual network interface, host network gives direct access to host's network stack for performance, and overlay networks connect containers across multiple Docker hosts for swarm/cluster scenarios. Bridge adds latency but security isolation; host has performance but no isolation; overlay enables distributed systems.\n\n```typescript\n// docker-compose.yml\nservices:\n  app:\n    image: myapp\n    networks:\n      - backend  # bridge network\n  \nnetworks:\n  backend:\n    driver: bridge\n    # For swarm: driver: overlay\n    # For host access: network_mode: host\n```\n\n**Common interview trap:** Assuming all containers on same bridge network can communicate freely—they still need proper DNS or IP references.",
+      "ru": "### Типы сетей для разных сценариев\n\nBridge сеть (по умолчанию) изолирует контейнеры с виртуальным сетевым интерфейсом, host сеть дает прямой доступ к сетевому стеку хоста для производительности, overlay сети связывают контейнеры на нескольких хостах Docker для swarm/кластеров.\n\n```typescript\n// docker-compose.yml\nservices:\n  app:\n    image: myapp\n    networks:\n      - backend  # bridge network\n  \nnetworks:\n  backend:\n    driver: bridge\n    # Для swarm: driver: overlay\n    # Для доступа к хосту: network_mode: host\n```\n\n**Типичная ошибка:** Предположить, что все контейнеры в одной bridge сети автоматически могут общаться—им все еще нужны правильные ссылки DNS или IP."
+    },
+    "tags": [
+      "docker-networking",
+      "bridge-network",
+      "overlay-network",
+      "host-network"
+    ]
+  },
+  {
+    "id": "docker-q-13",
+    "topicId": "docker",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you configure health checks and environment variables in docker-compose for a production application? Show how volumes persist data across container restarts.",
+      "ru": "Как бы вы настроили проверки здоровья и переменные окружения в docker-compose для production приложения? Покажите, как volumes сохраняют данные при перезагрузке контейнера."
+    },
+    "answer": {
+      "en": "### Health checks, env vars, and volumes work together\n\nHealth checks monitor container status and trigger restarts if unhealthy, environment variables configure application behavior, and named volumes persist data independently of container lifecycle. Volumes mount host paths or managed volumes that survive container removal.\n\n```typescript\n// docker-compose.yml\nservices:\n  api:\n    image: myapp\n    environment:\n      - DATABASE_URL=postgres://db:5432/myapp\n      - NODE_ENV=production\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:3000/health\"]\n      interval: 30s\n      timeout: 10s\n      retries: 3\n    volumes:\n      - app_data:/app/data\n      - ./logs:/app/logs\nvolumes:\n  app_data:\n```\n\n**Common interview trap:** Confusing bind mounts (./logs) with named volumes (app_data)—bind mounts require host paths to exist, named volumes are managed by Docker.",
+      "ru": "### Проверки здоровья, переменные окружения и volumes работают вместе\n\nProверки здоровья отслеживают статус контейнера и запускают перезагрузку при проблемах, переменные окружения конфигурируют поведение приложения, named volumes сохраняют данные независимо от жизненного цикла контейнера.\n\n```typescript\n// docker-compose.yml\nservices:\n  api:\n    image: myapp\n    environment:\n      - DATABASE_URL=postgres://db:5432/myapp\n      - NODE_ENV=production\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:3000/health\"]\n      interval: 30s\n      timeout: 10s\n      retries: 3\n    volumes:\n      - app_data:/app/data\n      - ./logs:/app/logs\nvolumes:\n  app_data:\n```\n\n**Типичная ошибка:** Путать bind mounts (./logs) с named volumes (app_data)—bind mounts требуют существующих путей на хосте, named volumes управляются Docker."
+    },
+    "tags": [
+      "healthcheck",
+      "environment-variables",
+      "volumes",
+      "docker-compose",
+      "data-persistence"
+    ]
+  },
+  {
+    "id": "docker-q-14",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how to optimize Docker image size for a Node.js application and what strategies you'd implement in a production environment.",
+      "ru": "Объясните, как оптимизировать размер Docker-образа для приложения Node.js и какие стратегии вы бы реализовали в production."
+    },
+    "answer": {
+      "en": "### Multi-stage builds and layer caching\n\nUse multi-stage builds to separate build dependencies from runtime, leverage .dockerignore to exclude unnecessary files, and use slim/alpine base images. Minimize layers by combining RUN commands and cleaning cache in the same layer.\n\n```dockerfile\nFROM node:18-alpine AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\n\nFROM node:18-alpine\nCOPY --from=builder /app/node_modules ./node_modules\nCOPY . .\nRUN npm prune --production\n```\n\n**Common interview trap:** Using full Node.js image instead of alpine or slim variants significantly increases image size.",
+      "ru": "### Многоэтапные сборки и кеширование слоёв\n\nИспользуйте многоэтапные сборки для разделения зависимостей сборки и runtime, используйте .dockerignore для исключения ненужных файлов и базовые образы slim/alpine. Минимизируйте слои, объединяя RUN команды и очищая кеш в одном слое.\n\n```dockerfile\nFROM node:18-alpine AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\n\nFROM node:18-alpine\nCOPY --from=builder /app/node_modules ./node_modules\nCOPY . .\nRUN npm prune --production\n```\n\n**Типичная ошибка:** Использование полного Node.js образа вместо alpine или slim вариантов значительно увеличивает размер."
+    },
+    "tags": [
+      "image-optimization",
+      "multi-stage-builds",
+      "alpine-images"
+    ]
+  },
+  {
+    "id": "docker-q-15",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you properly handle signals (SIGTERM, SIGINT) in a Node.js Docker container and why is this critical for graceful shutdowns?",
+      "ru": "Как правильно обрабатывать сигналы (SIGTERM, SIGINT) в Docker-контейнере Node.js и почему это критично для graceful shutdown?"
+    },
+    "answer": {
+      "en": "### Signal handling for graceful shutdown\n\nNode.js must listen to SIGTERM/SIGINT to close connections and complete pending requests before exiting. Use PID 1 to ensure signals are properly forwarded; avoid shell wrappers that don't pass signals.\n\n```typescript\nprocess.on('SIGTERM', async () => {\n  console.log('SIGTERM received, shutting down gracefully');\n  server.close(() => {\n    process.exit(0);\n  });\n  setTimeout(() => process.exit(1), 30000); // Force exit after 30s\n});\n\nserver.listen(3000);\n```\n\n**Common interview trap:** Running Node with `sh -c` wrapper prevents signal propagation; use exec form in CMD or ensure PID 1.",
+      "ru": "### Обработка сигналов для graceful shutdown\n\nNode.js должен слушать SIGTERM/SIGINT для закрытия соединений и завершения запросов перед выходом. Используйте PID 1 для правильной передачи сигналов; избегайте shell-обёрток, которые не передают сигналы.\n\n```typescript\nprocess.on('SIGTERM', async () => {\n  console.log('SIGTERM received, shutting down gracefully');\n  server.close(() => {\n    process.exit(0);\n  });\n  setTimeout(() => process.exit(1), 30000);\n});\n\nserver.listen(3000);\n```\n\n**Типичная ошибка:** Запуск Node через `sh -c` обёртку предотвращает передачу сигналов; используйте exec форму в CMD."
+    },
+    "tags": [
+      "signal-handling",
+      "graceful-shutdown",
+      "process-management"
+    ]
+  },
+  {
+    "id": "docker-q-16",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is the purpose of .dockerignore and how does it impact build performance? Provide an example configuration for a Node.js project.",
+      "ru": "Какова цель .dockerignore и как это влияет на производительность сборки? Приведите пример конфигурации для проекта Node.js."
+    },
+    "answer": {
+      "en": "### Reducing build context\n\n.dockerignore excludes files from the build context, reducing transfer time and layer size. It prevents copying unnecessary files like node_modules, git history, and test files, improving Docker daemon performance.\n\n```\nnode_modules\n.git\n.gitignore\n.env\n.env.*\n.DS_Store\ndist\nbuild\n.vscode\n.idea\nCOVERAGE\n.npm\n```\n\n**Common interview trap:** Ignoring .git still includes source code; be specific about what to exclude based on your deployment needs.",
+      "ru": "### Уменьшение контекста сборки\n\n.dockerignore исключает файлы из контекста сборки, уменьшая время передачи и размер слоя. Это предотвращает копирование ненужных файлов, таких как node_modules, история git и тесты, улучшая производительность демона Docker.\n\n```\nnode_modules\n.git\n.gitignore\n.env\n.env.*\n.DS_Store\ndist\nbuild\n.vscode\n.idea\nCOVERAGE\n.npm\n```\n\n**Типичная ошибка:** Игнорирование .git всё ещё включает исходный код; будьте конкретны в выборе исключаемых файлов."
+    },
+    "tags": [
+      "dockerignore",
+      "build-context",
+      "performance-optimization"
+    ]
+  },
+  {
+    "id": "docker-q-17",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the process of running a Node.js application as a non-root user in Docker and explain why this is a security best practice.",
+      "ru": "Опишите процесс запуска приложения Node.js от непривилегированного пользователя в Docker и объясните, почему это security best practice."
+    },
+    "answer": {
+      "en": "### Non-root user for privilege isolation\n\nRunning as non-root limits damage from container compromise since the process lacks system-level permissions. Create a dedicated user with minimal privileges and avoid running as root for production workloads.\n\n```dockerfile\nFROM node:18-alpine\nRUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001\nWORKDIR /app\nCOPY --chown=nodejs:nodejs . .\nUSER nodejs\nCMD [\"node\", \"server.js\"]\n```\n\n**Common interview trap:** Creating a user but forgetting to change ownership of files or using USER after RUN commands that need root access.",
+      "ru": "### Непривилегированный пользователь для изоляции привилегий\n\nЗапуск от непривилегированного пользователя ограничивает урон от компрометации контейнера, так как процесс не имеет системных разрешений. Создайте выделенного пользователя с минимальными привилегиями и избегайте запуска от root в production.\n\n```dockerfile\nFROM node:18-alpine\nRUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001\nWORKDIR /app\nCOPY --chown=nodejs:nodejs . .\nUSER nodejs\nCMD [\"node\", \"server.js\"]\n```\n\n**Типичная ошибка:** Создание пользователя, но забывание изменить владельца файлов или использование USER после RUN команд, требующих root."
+    },
+    "tags": [
+      "security",
+      "non-root-user",
+      "least-privilege"
+    ]
+  },
+  {
+    "id": "docker-q-18",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you integrate Docker image security scanning in a CI/CD pipeline and what vulnerabilities should you prioritize addressing?",
+      "ru": "Как бы вы интегрировали сканирование безопасности Docker-образа в CI/CD pipeline и какие уязвимости следует приоритизировать?"
+    },
+    "answer": {
+      "en": "### Security scanning in CI/CD\n\nIntegrate tools like Trivy or Snyk to scan images for known vulnerabilities before pushing to registry. Fail the build on critical/high severity issues, update base images regularly, and monitor runtime vulnerabilities. Use image signatures for verification.\n\n```yaml\n- name: Scan with Trivy\n  run: |\n    trivy image --severity HIGH,CRITICAL \\\n    --exit-code 1 myapp:latest\n    \n- name: Push image\n  if: success()\n  run: docker push myapp:latest\n```\n\n**Common interview trap:** Only scanning at build time misses runtime vulnerabilities; implement registry policies and continuous monitoring of deployed images.",
+      "ru": "### Сканирование безопасности в CI/CD\n\nИнтегрируйте инструменты вроде Trivy или Snyk для сканирования образов на известные уязвимости перед отправкой в реестр. Завершайте сборку при критических/высоких проблемах, регулярно обновляйте базовые образы и мониторьте уязвимости runtime.\n\n```yaml\n- name: Scan with Trivy\n  run: |\n    trivy image --severity HIGH,CRITICAL \\\n    --exit-code 1 myapp:latest\n    \n- name: Push image\n  if: success()\n  run: docker push myapp:latest\n```\n\n**Типичная ошибка:** Сканирование только во время сборки пропускает runtime уязвимости; реализуйте политики реестра и постоянный мониторинг развёрнутых образов."
+    },
+    "tags": [
+      "security-scanning",
+      "ci-cd-integration",
+      "vulnerability-management"
+    ]
+  },
+  {
+    "id": "docker-q-19",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe a comprehensive strategy for optimizing Docker image size for a Node.js application in production. What specific techniques would you use, and how would you verify the optimization results?",
+      "ru": "Опишите комплексную стратегию оптимизации размера Docker-образа для Node.js приложения в production. Какие конкретные техники вы используете и как проверяете результаты оптимизации?"
+    },
+    "answer": {
+      "en": "### Multi-stage builds with .dockerignore and layer caching\n\nUse multi-stage builds to separate build and runtime stages, implement .dockerignore to exclude unnecessary files, and leverage Docker layer caching by ordering commands from least to most frequently changed. Combine with security scanning (Trivy, Snyk) and use distroless images.\n\n```typescript\n# Stage 1: Builder\nFROM node:18-alpine AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\n\n# Stage 2: Runtime\nFROM gcr.io/distroless/nodejs18-debian11\nCOPY --from=builder /app/node_modules /app/node_modules\nCOPY --chown=nonroot:nonroot . /app\nUSER nonroot\nCMD [\"app.js\"]\n```\n\n**Common interview trap:** Forgetting that .dockerignore must be used alongside multi-stage builds, or omitting the nonroot user requirement for security.",
+      "ru": "### Многоэтапные сборки с .dockerignore и кешированием слоёв\n\nИспользуйте многоэтапные сборки для разделения этапов сборки и выполнения, применяйте .dockerignore для исключения ненужных файлов и используйте кеширование слоёв Docker, упорядочивая команды от менее к более часто изменяемым. Комбинируйте со сканированием безопасности и distroless образами.\n\n```typescript\n# Stage 1: Builder\nFROM node:18-alpine AS builder\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\n\n# Stage 2: Runtime\nFROM gcr.io/distroless/nodejs18-debian11\nCOPY --from=builder /app/node_modules /app/node_modules\nCOPY --chown=nonroot:nonroot . /app\nUSER nonroot\nCMD [\"app.js\"]\n```\n\n**Типичная ошибка:** Забывают использовать .dockerignore вместе с многоэтапными сборками или упускают требование nonroot пользователя для безопасности."
+    },
+    "tags": [
+      "multi-stage-builds",
+      "image-size-optimization",
+      ".dockerignore",
+      "distroless-images",
+      "layer-caching"
+    ]
+  },
+  {
+    "id": "docker-q-20",
+    "topicId": "docker",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you properly configure a Node.js application in Docker to handle graceful shutdown with SIGTERM signals, and what role does this play in container orchestration platforms like Kubernetes?",
+      "ru": "Как вы правильно сконфигурируете Node.js приложение в Docker для обработки корректного завершения с SIGTERM сигналами, и какую роль это играет в платформах оркестрации контейнеров типа Kubernetes?"
+    },
+    "answer": {
+      "en": "### Signal handling with exec form and PID 1\n\nUse exec form (JSON array) in CMD to ensure Node.js runs as PID 1 and receives signals directly. Implement SIGTERM handler to close connections gracefully. In Kubernetes, this enables proper pod termination during rolling updates and prevents data corruption.\n\n```typescript\n// app.js - Graceful shutdown\nconst server = http.createServer();\n\nprocess.on('SIGTERM', () => {\n  console.log('SIGTERM received, shutting down gracefully...');\n  server.close(() => process.exit(0));\n});\n\nserver.listen(3000);\n```\n\n```dockerfile\n# Dockerfile - Use exec form\nCMD [\"node\", \"app.js\"]\n```\n\n**Common interview trap:** Using shell form (CMD node app.js) instead of exec form, which causes SIGTERM to be sent to the shell instead of Node.js process.",
+      "ru": "### Обработка сигналов с exec формой и PID 1\n\nИспользуйте exec форму (JSON массив) в CMD, чтобы Node.js запускался с PID 1 и получал сигналы напрямую. Реализуйте обработчик SIGTERM для корректного закрытия соединений. В Kubernetes это обеспечивает правильное завершение подов при rolling updates и предотвращает повреждение данных.\n\n```typescript\n// app.js - Graceful shutdown\nconst server = http.createServer();\n\nprocess.on('SIGTERM', () => {\n  console.log('SIGTERM received, shutting down gracefully...');\n  server.close(() => process.exit(0));\n});\n\nserver.listen(3000);\n```\n\n```dockerfile\n# Dockerfile - Use exec form\nCMD [\"node\", \"app.js\"]\n```\n\n**Типичная ошибка:** Использование shell формы (CMD node app.js) вместо exec формы, что приводит к отправке SIGTERM оболочке вместо процесса Node.js."
+    },
+    "tags": [
+      "signal-handling",
+      "graceful-shutdown",
+      "pid-1",
+      "exec-form",
+      "kubernetes-readiness"
+    ]
+  }
+]

@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Next.js Fundamentals
 
 ## Что такое Next.js

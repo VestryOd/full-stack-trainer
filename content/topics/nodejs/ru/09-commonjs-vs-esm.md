@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # CommonJS vs ES Modules
 
 ## История модулей в JavaScript

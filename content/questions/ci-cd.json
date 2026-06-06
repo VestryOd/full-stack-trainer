@@ -1,1 +1,373 @@
-[]
+[
+  {
+    "id": "ci-cd-q-1",
+    "topicId": "ci-cd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are the three main components of a GitHub Actions workflow file, and what is the purpose of each?",
+      "ru": "Назовите три основных компонента файла GitHub Actions workflow и объясните их назначение."
+    },
+    "answer": {
+      "en": "### GitHub Actions Workflow Components\n\nA workflow consists of three main parts: **trigger events** (when the workflow runs), **jobs** (sets of steps executed in parallel or sequence), and **steps** (individual tasks within a job). Each component controls different aspects of automation execution.\n\n```typescript\nname: CI/CD Pipeline\non: [push, pull_request]  // Trigger event\njobs:\n  build:                   // Job name\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3  // Step\n      - run: npm install\n```\n\n**Common interview trap:** Confusing jobs with steps—jobs run in parallel by default, steps run sequentially within a job.",
+      "ru": "### Компоненты GitHub Actions Workflow\n\nWorkflow состоит из трёх частей: **событий-триггеров** (когда запускается workflow), **jobs** (наборы шагов), и **steps** (отдельные задачи в job). Каждый компонент управляет разными аспектами автоматизации.\n\n```typescript\nname: CI/CD Pipeline\non: [push, pull_request]  // Событие-триггер\njobs:\n  build:                   // Job\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3  // Step\n      - run: npm install\n```\n\n**Типичная ошибка:** Путаница между jobs и steps—jobs выполняются параллельно по умолчанию, steps выполняются последовательно внутри job."
+    },
+    "tags": [
+      "github-actions",
+      "workflow-structure",
+      "jobs-steps"
+    ]
+  },
+  {
+    "id": "ci-cd-q-2",
+    "topicId": "ci-cd",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you define and use environment variables in a GitHub Actions workflow?",
+      "ru": "Как определить и использовать переменные окружения в GitHub Actions workflow?"
+    },
+    "answer": {
+      "en": "### Environment Variables in GitHub Actions\n\nEnvironment variables can be defined at the workflow, job, or step level using the `env` keyword. Access them in scripts with `${{ env.VARIABLE_NAME }}` or standard shell syntax like `$VARIABLE_NAME`.\n\n```typescript\nname: Deploy\nenv:\n  DEPLOY_ENV: production  // Workflow-level\njobs:\n  deploy:\n    env:\n      API_KEY: ${{ secrets.API_KEY }}  // Job-level\n    steps:\n      - run: echo \"Deploying to ${{ env.DEPLOY_ENV }}\"\n```\n\n**Common interview trap:** Forgetting that variables in steps override job/workflow level variables—scope matters.",
+      "ru": "### Переменные окружения в GitHub Actions\n\nПеременные окружения определяются на уровне workflow, job или step с помощью ключевого слова `env`. Обращайтесь к ним через `${{ env.VARIABLE_NAME }}` или стандартный синтаксис shell `$VARIABLE_NAME`.\n\n```typescript\nname: Deploy\nenv:\n  DEPLOY_ENV: production  // Уровень workflow\njobs:\n  deploy:\n    env:\n      API_KEY: ${{ secrets.API_KEY }}  // Уровень job\n    steps:\n      - run: echo \"Deploying to ${{ env.DEPLOY_ENV }}\"\n```\n\n**Типичная ошибка:** Забывают, что переменные на уровне step переопределяют переменные job/workflow—область видимости имеет значение."
+    },
+    "tags": [
+      "environment-variables",
+      "github-actions",
+      "configuration"
+    ]
+  },
+  {
+    "id": "ci-cd-q-3",
+    "topicId": "ci-cd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are the typical stages in a basic CI/CD pipeline, and what happens in each stage?",
+      "ru": "Какие этапы типичны для базового CI/CD pipeline и что происходит на каждом этапе?"
+    },
+    "answer": {
+      "en": "### CI/CD Pipeline Stages\n\nA basic pipeline includes: **Build** (compile code, resolve dependencies), **Test** (run unit and integration tests), **Deploy** (push to staging/production), and **Monitor** (verify health). Each stage validates correctness before moving to the next.\n\n```typescript\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm install && npm run build\n  test:\n    needs: build\n    steps:\n      - run: npm test\n  deploy:\n    needs: test\n    steps:\n      - run: npm run deploy\n```\n\n**Common interview trap:** Thinking stages must run sequentially—you can parallelize independent stages using `needs` strategically.",
+      "ru": "### Этапы CI/CD Pipeline\n\nБазовый pipeline включает: **Build** (компиляция, разрешение зависимостей), **Test** (запуск тестов), **Deploy** (развёртывание), **Monitor** (проверка здоровья). Каждый этап валидирует код перед следующим.\n\n```typescript\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm install && npm run build\n  test:\n    needs: build\n    steps:\n      - run: npm test\n  deploy:\n    needs: test\n    steps:\n      - run: npm run deploy\n```\n\n**Типичная ошибка:** Думаете, что все этапы должны быть последовательными—можно распараллелить независимые этапы с помощью `needs`."
+    },
+    "tags": [
+      "pipeline-stages",
+      "build-test-deploy",
+      "workflow-optimization"
+    ]
+  },
+  {
+    "id": "ci-cd-q-4",
+    "topicId": "ci-cd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between a GitHub Actions 'action' and a 'workflow', and when would you use each?",
+      "ru": "В чём разница между GitHub Actions 'action' и 'workflow', и когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Actions vs Workflows\n\nA **workflow** is a configurable automated process (in `.github/workflows/`) that runs jobs based on triggers. An **action** is a reusable unit of code (custom or marketplace) that performs a specific task within a step. Use actions to encapsulate logic, workflows to orchestrate them.\n\n```typescript\n// Workflow (orchestration)\nname: CI\non: push\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v3  // Using an action\n      - run: npm install           // Using a command\n\n// Action (reusable component)\n// In: ./my-action/action.yml\nname: 'Deploy to AWS'\nruns:\n  using: 'node16'\n  main: 'index.js'\n```\n\n**Common interview trap:** Thinking every reusable piece needs to be an action—simple scripts can stay in workflows.",
+      "ru": "### Actions vs Workflows\n\n**Workflow** — это конфигурируемый автоматизированный процесс (в `.github/workflows/`), который запускает jobs на основе триггеров. **Action** — это переиспользуемая единица кода (встроенный или из marketplace), выполняющая конкретную задачу в step. Actions инкапсулируют логику, workflows их оркестрируют.\n\n```typescript\n// Workflow (оркестрация)\nname: CI\non: push\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v3  // Использование action\n      - run: npm install           // Команда\n\n// Action (переиспользуемый компонент)\n// В: ./my-action/action.yml\nname: 'Deploy to AWS'\nruns:\n  using: 'node16'\n  main: 'index.js'\n```\n\n**Типичная ошибка:** Думаете, что каждая переиспользуемая часть должна быть action—простые скрипты могут остаться в workflows."
+    },
+    "tags": [
+      "github-actions",
+      "reusability",
+      "workflow-design"
+    ]
+  },
+  {
+    "id": "ci-cd-q-5",
+    "topicId": "ci-cd",
+    "difficulty": "junior",
+    "question": {
+      "en": "How would you prevent sensitive information (like API keys) from being exposed in GitHub Actions logs?",
+      "ru": "Как предотвратить утечку конфиденциальной информации (например, API ключей) в логах GitHub Actions?"
+    },
+    "answer": {
+      "en": "### Protecting Secrets in GitHub Actions\n\nUse GitHub Secrets (stored in repository settings) and reference them with `${{ secrets.SECRET_NAME }}`. GitHub automatically masks secret values in logs. Never hardcode sensitive data in workflow files or pass them as plain environment variables.\n\n```typescript\njobs:\n  deploy:\n    steps:\n      - name: Deploy with API Key\n        run: curl -H \"Authorization: Bearer ${{ secrets.API_KEY }}\" https://api.example.com\n        env:\n          API_KEY: ${{ secrets.API_KEY }}\n      # DO NOT: hardcode API_KEY directly in scripts\n```\n\n**Common interview trap:** Thinking masked secrets prevent access—they only hide values in logs; actual secret content is still accessible to workflow steps.",
+      "ru": "### Защита Secrets в GitHub Actions\n\nИспользуйте GitHub Secrets (хранятся в настройках репозитория) и ссылайтесь на них через `${{ secrets.SECRET_NAME }}`. GitHub автоматически маскирует значения secrets в логах. Никогда не hardcode конфиденциальные данные в workflow файлах.\n\n```typescript\njobs:\n  deploy:\n    steps:\n      - name: Deploy with API Key\n        run: curl -H \"Authorization: Bearer ${{ secrets.API_KEY }}\" https://api.example.com\n        env:\n          API_KEY: ${{ secrets.API_KEY }}\n      # НЕ ДЕЛАЙТЕ: hardcode API_KEY в скрипты\n```\n\n**Типичная ошибка:** Думаете, что маскированные secrets предотвращают доступ—они только скрывают значения в логах, но content остаётся доступен для workflow steps."
+    },
+    "tags": [
+      "secrets-management",
+      "security",
+      "github-actions"
+    ]
+  },
+  {
+    "id": "ci-cd-q-6",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use GitHub Actions matrix strategy to test your application across multiple Node versions and databases? What are the performance trade-offs?",
+      "ru": "Как вы используете матрицу стратегий в GitHub Actions для тестирования приложения на разных версиях Node и БД? Каковы компромиссы производительности?"
+    },
+    "answer": {
+      "en": "### Matrix Strategy for Multi-Version Testing\n\nMatrix creates parallel jobs for each combination of variables, reducing total execution time compared to sequential runs. Each combination runs independently, allowing faster feedback but consuming more runner minutes.\n\n```yaml\nstrategy:\n  matrix:\n    node-version: [16.x, 18.x, 20.x]\n    db: [postgres, mysql]\nsteps:\n  - uses: actions/setup-node@v3\n    with:\n      node-version: ${{ matrix.node-version }}\n  - run: npm test -- --db=${{ matrix.db }}\n```\n\n**Common interview trap:** Thinking matrix always saves time—it consumes more minutes, just completes faster due to parallelization.",
+      "ru": "### Матричная стратегия для тестирования нескольких версий\n\nМатрица создает параллельные задания для каждой комбинации переменных, сокращая общее время выполнения. Каждая комбинация запускается независимо, обеспечивая быструю обратную связь, но потребляя больше runner-минут.\n\n```yaml\nstrategy:\n  matrix:\n    node-version: [16.x, 18.x, 20.x]\n    db: [postgres, mysql]\nsteps:\n  - uses: actions/setup-node@v3\n    with:\n      node-version: ${{ matrix.node-version }}\n  - run: npm test -- --db=${{ matrix.db }}\n```\n\n**Типичная ошибка:** Думать, что матрица всегда экономит минуты—она их потребляет, просто завершается быстрее благодаря параллелизму."
+    },
+    "tags": [
+      "github-actions-matrix",
+      "multi-version-testing",
+      "parallel-jobs"
+    ]
+  },
+  {
+    "id": "ci-cd-q-7",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how to implement a reusable GitHub Actions workflow for deployment. What parameters should be passed and how do you handle secrets securely?",
+      "ru": "Объясните, как реализовать переиспользуемый рабочий процесс GitHub Actions для развертывания. Какие параметры передавать и как безопасно обрабатывать секреты?"
+    },
+    "answer": {
+      "en": "### Reusable Workflows with Secure Secrets\n\nDefine a reusable workflow with `workflow_call` inputs and pass secrets explicitly via `secrets: inherit` or specific secret mappings. This allows centralized deployment logic across multiple repositories.\n\n```yaml\n# .github/workflows/deploy.yml\non:\n  workflow_call:\n    inputs:\n      environment:\n        type: string\n        required: true\n    secrets:\n      DEPLOY_KEY:\n        required: true\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - run: |\n          echo \"Deploying to ${{ inputs.environment }}\"\n          ssh-keyscan example.com >> ~/.ssh/known_hosts\n          ssh deploy@example.com \"${{ secrets.DEPLOY_KEY }}\"\n```\n\n**Common interview trap:** Hardcoding secrets in reusable workflow files instead of passing them explicitly.",
+      "ru": "### Переиспользуемые рабочие процессы с безопасными секретами\n\nОпределите переиспользуемый рабочий процесс с входами `workflow_call` и передавайте секреты явно через `secrets: inherit` или конкретные привязки секретов. Это позволяет централизовать логику развертывания.\n\n```yaml\n# .github/workflows/deploy.yml\non:\n  workflow_call:\n    inputs:\n      environment:\n        type: string\n        required: true\n    secrets:\n      DEPLOY_KEY:\n        required: true\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - run: |\n          echo \"Deploying to ${{ inputs.environment }}\"\n          ssh-keyscan example.com >> ~/.ssh/known_hosts\n          ssh deploy@example.com \"${{ secrets.DEPLOY_KEY }}\"\n```\n\n**Типичная ошибка:** Жесткое кодирование секретов в файлах переиспользуемых рабочих процессов вместо их явной передачи."
+    },
+    "tags": [
+      "github-actions-reusable-workflows",
+      "secrets-management",
+      "deployment-workflow"
+    ]
+  },
+  {
+    "id": "ci-cd-q-8",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you implement blue-green deployment strategy in CI/CD? What are the advantages over rolling deployment, and when would you choose canary instead?",
+      "ru": "Как реализовать стратегию blue-green развертывания в CI/CD? Какие преимущества перед rolling, и когда выбрать canary?"
+    },
+    "answer": {
+      "en": "### Blue-Green Deployment Strategy\n\nMaintain two identical production environments (blue and green); deploy to inactive environment, test, then switch traffic instantly. Zero-downtime with instant rollback, but requires double infrastructure cost. Use canary for gradual traffic shifting when infrastructure is limited.\n\n```bash\n# Deploy to green environment\ndeploy-to-env.sh green v2.0\n# Run smoke tests against green\nrun-smoke-tests.sh https://green.prod.example.com\n# Switch load balancer/DNS to green\nswitch-traffic.sh blue green\n# Old blue remains as instant rollback\n```\n\n**Common interview trap:** Confusing blue-green with canary—blue-green switches all traffic at once, canary gradually shifts percentage.",
+      "ru": "### Стратегия Blue-Green развертывания\n\nСодержите две идентичные production-среды (blue и green); развертывайте в неактивную среду, тестируйте, затем мгновенно переключите трафик. Нулевой простой с мгновенным откатом, но требует двойных затрат на инфраструктуру. Используйте canary для постепенного переключения трафика при ограниченной инфраструктуре.\n\n```bash\n# Deploy to green environment\ndeploy-to-env.sh green v2.0\n# Run smoke tests against green\nrun-smoke-tests.sh https://green.prod.example.com\n# Switch load balancer/DNS to green\nswitch-traffic.sh blue green\n# Old blue remains as instant rollback\n```\n\n**Типичная ошибка:** Путать blue-green с canary—blue-green переключает весь трафик сразу, canary постепенно сдвигает процент."
+    },
+    "tags": [
+      "blue-green-deployment",
+      "deployment-strategies",
+      "zero-downtime-deployment"
+    ]
+  },
+  {
+    "id": "ci-cd-q-9",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you use GitHub Actions caching and artifacts effectively? What's the difference between cache and upload-artifact, and when would you use each?",
+      "ru": "Как эффективно использовать кеширование и артефакты в GitHub Actions? В чем разница между cache и upload-artifact, и когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Caching vs Artifacts in GitHub Actions\n\nCache persists dependencies across runs (npm modules, build cache) for faster subsequent runs; artifacts store build outputs for downloading or next jobs. Use cache for build acceleration, artifacts for passing data between jobs or external download.\n\n```yaml\n- uses: actions/cache@v3\n  with:\n    path: node_modules\n    key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}\n- run: npm ci && npm run build\n- uses: actions/upload-artifact@v3\n  with:\n    name: build-dist\n    path: dist/\n    retention-days: 5\n```\n\n**Common interview trap:** Using artifacts for every cache-able dependency increases storage costs unnecessarily.",
+      "ru": "### Кеширование vs Артефакты в GitHub Actions\n\nКеш сохраняется между запусками (npm модули, кеш сборки) для ускорения; артефакты хранят выходные данные сборки для скачивания или следующих задач. Используйте кеш для ускорения сборки, артефакты для передачи данных между задачами.\n\n```yaml\n- uses: actions/cache@v3\n  with:\n    path: node_modules\n    key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}\n- run: npm ci && npm run build\n- uses: actions/upload-artifact@v3\n  with:\n    name: build-dist\n    path: dist/\n    retention-days: 5\n```\n\n**Типичная ошибка:** Использовать артефакты для каждой кешируемой зависимости увеличивает затраты на хранилище."
+    },
+    "tags": [
+      "github-actions-caching",
+      "artifacts-management",
+      "workflow-optimization"
+    ]
+  },
+  {
+    "id": "ci-cd-q-10",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe a canary deployment implementation. How do you monitor metrics and automatically rollback if issues are detected during canary phase?",
+      "ru": "Опишите реализацию canary развертывания. Как контролировать метрики и автоматически откатывать при обнаружении проблем?"
+    },
+    "answer": {
+      "en": "### Canary Deployment with Automated Rollback\n\nDeploy new version to small traffic percentage (5-10%), monitor error rates and latency. If metrics exceed thresholds, automatically rollback; otherwise gradually increase traffic. Requires service mesh or ingress controller and metrics integration.\n\n```bash\n# Deploy canary version to 5% of traffic\nkubectl set canary deployment/api --version=v2.0 --traffic=5\n# Monitor Prometheus metrics\nQUERY=\"rate(errors_total[5m])\"\nERROR_RATE=$(curl -s \"prometheus:9090/query?query=$QUERY\" | jq '.data.result[0].value[1]')\n# Rollback if error rate > 1%\nif (( $(echo \"$ERROR_RATE > 0.01\" | bc -l) )); then\n  kubectl rollout undo deployment/api\nfi\n```\n\n**Common interview trap:** Not monitoring long enough for slow-burning issues; canary should run 15-30+ minutes before full rollout.",
+      "ru": "### Canary развертывание с автоматическим откатом\n\nРазвертывайте новую версию на малый процент трафика (5-10%), контролируйте частоту ошибок и задержку. При превышении порогов откатитесь автоматически; иначе постепенно увеличивайте трафик. Требует service mesh или ingress controller и интеграцию метрик.\n\n```bash\n# Deploy canary version to 5% of traffic\nkubectl set canary deployment/api --version=v2.0 --traffic=5\n# Monitor Prometheus metrics\nQUERY=\"rate(errors_total[5m])\"\nERROR_RATE=$(curl -s \"prometheus:9090/query?query=$QUERY\" | jq '.data.result[0].value[1]')\n# Rollback if error rate > 1%\nif (( $(echo \"$ERROR_RATE > 0.01\" | bc -l) )); then\n  kubectl rollout undo deployment/api\nfi\n```\n\n**Типичная ошибка:** Не мониторить достаточно долго для медленных проблем; canary должен работать 15-30+ минут перед полным развертыванием."
+    },
+    "tags": [
+      "canary-deployment",
+      "metrics-monitoring",
+      "automated-rollback"
+    ]
+  },
+  {
+    "id": "ci-cd-q-11",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use GitHub Actions matrix strategy to test a fullstack application across multiple Node.js versions and databases? What are the caching considerations?",
+      "ru": "Как бы вы использовали матрицу GitHub Actions для тестирования fullstack приложения на нескольких версиях Node.js и БД? Какие есть соображения по кешированию?"
+    },
+    "answer": {
+      "en": "### Matrix Strategy with Caching\n\nMatrix allows parallel test runs across version combinations. Cache dependencies per Node version to avoid redundant installs and speed up CI.\n\n```yaml\nstrategy:\n  matrix:\n    node-version: [16.x, 18.x, 20.x]\n    db: [postgres, mysql]\nsteps:\n  - uses: actions/cache@v3\n    with:\n      path: ~/.npm\n      key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}\n  - run: npm ci\n  - run: npm test\n```\n\n**Common interview trap:** Not cache-busting properly when dependencies change, causing stale caches to be used in CI.",
+      "ru": "### Матрица со стратегией кеша\n\nМатрица позволяет запускать тесты параллельно для разных версий. Кешируйте зависимости по версии Node для быстрого CI.\n\n```yaml\nstrategy:\n  matrix:\n    node-version: [16.x, 18.x, 20.x]\n    db: [postgres, mysql]\nsteps:\n  - uses: actions/cache@v3\n    with:\n      path: ~/.npm\n      key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}\n  - run: npm ci\n  - run: npm test\n```\n\n**Типичная ошибка:** Не обновлять ключ кеша при изменении зависимостей, что приводит к использованию устаревшего кеша."
+    },
+    "tags": [
+      "github-actions-matrix",
+      "caching-strategy",
+      "ci-optimization"
+    ]
+  },
+  {
+    "id": "ci-cd-q-12",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe a blue-green deployment approach using GitHub Actions and how you would handle database migrations and secrets rotation between environments.",
+      "ru": "Опишите подход blue-green развёртывания с GitHub Actions и как вы будете обрабатывать миграции БД и ротацию секретов между средами."
+    },
+    "answer": {
+      "en": "### Blue-Green Deployment Pattern\n\nBlue-green maintains two identical production environments. Deploy to inactive (green), run smoke tests, then switch traffic via load balancer. Use environment-specific secrets and run migrations in a pre-deployment hook.\n\n```yaml\n- name: Deploy to Green\n  env:\n    DEPLOY_ENV: green\n    DB_URL: ${{ secrets.GREEN_DB_URL }}\n  run: |\n    docker build -t app:${{ github.sha }} .\n    docker push app:${{ github.sha }}\n    kubectl set image deployment/app-green app=app:${{ github.sha }}\n    kubectl rollout status deployment/app-green\n    npm run migrate:up -- --env green\n- name: Switch Traffic\n  run: kubectl patch service app -p '{\"spec\":{\"selector\":{\"version\":\"green\"}}}'\n```\n\n**Common interview trap:** Forgetting to verify green environment health before traffic switch, or running migrations on active DB causing downtime.",
+      "ru": "### Паттерн Blue-Green развёртывания\n\nBlue-green поддерживает две идентичные production среды. Разверните на неактивную (green), запустите тесты, переключите трафик. Используйте environment-специфичные секреты и миграции.\n\n```yaml\n- name: Deploy to Green\n  env:\n    DEPLOY_ENV: green\n    DB_URL: ${{ secrets.GREEN_DB_URL }}\n  run: |\n    docker build -t app:${{ github.sha }} .\n    docker push app:${{ github.sha }}\n    kubectl set image deployment/app-green app=app:${{ github.sha }}\n    kubectl rollout status deployment/app-green\n    npm run migrate:up -- --env green\n- name: Switch Traffic\n  run: kubectl patch service app -p '{\"spec\":{\"selector\":{\"version\":\"green\"}}}'\n```\n\n**Типичная ошибка:** Не проверить здоровье green среды перед переключением трафика или запустить миграции на активной БД."
+    },
+    "tags": [
+      "blue-green-deployment",
+      "secrets-management",
+      "database-migrations"
+    ]
+  },
+  {
+    "id": "ci-cd-q-13",
+    "topicId": "ci-cd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement a reusable GitHub Actions workflow that handles canary deployments with automated rollback on error rate threshold? Include artifact storage for logs.",
+      "ru": "Как бы вы реализовали переиспользуемый workflow GitHub Actions для canary развёртывания с автоматическим откатом при превышении ошибок? Включите сохранение артефактов логов."
+    },
+    "answer": {
+      "en": "### Reusable Canary Deployment Workflow\n\nCreate a reusable workflow that deploys to a small percentage of traffic, monitors error rates from metrics, and auto-rolls back if threshold exceeded. Artifacts capture deployment logs for investigation.\n\n```yaml\nname: canary-deploy\non:\n  workflow_call:\n    inputs:\n      error_threshold:\n        type: number\n        default: 5.0\njobs:\n  canary:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Deploy Canary (10% traffic)\n        run: |\n          helm upgrade --install app ./chart \\\n            --set canary.enabled=true \\\n            --set canary.weight=10\n      - name: Monitor for 5m\n        run: npm run monitor:errors > errors.log\n      - name: Check Threshold\n        run: |\n          ERROR_RATE=$(grep error_rate errors.log | tail -1)\n          [[ $ERROR_RATE -lt ${{ inputs.error_threshold }} ]] || helm rollback app\n      - uses: actions/upload-artifact@v3\n        with:\n          name: deployment-logs\n          path: errors.log\n```\n\n**Common interview trap:** Not accounting for monitoring latency—rollback logic may execute before metrics are available.",
+      "ru": "### Переиспользуемый workflow Canary развёртывания\n\nСоздайте переиспользуемый workflow для развёртывания на малый процент трафика с мониторингом ошибок и автоматическим откатом. Артефакты сохраняют логи.\n\n```yaml\nname: canary-deploy\non:\n  workflow_call:\n    inputs:\n      error_threshold:\n        type: number\n        default: 5.0\njobs:\n  canary:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Deploy Canary (10% traffic)\n        run: |\n          helm upgrade --install app ./chart \\\n            --set canary.enabled=true \\\n            --set canary.weight=10\n      - name: Monitor for 5m\n        run: npm run monitor:errors > errors.log\n      - name: Check Threshold\n        run: |\n          ERROR_RATE=$(grep error_rate errors.log | tail -1)\n          [[ $ERROR_RATE -lt ${{ inputs.error_threshold }} ]] || helm rollback app\n      - uses: actions/upload-artifact@v3\n        with:\n          name: deployment-logs\n          path: errors.log\n```\n\n**Типичная ошибка:** Не учесть задержку мониторинга—логика отката выполняется до доступности метрик."
+    },
+    "tags": [
+      "reusable-workflows",
+      "canary-deployment",
+      "artifacts-logging",
+      "automated-rollback"
+    ]
+  },
+  {
+    "id": "ci-cd-q-14",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you optimize a CI/CD pipeline that currently takes 25 minutes to deploy, where 20 minutes is spent on running tests? What specific strategies would you implement?",
+      "ru": "Как бы вы оптимизировали CI/CD pipeline, который сейчас занимает 25 минут на развертывание, где 20 минут уходит на тесты? Какие конкретные стратегии вы бы применили?"
+    },
+    "answer": {
+      "en": "### Pipeline Optimization Strategies\n\nImplement parallel test execution, cache dependencies, use test sharding, and run only affected tests via dependency analysis. Separate fast unit tests from slow integration tests into different stages.\n\n```yaml\nstages:\n  - test-unit: # 2 min\n      parallel: 4\n      script: jest --shard=1/4\n  - test-integration: # 5 min (async)\n      cache:\n        paths: [node_modules/]\n      script: pytest --maxfail=1\n  - build: # 3 min\n      script: docker build . -t app:latest\n```\n\n**Common interview trap:** Suggesting you need a faster machine instead of attacking algorithmic inefficiencies.",
+      "ru": "### Стратегии оптимизации Pipeline\n\nРеализуйте параллельное выполнение тестов, кэширование зависимостей, шардирование тестов и запуск только затронутых тестов через анализ зависимостей. Разделите быстрые unit-тесты от медленных интеграционных.\n\n```yaml\nstages:\n  - test-unit: # 2 мин\n      parallel: 4\n      script: jest --shard=1/4\n  - test-integration: # 5 мин (async)\n      cache:\n        paths: [node_modules/]\n      script: pytest --maxfail=1\n  - build: # 3 мин\n      script: docker build . -t app:latest\n```\n\n**Типичная ошибка:** Предложить купить более мощный сервер вместо устранения алгоритмических проблем."
+    },
+    "tags": [
+      "pipeline-optimization",
+      "parallel-execution",
+      "test-sharding",
+      "caching"
+    ]
+  },
+  {
+    "id": "ci-cd-q-15",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how you would deploy an application to Kubernetes with zero-downtime deployments. What rolling update strategy would you configure?",
+      "ru": "Объясните, как бы вы развернули приложение в Kubernetes с нулевым временем простоя. Какую стратегию rolling update вы бы настроили?"
+    },
+    "answer": {
+      "en": "### Zero-Downtime K8s Deployment\n\nUse rolling updates with proper readiness/liveness probes and PodDisruptionBudgets. Configure maxSurge and maxUnavailable to ensure gradual pod replacement while maintaining service availability.\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: app\nspec:\n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxSurge: 1\n      maxUnavailable: 0\n  template:\n    spec:\n      readinessProbe:\n        httpGet:\n          path: /health\n          port: 8080\n        initialDelaySeconds: 10\n      terminationGracePeriodSeconds: 30\n```\n\n**Common interview trap:** Forgetting to set maxUnavailable: 0, which allows pod termination during updates.",
+      "ru": "### Развертывание K8s без простоев\n\nИспользуйте rolling updates с правильными readiness/liveness пробами и PodDisruptionBudgets. Настройте maxSurge и maxUnavailable для постепенной замены подов при сохранении доступности.\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: app\nspec:\n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxSurge: 1\n      maxUnavailable: 0\n  template:\n    spec:\n      readinessProbe:\n        httpGet:\n          path: /health\n          port: 8080\n        initialDelaySeconds: 10\n      terminationGracePeriodSeconds: 30\n```\n\n**Типичная ошибка:** Забыть установить maxUnavailable: 0, что позволяет прерывать поды во время обновления."
+    },
+    "tags": [
+      "kubernetes-deployment",
+      "zero-downtime",
+      "rolling-updates",
+      "health-checks"
+    ]
+  },
+  {
+    "id": "ci-cd-q-16",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are the core principles of GitOps and how would you implement it in your deployment workflow? Walk through a concrete example.",
+      "ru": "Каковы основные принципы GitOps и как бы вы реализовали его в вашем workflow развертывания? Приведите конкретный пример."
+    },
+    "answer": {
+      "en": "### GitOps Core Principles\n\nGitOps treats Git as the single source of truth for infrastructure and application state. Use tools like ArgoCD to automatically sync desired state from Git to your cluster. Every change goes through Git commits and pull requests.\n\n```yaml\n# argocd-app.yaml - Git repo contains desired state\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\nspec:\n  source:\n    repoURL: https://github.com/myorg/config\n    path: k8s/prod\n    targetRevision: main\n  destination:\n    server: https://kubernetes.default.svc\n    namespace: prod\n  syncPolicy:\n    automated:\n      prune: true\n      selfHeal: true\n```\n\n**Common interview trap:** Thinking GitOps is just using Git for config without automated drift detection and reconciliation.",
+      "ru": "### Основные принципы GitOps\n\nGitOps рассматривает Git как единственный источник истины для инфраструктуры и состояния приложения. Используйте инструменты вроде ArgoCD для автоматической синхронизации желаемого состояния из Git в кластер. Каждое изменение проходит через commits и pull requests.\n\n```yaml\n# argocd-app.yaml - Git репо содержит желаемое состояние\napiVersion: argoproj.io/v1alpha1\nkind: Application\nmetadata:\n  name: my-app\nspec:\n  source:\n    repoURL: https://github.com/myorg/config\n    path: k8s/prod\n    targetRevision: main\n  destination:\n    server: https://kubernetes.default.svc\n    namespace: prod\n  syncPolicy:\n    automated:\n      prune: true\n      selfHeal: true\n```\n\n**Типичная ошибка:** Думать, что GitOps это просто использование Git для конфига без автоматического обнаружения drift и reconciliation."
+    },
+    "tags": [
+      "gitops",
+      "argocd",
+      "infrastructure-as-code",
+      "declarative-deployments"
+    ]
+  },
+  {
+    "id": "ci-cd-q-17",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement feature flags in your CI/CD pipeline to enable safe progressive deployments? What are the trade-offs?",
+      "ru": "Как бы вы реализовали feature flags в вашем CI/CD pipeline для безопасного постепенного развертывания? Какие есть компромиссы?"
+    },
+    "answer": {
+      "en": "### Feature Flags in Deployments\n\nIntegrate feature flag services (LaunchDarkly, Unleash) into your application to decouple deployment from feature release. This allows deploying code to production disabled, then gradually enabling it for user segments without redeploying.\n\n```typescript\nconst isNewUIEnabled = await featureFlags.isEnabled(\n  'new-ui-v2',\n  { userId: user.id, country: user.country }\n);\n\nif (isNewUIEnabled) {\n  return renderNewUI();\n} else {\n  return renderLegacyUI();\n}\n```\n\n**Common interview trap:** Implementing flags only in frontend; backend logic changes must also be feature-flagged for true safety.",
+      "ru": "### Feature Flags в развертывании\n\nИнтегрируйте сервисы feature flags (LaunchDarkly, Unleash) в приложение для разделения развертывания от релиза функций. Это позволяет развертывать код в production отключенным, затем постепенно включать его для сегментов пользователей без переразвертывания.\n\n```typescript\nconst isNewUIEnabled = await featureFlags.isEnabled(\n  'new-ui-v2',\n  { userId: user.id, country: user.country }\n);\n\nif (isNewUIEnabled) {\n  return renderNewUI();\n} else {\n  return renderLegacyUI();\n}\n```\n\n**Типичная ошибка:** Реализовать флаги только в frontend; изменения бизнес-логики тоже должны быть защищены flags для истинной безопасности."
+    },
+    "tags": [
+      "feature-flags",
+      "progressive-deployment",
+      "canary-releases",
+      "risk-mitigation"
+    ]
+  },
+  {
+    "id": "ci-cd-q-18",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a comprehensive rollback strategy for production deployments. How would you detect when a rollback is needed and execute it safely?",
+      "ru": "Разработайте комплексную стратегию откката для production развертываний. Как бы вы обнаружили необходимость отката и выполнили его безопасно?"
+    },
+    "answer": {
+      "en": "### Rollback Strategy Design\n\nCombine automated monitoring alerts (error rates, latency, resource usage) with manual gates. Keep previous image versions tagged and accessible. Use Kubernetes' native rollout history or GitOps to revert declaratively.\n\n```bash\n# Detect issues via Prometheus\nalert: HighErrorRate\nexpr: rate(http_requests_total{status=~\"5..\"}[5m]) > 0.05\nfor: 2m\n\n# Rollback command\nkubectl rollout undo deployment/app -n prod\n\n# Or via GitOps (revert commit)\ngit revert HEAD --no-edit && git push origin main\n```\n\n**Common interview trap:** Not automating monitoring checks; manual alerts are too slow and error-prone for production incidents.",
+      "ru": "### Дизайн стратегии отката\n\nКомбинируйте автоматизированные мониторинг-алерты (error rates, latency, resource usage) с ручными gatekeepers. Сохраняйте предыдущие версии образов с тегами. Используйте native Kubernetes rollout history или GitOps для декларативного отката.\n\n```bash\n# Обнаружение проблем через Prometheus\nalert: HighErrorRate\nexpr: rate(http_requests_total{status=~\"5..\"}[5m]) > 0.05\nfor: 2m\n\n# Команда отката\nkubectl rollout undo deployment/app -n prod\n\n# Или через GitOps (revert commit)\ngit revert HEAD --no-edit && git push origin main\n```\n\n**Типичная ошибка:** Не автоматизировать мониторинг-проверки; ручные алерты слишком медленные и подвержены ошибкам в production инцидентах."
+    },
+    "tags": [
+      "rollback-strategy",
+      "monitoring-alerts",
+      "incident-response",
+      "deployment-safety"
+    ]
+  },
+  {
+    "id": "ci-cd-q-19",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a CI/CD pipeline for Kubernetes deployment that incorporates feature flags, progressive rollout, and automatic rollback on monitoring alert threshold breach. What tools and strategies would you use?",
+      "ru": "Спроектируйте CI/CD конвейер для развертывания в Kubernetes, который использует флаги функций, прогрессивный откат и автоматический откат при превышении порога мониторинга. Какие инструменты и стратегии вы бы использовали?"
+    },
+    "answer": {
+      "en": "### GitOps + Progressive Delivery Architecture\n\nUse ArgoCD for GitOps (declarative deployments from Git), Flagger for canary deployments with automated rollbacks based on Prometheus metrics, and LaunchDarkly/Unleash for feature flags decoupled from code. This enables safe rollouts with instant feature kill-switches and metric-driven rollbacks without manual intervention.\n\n```typescript\n// Flagger Canary with monitoring\napiVersion: flagger.app/v1beta1\nkind: Canary\nmetadata:\n  name: myapp\nspec:\n  targetRef:\n    kind: Deployment\n    name: myapp\n  progressDeadlineSeconds: 300\n  service:\n    port: 80\n  analysis:\n    interval: 1m\n    threshold: 5\n    metrics:\n    - name: error-rate\n      thresholdRange:\n        max: 1\n      interval: 1m\n  skipAnalysis: false\n```\n\n**Common interview trap:** Confusing feature flags with Kubernetes native strategies—they serve different purposes; flags control behavior, canaries control rollout velocity.",
+      "ru": "### GitOps + прогрессивное развертывание\n\nИспользуйте ArgoCD для GitOps (декларативное развертывание из Git), Flagger для canary-развертываний с автоматическим откатом на основе метрик Prometheus и LaunchDarkly/Unleash для флагов функций, отделенных от кода. Это позволяет безопасные откаты с мгновенным отключением функций и откатом на основе метрик без ручного вмешательства.\n\n```typescript\n// Flagger Canary с мониторингом\napiVersion: flagger.app/v1beta1\nkind: Canary\nmetadata:\n  name: myapp\nspec:\n  targetRef:\n    kind: Deployment\n    name: myapp\n  progressDeadlineSeconds: 300\n  service:\n    port: 80\n  analysis:\n    interval: 1m\n    threshold: 5\n    metrics:\n    - name: error-rate\n      thresholdRange:\n        max: 1\n      interval: 1m\n```\n\n**Типичная ошибка:** Путаница между флагами функций и нативными стратегиями Kubernetes—они служат разным целям; флаги контролируют поведение, canary контролирует скорость развертывания."
+    },
+    "tags": [
+      "feature-flags",
+      "canary-deployment",
+      "kubernetes",
+      "gitops",
+      "flagger",
+      "rollback-automation"
+    ]
+  },
+  {
+    "id": "ci-cd-q-20",
+    "topicId": "ci-cd",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you optimize a CI/CD pipeline that currently takes 25 minutes from commit to production? Describe bottleneck identification and optimization strategies specific to Kubernetes deployments.",
+      "ru": "Как бы вы оптимизировали CI/CD конвейер, который в настоящее время занимает 25 минут от commit до production? Опишите стратегии идентификации узких мест и оптимизации, специфичные для развертываний Kubernetes."
+    },
+    "answer": {
+      "en": "### Profiling & Parallel Execution Strategy\n\nMeasure each stage (build, test, push, deploy) with detailed logging. Parallelize independent tests, use layer caching in Docker (baseimage → dependencies → code), and leverage Kubernetes admission webhooks for fast validations instead of external checks. Replace polling-based deployments with event-driven webhooks and use image pull policies with local registry mirrors to eliminate network latency.\n\n```typescript\n// Parallel job execution in GitLab CI\nstages:\n  - build\n  - test\njob:unit_tests:\n  stage: test\n  parallel: 4\njob:integration:\n  stage: test\n  parallel: 2\n# Both stages run in parallel, jobs within each parallelize further\nimage:\n  name: myregistry/mybase:v1 # Pre-built, cached base\n  pull_policy: if-not-present\n```\n\n**Common interview trap:** Optimizing only build time while deployment validation takes 10+ minutes—profile the entire pipeline, not assumptions.",
+      "ru": "### Профилирование и стратегия параллельного выполнения\n\nИзмеряйте каждый этап (build, test, push, deploy) с подробным логированием. Параллелизируйте независимые тесты, используйте кеширование слоев в Docker (baseimage → dependencies → code) и используйте Kubernetes admission webhooks для быстрых валидаций вместо внешних проверок. Замените развертывания на основе polling на event-driven webhooks и используйте image pull policies с локальными зеркалами реестра, чтобы устранить сетевую задержку.\n\n```typescript\n// Параллельное выполнение заданий в GitLab CI\nstages:\n  - build\n  - test\njob:unit_tests:\n  stage: test\n  parallel: 4\njob:integration:\n  stage: test\n  parallel: 2\n# Оба этапа выполняются параллельно\nimage:\n  name: myregistry/mybase:v1\n  pull_policy: if-not-present\n```\n\n**Типичная ошибка:** Оптимизация только времени сборки, в то время как валидация развертывания занимает 10+ минут—профилируйте весь конвейер, а не предположения."
+    },
+    "tags": [
+      "pipeline-optimization",
+      "kubernetes-deployment",
+      "caching",
+      "parallelization",
+      "performance-profiling"
+    ]
+  }
+]

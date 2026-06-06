@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 1 -->
 # Routing, Layouts и Middleware
 
 ## Routing в Next.js
@@ -156,9 +157,6 @@ export default function Layout({
       {children}
     </>
   );
-}
-```
-
 }
 ```
 

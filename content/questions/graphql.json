@@ -1,1 +1,557 @@
-[]
+[
+  {
+    "id": "graphql-q-1",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between GraphQL queries and mutations. When would you use each one?",
+      "ru": "Объясните разницу между GraphQL запросами и мутациями. Когда вы используете каждый из них?"
+    },
+    "answer": {
+      "en": "### Queries vs Mutations\n\nQueries are used to fetch data without modifying it. They are read-only operations and should be idempotent. Mutations are used to modify data on the server—creating, updating, or deleting resources. The key distinction is intent: queries retrieve, mutations transform.\n\nUse queries when you need to read data. Use mutations when you need to change server state. GraphQL enforces this distinction to make your API behavior predictable and maintainable.\n\ntypescript\nconst query = `\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      id\n      name\n      email\n    }\n  }\n`;\n\nconst mutation = `\n  mutation CreateUser($name: String!, $email: String!) {\n    createUser(input: { name: $name, email: $email }) {\n      id\n      name\n    }\n  }\n`;\n\n\n**Common interview trap:** Candidates sometimes think mutations are just queries that modify data. Remember: mutations explicitly signal intent to change state, improving API clarity.",
+      "ru": "### Запросы и мутации\n\nЗапросы используются для получения данных без изменения их. Это операции чтения и должны быть идемпотентными. Мутации используются для изменения данных на сервере—создания, обновления или удаления ресурсов. Главное отличие в намерении: запросы извлекают, мутации трансформируют.\n\nИспользуйте запросы для чтения данных. Используйте мутации для изменения состояния сервера. GraphQL требует это разделение для предсказуемости API.\n\ntypescript\nconst query = `\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      id\n      name\n      email\n    }\n  }\n`;\n\nconst mutation = `\n  mutation CreateUser($name: String!, $email: String!) {\n    createUser(input: { name: $name, email: $email }) {\n      id\n      name\n    }\n  }\n`;\n\n\n**Типичная ошибка на интервью:** Кандидаты думают, что мутации просто запросы, которые изменяют данные. Мутации явно сигнализируют о намерении изменить состояние."
+    },
+    "tags": [
+      "queries",
+      "mutations",
+      "intent-clarity"
+    ]
+  },
+  {
+    "id": "graphql-q-2",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is GraphQL Schema Definition Language (SDL)? Write a simple schema with at least one object type, a scalar type, and a query.",
+      "ru": "Что такое GraphQL Schema Definition Language (SDL)? Напишите простую схему с объектным типом, скалярным типом и запросом."
+    },
+    "answer": {
+      "en": "### Schema Definition Language\n\nSDL is GraphQL's human-readable syntax for defining your API structure. It describes types, fields, arguments, and their return types. SDL is language-agnostic and serves as the contract between client and server.\n\nYou define object types containing fields with specific scalar or complex types. Scalar types are primitives like String, Int, Boolean. Every schema needs a Query type as the entry point.\n\ntypescript\ntype User {\n  id: ID!\n  name: String!\n  age: Int\n  email: String!\n}\n\ntype Query {\n  user(id: ID!): User\n  allUsers: [User!]!\n}\n\n\n**Common interview trap:** Forgetting that the exclamation mark (!) means required—nullability is crucial in type safety. `String!` means never null, `String` means nullable.",
+      "ru": "### Schema Definition Language\n\nSDL—это читаемый синтаксис GraphQL для определения структуры API. Он описывает типы, поля, аргументы и их типы возврата. SDL независим от языка и служит контрактом между клиентом и сервером.\n\nВы определяете типы объектов содержащие поля с определенными скалярными или сложными типами. Скалярные типы—это примитивы вроде String, Int, Boolean.\n\ntypescript\ntype User {\n  id: ID!\n  name: String!\n  age: Int\n  email: String!\n}\n\ntype Query {\n  user(id: ID!): User\n  allUsers: [User!]!\n}\n\n\n**Типичная ошибка на интервью:** Забывают, что восклицательный знак (!) означает обязательное значение. `String!` никогда не null, `String` может быть null."
+    },
+    "tags": [
+      "schema",
+      "sdl",
+      "type-definition",
+      "nullability"
+    ]
+  },
+  {
+    "id": "graphql-q-3",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Describe the different scalar types in GraphQL and explain when you would use each one. Can you create a custom scalar type?",
+      "ru": "Опишите различные скалярные типы в GraphQL и объясните когда их использовать. Можете ли вы создать пользовательский скалярный тип?"
+    },
+    "answer": {
+      "en": "### Scalar Types\n\nGraphQL includes built-in scalars: String, Int, Float, Boolean, and ID. String handles text, Int for whole numbers, Float for decimals, Boolean for true/false, and ID for unique identifiers. You can create custom scalars like DateTime, Email, or JSON for domain-specific types.\n\nCustom scalars require serialization (output) and parsing (input) logic. They enhance type safety and validation at the schema level, preventing invalid data.\n\ntypescript\nconst DateTimeScalar = new GraphQLScalarType({\n  name: 'DateTime',\n  serialize: (value) => value.toISOString(),\n  parseValue: (value) => new Date(value),\n  parseLiteral: (ast) => new Date(ast.value),\n});\n\ntype User {\n  id: ID!\n  email: String!\n  createdAt: DateTime!\n  score: Float!\n}\n\n\n**Common interview trap:** Assuming custom scalars are complex. They're simple wrappers around basic types with validation logic—understand the three methods: serialize, parseValue, parseLiteral.",
+      "ru": "### Скалярные типы\n\nGraphQL включает встроенные скаляры: String, Int, Float, Boolean и ID. String для текста, Int для целых чисел, Float для десятичных, Boolean для истины/лжи, ID для идентификаторов. Вы можете создавать пользовательские скаляры вроде DateTime или Email.\n\nПользовательские скаляры требуют логики сериализации (вывода) и парсинга (входа). Они повышают безопасность типов и валидацию на уровне схемы.\n\ntypescript\nconst DateTimeScalar = new GraphQLScalarType({\n  name: 'DateTime',\n  serialize: (value) => value.toISOString(),\n  parseValue: (value) => new Date(value),\n  parseLiteral: (ast) => new Date(ast.value),\n});\n\ntype User {\n  id: ID!\n  email: String!\n  createdAt: DateTime!\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты переусложняют пользовательские скаляры. Это просто обертки с логикой валидации."
+    },
+    "tags": [
+      "scalar-types",
+      "custom-scalars",
+      "type-safety",
+      "validation"
+    ]
+  },
+  {
+    "id": "graphql-q-4",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is a resolver in GraphQL? Write a simple resolver function that fetches a user by ID.",
+      "ru": "Что такое резолвер в GraphQL? Напишите простую функцию резолвера которая получает пользователя по ID."
+    },
+    "answer": {
+      "en": "### Resolvers\n\nA resolver is a function that returns the data for a field. Every field in your GraphQL schema needs a resolver. Resolvers receive four arguments: parent (the object it's resolving from), args (query arguments), context (shared state), and info (metadata).\n\nResolvers fetch data from databases, APIs, or compute values. They bridge your schema to your actual data sources. Each field's resolver is called independently, enabling fine-grained data fetching.\n\ntypescript\nconst resolvers = {\n  Query: {\n    user: (parent, args, context, info) => {\n      return database.users.find(u => u.id === args.id);\n    },\n  },\n  User: {\n    email: (parent) => parent.userEmail, // field mapping\n  },\n};\n\n\n**Common interview trap:** Thinking resolvers must always fetch from a database. Resolvers can compute values, map fields, or fetch from any source. The parent object context matters.",
+      "ru": "### Резолверы\n\nРезолвер—это функция которая возвращает данные для поля. Каждое поле в вашей схеме GraphQL нуждается в резолвере. Резолверы получают четыре аргумента: parent, args, context и info.\n\nРезолверы получают данные из базы данных, API или вычисляют значения. Они связывают вашу схему с источниками данных. Каждый резолвер вызывается независимо.\n\ntypescript\nconst resolvers = {\n  Query: {\n    user: (parent, args, context, info) => {\n      return database.users.find(u => u.id === args.id);\n    },\n  },\n  User: {\n    email: (parent) => parent.userEmail,\n  },\n};\n\n\n**Типичная ошибка на интервью:** Думать что резолверы только получают из базы. Резолверы вычисляют значения, маппируют поля, могут использовать любой источник."
+    },
+    "tags": [
+      "resolvers",
+      "data-fetching",
+      "field-resolution",
+      "parent-context"
+    ]
+  },
+  {
+    "id": "graphql-q-5",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Compare GraphQL with REST. What are the main advantages of GraphQL over REST for API design?",
+      "ru": "Сравните GraphQL с REST. Каковы основные преимущества GraphQL над REST для дизайна API?"
+    },
+    "answer": {
+      "en": "### GraphQL vs REST\n\nREST uses multiple endpoints per resource (GET /users, POST /users), while GraphQL uses a single endpoint. With REST, you get fixed data shapes from each endpoint, causing over-fetching (unwanted data) or under-fetching (multiple requests). GraphQL lets clients request exactly the fields they need.\n\nGraphQL's strongly-typed schema enables better tooling, autocompletion, and documentation. REST requires separate API docs. GraphQL's single endpoint simplifies caching and deployment, though HTTP caching becomes trickier. REST is simpler for basic CRUD; GraphQL excels with complex, interconnected data.\n\ntypescript\n// REST: multiple requests\nGET /api/users/1\nGET /api/users/1/posts\nGET /api/users/1/posts/comments\n\n// GraphQL: single request, exact fields\nquery {\n  user(id: 1) {\n    name\n    posts { title }\n  }\n}\n\n\n**Common interview trap:** Claiming GraphQL replaces REST entirely. They solve different problems—GraphQL excels for complex client needs, REST for simple resource-based APIs.",
+      "ru": "### GraphQL против REST\n\nREST использует несколько endpoint-ов на ресурс, GraphQL использует один endpoint. В REST вы получаете фиксированные формы данных, вызывая over-fetching или under-fetching. GraphQL позволяет клиентам запрашивать ровно нужные поля.\n\nВнутренняя типизированная схема GraphQL улучшает инструменты и документацию. REST требует отдельной документации. GraphQL с одним endpoint упрощает развертывание.\n\ntypescript\n// REST: несколько запросов\nGET /api/users/1\nGET /api/users/1/posts\n\n// GraphQL: один запрос, точные поля\nquery {\n  user(id: 1) {\n    name\n    posts { title }\n  }\n}\n\n\n**Типичная ошибка на интервью:** Утверждение что GraphQL заменяет REST. Они решают разные задачи—GraphQL для сложных нужд, REST для простых API."
+    },
+    "tags": [
+      "graphql-vs-rest",
+      "over-fetching",
+      "under-fetching",
+      "api-design",
+      "single-endpoint"
+    ]
+  },
+  {
+    "id": "graphql-q-6",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between a GraphQL query and a mutation, and when would you use each one?",
+      "ru": "В чем разница между GraphQL query и mutation, и когда вы будете использовать каждый?"
+    },
+    "answer": {
+      "en": "### Queries vs Mutations\n\nQueries are used to fetch data without side effects, while mutations modify data on the server. Use queries for read operations and mutations for create, update, or delete operations.\n\n```typescript\n// Query - read only\nquery GetUser {\n  user(id: \"123\") {\n    id\n    name\n  }\n}\n\n// Mutation - modifies data\nmutation CreateUser {\n  createUser(name: \"John\") {\n    id\n    name\n  }\n}\n```\n\n**Common interview trap:** Confusing mutations with queries when handling state changes.",
+      "ru": "### Запросы vs Мутации\n\nЗапросы используются для получения данных без побочных эффектов, а мутации изменяют данные на сервере. Используйте запросы для операций чтения и мутации для создания, обновления или удаления.\n\n```typescript\n// Query - только чтение\nquery GetUser {\n  user(id: \"123\") {\n    id\n    name\n  }\n}\n\n// Mutation - изменяет данные\nmutation CreateUser {\n  createUser(name: \"John\") {\n    id\n    name\n  }\n}\n```\n\n**Типичная ошибка:** Путать мутации с запросами при обработке изменений состояния."
+    },
+    "tags": [
+      "queries-mutations",
+      "data-modification",
+      "graphql-fundamentals"
+    ]
+  },
+  {
+    "id": "graphql-q-7",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what GraphQL Schema Definition Language (SDL) is and provide a simple example of defining an object type.",
+      "ru": "Объясните, что такое GraphQL Schema Definition Language (SDL), и приведите простой пример определения типа объекта."
+    },
+    "answer": {
+      "en": "### Schema Definition Language\n\nSDL is a human-readable syntax for defining GraphQL types and their fields. It specifies what data can be queried and what operations are available.\n\n```typescript\ntype User {\n  id: ID!\n  name: String!\n  email: String\n  age: Int\n}\n\ntype Query {\n  getUser(id: ID!): User\n  getAllUsers: [User!]!\n}\n```\n\n**Common interview trap:** Forgetting that `!` means the field is required (non-nullable).",
+      "ru": "### Язык определения схемы\n\nSDL — это читаемый синтаксис для определения типов GraphQL и их полей. Он указывает, какие данные можно запрашивать и какие операции доступны.\n\n```typescript\ntype User {\n  id: ID!\n  name: String!\n  email: String\n  age: Int\n}\n\ntype Query {\n  getUser(id: ID!): User\n  getAllUsers: [User!]!\n}\n```\n\n**Типичная ошибка:** Забывать, что `!` означает, что поле обязательно (ненулевое)."
+    },
+    "tags": [
+      "schema-definition",
+      "SDL",
+      "type-system"
+    ]
+  },
+  {
+    "id": "graphql-q-8",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Name four scalar types in GraphQL and provide an example of when you would use an Input type instead of an Object type.",
+      "ru": "Назовите четыре скалярных типа в GraphQL и приведите пример, когда вы будете использовать Input тип вместо Object типа."
+    },
+    "answer": {
+      "en": "### Scalar Types and Input Types\n\nGraphQL's built-in scalar types are: String, Int, Float, Boolean, and ID. Use Input types for mutation arguments where you need to group multiple fields together for input data.\n\n```typescript\ninput CreateUserInput {\n  name: String!\n  email: String!\n  age: Int\n}\n\nmutation CreateUser($input: CreateUserInput!) {\n  createUser(input: $input) {\n    id\n    name\n  }\n}\n```\n\n**Common interview trap:** Confusing Input types with Object types; Input types are only for arguments, not return values.",
+      "ru": "### Скалярные типы и Input типы\n\nВстроенные скалярные типы GraphQL: String, Int, Float, Boolean и ID. Используйте Input типы для аргументов мутаций, когда нужно сгруппировать несколько полей для входных данных.\n\n```typescript\ninput CreateUserInput {\n  name: String!\n  email: String!\n  age: Int\n}\n\nmutation CreateUser($input: CreateUserInput!) {\n  createUser(input: $input) {\n    id\n    name\n  }\n}\n```\n\n**Типичная ошибка:** Путать Input типы с Object типами; Input типы только для аргументов, не для возвращаемых значений."
+    },
+    "tags": [
+      "scalar-types",
+      "input-types",
+      "type-system"
+    ]
+  },
+  {
+    "id": "graphql-q-9",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is a resolver in GraphQL and how does it connect schema fields to actual data or logic?",
+      "ru": "Что такое резолвер в GraphQL и как он соединяет поля схемы с реальными данными или логикой?"
+    },
+    "answer": {
+      "en": "### GraphQL Resolvers\n\nA resolver is a function that returns the value for a field in your schema. Each field can have its own resolver that determines how to fetch or compute that field's data.\n\n```typescript\nconst resolvers = {\n  Query: {\n    user: (parent, args) => {\n      return database.findUser(args.id);\n    }\n  },\n  User: {\n    email: (user) => user.emailAddress\n  }\n};\n```\n\n**Common interview trap:** Not understanding that every field needs a resolver, even if it's implicitly mapping to object properties.",
+      "ru": "### GraphQL Резолверы\n\nРезолвер — это функция, которая возвращает значение поля в вашей схеме. Каждое поле может иметь свой резолвер, который определяет, как получить или вычислить данные этого поля.\n\n```typescript\nconst resolvers = {\n  Query: {\n    user: (parent, args) => {\n      return database.findUser(args.id);\n    }\n  },\n  User: {\n    email: (user) => user.emailAddress\n  }\n};\n```\n\n**Типичная ошибка:** Не понимать, что каждому полю нужен резолвер, даже если он неявно отображается на свойства объекта."
+    },
+    "tags": [
+      "resolvers",
+      "field-resolution",
+      "data-fetching"
+    ]
+  },
+  {
+    "id": "graphql-q-10",
+    "topicId": "graphql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Compare GraphQL and REST APIs: what are two key advantages of GraphQL over REST?",
+      "ru": "Сравните GraphQL и REST API: каковы два ключевых преимущества GraphQL перед REST?"
+    },
+    "answer": {
+      "en": "### GraphQL vs REST\n\nGraphQL's main advantages are: (1) clients request exactly what data they need, avoiding over-fetching and under-fetching problems, and (2) a single endpoint handles all operations instead of multiple REST endpoints.\n\n```typescript\n// REST - over-fetching (getting unused fields)\nGET /api/users/123  // returns all user fields\n\n// GraphQL - precise data fetching\nquery {\n  user(id: \"123\") {\n    name\n    email\n  }\n}\n```\n\n**Common interview trap:** Saying GraphQL is always better; REST is simpler for small APIs and better for caching.",
+      "ru": "### GraphQL vs REST\n\nОсновные преимущества GraphQL: (1) клиенты запрашивают ровно те данные, которые им нужны, избегая проблем over-fetching и under-fetching, и (2) один endpoint обрабатывает все операции вместо нескольких REST endpoint'ов.\n\n```typescript\n// REST - over-fetching (получение неиспользуемых полей)\nGET /api/users/123  // возвращает все поля пользователя\n\n// GraphQL - точная загрузка данных\nquery {\n  user(id: \"123\") {\n    name\n    email\n  }\n}\n```\n\n**Типичная ошибка:** Говорить, что GraphQL всегда лучше; REST проще для небольших API и лучше для кеширования."
+    },
+    "tags": [
+      "graphql-vs-rest",
+      "api-design",
+      "efficiency"
+    ]
+  },
+  {
+    "id": "graphql-q-11",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do GraphQL fragments improve code reusability, and what's the difference between named fragments and inline fragments?",
+      "ru": "Как GraphQL фрагменты улучшают переиспользование кода и в чём разница между именованными и встроенными фрагментами?"
+    },
+    "answer": {
+      "en": "### Fragment Types\n\nNamed fragments are reusable definitions you can use across multiple queries, while inline fragments let you conditionally select fields based on type without naming them. Fragments reduce duplication when querying the same field sets repeatedly.\n\n```typescript\n// Named fragment\nfragment UserFields on User { id name email }\nquery GetUser { user { ...UserFields } }\n\n// Inline fragment\nquery GetNode(id: ID!) {\n  node(id: id) {\n    ... on User { name email }\n    ... on Post { title content }\n  }\n}\n```\n\n**Common interview trap:** Thinking inline fragments are less powerful—they're essential for union/interface types.",
+      "ru": "### Типы Фрагментов\n\nИменованные фрагменты — это переиспользуемые определения для использования в нескольких запросах, встроенные фрагменты позволяют условно выбирать поля по типу без имени. Фрагменты снижают дублирование при повторяющихся наборах полей.\n\n```typescript\n// Именованный фрагмент\nfragment UserFields on User { id name email }\nquery GetUser { user { ...UserFields } }\n\n// Встроенный фрагмент\nquery GetNode(id: ID!) {\n  node(id: id) {\n    ... on User { name email }\n    ... on Post { title content }\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что встроенные фрагменты слабее—они критичны для union/interface типов."
+    },
+    "tags": [
+      "fragments",
+      "query-design",
+      "code-reuse"
+    ]
+  },
+  {
+    "id": "graphql-q-12",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how GraphQL variables work and why they're preferred over hardcoding values in queries. Provide an example with Apollo Client.",
+      "ru": "Объясните как работают переменные в GraphQL и почему их предпочитают жёсткому кодированию значений. Приведите пример с Apollo Client."
+    },
+    "answer": {
+      "en": "### Query Variables\n\nVariables separate query logic from runtime values, enabling query reuse and security (preventing injection). They're type-safe and cached efficiently. Apollo Client passes them through the `variables` option.\n\n```typescript\nconst query = gql`\n  query GetUser($id: ID!) { user(id: $id) { name } }\n`;\n\nconst { data } = useQuery(query, {\n  variables: { id: '123' }\n});\n```\n\n**Common interview trap:** Forgetting that variables must be declared in the operation signature with their types.",
+      "ru": "### Переменные Запроса\n\nПеременные разделяют логику запроса от значений времени выполнения, позволяя переиспользование и безопасность (предотвращение инъекций). Они типобезопасны и эффективно кэшируются. Apollo Client передаёт их через опцию `variables`.\n\n```typescript\nconst query = gql`\n  query GetUser($id: ID!) { user(id: $id) { name } }\n`;\n\nconst { data } = useQuery(query, {\n  variables: { id: '123' }\n});\n```\n\n**Типичная ошибка:** Забыть объявить переменные в сигнатуре операции с их типами."
+    },
+    "tags": [
+      "variables",
+      "apollo-client",
+      "query-safety"
+    ]
+  },
+  {
+    "id": "graphql-q-13",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are GraphQL directives and how would you use @skip and @include in a real-world scenario? Show an example with conditional fields.",
+      "ru": "Что такое GraphQL директивы и как вы используете @skip и @include в реальном сценарии? Покажите пример с условными полями."
+    },
+    "answer": {
+      "en": "### Directives for Conditional Selection\n\nDirectives like @skip and @include conditionally include or exclude fields based on boolean variables, avoiding multiple query versions. This is cleaner than writing separate queries for different UI states.\n\n```typescript\nconst query = gql`\n  query GetUser($id: ID!, $includeEmail: Boolean!) {\n    user(id: $id) {\n      name\n      email @include(if: $includeEmail)\n      profile @skip(if: $includeEmail) { bio }\n    }\n  }\n`;\n\nuseQuery(query, { variables: { id: '1', includeEmail: false } });\n```\n\n**Common interview trap:** Confusing @skip and @include—@skip hides when true, @include shows when true.",
+      "ru": "### Директивы для Условного Выбора\n\nДирективы типа @skip и @include условно включают или исключают поля на основе логических переменных, избегая множественных версий запроса. Это чище, чем писать отдельные запросы для разных состояний UI.\n\n```typescript\nconst query = gql`\n  query GetUser($id: ID!, $includeEmail: Boolean!) {\n    user(id: $id) {\n      name\n      email @include(if: $includeEmail)\n      profile @skip(if: $includeEmail) { bio }\n    }\n  }\n`;\n\nuseQuery(query, { variables: { id: '1', includeEmail: false } });\n```\n\n**Типичная ошибка:** Путать @skip и @include—@skip скрывает когда true, @include показывает когда true."
+    },
+    "tags": [
+      "directives",
+      "@skip",
+      "@include",
+      "conditional-queries"
+    ]
+  },
+  {
+    "id": "graphql-q-14",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do GraphQL subscriptions differ from queries, and what's the role of Apollo Client's useSubscription hook? Provide a real-time messaging example.",
+      "ru": "Чем GraphQL подписки отличаются от запросов и какова роль хука useSubscription в Apollo Client? Приведите пример для чата в реальном времени."
+    },
+    "answer": {
+      "en": "### Real-Time Subscriptions\n\nSubscriptions maintain a persistent connection (WebSocket) to receive server-initiated updates, unlike queries which are one-off requests. useSubscription automatically handles connection setup and teardown, updating components as new data arrives.\n\n```typescript\nconst subscription = gql`\n  subscription OnMessageSent($chatId: ID!) {\n    messageSent(chatId: $chatId) { id text sender }\n  }\n`;\n\nconst { data, loading } = useSubscription(subscription, {\n  variables: { chatId: '123' }\n});\n```\n\n**Common interview trap:** Forgetting that subscriptions need WebSocket configuration in Apollo Client link setup.",
+      "ru": "### Подписки в Реальном Времени\n\nПодписки поддерживают постоянное соединение (WebSocket) для получения инициированных сервером обновлений, в отличие от запросов которые одноразовые. useSubscription автоматически обрабатывает установку и закрытие соединения, обновляя компоненты при поступлении новых данных.\n\n```typescript\nconst subscription = gql`\n  subscription OnMessageSent($chatId: ID!) {\n    messageSent(chatId: $chatId) { id text sender }\n  }\n`;\n\nconst { data, loading } = useSubscription(subscription, {\n  variables: { chatId: '123' }\n});\n```\n\n**Типичная ошибка:** Забыть что подписки требуют конфигурацию WebSocket в настройке Apollo Client link."
+    },
+    "tags": [
+      "subscriptions",
+      "real-time",
+      "websocket",
+      "useSubscription"
+    ]
+  },
+  {
+    "id": "graphql-q-15",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does Apollo Client's InMemoryCache work, and how would you handle cache updates after a mutation that returns partial data? Include error handling.",
+      "ru": "Как работает InMemoryCache в Apollo Client и как обновить кэш после мутации которая возвращает частичные данные? Включите обработку ошибок."
+    },
+    "answer": {
+      "en": "### Cache Updates & Partial Errors\n\nInMemoryCache uses object IDs (from __typename and id) to normalize data. After mutations, use `update()` to manually sync cache or rely on automatic updates if mutation returns complete objects. errorPolicy: 'all' preserves partial results even when errors occur.\n\n```typescript\nconst [mutate] = useMutation(UPDATE_USER, {\n  update(cache, { data, errors }) {\n    if (data?.updateUser) {\n      cache.modify({ fields: { user: () => data.updateUser } });\n    }\n  },\n  errorPolicy: 'all'\n});\n\nawait mutate({ variables: { id: '1', name: 'John' } });\n```\n\n**Common interview trap:** Not enabling errorPolicy—without it, partial errors discard all data instead of returning what succeeded.",
+      "ru": "### Обновления Кэша и Частичные Ошибки\n\nInMemoryCache использует ID объектов (из __typename и id) для нормализации данных. После мутаций используйте `update()` для ручной синхронизации кэша или полагайтесь на автоматические обновления если мутация возвращает полные объекты. errorPolicy: 'all' сохраняет частичные результаты даже при ошибках.\n\n```typescript\nconst [mutate] = useMutation(UPDATE_USER, {\n  update(cache, { data, errors }) {\n    if (data?.updateUser) {\n      cache.modify({ fields: { user: () => data.updateUser } });\n    }\n  },\n  errorPolicy: 'all'\n});\n\nawait mutate({ variables: { id: '1', name: 'John' } });\n```\n\n**Типичная ошибка:** Не включить errorPolicy—без него частичные ошибки отбрасывают все данные вместо возврата успешных."
+    },
+    "tags": [
+      "InMemoryCache",
+      "cache-updates",
+      "error-handling",
+      "partial-errors",
+      "useMutation"
+    ]
+  },
+  {
+    "id": "graphql-q-16",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain GraphQL fragments and when you would use them in Apollo Client queries. How do you reuse fragment definitions across multiple queries?",
+      "ru": "Объясните фрагменты GraphQL и когда их использовать в запросах Apollo Client. Как переиспользовать определения фрагментов в нескольких запросах?"
+    },
+    "answer": {
+      "en": "### GraphQL Fragments for Code Reuse\n\nFragments allow you to define reusable sets of fields and include them in multiple queries, reducing duplication. They're especially useful when the same fields are queried across different operations.\n\n```typescript\nconst UserFragment = gql`\n  fragment UserFields on User {\n    id\n    name\n    email\n  }\n`;\n\nconst GetUserQuery = gql`\n  ${UserFragment}\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserFields\n    }\n  }\n`;\n```\n\n**Common interview trap:** Thinking fragments are only for mutations—they work with any operation type.",
+      "ru": "### GraphQL фрагменты для переиспользования кода\n\nФрагменты позволяют определить переиспользуемые наборы полей и включать их в несколько запросов, снижая дублирование. Они особенно полезны при запросе одних и тех же полей в разных операциях.\n\n```typescript\nconst UserFragment = gql`\n  fragment UserFields on User {\n    id\n    name\n    email\n  }\n`;\n\nconst GetUserQuery = gql`\n  ${UserFragment}\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserFields\n    }\n  }\n`;\n```\n\n**Типичная ошибка:** Думать, что фрагменты работают только с мутациями—они работают с любыми операциями."
+    },
+    "tags": [
+      "fragments",
+      "code-reuse",
+      "query-optimization"
+    ]
+  },
+  {
+    "id": "graphql-q-17",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you use variables in GraphQL queries with Apollo Client? What are the benefits of using variables over hardcoded values?",
+      "ru": "Как использовать переменные в GraphQL запросах с Apollo Client? В чём преимущества переменных перед жёсткими значениями?"
+    },
+    "answer": {
+      "en": "### GraphQL Variables for Dynamic Queries\n\nVariables allow you to pass dynamic values to queries without string concatenation, improving security and cacheability. Apollo Client automatically serializes and validates variables against the schema.\n\n```typescript\nconst GetUserQuery = gql`\n  query GetUser($id: ID!, $includeEmail: Boolean) {\n    user(id: $id) {\n      id\n      name\n      email @include(if: $includeEmail)\n    }\n  }\n`;\n\nconst { data } = useQuery(GetUserQuery, {\n  variables: { id: '123', includeEmail: true }\n});\n```\n\n**Common interview trap:** Forgetting that variables prevent cache misses and GraphQL injection attacks.",
+      "ru": "### GraphQL переменные для динамических запросов\n\nПеременные позволяют передавать динамические значения в запросы без конкатенации строк, улучшая безопасность и кешируемость. Apollo Client автоматически сериализует и валидирует переменные против схемы.\n\n```typescript\nconst GetUserQuery = gql`\n  query GetUser($id: ID!, $includeEmail: Boolean) {\n    user(id: $id) {\n      id\n      name\n      email @include(if: $includeEmail)\n    }\n  }\n`;\n\nconst { data } = useQuery(GetUserQuery, {\n  variables: { id: '123', includeEmail: true }\n});\n```\n\n**Типичная ошибка:** Забыть, что переменные предотвращают промахи кеша и GraphQL инъекции."
+    },
+    "tags": [
+      "variables",
+      "security",
+      "cache-prevention"
+    ]
+  },
+  {
+    "id": "graphql-q-18",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain GraphQL directives @skip and @include. How would you use them in a real application scenario with Apollo Client?",
+      "ru": "Объясните GraphQL директивы @skip и @include. Как их использовать в реальном сценарии приложения с Apollo Client?"
+    },
+    "answer": {
+      "en": "### Conditional Field Selection with Directives\n\nThe @skip and @include directives conditionally include or exclude fields based on boolean variables. This reduces bandwidth by only fetching needed data without creating multiple queries.\n\n```typescript\nconst UserQuery = gql`\n  query GetUser($id: ID!, $fetchDetails: Boolean!, $skipEmail: Boolean) {\n    user(id: $id) {\n      id\n      name\n      details @include(if: $fetchDetails) { bio }\n      email @skip(if: $skipEmail)\n    }\n  }\n`;\n\nconst { data } = useQuery(UserQuery, {\n  variables: { id: '123', fetchDetails: true, skipEmail: false }\n});\n```\n\n**Common interview trap:** Using both @skip and @include on the same field with conflicting variables.",
+      "ru": "### Условный выбор полей с директивами\n\nДирективы @skip и @include условно включают или исключают поля на основе логических переменных. Это снижает трафик, получая только необходимые данные без создания нескольких запросов.\n\n```typescript\nconst UserQuery = gql`\n  query GetUser($id: ID!, $fetchDetails: Boolean!, $skipEmail: Boolean) {\n    user(id: $id) {\n      id\n      name\n      details @include(if: $fetchDetails) { bio }\n      email @skip(if: $skipEmail)\n    }\n  }\n`;\n\nconst { data } = useQuery(UserQuery, {\n  variables: { id: '123', fetchDetails: true, skipEmail: false }\n});\n```\n\n**Типичная ошибка:** Использовать @skip и @include на одном поле с конфликтующими переменными."
+    },
+    "tags": [
+      "directives",
+      "conditional-fields",
+      "bandwidth-optimization"
+    ]
+  },
+  {
+    "id": "graphql-q-19",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are GraphQL subscriptions and how do you implement real-time updates with Apollo Client? How does it differ from queries and mutations?",
+      "ru": "Что такое GraphQL подписки и как реализовать обновления в реальном времени с Apollo Client? Чем они отличаются от запросов и мутаций?"
+    },
+    "answer": {
+      "en": "### GraphQL Subscriptions for Real-Time Data\n\nSubscriptions maintain a persistent connection (WebSocket) and push updates to the client when server data changes. Unlike queries (one-time fetch) and mutations (single change), subscriptions establish a continuous listener.\n\n```typescript\nconst MessageSubscription = gql`\n  subscription OnMessageAdded($chatId: ID!) {\n    messageAdded(chatId: $chatId) {\n      id\n      text\n      author\n    }\n  }\n`;\n\nconst { data } = useSubscription(MessageSubscription, {\n  variables: { chatId: '456' }\n});\n```\n\n**Common interview trap:** Forgetting that subscriptions require WebSocket setup in Apollo Link, not just the hook.",
+      "ru": "### GraphQL подписки для данных в реальном времени\n\nПодписки поддерживают постоянное соединение (WebSocket) и отправляют обновления клиенту при изменении данных на сервере. В отличие от запросов (одноразовая выборка) и мутаций (одноразовое изменение), подписки устанавливают непрерывный слушатель.\n\n```typescript\nconst MessageSubscription = gql`\n  subscription OnMessageAdded($chatId: ID!) {\n    messageAdded(chatId: $chatId) {\n      id\n      text\n      author\n    }\n  }\n`;\n\nconst { data } = useSubscription(MessageSubscription, {\n  variables: { chatId: '456' }\n});\n```\n\n**Типичная ошибка:** Забыть, что подписки требуют настройки WebSocket в Apollo Link, а не только хука."
+    },
+    "tags": [
+      "subscriptions",
+      "real-time",
+      "websocket"
+    ]
+  },
+  {
+    "id": "graphql-q-20",
+    "topicId": "graphql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you handle partial errors in GraphQL responses with Apollo Client? What's the difference between network errors and GraphQL errors?",
+      "ru": "Как обрабатывать частичные ошибки в GraphQL ответах с Apollo Client? В чём разница между ошибками сети и ошибками GraphQL?"
+    },
+    "answer": {
+      "en": "### Handling GraphQL Partial Errors\n\nGraphQL can return a 200 status with partial data and errors when some fields fail but others succeed. Network errors occur at HTTP level; GraphQL errors are in the response body. Apollo stores both in the error object.\n\n```typescript\nconst { data, error, loading } = useQuery(GetUserQuery);\n\nif (error?.graphQLErrors) {\n  error.graphQLErrors.forEach(err => console.log(err.message));\n}\nif (error?.networkError) {\n  console.log('Network error:', error.networkError);\n}\n// data may still contain partially fetched fields\nif (data?.user) console.log(data.user);\n```\n\n**Common interview trap:** Assuming partial data is lost—Apollo caches and returns it even with errors.",
+      "ru": "### Обработка частичных ошибок GraphQL\n\nGraphQL может вернуть статус 200 с частичными данными и ошибками, когда некоторые поля не работают, но другие успешны. Ошибки сети происходят на HTTP уровне; ошибки GraphQL находятся в теле ответа. Apollo хранит обе в объекте error.\n\n```typescript\nconst { data, error, loading } = useQuery(GetUserQuery);\n\nif (error?.graphQLErrors) {\n  error.graphQLErrors.forEach(err => console.log(err.message));\n}\nif (error?.networkError) {\n  console.log('Network error:', error.networkError);\n}\n// data может всё ещё содержать частично загруженные поля\nif (data?.user) console.log(data.user);\n```\n\n**Типичная ошибка:** Думать, что частичные данные потеряны—Apollo их кеширует и возвращает даже с ошибками."
+    },
+    "tags": [
+      "error-handling",
+      "partial-errors",
+      "network-errors"
+    ]
+  },
+  {
+    "id": "graphql-q-21",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the N+1 query problem in GraphQL and how DataLoader solves it. Provide a code example showing how you'd implement DataLoader for a User-Posts relationship.",
+      "ru": "Объясните проблему N+1 запросов в GraphQL и как DataLoader её решает. Приведите пример кода, показывающий реализацию DataLoader для отношения User-Posts."
+    },
+    "answer": {
+      "en": "### N+1 Problem & DataLoader\n\nDataLoader batches multiple requests into a single database query by deferring execution until all resolvers in a resolver chain have collected their requests. This prevents querying the database once per user when fetching posts.\n\n```typescript\nconst userLoader = new DataLoader(async (userIds) => {\n  return await db.users.find({ id: { $in: userIds } });\n});\n\nconst resolvers = {\n  Post: {\n    author: (post, _, { userLoader }) => userLoader.load(post.authorId)\n  }\n};\n```\n\n**Common interview trap:** Thinking DataLoader automatically solves N+1—it requires proper implementation in resolvers.",
+      "ru": "### Проблема N+1 и DataLoader\n\nDataLoader группирует множественные запросы в один запрос к БД, отложив выполнение до того, как все резолверы в цепи соберут свои запросы. Это предотвращает запрос БД один раз на каждого пользователя при получении постов.\n\n```typescript\nconst userLoader = new DataLoader(async (userIds) => {\n  return await db.users.find({ id: { $in: userIds } });\n});\n\nconst resolvers = {\n  Post: {\n    author: (post, _, { userLoader }) => userLoader.load(post.authorId)\n  }\n};\n```\n\n**Типичная ошибка:** Думать, что DataLoader автоматически решает N+1—требуется правильная реализация в резолверах."
+    },
+    "tags": [
+      "n-plus-one",
+      "dataloader",
+      "query-optimization",
+      "batching"
+    ]
+  },
+  {
+    "id": "graphql-q-22",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is the difference between Schema Stitching and Apollo Federation? When would you choose one over the other in a microservices architecture?",
+      "ru": "В чём разница между Schema Stitching и Apollo Federation? Когда вы выберете один вариант вместо другого в микросервисной архитектуре?"
+    },
+    "answer": {
+      "en": "### Schema Stitching vs Federation\n\nSchema Stitching manually stitches multiple schemas together with custom logic, while Federation uses a declarative approach with entity references and a gateway. Federation is more maintainable for large teams as subgraphs own their entities independently.\n\n```typescript\n// Federation approach\nconst typeDefs = gql`\n  extend schema @link(url: \"https://specs.apollo.dev/federation/v2.0\")\n  type User @key(fields: \"id\") { id: ID! name: String! }\n`;\n\n// Schema Stitching: requires manual delegation logic\nconst stitchingDirectives = makeExecutableSchema({ typeDefs });\n```\n\n**Common interview trap:** Thinking they solve the same problem equally—Federation scales better with many services.",
+      "ru": "### Schema Stitching vs Federation\n\nSchema Stitching вручную объединяет несколько схем с пользовательской логикой, тогда как Federation использует декларативный подход с ссылками на сущности и шлюз. Federation более поддерживаема для больших команд, так как подграфы независимо владеют своими сущностями.\n\n```typescript\n// Подход Federation\nconst typeDefs = gql`\n  extend schema @link(url: \"https://specs.apollo.dev/federation/v2.0\")\n  type User @key(fields: \"id\") { id: ID! name: String! }\n`;\n\n// Schema Stitching: требует пользовательской логики делегирования\nconst stitchingDirectives = makeExecutableSchema({ typeDefs });\n```\n\n**Типичная ошибка:** Думать, что они одинаково решают проблему—Federation лучше масштабируется с многими сервисами."
+    },
+    "tags": [
+      "schema-stitching",
+      "federation",
+      "microservices",
+      "gateway-pattern"
+    ]
+  },
+  {
+    "id": "graphql-q-23",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do context objects flow through resolver chains in GraphQL? Show an example of managing context state through nested field resolvers and explain potential pitfalls.",
+      "ru": "Как объекты контекста проходят через цепи резолверов в GraphQL? Покажите пример управления состоянием контекста через вложенные резолверы полей и объясните потенциальные ловушки."
+    },
+    "answer": {
+      "en": "### Context in Resolver Chains\n\nContext is passed as the third argument to every resolver and persists across the entire request. Each resolver can read and modify context, but mutations to context should be avoided as they can cause unpredictable side effects in parallel field resolution.\n\n```typescript\nconst resolvers = {\n  Query: {\n    user: (_, { id }, { db, logger }) => {\n      logger.info(`Fetching user ${id}`);\n      return db.getUser(id);\n    }\n  },\n  User: {\n    posts: (user, _, { db, dataloader }) => {\n      return dataloader.load(user.id);\n    }\n  }\n};\n```\n\n**Common interview trap:** Modifying context directly leads to race conditions in parallel field resolvers.",
+      "ru": "### Контекст в цепях резолверов\n\nКонтекст передаётся третьим аргументом каждому резолверу и сохраняется на протяжении всего запроса. Каждый резолвер может читать и изменять контекст, но мутации контекста следует избегать, так как они могут вызвать непредсказуемые побочные эффекты при параллельном разрешении полей.\n\n```typescript\nconst resolvers = {\n  Query: {\n    user: (_, { id }, { db, logger }) => {\n      logger.info(`Fetching user ${id}`);\n      return db.getUser(id);\n    }\n  },\n  User: {\n    posts: (user, _, { db, dataloader }) => {\n      return dataloader.load(user.id);\n    }\n  }\n};\n```\n\n**Типичная ошибка:** Прямое изменение контекста приводит к race conditions при параллельном разрешении полей."
+    },
+    "tags": [
+      "context-object",
+      "resolver-chain",
+      "request-scope",
+      "concurrency"
+    ]
+  },
+  {
+    "id": "graphql-q-24",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain persisted queries in GraphQL and their security/performance benefits. How would you implement persisted queries with Apollo Client and Server?",
+      "ru": "Объясните постоянные запросы в GraphQL и их преимущества безопасности/производительности. Как бы вы реализовали постоянные запросы с Apollo Client и Server?"
+    },
+    "answer": {
+      "en": "### Persisted Queries\n\nPersisted queries store query hashes on the server and clients send only the hash instead of full query text, reducing bandwidth and preventing malicious queries. This requires a manifest mapping hashes to queries built during deployment.\n\n```typescript\n// Server setup\nconst server = new ApolloServer({\n  plugins: {\n    didResolveOperation: async (context) => {\n      const hash = context.request.http.headers.get('apollo-client-id');\n      const query = persistedQueryMap[hash];\n      if (!query) throw new Error('Unknown query hash');\n      context.request.body.query = query;\n    }\n  }\n});\n```\n\n**Common interview trap:** Forgetting that persisted queries need version management during deployments.",
+      "ru": "### Постоянные запросы\n\nПостоянные запросы хранят хеши запросов на сервере, а клиенты отправляют только хеш вместо полного текста запроса, снижая пропускную способность и предотвращая вредоносные запросы. Это требует манифеста, связывающего хеши с запросами, построенного при развёртывании.\n\n```typescript\n// Настройка сервера\nconst server = new ApolloServer({\n  plugins: {\n    didResolveOperation: async (context) => {\n      const hash = context.request.http.headers.get('apollo-client-id');\n      const query = persistedQueryMap[hash];\n      if (!query) throw new Error('Unknown query hash');\n      context.request.body.query = query;\n    }\n  }\n});\n```\n\n**Типичная ошибка:** Забыть об управлении версиями постоянных запросов при развёртывании."
+    },
+    "tags": [
+      "persisted-queries",
+      "security",
+      "bandwidth-optimization",
+      "cache"
+    ]
+  },
+  {
+    "id": "graphql-q-25",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a security strategy for a GraphQL API that prevents depth-limit attacks and query complexity abuse. Include both depth limiting and complexity analysis in your solution.",
+      "ru": "Разработайте стратегию безопасности для GraphQL API, которая предотвращает атаки на глубину и злоупотребление сложностью запроса. Включите в решение как ограничение глубины, так и анализ сложности."
+    },
+    "answer": {
+      "en": "### Depth & Complexity Security\n\nDepth limiting blocks deeply nested queries, while complexity analysis assigns costs to fields and rejects queries exceeding a threshold. Combine both to prevent both attack vectors without false positives from legitimate complex queries.\n\n```typescript\nimport { depthLimit, createComplexityLimitRule } from 'graphql-depth-limit';\n\nconst server = new ApolloServer({\n  schema,\n  validationRules: [\n    depthLimit(7),\n    createComplexityLimitRule(1000, {\n      onCost: (cost) => console.log(`Query cost: ${cost}`)\n    })\n  ]\n});\n```\n\n**Common interview trap:** Using only depth limiting leaves complexity attacks open; both are needed.",
+      "ru": "### Безопасность глубины и сложности\n\nОграничение глубины блокирует глубоко вложенные запросы, тогда как анализ сложности присваивает затраты полям и отклоняет запросы, превышающие пороговое значение. Объедините оба для предотвращения обоих векторов атак без ложных срабатываний от легитимных сложных запросов.\n\n```typescript\nimport { depthLimit, createComplexityLimitRule } from 'graphql-depth-limit';\n\nconst server = new ApolloServer({\n  schema,\n  validationRules: [\n    depthLimit(7),\n    createComplexityLimitRule(1000, {\n      onCost: (cost) => console.log(`Query cost: ${cost}`)\n    })\n  ]\n});\n```\n\n**Типичная ошибка:** Использование только ограничения глубины оставляет атаки сложности открытыми; нужны оба."
+    },
+    "tags": [
+      "depth-limiting",
+      "query-complexity",
+      "dos-prevention",
+      "validation"
+    ]
+  },
+  {
+    "id": "graphql-q-26",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the N+1 query problem in GraphQL resolvers and how DataLoader solves it. Provide a code example showing both the problem and the solution.",
+      "ru": "Объясните проблему N+1 в GraphQL резолверах и как DataLoader её решает. Приведите пример кода, показывающий проблему и решение."
+    },
+    "answer": {
+      "en": "### N+1 Problem and DataLoader\n\nWithout DataLoader, each nested resolver triggers separate database queries. DataLoader batches requests and caches results, reducing multiple queries to a single batch query.\n\n```typescript\n// Without DataLoader (N+1 problem)\nconst userResolver = async (id) => {\n  return db.query('SELECT * FROM users WHERE id = ?', [id]); // Runs for each item\n};\n\n// With DataLoader\nconst userLoader = new DataLoader(async (ids) => {\n  const users = await db.query('SELECT * FROM users WHERE id IN ?', [ids]);\n  return ids.map(id => users.find(u => u.id === id));\n});\n```\n\n**Common interview trap:** Confusing batching with caching—DataLoader does both simultaneously.",
+      "ru": "### Проблема N+1 и DataLoader\n\nБез DataLoader каждый вложенный резолвер запускает отдельные запросы к БД. DataLoader батчит запросы и кэширует результаты, сокращая несколько запросов до одного.\n\n```typescript\n// Без DataLoader (проблема N+1)\nconst userResolver = async (id) => {\n  return db.query('SELECT * FROM users WHERE id = ?', [id]);\n};\n\n// С DataLoader\nconst userLoader = new DataLoader(async (ids) => {\n  const users = await db.query('SELECT * FROM users WHERE id IN ?', [ids]);\n  return ids.map(id => users.find(u => u.id === id));\n});\n```\n\n**Типичная ошибка:** Путаница между батчингом и кэшированием—DataLoader делает оба."
+    },
+    "tags": [
+      "n-plus-one",
+      "dataloader",
+      "database-optimization"
+    ]
+  },
+  {
+    "id": "graphql-q-27",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is the purpose of the context object in GraphQL resolvers? How do you pass DataLoader instances and authentication data through the resolver chain?",
+      "ru": "Какова цель объекта context в GraphQL резолверах? Как передать экземпляры DataLoader и данные аутентификации через цепь резолверов?"
+    },
+    "answer": {
+      "en": "### Context Object in Resolvers\n\nThe context object carries shared data (authentication, database loaders, request metadata) across all resolvers without passing them as arguments. It's created once per request and passed to every resolver.\n\n```typescript\nconst server = new ApolloServer({\n  resolvers,\n  context: async ({ req }) => ({\n    user: authenticateToken(req.headers.authorization),\n    userLoader: new DataLoader(fetchUsersBatch),\n    db: dbConnection,\n  }),\n});\n\n// In resolver\nconst posts = (_, __, context) => {\n  return context.db.query('SELECT * FROM posts WHERE userId = ?', [context.user.id]);\n};\n```\n\n**Common interview trap:** Recreating DataLoader instances per request instead of once in context.",
+      "ru": "### Объект Context в Резолверах\n\nОбъект context передаёт общие данные (аутентификация, загрузчики БД, метаданные запроса) через все резолверы без передачи их как аргументов. Он создаётся один раз на запрос.\n\n```typescript\nconst server = new ApolloServer({\n  resolvers,\n  context: async ({ req }) => ({\n    user: authenticateToken(req.headers.authorization),\n    userLoader: new DataLoader(fetchUsersBatch),\n    db: dbConnection,\n  }),\n});\n\n// В резолвере\nconst posts = (_, __, context) => {\n  return context.db.query('SELECT * FROM posts WHERE userId = ?', [context.user.id]);\n};\n```\n\n**Типичная ошибка:** Пересоздание DataLoader экземпляров на каждый запрос вместо создания в context."
+    },
+    "tags": [
+      "context-object",
+      "resolver-architecture",
+      "dataloader-integration"
+    ]
+  },
+  {
+    "id": "graphql-q-28",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare schema stitching and Apollo Federation for combining multiple GraphQL services. What are the trade-offs between them?",
+      "ru": "Сравните schema stitching и Apollo Federation для объединения нескольких GraphQL сервисов. Какие компромиссы между ними?"
+    },
+    "answer": {
+      "en": "### Schema Stitching vs Federation\n\nSchema stitching merges local and remote schemas at runtime with full control but requires managing references manually. Federation uses a gateway pattern with the `@extends` directive for cleaner, more scalable service boundaries.\n\n```typescript\n// Schema Stitching: Manual merging\nconst stitchedSchema = mergeSchemas({\n  schemas: [localSchema, remoteSchema],\n  resolvers: { User: { posts: async (user) => fetchPosts(user.id) } },\n});\n\n// Federation: Declarative approach\n// Service A: User service with @key\ntype User @key(fields: \"id\") { id: ID! name: String! }\n// Service B: Post service extends User\nextend type User @key(fields: \"id\") { posts: [Post] }\n```\n\n**Common interview trap:** Assuming federation is always better—stitching offers more flexibility for heterogeneous systems.",
+      "ru": "### Schema Stitching vs Federation\n\nSchema stitching объединяет локальные и удаленные схемы во время выполнения с полным контролем, но требует ручного управления ссылками. Federation использует шаблон шлюза с директивой `@extends` для чистых границ сервисов.\n\n```typescript\n// Schema Stitching: Ручное объединение\nconst stitchedSchema = mergeSchemas({\n  schemas: [localSchema, remoteSchema],\n  resolvers: { User: { posts: async (user) => fetchPosts(user.id) } },\n});\n\n// Federation: Декларативный подход\n// Сервис A: Сервис пользователей с @key\ntype User @key(fields: \"id\") { id: ID! name: String! }\n// Сервис B: Сервис постов расширяет User\nextend type User @key(fields: \"id\") { posts: [Post] }\n```\n\n**Типичная ошибка:** Предположение, что Federation всегда лучше—stitching дает больше гибкости."
+    },
+    "tags": [
+      "schema-stitching",
+      "apollo-federation",
+      "microservices-architecture"
+    ]
+  },
+  {
+    "id": "graphql-q-29",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe persisted queries in GraphQL. How do they improve performance and security? What are the implementation challenges?",
+      "ru": "Описите сохранённые запросы в GraphQL. Как они улучшают производительность и безопасность? Какие проблемы реализации?"
+    },
+    "answer": {
+      "en": "### Persisted Queries\n\nPersisted queries store query strings on the server by hash, clients send only the hash ID. This reduces network payload, prevents query injection attacks, and enables query whitelisting.\n\n```typescript\nconst queryMap = new Map([\n  ['abc123', '{ users { id name } }'],\n  ['def456', '{ posts { id title } }'],\n]);\n\nserver.use((req, res, next) => {\n  if (req.body.extensions?.persistedQuery?.sha256Hash) {\n    const hash = req.body.extensions.persistedQuery.sha256Hash;\n    req.body.query = queryMap.get(hash);\n  }\n  next();\n});\n```\n\n**Common interview trap:** Thinking persisted queries eliminate the need for query depth/complexity limits.",
+      "ru": "### Сохранённые Запросы\n\nСохранённые запросы хранят строки запросов на сервере по хешу, клиенты отправляют только ID хеша. Это снижает сетевую нагрузку, предотвращает инъекции запросов и включает whitelist.\n\n```typescript\nconst queryMap = new Map([\n  ['abc123', '{ users { id name } }'],\n  ['def456', '{ posts { id title } }'],\n]);\n\nserver.use((req, res, next) => {\n  if (req.body.extensions?.persistedQuery?.sha256Hash) {\n    const hash = req.body.extensions.persistedQuery.sha256Hash;\n    req.body.query = queryMap.get(hash);\n  }\n  next();\n});\n```\n\n**Типичная ошибка:** Мысль, что persisted queries устраняют нужду в depth/complexity лимитах."
+    },
+    "tags": [
+      "persisted-queries",
+      "security",
+      "network-optimization"
+    ]
+  },
+  {
+    "id": "graphql-q-30",
+    "topicId": "graphql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement depth limiting and query complexity analysis to prevent DoS attacks in GraphQL. Show how to calculate complexity and reject queries that exceed thresholds.",
+      "ru": "Реализуйте ограничение глубины и анализ сложности запросов для предотвращения DoS атак в GraphQL. Покажите, как вычислить сложность и отклонить запросы, превышающие пороги."
+    },
+    "answer": {
+      "en": "### Depth Limiting and Query Complexity\n\nQuery complexity analysis calculates potential data fetches by assigning weights to fields. Depth limiting prevents deeply nested queries. Both prevent resource exhaustion and DoS attacks.\n\n```typescript\nconst rules = [\n  depthLimit(5),\n  createComplexityLimitRule(1000, (args, child) => {\n    return args.limit ? args.limit * child : child; // Field cost multiplied by limit arg\n  }),\n];\n\nconst server = new ApolloServer({\n  schema,\n  validationRules: rules,\n});\n\n// Query: { users(limit: 100) { posts(limit: 50) { comments } } }\n// Complexity: 100 * 50 * 1 = 5000 (exceeds 1000, rejected)\n```\n\n**Common interview trap:** Ignoring list arguments—multiplying complexity by pagination limits is critical.",
+      "ru": "### Ограничение Глубины и Сложность Запросов\n\nАнализ сложности запроса вычисляет потенциальные выборки данных, присваивая веса полям. Ограничение глубины предотвращает глубоко вложенные запросы. Обе защиты от исчерпания ресурсов.\n\n```typescript\nconst rules = [\n  depthLimit(5),\n  createComplexityLimitRule(1000, (args, child) => {\n    return args.limit ? args.limit * child : child; // Стоимость поля × аргумент limit\n  }),\n];\n\nconst server = new ApolloServer({\n  schema,\n  validationRules: rules,\n});\n\n// Query: { users(limit: 100) { posts(limit: 50) { comments } } }\n// Complexity: 100 * 50 * 1 = 5000 (превышает 1000, отклонено)\n```\n\n**Типичная ошибка:** Игнорирование аргументов списков—умножение сложности на лимиты критично."
+    },
+    "tags": [
+      "query-complexity",
+      "depth-limiting",
+      "dos-prevention",
+      "security"
+    ]
+  }
+]

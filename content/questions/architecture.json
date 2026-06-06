@@ -1,1 +1,481 @@
-[]
+[
+  {
+    "id": "architecture-q-1",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between layered architecture and the repository pattern. How do they work together in a typical application?",
+      "ru": "Объясните разницу между многоуровневой архитектурой и паттерном Repository. Как они работают вместе в типичном приложении?"
+    },
+    "answer": {
+      "en": "### Layered Architecture + Repository Pattern\n\nLayered architecture organizes code into distinct layers (presentation, business logic, data access), while the repository pattern abstracts data access logic. The repository sits in the data access layer and provides a clean interface for the business logic layer to fetch data without knowing database details.\n\n```typescript\n// Controller (Presentation)\nclass UserController {\n  constructor(private userService: UserService) {}\n  getUser(id: string) {\n    return this.userService.findUserById(id);\n  }\n}\n\n// Service (Business Logic)\nclass UserService {\n  constructor(private userRepo: UserRepository) {}\n  findUserById(id: string) {\n    return this.userRepo.findById(id);\n  }\n}\n\n// Repository (Data Access)\nclass UserRepository {\n  findById(id: string) {\n    return db.users.findOne({ id });\n  }\n}\n```\n\n**Common interview trap:** Confusing repositories with DAOs or thinking they eliminate the need for a service layer.",
+      "ru": "### Многоуровневая архитектура + паттерн Repository\n\nМногоуровневая архитектура организует код в отдельные слои (представление, бизнес-логика, доступ к данным), а паттерн Repository абстрагирует логику доступа к данным. Repository находится в слое доступа к данным и предоставляет чистый интерфейс для слоя бизнес-логики.\n\n```typescript\n// Controller (Presentation)\nclass UserController {\n  constructor(private userService: UserService) {}\n  getUser(id: string) {\n    return this.userService.findUserById(id);\n  }\n}\n\n// Service (Business Logic)\nclass UserService {\n  constructor(private userRepo: UserRepository) {}\n  findUserById(id: string) {\n    return this.userRepo.findById(id);\n  }\n}\n\n// Repository (Data Access)\nclass UserRepository {\n  findById(id: string) {\n    return db.users.findOne({ id });\n  }\n}\n```\n\n**Типичная ошибка:** Путаница между Repository и DAO, или мысль, что они устраняют необходимость слоя сервисов."
+    },
+    "tags": [
+      "layered-architecture",
+      "repository-pattern",
+      "separation-of-concerns"
+    ]
+  },
+  {
+    "id": "architecture-q-2",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare MVC, MVP, and MVVM patterns. When would you choose one over the other in a frontend application?",
+      "ru": "Сравните паттерны MVC, MVP и MVVM. Когда вы выберете один вместо другого в фронтенд приложении?"
+    },
+    "answer": {
+      "en": "### MVC vs MVP vs MVVM\n\nMVC couples View and Controller tightly; MVP adds a Presenter to handle all View logic, making Views testable; MVVM uses two-way data binding between View and ViewModel for reactive updates. Use MVC for simple apps, MVP for complex UI logic requiring testability, and MVVM for reactive frameworks like Vue or Angular with automatic synchronization.\n\n```typescript\n// MVVM Example (Vue-like)\nclass UserViewModel {\n  users = ref([]);\n  selectedUser = ref(null);\n  \n  selectUser(id: string) {\n    this.selectedUser.value = this.users.value.find(u => u.id === id);\n  }\n}\n\n// View auto-updates when selectedUser changes\n<div>{{ viewModel.selectedUser.value?.name }}</div>\n```\n\n**Common interview trap:** Claiming MVP is always better for testability without considering development complexity or team size."
+    },
+    "ru": "### MVC vs MVP vs MVVM\n\nMVC плотно связывает View и Controller; MVP добавляет Presenter для обработки всей логики View, делая Views тестируемыми; MVVM использует двусторонний data binding между View и ViewModel для реактивных обновлений. Используйте MVC для простых приложений, MVP для сложной логики UI требующей тестируемости, и MVVM для реактивных фреймворков с автоматической синхронизацией.\n\n```typescript\n// MVVM Example (Vue-подобный)\nclass UserViewModel {\n  users = ref([]);\n  selectedUser = ref(null);\n  \n  selectUser(id: string) {\n    this.selectedUser.value = this.users.value.find(u => u.id === id);\n  }\n}\n\n// View авто-обновляется когда selectedUser меняется\n<div>{{ viewModel.selectedUser.value?.name }}</div>\n```\n\n**Типичная ошибка:** Утверждение, что MVP всегда лучше для тестируемости без учета сложности разработки.",
+    "tags": [
+      "mvc-pattern",
+      "mvp-pattern",
+      "mvvm-pattern",
+      "frontend-architecture"
+    ]
+  },
+  {
+    "id": "architecture-q-3",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the Service Layer pattern and how does it differ from putting business logic directly in repositories? Provide a practical example.",
+      "ru": "Что такое паттерн Service Layer и чем он отличается от размещения бизнес-логики прямо в repositories? Приведите практический пример."
+    },
+    "answer": {
+      "en": "### Service Layer Pattern\n\nService Layer encapsulates business logic independently of data access, allowing multiple repositories to be orchestrated and enabling transaction management and cross-cutting concerns. Repositories alone only handle CRUD, while services handle domain operations like payments or order processing across multiple entities.\n\n```typescript\n// Without Service Layer (❌ mixing concerns)\nclass OrderRepository {\n  createOrder(items: Item[]) {\n    const total = items.reduce((sum, i) => sum + i.price, 0);\n    const order = this.db.orders.insert({ total, items });\n    this.db.inventory.update(items); // Repository doing business logic!\n    return order;\n  }\n}\n\n// With Service Layer (✓ clean separation)\nclass OrderService {\n  constructor(private orderRepo: OrderRepository, private inventoryRepo: InventoryRepository) {}\n  \n  createOrder(items: Item[]) {\n    this.inventoryRepo.reserve(items);\n    return this.orderRepo.save({ items });\n  }\n}\n```\n\n**Common interview trap:** Thinking services are just wrappers around repositories; they should coordinate multiple repositories and manage transactions."
+    },
+    "ru": "### Паттерн Service Layer\n\nService Layer инкапсулирует бизнес-логику независимо от доступа к данным, позволяя координировать несколько repositories и управлять транзакциями. Repositories только обрабатывают CRUD, а сервисы обрабатывают доменные операции как платежи или заказы между несколькими сущностями.\n\n```typescript\n// Без Service Layer (❌ смешивание concerns)\nclass OrderRepository {\n  createOrder(items: Item[]) {\n    const total = items.reduce((sum, i) => sum + i.price, 0);\n    const order = this.db.orders.insert({ total, items });\n    this.db.inventory.update(items); // Repository делает бизнес-логику!\n    return order;\n  }\n}\n\n// С Service Layer (✓ чистое разделение)\nclass OrderService {\n  constructor(private orderRepo: OrderRepository, private inventoryRepo: InventoryRepository) {}\n  \n  createOrder(items: Item[]) {\n    this.inventoryRepo.reserve(items);\n    return this.orderRepo.save({ items });\n  }\n}\n```\n\n**Типичная ошибка:** Мысль, что сервисы это просто обертки над repositories; они должны координировать несколько repositories и управлять транзакциями.",
+    "tags": [
+      "service-layer-pattern",
+      "business-logic",
+      "orchestration"
+    ]
+  },
+  {
+    "id": "architecture-q-4",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe how you would implement the repository pattern in a TypeScript backend application. What benefits does it provide over directly querying the database?",
+      "ru": "Опишите, как вы бы реализовали паттерн Repository в TypeScript backend приложении. Какие преимущества он дает по сравнению с прямыми запросами к БД?"
+    },
+    "answer": {
+      "en": "### Repository Pattern Implementation\n\nRepositories provide a collection-like interface for data access, abstracting the underlying database implementation and making code testable with mock repositories. Benefits include easier testing, database independence, and centralized query logic that's reusable across services.\n\n```typescript\n// Generic Repository Interface\ninterface IRepository<T> {\n  findById(id: string): Promise<T | null>;\n  save(entity: T): Promise<T>;\n  delete(id: string): Promise<void>;\n}\n\n// Concrete Implementation\nclass UserRepository implements IRepository<User> {\n  async findById(id: string) {\n    return db.users.findOne({ id });\n  }\n  \n  async save(user: User) {\n    return db.users.upsert(user);\n  }\n  \n  async delete(id: string) {\n    return db.users.deleteOne({ id });\n  }\n}\n\n// Easy to test with mock\nconst mockRepo = { findById: jest.fn() };\n```\n\n**Common interview trap:** Creating repositories that are too specific to one service instead of generic and reusable interfaces."
+    },
+    "ru": "### Реализация паттерна Repository\n\nRepositories предоставляют интерфейс, похожий на коллекцию, для доступа к данным, абстрагируя базовую реализацию БД и делая код тестируемым с mock repositories. Преимущества включают облегченное тестирование, независимость БД и централизованную логику запросов, переиспользуемую между сервисами.\n\n```typescript\n// Интерфейс Generic Repository\ninterface IRepository<T> {\n  findById(id: string): Promise<T | null>;\n  save(entity: T): Promise<T>;\n  delete(id: string): Promise<void>;\n}\n\n// Конкретная реализация\nclass UserRepository implements IRepository<User> {\n  async findById(id: string) {\n    return db.users.findOne({ id });\n  }\n  \n  async save(user: User) {\n    return db.users.upsert(user);\n  }\n  \n  async delete(id: string) {\n    return db.users.deleteOne({ id });\n  }\n}\n\n// Легко тестировать с mock\nconst mockRepo = { findById: jest.fn() };\n```\n\n**Типичная ошибка:** Создание repositories которые слишком специфичны для одного сервиса вместо универсальных переиспользуемых интерфейсов.",
+    "tags": [
+      "repository-pattern",
+      "abstraction",
+      "testability",
+      "database-independence"
+    ]
+  },
+  {
+    "id": "architecture-q-5",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you design a layered architecture for an e-commerce application? Describe each layer and explain the dependencies between them.",
+      "ru": "Как бы вы спроектировали многоуровневую архитектуру для e-commerce приложения? Опишите каждый слой и объясните зависимости между ними."
+    },
+    "answer": {
+      "en": "### E-Commerce Layered Architecture\n\nOrganize into Presentation (controllers/API routes), Business Logic (services for orders/payments), Domain (entities/models), and Data Access (repositories) layers. Each layer depends only on layers below it, enabling independent testing and maintainability. The domain layer contains pure business rules independent of frameworks.\n\n```typescript\n// Presentation: API Route\nrouter.post('/orders', (req, res) => {\n  const service = new OrderService(orderRepo, paymentRepo);\n  const order = service.createOrder(req.body);\n});\n\n// Business Logic: Service\nclass OrderService {\n  createOrder(data: CreateOrderDTO) {\n    const total = this.calculateTotal(data.items);\n    return this.orderRepo.save({ items: data.items, total });\n  }\n}\n\n// Data Access: Repository\nclass OrderRepository implements IRepository<Order> {\n  async save(order: Order) { return db.orders.insert(order); }\n}\n\n// Domain: Entity (no dependencies)\nclass Order { items: Item[]; total: number; }\n```\n\n**Common interview trap:** Making the domain layer depend on repositories or frameworks; domain should be framework-agnostic."
+    },
+    "ru": "### Многоуровневая архитектура E-Commerce\n\nОрганизуйте в слои Presentation (контроллеры/API маршруты), Business Logic (сервисы для заказов/платежей), Domain (сущности/модели), и Data Access (repositories). Каждый слой зависит только от слоев ниже, что позволяет независимо тестировать и поддерживать. Слой Domain содержит чистые бизнес-правила независимые от фреймворков.\n\n```typescript\n// Presentation: API Route\nrouter.post('/orders', (req, res) => {\n  const service = new OrderService(orderRepo, paymentRepo);\n  const order = service.createOrder(req.body);\n});\n\n// Business Logic: Service\nclass OrderService {\n  createOrder(data: CreateOrderDTO) {\n    const total = this.calculateTotal(data.items);\n    return this.orderRepo.save({ items: data.items, total });\n  }\n}\n\n// Data Access: Repository\nclass OrderRepository implements IRepository<Order> {\n  async save(order: Order) { return db.orders.insert(order); }\n}\n\n// Domain: Entity (без зависимостей)\nclass Order { items: Item[]; total: number; }\n```\n\n**Типичная ошибка:** Делание Domain слоя зависимым от repositories или фреймворков; domain должен быть независимым от фреймворка.",
+    "tags": [
+      "layered-architecture",
+      "domain-driven-design",
+      "dependency-direction",
+      "separation-of-layers"
+    ]
+  },
+  {
+    "id": "architecture-q-6",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between Repository Pattern and Service Layer Pattern. When would you use each one in a layered architecture?",
+      "ru": "Объясните разницу между паттерном Repository и паттерном Service Layer. Когда вы используете каждый из них в слоистой архитектуре?"
+    },
+    "answer": {
+      "en": "### Repository vs Service Layer\n\nRepository pattern abstracts data access logic and provides a collection-like interface for working with entities. Service layer contains business logic and orchestrates multiple repositories to fulfill use cases. Repositories handle WHERE data comes from, services handle WHAT to do with it.\n\n```typescript\n// Repository: data access\nclass UserRepository {\n  async findById(id: string): Promise<User> {\n    return db.query('SELECT * FROM users WHERE id = ?', [id]);\n  }\n}\n\n// Service: business logic\nclass UserService {\n  constructor(private userRepo: UserRepository) {}\n  \n  async promoteToAdmin(userId: string): Promise<void> {\n    const user = await this.userRepo.findById(userId);\n    user.role = 'admin';\n    await this.userRepo.save(user);\n  }\n}\n```\n\n**Common interview trap:** Thinking repository and service layer do the same thing—repository is just data access, service orchestrates business logic.",
+      "ru": "### Repository vs Service Layer\n\nПаттерн Repository абстрагирует логику доступа к данным и предоставляет интерфейс для работы с сущностями. Service Layer содержит бизнес-логику и координирует работу нескольких репозиториев. Репозитории отвечают за ОТКУДА берутся данные, сервисы за ЧТО с ними делать.\n\n```typescript\n// Repository: доступ к данным\nclass UserRepository {\n  async findById(id: string): Promise<User> {\n    return db.query('SELECT * FROM users WHERE id = ?', [id]);\n  }\n}\n\n// Service: бизнес-логика\nclass UserService {\n  constructor(private userRepo: UserRepository) {}\n  \n  async promoteToAdmin(userId: string): Promise<void> {\n    const user = await this.userRepo.findById(userId);\n    user.role = 'admin';\n    await this.userRepo.save(user);\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что repository и service layer делают одно и то же—репозиторий это просто доступ к данным, сервис координирует бизнес-логику."
+    },
+    "tags": [
+      "repository-pattern",
+      "service-layer",
+      "separation-of-concerns",
+      "data-access"
+    ]
+  },
+  {
+    "id": "architecture-q-7",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design a simple user registration flow using layered architecture with Controller, Service, and Repository layers. What responsibilities does each layer have?",
+      "ru": "Спроектируйте простой поток регистрации пользователя, используя слоистую архитектуру с слоями Controller, Service и Repository. Какие обязанности у каждого слоя?"
+    },
+    "answer": {
+      "en": "### Layered Architecture Flow\n\nController handles HTTP requests and responses, Service contains business logic and validation, Repository manages data persistence. Each layer only knows about the layer below it, creating clear separation of concerns and testability.\n\n```typescript\n// Controller: HTTP handling\nrouter.post('/register', (req, res) => {\n  const user = await userService.register(req.body);\n  res.json(user);\n});\n\n// Service: Business logic\nclass UserService {\n  async register(data: RegisterDto): Promise<User> {\n    if (await this.userRepo.findByEmail(data.email)) throw new Error('Email exists');\n    return this.userRepo.create(data);\n  }\n}\n\n// Repository: Data access\nclass UserRepository {\n  async create(data: RegisterDto): Promise<User> {\n    return db.insert('users', data);\n  }\n}\n```\n\n**Common interview trap:** Putting business logic in the controller or directly in the repository—each layer must have a single clear responsibility."
+    },
+    "answer_ru": "### Слоистая архитектура\n\nController обрабатывает HTTP запросы и ответы, Service содержит бизнес-логику и валидацию, Repository управляет сохранением данных. Каждый слой знает только о слое ниже, создавая четкое разделение ответственности и тестируемость.\n\n```typescript\n// Controller: HTTP обработка\nrouter.post('/register', (req, res) => {\n  const user = await userService.register(req.body);\n  res.json(user);\n});\n\n// Service: Бизнес-логика\nclass UserService {\n  async register(data: RegisterDto): Promise<User> {\n    if (await this.userRepo.findByEmail(data.email)) throw new Error('Email exists');\n    return this.userRepo.create(data);\n  }\n}\n\n// Repository: Доступ к данным\nclass UserRepository {\n  async create(data: RegisterDto): Promise<User> {\n    return db.insert('users', data);\n  }\n}\n```\n\n**Типичная ошибка:** Размещение бизнес-логики в контроллере или напрямую в репозитории—каждый слой должен иметь одну четкую ответственность.",
+    "tags": [
+      "layered-architecture",
+      "mvc-pattern",
+      "controller",
+      "separation-of-concerns"
+    ]
+  },
+  {
+    "id": "architecture-q-8",
+    "topicId": "architecture",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the key differences between MVC, MVP, and MVVM patterns? In what scenarios would you choose one over another?",
+      "ru": "Каковы ключевые различия между паттернами MVC, MVP и MVVM? В каких сценариях вы выбрали бы один вместо другого?"
+    },
+    "answer": {
+      "en": "### MVC vs MVP vs MVVM\n\nMVC has Controller directly updating View; MVP uses Presenter as a mediator with no direct View-Model connection; MVVM has ViewModel with two-way binding to View. Use MVC for simple web apps, MVP for better testability, MVVM for complex UIs with frequent state changes.\n\n```typescript\n// MVC: Controller updates View directly\nclass UserController {\n  handleClick() {\n    this.view.render(this.model.data); // Direct coupling\n  }\n}\n\n// MVP: Presenter mediates\nclass UserPresenter {\n  updateView() {\n    const data = this.model.getData();\n    this.view.display(data); // Presenter is bridge\n  }\n}\n\n// MVVM: Two-way binding\nclass UserViewModel {\n  @observable name = 'John'; // View binds and auto-updates\n}\n```\n\n**Common interview trap:** Thinking MVC and MVP are the same—MVP explicitly removes View-Model coupling through a presenter."
+    },
+    "answer_ru": "### MVC vs MVP vs MVVM\n\nMVC позволяет Controller напрямую обновлять View; MVP использует Presenter в качестве посредника без прямого соединения View-Model; MVVM имеет ViewModel с двусторонней привязкой к View. Используйте MVC для простых веб-приложений, MVP для лучшей тестируемости, MVVM для сложных UI с частыми изменениями состояния.\n\n```typescript\n// MVC: Controller обновляет View напрямую\nclass UserController {\n  handleClick() {\n    this.view.render(this.model.data); // Прямая связь\n  }\n}\n\n// MVP: Presenter медиирует\nclass UserPresenter {\n  updateView() {\n    const data = this.model.getData();\n    this.view.display(data); // Presenter связывает\n  }\n}\n\n// MVVM: Двусторонняя привязка\nclass UserViewModel {\n  @observable name = 'John'; // View привязана и обновляется\n}\n```\n\n**Типичная ошибка:** Думать, что MVC и MVP одно и то же—MVP явно удаляет соединение View-Model через presenter.",
+    "tags": [
+      "mvc-pattern",
+      "mvp-pattern",
+      "mvvm-pattern",
+      "presentation-layer"
+    ]
+  },
+  {
+    "id": "architecture-q-9",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how Hexagonal Architecture (Ports and Adapters) differs from Clean Architecture, and when would you choose one over the other in a complex domain-driven project?",
+      "ru": "Объясните, чем Hexagonal Architecture (Ports and Adapters) отличается от Clean Architecture, и когда вы выберете одну над другой в сложном проекте, управляемом доменом?"
+    },
+    "answer": {
+      "en": "### Hexagonal vs Clean Architecture\n\nHexagonal Architecture emphasizes ports (interfaces) and adapters for external dependencies, making the core business logic completely isolated. Clean Architecture focuses on concentric layers with dependency inversion, but doesn't explicitly define how external systems connect. Hexagonal is better when you need multiple implementations of the same interface (e.g., different databases, payment providers).\n\n```typescript\n// Hexagonal: explicit ports\ninterface PaymentPort {\n  process(amount: number): Promise<void>;\n}\nclass StripeAdapter implements PaymentPort {\n  async process(amount: number) { /* stripe logic */ }\n}\nclass Order {\n  constructor(private paymentPort: PaymentPort) {}\n}\n```\n\n**Common interview trap:** Thinking they're the same thing—they solve similar problems differently.",
+      "ru": "### Hexagonal vs Clean Architecture\n\nHexagonal Architecture подчеркивает ports (интерфейсы) и adapters для внешних зависимостей, полностью изолируя бизнес-логику. Clean Architecture фокусируется на концентрических слоях с инверсией зависимостей, но явно не определяет, как подключаются внешние системы. Hexagonal лучше, когда нужны несколько реализаций одного интерфейса (например, разные БД, провайдеры платежей).\n\n```typescript\n// Hexagonal: явные ports\ninterface PaymentPort {\n  process(amount: number): Promise<void>;\n}\nclass StripeAdapter implements PaymentPort {\n  async process(amount: number) { /* stripe logic */ }\n}\nclass Order {\n  constructor(private paymentPort: PaymentPort) {}\n}\n```\n\n**Типичная ошибка:** Думать, что это одно и то же—они решают похожие проблемы по-разному."
+    },
+    "tags": [
+      "hexagonal-architecture",
+      "ports-adapters",
+      "clean-architecture",
+      "dependency-inversion"
+    ]
+  },
+  {
+    "id": "architecture-q-10",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an event-driven system where a user registration triggers multiple asynchronous operations (email verification, analytics logging, subscription initialization). How would you handle failure scenarios?",
+      "ru": "Спроектируйте событийно-управляемую систему, где регистрация пользователя запускает несколько асинхронных операций (проверка email, логирование аналитики, инициализация подписки). Как вы обработаете сценарии отказа?"
+    },
+    "answer": {
+      "en": "### Event-Driven User Registration\n\nPublish a `UserRegistered` event to a message broker (RabbitMQ, Kafka) and let multiple subscribers handle their concerns independently. Use a dead-letter queue (DLQ) to capture failed messages and implement retry logic with exponential backoff. This decouples services and allows independent scaling.\n\n```typescript\nclass UserService {\n  async register(user: User) {\n    await this.userRepo.save(user);\n    await this.eventBus.publish('user.registered', { userId: user.id });\n  }\n}\nclass EmailSubscriber {\n  async handle(event: UserRegistered) {\n    try {\n      await this.emailService.sendVerification(event.userId);\n    } catch (err) {\n      await this.dlq.push(event); // Send to DLQ\n    }\n  }\n}\n```\n\n**Common interview trap:** Ignoring failure handling—most candidates skip DLQs and retries.",
+      "ru": "### Событийно-управляемая регистрация пользователя\n\nОпубликуйте событие `UserRegistered` в message broker (RabbitMQ, Kafka) и позвольте нескольким подписчикам независимо обработать свои задачи. Используйте dead-letter queue (DLQ) для захвата неудачных сообщений и реализуйте логику повтора с экспоненциальной задержкой. Это разделяет сервисы и позволяет независимое масштабирование.\n\n```typescript\nclass UserService {\n  async register(user: User) {\n    await this.userRepo.save(user);\n    await this.eventBus.publish('user.registered', { userId: user.id });\n  }\n}\nclass EmailSubscriber {\n  async handle(event: UserRegistered) {\n    try {\n      await this.emailService.sendVerification(event.userId);\n    } catch (err) {\n      await this.dlq.push(event); // Отправить в DLQ\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Игнорирование обработки отказов—большинство кандидатов пропускают DLQ и повторы."
+    },
+    "tags": [
+      "event-driven-architecture",
+      "message-broker",
+      "asynchronous-processing",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "architecture-q-11",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Saga pattern and how it differs from traditional distributed transactions. When should you use Choreography vs Orchestration-based Sagas?",
+      "ru": "Объясните Saga pattern и чем он отличается от традиционных распределённых транзакций. Когда использовать Choreography vs Orchestration-based Sagas?"
+    },
+    "answer": {
+      "en": "### Saga Pattern for Distributed Transactions\n\nSagas replace ACID transactions with a series of local transactions coordinated by either choreography (events) or orchestration (central coordinator). Use choreography for loosely-coupled microservices with few participants; use orchestration for complex workflows with many steps and clear dependencies. Both must implement compensating transactions for rollbacks.\n\n```typescript\n// Choreography: OrderService publishes OrderCreated\nawait orderService.create(order);\nawait eventBus.publish('order.created', order);\n// PaymentService listens and publishes PaymentCompleted\n// Orchestration: OrderSaga coordinates all steps\nclass OrderSaga {\n  async execute(order: Order) {\n    const payment = await this.orderOrchestrator.createPayment(order);\n    if (payment.failed) await this.compensate(); // Rollback\n  }\n}\n```\n\n**Common interview trap:** Thinking Sagas guarantee ACID properties—they don't, only eventual consistency.",
+      "ru": "### Saga Pattern для распределённых транзакций\n\nSagas заменяют ACID транзакции серией локальных транзакций, координируемых либо choreography (события), либо orchestration (центральный координатор). Используйте choreography для слабо связанных микросервисов с небольшим числом участников; используйте orchestration для сложных рабочих процессов со множеством шагов и явными зависимостями. Оба должны реализовать компенсирующие транзакции для откатов.\n\n```typescript\n// Choreography: OrderService публикует OrderCreated\nawait orderService.create(order);\nawait eventBus.publish('order.created', order);\n// PaymentService слушает и публикует PaymentCompleted\n// Orchestration: OrderSaga координирует все шаги\nclass OrderSaga {\n  async execute(order: Order) {\n    const payment = await this.orderOrchestrator.createPayment(order);\n    if (payment.failed) await this.compensate(); // Откат\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что Sagas гарантируют ACID свойства—они не гарантируют, только eventually consistent."
+    },
+    "tags": [
+      "saga-pattern",
+      "distributed-transactions",
+      "choreography",
+      "orchestration",
+      "compensation"
+    ]
+  },
+  {
+    "id": "architecture-q-12",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a CQRS system for an e-commerce platform where reads are optimized for reporting and writes handle order processing. How would you keep read and write models consistent?",
+      "ru": "Спроектируйте CQRS систему для платформы электронной коммерции, где чтение оптимизировано для отчётов, а запись обрабатывает заказы. Как вы обеспечите консистентность моделей чтения и записи?"
+    },
+    "answer": {
+      "en": "### CQRS for E-Commerce\n\nSeparate read and write models: the write model handles order commands and publishes domain events, while read projections subscribe to those events and update denormalized views optimized for queries. Use event sourcing to persist write events, ensuring eventual consistency between models via event replay.\n\n```typescript\n// Write: OrderCommandHandler\nclass PlaceOrderHandler {\n  async handle(cmd: PlaceOrderCmd) {\n    const order = Order.create(cmd);\n    await this.eventStore.append(order.events); // Event sourcing\n    await this.eventBus.publish(...order.events);\n  }\n}\n// Read: OrderProjection\nclass OrderProjection {\n  @OnEvent('order.placed')\n  async onOrderPlaced(event: OrderPlaced) {\n    await this.readDb.insert({ id: event.orderId, status: 'pending' });\n  }\n}\n```\n\n**Common interview trap:** Assuming strong consistency—CQRS models are eventually consistent by design.",
+      "ru": "### CQRS для электронной коммерции\n\nРазделите модели чтения и записи: модель записи обрабатывает команды заказов и публикует доменные события, а проекции чтения подписываются на эти события и обновляют денормализованные представления, оптимизированные для запросов. Используйте event sourcing для сохранения событий записи, обеспечивая eventual consistency между моделями через replay событий.\n\n```typescript\n// Write: OrderCommandHandler\nclass PlaceOrderHandler {\n  async handle(cmd: PlaceOrderCmd) {\n    const order = Order.create(cmd);\n    await this.eventStore.append(order.events); // Event sourcing\n    await this.eventBus.publish(...order.events);\n  }\n}\n// Read: OrderProjection\nclass OrderProjection {\n  @OnEvent('order.placed')\n  async onOrderPlaced(event: OrderPlaced) {\n    await this.readDb.insert({ id: event.orderId, status: 'pending' });\n  }\n}\n```\n\n**Типичная ошибка:** Предположение о сильной консистентности—модели CQRS по определению eventually consistent."
+    },
+    "tags": [
+      "cqrs",
+      "event-sourcing",
+      "read-models",
+      "write-models",
+      "eventual-consistency"
+    ]
+  },
+  {
+    "id": "architecture-q-13",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare Onion Architecture with Hexagonal Architecture. Describe a scenario where you'd apply Onion Architecture's strict layering for a financial processing system.",
+      "ru": "Сравните Onion Architecture с Hexagonal Architecture. Опишите сценарий, где вы применили бы строгое слоеподобное построение Onion Architecture для системы финансовой обработки."
+    },
+    "answer": {
+      "en": "### Onion Architecture for Financial Systems\n\nOnion Architecture enforces strict dependency flow: domain core → application services → infrastructure (inward dependencies only). This is ideal for financial systems where regulatory compliance and audit trails are critical. The innermost layer contains pure business rules untouched by external concerns, ensuring correctness and testability.\n\n```typescript\n// Core domain (no dependencies)\nclass MoneyTransfer {\n  execute(fromAccount: Account, toAccount: Account, amount: Money) {\n    if (fromAccount.balance.isLessThan(amount)) throw new Error();\n    fromAccount.debit(amount); toAccount.credit(amount);\n  }\n}\n// Application service\nclass TransferService {\n  async transferMoney(from: string, to: string, amount: number) {\n    const accounts = await this.accountRepo.findPair(from, to);\n    new MoneyTransfer().execute(accounts[0], accounts[1], new Money(amount));\n    await this.auditLog.record('transfer', from, to, amount);\n  }\n}\n```\n\n**Common interview trap:** Confusing layer boundaries—dependencies must point inward, not outward.",
+      "ru": "### Onion Architecture для финансовых систем\n\nOnion Architecture обеспечивает строгий поток зависимостей: доменное ядро → сервисы приложения → инфраструктура (только входящие зависимости). Это идеально для финансовых систем, где нормативное соответствие и журналы аудита критичны. Самый внутренний слой содержит чистые бизнес-правила, не зат��онутые внешними проблемами, обеспечивая корректность и тестируемость.\n\n```typescript\n// Core domain (no dependencies)\nclass MoneyTransfer {\n  execute(fromAccount: Account, toAccount: Account, amount: Money) {\n    if (fromAccount.balance.isLessThan(amount)) throw new Error();\n    fromAccount.debit(amount); toAccount.credit(amount);\n  }\n}\n// Application service\nclass TransferService {\n  async transferMoney(from: string, to: string, amount: number) {\n    const accounts = await this.accountRepo.findPair(from, to);\n    new MoneyTransfer().execute(accounts[0], accounts[1], new Money(amount));\n    await this.auditLog.record('transfer', from, to, amount);\n  }\n}\n```\n\n**Типичная ошибка:** Путаница в границах слоёв—зависимости должны указывать внутрь, не наружу."
+    },
+    "tags": [
+      "onion-architecture",
+      "layered-architecture",
+      "domain-driven-design",
+      "dependency-inversion",
+      "financial-systems"
+    ]
+  },
+  {
+    "id": "architecture-q-14",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how Hexagonal Architecture (Ports and Adapters) differs from Clean Architecture. When would you choose one over the other in a large-scale system?",
+      "ru": "Объясните различия между Hexagonal Architecture (Ports and Adapters) и Clean Architecture. Когда вы выбрали бы одну из них в крупномасштабной системе?"
+    },
+    "answer": {
+      "en": "### Ports and Adapters vs Clean Architecture\n\nHexagonal Architecture emphasizes external dependencies as interchangeable adapters connected through ports, making the core domain completely isolated. Clean Architecture focuses on concentric layers with clear dependency rules where inner layers are more abstract. Hexagonal is more suitable when you have multiple external integrations; Clean Architecture works better for business-logic-heavy domains.\n\n```typescript\n// Hexagonal: Port definition\ninterface PaymentPort {\n  process(amount: number): Promise<void>;\n}\n\n// Multiple adapters for same port\nclass StripeAdapter implements PaymentPort { }\nclass PayPalAdapter implements PaymentPort { }\n\n// Core domain knows nothing about adapters\nclass OrderService {\n  constructor(private paymentPort: PaymentPort) {}\n}\n```\n\n**Common interview trap:** Confusing ports with interfaces—ports are conceptual boundaries, adapters are implementations.",
+      "ru": "### Ports and Adapters vs Clean Architecture\n\nHexagonal Architecture подчеркивает внешние зависимости как взаимозаменяемые адаптеры, соединенные через порты, делая основной домен полностью изолированным. Clean Architecture сосредоточена на концентрических слоях с четкими правилами зависимостей, где внутренние слои более абстрактны. Hexagonal лучше подходит, когда у вас много внешних интеграций; Clean Architecture работает лучше для доменов с интенсивной бизнес-логикой.\n\n```typescript\n// Hexagonal: определение порта\ninterface PaymentPort {\n  process(amount: number): Promise<void>;\n}\n\n// Несколько адаптеров для одного порта\nclass StripeAdapter implements PaymentPort { }\nclass PayPalAdapter implements PaymentPort { }\n\n// Основной домен ничего не знает об адаптерах\nclass OrderService {\n  constructor(private paymentPort: PaymentPort) {}\n}\n```\n\n**Типичная ошибка:** Путаница портов с интерфейсами—порты это концептуальные границы, адаптеры это реализации."
+    },
+    "tags": [
+      "hexagonal-architecture",
+      "clean-architecture",
+      "dependency-inversion",
+      "ports-and-adapters"
+    ]
+  },
+  {
+    "id": "architecture-q-15",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an event-driven architecture for an e-commerce system where order placement triggers multiple async operations (payment, inventory, notification). What are the failure handling strategies?",
+      "ru": "Спроектируйте event-driven архитектуру для электронной коммерции, где размещение заказа запускает множество асинхронных операций (платеж, инвентарь, уведомление). Какие стратегии обработки ошибок?"
+    },
+    "answer": {
+      "en": "### Event-Driven E-Commerce Architecture\n\nPublish an `OrderCreatedEvent` to a message broker; independent services subscribe and process asynchronously. Use the Outbox pattern to guarantee event durability: write event and business state in the same transaction, then a separate process publishes to the broker. For failures, implement dead-letter queues, exponential backoff, and compensation logic (e.g., refund if payment fails and inventory was already reserved).\n\n```typescript\nclass OrderService {\n  async createOrder(data: OrderData): Promise<void> {\n    const order = new Order(data);\n    await this.db.transaction(async (tx) => {\n      await tx.orders.create(order);\n      await tx.outbox.insert({\n        eventType: 'OrderCreated',\n        payload: order,\n      });\n    });\n  }\n}\n\n// Separate worker processes outbox\nawait publishOutboxEvents(broker, db);\n```\n\n**Common interview trap:** Assuming eventual consistency is acceptable for all operations—validate business requirements for immediate consistency needs.",
+      "ru": "### Event-Driven архитектура электронной коммерции\n\nОпубликуйте `OrderCreatedEvent` в message broker; независимые сервисы подписываются и обрабатывают асинхронно. Используйте Outbox паттерн для гарантии надежности событий: пишите событие и состояние бизнеса в одной транзакции, затем отдельный процесс публикует в broker. Для ошибок реализуйте dead-letter queues, exponential backoff и компенсационную логику (например, возврат если платеж не прошел).\n\n```typescript\nclass OrderService {\n  async createOrder(data: OrderData): Promise<void> {\n    const order = new Order(data);\n    await this.db.transaction(async (tx) => {\n      await tx.orders.create(order);\n      await tx.outbox.insert({\n        eventType: 'OrderCreated',\n        payload: order,\n      });\n    });\n  }\n}\n\n// Отдельный процесс публикует события из outbox\nawait publishOutboxEvents(broker, db);\n```\n\n**Типичная ошибка:** Предположение, что eventual consistency приемлемо для всех операций—валидируйте требования бизнеса.",
+      "tags": [
+        "event-driven-architecture",
+        "message-broker",
+        "outbox-pattern",
+        "eventual-consistency",
+        "failure-handling"
+      ]
+    }
+  },
+  {
+    "id": "architecture-q-16",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Saga pattern and how it differs from distributed transactions. Provide an example of choreography vs orchestration in a multi-service workflow.",
+      "ru": "Объясните Saga паттерн и как он отличается от распределенных транзакций. Приведите пример choreography vs orchestration в многосервисном workflow."
+    },
+    "answer": {
+      "en": "### Saga Pattern: Choreography vs Orchestration\n\nSaga pattern manages distributed transactions by breaking them into local transactions coordinated through events or a central orchestrator. Choreography: services react to events autonomously (loosely coupled but harder to track). Orchestration: a saga orchestrator explicitly commands each step (easier debugging, single point of coordination). For booking systems: orchestration is safer; for loosely-integrated microservices, choreography scales better.\n\n```typescript\n// Orchestration: explicit coordination\nclass BookingSaga {\n  async execute(order: Order): Promise<void> {\n    await this.paymentService.charge(order);\n    await this.inventoryService.reserve(order);\n    await this.shippingService.schedule(order);\n  }\n  async compensate(order: Order): Promise<void> {\n    await this.paymentService.refund(order);\n    await this.inventoryService.release(order);\n  }\n}\n```\n\n**Common interview trap:** Choreography is not inherently better—orchestration is preferable for critical, auditable workflows despite higher coupling.",
+      "ru": "### Saga Pattern: Choreography vs Orchestration\n\nSaga паттерн управляет распределенными транзакциями, разбивая их на локальные транзакции, скоординированные через события или центральный оркестратор. Choreography: сервисы автономно реагируют на события (слабо связаны, но сложнее отследить). Orchestration: оркестратор явно командует каждым шагом (легче отладка, одна точка координации). Для систем бронирования: orchestration безопаснее; для слабо интегрированных микросервисов choreography масштабируется лучше.\n\n```typescript\n// Orchestration: явная координация\nclass BookingSaga {\n  async execute(order: Order): Promise<void> {\n    await this.paymentService.charge(order);\n    await this.inventoryService.reserve(order);\n    await this.shippingService.schedule(order);\n  }\n  async compensate(order: Order): Promise<void> {\n    await this.paymentService.refund(order);\n    await this.inventoryService.release(order);\n  }\n}\n```\n\n**Типичная ошибка:** Choreography не всегда лучше—orchestration предпочтительнее для критичных, аудируемых workflow несмотря на большую связанность.",
+      "tags": [
+        "saga-pattern",
+        "choreography",
+        "orchestration",
+        "distributed-transactions",
+        "compensation-logic"
+      ]
+    }
+  },
+  {
+    "id": "architecture-q-17",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a CQRS system where you separate read and write models. How would you keep them eventually consistent, and what challenges arise with this approach?",
+      "ru": "Спроектируйте CQRS систему, где вы разделяете read и write модели. Как вы обеспечите eventual consistency, и какие трудности возникают?"
+    },
+    "answer": {
+      "en": "### CQRS with Eventual Consistency\n\nCQRS separates write commands (modifying state) from read queries (returning denormalized views). Write model receives commands, generates domain events, and persists them; read model subscribes to events and updates denormalized projections asynchronously. Challenges: handling stale reads, managing projections during failures, and versioning event schemas when business requirements change.\n\n```typescript\nclass WriteService {\n  async createOrder(cmd: CreateOrderCommand): Promise<void> {\n    const event = new OrderCreatedEvent(cmd);\n    await this.eventStore.append(event);\n    await this.eventBus.publish(event);\n  }\n}\n\nclass ReadProjection {\n  onOrderCreatedEvent(event: OrderCreatedEvent): void {\n    this.db.collection('orders').insertOne({\n      id: event.orderId,\n      status: 'created',\n    });\n  }\n}\n```\n\n**Common interview trap:** Assuming CQRS is needed for all applications—use it only when read/write patterns diverge significantly.",
+      "ru": "### CQRS с Eventual Consistency\n\nCQRS разделяет write команды (модификация состояния) от read запросов (возврат денормализованных представлений). Write модель получает команды, генерирует domain события и сохраняет их; read модель подписывается на события и обновляет проекции асинхронно. Трудности: обработка устаревших прочтений, управление проекциями при сбоях и версионирование schema событий.\n\n```typescript\nclass WriteService {\n  async createOrder(cmd: CreateOrderCommand): Promise<void> {\n    const event = new OrderCreatedEvent(cmd);\n    await this.eventStore.append(event);\n    await this.eventBus.publish(event);\n  }\n}\n\nclass ReadProjection {\n  onOrderCreatedEvent(event: OrderCreatedEvent): void {\n    this.db.collection('orders').insertOne({\n      id: event.orderId,\n      status: 'created',\n    });\n  }\n}\n```\n\n**Типичная ошибка:** Предположение, что CQRS нужен для всех приложений—используйте только когда паттерны чтения/записи существенно различаются.",
+      "tags": [
+        "cqrs",
+        "event-sourcing",
+        "eventual-consistency",
+        "denormalization",
+        "projections"
+      ]
+    }
+  },
+  {
+    "id": "architecture-q-18",
+    "topicId": "architecture",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare Onion Architecture with Clean Architecture in terms of layer organization and dependency direction. How would you structure a banking system using Onion Architecture?",
+      "ru": "Сравните Onion Architecture с Clean Architecture по организации слоев и направлению зависимостей. Как бы вы структурировали банковскую систему используя Onion Architecture?"
+    },
+    "answer": {
+      "en": "### Onion Architecture Structure\n\nOnion Architecture arranges code in concentric layers: Domain Model (core), Domain Services, Application Services, and Infrastructure (outermost). Dependencies always point inward; outer layers depend on inner layers, never vice versa. Compared to Clean Architecture, Onion emphasizes domain-driven design and clearer business rule isolation. For banking: innermost layer contains Account, Transaction entities; Application Services handle use cases (Withdraw, Transfer); Infrastructure layer provides repositories and external APIs.\n\n```typescript\n// Core domain (innermost)\nclass Account {\n  withdraw(amount: number): void {\n    if (amount > this.balance) throw new Error('Insufficient funds');\n    this.balance -= amount;\n  }\n}\n\n// Application service (middle)\nclass WithdrawUseCase {\n  constructor(private accountRepo: AccountRepository) {}\n  async execute(accountId: string, amount: number): Promise<void> {\n    const account = await this.accountRepo.findById(accountId);\n    account.withdraw(amount);\n    await this.accountRepo.save(account);\n  }\n}\n```\n\n**Common interview trap:** Confusing layers with packages—Onion layers are logical boundaries, not forced folder structures.",
+      "ru": "### Структура Onion Architecture\n\nOnion Architecture расставляет код в концентрические слои: Domain Model (ядро), Domain Services, Application Services и Infrastructure (внешний). Зависимости всегда указывают внутрь; внешние слои зависят от внутренних, никогда наоборот. По сравнению с Clean Architecture, Onion подчеркивает domain-driven design и четкую изоляцию бизнес-правил. Для банков: внутренний слой содержит Account, Transaction сущности; Application Services обрабатывают use cases (Withdraw, Transfer); Infrastructure слой предоставляет репозитории.\n\n```typescript\n// Основной домен (ядро)\nclass Account {\n  withdraw(amount: number): void {\n    if (amount > this.balance) throw new Error('Insufficient funds');\n    this.balance -= amount;\n  }\n}\n\n// Application service (середина)\nclass WithdrawUseCase {\n  constructor(private accountRepo: AccountRepository) {}\n  async execute(accountId: string, amount: number): Promise<void> {\n    const account = await this.accountRepo.findById(accountId);\n    account.withdraw(amount);\n    await this.accountRepo.save(account);\n  }\n}\n```\n\n**Типичная ошибка:** Путаница слоев с пакетами—слои Onion это логические границы, не форсированные структуры папок.",
+      "tags": [
+        "onion-architecture",
+        "domain-driven-design",
+        "layered-architecture",
+        "dependency-inversion",
+        "domain-model"
+      ]
+    }
+  },
+  {
+    "id": "architecture-q-19",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the trade-offs between monolithic and microservices architectures. When would you choose each and what are the hidden costs?",
+      "ru": "Объясните компромиссы между монолитной архитектурой и микросервисами. Когда бы вы выбрали каждую и какие скрытые затраты они имеют?"
+    },
+    "answer": {
+      "en": "### Monolith vs Microservices Trade-offs\n\nMonoliths offer simplicity and easier debugging but scale poorly and create deployment bottlenecks. Microservices enable independent scaling and deployment but introduce network latency, distributed debugging complexity, and operational overhead.\n\n```typescript\n// Monolith: Single deployment unit\napp.use('/users', userRoutes);\napp.use('/orders', orderRoutes);\napp.use('/payments', paymentRoutes);\n\n// Microservices: Independent services\nconst userService = express(); // port 3001\nconst orderService = express(); // port 3002\nconst paymentService = express(); // port 3003\n```\n\n**Common interview trap:** Assuming microservices are always better; they're optimal only for large, distributed teams with clear domain boundaries.",
+      "ru": "### Компромиссы: Монолит vs Микросервисы\n\nМонолиты предлагают простоту и легче отлаживаются, но плохо масштабируются и создают узкие места при развёртывании. Микросервисы обеспечивают независимое масштабирование, но вводят сетевые задержки, сложность распределённой отладки и операционные затраты.\n\n```typescript\n// Монолит: единица развёртывания\napp.use('/users', userRoutes);\napp.use('/orders', orderRoutes);\napp.use('/payments', paymentRoutes);\n\n// Микросервисы: независимые сервисы\nconst userService = express(); // порт 3001\nconst orderService = express(); // порт 3002\nconst paymentService = express(); // порт 3003\n```\n\n**Типичная ошибка:** Предположение, что микросервисы всегда лучше; они оптимальны только для больших распределённых команд с чёткими границами доменов."
+    },
+    "tags": [
+      "monolith-vs-microservices",
+      "architectural-trade-offs",
+      "scalability"
+    ]
+  },
+  {
+    "id": "architecture-q-20",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe the strangler fig pattern for migrating a legacy system. What are the key challenges and how do you handle them?",
+      "ru": "Опишите паттерн strangler fig для миграции старого системы. Какие основные вызовы и как вы их преодолеваете?"
+    },
+    "answer": {
+      "en": "### Strangler Fig Pattern\n\nThe pattern intercepts calls to legacy code and gradually replaces them with new implementations using a proxy/router. It enables zero-downtime migration by running old and new systems in parallel until the legacy code is fully phased out.\n\n```typescript\n// Routing layer intercepts requests\napp.get('/api/users/:id', async (req, res) => {\n  const useNewSystem = shouldUseNewSystem(req.params.id);\n  const data = useNewSystem\n    ? await newUserService.getUser(req.params.id)\n    : await legacyUserService.getUser(req.params.id);\n  res.json(data);\n});\n```\n\n**Common interview trap:** Overlooking data consistency issues between old and new systems; you must synchronize state bidirectionally during transition phases.",
+      "ru": "### Паттерн Strangler Fig\n\nПаттерн перехватывает вызовы к старому коду и постепенно заменяет их новыми реализациями через прокси/маршрутизатор. Это позволяет осуществить миграцию без простоев, запуская старую и новую системы параллельно.\n\n```typescript\n// Слой маршрутизации перехватывает запросы\napp.get('/api/users/:id', async (req, res) => {\n  const useNewSystem = shouldUseNewSystem(req.params.id);\n  const data = useNewSystem\n    ? await newUserService.getUser(req.params.id)\n    : await legacyUserService.getUser(req.params.id);\n  res.json(data);\n});\n```\n\n**Типичная ошибка:** Игнорирование проблем консистентности данных между старой и новой системами; вы должны синхронизировать состояние в обе стороны."
+    },
+    "tags": [
+      "strangler-fig-pattern",
+      "legacy-migration",
+      "zero-downtime-deployment"
+    ]
+  },
+  {
+    "id": "architecture-q-21",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What are Architecture Decision Records (ADRs) and how do they improve team decisions? Provide an example of when NOT to use ADRs.",
+      "ru": "Что такое Architecture Decision Records (ADR) и как они улучшают командные решения? Приведите пример, когда НЕ использовать ADR."
+    },
+    "answer": {
+      "en": "### Architecture Decision Records (ADRs)\n\nADRs are lightweight documents capturing architectural decisions, their context, rationale, and consequences. They create accountability and prevent repeated discussions, but are overkill for minor technical choices like variable naming or temporary bug fixes.\n\n```typescript\n// ADR template structure\nconst adr = `\nTitle: Use PostgreSQL over MongoDB\nStatus: Accepted\nContext: Need ACID guarantees for financial transactions\nDecision: PostgreSQL provides strong consistency\nConsequences: Higher operational complexity, better data integrity\nAlternatives: MongoDB (rejected), Oracle (cost too high)\n`;\n```\n\n**Common interview trap:** Creating ADRs for every decision makes them noise; reserve them for decisions with long-term architectural impact and team-wide implications.",
+      "ru": "### Architecture Decision Records (ADR)\n\nADR — это лёгкие документы, фиксирующие архитектурные решения, их контекст, обоснование и последствия. Они создают ответственность и предотвращают повторные обсуждения, но избыточны для второстепенных выборов.\n\n```typescript\n// Структура шаблона ADR\nconst adr = `\nTitle: Использовать PostgreSQL вместо MongoDB\nStatus: Accepted\nContext: Нужны ACID гарантии для финансовых транзакций\nDecision: PostgreSQL обеспечивает сильную консистентность\nConsequences: Выше операционная сложность, лучше целостность данных\nAlternatives: MongoDB (отклонено), Oracle (дорого)\n`;\n```\n\n**Типичная ошибка:** Создание ADR для каждого решения создаёт шум; используйте их только для решений с долгосрочным архитектурным влиянием."
+    },
+    "tags": [
+      "ADR",
+      "architecture-decision-records",
+      "documentation",
+      "team-communication"
+    ]
+  },
+  {
+    "id": "architecture-q-22",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain evolutionary architecture and how it differs from traditional big-design-upfront approaches. What principles guide this evolution?",
+      "ru": "Объясните эволюционную архитектуру и чем она отличается от традиционного подхода big-design-upfront. Какие принципы направляют эту эволюцию?"
+    },
+    "answer": {
+      "en": "### Evolutionary Architecture\n\nEvolutionary architecture allows systems to change incrementally based on feedback and requirements, rather than rigid upfront design. It emphasizes modularity, automated testing, and fitness functions to ensure changes don't break constraints—enabling adaptation as business needs evolve.\n\n```typescript\n// Fitness function: automated constraint verification\nconst architectureFitness = () => {\n  const maxCyclomaticComplexity = 10;\n  const maxServiceLatency = 200; // ms\n  const minTestCoverage = 80; // %\n  \n  if (currentMetrics.complexity > maxCyclomaticComplexity) throw Error('Complexity violated');\n  if (currentMetrics.latency > maxServiceLatency) throw Error('Latency violated');\n};\n```\n\n**Common interview trap:** Confusing evolutionary architecture with \"no planning\"; you still need clear constraints and guiding principles—just apply them flexibly.",
+      "ru": "### Эволюционная архитектура\n\nЭволюционная архитектура позволяет системам меняться пошагово на основе обратной связи, а не жёсткого дизайна. Она делает упор на модульность, автоматизированное тестирование и функции соответствия для обеспечения эволюции.\n\n```typescript\n// Функция соответствия: автоматизированная проверка ограничений\nconst architectureFitness = () => {\n  const maxCyclomaticComplexity = 10;\n  const maxServiceLatency = 200; // ms\n  const minTestCoverage = 80; // %\n  \n  if (currentMetrics.complexity > maxCyclomaticComplexity) throw Error('Complexity violated');\n  if (currentMetrics.latency > maxServiceLatency) throw Error('Latency violated');\n};\n```\n\n**Типичная ошибка:** Путаница эволюционной архитектуры с «отсутствием планирования»; вам всё ещё нужны чёткие ограничения и направляющие принципы."
+    },
+    "tags": [
+      "evolutionary-architecture",
+      "fitness-functions",
+      "adaptive-design",
+      "constraints"
+    ]
+  },
+  {
+    "id": "architecture-q-23",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Compare event-driven vs request-response architectures. When would you use each and what are the operational complexities?",
+      "ru": "Сравните event-driven и request-response архитектуры. Когда вы используете каждую и какие операционные сложности возникают?"
+    },
+    "answer": {
+      "en": "### Event-Driven vs Request-Response\n\nRequest-response is synchronous, simple to debug, but creates tight coupling and scalability bottlenecks. Event-driven decouples services via asynchronous messaging, enabling better scalability, but introduces eventual consistency challenges and harder tracing.\n\n```typescript\n// Request-response: tight coupling\nconst order = await orderService.create(data);\nawait paymentService.charge(order.id); // blocking\n\n// Event-driven: loose coupling\nawait orderService.create(data);\nawait eventBus.emit('order.created', { orderId: order.id });\n// paymentService listens independently\n```\n\n**Common interview trap:** Event-driven sounds modern but requires robust monitoring, dead-letter queues, and idempotency; it's not always worth the complexity.",
+      "ru": "### Event-Driven vs Request-Response\n\nRequest-response синхронный, простой в отладке, но создаёт тесную связь и узкие места масштабирования. Event-driven разделяет услуги через асинхронный обмен сообщениями, но вводит проблемы итоговой консистентности.\n\n```typescript\n// Request-response: тесная связь\nconst order = await orderService.create(data);\nawait paymentService.charge(order.id); // блокирует\n\n// Event-driven: слабая связь\nawait orderService.create(data);\nawait eventBus.emit('order.created', { orderId: order.id });\n// paymentService слушает независимо\n```\n\n**Типичная ошибка:** Event-driven звучит современно, но требует надёжного мониторинга, очередей недоставленных сообщений и идемпотентности."
+    },
+    "tags": [
+      "event-driven-architecture",
+      "request-response",
+      "asynchronous-messaging",
+      "eventual-consistency"
+    ]
+  },
+  {
+    "id": "architecture-q-24",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the Strangler Fig pattern and describe a real-world scenario where you'd use it to migrate a monolithic system. What are the key trade-offs you need to consider?",
+      "ru": "Объясните паттерн Strangler Fig и опишите реальный сценарий его использования для миграции монолитной системы. Какие ключевые компромиссы необходимо учитывать?"
+    },
+    "answer": {
+      "en": "### Strangler Fig for Gradual Migration\n\nThe Strangler Fig pattern intercepts old system calls and gradually routes them to new microservices, allowing parallel operation during migration. This reduces risk compared to big-bang rewrites but introduces complexity in routing, duplicate data, and maintaining two systems simultaneously.\n\n```typescript\n// Request interceptor routing pattern\napp.use((req, res, next) => {\n  if (shouldUseNewService(req.path)) {\n    return newServiceProxy(req, res);\n  }\n  next(); // Fall back to legacy monolith\n});\n```\n\n**Common interview trap:** Candidates forget to address the synchronization problem between old and new systems during the transition period.",
+      "ru": "### Паттерн Strangler Fig для постепенной миграции\n\nПаттерн Strangler Fig перехватывает вызовы старой системы и постепенно маршрутизирует их в новые микросервисы, позволяя параллельно работать обеим системам. Это снижает риск по сравнению с полной переписью, но усложняет маршрутизацию, дублирование данных и поддержку двух систем одновременно.\n\n```typescript\n// Паттерн перехватчика для маршрутизации\napp.use((req, res, next) => {\n  if (shouldUseNewService(req.path)) {\n    return newServiceProxy(req, res);\n  }\n  next(); // Откат на старый монолит\n});\n```\n\n**Типичная ошибка:** Кандидаты забывают упомянуть проблему синхронизации между старой и новой системами во время переходного периода."
+    },
+    "tags": [
+      "strangler-fig-pattern",
+      "monolith-migration",
+      "gradual-cutover",
+      "legacy-system"
+    ]
+  },
+  {
+    "id": "architecture-q-25",
+    "topicId": "architecture",
+    "difficulty": "advanced",
+    "question": {
+      "en": "You need to choose between monolithic, microservices, and modular monolith architectures for a new platform. How would you use Architecture Decision Records (ADR) to document your decision and what factors would influence your choice?",
+      "ru": "Вам необходимо выбрать между монолитной, микросервисной и модульной монолитной архитектурой для новой платформы. Как вы использовали бы Architecture Decision Records (ADR) для документирования вашего решения и какие факторы будут влиять на выбор?"
+    },
+    "answer": {
+      "en": "### ADR Framework for Architecture Selection\n\nUse ADRs to capture the context, decision rationale, consequences, and alternatives considered. Key factors include team size, deployment frequency, data consistency requirements, and scalability needs. Monolith suits small teams with tight coupling needs, microservices fit high-velocity teams with independent deployment requirements, and modular monolith balances both.\n\n```typescript\n// ADR 0001: Architecture Choice\n// Context: 5-person team, moderate traffic, frequent deploys\n// Decision: Modular monolith with bounded contexts\n// Consequences: Easier ops than microservices, better decoupling than monolith\n// Alternatives considered: Pure microservices (too much overhead), monolith (poor isolation)\n```\n\n**Common interview trap:** Candidates choose architectures based on trends rather than analyzing team capability, operational maturity, and actual business constraints.",
+      "ru": "### Фреймворк ADR для выбора архитектуры\n\nИспользуйте ADRs для фиксации контекста, обоснования решения, последствий и рассмотренных альтернатив. Ключевые факторы включают размер команды, частоту развертывания, требования к консистентности данных и потребности в масштабируемости. Монолит подходит малым командам с тесной связью, микросервисы подходят командам с быстрым темпом разработки, а модульный монолит балансирует оба подхода.\n\n```typescript\n// ADR 0001: Выбор архитектуры\n// Контекст: команда из 5 человек, умеренный трафик, частые развертывания\n// Решение: Модульный монолит с ограниченными контекстами\n// Последствия: Проще операции чем микросервисы, лучше изоляция чем монолит\n// Альтернативы: Чистые микросервисы (слишком много overhead), монолит (плохая изоляция)\n```\n\n**Типичная ошибка:** Кандидаты выбирают архитектуры на основе тренда, а не анализа возможностей команды, операционной зрелости и реальных ограничений бизнеса."
+    },
+    "tags": [
+      "ADR",
+      "architecture-decision-records",
+      "monolith-vs-microservices",
+      "modular-monolith",
+      "architecture-tradeoffs"
+    ]
+  }
+]

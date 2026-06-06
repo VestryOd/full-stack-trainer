@@ -1,1 +1,288 @@
-[]
+[
+  {
+    "id": "event-driven-q-1",
+    "topicId": "event-driven",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between an Event, a Command, and a Query in event-driven architecture. Provide a practical example for each.",
+      "ru": "Объясните различие между Event, Command и Query в event-driven архитектуре. Приведите практический пример для каждого."
+    },
+    "answer": {
+      "en": "### Event, Command, Query distinction\n\nA Command is an action request that changes state (imperative). An Event is an immutable fact that already happened (past tense). A Query is a read-only request for data without side effects. Commands trigger events, queries retrieve state.\n\n```typescript\n// Command: intent to change state\ninterface CreateUserCommand { userId: string; email: string; }\n\n// Event: fact that occurred\ninterface UserCreatedEvent { userId: string; email: string; timestamp: Date; }\n\n// Query: retrieve data\ninterface GetUserQuery { userId: string; }\n```\n\n**Common interview trap:** Confusing commands and events as synonymous; they serve opposite roles.",
+      "ru": "### Различие Event, Command, Query\n\nCommand — это запрос на действие, которое изменяет состояние (императивный стиль). Event — это неизменяемый факт, который уже произошел (прошедшее время). Query — это запрос на чтение данных без побочных эффектов. Commands вызывают events, queries получают состояние.\n\n```typescript\n// Command: намерение изменить состояние\ninterface CreateUserCommand { userId: string; email: string; }\n\n// Event: факт, который произошел\ninterface UserCreatedEvent { userId: string; email: string; timestamp: Date; }\n\n// Query: получить данные\ninterface GetUserQuery { userId: string; }\n```\n\n**Типичная ошибка:** Путаница между commands и events как синонимами; они выполняют противоположные роли."
+    },
+    "tags": [
+      "command-query-event",
+      "cqrs-basics",
+      "event-semantics"
+    ]
+  },
+  {
+    "id": "event-driven-q-2",
+    "topicId": "event-driven",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the publish-subscribe (pub/sub) pattern and how does it differ from point-to-point messaging in event-driven systems?",
+      "ru": "Что такое паттерн publish-subscribe (pub/sub) и чем он отличается от point-to-point messaging в event-driven системах?"
+    },
+    "answer": {
+      "en": "### Pub/Sub vs Point-to-Point\n\nPub/Sub decouples publishers from subscribers—multiple subscribers can listen to the same event topic independently. Point-to-point routes messages to a single consumer from a queue. Pub/Sub enables loose coupling and event broadcasting, while point-to-point ensures ordered delivery to one handler.\n\n```typescript\n// Pub/Sub: multiple subscribers receive same event\neventBus.subscribe('UserCreated', (event) => sendEmail(event));\neventBus.subscribe('UserCreated', (event) => updateAnalytics(event));\neventBus.publish('UserCreated', { userId: '123' });\n\n// Point-to-Point: single consumer from queue\nqueue.send('ProcessOrder', orderData);\nworker.consume('ProcessOrder', handleOrder);\n```\n\n**Common interview trap:** Assuming pub/sub requires a central broker; it's about topology, not infrastructure.",
+      "ru": "### Pub/Sub vs Point-to-Point\n\nPub/Sub разделяет издателей и подписчиков — несколько подписчиков могут слушать одну тему события независимо. Point-to-point маршрутизирует сообщения одному потребителю из очереди. Pub/Sub обеспечивает слабую связанность и трансляцию событий, а point-to-point гарантирует упорядоченную доставку одному обработчику.\n\n```typescript\n// Pub/Sub: несколько подписчиков получают одно событие\neventBus.subscribe('UserCreated', (event) => sendEmail(event));\neventBus.subscribe('UserCreated', (event) => updateAnalytics(event));\neventBus.publish('UserCreated', { userId: '123' });\n\n// Point-to-Point: один потребитель из очереди\nqueue.send('ProcessOrder', orderData);\nworker.consume('ProcessOrder', handleOrder);\n```\n\n**Типичная ошибка:** Предположение, что pub/sub требует центральный брокер; это вопрос топологии, не инфраструктуры."
+    },
+    "tags": [
+      "pub-sub-pattern",
+      "message-topology",
+      "loose-coupling"
+    ]
+  },
+  {
+    "id": "event-driven-q-3",
+    "topicId": "event-driven",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe what a message queue is and explain why it's essential in event-driven architecture. Name one specific use case.",
+      "ru": "Опишите, что такое message queue и объясните, почему это важно в event-driven архитектуре. Назовите один конкретный use case."
+    },
+    "answer": {
+      "en": "### Message Queue fundamentals\n\nA message queue is a buffer that stores messages sent by producers and consumed by consumers asynchronously. It decouples producers from consumers, enables reliable delivery, and handles backpressure—if a consumer is slow, messages queue up without blocking the producer. Essential for resilience and scalability.\n\n```typescript\n// Producer: send order without waiting for processing\nqueue.enqueue('orders', { orderId: '456', items: [] });\n\n// Consumer: process orders at its own pace\nqueue.consume('orders', async (order) => {\n  await processPayment(order);\n  await shipOrder(order);\n});\n```\n\n**Common interview trap:** Thinking queues guarantee order across multiple partitions; partition-level ordering only.",
+      "ru": "### Основы Message Queue\n\nMessage queue — это буфер, который хранит сообщения от производителей и асинхронно потребляет их потребители. Это разделяет производителей и потребителей, обеспечивает надежную доставку и регулирует обратное давление — если потребитель медленный, сообщения накапливаются без блокирования производителя. Критична для отказоустойчивости и масштабируемости.\n\n```typescript\n// Producer: отправить заказ без ожидания обработки\nqueue.enqueue('orders', { orderId: '456', items: [] });\n\n// Consumer: обрабатывать заказы в своем темпе\nqueue.consume('orders', async (order) => {\n  await processPayment(order);\n  await shipOrder(order);\n});\n```\n\n**Типичная ошибка:** Предположение, что очереди гарантируют порядок между несколькими партициями; только на уровне партиции."
+    },
+    "tags": [
+      "message-queue-concept",
+      "asynchronous-processing",
+      "backpressure-handling"
+    ]
+  },
+  {
+    "id": "event-driven-q-4",
+    "topicId": "event-driven",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you handle event versioning in an event-driven system? Why is it important and what strategy would you use?",
+      "ru": "Как вы будете обрабатывать версионирование событий в event-driven системе? Почему это важно и какую стратегию вы используете?"
+    },
+    "answer": {
+      "en": "### Event Versioning strategy\n\nEvent versioning is critical because events are immutable and long-lived; old consumers must handle new event shapes without breaking. Use a version field in events and implement upcasting—converting old versions to new ones. Alternatively, add optional fields with defaults for backward compatibility.\n\n```typescript\ninterface UserCreatedEventV1 { version: 1; userId: string; email: string; }\ninterface UserCreatedEventV2 { version: 2; userId: string; email: string; phone?: string; }\n\nfunction upcaster(event: UserCreatedEventV1): UserCreatedEventV2 {\n  return { ...event, version: 2, phone: undefined };\n}\n\nconst handler = (event: any) => {\n  const v2 = event.version === 1 ? upcaster(event) : event;\n};\n```\n\n**Common interview trap:** Modifying existing events retroactively instead of accepting new versions gracefully.",
+      "ru": "### Стратегия версионирования событий\n\nВерсионирование событий критично, потому что события неизменяемы и долгоживущие; старые потребители должны обрабатывать новые форматы событий без сбоев. Используйте поле версии в событиях и реализуйте upcasting — преобразование старых версий в новые. Как альтернатива, добавляйте опциональные поля с значениями по умолчанию для обратной совместимости.\n\n```typescript\ninterface UserCreatedEventV1 { version: 1; userId: string; email: string; }\ninterface UserCreatedEventV2 { version: 2; userId: string; email: string; phone?: string; }\n\nfunction upcaster(event: UserCreatedEventV1): UserCreatedEventV2 {\n  return { ...event, version: 2, phone: undefined };\n}\n\nconst handler = (event: any) => {\n  const v2 = event.version === 1 ? upcaster(event) : event;\n};\n```\n\n**Типичная ошибка:** Модификация существующих событий ретроспективно вместо того, чтобы корректно принимать новые версии."
+    },
+    "tags": [
+      "event-versioning",
+      "backward-compatibility",
+      "upcasting"
+    ]
+  },
+  {
+    "id": "event-driven-q-5",
+    "topicId": "event-driven",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain what CQRS (Command Query Responsibility Segregation) is and why you might choose it for an event-driven system. What's a concrete trade-off?",
+      "ru": "Объясните, что такое CQRS (Command Query Responsibility Segregation) и почему вы можете выбрать его для event-driven системы. Какой конкретный компромисс?"
+    },
+    "answer": {
+      "en": "### CQRS pattern overview\n\nCQRS separates the write model (commands) from the read model (queries) into different data stores or services. Commands mutate state and emit events; queries read from optimized, denormalized read stores. This scales read and write independently and enables different schemas for different use cases. Trade-off: eventual consistency—read models lag behind writes temporarily.\n\n```typescript\n// Write model: command handler emits events\ncommandBus.handle(CreateUserCommand, (cmd) => {\n  const event = new UserCreatedEvent(cmd.userId, cmd.email);\n  eventStore.append(event);\n});\n\n// Read model: separate denormalized store\neventBus.subscribe(UserCreatedEvent, (event) => {\n  userReadDb.insert({ id: event.userId, email: event.email });\n});\n```\n\n**Common interview trap:** Implementing CQRS without eventual consistency handling; eventual consistency is the cost.",
+      "ru": "### Обзор паттерна CQRS\n\nCQRS разделяет модель записи (commands) от модели чтения (queries) в разные хранилища или сервисы. Commands изменяют состояние и генерируют события; queries читают из оптимизированных, денормализованных хранилищ чтения. Это масштабирует чтение и запись независимо и позволяет разные схемы для разных use cases. Компромисс: финальная согласованность — модели чтения отстают от записей временно.\n\n```typescript\n// Write model: обработчик command излучает события\ncommandBus.handle(CreateUserCommand, (cmd) => {\n  const event = new UserCreatedEvent(cmd.userId, cmd.email);\n  eventStore.append(event);\n});\n\n// Read model: отдельное денормализованное хранилище\neventBus.subscribe(UserCreatedEvent, (event) => {\n  userReadDb.insert({ id: event.userId, email: event.email });\n});\n```\n\n**Типичная ошибка:** Реализация CQRS без обработки финальной согласованности; финальная согласованность — это цена."
+    },
+    "tags": [
+      "cqrs-pattern",
+      "eventual-consistency",
+      "read-write-separation"
+    ]
+  },
+  {
+    "id": "event-driven-q-6",
+    "topicId": "event-driven",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the difference between CQRS and traditional CRUD patterns. When would you choose CQRS and what are the trade-offs?",
+      "ru": "Объясните разницу между CQRS и традиционным CRUD. Когда вы выбрали бы CQRS и какие компромиссы это влечёт?"
+    },
+    "answer": {
+      "en": "### CQRS vs CRUD\n\nCQRS separates read and write models, allowing independent scaling and optimization. CRUD uses a single model for both operations. CQRS adds complexity but enables event sourcing, better performance, and domain logic clarity.\n\n```typescript\n// CRUD: same model\nclass User { name: string; email: string; }\n\n// CQRS: separate concerns\nclass CreateUserCommand { name: string; email: string; }\nclass UserProjection { id: string; name: string; email: string; viewCount: number; }\n```\n\n**Common interview trap:** Assuming CQRS is always better—it adds complexity that's only justified at scale.",
+      "ru": "### CQRS vs CRUD\n\nCQRS разделяет модели чтения и записи, позволяя независимое масштабирование и оптимизацию. CRUD использует единую модель для обеих операций. CQRS добавляет сложность, но позволяет event sourcing, лучшую производительность и ясность бизнес-логики.\n\n```typescript\n// CRUD: одна модель\nclass User { name: string; email: string; }\n\n// CQRS: разделение забот\nclass CreateUserCommand { name: string; email: string; }\nclass UserProjection { id: string; name: string; email: string; viewCount: number; }\n```\n\n**Типичная ошибка:** Предполагать, что CQRS всегда лучше—это добавляет сложность, оправданную только при масштабировании."
+    },
+    "tags": [
+      "cqrs-pattern",
+      "architecture-patterns",
+      "trade-offs"
+    ]
+  },
+  {
+    "id": "event-driven-q-7",
+    "topicId": "event-driven",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you handle eventual consistency issues in a CQRS system? What happens if a read query is executed before the projection is updated?",
+      "ru": "Как вы бы обработали проблемы с итоговой согласованностью в системе CQRS? Что произойдёт, если запрос на чтение выполнится до обновления проекции?"
+    },
+    "answer": {
+      "en": "### Handling Eventual Consistency\n\nUse versioning, polling, or websockets to notify clients of stale reads. Implement read-your-writes consistency by querying the write model directly for the current user's recent operations. Cache invalidation and event replay ensure projections catch up eventually.\n\n```typescript\nclass UserService {\n  async getUserWithConsistency(userId: string, version?: number) {\n    if (version) await this.waitForProjection(userId, version);\n    return this.readModel.getUser(userId);\n  }\n  private async waitForProjection(userId: string, targetVersion: number) {\n    while ((await this.readModel.getVersion(userId)) < targetVersion) {\n      await this.sleep(100);\n    }\n  }\n}\n```\n\n**Common interview trap:** Ignoring eventual consistency entirely or over-engineering synchronous consistency into a distributed system."
+    },
+    "answer_ru": {
+      "ru": "### Обработка итоговой согласованности\n\nИспользуйте версионирование, polling или websockets для уведомления клиентов о устаревших чтениях. Реализуйте консистентность read-your-writes, запрашивая модель записи напрямую для недавних операций пользователя. Инвалидация кэша и replay событий обеспечивают, что проекции в конце концов догонят.\n\n```typescript\nclass UserService {\n  async getUserWithConsistency(userId: string, version?: number) {\n    if (version) await this.waitForProjection(userId, version);\n    return this.readModel.getUser(userId);\n  }\n  private async waitForProjection(userId: string, targetVersion: number) {\n    while ((await this.readModel.getVersion(userId)) < targetVersion) {\n      await this.sleep(100);\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Полностью игнорировать итоговую согласованность или переинженеризировать синхронную консистентность в распределённой системе."
+    },
+    "tags": [
+      "eventual-consistency",
+      "projections",
+      "read-your-writes"
+    ]
+  },
+  {
+    "id": "event-driven-q-8",
+    "topicId": "event-driven",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the Saga pattern and how it differs from distributed transactions. How would you handle saga compensation (rollback) on failure?",
+      "ru": "Описите паттерн Saga и чем он отличается от распределённых транзакций. Как вы бы обработали компенсацию saga (откат) при сбое?"
+    },
+    "answer": {
+      "en": "### Saga Pattern for Distributed Transactions\n\nSaga is a sequence of compensating transactions coordinated via events or orchestration, not ACID transactions. Unlike two-phase commit, each step succeeds independently and compensations are explicit. Orchestrator or Choreography pattern manages the flow and rollback chain.\n\n```typescript\nclass OrderSaga {\n  async execute(order: Order) {\n    try {\n      await this.paymentService.charge(order);\n      await this.inventoryService.reserve(order);\n      await this.shippingService.book(order);\n    } catch (e) {\n      await this.paymentService.refund(order);\n      await this.inventoryService.release(order);\n      throw e;\n    }\n  }\n}\n```\n\n**Common interview trap:** Confusing Saga with two-phase commit—Saga is compensating, not blocking."
+    },
+    "answer_ru": {
+      "ru": "### Паттерн Saga для распределённых транзакций\n\nSaga—это последовательность компенсирующих транзакций, скоординированных через события или оркестровку, а не ACID транзакции. В отличие от two-phase commit, каждый шаг работает независимо и компенсации явные. Orchestrator или паттерн Choreography управляет потоком и цепочкой отката.\n\n```typescript\nclass OrderSaga {\n  async execute(order: Order) {\n    try {\n      await this.paymentService.charge(order);\n      await this.inventoryService.reserve(order);\n      await this.shippingService.book(order);\n    } catch (e) {\n      await this.paymentService.refund(order);\n      await this.inventoryService.release(order);\n      throw e;\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Путать Saga с two-phase commit—Saga компенсирующая, не блокирующая."
+    },
+    "tags": [
+      "saga-pattern",
+      "distributed-transactions",
+      "compensating-transactions"
+    ]
+  },
+  {
+    "id": "event-driven-q-9",
+    "topicId": "event-driven",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is event sourcing and how does it relate to CQRS? What are the challenges of implementing event sourcing at scale?",
+      "ru": "Что такое event sourcing и как он связан с CQRS? Какие вызовы существуют при реализации event sourcing в масштабе?"
+    },
+    "answer": {
+      "en": "### Event Sourcing\n\nEvent sourcing stores all state changes as immutable events instead of snapshots. Combined with CQRS, events feed read projections. Challenges include event versioning, eventual consistency lag, snapshot complexity, and audit overhead. Event log grows unbounded without pruning strategies.\n\n```typescript\nclass EventStore {\n  private events: DomainEvent[] = [];\n  append(event: DomainEvent) { this.events.push(event); }\n  getHistory(aggregateId: string): DomainEvent[] {\n    return this.events.filter(e => e.aggregateId === aggregateId);\n  }\n  rebuildState(aggregateId: string): Aggregate {\n    return this.getHistory(aggregateId).reduce((state, evt) => state.apply(evt), new Aggregate());\n  }\n}\n```\n\n**Common interview trap:** Treating event sourcing as a silver bullet—it requires careful event versioning and migration strategies."
+    },
+    "answer_ru": {
+      "ru": "### Event Sourcing\n\nEvent sourcing сохраняет все изменения состояния как неизменяемые события вместо снимков. В сочетании с CQRS события питают проекции чтения. Вызовы включают версионирование событий, задержку итоговой согласованности, сложность снимков и издержки аудита. Журнал событий растёт бесконечно без стратегий очистки.\n\n```typescript\nclass EventStore {\n  private events: DomainEvent[] = [];\n  append(event: DomainEvent) { this.events.push(event); }\n  getHistory(aggregateId: string): DomainEvent[] {\n    return this.events.filter(e => e.aggregateId === aggregateId);\n  }\n  rebuildState(aggregateId: string): Aggregate {\n    return this.getHistory(aggregateId).reduce((state, evt) => state.apply(evt), new Aggregate());\n  }\n}\n```\n\n**Типичная ошибка:** Относиться к event sourcing как к панацее—это требует тщательного версионирования событий и стратегий миграции."
+    },
+    "tags": [
+      "event-sourcing",
+      "cqrs-relation",
+      "event-store"
+    ]
+  },
+  {
+    "id": "event-driven-q-10",
+    "topicId": "event-driven",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you design a resilient event-driven system that handles event ordering, deduplication, and idempotency across multiple services?",
+      "ru": "Как бы вы спроектировали устойчивую событийно-управляемую систему, которая обрабатывает упорядочение событий, дедупликацию и идемпотентность между несколькими сервисами?"
+    },
+    "answer": {
+      "en": "### Resilient Event-Driven Design\n\nUse event IDs and idempotency keys for deduplication, implement ordered delivery per aggregate, and ensure handlers are idempotent (safe to replay). Store processed event IDs to prevent duplicate handling. Use distributed tracing and event versioning for maintainability.\n\n```typescript\nclass EventHandler {\n  async handle(event: DomainEvent): Promise<void> {\n    const processed = await this.db.get(`processed:${event.id}`);\n    if (processed) return; // Idempotent: already handled\n    try {\n      await this.processEvent(event);\n      await this.db.set(`processed:${event.id}`, true);\n    } catch (e) {\n      // Retry logic with exponential backoff\n      await this.queue.publish(event); throw e;\n    }\n  }\n}\n```\n\n**Common interview trap:** Forgetting idempotency will cause cascading failures when events are retried or replayed."
+    },
+    "answer_ru": {
+      "ru": "### Устойчивая событийно-управляемая система\n\nИспользуйте ID событий и ключи идемпотентности для дедупликации, реализуйте упорядоченную доставку по агрегату и убедитесь, что обработчики идемпотентны (безопасны для replay). Сохраняйте обработанные ID событий, чтобы избежать дублирования обработки. Используйте распределённое трассирование и версионирование событий для поддерживаемости.\n\n```typescript\nclass EventHandler {\n  async handle(event: DomainEvent): Promise<void> {\n    const processed = await this.db.get(`processed:${event.id}`);\n    if (processed) return; // Идемпотент: уже обработан\n    try {\n      await this.processEvent(event);\n      await this.db.set(`processed:${event.id}`, true);\n    } catch (e) {\n      // Логика повтора с экспоненциальной задержкой\n      await this.queue.publish(event); throw e;\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Забыть идемпотентность приведёт к каскадным сбоям при повторе или replay событий."
+    },
+    "tags": [
+      "event-ordering",
+      "idempotency",
+      "deduplication",
+      "resilience"
+    ]
+  },
+  {
+    "id": "event-driven-q-11",
+    "topicId": "event-driven",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a distributed order processing system using CQRS and the saga pattern. How would you handle a failure during payment processing in a multi-step order workflow, and what are the trade-offs between orchestration and choreography sagas?",
+      "ru": "Спроектируйте распределённую систему обработки заказов, используя CQRS и паттерн saga. Как вы обработаете ошибку при обработке платежа в многоэтапном рабочем процессе заказа, и какие компромиссы между оркестрацией и хореографией sagas?"
+    },
+    "answer": {
+      "en": "### CQRS + Saga Pattern for Distributed Transactions\n\nUse an orchestration saga that coordinates order, payment, and inventory commands via a central saga service. On payment failure, emit a compensating transaction (refund) event to rollback previous steps. Choreography is simpler but harder to debug; orchestration provides explicit workflow control and easier error handling.\n\n```typescript\nclass OrderSaga {\n  async executeOrder(orderId: string) {\n    const eventBus = this.eventBus;\n    try {\n      eventBus.emit('CreateOrder', orderId);\n      await eventBus.waitFor('OrderCreated');\n      eventBus.emit('ProcessPayment', orderId);\n      await eventBus.waitFor('PaymentProcessed');\n    } catch (error) {\n      eventBus.emit('RollbackOrder', orderId);\n      eventBus.emit('RefundPayment', orderId);\n    }\n  }\n}\n```\n\n**Common interview trap:** Assuming choreography is always simpler—it becomes unmaintainable at scale due to implicit dependencies and hard-to-trace failures.",
+      "ru": "### CQRS + Паттерн Saga для распределённых транзакций\n\nИспользуйте оркестрационную сагу, которая координирует команды order, payment и inventory через центральный saga-сервис. При ошибке платежа испустите компенсирующую транзакцию (refund) для отката предыдущих шагов. Хореография проще, но её сложнее отлаживать; оркестрация обеспечивает явный контроль рабочего процесса и более лёгкую обработку ошибок.\n\n```typescript\nclass OrderSaga {\n  async executeOrder(orderId: string) {\n    const eventBus = this.eventBus;\n    try {\n      eventBus.emit('CreateOrder', orderId);\n      await eventBus.waitFor('OrderCreated');\n      eventBus.emit('ProcessPayment', orderId);\n      await eventBus.waitFor('PaymentProcessed');\n    } catch (error) {\n      eventBus.emit('RollbackOrder', orderId);\n      eventBus.emit('RefundPayment', orderId);\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Предположение, что хореография всегда проще—при масштабировании она становится неуправляемой из-за неявных зависимостей и сложной отладки ошибок."
+    },
+    "tags": [
+      "saga-pattern",
+      "cqrs",
+      "event-sourcing",
+      "distributed-transactions",
+      "eventual-consistency",
+      "orchestration-vs-choreography"
+    ]
+  },
+  {
+    "id": "event-driven-q-12",
+    "topicId": "event-driven",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how event storming helps design a CQRS system. What are the key artifacts you'd identify during a storming session, and how do they translate to code?",
+      "ru": "Объясните, как event storming помогает проектировать CQRS систему. Какие ключевые артефакты вы выявили бы во время сессии, и как они преобразуются в код?"
+    },
+    "answer": {
+      "en": "### Event Storming for CQRS Design\n\nEvent storming is a collaborative workshop where you map domain events, commands, aggregates, and bounded contexts. These artifacts become your aggregate roots, event handlers, and service boundaries. The visual timeline of events clarifies the flow and reveals consistency boundaries early.\n\n```typescript\ninterface EventStormArtifact {\n  event: DomainEvent;\n  command: Command;\n  aggregate: AggregateRoot;\n  boundedContext: string;\n}\n\nclass OrderAggregate {\n  handleCreateOrder(cmd: CreateOrderCommand): OrderCreatedEvent {\n    return new OrderCreatedEvent(cmd.customerId, cmd.items);\n  }\n}\n```\n\n**Common interview trap:** Treating event storming as just a whiteboard exercise—it must drive architectural decisions and define aggregate boundaries.",
+      "ru": "### Event Storming для проектирования CQRS\n\nEvent storming — это коллаборативная сессия, где вы отображаете события, команды, агрегаты и ограниченные контексты. Эти артефакты становятся корнями агрегатов, обработчиками событий и границами сервисов. Визуальная временная шкала событий проясняет поток и рано выявляет границы консистентности.\n\n```typescript\ninterface EventStormArtifact {\n  event: DomainEvent;\n  command: Command;\n  aggregate: AggregateRoot;\n  boundedContext: string;\n}\n\nclass OrderAggregate {\n  handleCreateOrder(cmd: CreateOrderCommand): OrderCreatedEvent {\n    return new OrderCreatedEvent(cmd.customerId, cmd.items);\n  }\n}\n```\n\n**Типичная ошибка:** Рассмотрение event storming как просто доскового упражнения — оно должно влиять на архитектурные решения и определять границы агрегатов."
+    },
+    "tags": [
+      "event-storming",
+      "cqrs-design",
+      "domain-driven-design",
+      "aggregate-roots"
+    ]
+  },
+  {
+    "id": "event-driven-q-13",
+    "topicId": "event-driven",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does the outbox pattern prevent message loss in distributed systems? Describe the problem it solves and show how to implement it with database transactions.",
+      "ru": "Как паттерн outbox предотвращает потерю сообщений в распределённых системах? Опишите проблему, которую он решает, и покажите реализацию с транзакциями БД."
+    },
+    "answer": {
+      "en": "### Outbox Pattern for Guaranteed Delivery\n\nThe outbox pattern solves the dual-write problem: if you publish an event to a message broker after writing to the database, a crash between the two leaves inconsistent state. The solution is to write both the business data and a copy of the event to the same database transaction, then publish from the outbox.\n\n```typescript\nasync function createOrder(order: Order): Promise<void> {\n  const client = await db.connect();\n  try {\n    await client.query('BEGIN');\n    await client.query('INSERT INTO orders VALUES ($1)', [order.id]);\n    await client.query('INSERT INTO outbox (event) VALUES ($1)', \n      [JSON.stringify(new OrderCreatedEvent(order))]);\n    await client.query('COMMIT');\n  } catch (e) {\n    await client.query('ROLLBACK');\n    throw e;\n  }\n}\n```\n\n**Common interview trap:** Thinking the outbox alone ensures delivery—you still need a separate poller to consume and publish events.",
+      "ru": "### Паттерн Outbox для гарантированной доставки\n\nПаттерн outbox решает проблему двойной записи: если вы публикуете событие в брокер сообщений после записи в БД, сбой между ними оставляет систему в несогласованном состоянии. Решение — записать и бизнес-данные, и копию события в одну транзакцию БД, затем опубликовать из outbox.\n\n```typescript\nasync function createOrder(order: Order): Promise<void> {\n  const client = await db.connect();\n  try {\n    await client.query('BEGIN');\n    await client.query('INSERT INTO orders VALUES ($1)', [order.id]);\n    await client.query('INSERT INTO outbox (event) VALUES ($1)', \n      [JSON.stringify(new OrderCreatedEvent(order))]);\n    await client.query('COMMIT');\n  } catch (e) {\n    await client.query('ROLLBACK');\n    throw e;\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что outbox один гарантирует доставку — вам всё ещё нужен отдельный опрос, чтобы потреблять и публиковать события."
+    },
+    "tags": [
+      "outbox-pattern",
+      "distributed-transactions",
+      "dual-write",
+      "event-publishing"
+    ]
+  },
+  {
+    "id": "event-driven-q-14",
+    "topicId": "event-driven",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What makes event handling idempotent, and why is it critical in event-driven systems? Show how to implement idempotent event processing with deduplication.",
+      "ru": "Что делает обработку событий идемпотентной и почему это критично в event-driven системах? Покажите реализацию с дедупликацией."
+    },
+    "answer": {
+      "en": "### Idempotent Event Handling\n\nIdempotency ensures that processing the same event twice produces the same result as processing it once—essential because message brokers may redeliver events. Implement it by storing event IDs in a processed table and checking before handler execution.\n\n```typescript\nasync function handleOrderCreated(event: OrderCreatedEvent): Promise<void> {\n  const exists = await db.query(\n    'SELECT 1 FROM processed_events WHERE event_id = $1', \n    [event.id]\n  );\n  if (exists.rowCount > 0) return; // Already processed\n  \n  await createOrderInReadModel(event);\n  await db.query(\n    'INSERT INTO processed_events (event_id) VALUES ($1)', \n    [event.id]\n  );\n}\n```\n\n**Common interview trap:** Assuming naturally idempotent operations (like SET commands) without explicit deduplication—external side effects still need deduplication.",
+      "ru": "### Идемпотентная обработка событий\n\nИдемпотентность гарантирует, что обработка одного события дважды даёт тот же результат, что и один раз — критично, потому что брокеры сообщений могут переправлять события. Реализуйте, сохраняя ID событий в таблице и проверяя перед выполнением.\n\n```typescript\nasync function handleOrderCreated(event: OrderCreatedEvent): Promise<void> {\n  const exists = await db.query(\n    'SELECT 1 FROM processed_events WHERE event_id = $1', \n    [event.id]\n  );\n  if (exists.rowCount > 0) return; // Already processed\n  \n  await createOrderInReadModel(event);\n  await db.query(\n    'INSERT INTO processed_events (event_id) VALUES ($1)', \n    [event.id]\n  );\n}\n```\n\n**Типичная ошибка:** Предполагать естественно идемпотентные операции (вроде SET команд) без явной дедупликации — внешние побочные эффекты нуждаются в дедупликации."
+    },
+    "tags": [
+      "idempotency",
+      "event-deduplication",
+      "event-handling",
+      "message-delivery"
+    ]
+  },
+  {
+    "id": "event-driven-q-15",
+    "topicId": "event-driven",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do you handle event schema evolution without breaking consumers in a long-lived event stream? Discuss versioning strategies and compatibility.",
+      "ru": "Как обрабатывать эволюцию схемы событий без нарушения потребителей в долгоживущих потоках? Обсудите стратегии версионирования и совместимость."
+    },
+    "answer": {
+      "en": "### Event Schema Evolution\n\nUse semantic versioning and schema registries (e.g., Avro, Protobuf) to track schema changes. Support backward and forward compatibility by making new fields optional and deprecating old ones gracefully. Consumers handle multiple versions simultaneously or transform old events during replay.\n\n```typescript\ninterface OrderCreatedEvent {\n  version: number; // 1, 2, 3...\n  orderId: string;\n  customerId: string;\n  items: OrderItem[]; // Added in v2\n  totalAmount?: number; // Added in v3, optional for older\n}\n\nfunction normalizeEvent(event: OrderCreatedEvent): OrderCreatedEventV3 {\n  return {\n    ...event,\n    version: 3,\n    totalAmount: event.totalAmount || calculateTotal(event.items)\n  };\n}\n```\n\n**Common interview trap:** Treating schema evolution as only adding optional fields—deleting fields breaks old producers, and breaking changes require dual-write periods.",
+      "ru": "### Эволюция схемы событий\n\nИспользуйте семантическое версионирование и реестры схем (например, Avro, Protobuf) для отслеживания изменений. Поддерживайте обратную и прямую совместимость, делая новые поля опциональными и мягко удаляя старые. Потребители обрабатывают несколько версий одновременно или трансформируют старые события при воспроизведении.\n\n```typescript\ninterface OrderCreatedEvent {\n  version: number; // 1, 2, 3...\n  orderId: string;\n  customerId: string;\n  items: OrderItem[]; // Added in v2\n  totalAmount?: number; // Added in v3, optional for older\n}\n\nfunction normalizeEvent(event: OrderCreatedEvent): OrderCreatedEventV3 {\n  return {\n    ...event,\n    version: 3,\n    totalAmount: event.totalAmount || calculateTotal(event.items)\n  };\n}\n```\n\n**Типичная ошибка:** Рассмотрение эволюции схемы как только добавление опциональных полей — удаление полей нарушает старые производители, и критические изменения требуют периодов двойной записи."
+    },
+    "tags": [
+      "schema-evolution",
+      "event-versioning",
+      "backward-compatibility",
+      "schema-registry"
+    ]
+  }
+]

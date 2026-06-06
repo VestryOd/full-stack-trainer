@@ -1,1 +1,1298 @@
-[]
+[
+  {
+    "id": "postgresql-q-1",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a SELECT query that retrieves all users with their email addresses, ordered by creation date in descending order.",
+      "ru": "Напишите запрос SELECT, который получает всех пользователей с их адресами электронной почты, упорядоченные по дате создания в убывающем порядке."
+    },
+    "answer": {
+      "en": "### SELECT with ORDER BY\n\nThe SELECT statement retrieves data from a table. The ORDER BY clause sorts results by specified columns. DESC sorts in descending order (newest first), while ASC sorts ascending. You can order by multiple columns.\n\ntypescript\nconst query = `\n  SELECT id, name, email, created_at\n  FROM users\n  ORDER BY created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log(result.rows);\n\n\n**Common interview trap:** Forgetting to specify the column name after ORDER BY, or confusing DESC/ASC direction.",
+      "ru": "### SELECT с ORDER BY\n\nОператор SELECT извлекает данные из таблицы. Предложение ORDER BY сортирует результаты по указанным столбцам. DESC сортирует в убывающем порядке (новые в начале), ASC — в возрастающем. Можно сортировать по нескольким столбцам.\n\ntypescript\nconst query = `\n  SELECT id, name, email, created_at\n  FROM users\n  ORDER BY created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log(result.rows);\n\n\n**Типичная ошибка на интервью:** Забыть указать имя столбца после ORDER BY или перепутать направление DESC/ASC."
+    },
+    "tags": [
+      "SELECT",
+      "ORDER-BY",
+      "basic-queries"
+    ]
+  },
+  {
+    "id": "postgresql-q-2",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain PRIMARY KEY and FOREIGN KEY constraints. Why are they important in database design?",
+      "ru": "Объясните ограничения PRIMARY KEY и FOREIGN KEY. Почему они важны в проектировании баз данных?"
+    },
+    "answer": {
+      "en": "### PRIMARY KEY and FOREIGN KEY\n\nA PRIMARY KEY uniquely identifies each row in a table and cannot be NULL. It ensures data integrity by preventing duplicate records. A FOREIGN KEY references a PRIMARY KEY in another table, establishing relationships between tables and enforcing referential integrity.\n\ntypescript\nconst createUsers = `\n  CREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    name VARCHAR(255) NOT NULL\n  );\n`;\n\nconst createPosts = `\n  CREATE TABLE posts (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER NOT NULL,\n    title VARCHAR(255),\n    FOREIGN KEY (user_id) REFERENCES users(id)\n  );\n`;\n\nawait client.query(createUsers);\nawait client.query(createPosts);\n\n\n**Common interview trap:** Thinking FOREIGN KEY is optional—it's critical for data consistency and preventing orphaned records.",
+      "ru": "### PRIMARY KEY и FOREIGN KEY\n\nPRIMARY KEY уникально идентифицирует каждую строку в таблице и не может быть NULL. Это гарантирует целостность данных, предотвращая дублирующиеся записи. FOREIGN KEY ссылается на PRIMARY KEY в другой таблице, устанавливая связи между таблицами и обеспечивая ссылочную целостность.\n\ntypescript\nconst createUsers = `\n  CREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    name VARCHAR(255) NOT NULL\n  );\n`;\n\nconst createPosts = `\n  CREATE TABLE posts (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER NOT NULL,\n    title VARCHAR(255),\n    FOREIGN KEY (user_id) REFERENCES users(id)\n  );\n`;\n\nawait client.query(createUsers);\nawait client.query(createPosts);\n\n\n**Типичная ошибка на интервью:** Думать, что FOREIGN KEY опциональный—это критично для согласованности данных."
+    },
+    "tags": [
+      "PRIMARY-KEY",
+      "FOREIGN-KEY",
+      "constraints",
+      "data-integrity"
+    ]
+  },
+  {
+    "id": "postgresql-q-3",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write an INSERT query to add a new user to the database with name and email fields.",
+      "ru": "Напишите запрос INSERT для добавления нового пользователя в базу данных с полями name и email."
+    },
+    "answer": {
+      "en": "### INSERT Statement\n\nINSERT adds new rows to a table. You specify column names and corresponding values. Always specify columns explicitly for clarity and flexibility. The RETURNING clause returns inserted data, useful for getting generated IDs.\n\ntypescript\nconst query = `\n  INSERT INTO users (name, email)\n  VALUES ($1, $2)\n  RETURNING id, name, email, created_at;\n`;\n\nconst values = ['John Doe', 'john@example.com'];\nconst result = await client.query(query, values);\nconsole.log('Created user:', result.rows[0]);\n\n\n**Common interview trap:** Not using parameterized queries ($1, $2)—this leaves you vulnerable to SQL injection attacks.",
+      "ru": "### Оператор INSERT\n\nINSERT добавляет новые строки в таблицу. Вы указываете имена столбцов и соответствующие значения. Всегда явно указывайте столбцы для ясности и гибкости. Предложение RETURNING возвращает вставленные данные, полезно для получения созданных ID.\n\ntypescript\nconst query = `\n  INSERT INTO users (name, email)\n  VALUES ($1, $2)\n  RETURNING id, name, email, created_at;\n`;\n\nconst values = ['John Doe', 'john@example.com'];\nconst result = await client.query(query, values);\nconsole.log('Created user:', result.rows[0]);\n\n\n**Типичная ошибка на интервью:** Не использовать параметризованные запросы ($1, $2)—это уязвимо для SQL-инъекций."
+    },
+    "tags": [
+      "INSERT",
+      "basic-queries",
+      "parameterized-queries"
+    ]
+  },
+  {
+    "id": "postgresql-q-4",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using JOIN to get all posts with their corresponding user names and emails.",
+      "ru": "Напишите запрос с использованием JOIN для получения всех постов с соответствующими именами и адресами электронной почты пользователей."
+    },
+    "answer": {
+      "en": "### INNER JOIN\n\nJOIN combines rows from multiple tables based on a shared key. INNER JOIN returns only matching records from both tables. Use the ON clause to specify the join condition. LEFT JOIN would include unmatched records from the left table.\n\ntypescript\nconst query = `\n  SELECT p.id, p.title, p.content, u.name, u.email\n  FROM posts p\n  INNER JOIN users u ON p.user_id = u.id\n  ORDER BY p.created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts with authors:', result.rows);\n\n\n**Common interview trap:** Forgetting the ON clause or using incorrect column names in the join condition, causing syntax errors.",
+      "ru": "### INNER JOIN\n\nJOIN объединяет строки из нескольких таблиц на основе общего ключа. INNER JOIN возвращает только совпадающие записи из обеих таблиц. Используйте предложение ON для указания условия объединения. LEFT JOIN включал бы неопасные записи из левой таблицы.\n\ntypescript\nconst query = `\n  SELECT p.id, p.title, p.content, u.name, u.email\n  FROM posts p\n  INNER JOIN users u ON p.user_id = u.id\n  ORDER BY p.created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts with authors:', result.rows);\n\n\n**Типичная ошибка на интервью:** Забыть предложение ON или использовать неправильные имена столбцов в условии объединения."
+    },
+    "tags": [
+      "JOIN",
+      "INNER-JOIN",
+      "relationships"
+    ]
+  },
+  {
+    "id": "postgresql-q-5",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using WHERE and GROUP BY to count how many posts each user has created.",
+      "ru": "Напишите запрос с использованием WHERE и GROUP BY, чтобы подсчитать, сколько постов создал каждый пользователь."
+    },
+    "answer": {
+      "en": "### WHERE and GROUP BY\n\nWHERE filters rows before grouping. GROUP BY aggregates rows by specified columns. Use aggregate functions like COUNT(), SUM(), AVG() with GROUP BY. HAVING filters results after grouping, unlike WHERE which filters before.\n\ntypescript\nconst query = `\n  SELECT u.id, u.name, COUNT(p.id) as post_count\n  FROM users u\n  LEFT JOIN posts p ON u.id = p.user_id\n  WHERE u.created_at > NOW() - INTERVAL '1 year'\n  GROUP BY u.id, u.name\n  ORDER BY post_count DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts per user:', result.rows);\n\n\n**Common interview trap:** Forgetting to include non-aggregated columns in GROUP BY clause, causing errors.",
+      "ru": "### WHERE и GROUP BY\n\nWHERE фильтрует строки перед группировкой. GROUP BY агрегирует строки по указанным столбцам. Используйте функции агрегации как COUNT(), SUM(), AVG() с GROUP BY. HAVING фильтрует результаты после группировки, в отличие от WHERE.\n\ntypescript\nconst query = `\n  SELECT u.id, u.name, COUNT(p.id) as post_count\n  FROM users u\n  LEFT JOIN posts p ON u.id = p.user_id\n  WHERE u.created_at > NOW() - INTERVAL '1 year'\n  GROUP BY u.id, u.name\n  ORDER BY post_count DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts per user:', result.rows);\n\n\n**Типичная ошибка на интервью:** Забыть включить неагрегированные столбцы в GROUP BY."
+    },
+    "tags": [
+      "WHERE",
+      "GROUP-BY",
+      "aggregate-functions",
+      "filtering"
+    ]
+  },
+  {
+    "id": "postgresql-q-6",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write an UPDATE query to change a user's email address where the user ID matches a specific value.",
+      "ru": "Напишите запрос UPDATE для изменения адреса электронной почты пользователя, где ID пользователя совпадает с конкретным значением."
+    },
+    "answer": {
+      "en": "### UPDATE Statement\n\nUPDATE modifies existing records. Always use WHERE to target specific rows—without it, all rows are updated. Use parameterized queries to prevent SQL injection. RETURNING shows updated data.\n\ntypescript\nconst query = `\n  UPDATE users\n  SET email = $1, updated_at = NOW()\n  WHERE id = $2\n  RETURNING id, name, email, updated_at;\n`;\n\nconst values = ['newemail@example.com', 5];\nconst result = await client.query(query, values);\nconsole.log('Updated user:', result.rows[0]);\n\n\n**Common interview trap:** Forgetting WHERE clause—this updates ALL records instead of just one, causing data loss.",
+      "ru": "### Оператор UPDATE\n\nUPDATE изменяет существующие записи. Всегда используйте WHERE для целевых строк—без него обновляются все строки. Используйте параметризованные запросы. RETURNING показывает обновленные данные.\n\ntypescript\nconst query = `\n  UPDATE users\n  SET email = $1, updated_at = NOW()\n  WHERE id = $2\n  RETURNING id, name, email, updated_at;\n`;\n\nconst values = ['newemail@example.com', 5];\nconst result = await client.query(query, values);\nconsole.log('Updated user:', result.rows[0]);\n\n\n**Типичная ошибка на интервью:** Забыть WHERE—обновляются ВСЕ записи вместо одной."
+    },
+    "tags": [
+      "UPDATE",
+      "WHERE",
+      "basic-queries",
+      "data-modification"
+    ]
+  },
+  {
+    "id": "postgresql-q-7",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what indexes are and write a CREATE INDEX statement for a users table on the email column.",
+      "ru": "Объясните, что такое индексы, и напишите оператор CREATE INDEX для таблицы users на столбце email."
+    },
+    "answer": {
+      "en": "### Database Indexes\n\nIndexes speed up queries by creating a sorted data structure that allows faster lookups. They slow down INSERT/UPDATE/DELETE operations slightly since the index must also be updated. Create indexes on frequently queried columns like email, username, or IDs. UNIQUE indexes also enforce uniqueness.\n\ntypescript\nconst createIndex = `\n  CREATE INDEX idx_users_email ON users(email);\n`;\n\nconst createUniqueIndex = `\n  CREATE UNIQUE INDEX idx_users_email_unique ON users(email);\n`;\n\nawait client.query(createIndex);\nconsole.log('Index created successfully');\n\n\n**Common interview trap:** Creating too many indexes thinking they always help—they consume memory and slow mutations; use only on frequently queried columns.",
+      "ru": "### Индексы базы данных\n\nИндексы ускоряют запросы, создавая отсортированную структуру данных для более быстрого поиска. Они немного замедляют INSERT/UPDATE/DELETE, так как индекс также должен обновляться. Создавайте индексы на часто запрашиваемых столбцах. UNIQUE индексы также обеспечивают уникальность.\n\ntypescript\nconst createIndex = `\n  CREATE INDEX idx_users_email ON users(email);\n`;\n\nconst createUniqueIndex = `\n  CREATE UNIQUE INDEX idx_users_email_unique ON users(email);\n`;\n\nawait client.query(createIndex);\nconsole.log('Index created successfully');\n\n\n**Типичная ошибка на интервью:** Создавать слишком много индексов, думая они всегда помогают—они потребляют память и замедляют мутации."
+    },
+    "tags": [
+      "indexes",
+      "performance",
+      "CREATE-INDEX",
+      "UNIQUE"
+    ]
+  },
+  {
+    "id": "postgresql-q-8",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between B-tree and Hash indexes in PostgreSQL. When would you use each one?",
+      "ru": "Объясните различия между B-tree и Hash индексами в PostgreSQL. Когда использовать каждый из них?"
+    },
+    "answer": {
+      "en": "### Index Type Selection\n\nB-tree indexes are the default and support range queries (>, <, BETWEEN), sorting, and NULL handling. They work well for most use cases including equality checks. Hash indexes only support equality comparisons and are faster for exact matches but cannot be used in WHERE clauses with operators like > or <. Hash indexes don't support NULL values and cannot be used in ORDER BY clauses.\n\ntypescript\n// B-tree: supports range queries\nCREATE INDEX idx_age_btree ON users(age);\nSELECT * FROM users WHERE age > 18 AND age < 65;\n\n// Hash: only equality\nCREATE INDEX idx_email_hash ON users USING HASH(email);\nSELECT * FROM users WHERE email = 'user@example.com';\n\n\n**Common interview trap:** Candidates often think Hash indexes are always faster without considering that B-tree's versatility and NULL handling make it superior for most scenarios.",
+      "ru": "### Выбор типа индекса\n\nB-tree индексы используются по умолчанию и поддерживают диапазонные запросы (>, <, BETWEEN), сортировку и обработку NULL. Hash индексы поддерживают только проверку равенства и быстрее для точных совпадений, но не работают с операторами сравнения. Hash индексы не поддерживают NULL и не могут использоваться в ORDER BY.\n\ntypescript\n// B-tree: поддерживает диапазоны\nCREATE INDEX idx_age_btree ON users(age);\nSELECT * FROM users WHERE age > 18 AND age < 65;\n\n// Hash: только равенство\nCREATE INDEX idx_email_hash ON users USING HASH(email);\nSELECT * FROM users WHERE email = 'user@example.com';\n\n\n**Типичная ошибка на интервью:** Кандидаты думают, что Hash всегда быстрее, не учитывая универсальность B-tree и работу с NULL."
+    },
+    "tags": [
+      "btree-index",
+      "hash-index",
+      "index-types"
+    ]
+  },
+  {
+    "id": "postgresql-q-9",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are GIN and GiST indexes? Provide a practical use case for each.",
+      "ru": "Что такое GIN и GiST индексы? Приведите практический пример использования для каждого."
+    },
+    "answer": {
+      "en": "### Specialized Index Types\n\nGIN (Generalized Inverted Index) is optimized for full-text search and array containment queries. It's faster for searches but slower for inserts. GiST (Generalized Search Tree) is for spatial data, range types, and complex data structures. GiST is more flexible but slower than GIN for text search.\n\ntypescript\n// GIN: full-text search and arrays\nCREATE INDEX idx_tags_gin ON posts USING GIN(tags);\nSELECT * FROM posts WHERE tags @> ARRAY['postgresql'];\n\n// GiST: geometric data\nCREATE INDEX idx_location_gist ON places USING GiST(coordinates);\nSELECT * FROM places WHERE coordinates <-> point(0,0) < 10;\n\n\n**Common interview trap:** Confusing GIN and GiST performance characteristics. GIN is better for exact matches in arrays/text; GiST for range and geometric queries.",
+      "ru": "### Специализированные индексы\n\nGIN оптимизирован для полнотекстового поиска и проверки принадлежности к массивам. Быстро ищет, медленно вставляет. GiST для пространственных данных, диапазонов и сложных структур. GiST гибче, но медленнее GIN для текста.\n\ntypescript\n// GIN: полнотекстовый поиск и массивы\nCREATE INDEX idx_tags_gin ON posts USING GIN(tags);\nSELECT * FROM posts WHERE tags @> ARRAY['postgresql'];\n\n// GiST: геометрические данные\nCREATE INDEX idx_location_gist ON places USING GiST(coordinates);\nSELECT * FROM places WHERE coordinates <-> point(0,0) < 10;\n\n\n**Типичная ошибка на интервью:** Путаница в характеристиках производительности. GIN лучше для точного поиска в массивах; GiST для диапазонов и геометрии."
+    },
+    "tags": [
+      "gin-index",
+      "gist-index",
+      "specialized-indexes"
+    ]
+  },
+  {
+    "id": "postgresql-q-10",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you interpret EXPLAIN ANALYZE output? What does Buffer information tell you about query performance?",
+      "ru": "Как интерпретировать вывод EXPLAIN ANALYZE? Что информация о Buffer говорит о производительности запроса?"
+    },
+    "answer": {
+      "en": "### Query Plan Analysis\n\nEXPLAIN ANALYZE shows estimated vs actual rows, execution time, and buffer usage. Buffer statistics reveal disk I/O: Hits indicate cached reads, Reads indicate disk access. High ratio of Reads means missing indexes or inefficient joins. Look for Sequential Scans on large tables (bad), high actual rows vs estimated (missing statistics), and nested loop joins with large datasets.\n\ntypescript\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE user_id = 5;\n\n// Output interpretation:\n// Seq Scan (bad) vs Index Scan (good)\n// Buffers: shared hit=1000 read=50 (mostly cached)\n// Actual rows=100 vs Planned rows=95 (good estimation)\n\n\n**Common interview trap:** Missing that estimated rows >> actual rows indicates stale statistics. Run ANALYZE to update. Also, high read:hit ratio suggests missing indexes.",
+      "ru": "### Анализ плана запроса\n\nEXPLAIN ANALYZE показывает оценённые vs реальные строки, время выполнения и использование буфера. Buffer статистика раскрывает I/O: Hits - кэшированные чтения, Reads - доступ с диска. Высокое соотношение Reads означает отсутствие индексов. Ищите Sequential Scan больших таблиц (плохо), большую разницу в строках (устаревшая статистика).\n\ntypescript\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE user_id = 5;\n\n// Интерпретация:\n// Seq Scan (плохо) vs Index Scan (хорошо)\n// Buffers: shared hit=1000 read=50 (в основном кэш)\n// Actual rows=100 vs Planned rows=95 (точная оценка)\n\n\n**Типичная ошибка на интервью:** Не заметить, что оцененные строки >> реальные означают устаревшую статистику. Запустить ANALYZE для обновления."
+    },
+    "tags": [
+      "explain-analyze",
+      "query-optimization",
+      "buffer-io"
+    ]
+  },
+  {
+    "id": "postgresql-q-11",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe PostgreSQL's transaction isolation levels. When would you use READ UNCOMMITTED vs SERIALIZABLE?",
+      "ru": "Опишите уровни изоляции транзакций в PostgreSQL. Когда использовать READ UNCOMMITTED vs SERIALIZABLE?"
+    },
+    "answer": {
+      "en": "### Isolation Levels\n\nPostgreSQL has four levels: READ UNCOMMITTED (rarely used, treated as READ COMMITTED), READ COMMITTED (default), REPEATABLE READ, and SERIALIZABLE. READ COMMITTED allows dirty reads from other transactions. REPEATABLE READ prevents non-repeatable reads but allows phantom reads. SERIALIZABLE provides complete isolation. Choose SERIALIZABLE for financial transactions or strict consistency; READ COMMITTED for most web apps prioritizing throughput.\n\ntypescript\nBEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;\nSELECT balance FROM accounts WHERE id = 1;\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nCOMMIT;\n\nBEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n-- Slowest but safest for concurrent writes\nCOMMIT;\n\n\n**Common interview trap:** PostgreSQL's READ UNCOMMITTED behaves like READ COMMITTED. Many think it allows actual dirty reads, which is incorrect.",
+      "ru": "### Уровни изоляции\n\nПостгреSQL имеет четыре уровня: READ UNCOMMITTED (обрабатывается как READ COMMITTED), READ COMMITTED (по умолчанию), REPEATABLE READ и SERIALIZABLE. READ COMMITTED позволяет грязное чтение. SERIALIZABLE обеспечивает полную изоляцию. Используйте SERIALIZABLE для финансовых операций; READ COMMITTED для веб-приложений.\n\ntypescript\nBEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;\nSELECT balance FROM accounts WHERE id = 1;\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nCOMMIT;\n\nBEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n-- Самый безопасный, но медленный\nCOMMIT;\n\n\n**Типичная ошибка на интервью:** Думать, что READ UNCOMMITTED позволяет грязное чтение. На самом деле PostgreSQL обрабатывает его как READ COMMITTED."
+    },
+    "tags": [
+      "isolation-levels",
+      "transactions",
+      "concurrency"
+    ]
+  },
+  {
+    "id": "postgresql-q-12",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are window functions? Show an example of calculating running totals and ranking within partitions.",
+      "ru": "Что такое оконные функции? Покажите пример расчёта кумулятивной суммы и рейтинга в разделах."
+    },
+    "answer": {
+      "en": "### Window Functions\n\nWindow functions operate on a set of rows (window) and return a result for each row. They enable running totals, rankings, and comparisons without subqueries. ROW_NUMBER assigns unique ranks; RANK allows ties; SUM(OVER) calculates aggregates per partition. Use PARTITION BY to group rows and ORDER BY to sequence them.\n\ntypescript\nSELECT \n  employee_id,\n  salary,\n  ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) as rank,\n  SUM(salary) OVER (PARTITION BY department ORDER BY salary) as running_total\nFROM employees;\n\n// Output: rank per department, cumulative salary\n\n\n**Common interview trap:** Forgetting ORDER BY clause leads to incorrect window frame. Also, confusing RANK() with ROW_NUMBER() - RANK allows ties.",
+      "ru": "### Оконные функции\n\nОконные функции работают с набором строк (окном) и возвращают результат для каждой строки. ROW_NUMBER присваивает уникальные ранги; RANK разрешает связи; SUM(OVER) вычисляет агрегаты по разделам. PARTITION BY группирует строки, ORDER BY упорядочивает.\n\ntypescript\nSELECT \n  employee_id,\n  salary,\n  ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) as rank,\n  SUM(salary) OVER (PARTITION BY department ORDER BY salary) as running_total\nFROM employees;\n\n// Вывод: ранг по отделам, кумулятивная зарплата\n\n\n**Типичная ошибка на интервью:** Забыть ORDER BY приводит к неправильному окну. Путаница между RANK и ROW_NUMBER - первый разрешает связи."
+    },
+    "tags": [
+      "window-functions",
+      "ranking",
+      "running-totals"
+    ]
+  },
+  {
+    "id": "postgresql-q-13",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain Common Table Expressions (CTEs). When should you use recursive CTEs vs non-recursive?",
+      "ru": "Объясните Common Table Expressions (CTE). Когда использовать рекурсивные CTE против обычных?"
+    },
+    "answer": {
+      "en": "### Common Table Expressions\n\nCTEs (WITH clause) improve readability by breaking complex queries into named subqueries. Non-recursive CTEs are simpler and optimize joins by materializing intermediate results. Recursive CTEs traverse hierarchical data (org charts, trees) by combining base and recursive queries. Use non-recursive for clarity and performance; recursive for graph/tree traversal.\n\ntypescript\n// Non-recursive: clarity\nWITH high_earners AS (\n  SELECT * FROM employees WHERE salary > 100000\n)\nSELECT * FROM high_earners WHERE department = 'sales';\n\n// Recursive: hierarchies\nWITH RECURSIVE org_tree AS (\n  SELECT id, name, manager_id FROM employees WHERE manager_id IS NULL\n  UNION ALL\n  SELECT e.id, e.name, e.manager_id FROM employees e\n  JOIN org_tree ot ON e.manager_id = ot.id\n)\nSELECT * FROM org_tree;\n\n\n**Common interview trap:** Recursive CTEs without proper termination condition cause infinite loops. Always ensure base case exits.",
+      "ru": "### Общие табличные выражения\n\nCTE (WITH) улучшают читаемость, разбивая сложные запросы на именованные подзапросы. Обычные CTE проще и оптимизируют соединения. Рекурсивные CTE проходят иерархические данные (орг-структура, деревья).\n\ntypescript\n// Обычный: читаемость\nWITH high_earners AS (\n  SELECT * FROM employees WHERE salary > 100000\n)\nSELECT * FROM high_earners WHERE department = 'sales';\n\n// Рекурсивный: иерархии\nWITH RECURSIVE org_tree AS (\n  SELECT id, name, manager_id FROM employees WHERE manager_id IS NULL\n  UNION ALL\n  SELECT e.id, e.name, e.manager_id FROM employees e\n  JOIN org_tree ot ON e.manager_id = ot.id\n)\nSELECT * FROM org_tree;\n\n\n**Типичная ошибка на интервью:** Рекурсивные CTE без условия завершения вызывают бесконечные циклы. Всегда проверяйте выход базового случая."
+    },
+    "tags": [
+      "cte",
+      "recursive-cte",
+      "query-structure"
+    ]
+  },
+  {
+    "id": "postgresql-q-14",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you work with JSONB data in PostgreSQL? Show indexing and query examples.",
+      "ru": "Как работать с JSONB данными в PostgreSQL? Покажите примеры индексирования и запросов."
+    },
+    "answer": {
+      "en": "### JSONB Operations\n\nJSONB stores JSON as binary, enabling efficient querying and indexing. Use @> operator for containment checks, -> for object access, ->> for text access. GIN indexes accelerate searches on JSONB columns. Extract nested values with ->'key' chains. JSONB is superior to JSON for production use due to faster operations and better indexing.\n\ntypescript\n// Table with JSONB\nCREATE TABLE products (\n  id SERIAL,\n  data JSONB\n);\nCREATE INDEX idx_data_jsonb ON products USING GIN(data);\n\n// Queries\nSELECT * FROM products WHERE data @> '{\"color\": \"red\"}';\nSELECT data->'specs'->>'weight' FROM products;\nSELECT jsonb_keys(data) FROM products;\n\n\n**Common interview trap:** Forgetting GIN index for JSONB performance. Without indexing, containment checks scan entire table.",
+      "ru": "### Операции с JSONB\n\nJSONB хранит JSON в бинарной форме, позволяя эффективные запросы и индексирование. Оператор @> для проверки содержимого, -> для доступа к объекту, ->> для текста. GIN индексы ускоряют поиск по JSONB. JSONB быстрее JSON для production.\n\ntypescript\n// Таблица с JSONB\nCREATE TABLE products (\n  id SERIAL,\n  data JSONB\n);\nCREATE INDEX idx_data_jsonb ON products USING GIN(data);\n\n// Запросы\nSELECT * FROM products WHERE data @> '{\"color\": \"red\"}';\nSELECT data->'specs'->>'weight' FROM products;\nSELECT jsonb_keys(data) FROM products;\n\n\n**Типичная ошибка на интервью:** Забыть GIN индекс для производительности. Без индекса проверка содержимого сканирует всю таблицу."
+    },
+    "tags": [
+      "jsonb",
+      "jsonb-operations",
+      "jsonb-indexing"
+    ]
+  },
+  {
+    "id": "postgresql-q-15",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain PRIMARY KEY, UNIQUE, CHECK, and FOREIGN KEY constraints. How do they enforce data integrity?",
+      "ru": "Объясните PRIMARY KEY, UNIQUE, CHECK и FOREIGN KEY ограничения. Как они обеспечивают целостность данных?"
+    },
+    "answer": {
+      "en": "### Constraints Overview\n\nPRIMARY KEY ensures uniqueness and non-null values, creating implicit index. UNIQUE allows one NULL but enforces uniqueness otherwise. CHECK validates data against expressions (e.g., age > 0). FOREIGN KEY maintains referential integrity between tables. Constraints are enforced at database level, preventing invalid data from being inserted regardless of application logic.\n\ntypescript\nCREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR UNIQUE NOT NULL,\n  age INT CHECK (age >= 18),\n  role_id INT REFERENCES roles(id) ON DELETE CASCADE\n);\n\n// Violation examples:\n// INSERT with duplicate email fails (UNIQUE)\n// INSERT with age=15 fails (CHECK)\n// INSERT invalid role_id fails (FOREIGN KEY)\n\n\n**Common interview trap:** Thinking UNIQUE prevents all duplicates. It actually allows NULL - multiple NULLs can exist. PRIMARY KEY is always NOT NULL.",
+      "ru": "### Обзор ограничений\n\nPRIMARY KEY обеспечивает уникальность и не-NULL значения. UNIQUE разрешает один NULL, но требует уникальности. CHECK проверяет данные против выражений. FOREIGN KEY поддерживает ссылочную целостность между таблицами. Ограничения на уровне БД, предотвращая неверные данные.\n\ntypescript\nCREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR UNIQUE NOT NULL,\n  age INT CHECK (age >= 18),\n  role_id INT REFERENCES roles(id) ON DELETE CASCADE\n);\n\n// Примеры нарушений:\n// Дубликат email - ошибка (UNIQUE)\n// age=15 - ошибка (CHECK)\n// Неверный role_id - ошибка (FOREIGN KEY)\n\n\n**Типичная ошибка на интервью:** UNIQUE позволяет несколько NULL. PRIMARY KEY всегда NOT NULL."
+    },
+    "tags": [
+      "constraints",
+      "primary-key",
+      "foreign-key",
+      "data-integrity"
+    ]
+  },
+  {
+    "id": "postgresql-q-16",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you optimize a slow query with missing indexes? Walk through the debugging process.",
+      "ru": "Как оптимизировать медленный запрос с отсутствующими индексами? Проведите процесс отладки."
+    },
+    "answer": {
+      "en": "### Query Optimization Process\n\n1. Run EXPLAIN ANALYZE to identify bottlenecks. 2. Look for Sequential Scans on large tables - add indexes. 3. Check estimated vs actual rows; if vastly different, run ANALYZE to update statistics. 4. Verify joins use index scans, not nested loops. 5. Create indexes on WHERE clause columns and join keys. 6. Test impact with EXPLAIN before and after.\n\ntypescript\n// Problem: slow query\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE user_id = 5 AND status = 'pending';\n\n// Solution: add indexes\nCREATE INDEX idx_orders_user_status ON orders(user_id, status);\n\n// Verify improvement\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE user_id = 5 AND status = 'pending';\n\n\n**Common interview trap:** Adding too many indexes. Each index slows writes. Prioritize WHERE, JOIN, and ORDER BY columns. Monitor with pg_stat_user_indexes.",
+      "ru": "### Процесс оптимизации\n\n1. EXPLAIN ANALYZE показывает узкие места. 2. Seq Scan на больших таблицах - добавить индексы. 3. Оценённые vs реальные строки; запустить ANALYZE для обновления статистики. 4. Соединения должны использовать Index Scan. 5. Индексы на столбцах WHERE и ключах соединения. 6. Проверить улучшение перед и после.\n\ntypescript\n// Проблема: медленный запрос\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE user_id = 5 AND status = 'pending';\n\n// Решение: добавить индексы\nCREATE INDEX idx_orders_user_status ON orders(user_id, status);\n\n// Проверить улучшение\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE user_id = 5 AND status = 'pending';\n\n\n**Типичная ошибка на интервью:** Добавлять слишком много индексов. Каждый замедляет запись. Приоритет: WHERE, JOIN, ORDER BY."
+    },
+    "tags": [
+      "query-optimization",
+      "explain-analyze",
+      "indexing-strategy"
+    ]
+  },
+  {
+    "id": "postgresql-q-17",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the differences between UPDATE with JOIN vs subquery approaches? Which is more efficient?",
+      "ru": "Каковы различия между UPDATE с JOIN и подзапросом? Какой подход эффективнее?"
+    },
+    "answer": {
+      "en": "### UPDATE Strategies\n\nUPDATE with JOIN directly references tables, using indexes effectively. Subquery approach uses IN/EXISTS, which may require scanning the subquery result set multiple times. JOIN is generally more efficient as PostgreSQL optimizes table access. Always use EXPLAIN ANALYZE to compare. JOIN is preferred for large datasets; subquery acceptable for small result sets.\n\ntypescript\n// UPDATE with JOIN (preferred)\nUPDATE users u\nSET status = 'active'\nFROM orders o\nWHERE u.id = o.user_id AND o.amount > 1000;\n\n// UPDATE with subquery\nUPDATE users\nSET status = 'active'\nWHERE id IN (SELECT user_id FROM orders WHERE amount > 1000);\n\n// Test with EXPLAIN ANALYZE before deploying\n\n\n**Common interview trap:** Assuming IN subqueries are slower without testing. Modern PostgreSQL optimizes many subqueries well. Always verify with EXPLAIN.",
+      "ru": "### Стратегии UPDATE\n\nUPDATE с JOIN прямо ссылается на таблицы, эффективно используя индексы. Подзапрос может требовать несколько сканирований. JOIN обычно эффективнее. Используйте EXPLAIN ANALYZE для сравнения.\n\ntypescript\n// UPDATE с JOIN (предпочтительно)\nUPDATE users u\nSET status = 'active'\nFROM orders o\nWHERE u.id = o.user_id AND o.amount > 1000;\n\n// UPDATE с подзапросом\nUPDATE users\nSET status = 'active'\nWHERE id IN (SELECT user_id FROM orders WHERE amount > 1000);\n\n// Проверить с EXPLAIN перед развёртыванием\n\n\n**Типичная ошибка на интервью:** Предполагать IN медленнее без тестирования. Современный PostgreSQL хорошо оптимизирует. Всегда проверяйте EXPLAIN."
+    },
+    "tags": [
+      "update-optimization",
+      "join-subquery",
+      "query-performance"
+    ]
+  },
+  {
+    "id": "postgresql-q-28",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the difference between PostgreSQL stored procedures and functions. When would you use one over the other?",
+      "ru": "Объясните разницу между хранимыми процедурами и функциями в PostgreSQL. Когда использовать одно вместо другого?"
+    },
+    "answer": {
+      "en": "### Procedures vs Functions\n\nFunctions return values and are used in SELECT statements or expressions. Procedures don't return values but support transaction control (COMMIT/ROLLBACK) via CALL. Functions run in the same transaction as caller; procedures can manage their own transactions. Use functions for computations and data retrieval; use procedures for multi-step business logic requiring transaction management.\n\nFunctions can be used in expressions; procedures cannot. Procedures provide better encapsulation for complex workflows.\n\ntypescript\n// Function - returns value\nCREATE FUNCTION add(a INT, b INT) RETURNS INT AS $$\nBEGIN\n  RETURN a + b;\nEND;\n$$ LANGUAGE plpgsql;\n\nSELECT add(5, 3); -- Works\n\n// Procedure - no return value, transaction control\nCREATE PROCEDURE process_order(order_id INT) AS $$\nBEGIN\n  UPDATE orders SET status = 'processing' WHERE id = order_id;\n  COMMIT;\nEND;\n$$ LANGUAGE plpgsql;\n\nCALL process_order(1); -- Must use CALL\n\n\n**Common interview trap:** Candidates forget procedures support COMMIT/ROLLBACK while functions don't, or try to use procedures in SELECT statements.",
+      "ru": "### Процедуры vs Функции\n\nФункции возвращают значения и используются в SELECT. Процедуры не возвращают значения, но поддерживают управление транзакциями (COMMIT/ROLLBACK) через CALL. Функции выполняются в той же транзакции что и вызывающий код; процедуры могут управлять своими транзакциями. Используйте функции для вычислений; процедуры для сложной бизнес-логики.\n\nФункции работают в выражениях; процедуры нет. Процедуры обеспечивают лучшую инкапсуляцию.\n\ntypescript\n// Функция - возвращает значение\nCREATE FUNCTION add(a INT, b INT) RETURNS INT AS $$\nBEGIN\n  RETURN a + b;\nEND;\n$$ LANGUAGE plpgsql;\n\nSELECT add(5, 3);\n\n// Процедура - управление транзакциями\nCREATE PROCEDURE process_order(order_id INT) AS $$\nBEGIN\n  UPDATE orders SET status = 'processing' WHERE id = order_id;\n  COMMIT;\nEND;\n$$ LANGUAGE plpgsql;\n\nCALL process_order(1);\n\n\n**Типичная ошибка:** Кандидаты забывают, что процедуры поддерживают COMMIT, а функции нет."
+    },
+    "tags": [
+      "stored-procedures",
+      "functions",
+      "transaction-control"
+    ]
+  },
+  {
+    "id": "postgresql-q-29",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What are PostgreSQL triggers and how do they differ from constraints? Describe a scenario where a trigger is better than a constraint.",
+      "ru": "Что такое триггеры PostgreSQL и чем они отличаются от ограничений? Опишите сценарий, где триггер лучше, чем ограничение."
+    },
+    "answer": {
+      "en": "### Triggers vs Constraints\n\nConstraints enforce data integrity at the database level (PRIMARY KEY, UNIQUE, CHECK). Triggers execute custom logic before/after DML operations (INSERT, UPDATE, DELETE). Constraints are faster and simpler; triggers add flexibility but overhead.\n\nUse triggers when you need conditional logic, complex validation, cascading updates, or logging. For example, automatically updating an updated_at timestamp, preventing overlapping time slots, or maintaining denormalized data. Constraints handle simple rules; triggers handle complex business logic.\n\ntypescript\n// Constraint - simple\nALTER TABLE users ADD CONSTRAINT age_check CHECK (age >= 18);\n\n// Trigger - complex logic\nCREATE TRIGGER update_timestamp BEFORE UPDATE ON users\nFOR EACH ROW\nBEGIN\n  NEW.updated_at = NOW();\n  RETURN NEW;\nEND LANGUAGE plpgsql;\n\n// Trigger example: prevent overlapping bookings\nCREATE TRIGGER check_booking_overlap BEFORE INSERT ON bookings\nFOR EACH ROW\nEXECUTE FUNCTION validate_no_overlap();\n\n\n**Common interview trap:** Candidates overuse triggers instead of simple constraints, causing performance issues and maintenance nightmares.",
+      "ru": "### Триггеры vs Ограничения\n\nОграничения обеспечивают целостность данных (PRIMARY KEY, UNIQUE, CHECK). Триггеры выполняют пользовательскую логику перед/после DML операций. Ограничения быстрее; триггеры дают гибкость.\n\nИспользуйте триггеры для условной логики, сложной валидации, каскадных обновлений или логирования. Например, автоматическое обновление updated_at, предотвращение пересечения слотов времени. Ограничения для простых правил; триггеры для сложной логики.\n\ntypescript\n// Ограничение\nALTER TABLE users ADD CONSTRAINT age_check CHECK (age >= 18);\n\n// Триггер - сложная логика\nCREATE TRIGGER update_timestamp BEFORE UPDATE ON users\nFOR EACH ROW\nBEGIN\n  NEW.updated_at = NOW();\n  RETURN NEW;\nEND LANGUAGE plpgsql;\n\n// Триггер: предотвращение перекрытия\nCREATE TRIGGER check_booking_overlap BEFORE INSERT ON bookings\nFOR EACH ROW\nEXECUTE FUNCTION validate_no_overlap();\n\n\n**Типичная ошибка:** Кандидаты перегружают приложение триггерами вместо простых ограничений."
+    },
+    "tags": [
+      "triggers",
+      "constraints",
+      "business-logic"
+    ]
+  },
+  {
+    "id": "postgresql-q-30",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do custom types and domains enhance data modeling in PostgreSQL? Provide an example of each.",
+      "ru": "Как пользовательские типы и домены улучшают моделирование данных в PostgreSQL? Приведите пример каждого."
+    },
+    "answer": {
+      "en": "### Custom Types and Domains\n\nDomains are constraints on base types with validation rules. Custom composite types group related fields. Domains reuse validation logic; types reuse structure. Domains are simpler for validation; types are better for complex structures.\n\nDomains validate data (EMAIL domain ensures format). Composite types create structured records (ADDRESS type containing street, city, zip). Use domains for semantic types; use composite types for multi-field structures.\n\ntypescript\n// Domain - validation wrapper\nCREATE DOMAIN email AS VARCHAR(255) CHECK (VALUE ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$');\n\nCREATE TABLE users (id INT, contact_email email);\nINSERT INTO users VALUES (1, 'invalid'); -- Fails validation\n\n// Composite type - structure\nCREATE TYPE address AS (\n  street VARCHAR(255),\n  city VARCHAR(100),\n  zip_code VARCHAR(10)\n);\n\nCREATE TABLE companies (\n  id INT,\n  headquarters address\n);\n\nINSERT INTO companies VALUES (1, ('123 Main St', 'NYC', '10001'));\n\n\n**Common interview trap:** Confusing domains with types; domains validate, types structure. Overusing domains when NOT NULL + CHECK would suffice.",
+      "ru": "### Пользовательские типы и домены\n\nДомены - это ограничения базовых типов с правилами валидации. Составные типы группируют связанные поля. Домены повторно используют валидацию; типы повторно используют структуру.\n\nДомены валидируют данные; составные типы создают структурированные записи. Используйте домены для семантических типов; типы для многополевых структур.\n\ntypescript\n// Домен - обертка валидации\nCREATE DOMAIN email AS VARCHAR(255) \nCHECK (VALUE ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$');\n\nCREATE TABLE users (id INT, contact_email email);\n\n// Составной тип - структура\nCREATE TYPE address AS (\n  street VARCHAR(255),\n  city VARCHAR(100),\n  zip_code VARCHAR(10)\n);\n\nCREATE TABLE companies (id INT, headquarters address);\nINSERT INTO companies VALUES (1, ('123 Main St', 'NYC', '10001'));\n\n\n**Типичная ошибка:** Путаница между доменами и типами. Переиспользование доменов когда достаточно CHECK."
+    },
+    "tags": [
+      "custom-types",
+      "domains",
+      "data-modeling"
+    ]
+  },
+  {
+    "id": "postgresql-q-31",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain PostgreSQL Row-Level Security (RLS) and how it's used to implement multi-tenant architectures.",
+      "ru": "Объясните Row-Level Security (RLS) в PostgreSQL и как его использовать для мультитенантных архитектур."
+    },
+    "answer": {
+      "en": "### Row-Level Security (RLS)\n\nRLS enforces access control at the row level using policies. Policies filter rows based on user context (current_user, session variables). Enable RLS on tables; define policies for SELECT, INSERT, UPDATE, DELETE. Each policy contains USING clause (visibility) and WITH CHECK clause (modification).\n\nFor multi-tenant: use tenant_id column, store tenant in session variable, filter all queries by tenant. Policies transparently restrict data access. This prevents accidental data leakage and simplifies application code.\n\ntypescript\n// Enable RLS\nALTER TABLE posts ENABLE ROW LEVEL SECURITY;\n\n// Set tenant context\nSET app.current_tenant_id = '123';\n\n// Create policy\nCREATE POLICY tenant_policy ON posts\nFOR ALL\nUSING (tenant_id = current_setting('app.current_tenant_id')::INT)\nWITH CHECK (tenant_id = current_setting('app.current_tenant_id')::INT);\n\n-- Now SELECT automatically filters by tenant\nSELECT * FROM posts; -- Only tenant 123's posts\n\n\n**Common interview trap:** Forgetting RLS is checked even with superuser (unless bypassed). Not setting context variables before queries causes security breaches.",
+      "ru": "### Row-Level Security (RLS)\n\nRLS обеспечивает контроль доступа на уровне строк с помощью политик. Политики фильтруют строки по контексту пользователя. Включите RLS на таблице; определите политики для SELECT, INSERT, UPDATE, DELETE.\n\nДля мультитенантности: используйте столбец tenant_id, сохраняйте тенанта в переменной сессии, фильтруйте все запросы. Политики прозрачно ограничивают доступ.\n\ntypescript\n// Включить RLS\nALTER TABLE posts ENABLE ROW LEVEL SECURITY;\n\n// Установить контекст тенанта\nSET app.current_tenant_id = '123';\n\n// Создать политику\nCREATE POLICY tenant_policy ON posts\nFOR ALL\nUSING (tenant_id = current_setting('app.current_tenant_id')::INT)\nWITH CHECK (tenant_id = current_setting('app.current_tenant_id')::INT);\n\nSELECT * FROM posts; -- Только посты тенанта 123\n\n\n**Типичная ошибка:** Забывают установить переменную контекста, что приводит к утечке данных."
+    },
+    "tags": [
+      "row-level-security",
+      "multi-tenancy",
+      "access-control"
+    ]
+  },
+  {
+    "id": "postgresql-q-32",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What is logical replication in PostgreSQL and how does it differ from physical replication? When would you use pg_logical?",
+      "ru": "Что такое логическая репликация в PostgreSQL и чем она отличается от физической? Когда использовать pg_logical?"
+    },
+    "answer": {
+      "en": "### Logical vs Physical Replication\n\nPhysical replication copies byte-for-byte WAL records, requiring identical PostgreSQL versions and architectures. Logical replication sends decoded DML changes (INSERT/UPDATE/DELETE), allowing different versions, selective table replication, and cross-database syncing.\n\nPhysical replication is faster but less flexible. Logical replication is slower but enables selective replication, version upgrades, and heterogeneous systems. pg_logical is the logical decoding framework using output plugins (test_decoding, wal2json). Use logical replication for change data capture, multi-version clusters, or sending data to different systems.\n\ntypescript\n// Enable logical replication\nALTER SYSTEM SET wal_level = logical;\nALTER SYSTEM SET max_wal_senders = 10;\n\n-- Create publication (source)\nCREATE PUBLICATION my_pub FOR TABLE orders, customers;\n\n-- Create subscription (target)\nCREATE SUBSCRIPTION my_sub CONNECTION 'host=source'\nPUBLICATION my_pub;\n\n-- Verify replication\nSELECT * FROM pg_stat_replication;\n\n\n**Common interview trap:** Confusing replication purpose - logical for CDC and selective sync, physical for HA/DR standbys.",
+      "ru": "### Логическая vs Физическая репликаци��\n\nФизическая репликация копирует WAL байт-в-байт, требует одинаковых версий. Логическая отправляет декодированные DML изменения, позволяет разные версии и выборочную репликацию.\n\nФизическая быстрее; логическая гибче. pg_logical - это фреймворк логического декодирования. Используйте для CDC, обновления версий или гетерогенных систем.\n\ntypescript\n// Включить логическую репликацию\nALTER SYSTEM SET wal_level = logical;\nALTER SYSTEM SET max_wal_senders = 10;\n\n-- Создать публикацию\nCREATE PUBLICATION my_pub FOR TABLE orders, customers;\n\n-- Создать подписку\nCREATE SUBSCRIPTION my_sub CONNECTION 'host=source'\nPUBLICATION my_pub;\n\n-- Проверить\nSELECT * FROM pg_stat_replication;\n\n\n**Типичная ошибка:** Путаница между логической репликацией для CDC и физической для HA."
+    },
+    "tags": [
+      "logical-replication",
+      "physical-replication",
+      "change-data-capture"
+    ]
+  },
+  {
+    "id": "postgresql-q-33",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the Write-Ahead Log (WAL) and its role in PostgreSQL durability and recovery. How does it affect performance?",
+      "ru": "Объясните Write-Ahead Log (WAL) и его роль в долговечности и восстановлении PostgreSQL. Как это влияет на производительность?"
+    },
+    "answer": {
+      "en": "### Write-Ahead Log (WAL)\n\nWAL ensures durability: changes are written to log before data files. On crash, replay WAL to recover. WAL enables point-in-time recovery, replication, and backup.\n\nWAL impacts performance through fsync cost (synchronous writes are slower). Tune wal_buffers, checkpoint settings, and wal_compression. Batch writes via group commit. WAL is mandatory for durability but can be tuned. High-performance systems use async commits with acceptable data loss risk.\n\ntypescript\n// Check WAL configuration\nSHOW wal_level; -- Must be 'replica' or 'logical' for replication\nSHOW wal_buffers; -- Default 16MB\nSHOW checkpoint_timeout; -- Default 5min\n\n// Performance tuning\nALTER SYSTEM SET wal_compression = on; -- Reduce WAL size\nALTER SYSTEM SET wal_buffers = '64MB'; -- Larger buffer\nALTER SYSTEM SET synchronous_commit = 'off'; -- Faster but risky\n\nSELECT * FROM pg_stat_wal;\n\n\n**Common interview trap:** Thinking WAL can be disabled for speed. It can't - it's required for crash recovery. Only synchronous_commit can be tuned.",
+      "ru": "### Write-Ahead Log (WAL)\n\nWAL гарантирует долговечность: изменения пишутся в лог перед файлами данных. При сбое WAL воспроизводится для восстановления. Включает point-in-time recovery и репликацию.\n\nWAL влияет на производительность через fsync. Настраивайте wal_buffers, checkpoint, wal_compression. Используйте group commit. WAL обязателен для долговечности.\n\ntypescript\n// Проверить WAL конфигурацию\nSHOW wal_level;\nSHOW wal_buffers;\nSHOW checkpoint_timeout;\n\n// Настройка производительности\nALTER SYSTEM SET wal_compression = on;\nALTER SYSTEM SET wal_buffers = '64MB';\nALTER SYSTEM SET synchronous_commit = 'off';\n\nSELECT * FROM pg_stat_wal;\n\n\n**Типичная ошибка:** Думают что WAL можно отключить для скорости. Нельзя - он нужен для восстановления."
+    },
+    "tags": [
+      "write-ahead-log",
+      "durability",
+      "performance-tuning",
+      "recovery"
+    ]
+  },
+  {
+    "id": "postgresql-q-34",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How would you use pg_vector extension for vector similarity search? Describe indexing strategies and use cases.",
+      "ru": "Как использовать расширение pg_vector для поиска по векторному сходству? Опишите стратегии индексирования и примеры использования."
+    },
+    "answer": {
+      "en": "### pg_vector Extension\n\npg_vector stores embeddings (vectors from ML models) and performs similarity search. Supports L2, cosine, inner product distances. Create VECTOR columns, index with ivfflat or hnsw. Use for semantic search, recommendations, duplicate detection.\n\nIVFFLAT is faster approximate search (good for large datasets). HNSW provides better recall. Index creation is expensive. Use probes/ef_search parameters to tune accuracy vs speed. Common use: embedding product descriptions, finding similar items.\n\ntypescript\n-- Install extension\nCREATE EXTENSION vector;\n\n-- Create table with vector column\nCREATE TABLE products (\n  id INT PRIMARY KEY,\n  name TEXT,\n  embedding vector(1536) -- OpenAI embedding size\n);\n\n-- Index for similarity search\nCREATE INDEX ON products USING ivfflat (embedding vector_cosine_ops)\nWITH (lists = 100);\n\n-- Similarity search\nSELECT name, embedding <=> query_embedding AS distance\nFROM products\nORDER BY embedding <=> query_embedding\nLIMIT 10;\n\n\n**Common interview trap:** Confusing vector similarity with full-text search. Vectors capture semantic meaning; text search is lexical. High-dimensional vectors need proper indexing.",
+      "ru": "### pg_vector Расширение\n\npg_vector хранит эмбеддинги (векторы из ML моделей) и выполняет поиск по сходству. Поддерживает L2, cosine, inner product расстояния. Используйте ivfflat или hnsw индексы.\n\nIVFFLAT для приблизительного поиска (больших датасетов). HNSW лучше для полноты. Полезно для семантического поиска, рекомендаций, дублей.\n\ntypescript\n-- Установить расширение\nCREATE EXTENSION vector;\n\n-- Таблица с векторной колоной\nCREATE TABLE products (\n  id INT PRIMARY KEY,\n  name TEXT,\n  embedding vector(1536)\n);\n\n-- Индекс для поиска\nCREATE INDEX ON products USING ivfflat (embedding vector_cosine_ops)\nWITH (lists = 100);\n\n-- Поиск по сходству\nSELECT name, embedding <=> query_embedding AS distance\nFROM products\nORDER BY embedding <=> query_embedding\nLIMIT 10;\n\n\n**Типичная ошибка:** Путаница между вектором и полнотекстовым поиском. Векторы семантические; текст лексический."
+    },
+    "tags": [
+      "pg-vector",
+      "embeddings",
+      "similarity-search",
+      "machine-learning"
+    ]
+  },
+  {
+    "id": "postgresql-q-35",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What are PostGIS spatial data types and how are they used? Provide an example of a distance query.",
+      "ru": "Что такое пространственные типы данных PostGIS и как их использовать? Приведите пример запроса расстояния."
+    },
+    "answer": {
+      "en": "### PostGIS Spatial Types\n\nPostGIS adds geometric types: POINT (coordinates), LINESTRING (path), POLYGON (area), MULTIPOINT, etc. Store geographic/geometric data. Query distances, containment, intersections. Essential for maps, location services, geospatial analytics.\n\nUse GEOGRAPHY for Earth surface (handles distance correctly); GEOMETRY for flat planes. Create GIST/BRIN indexes for spatial efficiency. Common operations: distance between points, points within polygon, nearest neighbors.\n\ntypescript\n-- Install PostGIS\nCREATE EXTENSION postgis;\n\n-- Create table with location\nCREATE TABLE restaurants (\n  id INT PRIMARY KEY,\n  name TEXT,\n  location GEOGRAPHY(POINT, 4326) -- SRID 4326 = WGS84\n);\n\n-- Add sample data\nINSERT INTO restaurants VALUES \n  (1, 'Café A', 'POINT(-73.9857 40.7484)'),\n  (2, 'Café B', 'POINT(-73.9900 40.7505)');\n\n-- Create spatial index\nCREATE INDEX ON restaurants USING GIST (location);\n\n-- Distance query (in meters)\nSELECT name, ST_Distance(location, 'POINT(-73.9857 40.7484)') AS distance_m\nFROM restaurants\nORDER BY location <-> 'POINT(-73.9857 40.7484)'\nLIMIT 5;\n\n\n**Common interview trap:** Using GEOMETRY when GEOGRAPHY is needed - distances are incorrect on curved Earth surface.",
+      "ru": "### PostGIS Пространственные типы\n\nPostGIS добавляет геометрические типы: POINT, LINESTRING, POLYGON и другие. Хранит географические данные. Запросы расстояния, пересечения. Необходимо для карт и геоаналитики.\n\nИспользуйте GEOGRAPHY для Земли; GEOMETRY для плоскости. GIST/BRIN индексы для эффективности. Операции: расстояние между точками, точки внутри полигона.\n\ntypescript\n-- Установить PostGIS\nCREATE EXTENSION postgis;\n\n-- Таблица с локацией\nCREATE TABLE restaurants (\n  id INT PRIMARY KEY,\n  name TEXT,\n  location GEOGRAPHY(POINT, 4326)\n);\n\n-- Примеры данных\nINSERT INTO restaurants VALUES \n  (1, 'Café A', 'POINT(-73.9857 40.7484)'),\n  (2, 'Café B', 'POINT(-73.9900 40.7505)');\n\n-- Пространственный индекс\nCREATE INDEX ON restaurants USING GIST (location);\n\n-- Поиск расстояния\nSELECT name, ST_Distance(location, 'POINT(-73.9857 40.7484)') AS distance_m\nFROM restaurants\nORDER BY location <-> 'POINT(-73.9857 40.7484)'\nLIMIT 5;\n\n\n**Типичная ошибка:** Используют GEOMETRY вместо GEOGRAPHY - расстояния неправильные на земной поверхности."
+    },
+    "tags": [
+      "postgis",
+      "spatial-data",
+      "geospatial",
+      "indexing"
+    ]
+  },
+  {
+    "id": "postgresql-q-43",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how PostgreSQL's query planner determines the cost of different execution plans. What factors does it consider, and how would you adjust planner constants if the optimizer makes poor choices?",
+      "ru": "Объясните, как планировщик запросов PostgreSQL определяет стоимость различных планов выполнения. Какие факторы он учитывает и как вы бы настроили константы планировщика, если оптимизатор делает плохой выбор?"
+    },
+    "answer": {
+      "en": "### Query Planner Cost Model\n\nPostgreSQL's planner estimates execution cost using CPU and I/O metrics. It assigns costs to sequential scans (seq_page_cost), random access (random_page_cost), CPU operations (cpu_operator_cost), and tuple processing (cpu_tuple_cost). The planner selects the plan with lowest total cost.\n\nFor SSD-heavy systems, reduce random_page_cost from 4.0 to 1.1. For heavily cached databases, decrease cpu_tuple_cost. Use EXPLAIN ANALYZE to verify estimates against actual execution.\n\ntypescript\n// Adjust planner constants for SSD\nALTER SYSTEM SET random_page_cost = 1.1;\nALTER SYSTEM SET seq_page_cost = 1.0;\nALTER SYSTEM SET cpu_tuple_cost = 0.01;\nALTER SYSTEM SET cpu_index_tuple_cost = 0.005;\nSELECT pg_reload_conf();\n\n// Verify with EXPLAIN ANALYZE\nEXPLAIN ANALYZE SELECT * FROM large_table WHERE id > 50000;\n\n\n**Common interview trap:** Candidates often confuse cost units with milliseconds. Costs are relative, abstract numbers. Changing them won't speed up queries—they only influence plan selection. The actual query must be optimized (indexes, statistics).",
+      "ru": "### Модель стоимости планировщика\n\nПланировщик PostgreSQL оценивает стоимость выполнения, используя метрики CPU и I/O. Он присваивает стоимость последовательным сканированиям (seq_page_cost), случайному доступу (random_page_cost), операциям CPU (cpu_operator_cost) и обработке кортежей (cpu_tuple_cost). Планировщик выбирает план с наименьшей общей стоимостью.\n\nДля систем на SSD уменьшите random_page_cost с 4.0 до 1.1. Для сильно кэшируемых БД уменьшите cpu_tuple_cost. Используйте EXPLAIN ANALYZE для проверки оценок.\n\ntypescript\n// Настройка констант для SSD\nALTER SYSTEM SET random_page_cost = 1.1;\nALTER SYSTEM SET seq_page_cost = 1.0;\nALTER SYSTEM SET cpu_tuple_cost = 0.01;\nALTER SYSTEM SET cpu_index_tuple_cost = 0.005;\nSELECT pg_reload_conf();\n\n// Проверка с EXPLAIN ANALYZE\nEXPLAIN ANALYZE SELECT * FROM large_table WHERE id > 50000;\n\n\n**Типичная ошибка на интервью:** Кандидаты путают единицы стоимости с миллисекундами. Стоимость—это относительные абстрактные числа. Их изменение не ускорит запросы, только повлияет на выбор плана."
+    },
+    "tags": [
+      "query-planner",
+      "cost-model",
+      "optimization"
+    ]
+  },
+  {
+    "id": "postgresql-q-44",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is MVCC in PostgreSQL? How does it enable concurrent reads and writes without blocking, and what problems can arise from long-running transactions?",
+      "ru": "Что такое MVCC в PostgreSQL? Как она позволяет выполнять одновременное чтение и запись без блокировок, и какие проблемы могут возникнуть из-за долгоживущих транзакций?"
+    },
+    "answer": {
+      "en": "### MVCC Architecture\n\nMulti-Version Concurrency Control maintains multiple versions of rows with xmin/xmax transaction IDs. Each transaction sees a snapshot based on its isolation level. Readers don't block writers; writers don't block readers because old versions remain visible.\n\nLong-running transactions prevent old rows from being vacuumed (xmin horizon), causing table bloat. They also block replication slot advancement, filling pg_wal. Monitor with pg_stat_activity and active_session_history.\n\ntypescript\n// Check long-running transactions\nSELECT pid, usename, query_start, \n       EXTRACT(EPOCH FROM (NOW() - query_start)) as duration_sec\nFROM pg_stat_activity\nWHERE query NOT LIKE '%pg_stat%'\n  AND query_start < NOW() - INTERVAL '1 hour';\n\n// Monitor xmin horizon\nSELECT txid_current();\nSELECT backend_xmin FROM pg_stat_replication;\n\n\n**Common interview trap:** Confusing MVCC with snapshot isolation. MVCC is the implementation mechanism; isolation level (READ COMMITTED, SERIALIZABLE) determines visibility rules. Long transactions don't directly cause performance—they prevent cleanup.",
+      "ru": "### Архитектура MVCC\n\nMulti-Version Concurrency Control сохраняет несколько версий строк с ID транзакций xmin/xmax. Каждая транзакция видит снимок на основе уровня изоляции. Читатели не блокируют писателей; писатели не блокируют читателей, так как старые версии остаются видимыми.\n\nДолгоживущие транзакции предотвращают очистку старых строк (горизонт xmin), вызывая раздувание таблицы. Они также блокируют продвижение слота репликации, заполняя pg_wal.\n\ntypescript\n// Проверка долгоживущих транзакций\nSELECT pid, usename, query_start, \n       EXTRACT(EPOCH FROM (NOW() - query_start)) as duration_sec\nFROM pg_stat_activity\nWHERE query NOT LIKE '%pg_stat%'\n  AND query_start < NOW() - INTERVAL '1 hour';\n\n// Мониторинг горизонта xmin\nSELECT txid_current();\nSELECT backend_xmin FROM pg_stat_replication;\n\n\n**Типичная ошибка на интервью:** Путание MVCC со снимками изоляции. MVCC—это механизм реализации; уровень изоляции определяет правила видимости."
+    },
+    "tags": [
+      "mvcc",
+      "concurrency",
+      "transactions",
+      "isolation-levels"
+    ]
+  },
+  {
+    "id": "postgresql-q-45",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the vacuum process in PostgreSQL. What is the difference between full vacuum and regular vacuum? When and why would you use autovacuum vs. manual vacuuming?",
+      "ru": "Опишите процесс вакуумирования в PostgreSQL. В чем разница между полным вакуумом и обычным вакуумом? Когда и почему вы использовали бы автовакуумирование вместо ручного?"
+    },
+    "answer": {
+      "en": "### Vacuum Process\n\nVacuum reclaims space from dead rows marked by MVCC. Regular VACUUM removes dead tuples and updates visibility maps; it's non-blocking. VACUUM FULL rewrites the entire table, acquiring an exclusive lock—use only during maintenance windows.\n\nAutovacuum daemon runs periodically, triggered by autovacuum_threshold and autovacuum_scale_factor. It prevents table bloat automatically but may cause I/O spikes. Manual vacuum gives control over timing for critical tables.\n\ntypescript\n// Check vacuum settings\nSHOW autovacuum_naptime;\nSHOW autovacuum_vacuum_threshold;\nSHOW autovacuum_vacuum_scale_factor;\n\n// Manual vacuum with monitoring\nVACUUM ANALYZE my_table;\n\n// Disable autovacuum for a table during batch operations\nALTER TABLE my_table SET (autovacuum_enabled = false);\n-- Re-enable after\nALTER TABLE my_table SET (autovacuum_enabled = true);\n\n\n**Common interview trap:** Thinking VACUUM FULL is required for normal operations. It's rarely needed and causes extended downtime. Regular VACUUM is sufficient; use FULL only for reclaiming significant disk space.",
+      "ru": "### Процесс вакуумирования\n\nВакуум возвращает место из мертвых строк, помеченных MVCC. Обычный VACUUM удаляет мертвые кортежи и обновляет карты видимости; он неблокирующий. VACUUM FULL переписывает всю таблицу, получая исключительную блокировку.\n\nДемон автовакуумирования запускается периодически, запускаемый autovacuum_threshold. Он предотвращает раздувание автоматически, но может вызывать всплески I/O.\n\ntypescript\n// Проверка настроек вакуума\nSHOW autovacuum_naptime;\nSHOW autovacuum_vacuum_threshold;\nSHOW autovacuum_vacuum_scale_factor;\n\n// Ручной вакуум с мониторингом\nVACUUM ANALYZE my_table;\n\n// Отключение автовакуума во время массовых операций\nALTER TABLE my_table SET (autovacuum_enabled = false);\nALTER TABLE my_table SET (autovacuum_enabled = true);\n\n\n**Типичная ошибка на интервью:** Думать, что VACUUM FULL требуется для нормальной работы. Обычный VACUUM достаточен; используйте FULL только для возврата дискового пространства."
+    },
+    "tags": [
+      "vacuum",
+      "autovacuum",
+      "table-bloat",
+      "maintenance"
+    ]
+  },
+  {
+    "id": "postgresql-q-46",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain table partitioning in PostgreSQL. What are the different partitioning strategies (range, list, hash)? When would you recommend each, and what are the performance implications?",
+      "ru": "Объясните секционирование таблиц в PostgreSQL. Какие существуют стратегии секционирования (range, list, hash)? Когда вы рекомендовали бы каждую, и какие последствия для производительности?"
+    },
+    "answer": {
+      "en": "### Table Partitioning Strategies\n\nRange partitioning divides rows by value ranges (dates, IDs)—best for time-series data with natural cutoffs. List partitioning groups discrete values—ideal for regions or categories. Hash partitioning distributes evenly using a hash function—good for load balancing without natural boundaries.\n\nPartitioning enables faster queries (constraint exclusion), easier maintenance (drop old partitions), and parallel scans. However, it complicates inserts (constraint checks) and requires partition pruning awareness.\n\ntypescript\n// Range partitioning by date\nCREATE TABLE orders (\n  id BIGINT, user_id INT, amount DECIMAL, created_at DATE\n) PARTITION BY RANGE (created_at);\n\nCREATE TABLE orders_2024_q1 PARTITION OF orders\n  FOR VALUES FROM ('2024-01-01') TO ('2024-04-01');\n\n// Check partition pruning\nEXPLAIN SELECT * FROM orders WHERE created_at = '2024-02-15';\n\n\n**Common interview trap:** Assuming partitioning always improves performance. Without constraint exclusion or correct partition pruning, it can hurt performance. Test with EXPLAIN and enable constraint_exclusion.",
+      "ru": "### Стратегии секционирования таблиц\n\nСекционирование по диапазону делит строки по диапазонам значений—лучше для временных рядов. Секционирование по списку группирует дискретные значения—идеально для регионов. Хеш-секционирование распределяет равномерно.\n\nСекционирование включает исключение ограничений, упрощает обслуживание и параллельные сканы. Однако усложняет вставки и требует осведомленности о усечении разделов.\n\ntypescript\n// Секционирование по дате\nCREATE TABLE orders (\n  id BIGINT, user_id INT, amount DECIMAL, created_at DATE\n) PARTITION BY RANGE (created_at);\n\nCREATE TABLE orders_2024_q1 PARTITION OF orders\n  FOR VALUES FROM ('2024-01-01') TO ('2024-04-01');\n\n// Проверка усечения\nEXPLAIN SELECT * FROM orders WHERE created_at = '2024-02-15';\n\n\n**Типичная ошибка на интервью:** Предположение, что секционирование всегда улучшает производительность. Без правильного усечения оно может снизить производительность."
+    },
+    "tags": [
+      "partitioning",
+      "range-partitioning",
+      "list-partitioning",
+      "hash-partitioning",
+      "optimization"
+    ]
+  },
+  {
+    "id": "postgresql-q-47",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is PgBouncer and how does it improve PostgreSQL performance? Explain connection pooling modes (session, transaction, statement) and when you would use each.",
+      "ru": "Что такое PgBouncer и как он улучшает производительность PostgreSQL? Объясните режимы пула подключений (session, transaction, statement) и когда вы будете использовать каждый."
+    },
+    "answer": {
+      "en": "### PgBouncer Connection Pooling\n\nPgBouncer multiplexes client connections to fewer database connections, reducing backend process overhead. Session mode maintains connection affinity (one client = one backend). Transaction mode reuses connections per transaction—ideal for stateless services. Statement mode reuses per statement—highest multiplexing but breaks prepared statements and transactions.\n\nTransaction mode is recommended for web apps; session mode for persistent connections. Statement mode requires careful SQL design. Monitor with SHOW POOLS and SHOW CLIENTS.\n\ntypescript\n// PgBouncer config (pgbouncer.ini)\n[databases]\nmyapp = host=localhost port=5432 dbname=myapp\n\n[pgbouncer]\npool_mode = transaction\nmax_client_conn = 1000\ndefault_pool_size = 25\nmin_pool_size = 10\n\n// Monitor connections\npsql -U pgbouncer -d pgbouncer\nSHOW POOLS;\nSHOW CLIENTS;\nSHOW STATS;\n\n\n**Common interview trap:** Assuming PgBouncer is always beneficial. With very few clients or high session duration, overhead outweighs benefits. Statement mode breaks many application patterns; test thoroughly.",
+      "ru": "### Пул подключений PgBouncer\n\nPgBouncer мультиплексирует клиентские подключения на меньшее количество подключений БД, снижая нагрузку на процессы. Режим Session сохраняет привязку подключения. Режим Transaction переиспользует подключения по транзакции—идеален для бессохранных сервисов. Режим Statement переиспользует на уровне оператора.\n\nРежим Transaction рекомендуется для веб-приложений. Мониторьте с SHOW POOLS.\n\ntypescript\n// Конфиг PgBouncer (pgbouncer.ini)\n[databases]\nmyapp = host=localhost port=5432 dbname=myapp\n\n[pgbouncer]\npool_mode = transaction\nmax_client_conn = 1000\ndefault_pool_size = 25\nmin_pool_size = 10\n\n// Мониторинг подключений\npsql -U pgbouncer -d pgbouncer\nSHOW POOLS;\nSHOW CLIENTS;\nSHOW STATS;\n\n\n**Типичная ошибка на интервью:** Предположение, что PgBouncer всегда полезен. Режим Statement нарушает многие паттерны приложений."
+    },
+    "tags": [
+      "pgbouncer",
+      "connection-pooling",
+      "transaction-mode",
+      "session-mode"
+    ]
+  },
+  {
+    "id": "postgresql-q-48",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain PostgreSQL replication basics. What is the difference between physical and logical replication? When would you use streaming replication vs. WAL archiving?",
+      "ru": "Объясните основы репликации PostgreSQL. В чем разница между физической и логической репликацией? Когда вы использовали бы потоковую репликацию вместо архивирования WAL?"
+    },
+    "answer": {
+      "en": "### PostgreSQL Replication Types\n\nPhysical replication copies WAL blocks byte-for-byte, maintaining identical standby servers—fast, low-latency failover. Logical replication replicates logical changes (INSERT/UPDATE/DELETE), allowing selective replication and heterogeneous targets—supports subscriptions and version upgrades.\n\nStreaming replication sends WAL continuously for real-time standby updates. WAL archiving stores WAL for later recovery or standby initialization. Streaming is standard for HA; archiving for point-in-time recovery (PITR).\n\ntypescript\n// Physical replication setup\n// On primary:\nALTER SYSTEM SET wal_level = replica;\nALTER SYSTEM SET max_wal_senders = 10;\nALTER SYSTEM SET wal_keep_size = '1GB';\nSELECT pg_reload_conf();\n\n// Logical replication\nCREATE PUBLICATION my_pub FOR TABLE users;\nCREATE SUBSCRIPTION my_sub CONNECTION 'dbname=source_db' PUBLICATION my_pub;\n\nSELECT * FROM pg_stat_replication;\n\n\n**Common interview trap:** Confusing replication lag with data loss. Synchronous replication doesn't prevent data loss on dual failures. Understand your RPO/RTO requirements before choosing architecture.",
+      "ru": "### Типы репликации PostgreSQL\n\nФизическая репликация копирует блоки WAL побайтно, поддерживая идентичные серверы-резервные копии. Логическая репликация реплицирует логические изменения, позволяя выборочную репликацию.\n\nПотоковая репликация отправляет WAL непрерывно. Архивирование WAL хранит WAL для более позднего восстановления.\n\ntypescript\n// Установка физической репликации\n// На основном:\nALTER SYSTEM SET wal_level = replica;\nALTER SYSTEM SET max_wal_senders = 10;\nALTER SYSTEM SET wal_keep_size = '1GB';\nSELECT pg_reload_conf();\n\n// Логическая репликация\nCREATE PUBLICATION my_pub FOR TABLE users;\nCREATE SUBSCRIPTION my_sub CONNECTION 'dbname=source_db' PUBLICATION my_pub;\n\nSELECT * FROM pg_stat_replication;\n\n\n**Типичная ошибка на интервью:** Путание задержки репликации с потерей данных. Синхронная репликация не предотвращает потерю при двойных сбоях."
+    },
+    "tags": [
+      "replication",
+      "physical-replication",
+      "logical-replication",
+      "streaming",
+      "wal-archiving"
+    ]
+  },
+  {
+    "id": "postgresql-q-49",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you diagnose and resolve a slow query in PostgreSQL? Walk through your investigation process using pg_stat_* views and query plans.",
+      "ru": "Как вы диагностировали бы и решали бы медленный запрос в PostgreSQL? Пройдите по процессу исследования, используя представления pg_stat_* и планы запросов."
+    },
+    "answer": {
+      "en": "### Query Diagnosis Process\n\n1. Identify slow queries using pg_stat_statements (enable shared_preload_libraries). Sort by total_time or mean_time.\n2. Run EXPLAIN ANALYZE to see actual vs. estimated rows. Look for sequential scans on large tables, high-cost operations, or nested loops.\n3. Check table statistics with ANALYZE; missing indexes, or obsolete stats cause poor plans.\n4. Use pg_stat_user_tables to find bloated tables (n_live_tup vs. n_dead_tup ratio).\n5. Monitor I/O with pg_stat_user_indexes: unused indexes waste writes; missing indexes cause scans.\n\ntypescript\n// Enable statistics\nALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';\n\n// Find slow queries\nSELECT query, calls, mean_time, max_time \nFROM pg_stat_statements \nORDER BY mean_time DESC LIMIT 10;\n\n// Check table health\nSELECT schemaname, tablename, n_live_tup, n_dead_tup,\n       ROUND(100 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0)) AS dead_ratio\nFROM pg_stat_user_tables\nWHERE n_dead_tup > 1000;\n\n// Diagnose query\nEXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE created_at > NOW() - INTERVAL '30 days';\n\n\n**Common interview trap:** Blindly adding indexes without understanding the query plan. Some sequential scans are appropriate. Verify with EXPLAIN that your fix actually reduces cost.",
+      "ru": "### Процесс диагностики запроса\n\n1. Идентифицируйте медленные запросы с помощью pg_stat_statements.\n2. Запустите EXPLAIN ANALYZE для фактических vs. оцененных строк.\n3. Проверьте статистику таблицы с ANALYZE.\n4. Используйте pg_stat_user_tables для поиска раздутых таблиц.\n5. Мониторьте I/O с pg_stat_user_indexes.\n\ntypescript\n// Включение статистики\nALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';\n\n// Поиск медленных запросов\nSELECT query, calls, mean_time, max_time \nFROM pg_stat_statements \nORDER BY mean_time DESC LIMIT 10;\n\n// Проверка здоровья таблицы\nSELECT schemaname, tablename, n_live_tup, n_dead_tup,\n       ROUND(100 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0)) AS dead_ratio\nFROM pg_stat_user_tables;\n\n// Диагностика запроса\nEXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE created_at > NOW() - INTERVAL '30 days';\n\n\n**Типичная ошибка на интервью:** Слепое добавление индексов без понимания плана. Некоторые последовательные сканы уместны."
+    },
+    "tags": [
+      "pg_stat_statements",
+      "explain-analyze",
+      "query-optimization",
+      "diagnostics"
+    ]
+  },
+  {
+    "id": "postgresql-q-50",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are the most important PostgreSQL performance tuning parameters? Explain shared_buffers, work_mem, maintenance_work_mem, and effective_cache_size, and how to set them appropriately.",
+      "ru": "Какие наиболее важные параметры настройки производительности PostgreSQL? Объясните shared_buffers, work_mem, maintenance_work_mem и effective_cache_size, и как их правильно установить."
+    },
+    "answer": {
+      "en": "### Core PostgreSQL Tuning Parameters\n\n**shared_buffers:** PostgreSQL's in-memory cache for pages. Set to 25% of RAM (max 40%). Larger buffer pools reduce disk I/O. Too large causes long checkpoint times.\n\n**work_mem:** Per-operation memory for sorts, hash joins. Default 4MB. Increase for complex queries. Multiply by max_connections to ensure total memory fits.\n\n**maintenance_work_mem:** Memory for VACUUM, CREATE INDEX, ANALYZE. Set to 1GB+ on large servers. Higher = faster maintenance.\n\n**effective_cache_size:** Helps planner estimate cache hits. Set to total available cache (shared_buffers + OS cache, ~50-75% RAM). Affects index vs. seq scan choice.\n\ntypescript\n// Conservative tuning for 64GB server\nALTER SYSTEM SET shared_buffers = '16GB';\nALTER SYSTEM SET effective_cache_size = '48GB';\nALTER SYSTEM SET work_mem = '20MB';  // 20MB * 100 connections = 2GB\nALTER SYSTEM SET maintenance_work_mem = '2GB';\nALTER SYSTEM SET random_page_cost = 1.1;  // for SSD\n\nSELECT pg_reload_conf();\nSELECT name, setting FROM pg_settings WHERE name IN ('shared_buffers', 'work_mem');\n\n\n**Common interview trap:** Setting shared_buffers too high thinking it's always better. Excessive buffers increase checkpoint duration and recovery time. Don't exceed 40% RAM. Balance with OS cache.",
+      "ru": "### Основные параметры настройки PostgreSQL\n\n**shared_buffers:** Кэш в оперативной памяти. Установите на 25% ОЗУ (макс 40%).\n\n**work_mem:** Память на операцию для сортировок. По умолчанию 4MB. Увеличьте для сложных запросов.\n\n**maintenance_work_mem:** Память для VACUUM, CREATE INDEX. Установите на 1GB+ на больших серверах.\n\n**effective_cache_size:** Помогает планировщику. Установите на общий доступный кэш (~50-75% ОЗУ).\n\ntypescript\n// Консервативная настройка для 64GB сервера\nALTER SYSTEM SET shared_buffers = '16GB';\nALTER SYSTEM SET effective_cache_size = '48GB';\nALTER SYSTEM SET work_mem = '20MB';\nALTER SYSTEM SET maintenance_work_mem = '2GB';\nALTER SYSTEM SET random_page_cost = 1.1;\n\nSELECT pg_reload_conf();\nSELECT name, setting FROM pg_settings WHERE name IN ('shared_buffers', 'work_mem');\n\n\n**Типичная ошибка на интервью:** Установка shared_buffers слишком высокой. Чрезмерные буферы увеличивают время checkpoints. Не превышайте 40% ОЗУ."
+    },
+    "tags": [
+      "performance-tuning",
+      "shared-buffers",
+      "work-mem",
+      "memory-management"
+    ]
+  },
+  {
+    "id": "postgresql-q-51",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe how index bloat occurs and why it matters for performance. How would you detect and remedy index bloat?",
+      "ru": "Опишите, как возникает раздувание индекса и почему это важно для производительности. Как вы обнаружили бы и исправили раздувание индекса?"
+    },
+    "answer": {
+      "en": "### Index Bloat\n\nIndex bloat occurs when deleted entries leave gaps in B-tree pages. Unlike tables, indexes can't reuse space efficiently—only REINDEX rebuilds from scratch. Large bloat slows scans and increases cache misses. Monitor with pgstattuple_approx or query pg_stat_user_indexes (idx_scan, idx_blks_read).\n\nDetect with pg_bloat_ratio queries or third-party tools (pgAdmin, pgbadger). Remedy by REINDEX during low-traffic windows or use REINDEX CONCURRENTLY (PostgreSQL 12+) for minimal locking.\n\ntypescript\n// Detect unused/bloated indexes\nSELECT schemaname, indexname, idx_scan, idx_blks_read, idx_blks_hit,\n       ROUND(100 * idx_blks_hit / (idx_blks_hit + idx_blks_read + 1)::numeric, 2) AS hit_ratio\nFROM pg_stat_user_indexes\nWHERE idx_scan = 0 OR idx_blks_read > 10000;\n\n// Rebuild index with minimal downtime (PG 12+)\nREINDEX INDEX CONCURRENTLY idx_name;\n\n// Or during maintenance\nREINDEX INDEX idx_name;\n\n\n**Common interview trap:** Assuming all index bloat requires immediate fixing. Unused indexes (idx_scan=0) should be dropped, not reindexed. Bloat on heavily-written indexes is normal; only reindex if performance degrades.",
+      "ru": "### Раздувание индекса\n\nРаздувание индекса возникает, когда удаленные записи оставляют пробелы в страницах B-дерева. В отличие от таблиц, индексы не могут переиспользовать пространство—только REINDEX перестраивает с нуля. Мониторьте с pg_stat_user_indexes.\n\nОбнаруживайте запросами pg_bloat_ratio. Исправьте с помощью REINDEX CONCURRENTLY (PostgreSQL 12+).\n\ntypescript\n// Обнаружение неиспользуемых/раздутых индексов\nSELECT schemaname, indexname, idx_scan, idx_blks_read, idx_blks_hit,\n       ROUND(100 * idx_blks_hit / (idx_blks_hit + idx_blks_read + 1)::numeric, 2) AS hit_ratio\nFROM pg_stat_user_indexes\nWHERE idx_scan = 0 OR idx_blks_read > 10000;\n\n// Перестройка с минимальной блокировкой (PG 12+)\nREINDEX INDEX CONCURRENTLY idx_name;\n\n// Или во время обслуживания\nREINDEX INDEX idx_name;\n\n\n**Типичная ошибка на интервью:** Предположение, что все раздувания индекса требуют немедленного исправления. Неиспользуемые индексы должны быть удалены, а не переиндексированы."
+    },
+    "tags": [
+      "index-bloat",
+      "reindex",
+      "maintenance",
+      "index-optimization"
+    ]
+  },
+  {
+    "id": "postgresql-q-52",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the PostgreSQL buffer manager and how dirty page eviction works during checkpoints. What is dirty_bytes and how does checkpoint_timeout interact with checkpoint_completion_target?",
+      "ru": "Объясните менеджер буфера PostgreSQL и как работает вытеснение грязных страниц во время контрольных точек. Что такое dirty_bytes и как checkpoint_timeout взаимодействует с checkpoint_completion_target?"
+    },
+    "answer": {
+      "en": "### Buffer Manager & Checkpoints\n\nPostgreSQL's buffer manager caches pages in shared_buffers. During checkpoint, dirty pages (modified since last checkpoint) are flushed to disk. High dirty_bytes slows checkpoint. checkpoint_timeout triggers checkpoints by time; checkpoint_completion_target spreads flushes over a fraction of max_wal_size to avoid I/O spikes.\n\nIf checkpoint_timeout (600s default) expires before max_wal_size fills, the checkpoint is time-driven. Increase checkpoint_completion_target (0.9) to smooth I/O but slower WAL recycling.\n\ntypescript\n// Monitor checkpoint performance\nSELECT * FROM pg_stat_bgwriter;\n\n// Tune checkpoint settings\nALTER SYSTEM SET checkpoint_timeout = '15 min';\nALTER SYSTEM SET max_wal_size = '4GB';\nALTER SYSTEM SET checkpoint_completion_target = 0.9;\nALTER SYSTEM SET wal_buffers = '16MB';\n\n// View current dirty pages\nSELECT buffers_clean, maxwritten_clean, checkpoint_sync_time\nFROM pg_stat_bgwriter;\n\n\n**Common interview trap:** Confusing checkpoint frequency with data safety. Longer checkpoint_timeout doesn't lose data (WAL protects); it batches flushes. Too-frequent checkpoints waste I/O; too-infrequent causes long recovery.",
+      "ru": "### Менеджер буфера и контрольные точки\n\nМенеджер буфера PostgreSQL кэширует страницы в shared_buffers. Во время контрольной точки грязные страницы (измененные с момента последней) сбрасываются на диск. High dirty_bytes замедляет контрольную точку. checkpoint_timeout запускает по времени; checkpoint_completion_target распределяет сбросы.\n\ntypescript\n// Мониторинг контрольной точки\nSELECT * FROM pg_stat_bgwriter;\n\n// Настройка контрольной точки\nALTER SYSTEM SET checkpoint_timeout = '15 min';\nALTER SYSTEM SET max_wal_size = '4GB';\nALTER SYSTEM SET checkpoint_completion_target = 0.9;\nALTER SYSTEM SET wal_buffers = '16MB';\n\n// Просмотр текущих грязных страниц\nSELECT buffers_clean, maxwritten_clean, checkpoint_sync_time\nFROM pg_stat_bgwriter;\n\n\n**Типичная ошибка на интервью:** Путание частоты контрольных точек с безопасностью данных. Более длительный checkpoint_timeout не теряет данные; WAL защищает."
+    },
+    "tags": [
+      "buffer-manager",
+      "checkpoints",
+      "wal-management",
+      "dirty-pages"
+    ]
+  },
+  {
+    "id": "postgresql-q-36",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a SQL query to select all users where age is greater than 25, ordered by name in ascending order.",
+      "ru": "Напишите SQL запрос для выбора всех пользователей, где возраст больше 25, отсортированных по имени в возрастающем порядке."
+    },
+    "answer": {
+      "en": "### SELECT with WHERE and ORDER BY\n\nUse WHERE to filter rows based on a condition, then ORDER BY to sort results. The ASC keyword is implicit but can be explicit.\n\n```typescript\nSELECT * FROM users\nWHERE age > 25\nORDER BY name ASC;\n```\n\n**Common interview trap:** Forgetting that WHERE filters before ORDER BY executes, not after.",
+      "ru": "### SELECT с WHERE и ORDER BY\n\nИспользуйте WHERE для фильтрации строк по условию, затем ORDER BY для сортировки результатов. Ключевое слово ASC неявно, но может быть явным.\n\n```typescript\nSELECT * FROM users\nWHERE age > 25\nORDER BY name ASC;\n```\n\n**Типичная ошибка:** Забыть, что WHERE фильтрует до выполнения ORDER BY, а не после."
+    },
+    "tags": [
+      "select-statement",
+      "where-clause",
+      "order-by"
+    ]
+  },
+  {
+    "id": "postgresql-q-37",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between INNER JOIN and LEFT JOIN? Provide a practical example.",
+      "ru": "В чём разница между INNER JOIN и LEFT JOIN? Приведите практический пример."
+    },
+    "answer": {
+      "en": "### INNER vs LEFT JOIN\n\nINNER JOIN returns only matching rows from both tables, while LEFT JOIN returns all rows from the left table plus matching rows from the right. LEFT JOIN includes nulls for non-matching rows.\n\n```typescript\n-- INNER: only users with orders\nSELECT u.name, o.order_id FROM users u\nINNER JOIN orders o ON u.id = o.user_id;\n\n-- LEFT: all users, with NULL if no orders\nSELECT u.name, o.order_id FROM users u\nLEFT JOIN orders o ON u.id = o.user_id;\n```\n\n**Common interview trap:** LEFT JOIN eliminates rows with no match on the right; it doesn't use WHERE filtering for the join itself.",
+      "ru": "### INNER vs LEFT JOIN\n\nINNER JOIN возвращает только совпадающие строки из обеих таблиц, LEFT JOIN возвращает все строки из левой таблицы плюс совпадающие из правой. LEFT JOIN включает NULL для несоответствующих строк.\n\n```typescript\n-- INNER: только пользователи с заказами\nSELECT u.name, o.order_id FROM users u\nINNER JOIN orders o ON u.id = o.user_id;\n\n-- LEFT: все пользователи, NULL если нет заказов\nSELECT u.name, o.order_id FROM users u\nLEFT JOIN orders o ON u.id = o.user_id;\n```\n\n**Типичная ошибка:** LEFT JOIN убирает строки без совпадения справа; он не использует WHERE фильтрацию для самого JOIN."
+    },
+    "tags": [
+      "joins",
+      "inner-join",
+      "left-join"
+    ]
+  },
+  {
+    "id": "postgresql-q-38",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write an INSERT statement to add a new product with name 'Laptop', price 999.99, and category_id 5.",
+      "ru": "Напишите оператор INSERT для добавления нового продукта с именем 'Laptop', ценой 999.99 и category_id 5."
+    },
+    "answer": {
+      "en": "### INSERT Statement\n\nSpecify column names and values in the same order. Always explicitly list columns to avoid issues if the table structure changes.\n\n```typescript\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5);\n```\n\n**Common interview trap:** Omitting column names makes queries fragile; if a column is added to the table, the insert fails.",
+      "ru": "### Оператор INSERT\n\nУкажите имена столбцов и значения в одинаковом порядке. Всегда явно перечисляйте столбцы, чтобы избежать проблем при изменении структуры таблицы.\n\n```typescript\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5);\n```\n\n**Типичная ошибка:** Пропуск имён столбцов делает запросы хрупкими; если столбец добавлен в таблицу, INSERT не выполняется."
+    },
+    "tags": [
+      "insert-statement",
+      "basic-dml"
+    ]
+  },
+  {
+    "id": "postgresql-q-39",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain PRIMARY KEY and FOREIGN KEY constraints. Why are they important for data integrity?",
+      "ru": "Объясните ограничения PRIMARY KEY и FOREIGN KEY. Почему они важны для целостности данных?"
+    },
+    "answer": {
+      "en": "### PRIMARY and FOREIGN Keys\n\nPRIMARY KEY uniquely identifies each row and prevents duplicates/nulls. FOREIGN KEY links one table to another, ensuring referential integrity. Together they prevent orphaned records and invalid relationships.\n\n```typescript\nCREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR UNIQUE\n);\nCREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  user_id INTEGER REFERENCES users(id)\n);\n```\n\n**Common interview trap:** FOREIGN KEY prevents deletion of referenced rows unless CASCADE is used; this can silently fail.",
+      "ru": "### PRIMARY и FOREIGN Keys\n\nPRIMARY KEY уникально идентифицирует каждую строку и предотвращает дубликаты/NULL. FOREIGN KEY связывает одну таблицу с другой, обеспечивая ссылочную целостность. Вместе они предотвращают сиротские записи и невалидные отношения.\n\n```typescript\nCREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR UNIQUE\n);\nCREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  user_id INTEGER REFERENCES users(id)\n);\n```\n\n**Типичная ошибка:** FOREIGN KEY предотвращает удаление Referenced строк, если не используется CASCADE; это может молча не выполниться."
+    },
+    "tags": [
+      "primary-key",
+      "foreign-key",
+      "constraints",
+      "data-integrity"
+    ]
+  },
+  {
+    "id": "postgresql-q-40",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using GROUP BY to count the number of orders per user, and filter groups where count is greater than 2.",
+      "ru": "Напишите запрос с GROUP BY для подсчёта количества заказов на пользователя и фильтрацию групп с количеством больше 2."
+    },
+    "answer": {
+      "en": "### GROUP BY with HAVING\n\nGROUP BY aggregates rows by column(s), then HAVING filters grouped results (WHERE filters before grouping). Use COUNT() to aggregate.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) > 2;\n```\n\n**Common interview trap:** Using WHERE instead of HAVING to filter groups; WHERE executes before GROUP BY, so it won't work as intended.",
+      "ru": "### GROUP BY с HAVING\n\nGROUP BY агрегирует строки по столбцам, затем HAVING фильтрует результаты группировки (WHERE фильтрует до группировки). Используйте COUNT() для агрегации.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) > 2;\n```\n\n**Типичная ошибка:** Использование WHERE вместо HAVING для фильтрации групп; WHERE выполняется до GROUP BY, поэтому не сработает как задумано."
+    },
+    "tags": [
+      "group-by",
+      "having-clause",
+      "aggregation",
+      "count-function"
+    ]
+  },
+  {
+    "id": "postgresql-q-41",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a SQL query to retrieve all users with their associated orders, including users who have no orders. Explain which JOIN type you would use and why.",
+      "ru": "Напишите SQL-запрос для получения всех пользователей с их заказами, включая пользователей без заказов. Объясните, какой тип JOIN вы используете и почему."
+    },
+    "answer": {
+      "en": "### LEFT JOIN for Unmatched Records\n\nA LEFT JOIN preserves all rows from the left table (users) and matches them with the right table (orders). If no matching order exists, NULL values appear in order columns. This ensures no users are filtered out.\n\n```typescript\nSELECT u.id, u.name, o.order_id, o.total\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nORDER BY u.id;\n```\n\n**Common interview trap:** Confusing LEFT JOIN with INNER JOIN—INNER JOIN would exclude users without orders.",
+      "ru": "### LEFT JOIN для сохранения всех записей\n\nLEFT JOIN сохраняет все строки из левой таблицы (users) и сопоставляет их с правой таблицей (orders). Если совпадающего заказа нет, в столбцах заказов появляются NULL значения.\n\n```typescript\nSELECT u.id, u.name, o.order_id, o.total\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nORDER BY u.id;\n```\n\n**Типичная ошибка:** Путаница между LEFT JOIN и INNER JOIN—INNER JOIN исключит пользователей без заказов."
+    },
+    "tags": [
+      "joins",
+      "left-join",
+      "data-retrieval"
+    ]
+  },
+  {
+    "id": "postgresql-q-42",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query to find the total number of orders per user, excluding users with fewer than 3 orders. What clauses do you need and in what order?",
+      "ru": "Напишите запрос для подсчета общего количества заказов по пользователям, исключая пользователей менее чем с 3 заказами. Какие предложения вам нужны и в каком порядке?"
+    },
+    "answer": {
+      "en": "### GROUP BY with HAVING Clause\n\nUse GROUP BY to aggregate orders per user, then HAVING (not WHERE) to filter groups after aggregation. HAVING filters grouped results, while WHERE filters individual rows before grouping.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) >= 3\nORDER BY order_count DESC;\n```\n\n**Common interview trap:** Using WHERE instead of HAVING—WHERE cannot filter aggregated results like COUNT().",
+      "ru": "### GROUP BY с предложением HAVING\n\nИспользуйте GROUP BY для агрегирования заказов по пользователям, затем HAVING (не WHERE) для фильтрации групп после агрегации. HAVING фильтрует сгруппированные результаты, а WHERE фильтрует отдельные строки до группировки.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) >= 3\nORDER BY order_count DESC;\n```\n\n**Типичная ошибка:** Использование WHERE вместо HAVING—WHERE не может фильтровать агрегированные результаты, такие как COUNT()."
+    },
+    "tags": [
+      "group-by",
+      "having-clause",
+      "aggregation"
+    ]
+  },
+  {
+    "id": "postgresql-q-43",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between B-tree and Hash indexes in PostgreSQL. When would you use each type, and what are the trade-offs?",
+      "ru": "Объясните разницу между B-tree и Hash индексами в PostgreSQL. Когда использовать каждый тип и каковы компромиссы?"
+    },
+    "answer": {
+      "en": "### B-tree vs Hash Indexes\n\nB-tree indexes support range queries and sorting, making them ideal for most cases. Hash indexes are faster for exact equality checks but don't support range queries or NULL handling.\n\n```typescript\n-- B-tree: supports range queries\nCREATE INDEX idx_age_btree ON users(age);\nSELECT * FROM users WHERE age > 30 AND age < 40;\n\n-- Hash: only equality\nCREATE INDEX idx_email_hash ON users USING HASH(email);\nSELECT * FROM users WHERE email = 'john@example.com';\n```\n\n**Common interview trap:** Assuming Hash is always faster—it's only faster for exact matches on single columns.",
+      "ru": "### B-tree vs Hash индексы\n\nB-tree индексы поддерживают диапазонные запросы и сортировку, идеальны в большинстве случаев. Hash индексы быстрее для поиска по точному совпадению, но не поддерживают диапазоны и NULL.\n\n```typescript\n-- B-tree: поддерживает диапазоны\nCREATE INDEX idx_age_btree ON users(age);\nSELECT * FROM users WHERE age > 30 AND age < 40;\n\n-- Hash: только точное совпадение\nCREATE INDEX idx_email_hash ON users USING HASH(email);\nSELECT * FROM users WHERE email = 'john@example.com';\n```\n\n**Типичная ошибка:** Предположение, что Hash всегда быстрее—это верно только для точного поиска по одной колонке."
+    },
+    "tags": [
+      "btree-indexes",
+      "hash-indexes",
+      "index-types"
+    ]
+  },
+  {
+    "id": "postgresql-q-44",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you interpret EXPLAIN ANALYZE output to identify performance bottlenecks? What metrics should you focus on?",
+      "ru": "Как интерпретировать вывод EXPLAIN ANALYZE для выявления узких мест? На какие метрики следует обратить внимание?"
+    },
+    "answer": {
+      "en": "### Reading EXPLAIN ANALYZE\n\nFocus on actual vs planned rows (if they differ greatly, your statistics are outdated), execution time, and high-cost operations like Sequential Scans on large tables. Look for loops and buffers hit/read ratios.\n\n```typescript\nEXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 5;\n-- Output shows:\n-- Planning Time: 0.234 ms\n-- Execution Time: 45.234 ms\n-- Seq Scan on orders (actual rows=100, planned rows=200)\n-- Buffers: shared hit=1000 read=50\n```\n\n**Common interview trap:** Ignoring planning time—query planning can be a bottleneck in complex queries.",
+      "ru": "### Чтение EXPLAIN ANALYZE\n\nСосредоточьтесь на разнице между actual и planned rows (если различаются, статистика устарела), времени выполнения и дорогостоящих операциях как Sequential Scan. Смотрите loops и соотношение hit/read в буферах.\n\n```typescript\nEXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 5;\n-- Output shows:\n-- Planning Time: 0.234 ms\n-- Execution Time: 45.234 ms\n-- Seq Scan on orders (actual rows=100, planned rows=200)\n-- Buffers: shared hit=1000 read=50\n```\n\n**Типичная ошибка:** Игнорирование planning time—планирование может быть узким местом в сложных запросах."
+    },
+    "tags": [
+      "explain-analyze",
+      "query-optimization",
+      "performance-metrics"
+    ]
+  },
+  {
+    "id": "postgresql-q-45",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between isolation levels READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, and SERIALIZABLE? Provide an example where each matters.",
+      "ru": "В чем разница между уровнями изоляции READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ и SERIALIZABLE? Приведите пример, где каждый имеет значение."
+    },
+    "answer": {
+      "en": "### Transaction Isolation Levels\n\nREAD COMMITTED (default) prevents dirty reads. REPEATABLE READ prevents non-repeatable reads using snapshots. SERIALIZABLE prevents phantom reads via full serialization. PostgreSQL doesn't implement READ UNCOMMITTED.\n\n```typescript\nBEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;\nSELECT balance FROM accounts WHERE id = 1; -- sees snapshot\nSELECT balance FROM accounts WHERE id = 1; -- same value even if another txn updates\nCOMMIT;\n\n-- SERIALIZABLE mode prevents race conditions in concurrent transactions\nBEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;\nUPDATE inventory SET qty = qty - 1 WHERE id = 1;\nCOMMIT;\n```\n\n**Common interview trap:** Thinking REPEATABLE READ is always best—it has performance overhead; READ COMMITTED is fine for most applications.",
+      "ru": "### Уровни изоляции транзакций\n\nREAD COMMITTED (по умолчанию) предотвращает грязное чтение. REPEATABLE READ предотвращает неповторяемое чтение через снимки. SERIALIZABLE предотвращает фантомные чтения через полную сериализацию. PostgreSQL не реализует READ UNCOMMITTED.\n\n```typescript\nBEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;\nSELECT balance FROM accounts WHERE id = 1; -- видит снимок\nSELECT balance FROM accounts WHERE id = 1; -- одно значение, даже если другая транзакция обновляет\nCOMMIT;\n\n-- SERIALIZABLE режим предотвращает race conditions\nBEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;\nUPDATE inventory SET qty = qty - 1 WHERE id = 1;\nCOMMIT;\n```\n\n**Типичная ошибка:** Мнение, что REPEATABLE READ всегда лучше—имеет оверхед производительности; READ COMMITTED подходит для большинства."
+    },
+    "tags": [
+      "isolation-levels",
+      "transactions",
+      "concurrency-control"
+    ]
+  },
+  {
+    "id": "postgresql-q-46",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare GIN and GiST indexes. When should you use each for full-text search, array, or JSON data?",
+      "ru": "Сравните GIN и GiST индексы. Когда использовать каждый для полнотекстового поиска, массивов или JSON данных?"
+    },
+    "answer": {
+      "en": "### GIN vs GiST Indexes\n\nGIN (Generalized Inverted Index) is faster for searches but slower to build/update; ideal for stable data with frequent reads. GiST (Generalized Search Tree) is slower for searches but faster to update; better for dynamic data. Both support full-text search, arrays, and JSON.\n\n```typescript\n-- GIN for frequently searched JSONB data\nCREATE INDEX idx_metadata_gin ON products USING GIN(metadata);\nSELECT * FROM products WHERE metadata @> '{\"color\": \"red\"}';\n\n-- GiST for arrays that change often\nCREATE INDEX idx_tags_gist ON articles USING GiST(tags);\nSELECT * FROM articles WHERE tags && ARRAY['postgres', 'sql'];\n```\n\n**Common interview trap:** Assuming GIN is always better—GiST has lower write overhead and better spatial support.",
+      "ru": "### GIN vs GiST индексы\n\nGIN (Generalized Inverted Index) быстрее для поиска, но медленнее строится/обновляется; идеален для стабильных данных с частыми чтениями. GiST медленнее для поиска, но быстрее обновляется; лучше для динамических данных. Оба поддерживают полнотекстовый поиск, массивы и JSON.\n\n```typescript\n-- GIN для часто ищемых JSONB данных\nCREATE INDEX idx_metadata_gin ON products USING GIN(metadata);\nSELECT * FROM products WHERE metadata @> '{\"color\": \"red\"}';\n\n-- GiST для часто меняющихся массивов\nCREATE INDEX idx_tags_gist ON articles USING GiST(tags);\nSELECT * FROM articles WHERE tags && ARRAY['postgres', 'sql'];\n```\n\n**Типичная ошибка:** Предположение, что GIN всегда лучше—GiST имеет меньший оверхед записи и лучшую пространственную поддержку."
+    },
+    "tags": [
+      "gin-indexes",
+      "gist-indexes",
+      "full-text-search",
+      "json-indexing"
+    ]
+  },
+  {
+    "id": "postgresql-q-47",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Write a query using CTEs and window functions to calculate the running balance for each account with transaction history, then rank accounts by total change.",
+      "ru": "Напишите запрос с CTEs и оконными функциями для расчета бегущего баланса для каждого счета с историей транзакций, затем ранжируйте счета по общему изменению."
+    },
+    "answer": {
+      "en": "### CTEs with Window Functions\n\nUse a CTE to calculate running balance with SUM() OVER(), then rank accounts by total change using another window function. This separates logic into readable stages.\n\n```typescript\nWITH running_balance AS (\n  SELECT account_id, amount,\n    SUM(amount) OVER (PARTITION BY account_id ORDER BY created_at) as balance\n  FROM transactions\n),\nranked_accounts AS (\n  SELECT account_id, balance,\n    RANK() OVER (ORDER BY balance DESC) as account_rank\n  FROM running_balance\n  WHERE created_at = (SELECT MAX(created_at) FROM transactions)\n)\nSELECT * FROM ranked_accounts;\n```\n\n**Common interview trap:** Forgetting ORDER BY in window function—it determines partition scope and ordering behavior.",
+      "ru": "### CTEs с оконными функциями\n\nИспользуйте CTE для расчета бегущего баланса с SUM() OVER(), затем ранжируйте счета по общему изменению другой оконной функцией. Это разделяет логику на читаемые этапы.\n\n```typescript\nWITH running_balance AS (\n  SELECT account_id, amount,\n    SUM(amount) OVER (PARTITION BY account_id ORDER BY created_at) as balance\n  FROM transactions\n),\nranked_accounts AS (\n  SELECT account_id, balance,\n    RANK() OVER (ORDER BY balance DESC) as account_rank\n  FROM running_balance\n  WHERE created_at = (SELECT MAX(created_at) FROM transactions)\n)\nSELECT * FROM ranked_accounts;\n```\n\n**Типичная ошибка:** Забывчивость ORDER BY в оконной функции—определяет область раздела и порядок."
+    },
+    "tags": [
+      "ctes",
+      "window-functions",
+      "recursive-queries"
+    ]
+  },
+  {
+    "id": "postgresql-q-48",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between B-tree and Hash indexes in PostgreSQL. When would you use each one?",
+      "ru": "Объясните различие между B-tree и Hash индексами в PostgreSQL. Когда использовать каждый из них?"
+    },
+    "answer": {
+      "en": "### Index Type Selection\n\nB-tree indexes support range queries and sorting, making them the default choice. Hash indexes only support equality comparisons and are faster for exact matches but cannot handle ORDER BY or inequality operators.\n\n```sql\n-- B-tree: supports range queries\nCREATE INDEX idx_age_btree ON users(age);\nSELECT * FROM users WHERE age > 25 AND age < 35;\n\n-- Hash: only equality\nCREATE INDEX idx_email_hash ON users USING HASH(email);\nSELECT * FROM users WHERE email = 'test@example.com';\n```\n\n**Common interview trap:** Thinking hash indexes are always faster—they're only better for pure equality lookups.",
+      "ru": "### Выбор типа индекса\n\nB-tree индексы поддерживают диапазонные запросы и сортировку, поэтому это выбор по умолчанию. Hash индексы поддерживают только проверку равенства и быстрее для точных совпадений, но не работают с ORDER BY и операторами неравенства.\n\n```sql\n-- B-tree: поддерживает диапазонные запросы\nCREATE INDEX idx_age_btree ON users(age);\nSELECT * FROM users WHERE age > 25 AND age < 35;\n\n-- Hash: только равенство\nCREATE INDEX idx_email_hash ON users USING HASH(email);\nSELECT * FROM users WHERE email = 'test@example.com';\n```\n\n**Типичная ошибка:** Думать, что hash индексы всегда быстрее—они лучше только для проверки равенства."
+    },
+    "tags": [
+      "btree-index",
+      "hash-index",
+      "index-selection"
+    ]
+  },
+  {
+    "id": "postgresql-q-49",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "What does EXPLAIN ANALYZE show that EXPLAIN doesn't? How would you use it to identify a slow query problem?",
+      "ru": "Что показывает EXPLAIN ANALYZE, чего не показывает EXPLAIN? Как его использовать для выявления проблемы медленного запроса?"
+    },
+    "answer": {
+      "en": "### EXPLAIN vs EXPLAIN ANALYZE\n\nEXPLAIN shows the planned execution strategy, while EXPLAIN ANALYZE actually executes the query and shows real rows processed, actual time, and planning overhead. Use it to find discrepancies between estimated and actual row counts.\n\n```sql\nEXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 5;\n-- Output shows: Est. rows vs Actual rows, Buffers used\n-- If Est. rows >> Actual rows, index or stats need updating\nANALYZE users; -- Update table statistics\n```\n\n**Common interview trap:** Forgetting ANALYZE modifies the plan output and may have side effects for DML statements.",
+      "ru": "### EXPLAIN vs EXPLAIN ANALYZE\n\nEXPLAIN показывает планируемую стратегию выполнения, а EXPLAIN ANALYZE фактически выполняет запрос и показывает реальное количество строк, фактическое время и затраты на планирование. Используйте его для поиска расхождений между предполагаемым и фактическим количеством строк.\n\n```sql\nEXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 5;\n-- Вывод показывает: Est. rows vs Actual rows, Buffers\n-- Если Est. rows >> Actual rows, нужно обновить индекс или статистику\nANALYZE users; -- Обновить статистику таблицы\n```\n\n**Типичная ошибка:** Забыть, что ANALYZE выполняет запрос и может иметь побочные эффекты для DML."
+    },
+    "tags": [
+      "query-optimization",
+      "explain-analyze",
+      "performance-diagnosis"
+    ]
+  },
+  {
+    "id": "postgresql-q-50",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe the READ COMMITTED and SERIALIZABLE isolation levels. What problems does each solve or prevent?",
+      "ru": "Опишите уровни изоляции READ COMMITTED и SERIALIZABLE. Какие проблемы решает или предотвращает каждый?"
+    },
+    "answer": {
+      "en": "### Isolation Levels\n\nREAD COMMITTED (default) prevents dirty reads but allows non-repeatable reads and phantom reads—sufficient for most apps. SERIALIZABLE prevents all anomalies by executing transactions serially, but has performance overhead and uses serialization conflicts.\n\n```sql\nSET TRANSACTION ISOLATION LEVEL READ COMMITTED;\n-- Allows: non-repeatable reads, phantom reads\n\nSET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n-- Prevents all anomalies, slower, may fail with conflicts\n-- error: could not serialize access due to concurrent update\n```\n\n**Common interview trap:** Confusing SERIALIZABLE with actual locking—PostgreSQL uses MVCC and predicate locking.",
+      "ru": "### Уровни изоляции\n\nREAD COMMITTED (по умолчанию) предотвращает грязное чтение, но допускает неповторяемые чтения и фантомные чтения—достаточно для большинства приложений. SERIALIZABLE предотвращает все аномалии, выполняя транзакции последовательно, но имеет затраты на производительность и использует конфликты сериализации.\n\n```sql\nSET TRANSACTION ISOLATION LEVEL READ COMMITTED;\n-- Допускает: неповторяемые чтения, фантомные чтения\n\nSET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n-- Предотвращает все аномалии, медленнее, может не пройти\n-- error: could not serialize access due to concurrent update\n```\n\n**Типичная ошибка:** Путать SERIALIZABLE с реальной блокировкой—PostgreSQL использует MVCC и predicate locking."
+    },
+    "tags": [
+      "isolation-levels",
+      "transaction-safety",
+      "concurrency-control"
+    ]
+  },
+  {
+    "id": "postgresql-q-51",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you use a window function and CTE together to calculate running totals and rank users by their spending?",
+      "ru": "Как использовать оконные функции и CTE вместе для расчета нарастающих итогов и ранжирования пользователей по расходам?"
+    },
+    "answer": {
+      "en": "### Window Functions with CTEs\n\nCTEs organize logic, while window functions compute aggregate values over ordered partitions without grouping. Combine them to calculate running totals and rankings in a single pass.\n\n```sql\nWITH user_spending AS (\n  SELECT user_id, amount, order_date FROM orders\n),\nranked_spending AS (\n  SELECT user_id, amount,\n    SUM(amount) OVER (PARTITION BY user_id ORDER BY order_date) as running_total,\n    RANK() OVER (ORDER BY SUM(amount) DESC) as overall_rank\n  FROM user_spending\n)\nSELECT * FROM ranked_spending;\n```\n\n**Common interview trap:** Using GROUP BY with window functions—window functions work without grouping.",
+      "ru": "### Оконные функции с CTE\n\nCTE организуют логику, а оконные функции вычисляют агрегирующие значения над упорядоченными разделами без группировки. Объедините их для расчета нарастающих итогов и ранжирования за один проход.\n\n```sql\nWITH user_spending AS (\n  SELECT user_id, amount, order_date FROM orders\n),\nranked_spending AS (\n  SELECT user_id, amount,\n    SUM(amount) OVER (PARTITION BY user_id ORDER BY order_date) as running_total,\n    RANK() OVER (ORDER BY SUM(amount) DESC) as overall_rank\n  FROM user_spending\n)\nSELECT * FROM ranked_spending;\n```\n\n**Типичная ошибка:** Использовать GROUP BY с оконными функциями—оконные функции работают без группировки."
+    },
+    "tags": [
+      "window-functions",
+      "cte-recursive",
+      "running-totals"
+    ]
+  },
+  {
+    "id": "postgresql-q-52",
+    "topicId": "postgresql",
+    "difficulty": "middle",
+    "question": {
+      "en": "When would you use GIN or GiST indexes, and what's the difference? Provide an example with JSONB operations.",
+      "ru": "Когда использовать GIN или GiST индексы и в чем разница? Приведите пример с операциями JSONB."
+    },
+    "answer": {
+      "en": "### GIN vs GiST Indexes\n\nGIN (Generalized Inverted Index) is faster for exact matches on multiple values; GiST (Generalized Search Tree) is better for range queries and approximate matches. Use GIN for JSONB containment checks, GiST for geometric or full-text search.\n\n```sql\n-- GIN for JSONB containment (faster for exact matches)\nCREATE INDEX idx_data_gin ON products USING GIN(data);\nSELECT * FROM products WHERE data @> '{\"color\": \"red\"}';\n\n-- GiST for geometric data or range searches\nCREATE INDEX idx_location_gist ON locations USING GiST(geom);\nSELECT * FROM locations WHERE geom <@ circle '((0,0), 100)';\n```\n\n**Common interview trap:** Using GIN for range queries—GiST is more efficient for inequality operators.",
+      "ru": "### GIN vs GiST индексы\n\nGIN (Generalized Inverted Index) быстрее для точных совпадений на нескольких значениях; GiST (Generalized Search Tree) лучше для диапазонных запросов и приблизительных совпадений. Используйте GIN для проверки содержания JSONB, GiST для геометрического поиска или полнотекстового поиска.\n\n```sql\n-- GIN для содержания JSONB (быстрее для точных совпадений)\nCREATE INDEX idx_data_gin ON products USING GIN(data);\nSELECT * FROM products WHERE data @> '{\"color\": \"red\"}';\n\n-- GiST для геометрических данных или диапазонных поисков\nCREATE INDEX idx_location_gist ON locations USING GiST(geom);\nSELECT * FROM locations WHERE geom <@ circle '((0,0), 100)';\n```\n\n**Типичная ошибка:** Использовать GIN для диапазонных запросов—GiST более эффективен для операторов неравенства."
+    },
+    "tags": [
+      "gin-index",
+      "gist-index",
+      "jsonb-operations"
+    ]
+  },
+  {
+    "id": "postgresql-q-53",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how PostgreSQL's MVCC (Multi-Version Concurrency Control) works and why it doesn't use row-level locking like traditional databases. What are the performance implications?",
+      "ru": "Объясните, как работает MVCC (Multi-Version Concurrency Control) в PostgreSQL и почему она не использует блокировку на уровне строк, как традиционные базы данных. Каковы последствия для производительности?"
+    },
+    "answer": {
+      "en": "### MVCC and Snapshot Isolation\n\nMVCC maintains multiple versions of rows with xmin/xmax transaction IDs, allowing concurrent reads without locks. Each transaction sees a consistent snapshot based on its isolation level. This eliminates read-write contention but creates dead tuples requiring VACUUM.\n\n```typescript\n// Transaction A and B see different row versions\nBEGIN ISOLATION LEVEL READ COMMITTED;\nSELECT * FROM users WHERE id = 1; -- sees version from own snapshot\nUPDATE users SET name = 'Alice' WHERE id = 1; -- creates new version\nCOMMIT;\n```\n\n**Common interview trap:** Candidates often think MVCC eliminates ALL locking—it doesn't; exclusive locks still exist for writes.",
+      "ru": "### MVCC и Snapshot Isolation\n\nMVCC ведёт несколько версий строк с ID транзакций xmin/xmax, позволяя конкурентное чтение без блокировок. Каждая транзакция видит согласованный снимок в зависимости от уровня изоляции. Это устраняет конфликты чтения-записи, но создаёт мёртвые кортежи, требующие VACUUM.\n\n```typescript\n// Транзакция A и B видят разные версии строк\nBEGIN ISOLATION LEVEL READ COMMITTED;\nSELECT * FROM users WHERE id = 1; -- видит версию из своего снимка\nUPDATE users SET name = 'Alice' WHERE id = 1; -- создаёт новую версию\nCOMMIT;\n```\n\n**Типичная ошибка:** Кандидаты часто думают, что MVCC устраняет ВСЕ блокировки—это неверно; эксклюзивные блокировки всё ещё существуют для записи."
+    },
+    "tags": [
+      "mvcc",
+      "concurrency",
+      "snapshot-isolation",
+      "transaction-ids"
+    ]
+  },
+  {
+    "id": "postgresql-q-54",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does PostgreSQL's query planner decide between a Sequential Scan, Index Scan, and Bitmap Index Scan? What statistics does it use and how can incorrect statistics degrade performance?",
+      "ru": "Как планировщик запросов PostgreSQL выбирает между Sequential Scan, Index Scan и Bitmap Index Scan? Какую статистику он использует и как неправильная статистика может снизить производительность?"
+    },
+    "answer": {
+      "en": "### Query Planner Decision Logic\n\nThe planner uses pg_class.relpages, pg_stat_user_tables.n_live_tup, and histogram data from pg_stats to estimate costs. It chooses the plan with the lowest total cost (sequential_page_cost vs random_page_cost). Outdated statistics from missing ANALYZE cause wrong plan selection.\n\n```typescript\nANALYZE table_name; -- update pg_stats\nEXPLAIN (ANALYZE, BUFFERS) \n  SELECT * FROM large_table WHERE id = 5;\n-- Compare estimated vs actual rows to detect stale stats\n```\n\n**Common interview trap:** Candidates forget that planner uses estimated costs, not actual execution metrics; cost parameters (seq_page_cost) are tunable.",
+      "ru": "### Логика выбора планировщика\n\nПланировщик использует pg_class.relpages, pg_stat_user_tables.n_live_tup и данные гистограмм из pg_stats для оценки затрат. Он выбирает план с наименьшей общей стоимостью (sequential_page_cost vs random_page_cost). Устаревшая статистика из отсутствующего ANALYZE вызывает неправильный выбор плана.\n\n```typescript\nANALYZE table_name; -- обновить pg_stats\nEXPLAIN (ANALYZE, BUFFERS) \n  SELECT * FROM large_table WHERE id = 5;\n-- Сравните предполагаемые строки с фактическими для выявления устаревшей статистики\n```\n\n**Типичная ошибка:** Кандидаты забывают, что планировщик использует предполагаемые затраты, а не фактические метрики выполнения; параметры затрат (seq_page_cost) настраиваются."
+    },
+    "tags": [
+      "query-planner",
+      "cost-estimation",
+      "statistics",
+      "explain-analyze"
+    ]
+  },
+  {
+    "id": "postgresql-q-55",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the VACUUM and AUTOVACUUM process in detail. How do they interact with MVCC? Why can aggressive autovacuum settings sometimes cause performance problems instead of solving them?",
+      "ru": "Опишите процесс VACUUM и AUTOVACUUM подробно. Как они взаимодействуют с MVCC? Почему агрессивные настройки autovacuum иногда вызывают проблемы с производительностью вместо их решения?"
+    },
+    "answer": {
+      "en": "### VACUUM and AUTOVACUUM Mechanics\n\nVACUUM scans tables to mark dead tuples (xmax < current_xmin) as reusable, reclaiming disk space. AUTOVACUUM is a background daemon that triggers based on dead tuple thresholds. Too-aggressive settings (low autovacuum_naptime) cause excessive I/O contention, blocking user queries with heavy scans.\n\n```typescript\nALTER TABLE big_table SET (\n  autovacuum_vacuum_threshold = 5000,\n  autovacuum_vacuum_scale_factor = 0.1\n);\nVACUUM ANALYZE big_table; -- manual maintenance\n```\n\n**Common interview trap:** Thinking VACUUM always improves performance—it's a trade-off; too frequent vacuuming wastes resources.",
+      "ru": "### Механика VACUUM и AUTOVACUUM\n\nVACUUM сканирует таблицы, чтобы пометить мёртвые кортежи (xmax < current_xmin) как переиспользуемые, возвращая дисковое пространство. AUTOVACUUM—это фоновый демон, срабатывающий на основе пороговых значений мёртвых кортежей. Слишком агрессивные настройки (низкий autovacuum_naptime) вызывают чрезмерное I/O-противодействие, блокируя пользовательские запросы тяжёлыми сканами.\n\n```typescript\nALTER TABLE big_table SET (\n  autovacuum_vacuum_threshold = 5000,\n  autovacuum_vacuum_scale_factor = 0.1\n);\nVACUUM ANALYZE big_table; -- ручное обслуживание\n```\n\n**Типичная ошибка:** Думать, что VACUUM всегда улучшает производительность—это компромисс; слишком частый вакуум тратит ресурсы впустую."
+    },
+    "tags": [
+      "vacuum",
+      "autovacuum",
+      "dead-tuples",
+      "maintenance",
+      "mvcc-interaction"
+    ]
+  },
+  {
+    "id": "postgresql-q-56",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain table partitioning strategies in PostgreSQL (range, list, hash). When should you use partitioning for performance vs. when is it overhead? How does partitioning affect VACUUM and index maintenance?",
+      "ru": "Объясните стратегии партиционирования таблиц в PostgreSQL (range, list, hash). Когда следует использовать партиционирование для производительности, а когда это просто нагрузка? Как партиционирование влияет на VACUUM и обслуживание индексов?"
+    },
+    "answer": {
+      "en": "### Partitioning Strategies\n\nRange partitioning (by date/ID) suits time-series data; list partitioning for discrete values; hash for even distribution. Benefits: faster queries via partition pruning, parallel scans, easier old-data archival. Overhead: complex joins across partitions, increased planner time. VACUUM runs per partition (more concurrent overhead on many partitions).\n\n```typescript\nCREATE TABLE events (\n  id bigint, created_at timestamp\n) PARTITION BY RANGE (created_at);\n\nCREATE TABLE events_2024_q1 PARTITION OF events\n  FOR VALUES FROM ('2024-01-01') TO ('2024-04-01');\n```\n\n**Common interview trap:** Partitioning isn't free—overhead outweighs gains on small tables or when queries span many partitions.",
+      "ru": "### Стратегии партиционирования\n\nПартиционирование по range (по дате/ID) подходит для временных рядов; по list для дискретных значений; по hash для равномерного распределения. Преимущества: более быстрые запросы через partition pruning, параллельные сканы, лёгкая архивация старых данных. Нагрузка: сложные соединения между партициями, увеличенное время планировщика. VACUUM работает по партициям (больше конкурирующей нагрузки на много партиций).\n\n```typescript\nCREATE TABLE events (\n  id bigint, created_at timestamp\n) PARTITION BY RANGE (created_at);\n\nCREATE TABLE events_2024_q1 PARTITION OF events\n  FOR VALUES FROM ('2024-01-01') TO ('2024-04-01');\n```\n\n**Типичная ошибка:** Партиционирование не бесплатно—нагрузка перевешивает выгоду на малых таблицах или когда запросы охватывают много партиций."
+    },
+    "tags": [
+      "partitioning",
+      "range-partitioning",
+      "hash-partitioning",
+      "list-partitioning",
+      "partition-pruning"
+    ]
+  },
+  {
+    "id": "postgresql-q-57",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does PgBouncer connection pooling work and what are the differences between session, transaction, and statement pooling modes? When would you choose each mode and what are common pitfalls with application-level prepared statements?",
+      "ru": "Как работает пулирование соединений PgBouncer и в чём различия между режимами сессии, транзакции и выражения? Когда вы выбираете каждый режим и какие типичные ошибки с подготовленными операторами на уровне приложения?"
+    },
+    "answer": {
+      "en": "### PgBouncer Pooling Modes\n\nSession mode: one connection per client (no multiplexing); Transaction mode: connection returned after COMMIT (multiplexes across clients); Statement mode: returned after each query (most aggressive). Use transaction mode for OLTP (stateless apps). Pitfall: prepared statements tied to backend connections break in transaction/statement modes—use unnamed or PgBouncer's prepared_statements=auto.\n\n```typescript\n// pgbouncer.ini\n[databases]\nmydb = host=localhost dbname=mydb\n\n[pgbouncer]\npool_mode = transaction\nmax_db_connections = 100\ndefault_pool_size = 20\n```\n\n**Common interview trap:** Assuming prepared statements always work with PgBouncer—statement scoping issues require protocol-level awareness.",
+      "ru": "### Режимы пулирования PgBouncer\n\nРежим сессии: одно соединение на клиента (без мультиплексирования); режим транзакции: соединение возвращается после COMMIT (мультиплексирует между клиентами); режим выражения: возвращается после каждого запроса (наиболее агрессивный). Используйте режим транзакции для OLTP (stateless приложений). Ошибка: подготовленные операторы, привязанные к соединениям backend, ломаются в режимах транзакции/выражения—используйте безымянные или PgBouncer's prepared_statements=auto.\n\n```typescript\n// pgbouncer.ini\n[databases]\nmydb = host=localhost dbname=mydb\n\n[pgbouncer]\npool_mode = transaction\nmax_db_connections = 100\ndefault_pool_size = 20\n```\n\n**Типичная ошибка:** Предположение, что подготовленные операторы всегда работают с PgBouncer—проблемы области видимости выражения требуют осведомлённости на уровне протокола."
+    },
+    "tags": [
+      "pgbouncer",
+      "connection-pooling",
+      "transaction-pooling",
+      "prepared-statements",
+      "pool-modes"
+    ]
+  },
+  {
+    "id": "postgresql-q-58",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how PostgreSQL's MVCC (Multi-Version Concurrency Control) prevents dirty reads and phantom reads. What role do transaction IDs (XIDs) and visibility maps play?",
+      "ru": "Объясните, как MVCC в PostgreSQL предотвращает грязное чтение и фантомное чтение. Какую роль играют идентификаторы транзакций (XID) и карты видимости?"
+    },
+    "answer": {
+      "en": "### MVCC and Transaction Isolation\n\nMVCC maintains multiple versions of rows with XIDs marking creation and deletion points. Visibility rules check xmin/xmax against current transaction XID to determine row visibility without locks. Visibility maps optimize sequential scans by skipping all-visible pages.\n\n```typescript\n// Check transaction visibility\nSELECT xmin, xmax, ctid FROM users WHERE id = 1;\nSELECT * FROM pg_visibility('users'::regclass);\n// xmin: XID that inserted row, xmax: XID that deleted it\n```\n\n**Common interview trap:** Confusing MVCC with row-level locking; they're independent mechanisms.",
+      "ru": "### MVCC и изоляция транзакций\n\nMVCC поддерживает несколько версий строк с XID, отмечающими точки создания и удаления. Правила видимости проверяют xmin/xmax против текущего XID без блокировок. Карты видимости оптимизируют последовательные сканы, пропуская полностью видимые страницы.\n\n```typescript\n// Проверка видимости транзакции\nSELECT xmin, xmax, ctid FROM users WHERE id = 1;\nSELECT * FROM pg_visibility('users'::regclass);\n// xmin: XID, вставивший строку, xmax: XID, удаливший её\n```\n\n**Типичная ошибка:** Путаница между MVCC и блокировкой на уровне строк; это независимые механизмы."
+    },
+    "tags": [
+      "mvcc",
+      "transaction-isolation",
+      "visibility-rules"
+    ]
+  },
+  {
+    "id": "postgresql-q-59",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Walk through the query planner's cost estimation process. How do statistics (pg_stat_*) influence plan selection, and what happens when statistics are stale?",
+      "ru": "Объясните процесс оценки стоимости в планировщике запросов. Как статистика (pg_stat_*) влияет на выбор плана и что происходит при устаревшей статистике?"
+    },
+    "answer": {
+      "en": "### Query Planner Cost Estimation\n\nThe planner uses pg_stat_user_tables and pg_stat_user_indexes to estimate row counts, page access costs, and I/O. It compares plan costs (seq_scan vs index_scan) and picks the cheapest. Stale statistics cause misestimates, leading to suboptimal plans like sequential scans on indexed columns.\n\n```typescript\n// Analyze table and check statistics\nANALYZE users;\nSELECT relname, n_live_tup, last_vacuum FROM pg_stat_user_tables;\nEXPLAIN (ANALYZE) SELECT * FROM users WHERE id > 1000000;\n```\n\n**Common interview trap:** Assuming ANALYZE updates table; it only refreshes statistics, doesn't modify data.",
+      "ru": "### Оценка стоимости в планировщике\n\nПланировщик использует pg_stat_user_tables и pg_stat_user_indexes для оценки кол-ва строк и расходов I/O. Он сравнивает стоимость планов (seq_scan vs index_scan) и выбирает дешевший. Устаревшая статистика вызывает неправильные оценки, приводя к неоптимальным планам.\n\n```typescript\n// Анализ таблицы и проверка статистики\nANALYZE users;\nSELECT relname, n_live_tup, last_vacuum FROM pg_stat_user_tables;\nEXPLAIN (ANALYZE) SELECT * FROM users WHERE id > 1000000;\n```\n\n**Типичная ошибка:** Путаница между ANALYZE (обновление статистики) и VACUUM (удаление мёртвых строк)."
+    },
+    "tags": [
+      "query-planner",
+      "cost-estimation",
+      "statistics"
+    ]
+  },
+  {
+    "id": "postgresql-q-60",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the vacuum process and autovacuum tuning. How does vacuum prevent transaction ID wraparound, and what are the performance implications of aggressive vs conservative settings?",
+      "ru": "Опишите процесс vacuum и настройку autovacuum. Как vacuum предотвращает переполнение ID транзакций и каковы последствия агрессивных vs консервативных настроек?"
+    },
+    "answer": {
+      "en": "### Vacuum and Autovacuum Tuning\n\nVacuum reclaims dead tuple space and marks visible rows in visibility maps. Autovacuum prevents XID wraparound (every ~2B transactions) by forcing aggressive vacuums on old tables. Aggressive settings clean more frequently but consume CPU; conservative settings risk wraparound halts.\n\n```typescript\n// Check autovacuum settings\nSHOW autovacuum_vacuum_threshold;\nSHOW autovacuum_naptime;\nALTER TABLE large_table SET (\n  autovacuum_vacuum_scale_factor = 0.01\n);\nSELECT datfrozenxid FROM pg_database WHERE datname = 'mydb';\n```\n\n**Common interview trap:** Thinking vacuum deletes rows; it marks space reusable but keeps the page structure.",
+      "ru": "### Vacuum и настройка Autovacuum\n\nVacuum освобождает место мёртвых кортежей и отмечает видимые строки в картах видимости. Autovacuum предотвращает переполнение XID (каждые ~2B транзакций), принудительно выполняя агрессивный vacuum на старых таблицах. Агрессивные настройки чистят часто, но потребляют CPU; консервативные рискуют остановкой.\n\n```typescript\n// Проверка настроек autovacuum\nSHOW autovacuum_vacuum_threshold;\nSHOW autovacuum_naptime;\nALTER TABLE large_table SET (\n  autovacuum_vacuum_scale_factor = 0.01\n);\nSELECT datfrozenxid FROM pg_database WHERE datname = 'mydb';\n```\n\n**Типичная ошибка:** Думать, что vacuum удаляет строки; на самом деле он отмечает место переиспользуемым."
+    },
+    "tags": [
+      "vacuum",
+      "autovacuum",
+      "xid-wraparound",
+      "maintenance"
+    ]
+  },
+  {
+    "id": "postgresql-q-61",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare table partitioning strategies (range, list, hash) and their impact on query planning. When should you use partitioning vs sharding, and what are partition pruning limitations?",
+      "ru": "Сравните стратегии партиционирования таблиц (range, list, hash) и их влияние на планирование запросов. Когда использовать партиционирование vs шардинг и какие ограничения у pruning?"
+    },
+    "answer": {
+      "en": "### Table Partitioning Strategies\n\nRange partitioning works for time-series; list for categorical; hash for even distribution. Partition pruning eliminates child scans based on WHERE constraints, improving performance. Partitioning benefits maintenance and query speed but adds complexity. Sharding is for horizontal scaling across servers; partitioning is within one database.\n\n```typescript\n// Range partitioning by date\nCREATE TABLE orders (\n  id SERIAL, date DATE, amount INT\n) PARTITION BY RANGE (EXTRACT(YEAR FROM date));\nCREATE TABLE orders_2023 PARTITION OF orders\n  FOR VALUES FROM (2023) TO (2024);\nEXPLAIN SELECT * FROM orders WHERE date > '2023-06-01';\n```\n\n**Common interview trap:** Assuming partition pruning happens without WHERE filters; it requires explicit constraints.",
+      "ru": "### Стратегии партиционирования таблиц\n\nRange-партиционирование для временных рядов; list для категорий; hash для равномерного распределения. Partition pruning исключает сканирование дочерних таблиц по WHERE-условиям, улучшая производительность. Партиционирование полезно для обслуживания и скорости, но добавляет сложность. Шардинг для горизонтального масштабирования между серверами; партиционирование внутри БД.\n\n```typescript\n// Range-партиционирование по дате\nCREATE TABLE orders (\n  id SERIAL, date DATE, amount INT\n) PARTITION BY RANGE (EXTRACT(YEAR FROM date));\nCREATE TABLE orders_2023 PARTITION OF orders\n  FOR VALUES FROM (2023) TO (2024);\nEXPLAIN SELECT * FROM orders WHERE date > '2023-06-01';\n```\n\n**Типичная ошибка:** Ожидание pruning без явных WHERE-фильтров в запросе."
+    },
+    "tags": [
+      "partitioning",
+      "query-optimization",
+      "partition-pruning"
+    ]
+  },
+  {
+    "id": "postgresql-q-62",
+    "topicId": "postgresql",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain PgBouncer's connection pooling modes (session, transaction, statement) and their trade-offs. How does pooling interact with PostgreSQL features like prepared statements and temporary tables?",
+      "ru": "Объясните режимы пулинга PgBouncer (session, transaction, statement) и их компромиссы. Как пулинг взаимодействует с подготовленными операторами и временными таблицами?"
+    },
+    "answer": {
+      "en": "### PgBouncer Connection Pooling Modes\n\nSession mode holds connections per client (high resource use). Transaction mode reuses connections between transactions (safe but slower). Statement mode reuses per query (fastest, breaks prepared statements and temp tables). Choose transaction mode for most apps; statement only if queries are stateless.\n\n```typescript\n// pgbouncer.ini configuration\n[databases]\nmydb = host=localhost port=5432 dbname=mydb\n\n[pgbouncer]\npool_mode = transaction  // or session, statement\nmax_client_conn = 1000\ndefault_pool_size = 25\nmin_pool_size = 10\n```\n\n**Common interview trap:** Transaction mode doesn't preserve session state; prepared statements fail if connection changes.",
+      "ru": "### Режимы пулинга PgBouncer\n\nSession mode держит соединения на клиента (высокий расход ресурсов). Transaction mode переиспользует соединения между транзакциями (безопасно, но медленнее). Statement mode переиспользует на запрос (быстрее, ломает подготовленные операторы и temp-таблицы). Выбирайте transaction для большинства приложений; statement только для stateless-запросов.\n\n```typescript\n// Конфигурация pgbouncer.ini\n[databases]\nmydb = host=localhost port=5432 dbname=mydb\n\n[pgbouncer]\npool_mode = transaction  // или session, statement\nmax_client_conn = 1000\ndefault_pool_size = 25\nmin_pool_size = 10\n```\n\n**Типичная ошибка:** Думать, что transaction mode сохраняет session state; подготовленные операторы падают при смене соединения."
+    },
+    "tags": [
+      "pgbouncer",
+      "connection-pooling",
+      "performance-tuning"
+    ]
+  },
+  {
+    "id": "postgresql-q-63",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the difference between PostgreSQL stored procedures and functions. When would you use a procedure over a function in a production system?",
+      "ru": "Объясните разницу между хранимыми процедурами и функциями в PostgreSQL. Когда вы используете процедуру вместо функции в production системе?"
+    },
+    "answer": {
+      "en": "### Procedures vs Functions\n\nProcedures (added in PG11) can COMMIT/ROLLBACK transactions and return multiple result sets, while functions execute within a single transaction. Use procedures for multi-statement business logic that needs transaction control, functions for reusable computations.\n\n```typescript\nCREATE PROCEDURE transfer_funds(from_id INT, to_id INT, amount DECIMAL) AS $$\nBEGIN\n  UPDATE accounts SET balance = balance - amount WHERE id = from_id;\n  UPDATE accounts SET balance = balance + amount WHERE id = to_id;\n  COMMIT;\nEND;\n$$ LANGUAGE plpgsql;\n\nCALL transfer_funds(1, 2, 100);\n```\n\n**Common interview trap:** Thinking functions and procedures are interchangeable—they have fundamentally different transaction semantics.",
+      "ru": "### Процедуры vs Функции\n\nПроцедуры (добавлены в PG11) могут COMMIT/ROLLBACK транзакции и возвращать несколько наборов результатов, в то время как функции выполняются в рамках одной транзакции. Используйте процедуры для многооператорной бизнес-логики, требующей управления транзакциями, функции для переиспользуемых вычислений.\n\n```typescript\nCREATE PROCEDURE transfer_funds(from_id INT, to_id INT, amount DECIMAL) AS $$\nBEGIN\n  UPDATE accounts SET balance = balance - amount WHERE id = from_id;\n  UPDATE accounts SET balance = balance + amount WHERE id = to_id;\n  COMMIT;\nEND;\n$$ LANGUAGE plpgsql;\n\nCALL transfer_funds(1, 2, 100);\n```\n\n**Типичная ошибка:** Думать, что функции и процедуры взаимозаменяемы—они имеют принципиально разную семантику транзакций."
+    },
+    "tags": [
+      "stored-procedures",
+      "functions",
+      "transaction-control"
+    ]
+  },
+  {
+    "id": "postgresql-q-64",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do PostgreSQL triggers differ from constraints, and what are the performance implications of using AFTER vs BEFORE triggers in high-volume write scenarios?",
+      "ru": "Чем триггеры PostgreSQL отличаются от ограничений (constraints) и каковы последствия производительности при использовании триггеров AFTER vs BEFORE в сценариях с большим объемом записей?"
+    },
+    "answer": {
+      "en": "### Triggers vs Constraints\n\nConstraints are declarative and checked at statement end, while triggers execute procedurally for each row. BEFORE triggers can prevent invalid rows from being written, but AFTER triggers have higher overhead in bulk operations since rows are already inserted. For high-volume writes, use constraints when possible.\n\n```typescript\nCREATE TRIGGER check_balance BEFORE INSERT OR UPDATE ON accounts\nFOR EACH ROW\nWHEN (NEW.balance < 0)\nEXECUTE FUNCTION raise_exception('Negative balance');\n\n-- Alternative constraint (more efficient for validation)\nALTER TABLE accounts ADD CONSTRAINT positive_balance CHECK (balance >= 0);\n```\n\n**Common interview trap:** Assuming BEFORE triggers are always faster—they prevent writes but add row-level overhead; constraints are declarative and faster.",
+      "ru": "### Триггеры vs Ограничения\n\nОграничения объявляются и проверяются в конце оператора, в то время как триггеры выполняются процедурно для каждой строки. Триггеры BEFORE могут предотвратить запись недействительных строк, но триггеры AFTER имеют более высокие накладные расходы при массовых операциях. Для больших объемов используйте ограничения, когда возможно.\n\n```typescript\nCREATE TRIGGER check_balance BEFORE INSERT OR UPDATE ON accounts\nFOR EACH ROW\nWHEN (NEW.balance < 0)\nEXECUTE FUNCTION raise_exception('Negative balance');\n\n-- Альтернативное ограничение (более эффективно для валидации)\nALTER TABLE accounts ADD CONSTRAINT positive_balance CHECK (balance >= 0);\n```\n\n**Типичная ошибка:** Предположение, что триггеры BEFORE всегда быстрее—они предотвращают запись, но добавляют накладные расходы на уровне строк."
+    },
+    "tags": [
+      "triggers",
+      "constraints",
+      "performance-optimization"
+    ]
+  },
+  {
+    "id": "postgresql-q-65",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe how row-level security (RLS) policies work and the potential pitfalls when combining RLS with triggers and custom types. How would you debug RLS policy issues?",
+      "ru": "Описать, как работают политики безопасности на уровне строк (RLS) и потенциальные проблемы при объединении RLS с триггерами и пользовательскими типами. Как вы бы отладили проблемы политики RLS?"
+    },
+    "answer": {
+      "en": "### Row-Level Security\n\nRLS policies filter rows based on the current user context (session variables). Pitfalls: RLS is bypassed by superusers, complex policies with triggers can cause performance degradation, and policies don't apply to table owners by default. Use `CURRENT_USER` or `current_setting()` for policy conditions.\n\n```typescript\nALTER TABLE users ENABLE ROW LEVEL SECURITY;\nCREATE POLICY user_isolation ON users\n  USING (user_id = current_user_id())\n  WITH CHECK (user_id = current_user_id());\n\n-- Debug with EXPLAIN ANALYZE\nEXPLAIN ANALYZE SELECT * FROM users WHERE id = 1;\n-- Check if filter is applied in the plan\n```\n\n**Common interview trap:** Thinking RLS alone provides complete security without considering that superusers bypass it and it must be combined with application-level checks.",
+      "ru": "### Безопасность на уровне строк\n\nПолитики RLS фильтруют строки на основе контекста текущего пользователя (переменные сеанса). Опасности: RLS обходится суперпользователями, сложные политики с триггерами могут вызвать деградацию производительности, и политики по умолчанию не применяются к владельцам таблиц. Используйте `CURRENT_USER` или `current_setting()` для условий политики.\n\n```typescript\nALTER TABLE users ENABLE ROW LEVEL SECURITY;\nCREATE POLICY user_isolation ON users\n  USING (user_id = current_user_id())\n  WITH CHECK (user_id = current_user_id());\n\n-- Отладка с EXPLAIN ANALYZE\nEXPLAIN ANALYZE SELECT * FROM users WHERE id = 1;\n-- Проверьте, применяется ли фильтр в плане\n```\n\n**Типичная ошибка:** Думать, что RLS одна обеспечивает полную безопасность без учета того, что суперпользователи обходят это и должны использоваться проверки на уровне приложения."
+    },
+    "tags": [
+      "row-level-security",
+      "access-control",
+      "security"
+    ]
+  },
+  {
+    "id": "postgresql-q-66",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how PostgreSQL's write-ahead log (WAL) enables data durability and logical replication. What is the role of pg_logical in setting up logical replication slots?",
+      "ru": "Объясните, как журнал предварительной записи (WAL) PostgreSQL обеспечивает долговечность данных и логическую репликацию. Какова роль pg_logical в настройке слотов логической репликации?"
+    },
+    "answer": {
+      "en": "### Write-Ahead Log and Logical Replication\n\nWAL ensures durability by writing changes to disk before modifying data pages. Logical replication uses WAL to stream changes (INSERT/UPDATE/DELETE) to subscribers without copying the entire table. pg_logical is the core logical decoding mechanism that parses WAL records into logical changes for replication slots.\n\n```typescript\n-- Create logical replication slot\nSELECT * FROM pg_create_logical_replication_slot('test_slot', 'test_decoding');\n\n-- View logical changes\nSELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);\n\n-- Monitor slot retention\nSELECT slot_name, restart_lsn FROM pg_replication_slots;\n```\n\n**Common interview trap:** Confusing physical replication (block-level) with logical replication (statement-level); logical replication is selective and subscriber-independent.",
+      "ru": "### Журнал предварительной записи и логическая репликация\n\nWAL обеспечивает долговечность, записывая изменения на диск перед изменением страниц данных. Логическая репликация использует WAL для потоковой передачи изменений (INSERT/UPDATE/DELETE) подписчикам без копирования всей таблицы. pg_logical—это основной механизм логического декодирования, который разбирает записи WAL на логические изменения для слотов репликации.\n\n```typescript\n-- Создать слот логической репликации\nSELECT * FROM pg_create_logical_replication_slot('test_slot', 'test_decoding');\n\n-- Просмотреть логические изменения\nSELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL);\n\n-- Мониторить удержание слота\nSELECT slot_name, restart_lsn FROM pg_replication_slots;\n```\n\n**Типичная ошибка:** Путать физическую репликацию (блок-уровень) с логической репликацией (уровень оператора); логическая репликация избирательна и не зависит от подписчика."
+    },
+    "tags": [
+      "wal",
+      "logical-replication",
+      "data-durability"
+    ]
+  },
+  {
+    "id": "postgresql-q-67",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How would you design a custom type or domain to enforce business rules at the database level? Give an example with both DOMAIN and composite type, and explain when to use each.",
+      "ru": "Как бы вы спроектировали пользовательский тип или доменный тип для принудительного соблюдения бизнес-правил на уровне базы данных? Приведите пример как с DOMAIN, так и с составным типом и объясните, когда использовать каждый."
+    },
+    "answer": {
+      "en": "### Custom Types and Domains\n\nDOMAINs are constrained base types with validation—use for simple business rules (e.g., positive prices). Composite types are multi-column structures—use for complex objects that recur across tables. Domains are checked at insert/update; composite types organize related fields and improve reusability.\n\n```typescript\n-- Domain for business rule\nCREATE DOMAIN positive_price AS DECIMAL(10,2) CHECK (VALUE > 0);\n\n-- Composite type for object structure\nCREATE TYPE address AS (street VARCHAR, city VARCHAR, zip VARCHAR);\n\nCREATE TABLE customers (\n  id SERIAL,\n  price positive_price,\n  home_address address\n);\n```\n\n**Common interview trap:** Using domains for everything—they're only for simple constraints; composite types should be used for grouped data that gets reused.",
+      "ru": "### Пользовательские типы и доменные типы\n\nDOMAINs—это ограниченные базовые типы с валидацией—используйте для простых бизнес-правил (например, положительные цены). Составные типы—это многоколонные структуры—используйте для сложных объектов, которые повторяются в таблицах. Доменные типы проверяются при вставке/обновлении; составные типы организуют связанные поля и улучшают переиспользование.\n\n```typescript\n-- Доменный тип для бизнес-правила\nCREATE DOMAIN positive_price AS DECIMAL(10,2) CHECK (VALUE > 0);\n\n-- Составной тип для структуры объекта\nCREATE TYPE address AS (street VARCHAR, city VARCHAR, zip VARCHAR);\n\nCREATE TABLE customers (\n  id SERIAL,\n  price positive_price,\n  home_address address\n);\n```\n\n**Типичная ошибка:** Использование доменов для всего—они подходят только для простых ограничений; составные типы должны использоваться для сгруппированных данных, которые переиспользуются."
+    },
+    "tags": [
+      "custom-types",
+      "domains",
+      "business-rules"
+    ]
+  },
+  {
+    "id": "postgresql-q-68",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the difference between PostgreSQL stored procedures and functions, and when you would use triggers over stored procedures for maintaining data consistency.",
+      "ru": "Объясните разницу между хранимыми процедурами и функциями PostgreSQL и когда вы предпочтете триггеры хранимым процедурам для обеспечения целостности данных."
+    },
+    "answer": {
+      "en": "### Procedures vs Functions and Triggers\n\nStored procedures (CALL syntax) handle transactions and can COMMIT/ROLLBACK, while functions (SELECT syntax) are transaction-safe and return values. Use triggers for automatic enforcement of invariants on INSERT/UPDATE/DELETE; use procedures for complex multi-step operations.\n\n```typescript\nCREATE PROCEDURE update_user_stats(user_id INT)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  UPDATE users SET updated_at = NOW() WHERE id = user_id;\n  COMMIT;\nEND $$;\n\nCREATE FUNCTION prevent_negative_balance() RETURNS TRIGGER AS $$\nBEGIN\n  IF NEW.balance < 0 THEN RAISE EXCEPTION 'Negative balance';\n  END IF;\n  RETURN NEW;\nEND $$ LANGUAGE plpgsql;\n```\n\n**Common interview trap:** Thinking functions and procedures are interchangeable—they differ in transaction semantics and invocation syntax.",
+      "ru": "### Процедуры vs Функции и Триггеры\n\nХранимые процедуры (синтаксис CALL) управляют транзакциями и могут COMMIT/ROLLBACK, тогда как функции (синтаксис SELECT) безопасны для транзакций и возвращают значения. Используйте триггеры для автоматического обеспечения инвариантов при INSERT/UPDATE/DELETE; используйте процедуры для сложных многошаговых операций.\n\n```typescript\nCREATE PROCEDURE update_user_stats(user_id INT)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n  UPDATE users SET updated_at = NOW() WHERE id = user_id;\n  COMMIT;\nEND $$;\n\nCREATE FUNCTION prevent_negative_balance() RETURNS TRIGGER AS $$\nBEGIN\n  IF NEW.balance < 0 THEN RAISE EXCEPTION 'Negative balance';\n  END IF;\n  RETURN NEW;\nEND $$ LANGUAGE plpgsql;\n```\n\n**Типичная ошибка:** Думать, что функции и процедуры взаимозаменяемы—они различаются семантикой транзакций и синтаксисом вызова."
+    },
+    "tags": [
+      "stored-procedures",
+      "functions",
+      "triggers",
+      "transaction-semantics"
+    ]
+  },
+  {
+    "id": "postgresql-q-69",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do row-level security (RLS) policies interact with logical replication and pg_logical, and what are the implications for replicating sensitive data across clusters?",
+      "ru": "Как политики безопасности на уровне строк (RLS) взаимодействуют с логической репликацией и pg_logical, и каковы последствия для репликации чувствительных данных между кластерами?"
+    },
+    "answer": {
+      "en": "### RLS and Logical Replication\n\nRLS policies filter data per session but do NOT apply during replication—the logical replication worker bypasses RLS to maintain consistency. Sensitive data replicated via pg_logical must be managed through publication filters, not RLS alone. Use column-level security or encrypted columns for cross-cluster sensitive data.\n\n```typescript\nCREATE PUBLICATION pub_safe FOR TABLE users\n  WHERE (tenant_id = CURRENT_SETTING('app.tenant_id')::INT);\n\nCREATE POLICY user_policy ON users\n  USING (tenant_id = CURRENT_SETTING('app.tenant_id')::INT);\n\nCREATE SUBSCRIPTION sub_safe CONNECTION '...' \n  PUBLICATION pub_safe;\n```\n\n**Common interview trap:** Assuming RLS protects data during replication—it doesn't; publication filters are required.",
+      "ru": "### RLS и Логическая Репликация\n\nПолитики RLS фильтруют данные per сессию, но НЕ применяются во время репликации—логический рабочий процесс репликации обходит RLS для обеспечения согласованности. Чувствительные данные, реплицируемые через pg_logical, должны управляться через фильтры публикаций, а не только через RLS. Используйте безопасность на уровне столбцов или зашифрованные столбцы для чувствительных данных между кластерами.\n\n```typescript\nCREATE PUBLICATION pub_safe FOR TABLE users\n  WHERE (tenant_id = CURRENT_SETTING('app.tenant_id')::INT);\n\nCREATE POLICY user_policy ON users\n  USING (tenant_id = CURRENT_SETTING('app.tenant_id')::INT);\n\nCREATE SUBSCRIPTION sub_safe CONNECTION '...'\n  PUBLICATION pub_safe;\n```\n\n**Типичная ошибка:** Предположение, что RLS защищает данные во время репликации—это не так; необходимы фильтры публикаций."
+    },
+    "tags": [
+      "row-level-security",
+      "logical-replication",
+      "pg_logical",
+      "data-security",
+      "publication-filters"
+    ]
+  },
+  {
+    "id": "postgresql-q-70",
+    "topicId": "postgresql",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a solution using custom types, domains, and extensions (pg_vector, PostGIS) to store and query multi-modal data (embeddings + geospatial). How would write-ahead logging impact performance?",
+      "ru": "Разработайте решение с использованием пользовательских типов, доменов и расширений (pg_vector, PostGIS) для хранения и запроса мультимодальных данных (встраивания + геопространственные). Как предварительное логирование влияет на производительность?"
+    },
+    "answer": {
+      "en": "### Multi-Modal Data with Custom Types\n\nCreate a composite domain combining vector embeddings (pg_vector) with PostGIS geometry for hybrid similarity searches. Custom domains enforce constraints at insertion; WAL writes are synchronous by default but can be tuned with synchronous_commit for performance trade-offs.\n\n```typescript\nCREATE TYPE location_data AS (geom GEOMETRY(Point, 4326), embedding VECTOR(384));\nCREATE DOMAIN geo_embedding AS location_data CHECK ((geom).x BETWEEN -180 AND 180);\n\nCREATE TABLE places (id SERIAL, data geo_embedding, CONSTRAINT valid_emb CHECK (vector_dims(data.embedding) = 384));\nCREATE INDEX ON places USING GiST(data.geom);\nCREATE INDEX ON places USING IVFFLAT(data.embedding);\n\nSET synchronous_commit = local; -- Reduce WAL fsync overhead\n```\n\n**Common interview trap:** Ignoring that WAL writes are the bottleneck—synchronous_commit tuning is critical for bulk loads.",
+      "ru": "### Мультимодальные данные с пользовательскими типами\n\nСоздайте составной домен, объединяющий векторные встраивания (pg_vector) с геометрией PostGIS для гибридных поисков подобия. Пользовательские домены обеспечивают ограничения при вставке; WAL записи синхронны по умолчанию, но можно настроить с помощью synchronous_commit для компромисса производительности.\n\n```typescript\nCREATE TYPE location_data AS (geom GEOMETRY(Point, 4326), embedding VECTOR(384));\nCREATE DOMAIN geo_embedding AS location_data CHECK ((geom).x BETWEEN -180 AND 180);\n\nCREATE TABLE places (id SERIAL, data geo_embedding, CONSTRAINT valid_emb CHECK (vector_dims(data.embedding) = 384));\nCREATE INDEX ON places USING GiST(data.geom);\nCREATE INDEX ON places USING IVFFLAT(data.embedding);\n\nSET synchronous_commit = local; -- Reduce WAL fsync overhead\n```\n\n**Типичная ошибка:** Игнорирование того, что запись WAL является узким местом—настройка synchronous_commit критична для массовых загрузок."
+    },
+    "tags": [
+      "custom-types",
+      "domains",
+      "pg_vector",
+      "postgis",
+      "write-ahead-log",
+      "performance-tuning"
+    ]
+  }
+]

@@ -1,1 +1,486 @@
-[]
+[
+  {
+    "id": "system-design-q-1",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design an API contract between frontend and backend that minimizes payload size while maintaining flexibility for different client types (web, mobile). How would you structure your endpoints?",
+      "ru": "Спроектируйте контракт API между фронтенд и бэкенд, который минимизирует размер payload, сохраняя гибкость для разных типов клиентов (веб, мобильная). Как бы вы структурировали endpoints?"
+    },
+    "answer": {
+      "en": "### Field Selection & Sparse Fieldsets\n\nUse query parameters to allow clients to request only needed fields, reducing payload size. This approach supports different client needs without multiple endpoints.\n\n```typescript\n// Request specific fields only\nGET /api/users/123?fields=id,name,email\n\n// Response\n{\n  \"id\": \"123\",\n  \"name\": \"John\",\n  \"email\": \"john@example.com\"\n}\n```\n\n**Common interview trap:** Not considering that mobile clients might need different data than web — mention field selection solves this without BFF.",
+      "ru": "### Выборочные поля (Sparse Fieldsets)\n\nИспользуйте параметры запроса, чтобы позволить клиентам запрашивать только нужные поля, уменьшая размер payload. Этот подход поддерживает различные потребности клиентов без множественных endpoints.\n\n```typescript\n// Запрос только нужных полей\nGET /api/users/123?fields=id,name,email\n\n// Ответ\n{\n  \"id\": \"123\",\n  \"name\": \"John\",\n  \"email\": \"john@example.com\"\n}\n```\n\n**Типичная ошибка:** Не учитывать, что мобильные клиенты могут нуждаться в других данных, чем веб — упомяните, что выборочные поля решают это без BFF."
+    },
+    "tags": [
+      "api-design",
+      "sparse-fieldsets",
+      "payload-optimization"
+    ]
+  },
+  {
+    "id": "system-design-q-2",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "When would you implement a Backend for Frontend (BFF) pattern instead of a shared API? Describe a real scenario with trade-offs.",
+      "ru": "Когда вы бы внедрили паттерн Backend for Frontend (BFF) вместо общего API? Опишите реальный сценарий с компромиссами."
+    },
+    "answer": {
+      "en": "### BFF for Microservices Orchestration\n\nUse BFF when frontend needs data from multiple backend services but network constraints (mobile) or composition logic makes a shared API inefficient. Trade-off: extra service adds deployment complexity.\n\n```typescript\n// BFF orchestrates multiple microservices\napp.get('/api/user-dashboard/:id', async (req, res) => {\n  const user = await userService.get(req.params.id);\n  const orders = await orderService.getByUser(req.params.id);\n  const notifications = await notifService.get(req.params.id);\n  res.json({ user, orders, notifications });\n});\n```\n\n**Common interview trap:** Saying BFF is always needed — clarify it's only necessary for complex multi-service scenarios or different client requirements.",
+      "ru": "### BFF для оркестрации микросервисов\n\nИспользуйте BFF, когда фронтенду нужны данные из нескольких бэкенд-сервисов, но сетевые ограничения (мобильная) или логика композиции делают общий API неэффективным. Компромисс: дополнительный сервис усложняет деплой.\n\n```typescript\n// BFF организует несколько микросервисов\napp.get('/api/user-dashboard/:id', async (req, res) => {\n  const user = await userService.get(req.params.id);\n  const orders = await orderService.getByUser(req.params.id);\n  const notifications = await notifService.get(req.params.id);\n  res.json({ user, orders, notifications });\n});\n```\n\n**Типичная ошибка:** Говорить, что BFF всегда нужен — уточните, что это необходимо только для сложных мультисервисных сценариев или разных требований клиента."
+    },
+    "tags": [
+      "bff-pattern",
+      "microservices",
+      "api-orchestration"
+    ]
+  },
+  {
+    "id": "system-design-q-3",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design a multi-layer caching strategy for a product listing page that shows frequently updated inventory. Include CDN, browser, and API-level caching with appropriate TTLs.",
+      "ru": "Спроектируйте многоуровневую стратегию кэширования для страницы списка товаров, которая показывает часто обновляемый инвентарь. Включите кэширование на уровне CDN, браузера и API с подходящими TTL."
+    },
+    "answer": {
+      "en": "### Tiered Caching Strategy\n\nCombine CDN (long TTL for static HTML), browser cache (etags for dynamic content), and API headers (vary by query params). Use stale-while-revalidate to serve cached content while refreshing in background.\n\n```typescript\n// API response with smart caching headers\nres.set({\n  'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',\n  'ETag': generateHash(products),\n  'Vary': 'Accept-Encoding, Accept-Language'\n});\n\n// Browser can serve stale data while revalidating\nconst response = await fetch('/api/products', {\n  headers: { 'If-None-Match': previousETag }\n});\n```\n\n**Common interview trap:** Setting same TTL for all layers — inventory updates require shorter API TTL but longer CDN TTL for static assets.",
+      "ru": "### Стратегия многоуровневого кэширования\n\nОбъедините CDN (длинный TTL для статического HTML), кэш браузера (etags для динамического контента) и заголовки API (отличаются по параметрам запроса). Используйте stale-while-revalidate для подачи кэшированного контента во время обновления в фоне.\n\n```typescript\n// API ответ с умными заголовками кэширования\nres.set({\n  'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',\n  'ETag': generateHash(products),\n  'Vary': 'Accept-Encoding, Accept-Language'\n});\n\n// Браузер может подать устаревшие данные при переаккредитации\nconst response = await fetch('/api/products', {\n  headers: { 'If-None-Match': previousETag }\n});\n```\n\n**Типичная ошибка:** Установка одинакового TTL для всех уровней — обновления инвентаря требуют более короткого API TTL, но более длинного CDN TTL для статических ассетов."
+    },
+    "tags": [
+      "caching-strategy",
+      "cdn",
+      "http-caching",
+      "stale-while-revalidate"
+    ]
+  },
+  {
+    "id": "system-design-q-4",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "Implement pagination for a large dataset endpoint. Compare cursor-based vs offset-based pagination and explain why one is better for mobile clients accessing via API.",
+      "ru": "Реализуйте пагинацию для endpoint с большим набором данных. Сравните cursor-based и offset-based пагинацию и объясните, почему один подход лучше для мобильных клиентов, получающих доступ через API."
+    },
+    "answer": {
+      "en": "### Cursor-Based Pagination for Performance\n\nCursor-based pagination is better for APIs: it avoids expensive offset skipping and handles data changes between requests (insertions/deletions don't break pagination). Offset-based requires querying and skipping N rows, which degrades with large datasets.\n\n```typescript\n// Cursor-based: efficient and resilient\nGET /api/products?cursor=eyJpZCI6MTIzfQ&limit=20\n\n// Response includes next cursor\n{\n  \"items\": [...],\n  \"nextCursor\": \"eyJpZCI6MTQzfQ\"\n}\n\n// vs offset-based: scans all skipped rows\nGET /api/products?offset=1000&limit=20 // scans rows 0-1019\n```\n\n**Common interview trap:** Not mentioning offset's performance issues with large offsets — index still must scan skipped rows regardless of LIMIT.",
+      "ru": "### Cursor-based пагинация для производительности\n\nCursor-based пагинация лучше для API: она избегает дорогостоящего пропуска offset и обрабатывает изменения данных между запросами (вставки/удаления не ломают пагинацию). Offset-based требует запроса и пропуска N строк, что деградирует с большими наборами данных.\n\n```typescript\n// Cursor-based: эффективно и устойчиво\nGET /api/products?cursor=eyJpZCI6MTIzfQ&limit=20\n\n// Ответ включает следующий cursor\n{\n  \"items\": [...],\n  \"nextCursor\": \"eyJpZCI6MTQzfQ\"\n}\n\n// vs offset-based: сканирует все пропущенные строки\nGET /api/products?offset=1000&limit=20 // сканирует строки 0-1019\n```\n\n**Типичная ошибка:** Не упоминать проблемы производительности offset с большими offset — индекс все равно должен сканировать пропущенные строки независимо от LIMIT."
+    },
+    "tags": [
+      "pagination",
+      "cursor-based",
+      "offset-based",
+      "database-performance"
+    ]
+  },
+  {
+    "id": "system-design-q-5",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design how a frontend should handle stale data and cache invalidation when the user performs actions (like adding to cart). Should backend push updates or frontend poll?",
+      "ru": "Спроектируйте, как фронтенд должен обрабатывать устаревшие данные и инвалидацию кэша, когда пользователь выполняет действия (например, добавление в корзину). Должен ли бэкенд отправлять обновления или фронтенд опрашивать?"
+    },
+    "answer": {
+      "en": "### Optimistic Updates + Event-Driven Invalidation\n\nFrontend optimistically updates UI immediately, while backend confirms via response. Use webhooks/WebSockets for critical data (inventory) and cache tags for selective invalidation. Polling is too slow for real-time scenarios.\n\n```typescript\n// Frontend optimistic update\nfunction addToCart(product) {\n  setCart([...cart, product]); // Update UI immediately\n  \n  fetch('/api/cart', { method: 'POST', body: product })\n    .then(res => {\n      if (!res.ok) setCart(previousCart); // Rollback on error\n    });\n}\n\n// Backend sends event for listeners to invalidate cache\nemitter.emit('product:inventory-changed', { productId, quantity });\n```\n\n**Common interview trap:** Saying polling is acceptable — it's wasteful and creates latency for actionable updates like inventory changes.",
+      "ru": "### Оптимистичные обновления + инвалидация на основе событий\n\nФронтенд оптимистично обновляет UI немедленно, а бэкенд подтверждает через ответ. Используйте webhooks/WebSockets для критических данных (инвентарь) и кэш-теги для выборочной инвалидации. Опрос слишком медленен для real-time сценариев.\n\n```typescript\n// Фронтенд оптимистично обновляет\nfunction addToCart(product) {\n  setCart([...cart, product]); // Обновить UI немедленно\n  \n  fetch('/api/cart', { method: 'POST', body: product })\n    .then(res => {\n      if (!res.ok) setCart(previousCart); // Откат при ошибке\n    });\n}\n\n// Бэкенд отправляет событие для слушателей инвалидировать кэш\nemitter.emit('product:inventory-changed', { productId, quantity });\n```\n\n**Типичная ошибка:** Говорить, что опрос приемлем — это расточительно и создает задержку для действенных обновлений, таких как изменения инвентаря."
+    },
+    "tags": [
+      "cache-invalidation",
+      "optimistic-updates",
+      "event-driven",
+      "websockets"
+    ]
+  },
+  {
+    "id": "system-design-q-6",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design an API contract between frontend and backend for a paginated product list that supports filtering, sorting, and infinite scroll. How would you structure the request/response to minimize payload size and support both client-side and server-side caching?",
+      "ru": "Спроектируйте контракт API между фронтенд и бэкенд для постраничного списка товаров с фильтрацией, сортировкой и бесконечной прокруткой. Как вы структурируете запрос/ответ, чтобы минимизировать размер данных и поддержать кэширование как на клиенте, так и на сервере?"
+    },
+    "answer": {
+      "en": "### Structured Pagination API with Cache Headers\n\nUse cursor-based pagination with sparse fieldsets to reduce payload. Include ETag and Cache-Control headers for browser caching while supporting conditional requests. Return only essential fields and let the client request additional data separately.\n\n```typescript\n// Request\nGET /api/v1/products?cursor=abc123&limit=20&fields=id,name,price&filter[category]=electronics&sort=-createdAt\n\n// Response with cache headers\n{\n  \"data\": [{\"id\": \"1\", \"name\": \"Laptop\", \"price\": 999}],\n  \"pagination\": {\"nextCursor\": \"def456\", \"hasMore\": true},\n  \"headers\": {\"ETag\": \"w/abc123\", \"Cache-Control\": \"max-age=300, public\"}\n}\n```\n\n**Common interview trap:** Using offset-based pagination for infinite scroll causes data duplication and inconsistency when items are added/removed during scrolling.",
+      "ru": "### Структурированный API постраничной выборки с кэш-заголовками\n\nИспользуйте cursor-based пагинацию с разреженными полями для сокращения размера. Включите ETag и Cache-Control заголовки для кэширования браузером с поддержкой условных запросов. Возвращайте только нужные поля, позволяя клиенту отдельно запрашивать дополнительные данные.\n\n```typescript\n// Запрос\nGET /api/v1/products?cursor=abc123&limit=20&fields=id,name,price&filter[category]=electronics&sort=-createdAt\n\n// Ответ с кэш-заголовками\n{\n  \"data\": [{\"id\": \"1\", \"name\": \"Ноутбук\", \"price\": 999}],\n  \"pagination\": {\"nextCursor\": \"def456\", \"hasMore\": true},\n  \"headers\": {\"ETag\": \"w/abc123\", \"Cache-Control\": \"max-age=300, public\"}\n}\n```\n\n**Типичная ошибка:** Использование offset-based пагинации для бесконечной прокрутки приводит к дублированию и несогласованности данных."
+    },
+    "tags": [
+      "cursor-pagination",
+      "cache-headers",
+      "api-design",
+      "sparse-fields"
+    ]
+  },
+  {
+    "id": "system-design-q-7",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "When should you implement a Backend-for-Frontend (BFF) pattern instead of having the frontend call backend services directly? Describe a concrete scenario where BFF adds value and explain the caching implications.",
+      "ru": "Когда стоит реализовать паттерн Backend-for-Frontend (BFF) вместо прямых вызовов фронтенда к бэкенд-сервисам? Опишите конкретный сценарий, где BFF добавляет ценность, и объясните последствия для кэширования."
+    },
+    "answer": {
+      "en": "### BFF for Aggregation and Transformation\n\nUse BFF when the frontend needs data from multiple backend services or requires heavy transformation to match frontend models. BFF acts as an orchestration layer that caches aggregated results and shields frontend from backend complexity.\n\n```typescript\n// Frontend calls BFF (single endpoint)\nGET /api/bff/dashboard\n\n// BFF internally orchestrates\nconst dashboardData = await Promise.all([\n  fetch('/internal/users/:id'),\n  fetch('/internal/orders/:userId'),\n  fetch('/internal/recommendations/:userId')\n]);\n// Cache aggregated result for 5 minutes\nresponse.set('Cache-Control', 'max-age=300, s-maxage=600');\n```\n\n**Common interview trap:** BFF shouldn't just proxy requests; it should add genuine value through aggregation, transformation, or authentication logic.",
+      "ru": "### BFF для Агрегации и Трансформации\n\nИспользуйте BFF когда фронтенд нужны данные из нескольких бэкенд-сервисов или требуется значительная трансформация под фронтенд модели. BFF служит слоем оркестрации, кэширует агрегированные результаты и защищает фронтенд от сложности бэкенда.\n\n```typescript\n// Фронтенд вызывает BFF (один endpoint)\nGET /api/bff/dashboard\n\n// BFF внутри оркеструет\nconst dashboardData = await Promise.all([\n  fetch('/internal/users/:id'),\n  fetch('/internal/orders/:userId'),\n  fetch('/internal/recommendations/:userId')\n]);\n// Кэшируем агрегированный результат на 5 минут\nresponse.set('Cache-Control', 'max-age=300, s-maxage=600');\n```\n\n**Типичная ошибка:** BFF не должен просто проксировать запросы; он должен добавлять реальную ценность через агрегацию, трансформацию или аутентификацию."
+    },
+    "tags": [
+      "bff-pattern",
+      "api-aggregation",
+      "cache-layers",
+      "service-orchestration"
+    ]
+  },
+  {
+    "id": "system-design-q-8",
+    "topicId": "system-design",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare offset-based and cursor-based pagination for a feed-like interface. Which one is better for caching and why? How would you handle the case where new items are inserted at the top while the user is scrolling?",
+      "ru": "Сравните offset-based и cursor-based пагинацию для интерфейса типа лента. Какая лучше для кэширования и почему? Как вы будете обрабатывать случай, когда новые элементы вставляются сверху, пока пользователь прокручивает?"
+    },
+    "answer": {
+      "en": "### Cursor-Based Pagination for Feeds\n\nCursor-based pagination is superior for feeds because it remains stable when items are inserted at the top, while offset breaks when data changes. Cursors are deterministic and cacheable per cursor value; offsets shift unpredictably.\n\n```typescript\n// Cursor-based: stable across insertions\nGET /api/feed?cursor=item-42&limit=20\nresponse.set('Cache-Control', 'max-age=60, public');\n// Cache key: feed:cursor:item-42 — works even after new items\n\n// Offset-based: breaks after insertion\nGET /api/feed?offset=20&limit=20\n// Cache invalidated when new items appear at top\n```\n\n**Common interview trap:** Offset-based pagination appears simpler but causes data duplication and missing/repeated items in real-time feeds.",
+      "ru": "### Cursor-Based Пагинация для Лент\n\nCursor-based пагинация превосходит offset-based для лент, потому что остается стабильной при вставке элементов сверху, тогда как offset нарушается при изменении данных. Курсоры детерминированы и кэшируемы для каждого значения курсора; офсеты смещаются непредсказуемо.\n\n```typescript\n// Cursor-based: стабильно при вставках\nGET /api/feed?cursor=item-42&limit=20\nresponse.set('Cache-Control', 'max-age=60, public');\n// Ключ кэша: feed:cursor:item-42 — работает даже после новых элементов\n\n// Offset-based: ломается после вставки\nGET /api/feed?offset=20&limit=20\n// Кэш инвалидируется когда сверху появляются новые элементы\n```\n\n**Типичная ошибка:** Offset-based пагинация выглядит проще, но вызывает дублирование данных и пропуск/повтор элементов в реал-тайм лентах."
+    },
+    "tags": [
+      "cursor-pagination",
+      "offset-pagination",
+      "feed-pattern",
+      "cache-stability"
+    ]
+  },
+  {
+    "id": "system-design-q-9",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a micro-frontend architecture using Module Federation. What are the key trade-offs between shared dependencies, version conflicts, and bundle size when multiple teams deploy independently?",
+      "ru": "Спроектируйте архитектуру микрофронтенда с использованием Module Federation. Каковы основные компромиссы между общими зависимостями, конфликтами версий и размером бандла при независимом развёртывании несколькими командами?"
+    },
+    "answer": {
+      "en": "### Module Federation Trade-offs\n\nModule Federation allows multiple webpack instances to share code at runtime, but requires careful versioning strategy. Shared dependencies can reduce duplication but risk version mismatches; singleton mode ensures one instance but limits flexibility.\n\n```typescript\n// webpack.config.js\nconst ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');\n\nplugins: [\n  new ModuleFederationPlugin({\n    name: 'app1',\n    filename: 'remoteEntry.js',\n    remotes: { app2: 'app2@http://localhost:3002/remoteEntry.js' },\n    shared: {\n      react: { singleton: true, requiredVersion: '^18.0' },\n      'react-dom': { singleton: true }\n    }\n  })\n]\n```\n\n**Common interview trap:** Assuming all shared dependencies should use singleton mode without considering version compatibility requirements.",
+      "ru": "### Компромиссы Module Federation\n\nModule Federation позволяет нескольким экземплярам webpack делиться кодом во время выполнения, но требует тщательной стратегии версионирования. Общие зависимости снижают дублирование, но рискуют конфликтами версий; режим singleton гарантирует один экземпляр, но ограничивает гибкость.\n\n```typescript\n// webpack.config.js\nconst ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');\n\nplugins: [\n  new ModuleFederationPlugin({\n    name: 'app1',\n    filename: 'remoteEntry.js',\n    remotes: { app2: 'app2@http://localhost:3002/remoteEntry.js' },\n    shared: {\n      react: { singleton: true, requiredVersion: '^18.0' },\n      'react-dom': { singleton: true }\n    }\n  })\n]\n```\n\n**Типичная ошибка:** Предположение, что все общие зависимости должны использовать режим singleton без учёта требований совместимости версий."
+    },
+    "tags": [
+      "module-federation",
+      "dependency-sharing",
+      "version-management",
+      "bundle-optimization"
+    ]
+  },
+  {
+    "id": "system-design-q-10",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're building a design system used by 50+ teams. How would you handle component versioning, breaking changes, and ensure backward compatibility while allowing evolution?",
+      "ru": "Вы создаёте дизайн-систему для 50+ команд. Как вы будете управлять версионированием компонентов, обрабатывать критические изменения и обеспечивать обратную совместимость при развитии?"
+    },
+    "answer": {
+      "en": "### Design System Versioning Strategy\n\nUse semantic versioning with clear deprecation policies and codemods for migrations. Publish deprecated component versions alongside new ones to allow gradual adoption; use TypeScript strict mode to catch breaking changes early.\n\n```typescript\n// ComponentV1.tsx (deprecated)\n/**\n * @deprecated Use ComponentV2 instead. Migration: https://docs-link\n */\nexport const ComponentV1 = (props) => { /* ... */ };\n\n// package.json\n{\n  \"exports\": {\n    \"./ComponentV1\": \"./dist/ComponentV1.js\",\n    \"./ComponentV2\": \"./dist/ComponentV2.js\"\n  }\n}\n```\n\n**Common interview trap:** Forcing all teams to update immediately instead of providing migration tools and gradual deprecation windows.",
+      "ru": "### Стратегия версионирования дизайн-системы\n\nИспользуйте семантическое версионирование с чёткими политиками устаревания и codemods для миграций. Публикуйте устаревшие версии компонентов вместе с новыми для постепенного внедрения; используйте TypeScript strict mode для раннего обнаружения критических изменений.\n\n```typescript\n// ComponentV1.tsx (deprecated)\n/**\n * @deprecated Use ComponentV2 instead. Migration: https://docs-link\n */\nexport const ComponentV1 = (props) => { /* ... */ };\n\n// package.json\n{\n  \"exports\": {\n    \"./ComponentV1\": \"./dist/ComponentV1.js\",\n    \"./ComponentV2\": \"./dist/ComponentV2.js\"\n  }\n}\n```\n\n**Типичная ошибка:** Принудительное обновление всех команд сразу вместо предоставления инструментов миграции и постепенных окон устаревания."
+    },
+    "tags": [
+      "design-systems",
+      "versioning",
+      "backward-compatibility",
+      "deprecation"
+    ]
+  },
+  {
+    "id": "system-design-q-11",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare WebSockets vs Server-Sent Events vs polling for real-time notifications. When would you choose each, considering latency, server resources, browser compatibility, and failure recovery?",
+      "ru": "Сравните WebSockets, Server-Sent Events и polling для уведомлений в реальном времени. Когда вы выбрали бы каждый, учитывая задержку, ресурсы сервера, совместимость браузеров и восстановление при сбое?"
+    },
+    "answer": {
+      "en": "### Real-time Transport Trade-offs\n\nWebSockets offer bidirectional communication with lowest latency but require stateful connections; SSE is simpler (HTTP-based) but unidirectional; polling is most compatible but resource-intensive. Choose WebSockets for low-latency, bidirectional needs; SSE for server→client streams; polling for simple notifications with relaxed latency requirements.\n\n```typescript\n// SSE: Simple, unidirectional, auto-reconnect\nconst eventSource = new EventSource('/api/notifications');\neventSource.onmessage = (event) => console.log(event.data);\n\n// WebSocket: Bidirectional, manual reconnect\nconst ws = new WebSocket('wss://api.example.com');\nws.send(JSON.stringify({ action: 'subscribe' }));\nws.onmessage = (event) => console.log(JSON.parse(event.data));\n```\n\n**Common interview trap:** Defaulting to WebSockets without considering SSE's built-in reconnection and simpler implementation for one-way communication.",
+      "ru": "### Компромиссы транспорта реального времени\n\nWebSockets предлагают двусторонний обмен с минимальной задержкой, но требуют сохранения состояния соединения; SSE проще (основан на HTTP), но только в одну сторону; polling наиболее совместим, но требует ресурсов. Выбирайте WebSockets для низкой задержки и двусторонней коммуникации; SSE для потоков сервер→клиент; polling для простых уведомлений с мягкими требованиями к задержке.\n\n```typescript\n// SSE: Простой, односторонний, автоматическое переподключение\nconst eventSource = new EventSource('/api/notifications');\neventSource.onmessage = (event) => console.log(event.data);\n\n// WebSocket: Двусторонний, ручное переподключение\nconst ws = new WebSocket('wss://api.example.com');\nws.send(JSON.stringify({ action: 'subscribe' }));\nws.onmessage = (event) => console.log(JSON.parse(event.data));\n```\n\n**Типичная ошибка:** Выбор WebSockets по умолчанию без рассмотрения встроенного переподключения SSE и более простой реализации для односторонней коммуникации."
+    },
+    "tags": [
+      "websockets",
+      "sse",
+      "polling",
+      "real-time",
+      "latency"
+    ]
+  },
+  {
+    "id": "system-design-q-12",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an offline-first application architecture. How would you handle data synchronization, conflict resolution, and state consistency when the user regains connectivity?",
+      "ru": "Спроектируйте архитектуру приложения, ориентированную на работу в режиме офлайн. Как вы будете обрабатывать синхронизацию данных, разрешение конфликтов и консистентность состояния при восстановлении соединения?"
+    },
+    "answer": {
+      "en": "### Offline-First Architecture\n\nStore data in IndexedDB/SQLite locally, queue mutations, and sync on reconnection using optimistic updates with conflict detection. Use vector clocks or CRDT for deterministic conflict resolution; implement exponential backoff for retry logic to handle transient failures gracefully.\n\n```typescript\n// Queue mutations locally\nconst queueMutation = async (action) => {\n  await db.mutations.add({ ...action, timestamp: Date.now() });\n  if (navigator.onLine) await syncWithServer();\n};\n\n// Sync with retry and conflict resolution\nconst syncWithServer = async (retries = 0) => {\n  try {\n    const mutations = await db.mutations.getAll();\n    await fetch('/api/sync', { method: 'POST', body: JSON.stringify(mutations) });\n    await db.mutations.clear();\n  } catch (err) {\n    if (retries < 5) setTimeout(() => syncWithServer(retries + 1), 2 ** retries * 1000);\n  }\n};\n```\n\n**Common interview trap:** Ignoring concurrent mutations from multiple devices leading to data loss or consistency issues after sync.",
+      "ru": "### Архитектура offline-first\n\nСохраняйте данные локально в IndexedDB/SQLite, ставьте мутации в очередь и синхронизируйте при восстановлении соединения, используя оптимистичные обновления с обнаружением конфликтов. Используйте векторные часы или CRDT для детерминированного разрешения конфликтов; реализуйте экспоненциальную отсрочку для логики повтора для корректной обработки временных сбоев.\n\n```typescript\n// Поставьте мутации в очередь локально\nconst queueMutation = async (action) => {\n  await db.mutations.add({ ...action, timestamp: Date.now() });\n  if (navigator.onLine) await syncWithServer();\n};\n\n// Синхронизируйте с повторами и разрешением конфликтов\nconst syncWithServer = async (retries = 0) => {\n  try {\n    const mutations = await db.mutations.getAll();\n    await fetch('/api/sync', { method: 'POST', body: JSON.stringify(mutations) });\n    await db.mutations.clear();\n  } catch (err) {\n    if (retries < 5) setTimeout(() => syncWithServer(retries + 1), 2 ** retries * 1000);\n  }\n};\n```\n\n**Типичная ошибка:** Игнорирование одновременных мутаций с нескольких устройств, приводящих к потере данных или проблемам с консистентностью после синхронизации."
+    },
+    "tags": [
+      "offline-first",
+      "sync",
+      "conflict-resolution",
+      "indexeddb",
+      "crdt"
+    ]
+  },
+  {
+    "id": "system-design-q-13",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Architect a scalable design system component library with lazy-loading, tree-shaking optimization, and isolated development environments for 100+ components. How would you organize the monorepo and ensure performance?",
+      "ru": "Спроектируйте масштабируемую библиотеку компонентов дизайн-системы с ленивой загрузкой, оптимизацией tree-shaking и изолированными средами разработки для 100+ компонентов. Как вы организуете монорепо и обеспечиваете производительность?"
+    },
+    "answer": {
+      "en": "### Scalable Component Library Architecture\n\nOrganize monorepo with per-component packages and barrel exports for tree-shaking; use dynamic imports and code-splitting for lazy loading. Implement Storybook for isolated development, automated visual regression testing, and publish individual components to npm with semantic versioning.\n\n```typescript\n// packages/components/button/index.ts (tree-shakeable)\nexport { Button } from './Button';\n\n// packages/core/index.ts (barrel with lazy loading)\nexport const Button = () => import('../button').then(m => m.Button);\n\n// vite.config.ts\nexport default {\n  build: { rollupOptions: { output: { preserveModules: true } } },\n  ssr: { noExternal: ['@design-system/*'] }\n}\n```\n\n**Common interview trap:** Using a single large package instead of scoped packages, preventing granular updates and forcing unnecessary dependencies on consumers.",
+      "ru": "### Архитектура масштабируемой библиотеки компонентов\n\nОрганизуйте монорепо с отдельными пакетами компонентов и barrel exports для tree-shaking; используйте динамические импорты и code-splitting для ленивой загрузки. Реализуйте Storybook для изолированной разработки, автоматизированное визуальное регрессионное тестирование и публикуйте отдельные компоненты в npm с семантическим версионированием.\n\n```typescript\n// packages/components/button/index.ts (tree-shakeable)\nexport { Button } from './Button';\n\n// packages/core/index.ts (barrel с ленивой загрузкой)\nexport const Button = () => import('../button').then(m => m.Button);\n\n// vite.config.ts\nexport default {\n  build: { rollupOptions: { output: { preserveModules: true } } },\n  ssr: { noExternal: ['@design-system/*'] }\n}\n```\n\n**Типичная ошибка:** Использование одного большого пакета вместо scoped пакетов, предотвращающее детальные обновления и вынуждающее ненужные зависимости на потребителей."
+    },
+    "tags": [
+      "monorepo",
+      "tree-shaking",
+      "code-splitting",
+      "component-library",
+      "publishing"
+    ]
+  },
+  {
+    "id": "system-design-q-14",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're architecting a micro-frontend solution using Module Federation for a large e-commerce platform with 5 independent teams. What are the key trade-offs you'd evaluate when deciding between shared dependencies, dynamic remotes, and singleton pattern enforcement?",
+      "ru": "Вы разрабатываете архитектуру микрофронтенда с использованием Module Federation для крупной платформы электронной коммерции с 5 независимыми командами. Какие ключевые компромиссы вы оцените при выборе между общими зависимостями, динамическими удалённостями и принудительным применением паттерна синглтон?"
+    },
+    "answer": {
+      "en": "### Module Federation Trade-offs Analysis\n\nShared dependencies reduce bundle size but create version conflicts and tight coupling between teams. Dynamic remotes enable independent deployments but increase complexity in error handling and versioning. Singleton pattern prevents duplicate instances but risks breaking changes if one team updates a library.\n\n```typescript\nconst shared = {\n  react: { singleton: true, strictVersion: false, requiredVersion: '^18.0.0' },\n  'react-dom': { singleton: true, requiredVersion: '^18.0.0' },\n  '@shared/ui': { singleton: false, strictVersion: true }\n};\n```\n\n**Common interview trap:** Assuming shared dependencies are always better—they create hidden coupling between teams.",
+      "ru": "### Анализ компромиссов Module Federation\n\nОбщие зависимости уменьшают размер bundle, но создают конфликты версий и тесную связь между командами. Динамические удалённости позволяют независимо развёртывать, но усложняют обработку ошибок и управление версиями. Паттерн синглтон предотвращает дублирование, но рискует нарушить изменения, если одна команда обновит библиотеку.\n\n```typescript\nconst shared = {\n  react: { singleton: true, strictVersion: false, requiredVersion: '^18.0.0' },\n  'react-dom': { singleton: true, requiredVersion: '^18.0.0' },\n  '@shared/ui': { singleton: false, strictVersion: true }\n};\n```\n\n**Типичная ошибка:** Предположение, что общие зависимости всегда лучше—они создают скрытую связь между командами."
+    },
+    "tags": [
+      "module-federation",
+      "micro-frontend",
+      "dependency-sharing",
+      "team-autonomy"
+    ]
+  },
+  {
+    "id": "system-design-q-15",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a design system at scale that supports 15+ products with different branding needs. How would you structure tokens, component variants, and theming to prevent style conflicts while maintaining developer velocity?",
+      "ru": "Спроектируйте систему дизайна в масштабе, поддерживающую 15+ продуктов с разными потребностями в брендировании. Как вы структурируете токены, варианты компонентов и темизацию, чтобы предотвратить конфликты стилей и поддерживать скорость разработки?"
+    },
+    "answer": {
+      "en": "### Design System Architecture at Scale\n\nUse a three-layer token structure: global base tokens (colors, typography), product-specific overrides, and component-level variants. Implement CSS custom properties with a naming convention to prevent collisions, and use CSS Modules or BEM for component encapsulation. Document variant combinations explicitly to avoid permutation explosion.\n\n```typescript\n:root {\n  --ds-color-primary: #0066cc;\n  --product-a-color-primary: #ff6b00;\n}\n.button {\n  var(--ds-color-primary, --product-a-color-primary)\n}\nconst Button = ({ variant, size, theme }) => \n  <button className={`btn btn--${variant} btn--${size} btn--${theme}`} />;\n```\n\n**Common interview trap:** Creating infinite component variants instead of using composable slot-based components.",
+      "ru": "### Архитектура системы дизайна в масштабе\n\nИспользуйте трёхуровневую структуру токенов: глобальные базовые токены (цвета, типография), переопределения для конкретного продукта и варианты на уровне компонентов. Реализуйте CSS-переменные с соглашением по именованию для предотвращения коллизий и используйте CSS Modules или BEM для инкапсуляции компонентов. Явно документируйте комбинации вариантов, чтобы избежать взрыва перестановок.\n\n```typescript\n:root {\n  --ds-color-primary: #0066cc;\n  --product-a-color-primary: #ff6b00;\n}\n.button {\n  var(--ds-color-primary, --product-a-color-primary)\n}\nconst Button = ({ variant, size, theme }) => \n  <button className={`btn btn--${variant} btn--${size} btn--${theme}`} />;\n```\n\n**Типичная ошибка:** Создание бесконечных вариантов компонентов вместо использования компонуемых компонентов на основе слотов."
+    },
+    "tags": [
+      "design-system",
+      "tokens",
+      "theming",
+      "component-variants",
+      "scalability"
+    ]
+  },
+  {
+    "id": "system-design-q-16",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Your application needs real-time collaboration features (like Google Docs). Compare WebSockets, Server-Sent Events (SSE), and polling in terms of latency, resource consumption, scalability, and browser compatibility. Which would you choose and why?",
+      "ru": "Ваше приложение требует функций совместной работы в реальном времени (как Google Docs). Сравните WebSockets, Server-Sent Events (SSE) и опросы с точки зрения задержки, потребления ресурсов, масштабируемости и совместимости с браузерами. Какой выбрали бы вы и почему?"
+    },
+    "answer": {
+      "en": "### Real-time Transport Comparison\n\nWebSockets offer lowest latency (full-duplex, 5-10ms) but require sticky sessions in distributed systems. SSE is simpler and reuses HTTP but only supports server→client (requires polling for client→server). Polling wastes bandwidth with frequent requests. For real-time collaboration, use WebSockets with fallback to SSE over HTTP/2 for higher latency tolerance.\n\n```typescript\nif (navigator.onLine && supportsWebSocket) {\n  socket = new WebSocket(url);\n} else {\n  eventSource = new EventSource('/stream');\n  sendViaHTTP(payload); // polling fallback\n}\n```\n\n**Common interview trap:** Choosing WebSockets for everything without considering SSE's simplicity for unidirectional use cases.",
+      "ru": "### Сравнение транспортов реального времени\n\nWebSockets обеспечивают минимальную задержку (полнодуплексные, 5-10мс), но требуют липких сессий в распределённых системах. SSE проще и переиспользует HTTP, но поддерживает только server→client (требует опросов для client→server). Опросы тратят полосу пропускания частыми запросами. Для совместной работы в реальном времени используйте WebSockets с обратным переходом на SSE через HTTP/2 для больших задержек.\n\n```typescript\nif (navigator.onLine && supportsWebSocket) {\n  socket = new WebSocket(url);\n} else {\n  eventSource = new EventSource('/stream');\n  sendViaHTTP(payload); // polling fallback\n}\n```\n\n**Типичная ошибка:** Выбор WebSockets для всего без учёта простоты SSE для односторонних случаев использования."
+    },
+    "tags": [
+      "websockets",
+      "real-time",
+      "sse",
+      "polling",
+      "scalability",
+      "latency"
+    ]
+  },
+  {
+    "id": "system-design-q-17",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an offline-first architecture for a note-taking app where users work without internet. How would you handle conflict resolution when a user has conflicting edits offline, sync once reconnected, and prevent data loss?",
+      "ru": "Спроектируйте архитектуру offline-first для приложения заметок, где пользователи работают без интернета. Как вы обрабатываете разрешение конфликтов при наличии конфликтующих правок в автономном режиме, синхронизацию при переподключении и предотвращение потери данных?"
+    },
+    "answer": {
+      "en": "### Offline-First Conflict Resolution\n\nUse local-first storage (IndexedDB) with operation-based sync: store edits as immutable operations with timestamps and device IDs. On reconnect, merge using Last-Write-Wins (LWW) or Operational Transformation (OT) for deterministic resolution. Maintain a local journal of pending ops and a remote version vector to detect conflicts.\n\n```typescript\ninterface Operation { id: string; timestamp: number; deviceId: string; content: string; }\nconst mergeConflicts = (local: Op[], remote: Op[]) => {\n  const merged = [...local, ...remote].sort((a, b) => a.timestamp - b.timestamp);\n  return merged.reduce((acc, op) => applyOp(acc, op), '');\n};\n```\n\n**Common interview trap:** Assuming simple Last-Write-Wins without considering collaborative editing scenarios where order matters.",
+      "ru": "### Разрешение конфликтов в Offline-First\n\nИспользуйте локальное хранилище (IndexedDB) с синхронизацией на основе операций: сохраняйте правки как неизменяемые операции с временными метками и ID устройств. При переподключении объедините, используя Last-Write-Wins (LWW) или Operational Transformation (OT) для детерминированного разрешения. Ведите локальный журнал ожидающих операций и вектор версий удалённого сервера для обнаружения конфликтов.\n\n```typescript\ninterface Operation { id: string; timestamp: number; deviceId: string; content: string; }\nconst mergeConflicts = (local: Op[], remote: Op[]) => {\n  const merged = [...local, ...remote].sort((a, b) => a.timestamp - b.timestamp);\n  return merged.reduce((acc, op) => applyOp(acc, op), '');\n};\n```\n\n**Типичная ошибка:** Предположение простого Last-Write-Wins без учёта сценариев совместного редактирования, где порядок важен."
+    },
+    "tags": [
+      "offline-first",
+      "conflict-resolution",
+      "sync",
+      "indexeddb",
+      "ot"
+    ]
+  },
+  {
+    "id": "system-design-q-18",
+    "topicId": "system-design",
+    "difficulty": "senior",
+    "question": {
+      "en": "A design system component library is shared across 10 frontend applications via npm. How would you version it, manage breaking changes without breaking consumer apps, and coordinate releases across teams?",
+      "ru": "Библиотека компонентов системы дизайна используется совместно в 10 фронтенд-приложениях через npm. Как вы её версионируете, управляете критическими изменениями без нарушения потребительских приложений и координируете релизы между командами?"
+    },
+    "answer": {
+      "en": "### Component Library Versioning Strategy\n\nUse semantic versioning strictly: patch for bug fixes, minor for new non-breaking features, major for breaking changes. Provide deprecation warnings 2 releases before removal, use feature flags for gradual rollouts, and document migration guides. Publish alpha/beta versions for early feedback, and maintain a changelog with upgrade instructions.\n\n```typescript\n// v1.2.0: Deprecation warning\nconst Button = (props) => {\n  if (props.oldProp) console.warn('oldProp deprecated in v1.2, removed in v2.0');\n  return <button {...props} />;\n};\n// v2.0.0: Breaking change released\nexport { Button as default }; // oldProp removed\n```\n\n**Common interview trap:** Not planning for breaking changes—eventual refactors require communication strategy.",
+      "ru": "### Стратегия версионирования библиотеки компонентов\n\nИспользуйте семантическое версионирование строго: патч для исправлений, минор для новых неразрушающих функций, мажор для критических изменений. Предоставьте предупреждения об устаревании за 2 релиза до удаления, используйте флаги функций для постепенного развёртывания и документируйте руководства по миграции. Оп��бликуйте альфа/бета-версии для ранней обратной связи и ведите журнал изменений с инструкциями по обновлению.\n\n```typescript\n// v1.2.0: Deprecation warning\nconst Button = (props) => {\n  if (props.oldProp) console.warn('oldProp deprecated in v1.2, removed in v2.0');\n  return <button {...props} />;\n};\n// v2.0.0: Breaking change released\nexport { Button as default }; // oldProp removed\n```\n\n**Типичная ошибка:** Неучёт планирования критических изменений—итоговые рефакторинги требуют стратегии коммуникации."
+    },
+    "tags": [
+      "versioning",
+      "semver",
+      "deprecation",
+      "breaking-changes",
+      "npm-publishing"
+    ]
+  },
+  {
+    "id": "system-design-q-19",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a distributed frontend state management system for a multi-region application where users can switch regions seamlessly without losing their local state. How would you handle state synchronization, conflict resolution, and eventual consistency?",
+      "ru": "Спроектируйте систему распределенного управления состоянием фронтенда для многорегионального приложения, где пользователи могут переключаться между регионами без потери локального состояния. Как вы обработаете синхронизацию состояния, разрешение конфликтов и итоговую согласованность?"
+    },
+    "answer": {
+      "en": "### Distributed State with Region-Aware Sync\n\nImplement a state layer with versioning and timestamps to track changes per region. Use operational transformation (OT) or CRDT for conflict resolution when syncing between regions. Cache local state before switching regions and merge changes on region switch.\n\n```typescript\ninterface StateVersion {\n  version: number;\n  region: string;\n  timestamp: number;\n  data: Record<string, any>;\n}\n\nclass DistributedStateManager {\n  private stateQueue: StateVersion[] = [];\n  \n  switchRegion(newRegion: string) {\n    const currentState = this.getCachedState();\n    this.sync(currentState).then(() => {\n      this.stateQueue = this.mergeConflicts(\n        this.stateQueue, \n        newRegion\n      );\n    });\n  }\n}\n```\n\n**Common interview trap:** Assuming you can simply overwrite state during region switch without considering pending mutations or cached updates.",
+      "ru": "### Распределенное состояние с синхронизацией по регионам\n\nРеализуйте слой состояния с версионированием и временными метками для отслеживания изменений по регионам. Используйте операционное преобразование (OT) или CRDT для разрешения конфликтов при синхронизации между регионами. Кэшируйте локальное состояние перед переключением регионов и объединяйте изменения при переключении.\n\n```typescript\ninterface StateVersion {\n  version: number;\n  region: string;\n  timestamp: number;\n  data: Record<string, any>;\n}\n\nclass DistributedStateManager {\n  private stateQueue: StateVersion[] = [];\n  \n  switchRegion(newRegion: string) {\n    const currentState = this.getCachedState();\n    this.sync(currentState).then(() => {\n      this.stateQueue = this.mergeConflicts(\n        this.stateQueue, \n        newRegion\n      );\n    });\n  }\n}\n```\n\n**Типичная ошибка:** Предположение, что можно просто перезаписать состояние при переключении региона, не учитывая ожидающие мутации или кэшированные обновления."
+    },
+    "tags": [
+      "distributed-state",
+      "region-failover",
+      "conflict-resolution",
+      "crdt"
+    ]
+  },
+  {
+    "id": "system-design-q-20",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Architect a feature flag infrastructure that supports A/B testing at scale, with real-time rollout capabilities, and integrated observability. How would you minimize latency and handle edge cases like feature flag service outages?",
+      "ru": "Спроектируйте инфраструктуру флагов функций, поддерживающую A/B-тестирование в масштабе с возможностями развертывания в реальном времени и встроенной наблюдаемостью. Как минимизировать задержку и обработать граничные случаи, такие как сбои сервиса флагов?"
+    },
+    "answer": {
+      "en": "### Feature Flags with Edge Caching & Fallback\n\nUse a CDN-distributed flag service with client-side caching and stale-while-revalidate strategy. Embed flag definitions in build artifacts for instant fallback, and track exposure events separately for A/B metrics. Implement grace period where stale flags are used if service is unavailable.\n\n```typescript\nclass FeatureFlagManager {\n  private cache = new Map<string, CacheEntry>();\n  private fallbackFlags = EMBEDDED_FLAGS;\n  \n  async getFlag(name: string): Promise<boolean> {\n    const cached = this.cache.get(name);\n    if (cached && !cached.isStale) return cached.value;\n    \n    try {\n      const fresh = await this.fetchFromCDN(name);\n      this.cache.set(name, { value: fresh, timestamp: Date.now() });\n      return fresh;\n    } catch {\n      return this.fallbackFlags[name] ?? false;\n    }\n  }\n}\n```\n\n**Common interview trap:** Not accounting for the time lag between flag update on server and client seeing it, leading to inconsistent A/B group assignments.",
+      "ru": "### Флаги функций с кэшированием на граничных серверах и резервным вариантом\n\nИспользуйте распределенный по CDN сервис флагов с кэшированием на стороне клиента и стратегией stale-while-revalidate. Встройте определения флагов в артефакты сборки для мгновенного резервного варианта и отслеживайте события экспозиции отдельно для метрик A/B. Реализуйте льготный период, при котором устаревшие флаги используются, если сервис недоступен.\n\n```typescript\nclass FeatureFlagManager {\n  private cache = new Map<string, CacheEntry>();\n  private fallbackFlags = EMBEDDED_FLAGS;\n  \n  async getFlag(name: string): Promise<boolean> {\n    const cached = this.cache.get(name);\n    if (cached && !cached.isStale) return cached.value;\n    \n    try {\n      const fresh = await this.fetchFromCDN(name);\n      this.cache.set(name, { value: fresh, timestamp: Date.now() });\n      return fresh;\n    } catch {\n      return this.fallbackFlags[name] ?? false;\n    }\n  }\n}\n```\n\n**Типичная ошибка:** Не учитывание временного лага между обновлением флага на сервере и его отображением на клиенте, что приводит к несогласованному распределению групп A/B."
+    },
+    "tags": [
+      "feature-flags",
+      "a-b-testing",
+      "cdn-distribution",
+      "resilience"
+    ]
+  },
+  {
+    "id": "system-design-q-21",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a comprehensive observability stack for a frontend application serving multiple regions with millions of users. How would you aggregate logs, metrics, and traces efficiently while minimizing bandwidth overhead and sampling strategically?",
+      "ru": "Спроектируйте комплексный стек наблюдаемости для фронтенд-приложения, обслуживающего несколько регионов с миллионами пользователей. Как эффективно агрегировать логи, метрики и трассировку, минимизируя накладные расходы на пропускную способность и стратегически выполняя выборку?"
+    },
+    "answer": {
+      "en": "### Multi-Region Observability with Smart Sampling\n\nImplement client-side batching with exponential backoff to send telemetry to regional collectors. Use tail-sampling to capture errors and slow transactions automatically, and probabilistic sampling for normal traffic. Compress payloads and use a dedicated beacon endpoint that doesn't block page lifecycle.\n\n```typescript\nclass TelemetryBatcher {\n  private batch: TelemetryEvent[] = [];\n  private samplingRate = 0.1;\n  \n  addEvent(event: TelemetryEvent) {\n    if (event.isError || Math.random() < this.samplingRate) {\n      this.batch.push(event);\n      if (this.batch.length >= BATCH_SIZE) this.flush();\n    }\n  }\n  \n  flush() {\n    const compressed = compress(JSON.stringify(this.batch));\n    navigator.sendBeacon(`/telemetry/${getRegion()}`, compressed);\n    this.batch = [];\n  }\n}\n```\n\n**Common interview trap:** Sending all telemetry data without sampling, creating exponential cost and bandwidth issues as user base grows.",
+      "ru": "### Наблюдаемость в нескольких регионах с интеллектуальной выборкой\n\nРеализуйте пакетизацию на стороне клиента с экспоненциальной задержкой для отправки телеметрии региональным коллекторам. Используйте tail-sampling для автоматического захвата ошибок и медленных транзакций, а также вероятностную выборку для обычного трафика. Сжимайте полезную нагрузку и используйте выделенную конечную точку маяка, которая не блокирует жизненный цикл страницы.\n\n```typescript\nclass TelemetryBatcher {\n  private batch: TelemetryEvent[] = [];\n  private samplingRate = 0.1;\n  \n  addEvent(event: TelemetryEvent) {\n    if (event.isError || Math.random() < this.samplingRate) {\n      this.batch.push(event);\n      if (this.batch.length >= BATCH_SIZE) this.flush();\n    }\n  }\n  \n  flush() {\n    const compressed = compress(JSON.stringify(this.batch));\n    navigator.sendBeacon(`/telemetry/${getRegion()}`, compressed);\n    this.batch = [];\n  }\n}\n```\n\n**Типичная ошибка:** Отправка всех данных телеметрии без выборки, создающая экспоненциальное увеличение затрат и проблем с пропускной способностью по мере роста базы пользователей."
+    },
+    "tags": [
+      "observability",
+      "sampling",
+      "telemetry",
+      "distributed-tracing"
+    ]
+  },
+  {
+    "id": "system-design-q-22",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a multi-region deployment strategy for a frontend application where data residency is critical. How would you handle cross-region state consistency, service discovery, and graceful degradation when a region fails?",
+      "ru": "Спроектируйте стратегию развертывания в нескольких регионах для фронтенд-приложения, где критична локальность данных. Как обработать согласованность состояния между регионами, обнаружение сервисов и плавную деградацию при отказе региона?"
+    },
+    "answer": {
+      "en": "### Multi-Region with Data Residency & Failover\n\nUse DNS geolocation routing to direct users to nearest region, with client-side detection as fallback. Implement service mesh for inter-region communication with circuit breakers. Store user's region preference and cache it; on region failure, failover to secondary with data replication lag awareness.\n\n```typescript\nclass RegionalRouter {\n  private primaryRegion: string;\n  private secondaryRegion: string;\n  \n  async routeRequest(endpoint: string) {\n    try {\n      return await fetch(\n        `${this.getPrimaryURL(endpoint)}`, \n        { timeout: 2000 }\n      );\n    } catch {\n      console.warn(`${this.primaryRegion} failed, using ${this.secondaryRegion}`);\n      return fetch(`${this.getSecondaryURL(endpoint)}`);\n    }\n  }\n  \n  private getPrimaryURL(endpoint: string) {\n    return `https://${this.primaryRegion}.api.example.com${endpoint}`;\n  }\n}\n```\n\n**Common interview trap:** Not considering data replication lag between regions—assuming failover is instant and consistent, when secondary region may be stale.",
+      "ru": "### Несколько регионов с локальностью данных и отказоустойчивостью\n\nИспользуйте географическую маршрутизацию DNS для направления пользователей в ближайший регион с обнаружением на стороне клиента как резервный вариант. Реализуйте сетку сервисов для связи между регионами с автоматическими выключателями. Сохраняйте предпочтение региона пользователя и кэшируйте его; при сбое региона переходите на вторичный с учетом отставания репликации данных.\n\n```typescript\nclass RegionalRouter {\n  private primaryRegion: string;\n  private secondaryRegion: string;\n  \n  async routeRequest(endpoint: string) {\n    try {\n      return await fetch(\n        `${this.getPrimaryURL(endpoint)}`, \n        { timeout: 2000 }\n      );\n    } catch {\n      console.warn(`${this.primaryRegion} failed, using ${this.secondaryRegion}`);\n      return fetch(`${this.getSecondaryURL(endpoint)}`);\n    }\n  }\n  \n  private getPrimaryURL(endpoint: string) {\n    return `https://${this.primaryRegion}.api.example.com${endpoint}`;\n  }\n}\n```\n\n**Типичная ошибка:** Неучитывание отставания репликации данных между регионами—предположение, что отказоустойчивость мгновенна и согласована, когда вторичный регион может быть устаревшим."
+    },
+    "tags": [
+      "multi-region",
+      "data-residency",
+      "failover",
+      "service-discovery"
+    ]
+  },
+  {
+    "id": "system-design-q-23",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design an advanced A/B testing framework integrated with feature flags that can support multivariate testing, statistical significance tracking, and rollback strategies. How would you prevent test contamination and ensure users stay in their cohorts across sessions?",
+      "ru": "Спроектируйте продвинутый фреймворк A/B-тестирования, интегрированный с флагами функций, который может поддерживать многомерное тестирование, отслеживание статистической значимости и стратегии отката. Как предотвратить загрязнение теста и обеспечить, чтобы пользователи оставались в своих когортах между сеансами?"
+    },
+    "answer": {
+      "en": "### Multivariate A/B Testing with Cohort Persistence\n\nHash user ID with test variant salt to deterministically assign cohorts—ensures same user always gets same variant. Store cohort assignments in localStorage and sync with backend on session start. Use Bayesian statistics for early stopping when confidence threshold is reached. Implement mutual exclusion rules to prevent users being in conflicting tests.\n\n```typescript\nclass ABTestingFramework {\n  assignCohort(userId: string, testId: string): Variant {\n    const hash = hashCode(`${userId}:${testId}:salt`);\n    const bucketSize = 100 / Object.keys(variants).length;\n    const bucket = (hash % 100) / bucketSize;\n    return variants[Math.floor(bucket)];\n  }\n  \n  recordExposure(userId: string, testId: string) {\n    const cohort = this.assignCohort(userId, testId);\n    navigator.sendBeacon(\n      `/analytics/exposure/${testId}/${cohort}`,\n      { userId, timestamp: Date.now() }\n    );\n  }\n}\n```\n\n**Common interview trap:** Not using deterministic hashing for cohort assignment, causing users to flip between variants on refresh, which skews results.",
+      "ru": "### Многомерное A/B-тестирование с сохранением когорты\n\nХэшируйте ID пользователя с солью варианта теста для детерминированного назначения когорт—это гарантирует, что один пользователь всегда получает один и тот же вариант. Сохраняйте назначения когорт в localStorage и синхронизируйте с бэкендом в начале сеанса. Используйте байесовскую статистику для раннего прекращения, когда пороговое значение уверенности достигнуто. Реализуйте правила взаимного исключения, чтобы предотвратить участие пользователей в конфликтующих тестах.\n\n```typescript\nclass ABTestingFramework {\n  assignCohort(userId: string, testId: string): Variant {\n    const hash = hashCode(`${userId}:${testId}:salt`);\n    const bucketSize = 100 / Object.keys(variants).length;\n    const bucket = (hash % 100) / bucketSize;\n    return variants[Math.floor(bucket)];\n  }\n  \n  recordExposure(userId: string, testId: string) {\n    const cohort = this.assignCohort(userId, testId);\n    navigator.sendBeacon(\n      `/analytics/exposure/${testId}/${cohort}`,\n      { userId, timestamp: Date.now() }\n    );\n  }\n}\n```\n\n**Типичная ошибка:** Неиспользование детерминированного хэширования для назначения когорт, что приводит к переключению пользователей между вариантами при обновлении, искажая результаты."
+    },
+    "tags": [
+      "a-b-testing",
+      "multivariate-testing",
+      "cohort-persistence",
+      "statistical-significance"
+    ]
+  },
+  {
+    "id": "system-design-q-24",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a distributed frontend state management system that supports A/B testing variants, feature flags, and multi-region deployment. How would you handle state synchronization across regions, ensure consistency for experiment variants, and prevent state leakage between users?",
+      "ru": "Спроектируйте систему управления распределённым состоянием на фронтенде, которая поддерживает варианты A/B тестирования, feature flags и развёртывание в нескольких регионах. Как вы бы обеспечили синхронизацию состояния между регионами, консистентность для вариантов экспериментов и предотвращение утечки состояния между пользователями?"
+    },
+    "answer": {
+      "en": "### Multi-Region State Architecture\n\nUse a region-specific state store with feature flag middleware that isolates experiment variants per session. Implement server-driven state bootstrap from CDN edge nodes with client-side cache validation and atomic variant assignment via deterministic hashing of user ID + experiment ID.\n\n```typescript\nclass RegionalStateManager {\n  async bootstrapState(userId: string, region: string) {\n    const flags = await fetch(`https://${region}-edge.cdn/flags`).then(r => r.json());\n    const variant = this.getVariant(userId, flags);\n    return { flags, variant, region, timestamp: Date.now() };\n  }\n  \n  private getVariant(userId: string, flags: Record<string, any>) {\n    const hash = hashCode(`${userId}:exp-123`);\n    return flags['exp-123'].variants[hash % 2];\n  }\n}\n```\n\n**Common interview trap:** Assuming all users see the same state globally—variants must be deterministic per user, not randomized per region.",
+      "ru": "### Архитектура состояния в нескольких регионах\n\nИспользуйте хранилище состояния, зависящее от региона, с middleware для feature flags, которое изолирует варианты экспериментов по сессиям. Реализуйте инициализацию состояния на сервере из edge-узлов CDN с проверкой кэша на клиенте и атомарным назначением вариантов через детерминированное хеширование user ID + experiment ID.\n\n```typescript\nclass RegionalStateManager {\n  async bootstrapState(userId: string, region: string) {\n    const flags = await fetch(`https://${region}-edge.cdn/flags`).then(r => r.json());\n    const variant = this.getVariant(userId, flags);\n    return { flags, variant, region, timestamp: Date.now() };\n  }\n  \n  private getVariant(userId: string, flags: Record<string, any>) {\n    const hash = hashCode(`${userId}:exp-123`);\n    return flags['exp-123'].variants[hash % 2];\n  }\n}\n```\n\n**Типичная ошибка:** Предположение, что все пользователи видят одно и то же состояние глобально—варианты должны быть детерминированными для каждого пользователя, а не случайными по регионам."
+    },
+    "tags": [
+      "distributed-state",
+      "a-b-testing",
+      "feature-flags",
+      "multi-region",
+      "state-isolation"
+    ]
+  },
+  {
+    "id": "system-design-q-25",
+    "topicId": "system-design",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design an observability pipeline for frontend that captures distributed traces, logs, and metrics across multiple regions without overwhelming the backend. How would you sample traces intelligently, correlate logs with A/B test variants, and ensure low-overhead metric collection for client-side performance?",
+      "ru": "Спроектируйте конвейер наблюдаемости фронтенда, который захватывает распределённые трассы, логи и метрики в нескольких регионах без перегрузки бэкенда. Как бы вы осуществили интеллектуальную выборку трасс, коррелировали логи с вариантами A/B тестов и обеспечили низкие накладные расходы на сбор метрик для производительности клиента?"
+    },
+    "answer": {
+      "en": "### Intelligent Frontend Observability\n\nImplement head-based sampling with adaptive rates based on error patterns, and enrich all telemetry with trace IDs, variant context, and region. Use a batching collector that compresses payloads and implements backpressure to prevent memory bloat; deduplicate metrics client-side before sending.\n\n```typescript\nclass ObservabilityCollector {\n  async flushTelemetry(traceId: string, variant: string) {\n    const batch = {\n      traceId,\n      variant,\n      region: this.config.region,\n      logs: this.deduplicateLogs(),\n      metrics: this.compressMetrics(),\n      timestamp: Date.now()\n    };\n    await this.sendWithBackpressure(`/api/telemetry`, batch);\n  }\n  \n  shouldSampleTrace(isError: boolean): boolean {\n    return isError ? true : Math.random() < this.adaptiveSampleRate;\n  }\n}\n```\n\n**Common interview trap:** Sending all traces to backend causes network saturation—use client-side sampling and adaptive rates based on error density.",
+      "ru": "### Интеллектуальная наблюдаемость фронтенда\n\nРеализуйте head-based выборку с адаптивными скоростями на основе паттернов ошибок и обогащайте всю телеметрию trace ID, контекстом варианта и регионом. Используйте батчевый сборщик, который сжимает полезные нагрузки и реализует обратное давление для предотвращения утечки памяти; дедублируйте метрики на клиенте перед отправкой.\n\n```typescript\nclass ObservabilityCollector {\n  async flushTelemetry(traceId: string, variant: string) {\n    const batch = {\n      traceId,\n      variant,\n      region: this.config.region,\n      logs: this.deduplicateLogs(),\n      metrics: this.compressMetrics(),\n      timestamp: Date.now()\n    };\n    await this.sendWithBackpressure(`/api/telemetry`, batch);\n  }\n  \n  shouldSampleTrace(isError: boolean): boolean {\n    return isError ? true : Math.random() < this.adaptiveSampleRate;\n  }\n}\n```\n\n**Типичная ошибка:** Отправка всех трасс на бэкенд вызывает насыщение сети—используйте выборку на клиенте и адаптивные скорости на основе плотности ошибок."
+    },
+    "tags": [
+      "observability",
+      "distributed-tracing",
+      "logging",
+      "metrics",
+      "sampling",
+      "backpressure"
+    ]
+  }
+]

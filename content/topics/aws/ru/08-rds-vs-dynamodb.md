@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # RDS vs DynamoDB
 
 ## Очень популярный AWS вопрос

@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Content Types и Data Modeling в Strapi
 
 ## Самая важная концепция Strapi

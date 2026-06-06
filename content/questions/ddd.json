@@ -1,1 +1,281 @@
-[]
+[
+  {
+    "id": "ddd-q-1",
+    "topicId": "ddd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between Entity and Value Object in Domain-Driven Design. How do you decide which one to use?",
+      "ru": "Объясните разницу между Entity и Value Object в Domain-Driven Design. Как вы решаете, какой использовать?"
+    },
+    "answer": {
+      "en": "### Entity vs Value Object\n\nEntities have a unique identity that persists over time, while Value Objects are defined by their attributes and are immutable. Use Entities for concepts that need lifecycle tracking, and Value Objects for concepts that only matter for their values.\n\n```typescript\nclass User { // Entity - has identity\n  id: UUID;\n  name: string;\n}\n\nclass Money { // Value Object - immutable\n  constructor(amount: number, currency: string) {}\n  equals(other: Money): boolean {\n    return this.amount === other.amount && this.currency === other.currency;\n  }\n}\n```\n\n**Common interview trap:** Forgetting that Value Objects must be immutable and comparable by value, not identity.",
+      "ru": "### Entity vs Value Object\n\nEntity имеет уникальный идентификатор, который сохраняется со временем, а Value Object определяется своими атрибутами и неизменяем. Используйте Entity для концепций, требующих отслеживания жизненного цикла, и Value Object для концепций, которые важны только своими значениями.\n\n```typescript\nclass User { // Entity - имеет идентификатор\n  id: UUID;\n  name: string;\n}\n\nclass Money { // Value Object - неизменяем\n  constructor(amount: number, currency: string) {}\n  equals(other: Money): boolean {\n    return this.amount === other.amount && this.currency === other.currency;\n  }\n}\n```\n\n**Типичная ошибка:** Забыть, что Value Objects должны быть неизменяемыми и сравниваемыми по значению, а не по идентичности."
+    },
+    "tags": [
+      "entity-vs-value-object",
+      "immutability",
+      "domain-model"
+    ]
+  },
+  {
+    "id": "ddd-q-2",
+    "topicId": "ddd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is a Bounded Context and why is it crucial in Domain-Driven Design? Give a real-world example.",
+      "ru": "Что такое Bounded Context и почему это критично в Domain-Driven Design? Приведите пример из реальной жизни."
+    },
+    "answer": {
+      "en": "### Bounded Context\n\nA Bounded Context is an explicit boundary within which a domain model applies consistently. It isolates different models and their ubiquitous languages, preventing confusion when the same term means different things in different parts of the system.\n\n```typescript\n// Shipping Context\nclass Order {\n  id: OrderId;\n  status: 'pending' | 'shipped';\n}\n\n// Billing Context\nclass Order {\n  id: OrderId;\n  totalPrice: Money;\n  paymentStatus: 'unpaid' | 'paid';\n}\n```\n\n**Common interview trap:** Confusing Bounded Context with microservices—contexts are logical, services are deployment boundaries.",
+      "ru": "### Bounded Context\n\nBounded Context — это явная граница, в пределах которой доменная модель применяется последовательно. Он изолирует разные модели и их убиквитарные языки, предотвращая путаницу, когда один термин имеет разные значения в разных частях системы.\n\n```typescript\n// Контекст доставки\nclass Order {\n  id: OrderId;\n  status: 'pending' | 'shipped';\n}\n\n// Контекст биллинга\nclass Order {\n  id: OrderId;\n  totalPrice: Money;\n  paymentStatus: 'unpaid' | 'paid';\n}\n```\n\n**Типичная ошибка:** Путать Bounded Context с микросервисами — контексты логические, сервисы — это границы развертывания."
+    },
+    "tags": [
+      "bounded-context",
+      "domain-isolation",
+      "ubiquitous-language"
+    ]
+  },
+  {
+    "id": "ddd-q-3",
+    "topicId": "ddd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is an Aggregate and what role does the Aggregate Root play in it? How does it maintain consistency?",
+      "ru": "Что такое Aggregate и какую роль играет Aggregate Root? Как он поддерживает консистентность?"
+    },
+    "answer": {
+      "en": "### Aggregate and Aggregate Root\n\nAn Aggregate is a cluster of associated entities and value objects treated as a single unit. The Aggregate Root is the entry point that maintains invariants and ensures all operations within the aggregate preserve consistency rules.\n\n```typescript\nclass Order { // Aggregate Root\n  private items: OrderItem[] = [];\n  \n  addItem(product: Product, quantity: number): void {\n    if (this.items.length >= MAX_ITEMS) throw new Error('Too many items');\n    this.items.push(new OrderItem(product, quantity));\n  }\n}\n\nclass OrderItem { // Part of aggregate, not directly accessible\n  constructor(product: Product, quantity: number) {}\n}\n```\n\n**Common interview trap:** Allowing external code to modify aggregate members directly, breaking encapsulation and invariants.",
+      "ru": "### Aggregate и Aggregate Root\n\nAggregate — это кластер связанных entity и value object, обработанный как единое целое. Aggregate Root — это точка входа, которая поддерживает инварианты и гарантирует, что все операции внутри агрегата сохраняют правила консистентности.\n\n```typescript\nclass Order { // Aggregate Root\n  private items: OrderItem[] = [];\n  \n  addItem(product: Product, quantity: number): void {\n    if (this.items.length >= MAX_ITEMS) throw new Error('Too many items');\n    this.items.push(new OrderItem(product, quantity));\n  }\n}\n\nclass OrderItem { // Часть агрегата, недоступна напрямую\n  constructor(product: Product, quantity: number) {}\n}\n```\n\n**Типичная ошибка:** Разрешить внешнему коду напрямую модифицировать члены агрегата, нарушая инкапсуляцию и инварианты."
+    },
+    "tags": [
+      "aggregate",
+      "aggregate-root",
+      "invariants",
+      "consistency"
+    ]
+  },
+  {
+    "id": "ddd-q-4",
+    "topicId": "ddd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Repository pattern in DDD. How is it different from a DAO (Data Access Object)?",
+      "ru": "Объясните паттерн Repository в DDD. Чем он отличается от DAO (Data Access Object)?"
+    },
+    "answer": {
+      "en": "### Repository Pattern\n\nA Repository provides a collection-like interface for accessing Aggregates, abstracting persistence details and working exclusively with domain models. Unlike DAOs, repositories operate at the aggregate level, not individual entities, and hide all database logic from the domain.\n\n```typescript\ninterface OrderRepository {\n  save(order: Order): Promise<void>;\n  findById(id: OrderId): Promise<Order | null>;\n  findByCustomer(customerId: CustomerId): Promise<Order[]>;\n}\n\nclass SqlOrderRepository implements OrderRepository {\n  async save(order: Order): Promise<void> {\n    await db.query('INSERT INTO orders...');\n  }\n}\n```\n\n**Common interview trap:** Creating repositories that expose database queries or work with multiple aggregates—each repo should handle one aggregate type.",
+      "ru": "### Паттерн Repository\n\nRepository предоставляет интерфейс, похожий на коллекцию, для доступа к Aggregates, скрывая детали персистентности и работая только с доменными моделями. В отличие от DAO, репозитории работают на уровне агрегата, а не отдельных entity, и скрывают всю логику БД от домена.\n\n```typescript\ninterface OrderRepository {\n  save(order: Order): Promise<void>;\n  findById(id: OrderId): Promise<Order | null>;\n  findByCustomer(customerId: CustomerId): Promise<Order[]>;\n}\n\nclass SqlOrderRepository implements OrderRepository {\n  async save(order: Order): Promise<void> {\n    await db.query('INSERT INTO orders...');\n  }\n}\n```\n\n**Типичная ошибка:** Создание репозиториев, которые раскрывают запросы БД или работают с несколькими агрегатами — каждый репо должен обрабатывать один тип агрегата."
+    },
+    "tags": [
+      "repository-pattern",
+      "persistence-abstraction",
+      "aggregate-access"
+    ]
+  },
+  {
+    "id": "ddd-q-5",
+    "topicId": "ddd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are Domain Events and how do they enable loose coupling between aggregates? Provide a practical example.",
+      "ru": "Что такое Domain Events и как они обеспечивают слабую связь между агрегатами? Приведите практический пример."
+    },
+    "answer": {
+      "en": "### Domain Events\n\nDomain Events represent significant things that happen in the domain and are published by aggregates. They enable aggregates to communicate without direct dependencies, allowing other parts of the system to react asynchronously.\n\n```typescript\nclass Order { // Aggregate Root\n  private events: DomainEvent[] = [];\n  \n  createOrder(items: OrderItem[]): void {\n    this.items = items;\n    this.events.push(new OrderCreatedEvent(this.id, items));\n  }\n  \n  getDomainEvents(): DomainEvent[] { return this.events; }\n}\n\nclass SendConfirmationEmailService {\n  handle(event: OrderCreatedEvent): void {\n    sendEmail(event.customerId, 'Your order confirmed');\n  }\n}\n```\n\n**Common interview trap:** Storing domain events in the aggregate but never publishing them to interested subscribers—events must be handled outside.",
+      "ru": "### Domain Events\n\nDomain Events — это значимые события, которые происходят в домене и публикуются агрегатами. Они позволяют агрегатам взаимодействовать без прямых зависимостей, позволяя другим частям системы реагировать асинхронно.\n\n```typescript\nclass Order { // Aggregate Root\n  private events: DomainEvent[] = [];\n  \n  createOrder(items: OrderItem[]): void {\n    this.items = items;\n    this.events.push(new OrderCreatedEvent(this.id, items));\n  }\n  \n  getDomainEvents(): DomainEvent[] { return this.events; }\n}\n\nclass SendConfirmationEmailService {\n  handle(event: OrderCreatedEvent): void {\n    sendEmail(event.customerId, 'Your order confirmed');\n  }\n}\n```\n\n**Типичная ошибка:** Хранение domain events в агрегате, но их никогда не публикование заинтересованным подписчикам — события должны быть обработаны снаружи."
+    },
+    "tags": [
+      "domain-events",
+      "loose-coupling",
+      "event-driven",
+      "async-communication"
+    ]
+  },
+  {
+    "id": "ddd-q-6",
+    "topicId": "ddd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design a bounded context for an e-commerce system that separates Order and Payment domains. Explain how you would use ubiquitous language and domain events to communicate between these contexts without creating tight coupling.",
+      "ru": "Спроектируйте bounded context для e-commerce системы, разделяющий домены Order и Payment. Объясните, как бы вы использовали ubiquitous language и domain events для коммуникации между контекстами без создания тесной связанности."
+    },
+    "answer": {
+      "en": "### Bounded Contexts with Domain Events\n\nEach bounded context (Order, Payment) owns its aggregate roots and uses domain events to communicate asynchronously. Ubiquitous language ensures Order context uses terms like \"OrderPlaced\", while Payment uses \"PaymentRequested\"—same concept, different language per context.\n\n```typescript\n// Order Context\nclass Order extends AggregateRoot {\n  placeOrder(items: OrderItem[]) {\n    this.addDomainEvent(new OrderPlacedEvent(this.id, items));\n  }\n}\n\n// Payment Context listens to OrderPlaced\nclass PaymentService {\n  handleOrderPlaced(event: OrderPlacedEvent) {\n    const payment = new Payment(event.orderId);\n    this.paymentRepository.save(payment);\n  }\n}\n```\n\n**Common interview trap:** Treating events as synchronous calls between contexts defeats the purpose of decoupling.",
+      "ru": "### Bounded Contexts с Domain Events\n\nКаждый bounded context (Order, Payment) владеет своими aggregate roots и использует domain events для асинхронной коммуникации. Ubiquitous language гарантирует, что Order контекст использует термины типа \"OrderPlaced\", а Payment использует \"PaymentRequested\"—одна концепция, разный язык в каждом контексте.\n\n```typescript\n// Order Context\nclass Order extends AggregateRoot {\n  placeOrder(items: OrderItem[]) {\n    this.addDomainEvent(new OrderPlacedEvent(this.id, items));\n  }\n}\n\n// Payment Context слушает OrderPlaced\nclass PaymentService {\n  handleOrderPlaced(event: OrderPlacedEvent) {\n    const payment = new Payment(event.orderId);\n    this.paymentRepository.save(payment);\n  }\n}\n```\n\n**Типичная ошибка:** Обработка events как синхронные вызовы между контекстами нарушает цель разделения."
+    },
+    "tags": [
+      "bounded-context",
+      "domain-events",
+      "ubiquitous-language",
+      "aggregate-roots",
+      "event-driven-architecture"
+    ]
+  },
+  {
+    "id": "ddd-q-7",
+    "topicId": "ddd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Anti-Corruption Layer pattern and how you would implement it in a Node.js/TypeScript application when integrating with a legacy system that uses an anemic domain model.",
+      "ru": "Объясните паттерн Anti-Corruption Layer и как вы реализовали бы его в приложении Node.js/TypeScript при интеграции с устаревшей системой, использующей анемичную модель домена."
+    },
+    "answer": {
+      "en": "### Anti-Corruption Layer Implementation\n\nAn Anti-Corruption Layer (ACL) is a boundary that translates between your rich domain model and external systems' anemic models. It prevents external complexity from leaking into your core domain by adapting incoming and outgoing data.\n\n```typescript\ninterface LegacyUserDTO {\n  id: string;\n  name: string;\n  email: string;\n}\n\nclass UserACL {\n  toDomain(legacyUser: LegacyUserDTO): User {\n    return new User(legacyUser.id, legacyUser.name, legacyUser.email);\n  }\n  toExternal(domainUser: User): LegacyUserDTO {\n    return { id: domainUser.id, name: domainUser.name, email: domainUser.email };\n  }\n}\n```\n\n**Common interview trap:** Confusing ACL with simple DTO mapping—ACL must protect domain integrity and handle incompatibilities, not just transform data.",
+      "ru": "### Реализация Anti-Corruption Layer\n\nAnti-Corruption Layer (ACL)—это граница, которая переводит между вашей богатой моделью домена и анемичными моделями внешних систем. Она предотвращает утечку внешней сложности в ядро домена адаптацией входящих и исходящих данных.\n\n```typescript\ninterface LegacyUserDTO {\n  id: string;\n  name: string;\n  email: string;\n}\n\nclass UserACL {\n  toDomain(legacyUser: LegacyUserDTO): User {\n    return new User(legacyUser.id, legacyUser.name, legacyUser.email);\n  }\n  toExternal(domainUser: User): LegacyUserDTO {\n    return { id: domainUser.id, name: domainUser.name, email: domainUser.email };\n  }\n}\n```\n\n**Типичная ошибка:** Путаница ACL с простым преобразованием DTO—ACL должен защищать целостность домена и обрабатывать несовместимости, а не просто трансформировать данные."
+    },
+    "tags": [
+      "anti-corruption-layer",
+      "integration",
+      "domain-boundary"
+    ]
+  },
+  {
+    "id": "ddd-q-8",
+    "topicId": "ddd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare anemic domain models with rich domain models in DDD. What are the trade-offs, and how would you structure a Node.js/TypeScript project to enforce a rich model?",
+      "ru": "Сравните анемичные модели домена с богатыми моделями в DDD. Какие компромиссы существуют и как вы структурировали бы проект Node.js/TypeScript для обеспечения богатой модели?"
+    },
+    "answer": {
+      "en": "### Rich vs Anemic Domain Models\n\nRich models encapsulate behavior and validation logic within entities, while anemic models hold only data. Rich models reduce bugs by enforcing invariants at the domain level, but require more careful design. Use TypeScript private fields and methods to prevent external mutation.\n\n```typescript\n// Rich model\nclass Order {\n  private items: OrderItem[] = [];\n  \n  addItem(item: OrderItem): void {\n    if (this.items.length >= 100) throw new Error('Too many items');\n    this.items.push(item);\n  }\n  \n  getTotal(): Money {\n    return this.items.reduce((sum, item) => sum.add(item.price), Money.zero());\n  }\n}\n```\n\n**Common interview trap:** Thinking rich models mean adding every getter/setter—they mean moving business logic from services into domain entities.",
+      "ru": "### Богатые vs Анемичные модели\n\nБогатые модели инкапсулируют поведение и логику валидации внутри сущностей, в то время как анемичные модели содержат только данные. Богатые модели снижают ошибки, принуждая инварианты на уровне домена, но требуют более тщательного проектирования. Используйте приватные поля TypeScript для предотвращения внешних изменений.\n\n```typescript\n// Богатая модель\nclass Order {\n  private items: OrderItem[] = [];\n  \n  addItem(item: OrderItem): void {\n    if (this.items.length >= 100) throw new Error('Too many items');\n    this.items.push(item);\n  }\n  \n  getTotal(): Money {\n    return this.items.reduce((sum, item) => sum.add(item.price), Money.zero());\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что богатые модели означают добавление каждого getter/setter—они означают перемещение бизнес-логики из сервисов в сущности домена."
+    },
+    "tags": [
+      "rich-model",
+      "anemic-model",
+      "domain-logic"
+    ]
+  },
+  {
+    "id": "ddd-q-9",
+    "topicId": "ddd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the Context Mapping patterns (Partnership, Customer-Supplier, Conformist, Anticorruption Layer, Separate Ways). When would you use each in a microservices architecture?",
+      "ru": "Опишите паттерны Context Mapping (Partnership, Customer-Supplier, Conformist, Anticorruption Layer, Separate Ways). Когда вы использовали бы каждый в архитектуре микросервисов?"
+    },
+    "answer": {
+      "en": "### Context Mapping Patterns\n\nContext Mapping defines relationships between bounded contexts. Partnership: equal teams align; Customer-Supplier: downstream depends on upstream (negotiate contracts); Conformist: downstream accepts upstream model; ACL: downstream translates external model; Separate Ways: no integration. Choose based on power dynamics and coupling tolerance.\n\n```typescript\n// Conformist: adopt upstream's model directly\nclass PaymentContext {\n  constructor(private billingAPI: BillingService) {}\n  \n  pay(invoice: BillingInvoice): void {\n    // Direct dependency on upstream model\n    this.billingAPI.charge(invoice.amount);\n  }\n}\n\n// Vs ACL: translate upstream model\nclass PaymentContextWithACL {\n  constructor(private billingAPI: BillingService, private mapper: ACL) {}\n  \n  pay(order: Order): void {\n    const invoice = this.mapper.toExternal(order);\n    this.billingAPI.charge(invoice.amount);\n  }\n}\n```\n\n**Common interview trap:** Thinking all contexts should use ACL—Conformist is valid when upstream is trustworthy and stable.",
+      "ru": "### Паттерны Context Mapping\n\nContext Mapping определяет отношения между ограниченными контекстами. Partnership: равные команды согласуют; Customer-Supplier: нижестоящий зависит от восходящего (переговоры контрактов); Conformist: нижестоящий принимает модель восходящего; ACL: нижестоящий переводит внешнюю модель; Separate Ways: нет интеграции. Выбирайте на основе динамики власти и толерантности связности.\n\n```typescript\n// Conformist: прямое принятие модели восходящего\nclass PaymentContext {\n  constructor(private billingAPI: BillingService) {}\n  \n  pay(invoice: BillingInvoice): void {\n    this.billingAPI.charge(invoice.amount);\n  }\n}\n\n// Vs ACL: трансляция модели восходящего\nclass PaymentContextWithACL {\n  constructor(private billingAPI: BillingService, private mapper: ACL) {}\n  \n  pay(order: Order): void {\n    const invoice = this.mapper.toExternal(order);\n    this.billingAPI.charge(invoice.amount);\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что все контексты должны использовать ACL—Conformist корректен, когда восходящий контекст надежен и стабилен."
+    },
+    "tags": [
+      "context-mapping",
+      "bounded-contexts",
+      "partnership",
+      "conformist"
+    ]
+  },
+  {
+    "id": "ddd-q-10",
+    "topicId": "ddd",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you structure a bounded context for an e-commerce Order domain in Node.js/TypeScript? Show how you'd handle value objects, aggregates, and domain events.",
+      "ru": "Как вы структурировали бы ограниченный контекст для домена Order в e-commerce на Node.js/TypeScript? Покажите, как вы обрабатывали бы объекты значения, агрегаты и события домена."
+    },
+    "answer": {
+      "en": "### Bounded Context Structure\n\nStructure with Value Objects (immutable, no identity), Aggregates (root entities with invariants), and Domain Events (record state changes). Use TypeScript classes to enforce encapsulation and prevent invalid states.\n\n```typescript\nclass OrderID { constructor(readonly value: string) {} }\nclass Money { constructor(readonly amount: number) {} }\n\nclass Order {\n  private status: 'pending' | 'confirmed' = 'pending';\n  private events: DomainEvent[] = [];\n  \n  constructor(readonly id: OrderID, private items: OrderItem[]) {}\n  \n  confirm(): void {\n    this.status = 'confirmed';\n    this.events.push(new OrderConfirmed(this.id));\n  }\n  \n  getDomainEvents(): DomainEvent[] { return this.events; }\n}\n```\n\n**Common interview trap:** Storing domain events in a getter without clearing them—implement event sourcing or a publish mechanism to avoid replaying.",
+      "ru": "### Структура Bounded Context\n\nСтруктурируйте с Value Objects (неизменяемые, без идентичности), Aggregates (корневые сущности с инвариантами) и Domain Events (записывают изменения состояния). Используйте TypeScript классы для обеспечения инкапсуляции и предотвращения недопустимых состояний.\n\n```typescript\nclass OrderID { constructor(readonly value: string) {} }\nclass Money { constructor(readonly amount: number) {} }\n\nclass Order {\n  private status: 'pending' | 'confirmed' = 'pending';\n  private events: DomainEvent[] = [];\n  \n  constructor(readonly id: OrderID, private items: OrderItem[]) {}\n  \n  confirm(): void {\n    this.status = 'confirmed';\n    this.events.push(new OrderConfirmed(this.id));\n  }\n  \n  getDomainEvents(): DomainEvent[] { return this.events; }\n}\n```\n\n**Типичная ошибка:** Хранение событий домена в геттере без их очистки—реализуйте event sourcing или механизм публикации, чтобы избежать переворотничества."
+    },
+    "tags": [
+      "aggregate",
+      "value-object",
+      "domain-events",
+      "bounded-context"
+    ]
+  },
+  {
+    "id": "ddd-q-11",
+    "topicId": "ddd",
+    "difficulty": "senior",
+    "question": {
+      "en": "You have two services: Inventory and Order. Inventory maintains item stock (anemic model), Order needs to enforce business rules about reservations. How would you apply DDD patterns to integrate them cleanly?",
+      "ru": "У вас есть два сервиса: Inventory и Order. Inventory поддерживает запасы товаров (анемичная модель), Order должен обеспечивать бизнес-правила о резервированиях. Как вы применили бы паттерны DDD для чистой интеграции?"
+    },
+    "answer": {
+      "en": "### Cross-Service DDD Integration\n\nUse ACL in the Order service to translate Inventory's anemic model into Order's rich domain model. Emit domain events from Order that Inventory consumes asynchronously. This prevents coupling and allows each service to evolve independently.\n\n```typescript\n// Order service with ACL\nclass ReservationService {\n  async reserve(orderId: OrderID, inventoryItems: InventoryDTO[]): Promise<void> {\n    const domainReservations = inventoryItems.map(item => \n      this.inventoryACL.toDomainReservation(item)\n    );\n    const reservation = new Reservation(orderId, domainReservations);\n    await this.repository.save(reservation);\n    this.eventBus.publish(new ItemsReserved(orderId, domainReservations));\n  }\n}\n\n// Inventory listens to events\nclass InventoryProjection {\n  handle(event: ItemsReserved): void {\n    event.items.forEach(item => this.decrement(item.id, item.quantity));\n  }\n}\n```\n\n**Common interview trap:** Creating a shared domain model between services—each service owns its model; communication happens via events or ACL translation.",
+      "ru": "### Интеграция DDD между сервисами\n\nИспользуйте ACL в сервисе Order для трансляции анемичной модели Inventory в богатую модель домена Order. Выпускайте события домена из Order, которые Inventory потребляет асинхронно. Это предотвращает связность и позволяет каждому сервису развиваться независимо.\n\n```typescript\n// Order service с ACL\nclass ReservationService {\n  async reserve(orderId: OrderID, inventoryItems: InventoryDTO[]): Promise<void> {\n    const domainReservations = inventoryItems.map(item => \n      this.inventoryACL.toDomainReservation(item)\n    );\n    const reservation = new Reservation(orderId, domainReservations);\n    await this.repository.save(reservation);\n    this.eventBus.publish(new ItemsReserved(orderId, domainReservations));\n  }\n}\n\n// Inventory слушает события\nclass InventoryProjection {\n  handle(event: ItemsReserved): void {\n    event.items.forEach(item => this.decrement(item.id, item.quantity));\n  }\n}\n```\n\n**Типичная ошибка:** Создание общей модели домена между сервисами—каждый сервис владеет своей моделью; общение происходит через события или трансляцию ACL."
+    },
+    "tags": [
+      "service-integration",
+      "anti-corruption-layer",
+      "domain-events",
+      "event-driven"
+    ]
+  },
+  {
+    "id": "ddd-q-12",
+    "topicId": "ddd",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're integrating a legacy payment system into your Node.js domain model. The legacy system uses anemic DTOs and procedural logic. How would you implement an Anti-Corruption Layer with Context Mapping to protect your domain from this external model contamination?",
+      "ru": "Вы интегрируете устаревшую систему платежей в вашу доменную модель Node.js. Устаревшая система использует анемичные DTOs и процедурную логику. Как бы вы реализовали Anti-Corruption Layer с Context Mapping, чтобы защитить вашу область от загрязнения внешней моделью?"
+    },
+    "answer": {
+      "en": "### Anti-Corruption Layer Pattern\n\nAn Anti-Corruption Layer acts as a translator between your rich domain model and external systems. Use a mapper/adapter to convert legacy DTOs into domain-aware aggregates, isolating your core domain logic from external contamination.\n\n```typescript\n// Legacy system DTO (anemic)\ninterface LegacyPaymentDTO {\n  txnId: string;\n  amount: number;\n  status: string;\n}\n\n// Domain aggregate (rich model)\nclass Payment {\n  private paymentId: PaymentId;\n  private money: Money;\n  private status: PaymentStatus;\n  \n  refund(): void {\n    if (!this.canBeRefunded()) throw new Error('Cannot refund');\n    this.status = PaymentStatus.REFUNDED;\n  }\n}\n\n// Anti-Corruption Layer\nclass PaymentACLMapper {\n  toDomain(legacy: LegacyPaymentDTO): Payment {\n    return new Payment(\n      PaymentId.create(legacy.txnId),\n      Money.create(legacy.amount),\n      PaymentStatus.fromLegacyStatus(legacy.status)\n    );\n  }\n}\n```\n\n**Common interview trap:** Forgetting that the ACL must validate and enforce your domain invariants, not just mechanically convert fields.",
+      "ru": "### Паттерн Anti-Corruption Layer\n\nAnti-Corruption Layer работает как переводчик между вашей богатой доменной моделью и внешними системами. Используйте mapper/adapter для преобразования анемичных DTOs в domain-aware агрегаты, изолируя логику вашего ядра от внешнего загрязнения.\n\n```typescript\n// Legacy DTO (анемичная)\ninterface LegacyPaymentDTO {\n  txnId: string;\n  amount: number;\n  status: string;\n}\n\n// Доменный агрегат (богатая модель)\nclass Payment {\n  private paymentId: PaymentId;\n  private money: Money;\n  private status: PaymentStatus;\n  \n  refund(): void {\n    if (!this.canBeRefunded()) throw new Error('Cannot refund');\n    this.status = PaymentStatus.REFUNDED;\n  }\n}\n\n// Anti-Corruption Layer\nclass PaymentACLMapper {\n  toDomain(legacy: LegacyPaymentDTO): Payment {\n    return new Payment(\n      PaymentId.create(legacy.txnId),\n      Money.create(legacy.amount),\n      PaymentStatus.fromLegacyStatus(legacy.status)\n    );\n  }\n}\n```\n\n**Типичная ошибка:** Забыть, что ACL должен проверять и принудительно применять инварианты вашей области, а не просто механически конвертировать поля."
+    },
+    "tags": [
+      "anti-corruption-layer",
+      "context-mapping",
+      "domain-model",
+      "aggregate",
+      "typescript-ddd"
+    ]
+  },
+  {
+    "id": "ddd-q-13",
+    "topicId": "ddd",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe the main trade-offs when implementing DDD in a project. When would you choose NOT to use DDD and why?",
+      "ru": "Опишите основные компромиссы при внедрении DDD в проект. Когда бы вы выбрали НЕ использовать DDD и почему?"
+    },
+    "answer": {
+      "en": "### DDD Trade-offs and When to Avoid It\n\nDDD adds complexity through bounded contexts, aggregates, and ubiquitous language, which pays off for complex domains but is overkill for CRUD applications. Use DDD for domains with complex business rules; avoid it for simple data-driven systems, real-time analytics platforms, or when domain knowledge is unstable.\n\n```typescript\n// ❌ DDD overkill - simple CRUD\nclass UserRepository {\n  save(user: User): Promise<void> {\n    return db.users.insert(user);\n  }\n}\n\n// ✓ DDD justified - complex order processing\nclass OrderAggregate {\n  applyPayment(payment: Payment): OrderEvent[] {\n    if (!this.canAcceptPayment()) throw new DomainError();\n    return [new PaymentAppliedEvent()];\n  }\n}\n```\n\n**Common interview trap:** Saying DDD is always beneficial—it's expensive and adds value only for complex domains.",
+      "ru": "### Компромиссы DDD и когда его избегать\n\nDDD добавляет сложность через bounded contexts, агрегаты и ubiquitous language, что окупается для сложных доменов, но избыточно для CRUD приложений. Используйте DDD для доменов со сложными бизнес-правилами; избегайте для простых систем обработки данных, платформ аналитики или при нестабильном знании домена.\n\n```typescript\n// ❌ DDD избыточен - простой CRUD\nclass UserRepository {\n  save(user: User): Promise<void> {\n    return db.users.insert(user);\n  }\n}\n\n// ✓ DDD оправдан - сложная обработка заказов\nclass OrderAggregate {\n  applyPayment(payment: Payment): OrderEvent[] {\n    if (!this.canAcceptPayment()) throw new DomainError();\n    return [new PaymentAppliedEvent()];\n  }\n}\n```\n\n**Типичная ошибка:** Утверждать, что DDD всегда полезен—это дорого и ценно только для сложных доменов."
+    },
+    "tags": [
+      "ddd-trade-offs",
+      "domain-modeling",
+      "architecture-decisions"
+    ]
+  },
+  {
+    "id": "ddd-q-14",
+    "topicId": "ddd",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Event Sourcing complement DDD? What architectural challenges arise when combining them?",
+      "ru": "Как Event Sourcing дополняет DDD? Какие архитектурные вызовы возникают при их комбинировании?"
+    },
+    "answer": {
+      "en": "### Event Sourcing with DDD\n\nEvent Sourcing captures domain events as the source of truth, perfectly aligning with DDD's event-driven design. However, it introduces eventual consistency challenges, complex event versioning, and higher query complexity requiring CQRS for read optimization. Event reconstruction also demands careful aggregate design to avoid performance degradation.\n\n```typescript\n// Event Sourcing + DDD\nclass OrderAggregate {\n  static fromHistory(events: DomainEvent[]): OrderAggregate {\n    const order = new OrderAggregate();\n    events.forEach(e => order.applyEvent(e));\n    return order;\n  }\n  placeOrder(cmd: PlaceOrderCmd): OrderPlacedEvent {\n    return new OrderPlacedEvent(cmd.items, cmd.customerId);\n  }\n}\n```\n\n**Common interview trap:** Assuming Event Sourcing is free—it requires CQRS, event versioning strategies, and eventual consistency handling.",
+      "ru": "### Event Sourcing с DDD\n\nEvent Sourcing фиксирует события домена как источник истины, идеально согласуясь с event-driven дизайном DDD. Однако это вводит вызовы eventual consistency, сложное версионирование событий и требует CQRS для оптимизации чтения. Восстановление событий требует тщательного проектирования агрегатов.\n\n```typescript\n// Event Sourcing + DDD\nclass OrderAggregate {\n  static fromHistory(events: DomainEvent[]): OrderAggregate {\n    const order = new OrderAggregate();\n    events.forEach(e => order.applyEvent(e));\n    return order;\n  }\n  placeOrder(cmd: PlaceOrderCmd): OrderPlacedEvent {\n    return new OrderPlacedEvent(cmd.items, cmd.customerId);\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что Event Sourcing бесплатен—требует CQRS, стратегий версионирования и handling eventual consistency."
+    },
+    "tags": [
+      "event-sourcing",
+      "ddd-integration",
+      "eventual-consistency"
+    ]
+  },
+  {
+    "id": "ddd-q-15",
+    "topicId": "ddd",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a payment processing bounded context using DDD principles. How would you handle failures and compensations?",
+      "ru": "Спроектируйте bounded context обработки платежей с использованием принципов DDD. Как вы будете обрабатывать сбои и компенсации?"
+    },
+    "answer": {
+      "en": "### Payment Processing Bounded Context\n\nDefine aggregates (Payment, Refund) with explicit business rules as value objects. Use domain events (PaymentProcessedEvent, PaymentFailedEvent) to communicate state changes. Implement compensating transactions through a saga pattern or compensating event handler to rollback failed payments atomically.\n\n```typescript\nclass PaymentAggregate {\n  constructor(private id: string, private amount: Money) {}\n  \n  process(): PaymentEvent[] {\n    if (!this.canProcess()) throw new PaymentError();\n    return [new PaymentProcessedEvent(this.id, this.amount)];\n  }\n  \n  refund(): RefundEvent[] {\n    return [new RefundInitiatedEvent(this.id, this.amount)];\n  }\n}\n```\n\n**Common interview trap:** Ignoring failure scenarios—payments must be idempotent and support compensation/rollback.",
+      "ru": "### Bounded Context обработки платежей\n\nОпределите агрегаты (Payment, Refund) с явными бизнес-правилами как value objects. Используйте domain events для коммуникации изменений состояния. Реализуйте компенсирующие транзакции через saga pattern для атомарного откатывания платежей.\n\n```typescript\nclass PaymentAggregate {\n  constructor(private id: string, private amount: Money) {}\n  \n  process(): PaymentEvent[] {\n    if (!this.canProcess()) throw new PaymentError();\n    return [new PaymentProcessedEvent(this.id, this.amount)];\n  }\n  \n  refund(): RefundEvent[] {\n    return [new RefundInitiatedEvent(this.id, this.amount)];\n  }\n}\n```\n\n**Типичная ошибка:** Игнорирование сценариев сбоев—платежи должны быть idempotent и поддерживать компенсацию."
+    },
+    "tags": [
+      "bounded-contexts",
+      "aggregate-design",
+      "saga-pattern"
+    ]
+  }
+]

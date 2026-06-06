@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Strapi Architecture
 
 ## Самое важное понимание

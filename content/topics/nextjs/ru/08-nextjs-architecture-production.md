@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Production Architecture и Best Practices
 
 ## Самый Senior блок

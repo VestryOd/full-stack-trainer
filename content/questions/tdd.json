@@ -1,1 +1,501 @@
-[]
+[
+  {
+    "id": "tdd-q-1",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the red-green-refactor cycle in TDD. What is the purpose of each phase?",
+      "ru": "Объясните цикл red-green-refactor в TDD. Какова цель каждой фазы?"
+    },
+    "answer": {
+      "en": "### Red-Green-Refactor Cycle\n\nRed is writing a failing test for unimplemented functionality. Green is writing minimal code to make the test pass. Refactor is improving the code without changing behavior.\n\n```typescript\n// Red: Test fails\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// Green: Minimal implementation\nfunction add(a, b) { return a + b; }\n\n// Refactor: Improve if needed\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Common interview trap:** Thinking refactor means adding new features—it only improves existing code quality.",
+      "ru": "### Цикл Red-Green-Refactor\n\nRed — написание падающего теста для ненаписанной функциональности. Green — написание минимального кода, чтобы тест прошёл. Refactor — улучшение кода без изменения поведения.\n\n```typescript\n// Red: Тест падает\ntest('должен сложить два числа', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// Green: Минимальная реализация\nfunction add(a, b) { return a + b; }\n\n// Refactor: Улучшить при необходимости\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Типичная ошибка:** Думать, что refactor означает добавление новых функций—он только улучшает качество кода."
+    },
+    "tags": [
+      "red-green-refactor",
+      "tdd-cycle",
+      "test-first"
+    ]
+  },
+  {
+    "id": "tdd-q-2",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What makes a good unit test? List 3-4 characteristics.",
+      "ru": "Что делает unit test хорошим? Перечислите 3-4 характеристики."
+    },
+    "answer": {
+      "en": "### Characteristics of Good Unit Tests\n\nA good unit test is isolated (tests one thing), fast (runs quickly), reliable (consistent results), and readable (clear intent). It should test behavior, not implementation details.\n\n```typescript\n// Good: Clear, isolated, single responsibility\ntest('calculateDiscount returns 10% for silver members', () => {\n  const result = calculateDiscount('silver', 100);\n  expect(result).toBe(10);\n});\n\n// Bad: Multiple assertions, unclear intent\ntest('discount function works', () => {\n  expect(calculateDiscount('silver', 100)).toBe(10);\n  expect(calculateDiscount('gold', 100)).toBe(20);\n});\n```\n\n**Common interview trap:** Testing implementation details instead of behavior makes tests brittle and hard to maintain."
+    },
+    "ru": "### Характеристики хорошего Unit Test\n\nХороший unit test изолирован (тестирует одно), быстр (выполняется быстро), надёжен (стабильные результаты) и понятен (ясное намерение). Он должен тестировать поведение, а не детали реализации.\n\n```typescript\n// Хорошо: Ясно, изолировано, одна ответственность\ntest('calculateDiscount возвращает 10% для silver членов', () => {\n  const result = calculateDiscount('silver', 100);\n  expect(result).toBe(10);\n});\n\n// Плохо: Множество проверок, неясное намерение\ntest('функция скидки работает', () => {\n  expect(calculateDiscount('silver', 100)).toBe(10);\n  expect(calculateDiscount('gold', 100)).toBe(20);\n});\n```\n\n**Типичная ошибка:** Тестирование деталей реализации вместо поведения делает тесты хрупкими и сложными в обслуживании.",
+    "tags": [
+      "unit-test-quality",
+      "test-isolation",
+      "test-readability"
+    ]
+  },
+  {
+    "id": "tdd-q-3",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are good test naming conventions and why do they matter?",
+      "ru": "Какие хорошие соглашения об именовании тестов и почему они важны?"
+    },
+    "answer": {
+      "en": "### Test Naming Conventions\n\nTest names should clearly describe what is being tested and the expected outcome using patterns like `should[Expected]When[Condition]` or `[Function]_[Scenario]_[Expected]`. Clear names act as documentation and make failures self-explanatory.\n\n```typescript\n// Good: Describes behavior clearly\ntest('should return 0 when dividing by zero', () => {\n  expect(divide(10, 0)).toBe(0);\n});\n\n// Bad: Vague and unclear\ntest('divide works', () => {\n  expect(divide(10, 0)).toBe(0);\n});\n```\n\n**Common interview trap:** Using generic names like \"test1\" or \"it works\" defeats the purpose of tests as living documentation.",
+      "ru": "### Соглашения об именовании тестов\n\nИмена тестов должны ясно описывать, что тестируется и ожидаемый результат, используя паттерны типа `should[Expected]When[Condition]` или `[Function]_[Scenario]_[Expected]`. Ясные имена служат документацией и делают ошибки самоочевидными.\n\n```typescript\n// Хорошо: Ясно описывает поведение\ntest('should return 0 when dividing by zero', () => {\n  expect(divide(10, 0)).toBe(0);\n});\n\n// Плохо: Неясно и расплывчато\ntest('divide works', () => {\n  expect(divide(10, 0)).toBe(0);\n});\n```\n\n**Типичная ошибка:** Использование простых имён типа \"test1\" или \"it works\" лишает тесты их роли живой документации.",
+      "tags": [
+        "test-naming",
+        "test-documentation",
+        "naming-conventions"
+      ]
+    }
+  },
+  {
+    "id": "tdd-q-4",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the main benefits and costs of applying TDD in a real project? How do you decide when TDD is worth the overhead?",
+      "ru": "Каковы основные преимущества и затраты на применение TDD в реальном проекте? Как вы решаете, когда TDD стоит усилий?"
+    },
+    "answer": {
+      "en": "### Benefits vs Costs Trade-off\n\nTDD provides better design, fewer bugs, and easier refactoring, but increases initial development time. Use TDD for critical business logic, APIs, and complex algorithms; skip it for UI prototypes or throwaway code.\n\n```typescript\n// Worth TDD: complex payment logic\nfunction calculateDiscount(amount: number, tier: string): number {\n  if (tier === 'gold') return amount * 0.2;\n  if (tier === 'silver') return amount * 0.1;\n  return 0;\n}\n\n// Skip TDD: one-time UI mockup\nconst tempButton = () => <button>Click me</button>;\n```\n\n**Common interview trap:** Claiming TDD has no downsides or is always mandatory.",
+      "ru": "### Баланс преимуществ и затрат\n\nTDD обеспечивает лучший дизайн, меньше багов и легче рефакторить, но увеличивает время разработки. Используйте TDD для критичной бизнес-логики, API и сложных алгоритмов; пропускайте для UI прототипов.\n\n```typescript\n// Стоит TDD: сложная логика оплаты\nfunction calculateDiscount(amount: number, tier: string): number {\n  if (tier === 'gold') return amount * 0.2;\n  if (tier === 'silver') return amount * 0.1;\n  return 0;\n}\n\n// Пропустить TDD: одноразовый UI макет\nconst tempButton = () => <button>Click me</button>;\n```\n\n**Типичная ошибка:** Утверждение, что TDD не имеет недостатков или всегда обязателен."
+    },
+    "tags": [
+      "tdd-benefits",
+      "tdd-costs",
+      "pragmatism"
+    ]
+  },
+  {
+    "id": "tdd-q-9",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare outside-in and inside-out TDD approaches. When would you use each approach when developing a React component that fetches user data and displays it?",
+      "ru": "Сравните подходы outside-in и inside-out в TDD. Когда вы бы использовали каждый подход при разработке React компонента, который загружает данные пользователя и отображает их?"
+    },
+    "answer": {
+      "en": "### Outside-in vs Inside-out TDD\n\nOutside-in (top-down) starts with the user interaction and mocks dependencies, ensuring the component integrates correctly. Inside-out (bottom-up) builds and tests utilities first, then integrates them. For React components with API calls, outside-in is preferable as it focuses on user behavior and mocks the API dependency.\n\n```typescript\n// Outside-in: Test user interaction first, mock API\ntest('displays user name after loading', async () => {\n  const mockApi = { getUser: jest.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(await screen.findByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: Test hook first, then component\ntest('useUser returns user data', async () => {\n  const { result } = renderHook(() => useUser('1'));\n  await waitFor(() => expect(result.current.name).toBe('John'));\n});\n```\n\n**Common interview trap:** Thinking both approaches are equally suitable for React—outside-in is better for component testing because it emphasizes user-facing behavior.",
+      "ru": "### Outside-in vs Inside-out в TDD\n\nOutside-in (сверху вниз) начинается с взаимодействия пользователя и мокирует зависимости, обеспечивая правильную интеграцию компонента. Inside-out (снизу вверх) сначала разрабатывает и тестирует утилиты, затем интегрирует их. Для React компонентов с API запросами предпочтительнее outside-in, так как он фокусируется на поведении пользователя и мокирует API зависимость.\n\n```typescript\n// Outside-in: Тест взаимодействия пользователя первым, мокируем API\ntest('отображает имя пользователя после загрузки', async () => {\n  const mockApi = { getUser: jest.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(await screen.findByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: Сначала тестируем hook, потом компонент\ntest('useUser возвращает данные пользователя', async () => {\n  const { result } = renderHook(() => useUser('1'));\n  await waitFor(() => expect(result.current.name).toBe('John'));\n});\n```\n\n**Типичная ошибка:** Думать, что оба подхода равно подходят для React—outside-in лучше для тестирования компонентов, так как подчеркивает поведение пользователя."
+    },
+    "tags": [
+      "outside-in-tdd",
+      "inside-out-tdd",
+      "react-testing",
+      "test-doubles",
+      "integration-testing"
+    ]
+  },
+  {
+    "id": "tdd-q-10",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're tasked with adding a feature to a 10-year-old codebase with zero tests. How would you apply TDD principles without rewriting everything? What's your strategy for introducing tests incrementally?",
+      "ru": "Вас просят добавить функцию в 10-летний кодовый базис без тестов. Как бы вы применили TDD без переписывания всего? Какова ваша стратегия постепенного введения тестов?"
+    },
+    "answer": {
+      "en": "### Seams Model and Characterization Tests\n\nStart with characterization tests to document existing behavior, then use the Seams Model to isolate code without refactoring. Write tests only for new code initially, gradually expanding coverage for modified areas. This prevents breaking undocumented dependencies while enabling TDD for new features.\n\n```typescript\n// Characterization test: understand legacy behavior\ndescribe('Legacy Payment Module', () => {\n  it('should calculate discount with mysterious 5% rule', () => {\n    const result = legacyCalcDiscount(100);\n    expect(result).toBe(95); // Document as-is, don't judge\n  });\n});\n\n// Seam: inject dependency without refactoring\nconst processor = new PaymentProcessor(legacyCalculator);\n```\n\n**Common interview trap:** Thinking you must write tests for all legacy code before adding features—this kills velocity and misses the point of TDD.",
+      "ru": "### Модель Seams и Characterization-тесты\n\nНачните с characterization-тестов для документирования текущего поведения, затем используйте Seams Model для изоляции кода без рефакторинга. Пишите тесты только для нового кода изначально, постепенно расширяя покрытие. Это предотвращает нарушение скрытых зависимостей при включении TDD для новых возможностей.\n\n```typescript\n// Characterization-тест: понять поведение legacy\ndescribe('Legacy Payment Module', () => {\n  it('должен вычислить скидку по загадочному правилу 5%', () => {\n    const result = legacyCalcDiscount(100);\n    expect(result).toBe(95); // Документируем как есть\n  });\n});\n\n// Seam: инъекция зависимости без рефакторинга\nconst processor = new PaymentProcessor(legacyCalculator);\n```\n\n**Типичная ошибка:** Мысль, что нужно писать тесты для всего legacy-кода перед добавлением функций—это убивает скорость разработки."
+    },
+    "tags": [
+      "legacy-code",
+      "seams-model",
+      "characterization-tests",
+      "incremental-adoption"
+    ]
+  },
+  {
+    "id": "tdd-q-11",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain Acceptance TDD (ATDD) and how it differs from unit TDD. When would you use ATDD over traditional unit tests, and what are the trade-offs?",
+      "ru": "Объясните Acceptance TDD (ATDD) и чем он отличается от unit TDD. Когда вы используете ATDD вместо unit-тестов и каковы компромиссы?"
+    },
+    "answer": {
+      "en": "### Business-Driven Testing\n\nATDD writes acceptance tests from business requirements before implementation, using business language (Gherkin/Cucumber). Unit TDD tests implementation details. ATDD ensures features meet stakeholder needs and documents requirements; trade-off is slower test execution and higher maintenance when business rules change frequently.\n\n```typescript\n// ATDD: Gherkin scenario (business language)\n// Feature: User registration\n// Scenario: Valid email enables signup\n//   Given user enters valid email\n//   When user clicks submit\n//   Then account is created\n\n// Unit TDD: Implementation detail\ndescribe('EmailValidator', () => {\n  it('should return true for valid email format', () => {\n    expect(validator.isValid('test@example.com')).toBe(true);\n  });\n});\n```\n\n**Common interview trap:** Thinking ATDD replaces unit tests—it doesn't. Both are needed: ATDD validates business value, unit tests validate implementation correctness.",
+      "ru": "### Тестирование, ориентированное на бизнес\n\nATDD пишет acceptance-тесты из бизнес-требований перед имплементацией, используя бизнес-язык (Gherkin/Cucumber). Unit TDD тестирует детали имплементации. ATDD гарантирует, что функции соответствуют потребностям заинтересованных сторон; компромисс—медленнее исполнение и выше поддержка при частых изменениях требований.\n\n```typescript\n// ATDD: Gherkin-сценарий (бизнес-язык)\n// Feature: Регистрация пользователя\n// Scenario: Валидная почта позволяет регистрацию\n//   Given пользователь вводит валидный email\n//   When пользователь кликает submit\n//   Then аккаунт создан\n\n// Unit TDD: Деталь имплементации\ndescribe('EmailValidator', () => {\n  it('должен вернуть true для валидного формата', () => {\n    expect(validator.isValid('test@example.com')).toBe(true);\n  });\n});\n```\n\n**Типичная ошибка:** Думать, что ATDD заменяет unit-тесты—это не так. Оба нужны: ATDD валидирует бизнес-ценность, unit-тесты валидируют корректность имплементации."
+    },
+    "tags": [
+      "atdd",
+      "bdd",
+      "gherkin",
+      "business-requirements",
+      "acceptance-tests"
+    ]
+  },
+  {
+    "id": "tdd-q-12",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "TDD with async code is notoriously tricky. Walk me through how you'd test a Promise-based operation that retries on failure. What pitfalls do you watch out for?",
+      "ru": "TDD с асинхронным кодом хитрый. Пройдите через то, как вы бы тестировали Promise-операцию, которая повторяется при ошибке. Какие подводные камни вы избегаете?"
+    },
+    "answer": {
+      "en": "### Async Test Patterns with Timeout Handling\n\nReturn Promises from tests and use async/await for clarity. Mock timers (Jest fake timers) for retry logic to avoid slow tests. Watch for unhandled rejections and forgotten awaits—they silently pass. Use beforeEach to reset mocks between tests.\n\n```typescript\nit('should retry failed request', async () => {\n  const mockFetch = jest.fn()\n    .mockRejectedValueOnce(new Error('Fail'))\n    .mockResolvedValueOnce({ status: 200 });\n  \n  const result = await retryOperation(mockFetch, { maxRetries: 2 });\n  expect(result.status).toBe(200);\n  expect(mockFetch).toHaveBeenCalledTimes(2); // Verifies retry happened\n});\n\n// Dangerous: missing await or return\nit('silently passes without catching error', () => {\n  retryOperation(mockFetch); // BUG: test completes before Promise resolves\n});\n```\n\n**Common interview trap:** Assuming async tests pass when they don't—missing `await` or `return` lets tests exit before assertions run.",
+      "ru": "### Асинхронные тест-паттерны с обработкой таймаутов\n\nВозвращайте Promises из тестов и используйте async/await для ясности. Мокируйте таймеры (Jest fake timers) для логики повторов чтобы избежать медленных тестов. Следите за необработанными отказами и забытыми awaits—они молча проходят. Используйте beforeEach для сброса моков между тестами.\n\n```typescript\nit('должен повторить неудачный запрос', async () => {\n  const mockFetch = jest.fn()\n    .mockRejectedValueOnce(new Error('Fail'))\n    .mockResolvedValueOnce({ status: 200 });\n  \n  const result = await retryOperation(mockFetch, { maxRetries: 2 });\n  expect(result.status).toBe(200);\n  expect(mockFetch).toHaveBeenCalledTimes(2); // Проверяем повтор\n});\n\n// Опасно: отсутствует await или return\nit('молча проходит без ловления ошибки', () => {\n  retryOperation(mockFetch); // БАГ: тест завершается до разрешения\n});\n```\n\n**Типичная ошибка:** Предполагать, что асинхронные тесты проходят, когда они не проходят—отсутствие `await` или `return` позволяет тесту выйти до запуска assertions."
+    },
+    "tags": [
+      "async-testing",
+      "promises",
+      "mocking",
+      "jest",
+      "timeout-handling"
+    ]
+  },
+  {
+    "id": "tdd-q-13",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "TDD purists say 'write test first, always.' But you're in a startup with tight deadlines. When does pragmatism outweigh TDD dogma? Give me a real example where skipping tests upfront made sense.",
+      "ru": "Пуристы TDD говорят 'сначала пиши тест, всегда.' Но вы в стартапе с жесткими сроками. Когда прагматизм перевешивает догму TDD? Дайте мне реальный пример, где пропуск тестов имел смысл."
+    },
+    "answer": {
+      "en": "### Pragmatic Risk Assessment\n\nSkip upfront TDD for throwaway code (spikes, experiments) or when code will be deleted within days—but add tests before merging to main. High-risk code (auth, payments, data deletion) always needs tests first; low-risk UI tweaks can be tested after if time-critical. The key: test before shipping, not necessarily before writing.\n\n```typescript\n// Throwaway spike—test later if keeping it\nfunction experimentalAlgorithm(data) {\n  // Quick implementation to validate approach\n  return data.map(x => x * 2).filter(x => x > 10);\n}\n\n// High-risk—test FIRST\nit('should not charge customer twice', () => {\n  const charge = new PaymentProcessor();\n  expect(charge.process(100)).toBe(1); // Always test payment logic upfront\n});\n```\n\n**Common interview trap:** Confusing \"skip tests\" with \"skip testing\"—pragmatism means testing before production, not escaping accountability.",
+      "ru": "### Прагматичная оценка риска\n\nПропустите upfront TDD для одноразового кода (спайки, эксперименты) или когда код будет удален за дни—но добавьте тесты перед слиянием в main. Высокорисковой код (аутентификация, платежи, удаление данных) всегда нужны тесты сначала; низкорисковой UI-доработки могут быть протестированы позже если критично по времени. Ключ: тест перед отправкой, не обязательно перед написанием.\n\n```typescript\n// Одноразовый спайк—тест позже если сохранять\nfunction experimentalAlgorithm(data) {\n  // Быстрая имплементация для валидирования подхода\n  return data.map(x => x * 2).filter(x => x > 10);\n}\n\n// Высокий риск—тест СНАЧАЛА\nit('не должен дважды взимать плату', () => {\n  const charge = new PaymentProcessor();\n  expect(charge.process(100)).toBe(1); // Тест логики платежей сначала\n});\n```\n\n**Типичная ошибка:** Путать «пропустить тесты» с «пропустить тестирование»—прагматизм означает тестирование перед production, не избежание ответственности."
+    },
+    "tags": [
+      "pragmatic-tdd",
+      "risk-assessment",
+      "spikes",
+      "code-review",
+      "startup-realities"
+    ]
+  },
+  {
+    "id": "tdd-q-14",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is mutation testing and how does it expose weaknesses in your test suite? Have you used it in practice? How would you integrate it into a CI/CD pipeline?",
+      "ru": "Что такое mutation testing и как он обнаруживает слабости в вашем наборе тестов? Вы использовали его на практике? Как вы интегрировали бы его в CI/CD pipeline?"
+    },
+    "answer": {
+      "en": "### Mutation Testing for Test Quality\n\nMutation testing introduces bugs (mutations) into code to verify tests catch them. If a mutation isn't caught, your test is too weak. Tools like Stryker identify gaps better than coverage percentage. Integrate into CI to fail builds with low mutation scores (e.g., < 80%), but watch for slowness—run only on changed files, not the whole suite.\n\n```typescript\n// Weak test: passes even with mutation\nit('should return a number', () => {\n  expect(add(2, 3)).toBeDefined(); // Mutation: add returns 100 instead of 5\n});\n\n// Strong test: catches mutations\nit('should add correctly', () => {\n  expect(add(2, 3)).toBe(5); // Catches: return 100, return 2, etc.\n});\n\n// CI integration\n// npm run stryker -- --thresholdHigh 80 --onlyChanged\n```\n\n**Common interview trap:** Thinking mutation testing replaces code coverage—high coverage doesn't mean assertions are strong; mutations expose that gap.",
+      "ru": "### Mutation Testing для качества тестов\n\nMutation testing вводит баги (мутации) в код, чтобы проверить, ловят ли тесты их. Если мутация не поймана, ваш тест слишком слабый. Инструменты как Stryker выявляют пробелы лучше чем процент покрытия. Интегрируйте в CI для провала сборок с низким mutation score (например, < 80%), но следите за медленностью—запускайте только на измененных файлах.\n\n```typescript\n// Слабый тест: проходит даже с мутацией\nit('должен вернуть число', () => {\n  expect(add(2, 3)).toBeDefined(); // Мутация: add вернет 100 вместо 5\n});\n\n// Сильный тест: ловит мутации\nit('должен сложить корректно', () => {\n  expect(add(2, 3)).toBe(5); // Ловит: return 100, return 2 и т.д.\n});\n\n// CI интеграция\n// npm run stryker -- --thresholdHigh 80 --onlyChanged\n```\n\n**Типичная ошибка:** Думать, что mutation testing заменяет code coverage—высокое покрытие не означает, что assertions сильны; мутации обнаруживают этот пробел."
+    },
+    "tags": [
+      "mutation-testing",
+      "stryker",
+      "test-quality",
+      "ci-cd",
+      "code-coverage-gaps"
+    ]
+  },
+  {
+    "id": "tdd-q-15",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're introducing TDD to a legacy codebase with tight coupling and no tests. How would you balance writing tests with delivering features? Discuss ATDD, mutation testing, and when TDD might actually slow you down.",
+      "ru": "Вы внедряете TDD в старую кодовую базу с тесной связанностью и без тестов. Как вы уравновесите написание тестов с доставкой функций? Обсудите ATDD, mutation testing и когда TDD может вас замедлить."
+    },
+    "answer": {
+      "en": "### Pragmatic TDD in Legacy Code\n\nStart with ATDD (Acceptance TDD) at the feature level to avoid refactoring entire modules at once. Use mutation testing to validate test quality rather than coverage %. Accept that refactoring legacy code requires \"golden master\" tests first, then gradual TDD adoption—forcing 100% TDD upfront kills velocity and team morale.\n\n```typescript\n// ATDD: Write acceptance test first\ndescribe('Payment Feature', () => {\n  it('should process valid payment and update balance', async () => {\n    const result = await processPayment({ amount: 100, cardToken: 'xxx' });\n    expect(result.status).toBe('success');\n    expect(await getBalance()).toBe(prevBalance - 100);\n  });\n});\n\n// Then write implementation & unit tests incrementally\n// Use mutation testing: npm install -D stryker\n// to verify tests actually catch bugs, not just pass\n```\n\n**Common interview trap:** Claiming TDD is always mandatory or that legacy code can be fully tested before any refactoring—pragmatism beats purity.",
+      "ru": "### Прагматичный TDD в Старом Коде\n\nНачните с ATDD (Acceptance TDD) на уровне функций, чтобы избежать переделки целых модулей сразу. Используйте mutation testing для проверки качества тестов, а не только покрытия. Примите, что рефакторинг legacy кода требует сначала «golden master» тестов, затем постепенного внедрения TDD—принудительное 100% TDD замораживает скорость разработки.\n\n```typescript\n// ATDD: Пишем acceptance тест сначала\ndescribe('Payment Feature', () => {\n  it('should process valid payment and update balance', async () => {\n    const result = await processPayment({ amount: 100, cardToken: 'xxx' });\n    expect(result.status).toBe('success');\n    expect(await getBalance()).toBe(prevBalance - 100);\n  });\n});\n\n// Потом пишем реализацию и unit тесты постепенно\n// Используйте mutation testing: npm install -D stryker\n// чтобы проверить, что тесты ловят баги, не только проходят\n```\n\n**Типичная ошибка:** Утверждение, что TDD всегда обязателен или что legacy код нужно полностью покрыть тестами до рефакторинга—прагматизм важнее идеализма."
+    },
+    "tags": [
+      "legacy-code",
+      "ATDD",
+      "mutation-testing",
+      "pragmatic-tdd",
+      "async-testing"
+    ]
+  },
+  {
+    "id": "tdd-q-12",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the red-green-refactor cycle in TDD. What happens in each phase and why is this order important?",
+      "ru": "Объясните цикл red-green-refactor в TDD. Что происходит на каждом этапе и почему важен такой порядок?"
+    },
+    "answer": {
+      "en": "### Red-Green-Refactor Cycle\n\nRed: write a failing test first. Green: write minimal code to pass it. Refactor: improve code quality without changing behavior. This order ensures tests drive design and prevents over-engineering.\n\n```typescript\n// RED: test fails\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// GREEN: minimal implementation\nfunction add(a: number, b: number) { return a + b; }\n\n// REFACTOR: improve (if needed)\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Common interview trap:** Thinking refactoring means adding new features instead of just improving existing code.",
+      "ru": "### Цикл Red-Green-Refactor\n\nRed: сначала пишем failing тест. Green: пишем минимальный код для прохождения. Refactor: улучшаем качество без изменения поведения. Такой порядок гарантирует, что тесты ведут разработку.\n\n```typescript\n// RED: тест падает\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// GREEN: минимальная реализация\nfunction add(a: number, b: number) { return a + b; }\n\n// REFACTOR: улучшаем код\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Типичная ошибка:** Думать, что рефакторинг означает добавление новых функций вместо улучшения существующего кода."
+    },
+    "tags": [
+      "red-green-refactor",
+      "tdd-cycle",
+      "test-first"
+    ]
+  },
+  {
+    "id": "tdd-q-13",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What makes a good unit test? Describe at least 3 key characteristics with examples.",
+      "ru": "Что делает unit test хорошим? Опишите минимум 3 ключевые характеристики с примерами."
+    },
+    "answer": {
+      "en": "### Characteristics of Good Unit Tests\n\nA good test is: isolated (tests one responsibility), fast (no external dependencies), and deterministic (always same result). Tests should be independent and not rely on execution order or shared state.\n\n```typescript\n// GOOD: isolated, focused\ntest('should calculate discount correctly', () => {\n  const result = calculateDiscount(100, 0.2);\n  expect(result).toBe(80);\n});\n\n// BAD: depends on database, slow, not isolated\ntest('should fetch and save user', async () => {\n  const user = await db.query('SELECT * FROM users');\n  expect(user).toBeDefined();\n});\n```\n\n**Common interview trap:** Writing integration tests and calling them unit tests.",
+      "ru": "### Характеристики хорошего Unit Test\n\nХороший тест: изолирован (тестирует одну ответственность), быстр (без внешних зависимостей), детерминирован (всегда один результат). Тесты должны быть независимы друг от друга.\n\n```typescript\n// ХОРОШО: изолирован, сфокусирован\ntest('should calculate discount correctly', () => {\n  const result = calculateDiscount(100, 0.2);\n  expect(result).toBe(80);\n});\n\n// ПЛОХО: зависит от БД, медленный\ntest('should fetch and save user', async () => {\n  const user = await db.query('SELECT * FROM users');\n  expect(user).toBeDefined();\n});\n```\n\n**Типичная ошибка:** Писать интеграционные тесты и называть их unit тестами."
+    },
+    "tags": [
+      "unit-test-quality",
+      "test-isolation",
+      "deterministic-tests"
+    ]
+  },
+  {
+    "id": "tdd-q-14",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are good test naming conventions? Show examples of good and bad test names.",
+      "ru": "Какие хорошие соглашения по названию тестов? Покажите примеры хороших и плохих названий тестов."
+    },
+    "answer": {
+      "en": "### Test Naming Conventions\n\nGood test names follow pattern: `should [expected behavior] when [condition]` or `[unit] returns [result] given [input]`. Names should be descriptive enough that failing test tells you what went wrong without reading code.\n\n```typescript\n// GOOD: clear intent\ntest('should return user discount when loyalty years exceed 5', () => {\n  expect(calculateDiscount(user, 6)).toBe(0.15);\n});\n\ntest('should throw error when email is invalid', () => {\n  expect(() => validateEmail('not-email')).toThrow();\n});\n\n// BAD: vague\ntest('test user', () => {});\ntest('check discount', () => {});\n```\n\n**Common interview trap:** Using generic names like 'test1' or 'should work' that don't describe the scenario.",
+      "ru": "### Соглашения по названию тестов\n\nХорошие имена следуют паттерну: `should [ожидаемое поведение] when [условие]` или `[единица] returns [результат] given [вход]`. Названия должны быть достаточно описательными, чтобы падающий тест рассказал, что пошло не так.\n\n```typescript\n// ХОРОШО: ясное намерение\ntest('should return user discount when loyalty years exceed 5', () => {\n  expect(calculateDiscount(user, 6)).toBe(0.15);\n});\n\ntest('should throw error when email is invalid', () => {\n  expect(() => validateEmail('not-email')).toThrow();\n});\n\n// ПЛОХО: неясные названия\ntest('test user', () => {});\ntest('check discount', () => {});\n```\n\n**Типичная ошибка:** Использование общих имен вроде 'test1' или 'should work' без описания сценария."
+    },
+    "tags": [
+      "test-naming",
+      "naming-conventions",
+      "test-readability"
+    ]
+  },
+  {
+    "id": "tdd-q-15",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the main benefits and costs of adopting TDD in a production environment? How do you balance them?",
+      "ru": "Каковы основные преимущества и затраты на внедрение TDD в production? Как вы их балансируете?"
+    },
+    "answer": {
+      "en": "### Benefits vs Costs Trade-off\n\nBenefits include better design, fewer bugs, and easier refactoring. Costs are slower initial development and test maintenance overhead. Balance by applying TDD selectively to critical business logic and complex algorithms, not UI scaffolding.\n\n```typescript\n// TDD for complex business logic\ndescribe('calculateDiscount', () => {\n  it('should apply tiered discount correctly', () => {\n    expect(calculateDiscount(100, 'premium')).toBe(80);\n    expect(calculateDiscount(50, 'basic')).toBe(50);\n  });\n});\n```\n\n**Common interview trap:** Saying TDD has no costs or is always mandatory.",
+      "ru": "### Баланс преимуществ и затрат\n\nПреимущества: лучший дизайн, меньше ошибок, легче рефакторить. Затраты: медленнее разработка, поддержка тестов. Применяйте TDD избирательно для критичной бизнес-логики, не для UI скаффолдинга.\n\n```typescript\n// TDD для сложной бизнес-логики\ndescribe('calculateDiscount', () => {\n  it('should apply tiered discount correctly', () => {\n    expect(calculateDiscount(100, 'premium')).toBe(80);\n    expect(calculateDiscount(50, 'basic')).toBe(50);\n  });\n});\n```\n\n**Типичная ошибка:** Утверждение, что TDD не имеет затрат или всегда обязателен."
+    },
+    "tags": [
+      "tdd-benefits",
+      "cost-analysis",
+      "pragmatic-testing"
+    ]
+  },
+  {
+    "id": "tdd-q-16",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between stubs, mocks, and spies as test doubles. When would you use each in a TDD workflow?",
+      "ru": "Объясните разницу между стабами, моками и шпионами как тестовыми двойниками. Когда вы используете каждый в TDD?"
+    },
+    "answer": {
+      "en": "### Test Doubles Classification\n\nStubs provide canned responses, mocks verify interactions were called correctly, spies observe calls without replacing behavior. Use stubs for dependencies you don't care about, mocks to verify your code called external APIs correctly, spies when you need both observation and real behavior.\n\n```typescript\n// Stub: returns fixed value\nconst mockApi = { fetch: () => ({ data: 'test' }) };\n\n// Mock: verifies call was made\nconst mockApi = jest.fn().mockResolvedValue({ data: 'test' });\nexpect(mockApi).toHaveBeenCalledWith('/users');\n\n// Spy: wraps real function\nconst spy = jest.spyOn(api, 'fetch');\n```\n\n**Common interview trap:** Treating all test doubles as the same thing.",
+      "ru": "### Классификация тестовых двойников\n\nСтабы предоставляют готовые ответы, моки проверяют, что взаимодействия произошли, шпионы наблюдают без замены поведения. Используйте стабы для неважных зависимостей, моки для проверки вызовов API, шпионы когда нужны наблюдение и реальное поведение.\n\n```typescript\n// Стаб: возв��ащает фиксированное значение\nconst mockApi = { fetch: () => ({ data: 'test' }) };\n\n// Мок: проверяет вызов\nconst mockApi = jest.fn().mockResolvedValue({ data: 'test' });\nexpect(mockApi).toHaveBeenCalledWith('/users');\n\n// Шпион: оборачивает реальную функцию\nconst spy = jest.spyOn(api, 'fetch');\n```\n\n**Типичная ошибка:** Все тестовые двойники как одно и то же."
+    },
+    "tags": [
+      "test-doubles",
+      "mocks",
+      "stubs",
+      "spies"
+    ]
+  },
+  {
+    "id": "tdd-q-17",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between outside-in (London school) and inside-out (Detroit school) TDD? When would you prefer one over the other?",
+      "ru": "В чем разница между outside-in (London school) и inside-out (Detroit school) TDD? Когда вы предпочтёте одну другой?"
+    },
+    "answer": {
+      "en": "### TDD Schools Comparison\n\nOutside-in starts with integration tests for user behavior, then mocks dependencies; inside-out starts with unit tests for individual functions. Use outside-in for feature-driven work to prevent over-engineering, inside-out for library code where contracts are clearer.\n\n```typescript\n// Outside-in: test user flow first\nit('should display user profile', () => {\n  const mockApi = jest.fn().mockResolvedValue({ name: 'John' });\n  expect(renderUserProfile()).toContainText('John');\n});\n\n// Inside-out: test utils first\nit('should format user name', () => {\n  expect(formatName('john')).toBe('John');\n});\n```\n\n**Common interview trap:** Not mentioning when each approach shines.",
+      "ru": "### Сравнение школ TDD\n\nOutside-in начинает с интеграционных тестов поведения пользователя, потом мокирует зависимости; inside-out начинает с unit-тестов функций. Используйте outside-in для feature-driven работы, inside-out для библиотечного кода.\n\n```typescript\n// Outside-in: сначала тест пользовательского потока\nit('should display user profile', () => {\n  const mockApi = jest.fn().mockResolvedValue({ name: 'John' });\n  expect(renderUserProfile()).toContainText('John');\n});\n\n// Inside-out: сначала тест утилит\nit('should format user name', () => {\n  expect(formatName('john')).toBe('John');\n});\n```\n\n**Типичная ошибка:** Не упоминать, когда каждый подход работает лучше."
+    },
+    "tags": [
+      "outside-in-tdd",
+      "inside-out-tdd",
+      "london-school",
+      "detroit-school"
+    ]
+  },
+  {
+    "id": "tdd-q-18",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you apply TDD principles to React components? What are the specific challenges and how do you overcome them?",
+      "ru": "Как вы применяете принципы TDD к React компонентам? Какие конкретные проблемы и как их решить?"
+    },
+    "answer": {
+      "en": "### TDD for React Components\n\nTest component behavior (renders, clicks, state changes) not implementation. Challenge: React's hook dependencies and async state updates. Overcome with React Testing Library to test user interactions, not DOM structure, and proper async utilities like waitFor.\n\n```typescript\nit('should increment count on button click', async () => {\n  render(<Counter />);\n  const button = screen.getByRole('button');\n  fireEvent.click(button);\n  await waitFor(() => {\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n});\n```\n\n**Common interview trap:** Testing implementation details like state directly.",
+      "ru": "### TDD для React ��омпонентов\n\nТестируйте поведение (рендеринг, клики, изменения состояния), не реализацию. Проблема: зависимости хуков и асинхронные обновления. Решение: React Testing Library для тестирования взаимодействий, не DOM структуры, и waitFor.\n\n```typescript\nit('should increment count on button click', async () => {\n  render(<Counter />);\n  const button = screen.getByRole('button');\n  fireEvent.click(button);\n  await waitFor(() => {\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n});\n```\n\n**Типичная ошибка:** Тестирование деталей реализации, а не поведения."
+    },
+    "tags": [
+      "react-testing",
+      "tdd-components",
+      "testing-library",
+      "component-behavior"
+    ]
+  },
+  {
+    "id": "tdd-q-19",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "You're writing a React form component with complex validation. How would you apply TDD and what test structure would you follow?",
+      "ru": "Вы пишете React форму с сложной валидацией. Как вы применили бы TDD и какую структуру тестов использовали бы?"
+    },
+    "answer": {
+      "en": "### TDD for Form Components\n\nStart with validation logic tests (pure functions), then test form UI behavior (input changes, error display). Use arrange-act-assert pattern. Mock API calls and test async submission separately. This keeps validation logic decoupled and testable.\n\n```typescript\n// Step 1: Test validation logic\nit('should reject invalid email', () => {\n  expect(validateEmail('invalid')).toBeFalsy();\n});\n\n// Step 2: Test form behavior\nit('should show error on invalid email', async () => {\n  render(<Form />);\n  fireEvent.change(screen.getByName('email'), { target: { value: 'invalid' } });\n  await waitFor(() => {\n    expect(screen.getByText('Invalid email')).toBeInTheDocument();\n  });\n});\n```\n\n**Common interview trap:** Testing form with API calls in the same test.",
+      "ru": "### TDD для форм\n\nНачните с тестов логики валидации (чистые функции), потом UI поведения (изменения инпутов, ошибки). Используйте arrange-act-assert. Мокируйте API и тестируйте отправку отдельно.\n\n```typescript\n// Шаг 1: Тест логики валидации\nit('should reject invalid email', () => {\n  expect(validateEmail('invalid')).toBeFalsy();\n});\n\n// Шаг 2: Тест поведения формы\nit('should show error on invalid email', async () => {\n  render(<Form />);\n  fireEvent.change(screen.getByName('email'), { target: { value: 'invalid' } });\n  await waitFor(() => {\n    expect(screen.getByText('Invalid email')).toBeInTheDocument();\n  });\n});\n```\n\n**Типичная ошибка:** Тестирование формы с API вызовами в одном тесте."
+    },
+    "tags": [
+      "react-form-testing",
+      "validation-logic",
+      "separation-of-concerns",
+      "tdd-strategy"
+    ]
+  },
+  {
+    "id": "tdd-q-20",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare outside-in and inside-out TDD approaches. When would you choose each for developing a React component, and how do test doubles play different roles in each approach?",
+      "ru": "Сравните подходы outside-in и inside-out в TDD. Когда вы выбрали бы каждый при разработке React компонента и какую роль играют test doubles в каждом подходе?"
+    },
+    "answer": {
+      "en": "### Outside-in vs Inside-out TDD\n\nOutside-in (top-down) starts with integration tests for user behavior, then creates mocks for dependencies. Inside-out (bottom-up) builds individual units first with their tests. For React components, outside-in tests the component's public API first using render+userEvent, mocking child components and API calls; inside-out tests isolated logic units (hooks, utilities) before assembling them.\n\n```typescript\n// Outside-in: test component behavior first\nit('displays user data after fetch', () => {\n  const mockApi = { getUser: vi.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(screen.getByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: test hook first, then component\nit('useUser hook fetches data', () => {\n  const { result } = renderHook(() => useUser('1'));\n  expect(result.current.data).toEqual({ name: 'John' });\n});\n```\n\n**Common interview trap:** Claiming one approach is always better; they're complementary—use outside-in for UI flows, inside-out for complex business logic.",
+      "ru": "### Outside-in vs Inside-out в TDD\n\nOutside-in (сверху вниз) начинается с интеграционных тестов поведения пользователя, затем создаёт моки для зависимостей. Inside-out (снизу вверх) сначала строит отдельные юниты с их тестами. Для React компонентов outside-in тестирует публичный API компонента с render+userEvent, мокируя дочерние компоненты и API вызовы; inside-out тестирует изолированную логику (хуки, утилиты) перед их объединением.\n\n```typescript\n// Outside-in: сначала тестируем поведение компонента\nit('отображает данные пользователя после загрузки', () => {\n  const mockApi = { getUser: vi.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(screen.getByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: сначала тестируем хук, потом компонент\nit('useUser хук загружает данные', () => {\n  const { result } = renderHook(() => useUser('1'));\n  expect(result.current.data).toEqual({ name: 'John' });\n});\n```\n\n**Типичная ошибка:** Утверждение, что один подход всегда лучше; они дополняют друг друга—используйте outside-in для UI потоков, inside-out для сложной бизнес-логики."
+    },
+    "tags": [
+      "outside-in-tdd",
+      "inside-out-tdd",
+      "test-doubles",
+      "react-testing",
+      "integration-tests"
+    ]
+  },
+  {
+    "id": "tdd-q-21",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're tasked with adding a feature to a 10-year-old monolith with zero tests. How would you apply TDD principles without rewriting everything? What's your first step?",
+      "ru": "Вам нужно добавить функцию в 10-летний монолит без тестов. Как применить TDD без переписывания всего? Какой первый шаг?"
+    },
+    "answer": {
+      "en": "### Characterization Tests & Seams\n\nStart by writing characterization tests around the legacy code to document current behavior, then introduce seams (dependency injection points) to isolate new code. This lets you write tests for the new feature while minimizing changes to untested legacy logic.\n\n```typescript\n// Characterization test - document existing behavior\ntest('legacy function returns X when given Y', () => {\n  const result = legacyFunction(input);\n  expect(result).toBe(expectedOutput); // Define baseline\n});\n\n// Then inject seam for new code\nfunction newFeature(legacyFunc = legacyFunction) {\n  return legacyFunc(x); // Now testable\n}\n```\n\n**Common interview trap:** Saying you'd \"refactor everything first\" — that's a path to project death.",
+      "ru": "### Тесты характеризации и точки расширения\n\nНачните с тестов характеризации, чтобы задокументировать текущее поведение, затем добавьте точки расширения (dependency injection), чтобы изолировать новый код. Это позволяет писать тесты для новой функции, минимально трогая старый код.\n\n```typescript\n// Тест характеризации - задокументировать поведение\ntest('legacy function returns X when given Y', () => {\n  const result = legacyFunction(input);\n  expect(result).toBe(expectedOutput);\n});\n\n// Затем инъектируем зависимость\nfunction newFeature(legacyFunc = legacyFunction) {\n  return legacyFunc(x);\n}\n```\n\n**Типичная ошибка:** Говорить \"сначала рефакторим всё\" — это путь к смерти проекта."
+    },
+    "tags": [
+      "legacy-codebases",
+      "characterization-tests",
+      "seams",
+      "incremental-testing"
+    ]
+  },
+  {
+    "id": "tdd-q-22",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain Acceptance Test-Driven Development (ATDD). How does it differ from unit-level TDD, and when would you use it over traditional TDD?",
+      "ru": "Объясните ATDD. Чем она отличается от unit-level TDD и когда её использовать?"
+    },
+    "answer": {
+      "en": "### Business-Facing Tests First\n\nATDD writes acceptance tests from business requirements *before* implementation — these tests live in domain language (Gherkin, plain English) and validate entire workflows. Unit TDD writes technical tests; ATDD validates that you're building the right thing for stakeholders.\n\n```typescript\n// ATDD: \"User can login with valid credentials\"\nGiven('user is on login page');\nWhen('user enters valid email and password');\nThen('user is redirected to dashboard');\n\n// vs Unit TDD\ntest('hashPassword returns hashed string', () => {\n  expect(hashPassword('pass')).toBeDefined();\n});\n```\n\n**Common interview trap:** Thinking ATDD replaces unit tests — it complements them at the acceptance layer.",
+      "ru": "### Тесты на уровне бизнеса\n\nATDD пишет acceptance-тес��ы из требований *до* реализации — на языке бизнеса (Gherkin). Unit TDD — технические тесты; ATDD проверяет, что вы строите правильное решение.\n\n```typescript\n// ATDD: \"Пользователь может залогиниться\"\nGiven('user is on login page');\nWhen('user enters valid email and password');\nThen('user is redirected to dashboard');\n\n// vs Unit TDD\ntest('hashPassword returns hashed string', () => {\n  expect(hashPassword('pass')).toBeDefined();\n});\n```\n\n**Типичная ошибка:** Думать, что ATDD заменяет unit-тесты — она их дополняет."
+    },
+    "tags": [
+      "atdd",
+      "acceptance-tests",
+      "gherkin",
+      "behavior-driven-development",
+      "business-requirements"
+    ]
+  },
+  {
+    "id": "tdd-q-23",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you apply TDD to async code? Walk through testing a promise-based data fetch with retry logic and timeout.",
+      "ru": "Как применять TDD к async коду? Покажите тестирование Promise с retry и timeout."
+    },
+    "answer": {
+      "en": "### Mock Time & Use Fake Timers\n\nUse fake timers (Jest's `useFakeTimers`) to control async flow deterministically. Mock the async operation and advance time to trigger retries and timeouts without actual delays.\n\n```typescript\ntest('retries on failure and succeeds on 3rd attempt', async () => {\n  jest.useFakeTimers();\n  let attempts = 0;\n  const fetchWithRetry = async () => {\n    attempts++;\n    if (attempts < 3) throw new Error('fail');\n    return 'success';\n  };\n  \n  const promise = retryWithTimeout(fetchWithRetry, 3);\n  jest.runAllTimers();\n  expect(await promise).toBe('success');\n});\n```\n\n**Common interview trap:** Using real `setTimeout` in tests — kills performance and creates flaky tests.",
+      "ru": "### Фейковые таймеры\n\nИспользуйте fake timers (Jest `useFakeTimers`) для контроля async потока. Мокируйте операцию и управляйте временем для retry и timeout без реальных задержек.\n\n```typescript\ntest('retries on failure and succeeds on 3rd attempt', async () => {\n  jest.useFakeTimers();\n  let attempts = 0;\n  const fetchWithRetry = async () => {\n    attempts++;\n    if (attempts < 3) throw new Error('fail');\n    return 'success';\n  };\n  \n  const promise = retryWithTimeout(fetchWithRetry, 3);\n  jest.runAllTimers();\n  expect(await promise).toBe('success');\n});\n```\n\n**Типичная ошибка:** Использовать реальный `setTimeout` — убивает производительность."
+    },
+    "tags": [
+      "async-testing",
+      "promises",
+      "fake-timers",
+      "retry-logic",
+      "timeout-testing"
+    ]
+  },
+  {
+    "id": "tdd-q-24",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe a situation where strict TDD would slow you down significantly. How do you balance pragmatism with TDD discipline as a senior engineer?",
+      "ru": "Когда строгий TDD замедляет разработку? Как балансировать прагматизм и TDD?"
+    },
+    "answer": {
+      "en": "### Context Matters\n\nSpike/exploration code, prototypes, or one-time scripts rarely need full TDD — write messy code first, understand the problem, *then* formalize tests. High-stakes core logic always needs TDD. The pragmatic rule: test what breaks often or what's hard to debug.\n\n```typescript\n// Spike: no tests yet\nfunction exploreAlgorithm(data) {\n  return data.map(x => x * 2).filter(x => x > 10);\n}\n\n// Once validated, add tests\ntest('exploreAlgorithm filters and transforms', () => {\n  expect(exploreAlgorithm([5, 10, 15])).toEqual([20, 30]);\n});\n```\n\n**Common interview trap:** Saying \"TDD always slows you down\" — that's a junior perspective. The answer is \"it depends on context.\"",
+      "ru": "### Контекст важен\n\nСпайки, прототипы или одноразовые скрипты редко нуждаются в TDD — сначала пишите код, потом добавляйте тесты. Критический код всегда нуждается в TDD. Прагматичное правило: тестируйте то, что часто ломается.\n\n```typescript\n// Спайк: без тестов\nfunction exploreAlgorithm(data) {\n  return data.map(x => x * 2).filter(x => x > 10);\n}\n\n// После валидации добавляйте тесты\ntest('exploreAlgorithm filters and transforms', () => {\n  expect(exploreAlgorithm([5, 10, 15])).toEqual([20, 30]);\n});\n```\n\n**Типичная ошибка:** \"TDD всегда медленный\" — это юниор-позиция. Ответ: \"зависит от контекста\"."
+    },
+    "tags": [
+      "pragmatic-tdd",
+      "spike-code",
+      "prototypes",
+      "context-driven-testing",
+      "risk-assessment"
+    ]
+  },
+  {
+    "id": "tdd-q-25",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is mutation testing, and how would you use it to validate the quality of your test suite? Give a practical example.",
+      "ru": "Что такое mutation testing? Как его использовать для проверки качества тестов?"
+    },
+    "answer": {
+      "en": "### Introduce Bugs Deliberately\n\nMutation testing intentionally introduces bugs (mutations) into your code and checks if tests catch them. Low kill rate = weak tests. Tools like Stryker flip operators, change constants, remove statements — if 80% of mutations are killed, your tests are solid.\n\n```typescript\n// Original code\nfunction isAdult(age) {\n  return age >= 18; // Mutation: >= becomes >\n}\n\n// Good test catches the mutation\ntest('age 18 is adult', () => {\n  expect(isAdult(18)).toBe(true); // Fails if >= becomes >\n});\n\n// Weak test misses it\ntest('age 20 is adult', () => {\n  expect(isAdult(20)).toBe(true); // Passes even with >\n});\n```\n\n**Common interview trap:** Confusing mutation testing with fuzzing — they're different. Mutation is for test quality, fuzzing is for finding edge cases.",
+      "ru": "### Вводите ошибки специально\n\nMutation testing умышленно вводит баги в код и проверяет, ловят ли их тес��ы. Низкий kill rate = слабые тесты. Stryker меняет операторы, константы — если 80% мутаций поймано, тесты хороши.\n\n```typescript\n// Оригинальный код\nfunction isAdult(age) {\n  return age >= 18; // Мутация: >= становится >\n}\n\n// Хороший тест ловит мутацию\ntest('age 18 is adult', () => {\n  expect(isAdult(18)).toBe(true); // Падает если >= > >\n});\n\n// Слабый тест пропускает\ntest('age 20 is adult', () => {\n  expect(isAdult(20)).toBe(true); // Проходит даже с >\n});\n```\n\n**Типичная ошибка:** Путать mutation testing с fuzzing — они разные."
+    },
+    "tags": [
+      "mutation-testing",
+      "stryker",
+      "test-quality",
+      "code-coverage",
+      "test-effectiveness"
+    ]
+  },
+  {
+    "id": "tdd-q-26",
+    "topicId": "tdd",
+    "difficulty": "senior",
+    "question": {
+      "en": "You're tasked with adding tests to a 10-year-old legacy codebase with zero test coverage and tightly coupled components. How would you approach introducing TDD incrementally, and what's your strategy for handling async operations and acceptance-level testing in this context? Also, when would you pragmatically decide that TDD is slowing you down more than helping?",
+      "ru": "Вас просят добавить тесты к 10-летнему legacy-коду без покрытия тестами и с тесной связанностью компонентов. Как вы бы постепенно внедрили TDD? Какова ваша стратегия для async-операций и acceptance-тестирования? Когда вы прагматично решите, что TDD замедляет разработку больше, чем помогает?"
+    },
+    "answer": {
+      "en": "### Incremental TDD in Legacy Codebases\n\nStart with the seams model: extract dependencies at boundaries and write characterization tests (ATDD-style) to document current behavior before refactoring. For async code, use acceptance tests with proper timeouts and state verification. Use mutation testing to validate test quality—if mutants survive, your tests are false confidence. Pragmatically skip TDD for spike work, third-party integrations, or when acceptance tests already cover the behavior; resume TDD when refactoring stable code.\n\n```typescript\n// Characterization test (ATDD approach for legacy code)\nit('accepts legacy payment format and logs transaction', async () => {\n  const result = await legacyPaymentProcessor.process(mockData);\n  expect(result.status).toBe('success');\n  expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('PROCESSED'));\n});\n\n// Mutation test validates test quality\nrun('npx stryker run'); // Ensure >80% mutant kill rate\n```\n\n**Common interview trap:** Suggesting complete rewrite with TDD—legacy codebases need seams and characterization tests first, not purity.",
+      "ru": "### Постепенное внедрение TDD в Legacy-коде\n\nНачните с модели швов (seams model): извлекайте зависимости на границах и пишите characterization-тесты (ATDD-стиль) для документирования текущего пове��ения перед рефакторингом. Для async-кода используйте acceptance-тесты с таймаутами и проверкой состояния. Используйте mutation-тестирование для валидации качества тестов—если мутанты выживают, ваши тесты дают ложную уверенность. Прагматично пропускайте TDD при spike-работе, интеграциях с третьим кодом или когда acceptance-тесты уже покрывают поведение; возобновляйте TDD при рефакторинге стабильного кода.\n\n```typescript\n// Characterization-тест (ATDD подход для legacy-кода)\nit('accepts legacy payment format and logs transaction', async () => {\n  const result = await legacyPaymentProcessor.process(mockData);\n  expect(result.status).toBe('success');\n  expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('PROCESSED'));\n});\n\n// Mutation-тест валидирует качество тестов\nrun('npx stryker run'); // Убедитесь >80% kill rate\n```\n\n**Типичная ошибка:** Предложить полный переход на TDD—legacy-коду нужны сначала швы и characterization-тесты, а не идеальность."
+    },
+    "tags": [
+      "legacy-codebases",
+      "ATDD",
+      "async-testing",
+      "mutation-testing",
+      "pragmatic-TDD",
+      "seams-model"
+    ]
+  }
+]

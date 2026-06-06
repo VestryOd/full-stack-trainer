@@ -1,1 +1,476 @@
-[]
+[
+  {
+    "id": "solid-grasp-q-1",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Single Responsibility Principle (SRP) with a TypeScript example. Show a violation and how to fix it.",
+      "ru": "Объясните принцип единственной ответственности (SRP) с примером на TypeScript. Покажите нарушение и как его исправить."
+    },
+    "answer": {
+      "en": "### Single Responsibility Principle\n\nA class should have only one reason to change. The violation occurs when a class handles multiple concerns like user data AND email sending. Separate these into distinct classes.\n\n```typescript\n// VIOLATION\nclass User {\n  save(data: any) { /* DB logic */ }\n  sendEmail(email: string) { /* Email logic */ }\n}\n\n// FIXED\nclass User { save(data: any) { } }\nclass EmailService { send(email: string) { } }\n```\n\n**Common interview trap:** Confusing SRP with code organization—it's about reasons to change, not just splitting files.",
+      "ru": "### Принцип единственной ответственности\n\nКласс должен иметь только одну причину для изменения. Нарушение происходит, когда класс обрабатывает несколько задач: данные пользователя И отправку email. Разделите эти задачи на отдельные классы.\n\n```typescript\n// НАРУШЕНИЕ\nclass User {\n  save(data: any) { /* БД логика */ }\n  sendEmail(email: string) { /* Email логика */ }\n}\n\n// ИСПРАВЛЕНО\nclass User { save(data: any) { } }\nclass EmailService { send(email: string) { } }\n```\n\n**Типичная ошибка:** Путаница SRP с организацией кода—это про причины изменений, не про разделение файлов."
+    },
+    "tags": [
+      "single-responsibility",
+      "class-design",
+      "separation-of-concerns"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-2",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does the Open/Closed Principle (OCP) apply to real TypeScript code? Show a violation with a payment processor and demonstrate the fix.",
+      "ru": "Как принцип открытости/закрытости (OCP) применяется в реальном коде TypeScript? Покажите нарушение с обработчиком платежей и продемонстрируйте исправление."
+    },
+    "answer": {
+      "en": "### Open/Closed Principle\n\nClasses should be open for extension but closed for modification. A payment processor that uses if-else for each payment type violates OCP. Instead, use polymorphism with strategy pattern.\n\n```typescript\n// VIOLATION\nclass PaymentProcessor {\n  process(type: string, amount: number) {\n    if (type === 'card') { /* card logic */ }\n    else if (type === 'paypal') { /* paypal logic */ }\n  }\n}\n\n// FIXED\ninterface PaymentStrategy { process(amount: number): void; }\nclass CardPayment implements PaymentStrategy { process(amount: number) { } }\nclass PaymentProcessor { constructor(strategy: PaymentStrategy) { } }\n```\n\n**Common interview trap:** Thinking OCP means never modifying code—it means extending via inheritance/composition, not changing existing logic.",
+      "ru": "### Принцип открытости/закрытости\n\nКлассы должны быть открыты для расширения, но закрыты для изменений. Обработчик платежей, использующий if-else для каждого типа, нарушает OCP. Используйте полиморфизм со стратегией.\n\n```typescript\n// НАРУШЕНИЕ\nclass PaymentProcessor {\n  process(type: string, amount: number) {\n    if (type === 'card') { /* логика карты */ }\n    else if (type === 'paypal') { /* логика paypal */ }\n  }\n}\n\n// ИСПРАВЛЕНО\ninterface PaymentStrategy { process(amount: number): void; }\nclass CardPayment implements PaymentStrategy { process(amount: number) { } }\nclass PaymentProcessor { constructor(strategy: PaymentStrategy) { } }\n```\n\n**Типичная ошибка:** Думать, что OCP запрещает изменения—речь идёт о расширении через наследование/композицию, а не о изменении логики."
+    },
+    "tags": [
+      "open-closed-principle",
+      "polymorphism",
+      "strategy-pattern"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-3",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Demonstrate the Liskov Substitution Principle (LSP) violation with a practical example. Why can a Square inherit from Rectangle cause issues?",
+      "ru": "Продемонстрируйте нарушение принципа подстановки Лисков (LSP) практическим примером. Почему наследование Square от Rectangle вызывает проблемы?"
+    },
+    "answer": {
+      "en": "### Liskov Substitution Principle\n\nSubtypes must be substitutable for their base types without breaking behavior. A Square that overrides Rectangle's setWidth/setHeight violates LSP because it changes the contract—width must equal height.\n\n```typescript\n// VIOLATION\nclass Rectangle { setWidth(w: number) { this.width = w; } }\nclass Square extends Rectangle {\n  setWidth(w: number) { this.width = this.height = w; }\n}\nconst rect: Rectangle = new Square();\nrect.setWidth(5); // rect.height is also 5, unexpected!\n\n// FIXED: Composition instead of inheritance\nclass Shape { abstract area(): number; }\nclass Rectangle extends Shape { /* ... */ }\nclass Square extends Shape { /* ... */ }\n```\n\n**Common interview trap:** Assuming all \"is-a\" relationships work for inheritance—validate behavior contracts, not just type relationships.",
+      "ru": "### Принцип подстановки Лисков\n\nПодтипы должны быть взаимозаменяемы с базовыми типами без нарушения поведения. Square, переопределяющий setWidth/setHeight Rectangle, нарушает LSP, потому что изменяет контракт.\n\n```typescript\n// НАРУШЕНИЕ\nclass Rectangle { setWidth(w: number) { this.width = w; } }\nclass Square extends Rectangle {\n  setWidth(w: number) { this.width = this.height = w; }\n}\nconst rect: Rectangle = new Square();\nrect.setWidth(5); // rect.height тоже 5, неожиданно!\n\n// ИСПРАВЛЕНО: Композиция вместо наследования\nclass Shape { abstract area(): number; }\nclass Rectangle extends Shape { }\nclass Square extends Shape { }\n```\n\n**Типичная ошибка:** Предполагать, что все отношения \"является\" подходят для наследования—проверяйте контракты поведения, не только типы."
+    },
+    "tags": [
+      "liskov-substitution",
+      "inheritance-issues",
+      "composition-over-inheritance"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-4",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the Interface Segregation Principle (ISP)? Show how a fat interface violates it and how to fix it with TypeScript.",
+      "ru": "Что такое принцип разделения интерфейса (ISP)? Покажите, как толстый интерфейс его нарушает, и как исправить на TypeScript."
+    },
+    "answer": {
+      "en": "### Interface Segregation Principle\n\nClients should not depend on interfaces they don't use. A Worker interface with both work() and eat() forces non-human workers to implement unnecessary methods. Split into smaller, focused interfaces.\n\n```typescript\n// VIOLATION\ninterface Worker { work(): void; eat(): void; }\nclass Robot implements Worker {\n  work() { }\n  eat() { } // Robot doesn't eat!\n}\n\n// FIXED\ninterface Workable { work(): void; }\ninterface Eatable { eat(): void; }\nclass Robot implements Workable { work() { } }\nclass Human implements Workable, Eatable { work() { } eat() { } }\n```\n\n**Common interview trap:** Confusing ISP with SRP—ISP is about client interfaces, SRP is about class responsibilities.",
+      "ru": "### Принцип разделения интерфейса\n\nКлиенты не должны зависеть от интерфейсов, которые они не используют. Интерфейс Worker с work() и eat() заставляет нечеловеческих работников реализовать ненужные методы. Разделите на меньшие интерфейсы.\n\n```typescript\n// НАРУШЕНИЕ\ninterface Worker { work(): void; eat(): void; }\nclass Robot implements Worker {\n  work() { }\n  eat() { } // Робот не ест!\n}\n\n// ИСПРАВЛЕНО\ninterface Workable { work(): void; }\ninterface Eatable { eat(): void; }\nclass Robot implements Workable { work() { } }\nclass Human implements Workable, Eatable { work() { } eat() { } }\n```\n\n**Типичная ошибка:** Путаница ISP с SRP—ISP про интерфейсы клиентов, SRP про ответственность классов."
+    },
+    "tags": [
+      "interface-segregation",
+      "interface-design",
+      "client-dependency"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-5",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the Dependency Inversion Principle (DIP) in TypeScript. Why is directly instantiating dependencies a violation, and how does dependency injection fix it?",
+      "ru": "Объясните принцип инверсии зависимостей (DIP) на TypeScript. Почему прямое создание зависимостей это нарушение и как инъекция зависимостей это исправляет?"
+    },
+    "answer": {
+      "en": "### Dependency Inversion Principle\n\nHigh-level modules should not depend on low-level modules; both should depend on abstractions. Directly instantiating concrete classes creates tight coupling. Inject dependencies through constructors instead.\n\n```typescript\n// VIOLATION\nclass UserService {\n  private db = new MySQLDatabase(); // Tight coupling\n  getUser(id: number) { return this.db.query(id); }\n}\n\n// FIXED\ninterface Database { query(id: number): any; }\nclass UserService {\n  constructor(private db: Database) { }\n  getUser(id: number) { return this.db.query(id); }\n}\nconst service = new UserService(new MySQLDatabase());\n```\n\n**Common interview trap:** Thinking DIP is only about IoC containers—it's fundamentally about depending on abstractions, containers are just tools.",
+      "ru": "### Принцип инверсии зависимостей\n\nВысокоуровневые модули не должны зависеть от низкоуровневых; оба должны зависеть от абстракций. Прямое создание конкретных классов создаёт тесную связь. Инъектируйте зависимости через конструкторы.\n\n```typescript\n// НАРУШЕНИЕ\nclass UserService {\n  private db = new MySQLDatabase(); // Тесная связь\n  getUser(id: number) { return this.db.query(id); }\n}\n\n// ИСПРАВЛЕНО\ninterface Database { query(id: number): any; }\nclass UserService {\n  constructor(private db: Database) { }\n  getUser(id: number) { return this.db.query(id); }\n}\nconst service = new UserService(new MySQLDatabase());\n```\n\n**Типичная ошибка:** Думать, что DIP только про IoC контейнеры—это про зависимость от абстракций, контейнеры это просто инструменты."
+    },
+    "tags": [
+      "dependency-inversion",
+      "dependency-injection",
+      "loose-coupling"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-6",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain Single Responsibility Principle with a TypeScript example. Show a violation and how to fix it.",
+      "ru": "Объясните принцип единственной ответственности на примере TypeScript. Покажите нарушение и как его исправить."
+    },
+    "answer": {
+      "en": "### Single Responsibility Principle\n\nEach class should have one reason to change. A violation occurs when a class handles multiple concerns like data fetching AND formatting.\n\n```typescript\n// ❌ Violation: User class does too much\nclass User {\n  fetchFromDB() { /* */ }\n  formatJSON() { /* */ }\n  sendEmail() { /* */ }\n}\n\n// ✅ Fixed: Separate responsibilities\nclass UserRepository { fetchFromDB() { /* */ } }\nclass UserFormatter { formatJSON() { /* */ } }\nclass EmailService { sendEmail() { /* */ } }\n```\n\n**Common interview trap:** Conflating SRP with having few methods—it's about reasons to change, not method count.",
+      "ru": "### Принцип единственной ответственности\n\nКаждый класс должен иметь одну причину для изменения. Нарушение происходит, когда класс занимается несколькими задачами, такими как получение данных И форматирование.\n\n```typescript\n// ❌ Нарушение: класс User делает слишком много\nclass User {\n  fetchFromDB() { /* */ }\n  formatJSON() { /* */ }\n  sendEmail() { /* */ }\n}\n\n// ✅ Исправлено: разделите ответственность\nclass UserRepository { fetchFromDB() { /* */ } }\nclass UserFormatter { formatJSON() { /* */ } }\nclass EmailService { sendEmail() { /* */ } }\n```\n\n**Типичная ошибка:** Путаница SRP с количеством методов—речь о причинах для изменения, а не о методах."
+    },
+    "tags": [
+      "single-responsibility",
+      "class-design",
+      "separation-of-concerns"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-7",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Demonstrate Open/Closed Principle with TypeScript. Show how to extend behavior without modifying existing code.",
+      "ru": "Продемонстрируйте принцип открытости/закрытости на TypeScript. Покажите, как расширить поведение без изменения существующего кода."
+    },
+    "answer": {
+      "en": "### Open/Closed Principle\n\nClasses should be open for extension but closed for modification. Use abstraction (interfaces/inheritance) to add features without changing existing code.\n\n```typescript\n// ❌ Violation: Modify class for each new payment type\nclass PaymentProcessor {\n  process(type: string) {\n    if (type === 'card') { /* */ }\n    if (type === 'paypal') { /* */ }\n  }\n}\n\n// ✅ Fixed: Use strategy pattern\ninterface PaymentStrategy { process(): void; }\nclass CardPayment implements PaymentStrategy { process() { /* */ } }\nclass PayPalPayment implements PaymentStrategy { process() { /* */ } }\nclass PaymentProcessor { constructor(private strategy: PaymentStrategy) {} }\n```\n\n**Common interview trap:** Adding parameters to methods counts as modification—true OCP requires no changes to existing code.",
+      "ru": "### Принцип открытости/закрытости\n\nКлассы должны быть открыты для расширения, но закрыты для модификации. Используйте абстракцию (интерфейсы/наследование) для добавления функций без изменения существующего кода.\n\n```typescript\n// ❌ Нарушение: изменяйте класс для каждого типа платежа\nclass PaymentProcessor {\n  process(type: string) {\n    if (type === 'card') { /* */ }\n    if (type === 'paypal') { /* */ }\n  }\n}\n\n// ✅ Исправлено: используйте паттерн стратегия\ninterface PaymentStrategy { process(): void; }\nclass CardPayment implements PaymentStrategy { process() { /* */ } }\nclass PayPalPayment implements PaymentStrategy { process() { /* */ } }\nclass PaymentProcessor { constructor(private strategy: PaymentStrategy) {} }\n```\n\n**Типичная ошибка:** Добавление параметров к методам считается модификацией—истинная OCP требует отсутствия изменений в существующем коде."
+    },
+    "tags": [
+      "open-closed",
+      "design-patterns",
+      "strategy-pattern"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-8",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is Liskov Substitution Principle? Provide a TypeScript example of violation and the correct approach.",
+      "ru": "Что такое принцип подстановки Лисков? Приведите пример нарушения на TypeScript и правильный подход."
+    },
+    "answer": {
+      "en": "### Liskov Substitution Principle\n\nSubtypes must be substitutable for their base types without breaking behavior. Violate LSP when derived classes weaken contracts or throw unexpected errors.\n\n```typescript\n// ❌ Violation: Square breaks Rectangle contract\nclass Rectangle { setHeight(h: number) { this.height = h; } }\nclass Square extends Rectangle { setHeight(h: number) { this.height = this.width = h; } }\n\n// ✅ Fixed: Don't inherit, use composition or separate types\ninterface Shape { area(): number; }\nclass Rectangle implements Shape { area() { return this.width * this.height; } }\nclass Square implements Shape { area() { return this.side * this.side; } }\n```\n\n**Common interview trap:** Thinking inheritance always works—check if derived behavior truly substitutes the parent contract.",
+      "ru": "### Принцип подстановки Лисков\n\nПроизводные типы должны быть заменяемы для базовых типов без нарушения поведения. Нарушите LSP, когда производные классы ослабляют контракты или выбрасывают неожиданные ошибки.\n\n```typescript\n// ❌ Нарушение: Square нарушает контракт Rectangle\nclass Rectangle { setHeight(h: number) { this.height = h; } }\nclass Square extends Rectangle { setHeight(h: number) { this.height = this.width = h; } }\n\n// ✅ Исправлено: не наследуйте, используйте композицию или отдельные типы\ninterface Shape { area(): number; }\nclass Rectangle implements Shape { area() { return this.width * this.height; } }\nclass Square implements Shape { area() { return this.side * this.side; } }\n```\n\n**Типичная ошибка:** Думать, что наследование всегда работает—проверьте, действительно ли производное поведение заменяет родительский контракт."
+    },
+    "tags": [
+      "liskov-substitution",
+      "inheritance",
+      "contract-violation"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-9",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain Interface Segregation Principle with TypeScript. What happens when interfaces are too broad?",
+      "ru": "Объясните принцип разделения интерфейса на TypeScript. Что происходит, когда интерфейсы слишком широкие?"
+    },
+    "answer": {
+      "en": "### Interface Segregation Principle\n\nClients shouldn't depend on interfaces they don't use. Broad interfaces force implementations to handle unwanted responsibilities, creating coupling.\n\n```typescript\n// ❌ Violation: Worker interface too broad\ninterface Worker { work(): void; eat(): void; sleep(): void; }\nclass Robot implements Worker { \n  work() { /* */ }\n  eat() { throw new Error('Not applicable'); }\n  sleep() { throw new Error('Not applicable'); }\n}\n\n// ✅ Fixed: Segregate into smaller interfaces\ninterface Workable { work(): void; }\ninterface Eatable { eat(): void; }\nclass Robot implements Workable { work() { /* */ } }\nclass Human implements Workable, Eatable { work() { /* */ } eat() { /* */ } }\n```\n\n**Common interview trap:** Thinking ISP means having only one method per interface—it means clients depend only on what they use.",
+      "ru": "### Принцип разделения интерфейса\n\nКлиенты не должны зависеть от интерфейсов, которые они не используют. Широкие интерфейсы заставляют реализации обрабатывать нежелательные ответственности, создавая связанность.\n\n```typescript\n// ❌ Нарушение: интерфейс Worker слишком широкий\ninterface Worker { work(): void; eat(): void; sleep(): void; }\nclass Robot implements Worker { \n  work() { /* */ }\n  eat() { throw new Error('Неприменимо'); }\n  sleep() { throw new Error('Неприменимо'); }\n}\n\n// ✅ Исправлено: разделите на более мелкие интерфейсы\ninterface Workable { work(): void; }\ninterface Eatable { eat(): void; }\nclass Robot implements Workable { work() { /* */ } }\nclass Human implements Workable, Eatable { work() { /* */ } eat() { /* */ } }\n```\n\n**Типичная ошибка:** Думать, что ISP означает наличие одного метода на интерфейс—это означает, что клиенты зависят только от того, что они используют."
+    },
+    "tags": [
+      "interface-segregation",
+      "interface-design",
+      "client-dependency"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-10",
+    "topicId": "solid-grasp",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe Dependency Inversion Principle with TypeScript. How does it reduce coupling compared to direct dependencies?",
+      "ru": "Опишите принцип инверсии зависимостей на TypeScript. Как это снижает связанность по сравнению с прямыми зависимостями?"
+    },
+    "answer": {
+      "en": "### Dependency Inversion Principle\n\nHigh-level modules shouldn't depend on low-level modules; both should depend on abstractions. Inject dependencies via constructor to decouple implementation details.\n\n```typescript\n// ❌ Violation: Direct dependency on concrete Logger\nclass UserService {\n  logger = new ConsoleLogger();\n  getUser() { this.logger.log('Fetching user'); }\n}\n\n// ✅ Fixed: Depend on abstraction, inject concrete implementation\ninterface Logger { log(msg: string): void; }\nclass UserService {\n  constructor(private logger: Logger) {}\n  getUser() { this.logger.log('Fetching user'); }\n}\nconst service = new UserService(new ConsoleLogger());\n```\n\n**Common interview trap:** Confusing DIP with dependency injection—DIP is about abstractions; DI is the technique to achieve it.",
+      "ru": "### Принцип инверсии зависимостей\n\nВысокоуровневые модули не должны зависеть от низкоуровневых модулей; оба должны зависеть от абстракций. Вводите зависимости через конструктор, чтобы развязать детали реализации.\n\n```typescript\n// ❌ Нарушение: прямая зависимость от конкретного Logger\nclass UserService {\n  logger = new ConsoleLogger();\n  getUser() { this.logger.log('Fetching user'); }\n}\n\n// ✅ Исправлено: зависим от абстракции, вводим конкретную реализацию\ninterface Logger { log(msg: string): void; }\nclass UserService {\n  constructor(private logger: Logger) {}\n  getUser() { this.logger.log('Fetching user'); }\n}\nconst service = new UserService(new ConsoleLogger());\n```\n\n**Типичная ошибка:** Путаница DIP с внедрением зависимостей—DIP о абстракциях; DI это техника для её достижения."
+    },
+    "tags": [
+      "dependency-inversion",
+      "dependency-injection",
+      "abstraction",
+      "loose-coupling"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-11",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Information Expert GRASP pattern and how it prevents tight coupling. Give a real example where assigning responsibility to the wrong object violates this principle.",
+      "ru": "Объясните GRASP паттерн Information Expert и как он предотвращает связанность. Приведите реальный пример, где назначение ответственности неправильному объекту нарушает этот принцип."
+    },
+    "answer": {
+      "en": "### Information Expert Pattern\n\nAssign responsibility to the object that has the most information needed to fulfill it. This minimizes coupling because objects only know about necessary dependencies. If a User calculates their own discount instead of a DiscountPolicy object, the User becomes responsible for logic it shouldn't own.\n\n```typescript\n// Bad: User has discount logic\nclass User {\n  calculateDiscount(amount: number): number {\n    if (this.membershipLevel === 'premium') return amount * 0.9;\n    return amount;\n  }\n}\n\n// Good: DiscountPolicy is the Information Expert\nclass DiscountPolicy {\n  applyDiscount(user: User, amount: number): number {\n    return user.isPremium() ? amount * 0.9 : amount;\n  }\n}\n```\n\n**Common interview trap:** Thinking Information Expert is just about putting code in any relevant class—it's specifically about the class with the most *complete* information.",
+      "ru": "### Паттерн Information Expert\n\nНазначьте ответственность объекту, который имеет больше всего информации для её выполнения. Это минимизирует связанность, так как объекты знают только о необходимых зависимостях. Если User вычисляет свою скидку вместо объекта DiscountPolicy, User становится ответственным за логику, которой он не должен обладать.\n\n```typescript\n// Плохо: User имеет логику скидок\nclass User {\n  calculateDiscount(amount: number): number {\n    if (this.membershipLevel === 'premium') return amount * 0.9;\n    return amount;\n  }\n}\n\n// Хорошо: DiscountPolicy — Information Expert\nclass DiscountPolicy {\n  applyDiscount(user: User, amount: number): number {\n    return user.isPremium() ? amount * 0.9 : amount;\n  }\n}\n```\n\n**Типичная ошибка:** Думать, что Information Expert—это просто размещение кода в любом релевантном классе, это специально о классе с *полной* информацией."
+    },
+    "tags": [
+      "information-expert",
+      "grasp-patterns",
+      "coupling"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-12",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the Creator GRASP pattern and explain when it conflicts with the Single Responsibility Principle (SRP). How would you resolve such a conflict in a React application?",
+      "ru": "Опишите GRASP паттерн Creator и объясните, когда он конфликтует с принципом единственной ответственности (SRP). Как бы вы разрешили такой конфликт в React приложении?"
+    },
+    "answer": {
+      "en": "### Creator Pattern vs SRP\n\nCreator assigns object creation to the class that aggregates or uses the created objects. However, when creation logic becomes complex, the creator gains too much responsibility, violating SRP. Use factory functions or dependency injection in React to decouple creation from usage.\n\n```typescript\n// Conflict: Component creates and manages both logic\nfunction OrderForm() {\n  const [order, setOrder] = useState(new Order());\n  const [validator] = useState(new OrderValidator());\n  return <form>{/* form logic */}</form>;\n}\n\n// Resolved: Factory/DI handles creation\nconst useOrder = (factory: OrderFactory) => {\n  const [order] = useState(() => factory.create());\n  return order;\n};\n\nfunction OrderForm({ orderFactory }: Props) {\n  const order = useOrder(orderFactory);\n  return <form>{/* form logic */}</form>;\n}\n```\n\n**Common interview trap:** Assuming Creator means \"always create objects in the aggregating class\"—it's a guideline that should bend when complexity demands it.",
+      "ru": "### Паттерн Creator vs SRP\n\nCreator назначает создание объектов классу, который их использует или агрегирует. Однако, когда логика создания становится сложной, создатель получает слишком много ответственности, нарушая SRP. Используйте фабрики или dependency injection в React, чтобы развязать создание от использования.\n\n```typescript\n// Конфликт: Компонент создаёт и управляет обеими логиками\nfunction OrderForm() {\n  const [order, setOrder] = useState(new Order());\n  const [validator] = useState(new OrderValidator());\n  return <form>{/* form logic */}</form>;\n}\n\n// Разрешено: Фабрика/DI управляет созданием\nconst useOrder = (factory: OrderFactory) => {\n  const [order] = useState(() => factory.create());\n  return order;\n};\n\nfunction OrderForm({ orderFactory }: Props) {\n  const order = useOrder(orderFactory);\n  return <form>{/* form logic */}</form>;\n}\n```\n\n**Типичная ошибка:** Думать, что Creator означает «всегда создавайте объекты в агрегирующем классе»—это рекомендация, которая должна гнуться при сложности."
+    },
+    "tags": [
+      "creator-pattern",
+      "grasp-patterns",
+      "srp-conflict",
+      "react-patterns"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-13",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does the Controller GRASP pattern apply to React, and what happens when you violate Low Coupling by making a component directly depend on too many services? Show a violation and its fix.",
+      "ru": "Как паттерн Controller из GRASP применяется к React, и что происходит, когда вы нарушаете Low Coupling, заставляя компонент напрямую зависеть от множества сервисов? Покажите нарушение и его исправление."
+    },
+    "answer": {
+      "en": "### Controller Pattern & Low Coupling in React\n\nController handles system events and delegates to other objects. In React, custom hooks act as controllers, mediating between components and services. Violating Low Coupling means a component directly imports and uses many services, making it hard to test and reuse. Use hooks or providers to inject dependencies.\n\n```typescript\n// Violation: High coupling to multiple services\nfunction UserProfile() {\n  const auth = new AuthService();\n  const api = new ApiService();\n  const analytics = new AnalyticsService();\n  useEffect(() => {\n    auth.validate(); api.fetch(); analytics.track();\n  }, []);\n  return <div>{/* */}</div>;\n}\n\n// Fixed: Hook as controller\nconst useUserProfile = (authSvc, apiSvc, analyticsSvc) => {\n  useEffect(() => {\n    authSvc.validate(); apiSvc.fetch(); analyticsSvc.track();\n  }, []);\n};\n```\n\n**Common interview trap:** Thinking Low Coupling means zero dependencies—it means depending on abstractions, not concrete implementations.",
+      "ru": "### Паттерн Controller и Low Coupling в React\n\nController обрабатывает системные события и делегирует другим объектам. В React пользовательские хуки действуют как контроллеры, посредничая между компонентами и сервисами. Нарушение Low Coupling означает, что компонент напрямую импортирует и использует много сервисов, что делает его сложным для тестирования и переиспользования. Используйте хуки или провайдеры для инъекции зависимостей.\n\n```typescript\n// Нарушение: Высокая связанность с множеством сервисов\nfunction UserProfile() {\n  const auth = new AuthService();\n  const api = new ApiService();\n  const analytics = new AnalyticsService();\n  useEffect(() => {\n    auth.validate(); api.fetch(); analytics.track();\n  }, []);\n  return <div>{/* */}</div>;\n}\n\n// Исправлено: Хук как контроллер\nconst useUserProfile = (authSvc, apiSvc, analyticsSvc) => {\n  useEffect(() => {\n    authSvc.validate(); apiSvc.fetch(); analyticsSvc.track();\n  }, []);\n};\n```\n\n**Типичная ошибка:** Думать, что Low Coupling означает нулевые зависимости—это означает зависимость от абстракций, а не от конкретных реализаций."
+    },
+    "tags": [
+      "controller-pattern",
+      "grasp-patterns",
+      "low-coupling",
+      "react-hooks",
+      "dependency-injection"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-14",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "Show a real SOLID violation in a React component codebase. Identify which principles are violated (SRP, OCP, LSP, ISP, DIP), explain why, and refactor it to be compliant.",
+      "ru": "Покажите реальное нарушение SOLID в кодовой базе React компонента. Определите, какие принципы нарушены (SRP, OCP, LSP, ISP, DIP), объясните почему и рефакторьте его, чтобы он был совместимым."
+    },
+    "answer": {
+      "en": "### SOLID Violations in React\n\nA component that fetches data, validates, transforms, renders, and logs violates SRP (too many reasons to change). It also violates OCP (hard to extend without modifying) and DIP (depends on concrete implementations). Separate concerns using custom hooks, pure functions, and dependency injection.\n\n```typescript\n// Violations: SRP, OCP, DIP\nfunction UserList() {\n  const [users, setUsers] = useState([]);\n  useEffect(() => {\n    fetch('/api/users')\n      .then(r => r.json())\n      .then(data => {\n        const validated = data.filter(u => u.age > 18);\n        console.log('Loaded:', validated);\n        setUsers(validated);\n      });\n  }, []);\n  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;\n}\n\n// Refactored: Separate concerns, depend on abstractions\nconst useUsers = (fetcher: DataFetcher, validator: UserValidator) => {\n  const [users, setUsers] = useState([]);\n  useEffect(() => {\n    fetcher.getUsers().then(data => setUsers(validator.validate(data)));\n  }, [fetcher, validator]);\n  return users;\n};\n```\n\n**Common interview trap:** Thinking SOLID is only for backend code—React components need it just as much to remain maintainable.",
+      "ru": "### Нарушения SOLID в React\n\nКомпонент, который получает данные, валидирует, трансформирует, рендерит и логирует, нарушает SRP (слишком много причин для изменений). Он также нарушает OCP (сложно расширять без модификации) и DIP (зависит от конкретных реализаций). Разделите ответственность, используя пользовательские хуки, чистые функции и инъекцию зависимостей.\n\n```typescript\n// Нарушения: SRP, OCP, DIP\nfunction UserList() {\n  const [users, setUsers] = useState([]);\n  useEffect(() => {\n    fetch('/api/users')\n      .then(r => r.json())\n      .then(data => {\n        const validated = data.filter(u => u.age > 18);\n        console.log('Loaded:', validated);\n        setUsers(validated);\n      });\n  }, []);\n  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;\n}\n\n// Рефакторьте: Разделите ответственность, зависьте от абстракций\nconst useUsers = (fetcher: DataFetcher, validator: UserValidator) => {\n  const [users, setUsers] = useState([]);\n  useEffect(() => {\n    fetcher.getUsers().then(data => setUsers(validator.validate(data)));\n  }, [fetcher, validator]);\n  return users;\n};\n```\n\n**Типичная ошибка:** Думать, что SOLID только для бэкенда—компоненты React нуждаются в нём так же, чтобы оставаться maintainable."
+    },
+    "tags": [
+      "solid-violations",
+      "srp",
+      "ocp",
+      "dip",
+      "react-components",
+      "refactoring"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-15",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain High Cohesion GRASP principle through a React component example. What does low cohesion look like, and how would you improve it without breaking High Coupling?",
+      "ru": "Объясните принцип High Cohesion из GRASP через пример React компонента. Как выглядит низкая когезия и как бы вы её улучшили, не нарушая High Coupling?"
+    },
+    "answer": {
+      "en": "### High Cohesion in React Components\n\nHigh cohesion means related responsibilities stay together; low cohesion means unrelated logic mixed in one component. A component managing payments, notifications, and logging has low cohesion. Extract concerns into separate hooks while keeping them loosely coupled through composition.\n\n```typescript\n// Low cohesion: Multiple unrelated concerns\nfunction Checkout() {\n  const processPayment = async () => { /* payment logic */ };\n  const sendNotification = () => { /* email logic */ };\n  const logActivity = () => { /* analytics */ };\n  return <button onClick={() => {\n    processPayment(); sendNotification(); logActivity();\n  }}>Checkout</button>;\n}\n\n// High cohesion: Each concern in its own hook\nconst useCheckout = () => { /* cohesive payment logic */ };\nconst useNotifications = () => { /* notification logic */ };\nconst useAnalytics = () => { /* analytics logic */ };\n\nfunction Checkout() {\n  const checkout = useCheckout();\n  const notify = useNotifications();\n  const analytics = useAnalytics();\n  return <button onClick={() => {\n    checkout.process(); notify.send(); analytics.log();\n  }}>Checkout</button>;\n}\n```\n\n**Common interview trap:** Confusing high cohesion with tight coupling—high cohesion is internal focus; low coupling is external relationships.",
+      "ru": "### High Cohesion в React компонентах\n\nВысокая когезия означает, что связанная ответственность остаётся вместе; низкая когезия означает смешанную несвязанную логику в одном компоненте. Компонент, управляющий платежами, уведомлениями и логированием, имеет низкую когезию. Извлеките ответственность в отдельные хуки, сохраняя их слабо связанными через композицию.\n\n```typescript\n// Низкая когезия: Множество несвязанных ответственностей\nfunction Checkout() {\n  const processPayment = async () => { /* payment logic */ };\n  const sendNotification = () => { /* email logic */ };\n  const logActivity = () => { /* analytics */ };\n  return <button onClick={() => {\n    processPayment(); sendNotification(); logActivity();\n  }}>Checkout</button>;\n}\n\n// Высокая когезия: Каждая ответственность в своём хуке\nconst useCheckout = () => { /* cohesive payment logic */ };\nconst useNotifications = () => { /* notification logic */ };\nconst useAnalytics = () => { /* analytics logic */ };\n\nfunction Checkout() {\n  const checkout = useCheckout();\n  const notify = useNotifications();\n  const analytics = useAnalytics();\n  return <button onClick={() => {\n    checkout.process(); notify.send(); analytics.log();\n  }}>Checkout</button>;\n}\n```\n\n**Типичная ошибка:** Путать высокую когезию с тесной связанностью—высокая когезия это внутренний фокус; низкая связанность это внешние отношения."
+    },
+    "tags": [
+      "high-cohesion",
+      "grasp-patterns",
+      "react-hooks",
+      "separation-of-concerns"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-16",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how the Information Expert GRASP pattern helps distribute responsibilities in a React component hierarchy. Provide a real example where violating this pattern causes tight coupling.",
+      "ru": "Объясните, как паттерн Information Expert из GRASP помогает распределять ответственность в иерархии React компонентов. Приведите реальный пример, где нарушение этого паттерна вызывает плотную связанность."
+    },
+    "answer": {
+      "en": "### Information Expert in React\n\nThe Information Expert pattern assigns responsibility to the object that has the data needed to fulfill it. In React, this means placing logic close to the data source rather than in parent components. Violating this causes parent components to know too much about child state, breaking the abstraction.\n\n```typescript\n// BAD: Parent knows about User's internal structure\nfunction UserList({ users }) {\n  return users.map(u => (\n    <div>{u.firstName} {u.lastName} - {u.createdAt.toLocaleDateString()}</div>\n  ));\n}\n\n// GOOD: User component is the Information Expert\nfunction User({ user }) {\n  return <div>{user.displayName} - {user.formattedDate}</div>;\n}\n```\n\n**Common interview trap:** Confusing Information Expert with simply \"moving code closer to data\"—it's about who *owns* the responsibility to answer a question about the data.",
+      "ru": "### Information Expert в React\n\nПаттерн Information Expert назначает ответственность объекту, который имеет данные, необходимые для её выполнения. В React это означает размещение логики близко к источнику данных, а не в компонентах-родителях. Нарушение этого заставляет родительские компоненты знать слишком много о внутренней структуре дочерних, нарушая абстракцию.\n\n```typescript\n// ПЛОХО: Parent знает о внутренней структуре User\nfunction UserList({ users }) {\n  return users.map(u => (\n    <div>{u.firstName} {u.lastName} - {u.createdAt.toLocaleDateString()}</div>\n  ));\n}\n\n// ХОРОШО: User компонент — Information Expert\nfunction User({ user }) {\n  return <div>{user.displayName} - {user.formattedDate}</div>;\n}\n```\n\n**Типичная ошибка:** Путаница Information Expert с просто «перемещением кода ближе к данным»—речь идёт о том, кто *владеет* ответственностью ответить на вопрос о данных."
+    },
+    "tags": [
+      "information-expert",
+      "grasp-patterns",
+      "react-architecture",
+      "responsibility-assignment"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-17",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe a violation of the Creator GRASP pattern in a React/TypeScript codebase. How does this lead to SOLID violations, specifically SRP or DIP?",
+      "ru": "Опишите нарушение паттерна Creator из GRASP в React/TypeScript кодовой базе. Как это приводит к нарушениям SOLID, в частности SRP или DIP?"
+    },
+    "answer": {
+      "en": "### Creator Pattern Violation\n\nThe Creator pattern says an object should create instances of classes it has an aggregate or compositional relationship with. In React, this means utility functions or services should create objects, not UI components. Violating this makes components responsible for both rendering and object instantiation, breaking SRP.\n\n```typescript\n// BAD: Component creates the service (Creator violation + SRP violation)\nfunction UserDashboard() {\n  const userService = new UserService(); // Wrong place to instantiate\n  const [users, setUsers] = useState([]);\n  useEffect(() => { /* use userService */ }, []);\n}\n\n// GOOD: Injected dependency (Creator responsibility in factory/provider)\nfunction UserDashboard({ userService }: { userService: UserService }) {\n  const [users, setUsers] = useState([]);\n  useEffect(() => { /* use userService */ }, []);\n}\n```\n\n**Common interview trap:** Thinking dependency injection alone fixes Creator violations—you need the *right object* to create dependencies, not just avoid creating them in components.",
+      "ru": "### Нарушение паттерна Creator\n\nПаттерн Creator говорит, что объект должен создавать экземпляры классов, с которыми он имеет отношение агрегации или композиции. В React это означает, что утилиты или сервисы должны создавать объекты, а не UI компоненты. Нарушение этого делает компоненты ответственными за рендеринг и инстанциирование, нарушая SRP.\n\n```typescript\n// ПЛОХО: Компонент создаёт сервис (нарушение Creator + SRP)\nfunction UserDashboard() {\n  const userService = new UserService(); // Неправильное место\n  const [users, setUsers] = useState([]);\n  useEffect(() => { /* use userService */ }, []);\n}\n\n// ХОРОШО: Инжектированная зависимость (Creator в factory/provider)\nfunction UserDashboard({ userService }: { userService: UserService }) {\n  const [users, setUsers] = useState([]);\n  useEffect(() => { /* use userService */ }, []);\n}\n```\n\n**Типичная ошибка:** Мысль, что dependency injection сам по себе исправляет Creator нарушения—нужен *правильный объект* для создания зависимостей, а не просто избегание их в компонентах."
+    },
+    "tags": [
+      "creator-pattern",
+      "grasp-patterns",
+      "dependency-injection",
+      "srp-violation",
+      "react-architecture"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-18",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "A React form component handles validation, submission, state management, and rendering. Identify which SOLID principles are violated and refactor using GRASP patterns.",
+      "ru": "React компонент формы обрабатывает валидацию, отправку, управление состоянием и рендеринг. Определите, какие принципы SOLID нарушаются, и рефакторьте используя GRASP паттерны."
+    },
+    "answer": {
+      "en": "### Refactoring God Component\n\nThis violates SRP (single responsibility), LSP (tight to one form shape), and DIP (hardcoded validation logic). Separate concerns: validation logic into a service (Information Expert), form state into a custom hook (Low Coupling), rendering into pure components (High Cohesion).\n\n```typescript\n// BAD: God component with multiple responsibilities\nfunction LoginForm() {\n  const [email, setEmail] = useState('');\n  const handleSubmit = async (e) => {\n    if (!email.includes('@')) return; // Validation here\n    const user = await fetch('/api/login', {method:'POST', body:JSON.stringify({email})}); // API here\n  };\n  return <form onSubmit={handleSubmit}><input value={email} onChange={e => setEmail(e.target.value)} /></form>;\n}\n\n// GOOD: Separated concerns\nconst useLoginForm = (validator: Validator) => {\n  const [email, setEmail] = useState('');\n  const [errors, setErrors] = useState<string[]>([]);\n  const submit = async (email: string) => {\n    const validationErrors = validator.validate({email});\n    if (validationErrors.length) { setErrors(validationErrors); return; }\n    await loginService.login({email});\n  };\n  return { email, setEmail, errors, submit };\n};\n```\n\n**Common interview trap:** Over-engineering with too many abstractions—focus on *testable* separation, not just moving code.",
+      "ru": "### Рефакторинг God Component\n\nЭто нарушает SRP (одна ответственность), LSP (привязка к одной форме), и DIP (жёсткая логика валидации). Отделите задачи: валидацию в сервис (Information Expert), состояние в кастомный хук (Low Coupling), рендеринг в чистые компоненты (High Cohesion).\n\n```typescript\n// ПЛОХО: God component с множеством ответственности\nfunction LoginForm() {\n  const [email, setEmail] = useState('');\n  const handleSubmit = async (e) => {\n    if (!email.includes('@')) return; // Валидация\n    const user = await fetch('/api/login', {method:'POST', body:JSON.stringify({email})}); // API\n  };\n  return <form onSubmit={handleSubmit}><input value={email} onChange={e => setEmail(e.target.value)} /></form>;\n}\n\n// ХОРОШО: Отделённые задачи\nconst useLoginForm = (validator: Validator) => {\n  const [email, setEmail] = useState('');\n  const submit = async (email: string) => {\n    const errors = validator.validate({email});\n    if (errors.length) return;\n    await loginService.login({email});\n  };\n  return { email, setEmail, submit };\n};\n```\n\n**Типичная ошибка:** Over-engineering с слишком много абстракций—сосредоточьтесь на *тестируемом* разделении, а не просто перемещении кода."
+    },
+    "tags": [
+      "srp",
+      "god-component",
+      "grasp-refactoring",
+      "high-cohesion",
+      "low-coupling"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-19",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you apply the Controller GRASP pattern in a React application? Provide an example and explain how it prevents business logic from leaking into presentation components.",
+      "ru": "Как вы применяете паттерн Controller из GRASP в React приложении? Приведите пример и объясните, как это предотвращает утечку бизнес-логики в компоненты представления."
+    },
+    "answer": {
+      "en": "### Controller Pattern in React\n\nA Controller handles system events and delegates to domain objects. In React, this means services or custom hooks act as controllers—they orchestrate domain logic without leaking it into UI. This enforces SRP and makes business logic testable and reusable across frameworks.\n\n```typescript\n// BAD: Business logic in component\nfunction CheckoutButton() {\n  const handleClick = async () => {\n    const total = items.reduce((sum, i) => sum + i.price, 0);\n    const discount = total > 100 ? total * 0.1 : 0;\n    const finalPrice = total - discount;\n    await fetch('/api/checkout', {body: JSON.stringify({finalPrice})});\n  };\n  return <button onClick={handleClick}>Checkout</button>;\n}\n\n// GOOD: Controller (service) handles business logic\nclass CheckoutController {\n  calculate(items: CartItem[]): {total: number; discount: number; finalPrice: number} {\n    const total = items.reduce((sum, i) => sum + i.price, 0);\n    const discount = total > 100 ? total * 0.1 : 0;\n    return {total, discount, finalPrice: total - discount};\n  }\n}\n```\n\n**Common interview trap:** Confusing Controller with a component that *receives* props—Controller orchestrates domain logic, not just passes data around.",
+      "ru": "### Паттерн Controller в React\n\nController обрабатывает системные события и делегирует их доменным объектам. В React сервисы или кастомные хуки служат контроллерами—они оркестрируют доменную логику без утечки в UI. Это обеспечивает SRP и делает бизнес-логику тестируемой и переиспользуемой между фреймворками.\n\n```typescript\n// ПЛОХО: Бизнес-логика в компоненте\nfunction CheckoutButton() {\n  const handleClick = async () => {\n    const total = items.reduce((sum, i) => sum + i.price, 0);\n    const discount = total > 100 ? total * 0.1 : 0;\n    const finalPrice = total - discount;\n    await fetch('/api/checkout', {body: JSON.stringify({finalPrice})});\n  };\n  return <button onClick={handleClick}>Checkout</button>;\n}\n\n// ХОРОШО: Controller (сервис) обрабатывает бизнес-логику\nclass CheckoutController {\n  calculate(items: CartItem[]) {\n    const total = items.reduce((sum, i) => sum + i.price, 0);\n    const discount = total > 100 ? total * 0.1 : 0;\n    return {total, discount, finalPrice: total - discount};\n  }\n}\n```\n\n**Типичная ошибка:** Путаница Controller с компонентом, который *получает* props—Controller оркестрирует доменную логику, а не просто передаёт данные."
+    },
+    "tags": [
+      "controller-pattern",
+      "grasp-patterns",
+      "business-logic-separation",
+      "srp",
+      "testability"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-20",
+    "topicId": "solid-grasp",
+    "difficulty": "senior",
+    "question": {
+      "en": "You discover a codebase where components directly import and instantiate multiple service classes, making them tightly coupled and hard to test. Explain which SOLID and GRASP principles are violated, then show how to fix it using inversion of control.",
+      "ru": "Вы обнаруживаете кодовую базу, где компоненты напрямую импортируют и инстанциируют несколько сервисных классов, что делает их тесно связанными и трудными для тестирования. Объясните, какие принципы SOLID и GRASP нарушаются, затем покажите, как это исправить, используя инверсию управления."
+    },
+    "answer": {
+      "en": "### Tight Coupling via Direct Instantiation\n\nThis violates DIP (depends on concrete classes), Creator (wrong object creates dependencies), and Low Coupling GRASP. Inversion of Control through dependency injection and container patterns removes concrete dependencies, making code testable and loosely coupled.\n\n```typescript\n// BAD: Direct instantiation, high coupling\nclass UserComponent {\n  private authService = new AuthService();\n  private apiService = new ApiService();\n  private cache = new CacheService();\n}\n\n// GOOD: DIP + IoC container\ninterface ServiceContainer {\n  authService: IAuthService;\n  apiService: IApiService;\n  cache: ICacheService;\n}\n\nfunction UserComponent({ services }: { services: ServiceContainer }) {\n  // Now depends on abstractions, easy to mock for testing\n  useEffect(() => { services.authService.getCurrentUser(); }, []);\n}\n```\n\n**Common interview trap:** Thinking IoC only means \"pass things as arguments\"—it includes container patterns, factory functions, and any mechanism that removes hard dependencies from code.",
+      "ru": "### Плотная связанность через прямое инстанциирование\n\nЭто нарушает DIP (зависит от конкретных классов), Creator (неправильный объект создаёт зависимости), и Low Coupling GRASP. Инверсия управления через dependency injection и паттерны контейнера удаляют конкретные зависимости, делая код тестируемым и слабо связанным.\n\n```typescript\n// ПЛОХО: Прямое инстанциирование, высокая связанность\nclass UserComponent {\n  private authService = new AuthService();\n  private apiService = new ApiService();\n  private cache = new CacheService();\n}\n\n// ХОРОШО: DIP + IoC контейнер\ninterface ServiceContainer {\n  authService: IAuthService;\n  apiService: IApiService;\n  cache: ICacheService;\n}\n\nfunction UserComponent({ services }: { services: ServiceContainer }) {\n  // Зависит от абстракций, легко мокировать для тестов\n  useEffect(() => { services.authService.getCurrentUser(); }, []);\n}\n```\n\n**Типичная ошибка:** Мысль, что IoC только означает «передавайте вещи как аргументы»—это включает паттерны контейнера, factory функции и любой механизм, удаляющий жёсткие зависимости из кода."
+    },
+    "tags": [
+      "dip",
+      "low-coupling",
+      "dependency-injection",
+      "ioc-container",
+      "testability",
+      "grasp-patterns"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-21",
+    "topicId": "solid-grasp",
+    "difficulty": "advanced",
+    "question": {
+      "en": "When does strict adherence to the Single Responsibility Principle actually harm code maintainability? Provide a real-world example where you'd intentionally violate SRP.",
+      "ru": "Когда строгое соблюдение принципа единственной ответственности фактически вредит поддерживаемости кода? Приведите реальный пример, когда вы намеренно нарушите SRP."
+    },
+    "answer": {
+      "en": "### Over-fragmentation anti-pattern\n\nSplitting a tightly-coupled domain concept into too many classes increases cognitive load and coupling through dependency injection. Sometimes keeping related logic together in a cohesive module is more pragmatic than forcing artificial separation.\n\n```typescript\n// BAD: Over-fractured SRP\nclass UserValidator { validate(u: User) {} }\nclass UserSerializer { serialize(u: User) {} }\nclass UserRepository { save(u: User) {} }\nclass UserNotifier { notify(u: User) {} }\n\n// BETTER: Cohesive aggregate\nclass UserDomain {\n  validate(u: User) {}\n  serialize(u: User) {}\n  save(u: User) {}\n  notify(u: User) {}\n}\n```\n\n**Common interview trap:** Saying SRP is always violated when you have multiple methods—missing the distinction between responsibility (reason to change) and task (what it does).",
+      "ru": "### Анти-паттерн чрезмерной фрагментации\n\nРазделение тесно связанной концепции домена на слишком много классов увеличивает когнитивную нагрузку и связанность через внедрение зависимостей. Иногда лучше держать связанную логику вместе в когезивном модуле, чем навязывать искусственное разделение.\n\n```typescript\n// ПЛОХО: Переусложнённое SRP\nclass UserValidator { validate(u: User) {} }\nclass UserSerializer { serialize(u: User) {} }\nclass UserRepository { save(u: User) {} }\nclass UserNotifier { notify(u: User) {} }\n\n// ЛУЧШЕ: Когезивный агрегат\nclass UserDomain {\n  validate(u: User) {}\n  serialize(u: User) {}\n  save(u: User) {}\n  notify(u: User) {}\n}\n```\n\n**Типичная ошибка:** Утверждение, что SRP нарушено, когда у класса несколько методов—упущение различия между ответственностью (причина изменения) и задачей (что она делает)."
+    },
+    "tags": [
+      "single-responsibility-principle",
+      "over-engineering",
+      "pragmatic-design",
+      "domain-driven-design"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-22",
+    "topicId": "solid-grasp",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do SOLID principles apply differently in functional programming? Which principles lose relevance and why?",
+      "ru": "Как принципы SOLID применяются по-другому в функциональном программировании? Какие принципы теряют релевантность и почему?"
+    },
+    "answer": {
+      "en": "### SOLID shifts in functional paradigm\n\nFunctional programming naturally satisfies many SOLID goals through immutability and pure functions, making OOP-specific principles like SRP less critical. Interface Segregation and Dependency Inversion become less relevant since functions compose directly without abstraction layers.\n\n```typescript\n// FP approach: composition replaces inheritance/interfaces\nconst validateUser = (u: User): Result<User> => {...}\nconst serializeUser = (u: User): string => {...}\nconst saveUser = (repo: Repo) => (u: User): Promise<void> => {...}\n\n// No interfaces needed; just compose pure functions\nconst processUser = pipe(\n  validateUser,\n  mapRight(serializeUser),\n  mapRightAsync(saveUser(repo))\n)\n```\n\n**Common interview trap:** Claiming SOLID becomes irrelevant in FP—missing that principles like DRY and cohesion are universal; only their implementation changes.",
+      "ru": "### Сдвиг SOLID в функциональной парадигме\n\nФункциональное программирование естественно удовлетворяет многим целям SOLID через неизменяемость и чистые функции, что делает OOP-специфичные принципы менее критичными. Segregation of Interfaces и Inversion of Dependencies становятся менее релевантны, так как функции компонуются напрямую без слоёв абстракции.\n\n```typescript\n// FP подход: композиция заменяет наследование/интерфейсы\nconst validateUser = (u: User): Result<User> => {...}\nconst serializeUser = (u: User): string => {...}\nconst saveUser = (repo: Repo) => (u: User): Promise<void> => {...}\n\n// Интерфейсы не нужны; просто компонуем чистые функции\nconst processUser = pipe(\n  validateUser,\n  mapRight(serializeUser),\n  mapRightAsync(saveUser(repo))\n)\n```\n\n**Типичная ошибка:** Утверждение, что SOLID становится неактуальным в FP—упущение того, что принципы вроде DRY и когезии универсальны; изменяется только их реализация."
+    },
+    "tags": [
+      "functional-programming",
+      "solid-principles",
+      "paradigm-shift",
+      "composition-vs-inheritance"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-23",
+    "topicId": "solid-grasp",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe a scenario where applying Liskov Substitution Principle strictly would lead to a worse design. How would you balance LSP with practical constraints?",
+      "ru": "Опишите сценарий, где строгое применение принципа подстановки Лисков приведёт к худшему дизайну. Как вы уравновесили бы LSP с практическими ограничениями?"
+    },
+    "answer": {
+      "en": "### LSP rigidity in real-world hierarchies\n\nForcing a Square class to inherit from Rectangle violates LSP because Square's constraints break Rectangle's width/height independence. Strict LSP adherence here creates artificial inheritance that complicates code; composition or sealed classes are more pragmatic.\n\n```typescript\n// BAD LSP: Square violates Rectangle's invariants\nclass Rectangle { setWidth(w: number) {} setHeight(h: number) {} }\nclass Square extends Rectangle { setWidth(w) { this.width = this.height = w } }\n\n// BETTER: Composition + sealed shapes\ninterface Shape { area(): number }\nclass Rect implements Shape { area() { return this.w * this.h } }\nclass Sq implements Shape { area() { return this.side ** 2 } }\n```\n\n**Common interview trap:** Saying you'd keep the inheritance hierarchy \"for flexibility\"—missing that flexibility without correctness increases bugs.",
+      "ru": "### Жёсткость LSP в реальных иерархиях\n\nПопытка заставить класс Square наследоваться от Rectangle нарушает LSP, так как ограничения Square нарушают независимость ширины/высоты Rectangle. Строгое соблюдение LSP здесь создаёт искусственное наследование, которое усложняет код; композиция или запечатанные классы прагматичнее.\n\n```typescript\n// ПЛОХО LSP: Square нарушает инварианты Rectangle\nclass Rectangle { setWidth(w: number) {} setHeight(h: number) {} }\nclass Square extends Rectangle { setWidth(w) { this.width = this.height = w } }\n\n// ЛУЧШЕ: Композиция + запечатанные фигуры\ninterface Shape { area(): number }\nclass Rect implements Shape { area() { return this.w * this.h } }\nclass Sq implements Shape { area() { return this.side ** 2 } }\n```\n\n**Типичная ошибка:** Заявление, что вы сохраните иерархию наследования «для гибкости»—упущение того, что гибкость без корректности увеличивает ошибки."
+    },
+    "tags": [
+      "liskov-substitution-principle",
+      "inheritance-hierarchy",
+      "composition",
+      "contract-violation"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-24",
+    "topicId": "solid-grasp",
+    "difficulty": "advanced",
+    "question": {
+      "en": "You're refactoring legacy code. At what point does applying GRASP patterns (Controller, Service Layer, Repository) become over-engineering for a simple CRUD endpoint?",
+      "ru": "Вы рефакторите legacy код. На каком этапе применение паттернов GRASP (Controller, Service Layer, Repository) становится over-engineering для простого CRUD endpoint?"
+    },
+    "answer": {
+      "en": "### GRASP layers vs. simplicity trade-off\n\nFor a simple read-only GET endpoint, adding Service + Repository layers adds boilerplate without benefit. Introduce layers incrementally: keep simple queries in Controller, move only when logic becomes complex or needs reuse across multiple endpoints.\n\n```typescript\n// OVER-ENGINEERED: Simple GET with unnecessary layers\nrouter.get('/users/:id', (req, res) => {\n  userService.getUser(req.params.id)\n    .then(u => userRepository.findById(u.id))\n    .then(data => res.json(data))\n})\n\n// PRAGMATIC: Simple is fine\nrouter.get('/users/:id', async (req, res) => {\n  const user = await db.query('SELECT * FROM users WHERE id = ?', [req.params.id])\n  res.json(user)\n})\n```\n\n**Common interview trap:** Advocating \"always use Service + Repository\" without considering that coupling to a database adapter is sometimes acceptable for 80/20 scenarios.",
+      "ru": "### Слои GRASP vs. простота\n\nДля простого read-only GET endpoint добавление слоёв Service + Repository добавляет boilerplate без пользы. Вводите слои постепенно: держите простые запросы в Controller, переходите только когда логика усложнится или нужна переиспользуемость.\n\n```typescript\n// OVER-ENGINEERED: Простой GET с ненужными слоями\nrouter.get('/users/:id', (req, res) => {\n  userService.getUser(req.params.id)\n    .then(u => userRepository.findById(u.id))\n    .then(data => res.json(data))\n})\n\n// ПРАГМАТИЧНО: Простое нормально\nrouter.get('/users/:id', async (req, res) => {\n  const user = await db.query('SELECT * FROM users WHERE id = ?', [req.params.id])\n  res.json(user)\n})\n```\n\n**Типичная ошибка:** Защита позиции «всегда используйте Service + Repository» без учёта того, что связанность с адаптером БД иногда приемлема для 80/20 сценариев."
+    },
+    "tags": [
+      "grasp-patterns",
+      "over-engineering",
+      "incremental-design",
+      "pragmatic-architecture"
+    ]
+  },
+  {
+    "id": "solid-grasp-q-25",
+    "topicId": "solid-grasp",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How do you detect and prevent over-engineered architectures in a codebase? What metrics or code smells indicate you've applied SOLID too strictly?",
+      "ru": "Как вы обнаруживаете и предотвращаете over-engineered архитектуры? Какие метрики или code smells указывают, что вы применили SOLID слишком строго?"
+    },
+    "answer": {
+      "en": "### Detecting over-engineering signals\n\nWatch for: single-method classes, deep dependency chains (5+ injections), interfaces with one implementation, or adding abstraction layers before actual duplication. Healthy code has 1-2 reasons to change per class, not \"potential future scalability.\"\n\n```typescript\n// SMELL: Over-abstraction (interface with single implementation)\ninterface IUserValidator {}\nclass UserValidator implements IUserValidator { validate(u) {} }\n\n// SMELL: Single-method utility class\nclass UserNotificationFactory {\n  static create(user: User): Notification { return new Notification(user) }\n}\n\n// HEALTHY: Simple, concrete, solves today's problem\nclass User {\n  validate() { return this.email.includes('@') }\n  notify(msg: string) { mailer.send(this.email, msg) }\n}\n```\n\n**Common interview trap:** Confusing \"good design\" with \"maximum abstraction\"—missing that simplicity is itself a design goal.",
+      "ru": "### Сигналы over-engineering\n\nСмотрите на: классы с одним методом, глубокие цепи зависимостей (5+ инъекций), интерфейсы с одной реализацией, или слои абстракции до факта дублирования. Здоровый код имеет 1-2 причины для изменения класса, не \"потенциальную будущую масштабируемость\".\n\n```typescript\n// SMELL: Over-abstraction (интерфейс с одной реализацией)\ninterface IUserValidator {}\nclass UserValidator implements IUserValidator { validate(u) {} }\n\n// SMELL: Класс с одним методом\nclass UserNotificationFactory {\n  static create(user: User): Notification { return new Notification(user) }\n}\n\n// ЗДОРОВОЕ: Простое, конкретное, решает текущую проблему\nclass User {\n  validate() { return this.email.includes('@') }\n  notify(msg: string) { mailer.send(this.email, msg) }\n}\n```\n\n**Типичная ошибка:** Спутывание «хорошего дизайна» с «максимальной абстракцией»—упущение того, что простота сама по себе есть цель дизайна."
+    },
+    "tags": [
+      "code-smells",
+      "over-engineering",
+      "technical-debt",
+      "design-metrics",
+      "pragmatism"
+    ]
+  }
+]

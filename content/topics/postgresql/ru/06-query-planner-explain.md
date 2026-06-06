@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Query Planner и EXPLAIN ANALYZE
 
 ## Самый недооцененный компонент PostgreSQL

@@ -1,1 +1,478 @@
-[]
+[
+  {
+    "id": "http-rest-q-1",
+    "topicId": "http-rest",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between PUT and PATCH HTTP methods. When would you use each one?",
+      "ru": "Объясните разницу между HTTP методами PUT и PATCH. Когда вы используете каждый из них?"
+    },
+    "answer": {
+      "en": "### PUT vs PATCH\n\nPUT replaces the entire resource with the provided data, while PATCH applies partial updates. Use PUT when sending complete data, PATCH for partial modifications.\n\n```typescript\n// PUT - replace entire user\nfetch('/api/users/1', {\n  method: 'PUT',\n  body: JSON.stringify({ name: 'John', email: 'john@example.com' })\n});\n\n// PATCH - update only name\nfetch('/api/users/1', {\n  method: 'PATCH',\n  body: JSON.stringify({ name: 'John' })\n});\n```\n\n**Common interview trap:** Thinking PATCH is always smaller in payload—it's about intent, not size.",
+      "ru": "### PUT vs PATCH\n\nPUT заменяет весь ресурс предоставленными данными, а PATCH применяет частичные обновления. Используйте PUT при отправке полных данных, PATCH для частичных изменений.\n\n```typescript\n// PUT - заменить весь пользователя\nfetch('/api/users/1', {\n  method: 'PUT',\n  body: JSON.stringify({ name: 'John', email: 'john@example.com' })\n});\n\n// PATCH - обновить только имя\nfetch('/api/users/1', {\n  method: 'PATCH',\n  body: JSON.stringify({ name: 'John' })\n});\n```\n\n**Типичная ошибка:** Думать, что PATCH всегда меньше по размеру—это касается намерения, а не размера."
+    },
+    "tags": [
+      "http-methods",
+      "put-patch",
+      "rest-semantics"
+    ]
+  },
+  {
+    "id": "http-rest-q-2",
+    "topicId": "http-rest",
+    "difficulty": "junior",
+    "question": {
+      "en": "What does HTTP status code 204 mean and when should you return it from a REST API?",
+      "ru": "Что означает HTTP статус код 204 и когда его следует возвращать из REST API?"
+    },
+    "answer": {
+      "en": "### HTTP 204 No Content\n\n204 indicates the request succeeded but there's no content to return to the client. Use it for successful DELETE operations or when you don't need to send a response body.\n\n```typescript\n// Delete resource and return 204\napp.delete('/api/posts/:id', (req, res) => {\n  removePost(req.params.id);\n  res.status(204).send(); // No body needed\n});\n\n// vs 200 with empty body\nres.status(200).json({}); // Less appropriate\n```\n\n**Common interview trap:** Confusing 204 with 404—204 means success with no content, 404 means not found.",
+      "ru": "### HTTP 204 No Content\n\n204 указывает, что запрос выполнен успешно, но нет содержимого для возврата клиенту. Используйте его для успешных операций DELETE или когда не нужно отправлять тело ответа.\n\n```typescript\n// Удалить ресурс и вернуть 204\napp.delete('/api/posts/:id', (req, res) => {\n  removePost(req.params.id);\n  res.status(204).send(); // Тело не требуется\n});\n\n// vs 200 с пустым телом\nres.status(200).json({}); // Менее подходит\n```\n\n**Типичная ошибка:** Путать 204 с 404—204 означает успех без содержимого, 404 означает не найдено."
+    },
+    "tags": [
+      "status-codes",
+      "rest-responses",
+      "http-semantics"
+    ]
+  },
+  {
+    "id": "http-rest-q-3",
+    "topicId": "http-rest",
+    "difficulty": "junior",
+    "question": {
+      "en": "How would you implement basic authentication in a REST API using the Authorization header?",
+      "ru": "Как вы реализуете базовую аутентификацию в REST API, используя заголовок Authorization?"
+    },
+    "answer": {
+      "en": "### Basic Authentication\n\nBasic auth encodes credentials as base64 in the Authorization header. The client sends `username:password` encoded, and the server validates it on each request.\n\n```typescript\n// Client sends\nfetch('/api/data', {\n  headers: {\n    'Authorization': 'Basic ' + btoa('user:pass')\n  }\n});\n\n// Server validates\napp.get('/api/data', (req, res) => {\n  const auth = req.headers.authorization?.split(' ')[1];\n  const [user, pass] = Buffer.from(auth, 'base64').toString().split(':');\n  if (user === 'user' && pass === 'pass') res.json({ data: 'secret' });\n});\n```\n\n**Common interview trap:** Basic auth transmits credentials in every request—always use HTTPS to prevent interception.",
+      "ru": "### Basic Authentication\n\nБазовая аутентификация кодирует учетные данные как base64 в заголовке Authorization. Клиент отправляет `username:password` закодированным, сервер проверяет это для каждого запроса.\n\n```typescript\n// Клиент отправляет\nfetch('/api/data', {\n  headers: {\n    'Authorization': 'Basic ' + btoa('user:pass')\n  }\n});\n\n// Сервер проверяет\napp.get('/api/data', (req, res) => {\n  const auth = req.headers.authorization?.split(' ')[1];\n  const [user, pass] = Buffer.from(auth, 'base64').toString().split(':');\n  if (user === 'user' && pass === 'pass') res.json({ data: 'secret' });\n});\n```\n\n**Типичная ошибка:** Basic auth передает учетные данные в каждом запросе—всегда используйте HTTPS для защиты от перехвата."
+    },
+    "tags": [
+      "authentication",
+      "authorization-header",
+      "http-headers"
+    ]
+  },
+  {
+    "id": "http-rest-q-4",
+    "topicId": "http-rest",
+    "difficulty": "junior",
+    "question": {
+      "en": "What HTTP headers would you use to handle caching in a REST API, and how do they work?",
+      "ru": "Какие HTTP заголовки вы используете для управления кешированием в REST API и как они работают?"
+    },
+    "answer": {
+      "en": "### Cache Control Headers\n\nUse `Cache-Control` and `ETag` headers to manage caching. `Cache-Control` specifies how long to cache, `ETag` provides a unique identifier for content versions.\n\n```typescript\n// Server sets cache headers\napp.get('/api/posts', (req, res) => {\n  res.set('Cache-Control', 'public, max-age=3600'); // Cache 1 hour\n  res.set('ETag', '\"v1-abc123\"');\n  res.json({ posts: [...] });\n});\n\n// Client checks ETag\nfetch('/api/posts', {\n  headers: { 'If-None-Match': '\"v1-abc123\"' }\n});\n// Server returns 304 Not Modified if unchanged\n```\n\n**Common interview trap:** `max-age=0` doesn't disable caching—use `no-cache` or `no-store` instead.",
+      "ru": "### Заголовки Cache Control\n\nИспользуйте заголовки `Cache-Control` и `ETag` для управления кешированием. `Cache-Control` указывает, как долго кешировать, `ETag` предоставляет уникальный идентификатор версий контента.\n\n```typescript\n// Сервер устанавливает заголовки кеша\napp.get('/api/posts', (req, res) => {\n  res.set('Cache-Control', 'public, max-age=3600'); // Кеш на 1 час\n  res.set('ETag', '\"v1-abc123\"');\n  res.json({ posts: [...] });\n});\n\n// Клиент проверяет ETag\nfetch('/api/posts', {\n  headers: { 'If-None-Match': '\"v1-abc123\"' }\n});\n// Сервер возвращает 304 Not Modified если не изменено\n```\n\n**Типичная ошибка:** `max-age=0` не отключает кеширование—используйте `no-cache` или `no-store`."
+    },
+    "tags": [
+      "http-headers",
+      "caching",
+      "cache-control",
+      "etag"
+    ]
+  },
+  {
+    "id": "http-rest-q-5",
+    "topicId": "http-rest",
+    "difficulty": "junior",
+    "question": {
+      "en": "Describe the REST principle of using resource URLs vs action URLs. Show an example of each.",
+      "ru": "Опишите принцип REST использования URL ресурсов вместо URL действий. Покажите пример каждого."
+    },
+    "answer": {
+      "en": "### Resource URLs vs Action URLs\n\nREST emphasizes resource-based URLs with HTTP methods for actions, not action names in URLs. Resource URLs are cleaner and more scalable than RPC-style action URLs.\n\n```typescript\n// ✗ Action URLs (Anti-pattern)\nGET /api/getUser?id=1\nPOST /api/createUser\nPOST /api/deleteUser?id=1\n\n// ✓ Resource URLs (REST)\nGET /api/users/1\nPOST /api/users\nDELETE /api/users/1\n\n// Same intent, cleaner semantics\n```\n\n**Common interview trap:** Mixing action verbs in URLs breaks REST principles—use HTTP methods to express intent, not URL path names.",
+      "ru": "### URL ресурсов vs URL действий\n\nREST подчеркивает URL на основе ресурсов с HTTP методами для действий, а не имена действий в URL. URL ресурсов чище и масштабируемее, чем RPC-стилевые URL действий.\n\n```typescript\n// ✗ URL действий (Антипаттерн)\nGET /api/getUser?id=1\nPOST /api/createUser\nPOST /api/deleteUser?id=1\n\n// ✓ URL ресурсов (REST)\nGET /api/users/1\nPOST /api/users\nDELETE /api/users/1\n\n// Одно и то же намерение, чище семантика\n```\n\n**Типичная ошибка:** Смешивание глаголов действий в URL нарушает принципы REST—используйте HTTP методы для выражения намерения, а не имена действий в пути."
+    },
+    "tags": [
+      "rest-principles",
+      "resource-urls",
+      "rest-semantics"
+    ]
+  },
+  {
+    "id": "http-rest-q-6",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the differences between ETag, Last-Modified, and Cache-Control headers. When would you use each one, and how do they interact?",
+      "ru": "Объясните различия между заголовками ETag, Last-Modified и Cache-Control. Когда использовать каждый, и как они взаимодействуют?"
+    },
+    "answer": {
+      "en": "### Caching Header Strategy\n\nETag is a hash-based validator for conditional requests (304 Not Modified), Last-Modified is time-based validation, and Cache-Control manages cache lifetime. ETag detects content changes reliably, Last-Modified is simpler but less precise, and Cache-Control prevents unnecessary requests by setting expiration.\n\n```typescript\napp.get('/api/data', (req, res) => {\n  const data = JSON.stringify({id: 1, name: 'John'});\n  const etag = crypto.createHash('md5').update(data).digest('hex');\n  res.set('ETag', etag);\n  res.set('Cache-Control', 'public, max-age=3600');\n  res.set('Last-Modified', new Date().toUTCString());\n  if (req.get('If-None-Match') === etag) return res.status(304).send();\n  res.json({id: 1, name: 'John'});\n});\n```\n\n**Common interview trap:** Thinking ETag and Last-Modified serve the same purpose—they work together for robust validation.",
+      "ru": "### Стратегия заголовков кеширования\n\nETag — это валидатор на основе хеша для условных запросов (304 Not Modified), Last-Modified — валидация по времени, Cache-Control управляет временем жизни кеша. ETag надежно обнаруживает изменения контента, Last-Modified проще но менее точен, Cache-Control предотвращает лишние запросы.\n\n```typescript\napp.get('/api/data', (req, res) => {\n  const data = JSON.stringify({id: 1, name: 'John'});\n  const etag = crypto.createHash('md5').update(data).digest('hex');\n  res.set('ETag', etag);\n  res.set('Cache-Control', 'public, max-age=3600');\n  res.set('Last-Modified', new Date().toUTCString());\n  if (req.get('If-None-Match') === etag) return res.status(304).send();\n  res.json({id: 1, name: 'John'});\n});\n```\n\n**Типичная ошибка:** Думать, что ETag и Last-Modified служат одной цели — они работают вместе для надежной валидации."
+    },
+    "tags": [
+      "caching",
+      "etag",
+      "conditional-requests",
+      "http-headers"
+    ]
+  },
+  {
+    "id": "http-rest-q-7",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design a pagination strategy for a REST API that handles large datasets efficiently. What query parameters would you use and why?",
+      "ru": "Спроектируйте стратегию пагинации для REST API, которая эффективно работает с большими наборами данных. Какие параметры запроса вы бы использовали и почему?"
+    },
+    "answer": {
+      "en": "### Cursor-Based Pagination\n\nUse cursor-based pagination with `limit` and `cursor` parameters instead of offset, which becomes slow on large datasets. Cursors point to specific records, allowing consistent iteration even when data changes, and avoid the N+1 problem of counting total results.\n\n```typescript\napp.get('/api/users', (req, res) => {\n  const limit = Math.min(parseInt(req.query.limit) || 10, 100);\n  const cursor = req.query.cursor || '0';\n  const users = db.users.find({id: {$gt: cursor}}).limit(limit + 1);\n  const hasMore = users.length > limit;\n  res.json({\n    data: users.slice(0, limit),\n    next_cursor: hasMore ? users[limit].id : null\n  });\n});\n```\n\n**Common interview trap:** Using offset-limit pagination for all scenarios—it performs poorly at scale (O(n) complexity).",
+      "ru": "### Пагинация на основе курсора\n\nИспользуйте курсор-базированную пагинацию с параметрами `limit` и `cursor` вместо offset, который медленнеет на больших наборах. Курсоры указывают на конкретные записи, обеспечивая консистентную итерацию даже при изменении данных.\n\n```typescript\napp.get('/api/users', (req, res) => {\n  const limit = Math.min(parseInt(req.query.limit) || 10, 100);\n  const cursor = req.query.cursor || '0';\n  const users = db.users.find({id: {$gt: cursor}}).limit(limit + 1);\n  const hasMore = users.length > limit;\n  res.json({\n    data: users.slice(0, limit),\n    next_cursor: hasMore ? users[limit].id : null\n  });\n});\n```\n\n**Типичная ошибка:** Использование offset-limit пагинации везде — она плохо масштабируется (O(n) сложность)."
+    },
+    "tags": [
+      "pagination",
+      "query-parameters",
+      "cursor-based",
+      "performance"
+    ]
+  },
+  {
+    "id": "http-rest-q-8",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement API versioning in REST? Compare path-based (/v1/, /v2/) vs header-based approaches and discuss trade-offs.",
+      "ru": "Как бы вы реализовали версионирование API в REST? Сравните подходы на основе пути (/v1/, /v2/) и заголовков, обсудите компромиссы."
+    },
+    "answer": {
+      "en": "### API Versioning Strategies\n\nPath-based versioning (/v1/users) is explicit, cacheable by CDNs, and easier to debug; header-based (Accept: application/vnd.api+v2+json) keeps URLs clean but is invisible in logs. Choose path-based for public APIs where clients may lag, headers for internal APIs prioritizing URL elegance.\n\n```typescript\n// Path-based\napp.get('/v1/users', (req, res) => res.json({version: 1, data: []}));\napp.get('/v2/users', (req, res) => res.json({version: 2, data: [], pagination: {}}));\n\n// Header-based\napp.get('/users', (req, res) => {\n  const version = req.get('Accept')?.includes('v2') ? 2 : 1;\n  res.set('Content-Type', `application/vnd.api+v${version}+json`);\n  res.json({version, data: []});\n});\n```\n\n**Common interview trap:** Believing one approach is universally better—choose based on API maturity and client diversity.",
+      "ru": "### Стратегии версионирования API\n\nВерсионирование по пути (/v1/users) явное, кешируемое CDN, проще для отладки; на основе заголовков (Accept: application/vnd.api+v2+json) сохраняет URL чистыми но невидимо в логах. Выбирайте путь для публичных API где клиенты отстают, заголовки для внутренних API.\n\n```typescript\n// Path-based\napp.get('/v1/users', (req, res) => res.json({version: 1, data: []}));\napp.get('/v2/users', (req, res) => res.json({version: 2, data: [], pagination: {}}));\n\n// Header-based\napp.get('/users', (req, res) => {\n  const version = req.get('Accept')?.includes('v2') ? 2 : 1;\n  res.set('Content-Type', `application/vnd.api+v${version}+json`);\n  res.json({version, data: []});\n});\n```\n\n**Типичная ошибка:** Думать, что один подход универсально лучше — выбирайте на основе зрелости API и разнообразия клиентов."
+    },
+    "tags": [
+      "api-versioning",
+      "rest-design",
+      "http-headers",
+      "backward-compatibility"
+    ]
+  },
+  {
+    "id": "http-rest-q-9",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain CORS in depth. What are preflight requests, and how do you handle credentials, custom headers, and different methods securely?",
+      "ru": "Объясните CORS в деталях. Что такое preflight-запросы, и как безопасно обрабатывать учетные данные, пользовательские заголовки и разные методы?"
+    },
+    "answer": {
+      "en": "### CORS and Preflight Requests\n\nCORS (Cross-Origin Resource Sharing) allows controlled cross-origin requests. Preflight OPTIONS requests validate whether the browser should send the actual request. Use `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials`, `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers` to control access securely.\n\n```typescript\napp.use((req, res, next) => {\n  res.set('Access-Control-Allow-Origin', 'https://trusted-domain.com');\n  res.set('Access-Control-Allow-Credentials', 'true');\n  res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');\n  res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');\n  res.set('Access-Control-Max-Age', '86400');\n  if (req.method === 'OPTIONS') return res.sendStatus(204);\n  next();\n});\n```\n\n**Common interview trap:** Setting `Access-Control-Allow-Origin: *` with credentials=true—this is a security violation.",
+      "ru": "### CORS и Preflight-запросы\n\nCORS (Cross-Origin Resource Sharing) позволяет контролируемые кросс-оригин запросы. Preflight OPTIONS-запросы проверяют, должен ли браузер отправить реальный запрос. Используйте `Access-Control-Allow-Origin`, `Access-Control-Allow-Credentials`, `Access-Control-Allow-Methods` и `Access-Control-Allow-Headers`.\n\n```typescript\napp.use((req, res, next) => {\n  res.set('Access-Control-Allow-Origin', 'https://trusted-domain.com');\n  res.set('Access-Control-Allow-Credentials', 'true');\n  res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');\n  res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');\n  res.set('Access-Control-Max-Age', '86400');\n  if (req.method === 'OPTIONS') return res.sendStatus(204);\n  next();\n});\n```\n\n**Типичная ошибка:** Установка `Access-Control-Allow-Origin: *` с credentials=true — это нарушение безопасности."
+    },
+    "tags": [
+      "cors",
+      "preflight",
+      "cross-origin",
+      "security",
+      "http-headers"
+    ]
+  },
+  {
+    "id": "http-rest-q-10",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design a rate limiting strategy for a public REST API. How would you implement it, track requests, and communicate limits to clients?",
+      "ru": "Спроектируйте стратегию rate limiting для публичного REST API. Как вы бы это реализовали, отслеживали запросы и информировали клиентов об ограничениях?"
+    },
+    "answer": {
+      "en": "### Rate Limiting Implementation\n\nUse token bucket or sliding window algorithms with Redis for distributed tracking. Return `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers so clients can adjust behavior. Return 429 Too Many Requests when exceeded.\n\n```typescript\nconst redis = new Redis();\napp.use(async (req, res, next) => {\n  const key = `rate:${req.ip}`;\n  const limit = 100, window = 3600;\n  const current = await redis.incr(key);\n  if (current === 1) await redis.expire(key, window);\n  res.set('X-RateLimit-Limit', limit);\n  res.set('X-RateLimit-Remaining', Math.max(0, limit - current));\n  if (current > limit) return res.status(429).json({error: 'Too many requests'});\n  next();\n});\n```\n\n**Common interview trap:** Tracking only in-memory—doesn't work across multiple servers or after restarts.",
+      "ru": "### Реализация Rate Limiting\n\nИспользуйте алгоритмы token bucket или sliding window с Redis для распределенного отслеживания. Возвращайте заголовки `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` чтобы клиенты могли адаптировать поведение. Возвращайте 429 при превышении.\n\n```typescript\nconst redis = new Redis();\napp.use(async (req, res, next) => {\n  const key = `rate:${req.ip}`;\n  const limit = 100, window = 3600;\n  const current = await redis.incr(key);\n  if (current === 1) await redis.expire(key, window);\n  res.set('X-RateLimit-Limit', limit);\n  res.set('X-RateLimit-Remaining', Math.max(0, limit - current));\n  if (current > limit) return res.status(429).json({error: 'Too many requests'});\n  next();\n});\n```\n\n**Типичная ошибка:** Отслеживание только в памяти — не работает на нескольких серверах или после перезагрузки."
+    },
+    "tags": [
+      "rate-limiting",
+      "token-bucket",
+      "redis",
+      "http-429",
+      "api-limits"
+    ]
+  },
+  {
+    "id": "http-rest-q-11",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between ETag and Last-Modified headers for caching. When would you use each and how do they affect client-server communication?",
+      "ru": "Объясните разницу между заголовками ETag и Last-Modified для кеширования. Когда вы используете каждый и как они влияют на коммуникацию клиент-сервер?"
+    },
+    "answer": {
+      "en": "### ETag vs Last-Modified\n\nETag is a hash-based validator for the entire response body, while Last-Modified is timestamp-based. ETags are stronger validators but require more computation; Last-Modified is simpler but fails when content changes without modification time updates.\n\n```typescript\n// ETag approach - strong validator\nres.set('ETag', '\"abc123\"');\nif (req.headers['if-none-match'] === '\"abc123\"') {\n  res.status(304).send(); // Not Modified\n}\n\n// Last-Modified approach\nres.set('Last-Modified', new Date('2024-01-15').toUTCString());\nif (new Date(req.headers['if-modified-since']) >= new Date('2024-01-15')) {\n  res.status(304).send();\n}\n```\n\n**Common interview trap:** Thinking ETag and Last-Modified are mutually exclusive—use both for maximum compatibility.",
+      "ru": "### ETag vs Last-Modified\n\nETag — это валидатор на основе хеша всего тела ответа, а Last-Modified основан на временной метке. ETag сильнее, но требует больше вычислений; Last-Modified проще, но не работает при изменении контента без обновления времени.\n\n```typescript\n// Подход с ETag — сильный валидатор\nres.set('ETag', '\"abc123\"');\nif (req.headers['if-none-match'] === '\"abc123\"') {\n  res.status(304).send(); // Not Modified\n}\n\n// Подход с Last-Modified\nres.set('Last-Modified', new Date('2024-01-15').toUTCString());\nif (new Date(req.headers['if-modified-since']) >= new Date('2024-01-15')) {\n  res.status(304).send();\n}\n```\n\n**Типичная ошибка:** Думать, что ETag и Last-Modified взаимоисключающие — используйте оба для максимальной совместимости."
+    },
+    "tags": [
+      "etag",
+      "last-modified",
+      "conditional-requests",
+      "cache-validation"
+    ]
+  },
+  {
+    "id": "http-rest-q-12",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement API versioning in a REST API? Compare URI versioning, header-based versioning, and content negotiation approaches.",
+      "ru": "Как вы реализуете версионирование API в REST API? Сравните подходы с версионированием в URI, на основе заголовков и на основе согласования контента."
+    },
+    "answer": {
+      "en": "### API Versioning Strategies\n\nURI versioning (/v1/users) is most explicit but creates URL sprawl. Header-based versioning (Accept: application/vnd.api+json;version=1) is cleaner but less discoverable. Content negotiation is RESTful but complex to implement and test.\n\n```typescript\n// URI versioning - explicit\napp.get('/v1/users/:id', (req, res) => { /* v1 logic */ });\napp.get('/v2/users/:id', (req, res) => { /* v2 logic */ });\n\n// Header versioning - cleaner\napp.get('/users/:id', (req, res) => {\n  const version = req.headers['api-version'] || '1';\n  if (version === '2') { /* v2 logic */ }\n});\n```\n\n**Common interview trap:** Not considering backward compatibility—always maintain at least two versions simultaneously.",
+      "ru": "### Стратегии версионирования API\n\nВерсионирование URI (/v1/users) наиболее явное, но создает разрастание URL. Версионирование на основе заголовков (Accept: application/vnd.api+json;version=1) чище, но менее видимо. Согласование контента соответствует REST, но сложно реализовать и тестировать.\n\n```typescript\n// Версионирование URI - явное\napp.get('/v1/users/:id', (req, res) => { /* логика v1 */ });\napp.get('/v2/users/:id', (req, res) => { /* логика v2 */ });\n\n// Версионирование на основе заголовков - чище\napp.get('/users/:id', (req, res) => {\n  const version = req.headers['api-version'] || '1';\n  if (version === '2') { /* логика v2 */ }\n});\n```\n\n**Типичная ошибка:** Не рассматривать обратную совместимость — всегда поддерживайте как минимум две версии одновременно."
+    },
+    "tags": [
+      "api-versioning",
+      "uri-versioning",
+      "header-versioning",
+      "content-negotiation"
+    ]
+  },
+  {
+    "id": "http-rest-q-13",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Describe CORS (Cross-Origin Resource Sharing) in detail. How does the preflight request work and what are the security implications?",
+      "ru": "Подробно опишите CORS (Cross-Origin Resource Sharing). Как работает preflight-запрос и каковы последствия для безопасности?"
+    },
+    "answer": {
+      "en": "### CORS and Preflight Requests\n\nCORS allows browsers to make cross-origin requests safely. For non-simple requests (PUT, DELETE, custom headers), browsers send an OPTIONS preflight to verify the server allows the operation. This prevents malicious scripts from making unauthorized requests.\n\n```typescript\n// Server-side CORS setup\napp.use((req, res, next) => {\n  res.set('Access-Control-Allow-Origin', 'https://example.com');\n  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');\n  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');\n  res.set('Access-Control-Max-Age', '3600');\n  if (req.method === 'OPTIONS') res.sendStatus(200);\n  else next();\n});\n```\n\n**Common interview trap:** Allowing wildcard origins (*) with credentials—this is a security vulnerability.",
+      "ru": "### CORS и Preflight-запросы\n\nCORS позволяет браузерам безопасно делать кросс-доменные запросы. Для не-простых запросов (PUT, DELETE, пользовательские заголовки) браузер отправляет OPTIONS preflight для проверки разрешения сервера. Это предотвращает несанкционированные запросы от вредоносных скриптов.\n\n```typescript\n// Конфигурация CORS на сервере\napp.use((req, res, next) => {\n  res.set('Access-Control-Allow-Origin', 'https://example.com');\n  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');\n  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');\n  res.set('Access-Control-Max-Age', '3600');\n  if (req.method === 'OPTIONS') res.sendStatus(200);\n  else next();\n});\n```\n\n**Типичная ошибка:** Разрешение подстановочных источников (*) с учетными данными — это уязвимость безопасности."
+    },
+    "tags": [
+      "cors",
+      "preflight",
+      "cross-origin",
+      "security",
+      "options-method"
+    ]
+  },
+  {
+    "id": "http-rest-q-14",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "Design a pagination strategy for a REST API that handles large datasets efficiently. Compare offset-based and cursor-based pagination.",
+      "ru": "Спроектируйте стратегию пагинации для REST API, которая эффективно работает с большими наборами данных. Сравните пагинацию на основе смещения и на основе курсора."
+    },
+    "answer": {
+      "en": "### Pagination Strategies\n\nOffset-based pagination (?page=2&limit=20) is simple but inefficient for large datasets—it requires scanning all previous rows. Cursor-based pagination uses a bookmark (encoded ID/timestamp) to resume from the last position, making it O(1) regardless of page depth.\n\n```typescript\n// Offset-based - simple but slower at scale\napp.get('/users', (req, res) => {\n  const offset = (req.query.page - 1) * req.query.limit;\n  const users = db.query(`SELECT * FROM users LIMIT ${req.query.limit} OFFSET ${offset}`);\n  res.json({ data: users, page: req.query.page });\n});\n\n// Cursor-based - efficient at scale\napp.get('/users', (req, res) => {\n  const cursor = req.query.cursor ? Buffer.from(req.query.cursor, 'base64').toString() : '0';\n  const users = db.query(`SELECT * FROM users WHERE id > ${cursor} LIMIT 20`);\n  res.json({ data: users, nextCursor: Buffer.from(users[users.length-1].id).toString('base64') });\n});\n```\n\n**Common interview trap:** Offset pagination performs well for small page numbers but degrades exponentially—always mention this trade-off.",
+      "ru": "### Стратегии пагинации\n\nОффсет-пагинация (?page=2&limit=20) проста, но неэффективна для больших наборов данных — требует сканирования всех предыдущих строк. Курсор-пагинация использует закладку (закодированный ID/временная метка) для возобновления с последней позиции, O(1) независимо от глубины страницы.\n\n```typescript\n// Оффсет-пагинация - простая, но медленнее в масштабе\napp.get('/users', (req, res) => {\n  const offset = (req.query.page - 1) * req.query.limit;\n  const users = db.query(`SELECT * FROM users LIMIT ${req.query.limit} OFFSET ${offset}`);\n  res.json({ data: users, page: req.query.page });\n});\n\n// Курсор-пагинация - эффективна в масштабе\napp.get('/users', (req, res) => {\n  const cursor = req.query.cursor ? Buffer.from(req.query.cursor, 'base64').toString() : '0';\n  const users = db.query(`SELECT * FROM users WHERE id > ${cursor} LIMIT 20`);\n  res.json({ data: users, nextCursor: Buffer.from(users[users.length-1].id).toString('base64') });\n});\n```\n\n**Типичная ошибка:** Оффсет-пагинация хорошо работает для малых номеров страниц, но деградирует экспоненциально — всегда упоминайте этот компромисс."
+    },
+    "tags": [
+      "pagination",
+      "offset-based",
+      "cursor-based",
+      "performance",
+      "scalability"
+    ]
+  },
+  {
+    "id": "http-rest-q-15",
+    "topicId": "http-rest",
+    "difficulty": "middle",
+    "question": {
+      "en": "How would you implement rate limiting in a REST API? Discuss different strategies and the HTTP headers used to communicate limits to clients.",
+      "ru": "Как вы реализуете ограничение частоты запросов (rate limiting) в REST API? Обсудите различные стратегии и HTTP-заголовки для информирования клиентов об ограничениях."
+    },
+    "answer": {
+      "en": "### Rate Limiting Implementation\n\nRate limiting protects APIs from abuse using strategies like token bucket, sliding window, or fixed window. Communicate limits via standard headers: X-RateLimit-Limit (max requests), X-RateLimit-Remaining (remaining), and X-RateLimit-Reset (reset timestamp). Return 429 Too Many Requests when exceeded.\n\n```typescript\n// Token bucket strategy with Redis\nconst rateLimiter = async (req, res, next) => {\n  const key = `rate:${req.ip}`;\n  const limit = 100, window = 3600;\n  const current = await redis.incr(key);\n  if (current === 1) await redis.expire(key, window);\n  \n  res.set('X-RateLimit-Limit', limit);\n  res.set('X-RateLimit-Remaining', Math.max(0, limit - current));\n  res.set('X-RateLimit-Reset', Math.floor(Date.now() / 1000) + window);\n  \n  if (current > limit) return res.status(429).json({ error: 'Too many requests' });\n  next();\n};\n```\n\n**Common interview trap:** Not distinguishing between per-IP and per-user rate limits—use user ID when authenticated for better accuracy.",
+      "ru": "### Реализация ограничения частоты запросов\n\nОграничение частоты защищает APIs от злоупотребления, используя стратегии вроде token bucket, sliding window или fixed window. Информируйте об ограничениях через стандартные заголовки: X-RateLimit-Limit (макс запросы), X-RateLimit-Remaining (осталось), и X-RateLimit-Reset (время сброса). Возвращайте 429 Too Many Requests при превышении.\n\n```typescript\n// Стратегия token bucket с Redis\nconst rateLimiter = async (req, res, next) => {\n  const key = `rate:${req.ip}`;\n  const limit = 100, window = 3600;\n  const current = await redis.incr(key);\n  if (current === 1) await redis.expire(key, window);\n  \n  res.set('X-RateLimit-Limit', limit);\n  res.set('X-RateLimit-Remaining', Math.max(0, limit - current));\n  res.set('X-RateLimit-Reset', Math.floor(Date.now() / 1000) + window);\n  \n  if (current > limit) return res.status(429).json({ error: 'Слишком много запросов' });\n  next();\n};\n```\n\n**Типичная ошибка:** Не различать ограничения по IP и по пользователю — используйте ID пользователя при аутентификации для большей точности."
+    },
+    "tags": [
+      "rate-limiting",
+      "token-bucket",
+      "429-status",
+      "x-ratelimit-headers",
+      "abuse-protection"
+    ]
+  },
+  {
+    "id": "http-rest-q-16",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain HTTP/2 multiplexing and how it differs from HTTP/1.1 pipelining. What are the performance implications for REST APIs?",
+      "ru": "Объясните мультиплексирование HTTP/2 и чем оно отличается от конвейеризации HTTP/1.1. Каковы последствия производительности для REST API?"
+    },
+    "answer": {
+      "en": "### HTTP/2 Multiplexing vs HTTP/1.1 Pipelining\n\nHTTP/2 uses binary framing to multiplex multiple requests over a single TCP connection simultaneously, allowing responses to arrive out-of-order. HTTP/1.1 pipelining sends requests sequentially and requires responses in order, making it vulnerable to head-of-line blocking. HTTP/2 eliminates connection overhead and reduces latency for REST APIs with many concurrent requests.\n\n```typescript\n// HTTP/2 multiplexing (conceptual - handled by transport layer)\nconst http2 = require('http2');\nconst session = http2.connect('https://api.example.com');\n\n// Three requests sent simultaneously over one connection\nfor (let i = 0; i < 3; i++) {\n  const req = session.request({ ':path': `/api/resource-${i}` });\n  req.on('data', data => console.log(`Response ${i}:`, data));\n}\n```\n\n**Common interview trap:** Confusing pipelining with multiplexing—pipelining still has head-of-line blocking issues that multiplexing solves.",
+      "ru": "### HTTP/2 Мультиплексирование против конвейеризации HTTP/1.1\n\nHTTP/2 использует бинарное фрейминирование для мультиплексирования нескольких запросов по одному TCP-соединению одновременно, позволяя ответам приходить в произвольном порядке. HTTP/1.1 конвейеризация отправляет запросы последовательно и требует ответов по порядку, что делает её уязвимой для блокировки head-of-line. HTTP/2 устраняет накладные расходы на соединение и снижает задержку для REST API с множеством одновременных запросов.\n\n```typescript\n// HTTP/2 мультиплексирование (концептуально - обрабатывается транспортным слоем)\nconst http2 = require('http2');\nconst session = http2.connect('https://api.example.com');\n\n// Три запроса отправляются одновременно по одному соединению\nfor (let i = 0; i < 3; i++) {\n  const req = session.request({ ':path': `/api/resource-${i}` });\n  req.on('data', data => console.log(`Response ${i}:`, data));\n}\n```\n\n**Типичная ошибка:** Путание конвейеризации с мультиплексированием—конвейеризация всё ещё имеет проблемы с блокировкой head-of-line, которые решает мультиплексирование."
+    },
+    "tags": [
+      "http2-multiplexing",
+      "tcp-optimization",
+      "rest-performance"
+    ]
+  },
+  {
+    "id": "http-rest-q-17",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the TLS handshake process and explain how session resumption (tickets vs session IDs) can reduce latency for HTTPS REST APIs.",
+      "ru": "Опишите процесс TLS-рукопожатия и объясните, как возобновление сессии (tickets против session IDs) может снизить задержку для HTTPS REST API."
+    },
+    "answer": {
+      "en": "### TLS Handshake and Session Resumption\n\nThe TLS handshake involves ClientHello, ServerHello, certificate exchange, and key agreement, adding ~100-300ms latency. Session resumption using either session IDs (server-stored) or session tickets (client-stored, encrypted) allows reconnecting clients to skip the handshake. Tickets are stateless and better for distributed API gateways, while session IDs require server coordination.\n\n```typescript\n// Node.js TLS session resumption example\nconst https = require('https');\nlet session = null;\n\nconst options = { hostname: 'api.example.com', session };\nhttps.get(options, (res) => {\n  // Capture session for reuse (implicit)\n  session = res.socket.getSession();\n  console.log('Session resumed on next request');\n});\n\n// Subsequent requests reuse session, skip handshake\nhttps.get({ ...options, session }, () => {});\n```\n\n**Common interview trap:** Assuming all clients can reuse the same session ID—tickets are per-client and safer for security.",
+      "ru": "### TLS-рукопожатие и возобновление сессии\n\nTLS-рукопожатие включает ClientHello, ServerHello, обмен сертификатами и согласование ключей, добавляя ~100-300ms задержки. Возобновление сессии с использованием session IDs (хранящихся на сервере) или session tickets (хранящихся на клиенте, зашифрованных) позволяет переподключающимся клиентам пропустить рукопожатие. Tickets не требуют состояния и лучше для распределённых API шлюзов, в то время как session IDs требуют координации сервера.\n\n```typescript\n// Пример возобновления TLS сессии в Node.js\nconst https = require('https');\nlet session = null;\n\nconst options = { hostname: 'api.example.com', session };\nhttps.get(options, (res) => {\n  // Захватить сессию для переиспользования (неявно)\n  session = res.socket.getSession();\n  console.log('Session resumed on next request');\n});\n\n// Следующие запросы переиспользуют сессию, пропускают рукопожатие\nhttps.get({ ...options, session }, () => {});\n```\n\n**Типичная ошибка:** Предположение, что все клиенты могут переиспользовать одинаковый session ID—tickets уникальны для каждого клиента и безопаснее."
+    },
+    "tags": [
+      "tls-handshake",
+      "session-resumption",
+      "https-optimization"
+    ]
+  },
+  {
+    "id": "http-rest-q-18",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "When would you choose WebSockets over Server-Sent Events (SSE) for a real-time REST API, and what are the trade-offs?",
+      "ru": "Когда вы бы выбрали WebSockets вместо Server-Sent Events (SSE) для real-time REST API и какие компромиссы?"
+    },
+    "answer": {
+      "en": "### WebSockets vs SSE Trade-offs\n\nWebSockets enable bidirectional communication over a persistent TCP connection, ideal when clients need to send real-time data to the server. SSE uses HTTP and is simpler, unidirectional (server→client), with automatic reconnection, but cannot send client data without additional HTTP requests. Choose WebSockets for chat/collaboration, SSE for notifications/feeds. WebSockets have higher overhead and stateful server complexity.\n\n```typescript\n// WebSocket (bidirectional)\nconst ws = new WebSocket('wss://api.example.com/live');\nws.send({ action: 'subscribe', channel: 'prices' }); // Client→Server\nws.onmessage = (evt) => console.log('Price update:', evt.data);\n\n// SSE (unidirectional)\nconst sse = new EventSource('/api/prices/stream');\nsse.onmessage = (evt) => console.log('Price update:', evt.data);\n// Client needs separate POST to send data\n```\n\n**Common interview trap:** Thinking SSE cannot handle real-time updates—it can, but only server→client; use long polling or separate HTTP POST for client input.",
+      "ru": "### Компромиссы WebSockets против SSE\n\nWebSockets обеспечивают двусторонний обмен данными через постоянное TCP-соединение, идеальны, когда клиентам нужно отправлять данные в реальном времени на сервер. SSE использует HTTP и проще, односторонний (server→client), с автоматическим переподключением, но не может отправлять данные клиента без дополнительных HTTP запросов. Выберите WebSockets для чата/сотрудничества, SSE для уведомлений/лент. WebSockets имеют большие накладные расходы и сложность со статеф сервера.\n\n```typescript\n// WebSocket (двусторонний)\nconst ws = new WebSocket('wss://api.example.com/live');\nws.send({ action: 'subscribe', channel: 'prices' }); // Client→Server\nws.onmessage = (evt) => console.log('Price update:', evt.data);\n\n// SSE (односторонний)\nconst sse = new EventSource('/api/prices/stream');\nsse.onmessage = (evt) => console.log('Price update:', evt.data);\n// Клиенту нужен отдельный POST для отправки данных\n```\n\n**Типичная ошибка:** Думать, что SSE не может обрабатывать обновления в реальном времени—может, но только server→client; используйте long polling или отдельный HTTP POST для ввода клиента."
+    },
+    "tags": [
+      "websockets",
+      "sse",
+      "real-time-communication",
+      "bidirectional"
+    ]
+  },
+  {
+    "id": "http-rest-q-19",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement idempotency for REST APIs, and what role do idempotency keys play in preventing duplicate processing in distributed systems?",
+      "ru": "Как вы бы реализовали идемпотентность для REST API и какую роль играют ключи идемпотентности в предотвращении дублирования обработки в распределённых системах?"
+    },
+    "answer": {
+      "en": "### Idempotency Keys for Distributed REST APIs\n\nIdempotency keys are unique identifiers (UUID) sent by clients to ensure a request is processed exactly-once, even if retried. The server stores processed keys with results in a cache (Redis) and returns cached responses for duplicates. This prevents duplicate payments, orders, or state changes when networks fail or clients retry. Keys should expire after a grace period (24 hours).\n\n```typescript\n// Idempotency key implementation\nconst redis = require('redis');\nconst cache = redis.createClient();\n\napp.post('/api/payments', async (req, res) => {\n  const idempotencyKey = req.headers['idempotency-key'];\n  \n  // Check if already processed\n  const cached = await cache.get(idempotencyKey);\n  if (cached) return res.json(JSON.parse(cached));\n  \n  // Process payment\n  const result = await processPayment(req.body);\n  \n  // Store with 24h expiry\n  await cache.setex(idempotencyKey, 86400, JSON.stringify(result));\n  res.json(result);\n});\n```\n\n**Common interview trap:** Forgetting to validate that idempotency keys are unique per client—a key must not be reused for different requests from different clients.",
+      "ru": "### Ключи идемпотентности для распределённых REST API\n\nКлючи идемпотентности—уникальные идентификаторы (UUID), отправляемые клиентами для обеспечения обработки запроса ровно один раз, даже при повторных попытках. Сервер хранит обработанные ключи с результатами в кэше (Redis) и возвращает кэшированные ответы для дубликатов. Это предотвращает дублирующие платежи, заказы или изменения состояния при сбоях сети или повторных попытках клиента. Ключи должны истекать через период льготы (24 часа).\n\n```typescript\n// Реализация ключа идемпотентности\nconst redis = require('redis');\nconst cache = redis.createClient();\n\napp.post('/api/payments', async (req, res) => {\n  const idempotencyKey = req.headers['idempotency-key'];\n  \n  // Проверить, уже ли обработано\n  const cached = await cache.get(idempotencyKey);\n  if (cached) return res.json(JSON.parse(cached));\n  \n  // Обработать платёж\n  const result = await processPayment(req.body);\n  \n  // Сохранить с истечением через 24ч\n  await cache.setex(idempotencyKey, 86400, JSON.stringify(result));\n  res.json(result);\n});\n```\n\n**Типичная ошибка:** Забыть проверить, что ключи идемпотентности уникальны для каждого клиента—ключ не должен переиспользоваться для разных запросов от разных клиентов."
+    },
+    "tags": [
+      "idempotency",
+      "idempotency-key",
+      "distributed-systems",
+      "duplicate-prevention"
+    ]
+  },
+  {
+    "id": "http-rest-q-20",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how distributed tracing with OpenTelemetry helps diagnose latency issues in REST APIs. What are span contexts and how do you propagate them across service boundaries?",
+      "ru": "Объясните, как распределённая трассировка с OpenTelemetry помогает диагностировать проблемы задержки в REST API. Что такое span contexts и как вы их распространяете через границы служб?"
+    },
+    "answer": {
+      "en": "### Distributed Tracing with OpenTelemetry\n\nOpenTelemetry instruments applications to create spans (measurements) for each operation, forming traces that show request flow across services. Span contexts (trace ID, span ID, flags) are propagated via HTTP headers (traceparent, tracestate) to correlate requests across service boundaries. This reveals bottlenecks: which service is slow, which databases are queried, and where latency accumulates.\n\n```typescript\n// OpenTelemetry span context propagation\nconst { trace, context } = require('@opentelemetry/api');\nconst tracer = trace.getTracer('my-service');\n\napp.get('/api/users/:id', (req, res) => {\n  const span = tracer.startSpan('getUser');\n  context.with(trace.setSpan(context.active(), span), () => {\n    // Downstream service call includes traceparent header\n    fetch('http://db-service/users/' + req.params.id, {\n      headers: { 'traceparent': getTraceParent() } // Propagate context\n    });\n    span.end();\n  });\n});\n```\n\n**Common interview trap:** Assuming trace IDs must be manually generated—most frameworks auto-inject them if properly configured; just propagate existing headers.",
+      "ru": "### Распределённая трассировка с OpenTelemetry\n\nOpenTelemetry инструментирует приложения для создания spans (измерений) для каждой операции, образуя traces, показывающие поток запросов через сервисы. Span contexts (trace ID, span ID, флаги) распространяются через HTTP-заголовки (traceparent, tracestate) для корреляции запросов через границы сервисов. Это выявляет узкие места: какой сервис медленный, какие базы данных запрашиваются, где задержка накапливается.\n\n```typescript\n// Распространение span context OpenTelemetry\nconst { trace, context } = require('@opentelemetry/api');\nconst tracer = trace.getTracer('my-service');\n\napp.get('/api/users/:id', (req, res) => {\n  const span = tracer.startSpan('getUser');\n  context.with(trace.setSpan(context.active(), span), () => {\n    // Вызов нижестоящего сервиса включает заголовок traceparent\n    fetch('http://db-service/users/' + req.params.id, {\n      headers: { 'traceparent': getTraceParent() } // Распространить контекст\n    });\n    span.end();\n  });\n});\n```\n\n**Типичная ошибка:** Предположение, что trace IDs должны генерироваться вручную—большинство фреймворков автоматически их инжектируют, если правильно настроены; просто распространяйте существующие заголовки."
+    },
+    "tags": [
+      "distributed-tracing",
+      "opentelemetry",
+      "span-context",
+      "observability"
+    ]
+  },
+  {
+    "id": "http-rest-q-21",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how HTTP/2 multiplexing improves performance over HTTP/1.1 and describe a scenario where it might not provide expected benefits.",
+      "ru": "Объясните, как мультиплексирование HTTP/2 улучшает производительность по сравнению с HTTP/1.1, и опишите сценарий, в котором оно может не дать ожидаемых преимуществ."
+    },
+    "answer": {
+      "en": "### HTTP/2 Multiplexing\n\nHTTP/2 allows multiple requests and responses to be sent concurrently over a single TCP connection using binary framing, eliminating head-of-line blocking. However, it provides no benefit when TCP congestion window is the bottleneck or when the server has limited CPU for processing.\n\n```typescript\n// HTTP/1.1: Sequential requests blocked by network latency\nfetch('/api/users')\n  .then(() => fetch('/api/posts'))\n  .then(() => fetch('/api/comments'));\n\n// HTTP/2: Concurrent requests on same connection\nPromise.all([\n  fetch('/api/users'),\n  fetch('/api/posts'),\n  fetch('/api/comments')\n]);\n```\n\n**Common interview trap:** Assuming HTTP/2 is always faster—it depends on network conditions and server resources.",
+      "ru": "### Мультиплексирование HTTP/2\n\nHTTP/2 позволяет отправлять несколько запросов и ответов одновременно через одно TCP-соединение с использованием двоичного фреймирования, устраняя блокировку head-of-line. Однако оно не дает выгоды, когда узким местом является окно перегрузки TCP или когда сервер имеет ограниченную CPU.\n\n```typescript\n// HTTP/1.1: Последовательные запросы заблокированы задержкой\nfetch('/api/users')\n  .then(() => fetch('/api/posts'))\n  .then(() => fetch('/api/comments'));\n\n// HTTP/2: Параллельные запросы на одном соединении\nPromise.all([\n  fetch('/api/users'),\n  fetch('/api/posts'),\n  fetch('/api/comments')\n]);\n```\n\n**Типичная ошибка:** Предполагать, что HTTP/2 всегда быстрее—это зависит от условий сети и ресурсов сервера."
+    },
+    "tags": [
+      "http/2",
+      "multiplexing",
+      "tcp",
+      "performance"
+    ]
+  },
+  {
+    "id": "http-rest-q-22",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "What are the key differences between HTTP/3, QUIC, and how does QUIC's connection establishment differ from TCP+TLS in HTTP/2?",
+      "ru": "Каковы ключевые различия между HTTP/3 и QUIC, и чем отличается установление соединения QUIC от TCP+TLS в HTTP/2?"
+    },
+    "answer": {
+      "en": "### HTTP/3 and QUIC\n\nHTTP/3 runs over QUIC instead of TCP, which uses UDP and combines transport and encryption into a single protocol. QUIC achieves 0-RTT (zero round-trip time) resumption for known servers by including the TLS handshake in the initial packet, while TCP+TLS requires separate handshakes (3-way TCP + 2-way TLS = up to 2 RTTs).\n\n```typescript\n// Simulating QUIC 0-RTT benefit\nconst quickResumeKey = sessionStorage.getItem('quic-session');\n\n// First visit: Full handshake (2 RTTs)\nconst response1 = await fetch('https://api.example.com/data');\n\n// Subsequent visits: 0-RTT with resumption\nconst response2 = await fetch('https://api.example.com/data', {\n  headers: { 'X-QUIC-Session': quickResumeKey }\n});\n```\n\n**Common interview trap:** Thinking QUIC is always faster—0-RTT only applies to resumptions; first connections still need handshakes.",
+      "ru": "### HTTP/3 и QUIC\n\nHTTP/3 работает через QUIC вместо TCP, который использует UDP и объединяет транспортный уровень и шифрование в один протокол. QUIC достигает возобновления 0-RTT (нулевой задержки туда-обратно) для известных серверов, включая TLS-рукопожатие в начальный пакет, в то время как TCP+TLS требует отдельных рукопожатий (3-way TCP + 2-way TLS = до 2 RTT).\n\n```typescript\n// Имитация преимущества QUIC 0-RTT\nconst quickResumeKey = sessionStorage.getItem('quic-session');\n\n// Первый визит: полное рукопожатие (2 RTT)\nconst response1 = await fetch('https://api.example.com/data');\n\n// Последующие визиты: 0-RTT с возобновлением\nconst response2 = await fetch('https://api.example.com/data', {\n  headers: { 'X-QUIC-Session': quickResumeKey }\n});\n```\n\n**Типичная ошибка:** Думать, что QUIC всегда быстрее—0-RTT применяется только к возобновлениям; первые соединения требуют рукопожатий."
+    },
+    "tags": [
+      "http/3",
+      "quic",
+      "udp",
+      "0-rtt",
+      "tls"
+    ]
+  },
+  {
+    "id": "http-rest-q-23",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare WebSockets, Server-Sent Events (SSE), and Long Polling. When would you choose each and what are the tradeoffs?",
+      "ru": "Сравните WebSockets, Server-Sent Events (SSE) и Long Polling. Когда вы бы выбрали каждый из них и каковы компромиссы?"
+    },
+    "answer": {
+      "en": "### WebSockets vs SSE vs Long Polling\n\nWebSockets provide full-duplex communication but require stateful connections; SSE enables server-push over HTTP with simpler browser fallbacks but is unidirectional; Long Polling works everywhere but has high latency and CPU overhead. Choose WebSockets for real-time bidirectional data (chat, gaming), SSE for server notifications, and Long Polling only when clients must support ancient browsers.\n\n```typescript\n// SSE: Simple server push, unidirectional\nconst eventSource = new EventSource('/api/updates');\neventSource.onmessage = (e) => console.log(e.data);\n\n// WebSocket: Bidirectional, lower latency\nconst ws = new WebSocket('wss://api.example.com/live');\nws.send(JSON.stringify({ action: 'subscribe' }));\nws.onmessage = (e) => console.log(e.data);\n\n// Long Polling: High latency, polling loop\nsetInterval(() => fetch('/api/updates?since=' + lastId), 3000);\n```\n\n**Common interview trap:** Thinking WebSocket is always best—SSE is lighter for one-way streams and works better with HTTP/2 proxies.",
+      "ru": "### WebSockets vs SSE vs Long Polling\n\nWebSockets обеспечивают полнодуплексную связь, но требуют сохранения соединения; SSE включает push-уведомления с сервера через HTTP с более простыми fallbacks браузера, но однонаправленный; Long Polling работает везде, но имеет высокую задержку и нагрузку на CPU. Выбирайте WebSockets для двусторонней передачи данных в реальном времени (чат, игры), SSE для уведомлений с сервера и Long Polling только если клиенты должны поддерживать древние браузеры.\n\n```typescript\n// SSE: Простой push с сервера, однонаправленный\nconst eventSource = new EventSource('/api/updates');\neventSource.onmessage = (e) => console.log(e.data);\n\n// WebSocket: Двусторонний, низкая задержка\nconst ws = new WebSocket('wss://api.example.com/live');\nws.send(JSON.stringify({ action: 'subscribe' }));\nws.onmessage = (e) => console.log(e.data);\n\n// Long Polling: Высокая задержка, цикл опроса\nsetInterval(() => fetch('/api/updates?since=' + lastId), 3000);\n```\n\n**Типичная ошибка:** Думать, что WebSocket всегда лучший—SSE легче для односторонних потоков и работает лучше с HTTP/2 прокси."
+    },
+    "tags": [
+      "websockets",
+      "sse",
+      "long-polling",
+      "real-time",
+      "bidirectional"
+    ]
+  },
+  {
+    "id": "http-rest-q-24",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design an idempotent API endpoint that handles duplicate requests safely. How would you implement idempotency keys and what edge cases must you handle?",
+      "ru": "Спроектируйте идемпотентную API-конечную точку, которая безопасно обрабатывает дублирующиеся запросы. Как вы будете реализовать ключи идемпотентности и какие граничные случаи вы должны обработать?"
+    },
+    "answer": {
+      "en": "### Idempotency Keys\n\nIdempotency keys ensure duplicate requests produce the same result without side effects. Store the key with a hash of request body and cache the response for a limited time. Edge cases include key expiration, client retries after timeout, and ensuring the idempotency store survives service restarts.\n\n```typescript\n// Express middleware for idempotency\napp.post('/api/transfer', async (req, res) => {\n  const key = req.headers['idempotency-key'];\n  const cached = await idempotencyStore.get(key);\n  if (cached) return res.json(cached);\n  \n  const result = await processTransfer(req.body);\n  await idempotencyStore.set(key, result, { ttl: 3600 });\n  res.json(result);\n});\n```\n\n**Common interview trap:** Forgetting to handle key expiration—after TTL expires, a new request with the same key should be treated as fresh, potentially causing double processing.",
+      "ru": "### Ключи идемпотентности\n\nКлючи идемпотентности гарантируют, что дублирующиеся запросы дают одинаковый результат без побочных эффектов. Сохраняйте ключ с хешем тела запроса и кэшируйте ответ в течение ограниченного времени. Граничные случаи включают истечение ключа, повторы клиента после тайм-аута и обеспечение того, чтобы хранилище идемпотентности пережило перезагрузку сервиса.\n\n```typescript\n// Middleware Express для идемпотентности\napp.post('/api/transfer', async (req, res) => {\n  const key = req.headers['idempotency-key'];\n  const cached = await idempotencyStore.get(key);\n  if (cached) return res.json(cached);\n  \n  const result = await processTransfer(req.body);\n  await idempotencyStore.set(key, result, { ttl: 3600 });\n  res.json(result);\n});\n```\n\n**Типичная ошибка:** Забыть обработать истечение ключа—после истечения TTL новый запрос с тем же ключом должен быть обработан как свежий, потенциально вызывая двойную обработку."
+    },
+    "tags": [
+      "idempotency",
+      "api-design",
+      "duplicate-handling",
+      "caching"
+    ]
+  },
+  {
+    "id": "http-rest-q-25",
+    "topicId": "http-rest",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement distributed tracing for a microservices REST API using OpenTelemetry basics? What headers and context propagation are essential?",
+      "ru": "Как вы бы реализовали распределённую трассировку для микросервисного REST API, используя основы OpenTelemetry? Какие заголовки и распространение контекста необходимы?"
+    },
+    "answer": {
+      "en": "### OpenTelemetry Distributed Tracing\n\nOpenTelemetry uses trace IDs and span IDs propagated via W3C Trace Context headers (traceparent, tracestate) to correlate requests across services. Each service extracts the parent trace, creates child spans, and forwards the header to downstream services. This creates a parent-child span hierarchy visualized in backends like Jaeger or Datadog.\n\n```typescript\n// Express with OpenTelemetry\nconst tracer = sdk.getTracer('service-a');\n\napp.use((req, res, next) => {\n  const span = tracer.startSpan('http-request', {\n    attributes: { 'http.method': req.method, 'http.url': req.url }\n  });\n  res.on('finish', () => span.end());\n  next();\n});\n\n// Propagate to downstream service\nconst headers = context.extract(req.headers, defaultTextMapGetter);\ncontext.with(headers, () => {\n  fetch('http://service-b/api', { headers: propagate(headers) });\n});\n```\n\n**Common interview trap:** Forgetting to extract parent context from incoming requests—without this, traces become disconnected and lose the dependency chain.",
+      "ru": "### Распределённая трассировка OpenTelemetry\n\nOpenTelemetry использует trace ID и span ID, распространяемые через заголовки W3C Trace Context (traceparent, tracestate), для коррелирования запросов между сервисами. Каждый сервис извлекает родительскую трассировку, создаёт дочерние spans и пересылает заголовок нижестоящим сервисам. Это создаёт иерархию родитель-потомок spans, визуализируемую в бэкендах, таких как Jaeger или Datadog.\n\n```typescript\n// Express с OpenTelemetry\nconst tracer = sdk.getTracer('service-a');\n\napp.use((req, res, next) => {\n  const span = tracer.startSpan('http-request', {\n    attributes: { 'http.method': req.method, 'http.url': req.url }\n  });\n  res.on('finish', () => span.end());\n  next();\n});\n\n// Распространить в нижестоящий сервис\nconst headers = context.extract(req.headers, defaultTextMapGetter);\ncontext.with(headers, () => {\n  fetch('http://service-b/api', { headers: propagate(headers) });\n});\n```\n\n**Типичная ошибка:** Забыть извлечь родительский контекст из входящих запросов—без этого трассировки становятся отключёнными и теряют цепь зависимостей."
+    },
+    "tags": [
+      "distributed-tracing",
+      "opentelemetry",
+      "w3c-trace-context",
+      "observability"
+    ]
+  }
+]

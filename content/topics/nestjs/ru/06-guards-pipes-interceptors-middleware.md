@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Guards vs Pipes vs Interceptors vs Middleware
 
 ## Самый популярный вопрос по NestJS

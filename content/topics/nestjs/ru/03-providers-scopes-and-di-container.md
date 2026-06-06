@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Providers, Scopes и DI Container
 
 ## Самая важная идея NestJS

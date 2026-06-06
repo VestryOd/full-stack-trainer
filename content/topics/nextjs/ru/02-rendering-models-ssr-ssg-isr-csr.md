@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 0 -->
 # Rendering Models: CSR, SSR, SSG, ISR
 
 ## Самая популярная тема Next.js

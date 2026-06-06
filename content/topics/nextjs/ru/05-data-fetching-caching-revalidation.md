@@ -1,3 +1,4 @@
+<!-- verified: 2026-06-05, corrections: 1 -->
 # Data Fetching, Caching и Revalidation
 
 ## Самое большое изменение App Router
@@ -85,16 +86,16 @@ fetch
 
 ---
 
-В App Router:
+В App Router (Next.js 13/14):
 
 ```txt
-fetch кешируется
+fetch кешировался
 по умолчанию
 ```
 
 ---
 
-Это многих удивляет.
+В Next.js 15 поведение изменилось.
 
 ---
 
@@ -106,15 +107,21 @@ await fetch(...)
 
 ---
 
-По умолчанию:
+Next.js 13/14 по умолчанию:
 
 ```txt
 force-cache
 ```
 
+Next.js 15 по умолчанию:
+
+```txt
+no-store
+```
+
 ---
 
-То есть результат может быть закеширован.
+То есть в Next.js 15 кеширование нужно указывать явно.
 
 ---
 

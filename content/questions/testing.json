@@ -1,1 +1,466 @@
-[]
+[
+  {
+    "id": "testing-q-1",
+    "topicId": "testing",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between unit tests, integration tests, and end-to-end tests?",
+      "ru": "В чем разница между unit-тестами, интеграционными тестами и end-to-end тестами?"
+    },
+    "answer": {
+      "en": "### Test Types Hierarchy\n\nUnit tests verify individual functions in isolation, integration tests check how multiple components work together, and e2e tests simulate real user interactions across the entire application. Unit tests are fastest, e2e tests are slowest but most realistic.\n\n```typescript\n// Unit: test single function\ntest('sum adds numbers', () => {\n  expect(sum(2, 3)).toBe(5);\n});\n\n// Integration: test function with database\ntest('user creation saves to DB', async () => {\n  const user = await createUser({name: 'John'});\n  expect(user.id).toBeDefined();\n});\n\n// E2E: test full user workflow\ntest('user signup flow', () => {\n  cy.visit('/signup');\n  cy.get('input').type('john@example.com');\n  cy.get('button').click();\n  cy.contains('Success').should('be.visible');\n});\n```\n\n**Common interview trap:** Saying integration tests are faster than unit tests.",
+      "ru": "### Иерархия тестов\n\nUnit-тесты проверяют отдельные функции в изоляции, интеграционные тесты проверяют взаимодействие нескольких компонентов, e2e-тесты имитируют реальные действия пользователя во всем приложении. Unit-тесты выполняются быстрее всего, e2e-тесты — медленнее, но наиболее реалистичны.\n\n```typescript\n// Unit: тест отдельной функции\ntest('sum складывает числа', () => {\n  expect(sum(2, 3)).toBe(5);\n});\n\n// Integration: тест с БД\ntest('создание пользователя сохраняется', async () => {\n  const user = await createUser({name: 'John'});\n  expect(user.id).toBeDefined();\n});\n\n// E2E: полный workflow\ntest('процесс регистрации', () => {\n  cy.visit('/signup');\n  cy.get('input').type('john@example.com');\n  cy.get('button').click();\n  cy.contains('Success').should('be.visible');\n});\n```\n\n**Типичная ошибка:** Говорить, что интеграционные тесты быстрее unit-тестов."
+    },
+    "tags": [
+      "test-types",
+      "unit-integration-e2e",
+      "testing-strategy"
+    ]
+  },
+  {
+    "id": "testing-q-2",
+    "topicId": "testing",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the basic structure of a Jest test with describe, it, and expect.",
+      "ru": "Объясните базовую структуру Jest теста с describe, it и expect."
+    },
+    "answer": {
+      "en": "### Jest Structure\n\n`describe` groups related tests, `it` (or `test`) defines a single test case, and `expect` makes assertions. The nested structure improves readability and organization.\n\n```typescript\ndescribe('Calculator', () => {\n  describe('add function', () => {\n    it('should return sum of two numbers', () => {\n      expect(add(2, 3)).toBe(5);\n    });\n    it('should handle negative numbers', () => {\n      expect(add(-2, 3)).toBe(1);\n    });\n  });\n});\n```\n\n**Common interview trap:** Confusing `describe` and `it` — describe groups tests, it defines individual test cases.",
+      "ru": "### Структура Jest\n\n`describe` группирует связанные тесты, `it` (или `test`) определяет одиночный тест, `expect` проверяет утверждения. Вложенная структура улучшает читаемость.\n\n```typescript\ndescribe('Calculator', () => {\n  describe('add function', () => {\n    it('должен вернуть сумму двух чисел', () => {\n      expect(add(2, 3)).toBe(5);\n    });\n    it('должен обрабатывать отрицательные числа', () => {\n      expect(add(-2, 3)).toBe(1);\n    });\n  });\n});\n```\n\n**Типичная ошибка:** Путаница между `describe` и `it` — describe группирует тесты, it определяет отдельные случаи."
+    },
+    "tags": [
+      "jest-basics",
+      "describe-it-expect",
+      "test-structure"
+    ]
+  },
+  {
+    "id": "testing-q-3",
+    "topicId": "testing",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is mocking and why would you mock a function in a unit test?",
+      "ru": "Что такое mocking и зачем вы бы создавали mock функции в unit-тесте?"
+    },
+    "answer": {
+      "en": "### Mocking Basics\n\nMocking replaces a real function or dependency with a fake version to isolate the code being tested. This lets you control inputs/outputs and verify function calls without external dependencies like APIs or databases.\n\n```typescript\n// Mock an API call\nconst fetchUser = jest.fn();\nfetchUser.mockResolvedValue({id: 1, name: 'John'});\n\ntest('should call fetchUser with correct ID', async () => {\n  const user = await fetchUser(1);\n  expect(fetchUser).toHaveBeenCalledWith(1);\n  expect(user.name).toBe('John');\n});\n```\n\n**Common interview trap:** Mocking everything — mock only external dependencies, not the code you're testing.",
+      "ru": "### Основы Mocking\n\nMocking заменяет реальную функцию или зависимость на поддельную версию для изоляции тестируемого кода. Это позволяет контролировать входные/выходные данные и проверять вызовы без внешних зависимостей вроде API или БД.\n\n```typescript\n// Mock вызова API\nconst fetchUser = jest.fn();\nfetchUser.mockResolvedValue({id: 1, name: 'John'});\n\ntest('должен вызвать fetchUser с правильным ID', async () => {\n  const user = await fetchUser(1);\n  expect(fetchUser).toHaveBeenCalledWith(1);\n  expect(user.name).toBe('John');\n});\n```\n\n**Типичная ошибка:** Мокировать все подряд — мокируйте только внешние зависимости, не код, который вы тестируете."
+    },
+    "tags": [
+      "mocking-basics",
+      "jest-mock",
+      "test-isolation"
+    ]
+  },
+  {
+    "id": "testing-q-4",
+    "topicId": "testing",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you test a React component that fetches data using React Testing Library?",
+      "ru": "Как вы тестируете React компонент, который загружает данные, используя React Testing Library?"
+    },
+    "answer": {
+      "en": "### React Testing Library Basics\n\nRender the component and wait for elements to appear using `screen` and `waitFor`. Mock the API call with Jest to control the response. Verify UI updates after data loads by checking for elements.\n\n```typescript\ntest('renders user after loading', async () => {\n  const mockFetch = jest.spyOn(global, 'fetch')\n    .mockResolvedValue({json: () => ({name: 'John'})});\n  \n  render(<UserComponent />);\n  const name = await screen.findByText('John');\n  expect(name).toBeInTheDocument();\n  mockFetch.mockRestore();\n});\n```\n\n**Common interview trap:** Using `waitFor` when `findBy` is simpler and more direct.",
+      "ru": "### React Testing Library Основы\n\nОтрендеривайте компонент и ждите появления элементов используя `screen` и `waitFor`. Мокируйте API вызов с Jest для контроля ответа. Проверяйте обновление UI после загрузки данных.\n\n```typescript\ntest('отображает пользователя после загрузки', async () => {\n  const mockFetch = jest.spyOn(global, 'fetch')\n    .mockResolvedValue({json: () => ({name: 'John'})});\n  \n  render(<UserComponent />);\n  const name = await screen.findByText('John');\n  expect(name).toBeInTheDocument();\n  mockFetch.mockRestore();\n});\n```\n\n**Типичная ошибка:** Использовать `waitFor` когда `findBy` проще и прямолинейнее."
+    },
+    "tags": [
+      "react-testing-library",
+      "component-testing",
+      "async-testing"
+    ]
+  },
+  {
+    "id": "testing-q-5",
+    "topicId": "testing",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between jest.fn(), jest.spyOn(), and jest.mock()?",
+      "ru": "В чем разница между jest.fn(), jest.spyOn() и jest.mock()?"
+    },
+    "answer": {
+      "en": "### Jest Mocking Methods\n\n`jest.fn()` creates a mock function from scratch, `jest.spyOn()` wraps an existing function to track calls while keeping original behavior, and `jest.mock()` replaces entire modules. Use `jest.fn()` for simple mocks, `jest.spyOn()` to watch real functions, and `jest.mock()` for modules.\n\n```typescript\n// jest.fn: create mock\nconst mockFn = jest.fn().mockReturnValue(5);\n\n// jest.spyOn: spy on real function\nconst obj = {method: () => 10};\nconst spy = jest.spyOn(obj, 'method').mockReturnValue(5);\n\n// jest.mock: replace module\njest.mock('./api', () => ({fetch: jest.fn()}));\n```\n\n**Common interview trap:** Using `jest.mock()` when `jest.fn()` is sufficient for simple tests.",
+      "ru": "### Методы Mocking в Jest\n\n`jest.fn()` создает mock функцию с нуля, `jest.spyOn()` оборачивает существующую функцию для отслеживания вызовов, сохраняя оригинальное поведение, `jest.mock()` заменяет целые модули. Используйте `jest.fn()` для простых моков, `jest.spyOn()` для наблюдения, `jest.mock()` для модулей.\n\n```typescript\n// jest.fn: создать mock\nconst mockFn = jest.fn().mockReturnValue(5);\n\n// jest.spyOn: шпионить за реальной функцией\nconst obj = {method: () => 10};\nconst spy = jest.spyOn(obj, 'method').mockReturnValue(5);\n\n// jest.mock: заменить модуль\njest.mock('./api', () => ({fetch: jest.fn()}));\n```\n\n**Типичная ошибка:** Использовать `jest.mock()` когда `jest.fn()` достаточно для простых тестов."
+    },
+    "tags": [
+      "jest-mocking",
+      "jest-fn",
+      "jest-spyon",
+      "module-mocking"
+    ]
+  },
+  {
+    "id": "testing-q-6",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between a mock, stub, and spy in testing? When would you use each one?",
+      "ru": "В чём разница между mock, stub и spy в тестировании? Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Mock vs Stub vs Spy\n\nA **stub** replaces a function with a dummy implementation, a **mock** verifies interactions and can assert on calls, and a **spy** wraps the original function to track calls while preserving behavior. Use stubs to control dependencies, mocks to verify behavior, and spies to observe without changing functionality.\n\n```typescript\nconst stub = sinon.stub().returns(42);\nconst mock = sinon.mock(obj).expects('method').once();\nconst spy = sinon.spy(obj, 'method');\nspy.calledWith(5); // true if called with 5\n```\n\n**Common interview trap:** Confusing mocks with stubs—mocks are assertion-focused, stubs are replacement-focused.",
+      "ru": "### Mock vs Stub vs Spy\n\n**Stub** заменяет функцию на dummy-реализацию, **mock** проверяет взаимодействия и подтверждает вызовы, **spy** оборачивает оригинальную функцию для отслеживания вызовов без изменения поведения. Используйте stubs для управления зависимостями, mocks для проверки поведения, spies для наблюдения без изменений.\n\n```typescript\nconst stub = sinon.stub().returns(42);\nconst mock = sinon.mock(obj).expects('method').once();\nconst spy = sinon.spy(obj, 'method');\nspy.calledWith(5); // true если вызвана с 5\n```\n\n**Типичная ошибка:** Путать mocks и stubs—mocks проверяют вызовы, stubs меняют реализацию."
+    },
+    "tags": [
+      "test-doubles",
+      "mocking-libraries",
+      "isolation"
+    ]
+  },
+  {
+    "id": "testing-q-7",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you properly test asynchronous code? Explain the difference between async/await assertions and promise-based assertions.",
+      "ru": "Как правильно тестировать асинхронный код? Объясните разницу между async/await и promise-based assertions."
+    },
+    "answer": {
+      "en": "### Testing Async Code\n\nWith **async/await**, use `await` before assertions to ensure completion; with **promises**, return the promise chain to let the test framework wait. Async/await is clearer and prevents accidental test passes when assertions are skipped.\n\n```typescript\n// async/await - clearer\nit('should fetch data', async () => {\n  const data = await fetchUser();\n  expect(data.name).toBe('John');\n});\n\n// promise - must return\nit('should fetch', () => {\n  return fetchUser().then(data => {\n    expect(data.name).toBe('John');\n  });\n});\n```\n\n**Common interview trap:** Forgetting to `await` or `return` causes tests to pass without executing assertions.",
+      "ru": "### Тестирование асинхронного кода\n\nС **async/await** используйте `await` перед assertions для гарантии завершения; с **promises** верните цепь promise чтобы фреймворк дождался. Async/await понятнее и предотвращает случайный проход тестов при пропуске assertions.\n\n```typescript\n// async/await - понятнее\nit('should fetch data', async () => {\n  const data = await fetchUser();\n  expect(data.name).toBe('John');\n});\n\n// promise - должен вернуть\nit('should fetch', () => {\n  return fetchUser().then(data => {\n    expect(data.name).toBe('John');\n  });\n});\n```\n\n**Типичная ошибка:** Забыть `await` или `return` приводит к проходу теста без выполнения assertions."
+    },
+    "tags": [
+      "async-testing",
+      "promises",
+      "test-execution"
+    ]
+  },
+  {
+    "id": "testing-q-8",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is renderHook and how do you test custom React hooks with it? Provide an example with act().",
+      "ru": "Что такое renderHook и как тестировать custom React hooks? Приведите пример с act()."
+    },
+    "answer": {
+      "en": "### renderHook for Custom Hooks\n\n**renderHook** from React Testing Library isolates hook testing without a component wrapper. Wrap state updates in **act()** to ensure React batches updates before assertions, preventing \"not wrapped in act()\" warnings.\n\n```typescript\nimport { renderHook, act } from '@testing-library/react';\n\nconst { result } = renderHook(() => useCounter());\nact(() => {\n  result.current.increment();\n});\nexpect(result.current.count).toBe(1);\n```\n\n**Common interview trap:** Forgetting `act()` causes console warnings and flaky tests with state updates.",
+      "ru": "### renderHook для Custom Hooks\n\n**renderHook** из React Testing Library изолирует тестирование hook без wrapper компонента. Оборачивайте обновления state в **act()** чтобы React批обработал обновления перед assertions, предотвращая предупреждения.\n\n```typescript\nimport { renderHook, act } from '@testing-library/react';\n\nconst { result } = renderHook(() => useCounter());\nact(() => {\n  result.current.increment();\n});\nexpect(result.current.count).toBe(1);\n```\n\n**Типичная ошибка:** Забыть `act()` вызывает предупреждения консоли и нестабильные тесты с обновлениями state."
+    },
+    "tags": [
+      "react-testing-library",
+      "hooks-testing",
+      "act-wrapper"
+    ]
+  },
+  {
+    "id": "testing-q-9",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the pros and cons of snapshot testing? When should you avoid it?",
+      "ru": "Какие плюсы и минусы snapshot тестирования? Когда его избегать?"
+    },
+    "answer": {
+      "en": "### Snapshot Testing Trade-offs\n\n**Pros:** Fast to write, catches unintended changes. **Cons:** Easy to blindly approve snapshots without review, creates large diffs, poor for dynamic content (timestamps, IDs). Avoid for components with frequently changing output or business-critical logic—use targeted assertions instead.\n\n```typescript\n// Bad: snapshot for dynamic content\nexpect(render(<UserCard id={Math.random()} />)).toMatchSnapshot();\n\n// Good: targeted assertion\nexpect(wrapper.find('.name')).toHaveText('John');\n```\n\n**Common interview trap:** Using snapshots as a substitute for real test logic instead of a safety net.",
+      "ru": "### Snapshot Тестирование\n\n**Плюсы:** Быстро писать, ловит непредумышленные изменения. **Минусы:** Легко слепо одобрить snapshots, большие диффы, плохо для динамического контента (timestamps, IDs). Избегайте для компонентов с часто меняющимся выводом или критической логикой—используйте целевые assertions.\n\n```typescript\n// Плохо: snapshot для динамического контента\nexpect(render(<UserCard id={Math.random()} />)).toMatchSnapshot();\n\n// Хорошо: целевые assertions\nexpect(wrapper.find('.name')).toHaveText('John');\n```\n\n**Типичная ошибка:** Использовать snapshots вместо реальной логики тестов вместо страховки."
+    },
+    "tags": [
+      "snapshot-testing",
+      "test-strategy",
+      "jest"
+    ]
+  },
+  {
+    "id": "testing-q-10",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you interpret code coverage metrics? What does 80% coverage mean and what are its limitations?",
+      "ru": "Как интерпретировать метрики code coverage? Что означает 80% покрытие и в чём его ограничения?"
+    },
+    "answer": {
+      "en": "### Code Coverage Interpretation\n\n80% coverage means 80% of lines/branches executed by tests, but **doesn't guarantee quality**—it only measures execution, not assertion strength. Focus on branch coverage over line coverage; achieve coverage organically through meaningful tests, not by hitting arbitrary targets that lead to untested edge cases.\n\n```typescript\nfunction divide(a, b) {\n  return a / b; // 100% coverage if tested with a=10, b=2\n  // But b=0 (division by zero) may be untested\n}\n```\n\n**Common interview trap:** Assuming 100% coverage means bug-free code—high coverage with weak assertions is worse than lower coverage with strong tests.",
+      "ru": "### Интерпретация Code Coverage\n\n80% покрытие означает выполнение 80% строк/branches тестами, но **не гарантирует качество**—измеряет только выполнение, не мощь assertions. Fokusiруйте на branch coverage; добивайтесь покрытия органично через значимые тесты, не произвольные цели.\n\n```typescript\nfunction divide(a, b) {\n  return a / b; // 100% покрытие если тестировано с a=10, b=2\n  // Но b=0 (деление на ноль) может быть не протестировано\n}\n```\n\n**Типичная ошибка:** Думать что 100% coverage означает баг-free код—высокое покрытие со слабыми assertions хуже чем низкое покрытие с сильными тестами."
+    },
+    "tags": [
+      "code-coverage",
+      "metrics",
+      "test-quality"
+    ]
+  },
+  {
+    "id": "testing-q-11",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between mocks, stubs, and spies. When would you use each in a test?",
+      "ru": "Объясните различие между mocks, stubs и spies. Когда вы используете каждый в тесте?"
+    },
+    "answer": {
+      "en": "### Test Doubles Patterns\n\nStubs replace functions with predetermined responses, mocks verify interactions were called correctly, and spies track calls while preserving original behavior. Use stubs for dependencies, mocks for interaction verification, and spies for observing real function calls.\n\n```typescript\n// Stub: returns fixed value\nconst stub = sinon.stub(api, 'fetch').resolves({ data: 'test' });\n\n// Mock: verifies calls\nconst mock = sinon.mock(api).expects('fetch').once();\n\n// Spy: tracks calls but runs real function\nconst spy = sinon.spy(console, 'log');\nexpect(spy.calledWith('test')).to.be.true;\n```\n\n**Common interview trap:** Confusing mocks with stubs—mocks verify behavior, stubs provide fake data.",
+      "ru": "### Паттерны Test Doubles\n\nStubs заменяют функции предопределенными ответами, mocks проверяют вызовы функций, spies отслеживают вызовы, сохраняя оригинальное поведение. Используйте stubs для зависимостей, mocks для проверки взаимодействий, spies для наблюдения за реальными вызовами.\n\n```typescript\n// Stub: возвращает фиксированное значение\nconst stub = sinon.stub(api, 'fetch').resolves({ data: 'test' });\n\n// Mock: проверяет вызовы\nconst mock = sinon.mock(api).expects('fetch').once();\n\n// Spy: отслеживает вызовы но запускает реальную функцию\nconst spy = sinon.spy(console, 'log');\nexpect(spy.calledWith('test')).to.be.true;\n```\n\n**Типичная ошибка:** Путаница между mocks и stubs—mocks проверяют поведение, stubs предоставляют фальшивые данные."
+    },
+    "tags": [
+      "test-doubles",
+      "mocks",
+      "stubs",
+      "spies"
+    ]
+  },
+  {
+    "id": "testing-q-12",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you test asynchronous code? What are the pitfalls when testing async/await and promises?",
+      "ru": "Как вы тестируете асинхронный код? Какие подводные камни при тестировании async/await и promises?"
+    },
+    "answer": {
+      "en": "### Testing Async Code\n\nReturn promises from tests or use async/await syntax, ensuring the test waits for completion. Common pitfalls include forgetting to return promises, not catching rejections, and timeout issues with slow operations.\n\n```typescript\n// Correct: return promise\nit('fetches data', () => {\n  return api.fetch().then(data => {\n    expect(data).to.equal('result');\n  });\n});\n\n// Or using async/await\nit('fetches data', async () => {\n  const data = await api.fetch();\n  expect(data).to.equal('result');\n});\n\n// Pitfall: forgetting return\nit('bad test', () => {\n  api.fetch().then(data => expect(data).to.equal('result')); // No return!\n});\n```\n\n**Common interview trap:** Tests pass even when assertions fail because promise rejection isn't awaited.",
+      "ru": "### Тестирование асинхронного кода\n\nВозвращайте promises из тестов или используйте синтаксис async/await, убедитесь что тест ждет завершения. Типичные ошибки: забыли вернуть promise, не обработали rejections, проблемы timeout при медленных операциях.\n\n```typescript\n// Правильно: вернуть promise\nit('fetches data', () => {\n  return api.fetch().then(data => {\n    expect(data).to.equal('result');\n  });\n});\n\n// Или используя async/await\nit('fetches data', async () => {\n  const data = await api.fetch();\n  expect(data).to.equal('result');\n});\n\n// Ошибка: забыли return\nit('bad test', () => {\n  api.fetch().then(data => expect(data).to.equal('result')); // Нет return!\n});\n```\n\n**Типичная ошибка:** Тесты проходят даже если assertions падают, потому что rejection не ждется."
+    },
+    "tags": [
+      "async-testing",
+      "promises",
+      "async-await",
+      "test-execution"
+    ]
+  },
+  {
+    "id": "testing-q-13",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you use renderHook to test custom React hooks? What are the common mistakes when testing hooks?",
+      "ru": "Как вы используете renderHook для тестирования пользовательских React hooks? Какие типичные ошибки при тестировании hooks?"
+    },
+    "answer": {
+      "en": "### Testing Hooks with renderHook\n\nrenderHook from @testing-library/react-hooks lets you test hooks in isolation without rendering components. Common mistakes include not wrapping hooks in providers (Redux, contexts), not using act() for state updates, and forgetting to cleanup.\n\n```typescript\nimport { renderHook, act } from '@testing-library/react';\n\nit('increments counter', () => {\n  const { result } = renderHook(() => useCounter());\n  expect(result.current.count).toBe(0);\n  \n  act(() => {\n    result.current.increment();\n  });\n  expect(result.current.count).toBe(1);\n});\n\n// Common mistake: missing act()\nit('bad test', () => {\n  const { result } = renderHook(() => useCounter());\n  result.current.increment(); // Warning: not wrapped in act()\n});\n```\n\n**Common interview trap:** Forgetting that hook state updates require act() wrapping to avoid \"not wrapped in act()\" warnings.",
+      "ru": "### Тестирование Hooks с renderHook\n\nrenderHook из @testing-library/react позволяет тестировать hooks изолированно без рендера компонентов. Типичные ошибки: не обернули hooks в providers (Redux, contexts), не использовали act() для обновлений state, забыли cleanup.\n\n```typescript\nimport { renderHook, act } from '@testing-library/react';\n\nit('increments counter', () => {\n  const { result } = renderHook(() => useCounter());\n  expect(result.current.count).toBe(0);\n  \n  act(() => {\n    result.current.increment();\n  });\n  expect(result.current.count).toBe(1);\n});\n\n// Типичная ошибка: пропущен act()\nit('bad test', () => {\n  const { result } = renderHook(() => useCounter());\n  result.current.increment(); // Warning: not wrapped in act()\n});\n```\n\n**Типичная ошибка:** Забыли что обновления hook state требуют обертки в act() чтобы избежать предупреждений."
+    },
+    "tags": [
+      "react-hooks",
+      "renderHook",
+      "testing-library",
+      "act"
+    ]
+  },
+  {
+    "id": "testing-q-14",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the trade-offs of snapshot testing? When should you use or avoid it?",
+      "ru": "Какие компромиссы у snapshot тестирования? Когда вы должны его использовать или избегать?"
+    },
+    "answer": {
+      "en": "### Snapshot Testing Trade-offs\n\nSnapshots quickly catch unintended UI changes but create maintenance burden—developers often blindly update snapshots without reviewing changes. Use for stable components, avoid for frequently changing or generated content (IDs, timestamps, random data).\n\n```typescript\n// Good: stable component structure\nit('renders button', () => {\n  const { container } = render(<Button label=\"Click me\" />);\n  expect(container).toMatchSnapshot();\n});\n\n// Bad: contains dynamic data\nit('renders user list', () => {\n  const { container } = render(<UserList users={dynamicUsers} />);\n  expect(container).toMatchSnapshot(); // Snapshot changes every run!\n});\n\n// Better: snapshot specific parts\nexpect(button.textContent).toBe('Click me');\n```\n\n**Common interview trap:** Using snapshots as a substitute for meaningful assertions—they should complement, not replace specific expectations.",
+      "ru": "### Компромиссы Snapshot тестирования\n\nSnapshotы быстро ловят непредумышленные UI изменения но создают бремя обслуживания—разработчики часто слепо обновляют snapshots без проверки. Используйте для стабильных компонентов, избегайте часто меняющегося или сгенерированного контента (IDs, timestamps, random).\n\n```typescript\n// Хорошо: стабильная структура компонента\nit('renders button', () => {\n  const { container } = render(<Button label=\"Click me\" />);\n  expect(container).toMatchSnapshot();\n});\n\n// Плохо: содержит динамические данные\nit('renders user list', () => {\n  const { container } = render(<UserList users={dynamicUsers} />);\n  expect(container).toMatchSnapshot(); // Snapshot меняется каждый раз!\n});\n\n// Лучше: snapshot конкретных частей\nexpect(button.textContent).toBe('Click me');\n```\n\n**Типичная ошибка:** Использование snapshots как замены для осмысленных assertions—они должны дополнять, не заменять конкретные expectations."
+    },
+    "tags": [
+      "snapshot-testing",
+      "trade-offs",
+      "maintenance",
+      "test-strategy"
+    ]
+  },
+  {
+    "id": "testing-q-15",
+    "topicId": "testing",
+    "difficulty": "middle",
+    "question": {
+      "en": "What do code coverage metrics really tell you? What are the limitations of high coverage percentage?",
+      "ru": "Что вам реально говорят метрики code coverage? Какие ограничения у высокого процента coverage?"
+    },
+    "answer": {
+      "en": "### Code Coverage Metrics\n\nCoverage metrics (line, branch, function) measure how much code is executed during tests, but high percentages don't guarantee quality—you can have 100% coverage with meaningless assertions. Focus on critical paths and behavior, not just hitting numbers; uncovered edge cases can still hide bugs.\n\n```typescript\n// High coverage but poor quality\nfunction add(a, b) {\n  return a + b;\n}\n\nit('adds numbers', () => {\n  expect(add(1, 2)).toBe(3); // 100% coverage, zero assertions!\n});\n\n// Better: test behavior and edge cases\nit('adds positive numbers', () => {\n  expect(add(1, 2)).toBe(3);\n});\nit('handles negative numbers', () => {\n  expect(add(-1, -2)).toBe(-3);\n});\nit('handles zero', () => {\n  expect(add(0, 5)).toBe(5);\n});\n```\n\n**Common interview trap:** Confusing coverage percentage with test quality—80% coverage with meaningful tests beats 100% with empty assertions.",
+      "ru": "### Метрики Code Coverage\n\nМетрики coverage (line, branch, function) измеряют сколько кода выполнено при тестах, но высокие проценты не гарантируют качество—у вас может быть 100% coverage с бессмысленными assertions. Фокусируйтесь на критических путях и поведении, не на числах; непокрытые edge cases могут скрывать баги.\n\n```typescript\n// Высокий coverage но плохое качество\nfunction add(a, b) {\n  return a + b;\n}\n\nit('adds numbers', () => {\n  expect(add(1, 2)).toBe(3); // 100% coverage, ноль assertions!\n});\n\n// Лучше: тестируйте поведение и edge cases\nit('adds positive numbers', () => {\n  expect(add(1, 2)).toBe(3);\n});\nit('handles negative numbers', () => {\n  expect(add(-1, -2)).toBe(-3);\n});\nit('handles zero', () => {\n  expect(add(0, 5)).toBe(5);\n});\n```\n\n**Типичная ошибка:** Путаница между процентом coverage и качеством тестов—80% coverage с осмысленными тестами лучше 100% с пустыми assertions."
+    },
+    "tags": [
+      "code-coverage",
+      "metrics",
+      "test-quality",
+      "coverage-limitations"
+    ]
+  },
+  {
+    "id": "testing-q-16",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the difference between the testing pyramid and testing trophy. When would you choose one over the other in a modern application?",
+      "ru": "Объясните разницу между пирамидой тестирования и трофеем тестирования. Когда вы выбрали бы один подход над другим в современном приложении?"
+    },
+    "answer": {
+      "en": "### Testing Pyramid vs Trophy\n\nThe pyramid emphasizes many unit tests, fewer integration tests, and few e2e tests. The trophy inverts this, prioritizing integration tests that catch real user flows without heavy mocking. The trophy works better for frontend applications where integration tests provide more confidence with less brittleness.\n\n```typescript\n// Pyramid: 70% unit, 20% integration, 10% e2e\n// Trophy: 10% unit, 80% integration, 10% e2e\n// Frontend example favors trophy approach\n```\n\n**Common interview trap:** Assuming the pyramid is always correct; modern testing favors context-specific strategies.",
+      "ru": "### Пирамида vs Трофей\n\nПирамида подчеркивает много unit-тестов, меньше интеграционных и мало e2e. Трофей это инвертирует, приоритизируя интеграционные тесты, которые ловят реальные потоки без излишнего мокирования. Трофей лучше для фронтенда, где интеграционные тесты дают больше уверенности при меньшей хрупкости.\n\n```typescript\n// Пирамида: 70% unit, 20% integration, 10% e2e\n// Трофей: 10% unit, 80% integration, 10% e2e\n// Фронтенд предпочитает трофей\n```\n\n**Типичная ошибка:** Предполагать, что пирамида всегда правильна; современное тестирование требует контекстного подхода."
+    },
+    "tags": [
+      "testing-pyramid",
+      "testing-trophy",
+      "testing-strategy"
+    ]
+  },
+  {
+    "id": "testing-q-17",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement contract testing between a frontend and backend service? What tools would you use and why?",
+      "ru": "Как бы вы реализовали контрактное тестирование между фронтенд и бэкенд сервисом? Какие инструменты вы бы использовали и почему?"
+    },
+    "answer": {
+      "en": "### Contract Testing Implementation\n\nContract testing verifies that consumer and provider expectations match without running both services together. Use Pact: the consumer defines expected requests/responses, generating a contract that the provider validates independently. This catches integration breaks early and enables independent deployments.\n\n```typescript\n// Consumer side (frontend)\nconst interaction = new PactV3('Frontend', 'Backend')\n  .uponReceiving('a request for users')\n  .withRequest('GET', '/api/users')\n  .willRespondWith(200, { body: [{ id: 1, name: 'John' }] });\n\n// Provider validates this contract independently\n```\n\n**Common interview trap:** Confusing contract testing with mocking; contracts are validated by real code.",
+      "ru": "### Контрактное Тестирование\n\nКонтрактное тестирование проверяет, что ожидания потребителя и провайдера совпадают без запуска обоих сервисов вместе. Используйте Pact: потребитель определяет ожидаемые запросы/ответы, генерируя контракт, который провайдер валидирует независимо. Это ловит интеграционные проблемы рано.\n\n```typescript\n// Consumer side (frontend)\nconst interaction = new PactV3('Frontend', 'Backend')\n  .uponReceiving('a request for users')\n  .withRequest('GET', '/api/users')\n  .willRespondWith(200, { body: [{ id: 1, name: 'John' }] });\n```\n\n**Типичная ошибка:** Путать контрактное тестирование с мокированием; контракты валидируются реальным кодом."
+    },
+    "tags": [
+      "contract-testing",
+      "pact",
+      "api-testing",
+      "microservices"
+    ]
+  },
+  {
+    "id": "testing-q-18",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe property-based testing and provide an example. When is it more valuable than example-based testing?",
+      "ru": "Опишите property-based тестирование и приведите пример. Когда оно более ценно, чем тестирование на примерах?"
+    },
+    "answer": {
+      "en": "### Property-Based Testing\n\nProperty-based testing generates random inputs to verify invariant properties hold across many cases, not just examples. Use libraries like fast-check. It's more valuable for algorithmic functions, data transformations, and edge-case discovery where manual examples miss corner cases.\n\n```typescript\n// Example: sum is commutative\nimport fc from 'fast-check';\n\nfc.assert(\n  fc.property(fc.integer(), fc.integer(), (a, b) => {\n    return sum(a, b) === sum(b, a);\n  })\n);\n```\n\n**Common interview trap:** Property-based testing replacing all tests; best used alongside example-based tests.",
+      "ru": "### Property-Based Тестирование\n\nProperty-based тестирование генерирует случайные входные данные для проверки инвариантных свойств в многих случаях, не только примерах. Используйте fast-check. Оно ценнее для алгоритмических функций, трансформаций данных и открытия edge-cases.\n\n```typescript\n// Пример: сумма коммутативна\nimport fc from 'fast-check';\n\nfc.assert(\n  fc.property(fc.integer(), fc.integer(), (a, b) => {\n    return sum(a, b) === sum(b, a);\n  })\n);\n```\n\n**Типичная ошибка:** Property-based тестирование заменяет все тесты; лучше использовать наряду с примерами."
+    },
+    "tags": [
+      "property-based-testing",
+      "fast-check",
+      "generative-testing"
+    ]
+  },
+  {
+    "id": "testing-q-19",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you test microservices in isolation while ensuring end-to-end flows work? Compare MSW and contract testing approaches.",
+      "ru": "Как вы тестируете микросервисы в изоляции, убедившись, что end-to-end потоки работают? Сравните подходы MSW и контрактного тестирования."
+    },
+    "answer": {
+      "en": "### Testing Microservices\n\nMSW mocks HTTP responses at the network level for isolated unit/integration tests without real services. Contract testing validates actual service APIs match expectations. Use MSW for local frontend testing, contracts for integration between services. Combine both: MSW for speed, contracts for confidence.\n\n```typescript\n// MSW setup for frontend\nconst handlers = [\n  rest.get('/api/users/:id', (req, res, ctx) => {\n    return res(ctx.json({ id: req.params.id, name: 'John' }));\n  })\n];\n\n// Contract validates real backend honors this\n```\n\n**Common interview trap:** Thinking MSW replaces contract testing; they serve different purposes.",
+      "ru": "### Тестирование Микросервисов\n\nMSW мокирует HTTP ответы на уровне сети для изолированных юнит/интеграционных тестов без реальных сервисов. Контрактное тестирование валидирует, что реальные APIs совпадают с ожиданиями. Используйте MSW для локального тестирования фронтенда, контракты для интеграции сервисов. Комбинируйте оба.\n\n```typescript\n// MSW setup для фронтенда\nconst handlers = [\n  rest.get('/api/users/:id', (req, res, ctx) => {\n    return res(ctx.json({ id: req.params.id, name: 'John' }));\n  })\n];\n```\n\n**Типичная ошибка:** Думать, что MSW заменяет контрактное тестирование; они служат разным целям."
+    },
+    "tags": [
+      "microservices-testing",
+      "msw",
+      "contract-testing",
+      "mocking"
+    ]
+  },
+  {
+    "id": "testing-q-20",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain your approach to performance testing in a fullstack application. How would you measure and prevent regressions?",
+      "ru": "Объясните ваш подход к тестированию производительности в fullstack приложении. Как бы вы измеряли и предотвращали регрессии?"
+    },
+    "answer": {
+      "en": "### Performance Testing Strategy\n\nMeasure Core Web Vitals (LCP, FID, CLS) with tools like Lighthouse, WebPageTest, or custom instrumentation. Use Playwright to simulate real scenarios and track metrics over time. Integrate performance budgets in CI/CD: fail builds if metrics exceed thresholds. Track server response times, database queries, and bundle sizes separately.\n\n```typescript\n// Playwright performance measurement\nconst metrics = await page.evaluate(() => \n  JSON.stringify(window.performance.getEntriesByType('navigation'))\n);\nconst navigationTiming = JSON.parse(metrics)[0];\nexpect(navigationTiming.loadEventEnd).toBeLessThan(3000);\n```\n\n**Common interview trap:** Only measuring frontend performance; backend and database bottlenecks matter equally.",
+      "ru": "### Стратегия Тестирования Производительности\n\nИзмеряйте Core Web Vitals (LCP, FID, CLS) с инструментами как Lighthouse, WebPageTest или собственная инструментация. Используйте Playwright для симуляции реальных сценариев и отслеживания метрик. Интегрируйте performance budgets в CI/CD: не допускайте сборку при превышении пороков.\n\n```typescript\n// Измерение производительности Playwright\nconst metrics = await page.evaluate(() => \n  JSON.stringify(window.performance.getEntriesByType('navigation'))\n);\nconst navigationTiming = JSON.parse(metrics)[0];\nexpect(navigationTiming.loadEventEnd).toBeLessThan(3000);\n```\n\n**Типичная ошибка:** Измерять только фронтенд; бэкенд и БД bottlenecks одинаково важны."
+    },
+    "tags": [
+      "performance-testing",
+      "core-web-vitals",
+      "regression-prevention",
+      "playwright"
+    ]
+  },
+  {
+    "id": "testing-q-21",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the difference between the testing pyramid and testing trophy. Which approach do you prefer for microservices and why?",
+      "ru": "Объясните разницу между пирамидой тестирования и трофеем тестирования. Какой подход вы предпочитаете для микросервисов и почему?"
+    },
+    "answer": {
+      "en": "### Testing Pyramid vs Trophy\n\nThe pyramid emphasizes unit tests as the base, integration in the middle, and e2e at the top. The trophy inverts this, prioritizing integration tests (especially API/contract tests) as the most valuable. For microservices, the trophy is superior because unit tests miss service boundaries—contract testing catches real integration failures.\n\n```typescript\n// Trophy approach: prioritize integration\ntest('API contract', async () => {\n  const response = await fetch('/api/users');\n  expect(response).toHaveProperty('data');\n  expect(response.data).toEqual(expect.arrayContaining([\n    expect.objectContaining({ id: expect.any(Number) })\n  ]));\n});\n```\n\n**Common interview trap:** Saying the pyramid is always correct without considering service-oriented architectures.",
+      "ru": "### Пирамида vs трофей тестирования\n\nПирамида подчеркивает юнит-тесты как основу, интеграционные в середине и e2e сверху. Трофей инвертирует это, приоритизируя интеграционные тесты (особенно contract-тесты) как наиболее ценные. Для микросервисов трофей лучше, потому что юнит-тесты пропускают границы сервисов—контрактное тестирование ловит реальные ошибки интеграции.\n\n```typescript\n// Подход трофея: приоритет интеграции\ntest('API contract', async () => {\n  const response = await fetch('/api/users');\n  expect(response).toHaveProperty('data');\n  expect(response.data).toEqual(expect.arrayContaining([\n    expect.objectContaining({ id: expect.any(Number) })\n  ]));\n});\n```\n\n**Типичная ошибка:** Утверждать, что пирамида всегда правильна без учета архитектур, ориентированных на сервисы."
+    },
+    "tags": [
+      "testing-pyramid",
+      "testing-trophy",
+      "microservices-testing",
+      "contract-testing"
+    ]
+  },
+  {
+    "id": "testing-q-22",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you use Mock Service Worker (MSW) in combination with property-based testing to test an API client? What are the benefits?",
+      "ru": "Как бы вы использовали Mock Service Worker (MSW) в сочетании с property-based тестированием для тестирования API-клиента? В чем преимущества?"
+    },
+    "answer": {
+      "en": "### MSW + Property-Based Testing\n\nMSW intercepts HTTP requests at the network level, allowing you to define flexible response handlers. Property-based testing (using libraries like fast-check) generates hundreds of random inputs, ensuring your client handles edge cases. Together, they verify that your API client is resilient to variations in real-world data.\n\n```typescript\nimport { http, HttpResponse } from 'msw';\nimport { setupServer } from 'msw/node';\nimport fc from 'fast-check';\n\nconst server = setupServer(\n  http.get('/api/user', () => \n    HttpResponse.json({ id: fc.sample(fc.integer(), 1)[0] })\n  )\n);\n\ntest('client handles any integer id', () => {\n  fc.assert(fc.property(fc.integer(), (id) => {\n    expect(parseResponse({ id })).toBeDefined();\n  }));\n});\n```\n\n**Common interview trap:** Confusing property-based testing with random fuzzing—property-based shrinking identifies minimal failing cases.",
+      "ru": "### MSW + Property-Based Testing\n\nMSW перехватывает HTTP-запросы на уровне сети, позволяя определить гибкие обработчики ответов. Property-based тестирование (с использованием fast-check) генерирует сотни случайных входов, обеспечивая устойчивость клиента к edge cases. Вместе они проверяют, что ваш API-клиент устойчив к вариациям реальных данных.\n\n```typescript\nimport { http, HttpResponse } from 'msw';\nimport { setupServer } from 'msw/node';\nimport fc from 'fast-check';\n\nconst server = setupServer(\n  http.get('/api/user', () => \n    HttpResponse.json({ id: fc.sample(fc.integer(), 1)[0] })\n  )\n);\n\ntest('client handles any integer id', () => {\n  fc.assert(fc.property(fc.integer(), (id) => {\n    expect(parseResponse({ id })).toBeDefined();\n  }));\n});\n```\n\n**Типичная ошибка:** Путаница property-based тестирования со случайным fuzzing—property-based shrinking находит минимальные failing cases."
+    },
+    "tags": [
+      "msw",
+      "property-based-testing",
+      "api-client-testing",
+      "fast-check"
+    ]
+  },
+  {
+    "id": "testing-q-23",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe a strategy for testing microservices end-to-end with Playwright while minimizing flakiness and maintaining test performance. How do you handle async operations?",
+      "ru": "Опишите стратегию для end-to-end тестирования микросервисов с помощью Playwright, минимизируя flakiness и поддерживая производительность тестов. Как вы обрабатываете асинхронные операции?"
+    },
+    "answer": {
+      "en": "### E2E Testing Microservices with Playwright\n\nUse Playwright's built-in waiting mechanisms (waitForLoadState, waitForNavigation) instead of hardcoded sleeps to avoid flakiness. Parallelize tests across multiple worker processes and mock external dependencies with MSW to speed up execution. Handle async operations by waiting for specific selectors or network responses rather than time-based delays.\n\n```typescript\nawait page.goto('http://localhost:3000');\nawait page.waitForLoadState('networkidle');\nawait page.locator('[data-testid=\"user-card\"]').first().waitFor();\nawait expect(page.locator('[data-testid=\"user-card\"]')).toContainText('John');\n\n// Avoid this: await page.waitForTimeout(2000);\n```\n\n**Common interview trap:** Using arbitrary timeouts instead of Playwright's intelligent wait utilities, leading to random failures.",
+      "ru": "### E2E тестирование микросервисов с Playwright\n\nИспользуйте встроенные механизмы ожидания Playwright (waitForLoadState, waitForNavigation) вместо hardcoded sleep для избежания flakiness. Распараллеливайте тесты через несколько рабочих процессов и мокируйте внешние зависимости с MSW для ускорения. Обрабатывайте асинхронные операции, ожидая конкретные селекторы или ответы сети вместо временных задержек.\n\n```typescript\nawait page.goto('http://localhost:3000');\nawait page.waitForLoadState('networkidle');\nawait page.locator('[data-testid=\"user-card\"]').first().waitFor();\nawait expect(page.locator('[data-testid=\"user-card\"]')).toContainText('John');\n\n// Избегайте: await page.waitForTimeout(2000);\n```\n\n**Типичная ошибка:** Использование произвольных timeouts вместо интеллектуальных утилит ожидания Playwright, ведущее к случайным сбоям."
+    },
+    "tags": [
+      "playwright",
+      "e2e-testing",
+      "microservices-testing",
+      "test-flakiness"
+    ]
+  },
+  {
+    "id": "testing-q-24",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you implement contract testing in a microservices architecture? Compare different approaches (consumer-driven vs provider-driven) and explain when to use each.",
+      "ru": "Как вы реализуете контрактное тестирование в архитектуре микросервисов? Сравните различные подходы (consumer-driven vs provider-driven) и объясните, когда использовать каждый."
+    },
+    "answer": {
+      "en": "### Contract Testing Strategies\n\nConsumer-driven contracts (CDC) start from the consumer's needs and generate API expectations; provider-driven contracts test actual API capabilities. Use CDC when consumers drive requirements (many clients, few providers); use provider-driven when the provider is the source of truth. Pact.js is the standard CDC tool.\n\n```typescript\n// Consumer-driven: consumer defines expectations\nimport { Pact } from '@pact-foundation/pact';\n\nconst provider = new Pact({ consumer: 'WebApp', provider: 'UserService' });\n\ntest('fetches user by id', async () => {\n  await provider.addInteraction({\n    state: 'user 1 exists',\n    uponReceiving: 'a request for user 1',\n    withRequest: { method: 'GET', path: '/users/1' },\n    willRespondWith: { status: 200, body: { id: 1, name: 'John' } }\n  });\n  const user = await fetchUser(1);\n  expect(user.name).toBe('John');\n});\n```\n\n**Common interview trap:** Thinking contract tests replace integration tests—they verify API boundaries, not business logic correctness.",
+      "ru": "### Стратегии контрактного тестирования\n\nConsumer-driven контракты (CDC) начинаются с потребностей потребителя и генерируют ожидания API; provider-driven тесты проверяют фактические возможности API. Используйте CDC, когда потребители определяют требования (много клиентов, мало провайдеров); используйте provider-driven, когда провайдер является источником истины. Pact.js—стандартный инструмент CDC.\n\n```typescript\n// Consumer-driven: потребитель определяет ожидания\nimport { Pact } from '@pact-foundation/pact';\n\nconst provider = new Pact({ consumer: 'WebApp', provider: 'UserService' });\n\ntest('fetches user by id', async () => {\n  await provider.addInteraction({\n    state: 'user 1 exists',\n    uponReceiving: 'a request for user 1',\n    withRequest: { method: 'GET', path: '/users/1' },\n    willRespondWith: { status: 200, body: { id: 1, name: 'John' } }\n  });\n  const user = await fetchUser(1);\n  expect(user.name).toBe('John');\n});\n```\n\n**Типичная ошибка:** Думать, что контрактные тесты заменяют интеграционные тесты—они проверяют границы API, а не корректность бизнес-логики."
+    },
+    "tags": [
+      "contract-testing",
+      "pact",
+      "consumer-driven-contracts",
+      "microservices"
+    ]
+  },
+  {
+    "id": "testing-q-25",
+    "topicId": "testing",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain how you would approach performance testing in a fullstack application. What metrics matter, and how do you prevent performance regressions?",
+      "ru": "Объясните, как бы вы подошли к тестированию производительности в fullstack приложении. Какие метрики важны и как вы предотвращаете регрессии производительности?"
+    },
+    "answer": {
+      "en": "### Performance Testing Strategy\n\nMonitor Core Web Vitals (LCP, FID, CLS) using tools like Lighthouse, WebPageTest, or custom instrumentation. Measure backend latency with APM tools (New Relic, DataDog) and set performance budgets in CI/CD. Detect regressions by comparing metrics across commits using tools like Chromatic or custom dashboards.\n\n```typescript\nimport { expect, test } from '@playwright/test';\n\ntest('LCP within budget', async ({ page }) => {\n  const metrics = await page.evaluate(() => \n    JSON.stringify(window.performance.timing)\n  );\n  const lcp = JSON.parse(metrics).loadEventEnd - JSON.parse(metrics).navigationStart;\n  expect(lcp).toBeLessThan(2500); // 2.5s budget\n});\n\n// CI/CD: fail if metric exceeds baseline\n```\n\n**Common interview trap:** Focusing only on backend performance while ignoring frontend metrics—modern apps need both JS execution and network speed optimization.",
+      "ru": "### Стратегия тестирования производительности\n\nОтслеживайте Core Web Vitals (LCP, FID, CLS) используя инструменты как Lighthouse, WebPageTest или custom instrumentation. Измеряйте backend latency с помощью APM инструментов (New Relic, DataDog) и устанавливайте performance budgets в CI/CD. Обнаруживайте регрессии, сравнивая метрики между коммитами, используя Chromatic или custom dashboards.\n\n```typescript\nimport { expect, test } from '@playwright/test';\n\ntest('LCP within budget', async ({ page }) => {\n  const metrics = await page.evaluate(() => \n    JSON.stringify(window.performance.timing)\n  );\n  const lcp = JSON.parse(metrics).loadEventEnd - JSON.parse(metrics).navigationStart;\n  expect(lcp).toBeLessThan(2500); // 2.5s budget\n});\n\n// CI/CD: fail if metric exceeds baseline\n```\n\n**Типичная ошибка:** Сосредоточение только на backend производительности, игнорируя frontend метрики—современные приложения нуждаются в оптимизации JS и скорости сети."
+    },
+    "tags": [
+      "performance-testing",
+      "core-web-vitals",
+      "lighthouse",
+      "regression-detection"
+    ]
+  }
+]

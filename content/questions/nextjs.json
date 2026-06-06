@@ -1,1 +1,1321 @@
-[]
+[
+  {
+    "id": "nextjs-q-1",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain how Next.js file-based routing works. What file structure would you create for a blog application with routes /blog, /blog/[id], and /about?",
+      "ru": "Объясните, как работает файловая маршрутизация в Next.js. Какую структуру файлов вы создадите для блога с маршрутами /blog, /blog/[id] и /about?"
+    },
+    "answer": {
+      "en": "### File-Based Routing in Next.js\n\nNext.js automatically creates routes based on your file structure in the `pages` directory. Each file becomes a route, and folders create nested paths. Dynamic routes use square brackets `[param]` for catch-all segments.\n\nFor your blog, create this structure:\n\npages/\n  blog/\n    index.js          → /blog\n    [id].js           → /blog/[id]\n  about.js            → /about\n\n\nThe `[id].js` file receives the dynamic parameter through `useRouter()` or server-side props.\n\ntypescript\n// pages/blog/[id].js\nimport { useRouter } from 'next/router';\n\nexport default function BlogPost() {\n  const router = useRouter();\n  const { id } = router.query;\n  return <h1>Blog Post: {id}</h1>;\n}\n\n\n**Common interview trap:** Confusing `pages` directory routing with `app` directory routing (App Router). They work differently — pages uses `getStaticProps`, while app uses server components.",
+      "ru": "### Файловая маршрутизация в Next.js\n\nNext.js автоматически создает маршруты на основе структуры файлов в директории `pages`. Каждый файл становится маршрутом, папки создают вложенные пути. Динамические маршруты используют квадратные скобки `[param]`.\n\nДля блога создайте эту структуру:\n\npages/\n  blog/\n    index.js          → /blog\n    [id].js           → /blog/[id]\n  about.js            → /about\n\n\nФайл `[id].js` получает параметр через `useRouter()` или серверные props.\n\ntypescript\n// pages/blog/[id].js\nimport { useRouter } from 'next/router';\n\nexport default function BlogPost() {\n  const router = useRouter();\n  const { id } = router.query;\n  return <h1>Blog Post: {id}</h1>;\n}\n\n\n**Типичная ошибка на интервью:** Путаница между файловой маршрутизацией `pages` и `app` директории. Они работают по-разному."
+    },
+    "tags": [
+      "file-based-routing",
+      "pages-directory",
+      "dynamic-routes"
+    ]
+  },
+  {
+    "id": "nextjs-q-2",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between the Pages Router and App Router in Next.js? When would you use each one?",
+      "ru": "В чем разница между Pages Router и App Router в Next.js? Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Pages vs App Router\n\nThe **Pages Router** (legacy, `pages/` directory) uses file-based routing with data fetching functions like `getStaticProps` and `getServerSideProps`. The **App Router** (new, `app/` directory) uses React Server Components and a different structure with `layout.js` and `page.js` files.\n\nPages Router is simpler for small projects and widely supported. App Router is modern, supports nested layouts, streaming, and server-first architecture.\n\ntypescript\n// Pages Router - pages/blog/[id].js\nexport async function getStaticProps({ params }) {\n  return { props: { postId: params.id }, revalidate: 3600 };\n}\n\n// App Router - app/blog/[id]/page.js\nexport default async function Page({ params }) {\n  const postId = await fetch(`/api/posts/${params.id}`);\n  return <h1>Post: {postId}</h1>;\n}\n\n\n**Common interview trap:** Mixing Pages and App Router syntax. They cannot be used together — choose one for your entire app.",
+      "ru": "### Pages Router vs App Router\n\n**Pages Router** (устаревший, директория `pages/`) использует файловую маршрутизацию с функциями `getStaticProps` и `getServerSideProps`. **App Router** (новый, директория `app/`) использует React Server Components и структуру с `layout.js` и `page.js`.\n\nPages Router проще для малых проектов. App Router современнее, поддерживает вложенные макеты, потоковую передачу и архитектуру ориентированную на сервер.\n\ntypescript\n// Pages Router - pages/blog/[id].js\nexport async function getStaticProps({ params }) {\n  return { props: { postId: params.id }, revalidate: 3600 };\n}\n\n// App Router - app/blog/[id]/page.js\nexport default async function Page({ params }) {\n  const data = await fetch(`/api/posts/${params.id}`);\n  return <h1>Post ID</h1>;\n}\n\n\n**Типичная ошибка:** Смешивание синтаксиса Pages и App Router. Они не совместимы в одном проекте."
+    },
+    "tags": [
+      "pages-router",
+      "app-router",
+      "routing-comparison"
+    ]
+  },
+  {
+    "id": "nextjs-q-3",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between getStaticProps and getServerSideProps. When would you use each one and why?",
+      "ru": "Объясните разницу между getStaticProps и getServerSideProps. Когда использовать каждый и почему?"
+    },
+    "answer": {
+      "en": "### getStaticProps vs getServerSideProps\n\n**getStaticProps** generates pages at build time (Static Site Generation). Use it for content that doesn't change often—blog posts, documentation. Pages are pre-rendered and served instantly. Use `revalidate` for incremental static regeneration (ISR).\n\n**getServerSideProps** runs on every request (Server-Side Rendering). Use it for dynamic content that changes frequently—user profiles, real-time data. Slower but always fresh.\n\ntypescript\n// getStaticProps - build time\nexport async function getStaticProps() {\n  const posts = await fetch('https://api.example.com/posts');\n  return { props: { posts }, revalidate: 3600 };\n}\n\n// getServerSideProps - request time\nexport async function getServerSideProps() {\n  const user = await fetch('https://api.example.com/user');\n  return { props: { user } };\n}\n\n\n**Common interview trap:** Thinking getStaticProps updates automatically. It only regenerates on redeploy or with ISR. For truly dynamic data, use getServerSideProps or API routes.",
+      "ru": "### getStaticProps vs getServerSideProps\n\n**getStaticProps** генерирует страницы во время сборки (Static Site Generation). Используйте для контента, который меняется редко—посты блога, документация. Страницы предварительно отрендерены и подаются мгновенно. Используйте `revalidate` для инкрементальной статической регенерации.\n\n**getServerSideProps** запускается при каждом запросе (Server-Side Rendering). Используйте для динамического контента—профили пользователей, данные в реальном времени. Медленнее, но всегда свежо.\n\ntypescript\n// getStaticProps - время сборки\nexport async function getStaticProps() {\n  const posts = await fetch('https://api.example.com/posts');\n  return { props: { posts }, revalidate: 3600 };\n}\n\n// getServerSideProps - время запроса\nexport async function getServerSideProps() {\n  const user = await fetch('https://api.example.com/user');\n  return { props: { user } };\n}\n\n\n**Типичная ошибка:** Думать, что getStaticProps обновляется автоматически. Он регенерируется только при перезаборке или с ISR."
+    },
+    "tags": [
+      "getStaticProps",
+      "getServerSideProps",
+      "data-fetching",
+      "performance"
+    ]
+  },
+  {
+    "id": "nextjs-q-4",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Why should you use the Next.js Image component instead of the HTML img tag? Provide a practical example.",
+      "ru": "Почему нужно использовать компонент Next.js Image вместо HTML img? Приведите практический пример."
+    },
+    "answer": {
+      "en": "### Next.js Image Component Benefits\n\nThe Next.js `Image` component provides automatic optimization: responsive image serving, lazy loading, format conversion (WebP), and srcset generation. It prevents layout shift with intrinsic sizing. HTML `img` tags don't optimize, causing performance issues and poor UX.\n\nKey benefits: smaller file sizes, faster page loads, Cumulative Layout Shift (CLS) prevention, and automatic AVIF/WebP format support.\n\ntypescript\nimport Image from 'next/image';\n\nexport default function Hero() {\n  return (\n    <Image\n      src=\"/hero.jpg\"\n      alt=\"Hero image\"\n      width={1200}\n      height={600}\n      priority\n      sizes=\"(max-width: 768px) 100vw, 50vw\"\n    />\n  );\n}\n\n\n**Common interview trap:** Forgetting `width` and `height` props cause layout shift. Always specify them or use `fill` prop with a positioned parent container.",
+      "ru": "### Преимущества компонента Next.js Image\n\nКомпонент `Image` из Next.js обеспечивает автоматическую оптимизацию: адаптивное служение изображений, ленивую загрузку, преобразование формата (WebP), генерацию srcset. Предотвращает сдвиг макета с помощью внутреннего размера. HTML `img` не оптимизирует.\n\nОсновные преимущества: меньше размер файла, быстрее загрузка, предотвращение CLS, автоматическая поддержка AVIF/WebP.\n\ntypescript\nimport Image from 'next/image';\n\nexport default function Hero() {\n  return (\n    <Image\n      src=\"/hero.jpg\"\n      alt=\"Hero image\"\n      width={1200}\n      height={600}\n      priority\n      sizes=\"(max-width: 768px) 100vw, 50vw\"\n    />\n  );\n}\n\n\n**Типичная ошибка:** Забывают `width` и `height` props, что вызывает сдвиг макета. Всегда указывайте их или используйте `fill` с позиционированным родителем."
+    },
+    "tags": [
+      "Image-component",
+      "optimization",
+      "performance",
+      "layout-shift"
+    ]
+  },
+  {
+    "id": "nextjs-q-5",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the purpose of the Next.js Link component and how it differs from regular anchor tags. Show an example.",
+      "ru": "Объясните назначение компонента Next.js Link и чем он отличается от обычных тегов a. Покажите пример."
+    },
+    "answer": {
+      "en": "### Next.js Link Component\n\nThe `Link` component enables client-side navigation between pages without full page reloads. It prefetches linked pages, improving perceived performance. Regular `<a>` tags cause full page refreshes, losing state and being slower.\n\nLink accepts an `href` prop and automatically optimizes navigation. In Next.js 13+, the `href` prop can be used alone without a child `<a>` tag.\n\ntypescript\nimport Link from 'next/link';\n\nexport default function Navigation() {\n  return (\n    <nav>\n      <Link href=\"/\">Home</Link>\n      <Link href=\"/about\">About</Link>\n      <Link href=\"/blog/my-post\">Blog Post</Link>\n      \n      {/* With query parameters */}\n      <Link href=\"/search?q=nextjs\">Search</Link>\n    </nav>\n  );\n}\n\n\n**Common interview trap:** In Next.js 13+, wrapping an `<a>` inside Link is unnecessary (but still works). Newer syntax is simpler: `<Link href=\"...\">Link text</Link>`.",
+      "ru": "### Компонент Next.js Link\n\nКомпонент `Link` позволяет навигацию на клиенте между страницами без перезагрузки. Он предварительно загружает связанные страницы, улучшая производительность. Обычные теги `<a>` вызывают полную перезагрузку, теряя состояние.\n\nLink принимает проп `href` и автоматически оптимизирует навигацию. В Next.js 13+, `href` можно использовать без вложенного тега `<a>`.\n\ntypescript\nimport Link from 'next/link';\n\nexport default function Navigation() {\n  return (\n    <nav>\n      <Link href=\"/\">Home</Link>\n      <Link href=\"/about\">About</Link>\n      <Link href=\"/blog/my-post\">Blog Post</Link>\n      \n      {/* С параметрами запроса */}\n      <Link href=\"/search?q=nextjs\">Search</Link>\n    </nav>\n  );\n}\n\n\n**Типичная ошибка:** В Next.js 13+ оборачивание `<a>` в Link не требуется. Новый синтаксис проще: `<Link href=\"...\">Text</Link>`."
+    },
+    "tags": [
+      "Link-component",
+      "client-side-navigation",
+      "prefetching"
+    ]
+  },
+  {
+    "id": "nextjs-q-6",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do API routes work in Next.js? Show how you would create a simple GET endpoint that returns JSON data.",
+      "ru": "Как работают API маршрут�� в Next.js? Покажите, как создать простой GET endpoint, возвращающий JSON данные."
+    },
+    "answer": {
+      "en": "### Next.js API Routes\n\nAPI routes are serverless functions created in the `pages/api` directory. Each file becomes an API endpoint. They handle requests and return responses, allowing you to build backends without external servers. Use them for database queries, authentication, and integrations.\n\nEach route receives `req` and `res` objects. Use `req.method` to check HTTP method and respond accordingly.\n\ntypescript\n// pages/api/posts.js\nexport default function handler(req, res) {\n  if (req.method === 'GET') {\n    const posts = [\n      { id: 1, title: 'First Post' },\n      { id: 2, title: 'Second Post' }\n    ];\n    res.status(200).json(posts);\n  } else {\n    res.status(405).json({ error: 'Method not allowed' });\n  }\n}\n\n\nAccess it at `/api/posts`. Routes are secured—only code inside runs on the server, secrets stay safe.\n\n**Common interview trap:** Confusing API routes with frontend code. API routes run only on the server; they cannot be imported in components.",
+      "ru": "### API маршруты Next.js\n\nAPI маршруты—это бессерверные функции в директории `pages/api`. Каждый файл становится endpoint'ом. Они обрабатывают запросы и возвращают ответы, позволяя строить бэкэнды без внешних серверов. Используйте для запросов к БД, аутентификации и интеграций.\n\nКаждый маршрут получает объекты `req` и `res`. Используйте `req.method` для проверки HTTP метода.\n\ntypescript\n// pages/api/posts.js\nexport default function handler(req, res) {\n  if (req.method === 'GET') {\n    const posts = [\n      { id: 1, title: 'First Post' },\n      { id: 2, title: 'Second Post' }\n    ];\n    res.status(200).json(posts);\n  } else {\n    res.status(405).json({ error: 'Method not allowed' });\n  }\n}\n\n\nОбратитесь по `/api/posts`. Код выполняется только на сервере, секреты в безопасности.\n\n**Типичная ошибка:** Путаница между API маршрутами и фронтенд кодом. API маршруты работают только на сервере."
+    },
+    "tags": [
+      "API-routes",
+      "serverless-functions",
+      "backend"
+    ]
+  },
+  {
+    "id": "nextjs-q-7",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "You need to fetch data from an external API in your Next.js app. Should you use an API route, getStaticProps, getServerSideProps, or client-side fetch? Explain your reasoning.",
+      "ru": "Вы должны получить данные с внешнего API в приложении Next.js. Должны ли вы использовать API маршрут, getStaticProps, getServerSideProps или клиентскую выборку? Объясните свои рассуждения."
+    },
+    "answer": {
+      "en": "### Choosing the Right Data Fetching Strategy\n\nThe choice depends on your use case: **getStaticProps** for static content (blogs, documentation)—build-time fetch. **getServerSideProps** for dynamic content updated per request (user profiles, real-time). **API route** as middleware for sensitive operations (payments, auth tokens). **Client-side fetch** for user-initiated actions (search, filters)—uses `useEffect`.\n\nNever expose API keys in client code. Use API routes to hide sensitive keys. Static data should always use getStaticProps for performance.\n\ntypescript\n// Correct: Sensitive API key protected\n// pages/api/weather.js\nexport default async function handler(req, res) {\n  const data = await fetch(\n    `https://api.weather.com?key=${process.env.API_KEY}`\n  );\n  res.json(await data.json());\n}\n\n// Client calls your API route (not external API directly)\n// useEffect(() => fetch('/api/weather'), []);\n\n\n**Common interview trap:** Putting API keys in client code or fetching sensitive data client-side. Always use API routes or environment variables for protection.",
+      "ru": "### Выбор правильной стратегии получения данных\n\nВыбор зависит от случая использования: **getStaticProps** для статического контента—время сборки. **getServerSideProps** для динамического контента—каждый запрос. **API маршрут** как промежуточный слой для чувствительных операций—защита ключей. **Клиентская выборка** для действий пользователя—`useEffect`.\n\nНикогда не выставляйте API ключи в клиент-коде. Используйте API маршруты для защиты. Статические данные всегда используют getStaticProps для производительности.\n\ntypescript\n// Правильно: Защищенный API ключ\n// pages/api/weather.js\nexport default async function handler(req, res) {\n  const data = await fetch(\n    `https://api.weather.com?key=${process.env.API_KEY}`\n  );\n  res.json(await data.json());\n}\n\n// Клиент вызывает ваш маршрут (не внешний API)\n// useEffect(() => fetch('/api/weather'), []);\n\n\n**Типичная ошибка:** Размещение API ключей в клиент-коде. Всегда используйте API маршруты или переменные окружения для защиты."
+    },
+    "tags": [
+      "data-fetching-strategy",
+      "API-routes",
+      "getStaticProps",
+      "getServerSideProps",
+      "security"
+    ]
+  },
+  {
+    "id": "nextjs-q-28",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how Next.js handles code splitting and chunk generation internally. What happens during the build process when you have multiple dynamic imports?",
+      "ru": "Объясните, как Next.js внутренне обрабатывает разделение кода и генерацию чанков. Что происходит во время сборки при наличии нескольких динамических импортов?"
+    },
+    "answer": {
+      "en": "### Next.js Code Splitting Architecture\n\nNext.js uses webpack under the hood to automatically split code into chunks. Each page becomes its own chunk, and shared code is extracted into common chunks. During build, webpack analyzes your imports and creates optimal bundles based on entry points and dynamic imports.\n\nDynamic imports via `next/dynamic` or `import()` create separate chunks that are loaded on-demand. Next.js also creates a manifest file mapping chunks to pages for efficient loading strategies.\n\ntypescript\n// pages/index.tsx\nimport dynamic from 'next/dynamic';\n\nconst HeavyComponent = dynamic(() => import('../components/Heavy'), {\n  loading: () => <div>Loading...</div>,\n  ssr: false\n});\n\nexport default function Home() {\n  return <HeavyComponent />;\n}\n\n\n**Common interview trap:** Candidates often confuse dynamic imports with lazy loading and think `next/dynamic` only works in React.lazy. Actually, `next/dynamic` has Next.js-specific optimizations like SSR control and preloading support.",
+      "ru": "### Архитектура разделения кода Next.js\n\nNext.js использует webpack для автоматического разделения кода на чанки. Каждая страница становится отдельным чанком, а общий код извлекается в общие чанки. Во время сборки webpack анализирует импорты и создает оптимальные бандлы на основе точек входа и динамических импортов.\n\nДинамические импорты через `next/dynamic` или `import()` создают отдельные чанки, загружаемые по требованию. Next.js также создает файл манифеста, отображающий чанки на страницы для эффективных стратегий загрузки.\n\ntypescript\n// pages/index.tsx\nimport dynamic from 'next/dynamic';\n\nconst HeavyComponent = dynamic(() => import('../components/Heavy'), {\n  loading: () => <div>Loading...</div>,\n  ssr: false\n});\n\nexport default function Home() {\n  return <HeavyComponent />;\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты часто путают динамические импорты с ленивой загрузкой и думают, что `next/dynamic` работает только как React.lazy. На самом деле, `next/dynamic` имеет специфические оптимизации Next.js, такие как контроль SSR и поддержка предзагрузки."
+    },
+    "tags": [
+      "code-splitting",
+      "webpack",
+      "dynamic-imports",
+      "bundle-optimization"
+    ]
+  },
+  {
+    "id": "nextjs-q-29",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How would you customize webpack configuration in Next.js? Describe a scenario where you need to add custom loaders and explain the trade-offs.",
+      "ru": "Как вы кастомизируете конфигурацию webpack в Next.js? Опишите сценарий, когда вам нужны пользовательские загрузчики, и объясните компромиссы."
+    },
+    "answer": {
+      "en": "### Custom Webpack Configuration in Next.js\n\nModify webpack through `next.config.js` using the `webpack` property. This function receives the existing config and must return the modified version. You can add custom loaders, plugins, or modify existing ones.\n\nCommon trade-offs include build time increases, potential incompatibilities with Next.js optimizations, and maintenance burden when upgrading. Always prefer Next.js built-in features first (like `experimental.swcPlugins`) before custom webpack config.\n\ntypescript\n// next.config.js\nmodule.exports = {\n  webpack: (config, { isServer }) => {\n    config.module.rules.push({\n      test: /\\.custom$/,\n      use: {\n        loader: 'custom-loader',\n        options: { /* ... */ }\n      }\n    });\n    return config;\n  }\n};\n\n\n**Common interview trap:** Modifying webpack config can break Next.js optimizations like automatic code splitting. Many candidates don't test the final bundle output and assume changes won't affect performance.",
+      "ru": "### Пользовательская конфигурация Webpack в Next.js\n\nМодифицируйте webpack через `next.config.js`, используя свойство `webpack`. Эта функция получает существующую конфигурацию и должна вернуть измененную версию. Вы можете добавлять пользовательские загрузчики, плагины или изменять существующие.\n\nОбщие компромиссы включают увеличение времени сборки, потенциальную несовместимость с оптимизациями Next.js и бремя обслуживания при обновлении. Всегда сначала отдавайте предпочтение встроенным функциям Next.js (например, `experimental.swcPlugins`) перед пользовательской конфигурацией webpack.\n\ntypescript\n// next.config.js\nmodule.exports = {\n  webpack: (config, { isServer }) => {\n    config.module.rules.push({\n      test: /\\.custom$/,\n      use: {\n        loader: 'custom-loader',\n        options: { /* ... */ }\n      }\n    });\n    return config;\n  }\n};\n\n\n**Типичная ошибка на интервью:** Модификация конфигурации webpack может нарушить оптимизации Next.js, такие как автоматическое разделение кода. Многие кандидаты не тестируют финальный вывод бандла и предполагают, что изменения не повлияют на производительность."
+    },
+    "tags": [
+      "webpack",
+      "custom-loaders",
+      "next-config",
+      "build-optimization"
+    ]
+  },
+  {
+    "id": "nextjs-q-30",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Implement Module Federation in a Next.js application. How would you share components between micro-frontends while maintaining independent deployments?",
+      "ru": "Реализуйте федерацию модулей в приложении Next.js. Как вы будете обмениваться компонентами между микрофронтендами, сохраняя независимые развертывания?"
+    },
+    "answer": {
+      "en": "### Module Federation with Next.js\n\nModule Federation allows loading code from other applications at runtime. In Next.js, configure it via webpack in `next.config.js`. Define shared dependencies and expose/consume modules across applications.\n\nKey considerations: version conflicts with shared dependencies, network latency for loading remote modules, and debugging complexity. Use wrapper components to handle dynamic imports gracefully.\n\ntypescript\n// next.config.js (Host)\nconst NextFederationPlugin = require('@module-federation/nextjs-mf');\n\nmodule.exports = {\n  webpack: (config, options) => {\n    config.plugins.push(\n      new NextFederationPlugin({\n        name: 'host',\n        remotes: {\n          remote: 'remote@http://localhost:3001/_next/static/chunks/remoteEntry.js'\n        },\n        shared: ['react', 'react-dom']\n      })\n    );\n    return config;\n  }\n};\n\n\n**Common interview trap:** Candidates assume Module Federation solves all deployment problems but ignore shared dependency version mismatches and the increased complexity in error handling and debugging across federated apps.",
+      "ru": "### Федерация модулей с Next.js\n\nФедерация модулей позволяет загружать код из других приложений во время выполнения. В Next.js настройте ее через webpack в `next.config.js`. Определите общие зависимости и предоставляйте/потребляйте модули в приложениях.\n\nКлючевые соображения: конфликты версий общих зависимостей, сетевая задержка при загрузке удаленных модулей и сложность отладки. Используйте компоненты-обертки для корректной обработки динамических импортов.\n\ntypescript\n// next.config.js (Host)\nconst NextFederationPlugin = require('@module-federation/nextjs-mf');\n\nmodule.exports = {\n  webpack: (config, options) => {\n    config.plugins.push(\n      new NextFederationPlugin({\n        name: 'host',\n        remotes: {\n          remote: 'remote@http://localhost:3001/_next/static/chunks/remoteEntry.js'\n        },\n        shared: ['react', 'react-dom']\n      })\n    );\n    return config;\n  }\n};\n\n\n**Типичная ошибка на интервью:** Кандидаты предполагают, что федерация модулей решает все проблемы развертывания, но игнорируют несоответствия версий общих зависимостей и возросшую сложность обработки ошибок в федерированных приложениях."
+    },
+    "tags": [
+      "module-federation",
+      "micro-frontends",
+      "runtime-loading",
+      "deployment"
+    ]
+  },
+  {
+    "id": "nextjs-q-31",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What is Next.js multi-zone architecture and when would you use it instead of Module Federation? Provide a concrete implementation example.",
+      "ru": "Что такое архитектура мультизоны Next.js и когда вы бы использовали ее вместо федерации модулей? Предоставьте конкретный пример реализации."
+    },
+    "answer": {
+      "en": "### Next.js Multi-Zone Architecture\n\nMulti-zone merges multiple Next.js applications into one, each handling specific routes. Unlike Module Federation, it's simpler, more stable, and built-in. Use zones when you have independent Next.js apps that need route-based separation but unified domain deployment.\n\nEach zone is a separate Next.js app with its own `pages/` directory. A proxy routes requests to appropriate zones. Trade-off: less granular than Module Federation, but much simpler and with better SSR support.\n\ntypescript\n// next.config.js (Root)\nmodule.exports = {\n  basePath: '/zone-1',\n  publicRuntimeConfig: {\n    // Zone 1 config\n  }\n};\n\n// Proxy routing (nginx/vercel.json)\n{\n  \"rewrites\": [\n    { \"source\": \"/zone-1/:path*\", \"destination\": \"http://zone1:3001/:path*\" },\n    { \"source\": \"/zone-2/:path*\", \"destination\": \"http://zone2:3002/:path*\" }\n  ]\n}\n\n\n**Common interview trap:** Candidates confuse zones with Module Federation or think zones require monorepo structure. Multi-zones work with independent deployments and simpler proxy routing, making it ideal for teams with separate ownership.",
+      "ru": "### Архитектура мультизоны Next.js\n\nМультизона объединяет несколько приложений Next.js в одно, каждое обрабатывает определенные маршруты. В отличие от федерации модулей, это проще, стабильнее и встроено. Используйте зоны, когда у вас есть независимые приложения Next.js, которым нужно разделение на основе маршрутов, но единое развертывание домена.\n\nКаждая зона - это отдельное приложение Next.js с собственным каталогом `pages/`. Прокси маршрутизирует запросы в соответствующие зоны. Компромисс: менее гранулярно, чем федерация модулей, но намного проще с лучшей поддержкой SSR.\n\ntypescript\n// next.config.js (Root)\nmodule.exports = {\n  basePath: '/zone-1',\n  publicRuntimeConfig: {\n    // Zone 1 config\n  }\n};\n\n// Proxy routing (nginx/vercel.json)\n{\n  \"rewrites\": [\n    { \"source\": \"/zone-1/:path*\", \"destination\": \"http://zone1:3001/:path*\" },\n    { \"source\": \"/zone-2/:path*\", \"destination\": \"http://zone2:3002/:path*\" }\n  ]\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты путают зоны с федерацией модулей или думают, что зоны требуют структуры монорепо. Мультизоны работают с независимыми развертываниями и более простой маршрутизацией через прокси, что идеально для команд с отдельной ответственностью."
+    },
+    "tags": [
+      "multi-zone",
+      "architecture",
+      "route-based-separation",
+      "proxy-routing"
+    ]
+  },
+  {
+    "id": "nextjs-q-32",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe advanced bundle optimization techniques for Next.js. How would you analyze and reduce bundle size in a production environment?",
+      "ru": "Опишите продвинутые методы оптимизации бундла для Next.js. Как вы анализировали бы и уменьшали размер бандла в производственной среде?"
+    },
+    "answer": {
+      "en": "### Advanced Bundle Optimization\n\nUse tools like `next/bundle-analyzer` to visualize bundle composition. Implement import analysis, tree-shaking verification, and dynamic imports for heavy libraries. Leverage Next.js compression (gzip/brotli), image optimization, and SWC minification.\n\nOptimize third-party scripts with `next/script` strategy prop. Monitor Core Web Vitals and use `next/font` for font optimization. Consider replacing libraries with smaller alternatives (e.g., `date-fns` over `moment`).\n\ntypescript\n// next.config.js\nconst withBundleAnalyzer = require('@next/bundle-analyzer')({\n  enabled: process.env.ANALYZE === 'true'\n});\n\nmodule.exports = withBundleAnalyzer({\n  swcMinify: true,\n  compress: true,\n  productionBrowserSourceMaps: false\n});\n\n// Lazy load heavy library\nconst ChartLib = dynamic(() => import('heavy-chart-lib'), { ssr: false });\n\n\n**Common interview trap:** Candidates focus only on JavaScript size and ignore CSS, fonts, and images which often contribute more. They also don't consider tree-shaking failures when importing from barrel exports or using CommonJS in dependencies.",
+      "ru": "### Продвинутая оптимизация бундла\n\nИспользуйте такие инструменты, как `next/bundle-analyzer`, для визуализации состава бандла. Реализуйте анализ импортов, проверку tree-shaking и динамические импорты для тяжелых библиотек. Используйте сжатие Next.js (gzip/brotli), оптимизацию изображений и минификацию SWC.\n\nОптимизируйте сторонние скрипты с помощью пропса `next/script` strategy. Мониторьте Core Web Vitals и используйте `next/font` для оптимизации шрифтов. Рассмотрите замену библиотек на более маленькие альтернативы.\n\ntypescript\n// next.config.js\nconst withBundleAnalyzer = require('@next/bundle-analyzer')({\n  enabled: process.env.ANALYZE === 'true'\n});\n\nmodule.exports = withBundleAnalyzer({\n  swcMinify: true,\n  compress: true,\n  productionBrowserSourceMaps: false\n});\n\n// Lazy load heavy library\nconst ChartLib = dynamic(() => import('heavy-chart-lib'), { ssr: false });\n\n\n**Типичная ошибка на интервью:** Кандидаты сосредоточены только на размере JavaScript и игнорируют CSS, шрифты и изображения, которые часто вносят больший вклад. Они также не учитывают сбои tree-shaking при импорте из бочковых экспортов или использовании CommonJS в зависимостях."
+    },
+    "tags": [
+      "bundle-analysis",
+      "tree-shaking",
+      "dynamic-imports",
+      "minification"
+    ]
+  },
+  {
+    "id": "nextjs-q-33",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain deployment strategies for Next.js applications. Compare self-hosted, Vercel, and containerized approaches. What are the performance implications?",
+      "ru": "Объясните стратегии развертывания приложений Next.js. Сравните самостоятельное хостинг, Vercel и контейнеризованные подходы. Каковы последствия производительности?"
+    },
+    "answer": {
+      "en": "### Next.js Deployment Strategies\n\n**Vercel:** Built-in optimizations, edge middleware, automatic deployments. Cold starts are minimal. Cost scales with usage. Best for startups and teams needing fast iteration.\n\n**Self-hosted (Node.js):** Full control, complex scaling, requires infrastructure expertise. Use process managers like PM2. Enable compression and caching manually.\n\n**Docker/Kubernetes:** Standard container operations, scaling, monitoring. Requires significant setup. Best for enterprises with DevOps teams.\n\ntypescript\n// Dockerfile\nFROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\nCOPY .next .next\nEXPOSE 3000\nCMD [\"npm\", \"start\"]\n\n\n**Common interview trap:** Candidates assume Vercel is always best and don't consider lock-in costs or data residency requirements. They also underestimate self-hosted complexity and forget about database connection pools, secret management, and proper error logging in production.",
+      "ru": "### Стратегии развертывания Next.js\n\n**Vercel:** Встроенные оптимизации, edge middleware, автоматические развертывания. Холодные запуски минимальны. Стоимость масштабируется с использованием. Лучше всего для стартапов и команд, нуждающихся в быстрой итерации.\n\n**Самостоятельное хостинг (Node.js):** Полный контроль, сложное масштабирование, требует опыта инфраструктуры. Используйте менеджеры процессов как PM2. Включите сжатие и кеширование вручную.\n\n**Docker/Kubernetes:** Стандартные операции контейнеров, масштабирование, мониторинг. Требует значительной настройки. Лучше всего для предприятий с командами DevOps.\n\ntypescript\n// Dockerfile\nFROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\nCOPY .next .next\nEXPOSE 3000\nCMD [\"npm\", \"start\"]\n\n\n**Типичная ошибка на интервью:** Кандидаты предполагают, что Vercel всегда лучше и не рассматривают затраты на блокировку или требования к месторасположению данных. Они также недооценивают сложность самостоятельного хостинга и забывают о пулах подключений к базе данных, управлении секретами и правильном логировании ошибок в продакшене."
+    },
+    "tags": [
+      "deployment",
+      "vercel",
+      "docker",
+      "infrastructure",
+      "scaling"
+    ]
+  },
+  {
+    "id": "nextjs-q-34",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Next.js handle Incremental Static Regeneration (ISR)? Explain the on-demand revalidation feature and potential issues in distributed systems.",
+      "ru": "Как Next.js обрабатывает добавочную статическую регенерацию (ISR)? Объясните функцию переконфигурации по требованию и потенциальные проблемы в распределенных системах."
+    },
+    "answer": {
+      "en": "### ISR and On-Demand Revalidation\n\nISR combines static generation with periodic regeneration. Pages are served from cache but regenerated in background at specified intervals. On-demand revalidation via `revalidateTag()` or `revalidatePath()` manually triggers regeneration.\n\nIn distributed systems, cache invalidation becomes complex. Multiple instances may serve stale content during regeneration. Use shared cache layer (Redis) and ensure revalidation propagates across all instances.\n\ntypescript\n// pages/posts/[id].tsx\nexport async function getStaticProps({ params }) {\n  return {\n    props: { post: await fetchPost(params.id) },\n    revalidate: 3600 // ISR: regenerate every hour\n  };\n}\n\n// API route for on-demand revalidation\nexport default async function handler(req, res) {\n  try {\n    await res.revalidate(`/posts/${req.query.id}`);\n    return res.json({ revalidated: true });\n  } catch (err) {\n    return res.status(500).send('Revalidation failed');\n  }\n}\n\n\n**Common interview trap:** Candidates don't consider cache consistency across load-balanced instances. They assume revalidation instantly updates all caches and miss stale-while-revalidate HTTP caching implications.",
+      "ru": "### ISR и переконфигурация по требованию\n\nISR объединяет статическое поколение с периодической регенерацией. Страницы передаются из кэша, но регенерируются в фоне через определенные интервалы. Переконфигурация по требованию через `revalidateTag()` или `revalidatePath()` вручную запускает регенерацию.\n\nВ распределенных системах инвалидация кэша становится сложной. Несколько экземпляров могут обслуживать устаревший контент во время регенерации. Используйте общий слой кэша (Redis) и убедитесь, что переконфигурация распространяется на все экземпляры.\n\ntypescript\n// pages/posts/[id].tsx\nexport async function getStaticProps({ params }) {\n  return {\n    props: { post: await fetchPost(params.id) },\n    revalidate: 3600 // ISR: regenerate every hour\n  };\n}\n\n// API route for on-demand revalidation\nexport default async function handler(req, res) {\n  try {\n    await res.revalidate(`/posts/${req.query.id}`);\n    return res.json({ revalidated: true });\n  } catch (err) {\n    return res.status(500).send('Revalidation failed');\n  }\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты не учитывают согласованность кэша в экземплярах с балансировкой нагрузки. Они предполагают, что переконфигурация мгновенно обновляет все кэши и пропускают последствия кэширования HTTP stale-while-revalidate."
+    },
+    "tags": [
+      "ISR",
+      "revalidation",
+      "caching",
+      "distributed-systems"
+    ]
+  },
+  {
+    "id": "nextjs-q-35",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Deep dive into Next.js 13+ App Router internals. How does it differ from Pages Router? What are the performance and structural implications for large-scale applications?",
+      "ru": "Глубокое изучение внутренностей App Router в Next.js 13+. Чем он отличается от Pages Router? Каковы последствия производительности и структуры для приложений в большом масштабе?"
+    },
+    "answer": {
+      "en": "### App Router vs Pages Router\n\nApp Router uses file-based routing with `app/` directory, supporting nested layouts, streaming, and React Server Components (RSC). Pages Router is simpler but less flexible. App Router enables better code organization and performance through selective SSR/CSR per component.\n\nRSCs reduce JavaScript sent to client, improving performance. Layouts enable shared state across routes. Trade-offs: increased complexity, learning curve, potential issues with client-side libraries not marked with `'use client'`.\n\ntypescript\n// app/layout.tsx (Shared layout)\nexport default function RootLayout({ children }) {\n  return <html><body>{children}</body></html>;\n}\n\n// app/dashboard/page.tsx (Server component by default)\nexport default async function Dashboard() {\n  const data = await fetchData(); // Direct DB access\n  return <div>{data}</div>;\n}\n\n// app/dashboard/client.tsx (Client component)\n'use client';\nexport default function ClientComponent() {\n  const [state, setState] = useState();\n  return <div>Interactive</div>;\n}\n\n\n**Common interview trap:** Candidates don't understand RSCs and assume App Router is just reorganization. They miss that entire component trees can execute server-side, and client dependencies must be explicitly marked, breaking many legacy patterns.",
+      "ru": "### App Router против Pages Router\n\nApp Router использует маршрутизацию на основе файлов с каталогом `app/`, поддерживая вложенные макеты, потоковую передачу и React Server Components (RSC). Pages Router проще, но менее гибкий. App Router позволяет лучшую организацию кода и производительность благодаря выборочному SSR/CSR для каждого компонента.\n\nRSC уменьшают JavaScript, отправляемый клиенту, улучшая производительность. Макеты позволяют обмениваться состоянием по маршрутам. Компромиссы: повышенная сложность, кривая обучения, потенциальные проблемы с библиотеками на клиентской стороне, не помеченными с помощью `'use client'`.\n\ntypescript\n// app/layout.tsx (Shared layout)\nexport default function RootLayout({ children }) {\n  return <html><body>{children}</body></html>;\n}\n\n// app/dashboard/page.tsx (Server component by default)\nexport default async function Dashboard() {\n  const data = await fetchData(); // Direct DB access\n  return <div>{data}</div>;\n}\n\n// app/dashboard/client.tsx (Client component)\n'use client';\nexport default function ClientComponent() {\n  const [state, setState] = useState();\n  return <div>Interactive</div>;\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты не понимают RSC и предполагают, что App Router - это просто реорганизация. Они упускают, что целые деревья компонентов могут выполняться на стороне сервера, а зависимости клиента должны быть явно отмечены, нарушая много устаревших паттернов."
+    },
+    "tags": [
+      "app-router",
+      "server-components",
+      "RSC",
+      "layout-architecture"
+    ]
+  },
+  {
+    "id": "nextjs-q-23",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between Server Components and Client Components in Next.js App Router. When would you use each?",
+      "ru": "Объясните разницу между Server Components и Client Components в Next.js App Router. Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Server vs Client Components\n\nServer Components (default) execute only on the server, reducing JavaScript sent to the browser. They can access databases and secrets directly. Client Components (marked with 'use client') run in the browser and handle interactivity, state, and hooks.\n\nUse Server Components for data fetching, accessing protected resources, and reducing bundle size. Use Client Components for interactive features like forms, event listeners, and React hooks (useState, useEffect).\n\nA common pattern: fetch data in a Server Component parent, pass it as props to Client Component children.\n\ntypescript\n// app/page.tsx - Server Component\nconst data = await fetchData();\nreturn <ClientComponent data={data} />;\n\n// app/components/client.tsx\n'use client';\nimport { useState } from 'react';\nexport default function ClientComponent({ data }) {\n  const [count, setCount] = useState(0);\n  return <div>{data} - {count}</div>;\n}\n\n\n**Common interview trap:** Assuming all components should be Client Components out of habit. Server Components are the default for a reason—use them unless you need interactivity.",
+      "ru": "### Server vs Client Components\n\nServer Components (по умолчанию) выполняются только на сервере, что уменьшает объём JavaScript для браузера. Они могут напрямую обращаться к БД и секретам. Client Components (с 'use client') работают в браузере и отвечают за интерактивность, состояние и хуки.\n\nИспользуйте Server Components для загрузки данных, доступа к защищённым ресурсам и уменьшения размера бандла. Используйте Client Components для интерактивных функций, обработчиков событий и React хуков.\n\nОбщий паттерн: получайте данные в родительском Server Component, передавайте в дочерние Client Components через props.\n\ntypescript\n// app/page.tsx - Server Component\nconst data = await fetchData();\nreturn <ClientComponent data={data} />;\n\n// app/components/client.tsx\n'use client';\nimport { useState } from 'react';\nexport default function ClientComponent({ data }) {\n  const [count, setCount] = useState(0);\n  return <div>{data} - {count}</div>;\n}\n\n\n**Типичная ошибка на интервью:** Автоматически делать все компоненты Client Components. Server Components — это значение по умолчанию, используйте их, пока не нужна интерактивность."
+    },
+    "tags": [
+      "server-components",
+      "client-components",
+      "component-architecture"
+    ]
+  },
+  {
+    "id": "nextjs-q-24",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you structure nested layouts in Next.js App Router? Provide an example with a dashboard layout and nested admin routes.",
+      "ru": "Как организовать вложенные layouts в Next.js App Router? Приведите пример с dashboard layout и вложенными admin маршрутами."
+    },
+    "answer": {
+      "en": "### Nested Layouts Structure\n\nLayouts in App Router automatically nest based on directory structure. Each folder can have its own layout.tsx file that wraps all routes in that segment and its children.\n\nCreate a layout hierarchy: app/layout.tsx → app/dashboard/layout.tsx → app/dashboard/admin/layout.tsx. Each layout receives children as a prop and wraps them.\n\nLayouts don't remount between route changes in the same layout hierarchy, preserving state. This is powerful for maintaining UI state across nested routes.\n\ntypescript\n// app/dashboard/layout.tsx\nexport default function DashboardLayout({ children }) {\n  return (\n    <div className=\"sidebar\">\n      <nav>Dashboard Nav</nav>\n      {children}\n    </div>\n  );\n}\n\n// app/dashboard/admin/layout.tsx\nexport default function AdminLayout({ children }) {\n  return (\n    <div className=\"admin-wrapper\">\n      <h2>Admin Panel</h2>\n      {children}\n    </div>\n  );\n}\n\n// app/dashboard/admin/users/page.tsx\nexport default function UsersPage() {\n  return <h3>Users List</h3>;\n}\n\n\n**Common interview trap:** Forgetting that layouts persist across route changes—test if you're accidentally maintaining stale state or re-fetching unnecessarily.",
+      "ru": "### Вложенная структура Layouts\n\nLayouts в App Router автоматически вкладываются в зависимости от структуры папок. Каждая папка может иметь свой layout.tsx, который оборачивает все маршруты в этом сегменте и его детях.\n\nСоздайте иерархию: app/layout.tsx → app/dashboard/layout.tsx → app/dashboard/admin/layout.tsx. Каждый layout получает children как prop и оборачивает их.\n\nLayouts не пересоздаются при навигации внутри одной иерархии, сохраняя состояние. Это мощный инструмент для сохранения состояния UI между вложенными маршрутами.\n\ntypescript\n// app/dashboard/layout.tsx\nexport default function DashboardLayout({ children }) {\n  return (\n    <div className=\"sidebar\">\n      <nav>Dashboard Nav</nav>\n      {children}\n    </div>\n  );\n}\n\n// app/dashboard/admin/layout.tsx\nexport default function AdminLayout({ children }) {\n  return (\n    <div className=\"admin-wrapper\">\n      <h2>Admin Panel</h2>\n      {children}\n    </div>\n  );\n}\n\n\n**Типичная ошибка на интервью:** Забывают, что layouts сохраняются при смене маршрутов—проверяйте, не храните ли вы случайно устаревшее состояние."
+    },
+    "tags": [
+      "app-router",
+      "layouts",
+      "nested-routing"
+    ]
+  },
+  {
+    "id": "nextjs-q-25",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the three main data fetching patterns in Next.js? Compare fetch with revalidation strategies and explain ISR.",
+      "ru": "Какие три основных паттерна загрузки данных в Next.js? Сравните fetch с strategies переосмысления и объясните ISR."
+    },
+    "answer": {
+      "en": "### Data Fetching Patterns\n\nThe three patterns are: Static Generation (build time), Server-Side Rendering (request time), and Incremental Static Regeneration (ISR).\n\nStatic Generation uses fetch with revalidate option for caching. SSR renders on each request—useful for dynamic, user-specific content. ISR combines both: pages regenerate in the background after the revalidate period expires.\n\nISR is powerful for frequently-accessed pages that change occasionally (product catalogs, blog posts). It ensures fast initial loads while keeping content fresh.\n\ntypescript\n// Static with revalidation (ISR)\nexport const revalidate = 60; // Revalidate every 60 seconds\n\nconst response = await fetch('https://api.example.com/posts', {\n  next: { revalidate: 3600 } // 1 hour cache\n});\nconst data = await response.json();\n\n// Or use on-demand revalidation\nimport { revalidatePath } from 'next/cache';\nrevalidatePath('/posts');\n\n\n**Common interview trap:** Confusing revalidate timing—segment-level revalidate applies to all fetches, while fetch-level revalidate is per-request. The stricter rule wins.",
+      "ru": "### Паттерны загрузки данных\n\nТри паттерна: Static Generation (во время сборки), Server-Side Rendering (на каждый запрос) и Incremental Static Regeneration (ISR).\n\nStatic Generation использует fetch с опцией revalidate для кеширования. SSR отрисовывает на каждый запрос—полезно для динамичного, пользовательского контента. ISR комбинирует оба: страницы переосмысляются в фоне после истечения периода revalidate.\n\nISR мощен для часто посещаемых страниц, которые редко меняются (каталоги, блоги). Обеспечивает быструю загрузку при актуальном контенте.\n\ntypescript\n// Static с переосмыслением (ISR)\nexport const revalidate = 60; // Переосмыслить через 60 секунд\n\nconst response = await fetch('https://api.example.com/posts', {\n  next: { revalidate: 3600 } // 1 час кеша\n});\nconst data = await response.json();\n\n// Или on-demand переосмысление\nimport { revalidatePath } from 'next/cache';\nrevalidatePath('/posts');\n\n\n**Типичная ошибка на интервью:** Путают время revalidate—segment-level применяется ко всем fetch, fetch-level к отдельным. Действует более строгое правило."
+    },
+    "tags": [
+      "data-fetching",
+      "isr",
+      "revalidation",
+      "static-generation"
+    ]
+  },
+  {
+    "id": "nextjs-q-26",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you create and use dynamic routes with [id] segments in Next.js App Router? Show how to handle both static pre-rendering and dynamic content.",
+      "ru": "Как создавать и использовать динамические маршруты с [id] сегментами в Next.js App Router? Покажите обработку статической предварительной отрисовки и динамического контента."
+    },
+    "answer": {
+      "en": "### Dynamic Routes with [id] Segments\n\nDynamic routes use bracket notation: app/posts/[id]/page.tsx. The [id] becomes a dynamic parameter accessible via route params. For static generation with dynamic routes, use generateStaticParams to pre-render paths at build time.\n\ngenerateStaticParams returns an array of objects with all possible param combinations. Next.js pre-renders pages for each combination. Paths not in the array can be handled with fallback modes or dynamic rendering.\n\nThis approach optimizes performance: static pages load instantly, while truly dynamic content falls back to dynamic rendering.\n\ntypescript\n// app/posts/[id]/page.tsx\nexport async function generateStaticParams() {\n  const posts = await fetchAllPosts();\n  return posts.map((post) => ({ id: String(post.id) }));\n}\n\nexport default async function PostPage({ params }) {\n  const post = await fetchPost(params.id);\n  return <article>{post.title}</article>;\n}\n\n// Dynamic params: app/posts/[id]/comments/[commentId]/page.tsx\nexport async function generateStaticParams({ params }) {\n  const comments = await fetchComments(params.id);\n  return comments.map((c) => ({ commentId: String(c.id) }));\n}\n\n\n**Common interview trap:** Assuming all dynamic routes must be static—sometimes dynamic rendering is the right choice. Use ISR or dynamic rendering for truly unpredictable paths.",
+      "ru": "### Динамические маршруты с [id] сегментами\n\nДинамические маршруты используют скобки: app/posts/[id]/page.tsx. [id] становится динамическим параметром, доступным через route params. Для статической предварительной отрисовки динамических маршрутов используйте generateStaticParams для отрисовки путей во время сборки.\n\ngenerateStaticParams возвращает массив объектов со всеми возможными комбинациями параметров. Next.js предварительно отрисовывает страницы для каждой комбинации. Пути не в массиве обрабатываются режимами fallback или динамической отрисовкой.\n\nЭтот подход оптимизирует производительность: статические страницы загружаются мгновенно, динамический контент падает на динамическую отрисовку.\n\ntypescript\n// app/posts/[id]/page.tsx\nexport async function generateStaticParams() {\n  const posts = await fetchAllPosts();\n  return posts.map((post) => ({ id: String(post.id) }));\n}\n\nexport default async function PostPage({ params }) {\n  const post = await fetchPost(params.id);\n  return <article>{post.title}</article>;\n}\n\n\n**Типичная ошибка на интервью:** Предполагают, что все динамические маршруты должны быть статическими—иногда динамическая отрисовка правильнее. Используйте ISR или динамическую отрисовку для непредсказуемых путей."
+    },
+    "tags": [
+      "dynamic-routes",
+      "generateStaticParams",
+      "static-pre-rendering"
+    ]
+  },
+  {
+    "id": "nextjs-q-27",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain Next.js middleware and its execution flow. When should you use middleware for authentication, redirects, or request modification?",
+      "ru": "Объясните middleware Next.js и его поток выполнения. Когда использовать middleware для аутентификации, редиректов или модификации запроса?"
+    },
+    "answer": {
+      "en": "### Next.js Middleware\n\nMiddleware runs before a request reaches a route handler or page. It's defined in middleware.ts at the project root and executes at the edge, making it fast. Use matcher to specify which routes trigger middleware.\n\nCommon uses: protecting routes with authentication checks, redirecting based on location or user roles, adding headers, and modifying requests. Middleware can check cookies or headers without hitting the backend.\n\nImportant: middleware cannot write to response body—it can only redirect or create a response with headers. For complex logic, call external APIs from within middleware.\n\ntypescript\n// middleware.ts\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth-token')?.value;\n  \n  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  \n  const response = NextResponse.next();\n  response.headers.set('X-Custom-Header', 'value');\n  return response;\n}\n\nexport const config = {\n  matcher: ['/dashboard/:path*', '/admin/:path*']\n};\n\n\n**Common interview trap:** Thinking middleware can modify response body—it can't. Middleware is for routing decisions and header manipulation only.",
+      "ru": "### Next.js Middleware\n\nMiddleware выполняется перед тем, как запрос достигает обработчик маршрута или страницу. Определяется в middleware.ts в корне проекта и выполняется на edge, что быстро. Используйте matcher для указания, какие маршруты триггерят middleware.\n\nОбычные применения: защита маршрутов проверкой аутентификации, редиректы по местоположению или ролям, добавление headers и модификация запроса. Middleware может проверять cookies или headers без обращения к бэкенду.\n\nВажно: middleware не может писать в тело response—может только редиректить или создать response с headers. Для сложной логики вызывайте внешние API внутри middleware.\n\ntypescript\n// middleware.ts\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth-token')?.value;\n  \n  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  \n  const response = NextResponse.next();\n  response.headers.set('X-Custom-Header', 'value');\n  return response;\n}\n\nexport const config = {\n  matcher: ['/dashboard/:path*', '/admin/:path*']\n};\n\n\n**Типичная ошибка на интервью:** Думают, что middleware может модифицировать тело response—не может. Middleware только для роутинга и header манипуляции."
+    },
+    "tags": [
+      "middleware",
+      "edge-runtime",
+      "authentication",
+      "request-handling"
+    ]
+  },
+  {
+    "id": "nextjs-q-28",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does the Metadata API work in Next.js? Show examples of static metadata, dynamic metadata, and Open Graph meta tags for social sharing.",
+      "ru": "Как работает Metadata API в Next.js? Покажите примеры статических метаданных, динамических метаданных и Open Graph тегов для соцсетей."
+    },
+    "answer": {
+      "en": "### Metadata API\n\nNext.js Metadata API provides type-safe way to define meta tags in each page. Export metadata object in layout.tsx or page.tsx files. Metadata from nested layouts merges, with page-level metadata overriding layout-level.\n\nStatic metadata is a simple exported object. Dynamic metadata uses generateMetadata function to compute values based on params or fetched data. This is crucial for SEO: each page gets unique title, description, and social images.\n\nOpen Graph meta tags are essential for social sharing—they define how links appear on Twitter, Facebook, LinkedIn.\n\ntypescript\n// Static metadata - app/layout.tsx\nexport const metadata = {\n  title: 'My App',\n  description: 'App description',\n};\n\n// Dynamic metadata - app/posts/[id]/page.tsx\nexport async function generateMetadata({ params }) {\n  const post = await fetchPost(params.id);\n  return {\n    title: post.title,\n    description: post.excerpt,\n    openGraph: {\n      title: post.title,\n      description: post.excerpt,\n      images: [{ url: post.image }],\n    },\n  };\n}\n\nexport default async function PostPage({ params }) {\n  const post = await fetchPost(params.id);\n  return <article>{post.content}</article>;\n}\n\n\n**Common interview trap:** Forgetting that metadata is generated on the server—you can't use client-side state to determine metadata. Dynamic metadata via generateMetadata is the solution.",
+      "ru": "### Metadata API\n\nMetadata API в Next.js предоставляет type-safe способ определять мета-теги на каждой странице. Экспортируйте объект metadata в layout.tsx или page.tsx файлах. Метаданные из вложенных layouts объединяются, page-level переопределяет layout-level.\n\nСтатические метаданные—простой экспортируемый объект. Динамические метаданные используют generateMetadata для расчёта значений на основе params или загруженных данных. Критично для SEO: каждая страница получает уникальные title, description и социальные изображения.\n\nOpen Graph мета-теги essentiальны для соцсетей—определяют как ссылки выглядят в Twitter, Facebook, LinkedIn.\n\ntypescript\n// Static metadata - app/layout.tsx\nexport const metadata = {\n  title: 'My App',\n  description: 'App description',\n};\n\n// Dynamic metadata - app/posts/[id]/page.tsx\nexport async function generateMetadata({ params }) {\n  const post = await fetchPost(params.id);\n  return {\n    title: post.title,\n    description: post.excerpt,\n    openGraph: {\n      title: post.title,\n      description: post.excerpt,\n      images: [{ url: post.image }],\n    },\n  };\n}\n\n\n**Типичная ошибка на интервью:** Забывают, что метаданные генерируются на сервере—не можете использовать client-side состояние. generateMetadata решает эту проблему."
+    },
+    "tags": [
+      "metadata-api",
+      "seo",
+      "open-graph",
+      "dynamic-metadata"
+    ]
+  },
+  {
+    "id": "nextjs-q-29",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between getServerSideProps (Pages Router) and Server Components in App Router? When migrating, what patterns change?",
+      "ru": "Какая разница между getServerSideProps (Pages Router) и Server Components в App Router? Что меняется при миграции?"
+    },
+    "answer": {
+      "en": "### getServerSideProps vs Server Components\n\ngetServerSideProps is a Pages Router export that runs on the server per request, returning props to the page component. Server Components in App Router are async components that run on the server and render directly.\n\nKey difference: getServerSideProps creates a clear separation between data-fetching logic and rendering component. Server Components merge both—you fetch and render in the same function, reducing abstraction layers.\n\nMigration pattern: move getServerSideProps logic into the Server Component itself. Instead of returning props, fetch data inside the component and use it directly. This is simpler and enables better code colocation.\n\ntypescript\n// Pages Router\nexport async function getServerSideProps(context) {\n  const data = await fetchData(context.params.id);\n  return { props: { data } };\n}\n\nexport default function Page({ data }) {\n  return <div>{data.title}</div>;\n}\n\n// App Router equivalent\nexport default async function Page({ params }) {\n  const data = await fetchData(params.id);\n  return <div>{data.title}</div>;\n}\n\n\n**Common interview trap:** Thinking Server Components are just async getServerSideProps replacements—they're more powerful. Caching and revalidation work differently; fetch behavior is fundamentally different.",
+      "ru": "### getServerSideProps vs Server Components\n\ngetServerSideProps—экспорт Pages Router, выполняется на сервере на каждый запрос, возвращает props компоненту страницы. Server Components в App Router—async компоненты, выполняются на сервере и отрисовываются напрямую.\n\nКлючевая разница: getServerSideProps создаёт чёткое разделение между логикой загрузки и компонентом отрисовки. Server Components объединяют оба—вы загружаете и отрисовываете в одной функции, что снижает абстракции.\n\nПаттерн миграции: переместите логику getServerSideProps в сам Server Component. Вместо возврата props загружайте данные внутри компонента и используйте напрямую. Это проще и улучшает code colocation.\n\ntypescript\n// Pages Router\nexport async function getServerSideProps(context) {\n  const data = await fetchData(context.params.id);\n  return { props: { data } };\n}\n\nexport default function Page({ data }) {\n  return <div>{data.title}</div>;\n}\n\n// App Router эквивалент\nexport default async function Page({ params }) {\n  const data = await fetchData(params.id);\n  return <div>{data.title}</div>;\n}\n\n\n**Типичная ошибка на интервью:** Думают, что Server Components—просто замена async getServerSideProps. Они мощнее. Кеширование и revalidation работают иначе; поведение fetch фундаментально отличается."
+    },
+    "tags": [
+      "pages-router",
+      "app-router",
+      "server-components",
+      "migration"
+    ]
+  },
+  {
+    "id": "nextjs-q-30",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you handle parallel routes in Next.js App Router using the @slot syntax? Provide a real-world example with analytics and modals.",
+      "ru": "Как обрабатывать параллельные маршруты в Next.js App Router используя @slot синтаксис? Приведите пример с analytics и модальными окнами."
+    },
+    "answer": {
+      "en": "### Parallel Routes with @slot\n\nParallel routes (slots) let multiple pages render simultaneously within the same layout without navigation. Use folder names starting with @: @analytics, @modal. Each slot is independent and has its own file structure.\n\nSlots receive their own children and can have separate loading/error boundaries. They're useful for modals that don't change the URL, sidebars, and analytics dashboards that exist alongside main content.\n\nWhen navigating, only the affected slot updates. Other slots preserve their state. You define which content renders in each slot within the parent layout.\n\ntypescript\n// app/layout.tsx\nexport default function Layout({ children, modal, analytics }) {\n  return (\n    <div>\n      <main>{children}</main>\n      <aside>{analytics}</aside>\n      {modal}\n    </div>\n  );\n}\n\n// app/@modal/(..)post/[id]/modal/page.tsx\nexport default function PostModal({ params }) {\n  return <div className=\"modal\">Post {params.id} in modal</div>;\n}\n\n// app/@analytics/page.tsx\nexport default function Analytics() {\n  return <div>Analytics Dashboard</div>;\n}\n\n// app/page.tsx\nexport default function Home() {\n  return <h1>Main Content</h1>;\n}\n\n\n**Common interview trap:** Confusing parallel routes with nested routes—parallel routes render together at the same level, not hierarchically. State in one slot doesn't affect others.",
+      "ru": "### Параллельные маршруты с @slot\n\nПараллельные маршруты (slots) позволяют одновременно отрисовывать несколько страниц внутри одного layout без навигации. Используйте имена папок со @: @analytics, @modal. Каждый slot независим и имеет свою структуру файлов.\n\nSlots получают свои собственные children и могут иметь отдельные boundaries для loading/error. Полезны для модалей без смены URL, sidebars и analytics dashboards рядом с основным контентом.\n\nПри навигации обновляется только затронутый slot. Другие slots сохраняют своё состояние. Вы определяете какой контент отрисовывается в каждом slot внутри родительского layout.\n\ntypescript\n// app/layout.tsx\nexport default function Layout({ children, modal, analytics }) {\n  return (\n    <div>\n      <main>{children}</main>\n      <aside>{analytics}</aside>\n      {modal}\n    </div>\n  );\n}\n\n// app/@modal/(..)post/[id]/modal/page.tsx\nexport default function PostModal({ params }) {\n  return <div className=\"modal\">Post {params.id} в модали</div>;\n}\n\n// app/@analytics/page.tsx\nexport default function Analytics() {\n  return <div>Analytics Dashboard</div>;\n}\n\n\n**Типичная ошибка на интервью:** Путают параллельные маршруты с вложенными—параллельные отрисовываются вместе на одном уровне, а не иерархически. Состояние в одном slot не влияет на другие."
+    },
+    "tags": [
+      "parallel-routes",
+      "slots",
+      "modal-patterns",
+      "advanced-routing"
+    ]
+  },
+  {
+    "id": "nextjs-q-31",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain route groups in Next.js App Router. Show how to organize routes with route groups like (auth) and (dashboard) without affecting the URL structure.",
+      "ru": "Объясните группы маршрутов в Next.js App Router. Покажите как организовать маршруты с группами вроде (auth) и (dashboard) без влияния на URL структуру."
+    },
+    "answer": {
+      "en": "### Route Groups\n\nRoute groups use parentheses to organize routes without affecting URL paths. Folder names like (auth) or (dashboard) don't appear in the URL. This lets you organize related routes logically while keeping URLs clean.\n\nCommon uses: separating authentication flows from main app, grouping admin routes, organizing layout structures. Each route group can have its own layout—useful for different page structures (marketing site vs app).\n\nRoute groups are purely organizational; the URL remains the same whether you use groups or not. Multiple route groups can share a layout or have independent layouts.\n\ntypescript\n// Directory structure:\n// app/(auth)/login/page.tsx       → /login\n// app/(auth)/register/page.tsx    → /register\n// app/(dashboard)/layout.tsx\n// app/(dashboard)/profile/page.tsx → /profile\n// app/(dashboard)/settings/page.tsx → /settings\n\n// app/(auth)/layout.tsx\nexport default function AuthLayout({ children }) {\n  return <div className=\"auth-bg\">{children}</div>;\n}\n\n// app/(dashboard)/layout.tsx\nexport default function DashboardLayout({ children }) {\n  return <div className=\"app-layout\"><Sidebar />{children}</div>;\n}\n\n\n**Common interview trap:** Thinking route groups are necessary—they're optional organizational tools. Use them for clarity when you have distinct layout structures, not for every folder.",
+      "ru": "### Группы маршрутов\n\nГруппы маршрутов используют скобки для организации маршрутов без влияния на URL пути. Имена папок вроде (auth) или (dashboard) не появляются в URL. Позволяет организовать связанные маршруты логически при сохранении чистых URL.\n\nОбычные применения: разделение потоков аутентификации от основного приложения, группировка admin маршрутов, организация структур layout. Каждая группа маршрутов может иметь свой layout—полезно для разных структур страниц (маркетинг vs app).\n\nГруппы маршрутов чисто организационные; URL остаётся тем же с группами или без. Несколько групп маршрутов могут делить layout или иметь независимые.\n\ntypescript\n// Структура директорий:\n// app/(auth)/login/page.tsx       → /login\n// app/(auth)/register/page.tsx    → /register\n// app/(dashboard)/layout.tsx\n// app/(dashboard)/profile/page.tsx → /profile\n\n// app/(auth)/layout.tsx\nexport default function AuthLayout({ children }) {\n  return <div className=\"auth-bg\">{children}</div>;\n}\n\n// app/(dashboard)/layout.tsx\nexport default function DashboardLayout({ children }) {\n  return <div className=\"app-layout\"><Sidebar />{children}</div>;\n}\n\n\n**Типичная ошибка на интервью:** Думают, что группы маршрутов необходимы—они опциональный организационный инструмент. Используйте их для ясности с разными layouts, не для каждой папки."
+    },
+    "tags": [
+      "route-groups",
+      "url-structure",
+      "layout-organization",
+      "app-router"
+    ]
+  },
+  {
+    "id": "nextjs-q-32",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you optimize images and implement responsive images in Next.js using the Image component? Discuss lazy loading, srcSet, and best practices.",
+      "ru": "Как оптимизировать изображения и реализовать адаптивные изображения в Next.js используя компонент Image? Обсудите lazy loading, srcSet и лучшие практики."
+    },
+    "answer": {
+      "en": "### Image Optimization with Next.js Image Component\n\nNext.js Image component automatically optimizes images: resizing, format conversion (WebP), and responsive sizing. It prevents Cumulative Layout Shift (CLS) by requiring width and height props.\n\nLazy loading is enabled by default—images load only when approaching the viewport. The priority prop disables lazy loading for above-the-fold images (hero images, banners).\n\nResponsive images use sizes prop to specify different sizes for different viewports. Next.js generates srcSet automatically with optimal breakpoints. For best performance, use static imports or preload critical images.\n\ntypescript\nimport Image from 'next/image';\n\n// Static import - type-safe\nimport heroImage from '@/public/hero.jpg';\n\nexport default function Page() {\n  return (\n    <>\n      <Image\n        src={heroImage}\n        alt=\"Hero\"\n        priority // Above-the-fold: disable lazy loading\n      />\n      \n      <Image\n        src=\"/thumbnail.jpg\"\n        alt=\"Post thumbnail\"\n        width={300}\n        height={200}\n        sizes=\"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw\"\n      />\n    </>\n  );\n}\n\n\n**Common interview trap:** Forgetting that Image component requires explicit dimensions to prevent layout shift. Without width/height or sizes, images can cause CLS issues.",
+      "ru": "### Оптимизация изображений с Image компонентом Next.js\n\nImage компонент Next.js автоматически оптимизирует: изменение размера, конверсию формата (WebP) и адаптивность. Предотвращает Cumulative Layout Shift (CLS) требуя width и height props.\n\nLazy loading включен по умолчанию—изображения загружаются только при приближении к viewport. Prop priority отключает lazy loading для above-the-fold (герои, баннеры).\n\nАдаптивные изображения используют sizes для разных viewport. Next.js генерирует srcSet автоматически с оптимальными точками разлома. Для лучшей производительности используйте static imports или preload критичных.\n\ntypescript\nimport Image from 'next/image';\n\n// Static import - type-safe\nimport heroImage from '@/public/hero.jpg';\n\nexport default function Page() {\n  return (\n    <>\n      <Image\n        src={heroImage}\n        alt=\"Hero\"\n        priority // Above-the-fold: отключить lazy loading\n      />\n      \n      <Image\n        src=\"/thumbnail.jpg\"\n        alt=\"Post thumbnail\"\n        width={300}\n        height={200}\n        sizes=\"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw\"\n      />\n    </>\n  );\n}\n\n\n**Типичная ошибка на интервью:** Забывают, что Image требует явных размеров для предотвращения layout shift. Без width/height или sizes изображения вызывают CLS проблемы."
+    },
+    "tags": [
+      "image-optimization",
+      "responsive-images",
+      "performance",
+      "next-image"
+    ]
+  },
+  {
+    "id": "nextjs-q-33",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the difference between the Full Route Cache and the Data Cache in Next.js App Router. When would you use each and how do they interact?",
+      "ru": "Объясните разницу между Full Route Cache и Data Cache в Next.js App Router. Когда использовать каждый и как они взаимодействуют?"
+    },
+    "answer": {
+      "en": "### Caching Layers in Next.js\n\nThe Full Route Cache stores the rendered HTML and RSC payload of static routes at build time, serving them instantly on requests. The Data Cache uses `fetch()` with caching directives to store query results across builds until explicit revalidation.\n\nFull Route Cache applies to entire pages, while Data Cache works at the granular level. Data Cache invalidation can trigger Full Route Cache revalidation through ISR or `revalidateTag()`. They're hierarchical: if data changes, the full route must be regenerated.\n\ntypescript\n// Data Cache example\nconst data = await fetch('https://api.example.com/posts', {\n  next: { tags: ['posts'], revalidate: 3600 }\n});\n\n// Full Route Cache - automatic for static pages\nexport default function Page() {\n  return <div>{data}</div>;\n}\n\n\n**Common interview trap:** Candidates confuse revalidation scope—think Data Cache is global when it's segment-scoped. Full Route Cache doesn't auto-invalidate on data changes unless you use `revalidateTag()` or ISR.",
+      "ru": "### Слои кэширования в Next.js\n\nFull Route Cache хранит отрендеренный HTML и RSC payload статических маршрутов во время сборки. Data Cache использует `fetch()` с директивами кэширования для сохранения результатов запросов между сборками.\n\nFull Route Cache применяется ко всем страницам, Data Cache работает на уровне отдельных запросов. Инвалидация Data Cache может запустить переиндексацию Full Route Cache через ISR или `revalidateTag()`. Это иерархическая система: изменение данных требует регенерации полного маршрута.\n\ntypescript\nconst data = await fetch('https://api.example.com/posts', {\n  next: { tags: ['posts'], revalidate: 3600 }\n});\n\nexport default function Page() {\n  return <div>{data}</div>;\n}\n\n\n**Типичная ошибка на интервью:** Кандидаты путают область инвалидации—думают, что Data Cache глобален, когда это область сегмента. Full Route Cache не инвалидируется автоматически, нужен `revalidateTag()` или ISR."
+    },
+    "tags": [
+      "full-route-cache",
+      "data-cache",
+      "caching-strategy"
+    ]
+  },
+  {
+    "id": "nextjs-q-34",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does the Router Cache (request memoization) work, and what are its limitations compared to Full Route Cache?",
+      "ru": "Как работает Router Cache (мемоизация запросов) и какие у него ограничения по сравнению с Full Route Cache?"
+    },
+    "answer": {
+      "en": "### Router Cache Mechanics\n\nRouter Cache stores prefetched RSC payloads in memory for the duration of a user session. It prevents redundant `fetch()` calls within the same request via request memoization, enabling parallel data fetching without duplication.\n\nUnlike Full Route Cache, Router Cache is client-side and session-specific—expires on page refresh or navigation away. It doesn't persist across builds and doesn't provide SEO benefits. Use it for interactive features like prefetching linked pages; Full Route Cache is for static HTML generation.\n\ntypescript\n// Multiple calls, single fetch via memoization\nconst user = await fetch('/api/user');\nconst posts = await fetch('/api/posts');\n// Both execute in parallel, fetch cached per-request\n\n// Router Cache prefetching\nimport Link from 'next/link';\nexport default function Home() {\n  return <Link href=\"/about\" prefetch={true}>About</Link>;\n}\n\n\n**Common interview trap:** Confusing Router Cache with Full Route Cache—they're different layers. Router Cache won't cache across page reloads; Full Route Cache persists. Also, request memoization only works within a single render pass.",
+      "ru": "### Механика Router Cache\n\nRouter Cache хранит предварительно загруженные RSC payload в памяти на протяжении сеанса пользователя. Он предотвращает дублирование вызовов `fetch()` в одном запросе через мемоизацию, позволяя параллельно загружать данные без копирования.\n\nВ отличие от Full Route Cache, Router Cache находится на клиенте и специфичен для сеанса—истекает при обновлении страницы. Он не сохраняется между сборками и не дает SEO преимуществ. Используйте для интерактивных функций; Full Route Cache для статического HTML.\n\ntypescript\nconst user = await fetch('/api/user');\nconst posts = await fetch('/api/posts');\n\nimport Link from 'next/link';\nexport default function Home() {\n  return <Link href=\"/about\" prefetch={true}>About</Link>;\n}\n\n\n**Типичная ошибка на интервью:** Путаница между Router Cache и Full Route Cache—разные слои. Router Cache не кэшируется при перезагрузке; Full Route Cache сохраняется. Мемоизация работает только в одном проходе рендеринга."
+    },
+    "tags": [
+      "router-cache",
+      "request-memoization",
+      "client-side-caching"
+    ]
+  },
+  {
+    "id": "nextjs-q-35",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a streaming strategy using Suspense boundaries for a complex dashboard with slow API calls. How would you optimize the UX?",
+      "ru": "Спроектируйте стратегию потокового воспроизведения с границами Suspense для сложной панели управления с медленными API-вызовами. Как бы вы оптимизировали UX?"
+    },
+    "answer": {
+      "en": "### Streaming with Suspense Strategy\n\nUse nested Suspense boundaries aligned with component priorities. Wrap fast-loading UI in outer boundaries and slow data fetches in inner ones. This enables progressive hydration—users see layout immediately while data loads asynchronously.\n\nPrioritize critical UI (header, navigation) outside Suspense, defer non-critical sections (charts, recommendations). Use `fallback` components that mirror final layout to reduce cumulative layout shift. Combine with React 18's `startTransition` for smooth updates.\n\ntypescript\n// app/dashboard/page.tsx\nexport default function Dashboard() {\n  return (\n    <div>\n      <Header /> {/* No Suspense */}\n      <Suspense fallback={<HeaderSkeleton />}>\n        <Stats />\n      </Suspense>\n      <Suspense fallback={<ChartSkeleton />}>\n        <Analytics />\n      </Suspense>\n    </div>\n  );\n}\n\n\n**Common interview trap:** Using a single Suspense for the entire page defeats the purpose—data streams serially instead of in parallel. Also, fallback components should have matching dimensions to avoid layout shifts.",
+      "ru": "### Стратегия потоковой передачи с Suspense\n\nИспользуйте вложенные границы Suspense, выровненные по приоритетам компонентов. Оборачивайте быстро загружаемый UI во внешние границы, медленные выборки данных во внутренние. Это обеспечивает прогрессивную гидратацию.\n\nПриоритизируйте критичный UI вне Suspense, откладывайте некритичные секции. Используйте компоненты `fallback`, которые отражают финальный макет. Комбинируйте с `startTransition` для плавных обновлений.\n\ntypescript\nexport default function Dashboard() {\n  return (\n    <div>\n      <Header />\n      <Suspense fallback={<HeaderSkeleton />}>\n        <Stats />\n      </Suspense>\n      <Suspense fallback={<ChartSkeleton />}>\n        <Analytics />\n      </Suspense>\n    </div>\n  );\n}\n\n\n**Типичная ошибка на интервью:** Одна Suspense на всю страницу—данные загружаются последовательно, не параллельно. Компоненты fallback должны иметь совпадающие размеры для избежания сдвигов макета."
+    },
+    "tags": [
+      "streaming",
+      "suspense-boundaries",
+      "progressive-rendering",
+      "ux-optimization"
+    ]
+  },
+  {
+    "id": "nextjs-q-36",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain parallel routes in Next.js. Provide a real-world example where you'd use them instead of conditional rendering.",
+      "ru": "Объясните параллельные маршруты в Next.js. Приведите реальный пример, где вы бы их использовали вместо условной визуализации."
+    },
+    "answer": {
+      "en": "### Parallel Routes Architecture\n\nParallel routes render multiple page segments simultaneously within the same layout, defined by `@slot` conventions. They maintain independent state and URL params, enabling complex layouts without prop drilling or conditional logic.\n\nUse for dashboard layouts with sidebar, main content, and modals that operate independently. Each slot loads data in parallel and preserves state on navigation. Unlike conditional rendering, slots don't conflict—both render even if one is hidden, allowing seamless transitions.\n\ntypescript\n// app/dashboard/layout.tsx\nexport default function Layout({\n  children,\n  '@sidebar': sidebar,\n  '@analytics': analytics\n}) {\n  return (\n    <div className=\"flex\">\n      <aside>{sidebar}</aside>\n      <main>{children}</main>\n      <section>{analytics}</section>\n    </div>\n  );\n}\n\n// app/dashboard/@sidebar/page.tsx\nexport default function Sidebar() { return <Nav />; }\n\n\n**Common interview trap:** Confusing parallel routes with nested layouts—layouts are hierarchical, parallel routes are sibling segments with independent state. Also, all slots must handle 404 cases via default.tsx.",
+      "ru": "### Архитектура параллельных маршрутов\n\nПараллельные маршруты одновременно рендерят несколько сегментов страниц в одном макете, определяются через `@slot` соглашения. Они сохраняют независимое состояние и URL параметры, обеспечивая сложные макеты без prop drilling.\n\nИспользуйте для макетов панелей с боковой панелью, основным контентом и модалями, работающими независимо. Каждый slot загружает данные параллельно и сохраняет состояние при навигации.\n\ntypescript\nexport default function Layout({\n  children,\n  '@sidebar': sidebar,\n  '@analytics': analytics\n}) {\n  return (\n    <div className=\"flex\">\n      <aside>{sidebar}</aside>\n      <main>{children}</main>\n      <section>{analytics}</section>\n    </div>\n  );\n}\n\n\n**Типичная ошибка на интервью:** Путаница между параллельными маршрутами и вложенными макетами—макеты иерархичны, параллельные маршруты это соседние сегменты. Все slots должны обрабатывать 404 через default.tsx."
+    },
+    "tags": [
+      "parallel-routes",
+      "layout-patterns",
+      "independent-state",
+      "dashboard-architecture"
+    ]
+  },
+  {
+    "id": "nextjs-q-37",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe intercepting routes and show how you'd implement an image preview modal that doesn't break browser history.",
+      "ru": "Опишите перехватывающие маршруты и покажите, как реализовать модальное окно предпросмотра изображения, которое не нарушает историю браузера."
+    },
+    "answer": {
+      "en": "### Intercepting Routes Pattern\n\nIntercepting routes use `(..)` convention to catch route segments and render alternative content (e.g., modals) without changing the URL. They preserve the underlying route so closing the modal returns to the previous state without history corruption.\n\nFor image previews, intercept `/photos/[id]` with `(.)photos/[id]/modal`, rendering a modal overlay. The URL stays `/photos` until the modal closes. This pattern works because intercepting routes run only on client navigation, not direct URL visits—direct visits render the full page.\n\ntypescript\n// app/(.)photos/[id]/modal/page.tsx\nexport default function Modal({ params }) {\n  return (\n    <dialog open>\n      <img src={`/images/${params.id}.jpg`} />\n      <form method=\"dialog\"><button>Close</button></form>\n    </dialog>\n  );\n}\n\n// app/photos/[id]/page.tsx - fallback for direct visits\nexport default function PhotoPage({ params }) {\n  return <img src={`/images/${params.id}.jpg`} />;\n}\n\n\n**Common interview trap:** Intercepting routes don't work on direct URL visits—you must handle the non-intercepted path. Also, browser back button relies on layout structure; incorrect nesting breaks history.",
+      "ru": "### Паттерн перехватывающих маршрутов\n\nПерехватывающие маршруты используют соглашение `(..)` для перехвата сегментов маршрутов и рендеринга альтернативного контента без изменения URL. Они сохраняют базовый маршрут, чтобы закрытие модали возвращало в предыдущее состояние.\n\nДля предпросмотра изображений перехватите `/photos/[id]` с `(.)photos/[id]/modal`, рендерируя модальное окно. URL остается `/photos` до закрытия модали. Работает только при клиентской навигации, не при прямом URL.\n\ntypescript\nexport default function Modal({ params }) {\n  return (\n    <dialog open>\n      <img src={`/images/${params.id}.jpg`} />\n      <form method=\"dialog\"><button>Close</button></form>\n    </dialog>\n  );\n}\n\nexport default function PhotoPage({ params }) {\n  return <img src={`/images/${params.id}.jpg`} />;\n}\n\n\n**Типичная ошибка на интервью:** Перехватывающие маршруты не работают при прямом URL—обработайте неперехватанный путь. Кнопка назад зависит от структуры макета; неправильная вложенность нарушает историю."
+    },
+    "tags": [
+      "intercepting-routes",
+      "modal-patterns",
+      "client-navigation",
+      "browser-history"
+    ]
+  },
+  {
+    "id": "nextjs-q-38",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Implement a server action that handles form submission with proper error handling, validation, and type safety. Discuss security considerations.",
+      "ru": "Реализуйте серверное действие для обработки отправки формы с надлежащей обработкой ошибок, валидацией и безопасностью типов. Обсудите соображения безопасности."
+    },
+    "answer": {
+      "en": "### Secure Server Actions\n\nServer actions run exclusively on the server, eliminating XSS risks. Use strict TypeScript typing and validate all inputs with libraries like Zod. Always authenticate and authorize before processing sensitive operations. Never expose error details to clients—log internally and return generic messages.\n\nServer actions automatically handle CSRF tokens, streaming responses, and cache revalidation. Use `revalidatePath()` to update cached UI after mutations. For sensitive operations, verify user identity via session middleware before executing the action.\n\ntypescript\n'use server';\nimport { z } from 'zod';\nimport { revalidatePath } from 'next/cache';\n\nconst schema = z.object({ email: z.string().email() });\n\nexport async function submitForm(formData: FormData) {\n  try {\n    const data = schema.parse({\n      email: formData.get('email')\n    });\n    await db.users.create(data);\n    revalidatePath('/users');\n    return { success: true };\n  } catch (error) {\n    return { error: 'Invalid submission' };\n  }\n}\n\n\n**Common interview trap:** Exposing error details or database queries to the client. Also, forgetting to validate input—server actions aren't magical security; they need explicit validation like any API endpoint.",
+      "ru": "### Безопасные серверные действия\n\nСеверные действия выполняются исключительно на сервере, устраняя риски XSS. Используйте строгую типизацию TypeScript и валидируйте все входные данные с Zod. Всегда аутентифицируйте и авторизуйте перед обработкой. Никогда не раскрывайте детали ошибок—логируйте внутренне, возвращайте обобщенные сообщения.\n\nСеверные действия автоматически обрабатывают CSRF токены, потоковые ответы, инвалидацию кэша. Используйте `revalidatePath()` для обновления кэшированного UI после мутаций.\n\ntypescript\n'use server';\nimport { z } from 'zod';\nimport { revalidatePath } from 'next/cache';\n\nconst schema = z.object({ email: z.string().email() });\n\nexport async function submitForm(formData: FormData) {\n  try {\n    const data = schema.parse({\n      email: formData.get('email')\n    });\n    await db.users.create(data);\n    revalidatePath('/users');\n    return { success: true };\n  } catch (error) {\n    return { error: 'Invalid submission' };\n  }\n}\n\n\n**Типичная ошибка на интервью:** Раскрытие деталей ошибок или SQL запросов клиенту. Также забывают валидировать входные данные—серверные действия не магичны; нужна явная валидация."
+    },
+    "tags": [
+      "server-actions",
+      "form-handling",
+      "security",
+      "validation",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "nextjs-q-39",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare ISR (Incremental Static Regeneration) vs on-demand revalidation. When would you use each strategy and what are the trade-offs?",
+      "ru": "Сравните ISR (Incremental Static Regeneration) и переиндексацию по требованию. Когда использовать каждую стратегию и какие компромиссы?"
+    },
+    "answer": {
+      "en": "### ISR vs On-Demand Revalidation\n\nISR regenerates pages at intervals (e.g., `revalidate: 3600`) after the specified seconds. Pages serve stale content until regeneration completes, then update. On-demand revalidation (`revalidateTag()`, `revalidatePath()`) updates immediately when triggered by webhooks or server actions.\n\nUse ISR for content that updates infrequently (blogs, docs) with acceptable staleness windows. Use on-demand for critical content (inventory, pricing) requiring immediate updates. ISR is cheaper (fewer regenerations); on-demand is responsive but requires trigger infrastructure.\n\ntypescript\n// ISR - regenerate every hour\nexport const revalidate = 3600;\n\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/posts');\n  return <div>{data}</div>;\n}\n\n// On-demand - triggered by webhook\nexport async function POST(req: Request) {\n  if (req.headers.get('authorization') !== process.env.SECRET) {\n    return new Response('Unauthorized', { status: 401 });\n  }\n  await revalidateTag('posts');\n  return Response.json({ ok: true });\n}\n\n\n**Common interview trap:** Thinking ISR waits for regeneration before serving—it serves stale content immediately while regenerating in the background. Also, mixing on-demand revalidation with frequent updates defeats caching benefits.",
+      "ru": "### ISR vs переиндексация по требованию\n\nISR регенерирует страницы через интервалы после указанных секунд. Страницы служат устаревшему контенту до завершения регенерации, затем обновляются. На требование переиндексирует немедленно при триггере от вебхуков.\n\nИспользуйте ISR для контента, обновляющегося редко с допустимым окном устаревания. Используйте на требование для критичного контента требующего немедленных обновлений. ISR дешевле; на требование отзывчивее.\n\ntypescript\nexport const revalidate = 3600;\n\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/posts');\n  return <div>{data}</div>;\n}\n\nexport async function POST(req: Request) {\n  if (req.headers.get('authorization') !== process.env.SECRET) {\n    return new Response('Unauthorized', { status: 401 });\n  }\n  await revalidateTag('posts');\n  return Response.json({ ok: true });\n}\n\n\n**Типичная ошибка на интервью:** Думают что ISR ждет регенерации перед сервированием—служит устаревший контент пока регенерируется. Частые переиндексации на требование уничтожают преимущества кэширования."
+    },
+    "tags": [
+      "isr",
+      "revalidation-strategies",
+      "incremental-static-regeneration",
+      "on-demand-revalidation"
+    ]
+  },
+  {
+    "id": "nextjs-q-40",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the Edge Runtime in Next.js. What are its constraints and when would you deploy middleware or API routes to the edge?",
+      "ru": "Объясните Edge Runtime в Next.js. Какие его ограничения и когда вы развертываете middleware или API маршруты на edge?"
+    },
+    "answer": {
+      "en": "### Edge Runtime Overview\n\nEdge Runtime executes code on globally distributed servers near users, reducing latency. It's lightweight with constraints: no filesystem access, no native Node.js modules, 10MB code limit. Suitable for request/response modification, authentication, geolocation-based redirects, and bot filtering.\n\nUse Edge for latency-sensitive middleware (auth checks, CORS, security headers) and lightweight API transformations. Avoid heavy computation, database queries, or dependencies like Prisma. Deploy middleware at runtime to intercept all requests; edge API routes for endpoints needing low latency without heavy I/O.\n\ntypescript\n// middleware.ts - runs on edge\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth')?.value;\n  if (!token) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: '/admin/:path*' };\n\n// app/api/edge-route/route.ts\nexport const runtime = 'edge';\nexport async function GET(req: Request) {\n  const country = req.geo?.country || 'US';\n  return new Response(`Hello from ${country}`);\n}\n\n\n**Common interview trap:** Assuming Edge Runtime supports all Node.js APIs—it doesn't. Also, thinking edge deployment solves database latency; you still need regional DBs or caching for real improvements.",
+      "ru": "### Обзор Edge Runtime\n\nEdge Runtime выполняет код на глобально распределенных серверах рядом с пользователями, снижая задержку. Он легкий с ограничениями: нет доступа файловой системе, нет нативных модулей Node.js, лимит кода 10MB. Подходит для модификации запроса/ответа, аутентификации, перенаправления по геолокации.\n\nИспользуйте Edge для middleware чувствительного к задержке и легких трансформаций API. Избегайте тяжелых вычислений, запросов БД. Развертывайте middleware на runtime для перехвата всех запросов; edge API маршруты для endpoints требующих низкой задержки.\n\ntypescript\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth')?.value;\n  if (!token) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: '/admin/:path*' };\n\nexport const runtime = 'edge';\nexport async function GET(req: Request) {\n  const country = req.geo?.country || 'US';\n  return new Response(`Hello from ${country}`);\n}\n\n\n**Типичная ошибка на интервью:** Предположение что Edge поддерживает все Node.js API—не поддерживает. Edge не решает задержку БД; нужны региональные БД или кэширование."
+    },
+    "tags": [
+      "edge-runtime",
+      "middleware",
+      "geo-routing",
+      "performance-optimization"
+    ]
+  },
+  {
+    "id": "nextjs-q-41",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a multi-region static site deployment using ISR and regional revalidation webhooks. How would you handle cache invalidation across regions?",
+      "ru": "Спроектируйте развертывание многорегионального статического сайта с использованием ISR и региональных вебхуков переиндексации. Как вы бы обрабатывали инвалидацию кэша в разных регионах?"
+    },
+    "answer": {
+      "en": "### Multi-Region ISR Strategy\n\nDeploy identical Next.js apps to multiple regions with region-specific ISR and CDN caching. Use `revalidateTag()` triggered by centralized webhooks that broadcast to all regions simultaneously. Each region maintains its own on-demand cache layer while sharing ISR intervals.\n\nFor truly global consistency, implement distributed webhooks via a message queue (e.g., PubSub) that reaches all edge functions. Store revalidation timestamps in a global database to prevent cache stampedes. Handle regional failures gracefully by allowing stale-while-revalidate fallback.\n\ntypescript\n// Global revalidation webhook\nexport async function POST(req: Request) {\n  const regions = ['us-east', 'eu-west', 'ap-south'];\n  const promises = regions.map(region =>\n    fetch(`https://${region}.example.com/api/revalidate`, {\n      method: 'POST',\n      headers: { 'x-revalidate-token': process.env.REVALIDATE_SECRET },\n      body: JSON.stringify({ tags: ['products', 'pricing'] })\n    })\n  );\n  \n  await Promise.all(promises);\n  return Response.json({ ok: true });\n}\n\n// Regional revalidation endpoint\nexport async function POST(req: Request) {\n  const { tags } = await req.json();\n  tags.forEach(tag => revalidateTag(tag));\n  return Response.json({ ok: true });\n}\n\n\n**Common interview trap:** Assuming global webhooks work instantly—network delays cause cache inconsistency. Also, not accounting for regional database replication lag; data mutations should complete before triggering revalidation.",
+      "ru": "### Стратегия многорегионального ISR\n\nРазверните идентичные Next.js приложения в несколько регионов с региональным ISR и CDN кэшированием. Используйте `revalidateTag()` триггерируемые централизованными вебхуками транслирующимися во все регионы одновременно. Каждый регион с��храняет собственный слой кэша на требование.\n\nДля глобальной консистенции реализуйте распределенные вебхуки через очередь сообщений. Сохраняйте временные метки переиндексации в глобальной БД для предотвращения cache stampedes. Обрабатывайте региональные сбои позволяя stale-while-revalidate fallback.\n\ntypescript\nexport async function POST(req: Request) {\n  const regions = ['us-east', 'eu-west', 'ap-south'];\n  const promises = regions.map(region =>\n    fetch(`https://${region}.example.com/api/revalidate`, {\n      method: 'POST',\n      headers: { 'x-revalidate-token': process.env.REVALIDATE_SECRET },\n      body: JSON.stringify({ tags: ['products', 'pricing'] })\n    })\n  );\n  \n  await Promise.all(promises);\n  return Response.json({ ok: true });\n}\n\nexport async function POST(req: Request) {\n  const { tags } = await req.json();\n  tags.forEach(tag => revalidateTag(tag));\n  return Response.json({ ok: true });\n}\n\n\n**Типичная ошибка на интервью:** Предположение что глобальные вебхуки работают мгновенно—задержки сети вызывают несогласованность кэша. Не учитываются задержки репликации региональных БД; мутации данных должны завершиться перед переиндексацией."
+    },
+    "tags": [
+      "multi-region-deployment",
+      "distributed-caching",
+      "isr-strategy",
+      "webhook-coordination"
+    ]
+  },
+  {
+    "id": "nextjs-q-42",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Optimize a Next.js app's cold start time for serverless deployment. What strategies would you implement for caching, code splitting, and dependency management?",
+      "ru": "Оптимизируйте время холодного старта приложения Next.js для развертывания serverless. Какие стратегии вы бы реализовали для кэширования, разделения кода и управления зависимостями?"
+    },
+    "answer": {
+      "en": "### Serverless Cold Start Optimization\n\nMinimize cold start by reducing bundle size, using tree-shaking, and lazy-loading heavy dependencies. Split server and client code—only essential server code should be in the handler. Use external caches (Redis) for initialization state to avoid repeated setup. Enable ESM modules and remove unused node_modules.\n\nImplement request coalescing to handle simultaneous invocations efficiently. Use persistent connections and connection pooling for databases. Avoid initializing heavy libraries on import—defer until needed. Combine ISR with edge functions to serve cached static content globally, minimizing compute invocations.\n\ntypescript\n// Lazy load expensive dependencies\nlet db: PrismaClient | null = null;\n\nfunction getDb() {\n  if (!db) {\n    db = new PrismaClient();\n  }\n  return db;\n}\n\nexport async function GET(req: Request) {\n  const user = await getDb().user.findUnique({\n    where: { id: '123' }\n  });\n  return Response.json(user);\n}\n\n// Tree-shake unused code via dynamic imports\nconst heavy = await import('heavy-lib').then(m => m.process);\n\n\n**Common interview trap:** Thinking ISR alone solves cold start—it doesn't. You still need efficient handler code. Also, keeping persistent connections in Lambda causes security issues; use connection pooling instead.",
+      "ru": "### Оптимизация холодного старта Serverless\n\nМинимизируйте cold start уменьшением размера bundle, tree-shaking, ленивой загрузкой тяжелых зависимостей. Разделите код сервера и клиента—только необходимый код в handler. Используйте внешний кэш для состояния инициализации. Включите ESM модули.\n\nРеализуйте coalescing запросов для эффективной обработки одновременных вызовов. Используйте пулинг соединений с БД. Избегайте инициализации тяжелых библиотек при импорте—откладывайте до необходимости. Комбинируйте ISR с edge функциями для сервирования кэшированного контента.\n\ntypescript\nlet db: PrismaClient | null = null;\n\nfunction getDb() {\n  if (!db) {\n    db = new PrismaClient();\n  }\n  return db;\n}\n\nexport async function GET(req: Request) {\n  const user = await getDb().user.findUnique({\n    where: { id: '123' }\n  });\n  return Response.json(user);\n}\n\nconst heavy = await import('heavy-lib').then(m => m.process);\n\n\n**Типичная ошибка на интервью:** Мысль что ISR решает cold start—не решает. Нужен эффективный handler код. Постоянные соединения в Lambda создают проблемы безопасности; используйте пулинг вместо этого."
+    },
+    "tags": [
+      "serverless-optimization",
+      "cold-start",
+      "bundle-size",
+      "code-splitting",
+      "lambda"
+    ]
+  },
+  {
+    "id": "nextjs-q-36",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between the pages router and app router in Next.js. When would you use each one?",
+      "ru": "Объясните разницу между pages router и app router в Next.js. Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Pages vs App Router\n\nThe pages router (legacy) uses file-based routing in `/pages` directory with files as route handlers. The app router (newer) uses `/app` directory with layout.tsx and page.tsx files, supporting React Server Components by default.\n\n```typescript\n// pages router: /pages/blog/[id].tsx\nexport default function Post({ post }) {\n  return <h1>{post.title}</h1>;\n}\n\n// app router: /app/blog/[id]/page.tsx\nexport default function Post() {\n  return <h1>Post</h1>;\n}\n```\n\n**Common interview trap:** App router is always better — it's newer but pages router is still valid for existing projects.",
+      "ru": "### Pages vs App Router\n\nPages router (устаревший) использует файловую маршрутизацию в `/pages`, где файлы — это обработчики маршрутов. App router (новый) использует `/app` с layout.tsx и page.tsx, поддерживая Server Components по умолчанию.\n\n```typescript\n// pages router: /pages/blog/[id].tsx\nexport default function Post({ post }) {\n  return <h1>{post.title}</h1>;\n}\n\n// app router: /app/blog/[id]/page.tsx\nexport default function Post() {\n  return <h1>Post</h1>;\n}\n```\n\n**Типичная ошибка:** App router всегда лучше — он новее, но pages router всё ещё валиден для старых проектов."
+    },
+    "tags": [
+      "pages-router",
+      "app-router",
+      "routing"
+    ]
+  },
+  {
+    "id": "nextjs-q-37",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the purpose of getStaticProps and getServerSideProps? How do they differ in terms of build time and request time?",
+      "ru": "Для чего нужны getStaticProps и getServerSideProps? Чем они отличаются по времени сборки и запроса?"
+    },
+    "answer": {
+      "en": "### Static vs Server-Side Rendering\n\ngetStaticProps generates static HTML at build time (SSG), cached indefinitely unless revalidated. getServerSideProps runs on every request (SSR), fetching fresh data but slower. Use getStaticProps for content that rarely changes, getServerSideProps for dynamic user-specific data.\n\n```typescript\n// Static - runs at build time\nexport async function getStaticProps() {\n  const posts = await fetchPosts();\n  return { props: { posts }, revalidate: 60 }; // ISR: revalidate every 60s\n}\n\n// Server-side - runs on each request\nexport async function getServerSideProps() {\n  const user = await fetchUserData();\n  return { props: { user } };\n}\n```\n\n**Common interview trap:** getStaticProps always means zero latency — revalidation still requires time on revalidate.",
+      "ru": "### Статическая vs Серверная рендеринг\n\ngetStaticProps генерирует статический HTML при сборке (SSG), кешируется постоянно или до переvalidации. getServerSideProps выполняется при каждом запросе (SSR), получая свежие данные, но медленнее. Используйте getStaticProps для редко меняющегося контента, getServerSideProps для динамических пользовательских данных.\n\n```typescript\n// Static - выполняется при сборке\nexport async function getStaticProps() {\n  const posts = await fetchPosts();\n  return { props: { posts }, revalidate: 60 }; // ISR: переvalidate каждые 60s\n}\n\n// Server-side - выполняется при каждом запросе\nexport async function getServerSideProps() {\n  const user = await fetchUserData();\n  return { props: { user } };\n}\n```\n\n**Типичная ошибка:** getStaticProps всегда означает нулевую задержку — переvalidation всё ещё требует времени."
+    },
+    "tags": [
+      "getStaticProps",
+      "getServerSideProps",
+      "data-fetching",
+      "rendering-strategies"
+    ]
+  },
+  {
+    "id": "nextjs-q-38",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "How does the Next.js Image component improve performance compared to a regular HTML img tag?",
+      "ru": "Как компонент Image в Next.js улучшает производительность по сравнению с обычным img тегом?"
+    },
+    "answer": {
+      "en": "### Next.js Image Optimization\n\nThe Image component automatically optimizes images by lazy loading, responsive sizing, modern format conversion (WebP), and serving optimized versions based on device size. Regular img tags load all images immediately without optimization.\n\n```typescript\nimport Image from 'next/image';\n\n// Optimized: lazy loads, responsive, WebP format\n<Image\n  src=\"/hero.jpg\"\n  alt=\"Hero\"\n  width={800}\n  height={600}\n  loading=\"lazy\"\n/>\n\n// Not optimized: loads immediately, no format conversion\n<img src=\"/hero.jpg\" alt=\"Hero\" />\n```\n\n**Common interview trap:** Image component requires width/height — can use fill prop for containers.",
+      "ru": "### Оптимизация Image в Next.js\n\nКомпонент Image автоматически оптимизирует изображения: ленивая загрузка, адаптивный размер, конверсия в современные форматы (WebP), сервинг оптимизированных версий по размеру устройства. Обычные img теги загружают все изображения сразу без оптимизации.\n\n```typescript\nimport Image from 'next/image';\n\n// Оптимизирована: ленивая загрузка, адаптивная, WebP формат\n<Image\n  src=\"/hero.jpg\"\n  alt=\"Hero\"\n  width={800}\n  height={600}\n  loading=\"lazy\"\n/>\n\n// Не оптимизирована: загружается сразу, нет конверсии формата\n<img src=\"/hero.jpg\" alt=\"Hero\" />\n```\n\n**Типичная ошибка:** Image требует width/height — можно использовать fill prop для контейнеров."
+    },
+    "tags": [
+      "Image-component",
+      "optimization",
+      "performance",
+      "lazy-loading"
+    ]
+  },
+  {
+    "id": "nextjs-q-39",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain how file-based routing works in Next.js. How would you create a route for /blog/[id]/comments?",
+      "ru": "Объясните, как работает файловая маршрутизация в Next.js. Как создать маршрут для /blog/[id]/comments?"
+    },
+    "answer": {
+      "en": "### File-Based Routing\n\nNext.js automatically creates routes based on file structure in `/pages` or `/app`. Square brackets `[id]` create dynamic segments. The directory structure directly maps to URL paths.\n\n```typescript\n// Directory structure:\n// /pages/blog/[id]/comments/index.tsx\n\nexport default function Comments({ id }) {\n  return <h1>Comments for blog post {id}</h1>;\n}\n\nexport async function getStaticPaths() {\n  return { paths: [], fallback: 'blocking' };\n}\n```\n\n**Common interview trap:** File extensions and folder nesting don't affect routing — only page.tsx/index.tsx files create routes.",
+      "ru": "### Файловая маршрутизация\n\nNext.js автоматически создаёт маршруты на основе структуры файлов в `/pages` или `/app`. Квадратные скобки `[id]` создают динамические сегменты. Структура директорий напрямую отображается на URL пути.\n\n```typescript\n// Структура директорий:\n// /pages/blog/[id]/comments/index.tsx\n\nexport default function Comments({ id }) {\n  return <h1>Comments for blog post {id}</h1>;\n}\n\nexport async function getStaticPaths() {\n  return { paths: [], fallback: 'blocking' };\n}\n```\n\n**Типичная ошибка:** Расширения файлов и вложенность папок не влияют на маршрутизацию — только page.tsx/index.tsx файлы создают маршруты."
+    },
+    "tags": [
+      "file-based-routing",
+      "dynamic-routes",
+      "directory-structure"
+    ]
+  },
+  {
+    "id": "nextjs-q-40",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are API routes in Next.js and how would you create a simple POST endpoint at /api/posts?",
+      "ru": "Что такое API routes в Next.js и как создать простой POST endpoint по адресу /api/posts?"
+    },
+    "answer": {
+      "en": "### API Routes\n\nAPI routes are serverless functions that handle HTTP requests, created in `/pages/api` or `/app/api` directories. Each file becomes an API endpoint automatically. They allow backend logic without separate servers.\n\n```typescript\n// /pages/api/posts.ts\nimport type { NextApiRequest, NextApiResponse } from 'next';\n\nexport default function handler(\n  req: NextApiRequest,\n  res: NextApiResponse\n) {\n  if (req.method === 'POST') {\n    const { title } = req.body;\n    res.status(201).json({ id: 1, title });\n  } else {\n    res.status(405).end();\n  }\n}\n```\n\n**Common interview trap:** API routes are serverless — each request goes to a new function instance, avoid persistent state.",
+      "ru": "### API Routes\n\nAPI routes — это бессерверные функции, обрабатывающие HTTP запросы, созданные в `/pages/api` или `/app/api`. Каждый файл автоматически становится endpoint. Они позволяют логику бэкенда без отдельных серверов.\n\n```typescript\n// /pages/api/posts.ts\nimport type { NextApiRequest, NextApiResponse } from 'next';\n\nexport default function handler(\n  req: NextApiRequest,\n  res: NextApiResponse\n) {\n  if (req.method === 'POST') {\n    const { title } = req.body;\n    res.status(201).json({ id: 1, title });\n  } else {\n    res.status(405).end();\n  }\n}\n```\n\n**Типичная ошибка:** API routes бессерверные — каждый запрос идёт на новый экземпляр функции, избегайте persistent state."
+    },
+    "tags": [
+      "API-routes",
+      "serverless",
+      "backend",
+      "HTTP-methods"
+    ]
+  },
+  {
+    "id": "nextjs-q-41",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the difference between the Pages Router and App Router in Next.js. When would you use each one?",
+      "ru": "Объясните различие между Pages Router и App Router в Next.js. Когда вы бы использовали каждый из них?"
+    },
+    "answer": {
+      "en": "### Pages vs App Router\n\nPages Router uses file-based routing in `/pages` directory with server-side rendering functions like `getStaticProps` and `getServerSideProps`. App Router (Next.js 13+) uses `/app` directory with React Server Components and async components by default, offering better performance and simpler data fetching.\n\n```typescript\n// Pages Router - /pages/posts/[id].js\nexport async function getStaticProps({ params }) {\n  const post = await fetch(`/api/posts/${params.id}`);\n  return { props: { post }, revalidate: 60 };\n}\n\n// App Router - /app/posts/[id]/page.js\nexport default async function Page({ params }) {\n  const post = await fetch(`/api/posts/${params.id}`);\n  return <div>{post.title}</div>;\n}\n```\n\n**Common interview trap:** Assuming App Router is always better—Pages Router is still valid and required for some legacy projects.",
+      "ru": "### Pages vs App Router\n\nPages Router использует маршрутизацию на основе файлов в папке `/pages` с функциями серверного рендеринга как `getStaticProps` и `getServerSideProps`. App Router (Next.js 13+) использует папку `/app` с React Server Components и асинхронными компонентами по умолчанию, обеспечивая лучшую производительность и упрощенную загрузку данных.\n\n```typescript\n// Pages Router - /pages/posts/[id].js\nexport async function getStaticProps({ params }) {\n  const post = await fetch(`/api/posts/${params.id}`);\n  return { props: { post }, revalidate: 60 };\n}\n\n// App Router - /app/posts/[id]/page.js\nexport default async function Page({ params }) {\n  const post = await fetch(`/api/posts/${params.id}`);\n  return <div>{post.title}</div>;\n}\n```\n\n**Типичная ошибка:** Предположение, что App Router всегда лучше—Pages Router по-прежнему действителен для некоторых legacy проектов."
+    },
+    "tags": [
+      "pages-router",
+      "app-router",
+      "file-based-routing",
+      "server-components"
+    ]
+  },
+  {
+    "id": "nextjs-q-42",
+    "topicId": "nextjs",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the purpose of the Next.js Image component and how does it differ from using a regular HTML img tag? Provide a brief example.",
+      "ru": "Какова цель компонента Image в Next.js и чем он отличается от обычного HTML тега img? Приведите краткий пример."
+    },
+    "answer": {
+      "en": "### Next.js Image Component\n\nThe Image component automatically optimizes images with lazy loading, responsive sizing, and modern formats (WebP). Regular img tags require manual optimization and download the full-resolution image regardless of device, wasting bandwidth.\n\n```typescript\nimport Image from 'next/image';\n\n// Optimized with lazy loading and responsive sizes\n<Image\n  src=\"/photo.jpg\"\n  alt=\"Description\"\n  width={300}\n  height={200}\n  priority\n/>\n\n// vs regular img - no optimization\n<img src=\"/photo.jpg\" alt=\"Description\" />\n```\n\n**Common interview trap:** Forgetting to set `width` and `height` attributes—they're required for layout stability.",
+      "ru": "### Компонент Image в Next.js\n\nКомпонент Image автоматически оптимизирует изображения с ленивой загрузкой, адаптивными размерами и современными форматами (WebP). Обычные теги img требуют ручной оптимизации и загружают полноразрешенное изображение независимо от устройства, тратя пропускную способность.\n\n```typescript\nimport Image from 'next/image';\n\n// Оптимизировано с ленивой загрузкой\n<Image\n  src=\"/photo.jpg\"\n  alt=\"Description\"\n  width={300}\n  height={200}\n  priority\n/>\n\n// vs обычный img - без оптимизации\n<img src=\"/photo.jpg\" alt=\"Description\" />\n```\n\n**Типичная ошибка:** Забыть установить атрибуты `width` и `height`—они необходимы для стабильности макета."
+    },
+    "tags": [
+      "image-component",
+      "optimization",
+      "lazy-loading",
+      "responsive-images"
+    ]
+  },
+  {
+    "id": "nextjs-q-43",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between Server and Client components in Next.js App Router. When would you use each one and what are the performance implications?",
+      "ru": "Объясните различие между Server и Client компонентами в Next.js App Router. Когда использовать каждый и какие есть последствия для производительности?"
+    },
+    "answer": {
+      "en": "### Server vs Client Components\n\nServer components render on the server and send HTML to the browser, reducing JS bundle size and enabling direct database access. Client components run in the browser and handle interactivity with useState and event handlers.\n\n```typescript\n// app/page.tsx - Server component (default)\nexport default function Page() {\n  const data = await db.query();\n  return <div>{data}</div>;\n}\n\n// app/components/counter.tsx - Client component\n'use client';\nexport function Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n```\n\n**Common interview trap:** Thinking Server components can't have Client children—they actually can when wrapped properly.",
+      "ru": "### Server vs Client компоненты\n\nServer компоненты рендерятся на сервере и отправляют HTML в браузер, уменьшая размер JS бандла и позволяя прямой доступ к БД. Client компоненты выполняются в браузере и обрабатывают интерактивность со useState и обработчиками событий.\n\n```typescript\n// app/page.tsx - Server компонент (по умолчанию)\nexport default function Page() {\n  const data = await db.query();\n  return <div>{data}</div>;\n}\n\n// app/components/counter.tsx - Client компонент\n'use client';\nexport function Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n```\n\n**Типичная ошибка:** Думать, что Server компоненты не могут иметь Client потомков—на самом деле могут."
+    },
+    "tags": [
+      "server-components",
+      "client-components",
+      "app-router",
+      "rendering"
+    ]
+  },
+  {
+    "id": "nextjs-q-44",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you implement nested layouts in Next.js App Router? Show an example of a layout hierarchy and explain how metadata works with nested layouts.",
+      "ru": "Как реализовать вложенные layouts в Next.js App Router? Покажите пример иерархии layouts и объясните, как работает metadata с вложенными layouts."
+    },
+    "answer": {
+      "en": "### Nested Layouts\n\nLayouts wrap child routes and persist state across navigation. Each folder can have its own layout.tsx that applies to all nested routes. Metadata from child layouts merges with parent metadata, with child values overriding parent values.\n\n```typescript\n// app/layout.tsx\nexport const metadata = { title: 'My App' };\nexport default function RootLayout({ children }) {\n  return <html><body>{children}</body></html>;\n}\n\n// app/dashboard/layout.tsx\nexport const metadata = { title: 'Dashboard' };\nexport default function DashboardLayout({ children }) {\n  return <div className=\"sidebar\">{children}</div>;\n}\n\n// app/dashboard/page.tsx renders inside both layouts\n```\n\n**Common interview trap:** Confusing layout persistence with route guards—layouts don't protect routes.",
+      "ru": "### Вложенные Layouts\n\nLayouts оборачивают дочерние маршруты и сохраняют состояние при навигации. Каждая папка может иметь свой layout.tsx, применяемый ко всем вложенным маршрутам. Metadata из дочерних layouts объединяется с родительской, значения потомков переопределяют родительские.\n\n```typescript\n// app/layout.tsx\nexport const metadata = { title: 'My App' };\nexport default function RootLayout({ children }) {\n  return <html><body>{children}</body></html>;\n}\n\n// app/dashboard/layout.tsx\nexport const metadata = { title: 'Dashboard' };\nexport default function DashboardLayout({ children }) {\n  return <div className=\"sidebar\">{children}</div>;\n}\n\n// app/dashboard/page.tsx рендерится в обоих layouts\n```\n\n**Типичная ошибка:** Путать персистентность layouts с защитой маршрутов—layouts не защищают маршруты."
+    },
+    "tags": [
+      "layouts",
+      "app-router",
+      "metadata-api",
+      "nested-routes"
+    ]
+  },
+  {
+    "id": "nextjs-q-45",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain how generateStaticParams works with dynamic routes in Next.js. What's the difference between using it with ISR versus on-demand revalidation?",
+      "ru": "Объясните, как работает generateStaticParams с динамическими маршрутами в Next.js. В чем разница между использованием его с ISR и on-demand revalidation?"
+    },
+    "answer": {
+      "en": "### generateStaticParams\n\ngenerateStaticParams pre-generates static pages for specific route parameters at build time. ISR uses revalidate to automatically revalidate pages at intervals, while on-demand revalidation manually triggers revalidation when data changes via revalidatePath or revalidateTag.\n\n```typescript\n// app/posts/[id]/page.tsx\nexport async function generateStaticParams() {\n  const posts = await fetch('api/posts').then(r => r.json());\n  return posts.map(post => ({ id: post.id.toString() }));\n}\n\nexport const revalidate = 3600; // ISR: revalidate every hour\n\nexport default function Post({ params }) {\n  return <div>{params.id}</div>;\n}\n\n// revalidatePath('/posts/1'); // On-demand in API route\n```\n\n**Common interview trap:** Thinking generateStaticParams generates pages for all routes—it only generates specified params.",
+      "ru": "### generateStaticParams\n\ngenerateStaticParams предварительно генерирует статические страницы для определённых параметров маршрута во время сборки. ISR использует revalidate для автоматической ревалидации страниц через интервалы, а on-demand revalidation вручную запускает ревалидацию при изменении данных через revalidatePath или revalidateTag.\n\n```typescript\n// app/posts/[id]/page.tsx\nexport async function generateStaticParams() {\n  const posts = await fetch('api/posts').then(r => r.json());\n  return posts.map(post => ({ id: post.id.toString() }));\n}\n\nexport const revalidate = 3600; // ISR: переревалидация каждый час\n\nexport default function Post({ params }) {\n  return <div>{params.id}</div>;\n}\n\n// revalidatePath('/posts/1'); // On-demand в API route\n```\n\n**Типичная ошибка:** Думать, что generateStaticParams генерирует страницы для всех маршрутов—генерирует только указанные параметры."
+    },
+    "tags": [
+      "dynamic-routes",
+      "generateStaticParams",
+      "isr",
+      "revalidation"
+    ]
+  },
+  {
+    "id": "nextjs-q-46",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you use middleware in Next.js? Show an example of protecting routes and handling authentication redirects, and explain when middleware executes.",
+      "ru": "Как использовать middleware в Next.js? Покажите пример защиты маршрутов и обработки перенаправлений аутентификации, объясните когда выполняется middleware."
+    },
+    "answer": {
+      "en": "### Next.js Middleware\n\nMiddleware runs on the Edge before requests reach your routes. It's defined in middleware.ts at the project root and uses matcher to specify which routes it applies to. Use it for auth checks, redirects, and request/response modification before route handling.\n\n```typescript\n// middleware.ts\nimport { NextResponse } from 'next/server';\nimport type { NextRequest } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth');\n  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: ['/dashboard/:path*'] };\n```\n\n**Common interview trap:** Using database queries in middleware—it has limited execution context and can't access all Node.js APIs.",
+      "ru": "### Next.js Middleware\n\nMiddleware выполняется на Edge перед тем, как запросы попадают в маршруты. Определяется в middleware.ts в корне проекта и использует matcher для указания применяемых маршрутов. Используйте для проверок аутентификации, перенаправлений и изменения запросов/ответов перед обработкой маршрута.\n\n```typescript\n// middleware.ts\nimport { NextResponse } from 'next/server';\nimport type { NextRequest } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth');\n  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: ['/dashboard/:path*'] };\n```\n\n**Типичная ошибка:** Использовать запросы к БД в middleware—имеет ограниченный контекст выполнения и не может получить доступ ко всем Node.js API."
+    },
+    "tags": [
+      "middleware",
+      "authentication",
+      "edge-runtime",
+      "redirects"
+    ]
+  },
+  {
+    "id": "nextjs-q-47",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare different data fetching patterns in Next.js App Router: fetch with cache options, database queries in Server components, and client-side SWR. When would you use each approach?",
+      "ru": "Сравните различные паттерны получения данных в Next.js App Router: fetch с опциями кеша, запросы к БД в Server компонентах и client-side SWR. Когда использовать каждый подход?"
+    },
+    "answer": {
+      "en": "### Data Fetching Patterns\n\nUse fetch with cache options (default is forever cache) for external APIs with control over revalidation. Use direct database queries in Server components for sensitive data—no API exposure. Use client-side SWR for frequently changing data and real-time updates with user interactions.\n\n```typescript\n// Server-side fetch\nconst data = await fetch('api/posts', { next: { revalidate: 60 } });\n\n// Direct database in Server component\nconst posts = await db.posts.findMany();\n\n// Client-side SWR\n'use client';\nconst { data } = useSWR('/api/posts', fetcher);\n```\n\n**Common interview trap:** Assuming fetch cache: 'no-store' is always better—it defeats revalidation benefits and can hurt performance.",
+      "ru": "### Паттерны получения данных\n\nИспользуйте fetch с опциями кеша (по умолчанию кеш навсегда) для внешних API с контролем ревалидации. Используйте прямые запросы к БД в Server компонентах для чувствительных данных—без экспозиции API. Используйте client-side SWR для часто меняющихся данных и обновлений в реальном времени с взаимодействиями пользователя.\n\n```typescript\n// Server-side fetch\nconst data = await fetch('api/posts', { next: { revalidate: 60 } });\n\n// Прямая БД в Server компоненте\nconst posts = await db.posts.findMany();\n\n// Client-side SWR\n'use client';\nconst { data } = useSWR('/api/posts', fetcher);\n```\n\n**Типичная ошибка:** Думать, что fetch cache: 'no-store' всегда лучше—это разрушает преимущества ревалидации и может повредить производительность."
+    },
+    "tags": [
+      "data-fetching",
+      "caching",
+      "server-components",
+      "revalidation",
+      "swr"
+    ]
+  },
+  {
+    "id": "nextjs-q-48",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between Server Components and Client Components in Next.js App Router. When would you use each one?",
+      "ru": "Объясните разницу между Server Components и Client Components в Next.js App Router. Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Server vs Client Components\n\nServer Components run only on the server and don't send JavaScript to the browser, making them ideal for database queries and secrets. Client Components ('use client') require JavaScript in the browser and are necessary for interactivity and browser APIs.\n\n```typescript\n// app/page.tsx - Server Component by default\nexport default async function Page() {\n  const data = await db.query(); // ✓ Safe database access\n  return <div>{data}</div>;\n}\n\n// app/counter.tsx - Client Component\n'use client';\nimport { useState } from 'react';\nexport default function Counter() {\n  const [count, setCount] = useState(0); // ✓ Interactivity\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n```\n\n**Common interview trap:** Don't use 'use client' by default—start with Server Components and add it only when needed.",
+      "ru": "### Server vs Client Components\n\nServer Components выполняются только на сервере и не отправляют JavaScript в браузер, идеальны для запросов БД и секретов. Client Components ('use client') требуют JavaScript в браузере и необходимы для интерактивности и Browser API.\n\n```typescript\n// app/page.tsx - Server Component по умолчанию\nexport default async function Page() {\n  const data = await db.query(); // ✓ Безопасный доступ к БД\n  return <div>{data}</div>;\n}\n\n// app/counter.tsx - Client Component\n'use client';\nimport { useState } from 'react';\nexport default function Counter() {\n  const [count, setCount] = useState(0); // ✓ Интерактивность\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n```\n\n**Типичная ошибка:** Не используйте 'use client' по умолчанию—начните с Server Components и добавьте только при необходимости."
+    },
+    "tags": [
+      "server-components",
+      "client-components",
+      "app-router"
+    ]
+  },
+  {
+    "id": "nextjs-q-49",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you structure nested layouts in Next.js App Router? Provide an example of a layout hierarchy with shared UI.",
+      "ru": "Как организовать вложенные layouts в Next.js App Router? Приведите пример иерархии layouts с общим UI."
+    },
+    "answer": {
+      "en": "### Nested Layouts Structure\n\nLayouts apply to all child routes and wrap them consistently. Each folder can have its own layout.tsx file, creating a hierarchy where layouts compose from parent to child.\n\n```typescript\n// app/layout.tsx - Root layout\nexport default function RootLayout({ children }) {\n  return <html><body><Header />{children}</body></html>;\n}\n\n// app/dashboard/layout.tsx - Dashboard layout\nexport default function DashboardLayout({ children }) {\n  return <div className=\"flex\"><Sidebar /><main>{children}</main></div>;\n}\n\n// app/dashboard/page.tsx - Uses both layouts\nexport default function DashboardPage() {\n  return <h1>Dashboard</h1>; // Wrapped by RootLayout then DashboardLayout\n}\n```\n\n**Common interview trap:** Layouts don't re-render on route changes within the same segment—use them for persistent UI like sidebars.",
+      "ru": "### Структура вложенных Layouts\n\nLayouts применяются ко всем дочерним маршрутам и обворачивают их последовательно. Каждая папка может иметь свой layout.tsx, создавая иерархию, где layouts компонуются от родителя к ребенку.\n\n```typescript\n// app/layout.tsx - Root layout\nexport default function RootLayout({ children }) {\n  return <html><body><Header />{children}</body></html>;\n}\n\n// app/dashboard/layout.tsx - Dashboard layout\nexport default function DashboardLayout({ children }) {\n  return <div className=\"flex\"><Sidebar /><main>{children}</main></div>;\n}\n\n// app/dashboard/page.tsx - Использует оба layouts\nexport default function DashboardPage() {\n  return <h1>Dashboard</h1>; // Обвернут RootLayout затем DashboardLayout\n}\n```\n\n**Типичная ошибка:** Layouts не перерендеряются при изменении маршрутов в одном сегменте—используйте их для постоянного UI вроде sidebars."
+    },
+    "tags": [
+      "app-router",
+      "layouts",
+      "composition"
+    ]
+  },
+  {
+    "id": "nextjs-q-50",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is generateStaticParams and when would you use it? How does it optimize dynamic routes?",
+      "ru": "Что такое generateStaticParams и когда его использовать? Как он оптимизирует динамические маршруты?"
+    },
+    "answer": {
+      "en": "### generateStaticParams for Static Generation\n\ngeneratStaticParams pre-generates static pages for dynamic routes at build time. This converts dynamic routes into static ones for better performance and reduces server load at runtime.\n\n```typescript\n// app/products/[id]/page.tsx\nexport async function generateStaticParams() {\n  const products = await fetch('https://api.example.com/products').then(r => r.json());\n  return products.map((product) => ({\n    id: product.id.toString(),\n  }));\n}\n\nexport default function ProductPage({ params }) {\n  return <div>Product: {params.id}</div>;\n}\n```\n\n**Common interview trap:** Only pre-generate routes for frequently accessed pages—generating thousands of pages at build time slows your build significantly.",
+      "ru": "### generateStaticParams для статической генерации\n\ngeneratStaticParams предварительно генерирует статические страницы для динамических маршрутов при сборке. Это превращает динамические маршруты в статические для лучшей производительности и снижает нагрузку на сервер.\n\n```typescript\n// app/products/[id]/page.tsx\nexport async function generateStaticParams() {\n  const products = await fetch('https://api.example.com/products').then(r => r.json());\n  return products.map((product) => ({\n    id: product.id.toString(),\n  }));\n}\n\nexport default function ProductPage({ params }) {\n  return <div>Product: {params.id}</div>;\n}\n```\n\n**Типичная ошибка:** Предварительно генерируйте только часто запрашиваемые страницы—генерация тысяч страниц при сборке значительно замедляет процесс."
+    },
+    "tags": [
+      "dynamic-routes",
+      "static-generation",
+      "generateStaticParams"
+    ]
+  },
+  {
+    "id": "nextjs-q-51",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare different data fetching patterns in Next.js App Router: fetch with caching, ISR (revalidate), and dynamic data. When do you use each?",
+      "ru": "Сравните различные паттерны получения данных в Next.js App Router: fetch с кешированием, ISR (revalidate) и динамические данные. Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Data Fetching Patterns\n\n**fetch() with cache:** Default behavior caches responses indefinitely—use for static data. **revalidate:** Regenerates page at specified interval—use for semi-static content. **dynamic = 'force-dynamic':** Always fresh data—use for real-time content.\n\n```typescript\n// Cached (Static)\nconst data = await fetch('https://api.example.com/data');\n\n// ISR - Revalidate every 60 seconds\nconst data = await fetch('https://api.example.com/data', \n  { next: { revalidate: 60 } });\n\n// Always Dynamic\nexport const dynamic = 'force-dynamic';\nconst data = await fetch('https://api.example.com/data', \n  { cache: 'no-store' });\n```\n\n**Common interview trap:** Don't use force-dynamic globally—it defeats Next.js caching benefits. Enable it only for truly dynamic segments.",
+      "ru": "### Паттерны получения данных\n\n**fetch() с кешем:** Поведение по умолчанию кеширует ответы бесконечно—используйте для статических данных. **revalidate:** Перегенерирует страницу с интервалом—используйте для полустатического контента. **dynamic = 'force-dynamic':** Всегда свежие данные—используйте для real-time контента.\n\n```typescript\n// Кешировано (Static)\nconst data = await fetch('https://api.example.com/data');\n\n// ISR - Переоценка каждые 60 секунд\nconst data = await fetch('https://api.example.com/data', \n  { next: { revalidate: 60 } });\n\n// Всегда динамическое\nexport const dynamic = 'force-dynamic';\nconst data = await fetch('https://api.example.com/data', \n  { cache: 'no-store' });\n```\n\n**Типичная ошибка:** Не используйте force-dynamic глобально—это уничтожает преимущества кеширования Next.js. Включайте только для по-настоящему динамических сегментов."
+    },
+    "tags": [
+      "data-fetching",
+      "caching",
+      "revalidate",
+      "ISR"
+    ]
+  },
+  {
+    "id": "nextjs-q-52",
+    "topicId": "nextjs",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does Next.js Middleware work? Write an example that authenticates requests and redirects unauthorized users.",
+      "ru": "Как работает Next.js Middleware? Напишите пример, который аутентифицирует запросы и перенаправляет неавторизованных пользователей."
+    },
+    "answer": {
+      "en": "### Next.js Middleware\n\nMiddleware runs before a request is processed, allowing you to modify requests or redirect them. It's defined in middleware.ts at the root of your project and executes on every route matching the config matcher.\n\n```typescript\n// middleware.ts\nimport { NextResponse } from 'next/server';\nimport type { NextRequest } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth-token')?.value;\n  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: ['/dashboard/:path*'] };\n```\n\n**Common interview trap:** Middleware runs on Edge Runtime—avoid heavy computations and use lightweight checks only.",
+      "ru": "### Next.js Middleware\n\nMiddleware выполняется перед обработкой запроса, позволяя вам модифицировать или перенаправлять запросы. Определяется в middleware.ts в корне проекта и выполняется для каждого маршрута, соответствующего matcher.\n\n```typescript\n// middleware.ts\nimport { NextResponse } from 'next/server';\nimport type { NextRequest } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  const token = request.cookies.get('auth-token')?.value;\n  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {\n    return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: ['/dashboard/:path*'] };\n```\n\n**Типичная ошибка:** Middleware работает на Edge Runtime—избегайте тяжелых вычислений и используйте только легкие проверки."
+    },
+    "tags": [
+      "middleware",
+      "authentication",
+      "routing",
+      "edge-runtime"
+    ]
+  },
+  {
+    "id": "nextjs-q-53",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the three caching layers in Next.js 13+ App Router and how they interact. When would you bypass the Full Route Cache but keep the Data Cache active?",
+      "ru": "Объясните три уровня кеширования в Next.js 13+ App Router и как они взаимодействуют. Когда вы обойдёте Full Route Cache, но оставите Data Cache активным?"
+    },
+    "answer": {
+      "en": "### Three Caching Layers\n\nThe Full Route Cache stores static HTML/RSC payloads at build time; the Data Cache stores fetch() results across requests; the Router Cache stores RSC payloads client-side for 30 seconds. Bypass Full Route Cache with dynamic functions (headers(), cookies()) while Data Cache remains if fetch() has revalidate tags.\n\n```typescript\n// Dynamic page = no Full Route Cache, but Data Cache active\nexport default async function Page() {\n  const headers = headers(); // Dynamic\n  const data = await fetch('https://api.example.com', \n    { next: { revalidate: 3600 } }\n  );\n  return <div>{data}</div>;\n}\n```\n\n**Common interview trap:** Thinking dynamic functions invalidate all caches—they only skip Full Route Cache.",
+      "ru": "### Три уровня кеширования\n\nFull Route Cache хранит статический HTML/RSC на этапе сборки; Data Cache сохраняет результаты fetch() между запросами; Router Cache хранит RSC на клиенте 30 секунд. Обойдите Full Route Cache через динамические функции (headers(), cookies()), но Data Cache останется активным, если fetch() имеет теги переvalidate.\n\n```typescript\n// Динамическая страница = нет Full Route Cache, но Data Cache активен\nexport default async function Page() {\n  const headers = headers(); // Dynamic\n  const data = await fetch('https://api.example.com', \n    { next: { revalidate: 3600 } }\n  );\n  return <div>{data}</div>;\n}\n```\n\n**Типичная ошибка:** Думать, что динамические функции инвалидируют все кеши — они только пропускают Full Route Cache."
+    },
+    "tags": [
+      "full-route-cache",
+      "data-cache",
+      "router-cache",
+      "caching-layers"
+    ]
+  },
+  {
+    "id": "nextjs-q-54",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you implement streaming with Suspense in Server Components, and what are the performance implications when combined with Data Cache revalidation?",
+      "ru": "Как вы реализуете потоковую передачу с Suspense в Server Components и какие последствия для производительности при комбинировании с переvalidation Data Cache?"
+    },
+    "answer": {
+      "en": "### Streaming with Suspense\n\nWrap async Server Components with Suspense boundaries to stream partial HTML to the client while data loads. This reduces Time to First Byte (TTFB) but requires careful revalidation strategy—on-demand revalidation triggers only fallback re-render, not full page re-stream.\n\n```typescript\nexport default function Page() {\n  return (\n    <Suspense fallback={<Skeleton />}>\n      <SlowComponent />\n    </Suspense>\n  );\n}\n\nasync function SlowComponent() {\n  const data = await fetch('api', { next: { revalidate: 60 } });\n  return <div>{data}</div>;\n}\n```\n\n**Common interview trap:** Confusing Suspense streaming with client-side React.lazy—Suspense on Server Components avoids hydration delays.",
+      "ru": "### Потоковая передача с Suspense\n\nОборачивайте асинхронные Server Components в Suspense boundaries, чтобы отправлять на клиент частичный HTML пока загружаются данные. Это уменьшает Time to First Byte (TTFB), но требует осторожной стратегии переvalidation — on-demand переvalidation вызывает только переrender fallback, не полную переstream страницы.\n\n```typescript\nexport default function Page() {\n  return (\n    <Suspense fallback={<Skeleton />}>\n      <SlowComponent />\n    </Suspense>\n  );\n}\n\nasync function SlowComponent() {\n  const data = await fetch('api', { next: { revalidate: 60 } });\n  return <div>{data}</div>;\n}\n```\n\n**Типичная ошибка:** Путать Suspense потоковую передачу с клиентским React.lazy — Suspense на Server Components избегает задержек гидрации."
+    },
+    "tags": [
+      "suspense",
+      "streaming",
+      "server-components",
+      "performance"
+    ]
+  },
+  {
+    "id": "nextjs-q-55",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe the difference between parallel routes and intercepting routes. Provide a real-world scenario where you'd use intercepting routes with Server Actions.",
+      "ru": "Опишите различие между параллельными маршрутами и перехватывающими маршрутами. Приведите реальный сценарий, где вы используете перехватывающие маршруты с Server Actions."
+    },
+    "answer": {
+      "en": "### Parallel vs Intercepting Routes\n\nParallel routes (@slot syntax) render multiple independent segments simultaneously without sharing URL state; intercepting routes ((..)folder) intercept navigation and render an overlay without URL change. Use intercepting routes for modals: click image → modal opens at /gallery/@modal, but URL stays /gallery, then Server Action handles submission.\n\n```typescript\n// app/gallery/@modal/(..)photo/[id]/page.tsx\nexport default function PhotoModal({ params }: { params: { id: string } }) {\n  return (\n    <Modal>\n      <form action={async () => { 'use server'; /* save */ }}>\n        <img src={`/photo/${params.id}`} />\n      </form>\n    </Modal>\n  );\n}\n```\n\n**Common interview trap:** Thinking intercepting routes change the URL—they preserve navigation intent without browser history update.",
+      "ru": "### Параллельные vs перехватывающие маршруты\n\nПараллельные маршруты (@slot синтаксис) отрисовывают несколько независимых сегментов одновременно без обмена состоянием URL; перехватывающие маршруты ((..)folder) перехватывают навигацию и отрисовывают оверлей без смены URL. Используйте перехватывающие маршруты для модалей: клик на картинку → модаль открывается на /gallery/@modal, но URL остаётся /gallery, затем Server Action обрабатывает отправку.\n\n```typescript\n// app/gallery/@modal/(..)photo/[id]/page.tsx\nexport default function PhotoModal({ params }: { params: { id: string } }) {\n  return (\n    <Modal>\n      <form action={async () => { 'use server'; /* save */ }}>\n        <img src={`/photo/${params.id}`} />\n      </form>\n    </Modal>\n  );\n}\n```\n\n**Типичная ошибка:** Думать, что перехватывающие маршруты меняют URL — они сохраняют намерение навигации без обновления истории браузера."
+    },
+    "tags": [
+      "parallel-routes",
+      "intercepting-routes",
+      "server-actions",
+      "routing"
+    ]
+  },
+  {
+    "id": "nextjs-q-56",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do you handle ISR (Incremental Static Regeneration) at scale with On-Demand ISR and revalidate tags? When would you use Edge Runtime instead of Node.js runtime for revalidation logic?",
+      "ru": "Как вы обрабатываете ISR (Incremental Static Regeneration) в масштабе с On-Demand ISR и revalidate tags? Когда вы используете Edge Runtime вместо Node.js runtime для логики переvalidation?"
+    },
+    "answer": {
+      "en": "### ISR at Scale with On-Demand Revalidation\n\nCombine revalidate tags with on-demand revalidation: fetch() with tags, then use revalidateTag() in API routes when data changes. Use Edge Runtime for lightweight revalidation endpoints that need geo-distribution and low latency (webhook handlers), while Node.js handles complex database queries.\n\n```typescript\n// app/api/revalidate/route.ts - Node.js\nimport { revalidateTag } from 'next/cache';\n\nexport async function POST(req: Request) {\n  const { tag } = await req.json();\n  revalidateTag(tag);\n  return Response.json({ revalidated: true });\n}\n\n// // pages/posts/[id].tsx\n// fetch('api', { next: { tags: ['posts'] } })\n```\n\n**Common interview trap:** Using on-demand revalidation for every request defeats the purpose—batch webhook triggers by timestamp or event count.",
+      "ru": "### ISR в масштабе с On-Demand переvalidation\n\nКомбинируйте revalidate tags с on-demand переvalidation: fetch() с tags, затем используйте revalidateTag() в API routes при изменении данных. Используйте Edge Runtime для лёгких revalidation endpoints, которым нужна гео-распределение и низкая задержка (webhook handlers), а Node.js обрабатывает сложные запросы БД.\n\n```typescript\n// app/api/revalidate/route.ts - Node.js\nimport { revalidateTag } from 'next/cache';\n\nexport async function POST(req: Request) {\n  const { tag } = await req.json();\n  revalidateTag(tag);\n  return Response.json({ revalidated: true });\n}\n\n// // pages/posts/[id].tsx\n// fetch('api', { next: { tags: ['posts'] } })\n```\n\n**Типичная ошибка:** Использование on-demand переvalidation для каждого запроса разрушает цель — группируйте webhook триггеры по временной метке или количеству событий."
+    },
+    "tags": [
+      "isr",
+      "on-demand-revalidation",
+      "revalidate-tags",
+      "edge-runtime"
+    ]
+  },
+  {
+    "id": "nextjs-q-57",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Design a solution for a real-time collaborative editor using Server Actions, streaming Suspense components, and Router Cache. How would you prevent stale UI when multiple users edit simultaneously?",
+      "ru": "Спроектируйте решение для редактора совместного редактирования в реальном времени, используя Server Actions, streaming Suspense components и Router Cache. Как вы предотвратите устаревший UI при одновременном редактировании несколькими пользователями?"
+    },
+    "answer": {
+      "en": "### Real-Time Collaborative Editor Architecture\n\nUse Server Actions for mutation + revalidateTag() to invalidate Router Cache (30-sec stale-while-revalidate); pair with WebSocket-fed client state for instant optimistic updates. Stream Suspense boundaries for document fetch, then use router.refresh() on external edit notifications to bypass Router Cache stale window and fetch fresh content.\n\n```typescript\n// Server Action\n'use server';\nexport async function editDocument(id: string, content: string) {\n  await db.documents.update(id, { content });\n  revalidateTag(`doc-${id}`);\n}\n\n// Client with WebSocket listener\n'use client';\nimport { useRouter } from 'next/navigation';\nws.on('remote-edit', () => router.refresh()); // Bypass cache\n```\n\n**Common interview trap:** Relying solely on revalidateTag() causes race conditions—WebSocket + router.refresh() ensures real-time consistency.",
+      "ru": "### Архитектура редактора совместного редактирования в реальном времени\n\nИспользуйте Server Actions для mutation + revalidateTag() для инвалидирования Router Cache (30-сек stale-while-revalidate); комбинируйте с WebSocket-питаемым клиентским состоянием для мгновенных оптимистичных обновлений. Stream Suspense boundaries для загрузки документа, затем используйте router.refresh() при уведомлениях внешних редактирований, чтобы обойти Router Cache stale window и загрузить свежий контент.\n\n```typescript\n// Server Action\n'use server';\nexport async function editDocument(id: string, content: string) {\n  await db.documents.update(id, { content });\n  revalidateTag(`doc-${id}`);\n}\n\n// Client с WebSocket listener\n'use client';\nimport { useRouter } from 'next/navigation';\nws.on('remote-edit', () => router.refresh()); // Bypass cache\n```\n\n**Типичная ошибка:** Полагаться только на revalidateTag() вызывает race conditions — WebSocket + router.refresh() обеспечивают консистентность в реальном времени."
+    },
+    "tags": [
+      "server-actions",
+      "streaming",
+      "router-cache",
+      "real-time",
+      "collaborative-editing"
+    ]
+  },
+  {
+    "id": "nextjs-q-58",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Explain the difference between Next.js Full Route Cache and Data Cache, and when each gets invalidated. How would you strategically use both to optimize a product listing page with real-time inventory updates?",
+      "ru": "Объясните разницу между Full Route Cache и Data Cache в Next.js и когда каждый инвалидируется. Как бы вы стратегически использовали оба для оптимизации страницы списка товаров с обновлением инвентаря в реальном времени?"
+    },
+    "answer": {
+      "en": "### Cache Layer Strategy\n\nFull Route Cache caches the entire rendered page (HTML), while Data Cache caches database queries independently. Full Route Cache invalidates on redeploy or manual revalidation, while Data Cache invalidates via revalidateTag() or revalidatePath(). For real-time inventory, cache the product listing page but revalidate data frequently.\n\n```typescript\n// app/products/page.tsx\nexport const revalidate = 60; // ISR: revalidate every 60s\n\nasync function getProducts() {\n  const res = await fetch('https://api.example.com/products', {\n    next: { tags: ['products'], revalidate: 30 }\n  });\n  return res.json();\n}\n\nexport default async function Page() {\n  const products = await getProducts();\n  return <ProductList items={products} />;\n}\n```\n\n**Common interview trap:** Confusing revalidate prop (Full Route Cache) with fetch cache options (Data Cache) — they work independently.",
+      "ru": "### Стратегия слоёв кеша\n\nFull Route Cache кеширует весь отрендеренный страницу (HTML), а Data Cache кеширует запросы в БД независимо. Full Route Cache инвалидируется при переразвёртывании или ручной ревалидации, Data Cache инвалидируется через revalidateTag() или revalidatePath(). Для обновлений инвентаря кешируйте страницу но часто ревалидируйте данные.\n\n```typescript\n// app/products/page.tsx\nexport const revalidate = 60; // ISR: ревалидировать каждые 60s\n\nasync function getProducts() {\n  const res = await fetch('https://api.example.com/products', {\n    next: { tags: ['products'], revalidate: 30 }\n  });\n  return res.json();\n}\n\nexport default async function Page() {\n  const products = await getProducts();\n  return <ProductList items={products} />;\n}\n```\n\n**Типичная ошибка:** Путание параметра revalidate (Full Route Cache) с опциями кеша fetch (Data Cache) — они работают независимо."
+    },
+    "tags": [
+      "full-route-cache",
+      "data-cache",
+      "ISR",
+      "cache-invalidation"
+    ]
+  },
+  {
+    "id": "nextjs-q-59",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How would you implement streaming with Suspense boundaries to progressively render a dashboard with multiple independent data sources (user profile, analytics, notifications) that have different fetch latencies?",
+      "ru": "Как бы вы реализовали потоковую передачу с границами Suspense для прогрессивного рендеринга дашборда с несколькими независимыми источниками данных (профиль пользователя, аналитика, уведомления) с разными временами загрузки?"
+    },
+    "answer": {
+      "en": "### Streaming with Suspense\n\nWrap each data-fetching component in its own Suspense boundary to load them independently and stream HTML to the browser progressively. This prevents slower requests from blocking faster ones, improving perceived performance.\n\n```typescript\n// app/dashboard/page.tsx\nexport default function Dashboard() {\n  return (\n    <div>\n      <Suspense fallback={<ProfileSkeleton />}>\n        <UserProfile />\n      </Suspense>\n      <Suspense fallback={<AnalyticsSkeleton />}>\n        <Analytics />\n      </Suspense>\n      <Suspense fallback={<NotificationsSkeleton />}>\n        <Notifications />\n      </Suspense>\n    </div>\n  );\n}\n```\n\n**Common interview trap:** Using a single Suspense boundary for all sections causes the entire page to wait for the slowest request.",
+      "ru": "### Потоковая передача с Suspense\n\nОберните каждый компонент с загрузкой данных в отдельную границу Suspense для независимой загрузки и прогрессивной передачи HTML в браузер. Это предотвращает блокировку более быстрых запросов более медленными.\n\n```typescript\n// app/dashboard/page.tsx\nexport default function Dashboard() {\n  return (\n    <div>\n      <Suspense fallback={<ProfileSkeleton />}>\n        <UserProfile />\n      </Suspense>\n      <Suspense fallback={<AnalyticsSkeleton />}>\n        <Analytics />\n      </Suspense>\n      <Suspense fallback={<NotificationsSkeleton />}>\n        <Notifications />\n      </Suspense>\n    </div>\n  );\n}\n```\n\n**Типичная ошибка:** Использование одной границы Suspense для всех секций вынуждает всю страницу ждать самого медленного запроса."
+    },
+    "tags": [
+      "streaming",
+      "suspense",
+      "progressive-rendering",
+      "server-components"
+    ]
+  },
+  {
+    "id": "nextjs-q-60",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "Describe how parallel routes and intercepting routes work together in Next.js. Provide a real-world example where you'd use both to build a modal dialog that doesn't break the URL state.",
+      "ru": "Опишите, как параллельные маршруты и перехватывающие маршруты работают вместе в Next.js. Приведите реальный пример использования обоих для создания модального диалога, не нарушающего состояние URL."
+    },
+    "answer": {
+      "en": "### Parallel & Intercepting Routes\n\nParallel routes (@slot) render multiple segments simultaneously, while intercepting routes (.) capture child routes and replace them with alternative content. Together they enable modals that preserve browser history: intercepting the detail route while keeping the main layout in parallel.\n\n```typescript\n// app/@modal/(.)post/[id]/page.tsx\nexport default function PostModal({ params }: { params: { id: string } }) {\n  return (\n    <Modal>\n      <PostContent id={params.id} />\n    </Modal>\n  );\n}\n\n// app/post/[id]/page.tsx (fallback when navigating directly)\nexport default function PostPage({ params }: { params: { id: string } }) {\n  return <PostContent id={params.id} />;\n}\n```\n\n**Common interview trap:** Thinking intercepting routes replace layout rendering — they only intercept child segments while parent layouts continue rendering.",
+      "ru": "### Параллельные и перехватывающие маршруты\n\nПараллельные маршруты (@slot) рендерят несколько сегментов одновременно, перехватывающие маршруты (.) захватывают дочерние маршруты и заменяют их альтернативным содержимым. Вместе они позволяют создавать модали, сохраняющие историю браузера: перехватывая маршрут деталей при рендеринге главного макета параллельно.\n\n```typescript\n// app/@modal/(.)post/[id]/page.tsx\nexport default function PostModal({ params }: { params: { id: string } }) {\n  return (\n    <Modal>\n      <PostContent id={params.id} />\n    </Modal>\n  );\n}\n\n// app/post/[id]/page.tsx (fallback при прямой навигации)\nexport default function PostPage({ params }: { params: { id: string } }) {\n  return <PostContent id={params.id} />;\n}\n```\n\n**Типичная ошибка:** Думать, что перехватывающие маршруты заменяют рендеринг макета — они перехватывают только дочерние сегменты."
+    },
+    "tags": [
+      "parallel-routes",
+      "intercepting-routes",
+      "modals",
+      "routing-architecture"
+    ]
+  },
+  {
+    "id": "nextjs-q-61",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "How do Server Actions handle mutation and revalidation? Design a form submission flow where a Server Action updates the database and automatically revalidates multiple cache tags without refetching unnecessary data.",
+      "ru": "Как Server Actions обрабатывают мутацию и ревалидацию? Разработайте поток отправки формы, где Server Action обновляет БД и автоматически ревалидирует несколько тегов кеша без повторной загрузки ненужных данных."
+    },
+    "answer": {
+      "en": "### Server Actions & Revalidation\n\nServer Actions execute mutations on the server and can revalidateTag() or revalidatePath() to invalidate specific cache entries. This triggers refetching only affected data segments, not the entire route. Use tags strategically to decouple cache invalidation logic from route structure.\n\n```typescript\n// app/actions.ts\n'use server';\nimport { revalidateTag } from 'next/cache';\n\nexport async function updateProduct(formData: FormData) {\n  const id = formData.get('id');\n  await db.products.update(id, { name: formData.get('name') });\n  \n  revalidateTag('products');\n  revalidateTag(`product-${id}`);\n  revalidateTag('product-list');\n}\n```\n\n**Common interview trap:** Calling revalidatePath('/') instead of revalidateTag() causes unnecessary full-page regeneration and breaks streaming benefits.",
+      "ru": "### Server Actions и ревалидация\n\nServer Actions выполняют мутации на сервере и могут вызывать revalidateTag() или revalidatePath() для инвалидации конкретных записей кеша. Это запускает переполучение только затронутых сегментов данных, не всего маршрута. Используйте теги стратегически для развязывания логики инвалидации кеша от структуры маршрутов.\n\n```typescript\n// app/actions.ts\n'use server';\nimport { revalidateTag } from 'next/cache';\n\nexport async function updateProduct(formData: FormData) {\n  const id = formData.get('id');\n  await db.products.update(id, { name: formData.get('name') });\n  \n  revalidateTag('products');\n  revalidateTag(`product-${id}`);\n  revalidateTag('product-list');\n}\n```\n\n**Типичная ошибка:** Вызов revalidatePath('/') вместо revalidateTag() вызывает ненужную полную регенерацию страницы и нарушает преимущества потоковой передачи."
+    },
+    "tags": [
+      "server-actions",
+      "revalidation",
+      "mutations",
+      "cache-tags"
+    ]
+  },
+  {
+    "id": "nextjs-q-62",
+    "topicId": "nextjs",
+    "difficulty": "senior",
+    "question": {
+      "en": "When would you use Edge Runtime over Node.js runtime for route handlers? Design a request handler for a geolocation-based redirect that executes at the edge, considering latency, cost, and data access constraints.",
+      "ru": "Когда вы бы использовали Edge Runtime вместо Node.js runtime для обработчиков маршрутов? Разработайте обработчик запроса для перенаправления на основе геолокации, выполняемый на edge, учитывая задержку, стоимость и ограничения доступа к данным."
+    },
+    "answer": {
+      "en": "### Edge Runtime Strategy\n\nUse Edge Runtime for low-latency, geographically-distributed logic (redirects, auth checks, headers manipulation). Edge has faster cold starts and no database access, so fetch lightweight data or use Vercel KV. Use Node.js for complex server operations requiring database access.\n\n```typescript\n// app/api/redirect/route.ts\nexport const runtime = 'edge';\nimport { geolocation } from '@vercel/functions';\n\nexport async function GET(request: Request) {\n  const { country } = geolocation(request);\n  const redirectUrl = country === 'US' ? '/us' : '/global';\n  return Response.redirect(redirectUrl);\n}\n```\n\n**Common interview trap:** Trying to access databases or perform heavy computations on Edge Runtime — they lack persistent connections and timeout quickly (under 30s).",
+      "ru": "### Стратегия Edge Runtime\n\nИспользуйте Edge Runtime для низколатентной логики, распределённой географически (перенаправления, проверки auth, манипуляции headers). Edge имеет быстрые холодные старты и без доступа к БД, поэтому загружайте лёгкие данные или используйте Vercel KV. Node.js используйте для сложных операций требующих доступа к БД.\n\n```typescript\n// app/api/redirect/route.ts\nexport const runtime = 'edge';\nimport { geolocation } from '@vercel/functions';\n\nexport async function GET(request: Request) {\n  const { country } = geolocation(request);\n  const redirectUrl = country === 'US' ? '/us' : '/global';\n  return Response.redirect(redirectUrl);\n}\n```\n\n**Типичная ошибка:** Попытка доступа к БД или выполнение тяжёлых вычислений на Edge Runtime — им не хватает постоянных соединений и они быстро тайм-аутят (менее 30s)."
+    },
+    "tags": [
+      "edge-runtime",
+      "geolocation",
+      "performance",
+      "infrastructure"
+    ]
+  },
+  {
+    "id": "nextjs-q-63",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how Next.js handles the difference between build-time and runtime page generation. How would you configure a custom webpack plugin to optimize bundle size for different page types?",
+      "ru": "Объясните, как Next.js различает генерацию страниц во время сборки и во время выполнения. Как бы вы настроили пользовательский плагин webpack для оптимизации размера бандла для различных типов страниц?"
+    },
+    "answer": {
+      "en": "### Build-time vs Runtime Generation\n\nNext.js uses Static Generation (SSG) at build-time via getStaticProps and Server-Side Rendering (SSR) at runtime via getServerSideProps. Custom webpack plugins can target specific pages by analyzing the entry points and applying different optimizations based on page type.\n\n```typescript\nmodule.exports = {\n  webpack: (config, { dev, isServer }) => {\n    config.plugins.push(\n      new webpack.NormalModuleReplacementPlugin(\n        /^conditional-module$/,\n        dev ? './dev-version' : './prod-version'\n      )\n    );\n    return config;\n  }\n};\n```\n\n**Common interview trap:** Confusing getStaticProps caching behavior with actual ISR (Incremental Static Regeneration) revalidation timing.",
+      "ru": "### Генерация во время сборки и выполнения\n\nNext.js использует Static Generation (SSG) на этапе сборки через getStaticProps и Server-Side Rendering (SSR) во время выполнения через getServerSideProps. Пользовательские плагины webpack могут целевым образом работать с определенными страницами, анализируя точки входа и применяя различные оптимизации в зависимости от типа страницы.\n\n```typescript\nmodule.exports = {\n  webpack: (config, { dev, isServer }) => {\n    config.plugins.push(\n      new webpack.NormalModuleReplacementPlugin(\n        /^conditional-module$/,\n        dev ? './dev-version' : './prod-version'\n      )\n    );\n    return config;\n  }\n};\n```\n\n**Типичная ошибка:** Путаница между кешированием getStaticProps и фактическим временем переvalidation ISR (Incremental Static Regeneration)."
+    },
+    "tags": [
+      "build-time-rendering",
+      "webpack-config",
+      "getStaticProps",
+      "getServerSideProps"
+    ]
+  },
+  {
+    "id": "nextjs-q-64",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Next.js Module Federation work, and what are the challenges when implementing it in a multi-zone architecture? Provide a practical example of sharing components between independent Next.js applications.",
+      "ru": "Как работает Next.js Module Federation и какие проблемы возникают при его реализации в архитектуре с несколькими зонами? Приведите практический пример обмена компонентами между независимыми приложениями Next.js."
+    },
+    "answer": {
+      "en": "### Module Federation in Multi-Zone Setup\n\nNext.js Module Federation allows multiple independent applications to share code at runtime without monolithic coupling. The main challenge is managing version conflicts and ensuring consistent build outputs across zones. Each zone runs as a separate application with its own webpack configuration and build pipeline.\n\n```typescript\n// next.config.js for Host app\nconst { NextFederationPlugin } = require('@module-federation/nextjs-mf');\n\nmodule.exports = {\n  webpack(config, options) {\n    config.plugins.push(\n      new NextFederationPlugin({\n        name: 'host',\n        remotes: {\n          zone2: 'zone2@http://localhost:3001/_next/static/remotes/zone2.js'\n        }\n      })\n    );\n    return config;\n  }\n};\n```\n\n**Common interview trap:** Assuming Module Federation automatically handles dependency version mismatches—explicit shared dependencies configuration is required.",
+      "ru": "### Module Federation в архитектуре с несколькими зонами\n\nNext.js Module Federation позволяет нескольким независимым приложениям обмениваться кодом во время выполнения без монолитной связанности. Основная проблема—управление конфликтами версий и обеспечение согласованности выходных данных сборки между зонами. Каждая зона работает как отдельное приложение с собственной конфигурацией webpack и конвейером сборки.\n\n```typescript\n// next.config.js для Host приложения\nconst { NextFederationPlugin } = require('@module-federation/nextjs-mf');\n\nmodule.exports = {\n  webpack(config, options) {\n    config.plugins.push(\n      new NextFederationPlugin({\n        name: 'host',\n        remotes: {\n          zone2: 'zone2@http://localhost:3001/_next/static/remotes/zone2.js'\n        }\n      })\n    );\n    return config;\n  }\n};\n```\n\n**Типичная ошибка:** Предположение, что Module Federation автоматически обрабатывает несоответствия версий зависимостей—требуется явная конфигурация общих зависимостей."
+    },
+    "tags": [
+      "module-federation",
+      "multi-zone",
+      "webpack-federation",
+      "micro-frontend"
+    ]
+  },
+  {
+    "id": "nextjs-q-65",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What happens internally when Next.js builds a page with both getStaticProps and getStaticPaths? How does the incremental static regeneration (ISR) cache invalidation work, and what edge cases should you be aware of?",
+      "ru": "Что происходит внутри, когда Next.js создает страницу с getStaticProps и getStaticPaths одновременно? Как работает инвалидация кеша при инкрементальной статической регенерации (ISR) и какие граничные случаи следует учитывать?"
+    },
+    "answer": {
+      "en": "### getStaticProps + getStaticPaths + ISR\n\nNext.js pre-generates pages listed in getStaticPaths during build, storing them in .next/server/pages. ISR uses a background regeneration timer (revalidate option) to re-render stale pages on-demand. Edge case: fallback:'blocking' vs fallback:true behaves differently—blocking waits server-side, true serves a fallback immediately.\n\n```typescript\nexport async function getStaticPaths() {\n  return {\n    paths: [{ params: { id: '1' } }],\n    fallback: 'blocking' // or true\n  };\n}\n\nexport async function getStaticProps({ params }) {\n  return {\n    props: { data: await fetch(`/api/${params.id}`) },\n    revalidate: 60 // ISR: revalidate every 60 seconds\n  };\n}\n```\n\n**Common interview trap:** Thinking ISR revalidate instantly updates the cache—it only schedules background regeneration on next request after TTL expires.",
+      "ru": "### getStaticProps + getStaticPaths + ISR\n\nNext.js предварительно генерирует страницы, указанные в getStaticPaths во время сборки, сохраняя их в .next/server/pages. ISR использует таймер фоновой регенерации (опция revalidate) для повторного рендеринга устаревших страниц по требованию. Граничный случай: fallback:'blocking' vs fallback:true работают по-разному—blocking ждет на стороне сервера, true сразу возвращает fallback.\n\n```typescript\nexport async function getStaticPaths() {\n  return {\n    paths: [{ params: { id: '1' } }],\n    fallback: 'blocking' // или true\n  };\n}\n\nexport async function getStaticProps({ params }) {\n  return {\n    props: { data: await fetch(`/api/${params.id}`) },\n    revalidate: 60 // ISR: переvalidate каждые 60 секунд\n  };\n}\n```\n\n**Типичная ошибка:** Думка, что ISR revalidate мгновенно обновляет кеш—он просто планирует фоновую регенерацию на следующий запрос после истечения TTL."
+    },
+    "tags": [
+      "getStaticPaths",
+      "getStaticProps",
+      "ISR",
+      "cache-invalidation"
+    ]
+  },
+  {
+    "id": "nextjs-q-66",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a deployment strategy for a high-traffic Next.js application that uses both SSG and SSR pages. How would you handle cache headers, CDN invalidation, and zero-downtime deployments across multiple regions?",
+      "ru": "Спроектируйте стратегию развертывания высоконагруженного приложения Next.js, которое использует как SSG, так и SSR страницы. Как бы вы обрабатывали заголовки кеша, инвалидацию CDN и развертывание без простоя в нескольких регионах?"
+    },
+    "answer": {
+      "en": "### Multi-Region Deployment Strategy\n\nFor SSG pages, use immutable cache headers (Cache-Control: public, max-age=31536000, immutable) since content hashes change on rebuild. SSR pages need shorter TTLs (max-age=3600) with stale-while-revalidate. Deploy via blue-green or canary strategies with health checks; use CDN purge APIs only for changed pages via build manifest comparison.\n\n```typescript\n// next.config.js\nmodule.exports = {\n  async headers() {\n    return [\n      {\n        source: '/_next/static/:path*',\n        headers: [{ key: 'Cache-Control', value: 'public,max-age=31536000,immutable' }]\n      },\n      {\n        source: '/api/:path*',\n        headers: [{ key: 'Cache-Control', value: 'public,s-maxage=3600,stale-while-revalidate=86400' }]\n      }\n    ];\n  }\n};\n```\n\n**Common interview trap:** Assuming all Next.js assets are immutable—only _next/static files with content hashes are truly immutable; .html files can change.",
+      "ru": "### Стратегия развертывания в несколько регионов\n\nДля SSG страниц используйте неизменяемые заголовки кеша (Cache-Control: public, max-age=31536000, immutable), так как хеши контента меняются при перестройке. SSR страницы требуют более коротких TTL (max-age=3600) с stale-while-revalidate. Развертывайте через blue-green или canary стратегии с проверками здоровья; используйте API очистки CDN только для измененных страниц через сравнение манифеста сборки.\n\n```typescript\n// next.config.js\nmodule.exports = {\n  async headers() {\n    return [\n      {\n        source: '/_next/static/:path*',\n        headers: [{ key: 'Cache-Control', value: 'public,max-age=31536000,immutable' }]\n      },\n      {\n        source: '/api/:path*',\n        headers: [{ key: 'Cache-Control', value: 'public,s-maxage=3600,stale-while-revalidate=86400' }]\n      }\n    ];\n  }\n};\n```\n\n**Типичная ошибка:** Предположение, что все ассеты Next.js неизменяемы—только _next/static файлы с хешами содержимого действительно неизменяемы; .html файлы могут меняться."
+    },
+    "tags": [
+      "deployment",
+      "CDN",
+      "cache-headers",
+      "blue-green-deployment"
+    ]
+  },
+  {
+    "id": "nextjs-q-67",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe the internal mechanics of Next.js's route resolution and how middleware executes in the request lifecycle. How would you implement a custom routing strategy that bypasses Next.js's default behavior, and what performance implications would this have?",
+      "ru": "Опишите внутреннюю механику разрешения маршрутов Next.js и как middleware выполняется в жизненном цикле запроса. Как бы вы реализовали пользовательскую стратегию маршрутизации, которая обходит поведение Next.js по умолчанию, и какие последствия это имеет для производительности?"
+    },
+    "answer": {
+      "en": "### Route Resolution & Middleware Execution\n\nNext.js processes requests through: middleware → rewrites → redirects → dynamic/static page matching → API routes. Middleware runs on the edge before reaching origin, ideal for auth/logging. Custom routing requires next.config.js rewrites to intercept before built-in resolution. Performance impact: edge middleware adds latency; excessive rewrites bypass static optimizations and force dynamic rendering.\n\n```typescript\n// middleware.ts (edge runtime)\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  if (request.nextUrl.pathname.startsWith('/admin')) {\n    const token = request.headers.get('authorization');\n    if (!token) return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: '/admin/:path*' };\n```\n\n**Common interview trap:** Thinking middleware executes on every request equally—rewrites in next.config.js happen before middleware and can prevent proper middleware execution.",
+      "ru": "### Разрешение маршрутов и выполнение middleware\n\nNext.js обрабатывает запросы следующим образом: middleware → rewrites → redirects → dynamic/static page matching → API routes. Middleware выполняется на edge до достижения origin, идеален для auth/logging. Пользовательская маршрутизация требует rewrites в next.config.js для перехвата перед встроенным разрешением. Влияние на производительность: edge middleware добавляет задержку; чрезмерные rewrites обходят статические оптимизации и принуждают динамический рендеринг.\n\n```typescript\n// middleware.ts (edge runtime)\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport function middleware(request: NextRequest) {\n  if (request.nextUrl.pathname.startsWith('/admin')) {\n    const token = request.headers.get('authorization');\n    if (!token) return NextResponse.redirect(new URL('/login', request.url));\n  }\n  return NextResponse.next();\n}\n\nexport const config = { matcher: '/admin/:path*' };\n```\n\n**Типичная ошибка:** Думка, что middleware выполняется одинаково на каждом запросе—rewrites в next.config.js происходят перед middleware и могут предотвратить надлежащее выполнение middleware."
+    },
+    "tags": [
+      "route-resolution",
+      "middleware",
+      "edge-runtime",
+      "request-lifecycle"
+    ]
+  },
+  {
+    "id": "nextjs-q-68",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how Next.js handles module federation and what are the key differences when implementing it compared to a standard webpack setup?",
+      "ru": "Объясните, как Next.js обрабатывает модульную федерацию и какие ключевые отличия при её реализации по сравнению со стандартной настройкой webpack?"
+    },
+    "answer": {
+      "en": "### Module Federation in Next.js\n\nNext.js wraps Module Federation through next.config.js with the @module-federation/nextjs-mf plugin, handling compilation and routing automatically. Standard webpack requires manual chunk splitting and entry point configuration.\n\n```typescript\nconst withModuleFederation = require('@module-federation/nextjs-mf/build');\nmodule.exports = withModuleFederation({\n  name: 'host',\n  filename: 'static/chunks/remoteEntry.js',\n  remotes: { remote: 'remote@http://localhost:3001/_next/static/chunks/remoteEntry.js' },\n  shared: { react: { singleton: true, requiredVersion: false } }\n});\n```\n\n**Common interview trap:** Assuming Next.js Module Federation works identically to Webpack—it requires special handling for Next.js's build output and routing layer.",
+      "ru": "### Модульная федерация в Next.js\n\nNext.js оборачивает Module Federation через next.config.js с плагином @module-federation/nextjs-mf, автоматически обрабатывая компиляцию и маршрутизацию. Стандартный webpack требует ручного разделения чанков и конфигурации точек входа.\n\n```typescript\nconst withModuleFederation = require('@module-federation/nextjs-mf/build');\nmodule.exports = withModuleFederation({\n  name: 'host',\n  filename: 'static/chunks/remoteEntry.js',\n  remotes: { remote: 'remote@http://localhost:3001/_next/static/chunks/remoteEntry.js' },\n  shared: { react: { singleton: true, requiredVersion: false } }\n});\n```\n\n**Типичная ошибка:** Предположение, что Module Federation в Next.js работает идентично Webpack—требуется специальная обработка для выходных данных Next.js и слоя маршрутизации."
+    },
+    "tags": [
+      "module-federation",
+      "webpack-config",
+      "multi-zone"
+    ]
+  },
+  {
+    "id": "nextjs-q-69",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "How does Next.js internal build process differ between static generation and server-side rendering, and how would you optimize bundle size for each strategy?",
+      "ru": "Чем отличается внутренний процесс построения Next.js между статической генерацией и рендерингом на стороне сервера, и как бы вы оптимизировали размер пакета для каждой стратегии?"
+    },
+    "answer": {
+      "en": "### Build Process Differences\n\nStatic generation (SSG) pre-renders pages at build time and ships minimal runtime code, while SSR renders on each request and requires full server logic in the bundle. SSG allows aggressive code splitting and tree-shaking; SSR needs server-safe dependencies included.\n\n```typescript\nexport const getStaticProps = async () => {\n  return { props: { data }, revalidate: 3600 }; // Pre-built, cached\n};\n\nexport const getServerSideProps = async () => {\n  return { props: { data } }; // Built fresh per request\n};\n\n// Dynamic imports for SSR routes only\nconst HeavyComponent = dynamic(() => import('./Heavy'), { ssr: false });\n```\n\n**Common interview trap:** Thinking SSR and SSG have identical bundle optimization—SSG eliminates server code entirely, while SSR must include it.",
+      "ru": "### Различия в процессе сборки\n\nСтатическая генерация (SSG) предварительно отображает страницы во время сборки и отправляет минимальный код среды выполнения, тогда как SSR отображает при каждом запросе и требует полной серверной логики в пакете. SSG позволяет агрессивное разделение кода и tree-shaking; SSR нуждается в зависимостях, безопасных для сервера.\n\n```typescript\nexport const getStaticProps = async () => {\n  return { props: { data }, revalidate: 3600 }; // Предварительно построено, кэшировано\n};\n\nexport const getServerSideProps = async () => {\n  return { props: { data } }; // Построено заново для каждого запроса\n};\n\nconst HeavyComponent = dynamic(() => import('./Heavy'), { ssr: false });\n```\n\n**Типичная ошибка:** Думать, что SSR и SSG имеют одинаковую оптимизацию пакета—SSG полностью исключает код сервера, тогда как SSR должен его включать."
+    },
+    "tags": [
+      "ssg-ssr",
+      "bundle-optimization",
+      "build-internals"
+    ]
+  },
+  {
+    "id": "nextjs-q-70",
+    "topicId": "nextjs",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Describe a multi-zone Next.js architecture and explain how you would handle shared state, authentication, and inter-zone communication in a deployment with 3+ zones.",
+      "ru": "Описите архитектуру Next.js с несколькими зонами и объясните, как бы вы обрабатывали общее состояние, аутентификацию и связь между зонами в развёртывании с 3+ зонами."
+    },
+    "answer": {
+      "en": "### Multi-Zone Architecture\n\nMulti-zone allows independent Next.js apps deployed at different paths (e.g., /app, /admin, /api) sharing authentication via centralized token service and state via shared cache layer (Redis). Each zone has its own build and deployment pipeline but communicates through a shared gateway.\n\n```typescript\n// next.config.js - Zone 1 (main app)\nmodule.exports = {\n  basePath: '/app',\n  async rewrites() {\n    return { afterFiles: [{ source: '/api/:path*', destination: 'http://zone-api:3002/api/:path*' }] };\n  }\n};\n\n// Shared auth middleware\nexport const getAuth = async (req) => {\n  const token = req.headers.authorization;\n  const user = await redis.get(`auth:${token}`);\n  return user;\n};\n```\n\n**Common interview trap:** Treating zones as fully isolated—they must share authentication tokens and state through external services, not in-process memory.",
+      "ru": "### Архитектура многозонности\n\nМногозонность позволяет независимым приложениям Next.js развёртываться в разных путях (например, /app, /admin, /api) с общей аутентификацией через централизованный сервис токенов и состоянием через слой общего кэша (Redis). Каждая зона имеет собственный конвейер сборки и развёртывания, но взаимодействует через общий шлюз.\n\n```typescript\n// next.config.js - Зона 1 (основное приложение)\nmodule.exports = {\n  basePath: '/app',\n  async rewrites() {\n    return { afterFiles: [{ source: '/api/:path*', destination: 'http://zone-api:3002/api/:path*' }] };\n  }\n};\n\nexport const getAuth = async (req) => {\n  const token = req.headers.authorization;\n  const user = await redis.get(`auth:${token}`);\n  return user;\n};\n```\n\n**Типичная ошибка:** Рассмотрение зон как полностью изолированных—они должны делиться токенами аутентификации и состоянием через внешние сервисы, а не память процесса."
+    },
+    "tags": [
+      "multi-zone",
+      "deployment-strategy",
+      "shared-state"
+    ]
+  }
+]
