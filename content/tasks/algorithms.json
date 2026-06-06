@@ -1,1 +1,556 @@
-[]
+[
+  {
+    "id": "algorithms-t-1",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Two Sum",
+      "ru": "Два числа (Two Sum)"
+    },
+    "description": {
+      "en": "Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to the target.\n\nYou may assume that each input has exactly one solution, and you cannot use the same element twice.\n\n**Function signature:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Example:**\n- Input: `nums = [2, 7, 11, 15]`, `target = 9`\n- Output: `[0, 1]`\n- Explanation: `nums[0] + nums[1] = 2 + 7 = 9`, so return `[0, 1]`\n\n**Edge cases:**\n- Array with exactly 2 elements\n- Negative numbers in the array\n- Large numbers\n- Target is sum of first and last elements",
+      "ru": "Дан массив целых чисел `nums` и целое число `target`. Верните индексы двух чисел, которые в сумме дают `target`.\n\nМожно предположить, что каждый вход имеет ровно одно решение, и нельзя использовать один и тот же элемент дважды.\n\n**Сигнатура функции:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Пример:**\n- Вход: `nums = [2, 7, 11, 15]`, `target = 9`\n- Выход: `[0, 1]`\n- Объяснение: `nums[0] + nums[1] = 2 + 7 = 9`, поэтому вернуть `[0, 1]`\n\n**Граничные случаи:**\n- Массив ровно с 2 элементами\n- Отрицательные числа в массиве\n- Большие числа\n- Целевое число — сумма первого и последнего элементов"
+    },
+    "starterCode": "function twoSum(nums: number[], target: number): number[] {\n  // Use a hash map to store num -> index mapping\n  // For each num, check if (target - num) exists in the map\n  // Return the indices when found\n}",
+    "solution": "function twoSum(nums: number[], target: number): number[] {\n  const map = new Map<number, number>();\n  \n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    \n    if (map.has(complement)) {\n      return [map.get(complement)!, i];\n    }\n    \n    map.set(nums[i], i);\n  }\n  \n  return [];\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a hash map to store each number and its index as we iterate through the array. For each number, calculate its complement (target - current number) and check if it exists in the map. If it does, we found our pair.\n\n**Time complexity:** O(n) — single pass through the array\n**Space complexity:** O(n) — hash map can store up to n elements\n\n**Common mistakes:**\n- Using nested loops (brute force) resulting in O(n²) time\n- Forgetting to check if complement exists before returning\n- Using the same element twice by not properly tracking indices\n- Returning indices in wrong order",
+      "ru": "**Подход:** Используйте хеш-таблицу для хранения каждого числа и его индекса по мере перемещения по массиву. Для каждого числа вычислите его дополнение (target - текущее число) и проверьте, существует ли оно в таблице. Если существует, мы нашли нашу пару.\n\n**Временная сложность:** O(n) — один проход по массиву\n**Пространственная сложность:** O(n) — хеш-таблица может хранить до n элементов\n\n**Типичные ошибки:**\n- Использование вложенных циклов (перебор) со сложностью O(n²)\n- Забывание проверить наличие дополнения перед возвратом\n- Использование одного и того же элемента дважды из-за неправильного отслеживания индексов\n- Возврат индексов в неправильном порядке"
+    },
+    "tags": [
+      "hash-map",
+      "two-pointers",
+      "array",
+      "linear-search"
+    ]
+  },
+  {
+    "id": "algorithms-t-2",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Valid Parentheses",
+      "ru": "Правильные скобки (Valid Parentheses)"
+    },
+    "description": {
+      "en": "Given a string `s` containing just the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine if the input string is valid.\n\nAn input string is valid if:\n1. Open brackets must be closed by the same type of closing bracket\n2. Open brackets must be closed in the correct order\n3. Every closing bracket has a corresponding opening bracket of the same type\n\n**Function signature:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Examples:**\n- Input: `s = \"()\"` → Output: `true`\n- Input: `s = \"()[]{}\"`  → Output: `true`\n- Input: `s = \"(]\"` → Output: `false`\n- Input: `s = \"([)]\"` → Output: `false`\n- Input: `s = \"{[]}\"` → Output: `true`\n\n**Edge cases:**\n- Empty string\n- Single character\n- Only opening brackets\n- Only closing brackets\n- Odd length string",
+      "ru": "Дана строка `s`, содержащая только символы `'('`, `')'`, `'{'`, `'}'`, `'['` и `']'`. Определите, является ли входная строка правильной.\n\nВходная строка считается правильной, если:\n1. Открывающие скобки должны быть закрыты скобками того же типа\n2. Открывающие скобки должны быть закрыты в правильном порядке\n3. Каждая закрывающая скобка имеет соответствующую открывающую скобку того же типа\n\n**Сигнатура функции:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Примеры:**\n- Вход: `s = \"()\"` → Выход: `true`\n- Вход: `s = \"()[]{}\"`  → Выход: `true`\n- Вход: `s = \"(]\"` → Выход: `false`\n- Вход: `s = \"([)]\"` → Выход: `false`\n- Вход: `s = \"{[]}\"` → Выход: `true`\n\n**Граничные случаи:**\n- Пустая строка\n- Один символ\n- Только открывающие скобки\n- Только закрывающие скобки\n- Строка нечетной длины"
+    },
+    "starterCode": "function isValid(s: string): boolean {\n  // Use a stack to track opening brackets\n  // When you encounter a closing bracket, check if it matches the top of stack\n  // At the end, stack should be empty for valid string\n}",
+    "solution": "function isValid(s: string): boolean {\n  const stack: string[] = [];\n  const pairs: { [key: string]: string } = {\n    ')': '(',\n    '}': '{',\n    ']': '['\n  };\n  \n  for (const char of s) {\n    if (pairs[char]) {\n      // It's a closing bracket\n      if (stack.length === 0 || stack[stack.length - 1] !== pairs[char]) {\n        return false;\n      }\n      stack.pop();\n    } else {\n      // It's an opening bracket\n      stack.push(char);\n    }\n  }\n  \n  return stack.length === 0;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a stack data structure to keep track of opening brackets. When encountering a closing bracket, check if it matches the most recent opening bracket (top of stack). If it matches, pop from the stack; if not, the string is invalid. At the end, if the stack is empty, all brackets were properly matched.\n\n**Time complexity:** O(n) — single pass through the string\n**Space complexity:** O(n) — stack can contain up to n/2 opening brackets\n\n**Common mistakes:**\n- Not checking if stack is empty before accessing top element\n- Using incorrect bracket pairs mapping\n- Forgetting to check if stack is empty at the end\n- Not properly handling all three types of brackets",
+      "ru": "**Подход:** Используйте стек для отслеживания открывающих скобок. При встрече с закрывающей скобкой проверьте, соответствует ли она самой последней открывающей скобке (вершина стека). Если совпадает, извлеките из стека; если нет, строка недействительна. В конце, если стек пуст, все скобки были правильно сопоставлены.\n\n**Временная сложность:** O(n) — один проход по строке\n**Пространственная сложность:** O(n) — стек может содержать до n/2 открывающих скобок\n\n**Типичные ошибки:**\n- Непроверка пуст ли стек перед доступом к верхнему элементу\n- Использование неправильного отображения пар скобок\n- Забывание проверить, пуст ли стек в конце\n- Неправильная обработка всех трех типов скобок"
+    },
+    "tags": [
+      "stack",
+      "string",
+      "bracket-matching",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "algorithms-t-3",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Fibonacci with Memoization",
+      "ru": "Числа Фибоначчи с мемоизацией"
+    },
+    "description": {
+      "en": "Implement a function to compute the nth Fibonacci number using memoization to optimize performance.\n\nThe Fibonacci sequence is defined as:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) for n > 1\n\n**Function signature:**\ntypescript\nfunction fib(n: number): number\n\n\n**Examples:**\n- Input: `n = 0` → Output: `0`\n- Input: `n = 1` → Output: `1`\n- Input: `n = 4` → Output: `3` (sequence: 0, 1, 1, 2, 3)\n- Input: `n = 10` → Output: `55`\n- Input: `n = 6` → Output: `8`\n\n**Requirements:**\n- Use memoization to cache computed results\n- Avoid recomputing the same Fibonacci numbers\n- Handle large values of n efficiently\n\n**Edge cases:**\n- n = 0\n- n = 1\n- Large n values (e.g., n = 50)",
+      "ru": "Реализуйте функцию для вычисления n-го числа Фибоначчи с использованием мемоизации для оптимизации производительности.\n\nПоследовательность Фибоначчи определяется как:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) для n > 1\n\n**Сигнатура функции:**\ntypescript\nfunction fib(n: number): number\n\n\n**Примеры:**\n- Вход: `n = 0` → Выход: `0`\n- Вход: `n = 1` → Выход: `1`\n- Вход: `n = 4` → Выход: `3` (последовательность: 0, 1, 1, 2, 3)\n- Вход: `n = 10` → Выход: `55`\n- Вход: `n = 6` → Выход: `8`\n\n**Требования:**\n- Используйте мемоизацию для кеширования вычисленных результатов\n- Избегайте переработки одних и тех же чисел Фибоначчи\n- Эффективно обрабатывайте большие значения n\n\n**Граничные случаи:**\n- n = 0\n- n = 1\n- Большие значения n (например, n = 50)"
+    },
+    "starterCode": "function fib(n: number): number {\n  // Create a memoization cache (Map or object)\n  // Implement recursive function with base cases\n  // Check cache before computing, store result after computing\n  // Return the cached or computed result\n}",
+    "solution": "function fib(n: number): number {\n  const memo: Map<number, number> = new Map();\n  \n  function fibonacci(num: number): number {\n    // Base cases\n    if (num === 0) return 0;\n    if (num === 1) return 1;\n    \n    // Check if already computed\n    if (memo.has(num)) {\n      return memo.get(num)!;\n    }\n    \n    // Compute and store in memo\n    const result = fibonacci(num - 1) + fibonacci(num - 2);\n    memo.set(num, result);\n    \n    return result;\n  }\n  \n  return fibonacci(n);\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use recursive definition of Fibonacci with memoization. Create a Map to cache previously computed values. Before computing F(n), check if it's already in the cache. This converts exponential time complexity of naive recursion to linear.\n\n**Time complexity:** O(n) — each Fibonacci number from 0 to n is computed exactly once\n**Space complexity:** O(n) — memo map stores up to n+1 values, plus O(n) for recursion call stack\n\n**Common mistakes:**\n- Forgetting to check memo before recursive calls\n- Not handling base cases (0 and 1) properly\n- Using a global memo that persists across function calls (can be intentional for optimization)\n- Creating new memo for each call (defeats purpose of memoization)\n- Not returning memoized value before recursing",
+      "ru": "**Подход:** Используйте рекурсивное определение Фибоначчи с мемоизацией. Создайте Map для кеширования ранее вычисленных значений. Перед вычислением F(n) проверьте, есть ли оно уже в кеше. Это преобразует экспоненциальную временную сложность наивной рекурсии в линейную.\n\n**Временная сложность:** O(n) — каждое число Фибоначчи от 0 до n вычисляется ровно один раз\n**Пространственная сложность:** O(n) — карта memo хранит до n+1 значений, плюс O(n) для стека вызовов рекурсии\n\n**Типи��ные ошибки:**\n- Забывание проверить memo перед рекурсивными вызовами\n- Неправильная обработка базовых случаев (0 и 1)\n- Использование глобального memo, который сохраняется между вызовами функций (может быть намеренным для оптимизации)\n- Создание нового memo для каждого вызова (отменяет цель мемоизации)\n- Непроверка и возврат мемоизированного значения перед рекурсией"
+    },
+    "tags": [
+      "memoization",
+      "recursion",
+      "dynamic-programming",
+      "fibonacci"
+    ]
+  },
+  {
+    "id": "algorithms-t-4",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Two Sum",
+      "ru": "Два числа с заданной суммой"
+    },
+    "description": {
+      "en": "Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to the target.\n\nYou may assume each input has exactly one solution, and you cannot use the same element twice.\n\n**Function signature:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Example:**\n- Input: `nums = [2, 7, 11, 15]`, `target = 9`\n- Output: `[0, 1]`\n- Explanation: `nums[0] + nums[1] = 2 + 7 = 9`\n\n**Edge cases:**\n- Array with exactly 2 elements\n- Negative numbers in array\n- Large numbers that might overflow\n- Target could be negative",
+      "ru": "Дан массив целых чисел `nums` и целое число `target`. Верните индексы двух чисел, которые в сумме дают target.\n\nМожно предположить, что каждый вход имеет ровно одно решение, и нельзя использовать один и тот же элемент дважды.\n\n**Сигнатура функции:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Пример:**\n- Входные данные: `nums = [2, 7, 11, 15]`, `target = 9`\n- Выход: `[0, 1]`\n- Объяснение: `nums[0] + nums[1] = 2 + 7 = 9`\n\n**Граничные случаи:**\n- Массив ровно из 2 элементов\n- Отрицательные числа в массиве\n- Большие числа, которые могут переполниться\n- Target может быть отрицательным"
+    },
+    "starterCode": "function twoSum(nums: number[], target: number): number[] {\n  // Use a hash map to store value -> index\n  // Iterate through the array once\n  // For each number, check if (target - number) exists in the map\n  // Return the indices when a match is found\n}",
+    "solution": "function twoSum(nums: number[], target: number): number[] {\n  const map = new Map<number, number>();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (map.has(complement)) {\n      return [map.get(complement)!, i];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a hash map (object/Map) to store each number and its index as we iterate. For each number, calculate the complement needed to reach the target and check if it already exists in the map. This transforms the problem from O(n²) brute force to O(n) by trading space for time.\n\n**Time complexity:** O(n) - single pass through the array\n**Space complexity:** O(n) - hash map can store up to n elements\n\n**Common mistakes:**\n- Using nested loops (O(n²)) instead of hash map\n- Not handling the case where the same element shouldn't be used twice (adding element to map after checking complement)\n- Not returning an empty array or correct indices\n- Using object keys which convert to strings",
+      "ru": "**Подход:** Используйте хеш-таблицу для хранения каждого числа и его индекса во время итерации. Для каждого числа вычислите дополнение, необходимое для достижения целевого значения, и проверьте, существует ли оно в таблице. Это преобразует задачу из O(n²) в O(n) путем обмена памяти на время.\n\n**Временная сложность:** O(n) - одиночный проход через массив\n**Пространственная сложность:** O(n) - хеш-таблица может хранить до n элементов\n\n**Типичные ошибки:**\n- Использование вложенных циклов (O(n²)) вместо хеш-таблицы\n- Неправильная обработка случая, когда один элемент нельзя использовать дважды (добавление элемента в map после проверки дополнения)\n- Неправильный возврат пустого массива или индексов\n- Использование объектов вместо Map (ключи преобразуются в строки)"
+    },
+    "tags": [
+      "hash-map",
+      "two-pointer-concept",
+      "array",
+      "one-pass"
+    ]
+  },
+  {
+    "id": "algorithms-t-5",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Valid Parentheses",
+      "ru": "Проверка корректности скобок"
+    },
+    "description": {
+      "en": "Given a string `s` containing only the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine if the input string is valid.\n\nA string is valid if:\n1. Open brackets must be closed by the same type of closing bracket\n2. Every closing bracket has a corresponding opening bracket of the same type\n3. Brackets must be closed in the correct order\n\n**Function signature:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Examples:**\n- Input: `s = \"()\"` → Output: `true`\n- Input: `s = \"()[]{}\"` → Output: `true`\n- Input: `s = \"(]\"` → Output: `false`\n- Input: `s = \"([)]\"` → Output: `false`\n- Input: `s = \"{[]}\"` → Output: `true`\n\n**Edge cases:**\n- Empty string (should return true)\n- Single character\n- Only opening brackets\n- Only closing brackets\n- Mixed and nested brackets",
+      "ru": "Дана строка `s`, содержащая только символы `'('`, `')'`, `'{'`, `'}'`, `'['` и `']'`. Определите, является ли входная строка корректной.\n\nСтрока является корректной если:\n1. Открывающие скобки должны быть закрыты закрывающими скобками того же типа\n2. Каждая закрывающая скобка имеет соответствующую открывающую скобку того же типа\n3. Скобки должны быть закрыты в правильном порядке\n\n**Сигнатура функции:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Примеры:**\n- Входные данные: `s = \"()\"` → Выход: `true`\n- Входные данные: `s = \"()[]{}\"` → Выход: `true`\n- Входные данные: `s = \"(]\"` → Выход: `false`\n- Входные данные: `s = \"([)]\"` → Выход: `false`\n- Входные данные: `s = \"{[]}\"` → Выход: `true`\n\n**Граничные случаи:**\n- Пустая строка (должна вернуть true)\n- Одиночный символ\n- Только открывающие скобки\n- Только закрывающие скобки\n- Смешанные и вложенные скобки"
+    },
+    "starterCode": "function isValid(s: string): boolean {\n  // Use a stack to track opening brackets\n  // Iterate through each character\n  // Push opening brackets onto the stack\n  // For closing brackets, check if the top of stack matches\n  // At the end, stack should be empty\n}",
+    "solution": "function isValid(s: string): boolean {\n  const stack: string[] = [];\n  const pairs: Record<string, string> = {\n    ')': '(',\n    '}': '{',\n    ']': '['\n  };\n\n  for (const char of s) {\n    if (char in pairs) {\n      if (stack.length === 0 || stack[stack.length - 1] !== pairs[char]) {\n        return false;\n      }\n      stack.pop();\n    } else {\n      stack.push(char);\n    }\n  }\n\n  return stack.length === 0;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a stack data structure to match opening and closing brackets. Iterate through each character: if it's an opening bracket, push to stack; if it's a closing bracket, check if the top of the stack matches (using a mapping). At the end, the stack must be empty for the string to be valid. This ensures correct nesting and matching.\n\n**Time complexity:** O(n) - single pass through the string\n**Space complexity:** O(n) - stack can contain up to n/2 opening brackets\n\n**Common mistakes:**\n- Not checking if stack is empty before popping\n- Checking the wrong character type in the pairs mapping\n- Forgetting to return false when closing bracket doesn't match\n- Not verifying the stack is empty at the end (handles extra opening brackets)\n- Using array methods like pop() without checking length first",
+      "ru": "**Подход:** Используйте структуру данных стек для соответствия открывающих и закрывающих скобок. Итерируйте по каждому символу: если это открывающая скобка, поместите в стек; если это закрывающая скобка, проверьте соответствие с вершиной стека (используя маппинг). В конце стек должен быть пуст для корректности строки. Это гарантирует правильную вложенность и соответствие.\n\n**Временная сложность:** O(n) - одиночный проход через строку\n**Пространственная сложность:** O(n) - стек может содержать до n/2 открывающих скобок\n\n**Типичные ошибки:**\n- Отсутствие проверки пустоты стека перед извлечением\n- Проверка неправильного символа в маппинге пар\n- Забывчивость о возврате false при несовпадении закрывающей скобки\n- Отсутствие проверки пустоты стека в конце (обработка лишних открывающих скобок)\n- Использование методов массива без проверки длины"
+    },
+    "tags": [
+      "stack",
+      "string",
+      "pattern-matching",
+      "nesting"
+    ]
+  },
+  {
+    "id": "algorithms-t-6",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Fibonacci with Memoization",
+      "ru": "Числа Фибоначчи с мемоизацией"
+    },
+    "description": {
+      "en": "Implement the Fibonacci sequence using memoization to optimize recursive calls.\n\nThe Fibonacci sequence is defined as:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) for n > 1\n\n**Function signature:**\ntypescript\nfunction fibonacci(n: number): number\n\n\n**Examples:**\n- Input: `n = 0` → Output: `0`\n- Input: `n = 5` → Output: `5` (sequence: 0, 1, 1, 2, 3, 5)\n- Input: `n = 10` → Output: `55`\n- Input: `n = 50` → Output: `12586269025`\n\n**Requirements:**\n- Use memoization (caching) to avoid redundant calculations\n- Solution should handle large n values efficiently\n- Return the correct Fibonacci number for non-negative integers\n\n**Edge cases:**\n- n = 0 and n = 1\n- Large n values (> 40)\n- Negative numbers should not be accepted",
+      "ru": "Реализуйте последовательность Фибоначчи с использованием мемоизации для оптимизации рекурсивных вызовов.\n\nПоследовательность Фибоначчи определяется как:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) для n > 1\n\n**Сигнатура функции:**\ntypescript\nfunction fibonacci(n: number): number\n\n\n**Примеры:**\n- Входные данные: `n = 0` → Выход: `0`\n- Входные данные: `n = 5` → Выход: `5` (последовательность: 0, 1, 1, 2, 3, 5)\n- Входные данные: `n = 10` → Выход: `55`\n- Входные данные: `n = 50` → Выход: `12586269025`\n\n**Требования:**\n- Используйте мемоизацию (кеширование) для избежания избыточных вычислений\n- Решение должно эффективно обрабатывать большие значения n\n- Возвращайте правильное число Фибоначчи для неотрицательных целых чисел\n\n**Граничные случаи:**\n- n = 0 и n = 1\n- Большие значения n (> 40)\n- Отрицательные числа должны отвергаться"
+    },
+    "starterCode": "function fibonacci(n: number): number {\n  // Create a memo object or Map to store computed values\n  // Use a helper recursive function that checks memo first\n  // If value exists in memo, return it\n  // Otherwise compute, store in memo, and return\n}\n\n// Alternative: Create a closure with memo\nconst fibonacci = (() => {\n  const memo: Record<number, number> = {};\n  return (n: number): number => {\n    // Implementation here\n  };\n})();",
+    "solution": "function fibonacci(n: number): number {\n  const memo: Record<number, number> = {};\n\n  function fib(num: number): number {\n    if (num in memo) {\n      return memo[num];\n    }\n    if (num <= 1) {\n      return num;\n    }\n    memo[num] = fib(num - 1) + fib(num - 2);\n    return memo[num];\n  }\n\n  return fib(n);\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Memoization stores previously computed Fibonacci numbers to avoid recalculating them. Without memoization, computing F(n) has exponential time complexity O(2^n) because it recalculates the same values repeatedly. With memoization, each value is computed only once and retrieved from the cache on subsequent calls.\n\n**Time complexity:** O(n) - each Fibonacci number from 0 to n is calculated exactly once\n**Space complexity:** O(n) - memo object stores up to n values, plus O(n) for the call stack depth\n\n**Common mistakes:**\n- Forgetting to check the memo before recursive calls (losing optimization benefit)\n- Not handling base cases (0 and 1) correctly\n- Using the wrong key to store in memo\n- Declaring memo inside the function but resetting it on each call (losing cache between calls if used repeatedly)\n- Not returning the memoized value\n- Computing without checking if value already exists",
+      "ru": "**Подход:** Мемоизация сохраняет ранее вычисленные числа Фибоначчи, чтобы избежать их пересчета. Без мемоизации вычисление F(n) имеет экспоненциальную временную сложность O(2^n), потому что оно повторно вычисляет одни и те же значения. С мемоизацией каждое значение вычисляется только один раз и извлекается из кеша при последующих вызовах.\n\n**Временная сложность:** O(n) - каждое число Фибоначчи от 0 до n вычисляется ровно один раз\n**Пространственная сложность:** O(n) - объект memo хранит до n значений, плюс O(n) для глубины стека вызовов\n\n**Типичные ошибки:**\n- Забывчивость о проверке memo перед рекурсивными вызовами (потеря преимущества оптимизации)\n- Неправильная обработка базовых случаев (0 и 1)\n- Использование неправильного ключа для хранения в memo\n- Объявление memo внутри функции с его сбросом при каждом вызове (потеря кеша между вызовами)\n- Отсутствие возврата мемоизированного значения\n- Вычисление без проверки существования значения"
+    },
+    "tags": [
+      "memoization",
+      "dynamic-programming",
+      "recursion",
+      "optimization"
+    ]
+  },
+  {
+    "id": "algorithms-t-7",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Search in Rotated Sorted Array using Binary Search",
+      "ru": "Поиск в повёрнутом отсортированном массиве с помощью бинарного поиска"
+    },
+    "description": {
+      "en": "Implement a function to search for a target value in a rotated sorted array using binary search.\n\n**Requirements:**\n- Find the target value and return its index\n- Return -1 if target is not found\n- Time complexity must be O(log n)\n- Array is rotated at an unknown pivot\n\n**Function signature:**\ntypescript\nfunction search(nums: number[], target: number): number\n\n\n**Example:**\n- Input: nums = [4, 5, 6, 7, 0, 1, 2], target = 0\n- Output: 4\n- Explanation: Target 0 is at index 4 in the rotated array\n\n**Another example:**\n- Input: nums = [4, 5, 6, 7, 0, 1, 2], target = 3\n- Output: -1\n\n**Edge cases:**\n- Single element array\n- Target at boundaries\n- Duplicates in array (handle carefully)\n- Array not rotated",
+      "ru": "Реализуйте функцию для поиска целевого значения в повёрнутом отсортированном массиве с использованием бинарного поиска.\n\n**Требования:**\n- Найти целевое значение и вернуть его индекс\n- Вернуть -1, если цель не найдена\n- Временная сложность должна быть O(log n)\n- Массив повёрнут на неизвестной позиции\n\n**Сигнатура функции:**\ntypescript\nfunction search(nums: number[], target: number): number\n\n\n**Пример:**\n- Входные данные: nums = [4, 5, 6, 7, 0, 1, 2], target = 0\n- Выход: 4\n- Объяснение: Целевое значение 0 находится на индексе 4 в повёрнутом массиве\n\n**Ещё пример:**\n- Входные данные: nums = [4, 5, 6, 7, 0, 1, 2], target = 3\n- Выход: -1\n\n**Граничные случаи:**\n- Массив с одним элементом\n- Цель на границах\n- Дубликаты в массиве (обрабатывать тщательно)\n- Массив не повёрнут"
+    },
+    "starterCode": "function search(nums: number[], target: number): number {\n  // Implement binary search on rotated sorted array\n  // Determine which half is sorted, then decide which half to search\n  let left = 0;\n  let right = nums.length - 1;\n  \n  while (left <= right) {\n    // TODO: implement search logic\n  }\n  \n  return -1;\n}",
+    "solution": "function search(nums: number[], target: number): number {\n  let left = 0;\n  let right = nums.length - 1;\n  \n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    \n    if (nums[mid] === target) {\n      return mid;\n    }\n    \n    // Determine which half is sorted\n    if (nums[left] <= nums[mid]) {\n      // Left half is sorted\n      if (nums[left] <= target && target < nums[mid]) {\n        // Target is in left half\n        right = mid - 1;\n      } else {\n        // Target is in right half\n        left = mid + 1;\n      }\n    } else {\n      // Right half is sorted\n      if (nums[mid] < target && target <= nums[right]) {\n        // Target is in right half\n        left = mid + 1;\n      } else {\n        // Target is in left half\n        right = mid - 1;\n      }\n    }\n  }\n  \n  return -1;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Binary search with rotation awareness. At each step, determine which half of the array is properly sorted, then check if the target lies within that sorted range. If yes, search that half; otherwise search the other half.\n\n**Time complexity:** O(log n) - standard binary search\n**Space complexity:** O(1) - only using pointers\n\n**Common mistakes:**\n- Not properly identifying which half is sorted\n- Comparing target with wrong boundaries\n- Off-by-one errors in pivot detection\n- Forgetting to handle the case where left half is sorted",
+      "ru": "**Подход:** Бинарный поиск с учётом поворота. На каждом шаге определяем, какая половина массива правильно отсортирована, затем проверяем, находится ли целевое значение в этом отсортированном диапазоне. Если да, ищем в этой половине; в противном случае ищем в другой.\n\n**Временная сложность:** O(log n) - стандартный бинарный поиск\n**Пространственная сложность:** O(1) - используются только указатели\n\n**Типичные ошибки:**\n- Неправильное определение того, какая половина отсортирована\n- Сравнение целевого значения с неправильными границами\n- Ошибки на единицу при определении точки поворота\n- Забывают обрабатывать случай, когда левая половина отсортирована"
+    },
+    "tags": [
+      "binary-search",
+      "search",
+      "array",
+      "divide-and-conquer"
+    ]
+  },
+  {
+    "id": "algorithms-t-8",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Maximum Subarray Sum using Kadane's Algorithm",
+      "ru": "Максимальная сумма подмассива с использованием алгоритма Кадане"
+    },
+    "description": {
+      "en": "Implement Kadane's algorithm to find the contiguous subarray with the largest sum.\n\n**Requirements:**\n- Return the maximum sum of any contiguous subarray\n- Handle arrays with negative numbers\n- Time complexity must be O(n)\n- Space complexity must be O(1)\n\n**Function signature:**\ntypescript\nfunction maxSubArray(nums: number[]): number\n\n\n**Example:**\n- Input: nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]\n- Output: 6\n- Explanation: The subarray [4, -1, 2, 1] has the maximum sum of 6\n\n**Another example:**\n- Input: nums = [5, 4, -1, 7, 8]\n- Output: 23\n- Explanation: The entire array sums to 23\n\n**Edge cases:**\n- All negative numbers (return the largest negative)\n- Single element array\n- Empty array\n- Array with mixed positive and negative values",
+      "ru": "Реализуйте алгоритм Кадане для поиска смежного подмассива с наибольшей суммой.\n\n**Требования:**\n- Вернуть максимальную сумму любого смежного подмассива\n- Обрабатывать массивы с отрицательными числами\n- Временная сложность должна быть O(n)\n- Пространственная сложность должна быть O(1)\n\n**Сигнатура функции:**\ntypescript\nfunction maxSubArray(nums: number[]): number\n\n\n**Пример:**\n- Входные данные: nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]\n- Выход: 6\n- Объяснение: Подмассив [4, -1, 2, 1] имеет максимальную сумму 6\n\n**Ещё пример:**\n- Входные данные: nums = [5, 4, -1, 7, 8]\n- Выход: 23\n- Объяснение: Весь массив суммируется в 23\n\n**Граничные случаи:**\n- Все отрицательные числа (вернуть наибольшее отрицательное)\n- Массив с одним элементом\n- Пустой массив\n- Массив со смешанными положительными и отрицательными значениями"
+    },
+    "starterCode": "function maxSubArray(nums: number[]): number {\n  // Implement Kadane's algorithm\n  // Track current sum and maximum sum found so far\n  if (nums.length === 0) return 0;\n  \n  let currentSum = nums[0];\n  let maxSum = nums[0];\n  \n  for (let i = 1; i < nums.length; i++) {\n    // TODO: implement Kadane's logic\n  }\n  \n  return maxSum;\n}",
+    "solution": "function maxSubArray(nums: number[]): number {\n  if (nums.length === 0) return 0;\n  \n  let currentSum = nums[0];\n  let maxSum = nums[0];\n  \n  for (let i = 1; i < nums.length; i++) {\n    currentSum = Math.max(nums[i], currentSum + nums[i]);\n    maxSum = Math.max(maxSum, currentSum);\n  }\n  \n  return maxSum;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Kadane's algorithm maintains two variables: the maximum sum ending at the current position and the overall maximum sum. At each element, we decide whether to extend the existing subarray or start a new one. We choose whichever gives a larger sum.\n\n**Time complexity:** O(n) - single pass through the array\n**Space complexity:** O(1) - only using two variables\n\n**Common mistakes:**\n- Resetting currentSum to 0 instead of the current element\n- Not considering all-negative scenarios\n- Comparing before updating currentSum\n- Assuming the maximum subarray must be positive",
+      "ru": "**Подход:** Алгоритм Кадане поддерживает две переменные: максимальную сумму в текущей позиции и общую максимальную сумму. На каждом элементе мы решаем, продолжить существующий подмассив или начать новый. Мы выбираем тот, который дает большую сумму.\n\n**Временная сложность:** O(n) - один проход по массиву\n**Пространственная сложность:** O(1) - используются только две переменные\n\n**Типичные ошибки:**\n- Сброс currentSum на 0 вместо текущего элемента\n- Неучёт сценариев с полностью отрицательными числами\n- Сравнение перед обновлением currentSum\n- Предположение, что максимальный подмассив должен быть положительным"
+    },
+    "tags": [
+      "dynamic-programming",
+      "kadane-algorithm",
+      "array",
+      "optimization"
+    ]
+  },
+  {
+    "id": "algorithms-t-9",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Detect Cycle in Linked List",
+      "ru": "Обнаружение цикла в связном списке"
+    },
+    "description": {
+      "en": "Implement a function to detect if a linked list contains a cycle using Floyd's cycle detection algorithm (tortoise and hare).\n\n**Requirements:**\n- Detect if a cycle exists in the linked list\n- Return true if cycle found, false otherwise\n- Time complexity must be O(n)\n- Space complexity must be O(1)\n- Handle empty and single-node lists\n\n**Function signature:**\ntypescript\nclass ListNode {\n  val: number\n  next: ListNode | null\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val\n    this.next = next\n  }\n}\n\nfunction hasCycle(head: ListNode | null): boolean\n\n\n**Example:**\n- Input: head = [3, 2, 0, -4], pos = 1 (cycle starts at node with value 2)\n- Output: true\n- Explanation: There is a cycle in the linked list where the tail connects back to the second node\n\n**Another example:**\n- Input: head = [1, 2], pos = 0 (cycle at first node)\n- Output: true\n\n**Edge cases:**\n- Empty list (null head)\n- Single node pointing to itself\n- Single node with null next\n- Large list with cycle at the end\n- No cycle in the list",
+      "ru": "Реализуйте функцию для обнаружения наличия цикла в связном списке, используя алгоритм обнаружения цикла Флойда (черепаха и заяц).\n\n**Требования:**\n- Обнаружить наличие цикла в связном списке\n- Вернуть true, если цикл найден, false в противном случае\n- Временная сложность должна быть O(n)\n- Пространственная сложность должна быть O(1)\n- Обрабатывать пустые и одноэлементные списки\n\n**Сигнатура функции:**\ntypescript\nclass ListNode {\n  val: number\n  next: ListNode | null\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val\n    this.next = next\n  }\n}\n\nfunction hasCycle(head: ListNode | null): boolean\n\n\n**Пример:**\n- Входные данные: head = [3, 2, 0, -4], pos = 1 (цикл начинается в узле со значением 2)\n- Выход: true\n- Объяснение: В связном списке есть цикл, где хвост подключается обратно ко второму узлу\n\n**Ещё пример:**\n- Входные данные: head = [1, 2], pos = 0 (цикл в первом узле)\n- Выход: true\n\n**Граничные случаи:**\n- Пустой список (null head)\n- Один узел, указывающий на себя\n- Один узел с null next\n- Большой список с циклом в конце\n- Нет цикла в списке"
+    },
+    "starterCode": "class ListNode {\n  val: number\n  next: ListNode | null\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val\n    this.next = next\n  }\n}\n\nfunction hasCycle(head: ListNode | null): boolean {\n  // Implement Floyd's cycle detection (tortoise and hare)\n  // Use two pointers moving at different speeds\n  if (!head || !head.next) return false;\n  \n  let slow = head;\n  let fast = head;\n  \n  while (fast && fast.next) {\n    // TODO: implement cycle detection logic\n  }\n  \n  return false;\n}",
+    "solution": "class ListNode {\n  val: number\n  next: ListNode | null\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val\n    this.next = next\n  }\n}\n\nfunction hasCycle(head: ListNode | null): boolean {\n  if (!head || !head.next) return false;\n  \n  let slow = head;\n  let fast = head;\n  \n  while (fast && fast.next) {\n    slow = slow.next;\n    fast = fast.next.next;\n    \n    if (slow === fast) {\n      return true;\n    }\n  }\n  \n  return false;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Floyd's cycle detection algorithm uses two pointers (slow and fast). The slow pointer moves one step at a time, while the fast pointer moves two steps at a time. If there's a cycle, they will eventually meet. If the fast pointer reaches the end (null), there's no cycle.\n\n**Time complexity:** O(n) - in the worst case, we traverse the entire list\n**Space complexity:** O(1) - only using two pointers\n\n**Common mistakes:**\n- Not checking if head or head.next is null before entering the loop\n- Moving pointers incorrectly (slow should move 1 step, fast 2 steps)\n- Comparing pointers by value instead of by reference\n- Not handling the case where fast.next might be null",
+      "ru": "**Подход:** Алгоритм обнаружения цикла Флойда использует два указателя (медленный и быстрый). Медленный указатель движется на один шаг за раз, а быстрый указатель движется на два шага за раз. Если есть цикл, они в конце концов встретятся. Если быстрый указатель достигает конца (null), цикла нет.\n\n**Временная сложность:** O(n) - в худшем случае мы проходим весь список\n**Пространственная сложность:** O(1) - используются только два указателя\n\n**Типичные ошибки:**\n- Не проверка на null head или head.next перед циклом\n- Неправильное движение указателей (slow на 1 шаг, fast на 2)\n- Сравнение указателей по значению вместо по ссылке\n- Необработка случая, когда fast.next может быть null"
+    },
+    "tags": [
+      "linked-list",
+      "cycle-detection",
+      "floyd-algorithm",
+      "two-pointers"
+    ]
+  },
+  {
+    "id": "algorithms-t-10",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Find Maximum Subarray Sum (Kadane's Algorithm)",
+      "ru": "Найти максимальную сумму подмассива (алгоритм Кадане)"
+    },
+    "description": {
+      "en": "Implement Kadane's algorithm to find the maximum sum of any contiguous subarray.\n\n**Requirements:**\n- Find the contiguous subarray with the largest sum\n- Return both the maximum sum and the subarray itself\n- Handle arrays with all negative numbers\n- Handle empty arrays\n\n**Function signature:**\ntypescript\nfunction maxSubarray(nums: number[]): { sum: number; subarray: number[] }\n\n\n**Example 1:**\n- Input: `[-2, 1, -3, 4, -1, 2, 1, -5, 4]`\n- Output: `{ sum: 6, subarray: [4, -1, 2, 1] }`\n\n**Example 2:**\n- Input: `[-5, -3, -2]`\n- Output: `{ sum: -2, subarray: [-2] }`\n\n**Edge cases:**\n- All negative numbers\n- Single element array\n- Empty array (should return null or error)\n- Array with all positive numbers",
+      "ru": "Реализуйте алгоритм Кадане для поиска максимальной суммы любого смежного подмассива.\n\n**Требования:**\n- Найти смежный подмассив с наибольшей суммой\n- Вернуть как максимальную сумму, так и сам подмассив\n- Обработать массивы со всеми отрицательными числами\n- Обработать пустые массивы\n\n**Сигнатура функции:**\ntypescript\nfunction maxSubarray(nums: number[]): { sum: number; subarray: number[] }\n\n\n**Пример 1:**\n- Входные данные: `[-2, 1, -3, 4, -1, 2, 1, -5, 4]`\n- Выходные данные: `{ sum: 6, subarray: [4, -1, 2, 1] }`\n\n**Пример 2:**\n- Входные данные: `[-5, -3, -2]`\n- Выходные данные: `{ sum: -2, subarray: [-2] }`\n\n**Граничные случаи:**\n- Все отрицательные числа\n- Массив из одного элемента\n- Пустой массив (должен вернуть null или ошибку)\n- Массив со всеми положительными числами"
+    },
+    "starterCode": "function maxSubarray(nums: number[]): { sum: number; subarray: number[] } {\n  if (nums.length === 0) {\n    throw new Error('Array cannot be empty');\n  }\n\n  // Track the maximum sum ending at current position\n  let maxEndingHere = nums[0];\n  let maxSoFar = nums[0];\n  let startIndex = 0;\n  let endIndex = 0;\n  let tempStart = 0;\n\n  // Iterate through the array starting from the second element\n  for (let i = 1; i < nums.length; i++) {\n    // If adding current number to existing sum is worse than starting fresh\n    if (maxEndingHere + nums[i] < nums[i]) {\n      maxEndingHere = nums[i];\n      tempStart = i;\n    } else {\n      maxEndingHere += nums[i];\n    }\n\n    // Update the global maximum\n    if (maxEndingHere > maxSoFar) {\n      maxSoFar = maxEndingHere;\n      startIndex = tempStart;\n      endIndex = i;\n    }\n  }\n\n  const subarray = nums.slice(startIndex, endIndex + 1);\n  return { sum: maxSoFar, subarray };\n}",
+    "solution": "function maxSubarray(nums: number[]): { sum: number; subarray: number[] } {\n  if (nums.length === 0) {\n    throw new Error('Array cannot be empty');\n  }\n\n  let maxEndingHere = nums[0];\n  let maxSoFar = nums[0];\n  let startIndex = 0;\n  let endIndex = 0;\n  let tempStart = 0;\n\n  for (let i = 1; i < nums.length; i++) {\n    if (maxEndingHere + nums[i] < nums[i]) {\n      maxEndingHere = nums[i];\n      tempStart = i;\n    } else {\n      maxEndingHere += nums[i];\n    }\n\n    if (maxEndingHere > maxSoFar) {\n      maxSoFar = maxEndingHere;\n      startIndex = tempStart;\n      endIndex = i;\n    }\n  }\n\n  const subarray = nums.slice(startIndex, endIndex + 1);\n  return { sum: maxSoFar, subarray };\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Kadane's algorithm uses dynamic programming to track the maximum sum ending at each position. We maintain `maxEndingHere` (best sum up to current position) and `maxSoFar` (overall best sum). At each element, we decide whether to extend the existing subarray or start a new one. We also track start and end indices to reconstruct the actual subarray.\n\n**Time complexity:** O(n) - single pass through the array\n**Space complexity:** O(1) - only using constant extra space (excluding output array)\n\n**Common mistakes:**\n- Not tracking indices to reconstruct the subarray\n- Failing to handle all-negative arrays correctly\n- Comparing incorrectly when deciding to start a new subarray vs extending\n- Off-by-one errors in slice operations",
+      "ru": "**Подход:** Алгоритм Кадане использует динамическое программирование для отслеживания максимальной суммы в каждой позиции. Мы поддерживаем `maxEndingHere` (лучшая сумма до текущей позиции) и `maxSoFar` (общая лучшая сумма). На каждом элементе решаем, расширить ли существующий подмассив или начать новый. Также отслеживаем начальный и конечный индексы для восстановления подмассива.\n\n**Временная сложность:** O(n) - один проход по массиву\n**Пространственная сложность:** O(1) - только константное дополнительное пространство (исключая выходной массив)\n\n**Типичные ошибки:**\n- Неслежение за индексами для восстановления подмассива\n- Неправильная обработка массивов со всеми отрицательными числами\n- Неправильное сравнение при выборе между новым подмассивом и расширением\n- Ошибки на единицу в операциях slice"
+    },
+    "tags": [
+      "kadane-algorithm",
+      "dynamic-programming",
+      "maximum-subarray",
+      "array-manipulation"
+    ]
+  },
+  {
+    "id": "algorithms-t-11",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Group Anagrams",
+      "ru": "Группировка анаграмм"
+    },
+    "description": {
+      "en": "Group an array of strings into groups where each group contains only anagrams of each other.\n\n**Requirements:**\n- Two strings are anagrams if they contain the same characters with the same frequencies\n- Case-insensitive comparison\n- Return an array of arrays where each sub-array contains anagrams\n- Order within groups doesn't matter\n- Order of groups doesn't matter\n\n**Function signature:**\ntypescript\nfunction groupAnagrams(words: string[]): string[][]\n\n\n**Example 1:**\n- Input: `[\"eat\", \"tea\", \"ate\", \"tan\", \"ant\", \"nat\"]`\n- Output: `[[\"eat\", \"tea\", \"ate\"], [\"tan\", \"ant\", \"nat\"]]` (or any permutation)\n\n**Example 2:**\n- Input: `[\"listen\", \"silent\", \"enlist\", \"hello\"]`\n- Output: `[[\"listen\", \"silent\", \"enlist\"], [\"hello\"]]`\n\n**Edge cases:**\n- Empty array\n- Single word\n- Empty strings\n- Words with different cases\n- Duplicate words",
+      "ru": "Группируйте массив строк на группы, где каждая группа содержит только анаграммы друг друга.\n\n**Требования:**\n- Две строки являются анаграммами, если содержат одинаковые символы с одинаковыми частотами\n- Сравнение без учета регистра\n- Вернуть массив массивов, где каждый подмассив содержит анаграммы\n- Порядок в группах не важен\n- Порядок групп не важен\n\n**Сигнатура функции:**\ntypescript\nfunction groupAnagrams(words: string[]): string[][]\n\n\n**Пример 1:**\n- Входные данные: `[\"eat\", \"tea\", \"ate\", \"tan\", \"ant\", \"nat\"]`\n- Выходные данные: `[[\"eat\", \"tea\", \"ate\"], [\"tan\", \"ant\", \"nat\"]]` (или любая перестановка)\n\n**Пример 2:**\n- Входные данные: `[\"listen\", \"silent\", \"enlist\", \"hello\"]`\n- Выходные данные: `[[\"listen\", \"silent\", \"enlist\"], [\"hello\"]]`\n\n**Граничные случаи:**\n- Пустой массив\n- Одно слово\n- Пустые строки\n- Слова с разным регистром\n- Дублирующиеся слова"
+    },
+    "starterCode": "function groupAnagrams(words: string[]): string[][] {\n  if (words.length === 0) {\n    return [];\n  }\n\n  // Use a map to store groups of anagrams\n  const map = new Map<string, string[]>();\n\n  for (const word of words) {\n    // Normalize: convert to lowercase and sort characters\n    const normalized = word.toLowerCase();\n    const sorted = normalized.split('').sort().join('');\n\n    // Add word to the group with this sorted key\n    if (!map.has(sorted)) {\n      map.set(sorted, []);\n    }\n    map.get(sorted)!.push(word);\n  }\n\n  // Convert map values to array\n  return Array.from(map.values());\n}",
+    "solution": "function groupAnagrams(words: string[]): string[][] {\n  if (words.length === 0) {\n    return [];\n  }\n\n  const map = new Map<string, string[]>();\n\n  for (const word of words) {\n    const normalized = word.toLowerCase();\n    const sorted = normalized.split('').sort().join('');\n\n    if (!map.has(sorted)) {\n      map.set(sorted, []);\n    }\n    map.get(sorted)!.push(word);\n  }\n\n  return Array.from(map.values());\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** The key insight is that anagrams produce the same string when their characters are sorted. We use a HashMap where the key is the sorted version of each word (in lowercase for case-insensitivity). All anagrams will map to the same key, so we group them together. Finally, we extract all groups from the map.\n\n**Time complexity:** O(n * k log k) where n is the number of words and k is the maximum length of a word (due to sorting each word)\n**Space complexity:** O(n * k) to store all words in the map\n\n**Common mistakes:**\n- Not normalizing to lowercase before sorting\n- Using word frequency counting instead of sorting (works but less intuitive)\n- Not handling empty input array\n- Modifying the original array instead of creating groups\n- Not handling empty strings properly",
+      "ru": "**Подход:** Ключевое наблюдение: анаграммы дают одинаковую строку при сортировке символов. Используем HashMap, где ключ - это отсортированная версия каждого слова (в нижнем регистре для игнорирования регистра). Все анаграммы отображаются на один ключ, поэтому мы группируем их вместе. Затем извлекаем все группы из карты.\n\n**Временная сложность:** O(n * k log k), где n - количество слов, k - максимальная длина слова (из-за сортировки)\n**Пространственная сложность:** O(n * k) для хранения всех слов в карте\n\n**Типичные ошибки:**\n- Неполная нормализация к нижнему регистру перед сортировкой\n- Использование подсчета частоты вместо сортировки (работает, но менее интуитивно)\n- Неправильная обработка пустого входного массива\n- Изменение исходного массива вместо создания групп\n- Неправильная обработка пустых строк"
+    },
+    "tags": [
+      "hashing",
+      "sorting",
+      "anagrams",
+      "hash-map",
+      "string-manipulation"
+    ]
+  },
+  {
+    "id": "algorithms-t-12",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Detect Cycle in Linked List",
+      "ru": "Обнаружение цикла в связном списке"
+    },
+    "description": {
+      "en": "Detect if a linked list contains a cycle (a node points back to an earlier node in the list).\n\n**Requirements:**\n- Detect the presence of a cycle\n- If a cycle exists, return the node where the cycle begins\n- If no cycle, return null\n- Use Floyd's Cycle Detection (tortoise and hare) algorithm\n- Space complexity should be O(1)\n\n**Node structure:**\ntypescript\nclass ListNode {\n  val: number;\n  next: ListNode | null;\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val;\n    this.next = next;\n  }\n}\n\n\n**Function signature:**\ntypescript\nfunction detectCycle(head: ListNode | null): ListNode | null\n\n\n**Example 1:**\n- Input: List: 1 → 2 → 3 → 4, with node 4 pointing back to node 2\n- Output: The node with value 2 (where cycle begins)\n\n**Example 2:**\n- Input: List: 1 → 2 → 3 → 4 (no cycle)\n- Output: null\n\n**Edge cases:**\n- Empty list (null head)\n- Single node pointing to itself\n- Cycle of length 1 (node points to itself)\n- Cycle starting at head\n- Very long list with cycle at the end",
+      "ru": "Обнаружить, содержит ли связный список цикл (узел указывает на более ранний узел в списке).\n\n**Требования:**\n- Обнаружить наличие цикла\n- Если цикл существует, вернуть узел, где цик�� начинается\n- Если цикла нет, вернуть null\n- Использовать алгоритм обнаружения цикла Флойда (черепаха и заяц)\n- Пространственная сложность должна быть O(1)\n\n**Структура узла:**\ntypescript\nclass ListNode {\n  val: number;\n  next: ListNode | null;\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val;\n    this.next = next;\n  }\n}\n\n\n**Сигнатура функции:**\ntypescript\nfunction detectCycle(head: ListNode | null): ListNode | null\n\n\n**Пример 1:**\n- Входные данные: Список: 1 → 2 → 3 → 4, узел 4 указывает на узел 2\n- Выходные данные: Узел со значением 2 (где начинается цикл)\n\n**Пример 2:**\n- Входные данные: Список: 1 → 2 → 3 → 4 (нет цикла)\n- Выходные данные: null\n\n**Граничные случаи:**\n- Пустой список (null head)\n- Один узел, указывающий на себя\n- Цикл длиной 1 (узел указывает на себя)\n- Цикл, начинающийся с head\n- Очень длинный список с циклом в конце"
+    },
+    "starterCode": "class ListNode {\n  val: number;\n  next: ListNode | null;\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val;\n    this.next = next;\n  }\n}\n\nfunction detectCycle(head: ListNode | null): ListNode | null {\n  if (!head || !head.next) {\n    return null;\n  }\n\n  // Phase 1: Detect if cycle exists using slow and fast pointers\n  let slow = head;\n  let fast = head;\n\n  while (fast && fast.next) {\n    slow = slow!.next;\n    fast = fast.next.next;\n\n    // Cycle detected\n    if (slow === fast) {\n      // Phase 2: Find the start of the cycle\n      let ptr1 = head;\n      let ptr2 = slow;\n\n      while (ptr1 !== ptr2) {\n        ptr1 = ptr1!.next;\n        ptr2 = ptr2!.next;\n      }\n\n      return ptr1;\n    }\n  }\n\n  // No cycle found\n  return null;\n}",
+    "solution": "class ListNode {\n  val: number;\n  next: ListNode | null;\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val;\n    this.next = next;\n  }\n}\n\nfunction detectCycle(head: ListNode | null): ListNode | null {\n  if (!head || !head.next) {\n    return null;\n  }\n\n  let slow = head;\n  let fast = head;\n\n  while (fast && fast.next) {\n    slow = slow!.next;\n    fast = fast.next.next;\n\n    if (slow === fast) {\n      let ptr1 = head;\n      let ptr2 = slow;\n\n      while (ptr1 !== ptr2) {\n        ptr1 = ptr1!.next;\n        ptr2 = ptr2!.next;\n      }\n\n      return ptr1;\n    }\n  }\n\n  return null;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Floyd's Cycle Detection uses two pointers moving at different speeds. The slow pointer moves 1 step at a time, and the fast pointer moves 2 steps. If there's a cycle, they will eventually meet inside it. Once a cycle is detected, we find where it starts by resetting one pointer to head and moving both at the same speed until they meet again. This works because of the mathematical property that the distance from head to cycle start equals the distance from meeting point to cycle start.\n\n**Time complexity:** O(n) where n is the number of nodes\n**Space complexity:** O(1) - only using two pointers, no extra data structures\n\n**Common mistakes:**\n- Using a HashSet to detect cycles (violates O(1) space requirement)\n- Not implementing phase 2 to find the cycle start\n- Off-by-one errors in pointer movement\n- Not handling the case where head itself is in the cycle\n- Assuming the cycle start is always where slow and fast first meet",
+      "ru": "**Подход:** Алгоритм обнаружения цикла Флойда использует два указателя, движущихся с разными скоростями. Медленный указатель движется на 1 шаг за раз, быстрый - на 2 шага. Если есть цикл, они в итоге встретятся внутри него. После обнаружения цикла находим его начало, сбрасывая один указатель на head и перемещая оба с одинаковой скоростью до встречи. Это работает благодаря математическому свойству: расстояние от head до начала цикла равно расстоянию от точки встречи до начала цикла.\n\n**Временная сложность:** O(n), где n - количество узлов\n**Пространственная сложность:** O(1) - только два указателя, без дополнительных структур данных\n\n**Типичные ошибки:**\n- Использование HashSet для обнаружения циклов (нарушает требование O(1) пространства)\n- Неправильная реализация фазы 2 для поиска начала цикла\n- Ошибки на единицу в движении указателей\n- Неправильная обработка случая, когда head находится в цикле\n- Предположение, что начало цикла - это всегда первая точка встречи"
+    },
+    "tags": [
+      "floyd-cycle-detection",
+      "linked-list",
+      "two-pointers",
+      "cycle-detection"
+    ]
+  },
+  {
+    "id": "algorithms-t-13",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Search in Rotated Sorted Array using Binary Search",
+      "ru": "Поиск в повёрнутом отсортированном массиве с использованием бинарного поиска"
+    },
+    "description": {
+      "en": "## Task\nImplement a function that searches for a target value in a rotated sorted array using binary search. The array was originally sorted in ascending order, then rotated at an unknown pivot.\n\n## Requirements\n- Find the target value's index in O(log n) time\n- Return -1 if the target is not found\n- Handle duplicates if present\n- Cannot use linear search\n\n## Function Signature\ntypescript\nfunction search(nums: number[], target: number): number\n\n\n## Examples\n- Input: `nums = [4,5,6,7,0,1,2], target = 0` → Output: `4`\n- Input: `nums = [4,5,6,7,0,1,2], target = 3` → Output: `-1`\n- Input: `nums = [1], target = 1` → Output: `0`\n\n## Edge Cases\n- Empty array\n- Single element array\n- Target at rotation point\n- All elements are the same (with duplicates)",
+      "ru": "## Задача\nРеализуйте функцию поиска значения в повёрнутом отсортированном массиве с использованием бинарного поиска. Массив был изначально отсортирован в порядке возрастания, а затем повёрнут в неизвестной точке.\n\n## Требования\n- Найти индекс целевого значения за O(log n)\n- Вернуть -1, если значение не найдено\n- Обработать случай с дубликатами\n- Нельзя использовать линейный поиск\n\n## Сигнатура функции\ntypescript\nfunction search(nums: number[], target: number): number\n\n\n## Примеры\n- Input: `nums = [4,5,6,7,0,1,2], target = 0` → Output: `4`\n- Input: `nums = [4,5,6,7,0,1,2], target = 3` → Output: `-1`\n- Input: `nums = [1], target = 1` → Output: `0`\n\n## Граничные случаи\n- Пустой массив\n- Массив с одним элементом\n- Элемент находится в точке поворота\n- Все элементы одинаковые (с дубликатами)"
+    },
+    "starterCode": "function search(nums: number[], target: number): number {\n  // Binary search on rotated sorted array\n  // Determine which half is sorted, then decide which half to search\n  let left = 0;\n  let right = nums.length - 1;\n  \n  while (left <= right) {\n    // Find mid and check if target is at mid\n    // Determine which half is properly sorted\n    // Check if target is in the sorted half\n    // Move pointers accordingly\n  }\n  \n  return -1;\n}",
+    "solution": "function search(nums: number[], target: number): number {\n  let left = 0;\n  let right = nums.length - 1;\n  \n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    \n    if (nums[mid] === target) {\n      return mid;\n    }\n    \n    // Determine which half is sorted\n    if (nums[left] <= nums[mid]) {\n      // Left half is sorted\n      if (nums[left] <= target && target < nums[mid]) {\n        // Target is in left sorted half\n        right = mid - 1;\n      } else {\n        // Target is in right half\n        left = mid + 1;\n      }\n    } else {\n      // Right half is sorted\n      if (nums[mid] < target && target <= nums[right]) {\n        // Target is in right sorted half\n        left = mid + 1;\n      } else {\n        // Target is in left half\n        right = mid - 1;\n      }\n    }\n  }\n  \n  return -1;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Binary search with intelligent pivot detection. At each step, determine which half of the array is properly sorted (has no rotation), then check if the target lies within that sorted half. If yes, search that half; otherwise search the other half.\n\n**Time complexity:** O(log n) - standard binary search\n**Space complexity:** O(1) - only constant extra space\n\n**Common mistakes:**\n- Not correctly identifying which half is sorted\n- Comparing target incorrectly with boundary values\n- Off-by-one errors in pointer movement\n- Forgetting to handle the case where target equals mid value",
+      "ru": "**Подход:** Бинарный поиск с интеллектуальным определением половины. На каждом шаге определяем, какая половина массива правильно отсортирована (без поворота), затем проверяем, находится ли цель в этой отсортированной половине. Если да, ищем в этой половине, иначе в другой.\n\n**Временная сложность:** O(log n) - стандартный бинарный поиск\n**Пространственная сложность:** O(1) - только константное дополнительное место\n\n**Типичные ошибки:**\n- Неправильное определение, какая половина отсортирована\n- Неправильное сравнение цели с граничными значениями\n- Ошибки на единицу при движении указателей\n- Забывание о случае, когда цель равна значению mid"
+    },
+    "tags": [
+      "binary-search",
+      "rotated-array",
+      "search"
+    ]
+  },
+  {
+    "id": "algorithms-t-14",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Maximum Subarray Sum using Kadane's Algorithm",
+      "ru": "Максимальная сумма подмассива с использованием алгоритма Кадане"
+    },
+    "description": {
+      "en": "## Task\nFind the contiguous subarray with the largest sum using Kadane's algorithm.\n\n## Requirements\n- Return the maximum sum value\n- Handle negative numbers correctly\n- Solve in O(n) time with O(1) space\n- The array contains at least one element\n\n## Function Signature\ntypescript\nfunction maxSubArray(nums: number[]): number\n\n\n## Examples\n- Input: `nums = [-2,1,-3,4,-1,2,1,-5,4]` → Output: `6` (subarray [4,-1,2,1])\n- Input: `nums = [5,4,-1,7,8]` → Output: `23` (entire array)\n- Input: `nums = [-1]` → Output: `-1`\n- Input: `nums = [-2,-1,-3]` → Output: `-1`\n\n## Edge Cases\n- All negative numbers\n- Single element array\n- All positive numbers\n- Mix of positive and negative with varying magnitudes",
+      "ru": "## Задача\nНайти непрерывный подмассив с наибольшей суммой, используя алгоритм Кадане.\n\n## Требования\n- Вернуть значение максимальной суммы\n- Правильно обработать отрицательные числа\n- Решить за O(n) времени с O(1) дополнительного места\n- Массив содержит как минимум один элемент\n\n## Сигнатура функции\ntypescript\nfunction maxSubArray(nums: number[]): number\n\n\n## Примеры\n- Input: `nums = [-2,1,-3,4,-1,2,1,-5,4]` → Output: `6` (подмассив [4,-1,2,1])\n- Input: `nums = [5,4,-1,7,8]` → Output: `23` (весь массив)\n- Input: `nums = [-1]` → Output: `-1`\n- Input: `nums = [-2,-1,-3]` → Output: `-1`\n\n## Граничные случаи\n- Все отрицательные числа\n- Массив с одним элементом\n- Все положительные числа\n- Смешанные положительные и отрицательные числа"
+    },
+    "starterCode": "function maxSubArray(nums: number[]): number {\n  // Keep track of current sum and maximum sum\n  let currentSum = 0;\n  let maxSum = nums[0];\n  \n  for (let i = 0; i < nums.length; i++) {\n    // Decide whether to extend current subarray or start new one\n    // Update maximum if current sum is larger\n  }\n  \n  return maxSum;\n}",
+    "solution": "function maxSubArray(nums: number[]): number {\n  let currentSum = nums[0];\n  let maxSum = nums[0];\n  \n  for (let i = 1; i < nums.length; i++) {\n    // Either add current number to existing sum or start new subarray\n    currentSum = Math.max(nums[i], currentSum + nums[i]);\n    // Update maximum sum found so far\n    maxSum = Math.max(maxSum, currentSum);\n  }\n  \n  return maxSum;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Kadane's algorithm maintains two values: the maximum sum ending at the current position, and the global maximum sum seen so far. At each element, we decide whether to extend the current subarray (if adding current element increases the sum) or start a new subarray from the current element.\n\n**Time complexity:** O(n) - single pass through array\n**Space complexity:** O(1) - only two variables\n\n**Common mistakes:**\n- Initializing currentSum to 0 instead of nums[0], causing issues with all-negative arrays\n- Not updating maxSum after updating currentSum\n- Forgetting that we must include at least one element\n- Attempting to track the indices instead of just the maximum sum",
+      "ru": "**Подход:** Алгоритм Кадане поддерживает два значения: максимальная сумма, заканчивающаяся в текущей позиции, и глобальный максимум. На каждом элементе мы решаем, расширять текущий подмассив (если добавление текущего элемента увеличивает сумму) или начать новый подмассив с текущего элемента.\n\n**Временная сложность:** O(n) - один проход через массив\n**Пространственная сложность:** O(1) - только две переменные\n\n**Типичные ошибки:**\n- Инициализация currentSum в 0 вместо nums[0], приводит к проблемам со всеми отрицательными массивами\n- Забывание обновить maxSum после обновления currentSum\n- Забывание, что мы должны включить хотя бы один элемент\n- Попытка отслеживать индексы вместо просто максимальной суммы"
+    },
+    "tags": [
+      "kadane-algorithm",
+      "dynamic-programming",
+      "subarray",
+      "greedy"
+    ]
+  },
+  {
+    "id": "algorithms-t-15",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Group Anagrams by Sorting",
+      "ru": "Группировка анаграмм по сортировке"
+    },
+    "description": {
+      "en": "## Task\nGroup an array of strings into groups where each group contains only anagrams of each other. Anagrams are words that contain the same characters with the same frequencies, just in different order.\n\n## Requirements\n- Return grouped anagrams as an array of arrays\n- Order of groups doesn't matter\n- Order of strings within a group doesn't matter\n- Handle empty strings\n- Handle single character strings\n\n## Function Signature\ntypescript\nfunction groupAnagrams(strs: string[]): string[][]\n\n\n## Examples\n- Input: `strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]` → Output: `[[\"eat\",\"tea\",\"ate\"],[\"tan\",\"nat\"],[\"bat\"]]`\n- Input: `strs = [\"\"]` → Output: `[[\"\"]]`\n- Input: `strs = [\"a\"]` → Output: `[[\"a\"]]`\n- Input: `strs = [\"ab\",\"ba\",\"abc\",\"bca\",\"cab\",\"aab\",\"baa\"]` → Output: `[[\"ab\",\"ba\"],[\"abc\",\"bca\",\"cab\"],[\"aab\",\"baa\"]]`\n\n## Edge Cases\n- Empty input array\n- Array with single string\n- All strings are anagrams of each other\n- No anagrams in the array\n- Strings with special characters or numbers",
+      "ru": "## Задача\nГруппировать массив строк так, чтобы в каждой группе находились только анаграммы друг друга. Анаграммы - это слова, содержащие одинаковые символы с одинаковыми частотами, но в другом порядке.\n\n## Требования\n- Вернуть сгруппированные анаграммы как массив массивов\n- Порядок групп не важен\n- Порядок строк в группе не важен\n- Обработать пустые строки\n- Обработать строки с одним символом\n\n## Сигнатура функции\ntypescript\nfunction groupAnagrams(strs: string[]): string[][]\n\n\n## Примеры\n- Input: `strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]` → Output: `[[\"eat\",\"tea\",\"ate\"],[\"tan\",\"nat\"],[\"bat\"]]`\n- Input: `strs = [\"\"]` → Output: `[[\"\"]]`\n- Input: `strs = [\"a\"]` → Output: `[[\"a\"]]`\n- Input: `strs = [\"ab\",\"ba\",\"abc\",\"bca\",\"cab\",\"aab\",\"baa\"]` → Output: `[[\"ab\",\"ba\"],[\"abc\",\"bca\",\"cab\"],[\"aab\",\"baa\"]]`\n\n## Граничные случаи\n- Пустой входной массив\n- Массив с одной строкой\n- Все строки являются анаграммами друг друга\n- Нет анаграмм в массиве\n- Строки со специальными символами или цифрами"
+    },
+    "starterCode": "function groupAnagrams(strs: string[]): string[][] {\n  // Use a hash map where key is sorted characters\n  // and value is list of anagrams\n  const map = new Map<string, string[]>();\n  \n  for (const str of strs) {\n    // Sort the string to use as key\n    // Add string to corresponding group\n  }\n  \n  // Convert map values to array and return\n  return Array.from(map.values());\n}",
+    "solution": "function groupAnagrams(strs: string[]): string[][] {\n  const map = new Map<string, string[]>();\n  \n  for (const str of strs) {\n    // Sort characters in string to create a key\n    const sorted = str.split('').sort().join('');\n    \n    // If key doesn't exist, create new array\n    if (!map.has(sorted)) {\n      map.set(sorted, []);\n    }\n    \n    // Add current string to the group\n    map.get(sorted)!.push(str);\n  }\n  \n  // Convert map values to array of arrays\n  return Array.from(map.values());\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a hash map where the key is the sorted version of each string. All anagrams will have the same sorted representation, so they'll be grouped together. Iterate through all strings, sort each one, and use it as a key to group anagrams.\n\n**Time complexity:** O(n * k log k) where n is number of strings and k is max length of a string (dominated by sorting each string)\n**Space complexity:** O(n * k) to store all strings in the hash map\n\n**Common mistakes:**\n- Not sorting the string before using it as a key\n- Using character frequency count unnecessarily (sorting is simpler)\n- Forgetting to initialize the group array before pushing\n- Not converting the map values back to an array\n- Modifying input array instead of returning new result",
+      "ru": "**Подход:** Использование хеш-карты, где ключ - это отсортированная версия каждой строки. Все анаграммы будут иметь одинаковое отсортированное представление, поэтому они будут сгруппированы вместе. Пройти по всем строкам, отсортировать каждую и использовать как ключ для группировки анаграмм.\n\n**Временная сложность:** O(n * k log k) где n - количество строк, k - максимальная длина строки (доминируется сортировкой)\n**Пространственная сложность:** O(n * k) для хранения всех строк в хеш-карте\n\n**Типичные ошибки:**\n- Не сортировать строку перед использованием как ключ\n- Использовать подсчёт частоты символов без необходимости (сортировка проще)\n- Забыть инициализировать массив группы перед добавлением\n- Не преобразовать значения карты обратно в массив\n- Изменение входного массива вместо возврата нового результата"
+    },
+    "tags": [
+      "hash-map",
+      "string-sorting",
+      "grouping",
+      "anagrams"
+    ]
+  },
+  {
+    "id": "algorithms-t-16",
+    "topicId": "algorithms",
+    "difficulty": "medium",
+    "title": {
+      "en": "Product of Array Except Self",
+      "ru": "Произведение массива кроме самого себя"
+    },
+    "description": {
+      "en": "Given an integer array `nums`, return an array `answer` such that `answer[i]` is equal to the product of all the elements of `nums` except `nums[i]`.\n\nYou must write an algorithm that runs in O(n) time and uses O(1) auxiliary space (the output array does not count as extra space).\n\n**Function signature:**\ntypescript\nfunction productExceptSelf(nums: number[]): number[] {\n  // implement here\n}\n\n\n**Example:**\n- Input: `nums = [1,2,3,4]`\n- Output: `[24,12,8,6]`\n- Explanation: `[2*3*4, 1*3*4, 1*2*4, 1*2*3]`\n\n**Edge cases:**\n- Array with negative numbers: `[-1,1,0,-3,3]` → `[0,0,9,0,0]`\n- Array with zeros should be handled correctly\n- Cannot use division operator\n- Array length ≥ 2",
+      "ru": "Дан целочисленный массив `nums`. Вернуть массив `answer`, где `answer[i]` равно произведению всех элементов массива `nums`, кроме `nums[i]`.\n\nНужно написать алгоритм, работающий за O(n) времени и использующий O(1) дополнительного пространства (выходной массив не считается).\n\n**Сигнатура функции:**\ntypescript\nfunction productExceptSelf(nums: number[]): number[] {\n  // реализуйте здесь\n}\n\n\n**Пример:**\n- Входные данные: `nums = [1,2,3,4]`\n- Выходные данные: `[24,12,8,6]`\n- Объяснение: `[2*3*4, 1*3*4, 1*2*4, 1*2*3]`\n\n**Граничные случаи:**\n- Массив с отрицательными числами: `[-1,1,0,-3,3]` → `[0,0,9,0,0]`\n- Массив с нулями должен обрабатываться корректно\n- Нельзя использовать оператор деления\n- Длина массива ≥ 2"
+    },
+    "starterCode": "function productExceptSelf(nums: number[]): number[] {\n  const n = nums.length;\n  const answer: number[] = new Array(n);\n  \n  // First pass: calculate prefix products\n  // Second pass: calculate suffix products and combine\n  \n  return answer;\n}",
+    "solution": "function productExceptSelf(nums: number[]): number[] {\n  const n = nums.length;\n  const answer: number[] = new Array(n);\n  \n  // First pass: store prefix product at answer[i]\n  answer[0] = 1;\n  for (let i = 1; i < n; i++) {\n    answer[i] = answer[i - 1] * nums[i - 1];\n  }\n  \n  // Second pass: multiply by suffix product\n  let suffix = 1;\n  for (let i = n - 1; i >= 0; i--) {\n    answer[i] = answer[i] * suffix;\n    suffix *= nums[i];\n  }\n  \n  return answer;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use two passes through the array without division.\n\n**First pass (left to right):** Store the product of all elements to the left of index i in `answer[i]`. Start with `answer[0] = 1` (no elements to the left).\n\n**Second pass (right to left):** Multiply each `answer[i]` by the product of all elements to the right of index i. Track suffix products by multiplying from right to left.\n\nFor example with `[1,2,3,4]`:\n- After first pass: `[1, 1, 2, 6]` (prefix products)\n- After second pass: `[24, 12, 8, 6]` (prefix × suffix)\n\n**Time complexity:** O(n) — two linear passes through the array\n**Space complexity:** O(1) — only use the output array, no extra space\n\n**Common mistakes:**\n- Attempting to use division (not allowed per constraints)\n- Using extra arrays for prefix/suffix (violates space constraint)\n- Incorrect handling of the second pass logic or off-by-one errors\n- Not initializing suffix to 1 properly",
+      "ru": "**Подход:** Используем два прохода через массив без операции деления.\n\n**Первый проход (слева направо):** Сохраняем произведение всех элементов слева от индекса i в `answer[i]`. Начинаем с `answer[0] = 1` (нет элементов слева).\n\n**Второй проход (справа налево):** Умножаем каждый `answer[i]` на произведение всех элементов справа от индекса i. Отслеживаем суффиксные произведения, умножая справа налево.\n\nНапример для `[1,2,3,4]`:\n- После первого прохода: `[1, 1, 2, 6]` (префиксные произведения)\n- После второго прохода: `[24, 12, 8, 6]` (префикс × суффикс)\n\n**Временная сложность:** O(n) — два линейных прохода через массив\n**Пространственная сложность:** O(1) — используем только выходной массив, без доп. памяти\n\n**Типичные ошибки:**\n- Попытка использовать деление (запрещено по условиям)\n- Использование дополнительных массивов для префиксов/суффиксов (нарушает ограничение по памяти)\n- Некорректная логика второго прохода или ошибки на границах\n- Неправильная инициализация переменной suffix"
+    },
+    "tags": [
+      "array",
+      "prefix-suffix",
+      "product",
+      "space-optimization",
+      "two-pass"
+    ]
+  },
+  {
+    "id": "algorithms-t-17",
+    "topicId": "algorithms",
+    "difficulty": "hard",
+    "title": {
+      "en": "LRU Cache Implementation",
+      "ru": "Реализация LRU кэша"
+    },
+    "description": {
+      "en": "Design and implement a Least Recently Used (LRU) Cache with fixed capacity.\n\n**Requirements:**\n- Implement `LRUCache(capacity: number)` constructor\n- Implement `get(key: number): number` - returns value if key exists, else -1\n- Implement `put(key: number, value: number): void` - set key-value pair, evict least recently used item if at capacity\n- Both operations must run in O(1) time\n\n**Example:**\n\nconst cache = new LRUCache(2);\ncache.put(1, 1);   // cache: {1=1}\ncache.put(2, 2);   // cache: {1=1, 2=2}\nconsole.log(cache.get(1));  // 1 (1 is now most recent)\ncache.put(3, 3);   // evict 2, cache: {1=1, 3=3}\nconsole.log(cache.get(2));  // -1 (2 was evicted)\ncache.put(4, 4);   // evict 1, cache: {3=3, 4=4}\nconsole.log(cache.get(1));  // -1\nconsole.log(cache.get(3));  // 3\nconsole.log(cache.get(4));  // 4\n\n\n**Edge cases:**\n- Capacity of 1\n- Getting non-existent keys\n- Updating existing keys\n- Eviction when capacity is reached",
+      "ru": "Разработайте и реализуйте кэш Least Recently Used (LRU) с фиксированной ёмкостью.\n\n**Требования:**\n- Реализуйте конструктор `LRUCache(capacity: number)`\n- Реализуйте `get(key: number): number` - возвращает значение если ключ существует, иначе -1\n- Реализуйте `put(key: number, value: number): void` - установить пару ключ-значение, вытеснить наименее недавно использованный элемент при достижении ёмкости\n- Обе операции должны выполняться за O(1) времени\n\n**Пример:**\n\nconst cache = new LRUCache(2);\ncache.put(1, 1);   // кэш: {1=1}\ncache.put(2, 2);   // кэш: {1=1, 2=2}\nconsole.log(cache.get(1));  // 1 (1 теперь самый свежий)\ncache.put(3, 3);   // вытеснить 2, кэш: {1=1, 3=3}\nconsole.log(cache.get(2));  // -1 (2 был вытеснен)\ncache.put(4, 4);   // вытеснить 1, кэш: {3=3, 4=4}\nconsole.log(cache.get(1));  // -1\nconsole.log(cache.get(3));  // 3\nconsole.log(cache.get(4));  // 4\n\n\n**Граничные случаи:**\n- Ёмкость равна 1\n- Получение несуществующих ключей\n- Обновление существующих ключей\n- Вытеснение при достижении ёмкости"
+    },
+    "starterCode": "class LRUCache {\n  constructor(capacity: number) {\n    // implement\n  }\n\n  get(key: number): number {\n    // implement\n  }\n\n  put(key: number, value: number): void {\n    // implement\n  }\n}",
+    "solution": "class LRUCache {\n  private capacity: number;\n  private cache: Map<number, number>;\n\n  constructor(capacity: number) {\n    this.capacity = capacity;\n    this.cache = new Map();\n  }\n\n  get(key: number): number {\n    if (!this.cache.has(key)) {\n      return -1;\n    }\n    // Move to end (most recently used)\n    const value = this.cache.get(key)!;\n    this.cache.delete(key);\n    this.cache.set(key, value);\n    return value;\n  }\n\n  put(key: number, value: number): void {\n    // If key exists, delete it first\n    if (this.cache.has(key)) {\n      this.cache.delete(key);\n    } else if (this.cache.size >= this.capacity) {\n      // Evict least recently used (first entry)\n      const firstKey = this.cache.keys().next().value;\n      this.cache.delete(firstKey);\n    }\n    // Add to end (most recently used)\n    this.cache.set(key, value);\n  }\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a doubly-linked list with a hash map for O(1) access and O(1) node removal/insertion. JavaScript Map maintains insertion order, so we can leverage it directly instead of building an explicit doubly-linked list.\n\n**Time complexity:** O(1) for both get() and put() operations\n**Space complexity:** O(capacity) for storing cache entries\n\n**Common mistakes:**\n- Using a regular object instead of Map, losing insertion order\n- Forgetting to move accessed/updated keys to the end\n- Not handling the update case (key already exists)\n- Evicting from the wrong end (should evict from front/oldest)",
+      "ru": "**Подход:** Использование двусвязного списка с хэш-таблицей для O(1) доступа и O(1) удаления/вставки узла. Map в JavaScript сохраняет порядок вставки, поэтому можно использовать его напрямую вместо явного двусвязного списка.\n\n**Временная сложность:** O(1) для обеих операций get() и put()\n**Пространственная сложность:** O(capacity) для хранения записей кэша\n\n**Типичные ошибки:**\n- Использование обычного объекта вместо Map, потеря порядка вставки\n- Забывание переместить доступные/обновленные ключи в конец\n- Неправильная обработка случая обновления (ключ уже существует)\n- Вытеснение с неправильного конца (должно быть с начала/старейшего)"
+    },
+    "tags": [
+      "lru-cache",
+      "hash-map",
+      "linked-list",
+      "design-pattern"
+    ]
+  },
+  {
+    "id": "algorithms-t-18",
+    "topicId": "algorithms",
+    "difficulty": "hard",
+    "title": {
+      "en": "Serialize and Deserialize Binary Tree",
+      "ru": "Сериализация и десериализация бинарного дерева"
+    },
+    "description": {
+      "en": "Design an algorithm to serialize and deserialize a binary tree.\n\n**Requirements:**\n- Implement `serialize(root: TreeNode | null): string` - converts tree to a string\n- Implement `deserialize(data: string): TreeNode | null` - reconstructs tree from string\n- The format is flexible but must handle null nodes and all tree structures\n- Must work with arbitrary tree shapes and values\n\n**Example:**\n\nconst tree = new TreeNode(1);\ntree.left = new TreeNode(2);\ntree.right = new TreeNode(3);\ntree.right.left = new TreeNode(4);\ntree.right.right = new TreeNode(5);\n\nconst serialized = serialize(tree);\n// Example output: \"1,2,null,null,3,4,null,null,5,null,null\"\n\nconst deserialized = deserialize(serialized);\n// Should reconstruct the original tree structure\n\n\n**Tree structure:**\n\nclass TreeNode {\n  val: number;\n  left: TreeNode | null = null;\n  right: TreeNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\n\n**Edge cases:**\n- Empty tree (null root)\n- Single node\n- Unbalanced trees\n- Trees with negative values",
+      "ru": "Разработайте алгоритм для сериализации и десериализации бинарного дерева.\n\n**Требования:**\n- Реализуйте `serialize(root: TreeNode | null): string` - преобразует дерево в строку\n- Реализуйте `deserialize(data: string): TreeNode | null` - восстанавливает дерево из строки\n- Формат гибкий, но должен обрабатывать null узлы и все структуры деревьев\n- Должно работать с произвольными формами деревьев и значениями\n\n**Пример:**\n\nconst tree = new TreeNode(1);\ntree.left = new TreeNode(2);\ntree.right = new TreeNode(3);\ntree.right.left = new TreeNode(4);\ntree.right.right = new TreeNode(5);\n\nconst serialized = serialize(tree);\n// Пример вывода: \"1,2,null,null,3,4,null,null,5,null,null\"\n\nconst deserialized = deserialize(serialized);\n// Должно восстановить оригинальную структуру дерева\n\n\n**Структура дерева:**\n\nclass TreeNode {\n  val: number;\n  left: TreeNode | null = null;\n  right: TreeNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\n\n**Граничные случаи:**\n- Пустое дерево (null корень)\n- Один узел\n- Несбалансированные деревья\n- Деревья с отрицательными значениями"
+    },
+    "starterCode": "class TreeNode {\n  val: number;\n  left: TreeNode | null = null;\n  right: TreeNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\nfunction serialize(root: TreeNode | null): string {\n  // implement\n}\n\nfunction deserialize(data: string): TreeNode | null {\n  // implement\n}",
+    "solution": "class TreeNode {\n  val: number;\n  left: TreeNode | null = null;\n  right: TreeNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\nfunction serialize(root: TreeNode | null): string {\n  const result: string[] = [];\n\n  function dfs(node: TreeNode | null): void {\n    if (node === null) {\n      result.push('null');\n      return;\n    }\n    result.push(String(node.val));\n    dfs(node.left);\n    dfs(node.right);\n  }\n\n  dfs(root);\n  return result.join(',');\n}\n\nfunction deserialize(data: string): TreeNode | null {\n  const values = data.split(',');\n  let index = 0;\n\n  function dfs(): TreeNode | null {\n    const val = values[index++];\n    if (val === 'null') {\n      return null;\n    }\n    const node = new TreeNode(parseInt(val, 10));\n    node.left = dfs();\n    node.right = dfs();\n    return node;\n  }\n\n  return dfs();\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use pre-order traversal (DFS) for both serialization and deserialization. This approach maintains the structure information naturally - when deserializing, we can reconstruct the tree in the same pre-order sequence.\n\n**Time complexity:** O(n) for serialize, O(n) for deserialize, where n is the number of nodes\n**Space complexity:** O(n) for the result string in serialize; O(h) for recursion stack in deserialize where h is height\n\n**Common mistakes:**\n- Using in-order traversal (ambiguous without additional markers)\n- Not properly handling null markers\n- Incorrect index tracking during deserialization\n- Forgetting to increment index pointer in deserialize\n- Not handling negative values or edge cases",
+      "ru": "**Подход:** Использование обхода в прямом порядке (DFS) для сериализации и десериализации. Этот подход естественным образом сохраняет информацию о структуре - при десериализации мы можем восстановить дерево в той же последовательности.\n\n**Временная сложность:** O(n) для serialize, O(n) для deserialize, где n - количество узлов\n**Пространственная сложность:** O(n) для результирующей строки в serialize; O(h) для стека рекурсии в deserialize, где h - высота\n\n**Типичные ошибки:**\n- Использование симметричного обхода (неоднозначно без дополнительных маркеров)\n- Неправильная обработка null маркеров\n- Неправильное отслеживание индекса при десериализации\n- Забывание увеличивать указатель индекса в deserialize\n- Неправильная обработка отрицательных значений или граничных случаев"
+    },
+    "tags": [
+      "tree-traversal",
+      "dfs",
+      "preorder",
+      "serialization",
+      "design"
+    ]
+  },
+  {
+    "id": "algorithms-t-19",
+    "topicId": "algorithms",
+    "difficulty": "hard",
+    "title": {
+      "en": "Merge K Sorted Lists",
+      "ru": "Объединение K отсортированных списков"
+    },
+    "description": {
+      "en": "Merge k sorted linked lists into one sorted linked list.\n\n**Requirements:**\n- Implement `mergeKLists(lists: (ListNode | null)[]): ListNode | null`\n- All lists are sorted in ascending order\n- Return a single merged sorted list\n- Must handle edge cases efficiently\n\n**ListNode definition:**\n\nclass ListNode {\n  val: number;\n  next: ListNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\n\n**Example:**\n\nlists = [[1,4,5],[1,3,4],[2,6]]\nOutput: [1,1,2,1,3,4,4,5,6]\n\nVisualization:\nList 1: 1 -> 4 -> 5\nList 2: 1 -> 3 -> 4\nList 3: 2 -> 6\n\nMerged: 1 -> 1 -> 2 -> 1 -> 3 -> 4 -> 4 -> 5 -> 6\n\n\n**Edge cases:**\n- Empty input array\n- Array with null lists\n- Single list\n- Lists with single nodes\n- All lists are identical",
+      "ru": "Объедините k отсортированных связных списков в один отсортированный список.\n\n**Требования:**\n- Реализуйте `mergeKLists(lists: (ListNode | null)[]): ListNode | null`\n- Все списки отсортированы в возрастающем порядке\n- Вернуть один объединенный отсортированный список\n- Должно эффективно обрабатывать граничные случаи\n\n**Определение ListNode:**\n\nclass ListNode {\n  val: number;\n  next: ListNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\n\n**Пример:**\n\nlists = [[1,4,5],[1,3,4],[2,6]]\nВывод: [1,1,2,1,3,4,4,5,6]\n\nВизуализация:\nСписок 1: 1 -> 4 -> 5\nСписок 2: 1 -> 3 -> 4\nСписок 3: 2 -> 6\n\nОбъединено: 1 -> 1 -> 2 -> 1 -> 3 -> 4 -> 4 -> 5 -> 6\n\n\n**Граничные случаи:**\n- Пустой массив входных данных\n- Массив с null списками\n- Один список\n- Списки с одиночными узлами\n- Все списки идентичны"
+    },
+    "starterCode": "class ListNode {\n  val: number;\n  next: ListNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\nfunction mergeKLists(lists: (ListNode | null)[]): ListNode | null {\n  // implement\n}",
+    "solution": "class ListNode {\n  val: number;\n  next: ListNode | null = null;\n  constructor(val: number) {\n    this.val = val;\n  }\n}\n\nfunction mergeKLists(lists: (ListNode | null)[]): ListNode | null {\n  if (lists.length === 0) return null;\n\n  // Min heap using PriorityQueue pattern\n  class MinHeap {\n    private heap: [number, ListNode][] = [];\n\n    push(val: number, node: ListNode): void {\n      this.heap.push([val, node]);\n      this.bubbleUp(this.heap.length - 1);\n    }\n\n    pop(): [number, ListNode] | undefined {\n      if (this.heap.length === 0) return undefined;\n      const result = this.heap[0];\n      const last = this.heap.pop()!;\n      if (this.heap.length > 0) {\n        this.heap[0] = last;\n        this.bubbleDown(0);\n      }\n      return result;\n    }\n\n    private bubbleUp(index: number): void {\n      while (index > 0) {\n        const parentIndex = Math.floor((index - 1) / 2);\n        if (this.heap[index][0] < this.heap[parentIndex][0]) {\n          [this.heap[index], this.heap[parentIndex]] = [this.heap[parentIndex], this.heap[index]];\n          index = parentIndex;\n        } else {\n          break;\n        }\n      }\n    }\n\n    private bubbleDown(index: number): void {\n      while (true) {\n        let smallest = index;\n        const leftChild = 2 * index + 1;\n        const rightChild = 2 * index + 2;\n\n        if (leftChild < this.heap.length && this.heap[leftChild][0] < this.heap[smallest][0]) {\n          smallest = leftChild;\n        }\n        if (rightChild < this.heap.length && this.heap[rightChild][0] < this.heap[smallest][0]) {\n          smallest = rightChild;\n        }\n        if (smallest !== index) {\n          [this.heap[index], this.heap[smallest]] = [this.heap[smallest], this.heap[index]];\n          index = smallest;\n        } else {\n          break;\n        }\n      }\n    }\n  }\n\n  const heap = new MinHeap();\n  const dummy = new ListNode(0);\n  let current = dummy;\n\n  // Add first node of each list to heap\n  for (const list of lists) {\n    if (list !== null) {\n      heap.push(list.val, list);\n    }\n  }\n\n  // Extract minimum and add next node\n  while (true) {\n    const result = heap.pop();\n    if (!result) break;\n    const [, node] = result;\n    current.next = node;\n    current = current.next;\n    if (node.next !== null) {\n      heap.push(node.next.val, node.next);\n    }\n  }\n\n  return dummy.next;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a min-heap to efficiently get the smallest node among all list heads. Always extract the node with minimum value and add its next node to the heap. This is optimal compared to comparing all k lists at each step.\n\n**Time complexity:** O(n*log(k)) where n is total nodes and k is number of lists. Each insertion/deletion in heap is O(log k), and we do this n times.\n**Space complexity:** O(k) for the heap storing at most k nodes at any time\n\n**Common mistakes:**\n- Comparing ListNode objects directly instead of their values\n- Forgetting to add next nodes after extraction\n- Not handling null list inputs\n- Using naive approach of comparing all k lists at each step (O(n*k) time)\n- Incorrect heap implementation or bubble up/down logic",
+      "ru": "**Подход:** Использование мин-кучи для эффективного получения наименьшего узла среди всех голов списков. Всегда извлекайте узел с минимальным значением и добавляйте его следующий узел в кучу. Это оптимально по сравнению с сравнением всех k списков на каждом шаге.\n\n**Временная сложность:** O(n*log(k)) где n - общее количество узлов, k - количество списков. Каждая вставка/удаление в куче - O(log k), и мы делаем это n раз.\n**Пространственная сложность:** O(k) для кучи, в которой одновременно находится максимум k узлов\n\n**Типичные ошибки:**\n- Прямое сравнение объектов ListNode вместо их значений\n- Забывание добавить следующие узлы после извлечения\n- Неправильная обработка null входных списков\n- Использование наивного подхода сравнения всех k списков на каждом шаге (O(n*k) время)\n- Неправильная реализация кучи или логика bubbleUp/bubbleDown"
+    },
+    "tags": [
+      "heap",
+      "priority-queue",
+      "linked-list",
+      "merge",
+      "divide-and-conquer"
+    ]
+  },
+  {
+    "id": "algorithms-t-20",
+    "topicId": "algorithms",
+    "difficulty": "hard",
+    "title": {
+      "en": "LRU Cache Implementation",
+      "ru": "Реализация LRU Cache"
+    },
+    "description": {
+      "en": "Design and implement a Least Recently Used (LRU) Cache data structure that supports O(1) time complexity for both get and put operations.\n\n**Requirements:**\n- Implement `LRUCache` class with capacity constraint\n- `get(key)`: Return the value of the key if it exists, otherwise return -1. Mark the key as recently used.\n- `put(key, value)`: Update the value of the key if it exists, or add the key-value pair if it doesn't. If the cache exceeds capacity, evict the least recently used item.\n\n**Example:**\n\nconst cache = new LRUCache(2);\ncache.put(1, 1);\ncache.put(2, 2);\ncache.get(1);        // returns 1\ncache.put(3, 3);     // evicts key 2\ncache.get(2);        // returns -1 (not found)\ncache.put(4, 4);     // evicts key 1\ncache.get(1);        // returns -1\ncache.get(3);        // returns 3\ncache.get(4);        // returns 4\n\n\n**Edge cases:**\n- Single capacity cache\n- Repeated access to same key\n- Put operation updating existing key\n- Capacity of 0 or negative values should be handled gracefully",
+      "ru": "Спроектируйте и реализуйте структуру данных LRU Cache (кеш вытеснения давно не используемых элементов) с временной сложностью O(1) для операций get и put.\n\n**Требования:**\n- Реализовать класс `LRUCache` с ограничением по размеру\n- `get(key)`: вернуть значение по ключу если оно существует, иначе вернуть -1. Пометить ключ как недавно используемый.\n- `put(key, value)`: обновить значение ключа если он существует, или добавить пару ключ-значение. Если кеш превысит емкость, вытеснить наименее недавно используемый элемент.\n\n**Пример:**\n\nconst cache = new LRUCache(2);\ncache.put(1, 1);\ncache.put(2, 2);\ncache.get(1);        // возвращает 1\ncache.put(3, 3);     // вытесняет ключ 2\ncache.get(2);        // возвращает -1 (не найден)\ncache.put(4, 4);     // вытесняет ключ 1\ncache.get(1);        // возвращает -1\ncache.get(3);        // возвращает 3\ncache.get(4);        // возвращает 4\n\n\n**Граничные случаи:**\n- Кеш с емкостью 1\n- Повторный доступ к одному ключу\n- Операция put обновляет существующий ключ\n- Емкость 0 или отрицательные значения"
+    },
+    "starterCode": "class LRUCache {\n  constructor(capacity: number) {\n    // initialize cache with given capacity\n  }\n\n  get(key: number): number {\n    // retrieve value and mark as recently used\n    // return -1 if not found\n  }\n\n  put(key: number, value: number): void {\n    // add or update key-value pair\n    // evict least recently used if capacity exceeded\n  }\n}",
+    "solution": "class LRUCache {\n  private capacity: number;\n  private cache: Map<number, number>;\n\n  constructor(capacity: number) {\n    this.capacity = capacity;\n    this.cache = new Map();\n  }\n\n  get(key: number): number {\n    if (!this.cache.has(key)) {\n      return -1;\n    }\n    const value = this.cache.get(key)!;\n    // Mark as recently used by removing and re-adding\n    this.cache.delete(key);\n    this.cache.set(key, value);\n    return value;\n  }\n\n  put(key: number, value: number): void {\n    if (this.cache.has(key)) {\n      this.cache.delete(key);\n    } else if (this.cache.size >= this.capacity) {\n      // Evict least recently used (first entry in Map)\n      const lruKey = this.cache.keys().next().value;\n      this.cache.delete(lruKey);\n    }\n    this.cache.set(key, value);\n  }\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a HashMap (JavaScript Map) to store key-value pairs. JavaScript Map maintains insertion order, making the first entry the least recently used. When accessing or updating a key, delete and re-add it to move it to the end (most recently used position). When capacity is exceeded, remove the first entry from the Map.\n\n**Time complexity:** O(1) for both get and put operations\n**Space complexity:** O(capacity) for storing up to capacity items\n\n**Common mistakes:**\n- Using a regular object instead of Map (loses insertion order in some engines)\n- Forgetting to mark accessed keys as recently used in get operation\n- Not handling the case where put updates an existing key\n- Not properly tracking the least recently used item when evicting",
+      "ru": "**Подход:** Использовать HashMap (JavaScript Map) для хранения пар ключ-значение. Map в JavaScript сохраняет порядок вставки, поэтому первый элемент - самый давно не использованный. При доступе или обновлении ключа удалить и переустановить его для перемещения в конец (позиция самого недавно использованного). Когда емкость превышена, удалить первый элемент из Map.\n\n**Временная сложность:** O(1) для операций get и put\n**Пространственная сложность:** O(capacity) для хранения до capacity элементов\n\n**Типичные ошибки:**\n- Использование обычного объекта вместо Map (теряется порядок вставки)\n- Забывают пометить доступные ключи как недавно используемые в операции get\n- Не обрабатывают случай, когда put обновляет существующий ключ\n- Неправильный отслеживание наименее недавно используемого элемента при вытеснении"
+    },
+    "tags": [
+      "hash-map",
+      "linked-list-pattern",
+      "cache-design",
+      "data-structure-design"
+    ]
+  },
+  {
+    "id": "algorithms-t-21",
+    "topicId": "algorithms",
+    "difficulty": "hard",
+    "title": {
+      "en": "Serialize and Deserialize Binary Tree",
+      "ru": "Сериализация и десериализация бинарного дерева"
+    },
+    "description": {
+      "en": "Design an algorithm to serialize a binary tree into a string and deserialize the string back to the original tree structure.\n\n**Requirements:**\n- Implement `serialize(root)`: Convert a binary tree to a string representation\n- Implement `deserialize(data)`: Convert the string back to a binary tree\n- The format must handle null nodes and all tree structures\n- You can use any string format as long as serialization and deserialization work correctly\n\n**Example:**\n\nTree structure:\n    1\n   / \\\n  2   3\n     / \\\n    4   5\n\nSerialized: \"1,2,null,null,3,4,null,null,5,null,null\" (using pre-order with nulls)\n\nconst root = new TreeNode(1);\nroot.left = new TreeNode(2);\nroot.right = new TreeNode(3);\nroot.right.left = new TreeNode(4);\nroot.right.right = new TreeNode(5);\n\nconst serialized = serialize(root);\nconst deserialized = deserialize(serialized);\n// deserialized represents the same tree structure\n\n\n**Edge cases:**\n- Empty tree (null root)\n- Single node tree\n- Skewed trees (all left or all right)\n- Trees with negative values",
+      "ru": "Спроектируйте алгоритм для сериализации бинарного дерева в строку и десериализации строки обратно в исходное дерево.\n\n**Требования:**\n- Реализовать `serialize(root)`: преобразовать бинарное дерево в строку\n- Реализовать `deserialize(data)`: преобразовать строку обратно в бинарное дерево\n- Формат должен обрабатывать null узлы и все структуры деревьев\n- Вы можете использовать любой строковый формат при условии корректной сериализации и десериализации\n\n**Пример:**\n\nСтруктура дерева:\n    1\n   / \\\n  2   3\n     / \\\n    4   5\n\nСериализовано: \"1,2,null,null,3,4,null,null,5,null,null\" (используя pre-order с nulls)\n\nconst root = new TreeNode(1);\nroot.left = new TreeNode(2);\nroot.right = new TreeNode(3);\nroot.right.left = new TreeNode(4);\nroot.right.right = new TreeNode(5);\n\nconst serialized = serialize(root);\nconst deserialized = deserialize(serialized);\n// deserialized представляет ту же структуру дерева\n\n\n**Граничные случаи:**\n- Пустое дерево (null корень)\n- Дерево с одним узлом\n- Перекошенные деревья (все влево или все вправо)\n- Деревья с отрицательными значениями"
+    },
+    "starterCode": "class TreeNode {\n  val: number;\n  left: TreeNode | null;\n  right: TreeNode | null;\n  constructor(val: number) {\n    this.val = val;\n    this.left = null;\n    this.right = null;\n  }\n}\n\nfunction serialize(root: TreeNode | null): string {\n  // convert tree to string representation\n}\n\nfunction deserialize(data: string): TreeNode | null {\n  // convert string back to tree\n}",
+    "solution": "class TreeNode {\n  val: number;\n  left: TreeNode | null;\n  right: TreeNode | null;\n  constructor(val: number) {\n    this.val = val;\n    this.left = null;\n    this.right = null;\n  }\n}\n\nfunction serialize(root: TreeNode | null): string {\n  const result: (string | number)[] = [];\n\n  function preorder(node: TreeNode | null): void {\n    if (node === null) {\n      result.push('null');\n      return;\n    }\n    result.push(node.val);\n    preorder(node.left);\n    preorder(node.right);\n  }\n\n  preorder(root);\n  return result.join(',');\n}\n\nfunction deserialize(data: string): TreeNode | null {\n  const values = data.split(',');\n  let index = 0;\n\n  function buildTree(): TreeNode | null {\n    if (index >= values.length || values[index] === 'null') {\n      index++;\n      return null;\n    }\n\n    const node = new TreeNode(parseInt(values[index]));\n    index++;\n    node.left = buildTree();\n    node.right = buildTree();\n    return node;\n  }\n\n  return buildTree();\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use pre-order traversal (visit node, then left subtree, then right subtree) for serialization. Represent null nodes explicitly as 'null' strings. For deserialization, reconstruct the tree by following the same pre-order pattern using an index pointer that advances through the serialized values.\n\n**Time complexity:** O(n) for both serialize and deserialize, where n is the number of nodes\n**Space complexity:** O(n) for the output string and recursion stack\n\n**Common mistakes:**\n- Forgetting to serialize null nodes (makes deserialization ambiguous)\n- Using wrong traversal order inconsistently between serialize and deserialize\n- Not properly managing the index pointer during deserialization\n- Failing to handle negative numbers or special characters\n- Not resetting state between multiple serialize/deserialize calls",
+      "ru": "**Подход:** Использовать pre-order обход (посетить узел, затем левое поддерево, затем правое поддерево) для сериализации. Явно представлять null узлы как строки 'null'. Для десериализации пересоздать дерево, следуя тому же порядку pre-order, используя индексный указатель, который продвигается через сериализованные значения.\n\n**Временная сложность:** O(n) для сериализации и десериализации, где n - количество узлов\n**Пространственная сложность:** O(n) для выходной строки и стека рекурсии\n\n**Типичные ошибки:**\n- Забывают сериализовать null узлы (делает десериализацию неоднозначной)\n- Использование неправильного порядка обхода несогласованно между сериализацией и десериализацией\n- Неправильное управление индексным указателем во время десериализации\n- Неправильная обработка отрицательных чисел или специальных символов\n- Неправильная инициализация состояния между несколькими вызовами"
+    },
+    "tags": [
+      "tree-traversal",
+      "pre-order",
+      "serialization",
+      "binary-tree"
+    ]
+  },
+  {
+    "id": "algorithms-t-22",
+    "topicId": "algorithms",
+    "difficulty": "hard",
+    "title": {
+      "en": "Merge K Sorted Lists",
+      "ru": "Слияние K отсортированных списков"
+    },
+    "description": {
+      "en": "Merge multiple sorted linked lists into one sorted linked list.\n\n**Requirements:**\n- Input: Array of linked list heads, each representing a sorted list\n- Output: Single sorted linked list containing all elements\n- Handle edge cases: empty lists, lists with different lengths, lists with duplicate values\n\n**Example:**\n\nInput:\nlists = [\n  1 -> 4 -> 5,\n  1 -> 3 -> 4,\n  2 -> 6\n]\n\nOutput:\n1 -> 1 -> 2 -> 3 -> 4 -> 4 -> 5 -> 6\n\n\n**Constraints:**\n- k is the number of lists\n- Total number of nodes across all lists: n\n- Each list is already sorted in ascending order\n- Lists can be null or empty\n\n**Edge cases:**\n- Empty array of lists\n- Array containing null/empty lists\n- Single list with multiple elements\n- Lists with duplicate values\n- Lists of different lengths",
+      "ru": "Слейте несколько отсортированных связных списков в один отсортированный связный список.\n\n**Требования:**\n- Входные данные: Массив заголовков связных списков, каждый представляет отсортированный список\n- Выходные данные: Один отсортированный связный список, содержащий все элементы\n- Обработка граничных случаев: пустые списки, списки разной длины, списки с дублирующимися значениями\n\n**Пример:**\n\nВходные данные:\nlists = [\n  1 -> 4 -> 5,\n  1 -> 3 -> 4,\n  2 -> 6\n]\n\nВыходные данные:\n1 -> 1 -> 2 -> 3 -> 4 -> 4 -> 5 -> 6\n\n\n**Ограничения:**\n- k - количество списков\n- Общее количество узлов во всех списках: n\n- Каждый список уже отсортирован в порядке возрастания\n- Списки могут быть null или пустыми\n\n**Граничные случаи:**\n- Пустой массив списков\n- Массив содержащий null/пустые списки\n- Один список с несколькими элементами\n- Списки с дублирующимися значениями\n- Списки разной длины"
+    },
+    "starterCode": "class ListNode {\n  val: number;\n  next: ListNode | null;\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val;\n    this.next = next;\n  }\n}\n\nfunction mergeKLists(lists: Array<ListNode | null>): ListNode | null {\n  // merge all sorted lists into one\n}",
+    "solution": "class ListNode {\n  val: number;\n  next: ListNode | null;\n  constructor(val: number = 0, next: ListNode | null = null) {\n    this.val = val;\n    this.next = next;\n  }\n}\n\nfunction mergeKLists(lists: Array<ListNode | null>): ListNode | null {\n  if (!lists || lists.length === 0) {\n    return null;\n  }\n\n  // Min heap using a simple comparison approach\n  const minHeap: ListNode[] = [];\n\n  // Add first node from each list to heap\n  for (const list of lists) {\n    if (list !== null) {\n      minHeap.push(list);\n    }\n  }\n\n  // Sort to maintain heap property\n  minHeap.sort((a, b) => a.val - b.val);\n\n  const dummy = new ListNode(0);\n  let current = dummy;\n\n  while (minHeap.length > 0) {\n    // Get node with minimum value\n    minHeap.sort((a, b) => a.val - b.val);\n    const minNode = minHeap.shift()!;\n\n    // Add to result\n    current.next = minNode;\n    current = current.next;\n\n    // Add next node from same list if exists\n    if (minNode.next !== null) {\n      minHeap.push(minNode.next);\n    }\n  }\n\n  return dummy.next;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Use a min-heap (priority queue) to efficiently get the minimum value across all list heads. Add the first node from each non-null list to the heap. Repeatedly extract the minimum, add it to the result, and push its next node back to the heap. Continue until heap is empty.\n\nAlternative approach (Divide and Conquer): Recursively merge pairs of lists, then merge the results. This is more efficient with proper heap implementation.\n\n**Time complexity:** O(n log k) where n is total number of nodes and k is number of lists. Each extraction/insertion is O(log k), and we do this n times.\n**Space complexity:** O(k) for the heap, holding at most k nodes at any time\n\n**Common mistakes:**\n- Not filtering out null lists before processing\n- Repeatedly sorting the entire heap instead of using proper heap operations\n- Creating new nodes instead of reusing existing list nodes\n- Forgetting to connect the dummy node's next to the result\n- Not advancing to next node after adding current node to result\n- Using inefficient comparison in the heap",
+      "ru": "**Подход:** Использовать min-heap (приоритетную очередь) для эффективного получения минимального значения среди всех заголовков списков. Добавить первый узел из каждого не-null списка в heap. Повторно извлекать минимум, добавлять его в результат и возвращать его следующий узел в heap. Продолжать пока heap не пуст.\n\nАльтернативный подход (Divide and Conquer): Рекурсивно сливать пары списков, затем объединять результаты. Это более эффективно с правильной реализацией heap.\n\n**Временная сложность:** O(n log k), где n - общее количество узлов, k - количество списков. Каждое извлечение/вставление - O(log k), и мы делаем это n раз.\n**Пространственная сложность:** O(k) для heap, содержащего максимум k узлов в любой момент\n\n**Типичные ошибки:**\n- Не фильтруют null списки перед обработкой\n- Многократно сортируют весь heap вместо использования правильных операций heap\n- Создают новые узлы вместо переиспользования существующих узлов списка\n- Забывают подключить next dummy узла к результату\n- Не переходят к следующему узлу после добавления текущего узла к результату\n- Использование неэффективного сравнения в heap"
+    },
+    "tags": [
+      "heap",
+      "priority-queue",
+      "linked-list",
+      "merge",
+      "divide-and-conquer"
+    ]
+  }
+]
