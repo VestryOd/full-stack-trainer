@@ -5,6 +5,7 @@ import { QuizCard } from '@/components/quiz/QuizCard';
 import { QuizProgress } from '@/components/quiz/QuizProgress';
 import { QuizResult } from '@/components/quiz/QuizResult';
 import { Button } from '@/components/ui/button';
+import { useLocale } from '@/context/LocaleContext';
 import type { QuizQuestion } from '@/types';
 
 interface QuizSessionProps {
@@ -12,6 +13,7 @@ interface QuizSessionProps {
 }
 
 export function QuizSession({ initialQuestions }: QuizSessionProps) {
+  const { t2 } = useLocale();
   const [questions] = useState<QuizQuestion[]>(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -22,7 +24,7 @@ export function QuizSession({ initialQuestions }: QuizSessionProps) {
     return (
       <div className="container py-8 max-w-2xl">
         <p className="text-muted-foreground text-center py-12">
-          No quiz questions available for this topic yet.
+          {t2('quiz.noQuestions')}
         </p>
       </div>
     );
@@ -59,7 +61,7 @@ export function QuizSession({ initialQuestions }: QuizSessionProps) {
       {selectedIndex !== null && (
         <div className="flex justify-end">
           <Button onClick={handleNext}>
-            {currentIndex + 1 >= questions.length ? 'See Results' : 'Next Question'}
+            {currentIndex + 1 >= questions.length ? t2('quiz.seeResults') : t2('quiz.nextQuestion')}
           </Button>
         </div>
       )}

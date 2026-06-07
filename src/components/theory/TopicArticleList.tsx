@@ -25,7 +25,7 @@ function extractTitle(content: string, slug: string): string {
 }
 
 export function TopicArticleList({ topicId, articlesEn, articlesRu }: TopicArticleListProps) {
-  const { locale: globalLocale } = useLocale();
+  const { locale: globalLocale, t2 } = useLocale();
   const [locale, setLocale] = useState(globalLocale);
 
   useEffect(() => { setLocale(globalLocale); }, [globalLocale]);
@@ -37,7 +37,7 @@ export function TopicArticleList({ topicId, articlesEn, articlesRu }: TopicArtic
     <div className="space-y-3">
       {/* Language toggle */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground font-mono">{articles.length} articles</p>
+        <p className="text-xs text-muted-foreground font-mono">{articles.length} {t2('theory.articles')}</p>
         <div className="flex rounded border border-border overflow-hidden text-xs font-mono">
           {(['en', 'ru'] as const).map((l) => (
             <button
@@ -75,7 +75,7 @@ export function TopicArticleList({ topicId, articlesEn, articlesRu }: TopicArtic
             </span>
             <span className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
               <Clock className="h-3 w-3" />
-              {readTime} min
+              {readTime} {t2('theory.minRead')}
             </span>
           </Link>
         );

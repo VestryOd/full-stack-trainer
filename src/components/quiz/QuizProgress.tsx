@@ -1,4 +1,7 @@
+'use client';
+
 import { Progress } from '@/components/ui/progress';
+import { useLocale } from '@/context/LocaleContext';
 
 interface QuizProgressProps {
   current: number;
@@ -7,16 +10,17 @@ interface QuizProgressProps {
 }
 
 export function QuizProgress({ current, total, correct }: QuizProgressProps) {
+  const { t2 } = useLocale();
   const percent = total > 0 ? Math.round((current / total) * 100) : 0;
 
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm text-muted-foreground">
         <span>
-          Question {current} of {total}
+          {t2('quiz.questionOf')} {current} {t2('quiz.of')} {total}
         </span>
         <span>
-          Correct: {correct}/{current > 0 ? current - 1 : 0}
+          {t2('quiz.correct')}: {correct}/{current > 0 ? current - 1 : 0}
         </span>
       </div>
       <Progress value={percent} className="h-2" />

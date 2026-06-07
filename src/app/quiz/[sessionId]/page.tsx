@@ -1,5 +1,4 @@
-import { TOPICS } from '@/constants/topics';
-import { getQuizForSession } from '@/lib/quiz';
+import { getAvailableQuizTopics, getQuizQuestions } from '@/lib/quiz';
 import { QuizSession } from './QuizSession';
 
 interface Props {
@@ -16,9 +15,9 @@ function parseSessionId(sessionId: string): { topicId: string; count: number } {
 export function generateStaticParams() {
   const counts = [5, 10, 20];
   const params: { sessionId: string }[] = [];
-  for (const topic of TOPICS) {
+  for (const topicId of getAvailableQuizTopics()) {
     for (const count of counts) {
-      params.push({ sessionId: `${topic.id}-${count}` });
+      params.push({ sessionId: `${topicId}-${count}` });
     }
   }
   return params;
@@ -26,7 +25,7 @@ export function generateStaticParams() {
 
 export default function QuizSessionPage({ params }: Props) {
   const { topicId, count } = parseSessionId(params.sessionId);
-  const questions = getQuizForSession(topicId, count);
+  const questions = getQuizQuestions([topicId], count);
 
   return <QuizSession initialQuestions={questions} />;
 }

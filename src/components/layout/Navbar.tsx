@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/context/LocaleContext';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from '@/components/ui/button';
@@ -17,14 +18,15 @@ import {
 } from '@/components/ui/sheet';
 
 const NAV_LINKS = [
-  { href: '/theory', label: 'Theory' },
-  { href: '/questions', label: 'Questions' },
-  { href: '/quiz', label: 'Quiz' },
-  { href: '/tasks', label: 'Tasks' },
+  { href: '/theory', key: 'nav.theory' },
+  { href: '/questions', key: 'nav.questions' },
+  { href: '/quiz', key: 'nav.quiz' },
+  { href: '/tasks', key: 'nav.tasks' },
 ] as const;
 
 export function Navbar() {
   const pathname = usePathname();
+  const { t2 } = useLocale();
   const [open, setOpen] = useState(false);
 
   return (
@@ -47,7 +49,7 @@ export function Navbar() {
                   : 'text-muted-foreground',
               )}
             >
-              {link.label}
+              {t2(link.key)}
             </Link>
           ))}
         </nav>
@@ -80,7 +82,7 @@ export function Navbar() {
                         : 'text-foreground',
                     )}
                   >
-                    {link.label}
+                    {t2(link.key)}
                   </Link>
                 ))}
               </nav>

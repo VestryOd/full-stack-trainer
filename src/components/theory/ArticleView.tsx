@@ -37,7 +37,7 @@ export function ArticleView({
   prevSlug,
   nextSlug,
 }: ArticleViewProps) {
-  const { locale: globalLocale } = useLocale();
+  const { locale: globalLocale, t2 } = useLocale();
   const [locale, setLocale] = useState<'en' | 'ru'>(globalLocale);
 
   useEffect(() => { setLocale(globalLocale); }, [globalLocale]);
@@ -54,7 +54,7 @@ export function ArticleView({
       {/* Breadcrumb + locale toggle */}
       <div className="flex items-center justify-between mb-6 gap-4">
         <nav className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono min-w-0">
-          <Link href="/theory" className="hover:text-foreground transition-colors whitespace-nowrap">Theory</Link>
+          <Link href="/theory" className="hover:text-foreground transition-colors whitespace-nowrap">{t2('theory.title')}</Link>
           <ChevronRight className="h-3 w-3 flex-shrink-0" />
           <Link href={`/theory/${topicId}`} className="hover:text-foreground transition-colors whitespace-nowrap">{topicLabel}</Link>
           <ChevronRight className="h-3 w-3 flex-shrink-0" />

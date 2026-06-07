@@ -1,67 +1,31 @@
-import { getAllQuestions } from './questions';
-import type { Question, QuizQuestion } from '@/types';
+import fs from 'fs';
+import path from 'path';
+import type { QuizQuestion } from '@/types';
 
-function extractShortAnswer(markdown: string | undefined | null): string {
-  if (!markdown) return '';
-  const cleaned = markdown
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/^#{1,6}\s+.+$/gm, '')
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/\*(.*?)\*/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/^\s*[-*+\d]+\.?\s+/gm, '')
-    .replace(/\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+const QUIZ_DIR = path.join(process.cwd(), 'content', 'quiz');
 
-  return cleaned.length > 200 ? cleaned.slice(0, 197) + '…' : cleaned;
+function readTopicQuiz(topicId: string): QuizQuestion[] {
+  const filePath = path.join(QUIZ_DIR, `${topicId}.json`);
+  if (!fs.existsSync(filePath)) return [];
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(raw) as QuizQuestion[];
 }
 
 function shuffled<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function buildQuizQuestions(selected: Question[], allPool: Question[]): QuizQuestion[] {
-  return selected.map((q) => {
-    const answerEn = q.answer?.en;
-    const answerRu = q.answer?.ru ?? q.answer?.en;
-    const correctEn = extractShortAnswer(answerEn);
-    const correctRu = extractShortAnswer(answerRu);
-
-    const otherPool = allPool.filter((other) => other.id !== q.id && other.answer?.en);
-    const wrongPicks = shuffled(otherPool).slice(0, 3);
-
-    const optionsEn = [correctEn, ...wrongPicks.map((w) => extractShortAnswer(w.answer?.en))];
-    const optionsRu = [correctRu, ...wrongPicks.map((w) => extractShortAnswer(w.answer?.ru ?? w.answer?.en))];
-
-    // Same permutation applied to both locales
-    const order = shuffled([0, 1, 2, 3]);
-    const correctIndex = order.indexOf(0);
-
-    return {
-      id: q.id,
-      topicId: q.topicId,
-      question: {
-        en: q.question?.en ?? '',
-        ru: q.question?.ru ?? q.question?.en ?? '',
-      },
-      options: {
-        en: order.map((i) => optionsEn[i]),
-        ru: order.map((i) => optionsRu[i]),
-      },
-      correctIndex,
-      explanation: {
-        en: correctEn,
-        ru: correctRu,
-      },
-    };
-  });
+export function getAvailableQuizTopics(): string[] {
+  if (!fs.existsSync(QUIZ_DIR)) return [];
+  return fs
+    .readdirSync(QUIZ_DIR)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace(/\.json$/, ''));
 }
 
-export function getQuizForSession(topicId: string, count: number): QuizQuestion[] {
-  const allPool = getAllQuestions();
-  const topicPool = allPool.filter((q) => q.topicId === topicId && q.answer?.en);
-
-  const selected = shuffled(topicPool).slice(0, count);
-  return buildQuizQuestions(selected, allPool);
+export function getQuizQuestions(topicIds?: string[], count?: number): QuizQuestion[] {
+  const topics = topicIds ?? getAvailableQuizTopics();
+  const pool = topics.flatMap((topicId) => readTopicQuiz(topicId));
+  const selected = shuffled(pool);
+  return count !== undefined ? selected.slice(0, count) : selected;
 }

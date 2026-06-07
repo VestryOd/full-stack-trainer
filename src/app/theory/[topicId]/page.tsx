@@ -1,9 +1,7 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { TOPICS, getTopicById } from '@/constants/topics';
 import { getArticlesForTopic } from '@/lib/content';
-import { TopicArticleList } from '@/components/theory/TopicArticleList';
-import { ChevronRight } from 'lucide-react';
+import { TopicArticlesView } from '@/components/theory/TopicArticlesView';
 
 interface Props {
   params: { topicId: string };
@@ -25,33 +23,12 @@ export default function TopicPage({ params }: Props) {
   const articles = articlesRu.length > 0 ? articlesRu : articlesEn;
 
   return (
-    <div className="container py-8 max-w-3xl space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
-        <Link href="/theory" className="hover:text-foreground transition-colors">Theory</Link>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground">{topic.label}</span>
-      </nav>
-
-      <div>
-        <h1 className="text-2xl font-mono font-semibold">{topic.label}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {articles.length > 0 ? `${articles.length} articles` : 'No articles yet'}
-        </p>
-      </div>
-
-      {articles.length > 0 ? (
-        <TopicArticleList
-          topicId={params.topicId}
-          slugs={articles.map((a) => a.slug)}
-          articlesEn={articlesEn}
-          articlesRu={articlesRu}
-        />
-      ) : (
-        <p className="text-muted-foreground text-center py-12 text-sm">
-          Content for this topic is coming soon.
-        </p>
-      )}
-    </div>
+    <TopicArticlesView
+      topic={topic}
+      topicId={params.topicId}
+      articles={articles}
+      articlesEn={articlesEn}
+      articlesRu={articlesRu}
+    />
   );
 }

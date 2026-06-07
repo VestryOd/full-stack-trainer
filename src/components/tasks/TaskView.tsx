@@ -31,13 +31,13 @@ export function TaskView({
   starterCodeBlock,
   solutionCodeBlock,
 }: TaskViewProps) {
-  const { t } = useLocale();
+  const { t, t2 } = useLocale();
 
   return (
     <div className="container py-8 max-w-4xl space-y-6">
       <div>
         <div className="flex gap-2 text-sm text-muted-foreground">
-          <Link href="/tasks" className="hover:underline">Tasks</Link>
+          <Link href="/tasks" className="hover:underline">{t2('tasks.title')}</Link>
           <span>/</span>
           <Link href={`/tasks/${topic.id}`} className="hover:underline">{topic.label}</Link>
         </div>
@@ -49,16 +49,16 @@ export function TaskView({
         </div>
       </div>
 
-      <div className="article-body" dangerouslySetInnerHTML={{ __html: t(descriptionHtml) }} />
+      <div className="article-body task-description" dangerouslySetInnerHTML={{ __html: t(descriptionHtml) }} />
 
       {task.starterCode && (
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Starter Code</h2>
+          <h2 className="text-lg font-semibold">{t2('tasks.starterCode')}</h2>
           {starterCodeBlock}
         </div>
       )}
 
-      <SolutionSpoiler>
+      <SolutionSpoiler label={t2('tasks.showSolution')} hideLabel={t2('tasks.hideSolution')} revealLabel={t2('tasks.revealSolution')}>
         <div className="space-y-4">
           {solutionCodeBlock}
           <div className="article-body text-sm" dangerouslySetInnerHTML={{ __html: t(solutionExplanationHtml) }} />

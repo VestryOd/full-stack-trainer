@@ -19,7 +19,7 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question }: QuestionCardProps) {
-  const { locale: globalLocale } = useLocale();
+  const { locale: globalLocale, t2 } = useLocale();
   const [locale, setLocale] = useState<Locale>(globalLocale);
   const [open, setOpen] = useState(false);
   const [reviewed, toggleReviewed] = useQuestionReviewed(question.id);
@@ -101,7 +101,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
               aria-expanded={open}
               aria-controls={`answer-${question.id}`}
               className="rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={open ? 'Hide answer' : 'Show answer'}
+              aria-label={open ? t2('questions.hideAnswer') : t2('questions.showAnswer')}
             >
               <ChevronDown
                 className={cn('h-4 w-4 transition-transform duration-200', open && 'rotate-180')}
@@ -113,7 +113,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
 
       {/* Accordion answer */}
       {open && (
-        <div id={`answer-${question.id}`} className="border-t border-border px-4 py-3 animate-fade-in">
+        <div id={`answer-${question.id}`} className="question-answer border-t border-border px-4 py-3 animate-fade-in">
           <div className="article-body text-sm" dangerouslySetInnerHTML={{ __html: answerHtml }} />
 
           {/* Mark as reviewed */}
@@ -126,17 +126,17 @@ export function QuestionCard({ question }: QuestionCardProps) {
                   ? 'text-green-500 hover:text-green-400'
                   : 'text-muted-foreground hover:text-foreground',
               )}
-              aria-label={reviewed ? 'Mark as not reviewed' : 'Mark as reviewed'}
+              aria-label={reviewed ? 'Mark as not reviewed' : t2('questions.markReviewed')}
             >
               {reviewed ? (
                 <>
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Reviewed
+                  {t2('questions.reviewed')}
                 </>
               ) : (
                 <>
                   <Circle className="h-3.5 w-3.5" />
-                  Mark as reviewed
+                  {t2('questions.markReviewed')}
                 </>
               )}
             </button>

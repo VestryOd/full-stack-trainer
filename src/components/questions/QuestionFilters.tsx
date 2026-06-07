@@ -5,7 +5,13 @@ import type { QuestionDifficulty } from '@/types';
 import { QuestionCard, type QuestionWithAnswerHtml } from './QuestionCard';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Search, X } from 'lucide-react';
+import { useLocale } from '@/context/LocaleContext';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Search, X, ChevronRight } from 'lucide-react';
 
 interface QuestionFiltersProps {
   questions: QuestionWithAnswerHtml[];
@@ -23,9 +29,11 @@ const DIFFICULTY_STYLES: Record<QuestionDifficulty, string> = {
 };
 
 export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps) {
+  const { t2 } = useLocale();
   const [search, setSearch] = useState('');
   const [activeDifficulties, setActiveDifficulties] = useState<Set<QuestionDifficulty>>(new Set());
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+  const [tagsOpen, setTagsOpen] = useState(false);
 
   // Collect all tags from the question set
   const allTags = useMemo(() => {
@@ -79,7 +87,7 @@ export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps)
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search questions…"
+            placeholder={t2('questions.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-sm bg-background"
@@ -103,30 +111,41 @@ export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps)
           ))}
         </div>
 
-        {/* Tag pills */}
+        {/* Tag pills (collapsible) */}
         {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                data-active={activeTags.has(tag)}
-                onClick={() => toggleTag(tag)}
-                className={cn(
-                  'rounded px-1.5 py-0.5 text-xs font-mono border border-border text-muted-foreground transition-colors hover:border-muted-foreground',
-                  activeTags.has(tag) && 'bg-primary/10 text-primary border-primary/30',
-                )}
-              >
-                {tag}
+          <Collapsible open={tagsOpen} onOpenChange={setTagsOpen}>
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronRight className={cn('h-3 w-3 transition-transform duration-200', tagsOpen && 'rotate-90')} />
+                {tagsOpen ? t2('questions.hideTags') : t2('questions.showTags')}
+                {activeTags.size > 0 && ` (${activeTags.size})`}
               </button>
-            ))}
-          </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+              <div className="flex flex-wrap gap-1 pt-2">
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    data-active={activeTags.has(tag)}
+                    onClick={() => toggleTag(tag)}
+                    className={cn(
+                      'rounded px-1.5 py-0.5 text-xs font-mono border border-border text-muted-foreground transition-colors hover:border-muted-foreground',
+                      activeTags.has(tag) && 'bg-primary/10 text-primary border-primary/30',
+                    )}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {/* Count + reset */}
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <span className="text-xs text-muted-foreground font-mono">
-            {filtered.length} / {questions.length} questions
-            {topicLabel && ` in ${topicLabel}`}
+            {filtered.length} / {questions.length}{' '}
+            {topicLabel ? `${t2('questions.progress')} ${topicLabel}` : t2('questions.questionsWord')}
           </span>
           {hasFilters && (
             <button
@@ -134,7 +153,7 @@ export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps)
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-3 w-3" />
-              Reset
+              {t2('questions.reset')}
             </button>
           )}
         </div>

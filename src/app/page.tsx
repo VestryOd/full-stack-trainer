@@ -1,34 +1,17 @@
+'use client';
+
 import Link from 'next/link';
 import { TOPICS } from '@/constants/topics';
+import { useLocale } from '@/context/LocaleContext';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const SECTIONS = [
-  {
-    href: '/theory',
-    title: 'Theory',
-    description: 'In-depth articles on each topic with code examples.',
-    icon: '📖',
-  },
-  {
-    href: '/questions',
-    title: 'Questions',
-    description: 'Interview questions with hidden answers — Junior to Advanced.',
-    icon: '❓',
-  },
-  {
-    href: '/quiz',
-    title: 'Quiz',
-    description: 'Test yourself with multiple-choice quizzes and instant feedback.',
-    icon: '🧠',
-  },
-  {
-    href: '/tasks',
-    title: 'Tasks',
-    description: 'Coding challenges with starter code and hidden solutions.',
-    icon: '💻',
-  },
+  { href: '/theory',    titleKey: 'nav.theory',    descKey: 'home.theoryDesc',    icon: '📖' },
+  { href: '/questions', titleKey: 'nav.questions', descKey: 'home.questionsDesc', icon: '❓' },
+  { href: '/quiz',      titleKey: 'nav.quiz',      descKey: 'home.quizDesc',      icon: '🧠' },
+  { href: '/tasks',     titleKey: 'nav.tasks',     descKey: 'home.tasksDesc',     icon: '💻' },
 ] as const;
 
 const LEVEL_COLORS = {
@@ -38,33 +21,35 @@ const LEVEL_COLORS = {
 };
 
 export default function HomePage() {
+  const { t2 } = useLocale();
+
   return (
     <div className="container py-10 space-y-12">
       <section className="text-center space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Full Stack Trainer</h1>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-          Structured interview preparation for senior fullstack developers. Theory, questions, quizzes, and coding tasks — all in one place.
+          {t2('home.subtitle')}
         </p>
         <div className="flex justify-center gap-3">
           <Button asChild size="lg">
-            <Link href="/theory">Start with Theory</Link>
+            <Link href="/theory">{t2('home.btnTheory')}</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/quiz">Take a Quiz</Link>
+            <Link href="/quiz">{t2('home.btnQuiz')}</Link>
           </Button>
         </div>
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-6">Sections</h2>
+        <h2 className="text-2xl font-semibold mb-6">{t2('home.sections')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {SECTIONS.map((s) => (
             <Link key={s.href} href={s.href}>
-              <Card className="h-full transition-colors hover:bg-accent cursor-pointer">
+              <Card className="section-card h-full transition-colors hover:bg-accent cursor-pointer">
                 <CardHeader>
-                  <div className="text-3xl mb-2">{s.icon}</div>
-                  <CardTitle>{s.title}</CardTitle>
-                  <CardDescription>{s.description}</CardDescription>
+                  <div className="icon text-3xl mb-2 mx-auto sm:mx-0 w-fit">{s.icon}</div>
+                  <CardTitle className="text-center sm:text-left">{t2(s.titleKey)}</CardTitle>
+                  <CardDescription className="text-center sm:text-left">{t2(s.descKey)}</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
@@ -73,7 +58,7 @@ export default function HomePage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-6">Topics ({TOPICS.length})</h2>
+        <h2 className="text-2xl font-semibold mb-6">{t2('home.topics')} ({TOPICS.length})</h2>
         <div className="flex flex-wrap gap-2">
           {TOPICS.map((topic) => (
             <Link key={topic.id} href={`/theory/${topic.id}`}>
@@ -89,24 +74,24 @@ export default function HomePage() {
       </section>
 
       <section className="border rounded-lg p-6 bg-muted/30">
-        <h2 className="text-xl font-semibold mb-3">Coverage Levels</h2>
+        <h2 className="text-xl font-semibold mb-3">{t2('home.coverageLevels')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div>
             <Badge className={LEVEL_COLORS.deep}>Deep</Badge>
             <p className="mt-2 text-muted-foreground">
-              {TOPICS.filter((t) => t.level === 'deep').length} topics — comprehensive coverage with advanced questions
+              {t2('home.deepDesc')}
             </p>
           </div>
           <div>
             <Badge className={LEVEL_COLORS.medium}>Medium</Badge>
             <p className="mt-2 text-muted-foreground">
-              {TOPICS.filter((t) => t.level === 'medium').length} topics — solid fundamentals and common interview areas
+              {t2('home.mediumDesc')}
             </p>
           </div>
           <div>
             <Badge className={LEVEL_COLORS.light}>Light</Badge>
             <p className="mt-2 text-muted-foreground">
-              {TOPICS.filter((t) => t.level === 'light').length} topics — key concepts and essential knowledge
+              {t2('home.lightDesc')}
             </p>
           </div>
         </div>

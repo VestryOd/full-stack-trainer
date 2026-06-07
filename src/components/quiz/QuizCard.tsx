@@ -12,7 +12,7 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ question, selectedIndex, onSelect }: QuizCardProps) {
-  const { t } = useLocale();
+  const { t, t2 } = useLocale();
   const options = t({ en: question.options.en.join('|||'), ru: question.options.ru.join('|||') }).split('|||');
   const answered = selectedIndex !== null;
 
@@ -41,7 +41,7 @@ export function QuizCard({ question, selectedIndex, onSelect }: QuizCardProps) {
       </div>
       {answered && (
         <div className="rounded-md border p-3 text-sm bg-muted">
-          <p className="font-medium mb-1">Explanation:</p>
+          <p className="font-medium mb-1">{t2('quiz.explanation')}:</p>
           <p className="text-muted-foreground">{t(question.explanation)}</p>
         </div>
       )}
