@@ -105,6 +105,17 @@ export const translations = {
     backToTasks: { en: '← Tasks',            ru: '← Задачи' },
     noTasksYet:  { en: 'No tasks for this topic yet.', ru: 'Пока нет задач для этой темы.' },
   },
+  notFound: {
+    title:    { en: 'Page not found',                      ru: 'Страница не найдена' },
+    subtitle: { en: "The page you're looking for doesn't exist or has been moved.", ru: 'Страница, которую вы ищете, не существует или была перемещена.' },
+    backHome: { en: '← Back to home',                      ru: '← На главную' },
+  },
+  error: {
+    title:    { en: 'Something went wrong',                ru: 'Что-то пошло не так' },
+    subtitle: { en: 'An unexpected error occurred while rendering this page.', ru: 'Произошла непредвиденная ошибка при отображении страницы.' },
+    retry:    { en: 'Try again',                           ru: 'Попробовать снова' },
+    backHome: { en: '← Back to home',                      ru: '← На главную' },
+  },
 } as const;
 
 export type TranslationKey = typeof translations;

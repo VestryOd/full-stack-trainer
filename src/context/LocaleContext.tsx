@@ -35,15 +35,23 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
 
   useEffect(() => {
-    const stored = localStorage.getItem('fst-locale') as Locale | null;
-    if (stored === 'en' || stored === 'ru') {
-      setLocaleState(stored);
+    try {
+      const stored = localStorage.getItem('fst-locale') as Locale | null;
+      if (stored === 'en' || stored === 'ru') {
+        setLocaleState(stored);
+      }
+    } catch {
+      // localStorage unavailable (e.g. private browsing) — keep default locale
     }
   }, []);
 
   function setLocale(l: Locale) {
     setLocaleState(l);
-    localStorage.setItem('fst-locale', l);
+    try {
+      localStorage.setItem('fst-locale', l);
+    } catch {
+      // localStorage unavailable — locale won't persist across reloads
+    }
   }
 
   function t(obj: { en: string; ru: string }): string {

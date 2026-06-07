@@ -9,11 +9,13 @@ import './globals.css';
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
+  display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -21,7 +23,13 @@ export const metadata: Metadata = {
     template: '%s | Full Stack Trainer',
     default: 'Full Stack Trainer',
   },
-  description: 'Interview preparation for senior fullstack developers. Theory, questions, quizzes, and coding tasks.',
+  description: 'Prepare for senior fullstack engineering interviews. Theory, questions, quizzes, and coding tasks across 27 topics.',
+  keywords: ['interview', 'javascript', 'react', 'node.js', 'typescript', 'senior engineer', 'fullstack'],
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'Full Stack Trainer',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TOPICS, getTopicById } from '@/constants/topics';
 import { getQuestionsByTopic } from '@/lib/questions';
@@ -11,6 +12,12 @@ interface Props {
 
 export function generateStaticParams() {
   return TOPICS.map((t) => ({ topicId: t.id }));
+}
+
+export function generateMetadata({ params }: Props): Metadata {
+  const topic = getTopicById(params.topicId);
+  if (!topic) return {};
+  return { title: `${topic.label} Interview Questions` };
 }
 
 export default async function TopicQuestionsPage({ params }: Props) {

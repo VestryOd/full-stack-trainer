@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TOPICS, getTopicById } from '@/constants/topics';
 import { getArticlesForTopic } from '@/lib/content';
@@ -9,6 +10,12 @@ interface Props {
 
 export function generateStaticParams() {
   return TOPICS.map((t) => ({ topicId: t.id }));
+}
+
+export function generateMetadata({ params }: Props): Metadata {
+  const topic = getTopicById(params.topicId);
+  if (!topic) return {};
+  return { title: `${topic.label} Theory` };
 }
 
 export default function TopicPage({ params }: Props) {

@@ -36,7 +36,11 @@ function load(): ProgressStore {
 
 function save(store: ProgressStore): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — progress won't persist
+  }
 }
 
 export function useProgress() {

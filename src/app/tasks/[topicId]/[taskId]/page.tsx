@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TOPICS, getTopicById } from '@/constants/topics';
 import { getTasksByTopic, getTaskById } from '@/lib/tasks';
@@ -18,6 +19,12 @@ export async function generateStaticParams() {
     }
   }
   return params;
+}
+
+export function generateMetadata({ params }: Props): Metadata {
+  const task = getTaskById(params.topicId, params.taskId);
+  if (!task) return {};
+  return { title: task.title.en };
 }
 
 export default async function TaskPage({ params }: Props) {

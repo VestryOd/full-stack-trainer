@@ -1,6 +1,9 @@
+import type { Metadata } from 'next';
 import { TOPICS } from '@/constants/topics';
 import { getTopicArticleCount } from '@/lib/content';
 import { TheoryTopicsGrid } from '@/components/theory/TheoryTopicsGrid';
+
+export const metadata: Metadata = { title: 'Theory' };
 
 export default function TheoryPage() {
   const topicsWithCounts = TOPICS.map((t) => ({

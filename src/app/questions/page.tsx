@@ -1,6 +1,9 @@
+import type { Metadata } from 'next';
 import { TOPICS } from '@/constants/topics';
 import { getQuestionsByTopic } from '@/lib/questions';
 import { QuestionsTopicsGrid } from '@/components/questions/QuestionsTopicsGrid';
+
+export const metadata: Metadata = { title: 'Interview Questions' };
 
 export default function QuestionsPage() {
   const topicsWithCounts = TOPICS.map((t) => ({

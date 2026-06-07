@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+import { getTopicById } from '@/constants/topics';
 import { getAvailableQuizTopics, getQuizQuestions } from '@/lib/quiz';
 import { renderArticleHtml } from '@/components/theory/ArticleRenderer';
 import type { QuizQuestionWithHtml } from '@/components/quiz/QuizCard';
@@ -12,6 +14,12 @@ function parseSessionId(sessionId: string): { topicId: string; count: number } {
   const count = parseInt(parts[parts.length - 1], 10);
   const topicId = parts.slice(0, -1).join('-');
   return { topicId, count: isNaN(count) ? 10 : count };
+}
+
+export function generateMetadata({ params }: Props): Metadata {
+  const { topicId } = parseSessionId(params.sessionId);
+  const topic = getTopicById(topicId);
+  return { title: topic ? `${topic.label} Quiz` : 'Quiz' };
 }
 
 export function generateStaticParams() {

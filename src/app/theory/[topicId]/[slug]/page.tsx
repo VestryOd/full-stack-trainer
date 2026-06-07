@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { TOPICS, getTopicById } from '@/constants/topics';
 import { getArticle, getSlugsForTopic } from '@/lib/content';
@@ -6,6 +7,12 @@ import { ArticleView } from '@/components/theory/ArticleView';
 
 interface Props {
   params: { topicId: string; slug: string };
+}
+
+export function generateMetadata({ params }: Props): Metadata {
+  const article = getArticle(params.topicId, params.slug, 'en') ?? getArticle(params.topicId, params.slug, 'ru');
+  if (!article) return {};
+  return { title: article.title };
 }
 
 export async function generateStaticParams() {
