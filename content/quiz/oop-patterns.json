@@ -30,8 +30,8 @@
     "id": "oop-patterns-quiz-2",
     "topicId": "oop-patterns",
     "question": {
-      "en": "Consider the following code structure and determine the pattern used:\njs\nclass PaymentProcessor {\n  processVisa(payment) { /* Visa logic */ }\n  processMasterCard(payment) { /* MasterCard logic */ }\n  processPayPal(payment) { /* PayPal logic */ }\n  process(type, payment) {\n    switch(type) {\n      case 'visa': return this.processVisa(payment);\n      case 'mastercard': return this.processMasterCard(payment);\n      case 'paypal': return this.processPayPal(payment);\n    }\n  }\n}\n\nWhich refactoring would best apply Factory vs Abstract Factory pattern here?",
-      "ru": "Рассмотрите следующую структуру кода и определите используемый паттерн:\njs\nclass PaymentProcessor {\n  processVisa(payment) { /* Visa logic */ }\n  processMasterCard(payment) { /* MasterCard logic */ }\n  processPayPal(payment) { /* PayPal logic */ }\n  process(type, payment) {\n    switch(type) {\n      case 'visa': return this.processVisa(payment);\n      case 'mastercard': return this.processMasterCard(payment);\n      case 'paypal': return this.processPayPal(payment);\n    }\n  }\n}\n\nКакой рефакторинг лучше всего применит паттерн Factory vs Abstract Factory здесь?"
+      "en": "Consider the following code structure and determine the pattern used:\n```js\nclass PaymentProcessor {\n  processVisa(payment) { /* Visa logic */ }\n  processMasterCard(payment) { /* MasterCard logic */ }\n  processPayPal(payment) { /* PayPal logic */ }\n  process(type, payment) {\n    switch(type) {\n      case 'visa': return this.processVisa(payment);\n      case 'mastercard': return this.processMasterCard(payment);\n      case 'paypal': return this.processPayPal(payment);\n    }\n  }\n}\n```\nWhich refactoring would best apply Factory vs Abstract Factory pattern here?",
+      "ru": "Рассмотрите следующую структуру кода и определите используемый паттерн:\n```js\nclass PaymentProcessor {\n  processVisa(payment) { /* Visa logic */ }\n  processMasterCard(payment) { /* MasterCard logic */ }\n  processPayPal(payment) { /* PayPal logic */ }\n  process(type, payment) {\n    switch(type) {\n      case 'visa': return this.processVisa(payment);\n      case 'mastercard': return this.processMasterCard(payment);\n      case 'paypal': return this.processPayPal(payment);\n    }\n  }\n}\n```\nКакой рефакторинг лучше всего применит паттерн Factory vs Abstract Factory здесь?"
     },
     "options": {
       "en": [
@@ -84,8 +84,8 @@
     "id": "oop-patterns-quiz-4",
     "topicId": "oop-patterns",
     "question": {
-      "en": "Analyze this code and predict the output:\njs\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.execute(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n\nWhat pattern is demonstrated and why is it fundamentally different from State?",
-      "ru": "Проанализируйте этот код и предскажите вывод:\njs\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.pay(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n\nКакой паттерн демонстрируется и чем он принципиально отличается от State?"
+      "en": "Analyze this code and predict the output:\n```js\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.execute(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n```\nWhat pattern is demonstrated and why is it fundamentally different from State?",
+      "ru": "Проанализируйте этот код и предскажите вывод:\n```js\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.pay(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n```\nКакой паттерн демонстрируется и чем он принципиально отличается от State?"
     },
     "options": {
       "en": [
@@ -192,8 +192,8 @@
     "id": "oop-patterns-quiz-8",
     "topicId": "oop-patterns",
     "question": {
-      "en": "Consider this Observer pattern implementation. What will be logged?\nts\nclass Subject {\n  private observers: Function[] = [];\n  notify(data: any) {\n    this.observers.forEach(obs => obs(data));\n  }\n  subscribe(observer: Function) {\n    this.observers.push(observer);\n  }\n}\n\nconst subject = new Subject();\nsubject.subscribe((data) => console.log('Observer 1:', data));\nsubject.subscribe((data) => console.log('Observer 2:', data));\nsubject.notify('event');\n",
-      "ru": "Рассмотрите эту реализацию паттерна Observer. Что будет выведено?\nts\nclass Subject {\n  private observers: Function[] = [];\n  notify(data: any) {\n    this.observers.forEach(obs => obs(data));\n  }\n  subscribe(observer: Function) {\n    this.observers.push(observer);\n  }\n}\n\nconst subject = new Subject();\nsubject.subscribe((data) => console.log('Observer 1:', data));\nsubject.subscribe((data) => console.log('Observer 2:', data));\nsubject.notify('event');\n"
+      "en": "Consider this Observer pattern implementation. What will be logged?\n```ts\nclass Subject {\n  private observers: Function[] = [];\n  notify(data: any) {\n    this.observers.forEach(obs => obs(data));\n  }\n  subscribe(observer: Function) {\n    this.observers.push(observer);\n  }\n}\n\nconst subject = new Subject();\nsubject.subscribe((data) => console.log('Observer 1:', data));\nsubject.subscribe((data) => console.log('Observer 2:', data));\nsubject.notify('event');\n```",
+      "ru": "Рассмотрите эту реализацию паттерна Observer. Что будет выведено?\n```ts\nclass Subject {\n  private observers: Function[] = [];\n  notify(data: any) {\n    this.observers.forEach(obs => obs(data));\n  }\n  subscribe(observer: Function) {\n    this.observers.push(observer);\n  }\n}\n\nconst subject = new Subject();\nsubject.subscribe((data) => console.log('Observer 1:', data));\nsubject.subscribe((data) => console.log('Observer 2:', data));\nsubject.notify('event');\n```"
     },
     "options": {
       "en": [
@@ -327,8 +327,8 @@
     "id": "oop-patterns-quiz-13",
     "topicId": "oop-patterns",
     "question": {
-      "en": "What is the key semantic difference between Observer pattern and Pub/Sub pattern?\nts\n// Observer: Direct reference\nsubject.attach(observer);\n\n// Pub/Sub: Indirect via broker\npublisher.publish('event-name', data);\nsubscriber.subscribe('event-name', handler);\n",
-      "ru": "Какова ключевая семантическая разница между паттерном Observer и паттерном Pub/Sub?\nts\n// Observer: Прямая ссылка\nsubject.attach(observer);\n\n// Pub/Sub: Косвенно через брокер\npublisher.publish('event-name', data);\nsubscriber.subscribe('event-name', handler);\n"
+      "en": "What is the key semantic difference between Observer pattern and Pub/Sub pattern?\n```ts\n// Observer: Direct reference\nsubject.attach(observer);\n\n// Pub/Sub: Indirect via broker\npublisher.publish('event-name', data);\nsubscriber.subscribe('event-name', handler);\n```",
+      "ru": "Какова ключевая семантическая разница между паттерном Observer и паттерном Pub/Sub?\n```ts\n// Observer: Прямая ссылка\nsubject.attach(observer);\n\n// Pub/Sub: Косвенно через брокер\npublisher.publish('event-name', data);\nsubscriber.subscribe('event-name', handler);\n```"
     },
     "options": {
       "en": [
@@ -597,8 +597,8 @@
     "id": "oop-patterns-quiz-23",
     "topicId": "oop-patterns",
     "question": {
-      "en": "What is the key difference between Observer and Pub/Sub patterns?\njs\n// Observer: Direct coupling\nsubject.attach(observer);\n\n// Pub/Sub: Event bus mediates\neventBus.subscribe('event', callback);\neventBus.publish('event', data);\n",
-      "ru": "В чем ключевое отличие между паттернами Observer и Pub/Sub?\njs\n// Observer: Прямая связь\nsubject.attach(observer);\n\n// Pub/Sub: Event bus опосредует\neventBus.subscribe('event', callback);\neventBus.publish('event', data);\n"
+      "en": "What is the key difference between Observer and Pub/Sub patterns?\n```js\n// Observer: Direct coupling\nsubject.attach(observer);\n\n// Pub/Sub: Event bus mediates\neventBus.subscribe('event', callback);\neventBus.publish('event', data);\n```",
+      "ru": "В чем ключевое отличие между паттернами Observer и Pub/Sub?\n```js\n// Observer: Прямая связь\nsubject.attach(observer);\n\n// Pub/Sub: Event bus опосредует\neventBus.subscribe('event', callback);\neventBus.publish('event', data);\n```"
     },
     "options": {
       "en": [
@@ -624,8 +624,8 @@
     "id": "oop-patterns-quiz-24",
     "topicId": "oop-patterns",
     "question": {
-      "en": "Examine this code. Which pattern is being used?\nts\nclass PaymentProcessor {\n  private strategy: PaymentStrategy;\n  \n  setStrategy(strategy: PaymentStrategy) {\n    this.strategy = strategy;\n  }\n  \n  process(amount: number) {\n    return this.strategy.pay(amount);\n  }\n}\n\nconst processor = new PaymentProcessor();\nprocessor.setStrategy(new CreditCardPayment());\n",
-      "ru": "Изучите этот код. Какой паттерн здесь используется?\nts\nclass PaymentProcessor {\n  private strategy: PaymentStrategy;\n  \n  setStrategy(strategy: PaymentStrategy) {\n    this.strategy = strategy;\n  }\n  \n  process(amount: number) {\n    return this.strategy.pay(amount);\n  }\n}\n\nconst processor = new PaymentProcessor();\nprocessor.setStrategy(new CreditCardPayment());\n"
+      "en": "Examine this code. Which pattern is being used?\n```ts\nclass PaymentProcessor {\n  private strategy: PaymentStrategy;\n  \n  setStrategy(strategy: PaymentStrategy) {\n    this.strategy = strategy;\n  }\n  \n  process(amount: number) {\n    return this.strategy.pay(amount);\n  }\n}\n\nconst processor = new PaymentProcessor();\nprocessor.setStrategy(new CreditCardPayment());\n```",
+      "ru": "Изучите этот код. Какой паттерн здесь используется?\n```ts\nclass PaymentProcessor {\n  private strategy: PaymentStrategy;\n  \n  setStrategy(strategy: PaymentStrategy) {\n    this.strategy = strategy;\n  }\n  \n  process(amount: number) {\n    return this.strategy.pay(amount);\n  }\n}\n\nconst processor = new PaymentProcessor();\nprocessor.setStrategy(new CreditCardPayment());\n```"
     },
     "options": {
       "en": [
