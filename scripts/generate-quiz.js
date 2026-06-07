@@ -22,7 +22,7 @@ const https = require('https');
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-haiku-4-5-20251001';
-const QUIZ_DIR = path.join(__dirname, 'content', 'quiz');
+const QUIZ_DIR = path.join(__dirname, '..', 'content', 'quiz');
 const PROGRESS_FILE = path.join(__dirname, '.quiz-progress.json');
 const BATCH_SIZE = 5; // quiz questions per API call
 const DELAY_MS = 1500;

@@ -22,7 +22,7 @@ const https = require('https');
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-haiku-4-5-20251001';
-const TASKS_DIR = path.join(__dirname, 'content', 'tasks');
+const TASKS_DIR = path.join(__dirname, '..', 'content', 'tasks');
 const PROGRESS_FILE = path.join(__dirname, '.tasks-progress.json');
 const BATCH_SIZE = 3; // tasks per API call (tasks are longer than questions)
 const DELAY_MS = 2000;

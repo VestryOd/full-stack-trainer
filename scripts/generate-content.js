@@ -22,7 +22,7 @@ const https = require('https');
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-haiku-4-5-20251001';
-const QUESTIONS_DIR = path.join(__dirname, 'content', 'questions');
+const QUESTIONS_DIR = path.join(__dirname, '..', 'content', 'questions');
 const PROGRESS_FILE = path.join(__dirname, '.generation-progress.json');
 const BATCH_SIZE = 5; // questions per API call
 const DELAY_MS = 1500; // delay between API calls to avoid rate limits
