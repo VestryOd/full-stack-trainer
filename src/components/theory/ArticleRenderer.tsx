@@ -1,54 +1,68 @@
+import { marked, Renderer } from 'marked';
 import { highlight } from '@/lib/highlight';
 
 interface ArticleRendererProps {
-  content: string;
-  theme?: 'github-dark' | 'github-light';
+  html: string;
 }
 
-async function renderMarkdown(content: string, theme: 'github-dark' | 'github-light') {
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  const parts: Array<{ type: 'text' | 'code'; value: string; lang?: string }> = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', value: content.slice(lastIndex, match.index) });
-    }
-    parts.push({ type: 'code', lang: match[1] ?? 'text', value: match[2] });
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < content.length) {
-    parts.push({ type: 'text', value: content.slice(lastIndex) });
-  }
-
-  const rendered = await Promise.all(
-    parts.map(async (part) => {
-      if (part.type === 'code') {
-        return highlight(part.value, part.lang ?? 'text', theme);
-      }
-      return `<div class="prose-part">${escapeHtmlOutsideCode(part.value)}</div>`;
-    }),
-  );
-
-  return rendered.join('');
-}
-
-function escapeHtmlOutsideCode(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n/g, '<br />');
-}
-
-export async function ArticleRenderer({ content, theme = 'github-dark' }: ArticleRendererProps) {
-  const html = await renderMarkdown(content, theme);
+/** Renders pre-built HTML from renderArticleHtml(). */
+export function ArticleRenderer({ html }: ArticleRendererProps) {
   return (
     <div
-      className="prose prose-slate dark:prose-invert max-w-none"
+      className="article-body"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
+}
+
+/** Remove the <!-- verified: ... --> comment that starts every article. */
+function stripVerifiedComment(content: string): string {
+  return content.replace(/^<!--[\s\S]*?-->\s*/m, '');
+}
+
+/** Server-side: parse markdown + highlight code blocks. Returns HTML string. */
+export async function renderArticleHtml(content: string): Promise<string> {
+  const cleaned = stripVerifiedComment(content);
+  return renderMarkdownWithShiki(cleaned);
+}
+
+async function renderMarkdownWithShiki(source: string): Promise<string> {
+  // Pass 1: extract code blocks → placeholders
+  const blocks: Array<{ lang: string; code: string }> = [];
+  const withPlaceholders = source.replace(
+    /```(\w+)?\n?([\s\S]*?)```/g,
+    (_, lang: string | undefined, code: string) => {
+      const idx = blocks.push({ lang: lang ?? 'text', code: code.trim() }) - 1;
+      return `CODEBLOCK_PLACEHOLDER_${idx}`;
+    },
+  );
+
+  // Pass 2: render remaining markdown with marked
+  const renderer = new Renderer();
+  renderer.heading = function ({ text, depth }) {
+    const id = text
+      .toLowerCase()
+      .replace(/<[^>]+>/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+    return `<h${depth} id="${id}">${text}</h${depth}>\n`;
+  };
+
+  marked.setOptions({ gfm: true, breaks: false });
+  let html = await marked(withPlaceholders, { renderer, async: false }) as string;
+
+  // Pass 3: highlight code blocks
+  const highlighted = await Promise.all(
+    blocks.map(({ lang, code }) => highlight(code, lang)),
+  );
+
+  blocks.forEach((_, idx) => {
+    html = html
+      .replace(`<p>CODEBLOCK_PLACEHOLDER_${idx}</p>`, highlighted[idx])
+      .replace(`CODEBLOCK_PLACEHOLDER_${idx}`, highlighted[idx]);
+  });
+
+  return html;
 }

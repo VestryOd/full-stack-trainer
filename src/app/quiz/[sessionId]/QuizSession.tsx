@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import type { QuizQuestion } from '@/types';
 
 interface QuizSessionProps {
-  sessionId: string;
+  initialQuestions: QuizQuestion[];
 }
 
-export function QuizSession({ sessionId }: QuizSessionProps) {
-  const [questions] = useState<QuizQuestion[]>([]);
+export function QuizSession({ initialQuestions }: QuizSessionProps) {
+  const [questions] = useState<QuizQuestion[]>(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [correct, setCorrect] = useState(0);
@@ -22,10 +22,7 @@ export function QuizSession({ sessionId }: QuizSessionProps) {
     return (
       <div className="container py-8 max-w-2xl">
         <p className="text-muted-foreground text-center py-12">
-          No quiz questions available yet for session{' '}
-          <code className="font-mono text-sm bg-muted px-1 rounded">{sessionId}</code>.
-          <br />
-          Add content via Prompt 2.
+          No quiz questions available for this topic yet.
         </p>
       </div>
     );

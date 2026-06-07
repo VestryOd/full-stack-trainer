@@ -1,0 +1,155 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import type { QuestionDifficulty } from '@/types';
+import { QuestionCard, type QuestionWithAnswerHtml } from './QuestionCard';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { Search, X } from 'lucide-react';
+
+interface QuestionFiltersProps {
+  questions: QuestionWithAnswerHtml[];
+  showTopicFilter?: boolean;
+  topicLabel?: string;
+}
+
+const DIFFICULTIES: QuestionDifficulty[] = ['junior', 'middle', 'senior', 'advanced'];
+
+const DIFFICULTY_STYLES: Record<QuestionDifficulty, string> = {
+  junior:   'data-[active=true]:bg-green-500/20 data-[active=true]:text-green-400 data-[active=true]:border-green-500/40',
+  middle:   'data-[active=true]:bg-blue-500/20 data-[active=true]:text-blue-400 data-[active=true]:border-blue-500/40',
+  senior:   'data-[active=true]:bg-orange-500/20 data-[active=true]:text-orange-400 data-[active=true]:border-orange-500/40',
+  advanced: 'data-[active=true]:bg-red-500/20 data-[active=true]:text-red-400 data-[active=true]:border-red-500/40',
+};
+
+export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps) {
+  const [search, setSearch] = useState('');
+  const [activeDifficulties, setActiveDifficulties] = useState<Set<QuestionDifficulty>>(new Set());
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+
+  // Collect all tags from the question set
+  const allTags = useMemo(() => {
+    const s = new Set<string>();
+    questions.forEach((q) => (q.tags ?? []).forEach((t) => s.add(t)));
+    return Array.from(s).sort();
+  }, [questions]);
+
+  const filtered = useMemo(() => {
+    return questions.filter((q) => {
+      if (activeDifficulties.size > 0 && !activeDifficulties.has(q.difficulty)) return false;
+      if (activeTags.size > 0 && !(q.tags ?? []).some((t) => activeTags.has(t))) return false;
+      if (search) {
+        const needle = search.toLowerCase();
+        const haystack = `${q.question.en} ${q.question.ru} ${(q.tags ?? []).join(' ')}`.toLowerCase();
+        if (!haystack.includes(needle)) return false;
+      }
+      return true;
+    });
+  }, [questions, activeDifficulties, activeTags, search]);
+
+  function toggleDifficulty(d: QuestionDifficulty) {
+    setActiveDifficulties((prev) => {
+      const next = new Set(prev);
+      if (next.has(d)) next.delete(d); else next.add(d);
+      return next;
+    });
+  }
+
+  function toggleTag(tag: string) {
+    setActiveTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag); else next.add(tag);
+      return next;
+    });
+  }
+
+  function reset() {
+    setSearch('');
+    setActiveDifficulties(new Set());
+    setActiveTags(new Set());
+  }
+
+  const hasFilters = search || activeDifficulties.size > 0 || activeTags.size > 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Filter bar */}
+      <div className="space-y-3 p-4 bg-card border border-border rounded-md">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search questions…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 h-8 text-sm bg-background"
+          />
+        </div>
+
+        {/* Difficulty pills */}
+        <div className="flex flex-wrap gap-1.5">
+          {DIFFICULTIES.map((d) => (
+            <button
+              key={d}
+              data-active={activeDifficulties.has(d)}
+              onClick={() => toggleDifficulty(d)}
+              className={cn(
+                'rounded px-2 py-0.5 text-xs font-mono border border-border text-muted-foreground capitalize transition-colors hover:border-muted-foreground',
+                DIFFICULTY_STYLES[d],
+              )}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+
+        {/* Tag pills */}
+        {allTags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                data-active={activeTags.has(tag)}
+                onClick={() => toggleTag(tag)}
+                className={cn(
+                  'rounded px-1.5 py-0.5 text-xs font-mono border border-border text-muted-foreground transition-colors hover:border-muted-foreground',
+                  activeTags.has(tag) && 'bg-primary/10 text-primary border-primary/30',
+                )}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Count + reset */}
+        <div className="flex items-center justify-between pt-1 border-t border-border">
+          <span className="text-xs text-muted-foreground font-mono">
+            {filtered.length} / {questions.length} questions
+            {topicLabel && ` in ${topicLabel}`}
+          </span>
+          {hasFilters && (
+            <button
+              onClick={reset}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3 w-3" />
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Question list */}
+      {filtered.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8 text-sm">No questions match the filters.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((q) => (
+            <QuestionCard key={q.id} question={q} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

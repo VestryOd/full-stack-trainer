@@ -77,6 +77,11 @@ export function getTopicsWithContent(): string[] {
   });
 }
 
+export function getTopicArticleCount(topicId: string): number {
+  const ruCount = getSlugsForTopic(topicId, 'ru').length;
+  return ruCount > 0 ? ruCount : getSlugsForTopic(topicId, 'en').length;
+}
+
 export function getSlugsForTopic(topicId: string, locale: Locale): string[] {
   const folder = topicFolderName(topicId);
   const dir = path.join(CONTENT_DIR, folder, locale);

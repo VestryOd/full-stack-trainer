@@ -1,8 +1,16 @@
 import { TOPICS } from '@/constants/topics';
+import { getQuizForSession } from '@/lib/quiz';
 import { QuizSession } from './QuizSession';
 
 interface Props {
   params: { sessionId: string };
+}
+
+function parseSessionId(sessionId: string): { topicId: string; count: number } {
+  const parts = sessionId.split('-');
+  const count = parseInt(parts[parts.length - 1], 10);
+  const topicId = parts.slice(0, -1).join('-');
+  return { topicId, count: isNaN(count) ? 10 : count };
 }
 
 export function generateStaticParams() {
@@ -17,5 +25,8 @@ export function generateStaticParams() {
 }
 
 export default function QuizSessionPage({ params }: Props) {
-  return <QuizSession sessionId={params.sessionId} />;
+  const { topicId, count } = parseSessionId(params.sessionId);
+  const questions = getQuizForSession(topicId, count);
+
+  return <QuizSession initialQuestions={questions} />;
 }
