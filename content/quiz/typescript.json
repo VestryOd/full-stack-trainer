@@ -3,436 +3,31 @@
     "id": "typescript-quiz-1",
     "topicId": "typescript",
     "question": {
-      "en": "When you declare a variable with `const x = { name: 'Alice', age: 30 };` in TypeScript with strict mode enabled, what is the inferred type of the `age` property?",
-      "ru": "Когда вы объявляете переменную с `const x = { name: 'Alice', age: 30 };` в TypeScript со строгим режимом, какой тип выводится для свойства `age`?"
+      "en": "What is the key difference between a TypeScript `interface` and a `type` alias when used with object shapes?\ntypescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n",
+      "ru": "В чем ключевое различие между TypeScript `interface` и `type` alias при использовании с объектными формами?\ntypescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n"
     },
     "options": {
       "en": [
-        "number",
-        "30",
-        "number | undefined",
-        "any"
+        "Interfaces support declaration merging, while type aliases do not",
+        "Type aliases are faster at runtime than interfaces",
+        "Interfaces can only describe objects, while type aliases can describe any type",
+        "Type aliases support generics, while interfaces do not"
       ],
       "ru": [
-        "number",
-        "30",
-        "number | undefined",
-        "any"
+        "Интерфейсы поддерживают объединение объявлений, в то время как type alias не поддерживают",
+        "Type alias работают быстрее во время выполнения, чем интерфейсы",
+        "Интерфейсы могут описывать только объекты, в то время как type alias могут описывать любой тип",
+        "Type alias поддерживают обобщения, в то время как интерфейсы не поддерживают"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "TypeScript infers `age: number` because the literal value 30 is widened to the number type. The literal type `30` is only used when you use `as const` assertion. Without strict mode, this might be inferred differently, but strict mode still widens numeric literals to `number`.",
-      "ru": "TypeScript выводит `age: number`, потому что литеральное значение 30 расширяется до типа number. Литеральный тип `30` используется только с утверждением `as const`. Даже в строгом режиме числовые литералы расширяются до `number`."
+      "en": "Interfaces support declaration merging, allowing multiple declarations with the same name to be combined into a single interface. Type aliases cannot be merged and will cause an error if redeclared. Both support generics and can describe objects, and there is no runtime performance difference between them.",
+      "ru": "Интерфейсы поддерживают объединение объявлений, позволяя объединять несколько объявлений с одним именем в один интерфейс. Type alias не могут быть объединены и вызовут ошибку при повторном объявлении. Оба поддерживают обобщения и могут описывать объекты, и между ними нет различий в производительности во время выполнения."
     }
   },
   {
     "id": "typescript-quiz-2",
-    "topicId": "typescript",
-    "question": {
-      "en": "What is the key difference between using `interface` and `type` when defining object shapes in TypeScript?",
-      "ru": "В чём основное различие между использованием `interface` и `type` при определении структур объектов в TypeScript?"
-    },
-    "options": {
-      "en": [
-        "Interfaces are hoisted but types are not; interfaces support declaration merging while types do not",
-        "Types allow union types while interfaces do not; interfaces are always nominal",
-        "Interfaces must have explicit property definitions while types can use shorthand",
-        "Types are erased at runtime while interfaces remain in compiled JavaScript"
-      ],
-      "ru": [
-        "Интерфейсы поднимаются в области видимости, но типы нет; интерфейсы поддерживают слияние объявлений, а типы нет",
-        "Типы допускаю�� типы объединения, а интерфейсы нет; интерфейсы всегда именованные",
-        "Интерфейсы должны иметь явные определения свойств, а типы могут использовать сокращение",
-        "Типы стираются при выполнении, а интерфейсы остаются в скомпилированном JavaScript"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "Interfaces support declaration merging (you can declare the same interface multiple times and they combine), while types cannot be merged. Both are structural types and erased at runtime. Types are more flexible (support unions, intersections, and primitives) but interfaces excel at defining object contracts with composition.",
-      "ru": "Интерфейсы поддерживают слияние объявлений (можно объявить один интерфейс несколько раз, и они объединяются), а типы нет. Оба являются структурными типами и стираются при выполнении. Типы более гибкие (поддерживают объединения, пересечения и примитивы), но интерфейсы хороши для определения контрактов объектов с композицией."
-    }
-  },
-  {
-    "id": "typescript-quiz-3",
-    "topicId": "typescript",
-    "question": {
-      "en": "Given this code:\n\nfunction processValue<T extends string | number>(value: T): T {\n  return value;\n}\nconst result = processValue('hello');\n\nWhat is the inferred type of `result`?",
-      "ru": "Дан этот код:\n\nfunction processValue<T extends string | number>(value: T): T {\n  return value;\n}\nconst result = processValue('hello');\n\nКакой тип выводится для `result`?"
-    },
-    "options": {
-      "en": [
-        "\"hello\" (literal type)",
-        "string",
-        "string | number",
-        "unknown"
-      ],
-      "ru": [
-        "\"hello\" (литеральный тип)",
-        "string",
-        "string | number",
-        "unknown"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "TypeScript preserves literal types when inferring generics. Since 'hello' is passed as an argument, T is inferred as the literal type `\"hello\"`, not the wider `string` type. This preserves maximum type safety and allows the return type to be exactly `\"hello\"`.",
-      "ru": "TypeScript сохраняет литеральные типы при выводе обобщений. Так как 'hello' передан в качестве аргумента, T выводится как литеральный тип `\"hello\"`, а не более широкий `string`. Это обеспечивает максимальную безопасность типов и позволяет возвращаемому типу быть точно `\"hello\"`."
-    }
-  },
-  {
-    "id": "typescript-quiz-4",
-    "topicId": "typescript",
-    "question": {
-      "en": "What does the `Readonly<T>` utility type do, and what is a key limitation when using it with nested objects?",
-      "ru": "Что делает служебный тип `Readonly<T>`, и какое ключевое ограничение существует при его использовании с вложенными объектами?"
-    },
-    "options": {
-      "en": [
-        "It makes properties readonly only at the top level; nested objects remain mutable",
-        "It prevents all mutations including nested properties; changes require deep cloning",
-        "It converts the type to a union of readonly and mutable variants",
-        "It removes the type from the type system and treats it as any"
-      ],
-      "ru": [
-        "Он делает свойства только для чтения то��ько на верхнем уровне; вложенные объекты остаются изменяемыми",
-        "Он предотвращает все мутации, включая вложенные свойства; изменения требуют глубокого клонирования",
-        "Он преобразует тип в объединение вариантов только для чтения и изменяемых",
-        "Он удаляет тип из системы типов и обрабатывает его как any"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "`Readonly<T>` is shallow — it only prevents reassignment of top-level properties. Nested objects and arrays within can still be mutated. For deep immutability, you need recursive utility types or libraries. This is a common pitfall when developers expect `Readonly` to provide complete immutability.",
-      "ru": "`Readonly<T>` поверхностен — он только предотвращает переприсваивание свойств верхнего уровня. Вложенные объекты и массивы внутри по-прежнему могут быть изменены. Для глубокой неизменяемости требуются рекурсивные служебные типы или библиотеки. Это частая ошибка, когда разработчики ожидают полной неизменяемости от `Readonly`."
-    }
-  },
-  {
-    "id": "typescript-quiz-5",
-    "topicId": "typescript",
-    "question": {
-      "en": "Consider this code with a type guard:\n\nfunction isString(value: unknown): value is string {\n  return typeof value === 'string';\n}\nfunction process(input: unknown) {\n  if (isString(input)) {\n    console.log(input.toUpperCase());\n  }\n}\n\nWhy is the type guard `value is string` necessary here instead of just returning `boolean`?",
-      "ru": "Рассмотрите этот код с проверкой типа:\n\nfunction isString(value: unknown): value is string {\n  return typeof value === 'string';\n}\nfunction process(input: unknown) {\n  if (isString(input)) {\n    console.log(input.toUpperCase());\n  }\n}\n\nПочему проверка типа `value is string` необходима здесь вместо просто возврата `boolean`?"
-    },
-    "options": {
-      "en": [
-        "It narrows the type of `input` within the if block, allowing TypeScript to know `input` is `string` and permit `.toUpperCase()`",
-        "It prevents runtime errors by validating the type before execution",
-        "It makes the function execute faster by skipping the typeof check",
-        "It exports the type guard to other modules for reuse"
-      ],
-      "ru": [
-        "Оно сужает тип `input` внутри блока if, позволяя TypeScript знать, что `input` это `string` и разрешить `.toUpperCase()`",
-        "Это предотвращает ошибки выполнения путём проверки типа перед выполнением",
-        "Это делает функцию быстрее, пропуская проверку typeof",
-        "Это экспортирует проверку типа в другие модули для повторного использования"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "A type predicate (`value is string`) tells TypeScript to narrow the type of the parameter within the conditional block. Without it, even if the function returns `true`, TypeScript would still treat `input` as `unknown` inside the if block. Type predicates are a compile-time feature that don't affect runtime behavior — they're purely for type safety.",
-      "ru": "Предикат типа (`value is string`) указывает TypeScript сузить тип параметра внутри условного блока. Без него, даже если функ��ия возвращает `true`, TypeScript по-прежнему будет обрабатывать `input` как `unknown` внутри блока if. Предикаты типа — это особенность времени компиляции, которая не влияет на поведение выполнения — они чисто для безопасности типов."
-    }
-  },
-  {
-    "id": "typescript-quiz-6",
-    "topicId": "typescript",
-    "question": {
-      "en": "When would you choose a `type` alias over an `interface` in TypeScript? Which statement is most accurate?",
-      "ru": "Когда вы выбрали бы `type` вместо `interface` в TypeScript? Какое утверждение наиболее точно?"
-    },
-    "options": {
-      "en": [
-        "Types support union types, conditional types, and tuple types, while interfaces are limited to object shapes",
-        "Interfaces are more performant because they are cached by the TypeScript compiler",
-        "Types cannot be extended or merged, making them unsuitable for large codebases",
-        "Interfaces support generics while types do not"
-      ],
-      "ru": [
-        "Типы поддерживают объединения, условные типы и кортежи, а интерфейсы ограничены только формами объектов",
-        "Интерфейсы более производительны, потому что кэшируются компилятором TypeScript",
-        "Типы не могут быть расширены или объединены, что делает их непригодными для больших проектов",
-        "Интерфейсы поддерживают обобщения, а типы нет"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "Types are more flexible and support union types (A | B), conditional types (T extends U ? X : Y), and tuple types, which interfaces cannot. Interfaces are better for object-oriented patterns and declaration merging. Both support generics, and performance differences are negligible.",
-      "ru": "Типы более гибкие и поддерживают объединения (A | B), условные типы (T extends U ? X : Y) и кортежи, которые интерфейсы не могут выражать. Интерфейсы лучше для ООП-паттернов и слияния деклараций. Оба поддерживают обобщения, а различия в производительности пренебрежимо малы."
-    }
-  },
-  {
-    "id": "typescript-quiz-7",
-    "topicId": "typescript",
-    "question": {
-      "en": "What will be the inferred type of `result` in strict mode? \nconst obj = { name: 'John', age: 30 };\nconst result = obj.name;\n",
-      "ru": "Какой тип будет выведен для `result` в строгом режиме? \nconst obj = { name: 'John', age: 30 };\nconst result = obj.name;\n"
-    },
-    "options": {
-      "en": [
-        "string",
-        "string | number",
-        "any",
-        "unknown"
-      ],
-      "ru": [
-        "string",
-        "string | number",
-        "any",
-        "unknown"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "TypeScript's type inference narrows the type based on the literal values assigned. Since 'John' is a string literal, TypeScript infers `obj.name` as `string`, not a union type. The entire object is inferred as `{ name: string; age: number }`, so accessing `.name` gives us `string`.",
-      "ru": "Вывод типов TypeScript сужает тип на основе назначенных литеральных значений. Поскольку 'John' — это строковый литерал, TypeScript выводит `obj.name` как `string`, а не объединение. Весь объект выводится как `{ name: string; age: number }`, поэтому доступ к `.name` дает нам `string`."
-    }
-  },
-  {
-    "id": "typescript-quiz-8",
-    "topicId": "typescript",
-    "question": {
-      "en": "What is the primary purpose of a type guard function like `function isCat(animal: any): animal is Cat`? Why use it instead of a simple type assertion?",
-      "ru": "Какова основная цель функции защиты типа, такой как `function isCat(animal: any): animal is Cat`? Почему использовать её вместо простого приведения типов?"
-    },
-    "options": {
-      "en": [
-        "Type guards perform runtime checks and narrow types in control flow, while assertions only affect compile-time and don't validate at runtime",
-        "Type guards are faster because they skip TypeScript compilation",
-        "Type guards allow you to cast any type to any other type without restrictions",
-        "Type guards are only used for discriminated unions and cannot be used with regular types"
-      ],
-      "ru": [
-        "Защиты типов выполняют проверки во время выполнения и сужают типы в потоке управления, в то время как приведения влияют только на время компиляции и не проверяют во время выполнения",
-        "Защиты типов быстрее, потому что пропускают компиляцию TypeScript",
-        "Защиты типов позволяют приводить любой тип к любому другому типу без ограничений",
-        "Защиты типов используются только для дискриминированных объединений и не могут использоваться с обычными типами"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "Type guards use the `is` keyword and perform actual runtime checks, allowing TypeScript to narrow the type in subsequent code blocks. Type assertions (`as Type`) only tell TypeScript to treat a value as a type without runtime validation. Guards are essential for safe type narrowing when working with union types or `any`.",
-      "ru": "Защиты типов используют ключевое слово `is` и выполняют фактические проверки во время выполнения, позволяя TypeScript сужать тип в последующих блоках кода. Приведения типов (`as Type`) только говорят TypeScript рассматривать значение как тип без проверки во время выполнения. Защиты необходимы для безопасного сужения типов при работе с объединениями или `any`."
-    }
-  },
-  {
-    "id": "typescript-quiz-9",
-    "topicId": "typescript",
-    "question": {
-      "en": "What will TypeScript infer as the type of `config` after this code? \nfunction getConfig<T extends object>(overrides: T) {\n  const config = { debug: false, ...overrides };\n  return config;\n}\nconst result = getConfig({ timeout: 5000 });\n",
-      "ru": "Какой тип TypeScript выведет для `config` после этого кода? \nfunction getConfig<T extends object>(overrides: T) {\n  const config = { debug: false, ...overrides };\n  return config;\n}\nconst result = getConfig({ timeout: 5000 });\n"
-    },
-    "options": {
-      "en": [
-        "{ debug: boolean; timeout: number }",
-        "{ debug: false; timeout: 5000 }",
-        "{ debug: boolean } & { timeout: number }",
-        "{ debug: boolean; [key: string]: any }"
-      ],
-      "ru": [
-        "{ debug: boolean; timeout: number }",
-        "{ debug: false; timeout: 5000 }",
-        "{ debug: boolean } & { timeout: number }",
-        "{ debug: boolean; [key: string]: any }"
-      ]
-    },
-    "correctIndex": 1,
-    "explanation": {
-      "en": "TypeScript infers literal types for the initial object `{ debug: false }` and the spread result. When spreading `{ timeout: 5000 }`, it preserves the literal type `5000`. The return type is therefore `{ debug: false; timeout: 5000 }`, not widened to `boolean` and `number` without explicit type annotations.",
-      "ru": "TypeScript выводит литеральные типы для начального объекта `{ debug: false }` и результата распространения. При распространении `{ timeout: 5000 }` он сохраняет литеральный тип `5000`. Тип возврата таким образом `{ debug: false; timeout: 5000 }`, а не расширяется до `boolean` и `number` без явных аннотаций типов."
-    }
-  },
-  {
-    "id": "typescript-quiz-10",
-    "topicId": "typescript",
-    "question": {
-      "en": "What is the difference between `Partial<T>` and `Readonly<T>` utility types, and when would you use a mapped type instead of these built-in utilities?",
-      "ru": "В чем разница между утилитами `Partial<T>` и `Readonly<T>`, и когда вы использовали бы сопоставленный тип вместо этих встроенных утилит?"
-    },
-    "options": {
-      "en": [
-        "`Partial<T>` makes all properties optional while `Readonly<T>` prevents property modification; use mapped types when you need custom logic like prefixing properties or conditional modifications",
-        "`Partial<T>` and `Readonly<T>` are identical; mapped types are always slower and should be avoided",
-        "`Partial<T>` only works with interfaces while `Readonly<T>` only works with types",
-        "`Readonly<T>` is completely removed at runtime, so `Partial<T>` is preferred for type safety"
-      ],
-      "ru": [
-        "`Partial<T>` делает все свойства необязательными, а `Readonly<T>` предотвращает модификацию свойств; используйте сопоставленные типы, когда нужна пользовательская логика, такая как добавление префиксов к свойствам или условные изменения",
-        "`Partial<T>` и `Readonly<T>` идентичны; сопоставленные типы всегда медленнее и их следует избегать",
-        "`Partial<T>` работает только с интерфейсами, а `Readonly<T>` работает только с типами",
-        "`Readonly<T>` полностью удаляется во время выполнения, поэтому `Partial<T>` предпочтителен для безопасности типов"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "`Partial<T>` makes all properties optional (key?: value), while `Readonly<T>` prevents reassignment at compile time. Mapped types like `{ [K in keyof T]: T[K] & { readonly: true } }` allow you to apply custom transformations to each property, such as adding prefixes, wrapping types, or applying conditional logic that built-in utilities cannot express.",
-      "ru": "`Partial<T>` делает все свойства необязательными (key?: value), а `Readonly<T>` предотвращает переназначение во время компиляции. Сопоставленные типы, такие как `{ [K in keyof T]: T[K] & { readonly: true } }`, позволяют применять пользовательские преобразования к каждому свойству, такие как добавление префиксов, обертывание типов или применение условной логики, которую встроенные утилиты не могут выразить."
-    }
-  },
-  {
-    "id": "typescript-quiz-11",
-    "topicId": "typescript",
-    "question": {
-      "en": "When should you use a type alias instead of an interface in TypeScript? Consider both declaration merging and use cases.",
-      "ru": "Когда следует использовать псевдоним типа вместо интерфейса в TypeScript? Учтите объединение объявлений и варианты использования."
-    },
-    "options": {
-      "en": [
-        "Type aliases can represent union types, tuple types, and primitives, while interfaces can only represent object shapes",
-        "Interfaces are always better for performance, so type aliases should only be used for simple cases",
-        "Type aliases support declaration merging, which interfaces cannot do",
-        "Type aliases are required when working with generic constraints"
-      ],
-      "ru": [
-        "Псевдонимы типов могут представлять объединенные типы, типы кортежей и примитивы, в то время как интерфейсы могут представлять только формы объектов",
-        "Интерфейсы всегда лучше по производительности, поэтому псевдонимы типов следует использовать только для простых случаев",
-        "Псевдонимы типов поддерживают объединение объявлений, которое интерфейсы не могут делать",
-        "Псевдонимы типов требуются при работе с ограничениями общих типов"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "Type aliases excel at representing union types (A | B), tuples, and primitive types, which interfaces fundamentally cannot do. Interfaces can only describe object shapes. While interfaces support declaration merging (a unique feature), this is rarely needed in practice. Both have similar performance, and generics work equally well with both constructs.",
-      "ru": "Псевдонимы типов отлично подходят для представления объединенных типов (A | B), кортежей и примитивных типов, что интерфейсы в принципе не могут делать. Интерфейсы могут описывать только формы объектов. Хотя интерфейсы поддерживают объединение объявлений (уникальную функцию), это редко требуется на практике. Оба имеют аналогичную производительность, и универсальные типы одинаково хорошо работают с обоими конструкциями."
-    }
-  },
-  {
-    "id": "typescript-quiz-12",
-    "topicId": "typescript",
-    "question": {
-      "en": "What will be the inferred type of `result` in this code?\ntypescript\nconst obj = { a: 1, b: \"hello\", c: true };\nconst result = Object.values(obj);\n",
-      "ru": "Какой будет выведенный тип `result` в этом коде?\ntypescript\nconst obj = { a: 1, b: \"hello\", c: true };\nconst result = Object.values(obj);\n"
-    },
-    "options": {
-      "en": [
-        "(string | number | boolean)[]",
-        "(1 | \"hello\" | true)[]",
-        "any[]",
-        "unknown[]"
-      ],
-      "ru": [
-        "(string | number | boolean)[]",
-        "(1 | \"hello\" | true)[]",
-        "any[]",
-        "unknown[]"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "TypeScript infers the object type as `{ a: number; b: string; c: boolean }`, and `Object.values()` returns an array of the union of all value types. The result is `(string | number | boolean)[]` because TypeScript widens literal types to their base types in this context. It doesn't preserve exact literal types like `1` or `true` when inferring from object properties without explicit type annotations.",
-      "ru": "TypeScript выводит тип объекта как `{ a: number; b: string; c: boolean }`, и `Object.values()` возвращает массив объединения всех типов значений. Результат — `(string | number | boolean)[]`, поскольку TypeScript расширяет литеральные типы до их базовых типов в этом контексте. Он не сохраняет точные литеральные типы, такие как `1` или `true`, при выводе из свойств объекта без явных аннотаций типов."
-    }
-  },
-  {
-    "id": "typescript-quiz-13",
-    "topicId": "typescript",
-    "question": {
-      "en": "What is the primary difference between a type guard using `typeof` and a type guard using a custom predicate function with `is` keyword?",
-      "ru": "В чем основное различие между защитой типа с использованием `typeof` и защитой типа с использованием пользовательской функции-предиката с ключевым словом `is`?"
-    },
-    "options": {
-      "en": [
-        "Custom predicates with `is` allow you to narrow types based on arbitrary runtime logic, while `typeof` is limited to checking primitive types",
-        "`typeof` guards are always more performant because they use native JavaScript operators",
-        "The `is` keyword can only be used with classes, not with type aliases or interfaces",
-        "Custom predicates are compiled away in production, while `typeof` checks remain in the output"
-      ],
-      "ru": [
-        "Пользовательские предикаты с `is` позволяют сужать типы на основе произвольной логики времени выполнения, тогда как `typeof` ограничен проверкой примитивных типов",
-        "`typeof` охранители всегда более производительны, потому что они используют встроенные операторы JavaScript",
-        "Ключевое слово `is` можно использовать только с классами, а не с псевдонимами типов или интерфейсами",
-        "Пользовательские предикаты компилируются при выпуске, в то время как проверки `typeof` остаются в выходных данных"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "Custom type predicates with the `is` keyword provide maximum flexibility for narrowing types based on complex conditions—like checking object properties or complex logic—whereas `typeof` only narrows to primitive types. Both compile to regular JavaScript functions at runtime. The `is` keyword works with any type, not just classes.",
-      "ru": "Пользовательские предикаты типов с ключевым словом `is` обеспечивают максимальную гибкость для сужения типов на основе сложных условий, таких как проверка свойств объекта или сложная логика, тогда как `typeof` только сужает примитивные типы. Оба компилируются в обычные функции JavaScript во время выполнения. Ключевое слово `is` работает с любым типом, а не только с классами."
-    }
-  },
-  {
-    "id": "typescript-quiz-14",
-    "topicId": "typescript",
-    "question": {
-      "en": "What is the purpose of the `Readonly<T>` utility type, and how does it differ from using `const` in JavaScript?",
-      "ru": "Какова цель служебного типа `Readonly<T>`, и чем он отличается от использования `const` в JavaScript?"
-    },
-    "options": {
-      "en": [
-        "`Readonly<T>` makes properties immutable at compile-time through TypeScript's type system, while `const` prevents reassignment of the variable itself at runtime",
-        "`Readonly<T>` has the same effect as `const`, both preventing any modifications to the object",
-        "`Readonly<T>` is only useful for function parameters, while `const` is for variable declaration",
-        "They are identical; TypeScript's `Readonly<T>` is just syntactic sugar that compiles to `const`"
-      ],
-      "ru": [
-        "`Readonly<T>` делает свойства неизменяемыми во время компиляции через систему типов TypeScript, в то время как `const` предотвращает переназначение самой переменной во время выполнения",
-        "`Readonly<T>` имеет тот же эффект, что и `const`, оба предотвращают любые изменения объекта",
-        "`Readonly<T>` полезен только для параметров функции, в то время как `const` используется для объявления переменной",
-        "Они идентичны; `Readonly<T>` TypeScript — это просто синтаксический сахар, который компилируется в `const`"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "The `Readonly<T>` utility type is a TypeScript compile-time construct that prevents property modifications during type checking, but doesn't affect runtime behavior. Using `const` prevents reassigning the variable reference itself, but the object's properties can still be mutated. `Readonly<T>` is purely for type safety and static analysis, not runtime enforcement.",
-      "ru": "Служебный тип `Readonly<T>` — это конструкция TypeScript на этапе компиляции, которая предотвращает изменение свойств при проверке типов, но не влияет на поведение во время выполнения. Использование `const` предотвращает переназначение самой ссылки переменной, но свойства объекта все еще могут быть изменены. `Readonly<T>` предназначен исключительно для безопасности типов и статического анализа, а не для обеспечения во время выполнения."
-    }
-  },
-  {
-    "id": "typescript-quiz-15",
-    "topicId": "typescript",
-    "question": {
-      "en": "What is the result type of this conditional type?\ntypescript\ntype IsString<T> = T extends string ? true : false;\ntype Result = IsString<\"hello\" | 42>;\n",
-      "ru": "Какой тип результата этого условного типа?\ntypescript\ntype IsString<T> = T extends string ? true : false;\ntype Result = IsString<\"hello\" | 42>;\n"
-    },
-    "options": {
-      "en": [
-        "true | false",
-        "false",
-        "true",
-        "boolean"
-      ],
-      "ru": [
-        "true | false",
-        "false",
-        "true",
-        "boolean"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "When a conditional type is applied to a union type, TypeScript distributes it across each member. So `IsString<\"hello\" | 42>` becomes `IsString<\"hello\"> | IsString<42>`, which evaluates to `true | false`. This behavior is called conditional type distribution and is a key feature of advanced TypeScript. The result simplifies to `boolean` at runtime, but the static type remains `true | false`.",
-      "ru": "Когда условный тип применяется к объединенному типу, TypeScript распределяет его по каждому члену. Таким образом, `IsString<\"hello\" | 42>` становится `IsString<\"hello\"> | IsString<42>`, что оценивается как `true | false`. Это поведение называется распределением условного типа и является ключевой особенностью продвинутого TypeScript. Результат упрощается до `boolean` во время выполнения, но статический тип остается `true | false`."
-    }
-  },
-  {
-    "id": "typescript-quiz-16",
-    "topicId": "typescript",
-    "question": {
-      "en": "When should you use a type alias instead of an interface in TypeScript? Consider use cases like union types, tuple definitions, and primitive extensions.",
-      "ru": "Когда следует использовать type alias вместо interface в TypeScript? Рассмотрите случаи использования, такие как union типы, определение кортежей и расширение примитивов."
-    },
-    "options": {
-      "en": [
-        "Type aliases support union types and can extend primitives, while interfaces are only for object shapes",
-        "Interfaces are more performant and should always be preferred for better compilation speed",
-        "Type aliases cannot be merged or extended, making them unsuitable for library code",
-        "Interfaces support declaration merging while type aliases do not, but both serve similar purposes for objects"
-      ],
-      "ru": [
-        "Type aliases поддерживают union типы и могут расширять примитивы, тогда как interfaces только для формы объектов",
-        "Interfaces более производительны и всегда должны быть предпочтительны для лучшей скорости компиляции",
-        "Type aliases не могут быть объединены или расширены, что делает их непригодными для кода библиотеки",
-        "Interfaces поддерживают declaration merging, а type aliases нет, но оба служат схожим целям для объектов"
-      ]
-    },
-    "correctIndex": 0,
-    "explanation": {
-      "en": "Type aliases excel at defining union types (e.g., `type Status = 'active' | 'inactive'`), tuples, and extending primitive types, which interfaces cannot do. Interfaces are specialized for object shapes and support declaration merging for augmentation. Both have similar performance; the choice depends on use case, not speed.",
-      "ru": "Type aliases превосходят в определении union типов (например, `type Status = 'active' | 'inactive'`), кортежей и расширения примитивных типов, что interfaces не может делать. Interfaces специализируются на формах объектов и поддерживают declaration merging для расширения. Оба имеют похожую производительность; выбор зависит от варианта использования, а не от скорости."
-    }
-  },
-  {
-    "id": "typescript-quiz-17",
     "topicId": "typescript",
     "question": {
       "en": "What will be the inferred type of `result` in the following code?\ntypescript\nconst arr = [1, 'hello', true];\nconst result = arr[0];\n",
@@ -442,101 +37,1046 @@
       "en": [
         "number",
         "number | string | boolean",
-        "1 (literal type)",
+        "1",
         "any"
       ],
       "ru": [
         "number",
         "number | string | boolean",
-        "1 (буквальный тип)",
+        "1",
         "any"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "TypeScript infers the array type as `(number | string | boolean)[]` because it contains mixed types. When accessing an element via index, TypeScript conservatively infers the union of all possible element types, not just the type of the first element. This ensures type safety for dynamic array access.",
-      "ru": "TypeScript выводит тип массива как `(number | string | boolean)[]`, потому что он содержит смешанные типы. При доступе к элементу по индексу TypeScript консервативно выводит объединение всех возможных типов элементов, а не только тип первого элемента. Это обеспечивает безопасность типов при динамическом доступе к массиву."
+      "en": "TypeScript infers the array type as `(number | string | boolean)[]` because it contains mixed types. When accessing an element by index, the result type is the union of all possible element types. To narrow the type to just `number`, you would need an explicit type annotation like `const arr: [number, string, boolean]`.",
+      "ru": "TypeScript выводит тип массива как `(number | string | boolean)[]` потому что он содержит смешанные типы. При обращении к элементу по индексу результирующий тип является объединением всех возможных типов элементов. Чтобы сузить тип только до `number`, вам потребуется явная аннотация типа, например `const arr: [number, string, boolean]`."
+    }
+  },
+  {
+    "id": "typescript-quiz-3",
+    "topicId": "typescript",
+    "question": {
+      "en": "Which utility type correctly extracts only the public properties that are functions from a class?\ntypescript\nclass Service {\n  private secret: string = 'hidden';\n  public name: string = 'Service';\n  public getData(): string { return this.name; }\n}\n",
+      "ru": "Какой служебный тип правильно извлекает только публичные свойства, которые являются функциями из класса?\ntypescript\nclass Service {\n  private secret: string = 'hidden';\n  public name: string = 'Service';\n  public getData(): string { return this.name; }\n}\n"
+    },
+    "options": {
+      "en": [
+        "Pick<Service, 'getData'>",
+        "Omit<Service, 'secret' | 'name'>",
+        "Record<keyof Service, Function>",
+        "Extract<keyof Service, Function>"
+      ],
+      "ru": [
+        "Pick<Service, 'getData'>",
+        "Omit<Service, 'secret' | 'name'>",
+        "Record<keyof Service, Function>",
+        "Extract<keyof Service, Function>"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `Pick` utility type is used to select specific properties from a type. `Pick<Service, 'getData'>` extracts only the `getData` method property. `Omit` removes properties but requires knowing which to exclude. `Record` and `Extract` serve different purposes and don't properly extract methods from class types.",
+      "ru": "Служебный тип `Pick` используется для выбора определенных свойств из типа. `Pick<Service, 'getData'>` извлекает только свойство метода `getData`. `Omit` удаляет свойства, но требует знания, какие исключить. `Record` и `Extract` служат разным целям и не могут правильно извлекать методы из типов классов."
+    }
+  },
+  {
+    "id": "typescript-quiz-4",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the purpose of a type guard in TypeScript, and which is NOT a valid type guard pattern?\ntypescript\nfunction isString(value: unknown): value is string {\n  return typeof value === 'string';\n}\n",
+      "ru": "Какова цель type guard в TypeScript, и какой из них НЕ являет��я действительным шаблоном type guard?\ntypescript\nfunction isString(value: unknown): value is string {\n  return typeof value === 'string';\n}\n"
+    },
+    "options": {
+      "en": [
+        "Narrowing the type of a variable within a conditional block",
+        "Using `instanceof` operator to check if object is instance of a class",
+        "Declaring a return type of `boolean` instead of `value is Type`",
+        "Using a discriminated union with a literal type property check"
+      ],
+      "ru": [
+        "Сужение типа переменной в условном блоке",
+        "Использование оператора `instanceof` для проверки, является ли объект экземпляром класса",
+        "Объявление типа возврата `boolean` вместо `value is Type`",
+        "Использование дискриминированного объединения с проверкой свойства литерального типа"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Type guards narrow types within conditional blocks. Using `instanceof`, literal property checks, and the `is` syntax are all valid patterns. However, simply declaring a return type of `boolean` is NOT a type guard—the `is` keyword is required for TypeScript to perform type narrowing. Without it, the return value is just a boolean check with no type inference benefit.",
+      "ru": "Type guard сужают типы в условных блоках. Использование `instanceof`, проверки литеральных свойств и синтаксиса `is` являются действительными шаблонами. Однако простое объявление типа возврата `boolean` НЕ является type guard—ключевое слово `is` требуется для сужения типа. Без него возвращаемое значение — просто проверка boolean без преимуществ вывода типов."
+    }
+  },
+  {
+    "id": "typescript-quiz-5",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be the final type of `Config` when using the following mapped type and conditional type?\ntypescript\ntype Keys = 'api' | 'cache' | 'db';\ntype Config = {\n  [K in Keys]: K extends 'api' ? string : number;\n};\n",
+      "ru": "Каким будет финальный тип `Config` при использовании следующего mapped type и conditional type?\ntypescript\ntype Keys = 'api' | 'cache' | 'db';\ntype Config = {\n  [K in Keys]: K extends 'api' ? string : number;\n};\n"
+    },
+    "options": {
+      "en": [
+        "{ api: string; cache: string; db: string; }",
+        "{ api: string; cache: number; db: number; }",
+        "{ api: string | number; cache: string | number; db: string | number; }",
+        "{ [key: string]: string | number; }"
+      ],
+      "ru": [
+        "{ api: string; cache: string; db: string; }",
+        "{ api: string; cache: number; db: number; }",
+        "{ api: string | number; cache: string | number; db: string | number; }",
+        "{ [key: string]: string | number; }"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The mapped type iterates over each key in the union `Keys`. For each key `K`, the conditional type checks if `K extends 'api'`. Only when `K` is exactly `'api'` is the type `string`; for `'cache'` and `'db'`, the type is `number`. This creates an object with distinct value types per key, not a union of all possibilities.",
+      "ru": "Mapped type итерирует по каждому ключу в объединении `Keys`. Для каждого ключа `K` условный тип проверяет, является ли `K extends 'api'`. Только когда `K` точно `'api'`, тип является `string`; для `'cache'` и `'db'` тип является `number`. Это создает объект с отличными типами значений для каждого ключа, а не объединением всех возможностей."
+    }
+  },
+  {
+    "id": "typescript-quiz-6",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the key difference between `interface` and `type` in TypeScript when dealing with declaration merging?\ntypescript\ninterface User {\n  name: string;\n}\n\ninterface User {\n  age: number;\n}\n\ntype Product = {\n  id: number;\n};\n\ntype Product = {\n  name: string;\n};\n",
+      "ru": "В чем ключевое различие между `interface` и `type` в TypeScript при работе с объединением объявлений?\ntypescript\ninterface User {\n  name: string;\n}\n\ninterface User {\n  age: number;\n}\n\ntype Product = {\n  id: number;\n};\n\ntype Product = {\n  name: string;\n};\n"
+    },
+    "options": {
+      "en": [
+        "Interfaces support declaration merging and will combine both definitions, while types will cause a compilation error",
+        "Types support declaration merging and will combine both definitions, while interfaces will cause a compilation error",
+        "Both support declaration merging equally, but interfaces require explicit extends syntax",
+        "Declaration merging is not supported in either construct and both will throw errors"
+      ],
+      "ru": [
+        "Интерфейсы поддерживают объединение объявлений и объединят оба определения, в то время как типы вызовут ошибку компиляции",
+        "Типы поддерживают объединение объявлений и объединят оба определения, в то время как интерфейсы вызовут ошибку компиляции",
+        "Оба поддерживают объединение объявлений в равной степени, но интерфейсы требуют явного синтаксиса extends",
+        "Объединение объявлений не поддерживается ни в одной из конструкций и обе вызовут ошибки"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Interfaces in TypeScript automatically merge multiple declarations with the same name, combining all properties. Type aliases do not support declaration merging and will produce a duplicate identifier error. This is one of the few structural differences between interfaces and types beyond syntax.",
+      "ru": "Интерфейсы в TypeScript автоматически объединяют н��сколько объявлений с одинаковым именем, комбинируя все свойства. Типы не поддерживают объединение объявлений и будут производить ошибку дублирования идентификатора. Это одно из немногих структурных различий между интерфейсами и типами помимо синтаксиса."
+    }
+  },
+  {
+    "id": "typescript-quiz-7",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be the inferred type of `result` in this code?\ntypescript\nconst arr = [1, 'hello', true];\nconst result = arr[0];\n",
+      "ru": "Какой будет выведенный тип `result` в этом коде?\ntypescript\nconst arr = [1, 'hello', true];\nconst result = arr[0];\n"
+    },
+    "options": {
+      "en": [
+        "number",
+        "number | string | boolean",
+        "1",
+        "any"
+      ],
+      "ru": [
+        "number",
+        "number | string | boolean",
+        "1",
+        "any"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "TypeScript infers the type of the array as `(number | string | boolean)[]` because it contains multiple different types. When accessing an element by index without a type guard, the type remains the union of all possible element types. Strict type inference prevents narrowing to just `number` without explicit type checking.",
+      "ru": "TypeScript выводит тип массива как `(number | string | boolean)[]` потому что он содержит несколько разных типов. При обращении к элементу по индексу без проверки типа, тип остается объединением всех возможных типов элементов. Строгий вывод типа предотвращает сужение только к `number` без явной проверки типов."
+    }
+  },
+  {
+    "id": "typescript-quiz-8",
+    "topicId": "typescript",
+    "question": {
+      "en": "Which of the following is a valid use of a conditional type?\ntypescript\ntype IsString<T> = T extends string ? true : false;\n\nWhat is `IsString<'hello'>`?",
+      "ru": "Что будет результатом `IsString<'hello'>` при использовании условного типа?\ntypescript\ntype IsString<T> = T extends string ? true : false;\n"
+    },
+    "options": {
+      "en": [
+        "false",
+        "true",
+        "'hello'",
+        "string"
+      ],
+      "ru": [
+        "false",
+        "true",
+        "'hello'",
+        "string"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Conditional types use the `extends` keyword to check if a type matches a condition. Since the literal type `'hello'` extends `string`, the condition is true and the type resolves to the `true` branch. Literal string types are assignable to the `string` type in TypeScript's type system.",
+      "ru": "Условные типы используют ключевое слово `extends` для проверки соответствия типа условию. Поскольку литеральный тип `'hello'` расширяет `string`, условие истинно и тип разрешается в ветвь `true`. Литеральные строковые типы присваиваемы типу `string` в системе типов TypeScript."
+    }
+  },
+  {
+    "id": "typescript-quiz-9",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the purpose of the `Partial<T>` utility type, and how does it differ from optional properties?\ntypescript\ntype User = {\n  name: string;\n  email: string;\n};\n\ntype PartialUser = Partial<User>;\ntype OptionalUser = {\n  name?: string;\n  email?: string;\n};\n",
+      "ru": "Какова цель утилит типа `Partial<T>` и чем он отличается от опциональных свойств?\ntypescript\ntype User = {\n  name: string;\n  email: string;\n};\n\ntype PartialUser = Partial<User>;\ntype OptionalUser = {\n  name?: string;\n  email?: string;\n};\n"
+    },
+    "options": {
+      "en": [
+        "They are functionally identical; Partial<T> is just a built-in alias for the same pattern",
+        "Partial<T> creates a new type while optional properties modify the existing type",
+        "Partial<T> only works with objects, while optional properties work with any type",
+        "Partial<T> removes properties entirely, while optional properties make them nullable"
+      ],
+      "ru": [
+        "Они функционально идентичны; Partial<T> это просто встроенный alias для одного и того же паттерна",
+        "Partial<T> создает новый тип, в то время как опциональные свойства модифицируют существующий тип",
+        "Partial<T> работает только с объектами, в то время как опциональные свойства работают с любым типом",
+        "Partial<T> полностью удаляет свойства, в то время как опциональные свойства делают их nullable"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Both `Partial<User>` and the manually defined `OptionalUser` produce the identical type structure. `Partial<T>` is a mapped utility type that iterates over all properties and makes them optional using the `?` operator. While they are identical in behavior, using `Partial<T>` is more concise and maintainable for transforming existing types.",
+      "ru": "Оба `Partial<User>` и ручно определенный `OptionalUser` создают идентичную структуру типа. `Partial<T>` это отображаемый утилит-тип, который проходит по всем свойствам и делает их опциональными с помощью оператора `?`. Хотя они идентичны по поведению, использование `Partial<T>` более лаконично и управляемо для трансформации существующих типов."
+    }
+  },
+  {
+    "id": "typescript-quiz-10",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the output when running this code with TypeScript in strict mode?\ntypescript\nfunction process(input: string | number) {\n  if (typeof input === 'string') {\n    console.log(input.toUpperCase());\n  } else {\n    console.log(input + 10);\n  }\n}\n\nprocess('hello');\nprocess(5);\n",
+      "ru": "Какой будет вывод при запуске этого кода в TypeScript в строгом режиме?\ntypescript\nfunction process(input: string | number) {\n  if (typeof input === 'string') {\n    console.log(input.toUpperCase());\n  } else {\n    console.log(input + 10);\n  }\n}\n\nprocess('hello');\nprocess(5);\n"
+    },
+    "options": {
+      "en": [
+        "HELLO\\n15",
+        "hello\\n15",
+        "Type error: cannot call toUpperCase on union type",
+        "HELLO\\nNaN"
+      ],
+      "ru": [
+        "HELLO\\n15",
+        "hello\\n15",
+        "Ошибка типа: невозможно вызвать toUpperCase на типе union",
+        "HELLO\\nNaN"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TypeScript's type guard `typeof input === 'string'` narrows the union type within the if-block to just `string`, allowing safe access to string methods like `toUpperCase()`. In the else-block, the type is narrowed to `number`. This type narrowing is a key feature of strict mode that ensures type safety without explicit type assertions.",
+      "ru": "Охрана типа `typeof input === 'string'` сужает тип union в блоке if только до `string`, позволяя безопасно обращаться к методам строк, таким как `toUpperCase()`. В блоке else тип сужается до `number`. Это сужение типа является ключевой особенностью строгого режима, который обеспечивает безопасность типов без явных утверждений типов."
+    }
+  },
+  {
+    "id": "typescript-quiz-11",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the key difference between a TypeScript `interface` and a `type` when it comes to declaration merging?",
+      "ru": "В чем ключевое различие между TypeScript `interface` и `type` в контексте объединения объявлений?"
+    },
+    "options": {
+      "en": [
+        "Interfaces support declaration merging; types do not",
+        "Types support declaration merging; interfaces do not",
+        "Both support declaration merging equally",
+        "Declaration merging is only available for enums"
+      ],
+      "ru": [
+        "Интерфейсы поддерживают объединение объявлений; типы — нет",
+        "Типы поддерживают объединение объявлений; интерфейсы — нет",
+        "Оба поддерживают объединение объявлений одинаково",
+        "Объединение объявлений доступно только для перечислений"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Interfaces in TypeScript automatically merge when declared multiple times with the same name, allowing you to extend definitions across files. Types use the `&` operator for intersection but do not merge declarations. This makes interfaces more flexible for library APIs and plugin architectures.",
+      "ru": "Интерфейсы в TypeScript автоматически объединяются при множественных объявлениях с одинаковым именем, позволяя расширять определения в разных файлах. Типы используют оператор `&` для пересечения, но не объединяют объявления. Это делает интерфейсы более гибкими для API библиотек и архитектур плагинов."
+    }
+  },
+  {
+    "id": "typescript-quiz-12",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be logged to the console?\ntypescript\nconst obj = { a: 1, b: 'hello' };\ntype Keys = keyof typeof obj;\nconst key: Keys = 'a';\nconsole.log(typeof key);\n",
+      "ru": "Что будет выведено в консоль?\ntypescript\nconst obj = { a: 1, b: 'hello' };\ntype Keys = keyof typeof obj;\nconst key: Keys = 'a';\nconsole.log(typeof key);\n"
+    },
+    "options": {
+      "en": [
+        "\"string\"",
+        "\"number\"",
+        "\"object\"",
+        "This code will result in a compilation error"
+      ],
+      "ru": [
+        "\"string\"",
+        "\"number\"",
+        "\"object\"",
+        "Этот код приведет к ошибке компиляции"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `typeof` operator in runtime JavaScript returns the type of the variable's value, not its TypeScript type. Even though `Keys` is a literal type `'a' | 'b'`, the actual variable `key` holds the string value `'a'`, so `typeof key` returns `\"string\"`. TypeScript's type system is erased at runtime.",
+      "ru": "Оператор `typeof` в JavaScript во время выполнения возвращает тип значения переменной, а не её тип TypeScript. Даже если `Keys` является литеральным типом `'a' | 'b'`, переменная `key` содержит строковое значение `'a'`, поэтому `typeof key` возвращает `\"string\"`. Система типов TypeScript стирается во время выполнения."
+    }
+  },
+  {
+    "id": "typescript-quiz-13",
+    "topicId": "typescript",
+    "question": {
+      "en": "Given a generic function `function process<T extends string | number>(value: T): T { return value; }`, what is the inferred type of `result` in `const result = process('hello')`?",
+      "ru": "Для универсальной функции `function process<T extends string | number>(value: T): T { return value; }` каков выведенный тип `result` в `const result = process('hello')`?"
+    },
+    "options": {
+      "en": [
+        "\"hello\" (literal string type)",
+        "string",
+        "string | number",
+        "unknown"
+      ],
+      "ru": [
+        "\"hello\" (литеральный строковый тип)",
+        "string",
+        "string | number",
+        "unknown"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TypeScript's type inference narrows generic types to the most specific type possible. When you pass the literal `'hello'`, TypeScript infers `T` as the literal type `\"hello\"`, not the broader `string` type. The return type is therefore `\"hello\"`, preserving the literal precision through the generic constraint.",
+      "ru": "Вывод типов TypeScript сужает универсальные типы до наиболее конкретного типа. Когда вы передаете литерал `'hello'`, TypeScript выводит `T` как литеральный тип `\"hello\"`, а не более широкий тип `string`. Возвращаемый тип — это `\"hello\"`, сохраняя литеральную точность через ограничение универсального типа."
+    }
+  },
+  {
+    "id": "typescript-quiz-14",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the result of applying the `Readonly` utility type to a generic object?\ntypescript\ntype User = { name: string; age: number };\ntype ReadonlyUser = Readonly<User>;\nconst user: ReadonlyUser = { name: 'John', age: 30 };\nuser.name = 'Jane'; // What happens here?\n",
+      "ru": "Какой результат применения утилиты `Readonly` к универсальному объекту?\ntypescript\ntype User = { name: string; age: number };\ntype ReadonlyUser = Readonly<User>;\nconst user: ReadonlyUser = { name: 'John', age: 30 };\nuser.name = 'Jane'; // Что происходит здесь?\n"
+    },
+    "options": {
+      "en": [
+        "TypeScript compilation error: Cannot assign to 'name' because it is a readonly property",
+        "Runtime error when the property is accessed",
+        "The property is successfully reassigned at runtime",
+        "TypeScript warning but the code still compiles and runs"
+      ],
+      "ru": [
+        "Ошибка компиляции TypeScript: невозможно назначить 'name', так как это свойство только для чтения",
+        "Ошибка во время выполнения при доступе к свойству",
+        "Свойство успешно переназначается во время выполнения",
+        "Предупреждение TypeScript, но код все еще компилируется и работает"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `Readonly` utility type makes all properties of an object immutable at the type level. Attempting to reassign a readonly property causes a TypeScript compilation error, preventing the code from even being compiled to JavaScript. This is a compile-time safety feature, not a runtime enforcement.",
+      "ru": "Утилита `Readonly` делает все свойства объекта неизменяемыми на уровне типов. Попытка переназначить свойство только для чтения вызывает ошибку компиляции TypeScript, которая предотвращает компиляцию кода в JavaScript. Это особенность безопасности на этапе компиляции, а не принудительное выполнение во время выполнения."
+    }
+  },
+  {
+    "id": "typescript-quiz-15",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the purpose of conditional types in TypeScript, and which of the following best demonstrates their practical use?",
+      "ru": "Какова цель условных типов в TypeScript, и какой из следующих вариантов лучше всего демонстрирует их практическое использование?"
+    },
+    "options": {
+      "en": [
+        "To define types that resolve differently based on conditions, such as `T extends U ? X : Y`",
+        "To create enum-like structures with conditional logic at runtime",
+        "To replace if-else statements in TypeScript code execution",
+        "To optimize performance by conditionally loading type definitions"
+      ],
+      "ru": [
+        "Для определения типов, которые разрешаются по-разному в зависимости от условий, например `T extends U ? X : Y`",
+        "Для создания структур, подобных перечислениям, с условной логикой во время выполнения",
+        "Для замены операторов if-else при выполнении кода TypeScript",
+        "Для оптимизации производительности путем условной загрузки определений типов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Conditional types enable type-level programming by allowing types to be selected based on a condition. They are purely a compile-time construct that operates on types, not runtime values. Common use cases include creating utility types like `Extract`, `Exclude`, or `ReturnType` that adapt based on input types. They do not execute runtime logic or replace control flow statements.",
+      "ru": "Условные типы позволяют программировать на уровне типов, позволяя выбирать типы в зависимости от условия. Это чисто конструкция времени компиляции, которая работает с типами, а не со значениями во время выполнения. Типичные случаи использования включают создание служебных типов, таких как `Extract`, `Exclude` или `ReturnType`, которые адаптируются на осн��ве входных типов. Они не выполняют логику во время выполнения и не заменяют операторы управления потоком."
+    }
+  },
+  {
+    "id": "typescript-quiz-16",
+    "topicId": "typescript",
+    "question": {
+      "en": "When should you use a `type` instead of an `interface` in TypeScript?\ntypescript\ntype Point = { x: number; y: number };\ninterface IPoint { x: number; y: number; }\n\nWhich statement is most accurate?",
+      "ru": "Когда следует использовать `type` вместо `interface` в TypeScript?\ntypescript\ntype Point = { x: number; y: number };\ninterface IPoint { x: number; y: number; }\n\nКакое утверждение наиболее точно?"
+    },
+    "options": {
+      "en": [
+        "Types are better for objects, interfaces are better for everything else",
+        "Types can represent unions and primitives, making them more flexible for complex type definitions",
+        "Interfaces have better performance at runtime",
+        "Types support declaration merging while interfaces do not"
+      ],
+      "ru": [
+        "Types лучше для объектов, interfaces для всего остального",
+        "Types могут представлять объединения и примитивы, что делает их более гибкими для сложных определений типов",
+        "Interfaces имеют лучшую производительность во время выполнения",
+        "Types поддерживают слияние объявлений, а interfaces нет"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Types are more versatile because they can represent union types, intersection types, and primitive types, whereas interfaces are restricted to object shapes. While both can define objects, types are preferred when you need flexibility beyond simple object definitions. Interfaces actually support declaration merging, not types.",
+      "ru": "Types более универсальны, так как могут представлять типы объединений, пересечений и примитивные типы, в то время как interfaces ограничены формами объектов. Хотя оба могут определять объекты, types предпочтительны, когда требуется гибкость сверх простых определений объектов. На самом деле interfaces поддерживают слияние объявлений, а не types."
+    }
+  },
+  {
+    "id": "typescript-quiz-17",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be the inferred type of `result`?\ntypescript\nconst arr = [1, 'hello', true];\nconst result = arr[0];\n",
+      "ru": "Какой будет выведенный тип `result`?\ntypescript\nconst arr = [1, 'hello', true];\nconst result = arr[0];\n"
+    },
+    "options": {
+      "en": [
+        "`number`",
+        "`string | number | boolean`",
+        "`number | string | boolean`",
+        "`any`"
+      ],
+      "ru": [
+        "`number`",
+        "`string | number | boolean`",
+        "`number | string | boolean`",
+        "`any`"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Without explicit type annotation, TypeScript infers the array type as a union of all element types. When accessing an array element by index, TypeScript conservatively types it as the union of all possible values (`number | string | boolean`). The first option is too narrow and incorrect because TypeScript cannot know at compile-time which element you're accessing.",
+      "ru": "Без явной аннотации типа TypeScript выводит тип массива как объединение всех типов элементов. При доступе к элементу массива по индексу TypeScript консервативно типизирует его как объединение всех возможных значений (`number | string | boolean`). Первый вариант слишком узкий и неправильный, потому что TypeScript не может знать на этапе компиляции, какой элемент вы получаете."
     }
   },
   {
     "id": "typescript-quiz-18",
     "topicId": "typescript",
     "question": {
-      "en": "Which of the following best describes a type guard and its primary purpose in TypeScript strict mode?",
-      "ru": "Какое из следующих утверждений лучше всего описывает type guard и его основное назначение в строгом режиме TypeScript?"
+      "en": "What does the `Exclude` utility type do?\ntypescript\ntype Result = Exclude<'a' | 'b' | 'c', 'b'>;\n\nWhat is the resulting type?",
+      "ru": "Что делает утилитный тип `Exclude`?\ntypescript\ntype Result = Exclude<'a' | 'b' | 'c', 'b'>;\n\nКаков будет результирующий тип?"
     },
     "options": {
       "en": [
-        "A runtime check that narrows a variable's type for the compiler in subsequent code blocks",
-        "A compile-time syntax that prevents runtime errors by throwing exceptions automatically",
-        "A way to declare union types that the compiler can optimize for performance",
-        "A TypeScript-only feature that requires explicit type annotations on all variables"
+        "`'a' | 'c' | undefined`",
+        "`'a' | 'c'`",
+        "`'b'`",
+        "`'a' | 'b' | 'c'`"
       ],
       "ru": [
-        "Проверка во время выполнения, которая сужает тип переменной для компилятора в последующих блоках кода",
-        "Синтаксис времени компиляции, который предотвращает ошибки во время выполнения путем автоматического выброса исключений",
-        "Способ объявления union типов, который компилятор может оптимизировать для производительности",
-        "Функция TypeScript, которая требует явных аннотаций типов для всех переменных"
+        "`'a' | 'c' | undefined`",
+        "`'a' | 'c'`",
+        "`'b'`",
+        "`'a' | 'b' | 'c'`"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "A type guard is a runtime expression (like `typeof`, `instanceof`, or custom predicates) that checks a value's type and narrows it for the compiler. In strict mode, this is essential for safely handling union types. Type guards enable you to write type-safe code by proving to TypeScript what the actual type is at a given point.",
-      "ru": "Type guard - это выражение времени выполнения (например, `typeof`, `instanceof` или пользовательские предикаты), кото��ое проверяет тип значения и сужает его для компилятора. В строгом режиме это необходимо для безопасной работы с union типами. Type guards позволяют написать type-safe код, доказав TypeScript какой фактический тип на данный момент."
+      "en": "The `Exclude` utility type removes types from a union that match the second type parameter. In this case, `'b'` is removed from `'a' | 'b' | 'c'`, leaving `'a' | 'c'`. This is the opposite of `Extract`, which keeps only matching types. `Exclude` is commonly used in conditional types to narrow union types.",
+      "ru": "Утилитный тип `Exclude` удаляет типы из объединения, которые совпадают со вторым параметром типа. В этом случае `'b'` удаляется из `'a' | 'b' | 'c'`, оставляя `'a' | 'c'`. Это противоположно `Extract`, который сохраняет только совпадающие типы. `Exclude` часто используется в условных типах для сужения типов объединений."
     }
   },
   {
     "id": "typescript-quiz-19",
     "topicId": "typescript",
     "question": {
-      "en": "What is the output type of `Partial<Record<'a' | 'b' | 'c', number>>`?",
-      "ru": "Какой тип выводит `Partial<Record<'a' | 'b' | 'c', number>>`?"
+      "en": "Which type guard correctly narrows a variable of type `string | number` to `number`?",
+      "ru": "Какой type guard правильно сужает переменную типа `string | number` до `number`?"
     },
     "options": {
       "en": [
-        "{ a?: number; b?: number; c?: number; }",
-        "{ a: number | undefined; b: number | undefined; c: number | undefined; }",
-        "Record<'a' | 'b' | 'c', number | undefined>",
-        "{ a: number; b: number; c: number; } | undefined"
+        "`if (typeof value === 'numeric') { ... }`",
+        "`if (typeof value === 'number') { ... }`",
+        "`if (value instanceof Number) { ... }`",
+        "`if (Number.isNumber(value)) { ... }`"
       ],
       "ru": [
-        "{ a?: number; b?: number; c?: number; }",
-        "{ a: number | undefined; b: number | undefined; c: number | undefined; }",
-        "Record<'a' | 'b' | 'c', number | undefined>",
-        "{ a: number; b: number; c: number; } | undefined"
+        "`if (typeof value === 'numeric') { ... }`",
+        "`if (typeof value === 'number') { ... }`",
+        "`if (value instanceof Number) { ... }`",
+        "`if (Number.isNumber(value)) { ... }`"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "`Record<'a' | 'b' | 'c', number>` creates `{ a: number; b: number; c: number; }`. `Partial<T>` makes all properties optional by converting them to `key?: value` syntax, not by adding `| undefined` to the value type. Optional properties are different from nullable types—a property can simply be absent from the object.",
-      "ru": "`Record<'a' | 'b' | 'c', number>` создает `{ a: number; b: number; c: number; }`. `Partial<T>` делает все свойства необязательными, преобразуя их в синтаксис `key?: value`, а не добавляя `| undefined` к типу значения. Необязательные свойства отличаются от nullable типов—свойство может просто отсутствовать в объекте."
+      "en": "The `typeof` operator returns the string `'number'` for numeric values, making `typeof value === 'number'` the correct type guard. While `instanceof Number` checks for Number objects, it won't narrow primitives. There is no `'numeric'` typeof result and `Number.isNumber()` is not a standard method. The `typeof` operator is the standard, idiomatic way to narrow primitive types in TypeScript.",
+      "ru": "Оператор `typeof` возвращает строку `'number'` для числовых значений, что делает `typeof value === 'number'` правильным type guard. Хотя `instanceof Number` проверяет объекты Number, он не сужает примитивы. Нет результата typeof `'numeric'` и `Number.isNumber()` не является стандартным методом. Оператор `typeof` — это стандартный, идиоматический способ сужения примитивных типов в TypeScript."
     }
   },
   {
     "id": "typescript-quiz-20",
     "topicId": "typescript",
     "question": {
-      "en": "Consider a generic function: `function getValue<T extends { id: number }>(obj: T): T['id']`. Why does TypeScript allow calling this with any object that has an `id` property, but restricts the return type to the `id` property value?",
-      "ru": "Рассмотрим обобщенную функцию: `function getValue<T extends { id: number }>(obj: T): T['id']`. Почему TypeScript позволяет вызвать это с любым объектом, имеющим свойство `id`, но ограничивает тип возврата значением свойства `id`?"
+      "en": "What will this generic function return when called with a string?\ntypescript\nfunction identity<T>(value: T): T {\n  return value;\n}\nconst result = identity('hello');\n\nWhat is the type of `result`?",
+      "ru": "Что вернет эта универсальная функция при вызове со строкой?\ntypescript\nfunction identity<T>(value: T): T {\n  return value;\n}\nconst result = identity('hello');\n\nКаков тип `result`?"
     },
     "options": {
       "en": [
-        "The constraint `T extends { id: number }` ensures T has an `id` property, and `T['id']` uses indexed access to return the exact type of that property",
-        "TypeScript uses structural typing to automatically widen the type, allowing any object with an `id` field to match",
-        "The generic parameter T is ignored; the function always returns `number` because the constraint specifies `id: number`",
-        "This pattern requires explicit type parameters and does not work with implicit type inference"
+        "`string`",
+        "`T`",
+        "`'hello'`",
+        "`string | undefined`"
       ],
       "ru": [
-        "Ограничение `T extends { id: number }` гарантирует, что T имеет свойство `id`, а `T['id']` использует индексированный доступ для возврата точного типа этого свойства",
-        "TypeScript использует structural typing для автоматического расширения типа, позволяя любому объекту с полем `id` соответствовать",
-        "Обобщенный параметр T игнорируется; функция всегда возвращает `number`, потому что ограничение указывает `id: number`",
-        "Этот паттерн требует явных типовых параметров и не работает с неявным выводом типов"
+        "`string`",
+        "`T`",
+        "`'hello'`",
+        "`string | undefined`"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "When `identity` is called with the string literal `'hello'`, TypeScript infers `T` as the literal type `'hello'` (not just `string`). This is because TypeScript's type inference captures the most specific type possible. The return type matches the inferred type parameter, so `result` has type `'hello'`. Without `as const` or explicit type annotation, wider context might widen this to `string`, but in isolation, literal type inference applies.",
+      "ru": "Когда `identity` вызывается с литералом строки `'hello'`, TypeScript выводит `T` как литеральный тип `'hello'` (не просто `string`). Это потому, что вывод типов TypeScript захватывает наиболее специфичный возможный тип. Тип возврата соответствует выведенному параметру типа, поэтому `result` имеет тип `'hello'`. Без `as const` или явной аннотации типа более широкий контекст может расширить это до `string`, но в изоляции применяется вывод литерального типа."
+    }
+  },
+  {
+    "id": "typescript-quiz-21",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the key difference between a TypeScript `interface` and a `type` alias when it comes to declaration merging?\ntypescript\ninterface User {\n  name: string;\n}\n\ninterface User {\n  age: number;\n}\n\ntype Product = {\n  title: string;\n};\n\ntype Product = {\n  price: number;\n};\n",
+      "ru": "В чем ключевое отличие между TypeScript `interface` и `type` alias при слиянии объявлений?\ntypescript\ninterface User {\n  name: string;\n}\n\ninterface User {\n  age: number;\n}\n\ntype Product = {\n  title: string;\n};\n\ntype Product = {\n  price: number;\n};\n"
+    },
+    "options": {
+      "en": [
+        "Interface declarations are merged automatically, but type aliases cannot be redeclared and will cause a compilation error",
+        "Both interface and type alias support declaration merging equally",
+        "Type aliases are merged automatically, but interfaces cannot be redeclared",
+        "Interface merging only works with generic types, while type aliases never support merging"
+      ],
+      "ru": [
+        "Объявления interface автоматически объединяются, но type alias не может быть переобъявлен и вызовет ошибку компиляции",
+        "И interface, и type alias одинаково поддерживают объединение объявлений",
+        "Type alias автоматически объединяются, но interface не может быть переобъявлен",
+        "Объединение interface работает только с универсальными типами, в то время как type alias никогда не поддерживают объединение"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The constraint `T extends { id: number }` is a lower bound that guarantees T has at least an `id: number` property, but T may have additional properties. The indexed access type `T['id']` preserves the exact type of the `id` property for that specific T, enabling precise return type inference. This is more flexible than just returning `number` because it respects the actual type of `id` if it's a literal or union.",
-      "ru": "Ограничение `T extends { id: number }` - это нижняя граница, которая гарантирует, что T имеет как минимум свойство `id: number`, но T может иметь дополнительные свойства. Индексированный тип доступа `T['id']` сохраняет точный тип свойства `id` для конкретного T, обеспечивая точный вывод типа возврата. Это более гибко, чем просто возврат `number`, потому что он учитывает фактический тип `id`, если это буквальный или union тип."
+      "en": "Interfaces support declaration merging—multiple declarations with the same name are automatically combined. Type aliases do not support this and will throw a 'duplicate identifier' error if redeclared. This is one of the few structural differences between these two constructs.",
+      "ru": "Interfaces поддерживают слияние объявлений—несколько объявлений с одинаковым именем автоматически объединяются. Type alias не поддерживают это и вызовут ошибку 'duplicate identifier' при переобъявлении. Это одно из немногих структурных различий между этими двумя конструкциями."
+    }
+  },
+  {
+    "id": "typescript-quiz-22",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be the inferred type of `result` in strict mode?\ntypescript\nfunction process(input: unknown): void {\n  if (typeof input === 'string') {\n    const result = input.toUpperCase();\n  }\n}\n",
+      "ru": "Какой тип будет выведен для `result` в строгом режиме?\ntypescript\nfunction process(input: unknown): void {\n  if (typeof input === 'string') {\n    const result = input.toUpperCase();\n  }\n}\n"
+    },
+    "options": {
+      "en": [
+        "string",
+        "unknown",
+        "any",
+        "string | undefined"
+      ],
+      "ru": [
+        "string",
+        "unknown",
+        "any",
+        "string | undefined"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TypeScript's type narrowing through the `typeof` guard automatically refines the type from `unknown` to `string` inside the conditional block. The result of `input.toUpperCase()` is therefore inferred as `string`. Type guards are a core feature of TypeScript's control flow analysis.",
+      "ru": "Сужение типа TypeScript через защиту `typeof` автоматически уточняет тип с `unknown` до `string` внутри условного блока. Результат `input.toUpperCase()` поэтому выводится как `string`. Type guard'ы являются основной особенностью анализа потока управления TypeScript."
+    }
+  },
+  {
+    "id": "typescript-quiz-23",
+    "topicId": "typescript",
+    "question": {
+      "en": "Consider this generic function. What is the constraint on the generic parameter `T`, and why is it necessary?\ntypescript\nfunction getProperty<T extends { name: string }>(obj: T, key: keyof T): any {\n  return obj[key];\n}\n",
+      "ru": "Рассмотрим эту универсальную функцию. Какое ограничение на параметр `T`, и почему оно необходимо?\ntypescript\nfunction getProperty<T extends { name: string }>(obj: T, key: keyof T): any {\n  return obj[key];\n}\n"
+    },
+    "options": {
+      "en": [
+        "T must extend an object with at least a `name` property of type string, ensuring type safety when accessing properties",
+        "T can be any type, and the constraint is optional and has no effect on type checking",
+        "T must be exactly { name: string } with no additional properties allowed",
+        "The constraint ensures that T will always be a string type"
+      ],
+      "ru": [
+        "T должен расширять объект с как минимум свойством `name` типа string, обеспечивая безопасность типов при доступе к свойствам",
+        "T может быть любым типом, и ограничение опционально и не влияет на проверку типов",
+        "T должен быть точно { name: string } без дополнительных свойств",
+        "Ограничение обеспечивает, что T всегда будет типом string"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `extends { name: string }` constraint ensures that only objects with a `name: string` property can be passed. This guarantees type safety and enables the compiler to understand what properties are available. Without the constraint, `T` could be any type, and `keyof T` would be unreliable.",
+      "ru": "Ограничение `extends { name: string }` обеспечивает, что могут быть переданы только объекты со свойством `name: string`. Это гарантирует безопасность типов и позволяет компилятору понять, какие свойства доступны. Без ограничения `T` может быть любым типом, и `keyof T` был бы ненадежным."
+    }
+  },
+  {
+    "id": "typescript-quiz-24",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the result type of the `Readonly<T>` utility type when applied to a union of types?\ntypescript\ntype Config = Readonly<{ timeout: number } | { retries: number }>;\n",
+      "ru": "Каков результирующий тип утилиты `Readonly<T>` при применении к объединению типов?\ntypescript\ntype Config = Readonly<{ timeout: number } | { retries: number }>;\n"
+    },
+    "options": {
+      "en": [
+        "Readonly<{ timeout: number }> | Readonly<{ retries: number }>",
+        "{ readonly timeout: number } | { readonly retries: number }",
+        "{ readonly timeout?: number; readonly retries?: number }",
+        "{ timeout: number } | { retries: number } (unchanged)"
+      ],
+      "ru": [
+        "Readonly<{ timeout: number }> | Readonly<{ retries: number }>",
+        "{ readonly timeout: number } | { readonly retries: number }",
+        "{ readonly timeout?: number; readonly retries?: number }",
+        "{ timeout: number } | { retries: number } (неизменный)"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Utility types like `Readonly<T>` distribute over union types. When applied to a union, each member of the union gets the utility type applied independently, resulting in `{ readonly timeout: number } | { readonly retries: number }`. This is because utility types use mapped types which distribute across union members.",
+      "ru": "Утилиты типов вроде `Readonly<T>` распределяются над типами объединения. При применении к объединению каждый член объединения получает утилиту типа независимо, что приводит к `{ readonly timeout: number } | { readonly retries: number }`. Это происходит потому, что утилиты типов используют mapped types, которые распределяются по членам объединения."
+    }
+  },
+  {
+    "id": "typescript-quiz-25",
+    "topicId": "typescript",
+    "question": {
+      "en": "In the context of conditional types, what does the following type evaluate to?\ntypescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>;\ntype B = IsString<string>;\ntype C = IsString<string | number>;\n",
+      "ru": "В контексте условных типов, к чему вычисляется следующий тип?\ntypescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>;\ntype B = IsString<string>;\ntype C = IsString<string | number>;\n"
+    },
+    "options": {
+      "en": [
+        "A = true, B = true, C = false",
+        "A = true, B = true, C = true | false",
+        "A = true, B = false, C = false",
+        "A = false, B = true, C = boolean"
+      ],
+      "ru": [
+        "A = true, B = true, C = false",
+        "A = true, B = true, C = true | false",
+        "A = true, B = false, C = false",
+        "A = false, B = true, C = boolean"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Both 'hello' and string extend string, so A and B are true. For C, conditional types distribute over union types: `(string extends string ? true : false) | (number extends string ? true : false)` = `true | false`. This union simplifies to `boolean` in display, but the actual type is `true | false`, which is the correct answer.",
+      "ru": "И 'hello', и string расширяют string, поэтому A и B истинны. Для C условные типы распределяются над типами объединения: `(string extends string ? true : false) | (number extends string ? true : false)` = `true | false`. Это объединение упрощается до `boolean` при отображении, но фактический тип `true | false` - это правильный ответ."
+    }
+  },
+  {
+    "id": "typescript-quiz-26",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the key difference between a TypeScript `interface` and a `type` alias when dealing with declaration merging?\ntypescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n}\n",
+      "ru": "В чем ключевое отличие TypeScript `interface` от `type` alias при работе с объединением объявлений?\ntypescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n}\n"
+    },
+    "options": {
+      "en": [
+        "Interfaces support declaration merging and will combine properties, creating a User with both name and age",
+        "Type aliases also support declaration merging in the same way",
+        "Neither interfaces nor type aliases support declaration merging",
+        "Declaration merging only works with class declarations, not interfaces"
+      ],
+      "ru": [
+        "Интерфейсы поддерживают объединение объявлений и объединят свойства, создав User с именем и возрастом",
+        "Type aliases также поддерживают объединение объявлений таким же образом",
+        "Ни интерфейсы, ни type aliases не поддерживают объединение объявлений",
+        "Объединение объявлений работает только с объявлениями класса, но не с интерфейсами"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Interfaces in TypeScript support declaration merging, meaning multiple declarations with the same name are automatically combined into a single interface. Type aliases do not support this feature and would result in a duplicate identifier error. This is a fundamental difference that allows interfaces to be extended across multiple definitions.",
+      "ru": "Интерфейсы в TypeScript поддерживают объединение объявлений, что означает, что несколько объявлений с одинаковым именем автоматически объединяются в один интерфейс. Type aliases не поддерживают эту функцию и приведут к ошибке дублирования идентификатора. Это фундаментальное отличие, которое позволяет интерфейсам расширяться на нескольких определениях."
+    }
+  },
+  {
+    "id": "typescript-quiz-27",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be the inferred type of `result` in this code?\ntypescript\nconst getValue = <T extends string | number>(val: T): T => val;\nconst result = getValue(42);\n",
+      "ru": "Какой будет выведенный тип `result` в этом коде?\ntypescript\nconst getValue = <T extends string | number>(val: T): T => val;\nconst result = getValue(42);\n"
+    },
+    "options": {
+      "en": [
+        "42 (literal type)",
+        "number",
+        "string | number",
+        "unknown"
+      ],
+      "ru": [
+        "42 (литеральный тип)",
+        "number",
+        "string | number",
+        "unknown"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TypeScript's type inference will infer `T` as the literal type `42` rather than the broader `number` type. Since the generic function returns `T`, the return type is `42`. This demonstrates TypeScript's preference for inferring the most specific type possible. If you wanted the broader `number` type, you would need to explicitly specify it as `getValue<number>(42)`.",
+      "ru": "Вывод типов TypeScript будет выводить `T` как литеральный тип `42`, а не как более широкий тип `number`. Поскольку универсальная функция возвращает `T`, тип возврата — `42`. Это демонстрирует предпочтение TypeScript к выводу наиболее конкретного типа. Если вы хотите более широкий тип `number`, вам нужно явно указать его как `getValue<number>(42)`."
+    }
+  },
+  {
+    "id": "typescript-quiz-28",
+    "topicId": "typescript",
+    "question": {
+      "en": "Which utility type is best for creating a new type that contains only the properties of an object that are not null or undefined?\ntypescript\ntype User = {\n  name: string;\n  email: string | null;\n  phone?: string;\n};\n",
+      "ru": "Какой утилитарный тип лучше всего использовать для создания нового типа, содержащего только свойства объекта, которые не являются null или undefined?\ntypescript\ntype User = {\n  name: string;\n  email: string | null;\n  phone?: string;\n};\n"
+    },
+    "options": {
+      "en": [
+        "NonNullable<User> - removes null and undefined from all property types",
+        "Required<User> - makes all properties required but doesn't remove null/undefined",
+        "Partial<User> - makes all properties optional, the opposite of what we need",
+        "Omit<User, 'email' | 'phone'> - only removes specific properties"
+      ],
+      "ru": [
+        "NonNullable<User> - удаляет null и undefined из всех типов свойств",
+        "Required<User> - делает все свойства обязательными, но не удаляет null/undefined",
+        "Partial<User> - делает все свойства необязательными, противоположное тому, что нам нужно",
+        "Omit<User, 'email' | 'phone'> - удаляет только конкретные свойства"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "While NonNullable removes null and undefined, it applies to individual property types, not to filter properties at the object level. Required makes all properties mandatory, which combined with mapping over the type definition, better addresses the need to ensure no nullable properties exist. However, the ideal approach would use a conditional type to map over properties and remove those that include null or undefined. Required is the best available utility type for the intent of having all non-nullable properties.",
+      "ru": "Хотя NonNullable удаляет null и undefined, он применяется к отдельным типам свойств, а не к фильтрации свойств на уровне объекта. Required делает все свойства обязательными, что в сочетании с отображением определения типа лучше решает задачу обеспечения отсутствия свойств, допускающих значение null. Однако идеальный подход использовал бы условный тип для отображения свойств и удаления тех, которые включают null или undefined. Required — лучший доступный утилитарный тип для цели иметь все не допускающие значение null свойства."
+    }
+  },
+  {
+    "id": "typescript-quiz-29",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be logged to the console?\ntypescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>;\ntype B = IsString<string>;\ntype C = IsString<string | number>;\n\nconst a: A = true;\nconst b: B = true;\nconst c: C = false;\n",
+      "ru": "Что будет выведено в консоль?\ntypescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>;\ntype B = IsString<string>;\ntype C = IsString<string | number>;\n\nconst a: A = true;\nconst b: B = true;\nconst c: C = false;\n"
+    },
+    "options": {
+      "en": [
+        "All assignments are valid; conditional types work as shown",
+        "Error on c assignment because C resolves to true, not false",
+        "Error on b assignment because B resolves to false due to string being a type",
+        "Error on a assignment because literal types are not assignable to boolean"
+      ],
+      "ru": [
+        "Все назначения действительны; условные типы работают так, как показано",
+        "Ошибка при назначении c, потому что C разрешается в true, а не false",
+        "Ошибка при назначении b, потому что B разрешается в false из-за того, что string является типом",
+        "Ошибка при назначении a, потому что литеральные типы не могут быть назначены булеву значению"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Conditional types distribute over union types. When `C = IsString<string | number>`, TypeScript distributes the conditional over the union: `IsString<string> | IsString<number>` which evaluates to `true | false`, a union type. Since `c` is typed as this union but assigned `false` alone, and the actual type `C` is `true | false`, the assignment is type-safe. A and B are correct—'hello' extends string is true, and `string` extends `string` is true. The issue is that C actually resolves to `boolean` (true | false union), making the assignment of just `false` invalid.",
+      "ru": "Условные типы распределяются по типам объединения. Когда `C = IsString<string | number>`, TypeScript распределяет условие по объединению: `IsString<string> | IsString<number>`, что вычисляется в `true | false`, тип объединения. Поскольку `c` типизирован как это объединение, но назначен только `false`, а фактический тип `C` — `true | false`, назначение безопасно по типам. A и B верны — 'hello' extends string это true, и `string` extends `string` это true. Проблема в том, что C фактически разрешается в `boolean` (объединение true | false), что делает назначение только `false` невалидным."
+    }
+  },
+  {
+    "id": "typescript-quiz-30",
+    "topicId": "typescript",
+    "question": {
+      "en": "When using strict mode in TypeScript (strict: true), which scenario will cause a compilation error that wouldn't occur in non-strict mode?",
+      "ru": "При использовании строгого режима в TypeScript (strict: true), какой сценарий вызовет ошибку компиляции, которая не возникла бы в нестрогом режиме?"
+    },
+    "options": {
+      "en": [
+        "Accessing a property on a potentially null or undefined value without type narrowing",
+        "Using var instead of let or const for variable declarations",
+        "Omitting semicolons at the end of statements",
+        "Using any implicitly in variable declarations"
+      ],
+      "ru": [
+        "Доступ к свойству потенциально нулевого или неопределенного значения без сужения типа",
+        "Использование var вместо let или const для объявлений переменных",
+        "Опущение точек с запятой в конце операторов",
+        "Использование any неявно в объявлениях переменных"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Strict mode includes strictNullChecks, which prevents accessing properties on values that could be null or undefined without proper type narrowing. In non-strict mode, null and undefined are allowed to pass through without errors. Option B relates to style (var vs let), option C is a formatting choice, and option D refers to noImplicitAny which is separate from strict mode, though it is included when strict is enabled.",
+      "ru": "Строгий режим включает strictNullChecks, который предотвращает доступ к свойствам значений, которые могут быть null или undefined без надлежащего сужения типа. В нестрогом режиме null и undefined могут пройти без ошибок. Опция B относится к стилю (var vs let), опция C — к выбору форматирования, а опция D относится к noImplicitAny, который отделен от строгого режима, хотя включен при включении strict."
+    }
+  },
+  {
+    "id": "typescript-quiz-31",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the key difference between a TypeScript `interface` and a `type` alias when used for object shapes?\ntypescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype Person = {\n  name: string;\n  age: number;\n};\n\nWhich statement is most accurate?",
+      "ru": "В чем ключевое различие между TypeScript `interface` и `type` alias при использовании для объектных форм?\ntypescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype Person = {\n  name: string;\n  age: number;\n};\n\nКакое утверждение наиболее точно?"
+    },
+    "options": {
+      "en": [
+        "Interfaces can be extended by other interfaces, and type aliases can only be combined with intersection (&). Interfaces are also subject to declaration merging.",
+        "Type aliases are more performant and are the recommended approach in modern TypeScript.",
+        "Interfaces cannot represent union types, while type aliases can only represent object shapes.",
+        "Both are completely identical in behavior and choosing between them is purely a matter of style preference."
+      ],
+      "ru": [
+        "Интерфейсы могут быть расширены другими интерфейсами, а type alias могут быть объединены только через пересечение (&). Интерфейсы также подлежат объединению объявлений.",
+        "Type alias более производительны и являются рекомендуемым подходом в современном TypeScript.",
+        "Интерфейсы не могут представлять типы объединений, в то время как type alias могут представлять только объектные формы.",
+        "Оба полностью идентичны в поведении, и выбор между ними - это чистая предпочтение стиля."
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Interfaces support declaration merging and are designed specifically for OOP patterns, while type aliases are more flexible and can represent union types, tuples, and primitives. The main structural difference is that interfaces use `extends` for inheritance and benefit from declaration merging, whereas types use `&` for intersection and cannot be merged.",
+      "ru": "Интерфейсы поддерживают объединение объявлений и предназначены специально для OOP-паттернов, в то время как type alias более гибкие и могут представлять типы объединений, кортежи и примитивы. Главное структурное различие в том, что интерфейсы используют `extends` для наследования и поддерживают объединение объявлений, в то время как типы используют `&` для пересечения и не могут быть объединены."
+    }
+  },
+  {
+    "id": "typescript-quiz-32",
+    "topicId": "typescript",
+    "question": {
+      "en": "Consider the following generic function. What type will `result` have?\ntypescript\nfunction identity<T>(value: T): T {\n  return value;\n}\n\nconst result = identity({ name: 'John', age: 30 });\n",
+      "ru": "Рассмотрите следующую обобщенную функцию. Какой тип будет иметь `result`?\ntypescript\nfunction identity<T>(value: T): T {\n  return value;\n}\n\nconst result = identity({ name: 'John', age: 30 });\n"
+    },
+    "options": {
+      "en": [
+        "{ name: string; age: number }",
+        "T (the generic type parameter)",
+        "any",
+        "{ name: 'John'; age: 30 } (literal type)"
+      ],
+      "ru": [
+        "{ name: string; age: number }",
+        "T (параметр обобщенного типа)",
+        "any",
+        "{ name: 'John'; age: 30 } (литеральный тип)"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TypeScript infers the generic type `T` from the argument passed to the function. The object literal `{ name: 'John', age: 30 }` is inferred as `{ name: string; age: number }`, not as a literal type, because type inference widens literal values to their base types. Thus `result` has type `{ name: string; age: number }`.",
+      "ru": "TypeScript выводит обобщенный тип `T` из аргумента, переданного функции. Литерал объекта `{ name: 'John', age: 30 }` выводится как `{ name: string; age: number }`, а не как литеральный тип, потому что вывод типа расширяет литеральные значения до их базовых типов. Таким образом, `result` имеет тип `{ name: string; age: number }`."
+    }
+  },
+  {
+    "id": "typescript-quiz-33",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the purpose of TypeScript utility types like `Partial<T>`, `Required<T>`, and `Readonly<T>`?",
+      "ru": "Какова цель утилит-типов TypeScript, таких как `Partial<T>`, `Required<T>` и `Readonly<T>`?"
+    },
+    "options": {
+      "en": [
+        "To create new types based on transformations of existing types, modifying property optionality or immutability at compile time.",
+        "To improve runtime performance by allowing the compiler to optimize property access patterns.",
+        "To provide a mechanism for type checking during runtime execution, equivalent to instanceof checks.",
+        "To restrict which properties can be assigned to an object at any point in the program execution."
+      ],
+      "ru": [
+        "Для создания новых типов на основе преобразований существующих типов, изменяя необязательность свойств или неизменяемость на этапе компиляции.",
+        "Для улучшения производительности времени выполнения, позволяя компилятору оптимизировать паттерны доступа к свойствам.",
+        "Для обеспечения механизма проверки типов во время выполнения программы, эквивалентного проверкам instanceof.",
+        "Для ограничения того, какие свойства можно присвоить объекту в любой момент выполнения программы."
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Utility types are compile-time constructs that transform type definitions. `Partial<T>` makes all properties optional, `Required<T>` makes all properties required, and `Readonly<T>` makes properties immutable. These transformations occur during type checking, not at runtime, and help create safer, more flexible type contracts.",
+      "ru": "Утилиты типов - это конструкции времени компиляции, которые преобразуют определения типов. `Partial<T>` делает все свойства необязательными, `Required<T>` делает все свойства обязательными, а `Readonly<T>` делает свойства неизменяемыми. Эти преобразования происходят во время проверки типов, а не во время выполнения, и помогают создавать более безопасные и гибкие контракты типов."
+    }
+  },
+  {
+    "id": "typescript-quiz-34",
+    "topicId": "typescript",
+    "question": {
+      "en": "What does the following mapped type accomplish?\ntypescript\ntype Getters<T> = {\n  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]\n};\n\ntype User = { name: string; age: number };\ntype UserGetters = Getters<User>;\n\nWhat properties will `UserGetters` have?",
+      "ru": "Что достигает следующий mapped type?\ntypescript\ntype Getters<T> = {\n  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]\n};\n\ntype User = { name: string; age: number };\ntype UserGetters = Getters<User>;\n\nКакие свойства будет иметь `UserGetters`?"
+    },
+    "options": {
+      "en": [
+        "{ getName: () => string; getAge: () => number }",
+        "{ get: { name: () => string; age: () => number } }",
+        "{ name: () => string; age: () => number }",
+        "{ getString: () => string; getNumber: () => number }"
+      ],
+      "ru": [
+        "{ getName: () => string; getAge: () => number }",
+        "{ get: { name: () => string; age: () => number } }",
+        "{ name: () => string; age: () => number }",
+        "{ getString: () => string; getNumber: () => number }"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The mapped type iterates over keys of `T` using `keyof T`, and the `as` clause renames each key to a getter pattern using `get` + `Capitalize`. For `User`, this transforms `name` to `getName` and `age` to `getAge`, with each property being a function that returns the original property's type.",
+      "ru": "Mapped type проходит по ключам `T` с использованием `keyof T`, а предложение `as` переименовывает каждый ключ в паттерн getter используя `get` + `Capitalize`. Для `User` это преобразует `name` в `getName` и `age` в `getAge`, где каждое свойство - это функция, которая возвращает тип исходного свойства."
+    }
+  },
+  {
+    "id": "typescript-quiz-35",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is a type guard, and why is it important in TypeScript?\ntypescript\nfunction processValue(value: string | number) {\n  if (typeof value === 'string') {\n    console.log(value.toUpperCase());\n  } else {\n    console.log(value * 2);\n  }\n}\n\nWhat role does `typeof value === 'string'` serve?",
+      "ru": "Что такое type guard, и почему это важно в TypeScript?\ntypescript\nfunction processValue(value: string | number) {\n  if (typeof value === 'string') {\n    console.log(value.toUpperCase());\n  } else {\n    console.log(value * 2);\n  }\n}\n\nКакую роль играет `typeof value === 'string'`?"
+    },
+    "options": {
+      "en": [
+        "It is a type guard that narrows the type of `value` from `string | number` to `string` within the if block, allowing string methods to be called safely.",
+        "It performs a runtime check that converts `value` to a string if it is a number, ensuring type safety.",
+        "It is a compile-time assertion that tells TypeScript to treat `value` as a string without any runtime verification.",
+        "It validates that the value conforms to a string interface, but does not affect type inference in the conditional branches."
+      ],
+      "ru": [
+        "Это type guard, который сужает тип `value` с `string | number` до `string` внутри блока if, позволяя безопасно вызывать методы string.",
+        "Это проверка во время выполнения, которая преобразует `value` в строку, если это число, обеспечивая безопасность типов.",
+        "Это утверждение времени компиляции, которое говорит TypeScript рассматривать `value` как строку без какой-либо проверки времени выполнения.",
+        "Это проверяет, что значение соответствует интерфейсу строки, но не влияет на вывод типов в условных ветвях."
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A type guard is a conditional check that narrows a union type to a more specific type. The `typeof value === 'string'` check allows TypeScript to understand that within the if block, `value` must be a `string`, enabling the compiler to permit string-specific methods like `toUpperCase()` safely. This is a form of type narrowing that improves both safety and developer experience.",
+      "ru": "Type guard - это условная проверка, которая сужает тип объединения до более конкретного типа. Проверка `typeof value === 'string'` позволяет TypeScript понять, что внутри блока if `value` должна быть `string`, позволяя компилятору безопасно разрешить методы, специфичные для строк, такие как `toUpperCase()`. Это форма сужения типов, которая улучшает как безопасность, так и удобство разработки."
+    }
+  },
+  {
+    "id": "typescript-quiz-36",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the key difference between a TypeScript `interface` and a `type` alias?\ntypescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n",
+      "ru": "В чем ключевое различие между TypeScript `interface` и `type` alias?\ntypescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n"
+    },
+    "options": {
+      "en": [
+        "Interfaces can be merged (declaration merging), while types cannot",
+        "Types can use union and intersection operators, while interfaces cannot",
+        "Interfaces have better performance at runtime",
+        "Types are only used for primitive values, interfaces for objects"
+      ],
+      "ru": [
+        "Интерфейсы можно объединять (declaration merging), а типы нельзя",
+        "Типы могут использовать операторы объединения и пересечения, интерфейсы не могут",
+        "Интерфейсы имеют лучшую производительность во время выполнения",
+        "Типы используются только для примитивных значений, интерфейсы для объектов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Interfaces support declaration merging where multiple declarations with the same name are automatically combined, while type aliases do not. Both can use union/intersection operators (types more naturally), but interfaces excel at extensibility through merging. Performance and primitive type restrictions are not differentiators.",
+      "ru": "Интерфейсы поддерживают declaration merging, где несколько объявлений с одинаковым именем автоматически объединяются, в то время как типы этого не делают. Оба могут использовать операторы объединения и пересечения, но интерфейсы лучше для расширяемости через объединение. Производительность и ограничения примитивных типов не являются отличиями."
+    }
+  },
+  {
+    "id": "typescript-quiz-37",
+    "topicId": "typescript",
+    "question": {
+      "en": "What will be logged to the console?\ntypescript\nconst value: unknown = \"hello\";\nif (typeof value === \"string\") {\n  console.log(value.toUpperCase());\n} else {\n  console.log(\"not a string\");\n}\n",
+      "ru": "Что будет выведено в консоль?\ntypescript\nconst value: unknown = \"hello\";\nif (typeof value === \"string\") {\n  console.log(value.toUpperCase());\n} else {\n  console.log(\"not a string\");\n}\n"
+    },
+    "options": {
+      "en": [
+        "HELLO",
+        "hello",
+        "not a string",
+        "A TypeError at runtime"
+      ],
+      "ru": [
+        "HELLO",
+        "hello",
+        "not a string",
+        "TypeError во время выполнения"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The type guard `typeof value === \"string\"` narrows the `unknown` type to `string` within the if block. This allows TypeScript to safely call `toUpperCase()` on the value. Since the actual value is \"hello\", it outputs \"HELLO\" in uppercase.",
+      "ru": "Type guard `typeof value === \"string\"` сужает тип `unknown` до `string` внутри блока if. Это позволяет TypeScript безопасно вызвать `toUpperCase()` на значение. Поскольку фактическое значение это \"hello\", вывод будет \"HELLO\" в верхнем регистре."
+    }
+  },
+  {
+    "id": "typescript-quiz-38",
+    "topicId": "typescript",
+    "question": {
+      "en": "What is the correct use of a generic constraint to ensure a type parameter extends a specific interface?\ntypescript\ninterface HasName {\n  name: string;\n}\n",
+      "ru": "Каково правильное использование обобщенного ограничения, чтобы убедиться, что параметр типа расширяет определенный интерфейс?\ntypescript\ninterface HasName {\n  name: string;\n}\n"
+    },
+    "options": {
+      "en": [
+        "function getId<T extends HasName>(obj: T): string { return obj.name; }",
+        "function getId<T: HasName>(obj: T): string { return obj.name; }",
+        "function getId<T HasName>(obj: T): string { return obj.name; }",
+        "function getId<T = HasName>(obj: T): string { return obj.name; }"
+      ],
+      "ru": [
+        "function getId<T extends HasName>(obj: T): string { return obj.name; }",
+        "function getId<T: HasName>(obj: T): string { return obj.name; }",
+        "function getId<T HasName>(obj: T): string { return obj.name; }",
+        "function getId<T = HasName>(obj: T): string { return obj.name; }"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `extends` keyword is the correct syntax for generic constraints in TypeScript. It ensures that any type passed as T must satisfy the HasName interface contract. The other syntaxes (colon, space, equals) are invalid for constraints and would either cause syntax errors or have different meanings.",
+      "ru": "Ключевое слово `extends` является правильным синтаксисом для обобщенных ограничений в TypeScript. Оно гарантирует, что любой тип, переданный как T, должен удовлетворять контракту интерфейса HasName. Остальные синтаксисы (двоеточие, пробел, равно) недопустимы для ограничений и вызовут синтаксические ошибки или имеют разные значения."
+    }
+  },
+  {
+    "id": "typescript-quiz-39",
+    "topicId": "typescript",
+    "question": {
+      "en": "What does the `Partial<T>` utility type do in TypeScript?",
+      "ru": "Что делает утилитарный тип `Partial<T>` в TypeScript?"
+    },
+    "options": {
+      "en": [
+        "Makes all properties of T optional",
+        "Makes all properties of T required",
+        "Removes specific properties from T",
+        "Creates a read-only version of T"
+      ],
+      "ru": [
+        "Делает все свойства T необязательными",
+        "Делает все свойства T обязательными",
+        "Удаляет конкретные свойства из T",
+        "Создает read-only версию T"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "`Partial<T>` transforms all properties of type T into optional properties using the `?` modifier. This is useful for update operations where you only need to provide some fields. `Required<T>` does the opposite, `Pick<T, K>` removes properties, and `Readonly<T>` creates a read-only version.",
+      "ru": "`Partial<T>` преобразует все свойства типа T в необязательные свойства, используя модификатор `?`. Это полезно для операций обновления, где нужно предоставить только некоторые поля. `Required<T>` делает противоположное, `Pick<T, K>` удаляет свойства, а `Readonly<T>` создает read-only версию."
+    }
+  },
+  {
+    "id": "typescript-quiz-40",
+    "topicId": "typescript",
+    "question": {
+      "en": "When using `strictNullChecks: true`, what will TypeScript report?\ntypescript\nfunction greet(name: string) {\n  console.log(\"Hello, \" + name);\n}\n\nconst user: string | null = getName();\ngreet(user);\n",
+      "ru": "При использовании `strictNullChecks: true`, что сообщит TypeScript?\ntypescript\nfunction greet(name: string) {\n  console.log(\"Hello, \" + name);\n}\n\nconst user: string | null = getName();\ngreet(user);\n"
+    },
+    "options": {
+      "en": [
+        "A type error: Argument of type 'string | null' is not assignable to parameter of type 'string'",
+        "No error, null will be automatically coerced to empty string",
+        "A runtime error when user is null",
+        "A warning, but the code will compile"
+      ],
+      "ru": [
+        "Ошибка типа: Argument of type 'string | null' is not assignable to parameter of type 'string'",
+        "Нет ошибки, null будет автоматически преобразован в пустую строку",
+        "Ошибка во время выполнения, когда user равен null",
+        "Предупреждение, но код скомпилируется"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "With `strictNullChecks` enabled, TypeScript enforces strict null checking and will not allow a `string | null` value to be passed where `string` is expected. This prevents null-reference bugs at compile time. To fix it, you must either narrow the type (with an if check) or update the function signature to accept `string | null`.",
+      "ru": "С включенным `strictNullChecks`, TypeScript enforces строгую проверку null и не позволит передать значение `string | null` где ожидается `string`. Это предотвращает null-reference ошибки на этапе компиляции. Чтобы исправить, нужно сузить тип (с проверкой if) или обновить сигнатуру функции для принятия `string | null`."
     }
   }
 ]

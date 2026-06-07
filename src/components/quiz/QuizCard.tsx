@@ -5,20 +5,28 @@ import { useLocale } from '@/context/LocaleContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+/** Quiz question with its question text pre-rendered to HTML (shiki github-dark) on the server. */
+export interface QuizQuestionWithHtml extends QuizQuestion {
+  questionHtml: { en: string; ru: string };
+}
+
 interface QuizCardProps {
-  question: QuizQuestion;
+  question: QuizQuestionWithHtml;
   selectedIndex: number | null;
   onSelect: (index: number) => void;
 }
 
 export function QuizCard({ question, selectedIndex, onSelect }: QuizCardProps) {
-  const { t, t2 } = useLocale();
+  const { locale, t, t2 } = useLocale();
   const options = t({ en: question.options.en.join('|||'), ru: question.options.ru.join('|||') }).split('|||');
   const answered = selectedIndex !== null;
 
   return (
     <div className="space-y-4">
-      <p className="font-medium text-lg leading-relaxed">{t(question.question)}</p>
+      <div
+        className="article-body font-medium text-lg leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: question.questionHtml[locale] }}
+      />
       <div className="flex flex-col gap-2">
         {options.map((option, idx) => (
           <Button

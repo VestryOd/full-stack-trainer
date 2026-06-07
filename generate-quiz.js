@@ -38,67 +38,67 @@ const TOPICS = [
   {
     id: 'javascript',
     label: 'JavaScript',
-    count: 30,
+    count: 50,
     areas: 'event loop, closures, prototype chain, this binding, hoisting, typeof/instanceof, async/await, promises, ES6+ features, coercion edge cases, scope, generators',
   },
   {
     id: 'typescript',
     label: 'TypeScript',
-    count: 20,
+    count: 40,
     areas: 'type inference, interfaces vs types, generics, utility types, type guards, enums, conditional types, mapped types, strict mode behaviors',
   },
   {
     id: 'react',
     label: 'React',
-    count: 25,
+    count: 50,
     areas: 'hooks rules, useState/useEffect behavior, reconciliation, key prop, memo/useMemo/useCallback, context, component lifecycle, controlled vs uncontrolled, Suspense',
   },
   {
     id: 'nextjs',
     label: 'Next.js',
-    count: 20,
+    count: 30,
     areas: 'App Router vs Pages Router, Server vs Client components, data fetching strategies, caching layers, static vs dynamic rendering, middleware, image optimization',
   },
   {
     id: 'nodejs',
     label: 'Node.js',
-    count: 20,
+    count: 50,
     areas: 'event loop phases, streams, process.nextTick vs setImmediate, cluster vs worker threads, CommonJS vs ESM, error handling, Buffer',
   },
   {
     id: 'nestjs',
     label: 'Nest.js',
-    count: 15,
+    count: 30,
     areas: 'decorators, dependency injection, modules, guards vs interceptors vs pipes vs filters, lifecycle hooks, providers scope',
   },
   {
     id: 'postgresql',
     label: 'PostgreSQL',
-    count: 20,
+    count: 30,
     areas: 'index types, EXPLAIN output, transaction isolation levels, MVCC, window functions, JOIN types, NULL behavior, VACUUM',
   },
   {
     id: 'css-html',
     label: 'CSS + HTML',
-    count: 20,
+    count: 30,
     areas: 'specificity, box model, flexbox, grid, stacking context, pseudo-elements, BEM, CSS custom properties, semantic HTML, accessibility',
   },
   {
     id: 'algorithms',
     label: 'Algorithms & DS',
-    count: 20,
+    count: 30,
     areas: 'Big O notation, sorting algorithms complexity, hash map operations, tree traversal, BFS vs DFS, dynamic programming concepts, space-time tradeoffs',
   },
   {
     id: 'browser-runtime',
     label: 'Browser / JS Runtime',
-    count: 15,
+    count: 20,
     areas: 'rendering pipeline, reflow vs repaint, event delegation, Web APIs, CORS, storage types, service workers, critical rendering path',
   },
   {
     id: 'http-rest',
     label: 'HTTP / REST',
-    count: 15,
+    count: 30,
     areas: 'HTTP methods, status codes, caching headers, CORS, REST constraints, idempotency, HTTP/2 features, authentication methods',
   },
   {
@@ -110,49 +110,49 @@ const TOPICS = [
   {
     id: 'security',
     label: 'Security',
-    count: 15,
+    count: 25,
     areas: 'XSS types, CSRF, SQL injection, JWT structure, OAuth 2.0 flows, CSP headers, cookie flags, HTTPS/TLS',
   },
   {
     id: 'solid-grasp',
     label: 'SOLID + GRASP',
-    count: 15,
+    count: 25,
     areas: 'SRP, OCP, LSP, ISP, DIP — recognizing violations, GRASP patterns, applying principles to real code examples',
   },
   {
     id: 'oop-patterns',
     label: 'OOP Patterns',
-    count: 15,
+    count: 25,
     areas: 'pattern identification, Singleton pitfalls, Factory vs Abstract Factory, Observer vs Pub/Sub, Strategy vs State, Decorator vs HOC',
   },
   {
     id: 'git',
     label: 'Git',
-    count: 12,
+    count: 20,
     areas: 'rebase vs merge, cherry-pick, reflog, git objects (blob/tree/commit), fast-forward, detached HEAD, stash behavior',
   },
   {
     id: 'docker',
     label: 'Docker',
-    count: 12,
+    count: 15,
     areas: 'image vs container, layers, multi-stage builds, volume types, network modes, docker-compose, CMD vs ENTRYPOINT',
   },
   {
     id: 'web-performance',
     label: 'Web Performance',
-    count: 15,
+    count: 20,
     areas: 'Core Web Vitals definitions, LCP/CLS/INP, lazy loading, code splitting, preload vs prefetch, render-blocking resources, image formats',
   },
   {
     id: 'graphql',
     label: 'GraphQL',
-    count: 15,
+    count: 25,
     areas: 'queries vs mutations vs subscriptions, schema types, N+1 problem, fragments, Apollo Client cache, introspection, REST vs GraphQL tradeoffs',
   },
   {
     id: 'architecture',
     label: 'Architecture Patterns',
-    count: 12,
+    count: 20,
     areas: 'Clean vs Hexagonal vs Layered, CQRS concepts, event sourcing basics, repository pattern, dependency inversion in practice',
   },
 ];
@@ -256,6 +256,7 @@ function extractJSON(text) {
 // ─── PROMPT BUILDER ──────────────────────────────────────────────────────────
 
 function buildPrompt(topic, startIndex, chunkSize) {
+  const codeExample = 'What is logged?\\n```js\\nconsole.log(typeof null);\\n```';
   return `Generate exactly ${chunkSize} multiple-choice quiz questions for a Senior Fullstack Engineer interview preparation tool.
 
 Topic: ${topic.label}
@@ -293,6 +294,8 @@ Critical rules:
 - Include at least 2 questions with short code snippets to read and predict output
 - Both en and ru fields must be fully translated — no placeholders
 - Questions must be distinct — cover different sub-topics from the areas list
+- If the question contains a code snippet, NEVER put it inline. ALWAYS format as markdown code block with triple backticks and language tag. Example: "${codeExample}"
+- The \\\\n before opening backticks and after closing backticks are required.
 
 Generate exactly ${chunkSize} questions now:`;
 }

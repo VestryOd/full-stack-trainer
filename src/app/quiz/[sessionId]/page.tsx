@@ -1,4 +1,6 @@
 import { getAvailableQuizTopics, getQuizQuestions } from '@/lib/quiz';
+import { renderArticleHtml } from '@/components/theory/ArticleRenderer';
+import type { QuizQuestionWithHtml } from '@/components/quiz/QuizCard';
 import { QuizSession } from './QuizSession';
 
 interface Props {
@@ -23,9 +25,20 @@ export function generateStaticParams() {
   return params;
 }
 
-export default function QuizSessionPage({ params }: Props) {
+export default async function QuizSessionPage({ params }: Props) {
   const { topicId, count } = parseSessionId(params.sessionId);
   const questions = getQuizQuestions([topicId], count);
 
-  return <QuizSession initialQuestions={questions} />;
+  // Pre-render question markdown to HTML on the server (shiki github-dark), same pipeline as Theory/Questions
+  const questionsWithHtml: QuizQuestionWithHtml[] = await Promise.all(
+    questions.map(async (q) => ({
+      ...q,
+      questionHtml: {
+        en: await renderArticleHtml(q.question.en),
+        ru: await renderArticleHtml(q.question.ru ?? q.question.en),
+      },
+    })),
+  );
+
+  return <QuizSession initialQuestions={questionsWithHtml} />;
 }

@@ -3,675 +3,1350 @@
     "id": "react-quiz-1",
     "topicId": "react",
     "question": {
-      "en": "Consider this code: const [count, setCount] = useState(0); useEffect(() => { setCount(count + 1); }, [count]); What will happen when this component mounts?",
-      "ru": "Рассмотрите этот код: const [count, setCount] = useState(0); useEffect(() => { setCount(count + 1); }, [count]); Что произойдет при монтировании компонента?"
+      "en": "Which of the following violates the Rules of Hooks in React?\njs\nfunction MyComponent({ condition }) {\n  if (condition) {\n    const [state, setState] = useState(0);\n  }\n  const [name, setName] = useState('');\n  return <div>{name}</div>;\n}\n",
+      "ru": "Какой из следующих вариантов нарушает Правила Hooks в React?\njs\nfunction MyComponent({ condition }) {\n  if (condition) {\n    const [state, setState] = useState(0);\n  }\n  const [name, setName] = useState('');\n  return <div>{name}</div>;\n}\n"
     },
     "options": {
       "en": [
-        "It will cause an infinite loop of renders",
-        "The count will increment once and then stop",
-        "Nothing will happen on mount, effect runs only on updates",
-        "The effect will run but setCount will be ignored"
+        "Calling useState conditionally inside an if block violates the Rules of Hooks",
+        "Using two useState hooks in the same component is not allowed",
+        "The component will crash because condition might be undefined",
+        "There is no violation; React will skip the first hook if condition is false"
       ],
       "ru": [
-        "Это вызовет бесконечный цикл рендеров",
-        "Счетчик увеличится один раз, а затем остановится",
-        "При монтировании ничего не произойдет, эффект запускается только при обновлениях",
-        "Эффект запустится, но setCount будет проигнорирован"
+        "Вызов useState условно внутри блока if нарушает Правила Hooks",
+        "Использование двух useState hooks в одном компоненте недопустимо",
+        "Компонент сломается, потому что condition может быть undefined",
+        "Нарушений нет; React пропустит первый hook, если condition ложно"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "This creates an infinite loop because useEffect has count in its dependency array, so it runs after render. When setCount updates count, it triggers a new render, which triggers the effect again with the new count value. This cycle continues indefinitely. The effect runs on mount since the dependency array is present, making option C incorrect.",
-      "ru": "Это создает бесконечный цикл, потому что useEffect имеет count в массиве зависимостей, поэтому он запускается после рендера. Когда setCount обновляет count, это вызывает новый рендер, который снова запускает эффект с новым значением count. Этот цикл продолжается бесконечно. Эффект запускается при монтировании, так как массив зависимостей присутствует, что делает вариант C неправильным."
+      "en": "Hooks must be called unconditionally at the top level of a component function. Calling hooks conditionally (inside if statements) violates the Rules of Hooks because it can change the order of hooks between renders, breaking React's internal hook queue. The other options misunderstand either the actual rules or JavaScript behavior.",
+      "ru": "Hooks должны вызываться безусловно на верхнем уровне функции компонента. Вызов hooks условно (внутри if-блоков) нарушает Правила Hooks, так как может изменить порядок hooks между рендерами, нарушив внутреннюю очередь hooks React. Остальные варианты неправильно интерпретируют правила или поведение JavaScript."
     }
   },
   {
     "id": "react-quiz-2",
     "topicId": "react",
     "question": {
-      "en": "What is the primary purpose of the key prop in React lists, and why is using array index as a key problematic?",
-      "ru": "Какова основная цель свойства key в списках React, и почему использ��вание индекса массива в качестве key проблематично?"
+      "en": "What is the primary purpose of the key prop in lists, and why is using array index as a key problematic?\njs\n{items.map((item, index) => <Item key={index} {...item} />)}\n",
+      "ru": "Какова основная цель prop key в списках и почему использование индекса массива в качестве ключа проблематично?\njs\n{items.map((item, index) => <Item key={index} {...item} />)}\n"
     },
     "options": {
       "en": [
-        "Keys help React identify which items have changed, and array indices fail when list order changes or items are added/removed",
-        "Keys improve rendering performance by caching component instances based on their position",
-        "Keys allow React to persist component state between re-renders, which is impossible without them",
-        "Keys are required by React's reconciliation algorithm to avoid memory leaks in list components"
+        "The key prop helps React identify which items have changed, added, or removed. Using index as a key is problematic when the list can be reordered, filtered, or have items inserted, as the index-to-item mapping becomes unstable",
+        "The key prop is only used to improve rendering performance and has no effect on correctness",
+        "Using array index as a key is the best practice because it ensures stable identity for each element",
+        "The key prop determines the CSS class applied to each element in the list"
       ],
       "ru": [
-        "Ключи помогают React определить, какие элементы изменились, и индексы массива не работают, когда порядок списка меняется или элементы добавляются/удаляются",
-        "Ключи улучшают производительность рендеринга путем кэширования экземпляров компонентов на основе их позиции",
-        "Ключи позволяют React сохранять состояние компонента между рендерами, что невозможно без них",
-        "Ключи требуются алгоритмом согласования React, чтобы избежать утечек памяти в компонентах списков"
+        "Prop key помогает React определить, какие элементы изменились, были добавлены или удалены. Использование индекса в качестве ключа проблематично, когда список можно переупорядочить, отфильтровать или вставить элементы, так как отображение индекса к элементу становится нестабильным",
+        "Prop key используется только для улучшения производительности рендеринга и не влияет на корректность",
+        "Использование индекса массива в качестве ключа — это лучшая практика, так как обеспечивает стабильную идентичность каждого элемента",
+        "Prop key определяет CSS-класс, применяемый к каждому элементу в списке"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Keys enable React's diffing algorithm to match old elements with new ones during reconciliation. Array indices fail because if you remove the first item, index 0 now refers to a different item, causing React to misidentify which component instance should be reused. This leads to state being associated with the wrong list item. Options B and C are misconceptions—performance caching and state persistence work differently, and option D overstates the consequence.",
-      "ru": "Ключи позволяют алгоритму сравнения React сопоставлять старые элементы с новыми во время согласования. Индексы массива не работают, потому что если вы удалите первый элемент, индекс 0 теперь относится к другому элементу, заставляя React неправильно определить, какой экземпляр компонента следует повторно использовать. Это приводит к тому, что состояние связывается с неправильным элементом списка. Варианты B и C — это неправильные представления — кэширование производительности и сохранение состояния работают иначе, а вариант D преувеличивает последствие."
+      "en": "The key prop is critical for React's reconciliation algorithm to maintain component state and DOM identity correctly. When using index as a key on a dynamic list, if items are reordered or filtered, the index changes while the DOM node persists, causing state and refs to become misaligned with their intended items. A stable, unique identifier (like an item ID) should be used instead.",
+      "ru": "Prop key критичен для алгоритма согласования React, чтобы правильно поддерживать состояние компонента и идентичность DOM. При использовании индекса в качестве ключа в динамическом списке, если элементы переупорядочены или отфильтрованы, индекс меняется, а DOM-узел остается, вызывая рассинхронизацию состояния и ref с предполагаемыми элементами. Вместо этого следует использовать стабильный, уникальный идентификатор."
     }
   },
   {
     "id": "react-quiz-3",
     "topicId": "react",
     "question": {
-      "en": "Which of the following best explains why you cannot call React hooks conditionally? function MyComponent() { if (someCondition) { const [state, setState] = useState(0); } }",
-      "ru": "Какой из следующих вариантов лучше всего объясняет, почему вы не можете вызывать React hooks условно? function MyComponent() { if (someCondition) { const [state, setState] = useState(0); } }"
+      "en": "What will be logged to the console when this component mounts?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran, count is:', count);\n  }, [count]);\n  \n  console.log('Rendering, count is:', count);\n  \n  return (\n    <button onClick={() => setCount(count + 1)}>\n      Count: {count}\n    </button>\n  );\n}\n",
+      "ru": "Что будет залогировано в консоль при монтировании этого компонента?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran, count is:', count);\n  }, [count]);\n  \n  console.log('Rendering, count is:', count);\n  \n  return (\n    <button onClick={() => setCount(count + 1)}>\n      Count: {count}\n    </button>\n  );\n}\n"
     },
     "options": {
       "en": [
-        "React relies on the order of hook calls to maintain their state and identity; conditional calls violate this assumption and cause state to be mismatched between renders",
-        "Hooks must be defined at the module level to be properly optimized by React's compiler",
-        "Conditional hooks consume more memory because React allocates state for unused branches",
-        "Calling hooks conditionally is technically allowed but triggers a runtime warning that will crash the app in production"
+        "First: 'Rendering, count is: 0' then 'Effect ran, count is: 0'",
+        "First: 'Effect ran, count is: 0' then 'Rendering, count is: 0'",
+        "Only: 'Rendering, count is: 0' (the effect does not run on mount)",
+        "Nothing is logged because useState has not finished initializing"
       ],
       "ru": [
-        "React полагается на порядок вызовов hooks для по��держания их состояния и идентичности; условные вызовы нарушают это предположение и вызывают несоответствие состояния между рендерами",
-        "Hooks должны быть определены на уровне модуля для правильной оптимизации компилятором React",
-        "Условные hooks потребляют больше памяти, потому что React выделяет состояние для неиспользуемых ветвей",
-        "Условный вызов hooks технически разрешен, но запускает предупреждение во время выполнения, которое приведет к сбою приложения в production"
+        "Сначала: 'Rendering, count is: 0', затем 'Effect ran, count is: 0'",
+        "Сначала: 'Effect ran, count is: 0', затем 'Rendering, count is: 0'",
+        "Только: 'Rendering, count is: 0' (эффект не запускается при монтировании)",
+        "Ничего не логируется, так как useState еще не завершил инициализацию"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "React stores hook state in an array indexed by the order in which hooks are called within a component. If hooks are called conditionally, the order can change between renders, causing React to read the wrong state value for each hook. For example, skipping useState on one render means the next hook gets the state intended for it. This is why the Rules of Hooks enforce unconditional calls at the top level.",
-      "ru": "React хранит состояние hook в массиве, индексируемом по порядку вызова hooks внутри компонента. Если hooks вызываются условно, порядок может измениться между рендерами, что приведет к тому, что React прочитает неправильное значение состояния для каждого hook. Например, пропуск useState при одном рендере означает, что следующий hook получит состояние, предназначенное для него. Именно поэтому Rules of Hooks требуют безусловных вызовов на верхнем уровне."
+      "en": "React executes the component function body (the render phase) first, which logs 'Rendering, count is: 0'. After the component is mounted to the DOM, React then runs the effect because count is in the dependency array, logging 'Effect ran, count is: 0'. Effects always run after the render phase completes and the component is committed to the DOM.",
+      "ru": "React сначала выполняет тело функции компонента (фаза рендеринга), которая логирует 'Rendering, count is: 0'. После монтирования компонента на DOM, React запускает эффект, потому что count находится в массиве зависимостей, логируя 'Effect ran, count is: 0'. Эффекты всегда запускаются после завершения фазы рендеринга и коммита компонента на DOM."
     }
   },
   {
     "id": "react-quiz-4",
     "topicId": "react",
     "question": {
-      "en": "What is the difference between a controlled and uncontrolled input in React, and when should you prefer each?",
-      "ru": "В чем разница между управляемым и неуправляемым вводом в React, и когда вы должны предпочесть каждый?"
+      "en": "In what scenario would useMemo and useCallback provide the most significant performance benefit?",
+      "ru": "В каком сценарии useMemo и useCallback обеспечат наиболее значительный прирост производительности?"
     },
     "options": {
       "en": [
-        "Controlled inputs have their value managed by React state (single source of truth), while uncontrolled inputs rely on DOM state; use controlled for forms with validation, uncontrolled for simple cases or integrations with non-React code",
-        "Uncontrolled inputs are always faster because they don't trigger re-renders, while controlled inputs update the DOM directly; use uncontrolled in performance-critical applications",
-        "Controlled and uncontrolled inputs are identical in behavior; the distinction is only semantic and affects code readability",
-        "Uncontrolled inputs are the modern React standard because they reduce boilerplate; controlled inputs are deprecated and should not be used in new code"
+        "When preventing expensive re-renders of memoized child components that receive the same function or object reference as props",
+        "When you need to store data in local component state for multiple renders",
+        "When reducing the time it takes to execute a single render cycle",
+        "When you have no other way to store component state besides props"
       ],
       "ru": [
-        "Управляемые вводы имеют значение, управляемое состоянием React (единый источник истины), в то время как неуправляемые вводы полагаются на состояние DOM; используйте управляемые для форм с валидацией, неуправляемые для простых случаев или интеграции с кодом, не относящимся к React",
-        "Неуправляемые вводы всегда быстрее, потому что они не запускают повторные рендеры, в то время как управляемые вводы обновляют DOM напрямую; используйте неуправляемые в приложениях, критичных к производительности",
-        "Управляемые и неуправляемые вводы имеют идентичное поведение; различие только семантическое и влияет на читаемость кода",
-        "Неуправляемые вводы — это современный стандарт React, потому что они сокращают шаблонный код; управляемые вводы устарели и не должны использоваться в новом коде"
+        "Когда предотвращается дорогостоящий пересчет мемоизированных дочерних компонентов, которые получают одну и ту же ссылку на функцию или объект в качестве props",
+        "Когда вам нужно сохранить данные в локальное состояние компонента на несколько рендеров",
+        "Когда нужно сократить время выполнения одного цикла рендеринга",
+        "Когда у вас нет других способов хранить состояние компонента кроме props"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Controlled inputs let React manage the input value through state, enabling easy validation, transformation, and form coordination. Uncontrolled inputs use the DOM as the source of truth, useful for file inputs, integration with jQuery, or simple standalone inputs where React coordination isn't needed. Neither is deprecated; the choice depends on use case. Option B is false—controlled inputs don't force DOM updates directly, they cause re-renders which React optimizes.",
-      "ru": "Управляемые вводы позволяют React управлять значением ввода через состояние, обеспечивая легкую валидацию, трансформацию и координацию формы. Неуправляемые вводы используют DOM в качестве источника истины, полезны для загрузки файлов, интеграции с jQuery или простыми изолированными вводами, где координация React не требуется. Ни один не устарел; выбор зависит от случая использования. Вариант B неверен—управляемые вводы не заставляют DOM обновляться напрямую, они вызывают повторные рендеры, которые React оптимизирует."
+      "en": "useMemo and useCallback are designed to maintain referential equality of values and functions across renders. Their primary benefit is preventing unnecessary re-renders of memoized child components (wrapped with React.memo) that depend on these props. Without stable references, even if the logic hasn't changed, child components would re-render on every parent render. The other options confuse the purpose of these hooks with other React patterns.",
+      "ru": "useMemo и useCallback предназначены для сохранения референциального равенства значений и функций между рендерами. Их основное преимущество — предотвращение ненужных пересчетов мемоизированных дочерних компонентов (обернутых в React.memo), которые зависят от этих props. Без стабильных ссылок, даже если логика не изменилась, дочерние компоненты будут пересчитываться на каждом рендере родителя. Остальные варианты путают назначение этих hooks с другими паттернами React."
     }
   },
   {
     "id": "react-quiz-5",
     "topicId": "react",
     "question": {
-      "en": "const MemoChild = React.memo(({ count }) => { console.log('MemoChild rendered'); return <div>{count}</div>; }); function Parent() { const [count, setCount] = useState(0); const [other, setOther] = useState(0); return (<> <MemoChild count={count} /> <button onClick={() => setOther(other + 1)}>Increment Other</button> </> ); } How many times will 'MemoChild rendered' log when the 'Increment Other' button is clicked once?",
-      "ru": "const MemoChild = React.memo(({ count }) => { console.log('MemoChild rendered'); return <div>{count}</div>; }); function Parent() { const [count, setCount] = useState(0); const [other, setOther] = useState(0); return (<> <MemoChild count={count} /> <button onClick={() => setOther(other + 1)}>Increment Other</button> </> ); } Сколько раз будет выведено сообщение 'MemoChild rendered', когда кнопка 'Increment Other' будет нажата один раз?"
+      "en": "What is the key difference between a controlled component and an uncontrolled component in React, and when would you choose one over the other?",
+      "ru": "В чем ключевое различие между управляемым и неуправляемым компонентом в React, и когда вы выбрали бы одно вместо другого?"
     },
     "options": {
       "en": [
-        "Once, because Parent re-renders and even though count didn't change, memo will still re-render the child since Parent is the one passing new props",
-        "Zero times, because React.memo compares props and count hasn't changed, so the child won't re-render",
-        "Twice, once when Parent re-renders and once when memo detects the prop change",
-        "Once, because the button click causes a state update that forces all child components to re-render regardless of props"
+        "A controlled component's value is managed by React state, giving React full control over the input; an uncontrolled component relies on the DOM to manage its own value. Use controlled when you need to validate, transform, or react to changes; use uncontrolled for simple forms or integration with non-React code",
+        "A controlled component is faster because React manages the state directly in memory, while an uncontrolled component must query the DOM",
+        "Controlled components can only be used with text inputs, while uncontrolled components work with all input types",
+        "There is no difference; they are just alternative naming conventions for the same functionality"
       ],
       "ru": [
-        "Один раз, потому что Parent повторно рендерится, и даже если count не изменился, memo все равно повторно отрендирует дочерний компонент, так как Parent — это тот, кто передает новые props",
-        "Ноль раз, потому что React.memo сравнивает props и count не изменился, поэтому дочерний компонент не будет повторно рендеров",
-        "Дважды, один раз когда Parent повторно рендерится и один раз когда memo обнаруживает изменение prop",
-        "Один раз, потому что щелчок кнопки вызывает обновление состояния, которое заставляет все дочерние компоненты повторно рендеров независимо от props"
+        "Значение управляемого компонента управляется состоянием React, давая React полный контроль над вводом; неуправляемый компонент полагается на DOM для управления своим собственным значением. Используйте управляемый, когда вам нужно валидировать, трансформировать или реагировать на изменения; используйте неуправляемый для простых форм или интеграции с кодом без React",
+        "Управляемый компонент быстрее, потому что React управляет состоянием прямо в памяти, тогда как неуправляемый компонент должен запрашивать DOM",
+        "Управляемые компоненты можно использовать только с текстовыми входами, тогда как неуправляемые компоненты работают со всеми типами входов",
+        "Нет разницы; это просто альтернативные соглашения об именовании для одной и той же функциональности"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "React.memo performs shallow comparison of props. When setOther is called, Parent re-renders, but it passes the same count value (still 0) to MemoChild. Since the count prop is identical to the previous render, memo prevents the re-render, so 'MemoChild rendered' logs zero times. This is a key benefit of memo—preventing unnecessary renders when props haven't actually changed.",
-      "ru": "React.memo выполняет поверхностное сравнение props. Когда вызывается setOther, Parent повторно рендерится, но передает то же значение count (все еще 0) в MemoChild. Поскольку prop count идентичен предыдущему рендеру, memo предотвращает повторный рендер, поэтому 'MemoChild rendered' выводится ноль раз. Это ключевое преимущество memo—предотвращение ненужных рендеров, когда props на самом деле не изменились."
+      "en": "Controlled components keep input state in React's state via onChange handlers, allowing React to validate, sanitize, or respond to every change. Uncontrolled components let the DOM maintain state and require refs to access their value when needed. Controlled components are preferred for dynamic forms with validation; uncontrolled components are simpler for basic forms or when integrating with non-React libraries. The performance difference is negligible; the choice is about control and flexibility.",
+      "ru": "Управляемые компоненты хранят состояние ввода в состояние React через обработчики onChange, позволяя React валидировать, очищать или реагировать на каждое изменение. Неуправляемые компоненты позволяют DOM управлять состоянием и требуют refs для доступа к их значению при необходимости. Управляемые компоненты предпочтительны для динамических форм с валидацией; неуправляемые компоненты проще для базовых форм или при интеграции с библиотеками без React. Разница в производительности незначительна; выбор зависит от контроля и гибкости."
     }
   },
   {
     "id": "react-quiz-6",
     "topicId": "react",
     "question": {
-      "en": "You call useState multiple times in a component. Why must the order of hooks remain constant across renders?",
-      "ru": "Вы вызываете useState несколько раз в компоненте. Почему порядок хуков должен оставаться постоянным при каждом рендере?"
+      "en": "You have a component with useState. When you call the state setter function, React schedules a re-render but doesn't update state immediately. What is the correct term for this behavior and why does React do it?",
+      "ru": "У вас есть компонент с useState. Когда вы вызываете функцию установки состояния, React планирует повторный рендер, но не обновляет состояние немедленно. Как называется это поведение и почему React это делает?"
     },
     "options": {
       "en": [
-        "React uses a call stack to map hook invocations to state values in order",
-        "The JavaScript engine requires hooks to be declared in the same order for performance",
-        "React stores state in a Map keyed by hook name, so order doesn't actually matter",
-        "Each hook must be registered with a unique ID that gets assigned based on declaration order"
+        "Batching — React groups multiple state updates to improve performance and reduce unnecessary re-renders",
+        "Debouncing — React delays state updates by a fixed time interval to prevent rapid changes",
+        "Throttling — React limits state updates to occur only once per animation frame",
+        "Reconciliation — React compares old and new state objects to determine what changed"
       ],
       "ru": [
-        "React использует стек вызовов для отображения вызовов хуков на значения состояния по порядку",
-        "Движок JavaScript требует, чтобы хуки были объявлены в одном порядке для производительности",
-        "React хранит состояние в Map с ключами по имени хука, поэтому порядок не имеет значения",
-        "Каждый хук должен быть зарегистрирован с уникальным ID, который назначается на основе порядка объявления"
+        "Батчинг — React группирует несколько обновлений состояния для улучшения производительности и сокращения ненужных повторных рендеров",
+        "Дебаунсинг — React задерживает обновления состояния на фиксированный интервал времени, чтобы предотвратить быстрые изменения",
+        "Дросселирование — React ограничивает обновления состояния, чтобы они происходили только один раз за кадр анимации",
+        "Согласование — React сравнивает старые и новые объекты состояния, чтобы определить, что изменилось"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "React maintains a fiber node with a linked list of hooks. Each useState call corresponds to the next node in the list by position. If the order changes between renders, React will associate the wrong state value with the wrong hook. This is why hooks cannot be called conditionally.",
-      "ru": "React поддерживает узел fiber со связным списком хуков. Каждый вызов useState соответствует следующему узлу в списке по позиции. Если порядок изменится между рендерами, React свяжет неправильное значение состояния с неправильным хуком. Поэтому хуки не могут вызываться условно."
+      "en": "Batching is React's optimization strategy where multiple setState calls are grouped together before triggering a single re-render. This is especially important in event handlers and promises. Debouncing and throttling are manual techniques you'd implement separately, while reconciliation is the algorithm React uses to compare component trees, not related to state update timing.",
+      "ru": "Батчинг — это стратегия оптимизации React, при которой несколько вызовов setState группируются вместе перед запуском одного повторного рендера. Это особенно важно в обработчиках событий и промисах. Дебаунсинг и дросселирование — это методы, которые вы должны реализовать отдельно, а согласование — это алгоритм, который React использует для сравнения деревьев компонентов, что не связано с временем обновления состояния."
     }
   },
   {
     "id": "react-quiz-7",
     "topicId": "react",
     "question": {
-      "en": "What is the output of this code? const [count, setCount] = useState(0); useEffect(() => { setCount(count + 1); }, [count]); // renders once, what happens next?",
-      "ru": "Каков результат этого кода? const [count, setCount] = useState(0); useEffect(() => { setCount(count + 1); }, [count]); // рендерится один раз, что происходит дальше?"
+      "en": "What will be logged to the console?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran, count is:', count);\n    return () => console.log('Cleanup, count was:', count);\n  }, [count]);\n  \n  return (\n    <button onClick={() => setCount(count + 1)}>\n      {count}\n    </button>\n  );\n}\n\nAssume the button is clicked twice (0 → 1 → 2). What is the complete log output in order?",
+      "ru": "Что будет выведено в консоль?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran, count is:', count);\n    return () => console.log('Cleanup, count was:', count);\n  }, [count]);\n  \n  return (\n    <button onClick={() => setCount(count + 1)}>\n      {count}\n    </button>\n  );\n}\n\nПредположим, кнопка нажата дважды (0 → 1 → 2). Каков полный вывод логов в порядке?"
     },
     "options": {
       "en": [
-        "It enters an infinite loop, continuously incrementing count",
-        "It increments count once and then stops because of the dependency array",
-        "It increments count to 1 and stays there because setCount batches updates",
-        "The component throws an error because setCount cannot be called inside useEffect"
+        "Effect ran, count is: 0 → Effect ran, count is: 1 → Cleanup, count was: 1 → Effect ran, count is: 2",
+        "Effect ran, count is: 0 → Cleanup, count was: 0 → Effect ran, count is: 1 → Cleanup, count was: 1 → Effect ran, count is: 2",
+        "Effect ran, count is: 0 → Effect ran, count is: 1 → Effect ran, count is: 2 → Cleanup, count was: 2",
+        "Cleanup, count was: 0 → Effect ran, count is: 1 → Cleanup, count was: 1 → Effect ran, count is: 2 → Cleanup, count was: 2"
       ],
       "ru": [
-        "Это входит в бесконечный цикл, непрерывно увеличивая count",
-        "Это увеличивает count один раз и затем останавливается из-за массива зависимостей",
-        "Это увеличивает count до 1 и остается там, потому что setCount объединяет обновления",
-        "Компонент выбрасывает ошибку, потому что setCount не может быть вызван внутри useEffect"
+        "Effect ran, count is: 0 → Effect ran, count is: 1 → Cleanup, count was: 1 → Effect ran, count is: 2",
+        "Effect ran, count is: 0 → Cleanup, count was: 0 → Effect ran, count is: 1 → Cleanup, count was: 1 → Effect ran, count is: 2",
+        "Effect ran, count is: 0 → Effect ran, count is: 1 → Effect ran, count is: 2 → Cleanup, count was: 2",
+        "Cleanup, count was: 0 → Effect ran, count is: 1 → Cleanup, count was: 1 → Effect ran, count is: 2 → Cleanup, count was: 2"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "This creates an infinite loop because the effect dependency [count] includes count itself. Every time the effect runs and calls setCount(count + 1), count changes, triggering the effect again. To avoid this, either remove count from the dependency array, use a functional update setCount(c => c + 1) with an empty array, or restructure the logic.",
-      "ru": "Это создает бесконечный цикл, потому что зависимость эффекта [count] включает сам count. Каждый раз, когда эффект запускается и вызывает setCount(count + 1), count изменяется, снова запуская эффект. Чтобы избежать этого, удалите count из массива зависимостей, используйте функциональное обновление setCount(c => c + 1) с пустым массивом или переструктурируйте логику."
+      "en": "On mount, the effect runs once logging 'Effect ran, count is: 0'. When count changes to 1, the cleanup function runs first (logging the old count value 0), then the new effect runs. This pattern repeats for count = 2. The dependency array [count] ensures the effect re-runs whenever count changes, and cleanup always executes before the new effect.",
+      "ru": "При монтировании эффект выполняется один раз, выводя 'Effect ran, count is: 0'. Когда count изменяется на 1, сначала выполняется функция очистки (выводит старое значение count = 0), затем выполняется новый эффект. Этот паттерн повторяется для count = 2. Массив зависимостей [count] гарантирует, что эффект повторно выполняется всякий раз, когда count изменяется, и очистка всегда выполняется перед новым эффектом."
     }
   },
   {
     "id": "react-quiz-8",
     "topicId": "react",
     "question": {
-      "en": "In reconciliation, React uses the key prop to track element identity. What happens if you use the array index as the key and the list is reordered?",
-      "ru": "При согласовании React использует prop key для отслеживания идентичности элемента. Что происходит, если вы используете индекс массива как ключ и список переупорядочивается?"
+      "en": "In a list of 100 items rendered with .map(), you forgot to add the key prop. What is the main performance and correctness risk?",
+      "ru": "В списке из 100 элементов, отрендеренных с помощью .map(), вы забыли добавить проп key. Какой основной риск производительности и корректности?"
     },
     "options": {
       "en": [
-        "React correctly remaps the DOM elements to their new positions",
-        "React reuses DOM nodes incorrectly and component state becomes misaligned with data",
-        "React creates new DOM nodes for each reordered item, causing performance degradation",
-        "React throws a warning and aborts the render to prevent bugs"
+        "React will re-render all 100 items every time any item updates, even if only one changed",
+        "React uses array index as an implicit key, which causes issues when the list is filtered, sorted, or reordered because component state and DOM nodes get mismatched",
+        "React will throw an error and the component will not render at all",
+        "Each item will be re-mounted from scratch on every render, losing any internal state or focus position"
       ],
       "ru": [
-        "React правильно переотображает элементы DOM на их новые позиции",
-        "React неправильно переиспользует узлы DOM, и состояние компонента становится несогласованным с данными",
-        "React создает новые узлы DOM для каждого переупорядоченного элемента, вызывая деградацию производительности",
-        "React выдает предупреждение и отменяет рендер, чтобы предотвратить ошибки"
+        "React повторно отрендерит все 100 элементов каждый раз, когда обновится любой элемент, даже если изменился только один",
+        "React использует индекс массива в качестве неявного ключа, что вызывает проблемы, когда список фильтруется, сортируется или переупорядочивается, потому что состояние компонента и узлы DOM становятся несовместимыми",
+        "React выдаст ошибку и компонент вообще не будет отрендерен",
+        "Каждый элемент будет повторно монтирован с нуля при каждом рендере, теряя любое внутреннее состояние или позицию фокуса"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Using array indices as keys breaks reconciliation when the list order changes. React assumes the key '0' still refers to the first item even after reordering. This causes state, focus, and input values to become attached to the wrong list items. Always use stable, unique identifiers like IDs from your data.",
-      "ru": "Использование индексов массива в качестве ключей нарушает согласование при изменении порядка списка. React предполагает, что ключ '0' по-прежнему относится к первому элементу даже после переупорядочения. Это вызывает присоединение состояния, фокуса и значений ввода к неправильным элементам списка. Всегда используйте стабильные, уникальные идентификаторы, такие как ID из ваших данных."
+      "en": "Without explicit keys, React defaults to using array indices. This breaks reconciliation when the list order changes—React matches items by position rather than identity. A component that was at index 0 will be matched to whatever is now at index 0, causing state bugs, incorrect focus, and animation issues. The list will still render and update, but with correctness problems, not just performance issues.",
+      "ru": "Без явных ключей React использует индексы массива по умолчанию. Это нарушает согласование, когда порядок списка изменяется — React сопоставляет элементы по позиции, а не по идентичности. Компонент, который был по индексу 0, будет сопоставлен с тем, что сейчас находится по индексу 0, вызывая ошибки состояния, неправильный фокус и проблемы с анимацией. Список все еще будет отрендерен и обновлен, но с проблемами корректности, а не только производительности."
     }
   },
   {
     "id": "react-quiz-9",
     "topicId": "react",
     "question": {
-      "en": "When should you use useMemo vs useCallback? A parent passes a function to a child component wrapped in useCallback. The child is wrapped in React.memo. The function's closure captures a dependency that changes. What happens?",
-      "ru": "Когда следует использовать useMemo вместо useCallback? Родитель передает функцию дочернему компоненту, завернутую в useCallback. Дочерний компонент завернут в React.memo. Замыкание функции захватывает зависимость, которая изменяется. Что происходит?"
+      "en": "You have a parent component with a Context value that re-renders. All consumers of that context re-render too, even if the value didn't actually change. How can you prevent unnecessary re-renders of context consumers without splitting the context?",
+      "ru": "У вас есть родительский компонент с значением Context, которое повторно рендерится. Все потребители этого контекста также повторно рендерятся, даже если значение не изменилось. Как вы можете предотвратить ненужные повторные рендеры потребителей контекста без разделения контекста?"
     },
     "options": {
       "en": [
-        "The child re-renders because the function reference changes when its closure updates",
-        "The child does not re-render because useCallback prevents all re-renders of children",
-        "The function updates internally but the child never re-renders due to memo",
-        "React throws an error because useCallback and React.memo are incompatible"
+        "Use useMemo on the context value in the provider to memoize it and only create a new reference if dependencies change",
+        "Wrap context consumers with React.memo to prevent re-renders when parent re-renders",
+        "Move context state to a different component level so it re-renders less frequently",
+        "Use useCallback for all functions passed through context to ensure they have stable identities"
       ],
       "ru": [
-        "Дочерний компонент переживает повторный рендер, потому что ссылка на функцию изменяется при обновлении замыкания",
-        "Дочерний компонент не переживает повторный рендер, потому что useCallback предотвращает все повторные рендеры дочерних элементов",
-        "Функция обновляется внутри, но дочерний компонент никогда не переживает повторный рендер из-за memo",
-        "React выбрасывает ошибку, потому что useCallback и React.memo несовместимы"
+        "Используйте useMemo для значения контекста в провайдере, чтобы мемоизировать его и создавать новую ссылку только если зависимости изменяются",
+        "Оберните потребителей контекста с помощью React.memo, чтобы предотвратить повторные рендеры, когда родитель повторно рендерится",
+        "Переместите состояние контекста на другой уровень компонента, чтобы оно повторно рендерилось менее часто",
+        "Используйте useCallback для всех функций, передаваемых через контекст, чтобы гарантировать, что они имеют стабильные идентичности"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "useCallback only memoizes based on its dependency array. If the dependency changes, a new function reference is created, and React.memo detects the prop change, causing a re-render. The memo wrapper doesn't prevent this because the actual prop value (function reference) has changed. You must include all dependencies in useCallback's array.",
-      "ru": "useCallback мемоизирует только на основе массива зависимостей. Если зависимость изменится, создается новая ссылка на функцию, и React.memo обнаруживает изменение prop, вызывая повторный рендер. Обертка memo не предотвращает это, потому что фактическое значение prop (ссылка на функцию) изменилось. Вы должны включить все зависимости в массив useCallback."
+      "en": "When a context provider re-renders, it creates a new object reference for the value prop by default, triggering re-renders in all consumers. Wrapping the value with useMemo ensures a new reference is only created when the actual data dependencies change. React.memo alone won't help because context consumers subscribe at a deeper level and will still re-render when the context value reference changes. useCallback helps but isn't sufficient on its own.",
+      "ru": "Когда провайдер контекста повторно рендерится, по умолчанию он создает новую ссылку на объект для пропа value, что запускает повторные рендеры всех потребителей. Обертывание значения с помощью useMemo гарантирует, что новая ссылка создается только при изменении реальных зависимостей данных. React.memo сам по себе не поможет, потому что потребители контекста подписываются на более глубоком уровне и все равно повторно рендерятся, когда ссылка значения контекста изменяется. useCallback помогает, но недостаточно само по себе."
     }
   },
   {
     "id": "react-quiz-10",
     "topicId": "react",
     "question": {
-      "en": "What is the key difference between a controlled component (with value and onChange) and an uncontrolled component (with defaultValue and useRef)? Which one allows React to be the single source of truth?",
-      "ru": "Какова ключевая разница между управляемым компонентом (с value и onChange) и неуправляемым компонентом (с defaultValue и useRef)? Какой из них позволяет React быть единственным источником истины?"
+      "en": "What will be logged to the console when the component mounts?\njs\nfunction App() {\n  const [data, setData] = useState(null);\n  \n  useEffect(() => {\n    console.log('Fetching data');\n    fetch('/api/data')\n      .then(res => res.json())\n      .then(json => {\n        console.log('Data received:', json);\n        setData(json);\n      });\n  }, []);\n  \n  return <div>{data ? data.name : 'Loading...'}</div>;\n}\n\nWhat is the output order, assuming the fetch takes 100ms?",
+      "ru": "Что будет выведено в консоль при монтировании компонента?\njs\nfunction App() {\n  const [data, setData] = useState(null);\n  \n  useEffect(() => {\n    console.log('Fetching data');\n    fetch('/api/data')\n      .then(res => res.json())\n      .then(json => {\n        console.log('Data received:', json);\n        setData(json);\n      });\n  }, []);\n  \n  return <div>{data ? data.name : 'Loading...'}</div>;\n}\n\nКаков порядок вывода, если fetch занимает 100ms?"
     },
     "options": {
       "en": [
-        "Controlled components are slower because they update state on every keystroke, uncontrolled components don't require refs",
-        "Controlled components make React the source of truth by storing the value in state and syncing it with the DOM on every change",
-        "Uncontrolled components are more secure because the value is not exposed to JavaScript",
-        "The difference is purely stylistic; both approaches are equally performant and maintain the same data flow"
+        "'Fetching data' is logged immediately, then after ~100ms 'Data received: {...}' is logged, then the component re-renders",
+        "'Loading...' is rendered first, then 'Fetching data' is logged, then 'Data received: {...}' after ~100ms, then re-render with the name",
+        "'Fetching data' and 'Data received: {...}' are both logged immediately because the promise resolves synchronously",
+        "'Fetching data' is logged, then the component suspends, then after ~100ms it resumes and logs 'Data received: {...}'"
       ],
       "ru": [
-        "Управляемые компоненты работают медленнее, потому что они обновляют состояние при каждом нажатии клавиши, неуправляемые компоненты не требуют refs",
-        "Управляемые компоненты делают React источником истины, сохраняя значение в состоянии и синхронизируя его с DOM при каждом изменении",
-        "Неуправляемые компоненты более безопасны, потому что значение не открывается для JavaScript",
-        "Разница только стилистическая; оба подхода одинаково эффективны и поддерживают один и тот же поток данных"
+        "'Fetching data' выводится немедленно, затем после ~100ms выводится 'Data received: {...}', затем компонент повторно рендерится",
+        "'Loading...' сначала рендерится, затем выводится 'Fetching data', затем 'Data received: {...}' после ~100ms, затем повторный рендер с именем",
+        "'Fetching data' и 'Data received: {...}' оба выводятся немедленно, потому что промис разрешается синхронно",
+        "'Fetching data' выводится, затем компонент приостанавливается, затем после ~100ms он возобновляется и выводит 'Data received: {...}'"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "In a controlled component, React state is the single source of truth. The DOM value always matches the state, and changes flow through React's event handlers. In an uncontrolled component, the DOM holds the truth and React reads it via refs. Controlled components enable easier validation, conditional rendering, and state synchronization across the app.",
-      "ru": "В управляемом компоненте состояние React является единственным источником истины. Значение DOM всегда совпадает с состоянием, и изменения проходят через обработчики событий React. В неуправляемом компоненте DOM содержит истину, и React читает ее через refs. Управляемые компоненты облегчают валидацию, условный рендеринг и синхронизацию состояния по приложению."
+      "en": "The effect runs synchronously on mount, so 'Fetching data' is logged first. The component renders with data=null, displaying 'Loading...'. The fetch promise is asynchronous, so after ~100ms the promise resolves, 'Data received: {...}' is logged, setData is called, and React re-renders with the new data. Suspense is not used here, so there's no suspension behavior.",
+      "ru": "Эффект выполняется синхронно при монтировании, поэтому 'Fetching data' выводится первым. Компонент рендерится с data=null, отображая 'Loading...'. Промис fetch является асинхронным, поэтому после ~100ms промис разрешается, выводится 'Data received: {...}', вызывается setData, и React повторно рендерит с новыми данными. Suspense здесь не используется, поэтому поведения приостановки нет."
     }
   },
   {
     "id": "react-quiz-11",
     "topicId": "react",
     "question": {
-      "en": "Which of the following violates the Rules of Hooks in React?",
-      "ru": "Какой из следующих примеров нарушает правила использования хуков в React?"
+      "en": "Which of the following violates the Rules of Hooks in React?\njs\nfunction MyComponent() {\n  if (someCondition) {\n    const [state, setState] = useState(0);\n  }\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}\n\nWhat is the problem with this code?",
+      "ru": "Какой из следующих вариантов нарушает правила Hooks в React?\njs\nfunction MyComponent() {\n  if (someCondition) {\n    const [state, setState] = useState(0);\n  }\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}\n\nВ чём проблема этого кода?"
     },
     "options": {
       "en": [
-        "Calling useState at the top level of a functional component",
-        "Calling a custom hook that uses useState inside a conditional statement",
-        "Calling useEffect multiple times in the same component",
-        "Using hooks in a custom hook that is called from multiple components"
+        "Hooks are called conditionally, which breaks the stable order of hooks on each render",
+        "useState cannot be used inside a conditional block because it's inefficient",
+        "The component will throw an error because if statements are not allowed in components",
+        "The first state variable will be garbage collected if the condition is false"
       ],
       "ru": [
-        "Вызов useState на верхнем уровне функционального компонента",
-        "Вызов пользовательского хука, который использует useState, внутри условного оператора",
-        "Вызов useEffect несколько раз в одном компоненте",
-        "Использование хуков в пользовательском хуке, который вызывается из нескольких компонентов"
+        "Hooks вызываются условно, что нарушает стабильный порядок hooks при каждом рендере",
+        "useState нельзя использовать внутри условного блока, потому что это неэффективно",
+        "Компонент выбросит ошибку, потому что условные операторы не допускаются в компонентах",
+        "Первая переменная состояния будет удалена сборщиком мусора, если условие ложно"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "The Rules of Hooks state that hooks must be called at the top level of a component, not conditionally. Calling a hook inside a conditional, loop, or nested function breaks the hook order contract. Options 1, 3, and 4 are all valid patterns—useState at the top level is correct, multiple useEffect calls are allowed, and custom hooks can be reused across components.",
-      "ru": "Правила хуков гласят, что хуки должны вызываться на верхнем уровне компонента, а не условно. Вызов хука внутри условного оператора, цикла или вложенной функции нарушает контракт порядка хуков. Варианты 1, 3 и 4 — все допустимые паттерны: useState на верхнем уровне корректен, несколько вызовов useEffect разрешены, и пользовательские хуки могут переиспользоваться в разных компонентах."
+      "en": "React relies on the call order of hooks to maintain state correctly. Calling hooks conditionally changes this order between renders, causing React to associate state with the wrong hook. This is a fundamental rule violation that causes unpredictable behavior.",
+      "ru": "React полагается на порядок вызова hooks для правильного управления состоянием. Условный вызов hooks нарушает этот порядок между рендерами, заставляя React связывать состояние с неправильным hook. Это фундаментальное нарушение правил, вызывающее непредсказуемое поведение."
     }
   },
   {
     "id": "react-quiz-12",
     "topicId": "react",
     "question": {
-      "en": "What will be logged to the console when this component mounts and then the button is clicked once? const [count, setCount] = useState(0); useEffect(() => { console.log('Effect:', count); }, [count]); return <button onClick={() => setCount(count + 1)}>Click</button>;",
-      "ru": "Что будет выведено в консоль при монтировании компонента и после однократного клика по кнопке? const [count, setCount] = useState(0); useEffect(() => { console.log('Effect:', count); }, [count]); return <button onClick={() => setCount(count + 1)}>Click</button>;"
+      "en": "What will be logged to the console?\njs\nfunction App() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran:', count);\n  }, [count]);\n  \n  console.log('Render:', count);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n\nAfter clicking the button once, what is the order of logs?",
+      "ru": "Что будет выведено в консоль?\njs\nfunction App() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran:', count);\n  }, [count]);\n  \n  console.log('Render:', count);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n\nПосле одного клика на кнопку, какой порядок логов?"
     },
     "options": {
       "en": [
-        "Effect: 0, then Effect: 1",
-        "Effect: 1 only",
-        "Effect: 0 twice",
-        "Effect: 0, then nothing happens on click"
+        "Render: 0, Effect ran: 0, Render: 1, Effect ran: 1",
+        "Render: 0, Effect ran: 1, Render: 1, Effect ran: 0",
+        "Effect ran: 0, Render: 0, Effect ran: 1, Render: 1",
+        "Render: 1, Effect ran: 1"
       ],
       "ru": [
-        "Effect: 0, затем Effect: 1",
-        "Effect: 1 только",
-        "Effect: 0 дважды",
-        "Effect: 0, затем ничего не происходит при клике"
+        "Render: 0, Effect ran: 0, Render: 1, Effect ran: 1",
+        "Render: 0, Effect ran: 1, Render: 1, Effect ran: 0",
+        "Effect ran: 0, Render: 0, Effect ran: 1, Render: 1",
+        "Render: 1, Effect ran: 1"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The effect runs after mount with count=0, logging 'Effect: 0'. When the button is clicked, count becomes 1, which is in the dependency array, so the effect runs again and logs 'Effect: 1'. The effect only re-runs when its dependencies change, not on every render.",
-      "ru": "Эффект выполняется после монтирования с count=0, логируя 'Effect: 0'. При клике по кнопке count становится 1, который находится в массиве зависимостей, поэтому эффект выполняется снова и логирует 'Effect: 1'. Эффект повторно запускается только при изменении своих зависимостей, а не при каждом рендере."
+      "en": "On initial mount: 'Render: 0' logs during render, then 'Effect ran: 0' runs after commit. When the button is clicked, setState triggers a re-render: 'Render: 1' logs, then the effect runs again because count changed: 'Effect ran: 1'. Effects always run after the render phase.",
+      "ru": "При первоначальном монтировании: 'Render: 0' логируется во время рендера, затем 'Effect ran: 0' выполняется после коммита. При клике на кнопку setState вызывает перерендер: 'Render: 1' логируется, затем эффект выполняется снова, потому что count изменился: 'Effect ran: 1'. Эффекты всегда выполняются после фазы рендера."
     }
   },
   {
     "id": "react-quiz-13",
     "topicId": "react",
     "question": {
-      "en": "In React's reconciliation algorithm, why is the key prop important when rendering a list of items that may be reordered?",
-      "ru": "Почему в алгоритме примирения React пропс key важен при рендеринге списка элементов, которые могут быть переупорядочены?"
+      "en": "In React's reconciliation algorithm, what is the primary purpose of the 'key' prop when rendering a list of items?",
+      "ru": "В алгоритме reconciliation React, какова основная цель prop 'key' при рендеринге списка элементов?"
     },
     "options": {
       "en": [
-        "It helps React identify which items have changed, been added, or been removed by comparing keys across renders",
-        "It improves performance by allowing React to skip re-rendering items that haven't changed",
-        "It enables React to maintain component state and DOM node references correctly when list order changes",
-        "All of the above"
+        "To help React identify which items have changed, been added, or removed, enabling correct state persistence across re-renders",
+        "To automatically sort list items in the correct order",
+        "To improve rendering performance by preventing re-renders of unchanged items",
+        "To ensure that CSS styles are correctly applied to each list item"
       ],
       "ru": [
-        "Это помогает React идентифицировать, какие элементы изменились, были добавлены или удалены, путем сравнения ключей между рендерами",
-        "Это улучшает производительность, позволяя React пропускать повторный рендеринг элементов, которые не изменились",
-        "Это позволяет React правильно сохранять состояние компонента и ссылки на узлы DOM при изменении порядка списка",
-        "Все вышеперечисленное"
+        "Помочь React определить, какие элементы изменились, были добавлены или удалены, обеспечивая правильное сохранение состояния при перерендерах",
+        "Автоматически сортировать элементы списка в правильном порядке",
+        "Улучшить производительность рендеринга, предотвращая перерендеры неизменённых элементов",
+        "Обеспечить корректное применение CSS-стилей к каждому элементу списка"
       ]
     },
-    "correctIndex": 3,
+    "correctIndex": 0,
     "explanation": {
-      "en": "The key prop serves all three purposes: it helps React match elements between renders, it prevents unnecessary re-renders of stable items, and it ensures that component state stays with the correct DOM element even when list order changes. Without proper keys, reordering can cause state to be associated with wrong elements and visual bugs.",
-      "ru": "Пропс key служит всем трем целям: он помогает React сопоставлять элементы между рендерами, предотвращает ненужные повторные рендеры стабильных элементов и гаран��ирует, что состояние компонента остается с правильным элементом DOM даже при изменении порядка списка. Без правильных ключей переупорядочивание может привести к тому, что состояние будет связано с неправильными элементами и визуальными ошибками."
+      "en": "Keys allow React to match old elements with new ones during reconciliation. Without proper keys, React reuses DOM nodes in order, which causes state to be associated with the wrong item (e.g., form inputs appearing in wrong positions after filtering). Keys ensure each component instance maintains its own state correctly.",
+      "ru": "Ключи позволяют React сопоставлять старые элементы с новыми во время reconciliation. Без правильных ключей React переиспользует DOM-узлы по порядку, что приводит к тому, что состояние связывается с неправильным элементом (например, поля формы появляются в неправильных позициях после фильтрации). Ключи обеспечивают правильное сохранение состояния для каждого экземпляра компонента."
     }
   },
   {
     "id": "react-quiz-14",
     "topicId": "react",
     "question": {
-      "en": "A parent component uses Context to pass a theme object that contains color, fontSize, and spacing. A deeply nested child component wrapped in React.memo reads this context. When only the color property changes, what happens?",
-      "ru": "Родительский компонент использует Context для передачи объекта темы, содержащего color, fontSize и spacing. Глубоко вложенный дочерний компонент, обернутый в React.memo, читает этот контекст. Что произойдет при изменении только свойства color?"
+      "en": "What is the difference between a controlled component and an uncontrolled component in React?",
+      "ru": "В чём разница между контролируемым и неконтролируемым компонентом в React?"
     },
     "options": {
       "en": [
-        "The child will not re-render because React.memo prevents it",
-        "The child will re-render because the entire context object reference changed, even though only one property changed",
-        "The child will re-render only if you use useMemo to memoize the context value in the parent",
-        "The child will not re-render because it only uses color and ignores fontSize and spacing"
+        "A controlled component's value is managed by React state, while an uncontrolled component manages its own value via the DOM",
+        "A controlled component is slower because it re-renders on every input change, while uncontrolled components are more performant",
+        "A controlled component can only handle text input, while uncontrolled components work with any input type",
+        "A controlled component requires a form element, while uncontrolled components work independently"
       ],
       "ru": [
-        "Дочерний компонент не будет повторно отрендерен, потому что React.memo это предотвращает",
-        "Дочерний компонент будет повторно отрендерен, потому что ссылка на весь объект контекста изменилась, даже если изменилось только одно свойство",
-        "Дочерний компонент будет повторно отрендерен только если вы используете useMemo для мемоизации значения контекста в родителе",
-        "Дочерний компонент не будет повторно отрендерен, потому что он использует только color и игнорирует fontSize и spacing"
+        "Значение контролируемого компонента управляется состоянием React, а неконтролируемый компонент управляет своим значением через DOM",
+        "Контролируемый компонент медленнее, потому что перерендеривается при каждом изменении ввода, а неконтролируемые компоненты более производительны",
+        "Контролируемый компонент может обрабатывать только текстовый ввод, а неконтролируемые компоненты работают с любым типом ввода",
+        "Контролируемый компонент требует элемента формы, а неконтролируемые компоненты работают независимо"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "React.memo compares props, not context values. When context value changes, consumers always re-render regardless of memo. The entire theme object is created fresh, so even if only one property changes, the object reference is new. To fix this, wrap the context value with useMemo in the parent to maintain object identity, or split the context into smaller, more specific contexts.",
-      "ru": "React.memo сравнивает пропсы, а не значения контекста. Когда значение контекста изменяется, потребители всегда повторно отрендариваются, несмотря на memo. Весь объект темы создается заново, поэтому даже если изменяется только одно свойство, ссылка на объект новая. Чтобы это исправить, оберните значение контекста в useMemo в родителе, чтобы сохранить идентичность объекта, или разделите контекст на несколько более конкретных контекстов."
+      "en": "Controlled components have their value bound to React state via onChange handlers, making React the source of truth. Uncontrolled components use refs to access their DOM value directly. Controlled components offer better integration with React's data flow, while uncontrolled components are useful for file inputs or when integrating with non-React code.",
+      "ru": "Контролируемые компоненты имеют значение, привязанное к состоянию React через обработчики onChange, делая React источником истины. Неконтролируемые компоненты используют refs для прямого доступа к значению DOM. Контролируемые компоненты обеспечивают лучшую интеграцию с потоком данных React, а неконтролируемые полезны для загрузки файлов или интеграции с не-React кодом."
     }
   },
   {
     "id": "react-quiz-15",
     "topicId": "react",
     "question": {
-      "en": "What is the key difference in behavior between a controlled input (value={state}) and an uncontrolled input (<input ref={ref} />) when the component re-renders?",
-      "ru": "В чем ключевое отличие в поведении управляемого инпута (value={state}) от неуправляемого инпута (<input ref={ref} />) при повторном рендере компонента?"
+      "en": "When should you use useMemo vs useCallback in React, and what is the key difference between them?",
+      "ru": "Когда следует использовать useMemo vs useCallback в React, и в чём ключевое различие между ними?"
     },
     "options": {
       "en": [
-        "Controlled inputs always update from state on every render, while uncontrolled inputs preserve their DOM value independently",
-        "Uncontrolled inputs are faster because they bypass React's rendering process entirely",
-        "Controlled inputs cannot be modified by the user without updating state, while uncontrolled inputs have no restrictions",
-        "There is no behavioral difference; it's just a matter of coding style preference"
+        "useMemo memoizes a computed value, while useCallback memoizes a function; useMemo is for expensive calculations, useCallback is for preventing child re-renders",
+        "useCallback is more performant than useMemo, so you should always prefer useCallback",
+        "useMemo and useCallback are identical and can be used interchangeably in any situation",
+        "useCallback should only be used with event handlers, while useMemo should only be used with rendering logic"
       ],
       "ru": [
-        "Управляемые инпуты всегда обновляются из состояния при каждом рендере, тогда как неуправляемые инпуты сохраняют свое значение DOM независимо",
-        "Неуправляемые инпуты быстрее, потому что полностью обходят процесс рендеринга React",
-        "Управляемые инпуты не могут быть изменены пользователем без обновления состояния, тогда как неуправляемые инпуты не имеют ограничений",
-        "Нет поведенческого различия; это просто вопрос предпочтения в стиле кодирования"
+        "useMemo мемоизирует вычисленное значение, а useCallback мемоизирует функцию; useMemo для дорогостоящих расчётов, useCallback для предотвращения перерендеров потомков",
+        "useCallback более производителен, чем useMemo, поэтому всегда следует отдавать предпочтение useCallback",
+        "useMemo и useCallback идентичны и могут использоваться взаимозаменяемо в любой ситуации",
+        "useCallback следует использовать только с обработчиками событий, а useMemo только с логикой рендеринга"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "In a controlled input, React controls the input's value through state, so it updates on every render. In an uncontrolled input, the DOM node maintains its own value independently, and React doesn't update it. Controlled inputs ensure the UI always reflects the current state, while uncontrolled inputs are useful for integrating with non-React code or file inputs. Both have their use cases; the difference is not just stylistic.",
-      "ru": "В управляемом инпуте React контролирует значение инпута через состояние, поэтому оно обновляется при каждом рендере. В неуправляемом инпуте узел DOM сохраняет свое собственное значение независимо, и React его не обновляет. Управляемые инпуты гарантируют, что UI всегда отражает текущее состояние, а неуправляемые инпуты полезны для интеграции с кодом, не относящимся к React, или с файловыми инпутами. Оба имеют свои варианты использования; разница не только стилистическая."
+      "en": "useMemo returns a memoized value that is recalculated only when dependencies change, useful for expensive computations. useCallback returns a memoized function reference, preventing unnecessary re-creation and child re-renders. Both optimize performance but serve different purposes: useMemo optimizes calculations, useCallback optimizes function identity for React.memo or dependency arrays.",
+      "ru": "useMemo возвращает мемоизированное значение, пересчитываемое только при изменении зависимостей, полезно для дорогостоящих вычислений. useCallback возвращает мемоизированную ссылку на функцию, предотвращая ненужное пересоздание и перерендеры потомков. Обе оптимизируют производительность, но служат разным целям: useMemo оптимизирует вычисления, useCallback оптимизирует идентичность функции для React.memo или массивов зависимостей."
     }
   },
   {
     "id": "react-quiz-16",
     "topicId": "react",
     "question": {
-      "en": "Consider the following code: const [count, setCount] = useState(0); setCount(1); setCount(2); setCount(3); What will count be after the component renders?",
-      "ru": "Рассмотрите следующий код: const [count, setCount] = useState(0); setCount(1); setCount(2); setCount(3); Какое значение будет у count после рендера компонента?"
+      "en": "What will be logged when this component mounts and updates?\njs\nfunction Component() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    console.log('Effect ran:', count);\n  }, [count]);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n\nAssuming the button is clicked once after mount.",
+      "ru": "Что будет залогировано при монтировании и обновлении этого компонента?\njs\nfunction Component() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    console.log('Effect ran:', count);\n  }, [count]);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}\n\nПредполагая, что кнопка нажата один раз после монтирования."
     },
     "options": {
       "en": [
-        "3",
-        "1",
-        "0",
-        "The component will error"
+        "Effect ran: 0, then Effect ran: 1",
+        "Effect ran: 1 only",
+        "Effect ran: 0 only",
+        "Effect ran: 0, then Effect ran: 0, then Effect ran: 1"
       ],
       "ru": [
-        "3",
-        "1",
-        "0",
-        "Компонент выдаст ошибку"
+        "Effect ran: 0, затем Effect ran: 1",
+        "Effect ran: 1 только",
+        "Effect ran: 0 только",
+        "Effect ran: 0, затем Effect ran: 0, затем Effect ran: 1"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "React batches state updates, so all three setCount calls queue updates with values 1, 2, and 3. The final value is 3 because each update replaces the previous one. The component will only re-render once after all synchronous state updates are processed.",
-      "ru": "React объединяет обновления состояния, поэтому все три вызова setCount ставят в очередь обновления со значениями 1, 2 и 3. Финальное значение будет 3, так как каждое обновление заменяет предыдущее. Компонент перерендеринг только один раз после обработки всех синхронных обновлений состояния."
+      "en": "The effect runs once on mount with count=0, logging 'Effect ran: 0'. When the button is clicked, count updates to 1, triggering the effect again due to [count] dependency, logging 'Effect ran: 1'. The effect runs after render, not before state updates.",
+      "ru": "Эффект запускается один раз при монтировании с count=0, логируя 'Effect ran: 0'. Когда нажата кнопка, count обновляется до 1, что снова запускает эффект из-за зависимости [count], логируя 'Effect ran: 1'. Эффект запускается после рендера, а не перед обновлением состояния."
     }
   },
   {
     "id": "react-quiz-17",
     "topicId": "react",
     "question": {
-      "en": "What is the primary purpose of the 'key' prop when rendering lists in React?",
-      "ru": "Какова основная цель пропса 'key' при отображении списков в React?"
+      "en": "In React, when using the key prop during list reconciliation, what is the primary purpose?",
+      "ru": "В React при использовании пропса key во время согласования списков какова основная цель?"
     },
     "options": {
       "en": [
-        "To help React identify which items have changed, been added, or removed during reconciliation",
-        "To improve the visual appearance of list items",
-        "To ensure unique CSS class names for each list item",
-        "To prevent duplicate data from being stored in state"
+        "To improve styling and CSS class matching for list items",
+        "To help React identify which items have changed, been added, or been removed",
+        "To automatically sort the list items in alphabetical order",
+        "To ensure component state persists across re-renders without re-initialization"
       ],
       "ru": [
-        "Помочь React определить, какие элементы изменились, были добавлены или удалены во время согласования",
-        "Улучшить внешний вид элементов списка",
-        "Обеспечить уникальные имена CSS-классов для каждого элемента списка",
-        "Предотвратить сохранение дублированных данных в состояние"
+        "Улучшить стилизацию и соответствие CSS-классов для элементов списка",
+        "Помочь React определить, какие элементы изменились, были добавлены или удалены",
+        "Автоматически сортировать элементы списка в алфавитном порядке",
+        "Обеспечить сохранение состояния компонента во время повторных рендеров без переинициализации"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "The key prop enables React's reconciliation algorithm to match elements across renders, preserving component state and DOM nodes correctly. Without proper keys, reordering list items can cause state to become misaligned with the wrong elements, leading to bugs.",
-      "ru": "Пропс key позволяет алгоритму согласования React совпадать элементов между рендерами, правильно сохраняя состояние компонента и узлы DOM. Без правильных ключей переупорядочивание элементов списка может привести к несогласованности состояния с неправильными элементами, вызывая ошибки."
+      "en": "The key prop helps React match old elements with new ones during reconciliation, enabling correct state and DOM updates. Without stable keys (like using array indices), React may reuse component instances incorrectly, causing state bugs and performance issues. Keys are not for styling, sorting, or persistence across renders—those are misconceptions.",
+      "ru": "Пропс key помогает React сопоставить старые элементы с новыми во время согласования, обеспечивая правильное обновление состояния и DOM. Без стабильных ключей (таких как индексы массива) React может неправильно переиспользовать экземпляры компонентов, вызывая ошибки состояния и проблемы производительности. Ключи не предназначены для стилизации, сортировки или сохранения состояния во время рендеров."
     }
   },
   {
     "id": "react-quiz-18",
     "topicId": "react",
     "question": {
-      "en": "Which of the following correctly describes the difference between useMemo and useCallback?",
-      "ru": "Какое из следующих утверждений правильно описывает разницу между useMemo и useCallback?"
+      "en": "Which of the following correctly demonstrates the Rules of Hooks?",
+      "ru": "Какой из следующих вариантов правильно демонстрирует Правила Hooks?"
     },
     "options": {
       "en": [
-        "useMemo memoizes a computed value, while useCallback memoizes a function",
-        "useCallback is more performant than useMemo in all scenarios",
-        "useMemo is used only for expensive calculations, while useCallback is used for event handlers",
-        "They are identical and can be used interchangeably"
+        "Calling useState inside an if condition: if (user) { const [name, setName] = useState(''); }",
+        "Calling useEffect at the top level of a functional component consistently on every render",
+        "Using useCallback inside a loop to wrap event handlers: for(let i=0; i<5; i++) { useCallback(...) }",
+        "Calling useState in a class method converted from a functional component"
       ],
       "ru": [
-        "useMemo мемоизирует вычисленное значение, а useCallback мемоизирует функцию",
-        "useCallback более эффективен, чем useMemo во всех сценариях",
-        "useMemo используется только для дорогостоящих вычислений, а useCallback для обработчиков событий",
-        "Они идентичны и могут использоваться взаимозаменяемо"
+        "Вызов useState внутри условия if: if (user) { const [name, setName] = useState(''); }",
+        "Вызов useEffect на верхнем уровне функционального компонента последовательно при каждом рендере",
+        "Использование useCallback внутри цикла для обертывания обработчиков событий: for(let i=0; i<5; i++) { useCallback(...) }",
+        "Вызов useState в методе класса, преобразованном из функционального компонента"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "useMemo caches the result of a computation and returns the memoized value, while useCallback caches the function reference itself. useCallback is essentially useMemo with a function as the dependency, returning a stable function reference to prevent unnecessary re-renders of child components.",
-      "ru": "useMemo кэширует результат вычисления и возвращает мемоизированное значение, а useCallback кэширует саму ссылку на функцию. useCallback по сути является useMemo с функцией в качестве зависимости, возвращая стабильную ссылку на функцию для предотвращения ненужных перерендеров дочерних компонентов."
+      "en": "Hooks must be called at the top level of a functional component on every render in the same order. Conditional calls (option 1), loops (option 3), and class methods (option 4) violate the Rules of Hooks. Only option 2 correctly shows useEffect being called consistently at the top level without conditional logic or loops.",
+      "ru": "Hooks должны вызываться на верхнем уровне функционального компонента при каждом рендере в одном и том же порядке. Условные вызовы (вариант 1), циклы (вариант 3) и методы класса (вариант 4) нарушают Правила Hooks. Только вариант 2 правильно показывает useEffect, вызываемый последовательно на верхнем уровне без условной логики или циклов."
     }
   },
   {
     "id": "react-quiz-19",
     "topicId": "react",
     "question": {
-      "en": "In React, which of the following best explains the concept of 'reconciliation'?",
-      "ru": "В React какое из следующих утверждений лучше всего объясняет концепцию 'согласования'?"
+      "en": "What is the difference between a controlled and an uncontrolled component?\njs\n// Controlled\nfunction Controlled() {\n  const [value, setValue] = useState('');\n  return <input value={value} onChange={(e) => setValue(e.target.value)} />;\n}\n\n// Uncontrolled\nfunction Uncontrolled() {\n  const ref = useRef();\n  return <input ref={ref} />;\n}\n\nWhich statement is true?",
+      "ru": "В чем разница между управляемым и неуправляемым компонентом?\njs\n// Managed\nfunction Controlled() {\n  const [value, setValue] = useState('');\n  return <input value={value} onChange={(e) => setValue(e.target.value)} />;\n}\n\n// Unmanaged\nfunction Uncontrolled() {\n  const ref = useRef();\n  return <input ref={ref} />;\n}\n\nКакое утверждение верно?"
     },
     "options": {
       "en": [
-        "The process of comparing the previous and current virtual DOM trees to determine what changes need to be applied to the actual DOM",
-        "The automatic merging of props and state into a single object",
-        "The mechanism that prevents state updates from causing infinite loops",
-        "The process of converting JSX into JavaScript function calls"
+        "Controlled components are always faster because they use refs instead of state",
+        "Uncontrolled components rely on refs and have truth stored in the DOM, while controlled components store truth in React state",
+        "Controlled components cannot be used with form validation libraries",
+        "Uncontrolled components are preferred in modern React because they avoid re-renders"
       ],
       "ru": [
-        "Процесс сравнения предыдущего и текущего деревьев виртуального DOM для определения того, какие изменения необходимо применить к фактическому DOM",
-        "Автоматическое объединение props и state в один объект",
-        "Механизм, который предотвращает обновления состояния от вызывания бесконечных циклов",
-        "Процесс преобразования JSX в вызовы функций JavaScript"
+        "Управляемые компоненты всегда быстрее, потому что используют refs вместо состояния",
+        "Неуправляемые компоненты полагаются на refs и имеют истину, хранящуюся в DOM, в то время как управляемые компоненты хранят истину в состоянии React",
+        "Управляемые компоненты не могут использоваться с библиотеками валидации форм",
+        "Неуправляемые компоненты предпочтительны в современном React, потому что они избегают повторных рендеров"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Reconciliation is React's diffing algorithm that compares old and new virtual DOM trees to identify minimal changes needed in the real DOM. This is fundamental to React's performance optimization and is where the 'key' prop plays a crucial role in helping React match elements correctly.",
-      "ru": "Согласование — это алгоритм сравнения React, который сравнивает старые и новые деревья виртуального DOM для определения минимальных изменений, необходимых в реальном DOM. Это фундаментально для оптимизации производительности React и где пропс 'key' играет решающую роль в помощи React правильно совпадать элементов."
+      "en": "Controlled components sync React state with form input value, making React the single source of truth. Uncontrolled components store value directly in the DOM via refs. Controlled components enable easier validation, synchronization, and predictability; they are not slower and work with validation libraries. Uncontrolled components are rarely preferred in modern React.",
+      "ru": "Управляемые компоненты синхронизируют состояние React со значением ввода формы, делая React единственным источником истины. Неуправляемые компоненты хранят значение непосредственно в DOM через refs. Управляемые компоненты обеспечивают более простую валидацию, синхронизацию и предсказуемость; они не медленнее и работают с библиотеками валидации. Неуправляемые компоненты редко предпочтительны в современном React."
     }
   },
   {
     "id": "react-quiz-20",
     "topicId": "react",
     "question": {
-      "en": "What will be logged to the console and in what order? const [value, setValue] = useState(''); useEffect(() => { console.log('effect'); }, []); console.log('render');",
-      "ru": "Что будет выведено в консоль и в каком порядке? const [value, setValue] = useState(''); useEffect(() => { console.log('effect'); }, []); console.log('render');?"
+      "en": "When should you use useMemo vs useCallback? Consider this scenario:\njs\nconst expensiveValue = useMemo(() => {\n  return computeExpensiveValue(a, b);\n}, [a, b]);\n\nconst handleClick = useCallback(() => {\n  doSomething(expensiveValue);\n}, [expensiveValue]);\n\nWhich is the most accurate description?",
+      "ru": "Когда следует использовать useMemo vs useCallback? Рассмотрите этот сценарий:\njs\nconst expensiveValue = useMemo(() => {\n  return computeExpensiveValue(a, b);\n}, [a, b]);\n\nconst handleClick = useCallback(() => {\n  doSomething(expensiveValue);\n}, [expensiveValue]);\n\nКакое описание наиболее точно?"
     },
     "options": {
       "en": [
-        "'render' then 'effect'",
-        "'effect' then 'render'",
-        "'render' only, 'effect' never runs",
-        "'effect' then 'render' on every re-render"
+        "useMemo memoizes computed values to avoid expensive recalculations, while useCallback memoizes function references to prevent unnecessary child re-renders",
+        "useMemo is for functions and useCallback is for values—they are essentially the same with different names",
+        "useCallback should always be used with useMemo to avoid performance degradation",
+        "Both useMemo and useCallback are optimizations that should be used on every function and value in a component"
       ],
       "ru": [
-        "'render' затем 'effect'",
-        "'effect' затем 'render'",
-        "только 'render', 'effect' никогда не выполняется",
-        "'effect' затем 'render' при каждом перерендере"
+        "useMemo мемоизирует вычисленные значения, чтобы избежать дорогостоящих пересчетов, в то время как useCallback мемоизирует ссылки на функции, чтобы предотвратить ненужные повторные рендеры дочерних компонентов",
+        "useMemo используется для функций, а useCallback используется для значений—они по сути одинаковые с разными названиями",
+        "useCallback всегда должен использоваться с useMemo, чтобы избежать снижения производительности",
+        "Как useMemo, так и useCallback—это оптимизации, которые должны использоваться для каждой функции и значения в компоненте"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "React first executes all render logic (component body), logging 'render'. Then, after the component has been mounted and committed to the DOM, useEffect with an empty dependency array runs once, logging 'effect'. This execution order is critical because effects can access the DOM and refs that are only available after rendering.",
-      "ru": "React сначала выполняет всю логику рендера (тело компонента), выводя 'render'. Затем, после того как компонент был смонтирован и закомичен в DOM, useEffect с пустым массивом зависимостей выполняется один раз, выводя 'effect'. Этот порядок выполнения критичен, так как эффекты могут получать доступ к DOM и ссылкам, которые доступны только после рендера."
+      "en": "useMemo memoizes the result of an expensive computation and only recomputes when dependencies change. useCallback memoizes a function reference, preventing child components receiving it as a prop from unnecessarily re-rendering. They serve different purposes and should only be used when there is a measurable performance problem, not preemptively on all values and functions.",
+      "ru": "useMemo мемоизирует результат дорогостоящего вычисления и пересчитывает только при изменении зависимостей. useCallback мемоизирует ссылку на функцию, предотвращая ненужные повторные рендеры дочерних компонентов, получающих ее как пропс. Они служат разными целям и должны использоваться только при наличии измеримой проблемы производительности, а не превентивно на всех значениях и функциях."
     }
   },
   {
     "id": "react-quiz-21",
     "topicId": "react",
     "question": {
-      "en": "You have a custom hook that calls setState inside a setTimeout. Why might this violate the Rules of Hooks and cause issues?",
-      "ru": "У вас есть пользовательский hook, который вызывает setState внутри setTimeout. Почему это может нарушить Rules of Hooks и вызвать проблемы?"
+      "en": "Which of the following violates the Rules of Hooks in React?\njs\nfunction MyComponent() {\n  if (condition) {\n    const [state, setState] = useState(0);\n  }\n  return <div>{state}</div>;\n}\n",
+      "ru": "Какой из следующих вариантов нарушает Правила Hooks в React?\njs\nfunction MyComponent() {\n  if (condition) {\n    const [state, setState] = useState(0);\n  }\n  return <div>{state}</div>;\n}\n"
     },
     "options": {
       "en": [
-        "Because hooks must always be called at the top level of a function component, not inside callbacks or conditionals",
-        "Because setTimeout is asynchronous and hooks don't work with async code",
-        "Because setState inside setTimeout will cause memory leaks",
-        "Because custom hooks cannot use setTimeout at all"
+        "The hook is conditionally called, violating the rules",
+        "The hook name contains uppercase letters",
+        "The state variable is not destructured properly",
+        "The component should use useReducer instead"
       ],
       "ru": [
-        "Потому что hooks должны всегда вызываться на верхнем уровне функционального компонента, а не внутри callbacks или условных операторов",
-        "Потому что setTimeout асинхронен и hooks не работают с асинхронным кодом",
-        "Потому что setState внутри setTimeout вызывает утечки памяти",
-        "Потому что пользовательские hooks вообще не могут использовать setTimeout"
+        "Hook вызывается условно, что нарушает правила",
+        "Имя hook содержит заглавные буквы",
+        "Переменная состояния не деструктурирована правильно",
+        "Компонент должен использовать useReducer вместо этого"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The Rules of Hooks require hooks to be called unconditionally at the top level of components or custom hooks. Calling setState inside setTimeout (a callback) violates this because the callback may execute at unpredictable times and counts as conditional execution. Async code itself isn't the issue—it's the conditional invocation pattern that breaks React's hook tracking.",
-      "ru": "Rules of Hooks требуют, чтобы hooks вызывались безусловно на верхнем уровне компонентов или пользовательских hooks. Вызов setState внутри setTimeout (callback) нарушает это правило, потому что callback может выполниться в непредсказуемый момент и считается условным выполнением. Асинхронный код сам по себе не проблема—проблема в условной схеме вызова, которая нарушает отслеживание hooks в React."
+      "en": "Hooks must be called at the top level of a functional component, not conditionally or inside loops. This ensures the hook call order remains consistent across renders, which React relies on to track state correctly. The other options are either incorrect constraints or unrelated to the Rules of Hooks.",
+      "ru": "Hooks должны вызываться на верхнем уровне функционального компонента, а не условно или внутри циклов. Это гарантирует, что порядок вызовов hook остается постоянным между рендерами, что необходимо React для правильного отслеживания состояния. Остальные варианты либо некорректны, либо не связаны с Правилами Hooks."
     }
   },
   {
     "id": "react-quiz-22",
     "topicId": "react",
     "question": {
-      "en": "In this code, what will happen to the component when count increases? function Counter() { const [count, setCount] = useState(0); useEffect(() => { console.log('Effect'); }, [count]); return <button onClick={() => setCount(count + 1)}>{count}</button>; }",
-      "ru": "В этом коде что произойдет с компонентом при увеличении count? function Counter() { const [count, setCount] = useState(0); useEffect(() => { console.log('Effect'); }, [count]); return <button onClick={() => setCount(count + 1)}>{count}</button>; }"
+      "en": "What will be the behavior of this component regarding the key prop?\njs\nfunction List({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item.id}>{item.name}</li>\n      ))}\n    </ul>\n  );\n}\n",
+      "ru": "Какое будет поведение этого компонента в отношении prop key?\njs\nfunction List({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item.id}>{item.name}</li>\n      ))}\n    </ul>\n  );\n}\n"
     },
     "options": {
       "en": [
-        "The effect will run after every render because count is in the dependency array, causing the effect to re-run whenever count changes",
-        "The effect will run only once on mount because useEffect is declared at the top level",
-        "The effect will never run because count starts at 0",
-        "The effect will run before the component renders"
+        "If items are reordered, React will correctly preserve component state and DOM position",
+        "Each list item will always be re-rendered regardless of changes",
+        "The component will throw an error if item.id is not unique",
+        "Using the id as key is inefficient and should use index instead"
       ],
       "ru": [
-        "Эффект будет запускаться после каждого рендера, потому что count находится в массиве зависимостей, заставляя эффект перезапускаться при каждом изменении count",
-        "Эффект будет запущен только один раз при монтировании, потому что useEffect объявлен на верхнем уровне",
-        "Эффект никогда не запустится, потому что count начинается с 0",
-        "Эффект будет запущен до рендера компонента"
+        "Если элементы переупорядочены, React правильно сохранит состояние компонента и позицию в DOM",
+        "Каждый элемент списка будет всегда перерендерен независимо от изменений",
+        "Компонент выдаст ошибку, если item.id не является уникальным",
+        "Использование id в качестве key неэффективно и следует использовать index вместо этого"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The dependency array [count] tells React to run the effect after every render where count has changed. When the button is clicked, count increases, the component re-renders, and because count is in the dependency array, useEffect compares the old and new value and runs the effect. This is the intended behavior for tracking changes to specific state.",
-      "ru": "Массив зависимостей [count] указывает React запускать эффект после каждого рендера, где count изменился. Когда кнопка нажимается, count увеличивается, компонент перерендерится, и так как count находится в массиве зависимостей, useEffect сравнивает старое и новое значение и запускает эффект. Это предполагаемое поведение для отслеживания изменений конкретного состояния."
+      "en": "Using a stable, unique identifier like item.id as the key allows React's reconciliation algorithm to correctly track which items have changed, moved, or been deleted. This preserves component state and ensures proper DOM updates during reordering. Using index as a key causes problems when lists are reordered, and item.id being non-unique won't throw an error but will cause reconciliation bugs.",
+      "ru": "Использование стабильного, уникального идентификатора, как item.id, в качестве key позволяет алгоритму согласования React правильно отследить, какие элементы изменились, переместились или были удалены. Это сохраняет состояние компонента и гарантирует правильные обновления DOM при переупорядочении. Использование index в качестве key вызывает проблемы при переупорядочении списков, а неуникальный item.id не выдаст ошибку, но вызовет ошибки согласования."
     }
   },
   {
     "id": "react-quiz-23",
     "topicId": "react",
     "question": {
-      "en": "When rendering a list with .map(), why is using the array index as the key prop problematic for component state?",
-      "ru": "При рендеринге списка с .map(), почему использование индекса массива как key prop проблематично для состояния компонента?"
+      "en": "What is the primary difference between useState and useReducer in terms of state updates?\njs\n// With useState\nconst [count, setCount] = useState(0);\nsetCount(count + 1);\n\n// With useReducer\nconst [state, dispatch] = useReducer(reducer, 0);\ndispatch({ type: 'INCREMENT' });\n",
+      "ru": "В чем основное различие между useState и useReducer в плане обновления состояния?\njs\n// С useState\nconst [count, setCount] = useState(0);\nsetCount(count + 1);\n\n// С useReducer\nconst [state, dispatch] = useReducer(reducer, 0);\ndispatch({ type: 'INCREMENT' });\n"
     },
     "options": {
       "en": [
-        "Index as key can cause state to be associated with the wrong item if the list is reordered or items are added/removed, leading to visual bugs and lost state",
-        "Using index as key causes React to re-render every item in the list",
-        "Index-based keys prevent the use of useState in list items",
-        "React requires a string key, not a number, so indices don't work at all"
+        "useState is for simple state, useReducer is for complex logic with multiple related state updates",
+        "useReducer can only be used in class components",
+        "useState automatically batches updates while useReducer does not",
+        "useReducer has better performance than useState"
       ],
       "ru": [
-        "Индекс как key может привести к тому, что состояние будет связано с неправильным элементом, если список переупорядочен или элементы добавлены/удалены, что приводит к визуальным ошибкам и потере состояния",
-        "Использование индекса как key вызывает перерендер всех элементов в списке",
-        "Ключи на основе индексов предотвращают использование useState в элементах списка",
-        "React требует строковый ключ, а не число, поэтому индексы вообще не работают"
+        "useState предназначен для простого состояния, useReducer — для сложной логики с несколькими связанными обновлениями состояния",
+        "useReducer можно использовать только в классовых компонентах",
+        "useState автоматически группирует обновления, в то время как useReducer нет",
+        "useReducer имеет лучшую производительность, чем useState"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "React uses keys to identify which items have changed, been added, or been removed. When using index as a key, if the list order changes or items are inserted/deleted, the index values shift, causing React to misalign state with list items. For example, if item 0 has input state and you delete it, the state incorrectly attaches to the new item 0. Always use stable, unique identifiers like IDs.",
-      "ru": "React использует ключи для идентификации изменённых, добавленных или удалённых элементов. При использовании индекса как ключа, если порядок списка изменяется или вставляются/удаляются элементы, значения индексов смещаются, заставляя React неправильно связывать состояние с элементами списка. Например, если элемент 0 имеет состояние input и вы его удаляете, состояние неправильно прикрепляется к новому элементу 0. Всегда используйте стабильные, уникальные идентификаторы, такие как ID."
+      "en": "useState is ideal for single, independent state values, while useReducer excels with complex state logic involving multiple related updates and predictable transitions. useReducer can be used in functional components (via hooks), both support automatic batching in React 18+, and performance is comparable when used appropriately. The choice depends on code clarity and complexity, not component type or performance.",
+      "ru": "useState идеален для одиночных независимых значений состояния, в то время как useReducer превосходит при сложной логике состояния, включающей несколько связанных обновлений и предсказуемые переходы. useReducer можно использовать в функциональных компонентах (через hooks), оба поддерживают автоматическое группирование в React 18+ и производительность сравнима при правильном использовании. Выбор зависит от ясности кода и сложности, а не от типа компонента или производительности."
     }
   },
   {
     "id": "react-quiz-24",
     "topicId": "react",
     "question": {
-      "en": "What is the main difference between a controlled and uncontrolled component in React?",
-      "ru": "В чём главное отличие между контролируемым и неконтролируемым компонентом в React?"
+      "en": "In React's reconciliation process, what does the key prop primarily help React determine?\njs\nconst oldList = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }];\nconst newList = [{ id: 2, name: 'Bob' }, { id: 1, name: 'Alice' }];\n// Both rendered with key={item.id}\n",
+      "ru": "В процессе согласования React, что в основном помогает prop key определить React?\njs\nconst oldList = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }];\nconst newList = [{ id: 2, name: 'Bob' }, { id: 1, name: 'Alice' }];\n// Оба отрендерены с key={item.id}\n"
     },
     "options": {
       "en": [
-        "A controlled component has its value managed by React state, while an uncontrolled component manages its own value via the DOM",
-        "A controlled component uses props, while an uncontrolled component uses useState",
-        "A controlled component renders faster because the DOM directly updates it",
-        "Uncontrolled components are deprecated and should never be used in modern React"
+        "Whether the same element instance should be reused across renders despite position changes",
+        "The order in which elements should be visually displayed",
+        "The CSS class that should be applied to each element",
+        "Whether the element should be removed from the DOM"
       ],
       "ru": [
-        "Контролируемый компонент имеет своё значение, управляемое состоянием React, в то время как неконтролируемый компонент управляет своим значением через DOM",
-        "Контролируемый компонент использует props, а неконтролируемый компонент использует useState",
-        "Контролируемый компонент рендерится быстрее, потому что DOM напрямую его обновляет",
-        "Неконтролируемые компоненты устарели и никогда не должны использоваться в современном React"
+        "Должен ли один и тот же экземпляр элемента повторно использоваться между рендерами, несмотря на изменения позиции",
+        "Порядок, в котором элементы должны отображаться визуально",
+        "Класс CSS, который должен быть применен к каждому элементу",
+        "Должен ли элемент быть удален из DOM"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "In a controlled component, React state is the source of truth for the input value, and onChange updates state which then re-renders the input. In an uncontrolled component, the DOM itself maintains the value, and you access it via refs when needed. Controlled components are predictable and integrate better with React's data flow, though both approaches are valid depending on the use case.",
-      "ru": "В контролируемом компоненте состояние React является источником истины для значения input, и onChange обновляет состояние, которое затем перерендерит input. В неконтролируемом компоненте сам DOM хранит значение, и вы получаете доступ к нему через refs при необходимости. Контролируемые компоненты более предсказуемы и лучше интегрируются с потоком данных React, хотя оба подхода действительны в зависимости от случая использования."
+      "en": "The key prop tells React which element in the old tree corresponds to an element in the new tree, allowing it to reuse the same DOM node and preserve component state even if positions change. Without proper keys, React assumes the nth element in the old list corresponds to the nth element in the new list, causing state mismatches and unnecessary re-renders. Keys do not control visual order, CSS, or removal logic.",
+      "ru": "Prop key сообщает React, какой элемент в старом дереве соответствует элементу в новом дереве, позволяя ему повторно использовать тот же узел DOM и сохранять состояние компонента, даже если позиции меняются. Без правильных ключей React предполагает, что n-й элемент в старом списке соответствует n-му элементу в новом списке, вызывая несоответствия состояния и ненужные перерендеры. Ключи не контролируют визуальный порядок, CSS или логику удаления."
     }
   },
   {
     "id": "react-quiz-25",
     "topicId": "react",
     "question": {
-      "en": "When would you use useMemo instead of just computing a value directly in your component function?",
-      "ru": "Когда вы используете useMemo вместо прямого вычисления значения в функции компонента?"
+      "en": "Which statement correctly describes when useMemo should be used?\njs\nconst expensiveValue = useMemo(() => {\n  return complexCalculation(data);\n}, [data]);\n",
+      "ru": "Какое утверждение правильно описывает, когда следует использовать useMemo?\njs\nconst expensiveValue = useMemo(() => {\n  return complexCalculation(data);\n}, [data]);\n"
     },
     "options": {
       "en": [
-        "When the computation is expensive and the dependencies rarely change, so memoizing prevents unnecessary expensive recalculations on every render",
-        "When you want to ensure a value changes on every render",
-        "When working with async operations like fetch or setTimeout",
-        "When you need to store data that persists across component unmounts"
+        "When a computation is expensive and the component re-renders frequently, to avoid recalculating the same value",
+        "To automatically optimize all state updates in a component",
+        "To prevent all child components from re-rendering",
+        "To replace the useState hook for better performance"
       ],
       "ru": [
-        "Когда вычисление затратное и зависимости редко меняются, поэтому мемоизация предотвращает ненужные дорогостоящие пересчёты при каждом рендере",
-        "Когда вы хотите убедиться, что значение меняется при каждом рендере",
-        "При работе с асинхронными операциями, такими как fetch или setTimeout",
-        "Когда вам нужно хранить данные, которые сохраняются после размонтирования компонента"
+        "Когда вычисление дорогостоящее и компонент часто перерендеривается, чтобы избежать пересчета одного и того же значения",
+        "Чтобы автоматически оптимизировать все обновления состояния в компоненте",
+        "Чтобы предотвратить повторный рендеринг всех дочерних компонентов",
+        "Чтобы заменить hook useState для лучшей производительности"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "useMemo is an optimization hook that caches a computed value and only recalculates it when dependencies change. It's useful for expensive operations (like sorting large arrays or complex calculations) to avoid recalculating on every render. However, useMemo itself has overhead, so it should only be used when you've verified that the computation is genuinely expensive; premature memoization can hurt performance. It's not for managing async operations or persistent data.",
-      "ru": "useMemo—это hook оптимизации, который кэширует вычисленное значение и пересчитывает его только при изменении зависимостей. Это полезно для дорогостоящих операций (например, сортировка больших массивов или сложные вычисления), чтобы избежать пересчёта при каждом рендере. Однако сам useMemo имеет накладные расходы, поэтому его следует использовать только если вы убедились, что вычисление действительно затратное; преждевременная мемоизация может снизить производительность. Это не для управления асинхронными операциями или постоянными данными."
+      "en": "useMemo memoizes the result of an expensive computation and only recalculates when dependencies change, preventing wasteful recalculations on every render. It's a performance optimization for specific costly operations, not a blanket solution for all state updates or child re-renders. useMemo does not replace useState; they serve different purposes. Premature memoization without profiling can actually hurt performance due to dependency tracking overhead.",
+      "ru": "useMemo запоминает результат дорогостоящего вычисления и пересчитывает только при изменении зависимостей, предотвращая бесполезные пересчеты при каждом рендеринге. Это оптимизация производительности для специфических дорогостоящих операций, а не универсальное решение для всех обновлений состояния или повторных рендеров дочерних компонентов. useMemo не заменяет useState; они служат разным целям. Преждевременная мемоизация без профилирования может фактически ухудшить производительность из-за накладных расходов отслеживания зависимостей."
+    }
+  },
+  {
+    "id": "react-quiz-26",
+    "topicId": "react",
+    "question": {
+      "en": "What will be logged to the console when this component mounts and the button is clicked?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran with count:', count);\n  }, [count]);\n  \n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n",
+      "ru": "Что будет выведено в консоль при монтировании компонента и нажатии кнопки?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran with count:', count);\n  }, [count]);\n  \n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n"
+    },
+    "options": {
+      "en": [
+        "Effect ran with count: 0 (on mount), then Effect ran with count: 1 (after click)",
+        "Effect ran with count: 1 (on mount), then Effect ran with count: 2 (after click)",
+        "Nothing is logged on mount, only Effect ran with count: 1 after click",
+        "Effect ran with count: 0 twice on mount, then Effect ran with count: 1 after click"
+      ],
+      "ru": [
+        "Effect ran with count: 0 (при монтировании), затем Effect ran with count: 1 (после нажатия)",
+        "Effect ran with count: 1 (при монтировании), затем Effect ran with count: 2 (после нажатия)",
+        "Ничего не логируется при монтировании, только Effect ran with count: 1 после нажатия",
+        "Effect ran with count: 0 дважды при монтировании, затем Effect ran with count: 1 после нажатия"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The useEffect hook runs after the component mounts because [count] is in the dependency array, causing it to run on mount with count=0. When the button is clicked, setCount(1) triggers a re-render and the effect runs again with count=1. The effect runs after the render, not before.",
+      "ru": "Хук useEffect выполняется после монтирования компонента, так как [count] находится в массиве зависимостей, что заставляет его запуститься при монтировании с count=0. При нажатии кнопки setCount(1) вызывает перерендер и эффект снова выполняется с count=1. Эффект выполняется после рендера, а не до него."
+    }
+  },
+  {
+    "id": "react-quiz-27",
+    "topicId": "react",
+    "question": {
+      "en": "Which statement correctly describes the purpose of the 'key' prop in React lists?",
+      "ru": "Какое утверждение правильно описывает назначение пропа 'key' в списках React?"
+    },
+    "options": {
+      "en": [
+        "The key prop helps React identify which items have changed, been added, or been removed, enabling proper reconciliation and preserving component state",
+        "The key prop is only used to improve rendering performance and has no effect on component state or behavior",
+        "The key prop is required for accessibility and helps screen readers identify list items",
+        "The key prop allows you to pass data from parent to child components in list contexts"
+      ],
+      "ru": [
+        "Пропа key помогает React идентифицировать, какие элементы изменились, были добавлены или удалены, обеспечивая правильную согласованность и сохранение состояния компонента",
+        "Пропа key используется только для улучшения производительности рендеринга и не влияет на состояние или поведение компонента",
+        "Пропа key требуется для доступности и помогает средствам чтения с экрана идентифицировать элементы списка",
+        "Пропа key позволяет передавать данные от родительского компонента к дочернему в контексте списков"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The key prop is crucial for reconciliation—it helps React match old elements with new ones during re-renders. Without proper keys, React may reuse DOM nodes incorrectly, causing state to be preserved on wrong items or input values to persist unexpectedly. While keys do improve performance, their primary purpose is correctness in list rendering.",
+      "ru": "Пропа key критична для согласованности—она помогает React сопоставить старые элементы с новыми при перерендерах. Без правильных ключей React может неправильно переиспользовать узлы DOM, что приводит к сохранению состояния на неправильных элементах или неожиданному сохранению значений ввода. Хотя ключи улучшают производительность, их основная цель—корректность при рендеринге списков."
+    }
+  },
+  {
+    "id": "react-quiz-28",
+    "topicId": "react",
+    "question": {
+      "en": "What is the output of this component when rendered?\njs\nfunction Parent() {\n  const [name, setName] = useState('Alice');\n  \n  const handleClick = useCallback(() => {\n    setName('Bob');\n  }, []);\n  \n  return (\n    <>\n      <p>{name}</p>\n      <Child onClick={handleClick} />\n    </>\n  );\n}\n\nfunction Child({ onClick }) {\n  return <button onClick={onClick}>Change Name</button>;\n}\n",
+      "ru": "Какой вывод этого компонента при рендеринге?\njs\nfunction Parent() {\n  const [name, setName] = useState('Alice');\n  \n  const handleClick = useCallback(() => {\n    setName('Bob');\n  }, []);\n  \n  return (\n    <>\n      <p>{name}</p>\n      <Child onClick={handleClick} />\n    </>\n  );\n}\n\nfunction Child({ onClick }) {\n  return <button onClick={onClick}>Change Name</button>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "Initially displays 'Alice', but clicking the button will always set name to 'Alice' due to stale closure in useCallback",
+        "Initially displays 'Alice', and clicking the button correctly changes it to 'Bob'",
+        "Initially displays 'Bob' because useCallback executes immediately",
+        "The component will throw an error because useCallback with empty dependencies cannot update state"
+      ],
+      "ru": [
+        "Первоначально отображает 'Alice', но нажатие кнопки всегда установит name на 'Alice' из-за устаревшего замыкания в useCallback",
+        "Первоначально отображает 'Alice', и нажатие кнопки правильно изменит его на 'Bob'",
+        "Первоначально отображает 'Bob', потому что useCallback выполняется сразу же",
+        "Компонент выбросит ошибку, потому что useCallback с пустыми зависимостями не может обновлять состояние"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Although useCallback has an empty dependency array, the closure over setName still works correctly because setName is a function reference from useState that never changes. The state update will work as expected, and the name will change to 'Bob' when the button is clicked. This is a common misconception that empty dependencies prevent state updates.",
+      "ru": "Хотя useCallback имеет пустой массив зависимостей, замыкание над setName все еще работает правильно, потому что setName — это ссылка на функцию из useState, которая никогда не меняется. Обновление состояния будет работать как ожидается, и имя изменится на 'Bob' при нажатии кнопки. Это частое неправильное понимание того, что пустые зависимости предотвращают обновление состояния."
+    }
+  },
+  {
+    "id": "react-quiz-29",
+    "topicId": "react",
+    "question": {
+      "en": "In React Suspense, what happens when a component throws a promise?",
+      "ru": "В React Suspense что происходит, когда компонент выбрасывает обещание?"
+    },
+    "options": {
+      "en": [
+        "The promise is caught by the nearest Suspense boundary, which displays the fallback UI until the promise resolves",
+        "The promise propagates up and causes the entire application to crash",
+        "React automatically retries rendering the component every 100ms until the promise resolves",
+        "The thrown promise is ignored and the component continues rendering normally"
+      ],
+      "ru": [
+        "Обещание перехватывается ближайшей границей Suspense, которая отображает резервный пользовательский интерфейс до разрешения обещания",
+        "Обещание распространяется вверх и приводит к краху всего приложения",
+        "React автоматически повторно пытается отрендерить компонент каждые 100 мс до разрешения обещания",
+        "Выброшенное обещание игнорируется и компонент продолжает рендеринг нормально"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Suspense works by catching promises thrown from components during rendering. When a promise is thrown, the nearest Suspense boundary stops rendering and displays its fallback component. Once the promise resolves, React retries rendering the suspended component. This pattern is essential for data fetching and code-splitting in modern React.",
+      "ru": "Suspense работает, перехватывая обещания, выброшенные компонентами во время рендеринга. Когда обещание выбрасывается, ближайшая граница Suspense останавливает рендеринг и отображает свой резервный компонент. После разрешения обещания React повторно пытается отрендерить приостановленный компонент. Этот паттерн критически важен для выборки данных и разделения кода в современном React."
+    }
+  },
+  {
+    "id": "react-quiz-30",
+    "topicId": "react",
+    "question": {
+      "en": "What is the key difference between a controlled component and an uncontrolled component in React forms?",
+      "ru": "В чем ключевое различие между контролируемым и неконтролируемым компонентом в формах React?"
+    },
+    "options": {
+      "en": [
+        "A controlled component's value is managed by React state, while an uncontrolled component stores its value in the DOM and uses a ref to access it",
+        "Controlled components are faster than uncontrolled components because they skip DOM updates",
+        "Uncontrolled components automatically validate input, while controlled components require manual validation",
+        "There is no practical difference; they are just different naming conventions for the same concept"
+      ],
+      "ru": [
+        "Значение контролируемого компонента управляется состоянием React, а неконтролируемый компонент хранит свое значение в DOM и использует ref для доступа к нему",
+        "Контролируемые компоненты быстрее неконтролируемых, потому что они пропускают обновления DOM",
+        "Неконтролируемые компоненты автоматически проверяют ввод, а контролируемые требуют ручную проверку",
+        "Нет практической разницы; это просто разные соглашения об именовании для одной и той же концепции"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Controlled components have their value driven by React state and update through onChange handlers, giving React full control over the form data. Uncontrolled components maintain their own internal state in the DOM and require useRef to access values. Controlled components enable real-time validation and are generally preferred for most use cases in modern React applications.",
+      "ru": "Контролируемые компоненты имеют значение, управляемое состоянием React, и обновляются через обработчики onChange, что дает React полный контроль над данными формы. Неконтролируемые компоненты сохраняют собственное внутреннее состояние в DOM и требуют useRef для досту��а к значениям. Контролируемые компоненты обеспечивают валидацию в реальном времени и являются предпочтительным выбором для большинства случаев использования в современных приложениях React."
+    }
+  },
+  {
+    "id": "react-quiz-31",
+    "topicId": "react",
+    "question": {
+      "en": "You have a parent component passing a callback function to a child component. The child uses this callback in useEffect. Without memoization, what happens on every parent re-render?\njs\nfunction Parent() {\n  const handleClick = () => console.log('clicked');\n  return <Child onCallback={handleClick} />;\n}\n\nfunction Child({ onCallback }) {\n  useEffect(() => {\n    onCallback();\n  }, [onCallback]);\n  return <div>Child</div>;\n}\n",
+      "ru": "У вас есть родительский компонент, передающий функцию обратного вызова дочернему компоненту. Дочерний компонент использует этот callback в useEffect. Без мемоизации, что происходит при каждом перерендере родителя?\njs\nfunction Parent() {\n  const handleClick = () => console.log('clicked');\n  return <Child onCallback={handleClick} />;\n}\n\nfunction Child({ onCallback }) {\n  useEffect(() => {\n    onCallback();\n  }, [onCallback]);\n  return <div>Child</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "The effect runs every time because handleClick is a new function reference on each render",
+        "The effect runs only once because onCallback is a dependency",
+        "The effect never runs because the callback is not defined in Child",
+        "The effect runs only when onCallback's implementation changes"
+      ],
+      "ru": [
+        "Эффект запускается каждый раз, потому что handleClick — новая ссылка на функцию при каждом рендере",
+        "Эффект запускается только один раз, потому что onCallback — зависимость",
+        "Эффект никогда не запускается, потому что callback не определён в Child",
+        "Эффект запускается только когда меняется реализация onCallback"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Without useCallback, handleClick is recreated on every Parent render, making onCallback a new reference each time. This causes the Child's useEffect to see onCallback as changed and run repeatedly. Using useCallback(handleClick, []) would memoize the function and prevent unnecessary effect runs.",
+      "ru": "Без useCallback, handleClick пересоздаётся при каждом рендере Parent, создавая новую ссылку для onCallback. Это заставляет useEffect в Child видеть onCallback как изменённый и запускаться повторно. Использование useCallback(handleClick, []) мемоизировало бы функцию и предотвратило бы ненужные запуски эффекта."
+    }
+  },
+  {
+    "id": "react-quiz-32",
+    "topicId": "react",
+    "question": {
+      "en": "What will be logged when this component mounts and unmounts?\njs\nfunction Timer() {\n  useEffect(() => {\n    console.log('mounted');\n    return () => console.log('unmounted');\n  }, []);\n  \n  useEffect(() => {\n    const timer = setInterval(() => console.log('tick'), 1000);\n    return () => clearInterval(timer);\n  }, []);\n  \n  return <div>Timer</div>;\n}\n",
+      "ru": "Что будет залогировано при монтировании и демонтировании этого компонента?\njs\nfunction Timer() {\n  useEffect(() => {\n    console.log('mounted');\n    return () => console.log('unmounted');\n  }, []);\n  \n  useEffect(() => {\n    const timer = setInterval(() => console.log('tick'), 1000);\n    return () => clearInterval(timer);\n  }, []);\n  \n  return <div>Timer</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "Only 'mounted' on mount, and 'unmounted' on unmount",
+        "'mounted', then continuously 'tick' every second, and 'unmounted' on unmount",
+        "'mounted' twice due to strict mode, then 'tick', and 'unmounted' on unmount",
+        "'mounted' and 'unmounted' both logged immediately on mount"
+      ],
+      "ru": [
+        "Только 'mounted' при монтировании и 'unmounted' при демонтировании",
+        "'mounted', затем непрерывно 'tick' каждую секунду, и 'unmounted' при демонтировании",
+        "'mounted' дважды из-за strict mode, затем 'tick', и 'unmounted' при демонтировании",
+        "'mounted' и 'unmounted' залогированы одновременно при монтировании"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The first effect logs 'mounted' once on mount and returns cleanup that logs 'unmounted' on unmount. The second effect sets up an interval that logs 'tick' every second until cleanup removes it. Both cleanup functions run when the component unmounts.",
+      "ru": "Первый эффект логирует 'mounted' один раз при монтировании и возвращает очистку, которая логирует 'unmounted' при демонтировании. Второй эффект устанавливает интервал, который логирует 'tick' каждую секунду до очистки. Обе функции очистки запускаются при демонтировании компонента."
+    }
+  },
+  {
+    "id": "react-quiz-33",
+    "topicId": "react",
+    "question": {
+      "en": "When rendering a list with the 'key' prop, what is the primary purpose of using a unique key for each item?",
+      "ru": "При рендеринге списка с props 'key' какова основная цель использования уникального ключа для каждого элемента?"
+    },
+    "options": {
+      "en": [
+        "To improve CSS styling specificity and selector matching",
+        "To help React identify which items have changed, been added, or removed during reconciliation",
+        "To ensure that component state persists across page reloads",
+        "To prevent console warnings about missing keys"
+      ],
+      "ru": [
+        "Чтобы улучшить специфичность CSS и соответствие селекторам",
+        "Чтобы помочь React определить, какие элементы изменились, добавились или удалили при согласовании",
+        "Чтобы состояние компонента сохранялось при перезагрузке страницы",
+        "Чтобы предотвратить предупреждения консоли об отсутствующих ключах"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Keys help React's reconciliation algorithm match elements between renders. Without proper keys, React may reuse component instances incorrectly, causing state to be shared between unintended items and leading to bugs. Using array indices as keys is problematic when the list order changes.",
+      "ru": "Ключи помогают алгоритму согласования React сопоставлять элементы между рендерами. Без правильных ключей React может неправильно переиспользовать экземпляры компонентов, вызывая совместное использование состояния между непредусмотренными элементами. Использование индексов массива в качестве ключей проблематично, когда порядок списка изменяется."
+    }
+  },
+  {
+    "id": "react-quiz-34",
+    "topicId": "react",
+    "question": {
+      "en": "In a controlled input component, what must happen for the input value to update when the user types?",
+      "ru": "В управляемом компоненте input, что должно произойти, чтобы значение input обновилось при вводе пользователя?"
+    },
+    "options": {
+      "en": [
+        "The onChange handler updates state, and the state value is passed back to the input's value prop",
+        "The input automatically syncs with the DOM because it's a form element",
+        "React intercepts keyboard events and updates the input without state changes",
+        "The defaultValue prop is updated and re-renders the component"
+      ],
+      "ru": [
+        "Обработчик onChange обновляет состояние, и значение состояния передаётся обратно в props value input",
+        "Input автоматически синхронизируется с DOM, потому что это элемент формы",
+        "React перехватывает события клавиатуры и обновляет input без изменения состояния",
+        "Props defaultValue обновляется и перерендирует компонент"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A controlled component has its value explicitly managed by React state. The onChange handler must update the state, and that state value must be passed to the value prop. This creates a feedback loop where user input → onChange → state update → re-render → input displays new value.",
+      "ru": "Управляемый компонент имеет его значение явно управляемое состоянием React. Обработчик onChange должен обновить состояние, и это значение состояния должно быть передано в props value. Это создаёт цикл обратной связи: ввод пользователя → onChange → обновление состояния → перерендер → input отображает новое значение."
+    }
+  },
+  {
+    "id": "react-quiz-35",
+    "topicId": "react",
+    "question": {
+      "en": "What is the key difference between useMemo and useCallback in React?",
+      "ru": "Какое ключевое различие между useMemo и useCallback в React?"
+    },
+    "options": {
+      "en": [
+        "useMemo memoizes a computed value, while useCallback memoizes a function reference",
+        "useCallback is faster than useMemo for all use cases",
+        "useMemo can only be used at the top level, useCallback can be used anywhere",
+        "useCallback prevents re-renders, while useMemo prevents state updates"
+      ],
+      "ru": [
+        "useMemo мемоизирует вычисленное значение, а useCallback мемоизирует ссылку на функцию",
+        "useCallback быстрее, чем useMemo для всех случаев",
+        "useMemo можно использовать только на верхнем уровне, useCallback можно использовать везде",
+        "useCallback предотвращает перерендеры, а useMemo предотвращает обновления состояния"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "useMemo returns a memoized value computed by an expensive function, recalculating only when dependencies change. useCallback returns a memoized function reference, useful for passing callbacks to optimized child components. Both are Hooks subject to the same rules and can be used at the top level.",
+      "ru": "useMemo возвращает мемоизированное значение, вычисленное дорогостоящей функцией, пересчитывая только при изменении зависимостей. useCallback возвращает мемоизированную ссылку на функцию, полезную для передачи callbacks оптимизированным дочерним компонентам. Оба являются Hooks, подчиняются одним правилам и могут использоваться на верхнем уровне."
+    }
+  },
+  {
+    "id": "react-quiz-36",
+    "topicId": "react",
+    "question": {
+      "en": "What will be logged to the console when this component mounts and updates?\njsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    console.log('Effect ran');\n  }, [count]);\n  return (\n    <button onClick={() => setCount(count + 1)}>\n      {count}\n    </button>\n  );\n}\n\nAssuming the button is clicked once after mount.",
+      "ru": "Что будет выведено в консоль при монтировании компонента и обновлении?\njsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    console.log('Effect ran');\n  }, [count]);\n  return (\n    <button onClick={() => setCount(count + 1)}>\n      {count}\n    </button>\n  );\n}\n\nПредполагая, что кнопка нажимается один раз после монтирования."
+    },
+    "options": {
+      "en": [
+        "'Effect ran' logged twice (once on mount, once after click)",
+        "'Effect ran' logged once on mount only",
+        "'Effect ran' logged once on click only",
+        "'Effect ran' never logged because count is not in the initial dependency array"
+      ],
+      "ru": [
+        "'Effect ran' выводится дважды (один раз при монтировании, один раз после клика)",
+        "'Effect ran' выводится один раз при монтировании",
+        "'Effect ran' выводится один раз после клика",
+        "'Effect ran' никогда не выводится, потому что count не в начальном массиве зависимостей"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The useEffect runs on mount and then again whenever count changes. Since count starts at 0 and is incremented to 1 on click, the effect runs twice: first on component mount, then after the state update. The dependency array [count] ensures the effect re-runs whenever count changes.",
+      "ru": "useEffect запускается при монтировании, а затем снова каждый раз, когда изменяется count. Поскольку count начинается с 0 и увеличивается до 1 при клике, эффект запускается дважды: сначала при монтировании компонента, затем после обновления состояния. Массив зависимостей [count] гарантирует, что эффект повторно запустится, когда count изменится."
+    }
+  },
+  {
+    "id": "react-quiz-37",
+    "topicId": "react",
+    "question": {
+      "en": "What is the primary purpose of the key prop in React lists?",
+      "ru": "Какова основная цель prop key в списках React?"
+    },
+    "options": {
+      "en": [
+        "To help React identify which items have changed, been added, or been removed, improving reconciliation and maintaining component state correctly",
+        "To make list items unique in the DOM so they can be selected with CSS",
+        "To automatically sort array items in the correct order",
+        "To prevent re-renders of list items when the parent component updates"
+      ],
+      "ru": [
+        "Помочь React определить, какие элементы изменились, были добавлены или удалены, улучшив согласование и правильно сохранив состояние компонента",
+        "Сделать элементы списка уникальными в DOM, чтобы они могли быть выбраны с помощью CSS",
+        "Автоматически сортировать элементы массива в правильном порядке",
+        "Предотвратить повторные рендеры элементов списка при обновлении родительского компонента"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The key prop helps React's reconciliation algorithm match elements in the old and new render. Without proper keys, reordering items can cause state to get attached to the wrong elements, breaking controlled components. Keys are not for CSS selection or sorting—they're purely for React's internal reconciliation logic.",
+      "ru": "Prop key помогает алгоритму согласования React сопоставить элементы в старом и новом рендере. Без правильных ключей переупорядочение элементов может привести к тому, что состояние прикрепится к неправильным элементам, нарушив управляемые компоненты. Ключи не предназначены для выбора CSS или сортировки—они используются исключительно для внутренней логики согласования React."
+    }
+  },
+  {
+    "id": "react-quiz-38",
+    "topicId": "react",
+    "question": {
+      "en": "What will this component do when the button is clicked multiple times?\njsx\nfunction Form() {\n  const [name, setName] = useState('');\n  const handleChange = useCallback((e) => {\n    setName(e.target.value);\n  }, []);\n  return (\n    <input value={name} onChange={handleChange} />\n  );\n}\n",
+      "ru": "Что будет делать этот компонент при многократном нажатии кнопки?\njsx\nfunction Form() {\n  const [name, setName] = useState('');\n  const handleChange = useCallback((e) => {\n    setName(e.target.value);\n  }, []);\n  return (\n    <input value={name} onChange={handleChange} />\n  );\n}\n"
+    },
+    "options": {
+      "en": [
+        "Work correctly, allowing users to type in the input and update state",
+        "Fail to update because the callback doesn't have name in the dependency array",
+        "Cause infinite re-renders due to the empty dependency array",
+        "Update the input visually but not update the underlying state"
+      ],
+      "ru": [
+        "Работать правильно, позволяя пользователям вводить текст в поле и обновлять состояние",
+        "Не обновляться, потому что обратный вызов не имеет name в массиве зависимостей",
+        "Вызвать бесконечные повторные рендеры из-за пустого массива зависимостей",
+        "Обновить входное поле визуально, но не обновить основное состояние"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The callback only needs to capture the setName function, which is stable across renders. The empty dependency array is correct here because setName from useState never changes. The callback captures the current event's value and updates state correctly, so typing works as expected.",
+      "ru": "Обратный вызов должен захватить только функцию setName, которая стабильна при повторных рендерах. Пустой массив зависимостей здесь верен, потому что setName из useState никогда не меняется. Обратный вызов захватывает значение текущего события и правильно обновляет состояние, поэтому ввод текста работает как ожидается."
+    }
+  },
+  {
+    "id": "react-quiz-39",
+    "topicId": "react",
+    "question": {
+      "en": "What is the key difference between a controlled and an uncontrolled component in React?",
+      "ru": "В чем ключевое различие между управляемым и неуправляемым компонентом в React?"
+    },
+    "options": {
+      "en": [
+        "Controlled components have their value managed by React state, while uncontrolled components rely on the DOM to manage their own value",
+        "Controlled components are faster because they don't trigger re-renders",
+        "Uncontrolled components can only be used with forms, while controlled components work anywhere",
+        "Controlled components require useRef, while uncontrolled components do not"
+      ],
+      "ru": [
+        "Управляемые компоненты имеют их значение, управляемое состоянием React, в то время как неуправляемые компоненты полагаются на DOM для управления своим собственным значением",
+        "Управляемые компоненты быстрее, потому что они не вызывают повторные рендеры",
+        "Неуправляемые компоненты можно использовать только с формами, в то время как управляемые компоненты работают везде",
+        "Управляемые компоненты требуют useRef, в то время как неуправляемые компоненты не требуют"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Controlled components use React state (via value prop) and callbacks (via onChange) to manage input values. Uncontrolled components use the DOM directly, often accessed via useRef. The first option correctly defines this distinction. Controlled components don't prevent re-renders, and both can be used in various contexts.",
+      "ru": "Управляемые компоненты используют состояние React (через prop value) и обратные вызовы (через onChange) для управления значениями входных данных. Неуправляемые компоненты используют DOM напрямую, часто доступные через useRef. Первый вариант правильно определяет это различие. Управляемые компоненты не предотвращают повторные рендеры, и оба типа можно использовать в различных контекстах."
+    }
+  },
+  {
+    "id": "react-quiz-40",
+    "topicId": "react",
+    "question": {
+      "en": "When would you use useMemo instead of useCallback?",
+      "ru": "Когда вы бы использовали useMemo вместо useCallback?"
+    },
+    "options": {
+      "en": [
+        "When you need to memoize an expensive calculation or derived data, not a function",
+        "When you want to optimize function performance and pass it as a prop",
+        "They are interchangeable and can be used in any situation",
+        "When you need to prevent useEffect from running multiple times"
+      ],
+      "ru": [
+        "Когда вам нужно запомнить дорогостоящий расчет или производные данные, а не функцию",
+        "Когда вы хотите оптимизировать производительность функции и передать ее как prop",
+        "Они взаимозаменяемы и могут использоваться в любой ситуации",
+        "Когда вам нужно предотвратить многократное запускание useEffect"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "useMemo memoizes computed values (like filtered lists or calculations), while useCallback memoizes functions. useCallback is for optimizing function identity when passing callbacks as props. They are not interchangeable—each solves different performance problems. useMemo doesn't control useEffect execution; dependency arrays do.",
+      "ru": "useMemo запоминает вычисленные значения (такие как отфильтрованные списки или расчеты), а useCallback запоминает функции. useCallback используется для оптимизации идентичности функции при передаче обратных вызовов в качестве props. Они не взаимозаменяемы—каждый решает разные проблемы производительности. useMemo не контролирует выполнение useEffect; это делают массивы зависимостей."
+    }
+  },
+  {
+    "id": "react-quiz-41",
+    "topicId": "react",
+    "question": {
+      "en": "Which of the following violates the Rules of Hooks in React?\njs\nfunction MyComponent({ id }) {\n  if (id > 0) {\n    const [count, setCount] = useState(0);\n  }\n  const [name, setName] = useState('');\n  return <div>{name}</div>;\n}\n",
+      "ru": "Какой из следующих вариантов нарушает Rules of Hooks в React?\njs\nfunction MyComponent({ id }) {\n  if (id > 0) {\n    const [count, setCount] = useState(0);\n  }\n  const [name, setName] = useState('');\n  return <div>{name}</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "Calling useState conditionally inside the if block violates the rule that hooks must be called at the top level",
+        "The component calls useState twice, which is not allowed in a single component",
+        "The destructuring of count and name is incorrect and will cause a runtime error",
+        "There is no violation; hooks can be called anywhere within a functional component"
+      ],
+      "ru": [
+        "Вызов useState условно внутри блока if нарушает правило, что хуки должны вызываться на верхнем уровне",
+        "Компонент вызывает useState дважды, что не допускается в одном компоненте",
+        "Деструктуризация count и name неправильна и вызовет ошибку во время выполнения",
+        "Нарушения нет; хуки можно вызывать в любом месте функционального компонента"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "React's Rules of Hooks require that hooks be called at the top level of a functional component, not conditionally. The if statement causes useState to be called unpredictably based on the id prop, breaking the hook ordering that React relies on. Multiple useState calls are allowed and normal; the issue is the conditional execution.",
+      "ru": "Правила хуков React требуют, чтобы хуки вызывались на верхнем уровне функционального компонента, а не условно. Оператор if заставляет useState вызываться непредсказуемо в зависимости от реквизита id, нарушая порядок хуков, на который полагается React. Несколько вызовов useState допускаются и нормальны; проблема в условном выполнении."
+    }
+  },
+  {
+    "id": "react-quiz-42",
+    "topicId": "react",
+    "question": {
+      "en": "What is the output of this code snippet?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    setCount(count + 1);\n  }, []);\n  return <div>{count}</div>;\n}\n",
+      "ru": "Каков результат выполнения этого фрагмента кода?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    setCount(count + 1);\n  }, []);\n  return <div>{count}</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "The component renders 1 once and then stops updating",
+        "The component infinitely increments count because useEffect runs on every render",
+        "The component renders 0 because the effect captures the initial count value",
+        "The component throws an error because setCount cannot be called inside useEffect"
+      ],
+      "ru": [
+        "Компонент рендерит 1 один раз, а затем перестает обновляться",
+        "Компонент бесконечно увеличивает count, потому что useEffect запускается при каждом рендере",
+        "Компонент рендерит 0, потому что эффект захватывает начальное значение count",
+        "Компонент выбрасывает ошибку, потому что setCount не может быть вызван внутри useEffect"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The empty dependency array [] ensures the effect runs only once after the initial render. Inside the effect, setCount(count + 1) updates count to 1 using the captured count value of 0. The effect runs only once, so the component renders 0 initially, then 1 after the effect executes, and does not update further.",
+      "ru": "Пустой массив зависимостей [] гарантирует, что эффект запускается только один раз после начального рендера. Внутри эффекта setCount(count + 1) обновляет count до 1, используя захваченное значение count равное 0. Эффект запускается только один раз, поэтому компонент рендерит 0 первоначально, затем 1 после выполнения эффекта и больше не обновляется."
+    }
+  },
+  {
+    "id": "react-quiz-43",
+    "topicId": "react",
+    "question": {
+      "en": "In React's reconciliation algorithm, what is the primary purpose of the key prop when rendering a list of components?",
+      "ru": "Какова основная цель реквизита key в алгоритме примирения React при рендерировании списка компонентов?"
+    },
+    "options": {
+      "en": [
+        "To help React identify which items have changed, been added, or been removed, allowing it to preserve component state and DOM elements correctly",
+        "To improve the performance of list rendering by caching component instances based on the key value",
+        "To enforce a specific rendering order and prevent React from reordering list items",
+        "To provide a unique identifier for CSS styling and DOM queries"
+      ],
+      "ru": [
+        "Помочь React определить, какие элементы изменились, были добавлены или удалены, позволяя сохранить состояние компонента и элементы DOM правильно",
+        "Улучшить производительность рендерирования списка путем кэширования экземпляров компонентов на основе значения key",
+        "Обеспечить определенный порядок рендерирования и предотвратить переупорядочение элементов списка React",
+        "Предоставить уникальный идентификатор для стилизации CSS и запросов DOM"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The key prop is critical for React's diffing algorithm to maintain list item identity across re-renders. Without stable keys, React may reuse component instances incorrectly, leading to state corruption and DOM element mismatches. Using array indices as keys is an anti-pattern when the list can be reordered or filtered.",
+      "ru": "Реквизит key критически важен для алгоритма сравнения React для сохранения идентичности элемента списка при повторных рендерах. Без стабильных ключей React может неправильно повторно использовать экземпляры компонентов, что приводит к повреждению состояния и несоответствию элементов DOM. Использование индексов массива в качестве ключей — антипаттерн, когда список можно переупорядочить или отфильтровать."
+    }
+  },
+  {
+    "id": "react-quiz-44",
+    "topicId": "react",
+    "question": {
+      "en": "What is the difference between a controlled and uncontrolled input component in React?",
+      "ru": "В чем разница между управляемым и неуправляемым компонентом ввода в React?"
+    },
+    "options": {
+      "en": [
+        "Controlled inputs have their value managed by React state; uncontrolled inputs rely on the DOM to store and manage their value directly",
+        "Controlled inputs are faster because React optimizes state updates; uncontrolled inputs cause unnecessary re-renders",
+        "Uncontrolled inputs are safer because they don't allow direct state manipulation; controlled inputs expose state to the DOM",
+        "There is no meaningful difference; both terms refer to the same implementation pattern"
+      ],
+      "ru": [
+        "Управляемые входы имеют свое значение, управляемое состоянием React; неуправляемые входы полагаются на DOM для прямого хранения и управления их значением",
+        "Управляемые входы быстрее, потому что React оптимизирует обновления состояния; неуправляемые входы вызывают ненужные повторные рендеры",
+        "Неуправляемые входы более безопасны, потому что они не позволяют прямое манипулирование состоянием; управляемые входы открывают состояние для DOM",
+        "Нет существенной разницы; оба термина относятся к одному и тому же паттерну реализации"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "In a controlled component, React state is the single source of truth for input value, synchronized via onChange handlers. In an uncontrolled component, the input maintains its own state in the DOM and React reads it via refs when needed. Controlled components are preferred for form validation and synchronization; uncontrolled components are simpler for isolated inputs.",
+      "ru": "В управляемом компоненте состояние React является единственным источником истины для значения входа, синхронизируемого через обработчики onChange. В неуправляемом компоненте вход поддерживает свое собственное состояние в DOM, и React читает его через refs при необходимости. Управляемые компоненты предпочтительны для валидации и синхронизации формы; неуправляемые компоненты проще для изолированных входов."
+    }
+  },
+  {
+    "id": "react-quiz-45",
+    "topicId": "react",
+    "question": {
+      "en": "When should you use useMemo vs useCallback in a React component?",
+      "ru": "Когда следует использовать useMemo в сравнении с useCallback в компоненте React?"
+    },
+    "options": {
+      "en": [
+        "useMemo memoizes computed values; useCallback memoizes function references to prevent unnecessary re-creation and downstream re-renders of children using those functions",
+        "useMemo is for optimizing array and object creation; useCallback is only for optimizing event handler functions",
+        "useCallback is more performant than useMemo because it caches at the function level rather than value level",
+        "Both hooks serve identical purposes and can be used interchangeably in all cases"
+      ],
+      "ru": [
+        "useMemo мемоизирует вычисленные значения; useCallback мемоизирует ссылки на функции, чтобы предотвратить ненужное пересоздание и последующие повторные рендеры дочерних элементов, использующих эти функции",
+        "useMemo используется для оптимизации создания массивов и объектов; useCallback используется только для оптимизации функций обработчиков событий",
+        "useCallback более производителен, чем useMemo, потому что он кэширует на уровне функции, а не на уровне значения",
+        "Оба хука служат идентичным целям и могут использоваться взаимозаменяемо во всех случаях"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "useMemo caches computed values and prevents recalculation on every render, useful for expensive computations. useCallback caches function references to pass stable functions to memoized children via React.memo, preventing those children from re-rendering when the function identity changes. Both optimize performance but target different optimization patterns.",
+      "ru": "useMemo кэширует вычисленные значения и предотвращает пересчет при каждом рендере, полезно для дорогостоящих вычислений. useCallback кэширует ссылки на функции для передачи стабильных функций мемоизированным дочерним элементам через React.memo, предотвращая их повторный рендер при изменении идентичности функции. Оба оптимизируют производительность, но нацелены на разные паттерны оптимизации."
+    }
+  },
+  {
+    "id": "react-quiz-46",
+    "topicId": "react",
+    "question": {
+      "en": "What will be logged to the console?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran');\n    setCount(count + 1);\n  }, []);\n  \n  return <div>{count}</div>;\n}\n",
+      "ru": "Что будет выведено в консоль?\njs\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  useEffect(() => {\n    console.log('Effect ran');\n    setCount(count + 1);\n  }, []);\n  \n  return <div>{count}</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "'Effect ran' logged once, component renders with count=1 after effect",
+        "'Effect ran' logged once, infinite loop of effect executions",
+        "'Effect ran' logged twice due to StrictMode, component renders with count=1",
+        "'Effect ran' never logged because dependency array is empty"
+      ],
+      "ru": [
+        "'Effect ran' выведено один раз, компонент отображается с count=1 после эффекта",
+        "'Effect ran' выведено один раз, бесконечный цикл выполнения эффектов",
+        "'Effect ran' выведено дважды из-за StrictMode, компонент отображается с count=1",
+        "'Effect ran' никогда не выведено, потому что dependency array пуст"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The effect runs once after initial render because the dependency array is empty. When setCount is called, React schedules a re-render with count=1, but the effect won't run again since its dependencies haven't changed. The component will display '1' after the effect completes.",
+      "ru": "Эффект выполняется один раз после первоначального рендера, потому что dependency array пуст. Когда вызывается setCount, React планирует повторный рендер с count=1, но эффект не будет выполняться снова, так как его зависимости не изменились. Компонент отобразит '1' после завершения эффекта."
+    }
+  },
+  {
+    "id": "react-quiz-47",
+    "topicId": "react",
+    "question": {
+      "en": "Which statement about React's key prop is correct?",
+      "ru": "Какое утверждение о React key prop является правильным?"
+    },
+    "options": {
+      "en": [
+        "Keys should be unique across the entire application to ensure proper reconciliation",
+        "Keys help React identify which items have changed, enabling proper state preservation across re-renders",
+        "Using array index as a key is always safe if the list is not filtered or reordered",
+        "Keys are optional for list items if you're not using hooks in child components"
+      ],
+      "ru": [
+        "Ключи должны быть уникальны во всем приложении для обеспечения правильной reconciliation",
+        "Ключи помогают React определить, какие элементы изменились, обеспечивая правильное сохранение состояния при повторном рендере",
+        "Использование индекса массива в качестве ключа всегда безопасно, если список не фильтруется или не переупорядочивается",
+        "Ключи не обязательны для элементов списка, если вы не используете hooks в дочерних компонентах"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Keys help React match elements between renders, preserving component state and DOM nodes correctly. Keys only need to be unique within the list, not globally. Array indices fail when lists are reordered because the index-to-element mapping changes. Hooks don't affect the need for proper keys.",
+      "ru": "Ключи помогают React сопоставить элементы между рендерами, правильно сохраняя состояние компонента и узлы DOM. Ключи должны быть уникальны только в пределах списка, а не глобально. Индексы массива дают сбой при переупорядочении списков, потому что отображение индекса на элемент изменяется. Hooks не влияют на необходимость правильных ключей."
+    }
+  },
+  {
+    "id": "react-quiz-48",
+    "topicId": "react",
+    "question": {
+      "en": "What is the main difference between a controlled and uncontrolled component?\njs\n// Controlled\n<input value={state} onChange={setState} />\n\n// Uncontrolled\n<input defaultValue=\"initial\" />\n",
+      "ru": "В чем главное отличие между управляемым и неуправляемым компонентом?\njs\n// Управляемый\n<input value={state} onChange={setState} />\n\n// Неуправляемый\n<input defaultValue=\"initial\" />\n"
+    },
+    "options": {
+      "en": [
+        "Controlled components are faster because they don't trigger re-renders on every keystroke",
+        "Controlled components have their state managed by React, while uncontrolled components rely on the DOM to hold the value",
+        "Uncontrolled components cannot be validated because the value is stored in the DOM",
+        "Controlled components require defaultValue, while uncontrolled components require value"
+      ],
+      "ru": [
+        "Управляемые компоненты быстрее, потому что они не вызывают повторный рендер при каждом нажатии клавиши",
+        "Состояние управляемых компонентов управляется React, а неуправляемые компоненты полагаются на DOM для хранения значения",
+        "Неуправляемые компоненты нельзя проверить, потому что значение хранится в DOM",
+        "Управляемые компоненты требуют defaultValue, а неуправляемые компоненты требуют value"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "In controlled components, React state is the single source of truth, while uncontrolled components store their value in the DOM itself and can be accessed via refs. Controlled components do trigger re-renders per keystroke (which is intentional for validation). Both types can be validated, and the props used are opposite to what option 4 states.",
+      "ru": "В управляемых компонентах состояние React является единственным источником истины, а неуправляемые компоненты хранят свое значение в самом DOM и могут быть доступны через refs. Управляемые компоненты действительно вызывают повторный рендер при каждом нажатии клавиши (это намеренно для валидации). Оба типа можно проверить, и используемые props противоположны тому, что утверждает вариант 4."
+    }
+  },
+  {
+    "id": "react-quiz-49",
+    "topicId": "react",
+    "question": {
+      "en": "What is the purpose of the useCallback hook?",
+      "ru": "Какова цель hook useCallback?"
+    },
+    "options": {
+      "en": [
+        "To memoize callback functions so they maintain referential equality across re-renders when dependencies haven't changed",
+        "To automatically prevent child components from re-rendering when props change",
+        "To batch multiple state updates into a single re-render for performance optimization",
+        "To cache the result of expensive computations so they don't run on every render"
+      ],
+      "ru": [
+        "Для мемоизации callback функций, чтобы они сохраняли идентичность по ссылке при повторных рендерах, когда зависимости не изменились",
+        "Чтобы автоматически предотвратить повторный рендер дочерних компонентов при изменении props",
+        "Чтобы объединить несколько обновлений состояния в один повторный рендер для оптимизации производительности",
+        "Чтобы кэшировать результат дорогостоящих вычислений, чтобы они не выполнялись при каждом рендере"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "useCallback returns a memoized version of the callback that only changes if one of its dependencies has changed. This is useful when passing callbacks to optimized child components (memo) to prevent unnecessary re-renders. Option 3 describes batching, which is automatic. Option 4 describes useMemo, not useCallback.",
+      "ru": "useCallback возвращает мемоизированную версию callback, которая изменяется только если изменилась одна из его зависимостей. Это полезно при передаче callbacks оптимизированным дочерним компонентам (memo) для предотвращения ненужных повторных рендеров. Вариант 3 описывает батчинг, который происходит автоматически. Вариант 4 описывает useMemo, а не useCallback."
+    }
+  },
+  {
+    "id": "react-quiz-50",
+    "topicId": "react",
+    "question": {
+      "en": "What will happen when this component renders?\njs\nfunction Parent() {\n  const [theme, setTheme] = useState('light');\n  \n  return (\n    <ThemeContext.Provider value={{ theme, setTheme }}>\n      <Child />\n    </ThemeContext.Provider>\n  );\n}\n\nfunction Child() {\n  const { theme } = useContext(ThemeContext);\n  return <div>{theme}</div>;\n}\n",
+      "ru": "Что произойдет при рендере этого компонента?\njs\nfunction Parent() {\n  const [theme, setTheme] = useState('light');\n  \n  return (\n    <ThemeContext.Provider value={{ theme, setTheme }}>\n      <Child />\n    </ThemeContext.Provider>\n  );\n}\n\nfunction Child() {\n  const { theme } = useContext(ThemeContext);\n  return <div>{theme}</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "Child will re-render every time Parent re-renders because the context value object is created fresh on each render",
+        "Child will not re-render unless theme state actually changes, because React optimizes context subscriptions",
+        "Child will only re-render if setTheme is called, not when other state in Parent changes",
+        "Child will cause a memory leak because useContext creates a persistent subscription"
+      ],
+      "ru": [
+        "Child будет повторно отрендеться каждый раз, когда Parent повторно отрендерится, потому что объект значения контекста создается заново при каждом рендере",
+        "Child не будет повторно отрендеться, если состояние theme не изменится, потому что React оптимизирует подписки на контекст",
+        "Child будет повторно отрендеться только если вызвана setTheme, но не при изменении другого состояния в Parent",
+        "Child вызовет утечку памяти, потому что useContext создает постоянную подписку"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Even though only theme is used in Child, the context value `{ theme, setTheme }` is a new object on every Parent render. This causes all context consumers to re-render since the object reference changed. To fix this, you'd memoize the value with useMemo. React doesn't optimize away context re-renders based on which properties are used.",
+      "ru": "Хотя Child использует только theme, значение контекста `{ theme, setTheme }` — это новый объект при каждом рендере Parent. Это приводит к повторному рендеру всех потребителей контекста, так как ссылка на объект изменилась. Чтобы исправить это, вы бы мемоизировали значение с помощью useMemo. React не оптимизирует повторные рендеры контекста на основе того, какие свойства используются."
     }
   }
 ]

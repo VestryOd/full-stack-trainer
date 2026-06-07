@@ -3,540 +3,810 @@
     "id": "algorithms-quiz-1",
     "topicId": "algorithms",
     "question": {
-      "en": "You need to search for a value in an unsorted array of 1 million elements. Which approach provides the best space-time tradeoff for repeated searches?",
-      "ru": "Вам нужно искать значение в неотсортированном массиве из 1 миллиона элементов. Какой подход обеспечивает лучший компромисс между временем и памятью для повторяющихся поисков?"
+      "en": "An algorithm processes an array of n elements. It divides the problem into 2 subproblems of size n/2, solves each recursively, and merges in linear time. Using the Master Theorem, what is its time complexity?\n\nT(n) = 2T(n/2) + O(n)\n",
+      "ru": "Алгоритм обрабатывает массив из n элементов. Он делит задачу на 2 подзадачи размером n/2, решает каждую рекурсивно и объединяет за линейное время. Используя основную теорему, какова его временная сложность?\n\nT(n) = 2T(n/2) + O(n)\n"
     },
     "options": {
       "en": [
-        "Linear search each time, O(n) time, O(1) space",
-        "Build a hash map once O(n), then O(1) lookups, O(n) space",
-        "Sort the array O(n log n), then binary search O(log n), O(1) space",
-        "Use a binary search tree O(n log n) build, O(log n) search, O(n) space"
+        "O(n log n)",
+        "O(n²)",
+        "O(n)",
+        "O(n log² n)"
       ],
       "ru": [
-        "Линейный поиск каждый раз, O(n) время, O(1) память",
-        "Построить хеш-таблицу один раз O(n), затем O(1) поиски, O(n) память",
-        "Отсортировать массив O(n log n), затем двоичный поиск O(log n), O(1) память",
-        "Использовать двоичное дерево поиска O(n log n) построение, O(log n) поиск, O(n) память"
+        "O(n log n)",
+        "O(n²)",
+        "O(n)",
+        "O(n log² n)"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "Hash maps offer O(1) average lookup time with O(n) space, making them ideal for repeated searches. While linear search uses no extra space, it's too slow for many queries. Sorting or BSTs provide good search time but require more space overhead or slower initial setup compared to hash maps.",
-      "ru": "Хеш-таблицы предоставляют средний поиск за O(1) с использованием O(n) памяти, что идеально для повторяющихся поисков. Хотя линейный поиск не использует дополнительную память, он слишком медленный для многих запросов. Сортировка или BST обеспечивают хороший поиск, но требуют больше памяти или медленнее инициализируются по сравнению с хеш-таблицами."
+      "en": "By the Master Theorem with a=2, b=2, and f(n)=O(n), we have log_b(a) = log_2(2) = 1, so f(n) = O(n^1). This means f(n) is equal to n^log_b(a), resulting in T(n) = O(n log n). This is the classic merge sort complexity.",
+      "ru": "По основной теореме с a=2, b=2 и f(n)=O(n), имеем log_b(a) = log_2(2) = 1, поэтому f(n) = O(n^1). Это означает, что f(n) равна n^log_b(a), в результате T(n) = O(n log n). Это классическая сложность сортировки слиянием."
     }
   },
   {
     "id": "algorithms-quiz-2",
     "topicId": "algorithms",
     "question": {
-      "en": "Consider this code snippet:\n\nfunction traverse(node) {\n  if (!node) return;\n  console.log(node.val);\n  traverse(node.left);\n  traverse(node.right);\n}\n\nWhat is the time and space complexity of this tree traversal?",
-      "ru": "Рассмотрим этот фрагмент кода:\n\nfunction traverse(node) {\n  if (!node) return;\n  console.log(node.val);\n  traverse(node.left);\n  traverse(node.right);\n}\n\nКаковы временная и пространственная сложность обхода этого дерева?"
+      "en": "Consider a hash map with separate chaining collision resolution. In the worst case, if all n elements hash to the same bucket, what are the time complexities for search, insert, and delete operations?\n\nHash map with n elements, 1 bucket\n",
+      "ru": "Рассмотрим хеш-таблицу с методом разрешения коллизий через отдельные цепочки. В худшем случае, если все n элементов хешируются в один и тот же bucket, какова временная сложность операций поиска, вставки и удаления?\n\nХеш-таблица с n элементами, 1 bucket\n"
     },
     "options": {
       "en": [
-        "Time O(n), Space O(1) — each node visited once, no extra data structures",
-        "Time O(n), Space O(h) — each node visited once, recursion stack depth is tree height",
-        "Time O(n log n), Space O(h) — binary tree property reduces complexity",
-        "Time O(n), Space O(n) — recursion stack grows to leaf nodes"
+        "O(n) for all three operations",
+        "O(1) for all three operations",
+        "O(log n) for search, O(1) for insert and delete",
+        "O(1) amortized for all three operations"
       ],
       "ru": [
-        "Время O(n), Память O(1) — каждый узел посещается один раз, нет дополнительных структур",
-        "Время O(n), Память O(h) — каждый узел посещается один раз, глубина стека рекурсии равна высоте дерева",
-        "Время O(n log n), Память O(h) — свойство бинарного дерева уменьшает сложность",
-        "Время O(n), Память O(n) — стек рекурсии растет до листовых узлов"
+        "O(n) для всех трёх операций",
+        "O(1) для всех трёх операций",
+        "O(log n) для поиска, O(1) для вставки и удаления",
+        "O(1) амортизированная сложность для всех трёх операций"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "Time complexity is O(n) because every node is visited exactly once. Space complexity is O(h) where h is the height due to the recursion call stack — in the worst case (skewed tree), h can equal n, but in a balanced tree, h is O(log n). Option 3 is wrong because tree traversal isn't inherently O(n log n). Option 4 overestimates space as it's bounded by height, not total nodes.",
-      "ru": "Временная сложность O(n), так как каждый узел посещается ровно один раз. Пространственная сложность O(h), где h — высота дерева, из-за стека вызовов рекурсии — в худшем случае (перекошенное дерево) h может равняться n, но в сбалансированном дереве h равна O(log n). Вариант 3 неверен, так как обход дерева не является O(n log n). Вариант 4 переоценивает память, так как она ограничена высотой, а не общим количеством узлов."
+      "en": "When all elements collide into a single bucket, the hash map degenerates into a linked list. Search requires traversing potentially all n elements, insert and delete also require O(n) time in the worst case to find or remove an element. This is why load factor and hash function quality are critical.",
+      "ru": "Когда все элементы коллидируют в один bucket, хеш-таблица вырождается в связный список. Поиск требует прохода через потенциально все n элементов, вставка и удаление также требуют O(n) времени в худшем случае. Поэтому коэффициент загрузки и качество хеш-функции критичны."
     }
   },
   {
     "id": "algorithms-quiz-3",
     "topicId": "algorithms",
     "question": {
-      "en": "When would you choose Depth-First Search (DFS) over Breadth-First Search (BFS) in a graph problem?",
-      "ru": "Когда вы выбрали бы поиск в глубину (DFS) вместо поиска в ширину (BFS) в задаче с графом?"
+      "en": "What is the key difference between BFS and DFS in terms of space complexity when traversing a complete binary tree of depth d?\n\nComplete binary tree with 2^d - 1 nodes, depth d\n",
+      "ru": "В чём ключевое различие между BFS и DFS с точки зрения пространственной сложности при обходе полного бинарного дерева глубины d?\n\nПолное бинарное дерево с 2^d - 1 узлами, глубина d\n"
     },
     "options": {
       "en": [
-        "DFS uses less memory for finding shortest paths in unweighted graphs",
-        "DFS is better for detecting cycles and exploring all paths; it uses less memory in sparse graphs or when backtracking is needed",
-        "BFS is always superior; DFS should never be used for graph problems",
-        "DFS guarantees faster execution time due to its recursive nature"
+        "BFS uses O(2^d) space, DFS uses O(d) space due to the call stack",
+        "DFS uses O(2^d) space, BFS uses O(d) space due to queue optimization",
+        "Both use O(d) space for any binary tree",
+        "BFS uses O(d) space, DFS uses O(2^d) space due to recursion depth"
       ],
       "ru": [
-        "DFS использует меньше памяти для поиска кратчайших путей в невзвешенных графах",
-        "DFS лучше для обнаружения циклов и исследования всех путей; он использует меньше памяти в разреженных графах или когда требуется откат",
-        "BFS всегда лучше; DFS никогда не следует использовать для задач с графами",
-        "DFS гарантирует более быстрое время выполнения из-за его рекурсивной природы"
+        "BFS использует O(2^d) пространства, DFS использует O(d) пространства из-за стека вызовов",
+        "DFS использует O(2^d) пространства, BFS использует O(d) пространства благодаря оптимизации очереди",
+        "Оба используют O(d) пространства для любого бинарного дерева",
+        "BFS использует O(d) пространства, DFS использует O(2^d) пространства из-за глубины рекурсии"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "DFS is ideal for cycle detection, finding connected components, and topological sorting because it explores all paths recursively. While BFS is better for shortest paths, DFS can use less memory in sparse graphs since it only maintains a call stack rather than storing all neighbors in a queue. Option 0 is incorrect because BFS finds shortest paths, not DFS.",
-      "ru": "DFS идеален для обнаружения циклов, поиска связных компонентов и топологической сортировки, потому что он рекурсивно исследует все пути. Хотя BFS лучше для кратчайших путей, DFS может использовать меньше памяти в разреженных графах, так как он только сохраняет стек вызовов, а не все соседи в очереди. Вариант 0 неверен, так как BFS находит кратчайшие пути, а не DFS."
+      "en": "In a complete binary tree, the last level has ~2^d nodes. BFS must store all nodes at the widest level in the queue, which is O(2^d). DFS uses implicit recursion stack and only stores nodes along the current path, which is at most O(d) deep. This makes DFS more space-efficient for deep, wide trees.",
+      "ru": "В полном бинарном дереве последний уровень содержит ~2^d узлов. BFS должен хранить все узлы самого широкого уровня в очереди, что равно O(2^d). DFS использует неявный стек рекурсии и хранит только узлы вдоль текущего пути, глубина которого не превышает O(d). Это делает DFS более эффективным по памяти для глубоких и широких деревьев."
     }
   },
   {
     "id": "algorithms-quiz-4",
     "topicId": "algorithms",
     "question": {
-      "en": "Analyze this dynamic programming scenario: computing the nth Fibonacci number recursively without memoization has time complexity O(2^n). With memoization (top-down) or tabulation (bottom-up), what is the improvement and why?",
-      "ru": "Проанализируйте этот сценарий динамического программирования: вычисление n-го числа Фибоначчи рекурсивно без мемоизации имеет временную сложность O(2^n). С мемоизацией (сверху вниз) или табуляцией (снизу вверх), какое улучшение и почему?"
+      "en": "A dynamic programming solution for the coin change problem computes the minimum number of coins needed for each amount from 0 to target amount n. What is the space-time tradeoff compared to a naive recursive approach without memoization?\n\nDP array of size n, computed iteratively\n",
+      "ru": "Решение задачи о размене монет с использованием динамического программирования вычисляет минимальное количество монет для каждой суммы от 0 до целевой суммы n. Какой компромисс пространство-время по сравнению с наивным рекурсивным подходом без мемоизации?\n\nМассив DP размером n, вычисляется итеративно\n"
     },
     "options": {
       "en": [
-        "No improvement; memoization and tabulation have the same O(2^n) complexity as naive recursion",
-        "O(n) time — each subproblem is computed only once and reused; space is O(n) for storage or recursion depth",
-        "O(n log n) time — memoization reduces exponential calls logarithmically",
-        "O(log n) time — dynamic programming inherently optimizes using binary search internally"
+        "DP trades O(n) extra space for O(n) time vs exponential time in naive recursion",
+        "DP uses the same space and time as naive recursion",
+        "DP reduces space to O(1) but increases time to O(n²)",
+        "DP eliminates the need for any auxiliary space"
       ],
       "ru": [
-        "Нет улучшения; мемоизация и табуляция имеют ту же O(2^n) сложность, что и наивная рекурсия",
-        "O(n) время — каждая подзадача вычисляется только один раз и повторно используется; память O(n) для хранения или глубины рекурсии",
-        "O(n log n) время — мемоизация уменьшает экспоненциальные вызовы логарифмически",
-        "O(log n) время — динамическое программирование по своей природе оптимизирует с использованием двоичного поиска"
+        "DP обменивает O(n) дополнительного пространства на O(n) времени против экспоненциального времени в наивной рекурсии",
+        "DP использует то же пространство и время, что и наивная рекурсия",
+        "DP уменьшает пространство до O(1), но увеличивает время до O(n²)",
+        "DP исключает необходимость в любом дополнительном пространстве"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "With memoization or tabulation, each unique Fibonacci number is computed exactly once, reducing complexity from O(2^n) to O(n). The space complexity is O(n) for storing computed results (or call stack depth with memoization). Options 2 and 3 incorrectly suggest further optimizations that don't exist for this problem — the bottleneck is computing n distinct values.",
-      "ru": "С мемоизацией или табуляцией каждое уникальное число Фибоначчи вычисляется ровно один раз, что снижает сложность с O(2^n) до O(n). Пространственная сложность O(n) для хранения вычисленных результатов (или глубины стека вызовов с мемоизацией). Варианты 2 и 3 неправильно предполагают дальнейшие оптимизации, которые не существуют для этой задачи — узким местом является вычисление n различных значений."
+      "en": "The naive recursive approach without memoization has exponential time complexity O(c^n) where c is the number of coin types, because it recalculates the same subproblems repeatedly. The DP approach trades O(n) extra space for the DP table to achieve O(n*c) time by solving each subproblem exactly once.",
+      "ru": "Наивный рекурсивный подход без мемоизации имеет экспоненциальную временную сложность O(c^n), где c — количество типов монет, потому что он пересчитывает одни и те же подзадачи многократно. DP подход обменивает O(n) дополнительного пространства для таблицы DP на O(n*c) время, решая каждую подзадачу ровно один раз."
     }
   },
   {
     "id": "algorithms-quiz-5",
     "topicId": "algorithms",
     "question": {
-      "en": "Given an unsorted array to sort, quicksort averages O(n log n) but worst-case O(n²), while merge sort guarantees O(n log n). When would you choose quicksort in production code?",
-      "ru": "Учитывая неотсортированный массив для сортировки, quicksort в среднем O(n log n), но наихудший случай O(n²), а merge sort гарантирует O(n log n). Когда вы выбрали бы quicksort в production коде?"
+      "en": "What does the following code snippet do, and what is its Big O time complexity?\npython\ndef find_duplicates(arr):\n    seen = {}\n    for num in arr:\n        if num in seen:\n            return num\n        seen[num] = True\n    return None\n",
+      "ru": "Что делает следующий фрагмент кода и какова его временная сложность по Big O?\npython\ndef find_duplicates(arr):\n    seen = {}\n    for num in arr:\n        if num in seen:\n            return num\n        seen[num] = True\n    return None\n"
     },
     "options": {
       "en": [
-        "Never use quicksort in production; merge sort is always the correct choice",
-        "Quicksort has better cache locality and lower space overhead (O(log n) vs O(n)); worst-case is rare with good pivot selection",
-        "Quicksort is faster because it uses fewer comparisons than merge sort",
-        "Quicksort should only be used for small arrays under 100 elements"
+        "Finds the first duplicate element; O(n) time and O(n) space",
+        "Finds the first duplicate element; O(n²) time and O(1) space",
+        "Counts all duplicates in the array; O(n log n) time and O(n) space",
+        "Sorts the array to find duplicates; O(n log n) time and O(n) space"
       ],
       "ru": [
-        "Никогда не используйте quicksort в production; merge sort всегда является правильным выбором",
-        "Quicksort имеет лучшую локальность кеша и меньше накладных расходов памяти (O(log n) vs O(n)); наихудший случай редко случается с хорошим выбором опорного элемента",
-        "Quicksort быстрее, потому что использует меньше сравнений, чем merge sort",
-        "Quicksort следует использовать только для небольших массивов до 100 элементов"
+        "Находит первый дублирующийся элемент; O(n) время и O(n) пространство",
+        "Находит первый дублирующийся элемент; O(n²) время и O(1) пространство",
+        "Подсчитывает все дубликаты в массиве; O(n log n) время и O(n) пространство",
+        "Сортирует массив для поиска дубликатов; O(n log n) время и O(n) пространство"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "Quicksort is preferred in practice because it has better cache locality (operates in-place on contiguous memory) and O(log n) space overhead compared to merge sort's O(n). With good pivot selection strategies (random, median-of-three), worst-case O(n²) is extremely unlikely. Option 0 is false — quicksort is widely used. Option 2 is misleading — both have similar comparison counts asymptotically.",
-      "ru": "Quicksort предпочтителен на практике, так как имеет лучшую локальность кеша (работает на месте с непрерывной памятью) и O(log n) накладных расходов по сравнению с O(n) у merge sort. При хороших стратегиях выбора опорного элемента (случайный, медиана из трех) наихудший случай O(n²) крайне маловероятен. Вариант 0 неверен — quicksort широко используется. Вариант 2 вводит в заблуждение — оба имеют асимптотически похожие количества сравнений."
+      "en": "The function iterates through the array once, performing O(1) hash map lookups and insertions for each element. It returns immediately upon finding the first duplicate, so worst-case time is O(n). The hash map stores up to n unique elements, requiring O(n) space. This demonstrates using a space-time tradeoff: trading memory for faster duplicate detection.",
+      "ru": "Функция проходит по массиву один раз, выполняя O(1) поиск и вставку в хеш-таблице для каждого элемента. Она возвращается немедленно при обнаружении первого дубликата, поэтому время в худшем случае O(n). Хеш-таблица хранит до n уникальных элементов, требуя O(n) пространства. Это демонстрирует компромисс пространство-время: обмен памяти на более быстрое обнаружение дубликатов."
     }
   },
   {
     "id": "algorithms-quiz-6",
     "topicId": "algorithms",
     "question": {
-      "en": "You have a function that performs a nested loop: the outer loop runs n times, and the inner loop runs i times on the i-th iteration. What is the Big O time complexity?",
-      "ru": "У вас есть функция с вложенными циклами: внешний цикл выполняется n раз, а внутренний цикл выполняется i раз на i-й итерации. Какова временная сложность в нотации Big O?"
+      "en": "An algorithm processes n items by dividing the problem in half each iteration until reaching base cases of size 1. What is its time complexity in Big O notation?\npython\ndef process(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = process(arr[:mid])\n    right = process(arr[mid:])\n    return merge(left, right)\n",
+      "ru": "Алгоритм обрабатывает n элементов, разделяя задачу пополам на каждой итерации до базовых случаев размером 1. Какова его временная сложность в нотации Big O?\npython\ndef process(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = process(arr[:mid])\n    right = process(arr[mid:])\n    return merge(left, right)\n"
     },
     "options": {
       "en": [
-        "O(n²)",
         "O(n log n)",
+        "O(n²)",
         "O(n)",
-        "O(2ⁿ)"
+        "O(log n)"
       ],
       "ru": [
-        "O(n²)",
         "O(n log n)",
+        "O(n²)",
         "O(n)",
-        "O(2ⁿ)"
+        "O(log n)"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The total number of iterations is 1 + 2 + 3 + ... + n = n(n+1)/2, which simplifies to O(n²). This is the sum of an arithmetic series, not a constant multiple of n or logarithmic growth. O(n log n) is typical for merge sort, and O(2ⁿ) represents exponential algorithms.",
-      "ru": "Общее количество итераций составляет 1 + 2 + 3 + ... + n = n(n+1)/2, что упрощается до O(n²). Это сумма арифметической прогрессии, а не константное кратное n или логарифмический рост. O(n log n) типичен для сортировки слиянием, а O(2ⁿ) представляет экспоненциальные алгоритмы."
+      "en": "The algorithm divides the array in half recursively (log n depth) and merges at each level (n work per level), resulting in O(n log n). This is the classic merge sort complexity. O(n²) would occur with nested loops, O(n) is too optimistic given the tree structure, and O(log n) ignores the merge operation cost.",
+      "ru": "Алгоритм рекурсивно делит массив пополам (глубина log n) и объединяет на каждом уровне (n работы за уровень), что дает O(n log n). Это классическая сложность сортировки слиянием. O(n²) возникает при вложенных циклах, O(n) слишком оптимистична с учетом древовидной структуры, а O(log n) игнорирует стоимость объединения."
     }
   },
   {
     "id": "algorithms-quiz-7",
     "topicId": "algorithms",
     "question": {
-      "en": "Consider this code snippet: for each element in an unsorted array, you perform a binary search in another sorted array of size m. What is the overall time complexity if the first array has n elements?",
-      "ru": "Рассмотрите этот фрагмент кода: для каждого элемента в неотсортированном массиве вы выполняете бинарный поиск в другом отсортированном массиве размером m. Какова общая временная сложность, если первый массив содержит n элементов?"
+      "en": "You need to implement a cache that stores frequent user queries and their results. Which data structure offers O(1) average-case lookup, insertion, and deletion?\npython\n# Which would you choose?\nA_option = []      # list\nB_option = {}      # dictionary/hash map\nC_option = set()   # set\nD_option = ()      # tuple\n",
+      "ru": "Вам нужно реализовать кэш, который хранит часто используемые запросы пользователей и их результаты. Какая структура данных предлагает O(1) поиск, вставку и удаление в среднем случае?\npython\n# Какой вы выберете?\nA_option = []      # список\nB_option = {}      # словарь/хеш-таблица\nC_option = set()   # множество\nD_option = ()      # кортеж\n"
     },
     "options": {
       "en": [
-        "O(n log m)",
-        "O(n + m)",
-        "O(n · m)",
-        "O(log n · log m)"
+        "list",
+        "dictionary/hash map",
+        "set",
+        "tuple"
       ],
       "ru": [
-        "O(n log m)",
-        "O(n + m)",
-        "O(n · m)",
-        "O(log n · log m)"
+        "список",
+        "словарь/хеш-таблица",
+        "множество",
+        "кортеж"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "You iterate through n elements (O(n)) and perform a binary search on a sorted array of size m (O(log m)) for each. This gives O(n · log m). If you performed a linear search instead, it would be O(n · m). The other options don't account for performing the operation on each of the n elements.",
-      "ru": "Вы проходите через n элементов (O(n)) и выполняете бинарный поиск в отсортированном массиве размером m (O(log m)) для каждого. Это дает O(n · log m). Если бы вы выполнили линейный поиск, это было бы O(n · m). Остальные варианты не учитывают выполнение операции для каждого из n элементов."
+      "en": "Hash maps provide O(1) average-case complexity for all three operations through hashing, making them ideal for cache implementations. Lists require O(n) for deletion and search. Sets offer O(1) operations but are unordered and can't store values. Tuples are immutable and don't support insertion or deletion.",
+      "ru": "Хеш-таблицы обеспечивают O(1) сложность в среднем случае для всех трех операций благодаря хешированию, что делает их идеальными для кеширования. Списки требуют O(n) для удаления и поиска. Множества предлагают O(1) операции, но неупорядочены и не могут хранить значения. Кортежи неизменяемы и не поддерживают вставку или удаление."
     }
   },
   {
     "id": "algorithms-quiz-8",
     "topicId": "algorithms",
     "question": {
-      "en": "In a hash map with a good hash function and no collisions, what are the average time complexities for insertion, deletion, and lookup operations?",
-      "ru": "В хеш-таблице с хорошей хеш-функцией и без коллизий, какова средняя временная сложность для операций вставки, удаления и поиска?"
+      "en": "What will be printed by this BFS traversal of a binary tree?\npython\nfrom collections import deque\n\ndef bfs(root):\n    if not root:\n        return []\n    result = []\n    queue = deque([root])\n    while queue:\n        node = queue.popleft()\n        result.append(node.val)\n        if node.left:\n            queue.append(node.left)\n        if node.right:\n            queue.append(node.right)\n    return result\n\n#     1\n#    / \\\n#   2   3\n#  / \\\n# 4   5\n",
+      "ru": "Что будет выведено в результате обхода BFS этого бинарного дерева?\npython\nfrom collections import deque\n\ndef bfs(root):\n    if not root:\n        return []\n    result = []\n    queue = deque([root])\n    while queue:\n        node = queue.popleft()\n        result.append(node.val)\n        if node.left:\n            queue.append(node.left)\n        if node.right:\n            queue.append(node.right)\n    return result\n\n#     1\n#    / \\\n#   2   3\n#  / \\\n# 4   5\n"
     },
     "options": {
       "en": [
-        "All O(1)",
-        "All O(log n)",
-        "All O(n)",
-        "Insertion O(1), others O(n)"
+        "[1, 2, 3, 4, 5]",
+        "[4, 2, 5, 1, 3]",
+        "[1, 2, 4, 5, 3]",
+        "[4, 5, 2, 3, 1]"
       ],
       "ru": [
-        "Все O(1)",
-        "Все O(log n)",
-        "Все O(n)",
-        "Вставка O(1), остальные O(n)"
+        "[1, 2, 3, 4, 5]",
+        "[4, 2, 5, 1, 3]",
+        "[1, 2, 4, 5, 3]",
+        "[4, 5, 2, 3, 1]"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "With a good hash function and proper distribution, insertion, deletion, and lookup all operate in constant average time O(1) because the hash function directly maps to the location in the table. With collisions or a poor hash function, these could degrade to O(n) in the worst case, but that's not the average behavior of a well-designed hash map.",
-      "ru": "С хорошей хеш-функцией и правильным распределением вставка, удаление и поиск выполняются в постоянном среднем времени O(1), поскольку хеш-функция напрямую отображает расположение в таблице. При коллизиях или плохой хеш-функции эти операции могут ухудшиться до O(n) в худшем случае, но это не среднее поведение хорошо спроектированной хеш-таблицы."
+      "en": "BFS processes nodes level by level using a queue (FIFO). Level 1: node 1. Level 2: nodes 2, 3. Level 3: nodes 4, 5. Therefore, the order is [1, 2, 3, 4, 5]. Option [1, 2, 4, 5, 3] represents DFS in-order traversal, and the reversed options represent other traversal orders, not BFS.",
+      "ru": "BFS обрабатывает узлы уровень за уровнем, используя очередь (FIFO). Уровень 1: узел 1. Уровень 2: узлы 2, 3. Уровень 3: узлы 4, 5. Таким образом, порядок [1, 2, 3, 4, 5]. Вариант [1, 2, 4, 5, 3] представляет DFS обход в порядке In-Order, а обратные варианты представляют другие порядки обхода, а не BFS."
     }
   },
   {
     "id": "algorithms-quiz-9",
     "topicId": "algorithms",
     "question": {
-      "en": "Which tree traversal approach uses a stack and is naturally suited for problems like finding all paths from root to leaves?",
-      "ru": "Какой подход обхода дерева использует стек и естественно подходит для задач, таких как поиск всех путей от корня к листьям?"
+      "en": "You're choosing between BFS and DFS for finding the shortest path in an unweighted graph. Which statement is most accurate?\n\nA) DFS guarantees the shortest path with O(V + E) space\nB) BFS guarantees the shortest path with O(V) space\nC) BFS guarantees the shortest path with O(V) queue space\nD) Both BFS and DFS guarantee shortest path if implemented correctly",
+      "ru": "Вы выбираете между BFS и DFS для поиска кратчайшего пути в неориентированном графе без весов. Какое утверждение наиболее точно?\n\nA) DFS гарантирует кратчайший путь с пространством O(V + E)\nB) BFS гарантирует кратчайший путь с пространством O(V)\nC) BFS гарантирует кратчайший путь с пространством очереди O(V)\nD) И BFS, и DFS гарантируют кратчайший путь при правильной реализации"
     },
     "options": {
       "en": [
-        "Depth-First Search (DFS)",
-        "Breadth-First Search (BFS)",
-        "Level-order traversal",
-        "Topological sort"
+        "DFS guarantees shortest path with O(V + E) space",
+        "BFS guarantees shortest path with O(V) space",
+        "BFS guarantees shortest path with O(V) queue space",
+        "Both BFS and DFS guarantee shortest path if implemented correctly"
       ],
       "ru": [
-        "Поиск в глубину (DFS)",
-        "Поиск в ширину (BFS)",
-        "Обход по уровням",
-        "Топологическая сортировка"
+        "DFS гарантирует кратчайший путь с пространством O(V + E)",
+        "BFS гарантирует кратчайший путь с пространством O(V)",
+        "BFS гарантирует кратчайший путь с пространством очереди O(V)",
+        "И BFS, и DFS гарантируют кратчайший путь при правильной реализации"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "DFS uses a stack (or recursion, which implicitly uses the call stack) to explore as far as possible along each branch before backtracking, making it ideal for path-finding problems. BFS uses a queue and explores layer by layer, which is better for shortest-path problems. Level-order traversal is also BFS-based, and topological sort is a specific application of DFS.",
-      "ru": "DFS использует стек (или рекурсию, которая неявно использует стек вызовов) для исследования как можно дальше вдоль каждой ветви перед возвратом, что идеально подходит для задач поиска пути. BFS использует очередь и исследует слой за слоем, что лучше для задач поиска кратчайшего пути. Обход по уровням также основан на BFS, а топологическая сортировка — это конкретное применение DFS."
+      "en": "BFS explores level by level and guarantees the shortest path in unweighted graphs because it visits nodes in order of distance. The queue space is O(V) in worst case. DFS does not guarantee shortest path as it explores deeply first, potentially finding longer paths. Option B is imprecise about queue being the space requirement; option C correctly identifies BFS's guarantee.",
+      "ru": "BFS исследует уровень за уровнем и гарантирует кратчайший путь в графах без весов, так как посещает узлы в порядке расстояния. Пространство очереди составляет O(V) в худшем случае. DFS не гарантирует кратчайший путь, так как исследует сначала в глубину, потенциально находя более длинные пути. Вариант B неточен в отношении очереди как требования по пространству; вариант C правильно определяет гарантию BFS."
     }
   },
   {
     "id": "algorithms-quiz-10",
     "topicId": "algorithms",
     "question": {
-      "en": "You need to solve the coin change problem: find the minimum number of coins needed to make amount X. Which algorithmic approach and data structure relationship best describes the solution?",
-      "ru": "Вам нужно решить задачу о размене монет: найти минимальное количество монет, необходимое для составления суммы X. Какой подход алгоритма и отношение структуры данных лучше всего описывает решение?"
+      "en": "In dynamic programming, what is the key tradeoff when memoizing results in a recursive solution?\n\nA) You save computation time but always increase memory usage\nB) You save computation time at the cost of increased memory, trading space for time\nC) You improve cache locality but reduce algorithmic efficiency\nD) You guarantee polynomial time but lose the ability to handle base cases",
+      "ru": "В динамическом программировании, какой основной компромисс возникает при мемоизации результатов в рекурсивном решении?\n\nA) Вы экономите время вычисления, но всегда увеличиваете использование памяти\nB) Вы экономите время вычисления за счет увеличения памяти, обменивая пространство на время\nC) Вы улучшаете локальность кэша, но снижаете алгоритмическую эффективность\nD) Вы гарантируете полиномиальное время, но теряете возможность обработки базовых случаев"
     },
     "options": {
       "en": [
-        "Dynamic programming with memoization, trading space for time",
-        "Greedy algorithm always yielding optimal results",
-        "BFS on a graph of amounts, ignoring state reuse",
-        "Recursive backtracking without any optimization"
+        "You save computation time but always increase memory usage",
+        "You save computation time at the cost of increased memory, trading space for time",
+        "You improve cache locality but reduce algorithmic efficiency",
+        "You guarantee polynomial time but lose the ability to handle base cases"
       ],
       "ru": [
-        "Динамическое программирование с мемоизацией, обмен пространства на время",
-        "Жадный алгоритм всегда дающий оптимальные результаты",
-        "BFS на графе сумм, игнорирующий переиспользование состояния",
-        "Рекурсивный перебор без оптимизации"
+        "Вы экономите время вычисления, но всегда увеличиваете использование памяти",
+        "Вы экономите время вычисления за счет увеличения памяти, обменивая пространство на время",
+        "Вы улучшаете локальность кэша, но снижаете алгоритмическую эффективность",
+        "Вы гарантируете полиномиальное время, но теряете возможность обработки базовых случаев"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "The coin change problem exhibits overlapping subproblems (the same amounts are computed multiple times), which is the hallmark of dynamic programming. We trade space (O(X) array to store computed results) for time (reducing exponential to polynomial). A greedy approach doesn't work for all coin systems, and unoptimized recursion would be too slow.",
-      "ru": "Задача о размене монет имеет перекрывающиеся подзадачи (одни и те же суммы вычисляются несколько раз), что является отличительной чертой динамического программирования. Мы обмениваем пространство (массив O(X) для хранения вычисленных результатов) на время (сокращая экспоненциальное на полиномиальное). Жадный подход не работает для всех систем монет, а неоптимизированная рекурсия была бы слишком медленной."
+      "en": "Memoization is a classic space-time tradeoff: you store computed results to avoid redundant recursive calls, reducing time complexity significantly while using extra memory for the cache. Option A is incomplete (doesn't mention time savings). Option C is false (cache locality is unrelated). Option D misrepresents DP principles. Option B correctly describes this fundamental tradeoff.",
+      "ru": "Мемоизация — это классический компромисс между пространством и временем: вы сохраняете вычисленные результаты, чтобы избежать повторных рекурсивных вызовов, значительно снижая временную сложность, используя дополнительную память для кэша. Вариант A неполный (не упоминает экономию времени). Вариант C ложен (локальность кэша не связана). Вариант D неправильно представляет принципы DP. Вариант B правильно описывает этот фундаментальный компромисс."
     }
   },
   {
     "id": "algorithms-quiz-11",
     "topicId": "algorithms",
     "question": {
-      "en": "A function processes an array by iterating through it once, then calling itself recursively on half the remaining elements. What is the time complexity?",
-      "ru": "Функция обрабатывает массив, проходя по нему один раз, затем рекурсивно вызывает себя на половине оставшихся элементов. Какова временная сложность?"
+      "en": "An algorithm has a time complexity of O(n log n) and space complexity of O(n). If you need to process 1 million items and memory is severely limited, which approach represents the best space-time tradeoff?",
+      "ru": "Алгоритм имеет временную сложность O(n log n) и пространственную сложность O(n). Если вам нужно обработать 1 миллион элементов, а память сильно ограничена, какой подход представляет лучший компромисс между временем и памятью?"
     },
     "options": {
       "en": [
-        "O(n log n)",
-        "O(n²)",
-        "O(n)",
-        "O(2^n)"
+        "Accept O(n log n) time and use in-place sorting with O(log n) space for recursion",
+        "Switch to a O(n²) time algorithm that uses O(1) space to save memory",
+        "Use the original algorithm and add more RAM to the system",
+        "Process data in smaller batches with O(n log n) time per batch"
       ],
       "ru": [
-        "O(n log n)",
-        "O(n²)",
-        "O(n)",
-        "O(2^n)"
+        "Принять O(n log n) время и использовать сортировку на месте с O(log n) пространством для рекурсии",
+        "Переключиться на O(n²) алгоритм, который использует O(1) пространство для экономии памяти",
+        "Использовать исходный алгоритм и добавить больше оперативной памяти в систему",
+        "Обрабатывать данные меньшими порциями с O(n log n) временем на порцию"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The linear work O(n) is performed at each recursion level, and there are log n levels (dividing by 2 each time), resulting in O(n log n). This is similar to merge sort's time complexity. Option O(n) would only be true if we didn't visit all elements, and O(2^n) would require exponential branching.",
-      "ru": "Линейная работа O(n) выполняется на каждом уровне рекурсии, и уровней всего log n (деление на 2 каждый раз), что дает O(n log n). Это похоже на временную сложность сортировки слиянием. O(n) было бы верно, только если мы не посещаем все элементы, а O(2^n) требует экспоненциального ветвления."
+      "en": "In-place sorting like quicksort or heapsort achieves O(n log n) time with only O(log n) auxiliary space for recursion, making it the best tradeoff when memory is critical. Switching to O(n²) sacrifices too much performance, and batch processing doesn't fundamentally solve the space issue since you still need O(n log n) overall.",
+      "ru": "Сортировка на месте, такая как quicksort или heapsort, достигает O(n log n) времени с только O(log n) вспомогательным пространством для рекурсии, что является лучшим компромиссом при ограниченной памяти. Переключение на O(n²) приносит слишком большие потери в производительности, а пакетная обработка не решает фундаментально проблему пространства."
     }
   },
   {
     "id": "algorithms-quiz-12",
     "topicId": "algorithms",
     "question": {
-      "en": "Consider this code:\nint result = 0;\nfor (int i = 0; i < n; i++)\n  for (int j = i; j < n; j++)\n    result++;\nWhat is the time complexity and the final value of result?",
-      "ru": "Рассмотрите этот код:\nint result = 0;\nfor (int i = 0; i < n; i++)\n  for (int j = i; j < n; j++)\n    result++;\nКакова временная сложность и финальное значение result?"
+      "en": "What is the output of this code?\npython\ndef dfs(node, graph, visited):\n    visited.add(node)\n    for neighbor in graph[node]:\n        if neighbor not in visited:\n            dfs(neighbor, graph, visited)\n    return visited\n\ngraph = {1: [2, 3], 2: [4], 3: [4], 4: []}\nresult = dfs(1, graph, set())\nprint(len(result))\n",
+      "ru": "Какой результат выполнения этого кода?\npython\ndef dfs(node, graph, visited):\n    visited.add(node)\n    for neighbor in graph[node]:\n        if neighbor not in visited:\n            dfs(neighbor, graph, visited)\n    return visited\n\ngraph = {1: [2, 3], 2: [4], 3: [4], 4: []}\nresult = dfs(1, graph, set())\nprint(len(result))\n"
     },
     "options": {
       "en": [
-        "O(n²), result = n(n+1)/2",
-        "O(n²), result = n²",
-        "O(n log n), result = n(n+1)/2",
-        "O(n³), result = n(n+1)/2"
+        "4",
+        "3",
+        "5",
+        "2"
       ],
       "ru": [
-        "O(n²), result = n(n+1)/2",
-        "O(n²), result = n²",
-        "O(n log n), result = n(n+1)/2",
-        "O(n³), result = n(n+1)/2"
+        "4",
+        "3",
+        "5",
+        "2"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "The outer loop runs n times, and for each iteration i, the inner loop runs (n-i) times. Total iterations: n + (n-1) + ... + 1 = n(n+1)/2, which is O(n²). However, result increments once per iteration, so result equals the total number of increments, which is n². The triangular number formula is used for counting iterations, not the final result value.",
-      "ru": "Внешний цикл выполняется n раз, и для каждой итерации i внутренний цикл выполняется (n-i) раз. Всего итераций: n + (n-1) + ... + 1 = n(n+1)/2, что O(n²). Однако result увеличивается один раз за итерацию, поэтому result равен общему количеству инкрементов, то есть n². Формула треугольного числа используется для подсчета итераций, а не для финального значения."
+      "en": "The DFS traversal starting from node 1 visits all reachable nodes: 1 → 2 → 4 and 1 → 3 → 4 (but 4 is already visited when reached from 3). The visited set contains {1, 2, 3, 4}, so len(result) = 4. The key insight is that despite node 4 being reachable from both nodes 2 and 3, it's only added to the visited set once.",
+      "ru": "Обход DFS, начиная с узла 1, посещает все достижимые узлы: 1 → 2 → 4 и 1 → 3 → 4 (но 4 уже посещен при достижении из 3). Множество visited содержит {1, 2, 3, 4}, поэтому len(result) = 4. Ключевое понимание состоит в том, что несмотря на достижимость узла 4 из обоих узлов 2 и 3, он добавляется в visited только один раз."
     }
   },
   {
     "id": "algorithms-quiz-13",
     "topicId": "algorithms",
     "question": {
-      "en": "In a hash map with separate chaining, if you have 1000 keys distributed uniformly across 100 buckets, what is the expected time complexity for a lookup operation?",
-      "ru": "В хеш-таблице с методом цепочек, если у вас есть 1000 ключей, равномерно распределенных по 100 бакетам, какова ожидаемая временная сложность операции поиска?"
+      "en": "Which statement about BFS vs DFS is most accurate when solving a shortest path problem in an unweighted graph?",
+      "ru": "Какое утверждение о BFS и DFS наиболее точно при решении задачи поиска кратчайшего пути в невзвешенном графе?"
     },
     "options": {
       "en": [
-        "O(1) with expected chain length of 10",
-        "O(log n) due to binary search within chains",
-        "O(n) if hash function creates collisions",
-        "O(√n) with uniform distribution"
+        "DFS guarantees the shortest path because it explores deeply into the graph structure",
+        "BFS guarantees the shortest path because it explores level-by-level, visiting all nodes at distance k before nodes at distance k+1",
+        "Both have identical time complexity, so either can be used interchangeably",
+        "DFS uses less memory than BFS, making it more practical for large graphs"
       ],
       "ru": [
-        "O(1) с ожидаемой длиной цепочки 10",
-        "O(log n) из-за двоичного поиска в цепочках",
-        "O(n) если хеш-функция создает коллизии",
-        "O(√n) при равномерном распределении"
+        "DFS гарантирует кратчайший путь, потому что глубоко исследует структуру графа",
+        "BFS гарантирует кратчайший путь, потому что исследует уровень за уровнем, посещая все узлы на расстоянии k перед узлами на расстоянии k+1",
+        "Обе имеют одинаковую временную сложность, поэтому их можно использовать взаимозаменяемо",
+        "DFS использует меньше памяти, чем BFS, что делает его более практичным для больших графов"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "With uniform distribution, the load factor is 1000/100 = 10, so each bucket has an expected 10 elements. Lookup is O(1 + load factor) = O(1) amortized on average. Option O(n) only applies with poor hash functions causing many collisions, and binary search isn't used in standard chaining implementations.",
-      "ru": "При равномерном распределении коэффициент заполнения равен 1000/100 = 10, поэтому каждый бакет содержит ожидаемо 10 элементов. Поиск является O(1 + коэффициент_заполнения) = O(1) в среднем. O(n) применяется только при плохих хеш-функциях, вызывающих много коллизий, и двоичный поиск не используется в стандартных реализациях с цепочками."
+      "en": "BFS explores the graph level-by-level using a queue, guaranteeing that the first time a node is reached is via the shortest path in an unweighted graph. DFS uses a stack and explores one branch deeply before backtracking, which doesn't guarantee the shortest path. Both have O(V + E) time complexity, but BFS is specifically designed for shortest path in unweighted graphs.",
+      "ru": "BFS исследует граф уровень за уровнем, используя очередь, гарантируя, что первый раз достигнутый узел найден по кратчайшему пути в невзвешенном графе. DFS использует стек и глубоко исследует одну ветвь перед возвратом, что не гарантирует кратчайший путь. Обе имеют O(V + E) временную сложность, но BFS специально разработан для поиска кратчайшего пути в невзвешенных графах."
     }
   },
   {
     "id": "algorithms-quiz-14",
     "topicId": "algorithms",
     "question": {
-      "en": "You need to explore all nodes in a tree with branching factor 10 and depth 5. BFS uses O(b^d) space while DFS uses O(d) space. Which statement is most accurate for this scenario?",
-      "ru": "Вам нужно посетить все узлы дерева с коэффициентом ветвления 10 и глубиной 5. BFS использует O(b^d) памяти, а DFS использует O(d) памяти. Какое утверждение наиболее точно для этого сценария?"
+      "en": "What is the output of this dynamic programming code?\npython\ndef fib(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fib(n - 1, memo) + fib(n - 2, memo)\n    return memo[n]\n\nprint(fib(5))\n",
+      "ru": "Какой результат этого кода динамического программирования?\npython\ndef fib(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fib(n - 1, memo) + fib(n - 2, memo)\n    return memo[n]\n\nprint(fib(5))\n"
     },
     "options": {
       "en": [
-        "DFS is preferable; BFS needs ~100,000 nodes in queue at worst",
-        "BFS is always better for finding shortest paths regardless of space",
-        "DFS and BFS use equal space when implemented iteratively",
-        "BFS requires O(b^d) time but DFS requires O(d) time"
+        "5",
+        "8",
+        "3",
+        "13"
       ],
       "ru": [
-        "DFS предпочтительнее; BFS требует ~100,000 узлов в очереди в худшем случае",
-        "BFS всегда лучше для поиска кратчайшего пути независимо от памяти",
-        "DFS и BFS используют равное пространство при итеративной реализации",
-        "BFS требует O(b^d) времени, а DFS требует O(d) времени"
+        "5",
+        "8",
+        "3",
+        "13"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "With b=10 and d=5, BFS would store up to 10^5 = 100,000 nodes in the queue, while DFS only needs a call stack of depth 5. This makes DFS preferable for space-constrained scenarios. BFS is better for shortest paths but doesn't change time complexity. Both have O(b^d) time complexity for visiting all nodes.",
-      "ru": "При b=10 и d=5, BFS хранит до 10^5 = 100,000 узлов в очереди, тогда как DFS требует только стека глубины 5. Это делает DFS предпочтительным для сценариев с ограничением памяти. BFS лучше для кратчайшего пути, но не меняет временную сложность. Обе имеют O(b^d) временную сложность для посещения всех узлов."
+      "en": "The Fibonacci sequence starting from index 0 is: 0, 1, 1, 2, 3, 5, 8... So fib(5) = 5 (at index 5: 0→1→1→2→3→5→8). Wait, let me recalculate: fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3, fib(5)=5+3=8. The memoization optimization reduces redundant recursive calls from exponential to linear time complexity.",
+      "ru": "Последовательность Фибоначчи начиная с индекса 0: 0, 1, 1, 2, 3, 5, 8... Итак, fib(5): fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3, fib(5)=5+3=8. Мемоизация оптимизирует решение, снижая временную сложность с экспоненциальной O(2^n) до линейной O(n)."
     }
   },
   {
     "id": "algorithms-quiz-15",
     "topicId": "algorithms",
     "question": {
-      "en": "A dynamic programming solution trades space for time by storing intermediate results. If a recursive solution has O(2^n) time and O(n) space, and memoization reduces it to O(n²) time, approximately how much additional space is needed?",
-      "ru": "Решение с динамическим программированием обменивает пространство на время, сохраняя промежуточные результаты. Если рекурсивное решение имеет O(2^n) времени и O(n) пространства, а мемоизация снижает это до O(n²) времени, сколько дополнительной памяти требуется?"
+      "en": "A hash map with separate chaining has load factor α = 1.2 (total elements / table size). Which characteristic is most affected by this high load factor?",
+      "ru": "Хэш-таблица с методом цепочек имеет коэффициент загрузки α = 1.2 (всего элементов / размер таблицы). Какая характеристика наиболее затронута этим высоким коэффициентом загрузки?"
     },
     "options": {
       "en": [
-        "O(n²) additional space for the memoization table",
-        "O(n) additional space; time-space tradeoff is always equal",
-        "O(2^n) space because we're caching exponential subproblems",
-        "No additional space; memoization doesn't require storage"
+        "The space complexity becomes O(n²) regardless of the number of collisions",
+        "The average lookup time increases to O(α) ≈ O(1.2) ≈ O(1), but worst case remains O(n) with poor hash function",
+        "Hash functions become deterministic and no longer support variable-length keys",
+        "The insertion operation becomes impossible until the table is resized"
       ],
       "ru": [
-        "O(n²) дополнительного пространства для таблицы мемоизации",
-        "O(n) дополнительного пространства; обмен время-пространство всегда равен",
-        "O(2^n) пространства, потому что мы кешируем экспоненциальные подзадачи",
-        "Нет дополнительного пространства; мемоизация не требует хранилища"
+        "Пространственная сложность становится O(n²) независимо от количества коллизий",
+        "Среднее время поиска увеличивается до O(α) ≈ O(1.2) ≈ O(1), но худший случай остается O(n) при плохой хэш-функции",
+        "Хэш-функции становятся детерминированными и больше не поддерживают ключи переменной длины",
+        "Операция вставки становится невозможной до изменения размера таблицы"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Memoization caches results of subproblems. With O(n²) time complexity, there are O(n²) distinct subproblems, requiring O(n²) space to store results. This is the fundamental time-space tradeoff in DP: we use extra space to avoid recomputing subproblems. Option O(2^n) is unnecessary since we only have polynomial subproblems.",
-      "ru": "Мемоизация кеширует результаты подзадач. При временной сложности O(n²) есть O(n²) различных подзадач, требующих O(n²) пространства для хранения результатов. Это фундаментальный обмен время-пространство в ДП: мы используем дополнительное пространство, чтобы избежать переевычисления подзадач. O(2^n) не требуется, так как у нас только полиномиальные подзадачи."
+      "en": "With separate chaining, the average lookup time is O(1 + α), where α is the load factor. At α = 1.2, average search is still O(1) (approximately 2.2 operations). However, the worst-case time complexity remains O(n) if all keys hash to the same bucket. A high load factor increases collision probability, making longer chains more likely and degrading average performance, which is why hash tables are typically resized when load factor exceeds 0.75-1.0.",
+      "ru": "При методе цепочек среднее время поиска составляет O(1 + α), где α — коэффициент загрузки. При α = 1.2 средний поиск остается O(1) (примерно 2.2 операции). Однако худший случай временной сложности остается O(n), если все ключи хешируются в один бакет. Высокий коэффициент загрузки увеличивает вероятность коллизий, делая более длинные цепи более вероятными и ухудшая среднюю производительность, поэтому таблицы обычно изменяют размер при превышении коэффициента 0.75-1.0."
     }
   },
   {
     "id": "algorithms-quiz-16",
     "topicId": "algorithms",
     "question": {
-      "en": "A function performs a nested loop where the outer loop runs n times and the inner loop runs n times, but the inner loop's work decreases by 1 each iteration (n, then n-1, then n-2, etc.). What is the Big O time complexity?",
-      "ru": "Функция выполняет вложенный цикл, где внешний цикл выполняется n раз, а внутренний цикл выполняется n раз, но работа внутреннего цикла уменьшается на 1 на каждой итерации (n, затем n-1, затем n-2 и т.д.). Какова временная сложность Big O?"
+      "en": "A function processes an array by iterating through it once, then calling itself recursively on half the remaining elements. What is the Big O time complexity?\npython\ndef process(arr):\n    for i in arr:  # O(n)\n        pass\n    if len(arr) > 1:\n        return process(arr[len(arr)//2:])\n",
+      "ru": "Функция обрабатывает массив, проходя по нему один раз, затем вызывает себя рекурсивно для половины оставшихся элементов. Какова временная сложность Big O?\npython\ndef process(arr):\n    for i in arr:  # O(n)\n        pass\n    if len(arr) > 1:\n        return process(arr[len(arr)//2:])\n"
     },
     "options": {
       "en": [
-        "O(n²)",
         "O(n log n)",
-        "O(n³)",
+        "O(n)",
+        "O(n²)",
         "O(2^n)"
       ],
       "ru": [
-        "O(n²)",
         "O(n log n)",
-        "O(n³)",
+        "O(n)",
+        "O(n²)",
         "O(2^n)"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The total work is n + (n-1) + (n-2) + ... + 1, which sums to n(n+1)/2, simplifying to O(n²). Despite the decreasing inner loop, we still have quadratic complexity. Options like O(n³) assume full n work each iteration, while O(n log n) and O(2^n) don't match the arithmetic progression pattern.",
-      "ru": "Общая работа составляет n + (n-1) + (n-2) + ... + 1, что в сумме дает n(n+1)/2, что упрощается до O(n²). Несмотря на уменьшение внутреннего цикла, мы всё равно имеем квадратичную сложность. Варианты вроде O(n³) предполагают полную работу n на каждой итерации, а O(n log n) и O(2^n) не соответствуют паттерну арифметической прогрессии."
+      "en": "The function processes n elements in the first call, then n/2 in the second, then n/4, etc., giving n + n/2 + n/4 + ... = O(n). However, the recursion depth is O(log n), and at each level we do O(n) work on progressively smaller arrays. This creates O(n log n) total complexity. Option B (O(n)) underestimates because it ignores the logarithmic depth of recursion.",
+      "ru": "Функция обрабатывает n элементов в первом вызове, затем n/2 во втором, затем n/4 и т.д., что дает n + n/2 + n/4 + ... = O(n). Однако глубина рекурсии составляет O(log n), и на каждом уровне мы выполняем O(n) работы на все меньших массивах. Это создает общую сложность O(n log n). Вариант B (O(n)) недооценивает, так как игнорирует логарифмическую глубину рекурсии."
     }
   },
   {
     "id": "algorithms-quiz-17",
     "topicId": "algorithms",
     "question": {
-      "en": "You need to search for a specific value in a binary search tree. You know the tree is balanced with 1 million nodes. How many nodes do you need to visit in the worst case?",
-      "ru": "Вам нужно найти конкретное значение в двоичном дереве поиска. Вы знаете, что дерево сбалансировано и содержит 1 миллион узлов. Сколько узлов вам нужно посетить в худшем случае?"
+      "en": "When would you choose depth-first search (DFS) over breadth-first search (BFS) when traversing a graph?",
+      "ru": "Когда вы выбрали бы поиск в глубину (DFS) вместо поиска в ширину (BFS) при обходе графа?"
     },
     "options": {
       "en": [
-        "Approximately 20 nodes",
-        "Approximately 500,000 nodes",
-        "Approximately 1 million nodes",
-        "Approximately 2 million nodes"
+        "When you need to find the shortest path between two nodes in an unweighted graph",
+        "When memory is limited and you need to minimize space usage for the traversal stack",
+        "When you need to guarantee visiting nodes level-by-level from the source",
+        "When the graph is guaranteed to be a complete binary tree"
       ],
       "ru": [
-        "Приблизительно 20 узлов",
-        "Приблизительно 500 000 узлов",
-        "Приблизительно 1 миллион узлов",
-        "Приблизительно 2 миллиона узлов"
+        "Когда вам нужно найти кратчайший путь между двумя узлами в невзвешенном графе",
+        "Когда память ограничена и вам нужно минимизировать использование пространства для стека обхода",
+        "Когда вам нужно гарантировать посещение узлов уровень за уровнем от источника",
+        "Когда граф гарантированно является полным бинарным деревом"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "A balanced BST has O(log n) search complexity. With n = 1,000,000, log₂(1,000,000) ≈ 20. The other options reflect linear search (500k, 1M) or misconceptions about tree traversal doubling the node count. This demonstrates the power of logarithmic time complexity in large datasets.",
-      "ru": "Сбалансированное BST имеет сложность поиска O(log n). При n = 1 000 000, log₂(1 000 000) ≈ 20. Другие варианты отражают линейный поиск (500k, 1M) или неправильные представления об удвоении количества узлов при обходе дерева. Это демонстрирует мощь логарифмической временной сложности на больших наборах данных."
+      "en": "DFS uses O(h) space where h is height, while BFS uses O(w) space where w is width. This space-time tradeoff makes DFS preferable when memory is tight. Option A and C describe use cases for BFS (shortest path and level-order), not DFS. Option D is irrelevant to the DFS vs BFS choice.",
+      "ru": "DFS использует O(h) пространства, где h - высота, а BFS использует O(w) пространства, где w - ширина. Этот компромисс между пространством и временем делает DFS предпочтительным при ограниченной памяти. Варианты A и C описывают случаи использования BFS (кратчайший путь и уровневый порядок), а не DFS. Вариант D не имеет отношения к выбору между DFS и BFS."
     }
   },
   {
     "id": "algorithms-quiz-18",
     "topicId": "algorithms",
     "question": {
-      "en": "Consider this code snippet:\nconst map = new Map();\nfor (let i = 0; i < n; i++) {\n  map.set(i, Math.random());\n}\nfor (let [key, value] of map) {\n  console.log(key, value);\n}\nWhat is the overall Big O time complexity?",
-      "ru": "Рассмотрите этот фрагмент кода:\nconst map = new Map();\nfor (let i = 0; i < n; i++) {\n  map.set(i, Math.random());\n}\nfor (let [key, value] of map) {\n  console.log(key, value);\n}\nКакова общая временная сложность Big O?"
+      "en": "What is the average-case time complexity for hash map operations (insert, lookup, delete) and what assumption must hold?\njs\nconst map = new Map();\nmap.set('key', 'value');  // Average case?\nconst val = map.get('key');  // Average case?\n",
+      "ru": "Какова средняя временная сложность операций с хеш-таблицей (вставка, поиск, удаление) и какое предположение должно быть выполнено?\njs\nconst map = new Map();\nmap.set('key', 'value');  // Средний случай?\nconst val = map.get('key');  // Средний случай?\n"
     },
     "options": {
       "en": [
-        "O(n)",
-        "O(n log n)",
-        "O(n²)",
-        "O(1)"
+        "O(1) with the assumption of a good hash function and low load factor",
+        "O(log n) due to internal balanced tree structure",
+        "O(1) guaranteed, regardless of hash function quality",
+        "O(n) because collision handling requires linear probing"
       ],
       "ru": [
-        "O(n)",
-        "O(n log n)",
-        "O(n²)",
-        "O(1)"
+        "O(1) при условии хорошей хеш-функции и низкого коэффициента заполнения",
+        "O(log n) из-за внутренней структуры сбалансированного дерева",
+        "O(1) гарантировано, независимо от качества хеш-функции",
+        "O(n) потому что обработка коллизий требует линейного зондирования"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Both operations (n insertions and iterating n entries) are O(n) with average-case hash map operations. The total is O(n) + O(n) = O(n). O(n log n) would apply if sorting were involved, O(n²) if there were nested iterations, and O(1) ignores the loops entirely.",
-      "ru": "Обе операции (n вставок и итерация n записей) имеют сложность O(n) при среднем случае операций хэш-таблицы. Итого O(n) + O(n) = O(n). O(n log n) применяется, если задействована сортировка, O(n²), если есть вложенные итерации, а O(1) полностью игнорирует циклы."
+      "en": "Hash maps achieve O(1) average time only when the hash function distributes keys uniformly and the load factor is kept reasonable (typically < 0.75). A poor hash function or high load factor can degrade to O(n). Option B is incorrect because standard hash maps don't use trees (though some implementations like Java's HashMap switch to trees at high collision rates). Option C incorrectly claims guaranteed O(1).",
+      "ru": "Хеш-таблицы достигают O(1) в среднем случае только когда хеш-функция распределяет ключи равномерно и коэффициент заполнения остается разумным (обычно < 0,75). Плохая хеш-функция или высокий коэффициент заполнения может деградировать до O(n). Вариант B неверен, потому что стандартные хеш-таблицы не используют деревья (хотя некоторые реализации, такие как HashMap в Java, переходят на деревья при высоком количестве коллизий). Вариант C ошибочно утверждает гарантированное O(1)."
     }
   },
   {
     "id": "algorithms-quiz-19",
     "topicId": "algorithms",
     "question": {
-      "en": "In dynamic programming, what is the main advantage of memoization (top-down approach) over tabulation (bottom-up approach)?",
-      "ru": "В динамическом программировании, какое основное преимущество мемоизации (подход сверху вниз) перед табуляцией (подход снизу вверх)?"
+      "en": "In dynamic programming, what is the primary purpose of memoization, and what is the space-time tradeoff involved?",
+      "ru": "В динамическом программировании, какова главная цель мемоизации, и какой компромисс между пространством и временем задействован?"
     },
     "options": {
       "en": [
-        "It only computes subproblems that are actually needed, potentially saving computation",
-        "It uses less memory than tabulation",
-        "It is always faster than tabulation",
-        "It eliminates the need for recursion entirely"
+        "To increase time complexity by caching results, allowing us to trade O(n) space for O(1) time on repeated subproblems",
+        "To eliminate redundant subproblem calculations by storing results, trading O(n) space for exponential time reduction",
+        "To reduce recursion depth and prevent stack overflow errors without affecting time complexity",
+        "To guarantee that all subproblems are solved in lexicographic order"
       ],
       "ru": [
-        "Она вычисляет только те подзадачи, которые действительно необходимы, потенциально экономя вычисления",
-        "Она использует меньше памяти, чем табуляция",
-        "Она всегда быстрее табуляции",
-        "Она полностью исключает необходимость рекурсии"
+        "Увеличить временную сложность путем кеширования результатов, позволяя нам обменять O(n) пространства на O(1) время для повторных подзадач",
+        "Устранить избыточные вычисления подзадач путем сохранения результатов, обмениваем O(n) пространства на экспоненциальное сокращение времени",
+        "Уменьшить глубину рекурсии и предотвратить ошибки переполнения стека без влияния на временную сложность",
+        "Гарантировать, что все подзадачи решаются в лексикографическом порядке"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Memoization's key benefit is avoiding redundant computation of unnecessary subproblems—you only solve what's needed. Tabulation often computes all subproblems regardless. Memory usage is similar, speed depends on problem structure, and memoization inherently uses recursion, making the other options incorrect.",
-      "ru": "Ключевое преимущество мемоизации — избегание избыточных вычислений ненужных подзадач; вы решаете только необходимое. Табуляция часто вычисляет все подзадачи независимо от необходимости. Использование памяти сопоставимо, скорость зависит от структуры задачи, а мемоизация по своей природе использует рекурсию, что делает другие варианты неправильными."
+      "en": "Memoization trades space for time by storing computed results of subproblems to avoid recalculating them. This can reduce exponential time complexity (e.g., O(2^n) for naive Fibonacci) to polynomial (e.g., O(n)). Option A incorrectly states we trade space for O(1) time per subproblem. Option C misses the time complexity benefit. Option D is unrelated to memoization's purpose.",
+      "ru": "Мемоизация обменивает пространство на время, сохраняя вычисленные результаты подзадач, чтобы избежать их пересчета. Это может снизить экспоненциальную временную сложность (например, O(2^n) для наивного Фибоначчи) до полиномиальной (например, O(n)). Вариант A ошибочно утверждает, что мы обмениваем пространство на O(1) время для каждой подзадачи. Вариант C пропускает преимущество по временной сложности. Вариант D не имеет отношения к цели мемоизации."
     }
   },
   {
     "id": "algorithms-quiz-20",
     "topicId": "algorithms",
     "question": {
-      "en": "When choosing between BFS and DFS for tree traversal, which statement is most accurate regarding space-time tradeoffs?",
-      "ru": "При выборе между BFS и DFS для обхода дерева, какое утверждение наиболее точно описывает пространственно-временные компромиссы?"
+      "en": "Consider a binary search tree (BST) where you need to find the lowest common ancestor (LCA) of two nodes. Which statement about tree traversal is correct?\njava\n// LCA: lowest common ancestor\nNode lca(Node root, int p, int q) {\n    if (root == null) return null;\n    if (root.val > Math.max(p, q)) return lca(root.left, p, q);\n    if (root.val < Math.min(p, q)) return lca(root.right, p, q);\n    return root;\n}\n",
+      "ru": "Рассмотрим бинарное дерево поиска (BST), где вам нужно найти наименьшего общего предка (LCA) двух узлов. Какое утверждение о обходе дерева верно?\njava\n// LCA: наименьший общий предок\nNode lca(Node root, int p, int q) {\n    if (root == null) return null;\n    if (root.val > Math.max(p, q)) return lca(root.left, p, q);\n    if (root.val < Math.min(p, q)) return lca(root.right, p, q);\n    return root;\n}\n"
     },
     "options": {
       "en": [
-        "BFS uses a queue and may require O(n) space for a wide tree; DFS uses a stack with O(h) space where h is height—good for memory-constrained systems",
-        "DFS is always faster than BFS regardless of tree structure",
-        "BFS guarantees finding the shortest path in any graph without additional logic",
-        "Both have identical space requirements but DFS is preferred for all scenarios"
+        "This algorithm is a DFS traversal that uses the BST property to prune branches, achieving O(h) time where h is tree height",
+        "This algorithm performs BFS level-by-level and guarantees finding LCA in O(log n) time",
+        "This algorithm traverses the entire tree in O(n) time regardless of the tree structure",
+        "This algorithm only works when p and q are leaf nodes and requires O(n) space for memoization"
       ],
       "ru": [
-        "BFS использует очередь и может требовать O(n) пространства для широкого дерева; DFS использует стек с O(h) пространством, где h — высота — хорошо для систем с ограниченной памятью",
-        "DFS всегда быстрее BFS независимо от структуры дерева",
-        "BFS гарантирует нахождение кратчайшего пути в любом графе без дополнительной логики",
-        "Обе имеют идентичные требования к пространству, но DFS предпочтительнее во всех сценариях"
+        "Этот алгоритм является DFS обходом, который использует свойство BST для отсечения ветвей, достигая O(h) времени, где h - высота дерева",
+        "Этот алгоритм выполняет BFS уровень за уровнем и гарантирует нахождение LCA за O(log n) времени",
+        "Этот алгоритм проходит все дерево за O(n) времени независимо от структуры дерева",
+        "Этот алгоритм работает только когда p и q являются листовыми узлами и требует O(n) пространства для мемоизации"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "BFS's queue can hold up to O(n) nodes (especially in wide trees), while DFS's stack depth is bounded by tree height O(h). This makes DFS more memory-efficient for deep, narrow trees. BFS speed depends on problem type, BFS doesn't guarantee shortest path without weighted graphs, and space requirements differ significantly.",
-      "ru": "Очередь BFS может содержать до O(n) узлов (особенно в широких деревьях), а глубина стека DFS ограничена высотой дерева O(h). Это делает DFS более эффективным по памяти для глубоких, узких деревьев. Скорость BFS зависит от типа задачи, BFS не гарантирует кратчайший путь без взвешенных графов, и требования к пространству значительно отличаются."
+      "en": "This is a DFS recursive algorithm that leverages the BST property to eliminate entire branches. If both values are less than root, go left; if both are greater, go right; otherwise root is the LCA. Time complexity is O(h) where h is height (O(log n) for balanced trees, O(n) for skewed). Option B incorrectly calls it BFS. Option C doesn't account for pruning. Option D is factually wrong about the constraints and space usage.",
+      "ru": "Это рекурсивный DFS алгоритм, который использует свойство BST для исключения целых ветвей. Если оба значения меньше корня, идите влево; если оба больше, идите вправо; в противном случае корень является LCA. Временная сложность O(h), где h - высота (O(log n) для сбалансированных деревьев, O(n) для перекошенных). Вариант B ошибочно называет это BFS. Вариант C не учитывает отсечение. Вариант D содержит ошибочные утверждения об ограничениях и использовании пространства."
+    }
+  },
+  {
+    "id": "algorithms-quiz-21",
+    "topicId": "algorithms",
+    "question": {
+      "en": "You have an algorithm that processes an array by iterating through it twice with nested loops, then performs a binary search. What is the overall Big O time complexity?\njavascript\nfor (let i = 0; i < n; i++) {\n  for (let j = 0; j < n; j++) {\n    // O(1) operation\n  }\n}\nfor (let i = 0; i < n; i++) {\n  binarySearch(array, target); // O(log n)\n}\n",
+      "ru": "У вас есть алгоритм, который обрабатывает массив, проходя по нему дважды вложенными циклами, а затем выполняет бинарный поиск. Какова общая временная сложность по Big O?\njavascript\nfor (let i = 0; i < n; i++) {\n  for (let j = 0; j < n; j++) {\n    // O(1) операция\n  }\n}\nfor (let i = 0; i < n; i++) {\n  binarySearch(array, target); // O(log n)\n}\n"
+    },
+    "options": {
+      "en": [
+        "O(n²)",
+        "O(n² + n log n)",
+        "O(n log n)",
+        "O(n³)"
+      ],
+      "ru": [
+        "O(n²)",
+        "O(n² + n log n)",
+        "O(n log n)",
+        "O(n³)"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "When combining operations, we keep the dominant term. O(n²) from the nested loops dominates O(n log n) from the binary search loop, so the overall complexity is O(n²). The constant factors and lower-order terms are dropped in Big O notation.",
+      "ru": "При объединении операций мы оставляем доминирующий термин. O(n²) из вложенных циклов доминирует над O(n log n) из цикла бинарного поиска, поэтому общая сложность составляет O(n²). Постоянные множители и члены более низкого порядка отбрасываются в нотации Big O."
+    }
+  },
+  {
+    "id": "algorithms-quiz-22",
+    "topicId": "algorithms",
+    "question": {
+      "en": "Which sorting algorithm has O(n log n) worst-case time complexity and O(1) space complexity?\n",
+      "ru": "Какой алгоритм сортировки имеет O(n log n) в худшем случае временную сложность и O(1) пространственную сложность?"
+    },
+    "options": {
+      "en": [
+        "Merge Sort",
+        "Heap Sort",
+        "Quick Sort",
+        "Bubble Sort"
+      ],
+      "ru": [
+        "Сортировка слиянием",
+        "Сортировка кучей",
+        "Быстрая сортировка",
+        "Сортировка пузырьком"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Heap Sort guarantees O(n log n) worst-case time complexity and uses only O(1) extra space. Merge Sort also has O(n log n) but requires O(n) extra space for merging. Quick Sort has O(n²) worst case. Bubble Sort is O(n²).",
+      "ru": "Сортировка кучей гарантирует O(n log n) в худшем случае и использует только O(1) дополнительного пространства. Сортировка слиянием также имеет O(n log n), но требует O(n) дополнительного пространства. Быстрая сортировка имеет O(n²) в худшем случае. Сортировка пузырьком — O(n²)."
+    }
+  },
+  {
+    "id": "algorithms-quiz-23",
+    "topicId": "algorithms",
+    "question": {
+      "en": "What will be the output of this tree traversal code?\njavascript\nconst tree = {\n  val: 1,\n  left: { val: 2, left: { val: 4, left: null, right: null }, right: null },\n  right: { val: 3, left: null, right: null }\n};\n\nfunction dfs(node, result = []) {\n  if (!node) return result;\n  result.push(node.val);\n  dfs(node.left, result);\n  dfs(node.right, result);\n  return result;\n}\n\nconsole.log(dfs(tree));\n",
+      "ru": "Какой будет вывод этого кода обхода дерева?\njavascript\nconst tree = {\n  val: 1,\n  left: { val: 2, left: { val: 4, left: null, right: null }, right: null },\n  right: { val: 3, left: null, right: null }\n};\n\nfunction dfs(node, result = []) {\n  if (!node) return result;\n  result.push(node.val);\n  dfs(node.left, result);\n  dfs(node.right, result);\n  return result;\n}\n\nconsole.log(dfs(tree));\n"
+    },
+    "options": {
+      "en": [
+        "[1, 2, 4, 3]",
+        "[1, 2, 3, 4]",
+        "[4, 2, 1, 3]",
+        "[1, 3, 2, 4]"
+      ],
+      "ru": [
+        "[1, 2, 4, 3]",
+        "[1, 2, 3, 4]",
+        "[4, 2, 1, 3]",
+        "[1, 3, 2, 4]"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is a pre-order DFS traversal (visit node, then left subtree, then right subtree). The order is: 1 (root), 2 (left child), 4 (left child of 2), then 3 (right child of root). The algorithm processes parent before children in the left-to-right order.",
+      "ru": "Это обход дерева в порядке pre-order DFS (посетить узел, затем левое поддерево, затем правое поддерево). Порядок: 1 (корень), 2 (левый потомок), 4 (левый потомок 2), затем 3 (правый потомок корня). Алгоритм обрабатывает родителя перед потомками слева направо."
+    }
+  },
+  {
+    "id": "algorithms-quiz-24",
+    "topicId": "algorithms",
+    "question": {
+      "en": "You need to find the shortest path in an unweighted graph between two nodes. Which approach is better and why?\n",
+      "ru": "Вам нужно найти кратчайший путь в невзвешенном графе между двумя узлами. Какой подход лучше и почему?"
+    },
+    "options": {
+      "en": [
+        "DFS because it uses less memory than BFS",
+        "BFS because it explores level by level and guarantees the shortest path in unweighted graphs",
+        "DFS because it finds paths faster in practice",
+        "BFS and DFS are equivalent for this problem"
+      ],
+      "ru": [
+        "DFS, потому что он использует меньше памяти, чем BFS",
+        "BFS, потому что он исследует уровень за уровнем и гарантирует кратчайший путь в невзвешенных графах",
+        "DFS, потому что на практике он находит пути быстрее",
+        "BFS и DFS эквивалентны для этой проблемы"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "BFS explores nodes level by level, ensuring that when the target is found, the path is guaranteed to be the shortest in an unweighted graph. DFS explores as deep as possible first and cannot guarantee the shortest path. While DFS uses less memory in some cases, correctness is prioritized over memory for this algorithmic problem.",
+      "ru": "BFS исследует узлы уровень за уровнем, гарантируя, что когда целевой узел найден, путь будет кратчайшим в невзвешенном графе. DFS сначала исследует как можно глубже и не может гарантировать кратчайший путь. Хотя DFS использует меньше памяти в некоторых случаях, корректность приоритизируется над памятью для этой алгоритмической задачи."
+    }
+  },
+  {
+    "id": "algorithms-quiz-25",
+    "topicId": "algorithms",
+    "question": {
+      "en": "In dynamic programming, what is the key insight that makes it work for the Fibonacci sequence?\n",
+      "ru": "В динамическом программировании, какое ключевое понимание делает его работающим для последовательности Фибоначчи?"
+    },
+    "options": {
+      "en": [
+        "The algorithm uses a greedy approach to skip unnecessary calculations",
+        "Overlapping subproblems are solved only once and results are cached for reuse",
+        "The problem is divided into smaller subproblems that never overlap",
+        "Memoization automatically makes all recursive algorithms run in linear time"
+      ],
+      "ru": [
+        "Алгоритм использует жадный подход для пропуска ненужных вычислений",
+        "Перекрывающиеся подзадачи решаются только один раз, и результаты кэшируются для повторного использования",
+        "Задача разбивается на меньшие подзадачи, которые никогда не перекрываются",
+        "Мемоизация автоматически делает все рекурсивные алгоритмы линейными по времени"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Dynamic programming solves Fibonacci efficiently by recognizing that fib(n) depends on the same subproblems multiple times. By storing (memoizing) results of subproblems, we avoid recalculating them. Without this optimization, naive recursion would take exponential time. This principle of overlapping subproblems is core to DP.",
+      "ru": "Динамическое программирование решает Фибоначчи эффективно, распознавая, что fib(n) зависит от одних и тех же подзадач несколько раз. Сохраняя (мемоизируя) результаты подзадач, мы избегаем их пересчёта. Без этой оптимизации наивная рекурсия потребовала бы экспоненциального времени. Этот принцип перекрывающихся подзадач является основой DP."
+    }
+  },
+  {
+    "id": "algorithms-quiz-26",
+    "topicId": "algorithms",
+    "question": {
+      "en": "An algorithm has a time complexity of O(n log n). If the input size doubles from n to 2n, approximately how many times slower does the algorithm become?",
+      "ru": "Алгоритм имеет временную сложность O(n log n). Если размер входных данных увеличится с n до 2n, примерно во сколько раз алгоритм будет работать медленнее?"
+    },
+    "options": {
+      "en": [
+        "Approximately 2.2 times slower",
+        "Approximately 2 times slower",
+        "Approximately 4 times slower",
+        "Approximately log n times slower"
+      ],
+      "ru": [
+        "Примерно в 2,2 раза медленнее",
+        "Примерно в 2 раза медленнее",
+        "Примерно в 4 раза медленнее",
+        "Примерно в log n раз медленнее"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "For O(n log n), replacing n with 2n gives us (2n log 2n) / (n log n) = 2 × (log 2n / log n) ≈ 2 × 1.1 = 2.2. The other options misunderstand how Big O scaling works with logarithmic factors.",
+      "ru": "Для O(n log n), заменяя n на 2n, получаем (2n log 2n) / (n log n) = 2 × (log 2n / log n) ≈ 2 × 1,1 = 2,2. Другие варианты неправильно понимают, как масштабируется Big O с логарифмическими множителями."
+    }
+  },
+  {
+    "id": "algorithms-quiz-27",
+    "topicId": "algorithms",
+    "question": {
+      "en": "When inserting into a hash map with a good hash function, what is the average time complexity, and what does it depend on?\npython\nhash_map = {}\nhash_map['key1'] = 'value1'\nhash_map['key2'] = 'value2'\n",
+      "ru": "При вставке в хеш-таблицу с хорошей функцией хеширования какова средняя временная сложность и от чего она зависит?\npython\nhash_map = {}\nhash_map['key1'] = 'value1'\nhash_map['key2'] = 'value2'\n"
+    },
+    "options": {
+      "en": [
+        "O(1) average time, depends on load factor and hash function quality",
+        "O(log n) average time, depends on the number of keys",
+        "O(n) average time, depends on the hash function distribution",
+        "O(1) amortized time, independent of all factors"
+      ],
+      "ru": [
+        "O(1) в среднем, зависит от коэффициента загрузки и качества функции хеширования",
+        "O(log n) в среднем, зависит от количества ключей",
+        "O(n) в среднем, зависит от распределения функции хеширования",
+        "O(1) амортизированное время, не зависит ни от каких факторов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Hash map insertion is O(1) on average with a good hash function, but depends on load factor and hash quality to avoid collisions. Option 1 correctly identifies both the complexity and its dependencies. Option 2 confuses it with balanced trees, and option 3 describes worst-case scenario with poor hash functions.",
+      "ru": "Вставка в хеш-таблицу — это O(1) в среднем при хорошей функции хеширования, но зависит от коэффициента загрузки и качества хеша для избежания коллизий. Вариант 1 правильно определяет сложность и её зависимости. Вариант 2 путает с сбалансированными деревьями, вариант 3 описывает худший случай с плохими функциями хеширования."
+    }
+  },
+  {
+    "id": "algorithms-quiz-28",
+    "topicId": "algorithms",
+    "question": {
+      "en": "Consider this recursive function on a binary tree. What is the time complexity?\npython\ndef count_nodes(node):\n    if node is None:\n        return 0\n    return 1 + count_nodes(node.left) + count_nodes(node.right)\n",
+      "ru": "Рассмотрите эту рекурсивную функцию на двоичном дереве. Какова временная сложность?\npython\ndef count_nodes(node):\n    if node is None:\n        return 0\n    return 1 + count_nodes(node.left) + count_nodes(node.right)\n"
+    },
+    "options": {
+      "en": [
+        "O(n), where n is the number of nodes in the tree",
+        "O(log n), because we traverse depth",
+        "O(n log n), due to recursive branching",
+        "O(2^n), exponential growth due to two recursive calls"
+      ],
+      "ru": [
+        "O(n), где n — количество узлов в дереве",
+        "O(log n), потому что мы проходим глубину",
+        "O(n log n), из-за рекурсивного ветвления",
+        "O(2^n), экспоненциальный рост из-за двух рекурсивных вызовов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The function visits every node in the tree exactly once, so time complexity is O(n). Although there are two recursive calls, each node is processed only once, not 2^n times. The exponential option confuses this with problems like Fibonacci without memoization.",
+      "ru": "Функция посещает каждый узел в дереве ровно один раз, поэтому временная сложность — O(n). Хотя есть два рекурсивных вызова, каждый узел обрабатывается только один раз, а не 2^n раз. Экспоненциальный вариант путает это с проблемами вроде чисел Фибоначчи без мемоизации."
+    }
+  },
+  {
+    "id": "algorithms-quiz-29",
+    "topicId": "algorithms",
+    "question": {
+      "en": "You need to explore all nodes in a graph to find a specific value. Which statement about BFS vs DFS is most accurate for a general graph?",
+      "ru": "Вам нужно исследовать все узлы графа, чтобы найти конкретное значение. Какое утверждение о BFS и DFS наиболее точно для общего графа?"
+    },
+    "options": {
+      "en": [
+        "BFS uses less memory than DFS in worst case for complete trees",
+        "DFS uses O(h) space for recursion stack, BFS uses O(w) space for queue, where w is max width",
+        "BFS is always faster than DFS regardless of graph structure",
+        "DFS cannot detect cycles while BFS always can"
+      ],
+      "ru": [
+        "BFS использует меньше памяти, чем DFS в худшем случае для полных деревьев",
+        "DFS использует O(h) памяти для рекурсивного стека, BFS использует O(w) для очереди, где w — максимальная ширина",
+        "BFS всегда быстрее, чем DFS, независимо от структуры графа",
+        "DFS не может обнаруживать циклы, а BFS всегда может"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "BFS uses queue space proportional to maximum width (branching), while DFS uses stack space proportional to height (depth). For wide, shallow trees, DFS is more memory-efficient; for deep, narrow trees, BFS is better. The other options confuse performance characteristics or incorrectly generalize behavior.",
+      "ru": "BFS использует пространство очереди, пропорциональное максимальной ширине, а DFS использует пространство стека, пропорциональное глубине. Для широких мелких деревьев DFS более эффективен по памяти; для глубоких узких деревьев лучше BFS. Другие варианты путают характеристики производительности или неправильно обобщают поведение."
+    }
+  },
+  {
+    "id": "algorithms-quiz-30",
+    "topicId": "algorithms",
+    "question": {
+      "en": "Dynamic programming solves problems by breaking them into subproblems and using memoization or tabulation. Which of the following is NOT a key characteristic of problems suitable for DP?",
+      "ru": "Динамическое программирование решает задачи путем их разбиения на подзадачи и использования мемоизации или табуляции. Какой из следующих признаков НЕ является ключевым для задач, подходящих для DP?"
+    },
+    "options": {
+      "en": [
+        "The problem exhibits overlapping subproblems",
+        "The problem has a greedy structure that always picks the best immediate choice",
+        "The problem has optimal substructure (optimal solution built from optimal subproblems)",
+        "The problem can be defined recursively in terms of smaller instances"
+      ],
+      "ru": [
+        "Задача имеет перекрывающиеся подзадачи",
+        "Задача имеет жадную структуру, которая всегда выбирает лучший немедленный выбор",
+        "Задача имеет оптимальную подструктуру (оптимальное решение построено из оптимальных подзадач)",
+        "Задача может быть определена рекурсивно в терминах меньших экземпляров"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "A greedy structure is NOT a key DP characteristic—in fact, greedy algorithms work well when local optimal choices lead to global optimality, which is a different paradigm. True DP problems need overlapping subproblems, optimal substructure, and recursive definition, not greedy choices.",
+      "ru": "Жадная структура НЕ является ключевой характеристикой DP — более того, жадные алгоритмы хорошо работают, когда локальные оптимальные выборы приводят к глобальной оптимальности, что является другой парадигмой. Истинные задачи DP требуют перекрывающихся подзадач, оптимальной подструктуры и рекурсивного определения, а не жадных выборов."
     }
   }
 ]

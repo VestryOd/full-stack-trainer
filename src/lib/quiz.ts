@@ -15,6 +15,15 @@ function shuffled<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+function dedupeById(questions: QuizQuestion[]): QuizQuestion[] {
+  const seen = new Set<string>();
+  return questions.filter((q) => {
+    if (seen.has(q.id)) return false;
+    seen.add(q.id);
+    return true;
+  });
+}
+
 export function getAvailableQuizTopics(): string[] {
   if (!fs.existsSync(QUIZ_DIR)) return [];
   return fs
@@ -26,6 +35,6 @@ export function getAvailableQuizTopics(): string[] {
 export function getQuizQuestions(topicIds?: string[], count?: number): QuizQuestion[] {
   const topics = topicIds ?? getAvailableQuizTopics();
   const pool = topics.flatMap((topicId) => readTopicQuiz(topicId));
-  const selected = shuffled(pool);
+  const selected = shuffled(dedupeById(pool));
   return count !== undefined ? selected.slice(0, count) : selected;
 }

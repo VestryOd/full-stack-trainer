@@ -1,20 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { QuizCard } from '@/components/quiz/QuizCard';
+import { QuizCard, type QuizQuestionWithHtml } from '@/components/quiz/QuizCard';
 import { QuizProgress } from '@/components/quiz/QuizProgress';
 import { QuizResult } from '@/components/quiz/QuizResult';
 import { Button } from '@/components/ui/button';
 import { useLocale } from '@/context/LocaleContext';
-import type { QuizQuestion } from '@/types';
 
 interface QuizSessionProps {
-  initialQuestions: QuizQuestion[];
+  initialQuestions: QuizQuestionWithHtml[];
+}
+
+function dedupeById(questions: QuizQuestionWithHtml[]): QuizQuestionWithHtml[] {
+  const seen = new Set<string>();
+  return questions.filter((q) => {
+    if (seen.has(q.id)) return false;
+    seen.add(q.id);
+    return true;
+  });
 }
 
 export function QuizSession({ initialQuestions }: QuizSessionProps) {
   const { t2 } = useLocale();
-  const [questions] = useState<QuizQuestion[]>(initialQuestions);
+  const [questions] = useState<QuizQuestionWithHtml[]>(() => dedupeById(initialQuestions));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [correct, setCorrect] = useState(0);

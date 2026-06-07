@@ -3,405 +3,810 @@
     "id": "http-rest-quiz-1",
     "topicId": "http-rest",
     "question": {
-      "en": "A client makes a request to POST /api/users with a body containing user data. The server receives the request twice due to a network retry, but only processes it once. Which HTTP property makes this behavior possible, and what must the server implement?",
-      "ru": "Клиент отправляет запрос POST /api/users с телом, содержащим данные пользователя. Сервер получает запрос дважды из-за повторной попытки сети, но обрабатывает его только один раз. Какое свойство HTTP делает это поведение возможным, и что должен реализовать сервер?"
+      "en": "Which HTTP method is both safe and idempotent, meaning it should not change server state and multiple identical requests produce the same result?",
+      "ru": "Какой HTTP метод является одновременно безопасным и идемпотентным, то есть не должен изменять состояние сервера и множественные идентичные запросы должны давать один и тот же результат?"
     },
     "options": {
       "en": [
-        "Idempotency with server-side deduplication using request IDs or timestamps",
-        "HTTP/2 server push to prevent duplicate processing automatically",
-        "CORS preflight requests that cache the response to avoid retries",
-        "Cache-Control headers that prevent the POST method from being retried"
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
       ],
       "ru": [
-        "Идемпотентность с дедупликацией на стороне сервера, используя ID запросов или временные метки",
-        "HTTP/2 server push для автоматического предотвращения дублирования обработки",
-        "CORS preflight запросы, которые кэшируют ответ, чтобы избежать повторных попыток",
-        "Cache-Control заголовки, которые предотвращают повторную попытку метода POST"
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "While POST is not inherently idempotent, the server can implement idempotency by tracking request IDs or using idempotency keys to ensure duplicate requests don't create duplicate resources. HTTP/2 server push is for performance optimization, not duplicate prevention. CORS preflight and Cache-Control do not prevent server-side processing of duplicate requests.",
-      "ru": "Хотя POST не является по своей природе идемпотентным, сервер может реализовать идемпотентность, отслеживая ID запросов или используя ключи идемпотентности, чтобы гарантировать, что дублирующиеся запросы не создают дублирующиеся ресурсы. HTTP/2 server push используется для оптимизации производительности, а не предотвращения дублирования. CORS preflight и Cache-Control не предотвращают обработку дублирующихся запросов на стороне сервера."
+      "en": "GET is both safe (does not modify server state) and idempotent (calling it multiple times returns the same result). POST is neither safe nor idempotent as it creates new resources each time. PUT and DELETE are idempotent but not safe as they modify state.",
+      "ru": "GET одновременно безопасен (не изменяет состояние сервера) и идемпотентен (множественные вызовы возвращают один результат). POST ни безопасен, ни идемпотентен, так как создает новые ресурсы каждый раз. PUT и DELETE идемпотентны, но не безопасны, так как они изменяют состояние."
     }
   },
   {
     "id": "http-rest-quiz-2",
     "topicId": "http-rest",
     "question": {
-      "en": "Consider this response:\nHTTP/1.1 200 OK\nCache-Control: max-age=3600\nETag: \"abc123\"\nSet-Cookie: sessionId=xyz\n\nA client receives this and wants to cache it. What should the client do with subsequent requests to this resource within the hour?",
-      "ru": "Рассмотрим этот ответ:\nHTTP/1.1 200 OK\nCache-Control: max-age=3600\nETag: \"abc123\"\nSet-Cookie: sessionId=xyz\n\nКлиент получает это и хочет его кэшировать. Что клиент должен делать при последующих запросах к этому ресурсу в течение часа?"
+      "en": "A client sends a preflight request before making a cross-origin POST request with custom headers. What HTTP method is used for this preflight request?\n\nOPTIONS /api/users HTTP/1.1\nOrigin: https://example.com\n",
+      "ru": "Клиент отправляет предварительный запрос перед кросс-доменным POST запросом с кастомными заголовками. Какой HTTP метод используется для этого предварительного запроса?\n\nOPTIONS /api/users HTTP/1.1\nOrigin: https://example.com\n"
     },
     "options": {
       "en": [
-        "Use the cached response directly without making another request to the server",
-        "Send a conditional request with If-None-Match: \"abc123\" to validate freshness",
-        "Resend the Cookie header with each request to maintain the session",
-        "Invalidate the cache because Set-Cookie indicates dynamic content"
+        "OPTIONS",
+        "HEAD",
+        "TRACE",
+        "CONNECT"
       ],
       "ru": [
-        "Использовать кэшированный ответ напрямую без отправки еще одного запроса на сервер",
-        "Отправить условный запрос с If-None-Match: \"abc123\" для проверки свежести",
-        "Переотправить заголовок Cookie с каждым запросом для поддержания сеанса",
-        "Инвалидировать кэш, так как Set-Cookie указывает на динамическое содержимое"
+        "OPTIONS",
+        "HEAD",
+        "TRACE",
+        "CONNECT"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The Cache-Control: max-age=3600 header explicitly permits caching for 3600 seconds, so the cached response should be used directly without revalidation. Conditional requests with ETag are used after the cache expires. Set-Cookie does not prevent caching in this context, and resending cookies is automatic in browsers. The response is not invalid simply because it includes a Set-Cookie header.",
-      "ru": "Заголовок Cache-Control: max-age=3600 явно разрешает кэширование на 3600 секунд, поэтому кэшированный ответ должен использоваться напрямую без переаттестации. Условные запросы с ETag используются после истечения срока действия кэша. Set-Cookie не препятствует кэшированию в этом контексте, и переотправка cookies происходит автоматически в браузерах. Ответ не является недействительным просто потому, что он включает заголовок Set-Cookie."
+      "en": "OPTIONS is the correct HTTP method for CORS preflight requests. It allows the browser to query which HTTP methods and headers are allowed for a resource before sending the actual request. HEAD, TRACE, and CONNECT are not used for preflight validation in CORS.",
+      "ru": "OPTIONS — это правильный HTTP метод для preflight запросов CORS. Он позволяет браузеру узнать, какие методы HTTP и заголовки разрешены для ресурса перед отправкой фактического запроса. HEAD, TRACE и CONNECT не используются для валидации preflight в CORS."
     }
   },
   {
     "id": "http-rest-quiz-3",
     "topicId": "http-rest",
     "question": {
-      "en": "A frontend app at origin https://app.example.com makes a fetch request to https://api.example.com/data. The response includes Access-Control-Allow-Origin: https://app.example.com but no Access-Control-Allow-Credentials. What can the client do with the response?",
-      "ru": "Приложение фронтенда на origin https://app.example.com выполняет fetch запрос к https://api.example.com/data. Ответ включает Access-Control-Allow-Origin: https://app.example.com, но без Access-Control-Allow-Credentials. Что клиент может сделать с ответом?"
+      "en": "You have a REST API endpoint that returns user data. The response includes `Cache-Control: max-age=3600, public`. What does this header tell the client?\n\nHTTP/1.1 200 OK\nCache-Control: max-age=3600, public\nContent-Type: application/json\n\n{\"id\": 1, \"name\": \"John\"}\n",
+      "ru": "Ваш REST API эндпоинт возвращает данные пользователя. Ответ включает `Cache-Control: max-age=3600, public`. Что этот заголовок говорит клиенту?\n\nHTTP/1.1 200 OK\nCache-Control: max-age=3600, public\nContent-Type: application/json\n\n{\"id\": 1, \"name\": \"John\"}\n"
     },
     "options": {
       "en": [
-        "Read the response body but cannot access cookies or authentication tokens included in the request",
-        "Access all response data including cookies stored from the API origin",
-        "Make the request but receive a network error because credentials are missing",
-        "Cache the response but only for the same origin domain"
+        "Cache this response for 3600 seconds and allow intermediate proxies to cache it",
+        "Cache this response for 3600 milliseconds privately on the client only",
+        "Cache this response permanently but invalidate after 3600 requests",
+        "Cache this response only if the client has public internet access"
       ],
       "ru": [
-        "Прочитать тело ответа, но не может получить доступ к cookies или токенам аутентификации, включенным в запрос",
-        "Получить доступ ко всем данным ответа, включая cookies, сохраненные с origin API",
-        "Сделать запрос, но получить ошибку сети, так как учетные данные отсутствуют",
-        "Кэшировать ответ, но только для одного домена origin"
+        "Кэшировать этот ответ 3600 секунд и разрешить промежуточным прокси его кэшировать",
+        "Кэшировать этот ответ 3600 миллисекунд приватно только на клиенте",
+        "Кэшировать этот ответ постоянно, но инвалидировать после 3600 запросов",
+        "Кэшировать этот ответ только если клиент имеет публичный доступ в интернет"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "When Access-Control-Allow-Credentials is absent, the browser will not include credentials (cookies, authorization headers) in the request and will not expose credentials in the response to JavaScript. However, the response body itself can be read. The request succeeds; credentials are simply not transmitted. CORS caching rules do not restrict responses to a single origin.",
-      "ru": "Когда Access-Control-Allow-Credentials отсутствует, браузер не будет включать учетные данные (cookies, заголовки авторизации) в запрос и не будет открывать учетные данные в ответе для JavaScript. Однако тело ответа может быть прочитано. Запрос выполняется успешно; учетные данные просто не передаются. Правила кэширования CORS не ограничивают ответы одним origin."
+      "en": "max-age=3600 means cache for 3600 seconds, and public means intermediate caches (proxies, CDNs) can store it. If it were private, only the client browser could cache it. The directive does not relate to milliseconds, request counts, or internet access types.",
+      "ru": "max-age=3600 означает кэшировать 3600 секунд, а public означает, что промежуточные кэши (прокси, CDN) могут его хранить. Если бы это было private, только браузер клиента мог бы его кэшировать. Директива не относится к миллисекундам, количеству запросов или типам доступа в интернет."
     }
   },
   {
     "id": "http-rest-quiz-4",
     "topicId": "http-rest",
     "question": {
-      "en": "A REST API implements the following pattern:\nGET /api/orders/123 → 200 OK\nDELETE /api/orders/123 → 204 No Content (first call)\nDELETE /api/orders/123 → 204 No Content (second call)\nPUT /api/orders/123 → 200 OK with new data (idempotent update)\n\nWhich REST constraint or HTTP property is this API demonstrating?",
-      "ru": "REST API реализует следующий паттерн:\nGET /api/orders/123 → 200 OK\nDELETE /api/orders/123 → 204 No Content (первый вызов)\nDELETE /api/orders/123 → 204 No Content (второй вызов)\nPUT /api/orders/123 → 200 OK с новыми данными (идемпотентное обновление)\n\nКакое ограничение REST или свойство HTTP демонстрирует эта API?"
+      "en": "When implementing REST API authentication, which method is stateless and does not require the server to store session information?",
+      "ru": "При реализации аутентификации REST API, какой метод не требует состояния и не требует от сервера хранения информации о сессии?"
     },
     "options": {
       "en": [
-        "Idempotency of safe HTTP methods and proper use of status codes for different outcomes",
-        "Stateless communication where the server maintains no session between requests",
-        "Uniform interface by using standard HTTP methods to represent resource operations",
-        "Cacheability of responses based on the HTTP method semantics"
+        "Session cookies with server-side storage",
+        "JWT (JSON Web Tokens) with client-side validation",
+        "Basic authentication with plaintext credentials in every request",
+        "OAuth 2.0 authorization code flow"
       ],
       "ru": [
-        "Идемпотентность безопасных HTTP методов и правильное использование кодов статуса для разных исходов",
-        "Безгосударственное общение, при котором сервер не сохраняет сеанс между запросами",
-        "Единый интерфейс, используя стандартные HTTP методы для представления операций с ресурсами",
-        "Кэшируемость ответов на основе семантики HTTP метода"
+        "Сессионные куки с хранением на сервере",
+        "JWT (JSON Web Tokens) с валидацией на клиенте",
+        "Basic аутентификация с открытыми учетными данными в каждом запросе",
+        "OAuth 2.0 authorization code flow"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "The pattern shows that DELETE and PUT operations return the same successful response when called multiple times on the same resource (idempotency), and uses appropriate status codes (204 for deletion, 200 for updates). While the API also exhibits stateless communication and uniform interface, the key demonstration here is idempotency and correct status code usage for expected outcomes.",
-      "ru": "Паттерн показывает, что операции DELETE и PUT возвращают одинаковый успешный ответ при многократном вызове для одного ресурса (идемпотентность) и используют соответствующие коды статуса (204 для удаления, 200 для обновлений). Хотя API также демонстрирует безгосударственное общение и единый интерфейс, ключевой демонстрацией здесь является идемпотентность и правильное использование кодов статуса для ожидаемых исходов."
+      "en": "JWT is stateless—the server validates the signature without storing any session data. Session cookies require server-side storage, defeating the stateless principle. Basic auth is stateless but transmits credentials in every request (insecure without HTTPS). OAuth 2.0 authorization code flow requires server-side state management for authorization codes.",
+      "ru": "JWT — это stateless подход, сервер валидирует подпись без хранения данных сессии. Сессионные куки требуют хранения на сервере, нарушая принцип stateless. Basic auth stateless, но отправляет учетные данные в каждом запросе (небезопасно без HTTPS). OAuth 2.0 authorization code flow требует управления состоянием на сервере."
     }
   },
   {
     "id": "http-rest-quiz-5",
     "topicId": "http-rest",
     "question": {
-      "en": "A client uses HTTP Basic Authentication with credentials encoded in the Authorization header. The server should enforce this over HTTPS because what happens if used over plain HTTP?",
-      "ru": "Клиент использует HTTP Basic Authentication с учетными данными, закодированными в заголовке Authorization. Сервер должен применить это через HTTPS, потому что что происходит, если используется через простой HTTP?"
+      "en": "A REST API returns HTTP 409 Conflict for a PUT request to update a resource. Which scenario best explains why this status code was chosen?\n\nPUT /api/items/42 HTTP/1.1\nContent-Type: application/json\nIf-Match: \"abc123\"\n\n{\"name\": \"Updated Item\", \"version\": 1}\n\nResponse:\n\nHTTP/1.1 409 Conflict\n",
+      "ru": "REST API возвращает HTTP 409 Conflict для PUT запроса на обновление ресурса. Какой сценарий лучше всего объясняет, почему был выбран этот код статуса?\n\nPUT /api/items/42 HTTP/1.1\nContent-Type: application/json\nIf-Match: \"abc123\"\n\n{\"name\": \"Updated Item\", \"version\": 1}\n\nОтвет:\n\nHTTP/1.1 409 Conflict\n"
     },
     "options": {
       "en": [
-        "The Base64-encoded credentials can be easily decoded by any network observer, exposing username and password",
-        "The browser automatically downgrades to Digest Authentication to improve security",
-        "The server rejects Basic Authentication on HTTP and forces a redirect to HTTPS",
-        "The credentials are cached insecurely by intermediate proxies, requiring certificate pinning"
+        "The If-Match ETag does not match the current resource ETag, indicating the resource was modified by another client since the request was prepared",
+        "The resource does not exist on the server and needs to be created first",
+        "The server is temporarily unable to process the request due to high load",
+        "The client does not have permission to update this resource"
       ],
       "ru": [
-        "Base64-закодированные учетные данные могут быть легко расшифрованы любым наблюдателем сети, раскрывая имя пользователя и пароль",
-        "Браузер автоматически переходит на Digest Authentication для улучшения безопасности",
-        "Сервер отклоняет Basic Authentication на HTTP и вынуждает перенаправление на HTTPS",
-        "Учетные данные небезопасно кэшируются промежуточными прокси, требуя certificate pinning"
+        "ETag в If-Match не совпадает с текущим ETag ресурса, указывая что ресурс был изменен другим клиентом с момента подготовки запроса",
+        "Ресурс не существует на сервере и должен быть сначала создан",
+        "Сервер временно не может обработать запрос из-за высокой нагрузки",
+        "Клиент не имеет прав для обновления этого ресурса"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "HTTP Basic Authentication encodes credentials in Base64, which is easily reversible and provides no encryption. Over plain HTTP, network sniffers can intercept and decode these credentials. Browsers do not automatically switch authentication methods, servers cannot force security policy through HTTP status codes alone, and certificate pinning does not prevent Base64 decoding of credentials sent over unencrypted connections.",
-      "ru": "HTTP Basic Authentication кодирует учетные данные в Base64, что л��гко обратимо и не обеспечивает шифрование. По простому HTTP перехватчики сети могут перехватить и расшифровать эти учетные данные. Браузеры не переключаются автоматически между методами аутентификации, серверы не могут применять политику безопасности только через коды статуса HTTP, и certificate pinning не предотвращает декодирование Base64 учетных данных, отправленных по незашифрованным соединениям."
+      "en": "409 Conflict indicates a request conflict with the current state, commonly caused by ETag mismatch in optimistic locking—the resource was modified elsewhere since the client's last read. 404 indicates non-existence, 503 indicates service unavailable, and 403 indicates permission denied. The If-Match header is specifically designed to prevent lost update conflicts.",
+      "ru": "409 Conflict указывает на конфликт запроса с текущим состоянием, обычно вызванный несовпадением ETag в оптимистичной блокировке—ресурс был изменен где-то еще с момента последнего чтения клиентом. 404 указывает на отсутствие, 503 на недоступность, 403 на отсутствие прав. Заголовок If-Match специально разработан для предотвращения потери обновлений."
     }
   },
   {
     "id": "http-rest-quiz-6",
     "topicId": "http-rest",
     "question": {
-      "en": "You have a REST API endpoint that updates a user's email address. A client sends the same PUT request twice due to a network retry. What should happen to ensure idempotency?",
-      "ru": "У вас есть REST API endpoint, который обновляет адрес электронной почты пользователя. Клиент отправляет одинаковый PUT запрос дважды из-за повтора сети. Что должно произойти, чтобы обеспечить идемпотентность?"
+      "en": "Which HTTP method is both safe and idempotent, meaning multiple identical requests produce the same result as a single request without side effects?",
+      "ru": "Какой HTTP метод является одновременно безопасным и идемпотентным, то есть несколько идентичных запросов дают такой же результат, как один запрос, без побочных эффектов?"
     },
     "options": {
       "en": [
-        "The second request should update the email again, resulting in the same final state as if only one request was sent",
-        "The server should reject the second request with a 409 Conflict status code",
-        "The server should return 200 OK for the first request and 304 Not Modified for the second",
-        "The server should return different response codes to distinguish between the original and retry"
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
       ],
       "ru": [
-        "Второй запрос должен снова обновить адрес электронной почты, в результате чего получится то же конечное состояние, как если бы был отправлен только один запрос",
-        "Сервер должен отклонить второй запрос с кодом статуса 409 Conflict",
-        "Сервер должен вернуть 200 OK для первого запроса и 304 Not Modified для второго",
-        "Сервер должен возвращать разные коды ответов, чтобы различать исходный запрос и повтор"
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Idempotency means that multiple identical requests produce the same result as a single request. PUT is idempotent by design—applying the same update multiple times leaves the resource in the same final state. The response codes may differ, but the resource state should be identical. Rejecting with 409 or returning 304 would violate idempotency semantics.",
-      "ru": "Идемпотентность означает, что несколько одинаковых запросов дают тот же результат, что и один запрос. PUT по умолчанию идемпотентен — применение одного и того же обновления несколько раз оставляет ресурс в одном и том же конечном состоянии. Коды ответов могут отличаться, но состояние ресурса должно быть идентичным. Отклонение с 409 или возврат 304 нарушили бы семантику идемпотентности."
+      "en": "GET is safe (no side effects) and idempotent (multiple identical requests return the same data). POST is not idempotent (each call creates new resources), PUT is idempotent but not safe (it modifies state), and DELETE is idempotent but not safe (it modifies state).",
+      "ru": "GET является безопасным (без побочных эффектов) и идемпотентным (несколько одинаковых запросов возвращают одинаковые данные). POST не идемпотентен (каждый вызов создает новые ресурсы), PUT идемпотентен, но не безопасен (он изменяет состояние), и DELETE идемпотентен, но не безопасен (он изменяет состояние)."
     }
   },
   {
     "id": "http-rest-quiz-7",
     "topicId": "http-rest",
     "question": {
-      "en": "Analyze this HTTP response:\nHTTP/1.1 200 OK\nCache-Control: public, max-age=3600\nETag: \"abc123\"\nVary: Accept-Encoding\n\nWhat will happen when the same client requests the same resource after 2000 seconds?",
-      "ru": "Проанализируйте этот HTTP ответ:\nHTTP/1.1 200 OK\nCache-Control: public, max-age=3600\nETag: \"abc123\"\nVary: Accept-Encoding\n\nЧто произойдет, когда тот же клиент запросит тот же ресурс через 2000 секунд?"
+      "en": "A client receives the following response headers. Which caching behavior will the browser exhibit?\n\nCache-Control: max-age=3600, must-revalidate\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\n",
+      "ru": "Клиент получает следующие заголовки ответа. Какое поведение кэширования будет демонстрировать браузер?\n\nCache-Control: max-age=3600, must-revalidate\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\n"
     },
     "options": {
       "en": [
-        "The browser will send a conditional GET request with If-None-Match header using the ETag value",
-        "The browser will make a fresh request because max-age has expired and will receive 304 Not Modified",
-        "The cached resource will be automatically refreshed without contacting the server",
-        "The browser will ignore the cache and fetch the full resource again with a 200 response"
+        "Cache the response for 1 hour, then revalidate with the server before using expired cache",
+        "Cache the response indefinitely without revalidation",
+        "Never cache the response and always fetch fresh data",
+        "Cache the response for 1 hour and discard it after expiration without revalidation"
       ],
       "ru": [
-        "Браузер отправит условный GET запрос с заголовком If-None-Match, используя значение ETag",
-        "Браузер сделает новый запрос, потому что max-age истек, и получит 304 Not Modified",
-        "Кэшированный ресурс будет автоматически обновлен без связи с сервером",
-        "Браузер будет игнорировать кэш и полностью получит ресурс снова с ответом 200"
+        "Кэшировать ответ в течение 1 часа, затем переvalidировать на сервере перед использованием истекшего кэша",
+        "Кэшировать ответ бесконечно без переvalidации",
+        "Никогда не кэшировать ответ и всегда получать свежие данные",
+        "Кэшировать ответ в течение 1 часа и отбросить его после истечения без переvalidации"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "After 2000 seconds, the max-age of 3600 seconds has expired, so the cache is stale. The browser must revalidate with the server. It will send a conditional GET request, and the server will compare the ETag. If the resource hasn't changed, it returns 304 Not Modified, allowing the browser to use the cached version. Option 0 is incomplete—it doesn't mention the 304 response. Option 2 is wrong because expiration requires revalidation. Option 3 is wrong because conditional requests allow 304 responses.",
-      "ru": "После 2000 секунд max-age 3600 секунд истекло, поэтому кэш устарел. Браузер должен перепроверить на сервере. Он отправит условный GET запрос, и сервер сравнит ETag. Если ресурс не изменился, он возвращает 304 Not Modified, позволяя браузеру использовать кэшированную версию. Вариант 0 неполный—он не упоминает ответ 304. Вариант 2 неверен, потому что истечение требует перепроверки. Вариант 3 неверен, потому что условные запросы позволяют ответы 304."
+      "en": "max-age=3600 means cache for 1 hour. must-revalidate means after expiration, the browser must contact the server to verify freshness using ETag or Last-Modified. The other options ignore either the time limit or the revalidation requirement.",
+      "ru": "max-age=3600 означает кэширование в течение 1 часа. must-revalidate означает, что после истечения браузер должен связаться с сервером для проверки свежести, используя ETag или Last-Modified. Остальные варианты игнорируют либо временное ограничение, либо требование переvalidации."
     }
   },
   {
     "id": "http-rest-quiz-8",
     "topicId": "http-rest",
     "question": {
-      "en": "Your frontend (https://app.example.com) makes a fetch request to https://api.example.com/data with credentials. The API returns:\nAccess-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Credentials: true\n\nWhy is the absence of the Access-Control-Expose-Headers header problematic in this scenario?",
-      "ru": "Ваш фронтенд (https://app.example.com) делает fetch запрос к https://api.example.com/data с учетными данными. API возвращает:\nAccess-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Credentials: true\n\nПочему отсутствие заголовка Access-Control-Expose-Headers является проблемой в этом сценарии?"
+      "en": "A REST API endpoint returns a 201 Created status code. Which HTTP method was most likely used, and what should the response typically include?",
+      "ru": "Конечная точка REST API возвращает статус код 201 Created. Какой HTTP метод был, вероятно, использован, и что должен типично включать ответ?"
     },
     "options": {
       "en": [
-        "The browser will block the response because credentials require explicit header exposure",
-        "Custom response headers beyond the simple CORS headers will not be accessible to JavaScript code",
-        "The preflight request will fail and the actual request won't be sent",
-        "The response will be cached incorrectly by the browser's CORS cache"
+        "POST; should include a Location header with the new resource URI",
+        "GET; should include the resource data in the response body",
+        "PUT; should include a Cache-Control header for caching",
+        "PATCH; should include metadata about the partial update"
       ],
       "ru": [
-        "Браузер заблокирует ответ, потому что учетные данные требуют явного раскрытия заголовков",
-        "Пользовательские заголовки ответов помимо простых CORS заголовков не будут доступны JavaScript коду",
-        "Preflight запрос не пройдет и фактический запрос не будет отправлен",
-        "Ответ будет неправильно кэширован браузером CORS кэшем"
+        "POST; должен включать заголовок Location с URI нового ресурса",
+        "GET; должен включать данные ресурса в теле ответа",
+        "PUT; должен включать заголовок Cache-Control для кэширования",
+        "PATCH; должен включать метаданные о частичном обновлении"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "By default, CORS restricts JavaScript access to response headers. Only simple CORS headers (like Content-Type, Cache-Control) are exposed. To allow JavaScript to read custom headers (like X-Total-Count, X-RateLimit-Remaining), the server must explicitly list them in Access-Control-Expose-Headers. The credentials settings and preflight don't affect header exposure directly—they are separate concerns.",
-      "ru": "По умолчанию CORS ограничивает доступ JavaScript к заголовкам ответа. Только простые CORS заголовки (такие как Content-Type, Cache-Control) раскрываются. Чтобы позволить JavaScript читать пользовательские заголовки (например X-Total-Count, X-RateLimit-Remaining), сервер должен явно перечислить их в Access-Control-Expose-Headers. Параметры учетных данных и preflight не влияют напрямую на раскрытие заголовков—это отдельные проблемы."
+      "en": "201 Created is returned by POST when a new resource is successfully created. The Location header should specify the URI of the newly created resource. GET returns 200, PUT typically returns 200/204, and PATCH returns 200/204, none of which are standard for resource creation.",
+      "ru": "201 Created возвращается POST при успешном создании нового ресурса. Заголовок Location должен указывать URI только что созданного ресурса. GET возвращает 200, PUT обычно возвращает 200/204, а PATCH возвращает 200/204, ни один из них не является стандартным для создания ресурса."
     }
   },
   {
     "id": "http-rest-quiz-9",
     "topicId": "http-rest",
     "question": {
-      "en": "In HTTP/2, what is a key advantage over HTTP/1.1 that affects how REST APIs should handle multiple resource requests?",
-      "ru": "В HTTP/2, какое ключевое преимущество перед HTTP/1.1 влияет на то, как REST API должны обрабатывать несколько запросов ресурсов?"
+      "en": "A frontend application running on https://app.example.com needs to fetch data from https://api.example.com. The server does not include CORS headers in its response. What will happen?",
+      "ru": "Приложение переднего плана, работающее на https://app.example.com, должно получить данные с https://api.example.com. Сервер не включает заголовки CORS в свой ответ. Что произойдет?"
     },
     "options": {
       "en": [
-        "HTTP/2 uses compression to reduce header size, eliminating the need for request batching endpoints",
-        "HTTP/2 supports multiplexing, allowing multiple requests on a single connection without head-of-line blocking",
-        "HTTP/2 requires servers to use POST instead of GET for better performance",
-        "HTTP/2 automatically caches responses on the client side without Cache-Control headers"
+        "The browser will block the response due to CORS policy violation, even though the request was successful",
+        "The request will be allowed because both URLs use HTTPS",
+        "The request will be blocked at the network level before reaching the server",
+        "The browser will allow the response but warn the user in the console"
       ],
       "ru": [
-        "HTTP/2 использует сжатие для уменьшения размера заголовков, исключая необходимость в endpoints для пакетирования запросов",
-        "HTTP/2 поддерживает мультиплексирование, позволяя несколько запросов на одном соединении без блокировки очереди",
-        "HTTP/2 требует от серверов использовать POST вместо GET для лучшей производительности",
-        "HTTP/2 автоматически кэширует ответы на клиенте без заголовков Cache-Control"
+        "Браузер заблокирует ответ из-за нарушения политики CORS, несмотря на успешный запрос",
+        "Запрос будет разрешен, потому что оба URL используют HTTPS",
+        "Запрос будет заблокирован на уровне сети перед достижением сервера",
+        "Браузер разрешит ответ, но предупредит пользователя в консоли"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "HTTP/2's multiplexing feature allows multiple streams over a single TCP connection simultaneously, eliminating the head-of-line blocking problem of HTTP/1.1. This means clients don't need to wait for responses in order or open multiple connections. REST API design can take advantage of this by using individual resource requests instead of custom batch endpoints. The other options misrepresent HTTP/2 features or REST principles.",
-      "ru": "Функция мультиплексирования HTTP/2 позволяет несколько потоков через одно TCP соединение одновременно, устраняя проблему блокировки очереди HTTP/1.1. Это означает, что клиенты не должны ждать ответов по порядку или открывать несколько соединений. Дизайн REST API может воспользоваться этим, используя отдельные запросы ресурсов вместо пользовательских endpoints для пакетирования. Другие варианты неправильно представляют возможности HTTP/2 или принципы REST."
+      "en": "CORS is a browser-level security policy. Without appropriate CORS headers (Access-Control-Allow-Origin), the browser will block the response even if the server processed the request successfully. The request reaches the server, but the browser enforces CORS validation on the response. HTTPS protocol does not bypass CORS.",
+      "ru": "CORS — это политика безопасности на уровне браузера. Без соответствующих заголовков CORS (Access-Control-Allow-Origin) браузер заблокирует ответ, даже если сервер успешно обработал запрос. Запрос достигает сервера, но браузер применяет валидацию CORS к ответу. Протокол HTTPS не обходит CORS."
     }
   },
   {
     "id": "http-rest-quiz-10",
     "topicId": "http-rest",
     "question": {
-      "en": "A REST API uses Bearer token authentication with the Authorization header. Why is HTTPS (not HTTP) essential for this approach?",
-      "ru": "REST API использует аутентификацию Bearer token с заголовком Authorization. Почему HTTPS (не HTTP) необходим для этого подхода?"
+      "en": "Which authentication method is stateless, scalable, and commonly used in modern REST APIs where the server does not need to store session information?",
+      "ru": "Какой метод аутентификации является без состояния, масштабируемым и обычно используется в современных REST API, где серверу не нужно хранить информацию о сеансе?"
     },
     "options": {
       "en": [
-        "HTTP doesn't support the Authorization header, so HTTPS is required by the HTTP specification",
-        "Without HTTPS encryption, the bearer token can be intercepted in plaintext by anyone on the network",
-        "HTTPS validates the token cryptographically before allowing the request to proceed",
-        "Bearer tokens are only valid for HTTPS connections and will be rejected over HTTP by design"
+        "Session cookies with server-side storage",
+        "Bearer tokens (JWT)",
+        "Basic authentication with base64 encoding",
+        "Digest authentication with MD5 hashing"
       ],
       "ru": [
-        "HTTP не поддерживает заголовок Authorization, поэтому HTTPS требуется спецификацией HTTP",
-        "Без шифрования HTTPS токен bearer может быть перехвачен в открытом виде кем-либо в сети",
-        "HTTPS криптографически проверяет токен перед тем, как разрешить запрос",
-        "Bearer токены действительны только для HTTPS соединений и будут отклонены через HTTP по умолчанию"
+        "Сеансовые файлы cookie с хранилищем на сервере",
+        "Bearer токены (JWT)",
+        "Базовая аутентификация с кодированием base64",
+        "Digest аутентификация с хешированием MD5"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Bearer tokens are sensitive credentials that should never be transmitted in plaintext. HTTP sends data unencrypted, allowing attackers on the network to intercept the Authorization header and steal the token. HTTPS encrypts the entire connection, protecting the token from interception. The Authorization header works fine over HTTP technically, but it's a critical security vulnerability. Options 2 and 3 misrepresent how token validation works.",
-      "ru": "Bearer токены — это чувствительные учетные данные, которые никогда не должны передаваться в открытом ��иде. HTTP отправляет данные без шифрования, позволяя злоумышленникам в сети перехватить заголовок Authorization и украсть токен. HTTPS шифрует все соединение, защищая токен от перехвата. Заголовок Authorization технически работает нормально через HTTP, но это критическая уязвимость безопасности. Варианты 2 и 3 неправильно представляют, как работает проверка токена."
+      "en": "JWT (JSON Web Tokens) and Bearer tokens are stateless because the token contains all necessary information and is cryptographically signed; the server doesn't need to store session data. Session cookies require server-side storage (stateful). Basic and Digest authentication are older methods that don't scale well for distributed systems.",
+      "ru": "JWT (JSON Web Tokens) и Bearer токены являются без состояния, потому что токен содержит всю необходимую информацию и криптографически подписан; серверу не нужно хранить данные сеанса. Сеансовые файлы cookie требуют хранилища на сервере (с состоянием). Basic и Digest аутентификация — это старые методы, которые плохо масштабируются в распределенных системах."
     }
   },
   {
     "id": "http-rest-quiz-11",
     "topicId": "http-rest",
     "question": {
-      "en": "You have a REST endpoint `POST /api/orders` that creates a new order. A client sends the same request twice due to network retry logic. What HTTP principle should you implement to ensure the second request doesn't create a duplicate order?",
-      "ru": "У вас есть REST endpoint `POST /api/orders`, который создает новый заказ. Клиент отправляет одинаковый запрос дважды из-за логики повторных попыток. Какой принцип HTTP вы должны реализовать, чтобы второй запрос не создал дубликат заказа?"
+      "en": "Which HTTP method is idempotent and safe, meaning multiple identical requests produce the same result as a single request without side effects?\n\nGET /api/users/123\nHEAD /api/users/123\nPUT /api/users/123\nDELETE /api/users/123\n",
+      "ru": "Какой HTTP метод является идемпотентным и безопасным, то есть множественные одинаковые запросы дают тот же результат, что и один запрос, без побочных эффектов?\n\nGET /api/users/123\nHEAD /api/users/123\nPUT /api/users/123\nDELETE /api/users/123\n"
     },
     "options": {
       "en": [
-        "Implement idempotency using an Idempotency-Key header and store processed keys server-side",
-        "Make POST requests idempotent by design, since HTTP spec requires all POST requests to be idempotent",
-        "Use ETags to prevent duplicate submissions on the client side only",
-        "Rely on database unique constraints to silently ignore duplicate inserts"
+        "GET and HEAD",
+        "PUT and DELETE",
+        "POST and PATCH",
+        "OPTIONS and CONNECT"
       ],
       "ru": [
-        "Реализовать идемпотентность с помощью заголовка Idempotency-Key и сохранять обработанные ключи на сервере",
-        "Сделать POST-запросы идемпотентными по дизайну, так как HTTP-спецификация требует, чтобы все POST-запросы были идемпотентными",
-        "Использовать ETags для предотвращения дублирования отправок только на стороне клиента",
-        "Полагаться на уникальные ограничения базы данных для автоматического игнорирования дублирующихся вставок"
+        "GET и HEAD",
+        "PUT и DELETE",
+        "POST и PATCH",
+        "OPTIONS и CONNECT"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The Idempotency-Key header pattern is the industry standard for preventing duplicate requests on non-idempotent operations like POST. The server stores which keys have been processed and returns the same response for retries without side effects. POST requests are inherently non-idempotent by design, ETags are for conditional requests, and silent database constraint failures don't provide proper error handling.",
-      "ru": "Паттерн заголовка Idempotency-Key — это промышленный стандарт для предотвращения дублирования запросов при неидемпотентных операциях, таких как POST. Сервер сохраняет, какие ключи были обработаны, и возвращает один и тот же ответ для повторных попыток без побочных эффектов. POST-запросы по дизайну неидемпотентны, ETags используются для условных запросов, а молчаливые отказы ограничений базы данных не обеспечивают надлежащую обработку ошибок."
+      "en": "GET and HEAD are both safe methods that do not modify server state and are idempotent. PUT and DELETE are idempotent but not safe as they modify resources. POST and PATCH are neither safe nor always idempotent. OPTIONS and CONNECT serve different purposes and are not applicable here.",
+      "ru": "GET и HEAD — оба безопасные методы, которые не изменяют состояние сервера и идемпотентны. PUT и DELETE идемпотентны, но не безопасны, так как изменяют ресурсы. POST и PATCH ни безопасны, ни всегда идемпотентны. OPTIONS и CONNECT служат другим целям."
     }
   },
   {
     "id": "http-rest-quiz-12",
     "topicId": "http-rest",
     "question": {
-      "en": "A frontend application needs to fetch user profile data from a same-origin API, then make a cross-origin request to a third-party analytics service. Which CORS headers must the third-party service include in its response to allow the browser to access the response?",
-      "ru": "Фронтенд-приложение должно получить данные профиля пользователя из API того же источника, а затем сделать кросс-доменный запрос к сервису аналитики третьей стороны. Какие заголовки CORS должен включить сервис третьей стороны в свой ответ, чтобы позволить браузеру получить доступ к ответу?"
+      "en": "What is the primary purpose of the Cache-Control header value 'max-age=3600'?\n\nCache-Control: max-age=3600, public\n",
+      "ru": "Какова основная цель значения заголовка Cache-Control 'max-age=3600'?\n\nCache-Control: max-age=3600, public\n"
     },
     "options": {
       "en": [
-        "Access-Control-Allow-Origin header matching the request origin (or *)",
-        "Set-Cookie and Secure headers to establish a trusted connection",
-        "Content-Security-Policy header to whitelist the requesting domain",
-        "Authorization header to verify the requestor identity before responding"
+        "Specifies the resource can be cached by any cache for 3600 seconds",
+        "Prevents the resource from being cached longer than 3600 milliseconds",
+        "Requires server revalidation every 3600 seconds without exception",
+        "Limits concurrent requests to one per 3600 seconds"
       ],
       "ru": [
-        "Заголовок Access-Control-Allow-Origin, соответствующий источнику запроса (или *)",
-        "Заголовки Set-Cookie и Secure для установления доверенного соединения",
-        "Заголовок Content-Security-Policy для добавления домена-запросчика в белый список",
-        "Заголовок Authorization для проверки идентичности запросчика перед ответом"
+        "Указывает, что ресурс может быть кэширован любым кэшем в течение 3600 секунд",
+        "Предотвращает кэширование ресурса дольше 3600 миллисекунд",
+        "Требует переvalidation сервером каждые 3600 секунд без исключений",
+        "Ограничивает одновременные запросы до одного на 3600 секунд"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The Access-Control-Allow-Origin header is the primary CORS mechanism that tells the browser whether to allow JavaScript access to the response. Set-Cookie is for credentials (and requires additional CORS headers), CSP is a security policy unrelated to CORS, and Authorization is for authentication, not CORS preflight.",
-      "ru": "Заголовок Access-Control-Allow-Origin — это основной механизм CORS, который сообщает браузеру, разрешить ли доступ JavaScript к ответу. Set-Cookie используется для учетных данных (и требует дополнительных заголовков CORS), CSP — это политика безопасности, не связанная с CORS, а Authorization используется для аутентификации, а не для CORS preflight."
+      "en": "max-age=3600 indicates the resource is fresh for 3600 seconds after which revalidation may be needed. The 'public' directive allows any cache (browser, CDN, proxy) to store it. This is measured in seconds, not milliseconds, and allows stale-while-revalidate patterns rather than strict requirements.",
+      "ru": "max-age=3600 указывает, что ресурс свежий в течение 3600 секунд, после чего может потребоваться переvalidation. Директива 'public' позволяет любому кэшу (браузер, CDN, прокси) его хранить. Это измеряется в секундах, а не миллисекундах, и позволяет паттерны stale-while-revalidate."
     }
   },
   {
     "id": "http-rest-quiz-13",
     "topicId": "http-rest",
     "question": {
-      "en": "You are designing a REST API for a frequently accessed resource. You set `Cache-Control: max-age=3600, must-revalidate` on GET responses. What will happen after 3600 seconds?",
-      "ru": "Вы проектируете REST API для часто используемого ресурса. Вы устанавливаете `Cache-Control: max-age=3600, must-revalidate` на GET-ответы. Что произойдет после 3600 секунд?"
+      "en": "A browser makes a cross-origin request from 'https://app.example.com' to 'https://api.example.com'. The server responds with 'Access-Control-Allow-Origin: https://app.example.com'. What happens next?\n\nFetch request with credentials: 'include'\nResponse header: Access-Control-Allow-Credentials: true\n",
+      "ru": "Браузер выполняет кросс-origin запрос с 'https://app.example.com' на 'https://api.example.com'. Сервер отвечает с 'Access-Control-Allow-Origin: https://app.example.com'. Что произойдет дальше?\n\nFetch запрос с credentials: 'include'\nЗаголовок ответа: Access-Control-Allow-Credentials: true\n"
     },
     "options": {
       "en": [
-        "The cached response becomes stale, and the client must revalidate with the server (e.g., using If-None-Match) before using it",
-        "The cached response is immediately deleted from the client cache and a fresh request is made",
-        "The client can continue using the stale cache without any server contact until the user manually refreshes",
-        "The server automatically pushes an updated version to the client via HTTP/2 Server Push"
+        "The browser allows the response to be read by JavaScript, including cookies and auth headers",
+        "The browser blocks the response due to wildcard origin not being allowed with credentials",
+        "The response is cached indefinitely by default CORS rules",
+        "The request is automatically retried with a preflight OPTIONS call"
       ],
       "ru": [
-        "Кэшированный ответ становится устаревшим, и клиент должен переподтвердить его на сервере (например, используя If-None-Match) перед использованием",
-        "Кэшированный ответ немедленно удаляется из кэша клиента и делается новый запрос",
-        "Клиент может продолжать использовать устаревший кэш без контакта с сервером до тех пор, пока пользователь не обновит страницу вручную",
-        "Сервер автоматически отправляет обновленную версию клиенту через HTTP/2 Server Push"
+        "Браузер позволяет JavaScript прочитать ответ, включая cookies и заголовки аутентификации",
+        "Браузер блокирует ответ, так как подстановочный origin не разрешен с credentials",
+        "Ответ кэшируется бесконечно согласно правилам CORS по умолчанию",
+        "Запрос автоматически повторяется с предварительным вызовом OPTIONS"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The `must-revalidate` directive requires that after max-age expires, the cache must contact the server to validate (using ETag or Last-Modified) before serving the stale response. The response is not deleted, but becomes stale and requires validation. HTTP/2 Server Push is not triggered by cache expiration, and clients cannot use stale content without revalidation when must-revalidate is set.",
-      "ru": "Директива `must-revalidate` требует, чтобы после истечения max-age кэш связался с сервером для проверки (используя ETag или Last-Modified) перед использованием устаревшего ответа. Ответ не удаляется, но становится устаревшим и требует проверки. HTTP/2 Server Push не запускается истечением кэша, и клиенты не могут использовать устаревшее содержимое без переподтверждения, когда установлен must-revalidate."
+      "en": "When CORS is properly configured with specific origin, credentials mode included, and Access-Control-Allow-Credentials: true, the browser allows JavaScript to access the response including sensitive data. Using a wildcard origin ('*') with credentials is forbidden by CORS spec, making option 1 the only correct behavior here.",
+      "ru": "Когда CORS правильно настроен с конкретным origin, режимом credentials включен и Access-Control-Allow-Credentials: true, браузер позволяет JavaScript получить доступ к ответу, включая чувствительные данные. Использование подстановочного origin ('*') с credentials запрещено спецификацией CORS."
     }
   },
   {
     "id": "http-rest-quiz-14",
     "topicId": "http-rest",
     "question": {
-      "en": "Consider this code snippet where you receive an HTTP response with status 204 (No Content). What should your client application expect?\n\nresponse = fetch('/api/resource', {method: 'DELETE'})\ndata = await response.json()",
-      "ru": "Рассмотрите этот фрагмент кода, где вы получаете HTTP-ответ со статусом 204 (No Content). Что должно ожидать ваше клиентское приложение?\n\nresponse = fetch('/api/resource', {method: 'DELETE'})\ndata = await response.json()"
+      "en": "Which HTTP status code correctly indicates that a resource has permanently moved to a new URL and browsers should update their bookmarks?",
+      "ru": "Какой HTTP код состояния правильно указывает, что ресурс был постоянно перемещен на новый URL и браузеры должны обновить закладки?"
     },
     "options": {
       "en": [
-        "The response.json() call will throw an error because 204 responses have no body to parse",
-        "The response.json() call will return null or an empty object",
-        "The server guarantees that the resource was not modified, only read",
-        "The response is identical to 200 OK but indicates the server rejected the request silently"
+        "301 Moved Permanently",
+        "302 Found",
+        "303 See Other",
+        "307 Temporary Redirect"
       ],
       "ru": [
-        "Вызов response.json() выдаст ошибку, потому что ответы 204 не содержат тела для парсинга",
-        "Вызов response.json() вернет null или пустой объект",
-        "Сервер гарантирует, что ресурс не был изменен, только прочитан",
-        "Ответ идентичен 200 OK, но указывает, что сервер молча отклонил запрос"
+        "301 Moved Permanently",
+        "302 Found",
+        "303 See Other",
+        "307 Temporary Redirect"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "HTTP 204 No Content specifically means the request succeeded but there is no content to return. The response body is empty by specification, so calling .json() will fail because there is nothing to parse. Clients should not attempt to parse a body for 204 responses. This status is intentional and successful—the DELETE operation completed without returning data.",
-      "ru": "HTTP 204 No Content конкретно означает, что запрос был успешен, но нет содержимого для возврата. Тело ответа пусто по спецификации, поэтому вызов .json() завершится ошибкой, так как нечего парсить. Клиенты не должны пытаться парсить тело для ответов 204. Этот статус намеренный и успешный — операция DELETE завершилась без возврата данных."
+      "en": "301 Moved Permanently signals a permanent redirect and allows browsers to cache and update bookmarks. 302 Found is temporary and doesn't guarantee caching. 303 See Other is for GET redirects after POST, and 307 Temporary Redirect preserves the HTTP method but indicates temporary redirect. Only 301 conveys permanence to client caches.",
+      "ru": "301 Moved Permanently сигнализирует о постоянном перенаправлении и позволяет браузерам кэшировать и обновлять закладки. 302 Found является временным и не гарантирует кэширование. 303 See Other предназначен для GET перенаправлений после POST, а 307 Temporary Redirect сохраняет HTTP метод, но указывает на временное перенаправление."
     }
   },
   {
     "id": "http-rest-quiz-15",
     "topicId": "http-rest",
     "question": {
-      "en": "Which HTTP/2 feature allows a server to send multiple response messages for a single client request, and how does it differ from HTTP/1.1 in terms of connection management?",
-      "ru": "Какая функция HTTP/2 позволяет серверу отправлять несколько ответных сообщений на один клиентский запрос, и чем это отличается от HTTP/1.1 с точки зрения управления соединением?"
+      "en": "In HTTP/2, what is the primary advantage of multiplexing over HTTP/1.1 in this scenario:\n\nRequest 1: GET /images/large.jpg (2MB)\nRequest 2: GET /api/data (10KB)\nRequest 3: GET /styles.css (50KB)\n",
+      "ru": "В HTTP/2, каково основное преимущество мультиплексирования над HTTP/1.1 в этом сценарии:\n\nRequest 1: GET /images/large.jpg (2MB)\nRequest 2: GET /api/data (10KB)\nRequest 3: GET /styles.css (50KB)\n"
     },
     "options": {
       "en": [
-        "Server Push allows proactive resource delivery without client request, using multiplexing over a single connection instead of multiple parallel connections",
-        "Chunked Transfer Encoding lets servers send responses in fragments, requiring Keep-Alive headers in HTTP/1.1",
-        "WebSocket upgrade allows bidirectional communication, replacing the request-response model entirely",
-        "HTTP/2 frames enable parallel requests but require separate TCP connections for each stream, similar to HTTP/1.1 pipelining"
+        "All three requests share a single TCP connection without blocking, so smaller requests don't wait for large downloads",
+        "HTTP/2 automatically compresses all responses, reducing bandwidth by 90%",
+        "Request 2 and 3 are cached automatically while Request 1 downloads",
+        "HTTP/2 splits large files into smaller chunks, prioritizing critical requests"
       ],
       "ru": [
-        "Server Push позволяет активно доставлять ресурсы без запроса клиента, используя мультиплексирование по одному соединению вместо нескольких параллельных соединений",
-        "Chunked Transfer Encoding позволяет серверам отправлять ответы фрагментами, требуя заголовков Keep-Alive в HTTP/1.1",
-        "Обновление WebSocket позволяет двусторонней связи, полностью заменяя модель запрос-ответ",
-        "Фреймы HTTP/2 позволяют параллельные запросы, но требуют отдельного TCP-соединения для каждого потока, как HTTP/1.1 pipelining"
+        "Все три запроса используют одно TCP соединение без блокировки, поэтому меньшие запросы не ждут больших загрузок",
+        "HTTP/2 автоматически сжимает все ответы, уменьшая пропускную способность на 90%",
+        "Request 2 и 3 автоматически кэшируются во время загрузки Request 1",
+        "HTTP/2 разбивает большие файлы на меньшие куски, приоритизируя критичные запросы"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "HTTP/2 Server Push enables the server to send resources to the client proactively (e.g., pushing CSS files alongside HTML). Multiplexing in HTTP/2 allows multiple streams over a single TCP connection, eliminating the overhead of HTTP/1.1's multiple connections or pipelining. Chunked Transfer Encoding and WebSocket are unrelated to Server Push or multiplexing as HTTP/2 features.",
-      "ru": "HTTP/2 Server Push позволяет серверу активно ��тправлять ресурсы клиенту (например, отправляя файлы CSS вместе с HTML). Мультиплексирование в HTTP/2 позволяет использовать несколько потоков по одному TCP-соединению, устраняя затраты на несколько соединений HTTP/1.1 или pipelining. Chunked Transfer Encoding и WebSocket не связаны с Server Push или мультиплексированием как функциями HTTP/2."
+      "en": "HTTP/2 multiplexing allows multiple requests to be sent on the same connection concurrently, so Request 2 and 3 can complete while Request 1 is still downloading, unlike HTTP/1.1 which uses sequential requests per connection. Compression exists but is separate from multiplexing. Caching and chunking are separate concerns not directly related to multiplexing's core benefit.",
+      "ru": "Мультиплексирование HTTP/2 позволяет отправлять несколько запросов на одном соединении одновременно, поэтому Request 2 и 3 могут завершиться, пока Request 1 все еще загружается, в отличие от HTTP/1.1, который использует последовательные запросы per соединение. Сжатие существует, но отделено от мультиплексирования. Кэширование и chunking — отдельные concerns."
+    }
+  },
+  {
+    "id": "http-rest-quiz-16",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Which HTTP methods are considered idempotent, meaning multiple identical requests produce the same result as a single request?\n\nGET, HEAD, OPTIONS, PUT, DELETE\nPOST, PUT, PATCH, DELETE\nGET, POST, PUT, DELETE\nHEAD, OPTIONS, PATCH, DELETE\n",
+      "ru": "Какие HTTP методы считаются идемпотентными, то есть несколько идентичных запросов дают тот же результат, что и один запрос?\n\nGET, HEAD, OPTIONS, PUT, DELETE\nPOST, PUT, PATCH, DELETE\nGET, POST, PUT, DELETE\nHEAD, OPTIONS, PATCH, DELETE\n"
+    },
+    "options": {
+      "en": [
+        "GET, HEAD, OPTIONS, PUT, DELETE",
+        "POST, PUT, PATCH, DELETE",
+        "GET, POST, PUT, DELETE",
+        "HEAD, OPTIONS, PATCH, DELETE"
+      ],
+      "ru": [
+        "GET, HEAD, OPTIONS, PUT, DELETE",
+        "POST, PUT, PATCH, DELETE",
+        "GET, POST, PUT, DELETE",
+        "HEAD, OPTIONS, PATCH, DELETE"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Idempotent methods are GET, HEAD, OPTIONS, PUT, and DELETE. POST and PATCH are not idempotent because multiple POST requests create multiple resources, and PATCH operations may be order-dependent. PUT is idempotent because it replaces the entire resource unconditionally.",
+      "ru": "Идемпотентные методы - это GET, HEAD, OPTIONS, PUT и DELETE. POST и PATCH не являются идемпотентными, так как несколько POST запросов создают несколько ресурсов, а операции PATCH могут быть зависимы от порядка. PUT идемпотентен, так как он безусловно заменяет весь ресурс."
+    }
+  },
+  {
+    "id": "http-rest-quiz-17",
+    "topicId": "http-rest",
+    "question": {
+      "en": "A client sends a request with `Authorization: Bearer <token>`. The server responds with status 401 Unauthorized. What is the most likely cause and appropriate next action?\njs\nconst response = await fetch('/api/data', {\n  headers: { 'Authorization': 'Bearer ' + token }\n});\nif (response.status === 401) {\n  // What should happen here?\n}\n",
+      "ru": "Клиент отправляет запрос с `Authorization: Bearer <token>`. Сервер отвечает со статусом 401 Unauthorized. Какова наиболее вероятная причина и надлежащее действие?\njs\nconst response = await fetch('/api/data', {\n  headers: { 'Authorization': 'Bearer ' + token }\n});\nif (response.status === 401) {\n  // Что должно произойти здесь?\n}\n"
+    },
+    "options": {
+      "en": [
+        "The token is invalid or expired; attempt to refresh or re-authenticate",
+        "The server is temporarily unavailable; retry the request after 5 seconds",
+        "The resource does not exist; check the URL path",
+        "The client lacks permission; request elevated privileges from the administrator"
+      ],
+      "ru": [
+        "Токен невалиден или истёк; попытаться обновить или переаутентифицироваться",
+        "Сервер временно недоступен; повторить запрос через 5 секунд",
+        "Ресурс не существует; проверить путь URL",
+        "Клиент не имеет разрешения; запросить повышенные привилегии у администратора"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "401 Unauthorized specifically indicates authentication failure (invalid, expired, or missing credentials), not authorization failure. The appropriate action is to refresh the token or trigger re-authentication. 503 would indicate server unavailability, 404 would indicate a missing resource, and 403 would indicate authorization failure (no permission).",
+      "ru": "401 Unauthorized указывает конкретно на ошибку аутентификации (невалидные, истёкшие или отсутствующие учётные данные), а не на ошибку авторизации. Надлежащее действие - обновить токен или инициировать переаутентификацию. 503 указывал бы на недоступность сервера, 404 - на отсутствующий ресурс, 403 - на ошибку авторизации."
+    }
+  },
+  {
+    "id": "http-rest-quiz-18",
+    "topicId": "http-rest",
+    "question": {
+      "en": "A response includes these cache headers:\n\nCache-Control: max-age=3600, must-revalidate\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\n\nIf a client makes the same request 30 minutes later, what happens?",
+      "ru": "Ответ содержит эти заголовки кэширования:\n\nCache-Control: max-age=3600, must-revalidate\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\n\nЕсли клиент делает тот же запрос через 30 минут, что происходит?"
+    },
+    "options": {
+      "en": [
+        "The cached response is used directly without contacting the server",
+        "The client sends a conditional request with If-None-Match header and uses the cached response if unchanged",
+        "The server always returns a fresh response regardless of cache headers",
+        "The cached response is discarded and the client must re-authenticate"
+      ],
+      "ru": [
+        "Кэшированный ответ используется напрямую без обращения к серверу",
+        "Клиент отправляет условный запрос с заголовком If-None-Match и использует кэшированный ответ, если он не изменился",
+        "Сервер всегда возвращает свежий ответ независимо от заголовков кэша",
+        "Кэшированный ответ отбрасывается и клиент должен переаутентифицироваться"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "With `max-age=3600`, the cached response is fresh for 3600 seconds (1 hour). Since only 30 minutes have passed, the cache has not expired and the client uses the cached response without any server contact. The ETag and Last-Modified headers become relevant only after the cache expires and a revalidation is needed.",
+      "ru": "При `max-age=3600` кэшированный ответ свежий в течение 3600 секунд (1 час). Так как прошло только 30 минут, кэш не истёк и клиент использует кэшированный ответ без обращения к серверу. Заголовки ETag и Last-Modified становятся актуальны только после истечения кэша и необходимости переvalidации."
+    }
+  },
+  {
+    "id": "http-rest-quiz-19",
+    "topicId": "http-rest",
+    "question": {
+      "en": "A browser makes a cross-origin request from `https://app.example.com` to `https://api.example.com`. The server responds with:\n\nAccess-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Methods: GET, POST\nAccess-Control-Allow-Credentials: true\n\nWhat is true about this CORS configuration?",
+      "ru": "Браузер делает кроссоригинный запрос с `https://app.example.com` на `https://api.example.com`. Сервер отвечает с:\n\nAccess-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Methods: GET, POST\nAccess-Control-Allow-Credentials: true\n\nЧто верно об этой конфигурации CORS?"
+    },
+    "options": {
+      "en": [
+        "The specific origin is allowed, and credentials (cookies, auth headers) can be included in requests",
+        "All origins are allowed because the header allows credentials",
+        "The origin is allowed but credentials are forbidden due to the Allow-Methods restriction",
+        "Preflight requests are not needed because explicit methods are specified"
+      ],
+      "ru": [
+        "Специфичный оригин разрешён, и учётные данные (cookies, заголовки auth) могут быть включены в запросы",
+        "Все оригины разрешены, потому что заголовок позволяет учётные данные",
+        "Оригин разрешён, но учётные данные запрещены из-за ограничения Allow-Methods",
+        "Preflight запросы не нужны, потому что явно указаны методы"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "When `Access-Control-Allow-Origin` is set to a specific origin (not `*`) and `Access-Control-Allow-Credentials: true` is present, the browser allows credentials to be sent with requests. Using `*` with credentials is forbidden by the CORS spec. Preflight requests are still needed for certain request types regardless of the Allow-Methods header.",
+      "ru": "Когда `Access-Control-Allow-Origin` установлен на конкретный оригин (не `*`) и присутствует `Access-Control-Allow-Credentials: true`, браузер разрешает отправлять учётные данные с запросами. Использование `*` с учётными данными запрещено спецификацией CORS. Preflight запросы всё ещё нужны для определённых типов запросов независимо от заголовка Allow-Methods."
+    }
+  },
+  {
+    "id": "http-rest-quiz-20",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Which statement best describes a key advantage of HTTP/2 over HTTP/1.1 in the context of REST API performance?",
+      "ru": "Какое утверждение лучше всего описывает ключевое преимущество HTTP/2 над HTTP/1.1 в контексте производительности REST API?"
+    },
+    "options": {
+      "en": [
+        "HTTP/2 eliminates the need for domain sharding and enables multiplexing of multiple requests over a single TCP connection",
+        "HTTP/2 removes the requirement for HTTPS, allowing unencrypted traffic",
+        "HTTP/2 automatically compresses response bodies without requiring Content-Encoding headers",
+        "HTTP/2 eliminates caching entirely, requiring all requests to fetch fresh data"
+      ],
+      "ru": [
+        "HTTP/2 устраняет необходимость в domain sharding и включает мультиплексирование нескольких запросов через одно TCP соединение",
+        "HTTP/2 удаляет требование HTTPS, позволяя незашифрованный трафик",
+        "HTTP/2 автоматически сжимает телаответов без требования заголовков Content-Encoding",
+        "HTTP/2 полностью устраняет кэширование, требуя все запросы получать свежие данные"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "HTTP/2's primary performance advantage is multiplexing—multiple requests and responses can be transmitted concurrently over a single TCP connection without head-of-line blocking, eliminating the need for domain sharding tricks. HTTP/2 still requires HTTPS, does not eliminate explicit compression headers, and does not change caching behavior.",
+      "ru": "Главное преимущество производительности HTTP/2 - это мультиплексирование - несколько запросов и ответов могут передаваться одновременно через одно TCP соединение без блокирования head-of-line, устраняя необходимость в трюках с domain sharding. HTTP/2 всё ещё требует HTTPS, не устраняет явные заголовки сжатия и не меняет поведение кэширования."
+    }
+  },
+  {
+    "id": "http-rest-quiz-21",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Which HTTP method is idempotent and safe, meaning multiple identical requests produce the same result as a single request without side effects?\n\nGET /api/users/123\nPOST /api/users\nPUT /api/users/123\nDELETE /api/users/123\n",
+      "ru": "Какой HTTP метод является идемпотентным и безопасным, то есть несколько идентичных запросов дают тот же результат, что и один запрос, без побочных эффектов?\n\nGET /api/users/123\nPOST /api/users\nPUT /api/users/123\nDELETE /api/users/123\n"
+    },
+    "options": {
+      "en": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ],
+      "ru": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "GET is both safe and idempotent—it retrieves data without modifying server state, and calling it multiple times returns the same result. POST creates resources and is neither safe nor idempotent (multiple calls create multiple resources). PUT and DELETE are idempotent but not safe (they modify state). Only GET satisfies both conditions.",
+      "ru": "GET одновременно безопасен и идемпотентен—он получает данные без изменения состояния сервера, и множественные вызовы возвращают одинаковый результат. POST создает ресурсы и не является ни безопасным, ни идемпотентным (несколько вызовов создают несколько ресурсов). PUT и DELETE идемпотентны, но не безопасны (они изменяют состояние). Только GET удовлетворяет обоим условиям."
+    }
+  },
+  {
+    "id": "http-rest-quiz-22",
+    "topicId": "http-rest",
+    "question": {
+      "en": "You receive a 304 Not Modified response from a GET request. What HTTP header did the server likely check to determine the resource hadn't changed?\n\nRequest headers:\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\nIf-None-Match: \"abc123\"\nIf-Modified-Since: Wed, 21 Oct 2024 07:28:00 GMT\n",
+      "ru": "Вы получили ответ 304 Not Modified на запрос GET. Какой HTTP заголовок сервер, вероятно, проверил, чтобы определить, что ресурс не изменился?\n\nЗаголовки запроса:\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\nIf-None-Match: \"abc123\"\nIf-Modified-Since: Wed, 21 Oct 2024 07:28:00 GMT\n"
+    },
+    "options": {
+      "en": [
+        "If-None-Match or If-Modified-Since (both are valid for 304)",
+        "Last-Modified header from the request",
+        "ETag header from the request",
+        "Cache-Control header"
+      ],
+      "ru": [
+        "If-None-Match или If-Modified-Since (оба действительны для 304)",
+        "Заголовок Last-Modified из запроса",
+        "Заголовок ETag из запроса",
+        "Заголовок Cache-Control"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The 304 response is triggered when either If-None-Match (compares ETags) or If-Modified-Since (compares dates) matches the server's current resource state. Both are conditional request headers used for cache validation. ETag and Last-Modified are response headers (not request headers) that the server sends to the client for future validation. Cache-Control is unrelated to 304 determination.",
+      "ru": "Ответ 304 выдается, когда либо If-None-Match (сравнивает ETags), либо If-Modified-Since (сравнивает даты) совпадает с текущим состоянием ресурса на сервере. Оба являются условными заголовками запроса, используемыми для валидации кэша. ETag и Last-Modified являются заголовками ответа (а не запроса), которые сервер отправляет клиенту для будущей валидации. Cache-Control не имеет отношения к определению 304."
+    }
+  },
+  {
+    "id": "http-rest-quiz-23",
+    "topicId": "http-rest",
+    "question": {
+      "en": "A browser makes a cross-origin request from https://app.example.com to https://api.example.com. The API responds with these headers:\n\nAccess-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Methods: GET, POST\nAccess-Control-Allow-Credentials: true\n\nWhat is the most likely issue if the browser still blocks the request?",
+      "ru": "Браузер делает кросс-доменный запрос с https://app.example.com к https://api.example.com. API отвечает этими заголовками:\n\nAccess-Control-Allow-Origin: https://app.example.com\nAccess-Control-Allow-Methods: GET, POST\nAccess-Control-Allow-Credentials: true\n\nКакой наиболее вероятный источник проблемы, если браузер все еще блокирует запрос?"
+    },
+    "options": {
+      "en": [
+        "The request method (e.g., PUT or DELETE) is not in Access-Control-Allow-Methods",
+        "Access-Control-Allow-Origin should use a wildcard (*) instead of a specific origin",
+        "Access-Control-Allow-Credentials should be false when using specific origins",
+        "The request lacks an Authorization header"
+      ],
+      "ru": [
+        "Метод запроса (например, PUT или DELETE) отсутствует в Access-Control-Allow-Methods",
+        "Access-Control-Allow-Origin должен использовать подстановочный знак (*) вместо конкретного источника",
+        "Access-Control-Allow-Credentials должен быть false при использовании конкретных источников",
+        "В запросе отсутствует заголовок Authorization"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CORS allows only the methods listed in Access-Control-Allow-Methods. If the request uses PUT, DELETE, PATCH, or another method not in the list, the browser blocks it. The specific origin and credentials=true are correctly set. Wildcard (*) cannot be used with credentials=true, so that's not the issue here. Authorization header absence doesn't block CORS; it's checked after CORS passes.",
+      "ru": "CORS разрешает только методы, указанные в Access-Control-Allow-Methods. Если запрос использует PUT, DELETE, PATCH или другой метод, отсутствующий в списке, браузер блокирует его. Конкретный источник и credentials=true установлены правильно. Подстановочный знак (*) нельзя использовать с credentials=true, поэтому это не проблема здесь. Отсутствие заголовка Authorization не блокирует CORS; он проверяется после успешной проверки CORS."
+    }
+  },
+  {
+    "id": "http-rest-quiz-24",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Which status code should a REST API return when a client submits a valid request but the server cannot process it due to business logic constraints (e.g., insufficient balance, invalid state transition)?",
+      "ru": "Какой код состояния должен вернуть REST API, когда клиент отправляет корректный запрос, но сервер не может его обработать из-за ограничений бизнес-логики (например, недостаточный баланс, недопустимый переход состояния)?"
+    },
+    "options": {
+      "en": [
+        "400 Bad Request",
+        "422 Unprocessable Entity",
+        "409 Conflict",
+        "500 Internal Server Error"
+      ],
+      "ru": [
+        "400 Bad Request",
+        "422 Unprocessable Entity",
+        "409 Conflict",
+        "500 Internal Server Error"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "422 Unprocessable Entity is the correct status for semantically valid requests that fail due to business logic or validation rules. 400 implies malformed syntax; 409 is for resource conflicts (like concurrent updates); 500 indicates server errors. 422 explicitly conveys that the request was syntactically correct but semantically invalid according to business rules.",
+      "ru": "422 Unprocessable Entity — правильный статус для семантически корректных запросов, которые не проходят из-за бизнес-логики или правил валидации. 400 подразумевает синтаксическую ошибку; 409 используется для конфликтов ресурсов (например, одновременные обновления); 500 указывает на ошибки сервера. 422 явно указывает, что запрос был синтаксически корректен, но семантически недействителен согласно бизнес-правилам."
+    }
+  },
+  {
+    "id": "http-rest-quiz-25",
+    "topicId": "http-rest",
+    "question": {
+      "en": "HTTP/2 introduces server push, allowing the server to send resources to the client without waiting for explicit requests. Which of the following is a primary advantage of server push over HTTP/1.1's approach?\n\nHTTP/1.1 workflow:\n1. Client requests index.html\n2. Client parses HTML and discovers style.css\n3. Client requests style.css\n\nHTTP/2 server push:\n1. Client requests index.html\n2. Server pushes style.css before client asks\n",
+      "ru": "HTTP/2 вводит server push, позволяя серверу отправлять ресурсы клиенту без ожидания явных запросов. Какое из следующих утверждений является основным преимуществом server push по сравнению с подходом HTTP/1.1?\n\nПоток HTTP/1.1:\n1. Клиент запрашивает index.html\n2. Клиент парсит HTML и находит style.css\n3. Клиент запрашивает style.css\n\nHTTP/2 server push:\n1. Клиент запрашивает index.html\n2. Сервер отправляет style.css до того, как клиент спросит\n"
+    },
+    "options": {
+      "en": [
+        "Reduces round-trip time by eliminating the request-response cycle for predictable dependencies",
+        "Allows multiple requests to be processed in parallel on the same TCP connection",
+        "Compresses HTTP headers using HPACK algorithm",
+        "Enables browsers to cache resources more efficiently"
+      ],
+      "ru": [
+        "Снижает время туда-обратно, исключая цикл запрос-ответ для предсказуемых зависимостей",
+        "Позволяет параллельно обрабатывать несколько запросов по одному TCP соединению",
+        "Сжимает HTTP заголовки, используя алгоритм HPACK",
+        "Позволяет браузерам более эффективно кэшировать ресурсы"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Server push eliminates the latency of waiting for a client to request a dependency—the server anticipates needs and sends resources proactively. This saves at least one round-trip for predictable resources like stylesheets. Multiplexing (option 2) is HTTP/2's foundational feature but not unique to push. HPACK (option 3) is header compression, also an HTTP/2 feature but independent of push. Caching efficiency (option 4) isn't directly improved by push.",
+      "ru": "Server push исключает задержку ожидания запроса клиента на зависимый ресурс—сервер предвидит потребности и отправляет ресурсы заранее. Это экономит по крайней мере один цикл туда-обратно для предсказуемых ресурсов, таких как таблицы стилей. Мультиплексирование (вариант 2) — это основная функция HTTP/2, но не уникальная для push. HPACK (вариант 3) — это сжатие заголовков, также функция HTTP/2, но независимая от push. Эффективность кэширования (вариант 4) не улучшается напрямую push."
+    }
+  },
+  {
+    "id": "http-rest-quiz-26",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Which HTTP method is both safe and idempotent, meaning it should not change server state and multiple identical requests produce the same result?",
+      "ru": "Какой HTTP-метод является одновременно безопасным и идемпотентным, то есть не должен изменять состояние сервера и несколько идентичных запросов дают одинаковый результат?"
+    },
+    "options": {
+      "en": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH"
+      ],
+      "ru": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "GET is the only method that is both safe (read-only, no side effects) and idempotent (repeated calls return the same result). POST is neither safe nor idempotent, as it creates new resources and repeated calls create multiple resources. PUT is idempotent but not safe, and PATCH is neither idempotent nor safe.",
+      "ru": "GET — единственный метод, который является одновременно безопасным (только чтение, без побочных эффектов) и идемпотентным (повторные вызовы дают один результат). POST не является ни безопасным, ни идемпотентным, так как создает новые ресурсы. PUT идемпотентен, но не безопасен, а PATCH — ни то ни другое."
+    }
+  },
+  {
+    "id": "http-rest-quiz-27",
+    "topicId": "http-rest",
+    "question": {
+      "en": "A client sends a request with `Access-Control-Request-Method: POST` and `Origin: https://example.com`. The server responds with `Access-Control-Allow-Origin: https://other.com`. What happens?\n\nRequest:\nOrigin: https://example.com\nAccess-Control-Request-Method: POST\n\nResponse:\nAccess-Control-Allow-Origin: https://other.com\n",
+      "ru": "Клиент отправляет запрос с `Access-Control-Request-Method: POST` и `Origin: https://example.com`. Сервер отвечает с `Access-Control-Allow-Origin: https://other.com`. Что произойдет?\n\nRequest:\nOrigin: https://example.com\nAccess-Control-Request-Method: POST\n\nResponse:\nAccess-Control-Allow-Origin: https://other.com\n"
+    },
+    "options": {
+      "en": [
+        "The browser will block the request because the Origin does not match the allowed origin",
+        "The browser will allow the request since the server explicitly set a CORS header",
+        "The request will proceed but without credentials",
+        "The browser will retry the request with the allowed origin"
+      ],
+      "ru": [
+        "Браузер заблокирует запрос, так как Origin не соответствует разрешенному источнику",
+        "Браузер разрешит запрос, так как сервер явно установил CORS-заголовок",
+        "Запрос продолжится, но без учетных данных",
+        "Браузер повторит запрос с разрешенным источником"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CORS requires that the `Access-Control-Allow-Origin` header value exactly matches the request's `Origin` header. Since `https://example.com` does not match `https://other.com`, the browser's CORS policy will reject the request at the client side. The server's response is irrelevant if the origins don't match.",
+      "ru": "CORS требует, чтобы значение заголовка `Access-Control-Allow-Origin` точно совпадало с заголовком `Origin` запроса. Поскольку `https://example.com` не совпадает с `https://other.com`, политика CORS браузера отклонит запрос на стороне клиента. Ответ сервера не имеет значения, если источники не совпадают."
+    }
+  },
+  {
+    "id": "http-rest-quiz-28",
+    "topicId": "http-rest",
+    "question": {
+      "en": "A REST API endpoint returns `Cache-Control: max-age=3600, must-revalidate`. What does the `must-revalidate` directive do?",
+      "ru": "Эндпоинт REST API возвращает `Cache-Control: max-age=3600, must-revalidate`. Что делает директива `must-revalidate`?"
+    },
+    "options": {
+      "en": [
+        "It forces the browser to discard the cache after 3600 seconds regardless of freshness",
+        "It requires the cache to revalidate with the server once the response becomes stale, rather than serving a stale copy",
+        "It prevents any caching in intermediate proxies",
+        "It tells the browser to always make a new request without checking the cache"
+      ],
+      "ru": [
+        "Это заставляет браузер отбросить кэш через 3600 секунд независимо от свежести",
+        "Это требует от кэша проверить подлинность на сервере после истечения срока действия, вместо того чтобы отправить старую копию",
+        "Это предотвращает кэширование на промежуточных прокси",
+        "Это говорит браузеру всегда делать новый запрос без проверки кэша"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "`must-revalidate` means that once the cached response becomes stale (after 3600 seconds), it cannot be used without first revalidating it with the origin server. Without this directive, a cache could serve a stale response during network errors. It does not prevent caching or force immediate expiration; it ensures cache coherence.",
+      "ru": "`must-revalidate` означает, что после истечения срока действия кэшированного ответа (через 3600 секунд) он не может использоваться без предварительной проверки на сервере источника. Без этой директивы кэш мог бы отправить устаревший ответ при сетевых ошибках. Это не предотвращает кэширование и не заставляет немедленное истечение; это обеспечивает согласованность кэша."
+    }
+  },
+  {
+    "id": "http-rest-quiz-29",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Consider the following response headers:\n\nHTTP/1.1 200 OK\nContent-Encoding: gzip\nTransfer-Encoding: chunked\nX-Custom-Header: value\n\nWhich of these headers is NOT valid in HTTP/2?",
+      "ru": "Рассмотрим следующие заголовки ответа:\n\nHTTP/1.1 200 OK\nContent-Encoding: gzip\nTransfer-Encoding: chunked\nX-Custom-Header: value\n\nКакой из этих заголовков НЕ является допустимым в HTTP/2?"
+    },
+    "options": {
+      "en": [
+        "Content-Encoding",
+        "Transfer-Encoding",
+        "X-Custom-Header",
+        "All headers are valid in HTTP/2"
+      ],
+      "ru": [
+        "Content-Encoding",
+        "Transfer-Encoding",
+        "X-Custom-Header",
+        "Все заголовки допустимы в HTTP/2"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "HTTP/2 uses binary framing and does not use `Transfer-Encoding: chunked`. Instead, HTTP/2 handles streaming and multiplexing at the framing layer. `Content-Encoding` is valid in HTTP/2 and is used for compression. Custom headers like `X-Custom-Header` are also valid.",
+      "ru": "HTTP/2 использует двоичное фреймирование и не использует `Transfer-Encoding: chunked`. Вместо этого HTTP/2 обрабатывает потоковую передачу и мультиплексирование на уровне фреймов. `Content-Encoding` действителен в HTTP/2 и используется для сжатия. Пользовательские заголовки, такие как `X-Custom-Header`, также допустимы."
+    }
+  },
+  {
+    "id": "http-rest-quiz-30",
+    "topicId": "http-rest",
+    "question": {
+      "en": "Which HTTP status code should be returned when a client sends a valid request but the server refuses to fulfill it due to insufficient permissions, and the client is authenticated?",
+      "ru": "Какой код состояния HTTP должен быть возвращен, когда клиент отправляет корректный запрос, но сервер отказывается его выполнить из-за недостаточных прав доступа, и клиент аутентифицирован?"
+    },
+    "options": {
+      "en": [
+        "401 Unauthorized",
+        "403 Forbidden",
+        "405 Method Not Allowed",
+        "400 Bad Request"
+      ],
+      "ru": [
+        "401 Unauthorized",
+        "403 Forbidden",
+        "405 Method Not Allowed",
+        "400 Bad Request"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "403 Forbidden is the correct status code when the authenticated user lacks the necessary permissions to access a resource. 401 Unauthorized is for cases where authentication is missing or invalid. 405 Method Not Allowed is for unsupported HTTP methods, and 400 Bad Request is for malformed requests.",
+      "ru": "403 Forbidden — правильный код состояния, когда аутентифицированный пользователь не имеет необходимых прав доступа к ресурсу. 401 Unauthorized используется, когда аутентификация отсутствует или неверна. 405 Method Not Allowed — для неподдерживаемых методов HTTP, а 400 Bad Request — для неправильно сформированных запросов."
     }
   }
 ]
