@@ -1,0 +1,542 @@
+[
+  {
+    "id": "nextjs-quiz-1",
+    "topicId": "nextjs",
+    "question": {
+      "en": "When migrating from Pages Router to App Router, which statement about Server Components is most accurate?",
+      "ru": "При миграции с Pages Router на App Router, какое утверждение о Server Components является наиболее точным?"
+    },
+    "options": {
+      "en": [
+        "Server Components can directly access databases and secrets, and are rendered on the server by default in App Router",
+        "Server Components cannot access databases because all data fetching must happen in API routes",
+        "Server Components run on the client but have access to server-side environment variables",
+        "Server Components in App Router require explicit 'use server' directive at the top of every file"
+      ],
+      "ru": [
+        "Server Components могут прямо получать доступ к базам данных и секретам, и по умолчанию отображаются на сервере в App Router",
+        "Server Components не могут получать доступ к базам данных, так как весь fetching данных должен происходить через API routes",
+        "Server Components запускаются на клиенте, но имеют доступ к переменным окружения на стороне сервера",
+        "Server Components в App Router требуют явной директивы 'use server' в начале каждого файла"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Server Components in App Router are the default and execute only on the server, allowing direct database and secret access without exposing them to clients. The 'use server' directive is only needed for individual functions within Client Components, not for entire Server Component files. Pages Router's API routes are not required when using Server Components.",
+      "ru": "Server Components в App Router являются стандартом и выполняются только на сервере, позволяя прямой доступ к базам данных и секретам без их разоблачения перед клиентами. Директива 'use server' требуется только для отдельных функций внутри Client Components, а не для целых файлов Server Components. API routes из Pages Router не требуются при использовании Server Components."
+    }
+  },
+  {
+    "id": "nextjs-quiz-2",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Consider this App Router code: a page.tsx uses fetch() without options, while another uses fetch() with { cache: 'no-store' }. How does Next.js caching differ between these two?",
+      "ru": "Рассмотрите этот код App Router: page.tsx использует fetch() без опций, другой использует fetch() с { cache: 'no-store' }. Чем отличается кеширование Next.js между этими двумя?"
+    },
+    "options": {
+      "en": [
+        "The first fetch is cached by default for the duration of the request, the second bypasses all caching and revalidates on every request",
+        "The first fetch is not cached at all, the second uses Redis for persistent caching across deployments",
+        "Both fetches behave identically because Next.js ignores cache options in Server Components",
+        "The first fetch is cached indefinitely until deployment, the second is cached for 60 seconds by default"
+      ],
+      "ru": [
+        "Первый fetch кешируется по умолчанию на время запроса, второй обходит весь кеш и переvalidирует на каждый запрос",
+        "Первый fetch вообще не кешируется, второй использует Redis для постоянного кеширования во время развертывания",
+        "Оба fetch ведут себя одинаково, потому что Next.js игнорирует опции кеша в Server Components",
+        "Первый fetch кешируется бесконечно до развертывания, второй кешируется на 60 секунд по умолчанию"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "By default in App Router, fetch() results are cached at the request level (Request Memoization). Using { cache: 'no-store' } opts out of all caching mechanisms, forcing fresh data on every request. This is different from { revalidate: N } which enables ISR (Incremental Static Regeneration). Neither option uses Redis by default.",
+      "ru": "По умолчанию в App Router результаты fetch() кешируются на уровне запроса (Request Memoization). Использование { cache: 'no-store' } отключает все механизмы кеширования, принуждая получать свежие данные на каждый запрос. Это отличается от { revalidate: N }, который включает ISR (Incremental Static Regeneration). Ни одна из опций не использует Redis по умолчанию."
+    }
+  },
+  {
+    "id": "nextjs-quiz-3",
+    "topicId": "nextjs",
+    "question": {
+      "en": "What is the primary advantage of using Image component over standard <img> tags in Next.js, and which rendering strategy does it enable?",
+      "ru": "В чем главное преимущество использования Image компонента вместо стандартных <img> тегов в Next.js, и какую стратегию отображения он включает?"
+    },
+    "options": {
+      "en": [
+        "Image component automatically handles responsive sizing, format optimization, and lazy loading while supporting static site generation",
+        "Image component reduces bundle size but requires manual specification of all image formats and sizes",
+        "Image component only works with Server Components and cannot be used in Client Components at all",
+        "Image component forces all images to be pre-rendered at build time, preventing dynamic image loading"
+      ],
+      "ru": [
+        "Image компонент автоматически обрабатывает адаптивную размеризацию, оптимизацию формата и ленивую загрузку, поддерживая статическую генерацию сайта",
+        "Image компонент уменьшает размер bundle, но требует ручного указания всех форматов и размеров изображений",
+        "Image компонент работает только с Server Components и вообще не может использоваться в Client Components",
+        "Image компонент принуждает все изображения к pre-render на время сборки, предотвращая динамическую загрузку изображений"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The Image component provides automatic image optimization including responsive sizing, modern format conversion (WebP), and lazy loading by default. It works seamlessly with both static and dynamic rendering, and works in both Server and Client Components. Unlike static pre-rendering for all images, it intelligently optimizes at runtime based on viewport.",
+      "ru": "Image компонент обеспечивает автоматическую оптимизацию изображений, включая адаптивную размеризацию, преобразование формата (WebP) и ленивую загрузку по умолчанию. Он работает как со статическим, так и с динамическим отображением, и функционирует в обоих типах компонентов. В отличие от статического pre-rendering всех изображений, он интеллектуально оптимизирует во время выполнения на основе viewport."
+    }
+  },
+  {
+    "id": "nextjs-quiz-4",
+    "topicId": "nextjs",
+    "question": {
+      "en": "In App Router, when should you use middleware versus Server Component logic? Which scenario best describes a proper use case for middleware?",
+      "ru": "В App Router, когда следует использовать middleware вместо логики Server Component? Какой сценарий лучше всего описывает правильный случай использования middleware?"
+    },
+    "options": {
+      "en": [
+        "Middleware is ideal for authentication checks, redirects, and request manipulation that must execute before route handlers, while Server Components handle page-specific logic",
+        "Middleware should contain all business logic to avoid code duplication, while Server Components are only for rendering HTML",
+        "Middleware and Server Components serve identical purposes, so you should use only Server Components to reduce complexity",
+        "Middleware is specifically for styling and theming, while Server Components fetch data from APIs"
+      ],
+      "ru": [
+        "Middleware идеален для проверок аутентификации, редиректов и манипуляции запросами, которые должны выполниться до route handlers, а Server Components обрабатывают логику конкретной страницы",
+        "Middleware должен содержать всю бизнес-логику, чтобы избежать дублирования кода, а Server Components только для отображения HTML",
+        "Middleware и Server Components служат идентичным целям, поэтому следует использовать только Server Components для снижения сложности",
+        "Middleware специально для стилизации и theming, а Server Components получают данные из API"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Middleware executes on every request before routing and is perfect for cross-cutting concerns like authentication, logging, and request transformation. Server Components handle per-page logic and data fetching. Mixing these concerns leads to inefficient code—middleware shouldn't contain page-specific logic, and Server Components shouldn't duplicate auth checks.",
+      "ru": "Middleware выполняется на каждом запросе перед маршрутизацией и идеален для сквозных проблем, таких как аутентификация, логирование и трансформация запроса. Server Components обрабатывают логику и fetching данных для каждой страницы. Смешивание этих проблем приводит к неэффективному коду—middleware не должен содержать логику конкретной страницы, а Server Components не должны дублировать проверки аутентификации."
+    }
+  },
+  {
+    "id": "nextjs-quiz-5",
+    "topicId": "nextjs",
+    "question": {
+      "en": "A route is configured with revalidate: 60 in getStaticProps (Pages Router) versus with revalidate: 60 in route.ts (App Router). What is the key difference in how these work?",
+      "ru": "Маршрут настроен с revalidate: 60 в getStaticProps (Pages Router) в сравнении с revalidate: 60 в route.ts (App Router). В чем ключевое различие в том, как они работают?"
+    },
+    "options": {
+      "en": [
+        "Pages Router uses ISR where the page is pre-generated at build time and revalidated every 60 seconds, while App Router's revalidate in route.ts doesn't support ISR and only caches API responses",
+        "Both use identical ISR mechanisms, but Pages Router requires manual redeployment while App Router auto-deploys",
+        "App Router's revalidate works with dynamic routes without config, while Pages Router requires getStaticPaths for the same functionality",
+        "Pages Router pre-generates all static pages at build, while App Router generates pages on-demand by default and revalidates cached responses every 60 seconds"
+      ],
+      "ru": [
+        "Pages Router использует ISR, где страница pre-generated при сборке и переvalidируется каждые 60 секунд, а App Router's revalidate в route.ts не поддерживает ISR и только кеширует API responses",
+        "Оба используют идентичные механизмы ISR, но Pages Router требует ручного переразвертывания, а App Router авторазвертывается",
+        "App Router's revalidate работает с динамическими маршрутами без конфига, а Pages Router требует getStaticPaths для той же функциональности",
+        "Pages Router pre-generates все статические страницы при сборке, а App Router генерирует страницы on-demand по умолчанию и переvalidирует кешированные responses каждые 60 секунд"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "Pages Router's getStaticProps with revalidate generates pages at build time (ISR). App Router's revalidate in route.ts or layout works with dynamic rendering by default—pages can be generated on-demand and cached responses are revalidated after the specified interval. App Router's approach is more flexible as it doesn't require pre-generation and automatically handles dynamic data without needing getStaticPaths.",
+      "ru": "getStaticProps Pages Router с revalidate генерирует страницы при сборке (ISR). App Router's revalidate в route.ts или layout работает с динамическим отображением по умолчанию—страницы могут быть сгенерированы on-demand и кешированные responses переvalidируются после указанного интервала. Подход App Router более гибкий, так как не требует pre-generation и автоматически обрабатывает динамические данные без необходимости getStaticPaths."
+    }
+  },
+  {
+    "id": "nextjs-quiz-6",
+    "topicId": "nextjs",
+    "question": {
+      "en": "You're migrating a Next.js app from Pages Router to App Router. A route that previously used getStaticProps now needs to be converted. Which approach best leverages App Router's design philosophy?",
+      "ru": "Вы переносите приложение Next.js с Pages Router на App Router. Маршрут, который ранее использовал getStaticProps, теперь нужно преобразовать. Какой подход лучше всего соответствует философии App Router?"
+    },
+    "options": {
+      "en": [
+        "Use export const revalidate = 3600 in a Server Component to enable ISR with the same semantics",
+        "Convert the page to a Client Component and call an API route during useEffect to fetch data",
+        "Use getStaticProps equivalent API in App Router, which works identically to Pages Router",
+        "Move all data fetching logic to middleware and cache responses at the edge"
+      ],
+      "ru": [
+        "Используйте export const revalidate = 3600 в Server Component для включения ISR с той же семантикой",
+        "Преобразуйте страницу в Client Component и вызовите API-маршрут во время useEffect для получения данных",
+        "Используйте эквивалент getStaticProps в App Router, который работает идентично Pages Router",
+        "Переместите всю логику получения данных в middleware и кэшируйте ответы на краю"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "App Router doesn't have getStaticProps—it uses Server Components with fetch and revalidate for ISR. Setting revalidate as a module-level export enables incremental static regeneration directly in the component file. Converting to Client Component with useEffect is less efficient and increases JavaScript bundle. Middleware is meant for request routing, not primary data fetching.",
+      "ru": "App Router не имеет getStaticProps—он использует Server Components с fetch и revalidate для ISR. Установка revalidate как экспорта уровня модуля позволяет использовать инкрементную статическую регенерацию непосредственно в файле компонента. Преобразование в Client Component с useEffect менее эффективно и увеличивает размер пакета JavaScript. Middleware предназначен для маршрутизации запросов, а не для основной выборки данных."
+    }
+  },
+  {
+    "id": "nextjs-quiz-7",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Consider this Server Component code:\n\n\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/data');\n  return <div>{data}</div>;\n}\n\n\nWhat is the default caching behavior of this fetch request in Next.js App Router?",
+      "ru": "Рассмотрите этот код Server Component:\n\n\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/data');\n  return <div>{data}</div>;\n}\n\n\nКаково поведение кэширования этого запроса fetch по умолчанию в Next.js App Router?"
+    },
+    "options": {
+      "en": [
+        "The response is cached indefinitely until the deployment is updated or revalidate is explicitly set",
+        "The response is not cached and a new request is made on every build",
+        "The response is cached for 60 seconds and then automatically refetched",
+        "The response is only cached during development and never cached in production"
+      ],
+      "ru": [
+        "Ответ кэшируется бесконечно, пока развертывание не обновляется или не задается явное revalidate",
+        "Ответ не кэшируется и новый запрос выполняется при каждой сборке",
+        "Ответ кэшируется на 60 секунд, а затем автоматически переполучается",
+        "Ответ кэшируется только во время разработки и никогда не кэшируется в production"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Next.js uses Request Memoization and Data Cache by default—fetch calls are cached indefinitely at build time unless you set revalidate or use cache: 'no-store'. This is the 'Automatic Static Optimization' behavior. Setting revalidate enables ISR, cache: 'no-store' opts out of caching, and cache: 'force-cache' explicitly caches. The caching applies in both dev and production.",
+      "ru": "Next.js по умолчанию использует Request Memoization и Data Cache—вызовы fetch кэшируются бесконечно во время сборки, если вы не установите revalidate или не используете cache: 'no-store'. Это поведение 'Автоматической статической оптимизации'. Установка revalidate включает ISR, cache: 'no-store' отключает кэширование, а cache: 'force-cache' явно кэширует. Кэширование применяется как в dev, так и в production."
+    }
+  },
+  {
+    "id": "nextjs-quiz-8",
+    "topicId": "nextjs",
+    "question": {
+      "en": "You have a Client Component that needs access to environment variables. Which approach is correct in Next.js?",
+      "ru": "У вас есть Client Component, которому нужен доступ к переменным окружения. Какой подход правильный в Next.js?"
+    },
+    "options": {
+      "en": [
+        "Use process.env directly in the Client Component—Next.js automatically inlines all NEXT_PUBLIC_ variables at build time",
+        "Pass environment variables from a Server Component as props to the Client Component",
+        "Store environment variables in a context provider and access them via useContext in any Client Component",
+        "Create an API route that returns environment variables and fetch them inside useEffect"
+      ],
+      "ru": [
+        "Используйте process.env напрямую в Client Component—Next.js автоматически встраивает все NEXT_PUBLIC_ переменные во время сборки",
+        "Передайте переменные окружения из Server Component как пропсы в Client Component",
+        "Сохраняйте переменные окружения в поставщике контекста и получайте доступ через useContext в любом Client Component",
+        "Создайте API-маршрут, который возвращает переменные окружения, и получите их внутри useEffect"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Client Components can only access NEXT_PUBLIC_ prefixed variables, and only if they're inlined at build time. However, the cleanest pattern is to fetch them from a Server Component and pass them as props—this maintains security and flexibility. Using process.env directly works only for NEXT_PUBLIC_ vars. Context and API routes are unnecessary overhead when props are available. Server-to-Client prop passing is the recommended Next.js pattern.",
+      "ru": "Client Components могут получать доступ только к переменным с префиксом NEXT_PUBLIC_, и только если они встроены во время сборки. Однако самый чистый паттерн—получить их из Server Component и передать как пропсы—это обеспечивает безопасность и гибкость. Использование process.env напрямую работает только для NEXT_PUBLIC_ переменных. Context и API-маршруты—это ненужные накладные расходы, когда доступны пропсы. Передача пропсов от сервера к клиенту—это рекомендуемый паттерн Next.js."
+    }
+  },
+  {
+    "id": "nextjs-quiz-9",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Which caching layer is checked FIRST when a request comes into a Next.js application?",
+      "ru": "Какой уровень кэша проверяется ПЕРВЫМ, когда запрос поступает в приложение Next.js?"
+    },
+    "options": {
+      "en": [
+        "Router Cache (browser back/forward)",
+        "Request Memoization Cache (within one server request)",
+        "Data Cache (persistent across requests and deployments)",
+        "Full Route Cache (pre-rendered HTML and JSON)"
+      ],
+      "ru": [
+        "Router Cache (браузер назад/вперед)",
+        "Request Memoization Cache (внутри одного серверного запроса)",
+        "Data Cache (стойкий на протяжении запросов и развертываний)",
+        "Full Route Cache (предварительно отрендеренный HTML и JSON)"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Request Memoization is the first cache checked—it deduplicates identical fetch calls within a single server request lifecycle. This prevents redundant fetches when the same data is requested multiple times during rendering. Router Cache operates on the client side for navigation. Data Cache persists across requests but is checked after memoization. Full Route Cache contains pre-rendered output and is checked later in the chain.",
+      "ru": "Request Memoization—первый проверяемый кэш—он дедуплицирует идентичные вызовы fetch в рамках одного жизненного цикла серверного запроса. Это предотвращает избыточные выборки, когда одни и те же данные запрашиваются несколько раз во время рендеринга. Router Cache работает на стороне клиента для навигации. Data Cache сохраняется во время запросов, но проверяется после мемоизации. Full Route Cache содержит предварительно отрендеренный вывод и проверяется позже в цепочке."
+    }
+  },
+  {
+    "id": "nextjs-quiz-10",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Your Next.js app serves images from a dynamic source (user uploads). What is the primary benefit of using the Next.js Image component over a standard <img> tag?",
+      "ru": "Ваше приложение Next.js подает изображения из динамического источника (загрузки пользователей). Каково основное преимущество использования компонента Next.js Image перед стандартным тегом <img>?"
+    },
+    "options": {
+      "en": [
+        "It automatically detects image dimensions and prevents layout shift",
+        "It applies lazy loading and serves optimized formats (WebP) based on browser support",
+        "It caches images indefinitely in the browser to reduce network requests",
+        "It prevents XSS attacks by sanitizing image URLs before rendering"
+      ],
+      "ru": [
+        "Он автоматически определяет размеры изображения и предотвращает сдвиг макета",
+        "Он применяет ленивую загрузку и подает оптимизированные форматы (WebP) в зависимости от поддержки браузером",
+        "Он кэширует изображения бесконечно в браузере, чтобы сократить сетевые запросы",
+        "Он предотвращает XSS-атаки, дезинфицируя URL-адреса изображений перед рендерингом"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The Image component provides multiple optimizations: lazy loading by default, automatic format conversion (WebP for modern browsers, JPEG fallback), responsive sizing, and async decoding. While it does help with dimensions and layout shift, the core benefit is intelligent delivery and performance optimization. Browser caching is automatic for all image types. Image component doesn't inherently sanitize URLs—that's a developer responsibility, though it works with proper URL validation.",
+      "ru": "Компонент Image обеспечивает множество оптимизаций: ленивую загрузку по умолчанию, автоматическое преобразование формата (WebP для современных браузеров, резервный JPEG), адаптивное изменение размера и асинхронное декодирование. Хотя это помогает с размерами и сдвигом макета, основная выгода—это интеллектуальная доставка и оптимизация производительности. Кэширование браузера автоматическое для всех типов изображений. Компонент Image не наследственно дезинфицирует URL-адреса—это ответственность разработчика, хотя он работает с надлежащей проверкой URL."
+    }
+  },
+  {
+    "id": "nextjs-quiz-11",
+    "topicId": "nextjs",
+    "question": {
+      "en": "When migrating from Pages Router to App Router, which of the following represents the most significant architectural change in how you structure your application?",
+      "ru": "При миграции с Pages Router на App Router, какое из следующих утверждений представляет наиболее значительное архитектурное изменение в структуре вашего приложения?"
+    },
+    "options": {
+      "en": [
+        "App Router uses file-based routing with layout.js/page.js files and supports Server Components by default, while Pages Router uses index.js files and treats all components as Client Components",
+        "App Router requires you to manually manage caching headers, while Pages Router handles all caching automatically",
+        "App Router only supports dynamic routes, while Pages Router only supports static routes",
+        "App Router eliminates the need for API routes entirely and forces all data fetching through the frontend"
+      ],
+      "ru": [
+        "App Router использует файловую маршрутизацию с файлами layout.js/page.js и по умолчанию поддерживает Server Components, в то время как Pages Router использует файлы index.js и рассматривает все компоненты как Client Components",
+        "App Router требует ручного управления заголовками кэширования, в то время как Pages Router автоматически обрабатывает все кэширование",
+        "App Router поддерживает только динамические маршруты, в то время как Pages Router поддерживает только статические маршруты",
+        "App Router устраняет необходимость в API routes и заставляет всю выборку данных проходить через фронтенд"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The App Router's introduction of Server Components by default and layout-based file structure fundamentally changes how you architect Next.js applications. Pages Router treats all components as Client Components by default and uses a different file naming convention. The other options misrepresent how caching, routing types, and API routes work in both routers.",
+      "ru": "Введение App Router с Server Components по умолчанию и структурой на основе макетов кардинально меняет архитектуру приложений Next.js. Pages Router рассматривает все компоненты как Client Components по умолчанию и использует другое соглашение об именах файлов. Остальные варианты неправильно представляют работу кэширования, типов маршрутизации и API routes в обоих маршрутизаторах."
+    }
+  },
+  {
+    "id": "nextjs-quiz-12",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Consider this Next.js 13+ App Router component. What will happen and why?\n\n\nexport default function Page() {\n  const [data, setData] = useState(null);\n  \n  useEffect(() => {\n    fetch('/api/data').then(r => r.json()).then(setData);\n  }, []);\n  \n  return <div>{data}</div>;\n}\n",
+      "ru": "Рассмотрите этот компонент Next.js 13+ App Router. Что произойдет и почему?\n\n\nexport default function Page() {\n  const [data, setData] = useState(null);\n  \n  useEffect(() => {\n    fetch('/api/data').then(r => r.json()).then(setData);\n  }, []);\n  \n  return <div>{data}</div>;\n}\n"
+    },
+    "options": {
+      "en": [
+        "The component will cause an error because you cannot use hooks in App Router page components",
+        "The component will work correctly but is not optimized—it should be converted to a Server Component with direct database access to avoid client-side fetching",
+        "The component will automatically be converted to a Server Component by Next.js, eliminating the need for useState and useEffect",
+        "The component will render perfectly fine with no issues since App Router supports all React hooks"
+      ],
+      "ru": [
+        "Компонент вызовет ошибку, потому что вы не можете использовать хуки в компонентах Page App Router",
+        "Компонент будет работать правильно, но не оптимизирован—его следует преобразовать в Server Component с прямым доступом к базе данных, чтобы избежать выборки на клиентской стороне",
+        "Компонент будет автоматически преобразован Next.js в Server Component, что исключит необходимость в useState и useEffect",
+        "Компонент будет отлично работать без каких-либо проблем, так как App Router поддерживает все React хуки"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The code will work but is suboptimal in App Router's paradigm. By default, page components are Server Components, so the 'use client' directive is missing, which would be required for useState/useEffect to work. Better practice is to use async Server Components with direct data fetching, eliminating the need for client-side state management and waterfall requests.",
+      "ru": "Код будет работать, но не оптимален в парадигме App Router. По умолчанию компоненты page являются Server Components, поэтому отсутствует директива 'use client', которая требуется для работы useState/useEffect. Лучше использовать асинхронные Server Components с прямой выборкой данных, исключив необходимость управления состоянием на клиенте и каскадные запросы."
+    }
+  },
+  {
+    "id": "nextjs-quiz-13",
+    "topicId": "nextjs",
+    "question": {
+      "en": "In Next.js, what is the primary difference between using revalidatePath() and revalidateTag() for incremental static regeneration (ISR)?",
+      "ru": "В Next.js в чем заключается основное различие между использованием revalidatePath() и revalidateTag() для инкрементальной статической регенерации (ISR)?"
+    },
+    "options": {
+      "en": [
+        "revalidatePath() invalidates cache by file system path pattern, while revalidateTag() invalidates based on semantic tags assigned during data fetching, offering more granular control",
+        "revalidatePath() is only for Server Components while revalidateTag() works with both Server and Client Components",
+        "revalidateTag() is deprecated and only revalidatePath() should be used in modern Next.js applications",
+        "revalidatePath() invalidates all routes immediately, while revalidateTag() waits for the next user request before regenerating"
+      ],
+      "ru": [
+        "revalidatePath() инвалидирует кэш по шаблону пути файловой системы, а revalidateTag() инвалидирует на основе семантических тегов, назначенных при выборке данных, предоставляя более детальный контроль",
+        "revalidatePath() работает только с Server Components, в то время как revalidateTag() работает как с Server, так и с Client Components",
+        "revalidateTag() устарел и в современных приложениях Next.js следует использовать только revalidatePath()",
+        "revalidatePath() инвалидирует все маршруты немедленно, в то время как revalidateTag() ожидает следующего запроса пользователя перед регенерацией"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "revalidatePath() works with URL patterns (e.g., '/blog/*') and is useful for path-based invalidation. revalidateTag() uses semantic tags assigned via fetch() options and is more flexible when multiple routes depend on the same data source. This allows you to invalidate only what changed, not entire path patterns.",
+      "ru": "revalidatePath() работает с шаблонами URL (например, '/blog/*') и полезна для инвалидации на основе пути. revalidateTag() использует семантические теги, назначенные через опции fetch(), и является более гибкой, когда несколько маршрутов зависят от одного источника данных. Это позволяет инвалидировать только то, что изменилось, а не целые шаблоны путей."
+    }
+  },
+  {
+    "id": "nextjs-quiz-14",
+    "topicId": "nextjs",
+    "question": {
+      "en": "What does Next.js Image component optimization achieve that <img> tags cannot, and when would you choose one over the other?",
+      "ru": "Какую оптимизацию достигает компонент Next.js Image, которую не может обеспечить тег <img>, и когда вы выбрали бы один над другим?"
+    },
+    "options": {
+      "en": [
+        "Image component provides automatic format conversion, responsive sizing, lazy loading, and blur placeholders out-of-the-box. Use <img> only for SVGs or when you need immediate rendering without optimization",
+        "Image component makes images load faster but requires manual configuration of all optimization features, so <img> is simpler for most cases",
+        "Next.js Image is only useful for very large images; for small icons and UI elements, <img> performs better",
+        "Image component removes the need for CSS media queries entirely, making responsive design impossible with <img> tags"
+      ],
+      "ru": [
+        "Компонент Image обеспечивает автоматическое преобразование формата, адаптивное размерирование, ленивую загрузку и размытые заполнители из коробки. Используйте <img> только для SVG или когда нужна немедленная загрузка без оптимизации",
+        "Компонент Image делает изображения быстрее, но требует ручной конфигурации всех функций оптимизации, поэтому <img> проще для большинства случаев",
+        "Next.js Image полезна только для очень больших изображений; для небольших иконок и элементов UI, <img> работает лучше",
+        "Компонент Image устраняет необходимость в CSS media queries полностью, делая адаптивный дизайн невозможным с тегами <img>"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The Next.js Image component automatically handles WEBP conversion, responsive sizing via srcset, lazy loading by default, and optional blur placeholders. Use <img> when you need simple static images like SVGs or when Next.js Image's optimization overhead isn't necessary. The Image component is generally recommended for photos and marketing visuals to maximize performance.",
+      "ru": "Компонент Next.js Image автоматически обрабатывает преобразование WEBP, адаптивное размерирование через srcset, ленивую загрузку по умолчанию и опциональные размытые заполнители. Используйте <img> для простых статических изображений, таких как SVG, или когда накладные расходы оптимизации Image не требуются. Компонент Image обычно рекомендуется для фотографий и маркетинговых визуализаций для максимальной производительности."
+    }
+  },
+  {
+    "id": "nextjs-quiz-15",
+    "topicId": "nextjs",
+    "question": {
+      "en": "How do Next.js middleware and API route handlers differ in their execution context, and which would you use for request authentication?",
+      "ru": "Чем отличаются контексты выполнения middleware Next.js и обработчиков API route, и что вы выбрали бы для аутентификации запроса?"
+    },
+    "options": {
+      "en": [
+        "Middleware runs at the Edge before the request reaches your app, allowing early request interception and modification (e.g., auth checks, redirects), while API handlers run on your server. Use middleware for auth to protect routes before processing",
+        "Middleware runs only on the server side and has access to the database, while API handlers run at the Edge with limited capabilities",
+        "Both execute identically; middleware is just a newer syntax for doing what API routes always did",
+        "Middleware can only read requests but cannot modify them, while API handlers have full request/response control for authentication"
+      ],
+      "ru": [
+        "Middleware выполняется на Edge перед достижением запросом вашего приложения, позволяя перехватывать и изменять запросы (например, проверки auth, перенаправления), в то время как обработчики API выполняются на вашем сервере. Используйте middleware для аутентификации, чтобы защитить маршруты перед обработкой",
+        "Middleware выполняется только на стороне сервера и имеет доступ к базе данных, в то время как обработчики API выполняются на Edge с ограниченными возможностями",
+        "Оба выполняются одинаково; middleware — это просто более новый синтаксис для того, что всегда делали API routes",
+        "Middleware может только читать запросы, но не может их изменять, в то время как обработчики API имеют полный контроль над запросом/ответом для аутентификации"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Middleware executes at Vercel's Edge (or on your server if self-hosted) before reaching your application code, allowing you to inspect/redirect requests before they hit your routes. This makes it ideal for authentication, CORS, or logging. API handlers run within your application context and are better for business logic. Using middleware for auth provides a performance advantage and cleaner architecture.",
+      "ru": "Middleware выполняется на Edge компании Vercel (или на вашем сервере при самостоятельном размещении) перед достижением кода приложения, позволяя вам проверять/перенаправлять запросы перед попаданием в маршруты. Это делает его идеальным для аутентификации, CORS или логирования. Обработчики API выполняются в контексте приложения и лучше подходят для бизнес-логики. Использование middleware для аутентификации обеспечивает преимущество производительности и более чистую архитектуру."
+    }
+  },
+  {
+    "id": "nextjs-quiz-16",
+    "topicId": "nextjs",
+    "question": {
+      "en": "In Next.js 13+, what is the key architectural difference between the App Router and Pages Router that affects how you structure server-side logic?",
+      "ru": "В Next.js 13+ какая ключевая архитектурная разница между App Router и Pages Router, влияющая на структурирование логики на сервере?"
+    },
+    "options": {
+      "en": [
+        "App Router uses file-based routing with built-in support for Server Components and nested layouts, while Pages Router requires API routes for server logic",
+        "Pages Router is faster because it compiles all routes at build time, whereas App Router compiles routes on-demand",
+        "App Router forces all components to be Server Components by default, eliminating the need for API routes entirely",
+        "Both routers support Server Components equally, but App Router uses a different file naming convention"
+      ],
+      "ru": [
+        "App Router использует маршрутизацию на основе файлов с встроенной поддержкой Server Components и вложенных макетов, в то время как Pages Router требует API маршрутов для серверной логики",
+        "Pages Router работает быстрее, потому что компилирует все маршруты во время сборки, тогда как App Router компилирует маршруты по требованию",
+        "App Router принудительно делает все компоненты Server Components по умолчанию, полностью исключая необходимость в API маршрутах",
+        "Оба маршрутизатора одинаково поддерживают Server Components, но App Router использует другое соглашение об именовании файлов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The App Router fundamentally changes the architecture by making Server Components the default, allowing data fetching directly in components and supporting nested layouts natively. The Pages Router still requires separate API routes for server-side logic. While App Router doesn't eliminate all need for API routes, Server Components significantly reduce that dependency.",
+      "ru": "App Router принципиально изменяет архитектуру, делая Server Components по умолчанию, позволяя извлекать данные непосредственно в компонентах и поддерживая вложенные макеты. Pages Router по-прежнему требует отдельных API маршрутов для серверной логики. Хотя App Router не полностью исключает необходимость в API маршрутах, Server Components значительно снижают эту зависимость."
+    }
+  },
+  {
+    "id": "nextjs-quiz-17",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Consider this code snippet: A Server Component fetches data using fetch() with no cache configuration. In production, how many times will this data be fetched per deployment?",
+      "ru": "Рассмотрите этот код: Server Component извлекает данные с помощью fetch() без конфигурации кеша. В продакшене сколько раз эти данные будут загружены за один деплой?"
+    },
+    "options": {
+      "en": [
+        "Once at build time, then reused for all requests (cached by default)",
+        "On every user request (no caching occurs)",
+        "Once, because Next.js automatically applies 'force-cache' to all fetch calls",
+        "Once at build time with ISR, updating every 60 seconds"
+      ],
+      "ru": [
+        "Один раз во время сборки, затем повторно используется для всех запросов (кешируется по умолчанию)",
+        "При каждом запросе пользователя (кеширование не происходит)",
+        "Один раз, потому что Next.js автоматически применяет 'force-cache' ко всем вызовам fetch",
+        "Один раз во время сборки с ISR, обновляясь каждые 60 секунд"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "By default in Next.js 13+, fetch requests in Server Components are cached with 'force-cache' semantics—the data is fetched once at build time and reused across all requests until the next deployment. To fetch on every request, you must explicitly set { cache: 'no-store' }. ISR requires explicit revalidation configuration.",
+      "ru": "По умолчанию в Next.js 13+ запросы fetch в Server Components кешируются с семантикой 'force-cache' — данные извлекаются один раз во время сборки и повторно используются для всех запросов до следующего деплоя. Для загрузки при каждом запросе необходимо явно установить { cache: 'no-store' }. ISR требует явной конфигурации переvalidации."
+    }
+  },
+  {
+    "id": "nextjs-quiz-18",
+    "topicId": "nextjs",
+    "question": {
+      "en": "Which caching layer in Next.js operates at the Request level and is automatically shared across multiple render passes during a single server request?",
+      "ru": "Какой уровень кеширования в Next.js работает на уровне запроса и автоматически используется для нескольких проходов рендеринга в течение одного серверного запроса?"
+    },
+    "options": {
+      "en": [
+        "Request Memoization via React.cache()",
+        "Full Route Cache stored on the file system",
+        "Data Cache persisted in an external database",
+        "Browser Cache managed by HTTP headers"
+      ],
+      "ru": [
+        "Request Memoization через React.cache()",
+        "Full Route Cache, хранящийся в файловой системе",
+        "Data Cache, сохраненный во внешней базе данных",
+        "Browser Cache, управляемый заголовками HTTP"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "React.cache() creates a memoization layer that deduplicates fetch or computation calls during a single server request. This is distinct from the Full Route Cache (persistent across requests), Data Cache (persistent until revalidation), and Browser Cache (client-side). Request Memoization is the thinnest, most request-specific caching layer.",
+      "ru": "React.cache() создает слой мемоизации, который дедублирует вызовы fetch или вычислений во время одного серверного запроса. Это отличается от Full Route Cache (сохраняется между запросами), Data Cache (сохраняется до переvalidации) и Browser Cache (клиентская сторона). Request Memoization — это самый тонкий, наиболее специфичный для запроса уровень кеширования."
+    }
+  },
+  {
+    "id": "nextjs-quiz-19",
+    "topicId": "nextjs",
+    "question": {
+      "en": "In Next.js, what is the relationship between 'use client' directive and middleware? Can middleware access 'use client' components?",
+      "ru": "В Next.js каковы отношения между директивой 'use client' и middleware? Может ли middleware получить доступ к компонентам 'use client'?"
+    },
+    "options": {
+      "en": [
+        "Middleware runs on the server before routing and cannot directly access 'use client' components; it operates at the request/response level",
+        "'use client' components are available to middleware through context injection at runtime",
+        "Middleware must be marked with 'use client' to handle routes with client components",
+        "'use client' components automatically register themselves with middleware for request interception"
+      ],
+      "ru": [
+        "Middleware работает на сервере перед маршрутизацией и не может напрямую получить доступ к компонентам 'use client'; он работает на уровне запроса/ответа",
+        "Компоненты 'use client' доступны middleware через инъекцию контекста во время выполнения",
+        "Middleware должен быть отмечен 'use client' для обработки маршрутов с клиентскими компонентами",
+        "Компоненты 'use client' автоматически регистрируют себя в middleware для перехвата запросов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Middleware executes on the Edge (server-side) before request routing and works with request/response objects, not component trees. It has no direct knowledge of whether a component is marked 'use client'. Middleware is useful for authentication, redirects, and headers—concerns that exist outside the component layer. Client components are only rendered after routing and data fetching are complete.",
+      "ru": "Middleware выполняется на Edge (серверная сторона) перед маршрутизацией запроса и работает с объектами запроса/ответа, а не с деревьями компонентов. Он не имеет прямого знания о том, отмечен ли компонент 'use client'. Middleware полезен для аутентификации, перенаправлений и заголовков — проблемы, которые существуют вне слоя компонентов. Клиентские компоненты отображаются только после завершения маршрутизации и получения данных."
+    }
+  },
+  {
+    "id": "nextjs-quiz-20",
+    "topicId": "nextjs",
+    "question": {
+      "en": "How does Next.js Image component optimization (next/image) differ from serving a static .webp file in public/ when considering bundle size, runtime overhead, and SEO impact?",
+      "ru": "Чем оптимизация изображений Next.js Image (next/image) отличается от обслуживания статического файла .webp в public/ с точки зрения размера пакета, накладных расходов во время выполнения и влияния на SEO?"
+    },
+    "options": {
+      "en": [
+        "next/image adds small JS overhead but provides lazy loading, responsive sizing, format conversion, and automatic AVIF/WebP serving—static .webp lacks these features and SEO attributes",
+        "Static .webp files are smaller and faster since next/image requires server-side image processing for every request",
+        "next/image only works with Server Components; static .webp files can be used anywhere with no runtime cost",
+        "Both approaches are identical in performance; next/image is purely a convenience wrapper with no optimization benefits"
+      ],
+      "ru": [
+        "next/image добавляет небольшие JS накладные расходы, но обеспечивает ленивую загрузку, адаптивное изменение размера, преобразование формата и автоматическое обслуживание AVIF/WebP — статические .webp файлы не имеют этих функций и атрибутов SEO",
+        "Статические .webp файлы меньше и быстрее, поскольку next/image требует обработки изображений на сервере для каждого запроса",
+        "next/image работает только с Server Components; статические .webp файлы можно использовать везде без затрат времени выполнения",
+        "Оба подхода идентичны по производительности; next/image — это просто удобная оболочка без преимуществ оптимизации"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "next/image provides multiple optimizations: lazy loading (improves LCP), automatic format conversion (AVIF > WebP > JPEG based on browser), responsive srcset generation, and native lazy-loading attributes. Static .webp files offer no lazy loading, format negotiation, or SEO-friendly responsive attributes. The JS overhead is minimal and justified by better perceived performance and Core Web Vitals. Static files may actually load more data since they don't adapt to viewport or browser capabilities.",
+      "ru": "next/image обеспечивает множество оптимизаций: ленивую загрузку (улучшает LCP), автоматическое преобразование формата (AVIF > WebP > JPEG на основе браузера), генерацию адаптивного srcset и встроенные атрибуты ленивой загрузки. Статические .webp файлы не предлагают ленивую загрузку, согласование формата или атрибуты адаптивного ответа, удобные для SEO. JS накладные расходы минимальны и оправданы лучшей предполагаемой производительностью и Core Web Vitals. Статические файлы могут фактически загружать больше данных, поскольку они не адаптируются к viewport или возможностям браузера."
+    }
+  }
+]

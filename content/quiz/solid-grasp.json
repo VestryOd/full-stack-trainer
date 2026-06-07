@@ -1,0 +1,407 @@
+[
+  {
+    "id": "solid-grasp-quiz-1",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A UserRepository class handles database queries, caching logic, and email notification when a user is created. Which SOLID principle is violated and why?",
+      "ru": "Класс UserRepository обрабатывает запросы к базе данных, логику кеширования и отправку email-уведомлений при создании пользователя. Какой принцип SOLID нарушен и почему?"
+    },
+    "options": {
+      "en": [
+        "Single Responsibility Principle — the class has multiple reasons to change (database, cache, email logic)",
+        "Open/Closed Principle — the class is not open for extension without modifying existing code",
+        "Liskov Substitution Principle — the class cannot be substituted for its parent interface",
+        "Interface Segregation Principle — clients are forced to depend on email methods they don't use"
+      ],
+      "ru": [
+        "Принцип единственной ответственности — класс имеет несколько причин для изменения (база данных, кеш, логика email)",
+        "Принцип открытости/закрытости — класс не открыт для расширения без изменения существующего кода",
+        "Принцип подстановки Лисков — класс не может быть подставлен вместо своего интерфейса-родителя",
+        "Принцип разделения интерфейса — клиенты вынуждены зависеть от методов email, которые они не используют"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The class violates SRP because it has three distinct responsibilities: persistence, caching, and notifications. Each could change independently for different reasons. The correct fix is to extract email logic into a separate UserNotificationService and caching into a dedicated cache layer.",
+      "ru": "Класс нарушает SRP, так как имеет три различные обязанности: сохранение, кеширование и уведомления. Каждая может изменяться независимо по разным причинам. Правильное решение — извлечь логику email в отдельный UserNotificationService и кеширование в отдельный слой кеша."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-2",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "class Square extends Rectangle { setWidth(w) { this.width = this.height = w; } setHeight(h) { this.height = this.width = h; } } — What principle does this violate and what's the core issue?",
+      "ru": "class Square extends Rectangle { setWidth(w) { this.width = this.height = w; } setHeight(h) { this.height = this.width = h; } } — Какой принцип это нарушает и в чем суть проблемы?"
+    },
+    "options": {
+      "en": [
+        "Liskov Substitution Principle — Square violates Rectangle's contract; code expecting Rectangle behavior breaks when substituting Square",
+        "Open/Closed Principle — Rectangle is not closed for modification when Square extends it",
+        "Dependency Inversion Principle — Square directly depends on Rectangle's concrete implementation",
+        "Single Responsibility Principle — the Square class mixes geometry logic with setter logic"
+      ],
+      "ru": [
+        "Принцип подстановки Лисков — Square нарушает контракт Rectangle; код, ожидающий поведения Rectangle, ломается при подстановке Square",
+        "Принцип открытости/закрытости — Rectangle не закрыт для модификации, когда Square его расширяет",
+        "Принцип инверсии зависимостей — Square напрямую зависит от конкретной реализации Rectangle",
+        "Принцип единственной ответственности — класс Square смешивает логику геометрии с логикой сеттеров"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is a classic LSP violation. Code expecting Rectangle will set width and height independently, but Square forcibly keeps them equal, breaking the Rectangle contract. A client doing rect.setWidth(5); rect.setHeight(10); expects width=5, height=10, not both=10. The fix is composition: Square should contain a side property, not inherit from Rectangle.",
+      "ru": "Это классическое нарушение LSP. Код, ожидающий Rectangle, установит ширину и высоту независимо, но Square принудительно держит их равными, нарушая контракт Rectangle. Клиент, делающий rect.setWidth(5); rect.setHeight(10), ожидает width=5, height=10, а не both=10. Решение — композиция: Square должен содержать свойство side, а не наследоваться от Rectangle."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-3",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A PaymentProcessor interface requires methods: process(amount), refund(amount), getBalance(), validateCard(card), sendReceipt(email). Which principle guides splitting this interface and why?",
+      "ru": "Интерфейс PaymentProcessor требует методы: process(amount), refund(amount), getBalance(), validateCard(card), sendReceipt(email). Какой принцип направляет разделение этого интерфейса и почему?"
+    },
+    "options": {
+      "en": [
+        "Interface Segregation Principle — clients should not be forced to depend on methods they don't use; split into PaymentProcessor, CardValidator, and ReceiptSender",
+        "Single Responsibility Principle — the interface is responsible for too many different concerns",
+        "Dependency Inversion Principle — implementations should depend on abstractions, not the other way around",
+        "Open/Closed Principle — the interface should be open for extension without modifying existing client code"
+      ],
+      "ru": [
+        "Принцип разделения интерфейса — клиенты не должны зависеть от методов, которые они не используют; разделить на PaymentProcessor, CardValidator и ReceiptSender",
+        "Принцип единственной ответственности — интерфейс отвечает за слишком много различных задач",
+        "Принцип инверсии зависимостей — реализации должны зависеть от абстракций, а не наоборот",
+        "Принцип открытости/закрытости — интерфейс должен быть открыт для расширения без изменения существующего клиентского кода"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "ISP states that clients should not depend on interfaces they don't use. A simple payment gateway might only need PaymentProcessor, but is forced to implement validateCard and sendReceipt. Splitting into smaller, role-based interfaces (PaymentProcessor, CardValidator, ReceiptService) lets each client depend only on what it needs.",
+      "ru": "ISP гласит, что клиенты не должны зависеть от интерфейсов, которые они не используют. Простой платежный шлюз может нуждаться только в PaymentProcessor, но вынужден реализовывать validateCard и sendReceipt. Разделение на меньшие, роль-ориентированные интерфейсы позволяет каждому клиенту зависеть только от того, что ему нужно."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-4",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "class ReportGenerator { constructor(logger) { this.logger = logger; } generate(data) { this.logger.log('Generating...'); /* logic */ } } — Which GRASP pattern is applied and what advantage does it provide?",
+      "ru": "class ReportGenerator { constructor(logger) { this.logger = logger; } generate(data) { this.logger.log('Generating...'); /* логика */ } } — Какой паттерн GRASP применяется и какое преимущество он дает?"
+    },
+    "options": {
+      "en": [
+        "Dependency Injection via constructor — decouples ReportGenerator from concrete logger implementation, enabling easy testing and swapping implementations",
+        "Factory pattern — the constructor creates a logger instance for the class to use",
+        "Adapter pattern — ReportGenerator adapts a generic logger to its specific logging needs",
+        "Observer pattern — ReportGenerator observes changes in the logger to trigger generation"
+      ],
+      "ru": [
+        "Внедрение зависимостей через конструктор — разъединяет ReportGenerator от конкретной реализации логгера, позволяя легко тестировать и менять реализации",
+        "Паттерн Factory — конструктор создает экземпляр логгера для использования классом",
+        "Паттерн Adapter — ReportGenerator адаптирует общий логгер к своим специфическим потребностям",
+        "Паттерн Observer — ReportGenerator наблюдает за изменениями в логгере для запуска генерации"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is Dependency Injection (a key GRASP pattern): the logger is injected into the constructor rather than created inside. This allows mocking different logger implementations in tests, changing the logger at runtime, and loosely coupling ReportGenerator from Logger. It also supports the Dependency Inversion Principle.",
+      "ru": "Это внедрение зависимостей (ключевой паттерн GRASP): логгер внедряется в конструктор вместо того, чтобы создаваться внутри. Это позволяет мокировать разные реализации логгера в тестах, менять логгер во время выполнения и слабо связывать ReportGenerator с Logger. Это также поддерживает принцип инверсии зависимостей."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-5",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A system needs different encryption algorithms (AES, RSA, DES). Instead of using 'new AES()' directly throughout the code, a factory method returns the right encryptor based on config. Which principle is this approach primarily following?",
+      "ru": "Система требует различных алгоритмов шифрования (AES, RSA, DES). Вместо использования 'new AES()' во всем коде фабричный метод возвращает правильный шифратор на основе конфигурации. Какой принцип в первую очередь следует этот подход?"
+    },
+    "options": {
+      "en": [
+        "Dependency Inversion Principle — high-level code depends on abstractions (Encryptor interface), not concrete implementations; the factory creates them",
+        "Open/Closed Principle — the system is open for adding new encryption algorithms without modifying existing client code",
+        "Single Responsibility Principle — the factory handles only object creation, not encryption logic",
+        "Liskov Substitution Principle — all encryption implementations are substitutable for each other through the Encryptor interface"
+      ],
+      "ru": [
+        "Принцип инверсии зависимостей — высокоуровневый код зависит от абстракций (интерфейс Encryptor), а не конкретных реализаций; фабрика их создает",
+        "Принцип открытости/закрытости — система открыта для добавления новых алгоритмов шифрования без изменения существующего клиентского кода",
+        "Принцип единственной ответственности — фабрика обрабатывает только создание объектов, а не логику шифрования",
+        "Принцип подстановки Лисков — все реализации шифрования взаимозаменяемы через интерфейс Encryptor"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "While all principles apply, OCP is the primary benefit here. Adding a new ChaCha20 algorithm means creating a new class and registering it in the factory—no changes to existing code. The factory pattern is a classic OCP enabler. DIP is also relevant (depending on Encryptor abstraction), but OCP captures why we avoid hardcoded 'new' statements throughout the codebase.",
+      "ru": "Хотя все принципы применяются, OCP — основная выгода здесь. Добавление нового алгоритма ChaCha20 означает создание нового класса и регистрацию его в фабрике — без изме��ений существующего кода. Паттерн фабрики — классический способ включить OCP. DIP также релевантен (зависимость от абстракции Encryptor), но OCP объясняет, почему мы избегаем захардкодированных 'new' утверждений по всему кодовой базе."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-6",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A User class handles authentication, database persistence, email notifications, and logging. Which SOLID principle is being violated, and what is the primary issue?",
+      "ru": "Класс User обрабатывает аутентификацию, сохранение в базе данных, отправку email-уведомлений и логирование. Какой принцип SOLID нарушается, и в чём заключается основная проблема?"
+    },
+    "options": {
+      "en": [
+        "Single Responsibility Principle — the class has multiple reasons to change",
+        "Open/Closed Principle — the class is not open for extension",
+        "Liskov Substitution Principle — the class cannot be substituted in all contexts",
+        "Interface Segregation Principle — the class implements too many methods"
+      ],
+      "ru": [
+        "Single Responsibility Principle — класс имеет несколько причин для изменения",
+        "Open/Closed Principle — класс не открыт для расширения",
+        "Liskov Substitution Principle — класс не может быть заменён во всех контекстах",
+        "Interface Segregation Principle — класс реализует слишком много методов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "SRP states that a class should have only one reason to change. This User class violates SRP because it has four distinct responsibilities (authentication, persistence, notifications, logging), each could trigger independent changes. OCP, LSP, and ISP violations are secondary concerns here; the fundamental issue is responsibility fragmentation.",
+      "ru": "SRP гласит, что класс должен иметь только одну причину для изменения. Этот класс User нарушает SRP, так как имеет четыре отдельные ответственности, каждая из которых может привести к независимым изменениям. Нарушения OCP, LSP и ISP — это вторичные проблемы; основная проблема — в фрагментации ответственности."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-7",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "Consider a PaymentProcessor interface that requires implementing processCard(), processPayPal(), and processApplePay(). A CryptoCurrencyPayment class must implement all three methods but only uses processCard(). What principle does this violate and why?",
+      "ru": "Интерфейс PaymentProcessor требует реализации processCard(), processPayPal() и processApplePay(). Класс CryptoCurrencyPayment должен реализовать все три метода, но использует только processCard(). Какой принцип нарушается и почему?"
+    },
+    "options": {
+      "en": [
+        "Interface Segregation Principle — clients are forced to depend on methods they don't use",
+        "Liskov Substitution Principle — the subclass breaks the contract of the supertype",
+        "Dependency Inversion Principle — the class depends on concrete implementations",
+        "Single Responsibility Principle — the interface has too many responsibilities"
+      ],
+      "ru": [
+        "Interface Segregation Principle — клиентов заставляют зависеть от методов, которые они не используют",
+        "Liskov Substitution Principle — подкласс нарушает контракт суперкласса",
+        "Dependency Inversion Principle — класс зависит от конкретных реализаций",
+        "Single Responsibility Principle — интерфейс имеет слишком много ответственности"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "ISP states that clients should not be forced to depend on interfaces they don't use. CryptoCurrencyPayment is forced to implement unused methods. The solution is to split the interface into smaller, client-specific ones (e.g., CardPaymentProcessor, WalletPaymentProcessor). This is not an LSP, DIP, or SRP violation in the traditional sense.",
+      "ru": "ISP гласит, что клиентов не следует заставлять зависеть от интерфейсов, которые они не используют. CryptoCurrencyPayment вынужден реализовать неиспользуемые методы. Решение — разделить интерфейс на более мелкие, ориентированные на клиентов интерфейсы. Это не нарушение LSP, DIP или SRP в традиционном смысле."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-8",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A ReportGenerator class is hardcoded to write output to a file using FileWriter. To support exporting to email, PDF, and cloud storage, you must modify ReportGenerator every time. Which principle should guide the refactor?",
+      "ru": "Класс ReportGenerator жёстко закодирован для записи вывода в файл с использованием FileWriter. Для поддержки экспорта в email, PDF и облачное хранилище нужно изменять ReportGenerator каждый раз. Какой принцип должен направлять рефакторинг?"
+    },
+    "options": {
+      "en": [
+        "Open/Closed Principle — design for extension without modifying existing code",
+        "Dependency Inversion Principle — depend on abstractions, not concrete implementations",
+        "Liskov Substitution Principle — ensure subtypes are substitutable",
+        "Single Responsibility Principle — separate concerns into different classes"
+      ],
+      "ru": [
+        "Open/Closed Principle — дизайн для расширения без изменения существующего кода",
+        "Dependency Inversion Principle — зависимость от абстракций, а не конкретных реализаций",
+        "Liskov Substitution Principle — обеспечить подстановляемость подтипов",
+        "Single Responsibility Principle — разделить ответственность на разные классы"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "DIP states that classes should depend on abstractions (interfaces/abstract classes), not concrete implementations. By introducing an OutputFormatter interface and having ReportGenerator depend on it, you allow new output formats to be added without changing ReportGenerator. While OCP is also relevant, DIP is the root principle that enables OCP in this scenario.",
+      "ru": "DIP гласит, что классы должны зависеть от абстракций, а не конкретных реализаций. Введя интерфейс OutputFormatter и заставив ReportGenerator на него ориентироваться, вы позволяете добавлять новые форматы вывода без изменения ReportGenerator. Хотя OCP также релевантен, DIP — это корневой принцип, который позволяет OCP работать в этом сценарии."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-9",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A Square class inherits from Rectangle. Square overrides setWidth() and setHeight() to set both dimensions equally. Code using Rectangle expects setWidth(5); setHeight(10) to produce different dimensions. Which principle is violated?\n\nRectangle myShape = new Square();\nmyShape.setWidth(5);\nmyShape.setHeight(10);\n// Expected: width=5, height=10; Actual: width=10, height=10",
+      "ru": "Класс Square наследует Rectangle. Square переопределяет setWidth() и setHeight() для установки обоих измерений одинаково. Код, использующий Rectangle, ожидает, что setWidth(5); setHeight(10) создаст разные размеры. Какой принцип нарушается?\n\nRectangle myShape = new Square();\nmyShape.setWidth(5);\nmyShape.setHeight(10);\n// Ожидается: width=5, height=10; На самом деле: width=10, height=10"
+    },
+    "options": {
+      "en": [
+        "Liskov Substitution Principle — derived class breaks the contract of the base class",
+        "Open/Closed Principle — the base class is not closed for modification",
+        "Single Responsibility Principle — Rectangle and Square have overlapping concerns",
+        "Dependency Inversion Principle — the code depends on concrete classes"
+      ],
+      "ru": [
+        "Liskov Substitution Principle — производный класс нарушает контракт базового класса",
+        "Open/Closed Principle — базовый класс не закрыт для изменения",
+        "Single Responsibility Principle — Rectangle и Square имеют перекрывающиеся ответственности",
+        "Dependency Inversion Principle — код зависит от конкретных классов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "LSP states that objects of a subclass should be substitutable for objects of the superclass without breaking the client's expectations. Square violates this because clients expect Rectangle behavior (independent width and height), but Square changes the semantics. The fix is to use composition or refactor the hierarchy, not inheritance.",
+      "ru": "LSP гласит, что объекты подкласса должны быть взаимозаменяемы с объектами суперкласса без нарушения ожиданий клиента. Square нарушает это, потому что клиенты ожидают поведение Rectangle (независимая ширина и высота), но Square меняет семантику. Решение — использовать композицию или переструктурировать иерархию, а не наследование."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-10",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "In GRASP, the Creator pattern suggests assigning creation responsibility to a class that has all the information needed to instantiate an object. A UserRepository is responsible for managing User persistence. Who should be responsible for creating User instances: UserRepository or a dedicated UserFactory?",
+      "ru": "В GRASP паттерн Creator предлагает назначить ответственность создания классу, который имеет всю информацию, необходимую для инстанцирования объекта. UserRepository отвечает за управление сохранением User. Кто должен быть ответственен за создание экземпляров User: UserRepository или специализированный UserFactory?"
+    },
+    "options": {
+      "en": [
+        "UserRepository, because it has all aggregated User data and knows the creation rules",
+        "UserFactory, because it centralizes creation logic and keeps UserRepository focused on persistence",
+        "Both equally, with UserFactory as a helper to UserRepository",
+        "Neither; use a service locator to instantiate objects dynamically"
+      ],
+      "ru": [
+        "UserRepository, потому что он имеет все агрегированные данные User и знает правила создания",
+        "UserFactory, потому что он централизует логику создания и держит UserRepository сосредоточенным на сохранении",
+        "Оба в равной степени, с UserFactory как помощником для UserRepository",
+        "Ни один; использовать service locator для динамического инстанцирования объектов"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "GRASP's Creator pattern assigns object creation to the class best suited for it, considering information and cohesion. While UserRepository *aggregates* User data, a dedicated UserFactory better respects SRP by separating creation complexity from persistence concerns. This keeps repositories lean and creation logic reusable. A factory is more maintainable and testable than embedding creation in the repository.",
+      "ru": "Creator в GRASP назначает создание объекта классу, который лучше всего подходит, учитывая информацию и связность. Хотя UserRepository *агрегирует* данные User, специализированный UserFactory лучше соблюдает SRP, отделяя сложность создания от проблем сохранения. Это держит репозитории стройными и логику создания переиспользуемой. Фабрика более поддерживаема и тестируема, чем встроенное создание в репозитории."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-11",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A User class handles authentication, database persistence, email notifications, and role-based access control. Which SOLID principle is violated, and what is the primary consequence?",
+      "ru": "Класс User обрабатывает аутентификацию, сохранение в базу данных, отправку email-уведомлений и управление доступом на основе ролей. Какой принцип SOLID нарушен и каково основное последствие?"
+    },
+    "options": {
+      "en": [
+        "Single Responsibility Principle — the class has multiple reasons to change, making it harder to maintain and test",
+        "Open/Closed Principle — the class is not open for extension but closed for modification",
+        "Interface Segregation Principle — the class implements too many interfaces at once",
+        "Dependency Inversion Principle — the class depends directly on concrete implementations instead of abstractions"
+      ],
+      "ru": [
+        "Принцип единственной ответственности — класс имеет несколько причин для изменения, что затрудняет поддержку и тестирование",
+        "Принцип открытости/закрытости — класс не открыт для расширения, но закрыт для модификации",
+        "Принцип разделения интерфейса — класс реализует слишком много интерфейсов одновременно",
+        "Принцип инверсии зависимостей — класс зависит напрямую от конкретных реализаций вместо абстракций"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The User class violates SRP because it has multiple reasons to change: authentication logic updates, database schema changes, email service changes, or permission rules changes. This leads to tight coupling and difficult unit testing. The other principles relate to extensibility, interface design, and dependency management, but the root issue is responsibility.",
+      "ru": "Класс User нарушает SRP, потому что имеет несколько причин для изменения: обновления логики аутентификации, изменения схемы базы данных, смены email-сервиса или правил разрешений. Это приводит к связанности и сложности при unit-тестировании. Остальные принципы касаются расширяемости, дизайна интерфейсов и управления зависимостями, но корневая проблема в ответственности."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-12",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "Consider a payment processing system: abstract class Payment has method processPayment(). CreditCardPayment, PayPalPayment, and BitcoinPayment extend Payment. BitcoinPayment.processPayment() throws NotSupportedInCurrentCountryException, while other subclasses succeed. Which principle is violated?",
+      "ru": "Рассмотрим систему обработки платежей: абстрактный класс Payment имеет метод processPayment(). CreditCardPayment, PayPalPayment и BitcoinPayment наследуют Payment. BitcoinPayment.processPayment() выбрасывает NotSupportedInCurrentCountryException, в то время как другие подклассы успешны. Какой принцип нарушен?"
+    },
+    "options": {
+      "en": [
+        "Open/Closed Principle — new payment types require modifying the base class",
+        "Liskov Substitution Principle — subclasses cannot be substituted for the parent without violating contract expectations",
+        "Interface Segregation Principle — the Payment interface is too broad for all payment types",
+        "Dependency Inversion Principle — Payment depends on concrete payment implementations"
+      ],
+      "ru": [
+        "Принцип открытости/закрытости — новые типы платежей требуют модификации базового класса",
+        "Принцип подстановки Лисков — подклассы не могут быть заменены на родительский класс без нарушения ожиданий контракта",
+        "Принцип разделения интерфейса — интерфейс Payment слишком широк для всех типов платежей",
+        "Принцип инверсии зависимостей — Payment зависит от конкретных реализаций платежей"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "LSP violation occurs because BitcoinPayment breaks the contract established by the Payment abstract class—callers expect processPayment() to succeed, not throw exceptions based on implementation details. Subclasses must be substitutable without breaking client assumptions. The solution is to segregate payment types that may fail into a separate interface or check preconditions.",
+      "ru": "Нарушение LSP происходит потому, что BitcoinPayment нарушает контракт, установленный абстрактным классом Payment — вызывающий код ожидает успешного выполнения processPayment(), а не выброса исключений в зависимости от реализации. Подклассы должны быть заменяемы без нарушения допущений клиента. Решение — отделить типы платежей, которые могут быть неудачными, в отдельный интерфейс."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-13",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "An OrderProcessor class depends on EmailService, SMSService, and PushNotificationService directly (via new keyword). What design pattern from GRASP would help decouple OrderProcessor from concrete notification services?",
+      "ru": "Класс OrderProcessor зависит напрямую от EmailService, SMSService и PushNotificationService (через ключевое слово new). Какой паттерн из GRASP поможет разделить OrderProcessor и конкретные сервисы уведомлений?"
+    },
+    "options": {
+      "en": [
+        "Creator — assign creation responsibility to a factory class dedicated to notification services",
+        "Indirection — introduce a NotificationService abstraction between OrderProcessor and concrete implementations",
+        "Expert — move notification logic to a service class that knows how to handle all notification types",
+        "Facade — wrap all notification services behind a single simplified interface"
+      ],
+      "ru": [
+        "Creator — передайте ответственность за создание классу-фабрике, посвященному сервисам уведомлений",
+        "Indirection — введите абстракцию NotificationService между OrderProcessor и конкретными реализациями",
+        "Expert — переместите логику уведомлений в класс сервиса, который знает, как обрабатывать все типы уведомлений",
+        "Facade — оберните все сервисы уведомлений в одиночный упрощенный интерфейс"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Indirection (GRASP pattern) is the most direct solution: introduce an abstract NotificationService interface and inject it into OrderProcessor. This decouples the processor from concrete implementations and aligns with Dependency Inversion (SOLID). Creator handles object instantiation, Expert assigns responsibilities by knowledge, and Facade simplifies complex subsystems—all relevant but Indirection most directly addresses the coupling issue.",
+      "ru": "Indirection (паттерн GRASP) — это наиболее прямое решение: введите абстрактный интерфейс NotificationService и инъектируйте его в OrderProcessor. Это разделяет процессор и конкретные реализации и соответствует инверсии зависимостей (SOLID). Creator обрабатывает создание объектов, Expert назначает ответственность по знаниям, Facade упрощает сложные подсистемы — все релевантно, но Indirection наиболее прямо решает проблему связанности."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-14",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "A ReportGenerator class needs to support PDF, Excel, and Word export formats. Currently, every new format requires modifying ReportGenerator.export() with new if-else branches. Which principle should guide the refactoring?",
+      "ru": "Класс ReportGenerator должен поддерживать экспорт в форматы PDF, Excel и Word. Сейчас каждый новый формат требует модификации ReportGenerator.export() с новыми if-else ветвями. Какой принцип должен руководить рефакторингом?"
+    },
+    "options": {
+      "en": [
+        "Single Responsibility Principle — each format handler should be a separate class",
+        "Open/Closed Principle — the module should be open for extension (new formats) without modification of ReportGenerator",
+        "Interface Segregation Principle — create separate interfaces for each export format type",
+        "Liskov Substitution Principle — ensure all export formats behave identically when substituted"
+      ],
+      "ru": [
+        "Принцип единственной ответственности — каждый обработчик формата должен быть отдельным классом",
+        "Принцип открытости/закрытости — модуль должен быть открыт для расширения (новых форматов) без модификации ReportGenerator",
+        "Принцип разделения интерфейса — создайте отдельные интерфейсы для каждого типа экспорта",
+        "Принцип подстановки Лисков — убедитесь, что все форматы экспорта ведут себя идентично при замене"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "OCP directly addresses this problem: the ReportGenerator class should be closed for modification but open for extension. Introduce an ExportFormat interface and strategy pattern where each format (PDF, Excel, Word) is a separate class implementing ExportFormat. New formats can be added without touching ReportGenerator. SRP is also relevant (each format as separate class), but OCP is the guiding principle for this specific refactoring need.",
+      "ru": "OCP напрямую решает эту проблему: класс ReportGenerator должен быть закрыт для модификации, но открыт для расширения. Введите интерфейс ExportFormat и паттерн Strategy, где каждый формат (PDF, Excel, Word) — это отдельный класс, реализующий ExportFormat. Новые форматы можно добавлять без изменения ReportGenerator. SRP также релевантен (каждый формат как отдельный класс), но OCP — это направляющий принцип для этой конкретной потребности рефакторинга."
+    }
+  },
+  {
+    "id": "solid-grasp-quiz-15",
+    "topicId": "solid-grasp",
+    "question": {
+      "en": "An API client implements interfaces Worker, Serializable, Cacheable, and Loggable. Most callers only need Worker methods, but are forced to understand (and potentially mock) all four interfaces. Which principle should be applied to improve the design?",
+      "ru": "API-клиент реализует интерфейсы Worker, Serializable, Cacheable и Loggable. Большинству вызывающего кода нужны только методы Worker, но вынужден понимать (и потенциально мокировать) все четыре интерфейса. Какой принцип следует применить для улучшения дизайна?"
+    },
+    "options": {
+      "en": [
+        "Single Responsibility Principle — the class should focus only on one core responsibility",
+        "Dependency Inversion Principle — inject abstract interfaces instead of concrete dependencies",
+        "Interface Segregation Principle — clients should not be forced to depend on interfaces they don't use",
+        "Open/Closed Principle — the class should be extended via composition rather than inheritance"
+      ],
+      "ru": [
+        "Принцип единственной ответственности — класс должен фокусироваться только на одной основной ответственности",
+        "Принцип инверсии зависимостей — инъектируйте абстрактные интерфейсы вместо конкретных зависимостей",
+        "Принцип разделения интерфейса — клиенты не должны быть вынуждены зависеть от интерфейсов, которые они не используют",
+        "Принцип открытости/закрытости — класс должен расширяться через композицию, а не наследование"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "ISP states that clients should not be forced to depend on interfaces they don't use. The APIClient should expose only the Worker interface to most callers; Serializable, Cacheable, and Loggable can be separate, smaller interfaces for those who need them. This reduces coupling and makes testing easier. SRP and DIP address class structure and dependency direction, but ISP specifically solves the 'fat interface' problem.",
+      "ru": "ISP гласит, что клиенты не должны быть вынуждены зависеть от интерфейсов, которые они не используют. APIClient должен предоставлять только интерфейс Worker большинству вызывающего кода; Serializable, Cacheable и Loggable могут быть отдельными, меньшими интерфейсами для тех, кто их нужен. Это снижает связанность и упрощает тестирование. SRP и DIP решают структуру класса и направление зависимостей, но ISP специфически решает проблему 'толстого интерфейса'."
+    }
+  }
+]

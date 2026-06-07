@@ -1,1 +1,812 @@
-[]
+[
+  {
+    "id": "javascript-quiz-1",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged to the console? const obj = { value: 42, getValue: function() { return this.value; } }; const fn = obj.getValue; console.log(fn());",
+      "ru": "Что будет выведено в консоль? const obj = { value: 42, getValue: function() { return this.value; } }; const fn = obj.getValue; console.log(fn());"
+    },
+    "options": {
+      "en": [
+        "undefined",
+        "42",
+        "null",
+        "Error: this is not defined"
+      ],
+      "ru": [
+        "undefined",
+        "42",
+        "null",
+        "Error: this is not defined"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "When fn is called without a receiver object context, 'this' is bound to the global object (or undefined in strict mode), not to obj. Since the global object doesn't have a 'value' property, it returns undefined. This demonstrates the difference between method invocation and function invocation.",
+      "ru": "Когда fn вызывается без контекста объекта, 'this' привязывается к глобальному объект�� (или undefined в строгом режиме), а не к obj. Поскольку у глобального объекта нет свойства 'value', возвращается undefined. Это демонстрирует разницу между вызовом метода и вызовом функции."
+    }
+  },
+  {
+    "id": "javascript-quiz-2",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be the output? for (var i = 0; i < 3; i++) { setTimeout(() => console.log(i), 0); }",
+      "ru": "Какой будет результат? for (var i = 0; i < 3; i++) { setTimeout(() => console.log(i), 0); }"
+    },
+    "options": {
+      "en": [
+        "0, 1, 2",
+        "3, 3, 3",
+        "undefined, undefined, undefined",
+        "The code will throw an error"
+      ],
+      "ru": [
+        "0, 1, 2",
+        "3, 3, 3",
+        "undefined, undefined, undefined",
+        "Код выдаст ошибку"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The var keyword has function scope, not block scope. By the time the setTimeout callbacks execute (after the loop completes), i has already been incremented to 3. All three callbacks reference the same i variable. Using let instead of var would produce 0, 1, 2 due to block scoping.",
+      "ru": "Ключевое слово var имеет область видимости функции, а не блока. К моменту выполнения обратных вызовов setTimeout (после завершения цикла) i уже увеличена до 3. Все три обратных вызова ссылаются на одну переменную i. Использование let вместо var дало бы 0, 1, 2 благодаря блочной области видимости."
+    }
+  },
+  {
+    "id": "javascript-quiz-3",
+    "topicId": "javascript",
+    "question": {
+      "en": "What does typeof null return, and why is this behavior considered a quirk in JavaScript?",
+      "ru": "Что возвращает typeof null, и почему это поведение считается особенностью JavaScript?"
+    },
+    "options": {
+      "en": [
+        "'null' — because null is a primitive type",
+        "'object' — due to a bug in the original JavaScript specification that was never fixed for backwards compatibility",
+        "'undefined' — because null represents the absence of a value",
+        "'none' — null is not a valid type"
+      ],
+      "ru": [
+        "'null' — потому что null является примитивным типом",
+        "'object' — из-за ошибки в исходной спецификации JavaScript, ко��орая никогда не была исправлена для обратной совместимости",
+        "'undefined' — потому что null представляет отсутствие значения",
+        "'none' — null не является допустимым типом"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "typeof null returns 'object', which is a historical bug in JavaScript. In the original implementation, the type was determined by the tag in the value's memory, and null was mistakenly tagged as an object. This was never corrected to maintain backwards compatibility with existing code.",
+      "ru": "typeof null возвращает 'object', что является исторической ошибкой в JavaScript. В исходной реализации тип определялся по тегу в памяти значения, и null ошибочно был помечен как объект. Это никогда не было исправлено для сохранения обратной совместимости с существующим кодом."
+    }
+  },
+  {
+    "id": "javascript-quiz-4",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will this code output? function outer() { let x = 10; function inner() { console.log(x); } return inner; } const fn = outer(); fn();",
+      "ru": "Что выведет этот код? function outer() { let x = 10; function inner() { console.log(x); } return inner; } const fn = outer(); fn();"
+    },
+    "options": {
+      "en": [
+        "10",
+        "undefined",
+        "ReferenceError: x is not defined",
+        "null"
+      ],
+      "ru": [
+        "10",
+        "undefined",
+        "ReferenceError: x is not defined",
+        "null"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This demonstrates a closure. The inner function retains access to the variable x from its parent scope even after outer() has finished executing. The closure captures the lexical environment, allowing inner to access x and log 10. Closures are one of JavaScript's most powerful features.",
+      "ru": "Это демонстрирует замыкание. Функция inner сохраняет доступ к переменной x из области видимости родителя даже после завершения выполнения outer(). Замыкание захватывает лексическое окружение, позволяя inner получить доступ к x и вывести 10. Замыкания — одна из самых мощных функций JavaScript."
+    }
+  },
+  {
+    "id": "javascript-quiz-5",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the difference between hoisting behavior for function declarations versus var declarations?",
+      "ru": "В чем разница между поведением при поднятии объявлений функций и объявлений var?"
+    },
+    "options": {
+      "en": [
+        "Both are hoisted, but function declarations are hoisted with their entire definition while var declarations are hoisted as undefined",
+        "Function declarations are hoisted, var declarations are not hoisted at all",
+        "var declarations are hoisted, function declarations are not hoisted at all",
+        "Both are hoisted identically — there is no practical difference"
+      ],
+      "ru": [
+        "Оба поднимаются, но объявления функций поднимаются с их полным определением, а объявления var поднимаются как undefined",
+        "Объявления функций поднимаются, объявления var не поднимаются вообще",
+        "Объявления var поднимаются, объявления функций не поднимаются вообще",
+        "Оба поднимаются одинаково — практической разницы нет"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Function declarations are fully hoisted with their implementation, allowing you to call them before they appear in code. var declarations are hoisted as undefined (Temporal Dead Zone), so accessing them before declaration returns undefined rather than the assigned value. let and const are also hoisted but create a stricter TDZ with a ReferenceError.",
+      "ru": "Объявления функций полностью поднимаются с их реализацией, позволяя вам вызывать их до их появления в коде. Объявления var поднимаются как undefined (Temporal Dead Zone), поэтому доступ к ним до объявления возвращает undefined, а не присвоенное значение. let и const также поднимаются, но создают более строгую TDZ с ReferenceError."
+    }
+  },
+  {
+    "id": "javascript-quiz-6",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged to the console? const obj = { value: 42, getValue: function() { return this.value; } }; const fn = obj.getValue; console.log(fn());",
+      "ru": "Что будет выведено в консоль? const obj = { value: 42, getValue: function() { return this.value; } }; const fn = obj.getValue; console.log(fn());"
+    },
+    "options": {
+      "en": [
+        "undefined",
+        "42",
+        "TypeError: Cannot read property 'value' of undefined",
+        "null"
+      ],
+      "ru": [
+        "undefined",
+        "42",
+        "TypeError: Cannot read property 'value' of undefined",
+        "null"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "When fn() is called without a context (not as obj.getValue()), `this` refers to the global object (or undefined in strict mode). Since the global object doesn't have a `value` property, the result is undefined. This demonstrates how `this` binding depends on how the function is invoked, not where it's defined.",
+      "ru": "Когда fn() вызывается без контекста (не как obj.getValue()), `this` ссылается на глобальный объект (или undefined в строгом режиме). Поскольку глобальный объект не имеет свойства `value`, результат undefined. Это демонстрирует, что привязка `this` зависит от того, как функция вызывается, а не где она определена."
+    }
+  },
+  {
+    "id": "javascript-quiz-7",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be the output? for (var i = 0; i < 3; i++) { setTimeout(() => console.log(i), 0); }",
+      "ru": "Какой будет вывод? for (var i = 0; i < 3; i++) { setTimeout(() => console.log(i), 0); }"
+    },
+    "options": {
+      "en": [
+        "0, 1, 2",
+        "3, 3, 3",
+        "undefined, undefined, undefined",
+        "0, 1, 2, 3"
+      ],
+      "ru": [
+        "0, 1, 2",
+        "3, 3, 3",
+        "undefined, undefined, undefined",
+        "0, 1, 2, 3"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The loop completes before any setTimeout callbacks execute. Since `var` has function scope, all callbacks share the same `i` variable, which is 3 after the loop ends. This is a classic closure and event loop timing issue. Using `let` instead of `var` would print 0, 1, 2 because `let` creates a new binding for each iteration.",
+      "ru": "Цикл завершается до выполнения любых callback-ов setTimeout. Поскольку `var` имеет область видимости функции, все callback-и разделяют одну переменную `i`, которая равна 3 после завершения цикла. Это классическая проблема закрытия и синхронизации event loop. Использование `let` вместо `var` вывело бы 0, 1, 2, так как `let` создает новую привязку для каждой итерации."
+    }
+  },
+  {
+    "id": "javascript-quiz-8",
+    "topicId": "javascript",
+    "question": {
+      "en": "What does the following code return? const add = (a) => (b) => (c) => a + b + c; add(1)(2)(3);",
+      "ru": "Что возвращает следующий код? const add = (a) => (b) => (c) => a + b + c; add(1)(2)(3);"
+    },
+    "options": {
+      "en": [
+        "function",
+        "6",
+        "undefined",
+        "NaN"
+      ],
+      "ru": [
+        "function",
+        "6",
+        "undefined",
+        "NaN"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "This is a curried function using arrow function syntax. Each arrow function returns another function until the final one executes and returns the sum. The closure mechanism allows each nested function to access the parameters of its outer functions, so a=1, b=2, c=3, resulting in 6.",
+      "ru": "Это каррированная функция с использованием синтаксиса стрелочных функций. Каждая стрелочная функция возвращает другую функцию, пока последняя не выполнится и не вернет сумму. Механизм закрытия позволяет каждой вложенной функции получить доступ к параметрам своих внешних функций, поэтому a=1, b=2, c=3, в результате 6."
+    }
+  },
+  {
+    "id": "javascript-quiz-9",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will typeof and instanceof tell us? const arr = [1, 2, 3]; typeof arr; arr instanceof Array;",
+      "ru": "Что нам скажут typeof и instanceof? const arr = [1, 2, 3]; typeof arr; arr instanceof Array;"
+    },
+    "options": {
+      "en": [
+        "'array' and false",
+        "'object' and true",
+        "'array' and true",
+        "'object' and false"
+      ],
+      "ru": [
+        "'array' и false",
+        "'object' и true",
+        "'array' и true",
+        "'object' и false"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "In JavaScript, typeof returns 'object' for arrays because arrays are objects. The instanceof operator checks the prototype chain and correctly identifies that arr is an instance of Array. typeof is not reliable for checking array types; use Array.isArray() or instanceof instead.",
+      "ru": "В JavaScript typeof возвращает 'object' для массивов, потому что массивы — это объекты. Оператор instanceof проверяет цепь прототипов и правильно определяет, что arr является экземпляром Array. typeof ненадежен для проверки типов массивов; вместо этого используйте Array.isArray() или instanceof."
+    }
+  },
+  {
+    "id": "javascript-quiz-10",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged? const promise = Promise.resolve(5); promise.then(x => console.log(x)); console.log('sync');",
+      "ru": "Что будет выведено? const promise = Promise.resolve(5); promise.then(x => console.log(x)); console.log('sync');"
+    },
+    "options": {
+      "en": [
+        "5, then sync",
+        "sync, then 5",
+        "5 sync",
+        "sync only"
+      ],
+      "ru": [
+        "5, з��тем sync",
+        "sync, затем 5",
+        "5 sync",
+        "только sync"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Synchronous code executes first, so 'sync' is logged immediately. The promise .then() callback is asynchronous and placed in the microtask queue, executing after all synchronous code completes. This demonstrates the event loop priority: synchronous > microtasks (promises) > macrotasks (setTimeout).",
+      "ru": "Синхронный код выполняется первым, поэтому 'sync' выводится немедленно. Callback .then() промиса асинхронен и помещается в очередь микротасков, выполняясь после завершения всего синхронного кода. Это демонстрирует приоритет event loop: синхронный > микротаски (промисы) > макротаски (setTimeout)."
+    }
+  },
+  {
+    "id": "javascript-quiz-11",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged to the console? const obj = { value: 42, getValue: function() { const inner = () => this.value; return inner(); } }; console.log(obj.getValue());",
+      "ru": "Что будет выведено в консоль? const obj = { value: 42, getValue: function() { const inner = () => this.value; return inner(); } }; console.log(obj.getValue());"
+    },
+    "options": {
+      "en": [
+        "42",
+        "undefined",
+        "null",
+        "ReferenceError"
+      ],
+      "ru": [
+        "42",
+        "undefined",
+        "null",
+        "ReferenceError"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Arrow functions inherit `this` from their lexical scope, not from where they're called. The `inner` arrow function captures `this` from `getValue`, which is called as `obj.getValue()`, making `this` refer to `obj`. Therefore, `this.value` is 42.",
+      "ru": "Стрелочные функции наследуют `this` из лексического окружения, а не из места вызова. Функция `inner` захватывает `this` из `getValue`, который вызывается как `obj.getValue()`, поэтому `this` указывает на `obj`. Таким образом, `this.value` равно 42."
+    }
+  },
+  {
+    "id": "javascript-quiz-12",
+    "topicId": "javascript",
+    "question": {
+      "en": "What does the following code output? for (var i = 0; i < 3; i++) { setTimeout(() => console.log(i), 0); }",
+      "ru": "Какой результат выведет следующий код? for (var i = 0; i < 3; i++) { setTimeout(() => console.log(i), 0); }"
+    },
+    "options": {
+      "en": [
+        "0, 1, 2",
+        "3, 3, 3",
+        "undefined, undefined, undefined",
+        "0, 0, 0"
+      ],
+      "ru": [
+        "0, 1, 2",
+        "3, 3, 3",
+        "undefined, undefined, undefined",
+        "0, 0, 0"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Using `var` creates a function-scoped variable, not block-scoped. The loop completes before any setTimeout callback executes, and by then `i` equals 3. All callbacks reference the same `i`, so they all log 3. Using `let` instead of `var` would create a new binding per iteration and log 0, 1, 2.",
+      "ru": "Использование `var` создает переменную с функциональной областью видимости, а не блочной. Цикл завершается до выполнения любого callback-а setTimeout, и к тому моменту `i` равно 3. Все callback-и ссылаются на одну и ту же переменную `i`, поэтому все выводят 3. Использование `let` вместо `var` создало бы новую привязку на каждой итерации и вывело бы 0, 1, 2."
+    }
+  },
+  {
+    "id": "javascript-quiz-13",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the result of the expression: {} + [] in JavaScript?",
+      "ru": "Каков результат выражения: {} + [] в JavaScript?"
+    },
+    "options": {
+      "en": [
+        "0",
+        "[object Object]",
+        "NaN",
+        "\"[object Object]\""
+      ],
+      "ru": [
+        "0",
+        "[object Object]",
+        "NaN",
+        "\"[object Object]\""
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "JavaScript's coercion rules cause `{}` at the start of a statement to be parsed as a code block, not an object literal. The expression effectively becomes just `+ []`, which coerces the empty array to 0 (empty array → empty string → 0). If wrapped in parentheses like `({} + [])`, it would evaluate to \"[object Object]\" due to type coercion.",
+      "ru": "Правила ��риведения типов JavaScript заставляют `{}` в начале выражения парсится как блок кода, а не объектный литерал. Выражение фактически становится просто `+ []`, что приводит пустой массив к 0 (пустой массив → пустая строка → 0). Если обернуть в скобки как `({} + [])`, результат будет \"[object Object]\" из-за приведения типов."
+    }
+  },
+  {
+    "id": "javascript-quiz-14",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the difference between function declarations and function expressions regarding hoisting?",
+      "ru": "В чем разница между объявлением функций и функциональными выражениями в отношении hoisting?"
+    },
+    "options": {
+      "en": [
+        "Both are hoisted identically to the top of their scope",
+        "Function declarations are fully hoisted; function expressions assigned to var are hoisted as undefined",
+        "Function expressions are fully hoisted; function declarations are not hoisted",
+        "Neither are hoisted, but function declarations execute first"
+      ],
+      "ru": [
+        "Оба одинаково ��однимаются в начало их области видимости",
+        "Объявления функций полностью поднимаются; функциональные выражения с var поднимаются как undefined",
+        "Функциональные выражения полностью поднимаются; объявления функций не поднимаются",
+        "Ни один из них не поднимается, но объявления функций выполняются первыми"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Function declarations are hoisted completely with their body, allowing them to be called before they appear in code. Function expressions (especially with `var`) are only hoisted as variable declarations with `undefined` value—the assignment happens during execution. With `const` or `let`, function expressions remain in the temporal dead zone until their line is reached.",
+      "ru": "Объявления функций полностью поднимаются вместе с их телом, позволяя их вызывать до их появления в коде. Функциональные выражения (особенно с `var`) поднимаются только как объявления переменных со значением `undefined`—присваивание происходит во время выполнения. С `const` или `let` функциональные выражения остаются в мертвой зоне до достижения их строки."
+    }
+  },
+  {
+    "id": "javascript-quiz-15",
+    "topicId": "javascript",
+    "question": {
+      "en": "Which statement about closures and memory is correct?",
+      "ru": "Какое утверждение о замыканиях и памяти верно?"
+    },
+    "options": {
+      "en": [
+        "Closures automatically garbage collect variables when they're no longer used",
+        "Closures prevent garbage collection of variables they reference, keeping them in memory even after the outer function returns",
+        "Closures only retain memory while the outer function is executing",
+        "Variables in closures are copied, not referenced, so they don't affect garbage collection"
+      ],
+      "ru": [
+        "Замыкания автоматически удаляют переменные при сборке мусора когда они больше не используются",
+        "Замыкания предотвращают сборку мусора переменных, на которые они ссылаются, сохраняя ��х в памяти даже после возврата из внешней функции",
+        "Замыкания сохраняют память только во время выполнения внешней функции",
+        "Переменные в замыканиях копируются, а не ссылаются, поэтому они не влияют на сборку мусора"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Closures create persistent references to variables from their enclosing scope. These variables are not garbage collected as long as the closure exists, even after the outer function has returned. This is why closures are powerful for data privacy but can lead to memory leaks if not managed carefully.",
+      "ru": "Замыкания создают постоянные ссылки на переменные из окружающей области видимости. Эти переменные не удаляются сборщиком мусора, пока существует замыкание, даже после возврата из внешней функции. Поэтому замыкания мощны для приватности данных, но могут привести к утечкам памяти если не управлять ими осторожно."
+    }
+  },
+  {
+    "id": "javascript-quiz-16",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged to the console? Analyze the event loop behavior: console.log('1'); setTimeout(() => console.log('2'), 0); Promise.resolve().then(() => console.log('3')); console.log('4');",
+      "ru": "Что будет выведено в консоль? Проанализируйте поведение event loop: console.log('1'); setTimeout(() => console.log('2'), 0); Promise.resolve().then(() => console.log('3')); console.log('4');"
+    },
+    "options": {
+      "en": [
+        "1, 4, 3, 2",
+        "1, 2, 3, 4",
+        "1, 3, 2, 4",
+        "1, 4, 2, 3"
+      ],
+      "ru": [
+        "1, 4, 3, 2",
+        "1, 2, 3, 4",
+        "1, 3, 2, 4",
+        "1, 4, 2, 3"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Synchronous code (1, 4) executes first in the call stack. Then microtasks like promises (3) execute before macrotasks like setTimeout (2). This demonstrates the event loop priority: call stack → microtask queue → macrotask queue.",
+      "ru": "Синхронный код (1, 4) выполняется первым в стеке вызовов. Затем микротаски вроде promises (3) выполняются перед макротасками вроде setTimeout (2). Это демонстрирует приоритет event loop: стек вызовов → очередь микротасков → очередь макротасков."
+    }
+  },
+  {
+    "id": "javascript-quiz-17",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the relationship between closures and the garbage collector in this code? function outer() { let large = new Array(1000000); return () => console.log(large.length); } Does the large array persist in memory while the returned function exists?",
+      "ru": "Какова взаимосвязь между замыканиями и сборщиком мусора в этом коде? function outer() { let large = new Array(1000000); return () => console.log(large.length); } Сохраняется ли большой массив в памяти, пока существует возвращаемая функция?"
+    },
+    "options": {
+      "en": [
+        "Yes, because the closure retains a reference to the outer scope variable",
+        "No, because the array is garbage collected after outer() returns",
+        "Only if the returned function is called at least once",
+        "Only if the array is explicitly referenced in the function body"
+      ],
+      "ru": [
+        "Да, потому что замыкание сохраняет ссылку на переменную внешней области видимости",
+        "Нет, потому что массив собирается сборщиком мусора после возврата из outer()",
+        "Только если возвращаемая функция вызывается хотя бы один раз",
+        "Только если массив явно упоминается в теле функции"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A closure maintains a reference to variables in its lexical scope. The large array remains in memory for the lifetime of the closure because the inner function captures it, even if never called. This can lead to memory leaks if closures are not carefully managed.",
+      "ru": "Замыкание сохраняет ссылку на переменные в своей лексической области видимости. Большой массив остается в памяти на всё время существования замыкания, потому что внутренняя функция его захватывает, даже если она никогда не вызывается. Это может привести к утечкам памяти, если замыкания не управляются аккуратно."
+    }
+  },
+  {
+    "id": "javascript-quiz-18",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be the output? const obj = { value: 42 }; const fn = function() { return this.value; }; const boundFn = fn.bind(null); console.log(boundFn.call(obj));",
+      "ru": "Какой будет результат? const obj = { value: 42 }; const fn = function() { return this.value; }; const boundFn = fn.bind(null); console.log(boundFn.call(obj));"
+    },
+    "options": {
+      "en": [
+        "undefined",
+        "42",
+        "null",
+        "{ value: 42 }"
+      ],
+      "ru": [
+        "undefined",
+        "42",
+        "null",
+        "{ value: 42 }"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "bind() permanently sets the 'this' context. Once bound to null, calling call() or apply() cannot override it. Therefore, 'this' is null, and this.value is undefined. This demonstrates that bind() has higher precedence than call() in 'this' binding.",
+      "ru": "bind() постоянно устанавливает контекст 'this'. После привязки к null, вызов call() или apply() не может его переопределить. Поэтому 'this' равен null, и this.value равен undefined. Это демонстрирует, что bind() имеет более высокий приоритет, чем call() при привязке 'this'."
+    }
+  },
+  {
+    "id": "javascript-quiz-19",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will happen with hoisting in this code? console.log(typeof x); var x = 5; function test() { console.log(x); var x = 10; } test();",
+      "ru": "Что произойдет с поднятием в этом коде? console.log(typeof x); var x = 5; function test() { console.log(x); var x = 10; } test();"
+    },
+    "options": {
+      "en": [
+        "undefined, then 5",
+        "undefined, then undefined",
+        "5, then 10",
+        "ReferenceError on the first line"
+      ],
+      "ru": [
+        "undefined, затем 5",
+        "undefined, затем undefined",
+        "5, затем 10",
+        "ReferenceError в первой строке"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The first console.log outputs undefined because x is hoisted as a declaration but not initialized. Inside test(), x is redeclared with var, creating a new local variable that shadows the global x. This local x is also hoisted but not yet initialized when logged, so it prints undefined, not 5.",
+      "ru": "Первый console.log выводит undefined, потому что x поднимается как объявление, но не инициализируется. Внутри test() x переобъявляется с var, создавая новую локальную переменную, которая затеняет глобальный x. Этот локальный x также поднимается, но еще не инициализирован при выводе, поэтому выводит undefined, а не 5."
+    }
+  },
+  {
+    "id": "javascript-quiz-20",
+    "topicId": "javascript",
+    "question": {
+      "en": "Which of the following correctly demonstrates the prototype chain and property lookup? Assume all objects are plain objects created with object literals.",
+      "ru": "Какой из следующих вариантов правильно демонстрирует цепь прототипов и поиск свойств? Предположим, что все объекты — это обычные объекты, созданные с помощью литералов объектов."
+    },
+    "options": {
+      "en": [
+        "Object.getPrototypeOf({}) === Object.prototype and {} instanceof Object returns true",
+        "typeof [] === 'object' but [] instanceof Array is false because arrays are primitives",
+        "Function.prototype is an instance of Function, creating a circular relationship",
+        "All objects inherit directly from null, not from Object.prototype"
+      ],
+      "ru": [
+        "Object.getPrototypeOf({}) === Object.prototype и {} instanceof Object возвращает true",
+        "typeof [] === 'object', но [] instanceof Array возвращает false, потому что массивы являются примитивами",
+        "Function.prototype является экземпляром Function, создавая циклическое отношение",
+        "Все объекты наследуют напрямую от null, а не от Object.prototype"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Object literals have Object.prototype in their prototype chain, and instanceof correctly identifies objects as instances of Object. The other options contain misconceptions: arrays are objects (not primitives), Function.prototype is not circular, and most objects don't inherit from null directly.",
+      "ru": "Литералы объектов имеют Object.prototype в своей цепи прототипов, и instanceof правильно идентифицирует объекты как экземпляры Object. Остальные варианты содержат ошибочные представления: массивы — это объекты (не примитивы), Function.prototype не циклична, и большинство объектов не наследуют напрямую от null."
+    }
+  },
+  {
+    "id": "javascript-quiz-21",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged to the console?\n\nconst obj = {\n  value: 42,\n  getValue: function() {\n    return this.value;\n  }\n};\n\nconst fn = obj.getValue;\nconsole.log(fn());",
+      "ru": "Что будет выведено в консоль?\n\nconst obj = {\n  value: 42,\n  getValue: function() {\n    return this.value;\n  }\n};\n\nconst fn = obj.getValue;\nconsole.log(fn());"
+    },
+    "options": {
+      "en": [
+        "undefined",
+        "42",
+        "null",
+        "ReferenceError"
+      ],
+      "ru": [
+        "undefined",
+        "42",
+        "null",
+        "ReferenceError"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "When fn() is called, it's invoked without an object context, so 'this' refers to the global object (or undefined in strict mode). Since the global object doesn't have a 'value' property, the result is undefined. This demonstrates how this binding depends on the call site, not where the function is defined.",
+      "ru": "Когда fn() вызывается, она вызывается без контекста объекта, поэтому 'this' ссылается на глобальный объект (или undefined в строгом режиме). Поскольку глобальный объект не имеет свойства 'value', результат undefined. Это демонстрирует, что привязка this зависит от места вызова, а не от места определения функции."
+    }
+  },
+  {
+    "id": "javascript-quiz-22",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the output of this code?\n\nfunction* generator() {\n  yield 1;\n  yield 2;\n  return 3;\n}\n\nconst gen = generator();\nconsole.log(gen.next());\nconsole.log(gen.next());\nconsole.log(gen.next());",
+      "ru": "Каков вывод этого кода?\n\nfunction* generator() {\n  yield 1;\n  yield 2;\n  return 3;\n}\n\nconst gen = generator();\nconsole.log(gen.next());\nconsole.log(gen.next());\nconsole.log(gen.next());"
+    },
+    "options": {
+      "en": [
+        "{value: 1, done: false}, {value: 2, done: false}, {value: 3, done: true}",
+        "{value: 1, done: true}, {value: 2, done: true}, {value: 3, done: true}",
+        "1, 2, 3",
+        "{value: undefined, done: true}, {value: undefined, done: true}, {value: undefined, done: true}"
+      ],
+      "ru": [
+        "{value: 1, done: false}, {value: 2, done: false}, {value: 3, done: true}",
+        "{value: 1, done: true}, {value: 2, done: true}, {value: 3, done: true}",
+        "1, 2, 3",
+        "{value: undefined, done: true}, {value: undefined, done: true}, {value: undefined, done: true}"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Generator functions return an iterator object. Each call to next() resumes execution and returns {value, done}. yield statements produce values with done: false, while return produces a final value with done: true. After the generator completes, subsequent calls return {value: undefined, done: true}.",
+      "ru": "Генератор возвращает объект итератора. Каждый вызов next() возобновляет выполнение и возвращает {value, done}. Операторы yield производят значения с done: false, а return производит финальное значение с done: true. После завершения генератора последующие вызовы возвращают {value: undefined, done: true}."
+    }
+  },
+  {
+    "id": "javascript-quiz-23",
+    "topicId": "javascript",
+    "question": {
+      "en": "Which statement is true about hoisting in JavaScript?\n\nConsider:\nconsole.log(x);\nvar x = 5;",
+      "ru": "Какое утверждение верно в отношении поднятия (hoisting) в JavaScript?\n\nРассмотрим:\nconsole.log(x);\nvar x = 5;"
+    },
+    "options": {
+      "en": [
+        "It logs undefined because the variable declaration is hoisted but initialization is not",
+        "It logs 5 because hoisting moves the entire declaration and assignment to the top",
+        "It throws a ReferenceError because variables must be declared before use",
+        "It logs null because var initializes variables to null by default"
+      ],
+      "ru": [
+        "Выведет undefined, потому что объявление переменной поднято, но инициализация нет",
+        "Выведет 5, потому что hoisting переносит всё объявление и присваивание вверх",
+        "Выведет ReferenceError, потому что переменные должны быть объявлены до использования",
+        "Выведет null, потому что var инициализирует переменные значением null по умолчанию"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Hoisting moves variable declarations to the top of their scope, but only the declaration is hoisted—not the assignment. The variable x is declared at the top but uninitialized, so it has the value undefined. The assignment (x = 5) stays at its original location. This is why let and const don't hoist in the same way.",
+      "ru": "Hoisting перемещает объявления переменных в начало их области видимости, но только объявление поднято—инициализация нет. Переменная x объявлена в начале, но не инициализирована, поэтому имеет значение undefined. Присваивание (x = 5) остаётся на месте. Вот почему let и const не поднимаются одинаково."
+    }
+  },
+  {
+    "id": "javascript-quiz-24",
+    "topicId": "javascript",
+    "question": {
+      "en": "What does this code output?\n\nPromise.resolve(1)\n  .then(x => Promise.resolve(x + 1))\n  .then(x => { throw new Error('test'); })\n  .then(x => console.log('A', x))\n  .catch(e => console.log('B', e.message))\n  .then(x => console.log('C', x));",
+      "ru": "Что выведет этот код?\n\nPromise.resolve(1)\n  .then(x => Promise.resolve(x + 1))\n  .then(x => { throw new Error('test'); })\n  .then(x => console.log('A', x))\n  .catch(e => console.log('B', e.message))\n  .then(x => console.log('C', x));"
+    },
+    "options": {
+      "en": [
+        "B test, C undefined",
+        "A 2",
+        "B test, A 2, C undefined",
+        "ReferenceError at throw statement"
+      ],
+      "ru": [
+        "B test, C undefined",
+        "A 2",
+        "B test, A 2, C undefined",
+        "ReferenceError при выполнении throw"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The promise chain resolves to 2, then throws an error. The first then that logs 'A' is skipped because an error was thrown. The catch handler logs 'B test' and doesn't throw, so the promise resolves to undefined. The final then logs 'C undefined'. Promise chains continue after catch unless another error is thrown.",
+      "ru": "Цепочка промисов разрешается до 2, затем выбрасывает ошибку. Первый then, который логирует 'A', пропускается, потому что была выброшена ошибка. Обработчик catch логирует 'B test' и не выбрасывает, поэтому промис разрешается до undefined. Финальный then логирует 'C undefined'. Цепочки про��исов продолжаются после catch, если не выброшена другая ошибка."
+    }
+  },
+  {
+    "id": "javascript-quiz-25",
+    "topicId": "javascript",
+    "question": {
+      "en": "Which value is NOT falsy in JavaScript?\n\nConsider all of these are evaluated in a boolean context.",
+      "ru": "Какое значение НЕ является falsy в JavaScript?\n\nРассмотрите все эти значения в логическом контексте."
+    },
+    "options": {
+      "en": [
+        "0",
+        "'0'",
+        "NaN",
+        "null"
+      ],
+      "ru": [
+        "0",
+        "'0'",
+        "NaN",
+        "null"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The string '0' is truthy because it's a non-empty string. Falsy values in JavaScript are: false, 0, -0, 0n, '', null, undefined, and NaN. The string '0' contains a character, so it's truthy. This is a common source of type coercion bugs when comparing values.",
+      "ru": "Строка '0' является truthy, потому что это непустая строка. Falsy значения в JavaScript: false, 0, -0, 0n, '', null, undefined и NaN. Строка '0' содержит символ, поэтому она truthy. Это частый источник ошибок при приведении типов при сравнении значений."
+    }
+  },
+  {
+    "id": "javascript-quiz-26",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged to the console? const obj = { value: 42, getValue: function() { return this.value; } }; const fn = obj.getValue; console.log(fn());",
+      "ru": "Что будет выведено в консоль? const obj = { value: 42, getValue: function() { return this.value; } }; const fn = obj.getValue; console.log(fn());"
+    },
+    "options": {
+      "en": [
+        "undefined",
+        "42",
+        "null",
+        "TypeError: this is not defined"
+      ],
+      "ru": [
+        "undefined",
+        "42",
+        "null",
+        "TypeError: this не определён"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "When fn is called without an object context, `this` is bound to the global object (or undefined in strict mode), not to `obj`. Since the global object doesn't have a `value` property, the result is undefined. This demonstrates the importance of this binding context.",
+      "ru": "Когда fn вызывается без контекста объекта, `this` привязывается к глобальному объекту (или undefined в strict mode), а не к `obj`. Поскольку глобальный объект не имеет свойства `value`, результат undefined. Это демонстрирует важность контекста привязки this."
+    }
+  },
+  {
+    "id": "javascript-quiz-27",
+    "topicId": "javascript",
+    "question": {
+      "en": "What does the following code output? console.log(typeof null); console.log(null instanceof Object);",
+      "ru": "Что выведет следующий код? console.log(typeof null); console.log(null instanceof Object);"
+    },
+    "options": {
+      "en": [
+        "'object' then false",
+        "'null' then true",
+        "'object' then true",
+        "'undefined' then false"
+      ],
+      "ru": [
+        "'object' затем false",
+        "'null' затем true",
+        "'object' затем true",
+        "'undefined' затем false"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "typeof null returns 'object' due to a historical bug in JavaScript that was never fixed for backward compatibility. However, null instanceof Object returns false because null is not actually an instance of any object—it's a primitive value. This shows the difference between typeof and instanceof operators.",
+      "ru": "typeof null возвращает 'object' из-за исторической ошибки в JavaScript, которая так и не была исправлена для сов��естимости. Однако null instanceof Object возвращает false, потому что null на самом деле не является экземпляром какого-либо объекта—это примитивное значение. Это показывает разницу между операторами typeof и instanceof."
+    }
+  },
+  {
+    "id": "javascript-quiz-28",
+    "topicId": "javascript",
+    "question": {
+      "en": "What will be logged? function outer() { let count = 0; return function inner() { count++; return count; }; } const counter = outer(); console.log(counter()); console.log(counter());",
+      "ru": "Что будет выведено? function outer() { let count = 0; return function inner() { count++; return count; }; } const counter = outer(); console.log(counter()); console.log(counter());"
+    },
+    "options": {
+      "en": [
+        "1 then 2",
+        "undefined then undefined",
+        "1 then 1",
+        "2 then 2"
+      ],
+      "ru": [
+        "1 затем 2",
+        "undefined затем undefined",
+        "1 затем 1",
+        "2 затем 2"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The inner function creates a closure over the `count` variable from the outer function. Each call to counter() increments the same `count` variable, so the first call returns 1 and the second returns 2. Closures allow functions to access variables from their enclosing scope even after the outer function has finished executing.",
+      "ru": "Функция inner создаёт замыкание над переменной `count` из функции outer. Каждый вызов counter() увеличивает одну и ту же переменную `count`, поэтому первый вызов возвращает 1, а второй возвращает 2. Замыкания позволяют функциям обращаться к переменным из своей включающей области видимости даже после завершения выполнения внешней функции."
+    }
+  },
+  {
+    "id": "javascript-quiz-29",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the output of this code? const promise = Promise.resolve(5); promise.then(val => val * 2).then(val => console.log(val)); setTimeout(() => console.log('timeout'), 0); console.log('sync');",
+      "ru": "Какой результат выполнения этого кода? const promise = Promise.resolve(5); promise.then(val => val * 2).then(val => console.log(val)); setTimeout(() => console.log('timeout'), 0); console.log('sync');"
+    },
+    "options": {
+      "en": [
+        "'sync' then 10 then 'timeout'",
+        "'timeout' then 'sync' then 10",
+        "10 then 'sync' then 'timeout'",
+        "'sync' then 'timeout' then 10"
+      ],
+      "ru": [
+        "'sync' затем 10 затем 'timeout'",
+        "'timeout' затем 'sync' затем 10",
+        "10 затем 'sync' затем 'timeout'",
+        "'sync' затем 'timeout' затем 10"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The event loop prioritizes the microtask queue (promises) over the macrotask queue (setTimeout). First, synchronous code runs ('sync'), then microtasks (promise chain outputs 10), then macrotasks ('timeout'). Understanding the event loop hierarchy is crucial for predicting async code execution order.",
+      "ru": "Цикл событий отдаёт приоритет микрозадачам (promises) перед макрозадачами (setTimeout). Сначала выполняется синхронный код ('sync'), затем микрозадачи (цепочка promise выводит 10), затем макрозадачи ('timeout'). Понимание иерархии цикла событий имеет решающее значение для предсказания порядка выполнения асинхронного кода."
+    }
+  },
+  {
+    "id": "javascript-quiz-30",
+    "topicId": "javascript",
+    "question": {
+      "en": "What is the value of result? const obj = Object.create({ inherited: 'value' }); obj.own = 'own value'; const result = Object.keys(obj);",
+      "ru": "Какое значение у переменной result? const obj = Object.create({ inherited: 'value' }); obj.own = 'own value'; const result = Object.keys(obj);"
+    },
+    "options": {
+      "en": [
+        "['own']",
+        "['inherited', 'own']",
+        "['own', 'inherited']",
+        "[]"
+      ],
+      "ru": [
+        "['own']",
+        "['inherited', 'own']",
+        "['own', 'inherited']",
+        "[]"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Object.keys() returns only the object's own enumerable properties, not inherited properties from the prototype chain. Since 'inherited' is on the prototype object and 'own' is a direct property, only ['own'] is returned. This distinction is important when working with prototype-based inheritance.",
+      "ru": "Object.keys() возвращает только собственные перечислимые свойства объекта, а не унаследованные свойства из цепочки прототипов. Поскольку 'inherited' находится на объекте-прототипе, а 'own' является прямым свойством, возвращается только ['own']. Это различие важно при работе с наследованием на основе прототипов."
+    }
+  }
+]

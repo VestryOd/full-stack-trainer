@@ -1,0 +1,542 @@
+[
+  {
+    "id": "postgresql-quiz-1",
+    "topicId": "postgresql",
+    "question": {
+      "en": "When you run EXPLAIN ANALYZE on a query, you notice the actual rows returned are significantly higher than the planner estimated. What is the most likely cause of this underestimation?",
+      "ru": "При выполнении EXPLAIN ANALYZE для запроса вы заметили, что фактическое количество строк намного выше, чем оценил планировщик. Какова наиболее вероятная причина этой недооценки?"
+    },
+    "options": {
+      "en": [
+        "Outdated table statistics from a stale ANALYZE run",
+        "The query contains a JOIN with correlated subqueries",
+        "The table has too many indexes defined",
+        "MVCC visibility information is preventing accurate counting"
+      ],
+      "ru": [
+        "Устаревшая статистика таблицы из старого запуска ANALYZE",
+        "Запрос содержит JOIN с коррелированными подзапросами",
+        "На таблице определено слишком много индексов",
+        "Информация видимости MVCC препятствует точному подсчету"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The query planner relies on statistics from the last ANALYZE command to estimate row counts. If these statistics are stale or outdated, the planner will make poor estimates. Running ANALYZE updates the statistics and usually resolves the discrepancy. Subqueries, index count, and MVCC visibility do not directly cause row count estimation errors.",
+      "ru": "Планировщик запросов полагается на статистику из последней команды ANALYZE для оценки количества строк. Если эта статистика устарела, планировщик будет делать неправильные оценки. Запуск ANALYZE обновляет статистику и обычно разрешает проблему. Подзапросы, количество индексов и видимость MVCC не вызывают напрямую ошибки в оценке количества строк."
+    }
+  },
+  {
+    "id": "postgresql-quiz-2",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Consider this code snippet:\n\nSELECT user_id, COUNT(*) as order_count,\n       ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as rank\nFROM orders\nGROUP BY user_id;\n\nWhat will happen when you execute this query?",
+      "ru": "Рассмотрите этот фрагмент кода:\n\nSELECT user_id, COUNT(*) as order_count,\n       ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as rank\nFROM orders\nGROUP BY user_id;\n\nЧто произойдет при выполнении этого запроса?"
+    },
+    "options": {
+      "en": [
+        "The query will return results ranked by order count in descending order",
+        "PostgreSQL will throw an error because window functions cannot reference aggregate functions in their ORDER BY clause",
+        "The query will execute but the ranking will be non-deterministic across rows",
+        "The window function will be evaluated before the GROUP BY, causing incorrect results"
+      ],
+      "ru": [
+        "Запрос вернет результаты, отсортированные по количеству заказов в порядке убывания",
+        "PostgreSQL выдаст ошибку, так как оконные функции не могут ссылаться на агрегатные функции в предложении ORDER BY",
+        "Запрос будет выполнен, но ранжирование будет недетерминированным для строк",
+        "Оконная функция будет вычислена до GROUP BY, что вызовет неправильные результаты"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Window functions are evaluated after GROUP BY and aggregate functions, so referencing COUNT(*) in the OVER clause's ORDER BY is valid and works correctly. The rank will accurately reflect the order count in descending order. PostgreSQL handles this standard SQL pattern without errors and executes in a deterministic manner.",
+      "ru": "Оконные функции вычисляются после GROUP BY и агрегатных функций, поэтому ссылка на COUNT(*) в ORDER BY предложения OVER является допустимой и работает корректно. Ранг будет точно отражать количество заказов в порядке убывания. PostgreSQL обрабатывает этот стандартный SQL шаблон без ошибок и выполняет его детерминированным образом."
+    }
+  },
+  {
+    "id": "postgresql-quiz-3",
+    "topicId": "postgresql",
+    "question": {
+      "en": "In PostgreSQL, MVCC allows multiple transactions to see different versions of the same row. Which transaction isolation level provides the strongest protection against phantom reads while maintaining reasonable performance?",
+      "ru": "В PostgreSQL MVCC позволяет нескольким транзакциям видеть разные версии одной и той же строки. Какой уровень изоляции транзакций обеспечивает самую сильную защиту от фантомного чтения при сохранении приемлемой производительности?"
+    },
+    "options": {
+      "en": [
+        "SERIALIZABLE with predicate locking",
+        "REPEATABLE READ with explicit row locks",
+        "READ COMMITTED with careful application-level logic",
+        "READ UNCOMMITTED with transaction snapshots"
+      ],
+      "ru": [
+        "SERIALIZABLE с предикатной блокировкой",
+        "REPEATABLE READ с явной блокировкой строк",
+        "READ COMMITTED с осторожной логикой на уровне приложения",
+        "READ UNCOMMITTED со снимками транзакций"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "SERIALIZABLE is the strongest isolation level and uses predicate locking to prevent phantom reads by ensuring that the conditions used in queries remain consistent. While it has performance overhead, it's the only standard isolation level that truly prevents all anomalies including phantoms. REPEATABLE READ prevents most anomalies but not phantoms in PostgreSQL, and the others provide weaker guarantees.",
+      "ru": "SERIALIZABLE — это самый строгий уровень изоляции, который использует предикатную блокировку для предотвращения фантомного чтения, гарантируя, что условия, используемые в запросах, остаются согласованными. Хотя это имеет издержки производительности, это единственный стандартный уровень изоляции, который по-настоящему предотвращает все аномалии, включая фантомы. REPEATABLE READ предотвращает большинство аномалий, но не фантомы в PostgreSQL, а остальные обеспечивают более слабые гарантии."
+    }
+  },
+  {
+    "id": "postgresql-quiz-4",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Given the query:\n\nSELECT a.id, b.value\nFROM table_a a\nLEFT JOIN table_b b ON a.id = b.a_id\nWHERE b.value > 100;\n\nWhat is the semantic result of this query, and how would you correct it if the intent is to include all rows from table_a?",
+      "ru": "Дан запрос:\n\nSELECT a.id, b.value\nFROM table_a a\nLEFT JOIN table_b b ON a.id = b.a_id\nWHERE b.value > 100;\n\nКаков семантический результат этого запроса, и как его исправить, если цель — включить все строки из table_a?"
+    },
+    "options": {
+      "en": [
+        "The query effectively becomes an INNER JOIN due to the WHERE clause filtering NULLs; move the condition to the ON clause",
+        "The LEFT JOIN is working correctly and the WHERE clause is necessary to filter results",
+        "The query returns all rows from table_a with NULL values for unmatched rows; no correction is needed",
+        "The query will fail because you cannot use WHERE with LEFT JOIN"
+      ],
+      "ru": [
+        "Запрос фактически становится INNER JOIN из-за фильтрации NULL в предложении WHERE; переместите условие в предложение ON",
+        "LEFT JOIN работает корректно, и предложение WHERE необходимо для фильтрации результатов",
+        "Запрос возвращает все строки из table_a с значениями NULL для несовпадающих строк; коррекция не требуется",
+        "Запрос не будет выполнен, так как вы не можете использовать WHERE с LEFT JOIN"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The WHERE clause filters out rows where b.value IS NULL, effectively converting the LEFT JOIN into an INNER JOIN. If you want to keep all rows from table_a while filtering table_b values, the condition must be in the ON clause: 'ON a.id = b.a_id AND b.value > 100'. This distinction is crucial for correct query semantics with outer joins.",
+      "ru": "Предложение WHERE отфильтровывает строки, где b.value IS NULL, фактически преобразуя LEFT JOIN в INNER JOIN. Если вы хотите сохранить все строки из table_a, одновременно фильтруя значения table_b, условие должно быть в предложении ON: 'ON a.id = b.a_id AND b.value > 100'. Это различие критично для корректной семантики запроса при использовании внешних соединений."
+    }
+  },
+  {
+    "id": "postgresql-quiz-5",
+    "topicId": "postgresql",
+    "question": {
+      "en": "What is the primary purpose of running VACUUM in PostgreSQL, and why is it essential for long-running databases with frequent UPDATE operations?",
+      "ru": "Какова основная цель запуска VACUUM в PostgreSQL, и почему это важно для долгоживущих баз данных с частыми операциями UPDATE?"
+    },
+    "options": {
+      "en": [
+        "VACUUM reclaims disk space occupied by dead tuples and prevents table bloat due to MVCC's multi-version storage",
+        "VACUUM optimizes indexes by rebuilding them incrementally",
+        "VACUUM compresses table data to reduce memory usage during query execution",
+        "VACUUM updates table statistics for the query planner without requiring manual ANALYZE"
+      ],
+      "ru": [
+        "VACUUM освобождает дисковое пространство, занятое мертвыми кортежами, и предотвращает раздувание таблицы из-за многоверсионного хранилища MVCC",
+        "VACUUM оптимизирует индексы, постепенно перестраивая их",
+        "VACUUM сжимает данные таблицы для снижения использования памяти во время выполнения запроса",
+        "VACUUM обновляет статистику таблицы для планировщика запросов без необходимости ручного запуска ANALYZE"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "MVCC keeps old versions of rows for transaction visibility, creating dead tuples when rows are updated or deleted. VACUUM marks this space as reusable, preventing unbounded table bloat. Without VACUUM, tables grow indefinitely and query performance degrades. While VACUUM can optionally update statistics, its primary purpose is space reclamation, not index rebuilding or data compression.",
+      "ru": "MVCC хранит старые версии строк для видимости транзакций, создавая мертвые кортежи при обновлении или удалении строк. VACUUM помечает это пространство как пригодное для повторного использования, предотвращая неограниченное раздувание таблицы. Без VACUUM таблицы растут бесконечно и производительность запросов снижается. Хотя VACUUM может опционально обновлять статистику, его основная цель — восстановление пространства, а не перестроение индексов или сжатие данных."
+    }
+  },
+  {
+    "id": "postgresql-quiz-6",
+    "topicId": "postgresql",
+    "question": {
+      "en": "When using EXPLAIN ANALYZE on a query, what does it mean if the actual row count is significantly higher than the estimated row count for a node?",
+      "ru": "Когда вы используете EXPLAIN ANALYZE для запроса, что означает, если фактическое количество строк значительно выше расчетного количества строк для узла?"
+    },
+    "options": {
+      "en": [
+        "The query planner's statistics are outdated and VACUUM ANALYZE should be run",
+        "The table has too many indexes and query execution is slow",
+        "The WHERE clause is using functions that prevent proper estimation",
+        "PostgreSQL is using a sequential scan instead of an index scan"
+      ],
+      "ru": [
+        "Статистика планировщика запросов устарела и следует запустить VACUUM ANALYZE",
+        "Таблица имеет слишком много индексов и выполнение запроса медленное",
+        "Предложение WHERE использует функции, которые препятствуют правильной оценке",
+        "PostgreSQL использует последовательное сканирование вместо индексного сканирования"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Row count estimation depends on statistics gathered by ANALYZE. If estimates are significantly off from reality, it indicates stale statistics that need to be refreshed. While functions can affect estimation accuracy, and slow scans are a consequence rather than a cause, the core issue is outdated statistics.",
+      "ru": "Оценка количества строк зависит от статистики, собранной командой ANALYZE. Если оценки значительно отличаются от реальности, это указывает на устаревшую статистику, которую необходимо обновить. Хотя функции могут повлиять на точность оценки, а медленные сканирования являются следствием, а не причиной, основной проблемой являются устаревшие статистические данные."
+    }
+  },
+  {
+    "id": "postgresql-quiz-7",
+    "topicId": "postgresql",
+    "question": {
+      "en": "In PostgreSQL's MVCC model, why can two concurrent transactions executing SELECT queries see different data from the same table at the same wall-clock time?",
+      "ru": "В модели MVCC PostgreSQL, почему две одновременные транзакции, выполняющие запросы SELECT, могут видеть разные данные из одной и той же таблицы в один и тот же момент реального времени?"
+    },
+    "options": {
+      "en": [
+        "Each transaction has its own snapshot of committed data based on its transaction ID at start time",
+        "One transaction has a read-only lock while the other has a write lock",
+        "The queries are hitting different replicas that are not yet synchronized",
+        "PostgreSQL applies different isolation levels to each SELECT statement"
+      ],
+      "ru": [
+        "Каждая транзакция имеет собственный снимок зафиксированных данных на основе своего ID транзакции на момент начала",
+        "Одна транзакция имеет блокировку только для чтения, а другая имеет блокировку записи",
+        "Запросы обращаются к разным репликам, которые еще не синхронизированы",
+        "PostgreSQL применяет разные уровни изоляции к каждому оператору SELECT"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "MVCC (Multi-Version Concurrency Control) allows transactions to see consistent snapshots of data based on when they started, not when they execute. Each transaction sees only commits that occurred before its start time, enabling concurrent reads without blocking writes. Row-level locks and read replicas are separate concerns from MVCC snapshot isolation.",
+      "ru": "MVCC (управление многоверсионностью с контролем параллелизма) позволяет транзакциям видеть согласованные снимки данных в зависимости от того, когда они начались, а не когда они выполняются. Каждая транзакция видит только коммиты, которые произошли до времени её начала, обеспечивая одновременное чтение без блокировки записей. Блокировки на уровне строк и чтение репликок — это отдельные проблемы от изоляции снимков MVCC."
+    }
+  },
+  {
+    "id": "postgresql-quiz-8",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Consider this query: SELECT col1, ROW_NUMBER() OVER (PARTITION BY col2 ORDER BY col3) as rn FROM table1. If col3 contains NULL values, how are they ordered relative to non-NULL values?",
+      "ru": "Рассмотрим этот запрос: SELECT col1, ROW_NUMBER() OVER (PARTITION BY col2 ORDER BY col3) as rn FROM table1. Если col3 содержит значения NULL, как они упорядочиваются относительно значений, отличных от NULL?"
+    },
+    "options": {
+      "en": [
+        "NULLs are sorted first (before non-NULL values) by default in PostgreSQL",
+        "NULLs are sorted last (after non-NULL values) by default in PostgreSQL",
+        "NULLs cause the window function to return an error",
+        "NULLs are excluded from the window frame entirely"
+      ],
+      "ru": [
+        "NULL значения сортируются первыми (перед значениями, отличными от NULL) по умолчанию в PostgreSQL",
+        "NULL значения сортируются последними (после значений, отличных от NULL) по умолчанию в PostgreSQL",
+        "NULL значения вызывают ошибку функции окна",
+        "NULL значения полностью исключаются из окна"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "PostgreSQL sorts NULL values first in ascending order and last in descending order by default, which is different from many other databases. This behavior can be overridden using NULLS FIRST or NULLS LAST. Window functions handle NULLs gracefully without errors, and NULLs are included in the frame.",
+      "ru": "PostgreSQL сортирует значения NULL в первую очередь при сортировке в порядке возрастания и в последнюю очередь при сортировке в порядке убывания по умолчанию, что отличается от многих других баз данных. Это поведение можно переопределить с помощью NULLS FIRST или NULLS LAST. Функции окна корректно обрабатывают NULL без ошибок, и NULL включаются в окно."
+    }
+  },
+  {
+    "id": "postgresql-quiz-9",
+    "topicId": "postgresql",
+    "question": {
+      "en": "A table has columns: user_id (int), status (text), created_at (timestamp). You need to retrieve all active users with their most recent activity. What type of JOIN combined with a window function would be most efficient?",
+      "ru": "Таблица имеет столбцы: user_id (int), status (text), created_at (timestamp). Вам нужно получить всех активных пользователей с их самой последней активностью. Какой тип JOIN в сочетании с функцией окна будет наиболее эффективным?"
+    },
+    "options": {
+      "en": [
+        "INNER JOIN with a derived table using ROW_NUMBER() to identify the latest row per user",
+        "LEFT JOIN combined with GROUP BY and HAVING to filter for the maximum created_at",
+        "CROSS JOIN with window functions to rank all user-activity pairs",
+        "RIGHT JOIN using window functions is always better than derived tables"
+      ],
+      "ru": [
+        "INNER JOIN с производной таблицей, используя ROW_NUMBER() для определения последней строки для каждого пользователя",
+        "LEFT JOIN в сочетании с GROUP BY и HAVING для фильтрации максимального created_at",
+        "CROSS JOIN с функциями окна для ранжирования всех пар пользователь-активность",
+        "RIGHT JOIN с использованием функций окна всегда лучше, чем производные таблицы"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "INNER JOIN with a window function (specifically ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)) in a CTE or subquery is the most efficient approach because it uses a single pass through the data. GROUP BY with HAVING is less efficient for this use case, CROSS JOIN creates unnecessary cartesian products, and RIGHT JOIN has no inherent advantage.",
+      "ru": "INNER JOIN с функцией окна (в частности ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC)) в CTE или подзапросе является наиболее эффективным подходом, поскольку он использует один проход по данным. GROUP BY с HAVING менее эффективен для этого варианта использования, CROSS JOIN создает ненужные декартовы произведения, а RIGHT JOIN не имеет внутреннего преимущества."
+    }
+  },
+  {
+    "id": "postgresql-quiz-10",
+    "topicId": "postgresql",
+    "question": {
+      "en": "For a large table with millions of rows, you're deciding between a B-tree index and a BRIN (Block Range Index) on a timestamp column that stores data in chronological order. What is the primary advantage of BRIN in this scenario?",
+      "ru": "Для большой таблицы с миллионами строк вы выбираете между индексом B-tree и BRIN (индексом блока диапазона) в столбце timestamp, где данные хранятся в хронологическом порядке. Какое основное преимущество BRIN в этом сценарии?"
+    },
+    "options": {
+      "en": [
+        "BRIN uses significantly less disk space and memory while still providing good query performance for range scans",
+        "BRIN automatically handles NULL values better than B-tree indexes",
+        "BRIN doesn't require VACUUM operations and has no maintenance overhead",
+        "BRIN is faster for single-row lookups and random access patterns"
+      ],
+      "ru": [
+        "BRIN использует значительно меньше дискового пространства и памяти, обеспечивая при этом хорошую производительность запросов для сканирования диапазонов",
+        "BRIN автоматически лучше обрабатывает значения NULL, чем индексы B-tree",
+        "BRIN не требует операций VACUUM и не имеет накладных расходов на обслуживание",
+        "BRIN быстрее для поиска отдельных строк и случайных шаблонов доступа"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "BRIN is ideal for large, naturally ordered tables because it stores only block range metadata instead of individual row pointers, consuming 1-2% of B-tree space. It excels at range scans on sorted data (like timestamps). However, BRIN still requires VACUUM, handles NULLs similarly to B-tree, and is slower for random access—making B-tree better for that use case.",
+      "ru": "BRIN идеален для больших, естественно упорядоченных таблиц, потому что он хранит только метаданные диапазона блоков вместо указателей отдельных строк, потребляя 1-2% пространства B-tree. Он отлично подходит для сканирования диапазонов отсортированных данных (например, временных меток). Однако BRIN все еще требует VACUUM, обрабатывает NULL аналогично B-tree и медленнее для случайного доступа — что делает B-tree лучше для этого случая."
+    }
+  },
+  {
+    "id": "postgresql-quiz-11",
+    "topicId": "postgresql",
+    "question": {
+      "en": "You run EXPLAIN on a query and see 'Index Scan using idx_user_email on users' with an actual execution time much slower than expected. What is the most likely reason for this performance degradation?",
+      "ru": "Вы запустили EXPLAIN на запросе и видите 'Index Scan using idx_user_email on users' с фактическим временем выполнения намного медленнее, чем ожидалось. Какова наиболее вероятная причина этого снижения производительности?"
+    },
+    "options": {
+      "en": [
+        "The index is fragmented and requires REINDEX to restore performance",
+        "The index statistics are stale; ANALYZE needs to be run to update planner estimates",
+        "The query is performing index-only scans which are always slower than sequential scans",
+        "The index was created with a CONCURRENTLY flag which disables query optimization"
+      ],
+      "ru": [
+        "Индекс фрагментирован и требует REINDEX для восстановления производительности",
+        "Статистика индекса устарела; необходимо запустить ANALYZE для обновления оценок планировщика",
+        "Запрос выполняет сканирования только по индексу, которые всегда медленнее, чем последовательные сканирования",
+        "Индекс был создан с флагом CONCURRENTLY, который отключает оптимизацию запросов"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Stale statistics cause the query planner to make poor decisions about which index to use or how many rows will match. Running ANALYZE updates the pg_stats table and allows the planner to generate better execution plans. Index fragmentation (REINDEX) rarely causes dramatic slowdowns in PostgreSQL, and index-only scans are typically faster, not slower, than heap scans when applicable.",
+      "ru": "Устаревшая статистика заставляет планировщик запросов принимать неправильные решения о том, какой индекс использовать или сколько строк будет совпадать. Запуск ANALYZE обновляет таблицу pg_stats и позволяет планировщику генерировать более эффективные планы выполнения. Фрагментация индекса (REINDEX) редко вызывает значительные замедления в PostgreSQL, а сканирования только по индексу обычно быстрее, а не медленнее, чем сканирования кучи."
+    }
+  },
+  {
+    "id": "postgresql-quiz-12",
+    "topicId": "postgresql",
+    "question": {
+      "en": "What is the key difference between SERIALIZABLE and REPEATABLE READ isolation levels in terms of MVCC behavior?",
+      "ru": "В чем ключевое отличие между уровнями изоляции SERIALIZABLE и REPEATABLE READ с точки зрения поведения MVCC?"
+    },
+    "options": {
+      "en": [
+        "SERIALIZABLE uses MVCC snapshots while REPEATABLE READ uses row-level locks exclusively",
+        "REPEATABLE READ allows phantom reads; SERIALIZABLE detects write skew and conflicts via predicate locks and can abort transactions",
+        "SERIALIZABLE requires explicit LOCK commands; REPEATABLE READ uses implicit locking automatically",
+        "Both use identical MVCC mechanisms; the difference is purely in lock acquisition timing"
+      ],
+      "ru": [
+        "SERIALIZABLE использует снимки MVCC, в то время как REPEATABLE READ использует блокировки на уровне строк исключительно",
+        "REPEATABLE READ позволяет фантомные чтения; SERIALIZABLE обнаруживает конфликты записи через предикатные блокировки и может прервать транзакции",
+        "SERIALIZABLE требует явных команд LOCK; REPEATABLE READ использует неявную блокировку автоматически",
+        "Оба используют идентичные механизмы MVCC; различие чисто во времени захвата блокировок"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "REPEATABLE READ can suffer from phantom reads (new rows inserted by other transactions). SERIALIZABLE in PostgreSQL uses predicate locking to detect serialization conflicts and may abort a transaction if a conflict is detected, providing true serializability. Both use MVCC snapshots; the difference is in conflict detection and the ability to abort conflicting transactions.",
+      "ru": "REPEATABLE READ может страдать от фантомных чтений (новые строки, вставленные другими транзакциями). SERIALIZABLE в PostgreSQL использует предикатную блокировку для обнаружения конфликтов сериализации и может прервать транзакцию при обнаружении конфликта, обеспечивая истинную сериализуемость. Оба используют снимки MVCC; различие заключается в обнаружении конфликтов и способности прерывать конфликтующие транзакции."
+    }
+  },
+  {
+    "id": "postgresql-quiz-13",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Given the query: SELECT id, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) as rank FROM employees; What does this window function compute?",
+      "ru": "Дан запрос: SELECT id, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) as rank FROM employees; Что вычисляет эта оконная функция?"
+    },
+    "options": {
+      "en": [
+        "The rank of each employee among all employees, with gaps in rank numbers when salaries are equal",
+        "The sequential row number within each department, ordered by salary descending, without gaps even if salaries are tied",
+        "A dense rank (no gaps) of employees by salary within each department",
+        "The percentile rank of each employee relative to the entire company"
+      ],
+      "ru": [
+        "Ранг каждого сотрудника среди всех сотрудников с пробелами в номерах рангов при равных зарплатах",
+        "Последовательный номер строки в каждом отделе, упорядоченный по зарплате в убывающем порядке, без пробелов, даже если зарплаты совпадают",
+        "Плотный ранг (без пробелов) сотрудников по зарплате в каждом отделе",
+        "Процентильный ранг каждого сотрудника относительно всей компании"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "ROW_NUMBER() assigns a unique sequential integer to each row within a partition, with no gaps. The PARTITION BY department ensures numbering restarts for each department, and ORDER BY salary DESC orders rows by salary descending. This differs from RANK() which has gaps for ties, and DENSE_RANK() which has no gaps but assigns the same rank to ties.",
+      "ru": "ROW_NUMBER() присваивает уникальный последовательный целый номер каждой строке в разделе без пробелов. PARTITION BY department гарантирует, что нумерация начинается заново для каждого отдела, а ORDER BY salary DESC упорядочивает строки по зарплате в убывающем порядке. Это отличается от RANK(), который имеет пробелы для связанных значений, и DENSE_RANK(), который не имеет пробелов, но присваивает одинаковый ранг связанным значениям."
+    }
+  },
+  {
+    "id": "postgresql-quiz-14",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Consider: SELECT * FROM orders LEFT JOIN customers ON orders.customer_id = customers.id WHERE customers.id IS NULL; What does this query retrieve?",
+      "ru": "Рассмотрим: SELECT * FROM orders LEFT JOIN customers ON orders.customer_id = customers.id WHERE customers.id IS NULL; Что извлекает этот запрос?"
+    },
+    "options": {
+      "en": [
+        "All customers who have not placed any orders",
+        "All orders whose customer_id does not have a matching customer record (orphaned orders)",
+        "All orders and customers where the join condition failed",
+        "An empty result set, because WHERE filters out all LEFT JOIN results"
+      ],
+      "ru": [
+        "Всех покупателей, которые не размещали заказы",
+        "Все заказы, чей customer_id не имеет соответствующей записи покупателя (осиротелые заказы)",
+        "Все заказы и покупателей, где условие соединения не удалось",
+        "Пустой набор результатов, потому что WHERE фильтрует все результаты LEFT JOIN"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "A LEFT JOIN returns all rows from the left table (orders) and matching rows from the right table (customers). Rows that don't match have NULL values in the right table columns. The WHERE clause filters for customers.id IS NULL, which identifies orders with no matching customer—orphaned orders due to data inconsistency or referential integrity violations. Option A describes a NOT IN subquery, not a LEFT JOIN anti-pattern.",
+      "ru": "LEFT JOIN возвращает все строки из левой таблицы (orders) и соответствующие строки из правой таблицы (customers). Строки, которые не совпадают, имеют значения NULL в столбцах правой таблицы. Предложение WHERE фильтрует для customers.id IS NULL, что идентифицирует заказы без соответствующего покупателя - осиротелые заказы из-за несогласованности данных или нарушения ссылочной целостности. Вариант А описывает подзапрос NOT IN, а не анти-паттерн LEFT JOIN."
+    }
+  },
+  {
+    "id": "postgresql-quiz-15",
+    "topicId": "postgresql",
+    "question": {
+      "en": "What is the primary purpose of running VACUUM in PostgreSQL, and how does it relate to MVCC?",
+      "ru": "Какова основная цель запуска VACUUM в PostgreSQL и как это связано с MVCC?"
+    },
+    "options": {
+      "en": [
+        "VACUUM removes old row versions that are no longer visible to any active transaction, reclaiming disk space and preventing transaction ID wraparound",
+        "VACUUM rebuilds all indexes to defragment them and improve query performance",
+        "VACUUM locks the entire table and rewrites it to eliminate NULL values from the heap",
+        "VACUUM compresses the WAL (Write-Ahead Logs) to reduce storage overhead"
+      ],
+      "ru": [
+        "VACUUM удаляет старые версии строк, которые больше не видны ни одной активной транзакции, освобождая дисковое пространство и предотвращая переполнение ID транзакции",
+        "VACUUM перестраивает все индексы для дефрагментации и улучшения производительности запросов",
+        "VACUUM блокирует всю таблицу и переписывает ее, чтобы удалить значения NULL из кучи",
+        "VACUUM сжимает WAL (журналы упреждающей записи), чтобы снизить затраты на хранилище"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "MVCC maintains multiple versions of rows for concurrent access. When a row is updated or deleted, the old version remains until no active transaction can see it. VACUUM marks these obsolete versions as dead and reclaims their space. Additionally, VACUUM updates the transaction ID counter to prevent wraparound (xid wraparound), which could cause data corruption. VACUUM does not rebuild indexes (that's REINDEX) or compress WAL files.",
+      "ru": "MVCC поддерживает несколько версий строк для одновременного доступа. Когда строка обновляется или удаляется, старая версия остается до тех пор, пока ни одна активная транзакция не сможет ее видеть. VACUUM помечает эти устаревшие версии как мертвые и освобождает их пространство. Кроме того, VACUUM обновляет счетчик ID транзакции, чтобы предотвратить переполнение (xid wraparound), которое могло бы вызвать повреждение данных. VACUUM не перестраивает индексы (это REINDEX) и не сжимает файлы WAL."
+    }
+  },
+  {
+    "id": "postgresql-quiz-16",
+    "topicId": "postgresql",
+    "question": {
+      "en": "When you execute EXPLAIN ANALYZE on a slow query and see that a sequential scan is being used instead of an index scan, what is the most likely reason the query planner made this choice?",
+      "ru": "Когда вы выполняете EXPLAIN ANALYZE на медленном запросе и видите, что используется последовательное сканирование вместо сканирования по индексу, какова наиболее вероятная причина, по которой планировщик запросов сделал такой выбор?"
+    },
+    "options": {
+      "en": [
+        "The planner estimated that fetching most of the table rows through the index would be more expensive than scanning the entire table sequentially",
+        "The index is corrupted and PostgreSQL automatically disabled it for safety",
+        "The table is too small and indexes are not used for tables under 1000 rows",
+        "The query contains a WHERE clause with OR, which always prevents index usage"
+      ],
+      "ru": [
+        "Планировщик оценил, что получение большинства строк таблицы через индекс будет дороже, чем последовательное сканирование всей таблицы",
+        "Индекс повреждён и PostgreSQL автоматически отключил его для безопасности",
+        "Таблица слишком мала и индексы не используются для таблиц с количеством строк менее 1000",
+        "Запрос содержит предложение WHERE с OR, что всегда предотвращает использование индексов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "PostgreSQL's query planner uses cost-based optimization. A sequential scan can be cheaper than index access when the query selectivity is low (returns many rows), because random I/O through an index becomes more expensive than sequential I/O. The other options are misconceptions: indexes don't corrupt silently, table size thresholds don't exist, and OR conditions can use indexes via bitmap scans.",
+      "ru": "Планировщик запросов PostgreSQL использует оптимизацию на основе стоимости. Последовательное сканирование может быть дешевле, чем доступ по индексу, когда селективность запроса низкая (возвращается много строк), потому что случайный ввод-вывод через индекс становится дороже, чем последовательный ввод-вывод. Остальные варианты — неправильные представления: индексы не повреждаются молча, пороги размера таблицы не существуют, а условия OR могут использовать индексы через растровые сканирования."
+    }
+  },
+  {
+    "id": "postgresql-quiz-17",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Consider this code:\nSELECT col1, col2, ROW_NUMBER() OVER (PARTITION BY col1 ORDER BY col2 DESC) as rn FROM table1;\nWhich rows will be returned if you add a WHERE clause: WHERE rn <= 2?",
+      "ru": "Рассмотрите этот код:\nSELECT col1, col2, ROW_NUMBER() OVER (PARTITION BY col1 ORDER BY col2 DESC) as rn FROM table1;\nКакие строки будут возвращены, если вы добавите предложение WHERE: WHERE rn <= 2?"
+    },
+    "options": {
+      "en": [
+        "No rows — window functions cannot be used in WHERE clauses",
+        "Top 2 rows globally ordered by col2 descending",
+        "Top 2 rows within each partition (group) of col1 values",
+        "All rows where col2 rank is less than or equal to 2 across all partitions combined"
+      ],
+      "ru": [
+        "Никакие строки — оконные функции не могут использоваться в предложениях WHERE",
+        "Первые 2 строки в целом, упорядоченные по col2 в убывающем порядке",
+        "Первые 2 строки в каждой партиции (группе) значений col1",
+        "Все строки, где ранг col2 меньше или равен 2 во всех партициях в совокупности"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Window functions are evaluated after WHERE clauses, so you cannot filter on window function results directly in WHERE. To achieve this, you must wrap the query in a subquery or CTE, then apply the WHERE filter to the outer query. PostgreSQL will raise a syntax error if you try to use a window function in WHERE.",
+      "ru": "Оконные функции вычисляются после предложений WHERE, поэтому вы не можете фильтровать результаты оконных функций непосредственно в WHERE. Чтобы этого добиться, вы должны обернуть запрос в подзапрос или CTE, а затем применить фильтр WHERE к внешнему запросу. PostgreSQL выдаст ошибку синтаксиса при попытке использовать оконную функцию в WHERE."
+    }
+  },
+  {
+    "id": "postgresql-quiz-18",
+    "topicId": "postgresql",
+    "question": {
+      "en": "What is the primary purpose of MVCC (Multi-Version Concurrency Control) in PostgreSQL, and how does it affect transaction isolation?",
+      "ru": "Какова основная цель MVCC (многоверсионного контроля одновременности) в PostgreSQL и как она влияет на уровень изоляции транзакций?"
+    },
+    "options": {
+      "en": [
+        "MVCC allows readers to see consistent snapshots of data without blocking writers, reducing lock contention and enabling better concurrency",
+        "MVCC ensures that all transactions see the same data by locking rows, preventing phantom reads",
+        "MVCC replicates data across multiple servers to maintain concurrent access",
+        "MVCC stores multiple versions on disk to provide faster read performance"
+      ],
+      "ru": [
+        "MVCC позволяет читателям видеть согласованные снимки данных без блокировки писателей, снижая конкуренцию за блокировки и обеспечивая лучшую одновременность",
+        "MVCC гарантирует, что все транзакции видят одни и те же данные путем блокировки строк, предотвращая фантомные чтения",
+        "MVCC реплицирует данные на несколько серверов для обеспечения одновременного доступа",
+        "MVCC хранит несколько версий на диске для обеспечения более быстрого чтения"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "MVCC allows PostgreSQL to provide non-blocking reads by maintaining multiple versions of rows. Each transaction sees a consistent snapshot based on transaction IDs, so readers don't block writers and vice versa. This is fundamental to PostgreSQL's concurrency model and isolation levels. The other options misunderstand MVCC's role: it doesn't rely on row locking, data replication, or disk performance.",
+      "ru": "MVCC позволяет PostgreSQL обеспечить неблокирующее чтение, сохраняя несколько версий строк. Каждая транзакция видит согласованный снимок на основе ID транзакций, поэтому читатели не блокируют писателей и наоборот. Это является фундаментом модели одновременности PostgreSQL и уровней изоляции. Остальные варианты неправильно понимают роль MVCC: она не полагается на блокировку строк, репликацию данных или производительность диска."
+    }
+  },
+  {
+    "id": "postgresql-quiz-19",
+    "topicId": "postgresql",
+    "question": {
+      "en": "Which index type is best suited for range queries like: SELECT * FROM users WHERE age >= 25 AND age < 65?",
+      "ru": "Какой тип индекса лучше всего подходит для запросов диапазона, таких как: SELECT * FROM users WHERE age >= 25 AND age < 65?"
+    },
+    "options": {
+      "en": [
+        "B-tree index",
+        "Hash index",
+        "GiST index",
+        "BRIN index"
+      ],
+      "ru": [
+        "Индекс B-дерева",
+        "Хеш-индекс",
+        "Индекс GiST",
+        "Индекс BRIN"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "B-tree is the default and most versatile index type, ideal for range queries because it maintains sorted order of keys. Hash indexes only support equality comparisons, not ranges. GiST and BRIN are specialized for geometric/spatial data and large tables respectively, not optimal for simple numeric range queries.",
+      "ru": "B-дерево — это тип индекса по умолчанию и наиболее универсальный, идеален для запросов диапазона, поскольку сохраняет отсортированный порядок ключей. Хеш-индексы поддерживают только сравнения на равенство, а не диапазоны. GiST и BRIN специализированы для геометрических/пространственных данных и больших таблиц соответственно, не оптимальны для простых числовых запросов диапазона."
+    }
+  },
+  {
+    "id": "postgresql-quiz-20",
+    "topicId": "postgresql",
+    "question": {
+      "en": "What is the result of: SELECT NULL = NULL; and why?",
+      "ru": "Каков результат: SELECT NULL = NULL; и почему?"
+    },
+    "options": {
+      "en": [
+        "NULL, because NULL represents an unknown value and comparisons with unknown values always return NULL",
+        "TRUE, because both sides are identical NULL values",
+        "FALSE, because NULL is never equal to anything",
+        "An error, because PostgreSQL does not allow comparisons with NULL"
+      ],
+      "ru": [
+        "NULL, потому что NULL представляет неизвестное значение и сравнения с неизвестными значениями всегда возвращают NULL",
+        "TRUE, потому что обе стороны являются идентичными значениями NULL",
+        "FALSE, потому что NULL никогда не равен ничему",
+        "Ошибка, потому что PostgreSQL не разрешает сравнения с NULL"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "NULL represents an unknown value, not the absence of value. Comparing anything with NULL (including NULL itself) returns NULL because the result is unknown. To check for NULL, use IS NULL or IS NOT NULL operators instead. This is SQL standard behavior and a common source of logic errors in queries.",
+      "ru": "NULL представляет неизвестное значение, а не отсутствие значения. Сравнение чего-либо с NULL (включая сам NULL) возвращает NULL, потому что результат неизвестен. Для проверки NULL используйте операторы IS NULL или IS NOT NULL. Это поведение согласно стандарту SQL и частый источник логических ошибок в запросах."
+    }
+  }
+]

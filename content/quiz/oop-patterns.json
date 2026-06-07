@@ -1,0 +1,407 @@
+[
+  {
+    "id": "oop-patterns-quiz-1",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "You have a Singleton class that manages database connections. A developer uses reflection to create a second instance bypassing the private constructor. What is the primary issue with this approach in a multithreaded environment?",
+      "ru": "У вас есть класс Singleton, который управляет подключениями к базе данных. Разработчик использует рефлексию для создания второго экземпляра, обходя приватный конструктор. Какова основная проблема этого подхода в многопоточной среде?"
+    },
+    "options": {
+      "en": [
+        "Two separate database connections may be opened, breaking the single-instance guarantee and causing resource leaks",
+        "Reflection will throw a security exception before the second instance is created",
+        "The Singleton pattern becomes thread-safe automatically when reflection is used",
+        "The second instance will be created but will share the same state as the first, so there's no real problem"
+      ],
+      "ru": [
+        "Могут быть открыты два отдельных подключения к базе данных, нарушая гарантию единственности и вызывая утечку ресурсов",
+        "Рефлексия выбросит исключение безопасности перед созданием второго экземпляра",
+        "Паттерн Singleton автоматически становится потокобезопасным при использовании рефлексии",
+        "Второй экземпляр будет создан, но будет использовать то же состояние, что и первый, поэтому реальной проблемы нет"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Reflection allows bypassing the private constructor, creating a second independent instance. Each instance maintains its own connection pool, breaking the single-instance contract and leading to resource leaks and state inconsistency. The other options misunderstand how Singletons fail under reflection attacks—there's no automatic exception, and state is NOT shared between instances.",
+      "ru": "Рефлексия позволяет обойти приватный конструктор и создать второй независимый экземпляр. Каждый экземпляр ведет свой пул подключений, нарушая контракт единственности и приводя к утечкам ресурсов и несогласованности состояния. Другие варианты неправильно понимают, как Singleton падает при атаках рефлексии—нет автоматического исключения и состояние НЕ распределяется между экземплярами."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-2",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "Given this code snippet:\n\nclass Animal {}\nclass Dog extends Animal {}\nclass DogFactory { create() { return new Dog(); } }\nclass AnimalFactory { create() { return new DogFactory().create(); } }\n\nWhy is this NOT a proper Abstract Factory pattern?",
+      "ru": "Дана этот фрагмент кода:\n\nclass Animal {}\nclass Dog extends Animal {}\nclass DogFactory { create() { return new Dog(); } }\nclass AnimalFactory { create() { return new DogFactory().create(); } }\n\nПочему это НЕ является правильным паттерном Abstract Factory?"
+    },
+    "options": {
+      "en": [
+        "Abstract Factory should create families of related objects, not delegate to a concrete factory. This is just wrapping, not abstract families.",
+        "The code uses inheritance instead of composition, which violates the Abstract Factory principle",
+        "DogFactory should extend AnimalFactory instead of being a separate class",
+        "The create() method should be declared as abstract in the base class"
+      ],
+      "ru": [
+        "Abstract Factory должна создавать семейства связанных объектов, а не делегировать конкретной фабрике. Это просто обертка, а не абстрактные семейства.",
+        "Код использует наследование вместо композиции, что нарушает принцип Abstract Factory",
+        "DogFactory должна расширять AnimalFactory вместо того, чтобы быть отдельным классом",
+        "Метод create() должен быть объявлен как abstract в базовом классе"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Abstract Factory is about creating multiple related products (e.g., Dog, Cat, Bird) from a single factory, not wrapping one concrete factory with another. This design creates only Dogs and doesn't represent families of related types. A proper Abstract Factory would have separate families like PetFactory and WildlifeFactory, each creating multiple animal types.",
+      "ru": "Abstract Factory предназначена для создания нескольких связанных продуктов (например, Dog, Cat, Bird) из одной фабрики, а не обертывания одной конкретной фабрики другой. Этот дизайн создает только Dogs и не представляет семейства связанных типов. Правильная Abstract Factory должна иметь отдельные семейства, такие как PetFactory и WildlifeFactory, каждая создающая несколько типов животных."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-3",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "In what scenario would you choose the Observer pattern over a Pub/Sub message broker system?",
+      "ru": "В каком сценарии вы выбрали бы паттерн Observer вместо системы Pub/Sub message broker?"
+    },
+    "options": {
+      "en": [
+        "When you have loosely coupled components in the same process and don't need persistence, network distribution, or durable queues",
+        "When you need to ensure all subscribers receive messages exactly once, even if they go offline",
+        "When communication must be synchronous and order of execution must be strictly guaranteed",
+        "When you need subscribers to dynamically discover publishers without direct references"
+      ],
+      "ru": [
+        "Когда у вас есть слабо связанные компоненты в одном процессе и вам не нужны персистентность, сетевое распределение или надежные очереди",
+        "Когда вам нужно гарантировать, что все подписчики получат сообщения ровно один раз, даже если они отключены",
+        "Когда коммуникация должна быть синхронной и порядок выполнения должен быть строго гарантирован",
+        "Когда подписчикам нужно динамически обнаруживать издателей без прямых ссылок"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Observer is in-process, synchronous, and tightly couples runtime (but decouples code). It's ideal for simple, same-JVM event notification. Pub/Sub brokers add complexity but provide persistence, guaranteed delivery, and network distribution—unnecessary overhead for in-process communication. Option 2 describes Pub/Sub's strength, option 3 oversimplifies Observer's behavior, and option 4 applies to both patterns equally.",
+      "ru": "Observer находится в процессе, синхронна и тесно связывает ряд действий (но развязывает код). Идеально подходит для простого уведомления о событиях в одной JVM. Брокеры Pub/Sub добавляют сложность, но обеспечивают персистентность, гарантированную доставку и распределение по сети—ненужные затраты для внутрипроцессной коммуникации. Вариант 2 описывает силу Pub/Sub, вариант 3 переупрощает поведение Observer, вариант 4 одинаково относится к обоим паттернам."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-4",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "Consider this code:\n\nclass PaymentProcessor {\n  process(strategy) { return strategy.execute(100); }\n}\nconst visa = { execute: (amount) => `Visa: $${amount}` };\nconst mastercard = { execute: (amount) => `MC: $${amount}` };\n\nWhy would replacing this Strategy pattern with State be incorrect?",
+      "ru": "Рассмотрите этот код:\n\nclass PaymentProcessor {\n  process(strategy) { return strategy.execute(100); }\n}\nconst visa = { execute: (amount) => `Visa: $${amount}` };\nconst mastercard = { execute: (amount) => `MC: $${amount}` };\n\nПочему замена этого паттерна Strategy на State была бы неправильной?"
+    },
+    "options": {
+      "en": [
+        "State models transitions between states based on internal conditions; Strategy models interchangeable algorithms. Here, algorithms don't change based on object state, just client choice.",
+        "The State pattern requires abstract base classes, which the current code doesn't have",
+        "Strategy and State are equivalent patterns, so replacement would not be incorrect at all",
+        "State is more performant, so replacing Strategy with State would violate performance best practices"
+      ],
+      "ru": [
+        "State моделирует переходы между состояниями на основе внутренних условий; Strategy моделирует взаимозаменяемые алгоритмы. Здесь алгоритмы не меняются на основе состояния объекта, только выбор клиента.",
+        "Паттерн State требует абстрактные базовые классы, которые текущий код не имеет",
+        "Strategy и State это эквивалентные паттерны, поэтому замена не была бы неправильной",
+        "State более производителен, поэтому замена Strategy на State нарушит лучшие практики производительности"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Strategy is about choosing different algorithms at runtime based on client preferences; State is about changing behavior based on the object's internal state and transitions. In this payment example, the choice is externally driven, not driven by processor state changes. Using State would imply the processor automatically transitions from Visa→Mastercard internally, which isn't the case.",
+      "ru": "Strategy это выбор разных алгоритмов во время выполнения на основе предпочтений клиента; State это изменение поведения на основе внутреннего состояния объекта и переходов. В этом примере платежей выбор внешне управляется, а не управляется внутренними изменениями состояния процессора. Использование State означало бы, что процессор автоматически переходит от Visa→Mastercard внутри, чего здесь нет."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-5",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "What is the key semantic difference between the Decorator pattern and Higher-Order Components (HOC) in React?",
+      "ru": "В чем ключевое семантическое различие между паттерном Decorator и Higher-Order Components (HOC) в React?"
+    },
+    "options": {
+      "en": [
+        "Decorator adds behavior via composition at compile/design-time; HOC adds behavior at runtime by wrapping a component and returning a new one",
+        "Decorator uses inheritance; HOC uses prototypal delegation",
+        "Decorator is for objects; HOC is for functions only",
+        "HOC is simply the JavaScript name for the Decorator pattern, they have no semantic difference"
+      ],
+      "ru": [
+        "Decorator добавляет поведение через композицию на этапе компиляции/проектирования; HOC добавляет поведение во время выполнения, обертывая компонент и возвращая новый",
+        "Decorator использует наследование; HOC использует делегирование на уровне прототипов",
+        "Decorator для объектов; HOC только для функций",
+        "HOC это просто JavaScript название для паттерна Decorator, они не имеют семантического различия"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Both use composition, but Decorator typically wraps an object statically before runtime, while HOC dynamically wraps a component at runtime, returning an enhanced version. This runtime flexibility lets HOCs inject props, manage state, and conditionally render—capabilities essential in React. They're conceptually similar but applied differently: Decorator is a structural pattern for objects, HOC is a JavaScript component pattern.",
+      "ru": "Оба используют композицию, но Decorator обычно обертывает объект статически перед выполнением, в то время как HOC динамически обертывает компонент во время выполнения, возвращая улучшенную версию. Эта гибкость во время выполнения позволяет HOC-ам инжектировать props, управлять состоянием и условно отображать—способности необходимые в React. Они концептуально похожи, но применяются по-разному: Decorator это структурный паттерн для объектов, HOC это JavaScript паттерн компонентов."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-6",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "You have a class that manages database connections and must ensure only one instance exists throughout the application lifetime. However, you later need to support multiple database types (MySQL, PostgreSQL). What is the primary pitfall you should avoid when extending the Singleton pattern for this use case?",
+      "ru": "У вас есть класс, управляющий подключениями к базе данных, и вы должны гарантировать, что во время работы приложения существует только один экземпляр. Однако позже вам нужно поддерживать несколько типов баз данных (MySQL, PostgreSQL). Какой основной подводный камень следует избежать при расширении паттерна Singleton для этого варианта использования?"
+    },
+    "options": {
+      "en": [
+        "Creating multiple Singleton instances, one per database type, which defeats the single-instance guarantee and makes testing difficult",
+        "Using a factory method inside the Singleton to switch implementations, which is a valid extension",
+        "Adding a static cache map to store different database connection pools, which violates thread safety",
+        "Implementing interface-based Singletons to allow polymorphism while keeping single instantiation"
+      ],
+      "ru": [
+        "Создание нескольких экземпляров Singleton, по одному для каждого типа базы данных, что нарушает гарантию единственного экземпляра и усложняет тестирование",
+        "Использование фабричного метода внутри Singleton для переключения реализаций, что является допустимым расширением",
+        "Добавление статического кэша для хранения различных пулов подключений к базе данных, что нарушает потокобезопасность",
+        "Реализация интерфейс-ориентированных Singleton для поддержки полиморфизма при сохранении единственного создания экземпляра"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The main pitfall is trying to create multiple Singleton instances for different database types, which violates the core Singleton principle and defeats the purpose. Instead, you should use the Singleton pattern with a factory method or configuration parameter to return different implementations. Options 2-4 describe valid approaches that preserve Singleton guarantees while supporting multiple types.",
+      "ru": "Главный подводный камень - попытка создать несколько экземпляров Singleton для разных типов баз данных, что нарушает основной принцип Singleton. Вместо этого следует использовать паттерн Singleton с фабричным методом или параметром конфигурации для возврата разных реализаций. Варианты 2-4 описывают допустимые подходы, сохраняющие гарантии Singleton при поддержке нескольких типов."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-7",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "Consider this code:\n\nclass EventEmitter {\n  private listeners = new Map();\n  on(event, callback) { ... }\n  emit(event, data) { ... }\n}\n\nclass UserComponent {\n  constructor(emitter) {\n    emitter.on('user-login', this.onLogin);\n  }\n}\n\nWhich pattern does this represent, and what is a key limitation compared to the Observer pattern?",
+      "ru": "Рассмотрите этот код:\n\nclass EventEmitter {\n  private listeners = new Map();\n  on(event, callback) { ... }\n  emit(event, data) { ... }\n}\n\nclass UserComponent {\n  constructor(emitter) {\n    emitter.on('user-login', this.onLogin);\n  }\n}\n\nКакой паттерн это представляет и какое ключевое ограничение по сравнению с паттерном Observer?"
+    },
+    "options": {
+      "en": [
+        "Pub/Sub pattern; it decouples publisher and subscriber through a central broker, but subscribers cannot directly query the current state of publishers",
+        "Observer pattern; subscribers must maintain direct references to publishers, making refactoring difficult",
+        "Mediator pattern; it introduces too much indirection and reduces performance",
+        "Factory pattern; it creates too many listener objects and causes memory leaks"
+      ],
+      "ru": [
+        "Паттерн Pub/Sub; он разъединяет издателя и подписчика через центральный посредник, но подписчики не могут напрямую запросить текущее состояние издателей",
+        "Паттерн Observer; подписчики должны поддерживать прямые ссылки на издателей, что затрудняет рефакторинг",
+        "Паттерн Mediator; он вводит слишком много опосредования и снижает производительность",
+        "Паттерн Factory; он создает слишком много объектов-слушателей и вызывает утечки памяти"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is the Pub/Sub pattern with a centralized EventEmitter broker. The key difference from Observer is that Pub/Sub subscribers and publishers are completely decoupled and do not know about each other. A limitation is that subscribers have no way to query the current state of the publisher without explicit state-sharing mechanisms. Options 2-4 describe different patterns or false limitations.",
+      "ru": "Это паттерн Pub/Sub с централизованным посредником EventEmitter. Ключевое отличие от Observer в том, что подписчики и издатели полностью разъединены и не знают друг о друге. Ограничение в том, что подписчики не могут запросить текущее состояние издателя без явных механизмов обмена состоянием. Варианты 2-4 описывают другие паттерны или ложные ограничения."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-8",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "You are choosing between Factory and Abstract Factory patterns to create UI components across multiple themes (Light, Dark, HighContrast). Which statement best describes when Abstract Factory is the superior choice?",
+      "ru": "Вы выбираете между паттернами Factory и Abstract Factory для создания UI-компонентов в нескольких темах (Light, Dark, HighContrast). Какое утверждение лучше всего описывает, когда Abstract Factory - лучший выбор?"
+    },
+    "options": {
+      "en": [
+        "When you need to create families of related objects that must work together, and ensuring consistency across themes is critical",
+        "When you have only a single theme and need to add more themes later",
+        "When you want to use simple function-based factories instead of class-based ones",
+        "When the creation logic depends on runtime input and you want to avoid if-else statements"
+      ],
+      "ru": [
+        "Когда вам нужно создать семейства связанных объектов, которые должны работать вместе, и критически важно обеспечить согласованность между темами",
+        "Когда у вас есть только одна тема и вам нужно добавить больше тем позже",
+        "Когда вы хотите использовать простые функции-фабрики вместо фабрик на основе классов",
+        "Когда логика создания зависит от входных данных времени выполнения и вы хотите избежать операторов if-else"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Abstract Factory excels when you have families of related products that must work together coherently. With themes, a Button, Input, and Dialog from the same theme must have a unified look. Factory Pattern is simpler when you need just one type of object. The other options describe limitations or unrelated concerns that Factory handles equally well.",
+      "ru": "Abstract Factory превосходна, когда у вас есть семейства связанных продуктов, которые должны работать вместе согласованно. При работе с темами Button, Input и Dialog из одной темы должны иметь единый внешний вид. Factory Pattern проще, когда вам нужен только один тип объекта. Остальные варианты описывают ограничения или несвязанные проблемы, которые Factory решает одинаково хорошо."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-9",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "Analyze this code:\n\nclass Order {\n  state = 'pending';\n  process() {\n    if (this.state === 'pending') { ... this.state = 'shipped'; }\n    else if (this.state === 'shipped') { ... this.state = 'delivered'; }\n  }\n}\n\nYou need to add 5 more states with complex logic. Should you refactor using State or Strategy pattern? Why?",
+      "ru": "Проанализируйте этот код:\n\nclass Order {\n  state = 'pending';\n  process() {\n    if (this.state === 'pending') { ... this.state = 'shipped'; }\n    else if (this.state === 'shipped') { ... this.state = 'delivered'; }\n  }\n}\n\nВам нужно добавить еще 5 состояний со сложной логикой. Следует ли рефакторить, используя паттерн State или Strategy? Почему?"
+    },
+    "options": {
+      "en": [
+        "State pattern, because Order must transition between states and the behavior depends on current state; State manages these transitions automatically",
+        "Strategy pattern, because you simply need to switch between different algorithm implementations without state transitions",
+        "Either one works equally well; the difference is purely stylistic",
+        "State pattern, but only if you need to validate transitions between states"
+      ],
+      "ru": [
+        "Паттерн State, потому что Order должен переходить между состояниями и поведение зависит от текущего состояния; State управляет этими переходами автоматически",
+        "Паттерн Strategy, потому что вам просто нужно переключаться между различными реализациями алгоритмов без переходов между состояниями",
+        "Любой из них работает одинаково хорошо; разница чисто стилистическая",
+        "Паттерн State, но только если вам нужно валидировать переходы между состояниями"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This requires State pattern because the Order object has mutable state and must transition between states (pending → shipped → delivered). State pattern encapsulates state-specific behavior and allows automatic transitions. Strategy is for choosing between interchangeable algorithms without state changes. Option 4 is partially correct but state validation is optional, not a requirement for choosing State pattern.",
+      "ru": "Это требует паттерна State, потому что объект Order имеет изменяемое состояние и должен переходить между состояниями (pending → shipped → delivered). State инкапсулирует поведение, специфичное для состояния, и позволяет автоматические переходы. Strategy используется для выбора между взаимозаменяемыми алгоритмами без изменения состояния. Вариант 4 частично верен, но валидация состояния необязательна, а не требование для выбора State."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-10",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "In React, a Higher-Order Component (HOC) and the Decorator pattern solve similar problems. Which statement accurately describes their relationship and a key difference?",
+      "ru": "В React компонент High-Order Component (HOC) и паттерн Decorator решают подобные проблемы. Какое утверждение точно описывает их взаимосвязь и ключевое отличие?"
+    },
+    "options": {
+      "en": [
+        "HOC is the Decorator pattern applied to React components; both wrap objects to add behavior, but HOC operates at the component level and returns a new component",
+        "HOC and Decorator are the same pattern, just with different names in different frameworks",
+        "Decorator is more powerful than HOC because it can modify object properties directly without wrapping",
+        "HOC replaces the Decorator pattern and is considered the modern standard for all decoration tasks"
+      ],
+      "ru": [
+        "HOC - это паттерн Decorator, применённый к React-компонентам; оба оборачивают объекты для добавления поведения, но HOC работает на уровне компонентов и возвращает новый компонент",
+        "HOC и Decorator - это один и тот же паттерн, просто с разными названиями в разных фреймворках",
+        "Decorator более мощен, чем HOC, потому что может изменять свойства объекта напрямую без обёртывания",
+        "HOC заменяет паттерн Decorator и считается современным стандартом для всех задач декорирования"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "HOC is essentially the Decorator pattern adapted for React's component-based architecture. Both wrap an object (Component) to enhance it. The key difference is that HOC returns a new component that wraps the original, while traditional Decorators add behavior by composition or inheritance. Options 2, 3, and 4 misrepresent the relationship or incorrectly claim one is universally superior.",
+      "ru": "HOC - это по сути паттерн Decorator, адаптированный к архитектуре React на основе компонентов. Оба оборачивают объект (Component) для его улучшения. Ключевое отличие в том, что HOC возвращает новый компонент, который оборачивает исходный, а традиционные Decorator добавляют поведение через композицию или наследование. Варианты 2, 3 и 4 неправильно представляют взаимосвязь или неверно утверждают, что один универсально превосходит другой."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-11",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "You have a codebase where a Singleton is accessed from multiple threads without synchronization. Which of the following is the most critical issue that can occur?",
+      "ru": "В кодовой базе Singleton получают доступ из нескольких потоков без синхронизации. Какая из следующих проблем является наиболее критической?"
+    },
+    "options": {
+      "en": [
+        "Multiple instances of the Singleton can be created, violating the single instance guarantee",
+        "The Singleton will consume more memory than a regular class",
+        "The Singleton cannot be garbage collected properly",
+        "Thread context variables will not work inside the Singleton"
+      ],
+      "ru": [
+        "Могут быть созданы несколько экземпляров Singleton, нарушая гарантию единственного экземпляра",
+        "Singleton будет потреблять больше памяти, чем обычный класс",
+        "Singleton не может быть надлежащим образом собран сборщиком мусора",
+        "Переменные контекста потока не будут работать внутри Singleton"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The primary Singleton pitfall in multithreaded environments is double-checked locking failure or race conditions during instance creation, which can result in multiple instances. Memory consumption and garbage collection are not specific to Singleton thread-safety issues. Thread context variables are unrelated to the Singleton pattern.",
+      "ru": "Основной подвох Singleton в многопоточной среде — это отказ двойной проверки блокировки или условия гонки при создании экземпляра, что может привести к созданию нескольких экземпляров. Потребление памяти и сборка мусора не являются специфическими проблемами безопасности потоков Singleton. Переменные контекста потока не связаны с паттерном Singleton."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-12",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "When should you use Abstract Factory instead of Factory Method? Select the best answer.",
+      "ru": "Когда следует использовать Abstract Factory вместо Factory Method? Выберите лучший ответ."
+    },
+    "options": {
+      "en": [
+        "When you need to create a single product type with different implementations",
+        "When you need to create families of related objects that work together as a coherent system",
+        "When you want to reduce the number of classes in your codebase",
+        "When you need to create objects faster than Factory Method allows"
+      ],
+      "ru": [
+        "Когда вам нужно создать один тип продукта с разными реализациями",
+        "Когда вам нужно создавать семьи связанных объектов, которые работают вместе как согласованная система",
+        "Когда вы хотите уменьшить количество классов в вашей кодовой базе",
+        "Когда вам нужно создавать объекты быстрее, чем позволяет Factory Method"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Abstract Factory is designed to create families of related objects (e.g., UI components for different OS themes) that depend on each other, ensuring consistency. Factory Method creates a single product type. Performance and code reduction are not primary concerns for choosing between these patterns.",
+      "ru": "Abstract Factory предназначена для создания семей связанных объектов (например, компонентов пользовательского интерфейса для разных тем ОС), которые зависят друг от друга, обеспечивая согласованность. Factory Method создает один тип продукта. Производительность и сокращение кода не являются основными факторами выбора между этими паттернами."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-13",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "Consider this code: An event emitter broadcasts events to 100 subscribers. Each subscriber processes the event independently without needing to coordinate. Is Observer or Pub/Sub more appropriate here, and why?",
+      "ru": "Рассмотрите код: эмиттер событий передает события 100 подписчикам. Каждый подписчик обрабатывает событие независимо без необходимости координации. Является ли Observer или Pub/Sub более подходящим здесь и почему?"
+    },
+    "options": {
+      "en": [
+        "Observer, because it's faster and uses less memory",
+        "Pub/Sub, because it decouples the publisher from subscribers through a message broker or central event channel",
+        "Observer, because Observer pattern is always preferred in event-driven architectures",
+        "Pub/Sub, because it automatically handles subscriber failures gracefully"
+      ],
+      "ru": [
+        "Observer, потому что он быстрее и использует меньше памяти",
+        "Pub/Sub, потому что он разделяет издателя и подписчиков через брокер сообщений или центральный канал событий",
+        "Observer, потому что паттерн Observer всегда предпочтительнее в архитектурах, управляемых событиями",
+        "Pub/Sub, потому что он автоматически обрабатывает отказы подписчиков корректно"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Pub/Sub is more appropriate when you need loose coupling and scalability, as the publisher doesn't need to know about subscribers and can scale independently. Observer creates tight coupling between publisher and observers. Neither pattern is universally 'always preferred', and Pub/Sub does not automatically handle failures—that requires explicit error handling.",
+      "ru": "Pub/Sub более подходит, когда вам нужна слабая связанность и масштабируемость, так как издатель не должен знать о подписчиках и может масштабироваться независимо. Observer создает тесную связь между издателем и наблюдателями. Ни один паттерн не является универсально 'всегда предпочтительным', и Pub/Sub не обрабатывает отказы автоматически — это требует явной обработки ошибок."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-14",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "In a payment processing system, you have different payment strategies (Credit Card, PayPal, Crypto). The behavior depends on the internal state of the payment process (pending, processing, completed). Which pattern should you combine to handle both strategy switching and state transitions properly?",
+      "ru": "В системе обработки платежей у вас есть разные стратегии платежей (кредитная карта, PayPal, крипто). Поведение зависит от внутреннего состояния процесса платежа (ожидание, обработка, завершение). Какой паттерн вы должны объединить, чтобы правильно обработать как переключение стратегии, так и переходы состояния?"
+    },
+    "options": {
+      "en": [
+        "Strategy alone, with conditional logic to handle state transitions",
+        "State alone, with methods that implement all payment strategies internally",
+        "Strategy and State patterns together, where State determines which Strategy can execute, and Strategy defines the algorithm for state-specific operations",
+        "Neither; use a simple switch statement to handle both concerns"
+      ],
+      "ru": [
+        "Только Strategy с условной логикой для обработки переходов состояния",
+        "Только State с методами, которые реализуют все стратегии платежей внутри",
+        "Паттерны Strategy и State вместе, где State определяет, какую Strategy можно выполнить, и Strategy определяет алгоритм для операций, зависящих от состояния",
+        "Ни то, ни другое; используйте простой switch-оператор для обработки обеих проблем"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Strategy and State address different concerns: Strategy encapsulates interchangeable algorithms (payment methods), while State encapsulates behavior that varies with object state (payment process lifecycle). Combining them creates a flexible, maintainable design. Using only one pattern or a switch statement would lead to tight coupling and reduced extensibility.",
+      "ru": "Strategy и State решают разные проблемы: Strategy инкапсулирует взаимозаменяемые алгоритмы (методы платежа), а State инкапсулирует поведение, которое варьируется с состоянием объекта (жизненный цикл процесса платежа). Их комбинация создает гибкий, поддерживаемый дизайн. Использование только одного паттерна или switch-оператора приведет к тесной связанности и сниженной расширяемости."
+    }
+  },
+  {
+    "id": "oop-patterns-quiz-15",
+    "topicId": "oop-patterns",
+    "question": {
+      "en": "You are building a React component library. You want to add logging, authentication, and theme wrapping to a base Button component without modifying it. Decorator and Higher-Order Component (HOC) can both solve this. What is the key difference in how they achieve this?",
+      "ru": "Вы создаете библиотеку компонентов React. Вы хотите добавить логирование, аутентификацию и обертывание темы к базовому компоненту Button без его изменения. Decorator и Higher-Order Component (HOC) могут решить эту проблему. В чем ключевое различие в том, как они это достигают?"
+    },
+    "options": {
+      "en": [
+        "Decorator modifies the component instance at runtime; HOC creates a new component that wraps the original",
+        "HOC modifies the component instance at runtime; Decorator creates a new component that wraps the original",
+        "Both achieve the same result, but Decorator is JavaScript syntax sugar for HOC",
+        "Decorator works only with class components; HOC works with both class and functional components"
+      ],
+      "ru": [
+        "Decorator изменяет экземпляр компонента во время выполнения; HOC создает новый компонент, который оборачивает исходный",
+        "HOC изменяет экземпляр компонента во время выполнения; Decorator создает новый компонент, который оборачивает исходный",
+        "Оба достигают одного и того же результата, но Decorator — это синтаксический сахар JavaScript для HOC",
+        "Decorator работает только с компонентами класса; HOC работает как с компонентами класса, так и с функциональными"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "In JavaScript/React, Decorator modifies or enhances a class or function at definition time (via metadata or wrapping), while HOC is a function that takes a component and returns a new component that wraps it. HOC is the primary composition pattern in React since decorators are still experimental. Option 2 reverses the mechanism, and option 3 incorrectly equates the two.",
+      "ru": "В JavaScript/React Decorator изменяет или улучшает класс или функцию во время определения (через метаданные или обертывание), в то время как HOC — это функция, которая принимает компонент и возвращает новый компонент, который его оборачивает. HOC — основной паттерн композиции в React, так как декораторы все еще экспериментальны. Вариант 2 переворачивает механизм, а вариант 3 неправильно приравнивает эти два."
+    }
+  }
+]

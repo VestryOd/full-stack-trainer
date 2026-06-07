@@ -1,0 +1,407 @@
+[
+  {
+    "id": "security-quiz-1",
+    "topicId": "security",
+    "question": {
+      "en": "Which of the following best describes the difference between Stored XSS and Reflected XSS?",
+      "ru": "Какое из следующих утверждений лучше всего описывает разницу между сохраненной XSS и отраженной XSS?"
+    },
+    "options": {
+      "en": [
+        "Stored XSS persists in the database and affects all users, while Reflected XSS is temporary and requires the victim to click a malicious link",
+        "Reflected XSS persists in the database and affects all users, while Stored XSS is temporary and requires the victim to click a malicious link",
+        "Both types persist in the database; the difference is only in how the payload is encoded",
+        "Stored XSS only affects the attacker's own session, while Reflected XSS affects all users globally"
+      ],
+      "ru": [
+        "Сохраненная XSS сохраняется в базе данных и влияет на всех пользователей, в то время как отраженная XSS временна и требует, чтобы жертва нажала на вредоносную ссылку",
+        "Отраженная XSS сохраняется в базе данных и влияет на всех пользователей, в то время как сохраненная XSS временна и требует, чтобы жертва нажала на вредоносную ссылку",
+        "Оба типа сохраняются в базе данных; разница только в том, как кодируется полезная нагрузка",
+        "Сохраненная XSS влияет только на собственный сеанс злоумышленника, в то время как отраженная XSS влияет на всех пользователей глобально"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Stored XSS saves the malicious payload to the server (database), making it persistent and affecting all users who view the compromised content. Reflected XSS occurs when user input is immediately echoed back without proper sanitization, but is not saved, requiring social engineering to trick users into clicking malicious links. The other options confuse these definitions or misunderstand the scope of impact.",
+      "ru": "Сохраненная XSS сохраняет вредоносную полезную нагрузку на сервер (базу данных), делая ее постоянной и влияя на всех пользователей, которые просматривают скомпрометированный контент. Отраженная XSS происходит, когда пользовательский ввод немедленно возвращается без надлежащей очистки, но не сохраняется, требуя социальной инженерии. Остальные варианты путают эти определения или неправильно понимают масштаб воздействия."
+    }
+  },
+  {
+    "id": "security-quiz-2",
+    "topicId": "security",
+    "question": {
+      "en": "A JWT token has three parts separated by dots. If a token is `eyJhbGc...`, `eyJzdWI...`, and `TJVA95U...`, what is the correct order of these components?",
+      "ru": "JWT токен состоит из трех частей, разделенных точками. Если токен содержит `eyJhbGc...`, `eyJzdWI...` и `TJVA95U...`, какой правильный порядок этих компонентов?"
+    },
+    "options": {
+      "en": [
+        "Header.Payload.Signature",
+        "Payload.Header.Signature",
+        "Signature.Header.Payload",
+        "Header.Signature.Payload"
+      ],
+      "ru": [
+        "Заголовок.Полезная_нагрузка.Подпись",
+        "Полезная_нагрузка.Заголовок.Подпись",
+        "Подпись.Заголовок.Полезная_нагрузка",
+        "Заголовок.Подпись.Полезная_нагрузка"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "JWT always follows the structure Header.Payload.Signature. The header contains metadata like algorithm type, the payload contains claims about the user, and the signature ensures the token hasn't been tampered with. The other orderings are incorrect and would break the JWT verification process.",
+      "ru": "JWT всегда следует структуре Заголовок.Полезная_нагрузка.Подпись. Заголовок содержит метаданные, такие как тип алгоритма, полезная нагрузка содержит утверждения о пользователе, а подпись гарантирует, что токен не был изменен. Остальные порядки неверны и нарушат процесс проверки JWT."
+    }
+  },
+  {
+    "id": "security-quiz-3",
+    "topicId": "security",
+    "question": {
+      "en": "You are reviewing code that handles user comments. The code processes: `const query = \"SELECT * FROM comments WHERE id = \" + userId;`. What type of vulnerability does this represent, and why is it dangerous?",
+      "ru": "Вы проверяете код, который обрабатывает комментарии пользователей. Код обрабатывает: `const query = \"SELECT * FROM comments WHERE id = \" + userId;`. Какой тип уязвимости это представляет и почему это опасно?"
+    },
+    "options": {
+      "en": [
+        "SQL Injection: an attacker can manipulate the query by providing malicious input like `1; DROP TABLE comments;--`",
+        "CSRF: the query lacks a security token to verify the request came from a trusted source",
+        "XSS: the query string is not escaped before being displayed to the user",
+        "Authentication bypass: the query doesn't include password validation before executing"
+      ],
+      "ru": [
+        "SQL-инъекция: злоумышленник может манипулировать запросом, предоставляя вредоносный ввод типа `1; DROP TABLE comments;--`",
+        "CSRF: запросу не хватает маркера безопасности для проверки того, что запрос пришел из надежного источника",
+        "XSS: строка запроса не экранирована перед отображением пользователю",
+        "Обход аутентификации: запрос не включает проверку пароля перед выполнением"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is a classic SQL Injection vulnerability because user input is directly concatenated into the SQL query without sanitization or parameterized queries. An attacker can inject SQL commands to modify the query logic, potentially extracting, modifying, or deleting data. Using prepared statements with parameterized queries would prevent this vulnerability.",
+      "ru": "Это классическая уязвимость SQL-инъекции, потому что пользовательский ввод напрямую объединяется в SQL-запрос без санитизации или параметризованных запросов. Злоумышленник может внедрить SQL-команды для изменения логики запроса, потенциально извлекая, изменяя или удаляя данные. Использование подготовленных операторов с параметризованными запросами предотвратило бы эту уязвимость."
+    }
+  },
+  {
+    "id": "security-quiz-4",
+    "topicId": "security",
+    "question": {
+      "en": "A web application sets a cookie with these flags: `Set-Cookie: sessionId=abc123; HttpOnly; Secure`. What does this configuration protect against?",
+      "ru": "Веб-приложение устанавливает cookie со следующими флагами: `Set-Cookie: sessionId=abc123; HttpOnly; Secure`. От чего защищает эта конфигурация?"
+    },
+    "options": {
+      "en": [
+        "HttpOnly prevents JavaScript access to the cookie, and Secure ensures it's only sent over HTTPS connections",
+        "HttpOnly encrypts the cookie value, and Secure prevents the cookie from being sent to subdomains",
+        "Both flags encrypt the cookie and prevent CSRF attacks by blocking all cross-origin requests",
+        "HttpOnly disables cookie sharing between browsers, and Secure adds an authentication signature to the cookie"
+      ],
+      "ru": [
+        "HttpOnly предотвращает доступ JavaScript к cookie, а Secure гарантирует, что он отправляется только через HTTPS-соединения",
+        "HttpOnly шифрует значение cookie, а Secure предотвращает отправку cookie поддоменам",
+        "Оба флага шифруют cookie и предотвращают CSRF-атаки, блокируя все кросс-доменные запросы",
+        "HttpOnly отключает совместное использование cookie между браузерами, а Secure добавляет подпись аутентификации к cookie"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "HttpOnly prevents client-side JavaScript from accessing the cookie, protecting against XSS attacks that attempt to steal session tokens. Secure ensures the cookie is only transmitted over encrypted HTTPS connections, preventing interception on unencrypted HTTP. Together, they significantly reduce the attack surface for session hijacking. The other options misrepresent what these flags do.",
+      "ru": "HttpOnly предотвращает доступ JavaScript на стороне клиента к cookie, защищая от XSS-атак, которые пытаются украсть токены сеанса. Secure гарантирует, что cookie передается только через зашифрованные HTTPS-соединения, предотвращая перехват на незашифрованном HTTP. Вместе они значительно снижают поверхность атаки для перехвата сеанса. Остальные варианты неправильно описывают функции этих флагов."
+    }
+  },
+  {
+    "id": "security-quiz-5",
+    "topicId": "security",
+    "question": {
+      "en": "Which OAuth 2.0 flow is most appropriate for a single-page application (SPA) that needs to call a backend API, and why?",
+      "ru": "Какой поток OAuth 2.0 наиболее подходит для одностраничного приложения (SPA), которому нужно вызывать API бэкенда, и почему?"
+    },
+    "options": {
+      "en": [
+        "Authorization Code flow with PKCE: it avoids storing client secrets in the browser and uses state/code verification to prevent attacks",
+        "Implicit flow: it provides direct access tokens to the browser without requiring a backend, simplifying the implementation",
+        "Client Credentials flow: it allows the SPA to authenticate directly to the API using a shared secret",
+        "Resource Owner Password flow: it is the most secure method because the user directly provides credentials to the application"
+      ],
+      "ru": [
+        "Поток кода авторизации с PKCE: он позволяет избежать хранения секретов клиента в браузере и использует проверку состояния/кода для предотвращения атак",
+        "Неявный поток: он предоставляет маркеры доступа непосредственно в браузер без необходимости бэкенда, упрощая реализацию",
+        "Поток учетных данных клиента: он позволяет SPA аутентифицироваться непосредственно в API, используя общий секрет",
+        "Поток пароля владельца ресурса: это наиболее безопасный метод, поскольку пользователь напрямую предоставляет учетные данные приложению"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Authorization Code flow with PKCE (Proof Key for Code Exchange) is the modern standard for SPAs because it prevents storing sensitive client secrets in browser memory and uses cryptographic verification to protect against authorization code interception and CSRF attacks. The Implicit flow is now deprecated due to security concerns. Client Credentials and Resource Owner Password flows are designed for different scenarios (service-to-service and legacy applications, respectively).",
+      "ru": "Поток кода авторизации с PKCE является современным стандартом для SPA, поскольку он предотвращает хранение конфиденциальных секретов клиента в памяти браузера и использует криптографическую проверку для защиты от перехвата кода авторизации и CSRF-атак. Неявный поток теперь считается устаревшим из-за проблем безопасности. Потоки учетных данных клиента и пароля владельца ресурса предназначены для других сценариев."
+    }
+  },
+  {
+    "id": "security-quiz-6",
+    "topicId": "security",
+    "question": {
+      "en": "A JWT token is intercepted by an attacker. Which part of the JWT structure can the attacker read without the secret key?",
+      "ru": "JWT токен перехвачен злоумышленником. Какую часть структуры JWT злоумышленник может прочитать без секретного ключа?"
+    },
+    "options": {
+      "en": [
+        "Header and Payload (they are Base64 encoded, not encrypted)",
+        "Only the Signature",
+        "Only the Header",
+        "All parts require the secret key to decode"
+      ],
+      "ru": [
+        "Заголовок и Payload (они закодированы в Base64, а не зашифрованы)",
+        "Только подпись (Signature)",
+        "Только заголовок (Header)",
+        "Все части требуют секретного ключа для декодирования"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "JWT uses Base64 encoding for header and payload, not encryption, so any interceptor can decode them. The signature is what verifies integrity using the secret key. This is why JWTs should be transmitted over HTTPS and should not contain sensitive data.",
+      "ru": "JWT использует кодирование Base64 для заголовка и полезной нагрузки, а не шифрование, поэтому любой перехватчик может их декодировать. Подпись проверяет целостность с помощью секретного ключа. Поэтому JWT должны передаваться по HTTPS и не должны содержать конфиденциальные данные."
+    }
+  },
+  {
+    "id": "security-quiz-7",
+    "topicId": "security",
+    "question": {
+      "en": "Which HTTP header best prevents Reflected XSS attacks while still allowing inline scripts from your own domain?",
+      "ru": "Какой HTTP заголовок лучше всего предотвращает атаки отражённого XSS, при этом разрешая встроенные скрипты со своего домена?"
+    },
+    "options": {
+      "en": [
+        "Content-Security-Policy: script-src 'self'",
+        "X-XSS-Protection: 1; mode=block",
+        "X-Content-Type-Options: nosniff",
+        "Strict-Transport-Security: max-age=31536000"
+      ],
+      "ru": [
+        "Content-Security-Policy: script-src 'self'",
+        "X-XSS-Protection: 1; mode=block",
+        "X-Content-Type-Options: nosniff",
+        "Strict-Transport-Security: max-age=31536000"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CSP with script-src 'self' is the modern and most effective defense against XSS by controlling which scripts can execute. X-XSS-Protection is legacy and less reliable. X-Content-Type-Options prevents MIME-type sniffing, not XSS. HSTS only enforces HTTPS usage.",
+      "ru": "CSP с script-src 'self' — это современная и наиболее эффективная защита от XSS путём контроля того, какие скрипты могут выполняться. X-XSS-Protection устарела и менее надёжна. X-Content-Type-Options предотвращает снифинг MIME-типов, а не XSS. HSTS только принуждает использовать HTTPS."
+    }
+  },
+  {
+    "id": "security-quiz-8",
+    "topicId": "security",
+    "question": {
+      "en": "Review this code: A form submits a bank transfer request without a token check. An attacker crafts a malicious site that makes the user's browser submit the same form. What vulnerability is this?",
+      "ru": "Проверьте код: форма отправляет запрос на перевод денег без проверки токена. Злоумышленник создаёт вредоносный сайт, который заставляет браузер пользователя отправить ту же форму. Какой это тип уязвимости?"
+    },
+    "options": {
+      "en": [
+        "Cross-Site Request Forgery (CSRF)",
+        "Cross-Site Scripting (XSS)",
+        "SQL Injection",
+        "Session Hijacking"
+      ],
+      "ru": [
+        "Подделка запроса между сайтами (CSRF)",
+        "Межсайтовый скриптинг (XSS)",
+        "SQL-инъекция",
+        "Перехват сессии"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is a textbook CSRF attack where the attacker exploits the user's authenticated session to perform unwanted actions. The fix is to use anti-CSRF tokens (SameSite cookies, double-submit tokens). XSS involves code injection, SQL injection targets databases, and session hijacking is about stealing session identifiers.",
+      "ru": "Это классическая атака CSRF, где злоумышленник использует аутентифицированную сессию пользователя для выполнения нежелательных действий. Решение — использовать анти-CSRF токены (SameSite cookies, double-submit токены). XSS связана с инъекцией кода, SQL-инъекция нацелена на БД, а перехват сессии — это кража идентификаторов сессии."
+    }
+  },
+  {
+    "id": "security-quiz-9",
+    "topicId": "security",
+    "question": {
+      "en": "In OAuth 2.0, which flow is most suitable for a single-page application (SPA) running in a browser, and why is the Implicit flow now considered deprecated?",
+      "ru": "В OAuth 2.0, какой поток наиболее подходит для одностраничного приложения (SPA), работающего в браузере, и почему поток Implicit теперь считается устаревшим?"
+    },
+    "options": {
+      "en": [
+        "Authorization Code Flow with PKCE; Implicit flow exposes tokens in the URL, making them vulnerable to interception and XSS",
+        "Implicit Flow; it was deprecated due to poor user experience",
+        "Resource Owner Password Credentials Flow; it is the most secure for SPAs",
+        "Client Credentials Flow; browser-based apps require direct client credentials"
+      ],
+      "ru": [
+        "Поток кода авторизации с PKCE; поток Implicit раскрывает токены в URL, подвергая их риску перехвата и XSS",
+        "Поток Implicit; он был устарел из-за плохого пользовательского опыта",
+        "Поток учётных данных владельца ресурса; это наиболее безопасно для SPA",
+        "Поток учётных данных клиента; браузерные приложения требуют прямых учётных данных клиента"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Authorization Code Flow with PKCE is the modern OAuth 2.0 standard for SPAs because the backend handles the token exchange securely. Implicit flow is insecure because access tokens appear in the URL fragment, vulnerable to XSS and browser history interception. Resource Owner Password and Client Credentials flows are inappropriate for frontend applications.",
+      "ru": "Поток кода авторизации с PKCE — это современный стандарт OAuth 2.0 для SPA, потому что бэкенд безопасно обменивает токены. Поток Implicit небезопасен, так как токены доступа отображаются в фрагменте URL, уязвимы к XSS и перехвату истории браузера. Потоки учётных данных владельца ресурса и клиента неуместны для фронтенд-приложений."
+    }
+  },
+  {
+    "id": "security-quiz-10",
+    "topicId": "security",
+    "question": {
+      "en": "A web app uses cookies with: `Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict`. Which attack vector is NOT mitigated by these flags combined?",
+      "ru": "Веб-приложение использует cookies с: `Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict`. Какой вектор атаки НЕ смягчается этими флагами в совокупности?"
+    },
+    "options": {
+      "en": [
+        "Direct SQL injection attack on the backend database",
+        "XSS attacks that try to access the cookie via JavaScript",
+        "CSRF attacks from external sites",
+        "Man-in-the-middle interception of the cookie"
+      ],
+      "ru": [
+        "Прямая атака SQL-инъекции на базу данных бэкенда",
+        "Атаки XSS, которые пытаются получить доступ к cookie через JavaScript",
+        "Атаки CSRF с внешних сайтов",
+        "Атака посредника с перехватом cookie"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Cookie flags (HttpOnly, Secure, SameSite) protect the cookie itself during transmission and usage, but they cannot prevent backend SQL injection vulnerabilities. HttpOnly blocks XSS cookie theft, Secure prevents MITM over HTTP, and SameSite blocks CSRF. SQL injection is a backend logic vulnerability that requires input validation and parameterized queries.",
+      "ru": "Флаги cookie (HttpOnly, Secure, SameSite) защищают саму cookie при передаче и использовании, но не могут предотвратить уязвимости SQL-инъекции на бэкенде. HttpOnly блокирует кражу cookie через XSS, Secure предотвращает MITM через HTTP, а SameSite блокирует CSRF. SQL-инъекция — это уязвимость логики бэкенда, требующая валидации входных данных и параметризованных запросов."
+    }
+  },
+  {
+    "id": "security-quiz-11",
+    "topicId": "security",
+    "question": {
+      "en": "You have a web application that reflects user input in the HTML response without any encoding. An attacker crafts a malicious URL containing <script>alert('XSS')</script> in a query parameter. Which type of XSS vulnerability is this?",
+      "ru": "У вас есть веб-приложение, которое отражает пользовательский ввод в HTML-ответе без кодирования. Злоумышленник создает вредоносный URL с <script>alert('XSS')</script> в параметре запроса. Какой тип уязвимости XSS это?"
+    },
+    "options": {
+      "en": [
+        "Reflected XSS",
+        "Stored XSS",
+        "DOM-based XSS",
+        "Blind XSS"
+      ],
+      "ru": [
+        "Reflected XSS",
+        "Stored XSS",
+        "DOM-based XSS",
+        "Blind XSS"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Reflected XSS occurs when untrusted data from a request is immediately echoed back in the response without sanitization. The payload is not stored in a database (which would be Stored XSS) and is not executed purely in the DOM (DOM-based XSS). Blind XSS involves attacks where the attacker cannot see the result directly.",
+      "ru": "Reflected XSS происходит, когда ненадежные данные из запроса немедленно возвращаются в ответе без санитизации. Payload не сохраняется в базе данных (это было бы Stored XSS) и не выполняется чисто в DOM (DOM-based XSS). Blind XSS включает атаки, где злоумышленник не видит результат напрямую."
+    }
+  },
+  {
+    "id": "security-quiz-12",
+    "topicId": "security",
+    "question": {
+      "en": "A JWT token has three parts separated by dots. If a token is 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U', which part is the signature?",
+      "ru": "JWT токен имеет три части, разделенные точками. Если токен 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U', какая часть является подписью?"
+    },
+    "options": {
+      "en": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+        "eyJzdWIiOiIxMjM0NTY3ODkwIn0",
+        "dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+        "The entire token is the signature"
+      ],
+      "ru": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+        "eyJzdWIiOiIxMjM0NTY3ODkwIn0",
+        "dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+        "Весь токен является подписью"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A JWT consists of Header.Payload.Signature. The first part is the base64-encoded header, the second is the payload, and the third is the cryptographic signature. The signature is what ensures the token hasn't been tampered with and verifies authenticity.",
+      "ru": "JWT состоит из Header.Payload.Signature. Первая часть - это base64-кодированный заголовок, вторая - payload, третья - криптографическая подпись. Подпись гарантирует, что токен не был подделан и проверяет подлинность."
+    }
+  },
+  {
+    "id": "security-quiz-13",
+    "topicId": "security",
+    "question": {
+      "en": "Consider a form submission where a user changes their email. The server checks the 'Referer' header to prevent CSRF attacks. Why is this approach insufficient?",
+      "ru": "Рассмотрим отправку формы, где пользователь меняет свой email. Сервер проверяет заголовок 'Referer' для предотвращения CSRF-атак. Почему этот подход недостаточен?"
+    },
+    "options": {
+      "en": [
+        "Referer header can be spoofed by attackers easily",
+        "Referer header is not sent by some browsers and proxies for privacy reasons",
+        "CSRF tokens are the only valid protection method",
+        "Referer header only works for GET requests"
+      ],
+      "ru": [
+        "Заголовок Referer может быть легко подделан злоумышленниками",
+        "Заголовок Referer не отправляется некоторыми браузерами и прокси из соображений приватности",
+        "CSRF токены - единственный действительный метод защиты",
+        "Заголовок Referer работает только для GET запросов"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "While Referer headers can be controlled by browsers and may be stripped by proxies or privacy tools, the main issue is that they can be legitimately absent due to privacy policies and browser configurations. The correct approach uses CSRF tokens (not the only method, but best practice) combined with SameSite cookie attributes. Relying solely on Referer creates gaps in protection.",
+      "ru": "Хотя заголовки Referer управляются браузерами и могут быть удалены прокси или инструментами приватности, основная проблема в том, что они могут легально отсутствовать из-за политик приватности и конфигураций браузера. Правильный подход использует CSRF токены в сочетании с атрибутами SameSite cookies. Полагаться только на Referer создает пробелы в защите."
+    }
+  },
+  {
+    "id": "security-quiz-14",
+    "topicId": "security",
+    "question": {
+      "en": "In an OAuth 2.0 flow, which grant type is most appropriate for a single-page application (SPA) that cannot securely store a client secret?",
+      "ru": "В OAuth 2.0 потоке, какой тип grant наиболее подходит для одностраничного приложения (SPA), которое не может безопасно хранить client secret?"
+    },
+    "options": {
+      "en": [
+        "Client Credentials Grant",
+        "Authorization Code Grant with PKCE",
+        "Password Grant (Resource Owner Password Credentials)",
+        "Implicit Grant"
+      ],
+      "ru": [
+        "Client Credentials Grant",
+        "Authorization Code Grant с PKCE",
+        "Password Grant (Resource Owner Password Credentials)",
+        "Implicit Grant"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Authorization Code Grant with PKCE (Proof Key for Code Exchange) is the modern standard for SPAs. It allows secure authorization without requiring the client to store a secret, using a dynamic code_challenge instead. Implicit Grant is deprecated due to security vulnerabilities. Client Credentials and Password Grant are inappropriate for user-facing applications.",
+      "ru": "Authorization Code Grant с PKCE (Proof Key for Code Exchange) - это современный стандарт для SPA. Это позволяет безопасную авторизацию без необходимости хранения secrets, используя динамический code_challenge. Implicit Grant устарел из-за уязвимостей. Client Credentials и Password Grant неподходящи для приложений с пользовательским интерфейсом."
+    }
+  },
+  {
+    "id": "security-quiz-15",
+    "topicId": "security",
+    "question": {
+      "en": "A developer sets a cookie with flags: Set-Cookie: sessionid=abc123; Secure; HttpOnly. What protection does this provide, and what attack vector remains vulnerable?",
+      "ru": "Разработчик устанавливает cookie с флагами: Set-Cookie: sessionid=abc123; Secure; HttpOnly. Какую защиту это обеспечивает, и какой вектор атаки остается уязвимым?"
+    },
+    "options": {
+      "en": [
+        "Protects against XSS and man-in-the-middle attacks, but vulnerable to CSRF",
+        "Protects against CSRF and man-in-the-middle attacks, but vulnerable to XSS",
+        "Protects against all network-level attacks with complete immunity",
+        "Protects against XSS only, with all other vectors remaining open"
+      ],
+      "ru": [
+        "Защищает от XSS и атак man-in-the-middle, но уязвима для CSRF",
+        "Защищает от CSRF и атак man-in-the-middle, но уязвима для XSS",
+        "Защищает от всех сетевых атак с полным иммунитетом",
+        "Защищает только от XSS, со всеми остальными векторами открытыми"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "HttpOnly prevents JavaScript from accessing the cookie (mitigates XSS), and Secure ensures it's only sent over HTTPS (protects against MITM). However, these flags don't prevent CSRF attacks, which automatically send cookies with cross-origin requests. CSRF requires additional protection like SameSite attribute or CSRF tokens.",
+      "ru": "HttpOnly предотвращает доступ JavaScript к cookies (смягчает XSS), а Secure гарантирует отправку только через HTTPS (защищает от MITM). Однако эти флаги не предотвращают CSRF-атаки, которые автоматически отправляют cookies с кросс-доменными запросами. CSRF требует дополнительной защиты, такой как атрибут SameSite или CSRF-токены."
+    }
+  }
+]

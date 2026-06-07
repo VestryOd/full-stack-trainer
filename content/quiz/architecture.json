@@ -1,0 +1,326 @@
+[
+  {
+    "id": "architecture-quiz-1",
+    "topicId": "architecture",
+    "question": {
+      "en": "You are designing a microservice that handles user registrations. Which architectural pattern would best allow you to decouple your domain logic from infrastructure concerns like database access and email notifications?",
+      "ru": "Вы проектируете микросервис для обработки регистрации пользователей. Какой архитектурный паттерн лучше всего позволит вам отделить бизнес-логику от инфраструктурных concerns, таких как доступ к БД и отправка уведомлений по email?"
+    },
+    "options": {
+      "en": [
+        "Hexagonal Architecture (Ports & Adapters) with dependency injection",
+        "Layered Architecture with direct database imports in controllers",
+        "Event-driven architecture without any abstraction layers",
+        "Repository pattern alone without any inversion of control"
+      ],
+      "ru": [
+        "Hexagonal Architecture (Ports & Adapters) с dependency injection",
+        "Layered Architecture с прямыми импортами БД в контроллерах",
+        "Event-driven архитектура без слоёв абстракции",
+        "Repository pattern в изоляции без inversion of control"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Hexagonal Architecture with dependency injection explicitly decouples domain logic from external systems through ports (interfaces) and adapters, making the domain testable and infrastructure-agnostic. Layered architecture doesn't guarantee decoupling if implementations depend directly on concrete classes. Event-driven and repository pattern alone don't address the broader architectural concern of isolation.",
+      "ru": "Hexagonal Architecture с dependency injection явно отделяет бизнес-логику от внешних систем через ports (интерфейсы) и adapters, делая домен тестируемым и независимым от инфраструктуры. Layered Architecture не гарантирует разделение, если реализации напрямую зависят от конкретных классов. Event-driven и repository pattern сами по себе не решают проблему архитектурной изоляции."
+    }
+  },
+  {
+    "id": "architecture-quiz-2",
+    "topicId": "architecture",
+    "question": {
+      "en": "Consider this code:\ninterface IUserRepository {\n  getUser(id: string): User;\n  saveUser(user: User): void;\n}\nclass UserService {\n  constructor(private repo: IUserRepository) {}\n  registerUser(email: string) {\n    const user = new User(email);\n    this.repo.saveUser(user);\n  }\n}\nWhich principle is most clearly demonstrated here?",
+      "ru": "Рассмотрите этот код:\ninterface IUserRepository {\n  getUser(id: string): User;\n  saveUser(user: User): void;\n}\nclass UserService {\n  constructor(private repo: IUserRepository) {}\n  registerUser(email: string) {\n    const user = new User(email);\n    this.repo.saveUser(user);\n  }\n}\nКакой принцип наиболее ясно продемонстрирован здесь?"
+    },
+    "options": {
+      "en": [
+        "Dependency Inversion Principle — high-level module depends on abstraction, not concrete implementation",
+        "Single Responsibility Principle — each class has one reason to change",
+        "Open/Closed Principle — the service is open for extension without modification",
+        "Interface Segregation Principle — the interface is minimal and focused"
+      ],
+      "ru": [
+        "Dependency Inversion Principle — высокоуровневый модуль зависит от абстракции, а не от конкретной реализации",
+        "Single Responsibility Principle — каждый класс имеет одну причину для изменения",
+        "Open/Closed Principle — сервис открыт для расширения без модификации",
+        "Interface Segregation Principle — интерфейс минимален и сфокусирован"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "UserService depends on the IUserRepository abstraction (interface) rather than a concrete repository class, which is the core of Dependency Inversion. While SRP, OCP, and ISP are good practices demonstrated here, the primary pattern shown is that the high-level UserService is not coupled to low-level repository details.",
+      "ru": "UserService зависит от абстракции IUserRepository (интерфейса), а не от конкретного класса репозитория — это суть Dependency Inversion. Хотя SRP, OCP и ISP также демонстрируются, основной паттерн заключается в том, что высокоуровневый UserService не связан с низкоуровневыми деталями репозитория."
+    }
+  },
+  {
+    "id": "architecture-quiz-3",
+    "topicId": "architecture",
+    "question": {
+      "en": "In a CQRS (Command Query Responsibility Segregation) architecture, what is the primary benefit of separating write and read models?",
+      "ru": "В архитектуре CQRS (Command Query Responsibility Segregation), в чём основное преимущество разделения моделей записи и чтения?"
+    },
+    "options": {
+      "en": [
+        "Each model can be optimized independently for its specific use case; writes can use normalized schemas while reads use denormalized views",
+        "It eliminates the need for a database entirely",
+        "It automatically provides strong consistency across all operations",
+        "It replaces the need for caching and indexing strategies"
+      ],
+      "ru": [
+        "Каждая модель может быть оптимизирована независимо для своего конкретного use case; запись может использовать нормализованные схемы, а чтение — денормализованные представления",
+        "Это устраняет необходимость в базе данных полностью",
+        "Это автоматически обеспечивает строгую согласованность всех операций",
+        "Это заменяет необходимость в стратегиях кеширования и индексирования"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CQRS separates read and write concerns, allowing the write model to optimize for consistency and transactions, while the read model can be denormalized for fast queries. CQRS does not eliminate databases, does not guarantee strong consistency (often introduces eventual consistency), and does not replace caching—it actually complements such optimizations.",
+      "ru": "CQRS разделяет concerns записи и чтения, позволяя модели записи оптимизировать консистентность и транзакции, в то время как модель чтения может быть денормализирована для быстрых запросов. CQRS не исключает БД, не гарантирует строгую согласованность (часто вводит eventual consistency) и не заменяет кеширование — наоборот, дополняет такие оптимизации."
+    }
+  },
+  {
+    "id": "architecture-quiz-4",
+    "topicId": "architecture",
+    "question": {
+      "en": "Consider this scenario:\nclass Order {\n  status: string = 'pending';\n  items: OrderItem[];\n  placeOrder() { this.status = 'placed'; }\n  cancelOrder() { this.status = 'cancelled'; }\n}\nIf you need to track all state transitions for audit purposes and replay order history, what pattern should replace direct state mutation?",
+      "ru": "Рассмотрите этот сценарий:\nclass Order {\n  status: string = 'pending';\n  items: OrderItem[];\n  placeOrder() { this.status = 'placed'; }\n  cancelOrder() { this.status = 'cancelled'; }\n}\nЕсли вам нужно отслеживать все переходы состояния в целях аудита и воспроизводить историю заказов, какой паттерн должен заменить прямое изменение состояния?"
+    },
+    "options": {
+      "en": [
+        "Event Sourcing — store immutable events instead of state, reconstruct state by replaying events",
+        "Layered Architecture — separate state management into different layers",
+        "Repository Pattern — abstract data access layer to track changes",
+        "CQRS — split command and query responsibilities for state"
+      ],
+      "ru": [
+        "Event Sourcing — сохранять неизменяемые события вместо состояния, восстанавливать состояние воспроизведением событий",
+        "Layered Architecture — разделить управление состоянием на различные слои",
+        "Repository Pattern — абстрактный слой доступа к данным для отслеживания изменений",
+        "CQRS — разделить команды и запросы для управления состоянием"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Event Sourcing stores immutable events (e.g., 'OrderPlaced', 'OrderCancelled') instead of current state, enabling full audit trails and the ability to replay history. Layered Architecture and Repository Pattern don't inherently provide audit capabilities or replay functionality. CQRS is orthogonal and can be combined with Event Sourcing but doesn't directly solve the audit requirement.",
+      "ru": "Event Sourcing сохраняет неизменяемые события (например, 'OrderPlaced', 'OrderCancelled') вместо текущего состояния, что позволяет вести полный audit trail и воспроизводить историю. Layered Architecture и Repository Pattern не обеспечивают встроенные возможности аудита или replay. CQRS ортогонален и может быть объединён с Event Sourcing, но не решает требование аудита напрямую."
+    }
+  },
+  {
+    "id": "architecture-quiz-5",
+    "topicId": "architecture",
+    "question": {
+      "en": "When comparing Hexagonal Architecture and Clean Architecture, what is the main structural difference?",
+      "ru": "При сравнении Hexagonal Architecture и Clean Architecture, в чём основное структурное различие?"
+    },
+    "options": {
+      "en": [
+        "Hexagonal uses ports/adapters and emphasizes external dependency injection at boundaries; Clean Architecture emphasizes concentric circles with dependencies pointing inward",
+        "Hexagonal is for microservices only while Clean Architecture works for all application types",
+        "Clean Architecture requires CQRS while Hexagonal does not",
+        "Hexagonal eliminates the need for repositories while Clean Architecture relies on them"
+      ],
+      "ru": [
+        "Hexagonal использует ports/adapters и подчёркивает инъекцию внешних зависимостей на границах; Clean Architecture подчёркивает концентрические слои с зависимостями, направленными внутрь",
+        "Hexagonal предназначена только для микросервисов, в то время как Clean Architecture работает для всех типов приложений",
+        "Clean Architecture требует CQRS, а Hexagonal — нет",
+        "Hexagonal исключает необходимость в repositories, в то время как Clean Architecture на них полагается"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Hexagonal focuses on symmetrical ports and adapters connecting external systems to a core domain, while Clean Architecture visualizes layers as concentric circles where all dependencies point toward the immutable core business logic. Both architectures share the goal of dependency inversion, but their mental models differ. Both work for various application types, neither mandates CQRS, and both can use repositories.",
+      "ru": "Hexagonal фокусируется на симметричных ports и adapters, соединяющих внешние системы с ядром домена, в то время как Clean Architecture визуализирует слои как концентрические окружности, где все зависимости указывают на неизменяемую бизнес-логику ядра. Обе архитектуры преследуют цель dependency inversion, но их ментальные модели различаются. Обе работают для различных типов приложений, ни одна не требует CQRS, и обе могут использовать repositories."
+    }
+  },
+  {
+    "id": "architecture-quiz-6",
+    "topicId": "architecture",
+    "question": {
+      "en": "You are refactoring a monolithic application and considering between Hexagonal and Layered architecture. Which statement best describes the key difference in how these two patterns handle external dependencies?",
+      "ru": "Вы рефакторите монолитное приложение и выбираете между архитектурой Hexagonal и Layered. Какое утверждение лучше всего описывает ключевое различие в том, как эти два паттерна обрабатывают внешние зависимости?"
+    },
+    "options": {
+      "en": [
+        "Hexagonal architecture treats external dependencies as ports and adapters, keeping the domain isolated at the center, while Layered architecture allows domain logic to directly depend on outer layers like persistence",
+        "Layered architecture provides better dependency isolation because each layer can only communicate with adjacent layers",
+        "Hexagonal architecture requires all dependencies to be defined in a separate configuration layer, while Layered does not",
+        "Both patterns are equivalent in dependency management; the choice depends only on team preference"
+      ],
+      "ru": [
+        "Архитектура Hexagonal рассматривает внешние зависимости как порты и адаптеры, сохраняя логику домена изолированной в центре, в то время как Layered позволяет логике домена напрямую зависеть от внешних слоёв, таких как persistence",
+        "Архитектура Layered обеспечивает лучшую изоляцию зависимостей, поскольку каждый слой может взаимодействовать только с соседними слоями",
+        "Архитектура Hexagonal требует определения всех зависимостей в отдельном конфигурационном слое, а Layered — нет",
+        "Оба паттерна эквивалентны в управлении зависимостями; выбор зависит только от предпочтения команды"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Hexagonal architecture's primary advantage is inverting dependencies so the core domain never depends on external systems—only external systems depend on ports defined by the domain. Layered architecture traditionally allows domain/business logic to directly import persistence or UI concerns, creating upward dependencies that violate the Dependency Inversion Principle. Options 2-4 misrepresent how these architectures actually isolate dependencies.",
+      "ru": "Основное преимущество архитектуры Hexagonal — инверсия зависимостей, так что ядро домена никогда не зависит от внешних систем—только внешние системы зависят от портов, определённых доменом. Архитектура Layered традиционно позволяет логике домена/бизнеса напрямую импортировать persistence или UI-concerns, создавая восходящие зависимости, нарушающие Principle of Dependency Inversion. Варианты 2-4 неправильно представляют, как эти архитектуры на самом деле изолируют зависимости."
+    }
+  },
+  {
+    "id": "architecture-quiz-7",
+    "topicId": "architecture",
+    "question": {
+      "en": "In a CQRS system, you have a command handler that updates a user's profile and a query handler that retrieves it. Why is separating these concerns beneficial compared to a traditional CRUD model?",
+      "ru": "В системе CQRS у вас есть command handler, который обновляет профиль пользователя, и query handler, который его получает. Почему разделение этих concerns выгодно по сравнению с традиционной CRUD-моделью?"
+    },
+    "options": {
+      "en": [
+        "Command and query models can be optimized independently—writes can use normalized schemas while reads use denormalized views optimized for specific queries, and they can scale at different rates",
+        "CQRS eliminates the need for a database, replacing it with in-memory caches for both reads and writes",
+        "It reduces the total number of database calls by forcing both reads and writes through a single transaction handler",
+        "CQRS guarantees strong consistency across all distributed systems without additional coordination"
+      ],
+      "ru": [
+        "Модели команд и запросов можно оптимизировать независимо—записи могут использовать нормализованные схемы, а чтение использует денормализованные представления, оптимизированные для конкретных запросов, и они могут масштабироваться с разными темпами",
+        "CQRS исключает необходимость в базе данных, заменяя её кэшами в памяти как для чтения, так и для записи",
+        "Это снижает общее количество вызовов базы данных, заставляя как чтение, так и запись проходить через единственный обработчик транзакций",
+        "CQRS гарантирует сильную согласованность между всеми распределёнными системами без дополнительной координации"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CQRS's power lies in allowing asymmetric optimization: write models can be normalized for consistency while read models (projections) are denormalized for query performance, and they scale independently. Option 2 is false—CQRS still uses databases. Option 3 misunderstands CQRS as a transaction optimization. Option 4 confuses CQRS with consensus protocols; CQRS introduces eventual consistency challenges that must be managed explicitly.",
+      "ru": "Сила CQRS заключается в возможности асимметричной оптимизации: модели записи могут быть нормализованы для консистентности, а модели чтения (проекции) денормализованы для производительности запросов, и они масштабируются независимо. Вариант 2 неверен—CQRS всё равно использует базы данных. Вариант 3 неправильно понимает CQRS как оптимизацию транзакций. Вариант 4 путает CQRS с протоколами консенсуса; CQRS вводит проблемы конечной согласованности, которые должны быть явно управляемы."
+    }
+  },
+  {
+    "id": "architecture-quiz-8",
+    "topicId": "architecture",
+    "question": {
+      "en": "Consider this repository interface: `interface IUserRepository { User GetById(int id); void Save(User user); }` Now imagine you also need to query users by email. Which approach best respects both the Repository pattern and the Single Responsibility Principle?",
+      "ru": "Рассмотрите этот интерфейс репозитория: `interface IUserRepository { User GetById(int id); void Save(User user); }` Теперь представьте, что вам также нужно запрашивать пользователей по электронной почте. Какой подход лучше всего соответствует как Repository pattern, так и Single Responsibility Principle?"
+    },
+    "options": {
+      "en": [
+        "Add a GetByEmail method to IUserRepository, and implement additional repository methods as query needs arise, keeping all persistence logic in one place",
+        "Create a separate IUserQueryRepository interface with query-only methods, keeping queries and commands separated per CQRS principles",
+        "Move all query logic into the application service layer and bypass the repository pattern for complex queries",
+        "Implement a generic FindBy(predicate) method that accepts any condition to handle all possible queries"
+      ],
+      "ru": [
+        "Добавьте метод GetByEmail в IUserRepository и реализуйте дополнительные методы репозитория по мере возникновения потребности в запросах, сохраняя всю логику persistence в одном месте",
+        "Создайте отдельный интерфейс IUserQueryRepository с методами только для чтения, отделяя запросы и команды в соответствии с принципами CQRS",
+        "Переместите всю логику запросов в слой приложения и обойдите Repository pattern для сложных запросов",
+        "Реализуйте универсальный метод FindBy(predicate), который принимает любое условие для обработки всех возможных запросов"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Option 2 respects both the Repository pattern and SRP by creating a focused interface for query operations, which aligns with CQRS principles. Option 1 violates SRP by bloating the repository with every possible query. Option 3 bypasses the repository entirely, defeating abstraction. Option 4 uses a generic predicate which leaks domain logic into the infrastructure layer, violating Dependency Inversion.",
+      "ru": "Вариант 2 соответствует как Repository pattern, так и SRP, создав сфокусированный интерфейс для операций запроса, что согласуется с принципами CQRS. Вариант 1 нарушает SRP, перегружая репозиторий каждым возможным запросом. Вариант 3 полностью обходит репозиторий, нарушая абстракцию. Вариант 4 использует универсальный predicate, который утекает логику домена в слой инфраструктуры, нарушая Dependency Inversion."
+    }
+  },
+  {
+    "id": "architecture-quiz-9",
+    "topicId": "architecture",
+    "question": {
+      "en": "You're implementing event sourcing. An Order aggregate fires an OrderCreated event, then an OrderShipped event. A read model projection listens to these events and builds a denormalized OrderSummary table. What is a critical architectural concern you must address?",
+      "ru": "Вы реализуете Event Sourcing. Агрегат Order выпускает событие OrderCreated, а затем OrderShipped. Проекция read model прослушивает эти события и создаёт денормализованную таблицу OrderSummary. Какое критическое архитектурное беспокойство вы должны решить?"
+    },
+    "options": {
+      "en": [
+        "The projection might lag behind the write model, causing queries to return stale data; you must decide whether eventual consistency is acceptable and implement retry/reconciliation logic",
+        "Event sourcing eliminates the need for transactions since each event is atomic by definition",
+        "The ProjectionBuilder should directly call the aggregate's domain methods to update the read model for consistency",
+        "All events must be stored in a single database table for simplicity and event ordering guarantees"
+      ],
+      "ru": [
+        "Проекция может отставать от модели записи, вызывая возврат устаревших данных при запросах; вы должны решить, приемлема ли конечная согласованность, и реализовать логику повтора/согласования",
+        "Event Sourcing исключает необходимость в транзакциях, так как каждое событие атомарно по определению",
+        "ProjectionBuilder должен напрямую вызывать методы домена агрегата для обновления read model для консистентности",
+        "Все события должны быть сохранены в одной таблице базы данных для простоты и гарантий упорядочения событий"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Event sourcing inherently introduces eventual consistency—projections are built asynchronously from events, so reads may reflect a stale state. This requires explicit handling of staleness, retries, and possibly manual reconciliation. Option 2 is false; transactions are still needed for writes. Option 3 violates separation of concerns by having projections call domain logic. Option 4 is implementation-specific; multiple tables can work if ordering is preserved via event streams or timestamps.",
+      "ru": "Event Sourcing по своей природе вводит конечную согласованность—проекции создаются асинхронно из событий, поэтому чтения могут отражать устаревшее состояние. Это требует явной обработки устаревания, повторов и, возможно, ручного согласования. Вариант 2 неверен; транзакции всё равно необходимы для записи. Вариант 3 нарушает разделение concerns, заставляя проекции вызывать логику домена. Вариант 4 зависит от реализации; несколько таблиц могут работать, если упорядочение сохраняется через event streams или временные метки."
+    }
+  },
+  {
+    "id": "architecture-quiz-10",
+    "topicId": "architecture",
+    "question": {
+      "en": "You have a domain class `PaymentService` that currently depends directly on a `StripePaymentGateway` concrete class. Applying Dependency Inversion, you create an `IPaymentGateway` interface. Which design outcome best demonstrates correct application of the principle?",
+      "ru": "У вас есть класс домена `PaymentService`, который в настоящее время напрямую зависит от конкретного класса `StripePaymentGateway`. Применяя Dependency Inversion, вы создаёте интерфейс `IPaymentGateway`. Какой результат дизайна лучше всего демонстрирует правильное применение принципа?"
+    },
+    "options": {
+      "en": [
+        "PaymentService depends on IPaymentGateway abstraction; a StripePaymentGateway implementation is injected at runtime, allowing PaymentService to remain agnostic of the concrete payment provider",
+        "PaymentService depends on IPaymentGateway, but IPaymentGateway internally creates instances of StripePaymentGateway to satisfy the abstraction",
+        "The IPaymentGateway interface is defined in the infrastructure layer so PaymentService can import it without circular dependencies",
+        "PaymentService depends on IPaymentGateway, which is an abstract base class that StripePaymentGateway extends"
+      ],
+      "ru": [
+        "PaymentService зависит от абстракции IPaymentGateway; реализация StripePaymentGateway внедряется во время выполнения, позволяя PaymentService оставаться агностичным от конкретного провайдера платежей",
+        "PaymentService зависит от IPaymentGateway, но IPaymentGateway внутри создаёт экземпляры StripePaymentGateway для удовлетворения абстракции",
+        "Интерфейс IPaymentGateway определён в слое инфраструктуры, чтобы PaymentService мог его импортировать без циклических зависимостей",
+        "PaymentService зависит от IPaymentGateway, который является абстрактным базовым классом, который расширяет StripePaymentGateway"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Option 0 correctly applies DIP: the high-level domain module (PaymentService) depends on an abstraction (IPaymentGateway), and a low-level concrete implementation (StripePaymentGateway) is injected externally. This enables testing and swapping providers. Option 1 defeats DIP by having the abstraction create its own concrete dependency. Option 2 incorrectly places the abstraction in infrastructure (it should be in the domain). Option 3 is valid but doesn't better demonstrate DIP than option 0.",
+      "ru": "Вариант 0 правильно применяет DIP: высокоуровневый модуль домена (PaymentService) зависит от абстракции (IPaymentGateway), и низкоуровневая конкретная реализация (StripePaymentGateway) внедряется извне. Это позволяет тестировать и менять провайдеров. Вариант 1 нарушает DIP, заставляя абстракцию создавать собственную конкретную зависимость. Вариант 2 неправильно размещает абстракцию в инфраструктуре (она должна быть в домене). Вариант 3 верен, но не демонстрирует DIP лучше, чем вариант 0."
+    }
+  },
+  {
+    "id": "architecture-quiz-11",
+    "topicId": "architecture",
+    "question": {
+      "en": "You're designing a system where user commands and queries have vastly different performance requirements. Commands require strong consistency and audit trails, while queries need to be optimized for read performance across multiple denormalized views. Which architecture pattern best addresses this separation of concerns?",
+      "ru": "Вы проектируете систему, где команды пользователей и запросы имеют очень разные требования к производительности. Команды требуют строгой согласованности и журналов аудита, а запросы должны быть оптимизированы для производительности чтения по нескольким денормализованным представлениям. Какой архитектурный паттерн лучше всего решает эту разделение ответственности?"
+    },
+    "options": {
+      "en": [
+        "CQRS (Command Query Responsibility Segregation) with event sourcing",
+        "Layered architecture with dependency injection",
+        "Hexagonal architecture with repository pattern",
+        "Clean architecture with repository pattern only"
+      ],
+      "ru": [
+        "CQRS (разделение ответственности команд и запросов) с event sourcing",
+        "Слоистая архитектура с внедрением зависимостей",
+        "Шестиугольная архитектура с паттерном репозитория",
+        "Чистая архитектура только с паттерном репозитория"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CQRS explicitly separates command (write) and query (read) models, allowing each to be optimized independently. Event sourcing provides the audit trail and strong consistency guarantees for commands. The other patterns don't specifically address the asymmetry between command and query requirements or the need for multiple denormalized views.",
+      "ru": "CQRS явно разделяет модели команд (запись) и запросов (чтение), позволяя каждой быть оптимизированной независимо. Event sourcing обеспечивает журнал аудита и гарантии строгой согласованности для команд. Остальные паттерны не решают асимметрию между требованиями команд и запросов или необходимость в нескольких денормализованных представлениях."
+    }
+  },
+  {
+    "id": "architecture-quiz-12",
+    "topicId": "architecture",
+    "question": {
+      "en": "You have a UserRepository depending on a UserMapper and a DatabaseConnection. You want to apply Dependency Inversion. Which approach best ensures that high-level modules don't depend on low-level implementation details?",
+      "ru": "У вас есть UserRepository, зависящий от UserMapper и DatabaseConnection. Вы хотите применить принцип инверсии зависимостей. Какой подход лучше всего гарантирует, что высокоуровневые модули не зависят от деталей реализации низкоуровневых модулей?"
+    },
+    "options": {
+      "en": [
+        "Inject interfaces IUserMapper and IConnection into UserRepository, letting the container resolve concrete implementations",
+        "Pass the DatabaseConnection as a static singleton to UserRepository",
+        "Make UserRepository inherit from a BaseRepository class that handles all dependencies",
+        "Create UserRepository with hard-coded dependencies and use factory methods to swap them during testing"
+      ],
+      "ru": [
+        "Внедрить интерфейсы IUserMapper и IConnection в UserRepository, позволяя контейнеру разрешать конкретные реализации",
+        "Передать DatabaseConnection как статический синглтон в UserRepository",
+        "Сделать UserRepository наследующим от класса BaseRepository, который обрабатывает все зависимости",
+        "Создать UserRepository с жестко закодированными зависимостями и использовать фабричные методы для их замены при тестировании"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Dependency Inversion requires high-level modules to depend on abstractions (interfaces), not concrete implementations. Injecting IUserMapper and IConnection allows UserRepository to work with any implementation without knowing concrete details, and the DI container handles the wiring. Static singletons and hard-coded dependencies violate inversion, while inheritance doesn't address the core principle of depending on abstractions.",
+      "ru": "Инверсия зависимостей требует, чтобы высокоуровневые модули зависели от абстракций (интерфейсов), а не конкретных реализаций. Внедрение IUserMapper и IConnection позволяет UserRepository работать с любой реализацией без знания конкретных деталей, а контейнер IoC управляет связыванием. Статические синглтоны и жестко закодированные зависимости нарушают инверсию, в то время как наследование не решает основной принцип зависимости от абстракций."
+    }
+  }
+]

@@ -1,1 +1,407 @@
-[]
+[
+  {
+    "id": "nestjs-quiz-1",
+    "topicId": "nestjs",
+    "question": {
+      "en": "In Nest.js, what is the primary difference between a Guard and an Interceptor in terms of execution order and responsibility?",
+      "ru": "В Nest.js, в чем основное различие между Guard и Interceptor с точки зрения порядка выполнения и ответственности?"
+    },
+    "options": {
+      "en": [
+        "Guards execute before route handlers and make authorization decisions, while Interceptors execute around route handlers and can transform request/response data",
+        "Interceptors execute before Guards and handle all cross-cutting concerns including authentication",
+        "Guards and Interceptors execute at the same time but Guards are only for role-based access control",
+        "Interceptors are deprecated in favor of Guards which handle both authorization and data transformation"
+      ],
+      "ru": [
+        "Guards выполняются перед обработчиками маршрутов и принимают решения об авторизации, в то время как Interceptors выполняются вокруг обработчиков маршрутов и могут трансформировать данные запроса/ответа",
+        "Interceptors выполняются перед Guards и обрабатывают все сквозные задачи включая аутентификацию",
+        "Guards и Interceptors выполняются одновременно, но Guards предназначены только для контроля доступа на основе ролей",
+        "Interceptors устарели в пользу Guards, которые обрабатывают как авторизацию, так и трансформацию данных"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Guards are decision-makers that execute before the route handler to determine access (authorization/authentication), while Interceptors wrap the entire request-response cycle and can modify data on both sides. Pipes validate data before it reaches handlers, and Filters handle exceptions after execution. This separation of concerns is fundamental to Nest.js architecture.",
+      "ru": "Guards — это решающие механизмы, выполняющиеся перед обработчиком маршрута для определения доступа (авторизация/аутентификация), в то время как Interceptors оборачивают весь цикл запроса-ответа и могут изменять данные с обеих сторон. Pipes валидируют данные перед попаданием в обработчики, а Filters обрабатывают исключения после выполнения. Это разделение ответственности — основа архитектуры Nest.js."
+    }
+  },
+  {
+    "id": "nestjs-quiz-2",
+    "topicId": "nestjs",
+    "question": {
+      "en": "Consider the following code:\n\n@Injectable({ scope: Scope.TRANSIENT })\nclass UserService {}\n\n@Injectable()\nclass OrderService {\n  constructor(private userService: UserService) {}\n}\n\nWhat happens when two requests arrive and each OrderService instance needs UserService?",
+      "ru": "Рассмотрите следующий код:\n\n@Injectable({ scope: Scope.TRANSIENT })\nclass UserService {}\n\n@Injectable()\nclass OrderService {\n  constructor(private userService: UserService) {}\n}\n\nЧто происходит, когда приходят два запроса и каждому экземпляру OrderService нужен UserService?"
+    },
+    "options": {
+      "en": [
+        "Two new UserService instances are created, one for each request, because TRANSIENT scope creates a new instance for every injection",
+        "One UserService instance is shared between both requests because OrderService is DEFAULT scoped",
+        "Two new UserService instances are created only if explicitly requested with @Inject decorator",
+        "The application throws an error because TRANSIENT services cannot be injected into DEFAULT scoped services"
+      ],
+      "ru": [
+        "Два новых экземпляра UserService создаются, по одному для каждого запроса, так как TRANSIENT создает новый экземпляр при каждой инъекции",
+        "Один экземпляр UserService используется обоими запросами, так как OrderService имеет DEFAULT область видимости",
+        "Два новых экземпляра UserService создаются только если явно запросить с помощью @Inject декоратора",
+        "Приложение выбросит ошибку, так как TRANSIENT сервисы не могут быть внедрены в DEFAULT сервисы"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TRANSIENT scope means a new instance is created every time the provider is injected, regardless of who requests it. Each request's OrderService instance will receive a fresh UserService instance. TRANSIENT services can be safely injected into any scoped service without issues, which is a key feature of Nest.js dependency injection.",
+      "ru": "TRANSIENT область видимости означает, что новый экземпляр создается каждый раз при внедрении провайдера, независимо от того, кто его запрашивает. Каждый экземпляр OrderService для запроса получит свежий экземпляр UserService. TRANSIENT сервисы могут быть безопасно внедрены в сервисы с любой областью видимости без проблем, что является ключевой особенностью DI в Nest.js."
+    }
+  },
+  {
+    "id": "nestjs-quiz-3",
+    "topicId": "nestjs",
+    "question": {
+      "en": "What is the correct order of lifecycle hooks execution in Nest.js when a module is initialized?",
+      "ru": "Какой правильный порядок выполнения hooks жизненного цикла в Nest.js при инициализации модуля?"
+    },
+    "options": {
+      "en": [
+        "onModuleInit → onApplicationBootstrap → (requests handled) → onModuleDestroy → onApplicationShutdown",
+        "onApplicationBootstrap → onModuleInit → (requests handled) → onApplicationShutdown → onModuleDestroy",
+        "onModuleInit → (requests handled) → onApplicationBootstrap → onApplicationShutdown → onModuleDestroy",
+        "onApplicationBootstrap → (requests handled) → onModuleInit → onModuleDestroy → onApplicationShutdown"
+      ],
+      "ru": [
+        "onModuleInit → onApplicationBootstrap → (обработка запросов) → onModuleDestroy → onApplicationShutdown",
+        "onApplicationBootstrap → onModuleInit → (обработка запросов) → onApplicationShutdown → onModuleDestroy",
+        "onModuleInit → (обработка запросов) → onApplicationBootstrap → onApplicationShutdown → onModuleDestroy",
+        "onApplicationBootstrap → (обработка запросов) → onModuleInit → onModuleDestroy → onApplicationShutdown"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The correct lifecycle order is: onModuleInit (each module initializes), onApplicationBootstrap (app fully initialized), then request handling begins. On shutdown, it reverses: onModuleDestroy (each module cleans up), onApplicationShutdown (final cleanup). This ensures all dependencies are ready before bootstrap and properly cleaned up on shutdown.",
+      "ru": "Правильный порядок жизненного цикла: onModuleInit (каждый модуль инициализируется), onApplicationBootstrap (приложение полностью инициализировано), затем начинается обработка запросов. При завершении порядок обратный: onModuleDestroy (каждый модуль очищается), onApplicationShutdown (финальная очистка). Это гарантирует, что все зависимости готовы перед bootstrap и правильно очищаются при завершении."
+    }
+  },
+  {
+    "id": "nestjs-quiz-4",
+    "topicId": "nestjs",
+    "question": {
+      "en": "What is the main purpose of Pipes in Nest.js, and how do they differ from Filters?",
+      "ru": "Какова основная цель Pipes в Nest.js и чем они отличаются от Filters?"
+    },
+    "options": {
+      "en": [
+        "Pipes validate and transform data before reaching handlers; Filters catch and handle exceptions after handler execution",
+        "Pipes handle exceptions in handlers; Filters validate incoming request data",
+        "Pipes and Filters perform the same function but Pipes are newer and deprecated Filters",
+        "Pipes transform responses after handlers execute; Filters prevent unauthorized access"
+      ],
+      "ru": [
+        "Pipes валидируют и трансформируют данные перед попаданием в обработчики; Filters ловят и обрабатывают исключения после выполнения обработчика",
+        "Pipes обрабатывают исключения в обработчиках; Filters валидируют входящие данные запроса",
+        "Pipes и Filters выполняют одинаковую функцию, но Pipes новее и Filters устарели",
+        "Pipes трансформируют ответы после выполнения обработчиков; Filters предотвращают несанкционированный доступ"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Pipes are used for data validation and transformation (via @Body(), @Query(), @Param() decorators) and execute before the route handler. Filters are exception handlers that catch thrown exceptions and format error responses. This separation allows clean, predictable data flow: validation → handler logic → exception handling.",
+      "ru": "Pipes используются для валидации и трансформации данных (через @Body(), @Query(), @Param() декораторы) и выполняются перед обработчиком маршрута. Filters — это обработчики исключений, которые ловят выброшенные исключения и форматируют ответы об ошибках. Это разделение обеспечивает чистый и предсказуемый поток данных: валидация → логика обработчика → обработка исключений."
+    }
+  },
+  {
+    "id": "nestjs-quiz-5",
+    "topicId": "nestjs",
+    "question": {
+      "en": "In Nest.js modules, which of the following correctly describes the purpose of the 'exports' array in @Module decorator?",
+      "ru": "В модулях Nest.js, что из следующего правильно описывает назначение массива 'exports' в @Module декораторе?"
+    },
+    "options": {
+      "en": [
+        "It makes providers available for dependency injection in other modules that import this module",
+        "It defines which HTTP endpoints are publicly accessible from outside the application",
+        "It specifies providers that should be destroyed when the module is unloaded",
+        "It determines which providers can only be used within the current module's scope"
+      ],
+      "ru": [
+        "Это делает провайдеров доступными для внедрения зависимостей в других модулях, которые импортируют этот модуль",
+        "Это определяет, какие HTTP endpoints доступны снаружи приложения",
+        "Это указывает провайдеров, которые должны быть уничтожены при выгрузке модуля",
+        "Это определяет, какие провайдеры могут использоваться только в пределах текущей области видимости модуля"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The 'exports' array in @Module makes specific providers available to other modules that import the current module. Without exporting, providers are private to the module. This enables code reuse and modular architecture by explicitly controlling what parts of a module are accessible to dependents, following the principle of encapsulation.",
+      "ru": "Массив 'exports' в @Module делает конкретные провайдеры доступными для других модулей, которые импортируют текущий модуль. Без экспорта провайдеры остаются приватными для модуля. Это позволяет повторно использовать код и создавать модульную архитектуру, явно контролируя, какие части модуля доступны потребителям, следуя принципу инкапсуляции."
+    }
+  },
+  {
+    "id": "nestjs-quiz-6",
+    "topicId": "nestjs",
+    "question": {
+      "en": "In Nest.js, what is the key difference between a Guard and an Interceptor in terms of execution order and responsibility?",
+      "ru": "В Nest.js, в чем ключевое различие между Guard и Interceptor с точки зрения порядка выполнения и ответственности?"
+    },
+    "options": {
+      "en": [
+        "Guards execute before route handlers and determine if a request should proceed, while Interceptors wrap the request/response lifecycle and can transform data",
+        "Interceptors execute before Guards and are responsible for authentication, while Guards handle response transformation",
+        "Guards and Interceptors execute simultaneously and have identical purposes, just different naming conventions",
+        "Interceptors execute before Guards and can prevent request execution, while Guards only log request metadata"
+      ],
+      "ru": [
+        "Guards выполняются перед обработчиками маршрутов и определяют, должен ли запрос продолжаться, а Interceptors обёртывают жизненный цикл запроса/ответа и могут трансформировать данные",
+        "Interceptors выполняются перед Guards и отвечают за аутентификацию, а Guards обрабатывают трансформацию ответа",
+        "Guards и Interceptors выполняются одновременно и имеют одинаковые цели, просто разные соглашения об именовании",
+        "Interceptors выполняются перед Guards и могут предотвратить выполнение запроса, а Guards только логируют метаданные запроса"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Guards are executed before the route handler and decide whether to allow or deny request processing (authorization logic). Interceptors wrap the entire request/response cycle and are used for transforming data, logging, or exception handling. Guards follow a boolean decision pattern, while Interceptors have full access to both request and response streams.",
+      "ru": "Guards выполняются перед обработчиком маршрута и решают, разрешить или запретить обработку запроса (логика авторизации). Interceptors обёртывают весь цикл запроса/ответа и используются для трансформации данных, логирования или обработки исключений. Guards следуют шаблону логического решения, а Interceptors имеют полный доступ к потокам запроса и ответа."
+    }
+  },
+  {
+    "id": "nestjs-quiz-7",
+    "topicId": "nestjs",
+    "question": {
+      "en": "Consider this code: @Injectable({ scope: Scope.TRANSIENT }) class UserService {}. What does the TRANSIENT scope mean, and when would you use it instead of DEFAULT?",
+      "ru": "Рассмотрите этот код: @Injectable({ scope: Scope.TRANSIENT }) class UserService {}. Что означает область TRANSIENT, и когда вы бы использовали её вместо DEFAULT?"
+    },
+    "options": {
+      "en": [
+        "TRANSIENT creates a new instance of the provider for every request, useful when the provider holds request-specific state or must not be shared across requests",
+        "TRANSIENT caches the provider instance globally, useful when you need maximum performance across multiple requests",
+        "TRANSIENT is only used for stateless services and is identical to DEFAULT scope in terms of instantiation",
+        "TRANSIENT creates one instance per module, while DEFAULT creates one per application"
+      ],
+      "ru": [
+        "TRANSIENT создаёт новый экземпляр провайдера для каждого запроса, полезно когда провайдер содержит состояние, специфичное для запроса, или не должен быть общим между запросами",
+        "TRANSIENT кэширует экземпляр провайдера глобально, полезно когда вам нужна максимальная производительность между несколькими запросами",
+        "TRANSIENT используется только для stateless сервисов и идентичен области DEFAULT с точки зрения инстанцирования",
+        "TRANSIENT создаёт один экземпляр на модуль, а DEFAULT создаёт один на приложение"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "TRANSIENT scope instantiates a new provider instance for each consumer or request, making it ideal for stateful providers where isolation is required. DEFAULT (SINGLETON) reuses the same instance, which is more memory-efficient but unsuitable for request-specific state. TRANSIENT is used precisely when sharing state across requests would be incorrect or unsafe.",
+      "ru": "Область TRANSIENT создаёт новый экземпляр провайдера для каждого потребителя или запроса, что идеально подходит для stateful провайдеров, где требуется изоляция. DEFAULT (SINGLETON) повторно использует один и тот же экземпляр, что более экономно по памяти, но не подходит для состояния, специфичного для запроса. TRANSIENT используется именно когда совместное использование состояния между запросами было бы неправильным или небезопасным."
+    }
+  },
+  {
+    "id": "nestjs-quiz-8",
+    "topicId": "nestjs",
+    "question": {
+      "en": "In Nest.js dependency injection, what happens when you use @Inject(SERVICE_TOKEN) with a custom provider token instead of a class reference?",
+      "ru": "В инъекции зависимостей Nest.js, что происходит, когда вы используете @Inject(SERVICE_TOKEN) с токеном пользовательского провайдера вместо ссылки на класс?"
+    },
+    "options": {
+      "en": [
+        "The DI container resolves the token string and injects the provider value registered with that token, allowing flexible non-class-based providers",
+        "Nest.js ignores the token and always injects the class type instead, treating it as a type hint",
+        "The application throws a runtime error because Nest.js only supports class-based injection",
+        "The token is treated as a literal string value and injected directly without provider resolution"
+      ],
+      "ru": [
+        "Контейнер DI разрешает строку токена и внедряет значение провайдера, зарегистрированное с этим токеном, позволяя гибкие провайдеры на основе не-класса",
+        "Nest.js игнорирует токен и всегда внедряет тип класса вместо этого, обрабатывая его как подсказку типа",
+        "Приложение выбрасывает ошибку во время выполнения, потому что Nest.js поддерживает только инъекцию на основе класса",
+        "Токен рассматривается как буквальное строковое значение и внедряется напрямую без разрешения провайдера"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Custom tokens allow you to register and inject non-class providers like objects, strings, or factory functions. The DI container maintains a map of token → provider value. This is essential when you need to inject configuration objects, third-party libraries, or any value that isn't a class constructor.",
+      "ru": "Пользовательские токены позволяют вам регистрировать и внедрять провайдеры на основе не-класса, такие как объекты, строки или функции-фабрики. Контейнер DI ведёт карту токена → значение провайдера. Это необходимо, когда вам нужно внедрить объекты конфигурации, сторонние библиотеки или любое значение, которое не является конструктором класса."
+    }
+  },
+  {
+    "id": "nestjs-quiz-9",
+    "topicId": "nestjs",
+    "question": {
+      "en": "What is the lifecycle execution order of providers in a Nest.js module, and which hook is guaranteed to fire only once per application lifetime?",
+      "ru": "Каков порядок выполнения жизненного цикла провайдеров в модуле Nest.js, и какой хук гарантированно срабатывает только один раз за время жизни приложения?"
+    },
+    "options": {
+      "en": [
+        "onModuleInit fires for each module, then onApplicationBootstrap fires once for the entire app; onApplicationBootstrap is guaranteed to fire exactly once",
+        "onApplicationBootstrap fires first, then onModuleInit for each module; onModuleInit is guaranteed to fire exactly once",
+        "onModuleInit and onApplicationBootstrap fire simultaneously in random order; neither is guaranteed to fire only once",
+        "onModuleInit fires once globally, then onApplicationBootstrap fires per module; onModuleInit is guaranteed to fire exactly once"
+      ],
+      "ru": [
+        "onModuleInit срабатывает для каждого модуля, затем onApplicationBootstrap срабатывает один раз для всего приложения; onApplicationBootstrap гарантированно срабатывает ровно один раз",
+        "onApplicationBootstrap срабатывает первым, затем onModuleInit для каждого модуля; onModuleInit гарантированно срабатывает ровно один раз",
+        "onModuleInit и onApplicationBootstrap срабатывают одновременно в случайном порядке; ни один не гарантирован сработать только один раз",
+        "onModuleInit срабатывает один раз глобально, затем onApplicationBootstrap срабатывает для каждого модуля; onModuleInit гарантированно срабатывает ровно один раз"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "During app bootstrap, each module's providers fire onModuleInit in dependency order. After all modules initialize, onApplicationBootstrap fires exactly once at the application level. This allows module-level setup followed by global app setup. The onApplicationBootstrap hook is the only lifecycle hook guaranteed to fire exactly once per application lifetime, regardless of module count.",
+      "ru": "Во время загрузки приложения провайдеры каждого модуля срабатывают onModuleInit в порядке зависимостей. После инициализации всех модулей onApplicationBootstrap срабатывает ровно один раз на уровне приложения. Это позволяет выполнить настройку на уровне модуля, а затем глобальную настройку приложения. Хук onApplicationBootstrap — единственный хук жизненного цикла, гарантированно срабатывающий ровно один раз за время жизни приложения, независимо от количества модулей."
+    }
+  },
+  {
+    "id": "nestjs-quiz-10",
+    "topicId": "nestjs",
+    "question": {
+      "en": "Given this code snippet:\n@Controller('users')\n@UseGuards(AuthGuard)\n@UseInterceptors(LoggingInterceptor)\nclass UsersController {\n  @Post()\n  @UsePipes(ValidationPipe)\n  create(dto: CreateUserDto) { }\n}\n\nIn what order do the request processing steps execute?",
+      "ru": "Учитывая этот фрагмент кода:\n@Controller('users')\n@UseGuards(AuthGuard)\n@UseInterceptors(LoggingInterceptor)\nclass UsersController {\n  @Post()\n  @UsePipes(ValidationPipe)\n  create(dto: CreateUserDto) { }\n}\n\nВ каком порядке выполняются шаги обработки запроса?"
+    },
+    "options": {
+      "en": [
+        "LoggingInterceptor (before) → AuthGuard → ValidationPipe → route handler → LoggingInterceptor (after)",
+        "AuthGuard → LoggingInterceptor (before) → ValidationPipe → route handler → LoggingInterceptor (after)",
+        "ValidationPipe → AuthGuard → LoggingInterceptor (before) → route handler → LoggingInterceptor (after)",
+        "LoggingInterceptor (before) → ValidationPipe → AuthGuard → route handler → LoggingInterceptor (after)"
+      ],
+      "ru": [
+        "LoggingInterceptor (перед) → AuthGuard → ValidationPipe → обработчик маршрута → LoggingInterceptor (после)",
+        "AuthGuard → LoggingInterceptor (перед) → ValidationPipe → обработчик маршрута → LoggingInterceptor (после)",
+        "ValidationPipe → AuthGuard → LoggingInterceptor (перед) → обработчик маршрута → LoggingInterceptor (после)",
+        "LoggingInterceptor (перед) → ValidationPipe → AuthGuard → обработчик маршрута → LoggingInterceptor (после)"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "In Nest.js, the execution order is: Interceptors (before) → Guards → Pipes → Route Handler → Interceptors (after). Guards execute before pipes to make authorization decisions early. Pipes validate/transform data only after authorization succeeds. Interceptors wrap the entire cycle, executing their 'before' logic first and 'after' logic last.",
+      "ru": "В Nest.js порядок выполнения следующий: Interceptors (перед) → Guards → Pipes → Route Handler → Interceptors (после). Guards выполняются перед Pipes для принятия решений об авторизации в начале. Pipes проверяют/трансформируют данные только после успешной авторизации. Interceptors обёртывают весь цикл, выполняя их логику 'перед' первой и логику 'после' последней."
+    }
+  },
+  {
+    "id": "nestjs-quiz-11",
+    "topicId": "nestjs",
+    "question": {
+      "en": "What is the primary difference between a Guard and an Interceptor in Nest.js?",
+      "ru": "Какова основная разница между Guard и Interceptor в Nest.js?"
+    },
+    "options": {
+      "en": [
+        "Guards determine if a request should be processed; Interceptors wrap request/response logic and can transform data",
+        "Interceptors determine if a request should be processed; Guards wrap request/response logic and can transform data",
+        "Guards and Interceptors serve the same purpose but Guards are applied globally while Interceptors are route-specific",
+        "Guards handle authentication while Interceptors handle logging only"
+      ],
+      "ru": [
+        "Guards определяют, должен ли запрос обрабатываться; Interceptors оборачивают логику запроса/ответа и могут преобразовывать данные",
+        "Interceptors определяют, должен ли запрос обрабатываться; Guards оборачивают логику запроса/ответа и могут преобразовывать данные",
+        "Guards и Interceptors служат одной и той же цели, но Guards применяются глобально, а Interceptors - для конкретных маршрутов",
+        "Guards обрабатывают аутентификацию, а Interceptors только логирование"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Guards are used to determine whether a request should be allowed to proceed (authorization logic), while Interceptors are used to wrap request/response handling and can transform data before and after the handler executes. They serve fundamentally different purposes in the request lifecycle.",
+      "ru": "Guards используются для определения, должен ли запрос быть разрешен (логика авторизации), а Interceptors используются для обертки обработки запроса/ответа и могут преобразовывать данные до и после выполнения обработчика. Они служат фундаментально разным целям в жизненном цикле запроса."
+    }
+  },
+  {
+    "id": "nestjs-quiz-12",
+    "topicId": "nestjs",
+    "question": {
+      "en": "Consider this code snippet. What will be logged when a request hits the route?\n\n@Injectable()\nexport class LoggingInterceptor implements NestInterceptor {\n  intercept(context: ExecutionContext, next: CallHandler) {\n    console.log('Before');\n    return next.handle().pipe(tap(() => console.log('After')));\n  }\n}\n\n@Controller('test')\nexport class TestController {\n  @UseInterceptors(LoggingInterceptor)\n  @Get()\n  test() {\n    console.log('Handler');\n    return { data: 'test' };\n  }\n}",
+      "ru": "Рассмотрите этот фрагмент кода. Что будет залогировано при попадании запроса на маршрут?\n\n@Injectable()\nexport class LoggingInterceptor implements NestInterceptor {\n  intercept(context: ExecutionContext, next: CallHandler) {\n    console.log('Before');\n    return next.handle().pipe(tap(() => console.log('After')));\n  }\n}\n\n@Controller('test')\nexport class TestController {\n  @UseInterceptors(LoggingInterceptor)\n  @Get()\n  test() {\n    console.log('Handler');\n    return { data: 'test' };\n  }\n}"
+    },
+    "options": {
+      "en": [
+        "Before, Handler, After",
+        "Handler, Before, After",
+        "Before, After, Handler",
+        "After, Handler, Before"
+      ],
+      "ru": [
+        "Before, Handler, After",
+        "Handler, Before, After",
+        "Before, After, Handler",
+        "After, Handler, Before"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The Interceptor logs 'Before' immediately, then calls next.handle() which executes the handler and logs 'Handler', and finally the RxJS pipe with tap logs 'After' when the response is emitted. This is the natural order of synchronous code followed by observable completion.",
+      "ru": "Interceptor логирует 'Before' немедленно, затем вызывает next.handle(), который выполняет обработчик и логирует 'Handler', и наконец pipe с tap логирует 'After' при испускании ответа. Это естественный порядок синхронного кода, за которым следует завершение observable."
+    }
+  },
+  {
+    "id": "nestjs-quiz-13",
+    "topicId": "nestjs",
+    "question": {
+      "en": "When should you use a Pipe instead of a Guard in Nest.js?",
+      "ru": "Когда следует использовать Pipe вместо Guard в Nest.js?"
+    },
+    "options": {
+      "en": [
+        "When you need to validate and transform request data before it reaches the handler",
+        "When you need to check user permissions or roles before handler execution",
+        "When you need to throw a 403 Forbidden response",
+        "When you need to handle global error responses"
+      ],
+      "ru": [
+        "Когда нужно валидировать и преобразовывать данные запроса перед передачей обработчику",
+        "Когда нужно проверить разрешения или роли пользователя перед выполнением обработчика",
+        "Когда нужно выбросить ответ 403 Forbidden",
+        "Когда нужно обработать глобальные ответы об ошибках"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Pipes are designed for data validation, transformation, and coercion of request parameters, body, and query strings. Guards are for authorization decisions. These are distinct concerns: Pipes process data while Guards control access.",
+      "ru": "Pipes предназначены для валидации данных, трансформации и приведения параметров запроса, тела и строк запроса. Guards предназначены для решений об авторизации. Это различные задачи: Pipes обрабатывают данные, а Guards управляют доступом."
+    }
+  },
+  {
+    "id": "nestjs-quiz-14",
+    "topicId": "nestjs",
+    "question": {
+      "en": "What is the key difference between Transient and Request scope providers in Nest.js, and when should you use Request scope?",
+      "ru": "Какова ключевая разница между Transient и Request scope провайдерами в Nest.js, и когда следует использовать Request scope?"
+    },
+    "options": {
+      "en": [
+        "Transient providers are created for each injection point; Request scope providers are created once per HTTP request and shared across all injections within that request",
+        "Transient providers are created once per HTTP request; Request scope providers are created for each injection point",
+        "Transient scope is faster than Request scope, so you should always prefer Transient",
+        "Request scope providers must be manually destroyed while Transient providers are automatically cleaned up"
+      ],
+      "ru": [
+        "Transient провайдеры создаются для каждой точки инъекции; Request scope провайдеры создаются один раз на HTTP запрос и совместно используются всеми инъекциями в рамках этого запроса",
+        "Transient провайдеры создаются один раз на HTTP запрос; Request scope провайдеры создаются для каждой точки инъекции",
+        "Transient scope быстрее, чем Request scope, поэтому следует всегда предпочитать Transient",
+        "Request scope провайдеры должны быть вручную уничтожены, а Transient провайдеры автоматически очищаются"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Transient providers create a new instance for each injection, while Request scope creates one instance per HTTP request that is reused across all injections in that request. Use Request scope when you need request-specific state to be shared across multiple services, such as tracking a request ID.",
+      "ru": "Transient провайдеры создают новый экземпляр для каждой инъекции, а Request scope создает один экземпляр на HTTP запрос, который переиспользуется во всех инъекциях в рамках этого запроса. Используйте Request scope, когда вам нужно совместное состояние, зависящее от запроса, такое как отслеживание ID запроса."
+    }
+  },
+  {
+    "id": "nestjs-quiz-15",
+    "topicId": "nestjs",
+    "question": {
+      "en": "What lifecycle hook is called after Nest.js has fully initialized all modules and their dependencies, and what is the primary use case for it?",
+      "ru": "Какой хук жизненного цикла вызывается после того, как Nest.js полностью инициализировал все модули и их зависимости, и какой основной случай использования для него?"
+    },
+    "options": {
+      "en": [
+        "onModuleInit is called after all modules are initialized; use it for database connections, loading initial data, or starting background tasks",
+        "onApplicationBootstrap is called before any modules are loaded; use it to set up dependency injection configuration",
+        "onModuleDestroy is called when the application starts; use it to initialize external services",
+        "onApplicationShutdown is called immediately after module instantiation; use it for validating dependencies"
+      ],
+      "ru": [
+        "onModuleInit вызывается после инициализации всех модулей; используйте его для подключения к БД, загрузки начальных данных или запуска фоновых задач",
+        "onApplicationBootstrap вызывается перед загрузкой любых модулей; используйте его для настройки конфигурации внедрения зависимостей",
+        "onModuleDestroy вызывается при запуске приложения; используйте его для инициализации внешних сервисов",
+        "onApplicationShutdown вызывается сразу после создания экземпляра модуля; используйте его для валидации зависимостей"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "onModuleInit is triggered after dependency injection is complete and all modules are ready. This is the ideal time to execute initialization logic like database connections, seeding data, or starting cron jobs. onApplicationBootstrap is called even later if you need to initialize after all modules AND HTTP server setup.",
+      "ru": "onModuleInit срабатывает после завершения внедрения зависимостей и когда все модули готовы. Это идеальное время для выполнения логики инициализации, такой как подключение к БД, заполнение данных или запуск cron задач. onApplicationBootstrap вызывается еще позже, если нужна инициализация после всех модулей И настройки HTTP сервера."
+    }
+  }
+]

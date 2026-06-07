@@ -1,1 +1,542 @@
-[]
+[
+  {
+    "id": "nodejs-quiz-1",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the correct order of Node.js event loop phases, and which phase executes callbacks scheduled with process.nextTick()?",
+      "ru": "Какой правильный порядок фаз event loop в Node.js, и в какой фазе выполняются callback'и, запланированные с помощью process.nextTick()?"
+    },
+    "options": {
+      "en": [
+        "process.nextTick() runs between any event loop phase, before microtasks queue is processed",
+        "process.nextTick() runs only in the poll phase, after I/O events",
+        "process.nextTick() runs in the check phase, after setImmediate()",
+        "process.nextTick() runs at the very end of the event loop, after all phases complete"
+      ],
+      "ru": [
+        "process.nextTick() выполняется между любой фазой event loop, перед обработкой microtasks очереди",
+        "process.nextTick() выполняется только в poll фазе, после событий I/O",
+        "process.nextTick() выполняется в check фазе, после setImmediate()",
+        "process.nextTick() выполняется в самом конце event loop, после завершения всех фаз"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "process.nextTick() callbacks are executed between event loop phases as part of the microtasks queue, not within a specific phase. This gives them higher priority than I/O callbacks, timers, and setImmediate(). The other options incorrectly place nextTick in specific phases or at the end.",
+      "ru": "Callback'и process.nextTick() выполняются между фазами event loop как часть microtasks очереди, а не в определённой фазе. Это даёт им более высокий приоритет, чем callback'и I/O, таймеры и setImmediate(). Остальные варианты неправильно помещают nextTick в конкретные фазы или в конец."
+    }
+  },
+  {
+    "id": "nodejs-quiz-2",
+    "topicId": "nodejs",
+    "question": {
+      "en": "Consider this code snippet:\n\nconst stream = fs.createReadStream('file.txt');\nstream.on('data', chunk => {\n  console.log('chunk:', chunk.length);\n});\nstream.pause();\nstream.on('data', chunk => {\n  console.log('paused chunk:', chunk.length);\n});\nstream.resume();\n\nWhat will be logged to console?",
+      "ru": "Рассмотрите этот код:\n\nconst stream = fs.createReadStream('file.txt');\nstream.on('data', chunk => {\n  console.log('chunk:', chunk.length);\n});\nstream.pause();\nstream.on('data', chunk => {\n  console.log('paused chunk:', chunk.length);\n});\nstream.resume();\n\nЧто будет выведено в консоль?"
+    },
+    "options": {
+      "en": [
+        "Both 'chunk' and 'paused chunk' handlers will execute for each chunk, because pause() doesn't remove existing listeners",
+        "Only 'chunk' handler will execute, because adding a listener after pause() has no effect",
+        "Only 'paused chunk' handler will execute, because the second listener replaces the first",
+        "Neither handler will execute, because pause() prevents all data events"
+      ],
+      "ru": [
+        "Оба обработчика 'chunk' и 'paused chunk' будут выполняться для каждого chunk'а, потому что pause() не удаляет существующие listener'ы",
+        "Только обработчик 'chunk' будет выполняться, потому что добавление listener'а после pause() не имеет эффекта",
+        "Только обработчик 'paused chunk' будет выполняться, потому что второй listener заменяет первый",
+        "Ни один обработчик не будет выполняться, потому что pause() предотвращает все события data"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Stream event listeners are additive—both 'data' listeners will be registered. pause() stops the stream from emitting events, but resume() restarts it, and both listeners will fire for each chunk. Adding an event listener after pause() does not prevent it from executing once the stream resumes.",
+      "ru": "Event listener'ы потока аддитивны—оба 'data' listener'а будут зарегистрированы. pause() останавливает поток от испускания событий, но resume() перезапускает его, и оба listener'а будут срабатывать для каждого chunk'а. Добавление listener'а события после pause() не предотвращает его выполнение после возобновления потока."
+    }
+  },
+  {
+    "id": "nodejs-quiz-3",
+    "topicId": "nodejs",
+    "question": {
+      "en": "When should you use Node.js cluster module instead of worker threads?",
+      "ru": "Когда следует использовать модуль cluster Node.js вместо worker threads?"
+    },
+    "options": {
+      "en": [
+        "When you need to handle multiple CPU cores and want each worker to be a separate Node.js process with its own V8 instance",
+        "When you need lightweight concurrency with shared memory and lower overhead than spawning full processes",
+        "When you need to perform CPU-intensive tasks and want to share large buffers efficiently between threads",
+        "Cluster and worker threads are functionally identical, so the choice depends only on performance preferences"
+      ],
+      "ru": [
+        "Когда вам нужно обрабатывать несколько ядер CPU и вы хотите, чтобы каждый worker был отдельным процессом Node.js с собственным экземпляром V8",
+        "Когда вам нужна лёгкая конкурентность с общей памятью и меньшие накладные расходы, чем при создании полных процессов",
+        "Когда вам нужно выполнять CPU-интенсивные задачи и вы хотите эффективно обмениваться большими буферами между потоками",
+        "Cluster и worker threads функционально идентичны, поэтому выбор зависит только от предпочтений производительности"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Cluster creates multiple processes (each with its own V8 instance), ideal for scaling web servers across multiple CPU cores. Worker threads are lightweight threads sharing the same V8 instance and memory space, better for CPU-intensive tasks. Option 2 describes worker threads, option 3 confuses benefits, and option 4 is factually incorrect about their differences.",
+      "ru": "Cluster создаёт несколько процессов (каждый со своим экземпляром V8), идеален для масштабирования веб-серверов на несколько ядер CPU. Worker threads—это лёгкие потоки, совместно использующие один экземпляр V8 и пространство памяти, лучше для CPU-интенсивных задач. Вариант 2 описывает worker threads, вариант 3 путает преимущества, а вариант 4 фактически неправ о их различиях."
+    }
+  },
+  {
+    "id": "nodejs-quiz-4",
+    "topicId": "nodejs",
+    "question": {
+      "en": "Analyze this code:\n\ntry {\n  fs.readFile('file.txt', (err, data) => {\n    if (err) throw err;\n    console.log(data);\n  });\n} catch (e) {\n  console.log('Caught:', e.message);\n}\n\nIf the file doesn't exist, what happens?",
+      "ru": "Проанализируйте этот код:\n\ntry {\n  fs.readFile('file.txt', (err, data) => {\n    if (err) throw err;\n    console.log(data);\n  });\n} catch (e) {\n  console.log('Caught:', e.message);\n}\n\nЕсли файл не существует, что происходит?"
+    },
+    "options": {
+      "en": [
+        "The error is caught by the catch block and 'Caught: ENOENT...' is logged",
+        "An uncaught exception occurs and crashes the process, because the error is thrown inside an async callback",
+        "The error is silently ignored and nothing is printed to console",
+        "The error is caught by the callback's if statement but not propagated, so neither catch nor error handling occurs"
+      ],
+      "ru": [
+        "Ошибка перехватывается блоком catch и выводится 'Caught: ENOENT...'",
+        "Происходит необработанное исключение и процесс падает, потому что ошибка выбрасывается внутри async callback'а",
+        "Ошибка молча игнорируется и ничего не выводится в консоль",
+        "Ошибка перехватывается условием if в callback'е, но не распространяется, поэтому ни catch, ни обработка ошибок не происходит"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The try-catch block only catches synchronous errors. Since fs.readFile is asynchronous, the callback executes later in the event loop, outside the try-catch scope. The thrown error inside the callback becomes an uncaught exception. To handle async errors, use error-first callbacks properly or use promises/async-await with proper error handling.",
+      "ru": "Блок try-catch перехватывает только синхронные ошибки. Поскольку fs.readFile является асинхронным, callback выполняется позже в event loop, вне области действия try-catch. Выброшенная ошибка внутри callback'а становится необработанным исключением. Для обработки async ошибок используйте error-first callback'и правильно или используйте promises/async-await с надлежащей обработкой ошибок."
+    }
+  },
+  {
+    "id": "nodejs-quiz-5",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the key difference in how CommonJS and ESM (ES modules) handle circular dependencies?",
+      "ru": "В чём ключевое отличие в том, как CommonJS и ESM (ES модули) обрабатывают циклические зависимости?"
+    },
+    "options": {
+      "en": [
+        "CommonJS resolves exports at runtime as properties of module.exports, while ESM bindings are static and resolved at parse time, causing different behavior with circular imports",
+        "ESM automatically detects circular dependencies and throws an error, while CommonJS silently ignores them",
+        "CommonJS and ESM handle circular dependencies identically, both resolving exports at parse time",
+        "ESM uses dynamic imports to avoid circular dependencies entirely, while CommonJS always has circular dependency issues"
+      ],
+      "ru": [
+        "CommonJS разрешает export'ы во время выполнения как свойства module.exports, а ESM привязки являются статическими и разрешаются во время синтаксического анализа, вызывая разное поведение с циклическими импортами",
+        "ESM автоматически обнаруживает циклические зависимости и выбрасывает ошибку, а CommonJS молча их игнорирует",
+        "CommonJS и ESM обрабатывают циклические зависимости идентично, оба разрешая export'ы во время синтаксического анализа",
+        "ESM использует динамические импорты, чтобы полностью избежать циклических зависимостей, а CommonJS всегда имеет проблемы с циклическими зависимостями"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "CommonJS resolves exports dynamically at runtime as object properties, allowing partial exports to work in circular dependencies. ESM bindings are static and evaluated at parse time, making circular dependencies more restrictive. ESM does not throw errors for circular deps, and both systems have potential issues—the difference lies in resolution timing and binding mechanism.",
+      "ru": "CommonJS разрешает export'ы динамически во время выполнения как свойства объекта, позволяя частичным export'ам работать в циклических зависимостях. Привязки ESM являются статическими и оцениваются во время синтаксического анализа, делая циклические зависимости более ограничивающими. ESM не выбрасывает ошибки для циклических зависимостей, и обе системы имеют потенциальные проблемы—разница заключается в механизме разрешения и привязки времени."
+    }
+  },
+  {
+    "id": "nodejs-quiz-6",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the correct order of event loop phases in Node.js, and which phase executes callbacks registered with process.nextTick()?",
+      "ru": "Какой правильный порядок фаз event loop в Node.js, и в какой фазе выполняются callbacks, зарегистрированные с помощью process.nextTick()?"
+    },
+    "options": {
+      "en": [
+        "process.nextTick() callbacks execute between each event loop phase, before microtask queue",
+        "process.nextTick() callbacks execute during the poll phase, after I/O callbacks",
+        "process.nextTick() callbacks execute in the check phase, alongside setImmediate()",
+        "process.nextTick() callbacks execute after the close phase, at the end of each cycle"
+      ],
+      "ru": [
+        "Callbacks process.nextTick() выполняются между каждой фазой event loop, до microtask queue",
+        "Callbacks process.nextTick() выполняются во время poll фазы, после I/O callbacks",
+        "Callbacks process.nextTick() выполняются в check фазе, наряду с setImmediate()",
+        "Callbacks process.nextTick() выполняются после close фазы, в конце каждого цикла"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "process.nextTick() has the highest priority and executes between event loop phases, before the microtask queue (which includes Promise callbacks). This ensures nextTick callbacks run as soon as the current operation completes. The other options confuse nextTick with setImmediate (check phase) or misplace it in the event loop sequence.",
+      "ru": "process.nextTick() имеет наивысший приоритет и выполняется между фазами event loop, перед microtask queue (которая включает Promise callbacks). Это гарантирует, что callbacks nextTick выполнятся как только завершится текущая операция. Остальные варианты путают nextTick с setImmediate (check phase) или неправильно размещают его в последовательности event loop."
+    }
+  },
+  {
+    "id": "nodejs-quiz-7",
+    "topicId": "nodejs",
+    "question": {
+      "en": "Consider this code: process.nextTick(() => console.log('A')); setImmediate(() => console.log('B')); Promise.resolve().then(() => console.log('C')); console.log('D'); What is the output?",
+      "ru": "Рассмотрите этот код: process.nextTick(() => console.log('A')); setImmediate(() => console.log('B')); Promise.resolve().then(() => console.log('C')); console.log('D'); Какой результат?"
+    },
+    "options": {
+      "en": [
+        "D, A, C, B",
+        "D, B, A, C",
+        "A, B, C, D",
+        "D, C, A, B"
+      ],
+      "ru": [
+        "D, A, C, B",
+        "D, B, A, C",
+        "A, B, C, D",
+        "D, C, A, B"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "D prints first (synchronous code). Then nextTick (A) executes before microtasks. Then microtasks like Promise (C) execute. Finally, check phase (B) executes last in this cycle. The priority order is: synchronous > nextTick > microtasks (Promises) > setImmediate.",
+      "ru": "D выводится первым (синхронный код). Затем nextTick (A) выполняется перед microtasks. Затем microtasks как Promise (C) выполняются. Наконец, check phase (B) выполняется последней в этом цикле. Порядок приоритета: синхронный > nextTick > microtasks (Promises) > setImmediate."
+    }
+  },
+  {
+    "id": "nodejs-quiz-8",
+    "topicId": "nodejs",
+    "question": {
+      "en": "When should you use Node.js streams instead of reading an entire file into memory with fs.readFile()? Which statement best describes the advantage?",
+      "ru": "Когда следует использовать Node.js streams вместо чтения всего файла в память с помощью fs.readFile()? Какое утверждение лучше описывает преимущество?"
+    },
+    "options": {
+      "en": [
+        "Streams allow processing large files with constant memory usage through backpressure handling, making them suitable for files larger than available RAM",
+        "Streams are faster than fs.readFile() because they use multiple threads internally",
+        "Streams eliminate the need for error handling since they automatically retry failed reads",
+        "Streams are only useful for network operations and should not be used for file I/O"
+      ],
+      "ru": [
+        "Streams позволяют обрабатывать большие файлы с постоянным использованием памяти благодаря обработке backpressure, что подходит для файлов больше доступной RAM",
+        "Streams быстрее, чем fs.readFile(), потому что внутри используют несколько потоков",
+        "Streams исключают необходимость в обработке ошибок, так как они автоматически повторяют неудачные чтения",
+        "Streams полезны только для сетевых операций и не должны использоваться для файлового ввода-вывода"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Streams process data in chunks with backpressure handling, ensuring memory usage stays constant regardless of file size. This is critical for large files. Option B is wrong (speed depends on other factors), C misunderstands error handling, and D is factually incorrect—streams are excellent for file I/O.",
+      "ru": "Streams обрабатывают данные порциями с обработкой backpressure, гарантируя, что использование памяти остается постоянным независимо от размера файла. Это критично для больших файлов. Вариант B неправ (скорость зависит от других факторов), C неправильно понимает обработку ошибок, и D фактически неправилен—streams отлично подходят для файлового ввода-вывода."
+    }
+  },
+  {
+    "id": "nodejs-quiz-9",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the key difference between Node.js cluster module and worker_threads, and when would you choose worker_threads over cluster?",
+      "ru": "В чем ключевое различие между модулем cluster Node.js и worker_threads, и когда вы выбрали бы worker_threads вместо cluster?"
+    },
+    "options": {
+      "en": [
+        "Worker threads share memory with the main thread and are better for CPU-intensive tasks, while cluster spawns separate Node.js processes with isolated memory suitable for I/O workloads",
+        "Cluster is deprecated and should never be used in modern Node.js applications",
+        "Worker threads can only communicate via TCP, while cluster can use shared memory",
+        "Cluster and worker_threads are identical—the choice only depends on naming preference"
+      ],
+      "ru": [
+        "Worker threads делят память с основным потоком и лучше подходят для CPU-интенсивных задач, в то время как cluster запускает отдельные процессы Node.js с изолированной памятью, подходящей для I/O workloads",
+        "Cluster устарел и никогда не должен использоваться в современных приложениях Node.js",
+        "Worker threads могут общаться только через TCP, в то время как cluster может использовать общую память",
+        "Cluster и worker_threads идентичны—выбор зависит только от предпочтений в названии"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Worker threads share the same V8 instance and memory space, making them ideal for CPU-intensive work with low overhead. Cluster spawns separate Node.js instances best for scaling I/O-bound servers. Option B is false (cluster is still useful), C confuses communication methods, and D ignores fundamental architectural differences.",
+      "ru": "Worker threads используют один экземпляр V8 и пространство памяти, что идеально для CPU-интенсивной работы с низкими издержками. Cluster запускает отдельные экземпляры Node.js, лучше всего подходящие для масштабирования I/O-bound серверов. Вариант B неправ (cluster все еще полезен), C путает методы коммуникации, и D игнорирует фундаментальные архитектурные различия."
+    }
+  },
+  {
+    "id": "nodejs-quiz-10",
+    "topicId": "nodejs",
+    "question": {
+      "en": "In CommonJS vs ESM, how do circular dependencies behave differently, and what does 'exports' reference in CommonJS?",
+      "ru": "В сравнении CommonJS и ESM, как ведут себя циклические зависимости по-другому, и на что ссылается 'exports' в CommonJS?"
+    },
+    "options": {
+      "en": [
+        "CommonJS 'exports' is a reference to module.exports object; circular dependencies return partially populated exports, while ESM throws an error for circular imports",
+        "CommonJS 'exports' and module.exports are completely separate objects; circular dependencies work identically in both systems",
+        "ESM 'exports' keyword functions like CommonJS exports; both handle circular dependencies by returning undefined",
+        "CommonJS has no 'exports' variable—it only uses module.exports; ESM always prevents circular dependencies at parse time"
+      ],
+      "ru": [
+        "'exports' в CommonJS является ссылкой на объект module.exports; циклические зависимости возвращают частично заполненные exports, в то время как ESM выбрасывает ошибку для циклических импортов",
+        "'exports' и module.exports в CommonJS — это совершенно разные объекты; циклические зависимости работают идентично в обеих системах",
+        "Ключевое слово 'exports' в ESM функционирует как CommonJS exports; обе системы обрабатывают циклические зависимости, возвращая undefined",
+        "CommonJS не имеет переменной 'exports'—он использует только module.exports; ESM всегда предотвращает циклические зависимости на этапе парсинга"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "In CommonJS, 'exports' is an alias for module.exports object. Circular dependencies return partially initialized modules. ESM handles circular dependencies more gracefully using live bindings but can still throw errors depending on how dependencies are accessed. Options B, C, and D contain factual errors about the module systems.",
+      "ru": "В CommonJS 'exports' является псевдонимом объекта module.exports. Циклические зависимости возвращают частично инициализированные модули. ESM обрабатывает циклические зависимости более грамотно, используя live bindings, но может все еще выбрасывать ошибки в зависимости от того, как осуществляется доступ к зависимостям. Варианты B, C и D содержат фактические ошибки о модульных системах."
+    }
+  },
+  {
+    "id": "nodejs-quiz-11",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the correct order of Node.js event loop phases?",
+      "ru": "Какой правильный порядок фаз цикла событий Node.js?"
+    },
+    "options": {
+      "en": [
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
+        "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
+        "timers → poll → pending callbacks → idle/prepare → check → close callbacks",
+        "pending callbacks → timers → poll → idle/prepare → check → close callbacks"
+      ],
+      "ru": [
+        "таймеры → отложенные обратные вызовы → простой/подготовка → опрос → проверка → закрытие обратных вызовов",
+        "опрос → таймеры → отложенные обратные вызовы → простой/подготовка → проверка → закрытие обратных вызовов",
+        "таймеры → опрос → отложенные обратные вызовы → простой/подготовка → проверка → закрытие обратных вызовов",
+        "отложенные обратные вызовы → таймеры → опрос → простой/подготовка → проверка → закрытие обратных вызовов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The event loop phases execute in the order: timers (setTimeout/setInterval), pending callbacks (deferred I/O), idle/prepare (internal), poll (I/O events), check (setImmediate), and close callbacks. This sequence ensures timers run first, followed by I/O operations, and setImmediate callbacks execute before the next timer phase.",
+      "ru": "Фазы цикла событий выполняются в порядке: таймеры (setTimeout/setInterval), отложенные обратные вызовы (отложенный I/O), простой/подготовка (внутренние), опрос (события I/O), проверка (setImmediate) и закрытие обратных вызовов. Эта последовательность гарантирует, что таймеры запускаются первыми, затем операции I/O, а обратные вызовы setImmediate выполняются до следующей фазы таймера."
+    }
+  },
+  {
+    "id": "nodejs-quiz-12",
+    "topicId": "nodejs",
+    "question": {
+      "en": "Consider this code snippet. What will be logged to the console? const buffer = Buffer.alloc(5); buffer.write('hello world'); console.log(buffer.toString());",
+      "ru": "Рассмотрите этот фрагмент кода. Что будет выведено в консоль? const buffer = Buffer.alloc(5); buffer.write('hello world'); console.log(buffer.toString());"
+    },
+    "options": {
+      "en": [
+        "hello",
+        "hello world",
+        "hellow",
+        "An error will be thrown"
+      ],
+      "ru": [
+        "hello",
+        "hello world",
+        "hellow",
+        "Будет выброшена ошибка"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Buffer.alloc(5) creates a buffer with exactly 5 bytes capacity. When write() is called with 'hello world', it only writes the first 5 characters that fit ('hello') because the buffer size is limited to 5 bytes. The remaining characters are ignored without throwing an error.",
+      "ru": "Buffer.alloc(5) создает буфер ровно с 5 байтами вместимости. Когда вызывается write() со строкой 'hello world', он записывает только первые 5 символов, которые подходят ('hello'), потому что размер буфера ограничен 5 байтами. Остальные символы игнорируются без выброса ошибки."
+    }
+  },
+  {
+    "id": "nodejs-quiz-13",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the key difference between process.nextTick() and setImmediate()?",
+      "ru": "В чем ключевое различие между process.nextTick() и setImmediate()?"
+    },
+    "options": {
+      "en": [
+        "process.nextTick() callbacks execute in the check phase, setImmediate() executes in the next timer phase",
+        "process.nextTick() has higher priority and executes before I/O events, while setImmediate() executes after the poll phase",
+        "setImmediate() executes synchronously, while process.nextTick() is always asynchronous",
+        "They are identical in execution order, just with different naming conventions"
+      ],
+      "ru": [
+        "Обратные вызовы process.nextTick() выполняются в фазе проверки, setImmediate() выполняется в следующей фазе таймера",
+        "process.nextTick() имеет более высокий приоритет и выполняется перед событиями I/O, в то время как setImmediate() выполняется после фазы опроса",
+        "setImmediate() выполняется синхронно, а process.nextTick() всегда асинхронный",
+        "Они идентичны в порядке выполнения, просто с разными соглашениями об именовании"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "process.nextTick() callbacks are executed after the current operation completes but before the event loop continues to the next phase, giving them higher priority. setImmediate() callbacks execute during the check phase, which occurs after the poll phase. This means process.nextTick() always runs before setImmediate() in the same iteration of the event loop.",
+      "ru": "Обратные вызовы process.nextTick() выполняются после завершения текущей операции, но перед тем, как цикл событий перейдет к следующей фазе, что дает им более высокий приоритет. Обратные вызовы setImmediate() выполняются во время фазы проверки, которая происходит после фазы опроса. Это означает, что process.nextTick() всегда выполняется перед setImmediate() в одной итерации цикла событий."
+    }
+  },
+  {
+    "id": "nodejs-quiz-14",
+    "topicId": "nodejs",
+    "question": {
+      "en": "When should you use Node.js streams instead of reading an entire file into memory with fs.readFile()?",
+      "ru": "Когда вы должны использовать потоки Node.js вместо чтения всего файла в память с помощью fs.readFile()?"
+    },
+    "options": {
+      "en": [
+        "Only when processing files larger than 1GB",
+        "When you need to process large files efficiently, avoid memory bloat, or transform data chunk-by-chunk without loading everything at once",
+        "Streams are slower and should only be used for network operations, not file I/O",
+        "When you want synchronous file operations for better error handling"
+      ],
+      "ru": [
+        "Только при обработке файлов размером более 1 ГБ",
+        "Когда вам нужно эффективно обрабатывать большие файлы, избежать избыточного использования памяти или преобразовать данные по частям без загрузки всего сразу",
+        "Потоки медленнее и должны использоваться только для сетевых операций, а не для файлового I/O",
+        "Когда вы хотите синхронные операции с файлами для лучшей обработки ошибок"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Streams are ideal for handling large files and data transformations because they process data in chunks rather than loading everything into memory at once. This prevents memory exhaustion and allows for real-time data processing. Streams work with any file size and are actually faster for large files, and they work well for both file and network I/O.",
+      "ru": "Потоки идеальны для обработки больших файлов и преобразований данных, поскольку они обрабатывают данные по частям, а не загружают все в память сразу. Это предотвращает истощение памяти и позволяет осуществлять обработку данных в реальном времени. Потоки работают с файлами любого размера и на самом деле быстрее для больших файлов, и они хорошо работают как с файловым, так и с сетевым I/O."
+    }
+  },
+  {
+    "id": "nodejs-quiz-15",
+    "topicId": "nodejs",
+    "question": {
+      "en": "When would you use the cluster module instead of worker_threads in Node.js?",
+      "ru": "Когда бы вы использовали модуль cluster вместо worker_threads в Node.js?"
+    },
+    "options": {
+      "en": [
+        "cluster is always better and should be used for all multi-processing scenarios",
+        "cluster spawns separate Node.js processes with their own V8 instances for CPU-bound tasks and load balancing across cores, while worker_threads share memory within a single process",
+        "worker_threads can only be used for network requests, cluster is for file operations",
+        "They are functionally identical; the choice is purely based on personal preference"
+      ],
+      "ru": [
+        "cluster всегда лучше и должна использоваться для всех сценариев многопроцессности",
+        "cluster порождает отдельные процессы Node.js с их собственными экземплярами V8 для CPU-интенсивных задач и балансировки нагрузки между ядрами, в то время как worker_threads совместно используют память в едином процессе",
+        "worker_threads можно использовать только для сетевых запросов, cluster для файловых операций",
+        "Они функционально идентичны; выбор основан исключительно на личных предпочтениях"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "cluster is best for load balancing HTTP servers across CPU cores because it spawns independent Node.js processes, allowing true parallelism for CPU-bound work. worker_threads share memory and are better for CPU-intensive tasks where you need shared state, with lower memory overhead. Each approach serves different use cases based on memory requirements and task characteristics.",
+      "ru": "cluster лучше всего подходит для балансировки нагрузки HTTP-серверов по ядрам CPU, поскольку она порождает независимые процессы Node.js, позволяя истинный параллелизм для CPU-интенсивных работ. worker_threads совместно используют память и лучше подходят для CPU-интенсивных задач, где вам нужно общее состояние, с меньшими накладными расходами памяти. Каждый подход служит разным случаям использования в зависимости от требований памяти и характеристик задач."
+    }
+  },
+  {
+    "id": "nodejs-quiz-16",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the correct order of event loop phases in Node.js, and which phase executes callbacks passed to process.nextTick?",
+      "ru": "Какой правильный порядок фаз цикла событий в Node.js, и в какой фазе выполняются callback'и, переданные в process.nextTick?"
+    },
+    "options": {
+      "en": [
+        "process.nextTick callbacks execute between each phase, not within a specific phase",
+        "process.nextTick callbacks execute during the poll phase",
+        "process.nextTick callbacks execute during the check phase along with setImmediate",
+        "process.nextTick callbacks execute during the timers phase"
+      ],
+      "ru": [
+        "Callback'и process.nextTick выполняются между каждой фазой, а не в конкретной фазе",
+        "Callback'и process.nextTick выполняются во время фазы опроса",
+        "Callback'и process.nextTick выполняются во время фазы check вместе с setImmediate",
+        "Callback'и process.nextTick выполняются во время фазы timers"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "process.nextTick has a microtask queue that runs between each event loop phase, giving it higher priority than setImmediate. This ensures nextTick callbacks always execute before any phase-specific callbacks, making it special compared to regular phases.",
+      "ru": "process.nextTick имеет отдельную микротаску очередь, которая выполняется между каждой фазой цикла событий, что дает ей более высокий приоритет, чем setImmediate. Это гарантирует, что callback'и nextTick всегда выполняются перед callback'ами любой фазы."
+    }
+  },
+  {
+    "id": "nodejs-quiz-17",
+    "topicId": "nodejs",
+    "question": {
+      "en": "Consider this code snippet. What will be the output order?\n\nsetTimeout(() => console.log('A'), 0);\nprocess.nextTick(() => console.log('B'));\nsetImmediate(() => console.log('C'));\nconsole.log('D');",
+      "ru": "Рассмотрите этот фрагмент кода. Какой будет порядок вывода?\n\nsetTimeout(() => console.log('A'), 0);\nprocess.nextTick(() => console.log('B'));\nsetImmediate(() => console.log('C'));\nconsole.log('D');"
+    },
+    "options": {
+      "en": [
+        "D, B, A, C",
+        "D, B, C, A",
+        "D, A, B, C",
+        "B, D, A, C"
+      ],
+      "ru": [
+        "D, B, A, C",
+        "D, B, C, A",
+        "D, A, B, C",
+        "B, D, A, C"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Synchronous code (D) runs first. Then microtasks like process.nextTick (B) execute. After that, the timers phase runs setTimeout (A), and finally the check phase runs setImmediate (C). The priority is: synchronous > nextTick > timers > setImmediate.",
+      "ru": "Синхронный код (D) выполняется первым. Затем выполняются микротаски, такие как process.nextTick (B). После этого выполняется фаза timers для setTimeout (A), и наконец фаза check для setImmediate (C). Приоритет: синхронный > nextTick > timers > setImmediate."
+    }
+  },
+  {
+    "id": "nodejs-quiz-18",
+    "topicId": "nodejs",
+    "question": {
+      "en": "When should you use Node.js Streams instead of reading an entire file into memory with fs.readFile? Which statement best explains the advantage?",
+      "ru": "Когда следует использовать Node.js Streams вместо чтения всего файла в память с помощью fs.readFile? Какое утверждение лучше всего объясняет преимущество?"
+    },
+    "options": {
+      "en": [
+        "Streams are faster because they use native C++ bindings, making them always the best choice",
+        "Streams process data in chunks, allowing constant memory usage regardless of file size, making them ideal for large files",
+        "Streams are required for files larger than 2GB, which is the maximum buffer size",
+        "Streams are only useful when working with network data; for local files, fs.readFile is always better"
+      ],
+      "ru": [
+        "Streams работают быстрее, так как используют нативные привязки C++, что делает их всегда лучшим выбором",
+        "Streams обрабатывают данные порциями, обеспечивая постоянное использование памяти независимо от размера файла, что идеально для больших файлов",
+        "Streams требуются для файлов больше 2 ГБ, что является максимальным размером буфера",
+        "Streams полезны только при работе с сетевыми данными; для локальных файлов fs.readFile всегда лучше"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Streams process data in manageable chunks rather than loading the entire file into memory, keeping memory usage constant and predictable. This is crucial for large files where loading everything at once would consume excessive memory and impact performance.",
+      "ru": "Streams обрабатывают данные управляемыми порциями, а не загружают весь файл в память, что поддерживает постоянное и предсказуемое использование памяти. Это критично для больших файлов, где загрузка всего сразу потребила бы чрезмерно много памяти и влияла на производительность."
+    }
+  },
+  {
+    "id": "nodejs-quiz-19",
+    "topicId": "nodejs",
+    "question": {
+      "en": "What is the key difference between the cluster module and worker_threads when choosing a concurrency model for CPU-intensive tasks?",
+      "ru": "В чем ключевое различие между модулем cluster и worker_threads при выборе модели параллелизма для CPU-интенсивных задач?"
+    },
+    "options": {
+      "en": [
+        "Cluster forks separate Node.js processes with isolated V8 instances, while worker_threads run in the same process and share the same memory space",
+        "Worker_threads are always faster than cluster because they have lower overhead",
+        "Cluster is only for network servers, while worker_threads can only be used for background tasks",
+        "Both cluster and worker_threads create identical performance and memory usage, so the choice is purely stylistic"
+      ],
+      "ru": [
+        "Cluster создает отдельные процессы Node.js с изолированными экземплярами V8, а worker_threads работают в одном процессе и общей памятью",
+        "Worker_threads всегда быстрее, чем cluster, потому что имеют меньше накладных расходов",
+        "Cluster используется только для сетевых серверов, а worker_threads можно использовать только для фоновых задач",
+        "Cluster и worker_threads создают одинаковую производительность и использование памяти, поэтому выбор исключительно стилистический"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Cluster spawns separate Node.js processes with independent memory, preventing memory sharing but providing true parallelism. Worker_threads share the same V8 heap and memory space, allowing efficient data sharing but with more complex synchronization requirements. Each is suited for different use cases.",
+      "ru": "Cluster создает отдельные процессы Node.js с независимой памятью, предотвращая общее использование памяти, но обеспечивая истинный параллелизм. Worker_threads используют одну V8 кучу и общее пространство памяти, позволяя эффективно обмениваться данными, но требуя более сложной синхронизации."
+    }
+  },
+  {
+    "id": "nodejs-quiz-20",
+    "topicId": "nodejs",
+    "question": {
+      "en": "How should you properly handle errors thrown in an async iterator or stream to prevent unhandled promise rejections in modern Node.js?",
+      "ru": "Как правильно обработать ошибки, выброшенные в асинхронном итераторе или потоке, чтобы предотвратить необработанные отклонения обещаний в современном Node.js?"
+    },
+    "options": {
+      "en": [
+        "Use try-catch blocks around for-await-of loops and attach 'error' event listeners to streams",
+        "Stream errors are automatically caught by Node.js and logged; no explicit handling is needed",
+        "Use only .on('error') handlers on streams; try-catch is not compatible with streams",
+        "Errors in streams are fatal and cannot be reliably handled, so you should avoid streams when error handling is important"
+      ],
+      "ru": [
+        "Используйте блоки try-catch вокруг циклов for-await-of и присоедините слушатели события 'error' к потокам",
+        "Ошибки потока автоматически отлавливаются Node.js и логируются; явная обработка не требуется",
+        "Используйте только обработчики .on('error') на потоках; try-catch несовместим с потоками",
+        "Ошибки в потоках являются фатальными и не могут быть надежно обработаны, поэтому следует избегать потоков, когда обработка ошибок важна"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "For async iterators, try-catch within for-await-of loops catches rejected promises. For streams, 'error' event listeners are essential because streams emit errors as events, not exceptions. Both techniques are necessary for comprehensive error handling in modern Node.js applications.",
+      "ru": "Для асинхронных итераторов try-catch внутри циклов for-await-of ловит отклоненные обещания. Для потоков слушатели события 'error' необходимы, потому что потоки генерируют ошибки как события, а не исключения. Обе техники необходимы для всеобъемлющей обработки ошибок в современных приложениях Node.js."
+    }
+  }
+]

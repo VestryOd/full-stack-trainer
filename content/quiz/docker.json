@@ -1,0 +1,326 @@
+[
+  {
+    "id": "docker-quiz-1",
+    "topicId": "docker",
+    "question": {
+      "en": "What is the fundamental difference between a Docker image and a Docker container?",
+      "ru": "В чем принципиальное отличие между образом Docker и контейнером Docker?"
+    },
+    "options": {
+      "en": [
+        "An image is a read-only template that defines how to build a container; a container is a running instance of that image",
+        "An image is a running instance; a container is the blueprint stored on disk",
+        "Images are only used during development, containers are used in production",
+        "An image contains only source code, while a container includes the compiled application"
+      ],
+      "ru": [
+        "Образ - это шаблон только для чтения, который определяет как построить контейнер; контейнер - это запущенный экземпляр этого образа",
+        "Образ - это запущенный экземпляр; контейнер - это чертеж, сохраненный на диске",
+        "Образы используются только при разработке, контейнеры используются в production",
+        "Образ содержит только исходный код, а контейнер включает скомпилированное приложение"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A Docker image is an immutable, layered template that serves as a blueprint, while a container is the actual running process with its own isolated filesystem and resources. Images are used to create multiple containers, and containers are ephemeral instances that can be started, stopped, and deleted.",
+      "ru": "Образ Docker - это неизменяемый многоуровневый шаблон, который служит чертежом, а контейнер - это фактический работающий процесс со своей собственной изолированной файловой системой и ресурсами. Образы используются для создания нескольких контейнеров, а контейнеры - это временные экземпляры, которые можно запускать, останавливать и удалять."
+    }
+  },
+  {
+    "id": "docker-quiz-2",
+    "topicId": "docker",
+    "question": {
+      "en": "Consider this Dockerfile. What happens when the container starts? \n\nFROM ubuntu:20.04\nRUN apt-get update && apt-get install -y curl\nCMD [\"echo\", \"Hello from CMD\"]\nENTRYPOINT [\"sh\", \"-c\"]",
+      "ru": "Рассмотрите этот Dockerfile. Что происходит при запуске контейнера? \n\nFROM ubuntu:20.04\nRUN apt-get update && apt-get install -y curl\nCMD [\"echo\", \"Hello from CMD\"]\nENTRYPOINT [\"sh\", \"-c\"]"
+    },
+    "options": {
+      "en": [
+        "The container fails because ENTRYPOINT and CMD cannot be used together",
+        "The ENTRYPOINT overrides CMD completely, and 'sh -c' is executed with no arguments",
+        "The ENTRYPOINT runs 'sh -c', and the CMD ['echo', 'Hello from CMD'] is passed as arguments to it, executing: sh -c echo Hello from CMD",
+        "Both ENTRYPOINT and CMD execute independently, running two separate processes"
+      ],
+      "ru": [
+        "Контейнер падает, потому что ENTRYPOINT и CMD не могут использоваться вместе",
+        "ENTRYPOINT полностью переопределяет CMD, и 'sh -c' выполняется без аргументов",
+        "ENTRYPOINT запускает 'sh -c', а CMD ['echo', 'Hello from CMD'] передается как аргументы к нему, выполняя: sh -c echo Hello from CMD",
+        "ENTRYPOINT и CMD выполняются независимо, запуская два отдельных процесса"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "When both ENTRYPOINT and CMD are defined in exec form, the CMD arguments are appended to the ENTRYPOINT command, creating a combined instruction. The ENTRYPOINT sets the main process (sh -c), and CMD provides the arguments to that process. This allows the container to be parameterizable while maintaining a fixed executable.",
+      "ru": "Когда оба ENTRYPOINT и CMD определены в exec форме, аргументы CMD добавляются к команде ENTRYPOINT, создавая комбинированную инструкцию. ENTRYPOINT устанавливает основной процесс (sh -c), а CMD предоставляет аргументы этому процессу. Это позволяет контейнеру быть параметризуемым, сохраняя фиксированный исполняемый файл."
+    }
+  },
+  {
+    "id": "docker-quiz-3",
+    "topicId": "docker",
+    "question": {
+      "en": "What is the primary advantage of using multi-stage builds in Docker?",
+      "ru": "В чем основное преимущество использования многоэтапных сборок в Docker?"
+    },
+    "options": {
+      "en": [
+        "They allow you to run multiple containers in parallel during the build process",
+        "They reduce the final image size by allowing you to copy only necessary artifacts from builder stages into the final stage",
+        "They enable you to use different base images for different layers of your application",
+        "They automatically optimize Docker layer caching for faster rebuilds"
+      ],
+      "ru": [
+        "Они позволяют запускать несколько контейнеров параллельно во время процесса сборки",
+        "Они уменьшают размер финального образа, позволяя копировать только необходимые артефакты из этапов сборки в финальный этап",
+        "Они позволяют использовать разные базовые образы для разных слоев вашего приложения",
+        "Они автоматически оптимизируют кеширование слоев Docker для более быстрых пересборок"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Multi-stage builds allow you to use multiple FROM statements, with each stage having its own context. You can build your application in a heavyweight builder stage (with compilers, development tools) and then copy only the compiled artifacts into a lean final stage, discarding build tools and reducing image size significantly.",
+      "ru": "Многоэтапные сборки позволяют использовать несколько инструкций FROM, каждый этап имеет свой контекст. Вы можете собрать приложение в тяжелом этапе сборки (с компиляторами, инструментами разработки) и затем скопировать только скомпилированные артефакты в легкий финальный этап, отбросив инструменты сборки и значительно уменьшив размер образа."
+    }
+  },
+  {
+    "id": "docker-quiz-4",
+    "topicId": "docker",
+    "question": {
+      "en": "Which Docker volume type persists data on the host machine even after the container is removed, and is managed by Docker?",
+      "ru": "Какой тип тома Docker сохраняет данные на машине хоста даже после удаления контейнера и управляется Docker?"
+    },
+    "options": {
+      "en": [
+        "Bind mounts, because they store data in /var/lib/docker/volumes on the host",
+        "Named volumes, because Docker manages the storage location and lifecycle independently",
+        "Tmpfs mounts, because they are persistent by default and automatically backed up",
+        "Anonymous volumes, because they are created without a name and managed by Docker automatically"
+      ],
+      "ru": [
+        "Bind mounts, потому что они хранят данные в /var/lib/docker/volumes на хосте",
+        "Named volumes, потому что Docker управляет местоположением хранилища и жизненным циклом независимо",
+        "Tmpfs mounts, потому что они по умолчанию постоянны и автоматически архивируются",
+        "Anonymous volumes, потому что они создаются без имени и автоматически управляются Docker"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Named volumes are the Docker-managed volume type that persists data and survives container removal. They are stored in Docker's managed directory (/var/lib/docker/volumes by default) and can be referenced by name across containers. Bind mounts are host-path dependent, tmpfs mounts are temporary, and anonymous volumes are harder to reuse.",
+      "ru": "Named volumes - это управляемый Docker тип тома, который сохраняет данные и существует даже после удаления контейнера. Они хранятся в управляемой Docker директории (/var/lib/docker/volumes по умолчанию) и могут быть использованы по имени в разных контейнерах. Bind mounts зависят от пути хоста, tmpfs mounts временные, а anonymous volumes сложнее переиспользовать."
+    }
+  },
+  {
+    "id": "docker-quiz-5",
+    "topicId": "docker",
+    "question": {
+      "en": "In a docker-compose.yml file, what is the difference between the 'host' and 'bridge' network modes?",
+      "ru": "В файле docker-compose.yml в чем разница между режимами сети 'host' и 'bridge'?"
+    },
+    "options": {
+      "en": [
+        "Bridge mode isolates container ports; host mode shares the host's network stack directly, but containers cannot communicate with each other",
+        "Bridge mode creates a virtual network where containers communicate via service names; host mode shares the host's network stack and allows container-to-container communication",
+        "Host mode is only available on Linux; bridge mode is the default and works on all platforms",
+        "Bridge mode assigns each container its own IP address; host mode requires static port mappings"
+      ],
+      "ru": [
+        "Режим Bridge изолирует порты контейнеров; режим host делится стеком сети хоста напрямую, но контейнеры не могут общаться друг с другом",
+        "Режим Bridge создает виртуальную сеть, где контейнеры общаются через имена сервисов; режим host делится стеком сети хоста и позволяет контейнерам общаться друг с другом",
+        "Режим Host доступен только на Linux; режим bridge - это режим по умолчанию и работает на всех платформах",
+        "Режим Bridge назначает каждому контейнеру свой IP-адрес; режим host требует статических маппингов портов"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Bridge mode is the default and creates an internal virtual network where containers can communicate by service name; it works consistently across Linux, macOS, and Windows. Host mode removes network isolation and shares the host's network stack directly (Linux only), making containers appear as if they're running on the host itself with direct access to host ports.",
+      "ru": "Режим Bridge - это режим по умолчанию, который создает внутреннюю виртуальную сеть, где контейнеры могут общаться по имени сервиса; он работает одинаково на Linux, macOS и Windows. Режим Host удаляет изоляцию сети и делится стеком сети хоста напрямую (только Linux), делая контейнеры похожими на то, что они работают на самом хосте с прямым доступом к портам хоста."
+    }
+  },
+  {
+    "id": "docker-quiz-6",
+    "topicId": "docker",
+    "question": {
+      "en": "What is the key difference between a Docker image and a Docker container?",
+      "ru": "В чем ключевое различие между образом Docker и контейнером Docker?"
+    },
+    "options": {
+      "en": [
+        "A Docker image is a blueprint or template, while a container is a running instance of that image with its own isolated filesystem and processes",
+        "A Docker image contains only source code, while a container includes the compiled application",
+        "A Docker image is mutable and changes persist, while a container is immutable",
+        "A Docker image runs in memory, while a container is stored on disk"
+      ],
+      "ru": [
+        "Образ Docker — это чертеж или шаблон, а контейнер — это работающий экземпляр этого образа со своей изолированной файловой системой и процессами",
+        "Образ Docker содержит только исходный код, а контейнер включает скомпилированное приложение",
+        "Образ Docker изменяется, и изменения сохраняются, а контейнер неизменяем",
+        "Образ Docker работает в памяти, а контейнер хранится на диске"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "An image is an immutable blueprint containing the application code, dependencies, and runtime; a container is a live, running instance with its own isolated environment. Images are stored as templates on disk, while containers execute in memory with their own isolated filesystems and processes.",
+      "ru": "Образ — это неизменяемый чертеж, содержащий код приложения, зависимости и среду выполнения; контейнер — это живой, работающий экземпляр со своей изолированной средой. Образы хранятся на диске как шаблоны, а контейнеры выполняются в памяти с собственными изолированными файловыми системами и процессами."
+    }
+  },
+  {
+    "id": "docker-quiz-7",
+    "topicId": "docker",
+    "question": {
+      "en": "In a Dockerfile with multiple RUN commands, how are layers created and what is the performance implication of this approach? Dockerfile: RUN apt-get update && RUN apt-get install -y curl && RUN apt-get install -y git",
+      "ru": "В Dockerfile с несколькими командами RUN, как создаются слои и какое влияние на производительность имеет этот подход? Dockerfile: RUN apt-get update && RUN apt-get install -y curl && RUN apt-get install -y git"
+    },
+    "options": {
+      "en": [
+        "Each RUN command creates a separate layer; this increases image size because apt-get cache from the first layer isn't available to subsequent layers",
+        "All RUN commands are combined into a single layer during build time, so there is no performance impact",
+        "Each RUN command creates a layer, but they share the same apt-get cache, so there is no performance penalty",
+        "Only the final RUN command creates a layer; previous commands are discarded"
+      ],
+      "ru": [
+        "Каждая команда RUN создает отдельный слой; это увеличивает размер образа, потому что кэш apt-get из первого слоя недоступен для последующих слоев",
+        "Все команды RUN объединяются в один слой во время сборки, поэтому нет влияния на производительность",
+        "Каждая команда RUN создает слой, но они используют один и тот же кэш apt-get, поэтому штрафов на производительность нет",
+        "Только последняя команда RUN создает слой; предыдущие команды отбрасываются"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Each RUN instruction creates a new layer in the image. When apt-get update runs in one layer, its cache doesn't persist to the next layer, causing redundant downloads and larger images. Best practice is to chain commands: RUN apt-get update && apt-get install -y curl git to create a single layer.",
+      "ru": "Каждая инструкция RUN создает новый слой в образе. Когда apt-get update выполняется в одном слое, его кэш не сохраняется для следующего слоя, что вызывает избыточные загрузки и большие образы. Лучшая практика — цепочка команд: RUN apt-get update && apt-get install -y curl git для создания одного слоя."
+    }
+  },
+  {
+    "id": "docker-quiz-8",
+    "topicId": "docker",
+    "question": {
+      "en": "What is the primary purpose of multi-stage Docker builds, and what problem do they solve?",
+      "ru": "Какова основная цель многоэтапных сборок Docker и какую проблему они решают?"
+    },
+    "options": {
+      "en": [
+        "They allow you to use multiple base images and reduce final image size by copying only necessary artifacts from build stages into the final stage",
+        "They enable parallel builds of different services in a single docker-compose file",
+        "They automatically optimize layers by reordering commands based on build frequency",
+        "They allow developers to run multiple containers simultaneously without using docker-compose"
+      ],
+      "ru": [
+        "Они позволяют использовать несколько базовых образов и уменьшить размер финального образа, копируя только необходимые артефакты из этапов сборки в финальный этап",
+        "Они включают параллельные сборки различных сервисов в одном файле docker-compose",
+        "Они автоматически оптимизируют слои путем переупорядочения команд на основе частоты сборки",
+        "Они позволяют разработчикам запускать несколько контейнеров одновременно без использования docker-compose"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Multi-stage builds solve the problem of large final images by separating build-time dependencies from runtime dependencies. You can use a larger builder stage (e.g., with compiler tools) and then copy only the compiled artifacts into a slim final stage, significantly reducing image size.",
+      "ru": "Многоэтапные сборки решают проблему больших финальных образов, разделяя зависимости времени сборки от зависимостей времени выполнения. Вы можете использовать больший этап построения (например, с инструментами компилятора) и затем скопировать только скомпилированные артефакты в стройный финальный этап, значительно уменьшив размер образа."
+    }
+  },
+  {
+    "id": "docker-quiz-9",
+    "topicId": "docker",
+    "question": {
+      "en": "In a Dockerfile, what is the difference between CMD and ENTRYPOINT, and when should you use each one? Example: ENTRYPOINT [\"./app\"] vs CMD [\"./app\"]",
+      "ru": "В Dockerfile, в чем разница между CMD и ENTRYPOINT, и когда вы должны использовать каждый? Пример: ENTRYPOINT [\"./app\"] vs CMD [\"./app\"]"
+    },
+    "options": {
+      "en": [
+        "ENTRYPOINT defines the command that always runs, while CMD provides default arguments that can be overridden at runtime; they can be used together for flexibility",
+        "CMD is executed first during container startup, while ENTRYPOINT is executed second",
+        "ENTRYPOINT and CMD are interchangeable; both can be used to start the application",
+        "ENTRYPOINT is only for shell scripts, while CMD is only for executable binaries"
+      ],
+      "ru": [
+        "ENTRYPOINT определяет команду, которая всегда выполняется, а CMD предоставляет аргументы по умолчанию, которые можно переопределить во время выполнения; они могут использоваться вместе для гибкости",
+        "CMD выполняется первым при запуске контейнера, а ENTRYPOINT выполняется вторым",
+        "ENTRYPOINT и CMD взаимозаменяемы; оба могут использоваться для запуска приложения",
+        "ENTRYPOINT предназначен только для shell-скриптов, а CMD — только для исполняемых бинарных файлов"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "ENTRYPOINT specifies the main command that always runs, making the container act like an executable. CMD provides default parameters that can be overridden with docker run arguments. Using both together (ENTRYPOINT for the executable, CMD for default args) is a best practice for flexible, predictable containers.",
+      "ru": "ENTRYPOINT задает основную команду, которая всегда выполняется, делая контейнер похожим на исполняемый файл. CMD предоставляет параметры по умолчанию, которые могут быть переопределены аргументами docker run. Использование обоих вместе (ENTRYPOINT для исполняемого файла, CMD для аргументов по умолчанию) является лучшей практикой для гибких, предсказуемых контейнеров."
+    }
+  },
+  {
+    "id": "docker-quiz-10",
+    "topicId": "docker",
+    "question": {
+      "en": "What are the three main Docker volume types, and when should you use a named volume versus a bind mount versus a tmpfs mount?",
+      "ru": "Каковы три основных типа томов Docker и когда вы должны использовать именованный том вместо монтирования привязки или монтирования tmpfs?"
+    },
+    "options": {
+      "en": [
+        "Named volumes (managed by Docker), bind mounts (map host directory to container), and tmpfs mounts (in-memory, ephemeral); use named volumes for production data, bind mounts for development, tmpfs for temporary/sensitive data",
+        "Anonymous volumes, persistent volumes, and ephemeral volumes; all three store data permanently on the host machine",
+        "Docker volumes, container volumes, and network volumes; network volumes are for inter-container communication only",
+        "Read-only volumes, read-write volumes, and system volumes; the choice depends only on container privilege level"
+      ],
+      "ru": [
+        "Именованные тома (управляются Docker), монтирования привязки (отображают каталог хоста на контейнер) и монтирования tmpfs (в памяти, временные); используйте именованные тома для производственных данных, монтирования привязки для разработки, tmpfs для временных/конфиденциальных данных",
+        "Анонимные тома, постоянные тома и временные тома; все три тома постоянно хранят данные на хост-машине",
+        "Тома Docker, тома контейнеров и сетевые тома; сетевые тома предназначены только для связи между контейнерами",
+        "Тома только для чтения, тома для чтения и записи и системные тома; выбор зависит только от уровня привилегий контейнера"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Docker has three volume types: named volumes (Docker-managed, portable, best for production), bind mounts (map host paths, useful for development), and tmpfs (non-persistent in-memory storage, ideal for sensitive temporary data). Choosing the right type depends on use case: production apps need named volumes, development benefits from bind mounts, and sensitive runtime data uses tmpfs.",
+      "ru": "Docker имеет три типа томов: именованные тома (управляемые Docker, портативные, лучше всего для производства), монтирования привязки (отображают пути хоста, полезны для разработки) и tmpfs (непостоянное хранилище в памяти, идеально для конфиденциальных временных данных). Выбор правильного типа зависит от варианта использования: производственные приложения нуждаются в именованных томах, разработка выигрывает от монтирован��й привязки, а конфиденциальные данные времени выполнения используют tmpfs."
+    }
+  },
+  {
+    "id": "docker-quiz-11",
+    "topicId": "docker",
+    "question": {
+      "en": "When you build a Docker image with multiple FROM statements in a Dockerfile, what is the primary advantage of using this multi-stage build approach?",
+      "ru": "Когда вы собираете Docker образ с несколькими инструкциями FROM в Dockerfile, каково основное преимущество такого подхода многоэтапной сборки?"
+    },
+    "options": {
+      "en": [
+        "It reduces the final image size by allowing you to copy only necessary artifacts from previous stages, leaving behind build tools and dependencies",
+        "It allows you to run multiple containers simultaneously from a single image",
+        "It enables you to use different Docker registries for each stage of the build process",
+        "It automatically creates separate volumes for each stage, improving I/O performance"
+      ],
+      "ru": [
+        "Он уменьшает размер финального образа, позволяя копировать только необходимые артефакты из предыдущих этапов, оставляя инструменты сборки и зависимости",
+        "Он позволяет одновременно запускать несколько контейнеров из одного образа",
+        "Он позволяет использовать разные реестры Docker для каждого этапа процесса сборки",
+        "Он автоматически создает отдельные тома для каждого этапа, улучшая производительность ввода-вывода"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Multi-stage builds allow you to use one stage to compile/build your application and another stage to run it, copying only the final binary or artifacts to the final stage. This leaves behind large build tools, compilers, and source code, significantly reducing the final image size. The other options misunderstand the purpose: multiple containers are unrelated to multi-stage builds, registries aren't stage-dependent, and volumes aren't automatically created by stages.",
+      "ru": "Многоэтапные сборки позволяют использовать один этап для компиляции приложения, а другой для его запуска, копируя только финальные бинарные файлы или артефакты на финальный этап. Это оставляет за собой большие инструменты сборки, компиляторы и исходный код, значительно уменьшая размер финального образа. Другие варианты неправильно интерпретируют цель: несколько контейнеров не связаны с многоэтапными сборками, реестры не зависят от этапов, и тома не создаются автоматически этапами."
+    }
+  },
+  {
+    "id": "docker-quiz-12",
+    "topicId": "docker",
+    "question": {
+      "en": "In a docker-compose.yml file, what is the key difference between using a named volume versus a bind mount for the 'services.db.volumes' section, in terms of data persistence and portability?",
+      "ru": "В файле docker-compose.yml в чем ключевое отличие между использованием именованного тома и монтирования привязки в разделе 'services.db.volumes' с точки зрения сохранения данных и портативности?"
+    },
+    "options": {
+      "en": [
+        "Named volumes are managed by Docker and stored in a Docker-managed directory, making them portable across machines; bind mounts tie data to a specific host path and are not portable",
+        "Bind mounts automatically backup data to remote storage, while named volumes only store data locally",
+        "Named volumes require explicit permissions configuration, while bind mounts inherit host file permissions automatically",
+        "Bind mounts are faster for database operations because they bypass the Docker daemon, while named volumes add overhead"
+      ],
+      "ru": [
+        "Именованные тома управляются Docker и хранятся в управляемой Docker директории, что делает их портативными между машинами; монтирования привязки привязывают данные к определенному пути хоста и не портативны",
+        "Монтирования привязки автоматически резервируют данные в удаленное хранилище, а именованные тома хранят данные только локально",
+        "Именованные тома требуют явной настройки разрешений, в то время как монтирования привязки автоматически наследуют права доступа файлов хоста",
+        "Монтирования привязки работают быстрее для операций с базой данных, потому что они обходят демон Docker, в то время как именованные тома добавляют накладные расходы"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Named volumes are Docker-managed and stored in a location controlled by Docker (usually /var/lib/docker/volumes on Linux), making them portable and easy to backup or migrate. Bind mounts directly reference a host filesystem path, coupling your containers to specific machines. The other options are misconceptions: bind mounts don't provide automatic backups, both volume types use host permissions, and both have similar performance characteristics.",
+      "ru": "Именованные тома управляются Docker и хранятся в местоположении, контролируемом Docker (обычно /var/lib/docker/volumes в Linux), что делает их портативными и легко резервируемыми или переносимыми. Монтирования привязки напрямую ссылаются на путь файловой системы хоста, связывая ваши контейнеры с конкретными машинами. Другие варианты - это неправильные представления: монтирования привязки не обеспечивают автоматическое резервное копирование, оба типа томов используют разрешения хоста, и оба имеют похожие характеристики производительности."
+    }
+  }
+]

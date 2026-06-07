@@ -1,0 +1,326 @@
+[
+  {
+    "id": "git-quiz-1",
+    "topicId": "git",
+    "question": {
+      "en": "You have a feature branch with 5 commits ahead of main. You want to incorporate these changes into main while maintaining a linear history. Which approach is most appropriate and why might you choose it over merge?",
+      "ru": "У вас есть ветка feature с 5 коммитами впереди main. Вы хотите включить эти изменения в main, сохраняя линейную историю. Какой подход наиболее подходящий и почему вы можете выбрать его вместо merge?"
+    },
+    "options": {
+      "en": [
+        "Use git rebase to replay commits on top of main, then fast-forward merge",
+        "Use git merge --no-ff to create a merge commit with all history preserved",
+        "Use git cherry-pick to select individual commits one by one",
+        "Use git reflog to restore the original state before any changes"
+      ],
+      "ru": [
+        "Использовать git rebase для повторного применения коммитов поверх main, затем fast-forward merge",
+        "Использовать git merge --no-ff для создания merge коммита со всей сохраненной историей",
+        "Использовать git cherry-pick для выбора отдельных коммитов один за другим",
+        "Использовать git reflog для восстановления исходного состояния перед любыми изменениями"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Rebase replays your commits on top of the updated main branch, creating a clean linear history without merge commits. This is preferred when you want a readable history and are rebasing unpublished work. Cherry-pick is for selective commits, merge --no-ff creates merge commits (which you want to avoid here), and reflog is for recovery, not integration.",
+      "ru": "Rebase повторно применяет ваши коммиты поверх обновленной ветки main, создавая чистую линейную историю без merge коммитов. Это предпочтительно, когда вы хотите читаемую историю и переделываете неопубликованную работу. Cherry-pick предназначен для выборочных коммитов, merge --no-ff создает merge коммиты (которые вы хотите избежать здесь), а reflog предназначен для восстановления, а не интеграции."
+    }
+  },
+  {
+    "id": "git-quiz-2",
+    "topicId": "git",
+    "question": {
+      "en": "What is the key difference between git stash and git stash pop in terms of the stash list?",
+      "ru": "В чем ключевое отличие между git stash и git stash pop с точки зрения списка stash?"
+    },
+    "options": {
+      "en": [
+        "git stash keeps the stash entry in the list; git stash pop removes it after applying",
+        "git stash removes the entry immediately; git stash pop keeps it for later reference",
+        "There is no difference; they are aliases for the same command",
+        "git stash pop creates a new stash entry; git stash discards the current work"
+      ],
+      "ru": [
+        "git stash сохраняет запись stash в списке; git stash pop удаляет её после применения",
+        "git stash удаляет запись немедленно; git stash pop сохраняет её для дальнейшей ссылки",
+        "Нет никакой разницы; они являются синонимами одной команды",
+        "git stash pop создает новую запись stash; git stash отбрасывает текущую работу"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "git stash save (or just git stash) creates a stash entry and leaves it in the stash list. git stash pop applies the most recent stash and removes it from the list in one operation. If you want to apply a stash multiple times, use git stash apply instead of pop.",
+      "ru": "git stash save (или просто git stash) создает запись stash и оставляет её в списке stash. git stash pop применяет самый свежий stash и удаляет его из списка в одной операции. Если вы хотите применить stash несколько раз, используйте git stash apply вместо pop."
+    }
+  },
+  {
+    "id": "git-quiz-3",
+    "topicId": "git",
+    "question": {
+      "en": "In Git's object model, which of the following best describes the relationship between blob, tree, and commit objects?",
+      "ru": "В объектной модели Git, что лучше всего описывает отношение между объектами blob, tree и commit?"
+    },
+    "options": {
+      "en": [
+        "A commit points to a tree, which contains references to blobs (files) and other trees (directories)",
+        "A blob contains multiple commits; a tree is a collection of blobs without any commit reference",
+        "A tree and blob are the same object; a commit is a snapshot of either one",
+        "A commit is the lowest level; trees are built from commits, and blobs are built from trees"
+      ],
+      "ru": [
+        "Коммит указывает на tree, который содержит ссылки на blobs (файлы) и другие trees (директории)",
+        "Blob содержит несколько коммитов; tree это коллекция blobs без ссылки на коммит",
+        "Tree и blob это один и тот же объект; коммит это снимок одного из них",
+        "Коммит это самый низкий уровень; trees строятся из коммитов, а blobs строятся из trees"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Git's object model is hierarchical: a commit object contains metadata and a pointer to a tree object. The tree object represents a directory and contains entries pointing to blobs (file contents) and other trees (subdirectories). Blobs are immutable file contents, identified by their SHA-1 hash. This structure forms a directed acyclic graph (DAG).",
+      "ru": "Объектная модель Git иерархична: объект коммита содержит метаданные и указатель на объект tree. Объект tree представляет директорию и содержит записи, указывающие на blobs (содержимое файлов) и другие trees (поддиректории). Blobs это неизменяемое содержимое файлов, идентифицируемое по их SHA-1 хешу. Эта структура образует направленный ациклический граф (DAG)."
+    }
+  },
+  {
+    "id": "git-quiz-4",
+    "topicId": "git",
+    "question": {
+      "en": "You accidentally ran: git reset --hard HEAD~3. Later, you realized you need to recover your work. Which command is most reliable for finding and recovering the lost commits?",
+      "ru": "Вы случайно выполнили: git reset --hard HEAD~3. Позже вы понял, что вам нужно восстановить вашу работу. Какая команда наиболее надежна для поиска и восстановления потерянных коммитов?"
+    },
+    "options": {
+      "en": [
+        "git reflog to view the history of HEAD movements, then git reset --hard <commit-sha>",
+        "git log --all to see all commits across all branches",
+        "git cherry-pick to manually restore commits from memory",
+        "git stash list to find the commits you stashed earlier"
+      ],
+      "ru": [
+        "git reflog для просмотра истории движений HEAD, затем git reset --hard <commit-sha>",
+        "git log --all для просмотра всех коммитов во всех ветках",
+        "git cherry-pick для ручного восстановления коммитов из памяти",
+        "git stash list для поиска коммитов, которые вы раньше stashили"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "git reflog maintains a local record of every HEAD position change, including resets and rebases. After a hard reset, the lost commits still exist in the object database and reflog will show them. You can then use git reset --hard with the commit SHA to recover. git log won't show unreachable commits, and cherry-pick/stash list won't help recovery in this scenario.",
+      "ru": "git reflog ведет локальный учет каждого изменения позиции HEAD, включая resets и rebases. После hard reset потерянные коммиты все еще существуют в базе данных объектов и reflog их покажет. Затем вы можете использовать git reset --hard с SHA коммита для восстановления. git log не будет показывать недостижимые коммиты, а cherry-pick/stash list не помогут в этом сценарии восстановления."
+    }
+  },
+  {
+    "id": "git-quiz-5",
+    "topicId": "git",
+    "question": {
+      "en": "You check out a specific commit by SHA: git checkout abc123def. You make new changes and commit them. What state are you in, and what risk does this pose?",
+      "ru": "Вы переключаетесь на конкретный коммит по SHA: git checkout abc123def. Вы вносите новые изменения и делаете коммит. В каком состоянии вы находитесь и какой риск это несет?"
+    },
+    "options": {
+      "en": [
+        "You are in a detached HEAD state; new commits will be unreachable if you switch branches without creating a branch first",
+        "You are on an anonymous branch that Git creates automatically; commits are safe",
+        "You have created a new branch implicitly; your commits are stored in the repository safely",
+        "You are in a merge conflict state and cannot make new commits until resolved"
+      ],
+      "ru": [
+        "Вы находитесь в состоянии detached HEAD; новые коммиты будут недостижимы, если вы переключитесь на другую ветку без создания ветки",
+        "Вы находитесь на анонимной ветке, которую Git создает автоматически; коммиты в безопасности",
+        "Вы неявно создали новую ветку; ваши коммиты безопасно хранятся в репозитории",
+        "Вы находитесь в состоянии конфликта слияния и не можете делать новые коммиты до разрешения"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Checking out a commit SHA puts you in a detached HEAD state where HEAD points directly to a commit instead of a branch. New commits you make won't belong to any branch and become orphaned if you switch away. To preserve them, you must create a branch with git branch <branch-name> or git checkout -b <branch-name> before switching. These commits are eventually pruned by garbage collection.",
+      "ru": "Переключение на SHA коммита помещает вас в состояние detached HEAD, где HEAD указывает непосредственно на коммит вместо ветки. Новые коммиты, которые вы делаете, не будут принадлежать никакой ветке и станут orphaned, если вы переключитесь. Чтобы их сохранить, вы должны создать ветку с помощью git branch <branch-name> или git checkout -b <branch-name> перед переключением. Эти коммиты в конце концов удаляются сборщиком мусора."
+    }
+  },
+  {
+    "id": "git-quiz-6",
+    "topicId": "git",
+    "question": {
+      "en": "You have a feature branch with 5 commits ahead of main. When you run `git rebase main`, Git replays your commits on top of main's latest commit. What Git object type remains unchanged for each of your original commits after the rebase?",
+      "ru": "У вас есть ветка feature с 5 коммитами впереди main. Когда вы запускаете `git rebase main`, Git переигрывает ваши коммиты поверх последнего коммита main. Какой тип Git-объекта остаётся неизменным для каждого из ваших исходных коммитов после перебазирования?"
+    },
+    "options": {
+      "en": [
+        "The tree object, because the file contents and structure haven't changed",
+        "The commit object, because Git preserves commit hashes during rebase",
+        "The blob objects, because they represent immutable file snapshots",
+        "All of the above remain unchanged"
+      ],
+      "ru": [
+        "Объект дерева (tree), потому что содержимое и структура файлов не изменились",
+        "Объект коммита (commit), потому что Git сохраняет хеши коммитов при перебазировании",
+        "Объекты больших двоичных объектов (blob), потому что они представляют неизменяемые снимки файлов",
+        "Все вышеперечисленное остаётся неизменным"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "During rebase, Git recreates commits with new hashes, so the commit objects change. However, if the file contents haven't been modified, Git reuses the same blob objects (content-addressable storage). The tree objects are also recreated because they reference the commit. Only the blob objects representing unchanged files persist across the rebase.",
+      "ru": "При перебазировании Git пересоздаёт коммиты с новыми хешами, поэтому объекты коммитов изменяются. Однако если содержимое файлов не было изменено, Git переиспользует те же объекты blob (адресуемые по содержимому). Объекты дерева также пересоздаются, потому что они ссылаются на коммит. Только объекты blob, представляющие неизменённые файлы, сохраняются во время перебазирования."
+    }
+  },
+  {
+    "id": "git-quiz-7",
+    "topicId": "git",
+    "question": {
+      "en": "Consider this scenario: You're on main branch, you create feature branch, make 3 commits, then run `git merge feature --ff-only`. What happens if main has received new commits since you branched off?",
+      "ru": "Рассмотрим этот сценарий: вы находитесь на ветке main, создаёте ветку feature, делаете 3 коммита, затем запускаете `git merge feature --ff-only`. Что произойдёт, если main получила новые коммиты с момента ветвления?"
+    },
+    "options": {
+      "en": [
+        "The merge completes successfully with a fast-forward, moving main pointer forward",
+        "Git creates a new merge commit combining both branches",
+        "The merge fails because fast-forward is not possible",
+        "Only the most recent commit from feature is merged into main"
+      ],
+      "ru": [
+        "Слияние успешно завершается с перемоткой, указатель main движется вперёд",
+        "Git создаёт новый коммит слияния, объединяющий обе ветки",
+        "Слияние не удаётся, потому что перемотка невозможна",
+        "Только самый свежий коммит из feature объединяется в main"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The `--ff-only` flag requires a fast-forward merge to be possible. Fast-forward occurs only when the target branch (main) hasn't diverged—its commit history must be a strict ancestor of the feature branch. If main received new commits, it has diverged, making fast-forward impossible, and the merge is rejected with an error.",
+      "ru": "Флаг `--ff-only` требует, чтобы перемотка была возможна. Перемотка происходит только когда целевая ветка (main) не расходилась — её история коммитов должна быть строгим предком ветки feature. Если main получила новые коммиты, она расходилась, что делает перемотку невозможной, и слияние отклоняется с ошибкой."
+    }
+  },
+  {
+    "id": "git-quiz-8",
+    "topicId": "git",
+    "question": {
+      "en": "You accidentally committed sensitive data and then made 10 more commits on top. You want to remove only that one commit's changes without altering the commit history of others. Which approach is most appropriate?",
+      "ru": "Вы случайно закоммитили чувствительные данные, а затем сделали 10 дополнительных коммитов. Вы хотите удалить только изменения этого одного коммита, не изменяя историю коммитов других. Какой подход наиболее подходящий?"
+    },
+    "options": {
+      "en": [
+        "Use `git cherry-pick` to select the commits you want and rewrite history",
+        "Use `git revert` to create a new commit that undoes the changes",
+        "Use `git reset --hard` to go back to before the sensitive commit",
+        "Manually edit the commit with `git commit --amend` on each subsequent commit"
+      ],
+      "ru": [
+        "Используйте `git cherry-pick` для выбора нужных коммитов и переписи истории",
+        "Используйте `git revert` для создания нового коммита, отменяющего изменения",
+        "Используйте `git reset --hard`, чтобы вернуться на момент перед чувствительным коммитом",
+        "Вручную отредактируйте коммит с помощью `git commit --amend` для каждого последующего коммита"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "`git revert` is the correct choice because it creates a new commit that negates the problematic commit's changes, preserving the full history and making it safe to share. `git reset` would lose the 10 subsequent commits. `git cherry-pick` is for copying commits, not undoing them. Manual amending is impractical for many commits.",
+      "ru": "`git revert` — правильный выбор, потому что он создаёт новый коммит, отменяющий изменения проблемного коммита, сохраняя полную историю и делая её безопасной для обмена. `git reset` потеряет 10 последующих коммитов. `git cherry-pick` предназначена для копирования коммитов, а не их отмены. Ручное редактирование непрактично для многих коммитов."
+    }
+  },
+  {
+    "id": "git-quiz-9",
+    "topicId": "git",
+    "question": {
+      "en": "You run `git stash` on your feature branch with uncommitted changes, then check out main, make changes, and commit them. Later you check out feature again and run `git stash pop`. What is the most likely outcome?",
+      "ru": "Вы запускаете `git stash` на ветке feature с незакоммиченными изменениями, затем переключаетесь на main, вносите изменения и коммитите их. Позже вы снова переключаетесь на feature и запускаете `git stash pop`. Какой наиболее вероятный результат?"
+    },
+    "options": {
+      "en": [
+        "The stashed changes are applied cleanly because stash is branch-agnostic",
+        "Git applies the changes but with potential merge conflicts if feature and main diverged",
+        "The stash is automatically discarded because you switched branches",
+        "The changes are applied only to the files that haven't been modified on main"
+      ],
+      "ru": [
+        "Отложенные изменения применяются безошибочно, потому что stash не зависит от ветки",
+        "Git применяет изменения, но с возможными конфликтами слияния, если feature и main расходились",
+        "Stash автоматически отбрасывается, потому что вы переключили ветки",
+        "Изменения применяются только к файлам, которые не были изменены на main"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Git stash stores changes independently of branch context, so `git stash pop` will attempt to apply them. However, if feature and main have diverged, the patch application may fail or create conflicts. The stash isn't branch-locked, so it persists across branch switches. Git doesn't selectively apply changes based on what changed elsewhere.",
+      "ru": "Git stash сохраняет изменения независимо от контекста ветки, поэтому `git stash pop` попытается их применить. Однако если feature и main расходились, применение патча может не удаться или создать конфликты. Stash не привязана к ветке, поэтому она сохраняется при переключении веток. Git не применяет изменения избирательно на основе того, что изменилось в другом месте."
+    }
+  },
+  {
+    "id": "git-quiz-10",
+    "topicId": "git",
+    "question": {
+      "en": "You accidentally detach your HEAD by checking out a specific commit hash instead of a branch. You then make 2 new commits. When you switch back to main with `git checkout main`, what happens to those 2 commits?",
+      "ru": "Вы случайно отделили HEAD, проверив конкретный хеш коммита вместо ветки. Затем вы делаете 2 новых коммита. Когда вы переключаетесь обратно на main с помощью `git checkout main`, что происходит с этими 2 коммитами?"
+    },
+    "options": {
+      "en": [
+        "They are permanently deleted because detached HEAD commits are garbage collected",
+        "They are preserved in reflog and can be recovered using the reflog hash",
+        "They are automatically merged into main as orphaned commits",
+        "They remain on the detached HEAD state and are visible in `git log`"
+      ],
+      "ru": [
+        "Они навсегда удаляются, потому что коммиты в отделённом состоянии HEAD удаляются сборщиком мусора",
+        "Они сохраняются в reflog и могут быть восстановлены с помощью хеша reflog",
+        "Они автоматически объединяются с main как сиротские коммиты",
+        "Они остаются в отделённом состоянии HEAD и видны в `git log`"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Commits made in detached HEAD are not automatically deleted; they're recorded in reflog for ~30 days. While they're not reachable from any branch, you can recover them using `git reflog` to find the commit hash and then create a branch from it. After sufficient time, unreachable commits are garbage collected, but reflog provides a safety net.",
+      "ru": "Коммиты, сделанные в отделённом состоянии HEAD, не удаляются автоматически; они записываются в reflog на ~30 дней. Хотя они не доступны из какой-либо ветки, вы можете их восстановить с помощью `git reflog` для поиска хеша коммита и последующего создания ветки из него. После достаточного времени недостижимые коммиты удаляются сборщиком мусора, но reflog обеспечивает страховку."
+    }
+  },
+  {
+    "id": "git-quiz-11",
+    "topicId": "git",
+    "question": {
+      "en": "You are on branch 'feature' with 3 commits ahead of 'main'. You want to incorporate changes from 'main' into your branch. Which approach will preserve your commit history as individual commits and is safer for shared branches?",
+      "ru": "Вы находитесь на ветке 'feature' с 3 коммитами впереди 'main'. Вы хотите включить изменения из 'main' в вашу ветку. Какой подход сохранит вашу историю коммитов как отдельные коммиты и безопаснее для общих веток?"
+    },
+    "options": {
+      "en": [
+        "git merge main — creates a merge commit and preserves both histories",
+        "git rebase main — replays commits and creates a linear history",
+        "git cherry-pick main — selectively applies only the latest commit from main",
+        "git reflog && git reset — undoes all changes and restarts from main"
+      ],
+      "ru": [
+        "git merge main — создает коммит слияния и сохраняет обе истории",
+        "git rebase main — переиграет коммиты и создает линейную историю",
+        "git cherry-pick main — выборочно применяет только последний коммит из main",
+        "git reflog && git reset — отменяет все изменения и перезапускает с main"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "git merge is the safer choice for shared branches because it preserves both branch histories and is non-destructive. Rebase rewrites history (dangerous on shared branches), cherry-pick is for selecting specific commits, and reflog + reset would lose your work entirely.",
+      "ru": "git merge — это безопасный выбор для общих веток, так как он сохраняет обе истории веток и не разрушителен. Rebase переписывает историю (опасно для общих веток), cherry-pick используется для выбора конкретных коммитов, а reflog + reset полностью потеряет вашу работу."
+    }
+  },
+  {
+    "id": "git-quiz-12",
+    "topicId": "git",
+    "question": {
+      "en": "You accidentally committed sensitive data. After running 'git log --oneline', you see: abc1234 Add config, def5678 Add feature, ghi9012 Initial. You want to remove the sensitive file from the middle commit without losing the other commits. What is the most reliable approach?",
+      "ru": "Вы случайно закоммитили конфиденциальные данные. После 'git log --oneline' вы видите: abc1234 Add config, def5678 Add feature, ghi9012 Initial. Вы хотите удалить конфиденциальный файл из среднего коммита, не потеряв остальные коммиты. Какой подход наиболее надежен?"
+    },
+    "options": {
+      "en": [
+        "git rebase -i HEAD~2, mark 'abc1234' as 'edit', remove the file, and git add/commit --amend",
+        "git cherry-pick def5678 to a new branch and force push to main",
+        "git stash pop the sensitive file and manually commit again",
+        "git reflog to find the original state and hard reset to before the sensitive commit"
+      ],
+      "ru": [
+        "git rebase -i HEAD~2, отметить 'abc1234' как 'edit', удалить файл и git add/commit --amend",
+        "git cherry-pick def5678 в новую ветку и force push в main",
+        "git stash pop конфиденциальный файл и вручную закоммитить снова",
+        "git reflog найти исходное состояние и hard reset до конфиденциального коммита"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Interactive rebase (git rebase -i) allows you to edit specific commits in the middle of your history. Marking 'abc1234' as 'edit' pauses the rebase there, letting you remove the file and amend the commit, then continue rebasing the later commits. Cherry-pick, stash, and reflog are inappropriate for this use case.",
+      "ru": "Интерактивный rebase (git rebase -i) позволяет редактировать конкретные коммиты в середине вашей истории. Отметив 'abc1234' как 'edit', вы паузируете rebase там, позволяя удалить файл и исправить коммит, затем продолжить rebase более поздних коммитов. Cherry-pick, stash и reflog неуместны для этого случая."
+    }
+  }
+]

@@ -1,0 +1,407 @@
+[
+  {
+    "id": "browser-runtime-quiz-1",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "You modify a DOM element's width property via JavaScript, which causes its children to reflow. Later, you change only its background color. What is the performance difference between these two operations?",
+      "ru": "Вы изменяете свойство width элемента DOM через JavaScript, что вызывает reflow его дочерних элементов. Позже вы меняете только его цвет фона. В чём разница в производительности этих двух операций?"
+    },
+    "options": {
+      "en": [
+        "Both operations trigger repaint only; reflow doesn't occur for layout-independent changes",
+        "The width change triggers reflow and repaint, while background color triggers repaint only",
+        "Both operations trigger the same reflow and repaint cycle regardless of property type",
+        "Background color changes are always faster because they skip the rendering pipeline"
+      ],
+      "ru": [
+        "Обе операции запускают только repaint; reflow не происходит для независимых от макета изменений",
+        "Изменение ширины запускает reflow и repaint, в то время как изменение цвета фона запускает только repaint",
+        "Обе операции запускают одинаковый цикл reflow и repaint независимо от типа свойства",
+        "Изменения цвета фона всегда быстрее, потому что они пропускают конвейер рендеринга"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Width changes affect layout and trigger both reflow (recalculating layout) and repaint (redrawing visuals). Background color changes only affect pixels and trigger repaint without reflow. Reflow is more expensive than repaint because it requires recalculating the entire layout tree.",
+      "ru": "Изменения ширины влияют на макет и запускают как reflow (пересчёт макета), так и repaint (перерисовку визуалов). Изменение цвета фона влияет только на пиксели и запускает repaint без reflow. Reflow дороже, чем repaint, потому что требует пересчёта всего дерева макета."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-2",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A CORS preflight request is sent by the browser before your actual request. Which of the following scenarios would NOT trigger a preflight request?",
+      "ru": "Запрос CORS preflight отправляется браузером перед вашим фактическим запросом. Какой из следующих сценариев НЕ запустит preflight запрос?"
+    },
+    "options": {
+      "en": [
+        "A POST request with a custom 'X-API-Key' header to a different origin",
+        "A GET request with standard headers to a different origin",
+        "A PUT request to a different origin with application/json content type",
+        "A DELETE request to a different origin"
+      ],
+      "ru": [
+        "POST запрос с пользовательским заголовком 'X-API-Key' на другой домен",
+        "GET запрос со стандартными заголовками на другой домен",
+        "PUT запрос на другой домен с типом контента application/json",
+        "DELETE запрос на другой домен"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Simple requests (GET, HEAD, POST with standard headers and content types like form-urlencoded) don't trigger preflight. Custom headers, non-standard content types, or methods like PUT and DELETE trigger preflight because they require the server to explicitly allow them via CORS headers.",
+      "ru": "Простые запросы (GET, HEAD, POST со стандартными заголовками и типами контента, такими как form-urlencoded) не запускают preflight. Пользовательские заголовки, нестандартные типы контента или методы, такие как PUT и DELETE, запускают preflight, потому что требуют явного разрешения сервера через CORS заголовки."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-3",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "Consider this code: document.getElementById('parent').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') console.log('Button clicked'); }); This is an example of which pattern, and what is its primary benefit?",
+      "ru": "Рассмотрите этот код: document.getElementById('parent').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') console.log('Button clicked'); }); Это пример какого паттерна, и какова его основная выгода?"
+    },
+    "options": {
+      "en": [
+        "Event delegation; reduces memory usage by using a single listener for multiple elements",
+        "Event bubbling; prevents child events from propagating to the parent",
+        "Event capturing; intercepts events in the capture phase before they reach the target",
+        "Event composition; combines multiple event listeners into one handler"
+      ],
+      "ru": [
+        "Event delegation; уменьшает использование памяти благодаря одному слушателю для нескольких элементов",
+        "Event bubbling; предотвращает распространение дочерних событий к родителю",
+        "Event capturing; перехватывает события на фазе захвата до достижения цели",
+        "Event composition; объединяет несколько слушателей событий в один обработчик"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "This is event delegation, a pattern where a single listener on a parent element handles events from multiple children. It reduces memory footprint, improves performance with dynamically added elements, and simplifies event management. Event bubbling is the mechanism that makes delegation work, but not the pattern itself.",
+      "ru": "Это event delegation, паттерн, где один слушатель на родительском элементе обрабатывает события от нескольких дочерних элементов. Это уменьшает использование памяти, улучшает производительность с динамически добавляемыми элементами и упрощает управление событиями. Event bubbling — это механизм, который заставляет delegation работать, но это не сам паттерн."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-4",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "Which storage API would you use to persist data that should survive browser closure, has a larger capacity than cookies, and can be cleared by the user without clearing all browser data?",
+      "ru": "Какой API хранилища вы используете для сохранения данных, которые должны сохраняться после закрытия браузера, имеют большую ёмкость, чем cookies, и могут быть очищены пользователем без очистки всех данных браузера?"
+    },
+    "options": {
+      "en": [
+        "Session Storage; survives browser closure and offers site-specific clearing",
+        "Local Storage; persists across sessions and provides site-specific data isolation",
+        "IndexedDB; synchronous API designed for small structured data",
+        "Cookies; automatically managed by the browser and separate from site-specific storage"
+      ],
+      "ru": [
+        "Session Storage; сохраняется после закрытия браузера и предоставляет очистку для конкретного сайта",
+        "Local Storage; сохраняется между сеансами и обеспечивает изоляцию данных для конкретного сайта",
+        "IndexedDB; синхронный API, предназначенный для небольших структурированных данных",
+        "Cookies; автоматически управляется браузером и отделены от хранилища для конкретного сайта"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Local Storage persists data across browser sessions, offers much larger capacity than cookies (~5-10MB vs 4KB), and can be cleared per-site via browser settings. Session Storage is cleared on tab close. IndexedDB is asynchronous and more complex but necessary for large datasets. Cookies are sent with every request and primarily used for auth.",
+      "ru": "Local Storage сохраняет данные между сеансами браузера, предоставляет гораздо большую ёмкость, чем cookies (~5-10MB против 4KB), и может быть очищено для каждого сайта через параметры браузера. Session Storage очищается при закрытии вкладки. IndexedDB асинхронен и сложнее, но необходим для больших наборов данных. Cookies отправляются с каждым запросом и в основном используются для аутентификации."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-5",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A service worker intercepts a network request and serves a cached response instead. What is the primary advantage of this approach for critical rendering path performance?",
+      "ru": "Service worker перехватывает сетевой запрос и вместо этого отправляет кэшированный ответ. Какова основная выгода этого подхода для производительности критического пути рендеринга?"
+    },
+    "options": {
+      "en": [
+        "It eliminates network latency, allowing assets to load instantly from the cache",
+        "It reduces the HTML file size by compressing responses before caching",
+        "It allows the service worker to modify the DOM during the rendering phase",
+        "It prevents the browser from parsing CSS and JavaScript files"
+      ],
+      "ru": [
+        "Это устраняет задержку сети, позволяя активам загружаться мгновенно из кэша",
+        "Это уменьшает размер файла HTML путём сжатия ответов перед кэшированием",
+        "Это позволяет service worker изменять DOM во время фазы рендеринга",
+        "Это предотвращает анализ браузером файлов CSS и JavaScript"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Service workers eliminate network latency by serving cached resources instantly, significantly reducing the critical rendering path time. This allows the browser to parse and render resources without waiting for network round-trips. The other options misrepresent how service workers work—they don't modify DOM, compress responses, or prevent parsing.",
+      "ru": "Service workers устраняют задержку сети, мгновенно доставляя кэшированные ресурсы, что значительно сокращает время критического пути рендеринга. Это позволяет браузеру анализировать и отображать ресурсы без ожидания сетевых задержек. Остальные варианты неправильно описывают работу service workers — они не изменяют DOM, не сжимают ответы и не предотвращают анализ."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-6",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "When you modify the width of an element via JavaScript, triggering a layout recalculation, and then read offsetWidth immediately after, what happens in the rendering pipeline?",
+      "ru": "Когда вы изменяете ширину элемента через JavaScript, запуская пересчет макета, и затем сразу же читаете offsetWidth, что происходит в конвейере рендеринга?"
+    },
+    "options": {
+      "en": [
+        "The browser synchronously flushes the style and layout queues before returning offsetWidth to avoid returning stale values",
+        "The browser returns the cached offsetWidth from before the modification without triggering reflow",
+        "The modification is queued and offsetWidth is read asynchronously on the next frame",
+        "The browser batches the read operation and defers it until after the next paint"
+      ],
+      "ru": [
+        "Браузер синхронно очищает очереди стилей и макета перед возвратом offsetWidth, чтобы избежать возврата устаревших значений",
+        "Браузер возвращает кэшированное значение offsetWidth с момента до модификации без запуска рефлоу",
+        "Модификация ставится в очередь, а offsetWidth читается асинхронно в следующем кадре",
+        "Браузер группирует операцию чтения и откладывает её до следующей отрисовки"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Modern browsers implement layout thrashing mitigation, but when you read a layout property like offsetWidth after modifying an element, the browser must synchronously reflush and recalculate to return the correct value. This is a performance antipattern called 'forced synchronous layout'. The other options incorrectly suggest the browser avoids reflow or defers the read operation.",
+      "ru": "Современные браузеры реализуют синхронную очистку очереди макета, когда вы читаете свойство макета, такое как offsetWidth, после модификации элемента. Это паттерн производительности, называемый 'принудительный синхронный макет'. Остальные варианты неверно предполагают, что браузер избегает рефлоу или откладывает операцию чтения."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-7",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "Consider this code snippet: element.style.backgroundColor = 'red'; element.style.color = 'blue'; What is the difference between the reflow and repaint that occurs, and which one is triggered first?",
+      "ru": "Рассмотрите этот фрагмент кода: element.style.backgroundColor = 'red'; element.style.color = 'blue'; В чём разница между рефлоу и репейнтом, которые происходят, и какой из них срабатывает первым?"
+    },
+    "options": {
+      "en": [
+        "Both changes cause reflow first, then repaint, because style changes always require layout recalculation before visual updates",
+        "These changes trigger only repaint, not reflow, since they only affect visual properties without changing layout dimensions",
+        "Reflow is triggered first for backgroundColor, then repaint for color, each property causing its own cycle",
+        "Only backgroundColor triggers reflow; color change is batched and handled in the next animation frame"
+      ],
+      "ru": [
+        "Оба изменения вызывают сначала рефлоу, затем репейнт, потому что изменения стилей всегда требуют пересчета макета перед визуальными обновлениями",
+        "Эти изменения вызывают только репейнт, а не рефлоу, так как они влияют только на визуальные свойства без изменения размеров макета",
+        "Рефлоу запускается сначала для backgroundColor, затем репейнт для color, каждое свойство вызывает свой цикл",
+        "Только backgroundColor запускает рефлоу; изменение color группируется и обрабатывается в следующем кадре анимации"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Reflow is needed when layout properties (width, height, position) change. Repaint is needed when only visual properties (color, background, shadows) change. Since both backgroundColor and color are visual-only properties, only repaint is triggered, no reflow. The other options incorrectly assume both properties trigger reflow or are handled separately per frame.",
+      "ru": "Рефлоу необходим, когда изменяются свойства макета (ширина, высота, позиция). Репейнт необходим, когда изменяются только визуальные свойства (цвет, фон, тени). Поскольку оба свойства влияют только на визуальное отображение, срабатывает только репейнт, рефлоу не требуется. Другие варианты неверно предполагают, что оба свойства вызывают рефлоу или обрабатываются отдельно в каждом кадре."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-8",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A web application uses event delegation by attaching a single click listener to a parent container rather than individual buttons. Which statement best describes why this improves performance and maintainability?",
+      "ru": "Веб-приложение использует делегирование событий, прикрепляя один обработчик клика к родительскому контейнеру вместо отдельных кнопок. Какое утверждение лучше всего описывает, почему это улучшает производительность и поддерживаемость?"
+    },
+    "options": {
+      "en": [
+        "It reduces memory overhead by maintaining fewer event listener objects and automatically handles dynamically added buttons without re-attaching listeners",
+        "It prevents event bubbling, which is more efficient than allowing events to propagate through the DOM tree",
+        "It eliminates the need for the browser to parse and execute JavaScript on child elements, reducing computational cost",
+        "It allows the browser to optimize the rendering pipeline by deferring all click events until the next animation frame"
+      ],
+      "ru": [
+        "Это снижает накладные расходы памяти благодаря поддержанию меньшего количества объектов обработчиков событий и автоматически обрабатывает динамически добавленные кнопки без повторного прикрепления обработчиков",
+        "Это предотвращает распространение событий, что более эффективно, чем разрешение событиям распространяться по дереву DOM",
+        "Это исключает необходимость браузеру анализировать и выполнять JavaScript на дочерних элементах, снижая вычислительные затраты",
+        "Это позволяет браузеру оптимизировать конвейер рендеринга, отложив все события клика до следующего кадра анимации"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Event delegation reduces memory consumption because fewer listener objects are kept in memory, and it automatically handles newly added elements without re-attaching listeners. Event bubbling is still used (not prevented), dynamically added elements are handled through the delegation pattern, and event deferral is not related to delegation benefits.",
+      "ru": "Делегирование событий снижает потребление памяти, так как в памяти хранится меньше объектов обработчиков, и оно автоматически обрабатывает новые элементы без повторного прикрепления слушателей. Распространение событий по-прежнему используется (не предотвращается), динамически добавленные элементы обрабатываются через паттерн делегирования, а отсрочка событий не связана с преимуществами делегирования."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-9",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A frontend application needs to store sensitive authentication tokens. Which storage mechanism is most appropriate and why?",
+      "ru": "Фронтенд-приложению нужно хранить конфиденциальные токены аутентификации. Какой механизм хранения является наиболее подходящим и почему?"
+    },
+    "options": {
+      "en": [
+        "An httpOnly, secure cookie set by the server, because it is inaccessible to JavaScript and automatically sent with HTTP requests",
+        "localStorage, because it persists across browser sessions and is protected by the same-origin policy",
+        "sessionStorage, because it is automatically cleared when the browser tab closes, reducing security risk",
+        "An in-memory variable, because it is completely invisible to the browser's developer tools and impossible to intercept"
+      ],
+      "ru": [
+        "Cookie httpOnly, secure, установленная сервером, потому что она недоступна JavaScript и автоматически отправляется с HTTP-запросами",
+        "localStorage, потому что она сохраняется между сеансами браузера и защищена политикой одного происхождения",
+        "sessionStorage, потому что она автоматически очищается при закрытии вкладки браузера, снижая риск безопасности",
+        "Переменная в памяти, потому что она полностью невидима инструментам разработчика браузера и невозможна для перехвата"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "httpOnly cookies prevent XSS attacks because JavaScript cannot access them, and the secure flag ensures they're only sent over HTTPS. localStorage persists but is vulnerable to XSS. sessionStorage is vulnerable during the session. In-memory variables are lost on page reload and don't provide real security against network interception.",
+      "ru": "Cookies httpOnly предотвращают атаки XSS, так как JavaScript не может их получить, и флаг secure гарантирует отправку только через HTTPS. localStorage сохраняется, но уязвима для XSS. sessionStorage уязвима во время сеанса. Переменные в памяти теряются при перезагрузке страницы и не обеспечивают реальную защиту от перехвата сети."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-10",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A service worker intercepts network requests. How does this component integrate into the critical rendering path, and what is its primary performance benefit?",
+      "ru": "Service worker перехватывает сетевые запросы. Как этот компонент интегрируется в критический путь рендеринга, и в чём его основное преимущество производительности?"
+    },
+    "options": {
+      "en": [
+        "It operates outside the critical rendering path; it enables offline functionality and caches assets to reduce latency and server requests on repeat visits",
+        "It optimizes the critical rendering path by processing CSS and JavaScript before the browser's parser receives them",
+        "It blocks the rendering pipeline until all assets are cached, ensuring no incomplete resources are used",
+        "It accelerates the critical rendering path by running paint and layout operations in a separate thread"
+      ],
+      "ru": [
+        "Он работает вне критического пути рендеринга; он обеспечивает автономную функциональность и кэширует активы для снижения задержки и запросов к серверу при повторных посещениях",
+        "Он оптимизирует критический путь рендеринга, обрабатывая CSS и JavaScript перед получением их браузером",
+        "Он блокирует конвейер рендер��нга до кэширования всех активов, обеспечивая отсутствие использования неполных ресурсов",
+        "Он ускоряет критический путь рендеринга, выполняя операции отрисовки и макета в отдельном потоке"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Service workers operate in a separate thread and don't directly participate in the rendering pipeline. Their performance benefit comes from caching strategies that reduce network latency and enable offline functionality, which improves perceived performance on repeat visits. They don't pre-process assets, block rendering, or move layout/paint to separate threads.",
+      "ru": "Service workers работают в отдельном потоке и не участвуют напрямую в конвейере рендеринга. Их преимущество производительности заключается в стратегиях кэширования, которые снижают задержку сети и обеспечивают автономную функциональность, что улучшает воспринимаемую производительность при повторных посещениях. Они не предварительно обрабатывают активы, не блокируют рендеринг и не переводят макет/отрисовку в отдельные потоки."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-11",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "During the critical rendering path, the browser must parse HTML, CSS, and JavaScript. In what order do these resources typically block rendering, and which one has the highest priority?",
+      "ru": "Во время критического пути отрисовки браузер должен проанализировать HTML, CSS и JavaScript. В каком порядке эти ресурсы обычно блокируют отрисовку, и какой из них имеет наивысший приоритет?"
+    },
+    "options": {
+      "en": [
+        "HTML blocks first, then CSS, then JavaScript — CSS has the highest priority",
+        "CSS blocks rendering completely until parsed, HTML is parsed in parallel, JavaScript is deferred",
+        "HTML and CSS are parsed in parallel during initial load, JavaScript execution blocks rendering",
+        "JavaScript blocks all other parsing, then CSS, then HTML is rendered last"
+      ],
+      "ru": [
+        "HTML блокирует сначала, затем CSS, затем JavaScript — CSS имеет наивысший приоритет",
+        "CSS полностью блокирует отрисовку до анализа, HTML анализируется параллельно, JavaScript отложен",
+        "HTML и CSS анализируются параллельно при начальной загрузке, выполнение JavaScript блокирует отрисовку",
+        "JavaScript блокирует весь остальной анализ, затем CSS, затем HTML отрисовывается в последний"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The critical rendering path starts with HTML parsing which builds the DOM tree. CSS blocks rendering to prevent FOUC (Flash of Unstyled Content), but is fetched in parallel with HTML. JavaScript execution synchronously blocks both HTML parsing and rendering until it completes, unless marked as async or defer. Understanding this blocking behavior is crucial for optimization.",
+      "ru": "Критический путь отрисовки начинается с анализа HTML, который создает дерево DOM. CSS блокирует отрисовку, чтобы предотвратить FOUC (вспышка неоформленного содержимого), но загружается параллельно с HTML. Выполнение JavaScript синхронно блокирует анализ HTML и отрисовку, пока не завершится, если только он не отмечен как async или defer. Понимание этого поведения блокировки критично для оптимизации."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-12",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "Consider this code snippet: document.getElementById('box').style.width = '100px'; const computed = window.getComputedStyle(document.getElementById('box')).width; Will this trigger a reflow, repaint, or both?",
+      "ru": "Рассмотрите этот фрагмент кода: document.getElementById('box').style.width = '100px'; const computed = window.getComputedStyle(document.getElementById('box')).width; Это вызовет reflow, repaint или оба?"
+    },
+    "options": {
+      "en": [
+        "Only repaint — changing style properties never causes reflow",
+        "Only reflow — reading computed styles forces the browser to recalculate layout",
+        "Both reflow and repaint — setting width causes layout recalculation, reading computed styles forces immediate reflow, then visual rendering occurs",
+        "Neither — modern browsers batch these operations and defer them until the next animation frame"
+      ],
+      "ru": [
+        "Только repaint — изменение свойств стиля никогда не вызывает reflow",
+        "Только reflow — чтение вычисленных стилей заставляет браузер пересчитать макет",
+        "Оба reflow и repaint — установка ширины вызывает пересчет макета, чтение вычисленных стилей форсирует немедленный reflow, затем происходит визуальная отрисовка",
+        "Ни то, ни другое — современные браузеры группируют эти операции и откладывают их до следующего кадра анимации"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Setting a layout-affecting property like width triggers reflow (layout recalculation). Reading getComputedStyle() forces the browser to flush any pending layout operations immediately to return accurate values. After reflow, the browser must repaint the affected area. This synchronous reflow-before-read pattern is a common performance issue known as layout thrashing.",
+      "ru": "Установка свойства, влияющего на макет, такого как width, вызывает reflow (пересчет макета). Чтение getComputedStyle() заставляет браузер немедленно применить все ожидающие операции макета, чтобы вернуть точные значения. После reflow браузер должен перерисовать затронутую область. Этот синхронный паттерн reflow-before-read является распространенной проблемой производительности, известной как layout thrashing."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-13",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A web application uses event delegation on a parent element to handle clicks on dynamically added child elements. How does event delegation relate to the event propagation phases in the DOM, and why is it an efficient pattern?",
+      "ru": "Веб-приложение использует делегирование событий на родительском элементе для обработки кликов по динамически добавленным дочерним элементам. Как делегирование событий относится к фазам распространения событий в DOM и почему это эффективный паттерн?"
+    },
+    "options": {
+      "en": [
+        "Event delegation uses the capturing phase to intercept events before they reach child elements, reducing memory overhead",
+        "Event delegation relies on the bubbling phase; listeners on parent elements catch events that bubble up from children, eliminating the need for individual listeners on each dynamic child",
+        "Event delegation forces events to propagate in a reverse order, making it faster for dynamic elements",
+        "Event delegation prevents event propagation entirely, which is why it's efficient for dynamically added elements"
+      ],
+      "ru": [
+        "Делегирование событий использует фазу захвата для перехвата событий до того, как они достигнут дочерних элементов, снижая затраты памяти",
+        "Делегирование событий полагается на фазу всплытия; слушатели на родительских элементах перехватывают события, которые всплывают от дочерних элементов, исключая необходимость отдельных слушателей для каждого динамического дочернего элемента",
+        "Делегирование событий заставляет события распространяться в обратном порядке, что делает его быстрее для динамических элементов",
+        "Делегирование событий полностью предотвращает распространение событий, поэтому оно эффективно для динамически добавленных элементов"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Event delegation works because most DOM events (click, change, input) bubble up from their target through parent elements. By attaching a single listener to a parent, you can handle events from all current and future children without adding/removing listeners. This is efficient because: (1) fewer listeners = less memory, (2) no listener management overhead when children are added/removed, (3) you inspect event.target to identify which child triggered the event.",
+      "ru": "Делегирование событий работает, потому что большинство событий DOM (click, change, input) всплывают от своей цели через родительские элементы. Присоединив один слушатель к родителю, вы можете обрабатывать события от всех текущих и будущих дочерних элементов без добавления/удаления слушателей. Это эффективно, потому что: (1) меньше слушателей = меньше памяти, (2) нет издержек управления слушателями при добавлении/удалении дочерних элементов, (3) вы проверяете event.target для определения того, какой дочерний элемент вызвал событие."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-14",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A frontend application needs to store data that persists across browser sessions and can handle large amounts of data (>5MB). The data should be accessible from JavaScript but NOT sent with HTTP requests. Which storage mechanism is most appropriate?",
+      "ru": "Приложение на фронтенде должно хранить данные, которые сохраняются между сеансами браузера и могут обрабатывать большие объемы данных (>5МБ). Данные должны быть доступны из JavaScript, но НЕ отправляться с HTTP-запросами. Какой механизм хранения наиболее подходящий?"
+    },
+    "options": {
+      "en": [
+        "Cookies — they persist across sessions and can store large amounts of data efficiently",
+        "localStorage — it persists across sessions but has a ~5-10MB limit depending on the browser",
+        "IndexedDB — it persists across sessions, can store hundreds of MB, and is not sent with HTTP requests",
+        "sessionStorage — it provides sufficient persistence and capacity for most applications"
+      ],
+      "ru": [
+        "Cookies — они сохраняются между сеансами и могут эффективно хранить большие объемы данных",
+        "localStorage — он сохраняется между сеансами, но имеет лимит ~5-10МБ в зависимости от браузера",
+        "IndexedDB — он сохраняется между сеансами, может хранить сотни МБ и не отправляется с HTTP-запросами",
+        "sessionStorage — он обеспечивает достаточную сохраняемость и емкость для большинства приложений"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Cookies have size limits (~4KB) and are automatically sent with HTTP requests, making them unsuitable. localStorage has a 5-10MB limit and is synchronous (blocking). IndexedDB is the correct choice: it's asynchronous, supports hundreds of MB of storage, persists across sessions, is not sent with requests, and is ideal for large structured datasets. sessionStorage is cleared when the tab closes, so it doesn't meet the persistence requirement.",
+      "ru": "Cookies имеют ограничение размера (~4 КБ) и автоматически отправляются с HTTP-запросами, что делает их неподходящими. localStorage имеет лимит 5-10 МБ и является синхронным (блокирующим). IndexedDB — это правильный выбор: он асинхронный, поддерживает сотни МБ хранилища, сохраняется между сеансами, не отправляется с запросами и идеален для больших структурированных данных. sessionStorage очищается при закрытии вкладки, поэтому он не соответствует требованию сохраняемости."
+    }
+  },
+  {
+    "id": "browser-runtime-quiz-15",
+    "topicId": "browser-runtime",
+    "question": {
+      "en": "A service worker intercepts fetch requests from the client. What is the relationship between CORS headers and service worker request interception? Can a service worker modify CORS behavior?",
+      "ru": "Service Worker перехватывает запросы fetch от клиента. Какая связь между CORS-заголовками и перехватом запросов service worker? Может ли service worker изменить поведение CORS?"
+    },
+    "options": {
+      "en": [
+        "A service worker can completely bypass CORS restrictions by modifying the request before it reaches the network, allowing any cross-origin request to succeed",
+        "CORS headers are checked by the browser before the service worker receives the request, so the service worker cannot modify CORS validation",
+        "A service worker can intercept the fetch and return a cached response regardless of CORS, but cannot change how CORS is validated for actual network requests — CORS checks happen at the network level, not in the service worker",
+        "Service workers and CORS are independent systems; service workers cannot interact with fetch requests at all"
+      ],
+      "ru": [
+        "Service Worker может полностью обойти ограничения CORS, изменив запрос до того, как он достигнет сети, позволяя любому кроссориджинному запросу успешно пройти",
+        "CORS-заголовки проверяются браузером до того, как service worker получит запрос, поэтому service worker не может изменить валидацию CORS",
+        "Service Worker может перехватить fetch и вернуть кэшированный ответ независимо от CORS, но не может изменить, как CORS валидируется для фактических сетевых запросов — проверки CORS происходят на уровне сети, а не в service worker",
+        "Service Workers и CORS — это независимые системы; service workers вообще не могут взаимодействовать с запросами fetch"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Service workers can intercept and cache responses, but CORS validation occurs at the browser/network level before the service worker evaluates the response. If a request violates CORS, the browser will reject it regardless of service worker logic. However, a service worker can serve cached responses that were previously fetched successfully, effectively bypassing the need for repeated CORS checks. The service worker cannot modify CORS headers on outgoing requests to make a disallowed request suddenly allowed.",
+      "ru": "Service Workers могут перехватывать и кэшировать ответы, но валидация CORS происходит на уровне браузера/сети до того, как service worker оценивает ответ. Если запрос нарушает CORS, браузер отклонит его независимо от логики service worker. Однако service worker может выдавать кэшированные ответы, которые были ранее успешно получены, эффективно обходя необходимость повторных проверок CORS. Service worker не может изменить CORS-заголовки в исходящих запросах, чтобы сделать запрещенный запрос внезапно разрешенным."
+    }
+  }
+]
