@@ -1,400 +1,211 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # Microtasks, Macrotasks и process.nextTick
 
-## Самая любимая тема интервьюеров
+## Почему это любимая тема интервьюеров — и в чём реальная глубина вопроса
 
-Очень часто показывают такой код:
+Поверхностный уровень этой темы — "выучить порядок: nextTick → microtasks → macrotasks" и предсказывать вывод `console.log` в коротких примерах. Это необходимо, но это не то, что отличает senior-ответ. Реальная глубина — в ответе на вопрос: **"между ЧЕМ именно происходит переключение очередей, и как часто"**. Именно это незнание приводит к продакшен-багам вида "почему один долгий запрос замедляет ВСЕ остальные, хотя я использую async/await везде".
 
-```js
-setTimeout(() => {
-  console.log('timeout');
-}, 0);
-
-Promise.resolve().then(() => {
-  console.log('promise');
-});
-
-console.log('sync');
-```
-
----
-
-Что выведется?
-
----
-
-Ответ:
+## Три очереди — и когда КАЖДАЯ из них опустошается
 
 ```txt
-sync
-promise
-timeout
+process.nextTick queue  — опустошается ПОЛНОСТЬЮ после
+                           завершения ЛЮБОЙ текущей операции:
+                           после синхронного кода скрипта,
+                           ПОСЛЕ КАЖДОГО microtask, после
+                           каждого callback фазы Event Loop
+
+Microtask queue          — опустошается ПОЛНОСТЬЮ (включая
+(Promise.then,             новые микротаски, добавленные ВО
+queueMicrotask)             ВРЕМЯ выполнения текущих) после
+                           завершения текущей операции и
+                           ПОСЛЕ опустошения nextTick queue
+
+Macrotask queue           — Event Loop переходит к следующему
+(setTimeout, setImmediate,  macrotask только когда ОБЕ очереди
+I/O callbacks)               выше полностью пусты
 ```
 
----
-
-Почему?
-
----
-
-Потому что существуют разные очереди задач.
-
----
-
-# Task Queues
-
-В Node есть несколько очередей.
-
----
-
-Упрощенно:
+Ключевая деталь, которую опускает большинство объяснений: это не происходит **один раз** "после синхронного блока скрипта" — это происходит **после КАЖДОГО callback'а**, где бы он ни выполнялся — будь то один из множества I/O callback'ов в poll-фазе, или один `setTimeout` среди десяти запланированных. Каждый отдельный callback, выполненный Event Loop'ом, завершается полным "дренажом" nextTick + microtask очередей, прежде чем Event Loop возьмёт следующую задачу.
 
 ```txt
-nextTick Queue
-↓
-Microtask Queue
-↓
-Macrotask Queue
+Poll-фаза, 3 готовых I/O callback'а:
+
+  callback1() {
+    promise.then(microtaskA)  // запланирован
+  }
+  → выполнить microtaskA (дренаж очереди)
+  callback2() { ... }
+  → дренаж очереди
+  callback3() { ... }
+  → дренаж очереди
+
+  Только теперь Event Loop переходит к фазе check
 ```
 
----
+## async/await — это .then() в синтаксическом сахаре, и это важно для подсчёта "тиков"
 
-# Macrotasks
+```ts
+// Эти два фрагмента ЭКВИВАЛЕНТНЫ по количеству microtask-тиков
+async function a() {
+  await Promise.resolve();
+  console.log('after await');
+}
 
-Сюда попадают:
-
-```txt
-setTimeout
-setInterval
-setImmediate
-I/O callbacks
+function b() {
+  Promise.resolve().then(() => console.log('after then'));
+}
 ```
 
----
-
-# Microtasks
-
-Сюда попадают:
-
-```txt
-Promise.then
-Promise.catch
-Promise.finally
-queueMicrotask
+```ts
+// ❌ Каждый await ВНУТРИ цепочки добавляет минимум один
+// microtask-тик — для цепочки из 100 await'ов даже над
+// уже-готовыми значениями (без реального I/O) понадобится
+// 100 проходов через microtask queue
+async function chainedAwaits() {
+  let result = 0;
+  for (let i = 0; i < 100; i++) {
+    result = await Promise.resolve(result + 1); // тик на каждой итерации
+  }
+  return result;
+}
 ```
 
----
-
-# Главное правило
-
-После завершения текущего кода:
-
-```txt
-Сначала выполняются все Microtasks
-Потом Macrotasks
-```
-
----
-
-# Пример
-
-```js
-setTimeout(() => {
-  console.log('timeout');
-});
-
-Promise.resolve().then(() => {
-  console.log('promise');
-});
-```
-
----
-
-Результат:
-
-```txt
-promise
-timeout
-```
-
----
-
-# Почему Promise раньше
-
-Promise находится в:
-
-```txt
-Microtask Queue
-```
-
----
-
-setTimeout находится в:
-
-```txt
-Macrotask Queue
-```
-
----
-
-Microtasks всегда имеют приоритет.
-
----
-
-# queueMicrotask
-
-Специальный API.
-
----
-
-```js
-queueMicrotask(() => {
-  console.log('microtask');
-});
-```
-
----
-
-Работает аналогично Promise.then.
-
----
-
-# process.nextTick
-
-Самая коварная тема.
-
----
-
-Node имеет отдельную очередь:
-
-```txt
-nextTick Queue
-```
-
----
-
-У неё ещё более высокий приоритет.
-
----
-
-# Пример
-
-```js
-process.nextTick(() => {
-  console.log('tick');
-});
-
-Promise.resolve().then(() => {
-  console.log('promise');
-});
-```
-
----
-
-Результат:
-
-```txt
-tick
-promise
-```
-
----
-
-# Почему?
-
-Потому что порядок:
-
-```txt
-nextTick
-↓
-Microtasks
-↓
-Macrotasks
-```
-
----
-
-# Полный приоритет
-
-```txt
-Call Stack
-↓
-process.nextTick
-↓
-Promise Microtasks
-↓
-Timers
-↓
-I/O
-↓
-setImmediate
-```
-
----
-
-# Очень популярный вопрос
-
-Что выведет код?
-
-```js
-console.log('1');
-
-setTimeout(() => {
-  console.log('2');
-});
-
-Promise.resolve().then(() => {
-  console.log('3');
-});
-
-console.log('4');
-```
-
----
-
-Ответ:
-
-```txt
-1
-4
-3
-2
-```
-
----
-
-Разбор:
-
-```txt
-1 -> sync
-4 -> sync
-3 -> microtask
-2 -> macrotask
-```
-
----
-
-# Более сложный пример
-
-```js
-console.log('1');
-
-process.nextTick(() => {
-  console.log('2');
-});
-
-Promise.resolve().then(() => {
-  console.log('3');
-});
-
-setTimeout(() => {
-  console.log('4');
-});
-
-console.log('5');
-```
-
----
-
-Ответ:
-
-```txt
-1
-5
-2
-3
-4
-```
-
----
-
-Разбор:
-
-```txt
-1 sync
-5 sync
-
-2 nextTick
-
-3 Promise
-
-4 timeout
-```
-
----
-
-# process.nextTick опасность
-
-Можно случайно заблокировать Event Loop.
-
----
-
-Плохо:
-
-```js
+Практическое значение: если у вас есть 100 готовых к выполнению `setTimeout(fn, 0)` И функция выше где-то в цепочке промисов — все 100 таймеров будут ждать, пока полностью не опустеет microtask queue, что при достаточно длинных promise-цепочках может занять заметное (хотя обычно субмиллисекундное) время. Для большинства приложений это незаметно — но для приложений с очень высокой частотой событий (трейдинг, realtime-аналитика) разница между "await на каждой итерации" и "await раз в N итераций" измерима.
+
+## process.nextTick starvation — не теоретический сценарий, а реальный класс багов
+
+```ts
+// ❌ Классический пример starvation — Event Loop НИКОГДА
+// не дойдёт до I/O, таймеров, или вообще чего-либо ещё.
+// Сервер перестанет отвечать на запросы, но не "упадёт" —
+// просто будет бесконечно крутиться в nextTick queue
 function loop() {
   process.nextTick(loop);
 }
-
 loop();
 ```
 
----
+Но реалистичный вариант этого бага выглядит куда менее очевидно:
 
-Что произойдет?
-
----
-
-Event Loop никогда не дойдет до остальных очередей.
-
----
-
-Получим starvation.
-
----
-
-# setImmediate vs setTimeout
-
-Очень популярный вопрос.
-
----
-
-```js
-setImmediate(...)
+```ts
+// ❌ Рекурсивная обработка очереди сообщений через nextTick —
+// выглядит как "эффективная" немедленная обработка, но если
+// сообщения поступают быстрее, чем обрабатываются, очередь
+// nextTick никогда не опустеет, и HTTP-сервер того же процесса
+// перестанет отвечать на запросы
+function processQueue() {
+  if (messages.length > 0) {
+    handleMessage(messages.shift());
+    process.nextTick(processQueue);  // "продолжить как можно скорее"
+  }
+}
 ```
 
-работает в фазе:
+```ts
+// ✅ setImmediate отдаёт управление Event Loop'у —
+// между итерациями обрабатываются I/O и таймеры
+function processQueue() {
+  if (messages.length > 0) {
+    handleMessage(messages.shift());
+    setImmediate(processQueue);
+  }
+}
+```
+
+Разница принципиальна: `process.nextTick` встраивается в очередь, которая дренируется **до перехода к следующей фазе Event Loop**, а `setImmediate` — это macrotask, который ждёт своей фазы (`check`), позволяя `poll`-фазе (где обрабатывается входящий трафик) выполниться между итерациями.
+
+## Полная карта приоритетов — с привязкой к фазам Event Loop
 
 ```txt
-Check
+Call Stack (синхронный код) — выполняется первым, всегда
+    ↓
+process.nextTick queue — дренируется ПОЛНОСТЬЮ
+    ↓
+Microtask queue (Promise, queueMicrotask) — дренируется ПОЛНОСТЬЮ
+    ↓
+═══════════ конец "текущей операции" ═══════════
+    ↓
+timers (setTimeout/setInterval, готовые по времени)
+    ↓ (nextTick + microtasks дренируются после каждого callback)
+pending callbacks
+    ↓ (nextTick + microtasks дренируются после каждого callback)
+poll (I/O callbacks — основная фаза)
+    ↓ (nextTick + microtasks дренируются после каждого callback)
+check (setImmediate)
+    ↓ (nextTick + microtasks дренируются после каждого callback)
+close callbacks
+    ↓
+[следующий проход цикла → снова timers]
 ```
 
----
+## Разбор классического примера — но с объяснением МЕХАНИЗМА, а не просто ответа
 
-```js
-setTimeout(...)
+```ts
+console.log('1');
+
+process.nextTick(() => console.log('2'));
+
+Promise.resolve().then(() => console.log('3'));
+
+setTimeout(() => console.log('4'), 0);
+
+console.log('5');
+
+// Вывод: 1, 5, 2, 3, 4
 ```
-
-работает в фазе:
 
 ```txt
-Timers
+Шаг 1: выполняется синхронный код скрипта (Call Stack)
+       → печатает "1", регистрирует nextTick-callback,
+         регистрирует microtask, регистрирует timer,
+         печатает "5"
+
+Шаг 2: синхронный код скрипта завершён → дренаж nextTick queue
+       → печатает "2"
+
+Шаг 3: nextTick queue пуста → дренаж microtask queue
+       → печатает "3"
+
+Шаг 4: обе очереди пусты → Event Loop переходит к фазе timers
+       → timer готов → печатает "4"
 ```
 
----
+Запоминание конкретного вывода "1 5 2 3 4" бесполезно для интервью, если изменить пример (добавить ещё один `setTimeout` внутри первого, или `.then()` внутри `nextTick`) — а понимание "после ЛЮБОЙ операции сначала полностью дренируется nextTick, потом полностью microtasks, и только потом следующий macrotask" позволяет разобрать ЛЮБОЙ вариант этого вопроса.
 
-В обычном коде порядок не гарантирован.
-
----
-
-После I/O обычно первым будет:
+## Практическое применение: когда выбирать что
 
 ```txt
-setImmediate
+process.nextTick — для:
+  - гарантии, что callback выполнится ДО любого I/O,
+    но ПОСЛЕ завершения текущей синхронной операции
+    (например, эмит события сразу после конструктора,
+    чтобы подписчики успели подписаться: классический
+    паттерн в EventEmitter-based API)
+  - редко нужен в обычном бизнес-коде
+
+queueMicrotask / await — для:
+  - стандартного асинхронного кода, цепочек промисов
+
+setImmediate — для:
+  - "выполнить как можно скорее, но ПОСЛЕ текущей I/O-фазы" —
+    например, разбивка тяжёлой синхронной работы на чанки
+    (см. [The Event Loop])
+
+setTimeout(fn, 0) — для:
+  - похоже на setImmediate, но проходит через фазу timers,
+    которая идёт ПЕРВОЙ в следующем проходе цикла; разница
+    между setImmediate и setTimeout(0) обычно незначительна,
+    кроме случаев внутри I/O callback (см. [The Event Loop])
 ```
 
----
+## Типичные ошибки на интервью
 
-# Senior Interview Answer
+- **Заучивание конкретных примеров вместо механизма** — любое изменение примера (вложенный `.then`, `nextTick` внутри `nextTick`, несколько `setTimeout`) ломает заученный ответ; нужно объяснять через "дренаж очередей после каждой операции", а не через таблицу запомненных выводов.
 
-Node.js использует несколько очередей задач. Наивысший приоритет имеет process.nextTick, затем выполняются Promise-based microtasks, после чего Event Loop переходит к macrotasks, таким как setTimeout, setImmediate и I/O callbacks. Именно поэтому Promise.then выполняется раньше setTimeout(0), а process.nextTick раньше Promise.then.
+- **Не знать, что microtask queue дренируется ПОСЛЕ КАЖДОГО callback'а**, а не один раз "после скрипта" — это объясняет, почему промис, запланированный во время обработки одного I/O callback'а, выполнится раньше следующего I/O callback'а, даже если оба готовы.
+
+- **Не видеть starvation как реальную угрозу** — process.nextTick recursion воспринимается как "экзотический edge case", хотя рекурсивная обработка очередей через nextTick — нередкая (хоть и ошибочная) практика в реальном коде.
+
+- **Не понимать, что async/await — это .then() в сахаре** — и, как следствие, не уметь объяснить, почему длинная цепочка await'ов добавляет microtask-тики, даже когда awaited-значения уже доступны синхронно.
+
+- **Путать setImmediate и setTimeout(fn, 0) как "то же самое"** — без понимания, что одно — это отдельная фаза (check), а другое — фаза timers, и разница проявляется именно при вызове внутри I/O callback'а (см. [The Event Loop]).
