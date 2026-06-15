@@ -1,636 +1,180 @@
 # Next.js Interview Questions (Middle → Senior)
 
----
-
-# 1. What is Next.js?
-
-Next.js is a full-stack framework built on top of React.
-
-Provides:
-
-- Routing
-- SSR
-- SSG
-- ISR
-- API Routes
-- Middleware
-- Caching
-- SEO tools
+This file is a quick Q&A recap. Detailed explanations with code and nuance live in the earlier articles in this section; the focus here is precise phrasing and the senior-level follow-ups that often get asked as a "plus one" to a basic answer.
 
 ---
 
-# 2. What React problems does Next.js solve?
+## 1. What is Next.js?
 
-- SEO
-- Routing
-- SSR
-- Data Fetching
-- Code Splitting
-- Performance Optimization
+A full-stack framework built on React that addresses (beyond UI) rendering, routing, data fetching, caching, and provides a backend layer (Route Handlers, Server Actions, Middleware). React is a UI library; Next is an application framework that uses React as its rendering engine.
 
----
+## 2. What problems does Next.js solve that React doesn't?
 
-# 3. Why is Next.js called a Fullstack Framework?
+SEO and first paint (empty HTML in an SPA), no unified data-fetching model, manual code splitting, no built-in backend layer. Senior follow-up: modern React (Suspense, Server Components) addresses part of this on its own — but without a framework around them (routing, build pipeline, deployment), these primitives have limited value.
 
-Because it contains:
+## 3. Why is Next.js called a fullstack framework?
 
-```txt
-Frontend
-+
-Backend
-```
+Because one project and one deployment combine a UI layer (Server/Client Components) with a backend layer (Route Handlers, Server Actions, Middleware) — no need to stand up a separate Express/Nest service for simple tasks (BFF aggregation, forms, webhooks).
 
-through:
+## 4. How does React differ from Next.js?
 
-- API Routes
-- Server Actions
-- Middleware
+| | React | Next.js |
+|---|---|---|
+| Level | UI library | Application framework |
+| Solves | How to describe/update UI | Where/when code runs, routing, caching |
+| Backend | None | Route Handlers, Server Actions, Middleware |
 
----
+## 5. What is rendering?
 
-# 4. How does React differ from Next.js?
+The process of turning a React tree into HTML. The key parameters of a model: *where* (server/client/build-time CDN) and *when* (every request/once at build/periodically).
 
-React:
+## 6. What is CSR?
+
+Client Side Rendering — HTML is created in the browser after JS loads and runs. Pro: cheap server, instant transitions after load. Con: empty initial HTML, request waterfalls inside `useEffect`.
+
+## 7. What is SSR?
+
+Server Side Rendering — HTML is created on the server on every request. In the App Router, this is the default for a Server Component using `cookies()`/`headers()`/`fetch` with `cache: 'no-store'`, or explicitly via `export const dynamic = 'force-dynamic'`.
+
+## 8. What is SSG?
+
+Static Site Generation — HTML is created at build time; the server isn't involved in rendering at request time at all. In the App Router: a Server Component with no dynamic APIs and `fetch` with `cache: 'force-cache'` (the default for fetch in Next.js ≤14).
+
+## 9. What is ISR?
+
+Incremental Static Regeneration — SSG that goes stale via TTL (`revalidate`) or on demand (`revalidateTag`/`revalidatePath`) and regenerates in the background. The user whose request triggers revalidation gets the **stale** version (stale-while-revalidate), not the rebuilt one.
+
+## 10-12. When to use SSR / SSG / ISR?
 
 ```txt
-UI Library
+SSR  → personalized/session-bound data (account pages, authenticated cart)
+SSG  → content that rarely changes (docs, landing pages, blogs with infrequent edits)
+ISR  → content that changes but doesn't need instant freshness
+        (catalogs, news, CMS pages)
 ```
 
----
+## 13. What is hydration?
 
-Next.js:
+The process where React reconciles already-existing server HTML with a virtual DOM and attaches event handlers, **without** recreating the markup from scratch. Before hydration, content is visible but not interactive.
 
-```txt
-Application Framework
-```
+## 14-15. Hydration mismatch and its causes
 
----
+Occurs when the HTML rendered on the server doesn't match what React renders on the client during the first pass. Causes: `Date.now()`/`Math.random()` directly in JSX, accessing `window`/`localStorage` during render, invalid HTML tag nesting. Fix — defer the computation to `useEffect` (render `null`/a placeholder on the server and on the first client render) or, sparingly, `suppressHydrationWarning`.
 
-# 5. What is Rendering?
+## 16-18. App Router, Pages Router, and their main difference
 
-The process of generating HTML.
+The App Router (`app/`) is built around React Server Components, nested layouts that preserve state across navigation, and built-in streaming. The Pages Router (`pages/`) — every file = a route = a Client Component, data via `getServerSideProps`/`getStaticProps`. **The main difference isn't the folder structure but the default component model**: in the App Router a page is a Server Component, in the Pages Router it's a Client Component with a server-rendered first pass.
 
----
+## 19-21. Server Component, Client Component, how to mark one
 
-# 6. What is CSR?
+A Server Component runs only on the server, and its code never ships to the client JS bundle (the default for everything in `app/`). A Client Component is marked with `'use client'`, which defines a *module* boundary: everything imported from that file (and everything it imports) joins the client dependency graph.
 
-Client Side Rendering.
+## 22-23. What's allowed/not allowed in a Server Component
 
-HTML is created in the browser after JavaScript loads.
+Not allowed: `useState`, `useEffect`, `useRef`, `window`/`document`, event handlers — a Server Component has no browser lifecycle. Allowed: `fetch`, direct DB queries, `cookies()`/`headers()`, filesystem, env variables, "heavy" server-only dependencies (markdown parsers, etc.).
 
----
+## 24. Why are Server Components faster?
 
-# 7. What is SSR?
+Four concrete mechanisms: (1) their code never ships to the client bundle — 0 bytes of JS; (2) no hydration — no client CPU cost reconciling the DOM; (3) direct data access without an extra "browser → API" round trip; (4) heavy dependencies (parsers, formatters) don't weigh down the client.
 
-Server Side Rendering.
+## 25. How does SSR differ from Server Components?
 
-HTML is created on the server on every request.
+SSR is about *when/where HTML is generated* (and can apply to a Client Component with a server-rendered first pass + later hydration). Server Components are about *whether the component's code runs in the browser at all*. An SSR component in the Pages Router still hydrates and ships JS to the client; a Server Component never does.
 
----
+## 26-27. Data fetching in the App Router, and how it differs from browser fetch
 
-# 8. What is SSG?
+`async/await` directly in a Server Component, co-located with the markup. Unlike browser `fetch`, App Router fetch is integrated with Next's caching system: it supports `cache`, `next.revalidate`, `next.tags`, and participates in Request Memoization (deduplicating identical requests within one render).
 
-Static Site Generation.
+## 28-30. cache: 'force-cache', 'no-store', revalidate
 
-HTML is created at build time.
+`force-cache` — caches the result indefinitely (until explicit invalidation), SSG-like. `no-store` — a fresh request on every render, SSR-like. **Senior nuance**: in Next.js 13/14, `force-cache` is the default; in Next.js 15 the default changed to `no-store` — one of the most discussed breaking changes. `revalidate: N` — TTL in seconds for ISR-like behavior (`next: { revalidate: 60 }` or `export const revalidate = 60`).
 
----
+## 31-32. revalidatePath vs revalidateTag
 
-# 9. What is ISR?
+`revalidatePath('/blog')` — targets the cached render of a specific route (Full Route Cache). `revalidateTag('posts')` — clears the Data Cache for *all* `fetch` calls tagged with it, regardless of route — useful when one resource is used on multiple pages.
 
-Incremental Static Regeneration.
+## 33. generateStaticParams
 
-Allows regenerating static pages after deployment.
+The `getStaticPaths` equivalent from the Pages Router — returns an array of params for statically generating dynamic routes at build time. For paths not returned here, behavior is controlled by `export const dynamicParams` (defaults to `true` → generate on demand on first request, like `fallback: 'blocking'`).
 
----
+## 34-36. cookies(), headers(), Dynamic Rendering
 
-# 10. When to use SSR?
+`cookies()`/`headers()` give access to request-specific data on the server and **mark the route as dynamic** — it drops out of the Full Route Cache and renders on every request. Dynamic Rendering is the umbrella term; the full list of triggers also includes `searchParams` in a Server Component, `fetch` with `cache: 'no-store'`/`revalidate: 0`, and `export const dynamic = 'force-dynamic'`.
 
-When you need:
+## 37. Request Memoization
 
-- personalized data
-- up-to-date data
-- SEO
+If multiple components within a *single* render call `fetch` with the same URL/options, one real HTTP request runs and the rest get the result from memory. This only applies within one server-side render — it's not a persistent cache across different users' requests (that's the Data Cache's job).
 
----
+## 38-40. Layout, Nested Layout, why a Layout beats a plain wrapper
 
-# 11. When to use SSG?
+`layout.tsx` is a persistent UI shell for a route segment and its descendants — it **doesn't remount** on navigation between child routes, preserving state (open menus, sidebar scroll position). Layouts nest: `Root Layout → Dashboard Layout → Page`. Unlike a manual wrapper component in the Pages Router, Next only requests the RSC payload for the changed segment from the server, while shared layouts stay mounted.
 
-For:
+## 41-43. loading.tsx, error.tsx, not-found.tsx
 
-- blogs
-- landing pages
-- documentation
+`loading.tsx` automatically wraps `page.tsx` in `<Suspense fallback={...}>`. `error.tsx` (must be a Client Component) is an Error Boundary for the segment and **its descendants**, but not for a `layout.tsx` at its own level (that's caught by the parent's `error.tsx`). `not-found.tsx` renders when `notFound()` is called or a catch-all route doesn't match.
 
----
+## 44-46. Middleware: what, where, what for
 
-# 12. When to use ISR?
+Code that runs **before** routing, on the Edge Runtime (V8 isolates, no Node APIs). The `middleware.ts` file lives at the project root. Uses: auth redirects, rewrites, geo/locale routing, A/B bucket assignment, modifying headers/cookies. Not a fit for heavy business logic or per-request DB operations — that's for Route Handlers/Server Actions with the Node runtime.
 
-For:
+## 47. Redirect vs Rewrite
 
-- online stores
-- catalogs
-- CMS content
+Redirect (`NextResponse.redirect`) — the browser gets a 307/308, the URL in the address bar **changes**, visible to the user and search engines. Rewrite (`NextResponse.rewrite`) — the request is served by a different path "under the hood", the URL **doesn't change**. For SEO these are different signals: redirect = "content moved", rewrite = "same resource, different implementation".
 
----
+## 48-53. Metadata API, OpenGraph, robots.txt, sitemap.xml
 
-# 13. What is Hydration?
+The Metadata API is a declarative `metadata`/`generateMetadata` export from `layout.tsx`/`page.tsx`; metadata is **inherited and merged** across the layout tree (`title.template` for child titles). OpenGraph controls link previews on social/messaging platforms. `app/robots.ts`/`app/sitemap.ts` are typed file conventions (`MetadataRoute.Robots`/`MetadataRoute.Sitemap`); for very large catalogs, `generateSitemaps` produces multiple files.
 
-The process of connecting React to already-existing HTML.
+## 54-55. next/image, next/font
 
----
+`next/image` generates a `srcset`, converts to WebP/AVIF, lazily loads images outside the viewport; explicit `width`/`height` (or `fill` with a positioned parent) reserve space — reducing CLS; `priority` raises fetch priority for LCP elements. `next/font` downloads the font **at build time**, self-hosts it as a static asset, and tunes fallback metrics — eliminating a runtime request to Google Fonts and reducing CLS on font swap.
 
-# 14. What is Hydration Mismatch?
+## 56. Core Web Vitals
 
-When server HTML differs from client HTML.
+LCP (Largest Contentful Paint — improved by SSR/SSG + `next/image priority` + `next/font`), CLS (Cumulative Layout Shift — improved by explicit image/font dimensions), INP (Interaction to Next Paint — improved by less client JS via Server Components).
 
----
+## 57-58. Streaming and Suspense
 
-# 15. Main causes of Hydration Mismatch?
+Streaming sends HTML in chunks (chunked transfer encoding) as data becomes ready, instead of rendering the whole page before sending anything. `<Suspense fallback={...}>` wraps a slow part of the tree — the user sees the shell and fallback immediately, while content "fills in" as it's ready. Transparent to SEO — crawlers receive the final HTML after streaming completes.
 
-```tsx
-Date.now()
-Math.random()
-window
-localStorage
-```
+## 59-60. Server Actions: what and when
 
-during rendering.
+Functions marked with `'use server'`, called from forms/UI code as mutations (`<form action={myAction}>`), without a separate API endpoint. Good for CRUD mutations, forms, optimistic UI (`useOptimistic`). **Not** a fit for a public API — they have no stable, versionable contract and aren't meant for external consumers.
 
----
+## 61. When are Route Handlers (API Routes) the better choice?
 
-# 16. What is App Router?
+When you need an explicit REST/JSON contract for external consumers: webhooks (payment providers, CMS), a mobile app, third-party integrations, OAuth callbacks.
 
-The new routing architecture of Next.js.
+## 62-63. The Edge Runtime and its constraints
 
-Built around:
+Runs on V8 isolates close to the user — low latency, minimal/no cold start. Constraints: no `fs`/`net`/`child_process`/native modules, only Web-standard APIs (`fetch`, `crypto`, Streams). Standard Prisma + the `pg` driver doesn't work on Edge without an adapter — a common cause of "works locally, breaks in prod on Edge".
 
-- Server Components
-- Streaming
-- Nested Layouts
+## 64. What is a BFF?
 
----
+Backend For Frontend — Next aggregates and transforms data from multiple microservices into a single, screen-tailored API. The frontend doesn't know the internal service topology. Boundary: a BFF is for UI-facing aggregation/transformation, not for business logic with side effects spanning multiple domains (that's the domain services' job).
 
-# 17. What is Pages Router?
+## 65-66. How would you architect an e-commerce / CMS project?
 
-The old routing system using the folder:
+E-commerce — a combination of models per screen: home/categories → SSG/ISR, product page → ISR + on-demand revalidation via webhook, cart → CSR, checkout → Server Actions + a Route Handler for the payment webhook, account → SSR. CMS project — Next + Strapi/Contentful + ISR with `revalidateTag`, invalidated via webhook on content publish.
 
-```txt
-pages/
-```
+## 67. How would you describe the architecture of modern Next.js?
 
----
+Built around the App Router and React Server Components: rendering, data fetching, and caching are chosen granularly per route segment, not for the whole app. Most logic runs on the server by default; Client Components are a deliberate opt-in only where interactivity is needed (forms, event handlers, browser APIs).
 
-# 18. The main difference of App Router?
+## 68. The most popular senior question: which rendering model would you choose?
 
-Server Components by default.
+There's no single correct model — a production app combines SSG, ISR, SSR, and Server/Client Components *per screen*, based on SEO requirements, performance, data freshness, and compute cost. A strong answer is a "page type → strategy" table, not one word.
 
----
+## Common interview mistakes
 
-# 19. What is a Server Component?
+- **Confusing SSR and Server Components** (see question 25) — the most common mistake in this whole section.
 
-A component that runs only on the server.
+- **Answering "fetch is cached by default" without specifying the Next version** — true in 13/14 (`force-cache`), false in 15 (`no-store`). Not knowing this breaking change is a red flag for a role requiring current knowledge.
 
----
+- **Confusing revalidatePath and revalidateTag** — the former targets a route (Full Route Cache), the latter targets data across the whole app (Data Cache), regardless of route.
 
-# 20. What is a Client Component?
+- **Assuming middleware can do everything a Route Handler can** — the Edge Runtime doesn't provide Node APIs or most ORMs.
 
-A component that runs in the browser.
+- **Giving a one-word answer to "how would you cache/architect this app"** — a strong senior answer always shows a composition of decisions per screen, not a single strategy.
 
----
-
-# 21. How do you mark a Client Component?
-
-```tsx
-'use client';
-```
-
----
-
-# 22. What cannot be used in Server Components?
-
-- useState
-- useEffect
-- useRef
-- window
-- document
-- event handlers
-
----
-
-# 23. What can be used in Server Components?
-
-- fetch
-- database queries
-- server code
-- environment variables
-
----
-
-# 24. Why are Server Components faster?
-
-Because:
-
-- less JS
-- less hydration
-- smaller bundle size
-
----
-
-# 25. How does SSR differ from Server Components?
-
-SSR answers:
-
-```txt
-Where is HTML created
-```
-
----
-
-Server Components:
-
-```txt
-Where React code runs
-```
-
----
-
-# 26. How does Data Fetching work in App Router?
-
-Via:
-
-```tsx
-await fetch()
-```
-
-inside Server Components.
-
----
-
-# 27. How does Next fetch differ from browser fetch?
-
-Integrated with:
-
-- caching
-- revalidation
-- rendering
-
----
-
-# 28. What does cache: 'force-cache' do?
-
-Uses the cached result.
-
----
-
-# 29. What does cache: 'no-store' do?
-
-Disables caching.
-
----
-
-# 30. What is revalidate?
-
-The cache lifetime.
-
----
-
-Example:
-
-```ts
-revalidate: 60
-```
-
----
-
-# 31. What is revalidatePath?
-
-Invalidates the cache for a specific route.
-
----
-
-# 32. What is revalidateTag?
-
-Invalidates the cache for a group of requests.
-
----
-
-# 33. What is generateStaticParams?
-
-Equivalent to getStaticPaths.
-
----
-
-Used to generate dynamic routes at build time.
-
----
-
-# 34. What does cookies() do?
-
-Allows reading cookies on the server.
-
----
-
-Using cookies() makes the page dynamic.
-
----
-
-# 35. What does headers() do?
-
-Allows reading HTTP headers on the server.
-
----
-
-# 36. What is Dynamic Rendering?
-
-When a page is rendered on every request.
-
----
-
-# 37. What is Request Memoization?
-
-Repeated fetch calls within a single render are not re-executed.
-
----
-
-# 38. What is a Layout?
-
-A wrapper component for a group of routes.
-
----
-
-# 39. What is a Nested Layout?
-
-Multiple nested layout levels.
-
----
-
-For example:
-
-```txt
-Root Layout
- ↓
-Dashboard Layout
- ↓
-Page
-```
-
----
-
-# 40. Why is Layout better than a regular component?
-
-It is not unmounted during navigation.
-
----
-
-# 41. What is loading.tsx?
-
-Automatic Loading UI.
-
----
-
-# 42. What is error.tsx?
-
-An Error Boundary for a route segment.
-
----
-
-# 43. What is not-found.tsx?
-
-A custom 404 page.
-
----
-
-# 44. What is Middleware?
-
-Code that runs before routing and rendering.
-
----
-
-# 45. Where does Middleware live?
-
-```txt
-middleware.ts
-```
-
----
-
-# 46. What is Middleware used for?
-
-- Auth
-- Redirects
-- A/B Tests
-- Geo Routing
-- Localization
-
----
-
-# 47. How does rewrite differ from redirect?
-
-Redirect:
-
-```txt
-changes the URL
-```
-
----
-
-Rewrite:
-
-```txt
-keeps the URL the same
-```
-
----
-
-# 48. What is the Metadata API?
-
-The built-in SEO system.
-
----
-
-# 49. How do you set the page title?
-
-```ts
-export const metadata = {
-  title: 'Products'
-}
-```
-
----
-
-# 50. What is generateMetadata()?
-
-Allows creating SEO metadata dynamically.
-
----
-
-# 51. What is OpenGraph?
-
-Metadata for social networks.
-
----
-
-# 52. What is robots.txt?
-
-Site indexing rules for search engines.
-
----
-
-# 53. What is sitemap.xml?
-
-A list of site pages for search engines.
-
----
-
-# 54. What is next/image?
-
-An image optimization component.
-
----
-
-Automatically provides:
-
-- lazy loading
-- responsive images
-- optimization
-
----
-
-# 55. What is next/font?
-
-Built-in font optimization.
-
----
-
-# 56. Which Core Web Vitals do you know?
-
-- LCP
-- CLS
-- INP
-
----
-
-# 57. What is Streaming?
-
-Sending HTML in chunks.
-
----
-
-# 58. What is Suspense?
-
-A mechanism for showing fallback UI while waiting for data.
-
----
-
-# 59. What are Server Actions?
-
-A way to run server code without API Routes.
-
----
-
-Example:
-
-```tsx
-'use server';
-```
-
----
-
-# 60. When to use Server Actions?
-
-For:
-
-- forms
-- CRUD operations
-- internal mutations
-
----
-
-# 61. When is it better to use API Routes?
-
-For:
-
-- REST API
-- Webhooks
-- external integrations
-
----
-
-# 62. What is Edge Runtime?
-
-Running code on Edge Nodes.
-
----
-
-Closer to the user.
-
----
-
-# 63. What are the limitations of Edge Runtime?
-
-No access to:
-
-- fs
-- net
-- child_process
-
----
-
-# 64. What is BFF?
-
-Backend For Frontend.
-
----
-
-Next aggregates data from multiple services.
-
----
-
-# 65. How would you build an e-commerce?
-
-```txt
-Homepage → SSG
-
-Catalog → ISR
-
-Product → ISR
-
-Cart → CSR
-
-Checkout → Server Actions
-
-Admin → CSR
-```
-
----
-
-# 66. How would you build a CMS project?
-
-```txt
-Next.js
- ↓
-Strapi
- ↓
-PostgreSQL
-```
-
----
-
-ISR + revalidateTag.
-
----
-
-# 67. How would you explain the architecture of modern Next.js?
-
-Modern Next.js is built around App Router, React Server Components, built-in Data Fetching, caching, and Streaming. Most logic runs on the server, and Client Components are used only where interactivity is needed.
-
----
-
-# 68. The Most Popular Senior Question
-
-Which rendering model should you choose for an application?
-
-Answer:
-
-There is no single correct model. A production application typically combines SSG, ISR, SSR, Server Components, and Client Components depending on the requirements for SEO, performance, data freshness, and user experience.
+- **Not knowing Server Component errors are invisible in the browser** — critical for discussing observability and error tracking in production.

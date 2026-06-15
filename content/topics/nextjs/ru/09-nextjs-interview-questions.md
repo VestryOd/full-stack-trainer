@@ -1,637 +1,181 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # Next.js Interview Questions (Middle → Senior)
 
----
-
-# 1. Что такое Next.js?
-
-Next.js — это full-stack framework поверх React.
-
-Предоставляет:
-
-- Routing
-- SSR
-- SSG
-- ISR
-- API Routes
-- Middleware
-- Caching
-- SEO инструменты
+Этот файл — быстрый Q&A-рекап. Подробные объяснения с кодом и нюансами — в предыдущих статьях этого раздела; здесь акцент на точность формулировок и senior-уточнения, которые часто проверяют именно как "добавочный вопрос" к базовому ответу.
 
 ---
 
-# 2. Какие проблемы React решает Next.js?
+## 1. Что такое Next.js?
 
-- SEO
-- Routing
-- SSR
-- Data Fetching
-- Code Splitting
-- Performance Optimization
+Full-stack framework поверх React, который решает (помимо UI) вопросы рендеринга, роутинга, data fetching, кеширования и предоставляет backend-слой (Route Handlers, Server Actions, Middleware). React — UI library, Next — application framework, использующий React как rendering engine.
 
----
+## 2. Какие проблемы React решает Next.js?
 
-# 3. Почему Next.js называют Fullstack Framework?
+SEO и first paint (пустой HTML в SPA), отсутствие единой модели data fetching, ручной code splitting, отсутствие встроенного backend-слоя. Senior-уточнение: современный React (Suspense, Server Components) сам по себе решает часть этих проблем — но без framework вокруг них (роутинг, build pipeline, deployment) эти примитивы малополезны.
 
-Потому что он содержит:
+## 3. Почему Next.js называют Fullstack Framework?
 
-```txt
-Frontend
-+
-Backend
-```
+Потому что в одном проекте и одном деплое сочетаются UI-слой (Server/Client Components) и backend-слой (Route Handlers, Server Actions, Middleware) — без необходимости поднимать отдельный Express/Nest сервис для простых задач (BFF-агрегация, формы, webhooks).
 
-через:
+## 4. Чем React отличается от Next.js?
 
-- API Routes
-- Server Actions
-- Middleware
+| | React | Next.js |
+|---|---|---|
+| Уровень | UI library | Application framework |
+| Решает | Как описывать/обновлять UI | Где и когда исполняется код, роутинг, кеш |
+| Backend | Нет | Route Handlers, Server Actions, Middleware |
 
----
+## 5. Что такое Rendering?
 
-# 4. Чем React отличается от Next.js?
+Процесс превращения React-дерева в HTML. Ключевые параметры модели: *где* (сервер/клиент/build-time CDN) и *когда* (на каждый запрос/один раз при билде/периодически).
 
-React:
+## 6. Что такое CSR?
+
+Client Side Rendering — HTML создаётся в браузере после загрузки и выполнения JS. Плюс: дешёвый сервер, мгновенные переходы после загрузки. Минус: пустой первый HTML, request waterfalls в `useEffect`.
+
+## 7. Что такое SSR?
+
+Server Side Rendering — HTML создаётся на сервере на каждый запрос. В App Router — поведение по умолчанию для Server Component, использующего `cookies()`/`headers()`/`fetch` с `cache: 'no-store'`, либо явно через `export const dynamic = 'force-dynamic'`.
+
+## 8. Что такое SSG?
+
+Static Site Generation — HTML создаётся во время build, сервер на момент запроса не участвует в рендере вообще. В App Router — Server Component без динамических API, `fetch` с `cache: 'force-cache'` (поведение по умолчанию для fetch в Next.js ≤14).
+
+## 9. Что такое ISR?
+
+Incremental Static Regeneration — SSG, который "протухает" по TTL (`revalidate`) или по требованию (`revalidateTag`/`revalidatePath`) и пересобирается в фоне. Пользователь, чей запрос триггерит revalidation, получает **старую** версию (stale-while-revalidate), а не ждёт пересборки.
+
+## 10-12. Когда использовать SSR / SSG / ISR?
 
 ```txt
-UI Library
+SSR  → персонализированные/привязанные к сессии данные (личный кабинет, корзина с auth)
+SSG  → контент, который меняется редко (документация, лендинги, блог без частых правок)
+ISR  → контент, который меняется, но не требует мгновенной свежести
+        (каталоги, новости, CMS-страницы)
 ```
 
----
+## 13. Что такое Hydration?
 
-Next.js:
+Процесс, при котором React сопоставляет уже существующий серверный HTML с виртуальным DOM и подключает обработчики событий, **без** пересоздания разметки с нуля. До hydration контент виден, но не интерактивен.
 
-```txt
-Application Framework
-```
+## 14-15. Hydration Mismatch и его причины
 
----
+Возникает, когда HTML, отрендеренный на сервере, не совпадает с тем, что React рендерит на клиенте при первом проходе. Причины: `Date.now()`/`Math.random()` напрямую в JSX, доступ к `window`/`localStorage` во время рендера, невалидная вложенность HTML-тегов. Решение — отложить вычисление до `useEffect` (рендерить `null`/placeholder на сервере и при первом клиентском рендере) или, в редких точечных случаях, `suppressHydrationWarning`.
 
-# 5. Что такое Rendering?
+## 16-18. App Router, Pages Router и их главное отличие
 
-Процесс генерации HTML.
+App Router (`app/`) построен вокруг React Server Components, вложенных layout'ов с сохранением состояния при навигации и встроенного streaming. Pages Router (`pages/`) — каждый файл = маршрут = Client Component, данные через `getServerSideProps`/`getStaticProps`. **Главное отличие — не структура папок, а модель компонентов по умолчанию**: в App Router страница — Server Component, в Pages Router — Client Component с серверным первым рендером.
 
----
+## 19-21. Server Component, Client Component, как помечать
 
-# 6. Что такое CSR?
+Server Component — выполняется только на сервере, его код никогда не попадает в клиентский JS-бандл (по умолчанию для всего в `app/`). Client Component — помечается директивой `'use client'`, которая определяет границу *модуля*: всё, что импортируется из этого файла (и что он сам импортирует), попадает в клиентский граф зависимостей.
 
-Client Side Rendering.
+## 22-23. Что можно/нельзя в Server Component
 
-HTML создается в браузере после загрузки JavaScript.
+Нельзя: `useState`, `useEffect`, `useRef`, `window`/`document`, обработчики событий — у Server Component нет жизненного цикла в браузере. Можно: `fetch`, прямые запросы к БД, `cookies()`/`headers()`, файловая система, env-переменные, "тяжёлые" серверные зависимости (markdown-парсеры и т.п.).
 
----
+## 24. Почему Server Components быстрее?
 
-# 7. Что такое SSR?
+Четыре конкретных механизма: (1) их код не попадает в клиентский бандл — 0 байт JS; (2) нет hydration — нет затрат CPU клиента на сопоставление DOM; (3) прямой доступ к данным без лишнего HTTP round-trip "браузер → API"; (4) тяжёлые зависимости (парсеры, форматтеры) не "весят" на клиенте.
 
-Server Side Rendering.
+## 25. Чем SSR отличается от Server Components?
 
-HTML создается на сервере при каждом запросе.
+SSR — это *когда/где генерируется HTML* (может относиться и к Client Component с серверным первым рендером + последующей гидратацией). Server Components — это *исполняется ли код компонента в браузере вообще*. SSR-компонент в Pages Router всё равно гидратируется и отправляет JS клиенту; Server Component — никогда.
 
----
+## 26-27. Data Fetching в App Router и отличие от browser fetch
 
-# 8. Что такое SSG?
+`async/await` прямо в Server Component, co-located с разметкой. В отличие от browser `fetch`, App Router fetch интегрирован с системой кеширования Next.js: поддерживает `cache`, `next.revalidate`, `next.tags`, и участвует в Request Memoization (дедупликация одинаковых запросов в рамках одного рендера).
 
-Static Site Generation.
+## 28-30. cache: 'force-cache', 'no-store', revalidate
 
-HTML создается во время build.
+`force-cache` — кеширует результат бессрочно (до явной инвалидации), SSG-подобное поведение. `no-store` — новый запрос на каждый рендер, SSR-подобное поведение. **Senior-нюанс**: в Next.js 13/14 `force-cache` — поведение по умолчанию, в Next.js 15 default изменён на `no-store` — одно из самых обсуждаемых breaking changes. `revalidate: N` — TTL в секундах для ISR-подобного поведения (`next: { revalidate: 60 }` или `export const revalidate = 60`).
 
----
+## 31-32. revalidatePath vs revalidateTag
 
-# 9. Что такое ISR?
+`revalidatePath('/blog')` — точечно сбрасывает кеш рендера конкретного маршрута (Full Route Cache). `revalidateTag('posts')` — сбрасывает Data Cache для *всех* `fetch`, помеченных этим тегом, независимо от маршрута — удобно, когда один ресурс используется на нескольких страницах.
 
-Incremental Static Regeneration.
+## 33. generateStaticParams
 
-Позволяет пересоздавать статические страницы после деплоя.
+Аналог `getStaticPaths` из Pages Router — возвращает массив параметров для статической генерации динамических маршрутов во время build. Для путей, не возвращённых отсюда, поведение контролируется `export const dynamicParams` (по умолчанию `true` → генерация по требованию при первом запросе, аналог `fallback: 'blocking'`).
 
----
+## 34-36. cookies(), headers(), Dynamic Rendering
 
-# 10. Когда использовать SSR?
+`cookies()`/`headers()` дают доступ к request-специфичным данным на сервере и **помечают маршрут как dynamic** — он выпадает из Full Route Cache и рендерится на каждый запрос. Dynamic Rendering — общий термин для этого поведения; полный список триггеров включает также `searchParams` в Server Component, `fetch` с `cache: 'no-store'`/`revalidate: 0`, и `export const dynamic = 'force-dynamic'`.
 
-Когда нужны:
+## 37. Request Memoization
 
-- персонализированные данные
-- актуальные данные
-- SEO
+Если несколько компонентов в рамках *одного* рендера вызывают `fetch` с одинаковыми URL/опциями, выполняется один реальный HTTP-запрос, остальные берут результат из памяти. Работает только в пределах одного server-side рендера — не персистентный кеш между запросами разных пользователей (это задача Data Cache).
 
----
+## 38-40. Layout, Nested Layout, почему Layout лучше обычной обёртки
 
-# 11. Когда использовать SSG?
+`layout.tsx` — персистентный UI-каркас для сегмента маршрута и его потомков, **не размонтируется** при навигации между дочерними маршрутами — сохраняется состояние (открытое меню, скролл сайдбара). Layout'ы вкладываются: `Root Layout → Dashboard Layout → Page`. В отличие от ручного компонента-обёртки в Pages Router, Next запрашивает с сервера только RSC payload изменившегося сегмента, а общие layout'ы остаются смонтированными.
 
-Для:
+## 41-43. loading.tsx, error.tsx, not-found.tsx
 
-- блогов
-- лендингов
-- документации
+`loading.tsx` автоматически оборачивает `page.tsx` в `<Suspense fallback={...}>`. `error.tsx` (обязательно Client Component) — Error Boundary для сегмента и **его потомков**, но не для `layout.tsx` своего же уровня (его ловит `error.tsx` родителя). `not-found.tsx` рендерится при вызове `notFound()` или несовпадении catch-all маршрута.
 
----
+## 44-46. Middleware: что, где, для чего
 
-# 12. Когда использовать ISR?
+Код, выполняющийся **до** маршрутизации, на Edge Runtime (V8 isolates, без Node API). Файл `middleware.ts` в корне проекта. Применения: auth-редиректы, rewrites, geo/locale routing, A/B bucket assignment, модификация заголовков/cookies. Не подходит для тяжёлой бизнес-логики и операций с БД на каждый запрос — это задача Route Handlers/Server Actions с Node runtime.
 
-Для:
+## 47. Redirect vs Rewrite
 
-- интернет-магазинов
-- каталогов
-- CMS-контента
+Redirect (`NextResponse.redirect`) — браузер получает 307/308, URL в адресной строке **меняется**, видимо пользователю и поисковикам. Rewrite (`NextResponse.rewrite`) — запрос обслуживается другим путём "под капотом", URL **не меняется**. Для SEO это разные сигналы: redirect = "контент переехал", rewrite = "тот же ресурс, другая реализация".
 
----
+## 48-53. Metadata API, OpenGraph, robots.txt, sitemap.xml
 
-# 13. Что такое Hydration?
+Metadata API — декларативный экспорт `metadata`/`generateMetadata` из `layout.tsx`/`page.tsx`, метаданные **наследуются и сливаются** по дереву layout'ов (`title.template` для дочерних title). OpenGraph — превью ссылок в соцсетях/мессенджерах. `app/robots.ts`/`app/sitemap.ts` — типизированные файловые конвенции (`MetadataRoute.Robots`/`MetadataRoute.Sitemap`); для очень больших каталогов — `generateSitemaps` для нескольких файлов.
 
-Процесс подключения React к уже готовому HTML.
+## 54-55. next/image, next/font
 
----
+`next/image` генерирует `srcset`, конвертирует в WebP/AVIF, лениво грузит вне viewport; явные `width`/`height` (или `fill` с позиционированным родителем) резервируют место — снижают CLS; `priority` повышает fetch-приоритет для LCP-элементов. `next/font` скачивает шрифт **на этапе сборки**, self-host'ит как статический ассет, подгоняет fallback-метрики — устраняет runtime-запрос к Google Fonts и снижает CLS при свапе шрифта.
 
-# 14. Что такое Hydration Mismatch?
+## 56. Core Web Vitals
 
-Когда серверный HTML отличается от клиентского.
+LCP (Largest Contentful Paint, улучшается SSR/SSG + `next/image priority` + `next/font`), CLS (Cumulative Layout Shift, улучшается явными размерами изображений/шрифтов), INP (Interaction to Next Paint, улучшается меньшим объёмом клиентского JS за счёт Server Components).
 
----
+## 57-58. Streaming и Suspense
 
-# 15. Основные причины Hydration Mismatch?
+Streaming — отправка HTML частями (chunked transfer encoding) по мере готовности данных, вместо рендера всей страницы целиком перед отправкой. `<Suspense fallback={...}>` оборачивает медленную часть дерева — пользователь видит shell и fallback немедленно, а контент "дорисовывается" по готовности. Для SEO прозрачно — крауlер получает финальный HTML после завершения стрима.
 
-```tsx
-Date.now()
-Math.random()
-window
-localStorage
-```
+## 59-60. Server Actions: что и когда
 
-во время рендера.
+Функции с директивой `'use server'`, вызываемые из форм/UI-кода как мутации (`<form action={myAction}>`), без отдельного API-эндпоинта. Подходят для CRUD-мутаций, форм, optimistic UI (`useOptimistic`). **Не** подходят для публичного API — у них нет стабильного версионируемого контракта и они не предназначены для внешних потребителей.
 
----
+## 61. Когда лучше Route Handlers (API Routes)?
 
-# 16. Что такое App Router?
+Когда нужен явный REST/JSON-контракт для внешних потребителей: webhooks (платёжные системы, CMS), мобильное приложение, сторонние интеграции, OAuth callbacks.
 
-Новая архитектура маршрутизации Next.js.
+## 62-63. Edge Runtime и его ограничения
 
-Построена вокруг:
+Выполнение на V8 isolates близко к пользователю — низкая латентность, минимальный/нулевой cold start. Ограничения: нет `fs`/`net`/`child_process`/нативных модулей, доступны только Web-стандартные API (`fetch`, `crypto`, Streams). Стандартный Prisma + `pg`-драйвер не работает на Edge без адаптера — частая причина "работает локально, падает в проде на Edge".
 
-- Server Components
-- Streaming
-- Nested Layouts
+## 64. Что такое BFF?
 
----
+Backend For Frontend — Next агрегирует и трансформирует данные из нескольких микросервисов в единый, заточенный под конкретный экран API. Frontend не знает про внутреннюю топологию сервисов. Граница: BFF — для агрегации/трансформации под UI, а не для бизнес-логики с побочными эффектами на несколько доменов (это ответственность доменных сервисов).
 
-# 17. Что такое Pages Router?
+## 65-66. Как бы вы построили e-commerce / CMS-проект?
 
-Старая система маршрутизации через папку:
+E-commerce — комбинация моделей по экранам: Homepage/категории → SSG/ISR, страница товара → ISR + on-demand revalidation по webhook, корзина → CSR, checkout → Server Actions + Route Handler для платёжного webhook, личный кабинет → SSR. CMS-проект — Next + Strapi/Contentful + ISR с `revalidateTag`, инвалидация по webhook при публикации контента.
 
-```txt
-pages/
-```
+## 67. Как объяснить архитектуру современного Next.js?
 
----
+Построен вокруг App Router и React Server Components: рендеринг, data fetching и кеширование выбираются гранулярно на уровне route segment, а не всего приложения. Большая часть логики выполняется на сервере по умолчанию, Client Components — осознанный opt-in только там, где нужна интерактивность (формы, обработчики событий, browser API).
 
-# 18. Главное отличие App Router?
+## 68. Самый популярный senior-вопрос: какую модель рендеринга выбрать?
 
-Server Components по умолчанию.
+Нет единственно правильной модели — production-приложение комбинирует SSG, ISR, SSR, Server и Client Components *по экранам*, в зависимости от требований к SEO, производительности, свежести данных и стоимости вычислений. Сильный ответ — это таблица "тип страницы → стратегия", а не одно слово.
 
----
+## Типичные ошибки на интервью
 
-# 19. Что такое Server Component?
+- **Путают SSR и Server Components** (см. вопрос 25) — самая частая ошибка во всём разделе.
 
-Компонент, выполняющийся только на сервере.
+- **Отвечают на "fetch кешируется по умолчанию" без указания версии Next** — в 13/14 да (`force-cache`), в 15 нет (`no-store`). Незнание этого breaking change — красный флаг для роли, требующей актуальных знаний.
 
----
+- **Путают revalidatePath и revalidateTag** — первый целится в маршрут (Full Route Cache), второй — в данные по всему приложению (Data Cache), независимо от маршрута.
 
-# 20. Что такое Client Component?
+- **Считают, что middleware может всё то же, что Route Handler** — Edge Runtime не даёт Node API и большинства ORM.
 
-Компонент, выполняющийся в браузере.
+- **Дают однословный ответ на "как кешировать/строить приложение"** — сильный ответ для senior всегда показывает композицию решений по экранам, а не единую стратегию.
 
----
-
-# 21. Как пометить Client Component?
-
-```tsx
-'use client';
-```
-
----
-
-# 22. Что нельзя использовать в Server Components?
-
-- useState
-- useEffect
-- useRef
-- window
-- document
-- event handlers
-
----
-
-# 23. Что можно использовать в Server Components?
-
-- fetch
-- database queries
-- server code
-- environment variables
-
----
-
-# 24. Почему Server Components быстрее?
-
-Потому что:
-
-- меньше JS
-- меньше hydration
-- меньше bundle size
-
----
-
-# 25. Чем SSR отличается от Server Components?
-
-SSR отвечает:
-
-```txt
-Где создается HTML
-```
-
----
-
-Server Components:
-
-```txt
-Где выполняется React код
-```
-
----
-
-# 26. Как работает Data Fetching в App Router?
-
-Через:
-
-```tsx
-await fetch()
-```
-
-внутри Server Components.
-
----
-
-# 27. Чем Next fetch отличается от browser fetch?
-
-Интегрирован с:
-
-- caching
-- revalidation
-- rendering
-
----
-
-# 28. Что делает cache: 'force-cache'?
-
-Использует кешированный результат.
-
----
-
-# 29. Что делает cache: 'no-store'?
-
-Отключает кеширование.
-
----
-
-# 30. Что такое revalidate?
-
-Время жизни кеша.
-
----
-
-Пример:
-
-```ts
-revalidate: 60
-```
-
----
-
-# 31. Что такое revalidatePath?
-
-Инвалидирует кеш конкретного маршрута.
-
----
-
-# 32. Что такое revalidateTag?
-
-Инвалидирует кеш группы запросов.
-
----
-
-# 33. Что такое generateStaticParams?
-
-Аналог getStaticPaths.
-
----
-
-Используется для генерации динамических маршрутов во время build.
-
----
-
-# 34. Что делает cookies()?
-
-Позволяет получить cookies на сервере.
-
----
-
-Использование cookies() делает страницу динамической.
-
----
-
-# 35. Что делает headers()?
-
-Позволяет читать HTTP заголовки на сервере.
-
----
-
-# 36. Что такое Dynamic Rendering?
-
-Когда страница рендерится на каждый запрос.
-
----
-
-# 37. Что такое Request Memoization?
-
-Повторные fetch внутри одного рендера не выполняются повторно.
-
----
-
-# 38. Что такое Layout?
-
-Компонент-обертка для группы маршрутов.
-
----
-
-# 39. Что такое Nested Layout?
-
-Вложенные layout уровни.
-
----
-
-Например:
-
-```txt
-Root Layout
- ↓
-Dashboard Layout
- ↓
-Page
-```
-
----
-
-# 40. Почему Layout лучше обычного компонента?
-
-Не размонтируется при навигации.
-
----
-
-# 41. Что такое loading.tsx?
-
-Автоматический Loading UI.
-
----
-
-# 42. Что такое error.tsx?
-
-Error Boundary для сегмента маршрута.
-
----
-
-# 43. Что такое not-found.tsx?
-
-Кастомная 404 страница.
-
----
-
-# 44. Что такое Middleware?
-
-Код, выполняющийся до маршрутизации и рендера.
-
----
-
-# 45. Где находится Middleware?
-
-```txt
-middleware.ts
-```
-
----
-
-# 46. Для чего используют Middleware?
-
-- Auth
-- Redirects
-- A/B Tests
-- Geo Routing
-- Localization
-
----
-
-# 47. Чем rewrite отличается от redirect?
-
-Redirect:
-
-```txt
-меняет URL
-```
-
----
-
-Rewrite:
-
-```txt
-оставляет URL прежним
-```
-
----
-
-# 48. Что такое Metadata API?
-
-Встроенная система SEO.
-
----
-
-# 49. Как задать title страницы?
-
-```ts
-export const metadata = {
-  title: 'Products'
-}
-```
-
----
-
-# 50. Что такое generateMetadata()?
-
-Позволяет создавать SEO-метаданные динамически.
-
----
-
-# 51. Что такое OpenGraph?
-
-Метаданные для социальных сетей.
-
----
-
-# 52. Что такое robots.txt?
-
-Правила индексации сайта поисковиками.
-
----
-
-# 53. Что такое sitemap.xml?
-
-Список страниц сайта для поисковых систем.
-
----
-
-# 54. Что такое next/image?
-
-Компонент оптимизации изображений.
-
----
-
-Автоматически предоставляет:
-
-- lazy loading
-- responsive images
-- optimization
-
----
-
-# 55. Что такое next/font?
-
-Встроенная оптимизация шрифтов.
-
----
-
-# 56. Какие Core Web Vitals знаете?
-
-- LCP
-- CLS
-- INP
-
----
-
-# 57. Что такое Streaming?
-
-Отправка HTML частями.
-
----
-
-# 58. Что такое Suspense?
-
-Механизм отображения fallback UI во время ожидания данных.
-
----
-
-# 59. Что такое Server Actions?
-
-Способ выполнять серверный код без API Routes.
-
----
-
-Пример:
-
-```tsx
-'use server';
-```
-
----
-
-# 60. Когда использовать Server Actions?
-
-Для:
-
-- форм
-- CRUD операций
-- внутренних мутаций
-
----
-
-# 61. Когда лучше использовать API Routes?
-
-Для:
-
-- REST API
-- Webhooks
-- внешних интеграций
-
----
-
-# 62. Что такое Edge Runtime?
-
-Выполнение кода на Edge Nodes.
-
----
-
-Ближе к пользователю.
-
----
-
-# 63. Какие ограничения Edge Runtime?
-
-Нет доступа к:
-
-- fs
-- net
-- child_process
-
----
-
-# 64. Что такое BFF?
-
-Backend For Frontend.
-
----
-
-Next агрегирует данные из нескольких сервисов.
-
----
-
-# 65. Как бы вы построили e-commerce?
-
-```txt
-Homepage → SSG
-
-Catalog → ISR
-
-Product → ISR
-
-Cart → CSR
-
-Checkout → Server Actions
-
-Admin → CSR
-```
-
----
-
-# 66. Как бы вы построили CMS проект?
-
-```txt
-Next.js
- ↓
-Strapi
- ↓
-PostgreSQL
-```
-
----
-
-ISR + revalidateTag.
-
----
-
-# 67. Как бы вы объяснили архитектуру современного Next.js?
-
-Современный Next.js строится вокруг App Router, React Server Components, встроенного Data Fetching, кеширования и Streaming. Большая часть логики выполняется на сервере, а Client Components используются только там, где нужна интерактивность.
-
----
-
-# 68. Самый популярный Senior вопрос
-
-Какую модель рендеринга выбрать для приложения?
-
-Ответ:
-
-Нет единственной правильной модели. Production приложение обычно сочетает SSG, ISR, SSR, Server Components и Client Components в зависимости от требований к SEO, производительности, свежести данных и пользовательскому опыту.
+- **Не знают, что ошибки Server Components не видны в браузере** — критично для обсуждения observability и error tracking в production.
