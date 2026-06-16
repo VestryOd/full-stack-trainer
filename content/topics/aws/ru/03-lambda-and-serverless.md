@@ -1,491 +1,227 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # Lambda и Serverless
 
-## Что такое AWS Lambda
+## Что такое AWS Lambda и модель Serverless
 
-Очень популярный вопрос.
-
----
-
-Lambda — сервис выполнения кода
-без управления серверами.
-
----
-
-Загружаем:
+Lambda — функция как сервис (FaaS): загружаешь код, AWS обеспечивает инфраструктуру, масштабирование, мониторинг. "Serverless" не означает отсутствие серверов — они существуют, но разработчик ими не управляет.
 
 ```txt
-код
+Традиционный EC2:                 Lambda:
+  Provision VM                      Загрузить код
+  Настроить OS + runtime            Настроить trigger + memory
+  Деплоить приложение               Всё остальное — AWS
+  Настраивать auto-scaling
+  Патчить OS
+  Платить 24/7 за uptime
+
+Модель оплаты Lambda:
+  $0.20 за 1 млн вызовов
+  $0.0000166667 за GB-секунду
+  Free Tier: 1M req/мес + 400k GB-сек навсегда
+
+При 100k req/мес, 128MB, 200ms:
+  Стоимость ≈ $0.00 (в рамках Free Tier)
+EC2 t3.micro: ~$8/мес без нагрузки
 ```
 
----
-
-AWS предоставляет:
+## Execution Model — Lifecycle Lambda функции
 
 ```txt
-серверы
-масштабирование
-мониторинг
-инфраструктуру
+Invocation → Cold или Warm Start:
+
+Cold Start (новый execution environment):
+  1. Скачать deployment package (ZIP/container image)
+  2. Запустить runtime (Node.js/Python/Java sandbox)
+  3. Выполнить init code (вне handler): импорты, DB connections
+  4. Вызвать handler(event, context)
+
+Warm Start (существующий execution environment):
+  1. Вызвать handler(event, context)  ← только это
+
+После вызова контейнер "заморожен" ~5-15 мин.
+Следующий вызов: warm start если контейнер жив, cold start если нет.
+
+Параллелизм: каждый КОНКУРЕНТНЫЙ вызов = отдельный execution environment.
+  100 concurrent requests = 100 контейнеров (или cold starts если первые).
+  Lambda автоматически масштабирует конкурентность до account limit (по умолчанию 1000).
 ```
 
----
-
-# Традиционный подход
+## Cold Start — причины, измерение, оптимизация
 
 ```txt
-Application
- ↓
-EC2
- ↓
-Linux
- ↓
-Monitoring
- ↓
-Scaling
+Факторы влияющие на cold start latency:
+  Тяжёлый: Java Spring + NestJS → 2-5 секунд
+  Средний: Node.js с TypeORM + множеством импортов → 500-1500ms
+  Лёгкий:  Go/Rust binary → 50-100ms
+  Причина: время инициализации runtime + размер пакета + init code
+
+Стратегии оптимизации:
+
+1. Минимизация bundle size:
+   esbuild или tsup вместо webpack → минимальный bundle
+   Tree shaking: не импортировать весь aws-sdk, только нужное
+   // ПЛОХО:
+   import AWS from 'aws-sdk';
+   // ХОРОШО:
+   import { S3Client } from '@aws-sdk/client-s3';
+
+2. Lazy initialization (defer DB connection):
+   // ПЛОХО: DB connection создаётся при каждом cold start немедленно
+   const db = createPool({ ... }); // вне handler → всегда при cold start
+
+   // ХОРОШО: создать при первом вызове, переиспользовать при warm
+   let dbPool: Pool | null = null;
+   export async function handler(event: APIGatewayEvent) {
+     if (!dbPool) dbPool = await createPool({ ... });
+     // ...
+   }
+
+3. Provisioned Concurrency:
+   Pre-warms N execution environments → нет cold starts для N concurrent.
+   Стоимость: платишь за initialized envs постоянно.
+   Подходит: latency-critical API с предсказуемым трафиком.
+
+4. Lambda SnapStart (Java):
+   Снапшот инициализированного execution environment → восстановление ~200ms.
+   Не доступно для Node.js/Python.
 ```
 
----
+## Типичный Lambda Handler с TypeScript
 
-Мы отвечаем за всё.
+```typescript
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 
----
+// Инициализация вне handler → переиспользуется при warm start
+const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+const docClient = DynamoDBDocumentClient.from(ddbClient);
 
-# Lambda
+export async function handler(
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> {
+  // context.getRemainingTimeInMillis() → осталось мс до timeout
+
+  const userId = event.pathParameters?.userId;
+  if (!userId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'userId required' }) };
+  }
+
+  try {
+    const result = await docClient.send(new GetCommand({
+      TableName: process.env.TABLE_NAME!,
+      Key: { pk: `USER#${userId}` },
+    }));
+
+    if (!result.Item) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
+    }
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result.Item),
+    };
+  } catch (err) {
+    console.error('DynamoDB error:', err); // → CloudWatch Logs автоматически
+    return { statusCode: 500, body: JSON.stringify({ error: 'Internal error' }) };
+  }
+}
+```
+
+## Triggers — чем запускается Lambda
 
 ```txt
-Application
- ↓
-Lambda
+Synchronous (Lambda ждёт и возвращает ответ):
+  API Gateway / Function URL → HTTP request/response
+  ALB → Lambda как backend
+  CloudFront Functions → edge processing
+
+Asynchronous (Lambda получает событие, результат не ждут):
+  S3 → "файл загружен" → Lambda (image resize)
+  SNS → "пришло сообщение" → Lambda
+  EventBridge → "scheduled cron" → Lambda
+  Lambda retries при ошибке: 2 раза (с задержкой), потом Dead Letter Queue
+
+Stream-based (Lambda polling источника):
+  SQS → Lambda poll batch of messages (batch size 1-10000)
+  Kinesis → Lambda poll records (при ошибке — bisect batch)
+  DynamoDB Streams → Lambda реагирует на изменения в таблице
 ```
 
----
-
-AWS отвечает за остальное.
-
----
-
-# Почему называется Serverless
-
-Очень любят спрашивать.
-
----
-
-Серверы существуют.
-
----
-
-Но:
+## Concurrency и Limits
 
 ```txt
-разработчик ими не управляет
+Default Account Concurrent Executions: 1000 (по умолчанию, можно увеличить)
+Burst limit: 500-3000/сек (зависит от региона)
+Timeout: максимум 15 минут (900 сек)
+Memory: 128MB – 10240MB (CPU масштабируется с памятью)
+Deployment package: 50MB ZIP / 10GB container image
+/tmp storage: 512MB – 10240MB (ephemeral, только в рамках invocation)
+Payload (синхронный): 6MB request + 6MB response
+Payload (асинхронный): 256KB
+
+Reserved Concurrency: зарезервировать N concurrency для функции.
+  Гарантирует: минимум N всегда доступны.
+  Лимит: не более N (throttle при превышении → SQS/retry).
+
+Throttling: при превышении concurrency → HTTP 429 (sync) или retry (async).
 ```
 
----
+## Lambda + VPC — доступ к RDS/ElastiCache
 
-Отсюда:
+```typescript
+// Lambda в VPC для доступа к RDS в private subnet
+const lambdaFn = new lambda.Function(this, 'ApiHandler', {
+  runtime: lambda.Runtime.NODEJS_20_X,
+  handler: 'index.handler',
+  code: lambda.Code.fromAsset('dist'),
+  vpc,
+  vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+  securityGroups: [lambdaSecurityGroup],
+  // Важно: Lambda в VPC → cold start +100-600ms (ENI provisioning)
+  // Mitigation: использовать RDS Proxy (connection pooling)
+});
+
+// RDS Proxy: решает проблему "1000 Lambda * DB connection = pool exhaustion"
+// Lambda → RDS Proxy (pooling) → RDS (реальных connections гораздо меньше)
+```
+
+**Важно**: Lambda в VPC не имеет internet доступа по умолчанию. Для доступа к AWS API (S3, DynamoDB): нужен NAT Gateway (дорого) или VPC Endpoints (дешевле).
+
+## Когда Lambda, когда ECS/EC2
 
 ```txt
-Serverless
+Lambda:
+  ✓ Sporadic traffic (нет трафика → нет стоимости)
+  ✓ Event processing (S3, SQS, SNS)
+  ✓ Simple HTTP API с API Gateway
+  ✓ Background jobs, scheduled tasks (cron)
+  ✓ File processing (thumbnail generation)
+  ✗ WebSocket постоянные соединения
+  ✗ Долгие задачи >15 мин
+  ✗ CPU-intensive (video encoding)
+  ✗ Stateful сервисы
+
+ECS/Fargate:
+  ✓ Predictable, high-volume трафик
+  ✓ WebSocket сервера
+  ✓ Stateful сервисы
+  ✓ Сложные NestJS монолиты
+  ✓ Задачи без time limit
+  ✗ Cold start нет (всегда running)
+  ✗ Стоишь при zero трафике
 ```
 
----
+## Типичные ошибки на интервью
 
-# Event Driven
+- **"Lambda stateless — нельзя ничего хранить между вызовами"** — execution environment переиспользуется при warm start. Переменные вне handler (DB connections, cached data) сохраняются между вызовами ОДНОГО контейнера. Но нельзя рассчитывать что конкретный state будет на следующем вызове (может быть другой контейнер).
 
-Главная идея Lambda.
+- **"Cold start можно устранить Provisioned Concurrency"** — можно уменьшить до нуля для N concurrent, но это стоит денег за постоянно "прогретые" среды. Для большинства API: оптимизировать bundle + lazy init + принять 200-500ms cold start.
 
----
+- **"Lambda в VPC такая же быстрая как без VPC"** — Lambda в VPC добавляет ~100-600ms к cold start из-за ENI provisioning. AWS улучшил это (Hyperplane ENI), но overhead всё равно есть. Если возможно — использовать DynamoDB вместо RDS (нет VPC требования).
 
-Lambda не работает постоянно.
+- **"Lambda масштабируется бесконечно"** — есть Account-level concurrent execution limit (по умолчанию 1000). При burst: 500-3000 новых containers/сек. При превышении → throttling (429). Limit можно повысить через request к AWS Support.
 
----
-
-Она запускается:
-
-```txt
-по событию
-```
-
----
-
-# Примеры событий
-
-```txt
-HTTP Request
-
-S3 Upload
-
-SQS Message
-
-SNS Event
-
-CloudWatch Event
-```
-
----
-
-# Пример
-
-```txt
-File Uploaded
- ↓
-S3 Event
- ↓
-Lambda
- ↓
-Image Resize
-```
-
----
-
-# Lambda Handler
-
-Node.js пример.
-
----
-
-```ts
-export const handler =
- async (event) => {
-
-  return {
-   statusCode: 200
-  };
- };
-```
-
----
-
-# Event
-
-Содержит данные события.
-
----
-
-Например:
-
-```txt
-request
-headers
-query params
-SQS message
-```
-
----
-
-Зависит от источника.
-
----
-
-# Execution Environment
-
-Очень популярный вопрос.
-
----
-
-Lambda работает внутри:
-
-```txt
-изолированного runtime
-```
-
----
-
-AWS создает контейнер.
-
----
-
-Запускает код.
-
----
-
-Возвращает результат.
-
----
-
-# Cold Start
-
-Самый популярный вопрос по Lambda.
-
----
-
-Что происходит.
-
----
-
-Запрос пришел.
-
----
-
-Но контейнера еще нет.
-
----
-
-AWS должен:
-
-```txt
-создать runtime
-
-загрузить код
-
-инициализировать зависимости
-```
-
----
-
-Это занимает время.
-
----
-
-Получаем:
-
-```txt
-Cold Start
-```
-
----
-
-# Cold Start Flow
-
-```txt
-Request
- ↓
-Container Creation
- ↓
-Initialization
- ↓
-Handler Execution
-```
-
----
-
-# Warm Start
-
-После первого вызова.
-
----
-
-Контейнер уже существует.
-
----
-
-Получаем:
-
-```txt
-Warm Start
-```
-
----
-
-Гораздо быстрее.
-
----
-
-# Что влияет на Cold Start
-
-Очень любят спрашивать.
-
----
-
-Размер:
-
-```txt
-bundle
-dependencies
-runtime
-```
-
----
-
-Например:
-
-```txt
-NestJS
-```
-
-обычно стартует медленнее.
-
----
-
-Чем:
-
-```txt
-простая Node Lambda
-```
-
----
-
-# Как уменьшить Cold Start
-
-```txt
-меньше bundle
-
-tree shaking
-
-esbuild
-
-provisioned concurrency
-```
-
----
-
-# Stateless
-
-Очень важная тема.
-
----
-
-Lambda должна считаться:
-
-```txt
-stateless
-```
-
----
-
-Нельзя рассчитывать:
-
-```txt
-что контейнер сохранится
-```
-
----
-
-# Масштабирование
-
-Очень сильная сторона Lambda.
-
----
-
-```txt
-1 запрос
-```
-
----
-
-Один контейнер.
-
----
-
-```txt
-1000 запросов
-```
-
----
-
-AWS может создать:
-
-```txt
-1000 контейнеров
-```
-
----
-
-Автоматически.
-
----
-
-# Ограничения
-
-Очень любят спрашивать.
-
----
-
-Lambda не подходит для:
-
-```txt
-долгих соединений
-
-WebSockets (частично)
-
-очень долгих вычислений
-```
-
----
-
-# Стоимость
-
-Очень популярный вопрос.
-
----
-
-Платим за:
-
-```txt
-количество вызовов
-
-время выполнения
-
-память
-```
-
----
-
-Не платим за простой.
-
----
-
-# Когда Lambda подходит
-
-```txt
-API
-
-Background Jobs
-
-File Processing
-
-Automation
-
-Event Processing
-```
-
----
-
-# Когда не подходит
-
-```txt
-High Throughput APIs
-
-Long Running Processes
-
-Heavy CPU Tasks
-```
-
----
-
-Тогда чаще используют:
-
-```txt
-ECS
-
-Fargate
-
-EC2
-```
-
----
-
-# Частый вопрос
-
-Что такое Cold Start?
-
-Ответ:
-
-Задержка первого вызова Lambda, связанная с созданием нового runtime и инициализацией приложения.
-
----
-
-# Частый вопрос
-
-Почему Lambda считается Serverless?
-
-Ответ:
-
-Потому что разработчик не управляет серверами, масштабированием и инфраструктурой — этим занимается AWS.
-
----
-
-# Interview Answer
-
-AWS Lambda — это serverless compute сервис, который выполняет код в ответ на события. Lambda автоматически масштабируется, оплачивается по фактическому использованию и хорошо подходит для API, фоновых задач и обработки событий. Одной из основных особенностей является Cold Start — задержка при создании нового execution environment.
+- **"Timeout Lambda — 5 минут"** — максимум 15 минут (900 секунд). По умолчанию 3 секунды. Нужно явно устанавливать timeout под задачу.

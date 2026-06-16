@@ -1,497 +1,221 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # RDS vs DynamoDB
 
-## Очень популярный AWS вопрос
+## RDS — управляемая реляционная БД
 
-Что выбрать:
-
-```txt
-RDS
-
-или
-
-DynamoDB
-```
-
----
-
-На самом деле вопрос означает:
+RDS (Relational Database Service) — managed SQL база данных. AWS управляет: patching, backup (daily + point-in-time restore до 35 дней), Multi-AZ replication (автоматический failover ~60-120 сек), monitoring. Вы работаете с обычной PostgreSQL/MySQL — подключаетесь той же строкой подключения.
 
 ```txt
-SQL
+Движки RDS:
+  PostgreSQL (самый популярный для fullstack)
+  MySQL
+  MariaDB
+  Oracle
+  SQL Server
+  Aurora (AWS-разработка, 5x быстрее MySQL, 3x быстрее PostgreSQL)
+  Aurora Serverless v2 — автоматическое масштабирование вычислений
 
-или
+RDS Multi-AZ:
+  Primary instance (синхронная репликация) → Standby в другой AZ
+  При падении Primary: DNS автоматически переключается на Standby (~1-2 мин)
+  Read Replica: асинхронная репликация, для scale read-нагрузки
 
-NoSQL
+Типичный режим:
+  Production: Multi-AZ + 1-2 Read Replicas
+  Dev/Staging: Single-AZ (дешевле)
 ```
 
----
+## DynamoDB — managed NoSQL БД
 
-# Что такое RDS
-
-RDS:
+DynamoDB — serverless key-value/document store: нет серверов для управления, автоматическое масштабирование, single-digit millisecond latency (P99), 99.99% SLA. Гарантирует предсказуемую производительность при любом масштабе за счёт отказа от JOIN и гибких запросов.
 
 ```txt
-Relational Database Service
-```
+Модель данных:
+  Таблица (Table)
+  Item (документ/запись, до 400KB)
+  Attribute (поле)
 
----
-
-Управляемая реляционная БД.
-
----
-
-Поддерживает:
-
-```txt
-PostgreSQL
-
-MySQL
-
-MariaDB
-
-SQL Server
-```
-
----
-
-# Что получаем
-
-AWS управляет:
-
-```txt
-backup
-
-replication
-
-patching
-
-monitoring
-```
-
----
-
-Мы работаем как с обычной БД.
-
----
-
-# Что такое DynamoDB
-
-NoSQL база данных AWS.
-
----
-
-Модель:
-
-```txt
-Key-Value
-
-Document
-```
-
----
+Обязательные ключи:
+  Partition Key (hash key): определяет партицию хранения
+  Sort Key (range key): опциональный, позволяет несколько item с одним PK
 
 Нет:
-
-```txt
-JOIN
-
-Foreign Key
-
-Relations
+  JOIN — данные денормализуются или вложены
+  Foreign Key Constraints
+  Сложных запросов (GROUP BY, WINDOW FUNCTIONS)
+  Фиксированной схемы
 ```
 
----
+## DynamoDB Data Modeling — Single Table Design
 
-# Главная разница
+```typescript
+// Классическая ошибка: думать о DynamoDB как о SQL таблицах
+// В SQL: Users таблица + Orders таблица → JOIN по userId
+// В DynamoDB: Single Table — всё в одной таблице, ключи — паттерны доступа
 
-RDS:
+// Паттерн Single Table Design:
+// pk (Partition Key) + sk (Sort Key) определяют тип и доступ
 
-```txt
-таблицы связаны
-```
-
----
-
-DynamoDB:
-
-```txt
-денормализация
-```
-
----
-
-# Пример RDS
-
-```sql
-Users
-
-Orders
-
-Products
-```
-
----
-
-Связаны через:
-
-```sql
-JOIN
-```
-
----
-
-# Пример DynamoDB
-
-Часто храним:
-
-```json
-{
- userId: 1,
- orders: [...]
+interface DynamoItem {
+  pk: string; // PRIMARY KEY
+  sk: string; // SORT KEY → тип записи
+  // Дополнительные поля...
 }
+
+// Пользователь:
+const user: DynamoItem = {
+  pk: 'USER#user-123',
+  sk: 'PROFILE',
+  name: 'Alice',
+  email: 'alice@example.com',
+  createdAt: '2024-01-01T00:00:00Z',
+};
+
+// Заказ пользователя:
+const order: DynamoItem = {
+  pk: 'USER#user-123',
+  sk: 'ORDER#order-456',
+  total: 99.99,
+  status: 'shipped',
+  items: [{ productId: 'p-1', qty: 2 }],
+};
+
+// Запросы по дизайну:
+// "Получить пользователя" → Query pk=USER#user-123, sk=PROFILE
+// "Получить все заказы" → Query pk=USER#user-123, sk begins_with ORDER#
+// "Пользователь + все заказы" → Query pk=USER#user-123 (один запрос!)
 ```
 
----
+```typescript
+// DynamoDB SDK v3: основные операции
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
-В одном объекте.
+const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
----
+// GetItem — получение по точному ключу (O(1), самый быстрый)
+const user = await client.send(new GetCommand({
+  TableName: 'AppTable',
+  Key: { pk: 'USER#user-123', sk: 'PROFILE' },
+}));
 
-# Schema
+// Query — все записи для одного Partition Key
+const orders = await client.send(new QueryCommand({
+  TableName: 'AppTable',
+  KeyConditionExpression: 'pk = :pk AND begins_with(sk, :skPrefix)',
+  ExpressionAttributeValues: {
+    ':pk': 'USER#user-123',
+    ':skPrefix': 'ORDER#',
+  },
+  ScanIndexForward: false, // последние сначала
+}));
 
-Очень популярный вопрос.
+// PutItem — создание/замена
+await client.send(new PutCommand({
+  TableName: 'AppTable',
+  Item: { pk: 'USER#user-123', sk: 'PROFILE', name: 'Alice' },
+  ConditionExpression: 'attribute_not_exists(pk)', // не перезаписать если есть
+}));
 
----
+// UpdateItem — частичное обновление (не нужно читать весь item)
+await client.send(new UpdateCommand({
+  TableName: 'AppTable',
+  Key: { pk: 'USER#user-123', sk: 'PROFILE' },
+  UpdateExpression: 'SET #name = :name, updatedAt = :now',
+  ExpressionAttributeNames: { '#name': 'name' }, // name — зарезервированное слово
+  ExpressionAttributeValues: { ':name': 'Alicia', ':now': new Date().toISOString() },
+}));
+```
 
-RDS:
+## Capacity Modes — On-Demand vs Provisioned
 
 ```txt
-строгая схема
+On-Demand Mode (Serverless):
+  Авто-масштабирование под нагрузку
+  Оплата: $1.25/million Write RCU, $0.25/million Read RCU
+  Когда: непредсказуемый трафик, dev/staging, новые проекты
+
+Provisioned Mode:
+  Задаёшь RCU (Read Capacity Units) + WCU (Write Capacity Units)
+  С Auto Scaling: увеличивает/уменьшает в заданных пределах
+  Дешевле при стабильной нагрузке
+  Когда: production с предсказуемым трафиком
+
+Read/Write Capacity Units:
+  1 RCU = 1 strongly consistent read или 2 eventually consistent read (до 4KB)
+  1 WCU = 1 write (до 1KB)
 ```
 
----
+## Global Secondary Index (GSI) — дополнительные паттерны доступа
 
-DynamoDB:
+```typescript
+// CDK: таблица с GSI
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+
+const table = new dynamodb.Table(this, 'AppTable', {
+  partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+  sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // On-Demand
+  removalPolicy: RemovalPolicy.DESTROY, // только для dev!
+});
+
+// GSI: поиск заказов по статусу (email → все записи этого email)
+table.addGlobalSecondaryIndex({
+  indexName: 'email-index',
+  partitionKey: { name: 'email', type: dynamodb.AttributeType.STRING },
+  sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+  projectionType: dynamodb.ProjectionType.INCLUDE,
+  nonKeyAttributes: ['name', 'createdAt'],
+});
+
+// Запрос через GSI:
+const result = await client.send(new QueryCommand({
+  TableName: 'AppTable',
+  IndexName: 'email-index', // указываем GSI
+  KeyConditionExpression: 'email = :email',
+  ExpressionAttributeValues: { ':email': 'alice@example.com' },
+}));
+```
+
+## RDS vs DynamoDB — матрица выбора
 
 ```txt
-гибкая схема
+                    RDS (PostgreSQL)      DynamoDB
+Schema:             Strict, migrations    Flexible, schema-less
+Query:              Full SQL (JOIN etc)   Key-based (Query/GetItem)
+Scale Write:        Vertical (instance)   Horizontal (auto)
+Max Scale:          ~100k TPS (Aurora)    Unlimited (millions TPS)
+Latency:            1-10ms (variable)     Single-digit ms (predictable)
+Transactions:       Full ACID             Limited (25 items/5 tables)
+Relations:          Native (FK, JOIN)     Denormalization required
+Cold Start (Lambda):Connection overhead   SDK only (no connections!)
+Operational:        Instance management   Fully serverless
+Cost Model:         Per instance/hour     Per request (On-Demand)
+
+Выбирай RDS когда:
+  ✓ Сложные связи между сущностями (e-commerce, CRM, ERP)
+  ✓ Нужны гибкие SQL-запросы (аналитика, отчёты)
+  ✓ ACID транзакции критичны (финансы, инвентарь)
+  ✓ Команда знает SQL, паттерны доступа не определены заранее
+  ✓ Стандартный fullstack проект (Next.js + NestJS + PostgreSQL)
+
+Выбирай DynamoDB когда:
+  ✓ Требуется масштаб (миллионы RPS, IoT, gaming, social feed)
+  ✓ Паттерны доступа известны заранее и простые
+  ✓ Lambda backend (нет connection pool проблемы)
+  ✓ Serverless архитектура (нет постоянных инстансов)
+  ✓ Session store, event log, real-time leaderboard
+  ✓ Предсказуемая low-latency latency обязательна
 ```
 
----
+## Типичные ошибки на интервью
 
-# JOIN
+- **"DynamoDB — это просто быстрая NoSQL, можно использовать везде вместо PostgreSQL"** — принципиальная разница: DynamoDB требует знания паттернов доступа ДО проектирования схемы. Если паттерны изменятся — схема меняется тяжело. PostgreSQL: можно добавить индекс и новый запрос без реструктуризации данных.
 
-Самый любимый вопрос интервьюеров.
+- **"DynamoDB поддерживает транзакции, значит как PostgreSQL"** — транзакции DynamoDB ограничены: максимум 25 items и 5 таблиц за раз, платишь 2x RCU/WCU. PostgreSQL: ACID транзакции без ограничений по количеству строк, реальные FOREIGN KEY constraints.
 
----
+- **"Для Lambda лучше DynamoDB потому что быстрее"** — правда о соединениях: Lambda + RDS имеет проблему connection pool exhaustion (1000 Lambda = 1000 соединений). Решение: RDS Proxy. DynamoDB: stateless HTTP-запросы, нет проблемы соединений. Но "быстрее" — зависит от запроса: сложный JOIN в PostgreSQL может быть быстрее, чем несколько GetItem в DynamoDB.
 
-RDS:
+- **"Single Table Design обязателен в DynamoDB"** — это лучшая практика, не требование. Для небольших проектов или начала — можно использовать несколько таблиц (Multi-Table Design). Single Table оптимально для high-traffic или когда нужны транзакции между разными типами сущностей.
 
-```sql
-JOIN
-```
-
----
-
-Есть.
-
----
-
-DynamoDB:
-
-```txt
-нет JOIN
-```
-
----
-
-Нужно проектировать данные иначе.
-
----
-
-# Транзакции
-
-RDS:
-
-```txt
-полноценные ACID
-```
-
----
-
-DynamoDB:
-
-```txt
-ограниченные транзакции
-```
-
----
-
-Поддерживаются,
-но используются реже.
-
----
-
-# Масштабирование
-
-Очень важная тема.
-
----
-
-RDS:
-
-```txt
-сложнее масштабировать
-```
-
----
-
-Особенно запись.
-
----
-
-# DynamoDB
-
-Создавался для:
-
-```txt
-горизонтального масштабирования
-```
-
----
-
-Может выдерживать:
-
-```txt
-миллионы запросов
-```
-
----
-
-# Производительность
-
-Очень популярный вопрос.
-
----
-
-DynamoDB:
-
-```txt
-single-digit millisecond
-```
-
----
-
-Практически всегда.
-
----
-
-Потому что:
-
-```txt
-нет JOIN
-
-нет сложных запросов
-```
-
----
-
-# Query Flexibility
-
-RDS:
-
-```txt
-очень гибкие запросы
-```
-
----
-
-Например:
-
-```sql
-JOIN
-GROUP BY
-WINDOW FUNCTIONS
-```
-
----
-
-# DynamoDB
-
-Ограниченные запросы.
-
----
-
-Модель:
-
-```txt
-Query by Key
-```
-
----
-
-# Partition Key
-
-Самая важная тема DynamoDB.
-
----
-
-Каждая запись имеет:
-
-```txt
-Partition Key
-```
-
----
-
-По ней определяется:
-
-```txt
-где хранить данные
-```
-
----
-
-# Sort Key
-
-Опционально.
-
----
-
-Позволяет хранить:
-
-```txt
-несколько записей
-внутри partition
-```
-
----
-
-# Secondary Indexes
-
-Аналог индексов.
-
----
-
-Позволяют искать:
-
-```txt
-не только по Primary Key
-```
-
----
-
-# Когда использовать RDS
-
-Подходит:
-
-```txt
-CRM
-
-ERP
-
-E-commerce
-
-Financial Systems
-
-Complex Relations
-```
-
----
-
-# Когда использовать DynamoDB
-
-Подходит:
-
-```txt
-High Throughput
-
-Gaming
-
-IoT
-
-Session Storage
-
-Event Storage
-```
-
----
-
-# Типичный Fullstack проект
-
-Очень любят спрашивать.
-
----
-
-```txt
-Next.js
-
-NestJS
-
-PostgreSQL
-```
-
----
-
-Почти всегда:
-
-```txt
-RDS
-```
-
----
-
-# Когда Dynamo оправдан
-
-Например:
-
-```txt
-миллионы событий
-
-логирование
-
-телеметрия
-
-real-time systems
-```
-
----
-
-# Частый вопрос
-
-Почему DynamoDB такой быстрый?
-
-Ответ:
-
-Потому что он оптимизирован под доступ по ключу, не поддерживает JOIN и распределяет данные по партициям.
-
----
-
-# Частый вопрос
-
-Почему многие приложения используют PostgreSQL вместо DynamoDB?
-
-Ответ:
-
-Потому что большинство бизнес-приложений работают с отношениями между сущностями и требуют гибких SQL-запросов.
-
----
-
-# Частый вопрос
-
-Что сложнее проектировать?
-
-Ответ:
-
-DynamoDB.
-
----
-
-Потому что сначала нужно продумать паттерны запросов и только потом проектировать структуру данных.
-
----
-
-# Interview Answer
-
-RDS является управляемой реляционной базой данных и хорошо подходит для систем со сложными связями и SQL-запросами. DynamoDB представляет собой высокомасштабируемую NoSQL базу данных, оптимизированную под доступ по ключу. Выбор между ними зависит от характера данных, требований к масштабированию и типов запросов.
+- **"RDS Aurora — это просто дорогой PostgreSQL"** — Aurora имеет другую архитектуру storage: shared distributed storage до 128TB, автоматически растущий, до 15 Read Replicas (vs 5 у RDS), failover <30 секунд (vs 60-120 у RDS). Aurora Serverless v2 — автоматическое масштабирование вычислений без предварительного provisioning.

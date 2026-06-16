@@ -2,460 +2,234 @@
 
 ## What is IAM
 
-IAM stands for:
+IAM (Identity and Access Management) is AWS's authentication and authorization system. It answers two questions: who are you (Identity) and what are you allowed to do (Access Management).
 
 ```txt
-Identity and Access Management
+Core IAM entities:
+  User   — human user or service account
+  Group  — group of users with shared permissions
+  Role   — a set of permissions that an AWS service or user can assume
+  Policy — a JSON document describing what is allowed/denied
+
+Hierarchy:
+  User / Group / Role → attach → Policy → defines permissions
 ```
 
----
-
-It is the system of:
-
-```txt
-Authentication
-Authorization
-```
-
-in AWS.
-
----
-
-# Very Important
-
-Authentication:
-
-```txt
-Who are you?
-```
-
----
-
-Authorization:
-
-```txt
-What are you allowed to do?
-```
-
----
-
-IAM handles both.
-
----
-
-# The Main Purpose of IAM
-
-To determine:
-
-```txt
-Who
-
-What
-
-On what
-
-Can do
-```
-
----
-
-# Core Entities
-
-```txt
-User
-
-Group
-
-Role
-
-Policy
-```
-
----
-
-# User
-
-A physical user.
-
----
-
-For example:
-
-```txt
-Maxim
-Alice
-Admin
-```
-
----
-
-A user receives:
-
-```txt
-Login
-Password
-Access Keys
-```
-
----
-
-# Group
-
-A group of users.
-
----
-
-For example:
-
-```txt
-Developers
-
-Admins
-
-QA
-```
-
----
-
-Permissions are assigned to the group.
-
----
-
-# Policy
-
-The most important entity.
-
----
-
-A Policy defines:
-
-```txt
-what is allowed
-```
-
----
-
-Example:
+## Policy — structure and evaluation mechanism
 
 ```json
 {
- "Effect": "Allow",
- "Action": "s3:GetObject",
- "Resource": "*"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::my-bucket/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:prefix": ["uploads/"]
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": "s3:DeleteObject",
+      "Resource": "*"
+    }
+  ]
 }
 ```
 
----
-
-Which means:
-
 ```txt
-can read S3 objects
+Policy Evaluation Logic:
+  1. Default: everything is DENY (implicit deny)
+  2. If there is an explicit Allow → permitted
+  3. If there is an explicit Deny → always overrides Allow
+
+Policy types:
+  Identity-based:  attached to User/Group/Role
+  Resource-based:  attached to the resource (S3 Bucket Policy, Lambda Resource Policy)
+  SCP (Org-level): limits the entire AWS Organization
+  Permission Boundary: maximum allowed permissions for a role
 ```
 
----
+## IAM Role — why it's better than Access Keys
 
-# Action
+```typescript
+// Bad: hardcoded Access Keys in code or env files
+// Problem: if .env leaks → full access with no expiry
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,       // long-lived
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!, // credential
+  },
+});
 
-Interviewers love asking this.
-
----
-
-Examples:
-
-```txt
-s3:GetObject
-
-s3:PutObject
-
-lambda:InvokeFunction
-
-dynamodb:GetItem
+// Good: Lambda with IAM Role — credentials automatically from environment
+// Lambda runtime provides temporary credentials via IMDS
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+// SDK automatically picks up: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
+// AWS_SESSION_TOKEN from env vars that Lambda Runtime sets
 ```
 
----
-
-# Resource
-
-What the permission applies to.
-
----
-
-For example:
-
 ```txt
-a specific bucket
+Temporary credentials (STS — Security Token Service):
+  AccessKeyId:     temporary (looks like a regular one)
+  SecretAccessKey: temporary
+  SessionToken:    confirms this is a temporary credential
+  Expiration:      typically 1-12 hours
 
-a specific lambda
+Lambda gets temporary credentials automatically:
+  Lambda Runtime → IMDS endpoint → STS → credentials → SDK
+  No need to store AWS_ACCESS_KEY/SECRET anywhere in code
 ```
 
----
+## Trust Policy — who can assume the role
 
-# Effect
+```typescript
+// CDK: creating an IAM Role for Lambda with Trust Policy
+import * as iam from 'aws-cdk-lib/aws-iam';
 
-```txt
-Allow
+const lambdaRole = new iam.Role(this, 'LambdaRole', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'), // Trust Policy
+  managedPolicies: [
+    iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+  ],
+});
+
+// Add only necessary permissions (Least Privilege):
+lambdaRole.addToPolicy(new iam.PolicyStatement({
+  effect: iam.Effect.ALLOW,
+  actions: ['s3:GetObject', 's3:PutObject'],
+  resources: [`arn:aws:s3:::${bucket.bucketName}/uploads/*`], // specific prefix
+}));
+
+lambdaRole.addToPolicy(new iam.PolicyStatement({
+  effect: iam.Effect.ALLOW,
+  actions: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem'],
+  resources: [table.tableArn], // specific table, not '*'
+}));
+
+// Trust Policy for cross-account assume role:
+const crossAccountRole = new iam.Role(this, 'CrossAccountRole', {
+  assumedBy: new iam.AccountPrincipal('123456789012'), // different AWS account
+});
 ```
 
-or
-
 ```txt
-Deny
+Trust Policy structure (JSON):
+{
+  "Principal": { "Service": "lambda.amazonaws.com" },
+  "Action": "sts:AssumeRole",
+  "Effect": "Allow"
+}
+
+Distinction:
+  Trust Policy      → who can assume the role (Who)
+  Permission Policy → what the role can do (What)
 ```
 
----
+## Principle of Least Privilege — in practice
 
-# Principle of Least Privilege
+```typescript
+// Bad: AdministratorAccess for Lambda
+// If Lambda is compromised → full access to the entire account
+const badRole = new iam.Role(this, 'BadRole', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+  managedPolicies: [
+    iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'), // never!
+  ],
+});
 
-The most popular question.
+// Good: minimal permissions with specific resource ARNs
+const goodRole = new iam.Role(this, 'GoodRole', {
+  assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+});
 
----
+// Read-only from a specific bucket + prefix
+bucket.grantRead(handler, 'avatars/*');
 
-Principle:
+// Write-only to a specific table
+table.grantWriteData(handler);
 
-```txt
-minimum necessary permissions
+// Send-only to a specific SQS queue
+queue.grantSendMessages(handler);
 ```
 
----
+## Resource-based Policy — direct resource access
 
-Bad:
+```typescript
+// S3 Bucket Policy: allow CloudFront to read objects
+const bucketPolicy = new iam.PolicyStatement({
+  effect: iam.Effect.ALLOW,
+  principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+  actions: ['s3:GetObject'],
+  resources: [bucket.arnForObjects('*')],
+  conditions: {
+    StringEquals: {
+      'AWS:SourceArn': distribution.distributionArn,
+    },
+  },
+});
 
-```txt
-AdministratorAccess
+// Lambda Resource Policy: allow API Gateway to invoke Lambda
+// Created automatically by CDK on addRoutes/addMethod
+// But manually it looks like:
+new lambda.CfnPermission(this, 'ApiGwPermission', {
+  action: 'lambda:InvokeFunction',
+  functionName: handler.functionName,
+  principal: 'apigateway.amazonaws.com',
+  sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${api.apiId}/*`,
+});
 ```
 
----
+## IAM in development — practical patterns
 
-For everyone.
+```typescript
+// 1. CDK Grants — ready-made Least Privilege methods
+bucket.grantRead(lambdaFn);           // s3:GetObject, s3:ListBucket
+bucket.grantPut(lambdaFn);            // s3:PutObject
+table.grantReadWriteData(lambdaFn);   // DynamoDB CRUD without Delete/DropTable
+queue.grantConsumeMessages(lambdaFn); // sqs:ReceiveMessage, sqs:DeleteMessage
+topic.grantPublish(lambdaFn);         // sns:Publish
 
----
+// 2. IAM Conditions — restrict by tags, IP, time
+const tagConditionPolicy = new iam.PolicyStatement({
+  effect: iam.Effect.ALLOW,
+  actions: ['ec2:StopInstances'],
+  resources: ['*'],
+  conditions: {
+    StringEquals: {
+      'ec2:ResourceTag/Environment': 'dev', // only dev instances
+    },
+  },
+});
 
-Good:
+// 3. STS AssumeRole — temporary cross-account access
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
 
-```txt
-only the required permissions
+async function assumeRole(roleArn: string) {
+  const sts = new STSClient({});
+  const { Credentials } = await sts.send(new AssumeRoleCommand({
+    RoleArn: roleArn,
+    RoleSessionName: 'my-app-session',
+    DurationSeconds: 3600, // 1 hour
+  }));
+  return Credentials; // AccessKeyId, SecretAccessKey, SessionToken
+}
 ```
 
----
+## Common interview mistakes
 
-# Role
+- **"IAM User is better suited for services than Role"** — the opposite: services (Lambda, EC2, ECS) should use IAM Roles. A User with Access Keys is a long-lived credential: if it leaks, you must manually rotate it. A Role issues temporary credentials automatically via STS.
 
-A very important topic.
+- **"Resource `*` in a Policy is fine for a single action"** — no. `"Resource": "*"` means the action applies to ALL resources of that type in the account. For S3, that's all buckets; for DynamoDB — all tables. Always specify a concrete ARN.
 
----
+- **"A Deny in one Policy can be overridden by an Allow in another"** — explicit Deny always wins. You cannot "re-allow" something explicitly denied by adding an Allow in another policy. Implicit deny (not mentioned) can be overridden by an Allow.
 
-A Role is a set of permissions
-that a service can temporarily assume.
+- **"Permission Boundary = maximum permissions on an Identity"** — correct, but with an important nuance: even if the Permission Boundary allows an action, there must also be an Identity Policy that explicitly allows it. Permission Boundary only restricts, it does not grant.
 
----
-
-# Why Role is More Important Than User
-
-Interviewers love asking this.
-
----
-
-For example:
-
-```txt
-Lambda
-```
-
-is not a user.
-
----
-
-But it needs access to:
-
-```txt
-S3
-DynamoDB
-SQS
-```
-
----
-
-We use:
-
-```txt
-IAM Role
-```
-
----
-
-# Lambda Role
-
-Diagram:
-
-```txt
-Lambda
- ↓
-Assume Role
- ↓
-S3 Access
-```
-
----
-
-Without Access Keys.
-
----
-
-# Why This Is More Secure
-
-No need to store:
-
-```txt
-AWS_ACCESS_KEY
-
-AWS_SECRET_KEY
-```
-
----
-
-In the code.
-
----
-
-# Temporary Credentials
-
-Very popular interview question.
-
----
-
-When a service assumes a role.
-
----
-
-AWS issues:
-
-```txt
-temporary credentials
-```
-
----
-
-For a limited time.
-
----
-
-# Trust Policy
-
-A very interesting topic.
-
----
-
-Defines:
-
-```txt
-who can use the role
-```
-
----
-
-For example:
-
-```txt
-Lambda Service
-```
-
----
-
-Or:
-
-```txt
-EC2 Service
-```
-
----
-
-# Permission Policy
-
-Defines:
-
-```txt
-what can be done
-```
-
----
-
-# Flow
-
-```txt
-Lambda
- ↓
-Role
- ↓
-Policy
- ↓
-S3
-```
-
----
-
-# Secrets
-
-Very popular interview question.
-
----
-
-You cannot store:
-
-```txt
-passwords
-
-tokens
-
-api keys
-```
-
----
-
-In the code.
-
----
-
-Use:
-
-```txt
-Secrets Manager
-
-Parameter Store
-```
-
----
-
-# Common Question
-
-How does Lambda get access to S3?
-
-Answer:
-
-Through an IAM Role assigned to the Lambda function. The role contains a Policy with permission to access the required Bucket.
-
----
-
-# Common Question
-
-What is an IAM Role?
-
-Answer:
-
-A set of permissions that an AWS service or user can temporarily assume.
-
----
-
-# Common Question
-
-Why is an IAM Role better than Access Keys?
-
-Answer:
-
-It doesn't require storing secrets and uses temporary credentials.
-
----
-
-# Interview Answer
-
-IAM manages access control in AWS. The core entities are Users, Roles, and Policies. In production systems, services typically use IAM Roles instead of Access Keys, which allows them to securely obtain temporary permissions to access AWS resources.
+- **"An IAM Role can't be shared between accounts"** — it can, via Cross-Account Role: the Trust Policy of a role in account A allows a Principal from account B to call `sts:AssumeRole`. Account B calls AssumeRole → gets temporary credentials → works with resources in account A. This is the foundation of multi-account architectures.

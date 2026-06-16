@@ -1,560 +1,209 @@
 # ECS, Fargate and Containers
 
-## Why Containers Are Needed
-
-Very popular interview question.
-
----
-
-The problem.
-
----
-
-The application works on the developer's machine.
-
----
-
-But doesn't work on the server.
-
----
-
-Reasons:
+## Docker and containers — the foundation
 
 ```txt
-different Node version
+Problem without Docker ("works on my machine"):
+  Dev:  Node.js 18, Ubuntu 22.04, libc 2.35, PostgreSQL 15
+  Prod: Node.js 16, CentOS 7,  libc 2.17, PostgreSQL 13
+  → different behavior, bugs in prod
 
-different libraries
+Container = isolated process with its own filesystem:
+  Dockerfile → docker build → Image (layered FS)
+  docker run → Container (running Image)
 
-different Linux
+What gets packaged:
+  Application code
+  Runtime (Node.js 20.x exact)
+  Dependencies (node_modules)
+  System libraries (specific version)
+  OS layer (minimal Alpine/Debian)
+  Config (env defaults)
 
-different environment
+VM vs Container:
+  VM:        Guest OS + Kernel + App (GBs, minutes to start)
+  Container: App + libs, shared Host Kernel (MBs, seconds to start)
 ```
 
----
+```dockerfile
+# Typical Dockerfile for NestJS
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-# Docker
+FROM node:20-alpine AS production
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY package*.json ./
+# Run as non-root (security)
+USER node
+EXPOSE 3000
+CMD ["node", "dist/main.js"]
+```
 
-Solves the problem.
+## ECS — Elastic Container Service
 
----
-
-A container contains:
+ECS is an AWS container orchestrator. It manages: launch, updates, scaling, monitoring, and networking. The alternative is Kubernetes (EKS), but ECS is simpler and better integrated with the AWS ecosystem.
 
 ```txt
-Application
+ECS hierarchy:
+  Cluster (logical grouping of resources)
+    ↳ Service (manages N copies of a Task Definition)
+          ↳ Task (a running container or group of containers)
+                ↳ Container (Docker container)
 
-Runtime
+Task Definition — a JSON launch template:
+  Docker image (ECR URI)
+  CPU + Memory allocation
+  Environment variables
+  Port mappings
+  Secrets (from Secrets Manager)
+  Log configuration (CloudWatch Logs)
+  Health check
 
-Dependencies
-
-Configuration
+Service — maintains the desired number of Tasks:
+  If a Task fails → Service automatically starts a new one
+  Rolling deployment: new Tasks come up before old ones are removed
+  Blue/Green deployment: via CodeDeploy
 ```
 
----
+## ECR and deployment
 
-We get:
+```bash
+# Typical CI/CD flow
+
+# 1. Build and push to ECR (AWS Container Registry)
+aws ecr get-login-password --region eu-west-1 | \
+  docker login --username AWS --password-stdin \
+  123456789.dkr.ecr.eu-west-1.amazonaws.com
+
+docker build -t my-api .
+docker tag my-api:latest \
+  123456789.dkr.ecr.eu-west-1.amazonaws.com/my-api:$GIT_SHA
+docker push \
+  123456789.dkr.ecr.eu-west-1.amazonaws.com/my-api:$GIT_SHA
+
+# 2. Update ECS Service with the new image
+aws ecs update-service \
+  --cluster my-cluster \
+  --service my-api-service \
+  --force-new-deployment
+```
+
+## Fargate vs ECS on EC2
 
 ```txt
-the same environment
-everywhere
+ECS on EC2:
+  You manage: EC2 instances (patching, capacity, AMI updates)
+  You pay for: EC2 instance continuously (whether a Task is running or not)
+  Advantage: cheaper at high utilization (EC2 Savings Plans)
+  Use when: large steady-state workloads, special instance types (GPU)
+
+ECS on Fargate (recommended):
+  AWS manages: servers, capacity, patching
+  You pay for: only CPU+Memory while a Task is running
+  Advantage: no operational overhead, scale to zero for ECS Scheduled Tasks
+  Use when: most backend APIs, batch jobs, dev teams without dedicated DevOps
+
+Fargate pricing:
+  $0.04048/vCPU/hour
+  $0.004445/GB memory/hour
+  Example: 0.5 vCPU + 1GB, 1 Task 24/7 ≈ $18/month
+  vs ECS on EC2 t3.micro ($8.5/month, but the whole machine regardless of usage)
 ```
 
----
+## CDK: Fargate Service + ALB
 
-# Container
+```typescript
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 
-Interviewers love asking this.
+const cluster = new ecs.Cluster(this, 'Cluster', { vpc });
 
----
+const repository = ecr.Repository.fromRepositoryName(this, 'Repo', 'my-api');
 
-A container is:
+// ApplicationLoadBalancedFargateService — ALB + Fargate in one construct
+const service = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'ApiService', {
+  cluster,
+  cpu: 512,              // 0.5 vCPU
+  memoryLimitMiB: 1024,  // 1GB RAM
+  desiredCount: 2,       // 2 tasks (for HA)
+
+  taskImageOptions: {
+    image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+    containerPort: 3000,
+    environment: {
+      NODE_ENV: 'production',
+      PORT: '3000',
+    },
+    secrets: {
+      DATABASE_URL: ecs.Secret.fromSecretsManager(dbSecret, 'url'),
+    },
+  },
+
+  // Health check grace period for ALB
+  healthCheckGracePeriod: Duration.seconds(30),
+
+  // Circuit breaker: rolls back the deployment if Tasks don't start
+  circuitBreaker: { rollback: true },
+});
+
+// Auto Scaling by CPU
+const scaling = service.service.autoScaleTaskCount({
+  minCapacity: 2,
+  maxCapacity: 10,
+});
+
+scaling.scaleOnCpuUtilization('CpuScaling', {
+  targetUtilizationPercent: 70,
+  scaleInCooldown: Duration.seconds(60),
+  scaleOutCooldown: Duration.seconds(30),
+});
+```
+
+## Lambda vs ECS Fargate — full matrix
 
 ```txt
-an isolated process
+                      Lambda              ECS Fargate
+Max Duration:         15 min              Unlimited
+Cold Start:           50-3000ms           Minimal (0 for already-running task)
+Concurrent:           1000 (default)      Determined by number of Tasks
+Memory:               128MB - 10GB        8MB - 120GB per Task
+CPU:                  Linear with memory  0.25 - 16 vCPU
+Persistent conn:      No (ephemeral)      Yes (WebSocket, SSE)
+Stateful:             No                  Yes (in-memory cache)
+Cost pattern:         Per invocation      Per running hour
+Zero traffic cost:    $0.00               ≠ $0 (Tasks still running)
+Docker:               Optional (ZIP)      Required
+
+Choose Lambda:
+  ✓ Event-driven (S3, SQS, SNS triggers)
+  ✓ Sporadic traffic (pay-per-use)
+  ✓ Background jobs, cron tasks
+  ✓ Simple HTTP API (< 29 sec response)
+
+Choose ECS Fargate:
+  ✓ Long-running HTTP services (NestJS, Express)
+  ✓ WebSocket servers
+  ✓ High-traffic APIs (>1000 RPS continuously)
+  ✓ Stateful workloads (in-memory cache)
+  ✓ Processes > 15 minutes
+  ✓ Complex monoliths with many dependencies
 ```
 
----
+## Common interview mistakes
 
-Important.
+- **"Container = VM"** — a container uses the host OS kernel, it does not run a separate OS. That's why: startup in seconds (not minutes), size in MBs (not GBs). Process + filesystem isolation, but a shared kernel. Windows containers are an exception (different mechanism).
 
----
+- **"ECS and Fargate are the same thing"** — ECS is the orchestrator. Fargate is a launch type (a way to run tasks), as opposed to the EC2 launch type. ECS can run on EC2 (you manage the instances) or on Fargate (AWS manages the infrastructure).
 
-A container is:
+- **"Fargate is more expensive than Lambda"** — it depends on traffic. Lambda: expensive for constant high load ($0.20/1M requests + compute). Fargate: fixed cost per hour. For >1M requests/day with longer-running tasks, Fargate can be cheaper.
 
-```txt
-NOT a virtual machine
-```
+- **"Auto Scaling in ECS reacts instantly"** — starting a new Fargate Task takes 30-60 seconds (pull image + start container). That's why Scale-Out Cooldown = 30s (aggressive), Scale-In Cooldown = 60s (conservative, to avoid killing too soon). For traffic spikes: keep `minCapacity` with a buffer.
 
----
-
-# VM vs Container
-
-VM:
-
-```txt
-OS
-+
-Kernel
-+
-Application
-```
-
----
-
-Container:
-
-```txt
-Application
-+
-Dependencies
-```
-
----
-
-Uses:
-
-```txt
-shared kernel
-```
-
----
-
-That's why containers are lighter.
-
----
-
-# ECS
-
-Elastic Container Service.
-
----
-
-AWS container orchestrator.
-
----
-
-Manages:
-
-```txt
-starting
-
-updating
-
-scaling
-
-monitoring
-```
-
----
-
-Containers.
-
----
-
-# ECS Cluster
-
-A group of resources.
-
----
-
-Inside:
-
-```txt
-Services
-
-Tasks
-```
-
----
-
-# Task
-
-Very popular interview question.
-
----
-
-Task:
-
-```txt
-a running container
-```
-
----
-
-Roughly:
-
-```txt
-Docker Container
-```
-
----
-
-In ECS.
-
----
-
-# Task Definition
-
-A launch template.
-
----
-
-Contains:
-
-```txt
-image
-
-cpu
-
-memory
-
-env variables
-
-ports
-```
-
----
-
-# Service
-
-Manages the number of tasks.
-
----
-
-For example:
-
-```txt
-3 containers
-```
-
----
-
-If one goes down:
-
-```txt
-ECS creates a new one
-```
-
----
-
-# ECS on EC2
-
-The older approach.
-
----
-
-We manage:
-
-```txt
-virtual machines
-```
-
-ourselves.
-
----
-
-Diagram:
-
-```txt
-ECS
- ↓
-EC2
- ↓
-Containers
-```
-
----
-
-# Drawback
-
-We need to manage:
-
-```txt
-EC2
-
-updates
-
-scaling
-```
-
----
-
-# Fargate
-
-Very popular interview question.
-
----
-
-AWS serverless containers.
-
----
-
-Diagram:
-
-```txt
-ECS
- ↓
-Fargate
- ↓
-Containers
-```
-
----
-
-Without EC2.
-
----
-
-# What AWS Does
-
-Manages:
-
-```txt
-servers
-
-capacity
-
-patching
-
-scaling
-```
-
----
-
-# What We Do
-
-Only:
-
-```txt
-deploy container
-```
-
----
-
-# Why Fargate is Popular
-
-We get:
-
-```txt
-containers
-
-without managing servers
-```
-
----
-
-# ECS vs Fargate
-
-Interviewers love asking this.
-
----
-
-ECS + EC2:
-
-```txt
-cheaper
-
-more control
-```
-
----
-
-Fargate:
-
-```txt
-simpler
-
-less DevOps
-```
-
----
-
-# Lambda vs Fargate
-
-The most popular question.
-
----
-
-Lambda:
-
-```txt
-short tasks
-
-event driven
-
-serverless
-```
-
----
-
-Fargate:
-
-```txt
-long-lived applications
-
-REST API
-
-WebSocket
-
-Background Workers
-```
-
----
-
-# When Lambda is a Bad Choice
-
-For example:
-
-```txt
-NestJS API
-
-long connections
-
-very high load
-```
-
----
-
-Often better:
-
-```txt
-ECS/Fargate
-```
-
----
-
-# When Lambda is a Good Choice
-
-```txt
-File Processing
-
-Notifications
-
-Cron Jobs
-
-Small APIs
-```
-
----
-
-# Load Balancer
-
-A very important topic.
-
----
-
-ECS is often placed behind:
-
-```txt
-ALB
-```
-
----
-
-Application Load Balancer.
-
----
-
-Flow:
-
-```txt
-User
- ↓
-ALB
- ↓
-Task 1
-
-Task 2
-
-Task 3
-```
-
----
-
-# Auto Scaling
-
-Interviewers love asking this.
-
----
-
-For example:
-
-```txt
-CPU > 70%
-```
-
----
-
-ECS launches:
-
-```txt
-new containers
-```
-
----
-
-# Deployment
-
-Typically:
-
-```txt
-Docker Build
- ↓
-ECR
- ↓
-ECS Deploy
-```
-
----
-
-# ECR
-
-Elastic Container Registry.
-
----
-
-AWS Docker Registry.
-
----
-
-Stores:
-
-```txt
-Docker Images
-```
-
----
-
-# Common Question
-
-What is ECS?
-
-Answer:
-
-The AWS container orchestration service.
-
----
-
-# Common Question
-
-What is Fargate?
-
-Answer:
-
-A serverless mode for running containers without managing EC2.
-
----
-
-# Common Question
-
-When to choose Lambda vs Fargate?
-
-Answer:
-
-Lambda is suitable for event-driven short tasks. Fargate is better for long-lived APIs and containerized applications.
-
----
-
-# Interview Answer
-
-ECS is the AWS container orchestration service. Fargate allows running containers without managing servers, providing a serverless model for Docker applications. For most modern backend APIs built with NestJS or Express, ECS Fargate is commonly used together with an Application Load Balancer.
+- **"Lambda is better for NestJS"** — NestJS initialization (DI, decorator scanning) takes 2-5 seconds on cold start. This is unacceptable on every Lambda invocation. NestJS on Fargate: process is always warm, no cold start problem. Lambda is better for simple functions; Fargate is better for frameworks with heavy initialization.

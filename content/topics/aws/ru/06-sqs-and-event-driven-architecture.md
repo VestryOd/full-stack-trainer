@@ -1,547 +1,231 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # SQS и Event-Driven Architecture
 
-## Что такое SQS
+## Что такое SQS и зачем нужны очереди
 
-SQS расшифровывается как:
-
-```txt
-Simple Queue Service
-```
-
----
-
-Это очередь сообщений AWS.
-
----
-
-# Главная идея
-
-Развязать сервисы.
-
----
-
-Без очереди:
+SQS (Simple Queue Service) — managed очередь сообщений AWS. Разрывает зависимость между сервисами: producer отправляет сообщение и забывает о нём, consumer обрабатывает независимо.
 
 ```txt
-API
- ↓
-Email Service
+Проблема без очереди (tight coupling):
+  API → Email Service (синхронно)
+  Если Email Service упал → API тоже возвращает ошибку
+  Если Email Service медленный → API висит в ожидании
+  Если нагрузка растёт → оба сервиса перегружаются вместе
+
+С SQS (loose coupling):
+  API → SQS → Email Service
+  API: отправил сообщение, получил 200 OK сразу
+  Email Service: упал → сообщение остаётся в очереди, retry автоматически
+  Email Service медленный → накапливает бэклог, обрабатывает в своём темпе
+  Нагрузка → масштабируем consumers независимо
 ```
 
----
-
-Если Email Service упал:
+## Visibility Timeout и механизм at-least-once delivery
 
 ```txt
-API тоже страдает
+Жизненный цикл сообщения в SQS:
+
+1. Producer → SQS: SendMessage → сообщение в очереди (visible)
+2. Consumer → SQS: ReceiveMessage → сообщение становится invisible
+   (Visibility Timeout начинается, default 30 сек)
+3. Consumer обрабатывает сообщение...
+4a. Успех: Consumer → SQS: DeleteMessage → сообщение удалено
+4b. Consumer упал / timeout истёк → сообщение снова visible
+    → другой consumer (или тот же) получит его повторно
+
+Важно:
+  SQS гарантирует At-Least-Once Delivery (Standard Queue)
+  Одно сообщение может быть доставлено БОЛЕЕ одного раза
+  → Обработчики должны быть IDEMPOTENT
 ```
 
----
-
-# Через очередь
+## Standard Queue vs FIFO Queue
 
 ```txt
-API
- ↓
-SQS
- ↓
-Email Service
+Standard Queue:
+  Throughput: неограниченный (virtually unlimited TPS)
+  Порядок:    Best-effort ordering (не гарантируется)
+  Дубликаты: возможны (At-Least-Once Delivery)
+  Когда:     большинство задач: email, notifications, background jobs
+
+FIFO Queue (.fifo suffix):
+  Throughput: 3000 сообщений/сек с batching, 300 без
+  Порядок:    строгий (First-In-First-Out в рамках MessageGroupId)
+  Дубликаты: исключены (Exactly-Once Processing, 5-минутное окно дедупликации)
+  Когда:     финансовые транзакции, ordering systems, состояния машин
+  
+  MessageGroupId: позволяет иметь несколько "потоков" внутри одной FIFO очереди
+  DeduplicationId: hash тела сообщения или явный ID для дедупликации
 ```
 
----
-
-API завершился успешно.
-
----
-
-Сообщение остается в очереди.
-
----
-
-# Зачем нужны очереди
-
-Очень популярный вопрос.
-
----
-
-Для:
+## Dead Letter Queue (DLQ)
 
 ```txt
-асинхронности
+Проблема: сообщение постоянно падает при обработке
+  → Consumer берёт → exception → Visibility Timeout истекает
+  → Снова visible → Consumer берёт снова → exception...
+  → Бесконечный цикл, блокирующий очередь
 
-буферизации
+DLQ решение:
+  После N попыток (maxReceiveCount) → сообщение переносится в DLQ
+  DLQ — обычная SQS очередь, отдельная от основной
 
-устойчивости
-
-масштабирования
+Что делать с сообщениями в DLQ:
+  - Алерт в CloudWatch → команда получает уведомление
+  - Анализ сообщений: что пошло не так?
+  - Replay: после исправления бага → перенести обратно в основную очередь
 ```
 
----
+## Lambda + SQS — event source mapping
 
-# Producer
+```typescript
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { SQSEvent, SQSRecord, SQSBatchResponse } from 'aws-lambda';
 
-Отправляет сообщения.
+const sqs = new SQSClient({ region: process.env.AWS_REGION });
 
----
+// Producer: отправка сообщения в SQS
+async function enqueueEmailJob(userId: string, templateId: string): Promise<void> {
+  await sqs.send(new SendMessageCommand({
+    QueueUrl: process.env.EMAIL_QUEUE_URL!,
+    MessageBody: JSON.stringify({ userId, templateId, timestamp: Date.now() }),
+    // Для FIFO очереди:
+    // MessageGroupId: userId,         // все сообщения пользователя — один поток
+    // MessageDeduplicationId: `${userId}-${templateId}-${Date.now()}`,
+  }));
+}
 
-Например:
+// Consumer Lambda: обрабатывает batch сообщений из SQS
+export async function handler(event: SQSEvent): Promise<SQSBatchResponse> {
+  const failures: string[] = [];
 
-```txt
-Order Service
-```
+  for (const record of event.Records) {
+    try {
+      const body = JSON.parse(record.body) as { userId: string; templateId: string };
+      await sendEmail(body.userId, body.templateId);
+      // Успешно обработано → не нужно явно удалять
+      // Lambda Event Source Mapping удаляет успешные автоматически
+    } catch (err) {
+      console.error(`Failed to process ${record.messageId}:`, err);
+      failures.push(record.messageId); // помечаем как failed
+    }
+  }
 
----
-
-# Consumer
-
-Читает сообщения.
-
----
-
-Например:
-
-```txt
-Email Service
-```
-
----
-
-# Flow
-
-```txt
-Producer
- ↓
-SQS
- ↓
-Consumer
-```
-
----
-
-# Message
-
-Сообщение в очереди.
-
----
-
-Например:
-
-```json
-{
- "userId": 123,
- "type": "WELCOME_EMAIL"
+  // SQS Batch Item Failures: только упавшие идут в retry / DLQ
+  // Остальные из batch удаляются как успешные
+  return {
+    batchItemFailures: failures.map(id => ({ itemIdentifier: id })),
+  };
 }
 ```
 
----
+```typescript
+// CDK: SQS + Lambda с DLQ
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import { Duration } from 'aws-cdk-lib';
 
-# Polling
+const dlq = new sqs.Queue(this, 'EmailDLQ', {
+  retentionPeriod: Duration.days(14), // хранить упавшие 14 дней
+});
 
-Очень популярный вопрос.
+const emailQueue = new sqs.Queue(this, 'EmailQueue', {
+  visibilityTimeout: Duration.seconds(30),
+  deadLetterQueue: {
+    queue: dlq,
+    maxReceiveCount: 3, // после 3 попыток → DLQ
+  },
+});
 
----
+const emailProcessor = new lambda.Function(this, 'EmailProcessor', {
+  runtime: lambda.Runtime.NODEJS_20_X,
+  handler: 'index.handler',
+  code: lambda.Code.fromAsset('dist/email-processor'),
+  timeout: Duration.seconds(25), // < visibilityTimeout!
+});
 
-Consumer спрашивает:
-
-```txt
-Есть сообщения?
+emailProcessor.addEventSource(new lambdaEventSources.SqsEventSource(emailQueue, {
+  batchSize: 10,                // обрабатывать до 10 сообщений за раз
+  reportBatchItemFailures: true, // включает SQS Batch Item Failures
+}));
 ```
 
----
+## Idempotency — обязательное требование
 
-Если есть:
+```typescript
+// Проблема: SQS может доставить сообщение дважды
+// Без idempotency: пользователь получит 2 welcome email
 
-```txt
-получает сообщение
+// Плохо: не idempotent
+async function sendWelcomeEmail(userId: string): Promise<void> {
+  await emailService.send(userId, 'welcome');
+  // Если вызвать дважды → два письма
+}
+
+// Хорошо: idempotent через БД-флаг
+async function sendWelcomeEmailIdempotent(userId: string, messageId: string): Promise<void> {
+  // Проверить не было ли уже обработано (используем SQS messageId как ключ)
+  const alreadyProcessed = await db.processedMessages.findOne({ messageId });
+  if (alreadyProcessed) {
+    console.log(`Message ${messageId} already processed, skipping`);
+    return;
+  }
+
+  await emailService.send(userId, 'welcome');
+  
+  // Сохранить факт обработки (атомарно или в транзакции с основной операцией)
+  await db.processedMessages.insert({ messageId, processedAt: new Date() });
+}
+
+// В Lambda handler:
+export async function handler(event: SQSEvent) {
+  for (const record of event.Records) {
+    const { userId } = JSON.parse(record.body);
+    await sendWelcomeEmailIdempotent(userId, record.messageId);
+  }
+}
 ```
 
----
-
-# Visibility Timeout
-
-Самая любимая тема интервьюеров.
-
----
-
-Что происходит.
-
----
-
-Consumer получил сообщение.
-
----
-
-Но еще не обработал.
-
----
-
-Чтобы другой consumer
-не взял его повторно:
+## Event-Driven Architecture
 
 ```txt
-сообщение скрывается
+Традиционная (synchronous/tight coupling):
+  Order Service → HTTP → Payment Service → HTTP → Inventory → HTTP → Email
+  Минус: один упал → весь chain падает
+  Минус: нельзя добавить новый consumer без изменения Order Service
+
+Event-Driven (asynchronous/loose coupling):
+  Order Service → publish "OrderCreated" event → SQS/SNS/EventBridge
+                                                    ↓
+                                         Payment Lambda (subscribe)
+                                         Inventory Lambda (subscribe)
+                                         Email Lambda (subscribe)
+                                         Analytics Lambda (subscribe)
+
+Преимущества:
+  → Сервисы независимы: упал один → остальные работают
+  → Добавить новый consumer → без изменения Order Service
+  → Масштабируются независимо
+  → Retry и DLQ встроены
+
+Пример реального flow:
+  POST /orders
+  → Order Service сохраняет в БД, публикует "OrderCreated" в SNS
+  → SNS fan-out → SQS_Payment + SQS_Email + SQS_Analytics
+  → Lambda_Payment обрабатывает платёж (retry 3x, потом DLQ)
+  → Lambda_Email отправляет подтверждение (idempotent)
+  → Lambda_Analytics записывает метрику (idempotent)
 ```
 
----
+## Типичные ошибки на интервью
 
-На время:
+- **"SQS удаляет сообщение сразу как отдаёт consumer"** — нет. Сообщение становится invisible на время Visibility Timeout. Только явный вызов `DeleteMessage` (или успешная обработка в Lambda event source mapping) удаляет сообщение. Если consumer упал — сообщение становится видимым снова.
 
-```txt
-Visibility Timeout
-```
+- **"Standard Queue гарантирует порядок, FIFO гарантирует exactly-once"** — наоборот. Standard Queue: нет гарантии порядка, возможны дубликаты. FIFO Queue: гарантирует порядок и exactly-once (в 5-минутном окне дедупликации). Но FIFO имеет ограниченный throughput.
 
----
+- **"Visibility Timeout нужно устанавливать больше таймаута Lambda"** — нужно устанавливать НЕМНОГО БОЛЬШЕ, чтобы успеть обработать. Но основное правило: `visibilityTimeout > Lambda timeout`. Если Lambda timeout = 25 сек, visibilityTimeout = 30 сек — это нормально. Если `<` — другой consumer может взять сообщение пока текущий ещё обрабатывает.
 
-# Flow
+- **"DLQ не нужна, если есть retry"** — retry без DLQ приводит к бесконечному циклу для poison messages (сообщений с данными, которые всегда вызывают ошибку). DLQ — это изоляция: сломанные сообщения убираются из основного потока без потери данных.
 
-```txt
-Message
- ↓
-Consumer
- ↓
-Invisible
- ↓
-Processing
-```
-
----
-
-# Delete Message
-
-Очень важно.
-
----
-
-После успешной обработки:
-
-```txt
-Consumer
- ↓
-Delete Message
-```
-
----
-
-Сообщение удаляется.
-
----
-
-# Что если Consumer упал
-
-Очень популярный вопрос.
-
----
-
-Сообщение не удалилось.
-
----
-
-После истечения:
-
-```txt
-Visibility Timeout
-```
-
----
-
-Сообщение снова появится.
-
----
-
-# At Least Once Delivery
-
-Критически важная тема.
-
----
-
-SQS гарантирует:
-
-```txt
-минимум один раз
-```
-
----
-
-Но может доставить:
-
-```txt
-несколько раз
-```
-
----
-
-Поэтому обработчики должны быть:
-
-```txt
-idempotent
-```
-
----
-
-# Idempotency
-
-Очень любят спрашивать.
-
----
-
-Операция:
-
-```txt
-1 вызов
-или
-
-10 вызовов
-```
-
----
-
-Должна давать одинаковый результат.
-
----
-
-# Standard Queue
-
-По умолчанию.
-
----
-
-Плюсы:
-
-```txt
-очень высокая производительность
-```
-
----
-
-Минусы:
-
-```txt
-возможны дубликаты
-
-нет строгого порядка
-```
-
----
-
-# FIFO Queue
-
-First In First Out.
-
----
-
-Гарантирует:
-
-```txt
-порядок сообщений
-```
-
----
-
-И почти исключает дубликаты.
-
----
-
-Минус:
-
-```txt
-ниже throughput
-```
-
----
-
-# Dead Letter Queue
-
-Очень популярный вопрос.
-
----
-
-Проблема:
-
-```txt
-сообщение постоянно падает
-```
-
----
-
-Решение:
-
-```txt
-DLQ
-```
-
----
-
-После нескольких попыток:
-
-```txt
-основная очередь
- ↓
-DLQ
-```
-
----
-
-Сообщение переносится.
-
----
-
-# Lambda + SQS
-
-Очень популярная архитектура.
-
----
-
-```txt
-API
- ↓
-SQS
- ↓
-Lambda
-```
-
----
-
-Lambda автоматически читает очередь.
-
----
-
-# Event Driven Architecture
-
-Главная идея.
-
----
-
-Вместо:
-
-```txt
-Service A
- ↓
-Service B
- ↓
-Service C
-```
-
----
-
-Получаем:
-
-```txt
-Service A
- ↓
-Event
- ↓
-Queue
- ↓
-Consumers
-```
-
----
-
-Сервисы не знают друг о друге.
-
----
-
-# Реальный пример
-
-Создание заказа.
-
----
-
-```txt
-Order Created
-```
-
----
-
-Событие попадает в очередь.
-
----
-
-Дальше независимо:
-
-```txt
-Email Service
-
-Analytics Service
-
-CRM Service
-
-Billing Service
-```
-
----
-
-# Когда использовать SQS
-
-Подходит:
-
-```txt
-Email
-
-Reports
-
-Notifications
-
-Background Jobs
-
-File Processing
-```
-
----
-
-# Когда не подходит
-
-```txt
-Realtime Chat
-
-Realtime Gaming
-
-Low Latency Systems
-```
-
----
-
-# Частый вопрос
-
-Почему нельзя просто вызвать сервис напрямую?
-
-Ответ:
-
-Очередь разрывает зависимость между сервисами и позволяет переживать временные сбои потребителей.
-
----
-
-# Частый вопрос
-
-Что такое Visibility Timeout?
-
-Ответ:
-
-Период времени, в течение которого полученное сообщение скрыто от других consumers, пока текущий consumer его обрабатывает.
-
----
-
-# Частый вопрос
-
-Почему нужна DLQ?
-
-Ответ:
-
-Для изоляции сообщений, которые постоянно падают при обработке и не могут быть успешно обработаны.
-
----
-
-# Частый вопрос
-
-Что такое At Least Once Delivery?
-
-Ответ:
-
-SQS гарантирует доставку сообщения как минимум один раз, поэтому обработчики должны быть идемпотентными.
-
----
-
-# Interview Answer
-
-SQS — это очередь сообщений AWS, используемая для асинхронной обработки и построения event-driven систем. Она позволяет развязывать сервисы, переживать временные сбои и масштабировать нагрузку независимо. Важными концепциями являются Visibility Timeout, Dead Letter Queue, At Least Once Delivery и Idempotency.
+- **"SQS можно использовать для pub/sub (один producer → много consumers)"** — SQS — это point-to-point: одно сообщение получает ровно один consumer. Для fan-out (один event → много consumers) нужен SNS или EventBridge: publish в SNS topic → SNS fan-out → несколько SQS очередей.
