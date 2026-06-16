@@ -1,338 +1,249 @@
 # GraphQL vs REST
 
-## The Most Popular Question
+## The right level of comparison — architectural, not "which is better"
 
-When to use GraphQL and when to use REST?
+Both approaches use HTTP, JSON, and stateless requests. The difference isn't about "technology" — it's about WHO controls the shape of the response and WHAT architectural invariants are baked into the protocol.
 
----
+```txt
+REST    — RESOURCE-oriented approach:
+          URL = resource, HTTP method = operation on the resource,
+          HTTP status = result of the operation
+          The server determines the response shape for each endpoint
 
-# REST
+GraphQL — OPERATION-oriented approach:
+          One URL, the operation is described IN THE REQUEST BODY
+          (query/mutation/subscription), the client determines
+          the response shape via the selection set
+```
 
-Resource-oriented approach.
+## Overfetching and Underfetching — where REST "breaks" for complex clients
 
----
+```txt
+These problems are covered in [GraphQL Fundamentals] with a
+numeric example. A nuance that's rarely mentioned:
 
-Example:
+REST isn't required to always return everything: many public REST
+APIs support sparse fieldsets (e.g., Google API:
+?fields=name,email, JSON:API spec: ?fields[users]=name,email).
+This partially solves overfetching — but it's a CONVENTION, not
+a mechanism built into the REST specification. GraphQL makes this
+standard behavior out of the box.
+
+The more serious problem is underfetching for COMPLEX UX: a
+"Dashboard" screen with profile + notifications + recent orders
+= 3 round trips in REST (or 1 custom /dashboard endpoint that
+breaks resource-orientation), vs 1 GraphQL request with 3
+top-level fields.
+```
+
+## Versioning — REST's chronic pain point
 
 ```http
-GET /users
-GET /users/1
-POST /users
-DELETE /users/1
+# REST — usually solved via URL versioning or a header
+GET /v1/users/1
+GET /v2/users/1
 ```
-
----
-
-Each endpoint is responsible for a specific resource.
-
----
-
-# GraphQL
-
-One endpoint.
-
----
-
-Typically:
 
 ```txt
-/graphql
+/v2 = duplicating all the logic, maintaining two versions in
+parallel, eventually "/v3"...
+Attempts to solve it via headers (Accept: application/vnd.api.v2+json)
+or parameters (?version=2) don't fix the fundamental problem:
+REMOVING or CHANGING a field in an existing endpoint is a
+BREAKING CHANGE for clients.
 ```
-
----
-
-The client defines the data it needs.
-
----
-
-# The Main Difference
-
-REST:
-
-```txt
-the server defines the response
-```
-
----
-
-GraphQL:
-
-```txt
-the client defines the response
-```
-
----
-
-# Overfetching
-
-REST:
-
-```http
-GET /user/1
-```
-
----
-
-Received:
-
-```json
-{
-  "id": 1,
-  "name": "Max",
-  "email": "...",
-  "avatar": "...",
-  "settings": ...
-}
-```
-
----
-
-Only needed:
-
-```txt
-name
-```
-
----
-
-Result: overfetching.
-
----
-
-# GraphQL
 
 ```graphql
-query {
-  user(id:1) {
-    name
-  }
+# GraphQL — additive evolution without versions
+type User {
+  id: ID!
+  name: String!
+  fullName: String @deprecated(reason: "Use 'name' instead")
+  email: String
+  # Adding new fields — old clients simply don't request them
+  phoneNumber: String
 }
 ```
 
----
-
-Returns exactly one field.
-
----
-
-# Underfetching
-
-REST:
-
 ```txt
-User
-Posts
-Comments
+The GraphQL approach: ADDING fields is not a breaking change (old
+clients don't request them, the schema is backward compatible).
+REMOVING a field is a breaking change, so the field is first
+marked @deprecated (tooling will warn frontend developers via
+codegen), its usage is monitored (Apollo Studio shows who's still
+using the deprecated field), and it's only removed after 0% usage.
+
+This doesn't mean GraphQL never makes breaking changes — CHANGING
+a field's TYPE (String → Int), CHANGING nullable → non-null — are
+breaking changes in GraphQL too. But the tooling (schema registry,
+breaking-change detection in CI) is more mature.
 ```
 
----
+## Typing and contracts — OpenAPI vs GraphQL Schema
 
-Three requests.
-
----
+```txt
+REST + OpenAPI:
+  - OpenAPI spec is a SEPARATE file/doc that CAN drift from the
+    actual implementation (without automated conformance testing)
+  - Types are generated from the OpenAPI spec → if the spec isn't
+    updated, the generated types don't reflect the real API
+  - No built-in mechanism for compatibility checking
 
 GraphQL:
-
-```graphql
-query {
-  user {
-    posts {
-      comments {
-        text
-      }
-    }
-  }
-}
+  - The schema IS the spec — the server physically cannot return a
+    field that doesn't exist in the schema (Validate phase runs
+    before resolvers, see [GraphQL Fundamentals])
+  - Introspection gives the LIVE schema directly from the server
+  - Codegen (graphql-codegen) generates types from the RUNTIME
+    schema, not from potentially stale docs
+  - CI can check for breaking changes (schema diffing) automatically
 ```
 
----
-
-One request.
-
----
-
-# Typing
-
-REST:
+## Caching — where REST genuinely wins (and how GraphQL compensates)
 
 ```txt
-not standardized
-```
-
----
+REST:
+  GET /users/1 — cached by a CDN by URL out of the box:
+    - Cache-Control: max-age=3600
+    - ETag + If-None-Match (304 Not Modified)
+    - Last-Modified + If-Modified-Since
+    - URL = the unit of caching (precise, predictable)
 
 GraphQL:
+  POST /graphql — not cached by a CDN by default
+  (details in [GraphQL Fundamentals] and [Performance and Security])
 
-```txt
-strict schema
+GraphQL compensations:
+  1. Persisted Queries → GET requests with a hash in the URL →
+     CDN cache
+  2. @cacheControl directive (Apollo):
+     type Post @cacheControl(maxAge: 60) { ... }
+     in the resolver: info.cacheControl.setCacheHint()
+     → the server adds Cache-Control: max-age=60 to the HTTP response
+  3. Client-side normalized cache (Apollo Client) — cached by
+     type id, not by URL, allowing one query to automatically
+     update another query's cache if both touched the same
+     User { id: "1" }
 ```
 
----
-
-# Self Documentation
-
-GraphQL:
+## Error semantics — HTTP status codes vs errors[]
 
 ```txt
-Introspection
+REST:    200 OK, 201 Created, 400 Bad Request,
+         401 Unauthorized, 404 Not Found, 500 Internal Error
+         → Monitoring via HTTP status codes — a standard
+           tool for any APM/alerting system
+
+GraphQL: almost always HTTP 200, even on errors
+         (details in [GraphQL Fundamentals])
+         → Monitoring requires parsing the response body,
+           needs GraphQL-aware tooling (Apollo Studio)
+
+That said, GraphQL errors are STRUCTURED: each error includes a
+path (the path to the failing field in the response), which lets
+you pinpoint EXACTLY which field broke, rather than just knowing
+"something is 500-ing."
 ```
 
----
-
-The client can discover the API automatically.
-
----
-
-REST:
+## File uploads — where REST is simpler
 
 ```txt
-Swagger/OpenAPI
+REST: multipart/form-data — native HTTP-level support, handlers
+available in any framework.
+
+GraphQL: files aren't part of the GraphQL specification (which
+describes ONLY JSON). For file uploads you need either:
+  - graphql-upload (implements the graphql-multipart-request-spec
+    — an extension on top of GraphQL) — with limitations (only
+    works with multipart-compatible clients)
+  - Hybrid approach: a separate REST/presigned-S3 URL for the file
+    upload, a GraphQL mutation only for saving metadata — this is
+    the cleanest architectural pattern for production
 ```
 
-must be maintained separately.
-
----
-
-# Caching
-
-REST wins here.
-
----
-
-REST:
-
-```txt
-URL-based caching
-CDN caching
-ETag
-```
-
----
-
-GraphQL:
-
-```txt
-more complex
-```
-
----
-
-Because there is only one endpoint.
-
----
-
-# Complexity
-
-REST is simpler.
-
----
-
-GraphQL is more complex.
-
----
-
-New concepts appear:
-
-```txt
-Resolvers
-DataLoader
-Federation
-Query Complexity
-```
-
----
-
-# Mobile Applications
-
-A great use case for GraphQL.
-
----
-
-Why?
-
----
-
-Mobile devices are sensitive to:
-
-```txt
-number of requests
-volume of data
-```
-
----
-
-GraphQL helps reduce both.
-
----
-
-# Microservices
-
-GraphQL is often used as:
-
-```txt
-BFF
-Backend For Frontend
-```
-
----
-
-Architecture:
+## BFF — the most common way to use both together
 
 ```txt
 Frontend
-   ↓
-GraphQL Gateway
-   ↓
-Microservices
+    ↓
+GraphQL BFF (Backend For Frontend)
+    ↓
+  ┌─────────────────────────────────┐
+  │ Users REST Service              │
+  │ Orders REST Service             │
+  │ Notifications gRPC Service      │
+  │ External Partner REST API       │
+  └─────────────────────────────────┘
 ```
-
----
-
-# When to Choose REST
-
-- simple CRUD API
-- public API
-- high cacheability
-- small team
-
----
-
-# When to Choose GraphQL
-
-- complex UIs
-- many screens
-- mobile apps
-- BFF layer
-- lots of related data
-
----
-
-# A Common Question
-
-Does GraphQL replace REST?
-
----
-
-Answer:
-
-No.
-
----
-
-They solve different problems.
-
----
-
-Today it is very common to use:
 
 ```txt
-REST + GraphQL
+The GraphQL layer aggregates data from MULTIPLE downstream services
+(which can remain REST or gRPC) into ONE graph, optimally shaping
+the response for the specific client's needs (web, mobile, TV app
+— each with its own data requirements).
+
+The downstream services stay REST because:
+  - they serve OTHER clients (other BFFs, partners, webhooks)
+  - REST is simpler for public APIs and standardization
+  - HTTP caching at the inter-service level is simpler with REST
+
+GraphQL Federation (see [Performance and Security]) is the same
+idea but without a single monolithic BFF: each service owns its
+part of the GraphQL graph.
 ```
 
-in the same project.
+## When to choose REST, when GraphQL — an honest assessment
 
----
+```txt
+REST is preferable:
+  ✓ Public APIs (GitHub v3 REST, Stripe, Twilio) — CDN caching,
+    wide client support (curl, HTTPie, Postman out of the box),
+    no dependency on a GraphQL client
+  ✓ Simple CRUD with no complex entity relationships
+  ✓ APIs with frequent file uploads
+  ✓ When HTTP caching is critical and there are no resources for
+    Persisted Queries / Apollo Cache Control
+  ✓ Webhooks, event-driven integrations (REST endpoint as an event
+    "receiver")
+  ✓ Small team with less GraphQL experience
 
-# Interview Answer
+GraphQL is preferable:
+  ✓ Complex UIs with nested, related data
+  ✓ Multiple clients with DIFFERENT data requirements (web vs
+    mobile vs embedded — each requests exactly what it needs)
+  ✓ A BFF layer over multiple downstream services
+  ✓ Teams that value type-safe codegen and a shared schema
+    contract between frontend and backend
+  ✓ Actively evolving API with frequently changing client
+    requirements (additive evolution without versioning)
 
-REST is simpler, caches better, and is a great fit for CRUD APIs. GraphQL gives the client flexibility, solves overfetching and underfetching, and is especially useful for complex frontend applications and BFF architectures. In practice, both technologies are often used together.
+The most realistic production answer: REST + GraphQL in one
+project — REST for the public API and webhook integrations,
+GraphQL as a BFF for your own frontend.
+```
+
+## Connection to other topics
+
+```txt
+[GraphQL Fundamentals]            — overfetching/underfetching,
+                                      GraphQL's HTTP semantics
+[Performance and Security]         — caching via Persisted Queries,
+                                      Federation as an alternative
+                                      to a monolithic BFF
+[Queries, Mutations, and
+ Subscriptions]                     — comparing Mutation with REST
+                                      verbs POST/PUT/PATCH/DELETE
+                                      and idempotency
+```
+
+## Common interview mistakes
+
+- **"GraphQL will replace REST"** — not understanding that they solve different problems: GraphQL has no native CDN caching, makes file uploads harder, and most public APIs will stay REST precisely because of ease of consumption and HTTP caching.
+
+- **"REST is less type-safe because it has no schema"** — not mentioning OpenAPI/Swagger as the standard for REST API typing, and not explaining the difference in guarantees (OpenAPI can drift, GraphQL schema IS the runtime contract).
+
+- **"GraphQL has no versioning — so things are always breaking"** — not knowing about @deprecated + additive evolution as the primary strategy, not mentioning breaking-change detection via schema diffing in CI.
+
+- **"GraphQL caching is Apollo Client"** — confusing the client-side normalized cache with HTTP caching; not knowing about @cacheControl and Persisted Queries as a way to get CDN caching for GraphQL.
+
+- **"You have to choose: REST or GraphQL"** — not proposing the hybrid BFF pattern (GraphQL as an aggregation layer over REST microservices) as the most common production solution.
