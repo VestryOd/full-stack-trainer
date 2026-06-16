@@ -1,490 +1,158 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # Redis Persistence
 
-## Очень популярный вопрос
+## RDB — периодические снапшоты
 
-Если Redis хранит данные в памяти:
-
-```txt
-RAM
-```
-
----
-
-Что произойдет после:
+RDB (Redis Database) — бинарный снапшот всей памяти Redis на момент времени. Сохраняется в `dump.rdb` через fork процесс (родитель продолжает обрабатывать команды, дочерний пишет на диск через Copy-On-Write).
 
 ```txt
-перезагрузки сервера?
+redis.conf — настройка RDB:
+  save 3600 1     # snapshot если за 1 час изменился хотя бы 1 ключ
+  save 300 100    # snapshot если за 5 мин изменилось 100+ ключей
+  save 60 10000   # snapshot если за 1 мин изменилось 10000+ ключей
+  
+  dbfilename dump.rdb
+  dir /var/lib/redis
+
+Ручной snapshot:
+  BGSAVE   # асинхронно в background (не блокирует)
+  SAVE     # синхронно (блокирует Redis — не использовать в production!)
+  
+  LASTSAVE # timestamp последнего успешного RDB
+
+RDB преимущества:
+  ✓ Компактный бинарный файл (меньше AOF)
+  ✓ Быстрое восстановление при рестарте (replay не нужен)
+  ✓ Минимальный I/O overhead (только при snapshot)
+  ✓ Удобен для disaster recovery (один файл)
+
+RDB недостатки:
+  ✗ Потеря данных: всё что записано после последнего snapshot
+  ✗ Fork для snapshot: при >10GB данных fork overhead заметен
 ```
 
----
+## AOF — append-only log каждой команды
 
-Ответ:
+AOF (Append Only File) — лог каждой write команды. При рестарте Redis воспроизводит весь лог для восстановления состояния.
 
 ```txt
-данные исчезнут
+redis.conf — настройка AOF:
+  appendonly yes
+  appendfilename "appendonly.aof"
+  
+  # fsync политика (главный trade-off):
+  appendfsync always    # fsync после каждой команды → максимальная надёжность, медленно
+  appendfsync everysec  # fsync раз в секунду → компромисс (рекомендуется)
+  appendfsync no        # OS решает когда → быстро, но возможна потеря при сбое
+
+AOF Rewrite (сжатие лога):
+  Со временем AOF растёт: 1000 INCR → можно заменить одним SET
+  auto-aof-rewrite-percentage 100  # rewrite если AOF вырос в 2x от base
+  auto-aof-rewrite-min-size 64mb   # но не раньше чем AOF достиг 64MB
+  BGREWRITEAOF  # ручной rewrite (background, не блокирует)
+
+AOF преимущества:
+  ✓ Максимум потеря 1 секунды данных (с everysec)
+  ✓ Читаемый формат (можно вручную исправить при повреждении)
+  ✓ appendonly yes + everysec → достаточно для большинства production случаев
+
+AOF недостатки:
+  ✗ Файл больше RDB (хранит историю команд, не конечное состояние)
+  ✗ Восстановление медленнее (replay всего лога)
+  ✗ При appendfsync always — заметный I/O overhead
 ```
 
----
-
-если не настроена Persistence.
-
----
-
-# Что такое Persistence
-
-Механизм сохранения данных на диск.
-
----
-
-Redis поддерживает:
+## RDB + AOF вместе (Production рекомендация)
 
 ```txt
-RDB
+Комбинация: redis.conf
+  save 3600 1        # RDB для fast restart
+  appendonly yes     # AOF для minimal data loss
+  appendfsync everysec
 
-AOF
+При рестарте (если оба включены):
+  Redis использует AOF — он точнее (меньше потеря данных)
 
-RDB + AOF
+Стратегия:
+  Cache-only Redis:  persistence off (maxmemory + eviction policy)
+  Session/Queue:     AOF everysec (1 сек потеря допустима)
+  Primary DB mode:   AOF always + RDB (максимальная надёжность, медленнее)
 ```
 
----
+## Replication — Master/Replica
 
-# RDB
+```typescript
+// redis.conf для Replica:
+// replicaof <master-ip> <master-port>
+// masterauth <password>
 
-Redis Database Snapshot.
+// Программно можно проверить роль:
+// ROLE → ['master', offset, [[replica-ip, replica-port, offset], ...]]
+//     или ['slave', master-ip, master-port, state, offset]
 
----
+// В Node.js с ioredis — отдельные clients:
+const masterClient = new Redis({ host: 'redis-master', port: 6379 });
+const replicaClient = new Redis({ host: 'redis-replica', port: 6379 });
 
-Самый простой режим.
+// Writes → master
+await masterClient.set('user:123', JSON.stringify(user));
 
----
-
-# Как работает
-
-Redis периодически делает:
+// Reads → replica (read scaling)
+const cached = await replicaClient.get('user:123');
+// Важно: replication асинхронная → возможен lag в несколько мс
+```
 
 ```txt
-снимок памяти
+Replication:
+  Master → асинхронная репликация → Replica(s)
+  Replica: read-only (по умолчанию), снижает нагрузку на master
+  Replica lag: обычно <1ms при стабильном соединении
+  При падении Master: replica не становится master автоматически
+  → нужен Sentinel или Redis Cluster
+
+Redis Sentinel (HA без шардинга):
+  3+ Sentinel процессов мониторят Master
+  При сбое: Sentinel vote → выбирают нового Master → обновляют DNS
+  Клиент подключается к Sentinel → получает адрес текущего Master
+  Failover: ~10-30 секунд
+  
+  Ограничение: весь dataset на одном Master (нет шардинга)
+  Подходит: когда нужна HA, но данные помещаются в RAM одного сервера
+
+Redis Cluster (шардинг + HA):
+  16384 hash slots → распределены по N мастер-нодам
+  Каждый master имеет replicas
+  key → CRC16(key) % 16384 → slot → node
+  Автоматический failover внутри cluster
+  Ограничение: multi-key операции только для ключей в одном slot
 ```
 
----
-
-И сохраняет:
+## Persistence выключена — когда это правильно
 
 ```txt
-dump.rdb
+Redis как ephemeral cache (maxmemory + allkeys-lru):
+  appendonly no
+  save ""  # отключить RDB
+
+Когда подходит:
+  Cache layer поверх PostgreSQL — при потере кэша просто Cache MISS
+  Session storage если допустимо logout пользователей при рестарте
+  Rate limiting counters — reset при рестарте приемлем
+
+Когда НЕ подходит:
+  BullMQ job queue — задачи потеряются при перезапуске
+  Distributed locks с критичными ресурсами
+  Redis как primary database для любых данных
 ```
 
----
+## Типичные ошибки на интервью
 
-На диск.
+- **"Redis теряет данные при перезапуске"** — только без persistence. С AOF `everysec`: потеря максимум 1 секунда данных. С `always`: нет потери (каждая команда синхронно на диск, но медленно). Для критичных данных: AOF + RDB комбинация.
 
----
+- **"RDB лучше AOF"** — разные trade-offs. RDB: быстрый restart, компактный, потеря данных до нескольких минут. AOF: медленный restart при большом логе, больше места, потеря до 1 сек. Production: оба вместе.
 
-# Схема
+- **"Replica автоматически становится Master при падении"** — нет. Без Sentinel или Cluster: replica остаётся replica. Нужен Sentinel для автоматического failover. Без Sentinel: ручная смена (`REPLICAOF NO ONE` на replica, обновить DNS/config).
 
-```txt
-Memory
- ↓
-Snapshot
- ↓
-dump.rdb
-```
+- **"Redis Cluster решает все проблемы масштабирования"** — Cluster добавляет сложность. Multi-key операции (`MGET`, `MSET`, Lua scripts) работают только если все ключи в одном hash slot. Если ключи на разных нодах → ошибка. Решение: hash tags `{prefix}:key` или избегать cross-slot операций.
 
----
-
-# Пример
-
-Каждые:
-
-```txt
-5 минут
-```
-
----
-
-Создается новый snapshot.
-
----
-
-# Плюсы
-
-```txt
-быстро
-
-мало места
-
-быстрое восстановление
-```
-
----
-
-# Минусы
-
-Очень любят спрашивать.
-
----
-
-Можно потерять данные.
-
----
-
-Например:
-
-```txt
-Snapshot был в 12:00
-
-Redis упал в 12:04
-```
-
----
-
-Потеряем:
-
-```txt
-4 минуты данных
-```
-
----
-
-# AOF
-
-Append Only File.
-
----
-
-Другой подход.
-
----
-
-# Как работает
-
-Каждая команда записи:
-
-```bash
-SET
-
-DEL
-
-INCR
-```
-
----
-
-Записывается в лог.
-
----
-
-Пример:
-
-```txt
-SET user:1 John
-
-SET user:2 Alice
-
-INCR counter
-```
-
----
-
-# Восстановление
-
-После перезапуска:
-
-```txt
-Redis воспроизводит команды
-```
-
----
-
-Из лога.
-
----
-
-# Плюсы
-
-Меньше потерь данных.
-
----
-
-# Минусы
-
-```txt
-больше диск
-
-медленнее запись
-```
-
----
-
-# fsync
-
-Очень популярный вопрос.
-
----
-
-Определяет:
-
-```txt
-когда писать на диск
-```
-
----
-
-# always
-
-```txt
-каждая операция
-```
-
----
-
-Самый надежный режим.
-
----
-
-Самый медленный.
-
----
-
-# everysec
-
-По умолчанию.
-
----
-
-```txt
-раз в секунду
-```
-
----
-
-Компромисс:
-
-```txt
-скорость
-
-надежность
-```
-
----
-
-# no
-
-ОС сама решает.
-
----
-
-Самый быстрый.
-
----
-
-Самый рискованный.
-
----
-
-# RDB + AOF
-
-Самый популярный production вариант.
-
----
-
-Используем:
-
-```txt
-быстрый startup
-
-+
-минимальная потеря данных
-```
-
----
-
-# Replication
-
-Очень популярная тема.
-
----
-
-Master:
-
-```txt
-основной Redis
-```
-
----
-
-Replica:
-
-```txt
-копия
-```
-
----
-
-Схема:
-
-```txt
-Master
- ↓
-Replica 1
-
-Replica 2
-```
-
----
-
-# Зачем Replica
-
-```txt
-Read Scaling
-
-Failover
-
-Backup
-```
-
----
-
-# Redis Sentinel
-
-Очень любят спрашивать.
-
----
-
-Следит за:
-
-```txt
-Master
-```
-
----
-
-Если Master упал:
-
-```txt
-выбирает нового Master
-```
-
----
-
-Автоматически.
-
----
-
-# Redis Cluster
-
-Следующий уровень.
-
----
-
-Решает:
-
-```txt
-масштабирование
-```
-
----
-
-Данные распределяются между узлами.
-
----
-
-# Sharding
-
-Очень популярный вопрос.
-
----
-
-Разделение данных.
-
----
-
-Например:
-
-```txt
-Node 1
-users 1-100000
-
-Node 2
-users 100001-200000
-```
-
----
-
-# Redis как Primary Database
-
-Очень любят спрашивать.
-
----
-
-Технически:
-
-```txt
-можно
-```
-
----
-
-Практически:
-
-```txt
-редко
-```
-
----
-
-Обычно:
-
-```txt
-PostgreSQL
-
-+
-Redis
-```
-
----
-
-# Частый вопрос
-
-Что лучше RDB или AOF?
-
-Ответ:
-
-RDB быстрее и компактнее, AOF надежнее и позволяет потерять меньше данных.
-
----
-
-# Частый вопрос
-
-Что используется в production?
-
-Ответ:
-
-Чаще всего одновременно RDB и AOF.
-
----
-
-# Частый вопрос
-
-Что такое Redis Sentinel?
-
-Ответ:
-
-Механизм мониторинга и автоматического failover Redis.
-
----
-
-# Частый вопрос
-
-Что такое Redis Cluster?
-
-Ответ:
-
-Распределенный кластер Redis для горизонтального масштабирования данных.
-
----
-
-# Interview Answer
-
-Redis хранит данные в памяти, поэтому для сохранения данных после перезапуска используются механизмы Persistence. Основные варианты — RDB snapshots и AOF logs. В production системах часто используется комбинация обоих подходов вместе с репликацией, Sentinel или Redis Cluster для обеспечения отказоустойчивости.
+- **"SAVE безопасен в production"** — `SAVE` блокирует Redis до завершения snapshotting. При большом dataset — секунды блокировки. В production только `BGSAVE` (background, через fork, не блокирует обработку команд).
