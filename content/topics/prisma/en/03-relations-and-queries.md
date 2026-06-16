@@ -1,550 +1,273 @@
 # Prisma Relations and Queries
 
-## The Main Idea of Relations
+## Relation types
 
-Prisma describes relationships between models.
-
-Under the hood these are still ordinary:
-
-```txt
-Foreign Keys
-JOIN
-Reference Constraints
-```
-
-in PostgreSQL.
-
----
-
-# One-To-One
-
-Example:
-
-```txt
-User
- ↓
-Profile
-```
-
----
-
-# Prisma Schema
+Prisma supports three relation types — all of them map to standard Foreign Keys and JOINs in PostgreSQL. The only difference is which side holds the FK.
 
 ```prisma
+// One-to-One: User has exactly one Profile
+// FK is on the "child" model (Profile.userId)
 model User {
   id      Int      @id @default(autoincrement())
-  profile Profile?
+  profile Profile?  // nullable — Profile may not exist
 }
 
 model Profile {
-  id      Int @id @default(autoincrement())
-
-  userId  Int @unique
-
-  user    User @relation(
-    fields: [userId],
-    references: [id]
-  )
+  id     Int    @id @default(autoincrement())
+  bio    String?
+  userId Int    @unique  // @unique enforces one-to-one (not one-to-many)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-```
 
----
-
-# Why @unique
-
-Because:
-
-```txt
-one User
-=
-one Profile
-```
-
----
-
-# SQL Equivalent
-
-```sql
-profile.user_id UNIQUE
-```
-
----
-
-# One-To-Many
-
-The most popular relation.
-
----
-
-Example:
-
-```txt
-User
- ↓
-Posts
-```
-
----
-
-# Prisma Schema
-
-```prisma
+// One-to-Many: User has many Posts
 model User {
   id    Int    @id @default(autoincrement())
-
-  posts Post[]
+  posts Post[]  // virtual field — no column in the DB
 }
 
 model Post {
-  id     Int @id @default(autoincrement())
-
-  userId Int
-
-  user User @relation(
-    fields: [userId],
-    references: [id]
-  )
-}
-```
-
----
-
-# SQL Equivalent
-
-```sql
-posts.user_id REFERENCES users(id)
-```
-
----
-
-# Many-To-Many
-
-A very common interview question.
-
----
-
-Example:
-
-```txt
-Users
- ↕
-Roles
-```
-
----
-
-# Implicit Many-To-Many
-
-Prisma can create the join table automatically.
-
----
-
-```prisma
-model User {
-  id    Int @id @default(autoincrement())
-
-  roles Role[]
+  id       Int  @id @default(autoincrement())
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
 }
 
-model Role {
-  id    Int @id @default(autoincrement())
-
-  users User[]
-}
-```
-
----
-
-Prisma will create the intermediate table itself.
-
----
-
-# Explicit Many-To-Many
-
-More commonly used in production.
-
----
-
-Because extra fields can be stored.
-
----
-
-Example:
-
-```prisma
+// Many-to-Many explicit (production recommendation)
+// — when you need extra fields on the join table
 model UserRole {
-  userId Int
-  roleId Int
-
+  userId     Int
+  roleId     Int
   assignedAt DateTime @default(now())
+  assignedBy String?
 
-  user User @relation(
-    fields: [userId],
-    references: [id]
-  )
-
-  role Role @relation(
-    fields: [roleId],
-    references: [id]
-  )
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+  @@index([roleId])
 }
+
+// Many-to-Many implicit (when no extra fields are needed — Prisma creates the join table)
+model Post {
+  id   Int   @id @default(autoincrement())
+  tags Tag[]
+}
+model Tag {
+  id    Int    @id @default(autoincrement())
+  posts Post[]
+}
+// → Prisma creates the "_PostToTag" table automatically
 ```
 
----
+## onDelete / onUpdate — Referential Actions
 
-# SELECT Queries
+```prisma
+model Post {
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id],
+    onDelete: Cascade,  // delete User → delete all their Posts
+    onUpdate: Cascade   // change User.id → update Post.authorId
+  )
+}
 
-Get all users.
-
-```ts
-const users = await prisma.user.findMany();
+// Options:
+// Cascade  — cascade delete/update (most common)
+// Restrict — prevent deletion if related records exist (data protection)
+// SetNull  — set FK = NULL (field must be nullable: authorId Int?)
+// NoAction — no action at Prisma level (enforced at DB level)
+// SetDefault — set FK to its default value
 ```
 
----
+## Queries — find*, create, update, delete
 
-Get one.
+```typescript
+// findUnique — only for @id or @unique fields, returns T | null
+const user = await prisma.user.findUnique({ where: { id: 1 } });
 
-```ts
-const user = await prisma.user.findUnique({
-  where: {
-    id: 1,
-  },
+// findFirst — first record matching a condition, returns T | null
+const active = await prisma.user.findFirst({
+  where: { isActive: true },
+  orderBy: { createdAt: 'desc' },
 });
-```
 
----
-
-# findUnique
-
-Only used for:
-
-```txt
-Primary Key
-Unique Fields
-```
-
----
-
-# findFirst
-
-Finds the first matching record.
-
----
-
-```ts
-await prisma.user.findFirst({
+// findMany — all records matching a condition
+const users = await prisma.user.findMany({
   where: {
-    isActive: true,
+    AND: [
+      { isActive: true },
+      { createdAt: { gte: new Date('2024-01-01') } },
+    ],
+    OR: [
+      { role: 'ADMIN' },
+      { role: 'EDITOR' },
+    ],
+    email: { contains: '@company.com', mode: 'insensitive' }, // case-insensitive LIKE
+    name: { not: null },
   },
+  orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
+  take: 20,    // LIMIT
+  skip: 40,    // OFFSET — offset pagination
 });
-```
 
----
-
-# WHERE
-
-Filtering.
-
----
-
-```ts
-await prisma.user.findMany({
-  where: {
-    email: 'max@test.com',
-  },
+// count + aggregate
+const total = await prisma.user.count({ where: { isActive: true } });
+const stats = await prisma.order.aggregate({
+  _sum: { amount: true },
+  _avg: { amount: true },
+  _count: true,
+  where: { status: 'COMPLETED' },
 });
+
+// upsert — create if not exists, else update
+const user = await prisma.user.upsert({
+  where: { email: 'alice@example.com' },
+  create: { email: 'alice@example.com', name: 'Alice' },
+  update: { name: 'Alice Updated' },
+});
+
+// createMany / updateMany / deleteMany — bulk operations
+await prisma.post.createMany({
+  data: [{ title: 'A', authorId: 1 }, { title: 'B', authorId: 1 }],
+  skipDuplicates: true, // ignore unique constraint conflicts
+});
+
+await prisma.post.deleteMany({ where: { authorId: 1 } });
 ```
 
----
+## include vs select — loading relations
 
-# AND
-
-```ts
-where: {
-  AND: [
-    { active: true },
-    { age: { gt: 18 } },
-  ]
-}
-```
-
----
-
-# OR
-
-```ts
-where: {
-  OR: [
-    { role: 'ADMIN' },
-    { role: 'MODERATOR' },
-  ]
-}
-```
-
----
-
-# LIKE Equivalent
-
-```ts
-where: {
-  email: {
-    contains: '@gmail.com',
-  },
-}
-```
-
----
-
-# include
-
-A very important topic.
-
----
-
-Get a user and their posts.
-
-```ts
-await prisma.user.findMany({
+```typescript
+// include: load related records (JOIN under the hood)
+const userWithPosts = await prisma.user.findUnique({
+  where: { id: 1 },
   include: {
-    posts: true,
+    posts: {
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      include: { tags: true }, // nested include
+    },
+    profile: true,
   },
 });
-```
 
----
-
-Under the hood Prisma will perform a JOIN.
-
----
-
-# select
-
-Allows returning only the needed fields.
-
----
-
-```ts
-await prisma.user.findMany({
+// select: choose only the needed fields (projection)
+const userNames = await prisma.user.findMany({
   select: {
     id: true,
     email: true,
-  },
-});
-```
-
----
-
-Very useful for performance.
-
----
-
-# include vs select
-
-include:
-
-```txt
-adds relations
-```
-
----
-
-select:
-
-```txt
-limits fields
-```
-
----
-
-# Nested Select
-
-```ts
-await prisma.user.findMany({
-  select: {
-    id: true,
-    posts: {
-      select: {
-        title: true,
-      },
+    posts: {           // select + relation — works
+      select: { title: true, createdAt: true },
+      where: { published: true },
     },
   },
 });
+// Result is strongly typed: { id: number; email: string; posts: { title: string; ... }[] }
+
+// include and select cannot be used together at the same level
+// ✗ { include: { posts: true }, select: { id: true } } — TS error
+// ✓ select: { id: true, posts: { select: { title: true } } } — correct
 ```
 
----
+## Nested Writes — related records in one request
 
-# Create
-
-```ts
-await prisma.user.create({
+```typescript
+// create with nested create (User + Posts in one request = one transaction)
+const user = await prisma.user.create({
   data: {
-    email: 'max@test.com',
-  },
-});
-```
-
----
-
-# Update
-
-```ts
-await prisma.user.update({
-  where: {
-    id: 1,
-  },
-  data: {
-    email: 'new@test.com',
-  },
-});
-```
-
----
-
-# Delete
-
-```ts
-await prisma.user.delete({
-  where: {
-    id: 1,
-  },
-});
-```
-
----
-
-# Nested Writes
-
-A very common interview topic.
-
----
-
-You can create a User and a Post in one query.
-
----
-
-```ts
-await prisma.user.create({
-  data: {
-    email: 'max@test.com',
-
+    email: 'alice@example.com',
+    profile: {
+      create: { bio: 'Senior Engineer' },  // create Profile
+    },
     posts: {
       create: [
-        {
-          title: 'First Post',
-        },
+        { title: 'First post' },
+        { title: 'Second post' },
       ],
     },
   },
+  include: { profile: true, posts: true }, // return with relations
 });
-```
 
----
+// connect — link an existing record
+await prisma.post.update({
+  where: { id: 1 },
+  data: {
+    tags: {
+      connect: [{ id: 1 }, { id: 2 }],     // add tags
+      disconnect: [{ id: 3 }],              // remove a tag
+      set: [{ id: 1 }],                     // set exactly these tags (disconnect old ones)
+    },
+  },
+});
 
-# connect
-
-Link an existing record.
-
----
-
-```ts
+// connectOrCreate — find or create
 await prisma.post.create({
   data: {
     title: 'Post',
-
-    user: {
-      connect: {
-        id: 1,
+    author: {
+      connectOrCreate: {
+        where: { email: 'alice@example.com' },
+        create: { email: 'alice@example.com', name: 'Alice' },
       },
     },
   },
 });
 ```
 
----
+## Pagination — offset vs cursor
 
-# connectOrCreate
+```typescript
+// Offset pagination — simple but slow on large tables
+const page2 = await prisma.post.findMany({
+  skip: 20,   // OFFSET 20
+  take: 10,   // LIMIT 10
+  orderBy: { createdAt: 'desc' },
+});
+// Problem: OFFSET 1000000 — PostgreSQL still reads 1000010 rows
 
-Very popular.
-
----
-
-If the record does not exist:
-
-```txt
-create
+// Cursor pagination — for large tables and infinite scrolling
+const nextPage = await prisma.post.findMany({
+  cursor: { id: lastSeenId },   // start after this id
+  take: 10,
+  skip: 1,                       // skip the cursor itself
+  orderBy: { id: 'asc' },
+});
+// Under the hood: WHERE id > lastSeenId LIMIT 10 → O(log N) via index
 ```
 
-If it does:
+## The N+1 problem and how to solve it
 
-```txt
-connect
-```
-
----
-
-```ts
-connectOrCreate: {
-  where: {
-    email: 'max@test.com',
-  },
-  create: {
-    email: 'max@test.com',
-  },
+```typescript
+// N+1: a separate query to posts is executed for each user
+const users = await prisma.user.findMany();
+for (const user of users) {
+  const posts = await prisma.post.findMany({ where: { authorId: user.id } });
+  // 1 query for findMany + N queries for posts = N+1
 }
+
+// Solution: include — a single query with JOIN
+const usersWithPosts = await prisma.user.findMany({
+  include: { posts: true },
+  // Prisma executes: SELECT users.*, posts.* FROM users LEFT JOIN posts ON ...
+});
+
+// For complex cases: prisma.$queryRaw with explicit JOIN
+const result = await prisma.$queryRaw<UserWithCount[]>`
+  SELECT u.id, u.email, COUNT(p.id)::int as post_count
+  FROM users u
+  LEFT JOIN posts p ON p.author_id = u.id
+  GROUP BY u.id
+`;
 ```
 
----
+## Common interview mistakes
 
-# Pagination
+- **"include always does a JOIN"** — not quite. Prisma 5+ uses `JOIN` for include in most cases, but for some patterns it may issue a separate `SELECT ... WHERE id IN (...)`. Enable `log: ['query']` to see the actual SQL.
 
-offset pagination
+- **"select and include can't be used together"** — they can't at the same level (`{ select, include }` → TS error), but you can do: `select: { id: true, posts: { select: { title: true } } }` — a select with a nested select for the relation.
 
-```ts
-skip: 20
-take: 10
-```
+- **"Implicit Many-to-Many is better for production"** — no. Explicit Many-to-Many (explicit join table) is recommended for production: you can add fields (`assignedAt`, `role`), directly query the join table (`prisma.userRole.findMany()`), and cascade deletion is easier to manage.
 
----
+- **"findUnique is faster than findFirst"** — yes, because `findUnique` translates to `WHERE id = ?` on an indexed field. `findFirst` with the same condition is equivalent but may not be optimized by the Prisma compiler. Use `findUnique` when searching by `@id` or `@unique` fields.
 
-cursor pagination
-
-```ts
-cursor: {
-  id: 100
-}
-```
-
----
-
-Cursor pagination is preferable for large tables.
-
----
-
-# A Common Question
-
-What is better:
-
-```ts
-include
-```
-
-or
-
-multiple separate queries?
-
----
-
-Answer:
-
-It depends on the data volume.
-
-A large include can lead
-to very heavy JOIN queries.
-
----
-
-# Interview Answer
-
-Relations in Prisma are an abstraction over Foreign Keys. Prisma supports One-To-One, One-To-Many, and Many-To-Many relationships and provides a convenient API through include, select, nested writes, connect, and connectOrCreate.
+- **"Cursor pagination is always better than offset"** — cursor is better for large tables and infinite scrolling. But cursor-based pagination does not support jumping to an arbitrary page (you can't go to page 50 without traversing pages 1–49). For numbered page UIs: offset. For infinite scroll/APIs: cursor.

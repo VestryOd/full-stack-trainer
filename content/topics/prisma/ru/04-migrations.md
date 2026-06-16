@@ -1,410 +1,202 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Prisma Migrations
 
-## Что такое миграция
+## Зачем нужны миграции
 
-Migration — это версия изменений структуры базы данных.
-
----
-
-Например:
-
-Было:
-
-```prisma
-model User {
-  id Int @id
-}
-```
-
----
-
-Стало:
-
-```prisma
-model User {
-  id Int @id
-
-  email String
-}
-```
-
----
-
-Необходимо изменить структуру БД.
-
----
-
-# Зачем нужны миграции
-
-Без миграций:
+Миграция — это версионированное изменение схемы БД. Без миграций три окружения (local, staging, production) постепенно расходятся, и выкатка нового кода ломается из-за несоответствия схем. Prisma Migrate хранит историю изменений в папке `prisma/migrations/` под git-контролем: каждое изменение — отдельный SQL-файл с таймстемпом.
 
 ```txt
-локальная база
-стейджинг
-прод
+Workflow:
+  1. Изменить schema.prisma
+  2. npx prisma migrate dev   → сгенерировать migration.sql + применить + regenerate Client
+  3. git add prisma/migrations/  → зафиксировать migration в репозитории
+  4. CI/CD: npx prisma migrate deploy  → применить pending migrations на production
 ```
 
-начнут отличаться.
-
----
-
-Миграции позволяют гарантировать одинаковую схему.
-
----
-
-# Главная идея
-
-Schema
-
-↓
-
-Migration
-
-↓
-
-SQL
-
-↓
-
-Database
-
----
-
-# migrate dev
-
-Основная команда разработки.
-
----
+## Команды Prisma Migrate
 
 ```bash
-npx prisma migrate dev
+# Разработка — создать и применить migration (+ regenerate Client)
+npx prisma migrate dev --name add_user_email
+# → создаёт: prisma/migrations/20240101120000_add_user_email/migration.sql
+# → применяет SQL к dev БД
+# → запускает prisma generate
+
+# Production / CI — применить pending migrations (без генерации, без интерактива)
+npx prisma migrate deploy
+# → читает prisma/migrations/ → находит непримененные → применяет по порядку
+# → НЕ создаёт новых migrations, НЕ изменяет schema.prisma
+
+# Просмотр статуса migrations
+npx prisma migrate status
+# → показывает applied / pending migrations
+
+# Прототипирование — синхронизировать БД со schema.prisma БЕЗ создания migration файла
+npx prisma db push
+# Использовать только локально для PoC — теряет историю изменений!
+
+# Сброс БД (только локально!)
+npx prisma migrate reset
+# → DROP all tables → apply all migrations from scratch → run seed
+# НИКОГДА не запускать на production
+
+# Генерация Client без migration
+npx prisma generate
+# Нужно после любого изменения schema.prisma без migrate dev
 ```
 
----
-
-Что происходит:
-
-1. Prisma читает schema.prisma
-2. Сравнивает с текущим состоянием БД
-3. Генерирует SQL
-4. Создает migration файл
-5. Выполняет migration
-6. Обновляет Prisma Client
-
----
-
-# Пример
-
-Добавили поле:
-
-```prisma
-email String
-```
-
----
-
-Prisma создаст:
-
-```sql
-ALTER TABLE users
-ADD COLUMN email TEXT;
-```
-
----
-
-# Migration Folder
-
-Появится:
+## Структура папки migrations
 
 ```txt
 prisma/
- └─ migrations/
-     └─ 20250101120000_add_email/
+└─ migrations/
+   ├─ 20240101120000_init/
+   │   └─ migration.sql          ← CREATE TABLE statements
+   ├─ 20240115083000_add_email/
+   │   └─ migration.sql          ← ALTER TABLE users ADD COLUMN email TEXT
+   ├─ 20240201140000_add_posts/
+   │   └─ migration.sql          ← CREATE TABLE posts + FK
+   └─ migration_lock.toml        ← провайдер БД (не менять вручную)
 ```
-
----
-
-Внутри:
 
 ```sql
-migration.sql
+-- Пример migration.sql
+-- 20240115083000_add_email/migration.sql
+
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN "email" TEXT;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 ```
 
----
+## Shadow Database — зачем нужна
 
-# Почему это хорошо
+```txt
+Shadow Database — временная БД, которую Prisma создаёт при migrate dev:
 
-SQL остается под контролем.
+1. Prisma применяет ВСЕ существующие migrations на Shadow DB
+2. Применяет текущий state schema.prisma на Shadow DB
+3. Сравнивает разницу → генерирует новую migration.sql
+4. Удаляет Shadow DB
 
----
+Зачем: чтобы сгенерировать ТОЧНЫЙ SQL diff.
+Без Shadow DB: Prisma не знает текущее реальное состояние БД
+(вдруг там есть изменения сделанные вручную?).
 
-Можно посмотреть:
+Настройка (обязательно для managed DB типа Supabase/PlanetScale):
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // отдельная dev БД
+}
+```
+
+## CI/CD pipeline с Prisma
+
+```yaml
+# .github/workflows/deploy.yml
+jobs:
+  deploy:
+    steps:
+      - name: Build
+        run: npm run build
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Start server
+        run: npm start
+```
+
+```txt
+Важно: порядок обязателен
+  1. migrate deploy — ПЕРЕД стартом нового кода
+  2. Новый код должен быть обратно совместим со СТАРОЙ схемой
+     (в момент раскатки работают два экземпляра: старый и новый код)
+
+Безопасная добавка колонки:
+  Migration 1: ALTER TABLE ADD COLUMN name TEXT  (nullable — не ломает старый код)
+  Deploy новый код (заполняет name)
+  Migration 2: ALTER TABLE ALTER COLUMN name SET NOT NULL  (когда все записи заполнены)
+```
+
+## Опасные миграции — что проверять перед deploy
 
 ```sql
-ALTER TABLE ...
+-- ОПАСНО: блокирует таблицу на всё время операции
+ALTER TABLE users ADD COLUMN age INT NOT NULL DEFAULT 0;
+-- На таблице 10M строк — блокировка на минуты
+
+-- БЕЗОПАСНО: добавить nullable сначала, потом заполнить, потом NOT NULL
+ALTER TABLE users ADD COLUMN age INT;  -- migration 1: nullable, мгновенно
+-- (background job: UPDATE users SET age = 0 WHERE age IS NULL)
+ALTER TABLE users ALTER COLUMN age SET NOT NULL;  -- migration 2: после заполнения
+
+-- ОПАСНО: переименование поля — сломает работающий код
+ALTER TABLE users RENAME COLUMN email TO email_address;
+-- Правильно: добавить новую колонку → скопировать данные → убрать старую (3 migration)
+
+-- ОПАСНО: DROP COLUMN с данными
+ALTER TABLE users DROP COLUMN metadata;
+-- Всегда проверять что колонка не используется в коде ДО migration
 ```
 
----
+## Seeding — тестовые данные
 
-И понять что реально изменится.
+```typescript
+// prisma/seed.ts
+import { PrismaClient } from '@prisma/client';
 
----
+const prisma = new PrismaClient();
 
-# migrate deploy
+async function main() {
+  // upsert вместо create — можно запускать несколько раз
+  await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {},
+    create: {
+      email: 'admin@example.com',
+      name: 'Admin',
+      role: 'ADMIN',
+    },
+  });
 
-Production команда.
+  await prisma.user.createMany({
+    data: Array.from({ length: 10 }, (_, i) => ({
+      email: `user${i}@example.com`,
+      name: `User ${i}`,
+    })),
+    skipDuplicates: true,
+  });
+}
 
----
+main().finally(() => prisma.$disconnect());
+```
+
+```json
+// package.json
+{
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}
+```
 
 ```bash
-npx prisma migrate deploy
+npx prisma db seed          # запустить seed вручную
+npx prisma migrate reset    # сброс + seed автоматически
 ```
 
----
+## Типичные ошибки на интервью
 
-Используется на:
+- **"migrate dev можно использовать в production"** — нет. `migrate dev` создаёт Shadow DB, генерирует новые migrations, интерактивный режим. Для production: `migrate deploy` — только применяет pending migrations, не создаёт новых. В CI/CD всегда `migrate deploy`.
 
-```txt
-CI/CD
-Production
-Docker
-```
+- **"Можно удалить migration файл если передумали"** — нельзя если migration уже применена на staging/production. Удаление нарушает историю. Правильный путь: создать новую migration которая отменяет изменения (reverse migration). Если migration ещё не применена нигде — можно удалить файл и `prisma migrate dev` пересоздаст.
 
----
+- **"db push делает то же самое что migrate dev"** — нет. `db push` напрямую изменяет БД без создания migration файла. Нет истории, нельзя воспроизвести на другом окружении, не отслеживается в git. Использовать только для быстрого прототипирования локально.
 
-# Важно
+- **"NOT NULL колонку можно добавить за один шаг"** — опасно на больших таблицах. `ADD COLUMN name TEXT NOT NULL DEFAULT 'value'` → PostgreSQL блокирует таблицу для перезаписи всех строк. Правило: добавить nullable → заполнить данными → сделать NOT NULL. Три отдельных migration с деплоями между ними.
 
-На production обычно НЕ используют:
-
-```bash
-migrate dev
-```
-
----
-
-Только:
-
-```bash
-migrate deploy
-```
-
----
-
-# db push
-
-Очень любят спрашивать.
-
----
-
-```bash
-npx prisma db push
-```
-
----
-
-Отличие:
-
-```txt
-изменяет БД
-НО
-не создает migration
-```
-
----
-
-Полезно для:
-
-```txt
-прототипов
-локальной разработки
-PoC
-```
-
----
-
-Не рекомендуется для production.
-
----
-
-# migrate reset
-
-Полностью пересоздает БД.
-
----
-
-```bash
-npx prisma migrate reset
-```
-
----
-
-Делает:
-
-```txt
-DROP DATABASE
-CREATE DATABASE
-apply migrations
-run seed
-```
-
----
-
-Используется только локально.
-
----
-
-# Shadow Database
-
-Очень популярный senior вопрос.
-
----
-
-Prisma использует временную БД
-для проверки миграций.
-
----
-
-Называется:
-
-```txt
-Shadow Database
-```
-
----
-
-Она нужна чтобы:
-
-```txt
-проверить migration history
-выявить конфликты
-оценить diff
-```
-
----
-
-# Почему Shadow DB важна
-
-Без нее можно случайно
-сгенерировать некорректную миграцию.
-
----
-
-# Что происходит в CI/CD
-
-Обычно:
-
-```bash
-npm run build
-
-npx prisma migrate deploy
-
-npm start
-```
-
----
-
-# Что делать если migration упала в production
-
-Очень популярный вопрос.
-
----
-
-Нельзя:
-
-```txt
-удалять migration руками
-```
-
----
-
-Правильно:
-
-1. исправить проблему
-2. создать новую migration
-3. применить новую migration
-
----
-
-# Seed
-
-Prisma поддерживает заполнение тестовыми данными.
-
----
-
-Пример:
-
-```bash
-npx prisma db seed
-```
-
----
-
-Используется для:
-
-```txt
-users
-roles
-permissions
-demo data
-```
-
----
-
-# Migration Best Practices
-
-Не удалять старые migration.
-
----
-
-Каждая migration должна быть:
-
-```txt
-маленькой
-понятной
-атомарной
-```
-
----
-
-Проверять generated SQL.
-
----
-
-Особенно если:
-
-```txt
-DROP COLUMN
-DROP TABLE
-ALTER TYPE
-```
-
----
-
-# Частый вопрос
-
-Что является source of truth?
-
----
-
-Ответ:
-
-```txt
-schema.prisma
-```
-
----
-
-Не база данных.
-
-Не migration folder.
-
----
-
-Именно schema.prisma.
-
----
-
-# Interview Answer
-
-Prisma Migrate — это система управления версиями схемы базы данных. Изменения описываются в schema.prisma, после чего Prisma генерирует SQL миграции, которые могут быть применены локально через migrate dev и в production через migrate deploy.
+- **"schema.prisma — это не настоящий source of truth, БД важнее"** — нет. В Prisma: schema.prisma — source of truth. migrations — история изменений schema. БД — результат применения migrations. Если БД и schema расходятся (ручные изменения в БД) — `prisma migrate dev` это обнаружит и попросит разрешить конфликт.

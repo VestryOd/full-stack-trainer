@@ -1,373 +1,177 @@
 # Prisma Schema and Models
 
-## The Main Prisma File
+## schema.prisma structure
 
-The entire project revolves around:
-
-```txt
-schema.prisma
-```
-
----
-
-# Structure of schema.prisma
-
-Usually consists of:
+`schema.prisma` is the single source of truth for the database structure in a Prisma project. It consists of three blocks: datasource (DB connection), generator (what to generate), and model (table definitions).
 
 ```prisma
-datasource db {}
+// schema.prisma — full structure
 
-generator client {}
+generator client {
+  provider = "prisma-client-js"
+  // output = "../src/generated/client" // optional custom output path
+}
 
-model User {}
-```
-
----
-
-# Datasource
-
-Describes the database connection.
-
-Example:
-
-```prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // required for migrate dev against a prod DB
 }
-```
 
----
-
-# Generator
-
-Generates the Prisma Client.
-
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
-```
-
----
-
-# Model
-
-Describes a table.
-
-Example:
-
-```prisma
-model User {
-  id    Int
-  email String
-}
-```
-
----
-
-# How Prisma Converts a Model into a Table
-
-Model:
-
-```prisma
-model User {
-  id    Int    @id
-  email String
-}
-```
-
----
-
-Becomes approximately:
-
-```sql
-CREATE TABLE users (
-  id INTEGER PRIMARY KEY,
-  email TEXT NOT NULL
-);
-```
-
----
-
-# Core Types
-
-## String
-
-```prisma
-name String
-```
-
----
-
-## Int
-
-```prisma
-age Int
-```
-
----
-
-## Boolean
-
-```prisma
-active Boolean
-```
-
----
-
-## DateTime
-
-```prisma
-createdAt DateTime
-```
-
----
-
-## Float
-
-```prisma
-price Float
-```
-
----
-
-## Json
-
-```prisma
-settings Json
-```
-
----
-
-# Nullable Fields
-
-Denoted with:
-
-```prisma
-String?
-```
-
----
-
-Example:
-
-```prisma
-middleName String?
-```
-
----
-
-SQL equivalent:
-
-```sql
-NULL
-```
-
----
-
-# Primary Key
-
-```prisma
-id Int @id
-```
-
----
-
-# Auto Increment
-
-```prisma
-id Int @id @default(autoincrement())
-```
-
----
-
-SQL:
-
-```sql
-SERIAL
-```
-
----
-
-# UUID
-
-Very popular.
-
-```prisma
-id String @id @default(uuid())
-```
-
----
-
-# Unique
-
-```prisma
-email String @unique
-```
-
----
-
-SQL:
-
-```sql
-UNIQUE(email)
-```
-
----
-
-# Default
-
-```prisma
-createdAt DateTime @default(now())
-```
-
----
-
-# UpdatedAt
-
-A very popular feature.
-
-```prisma
-updatedAt DateTime @updatedAt
-```
-
----
-
-Prisma updates this field automatically.
-
----
-
-# Enum
-
-Example:
-
-```prisma
+// Enum — a type shared by multiple models
 enum UserRole {
   ADMIN
-  USER
+  EDITOR
+  VIEWER
 }
-```
 
----
-
-Usage:
-
-```prisma
-role UserRole
-```
-
----
-
-# Indexes
-
-Simple index:
-
-```prisma
-@@index([email])
-```
-
----
-
-Composite index:
-
-```prisma
-@@index([email, createdAt])
-```
-
----
-
-Unique composite index:
-
-```prisma
-@@unique([userId, roleId])
-```
-
----
-
-# Mapping
-
-Sometimes the model name differs from the table name.
-
----
-
-For example:
-
-```prisma
 model User {
-  id Int @id
-  @@map("users")
-}
-```
-
----
-
-# Fields Can Be Renamed Too
-
-```prisma
-email String @map("email_address")
-```
-
----
-
-# Complete Model
-
-```prisma
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
+  id        String   @id @default(uuid())         // UUID primary key
+  email     String   @unique                        // UNIQUE constraint
+  name      String?                                 // nullable (NULL in SQL)
+  role      UserRole @default(VIEWER)
   isActive  Boolean  @default(true)
+  score     Decimal  @default(0) @db.Decimal(10, 2) // precise decimal for money
+  metadata  Json?                                   // JSON field (PostgreSQL jsonb)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt                     // Prisma updates automatically
 
-  @@index([email])
+  posts     Post[]   // one-to-many: a User has many Posts
+  profile   Profile? // one-to-one: a User has one Profile (optional)
+
+  @@index([email, createdAt])                      // composite index
+  @@map("users")                                   // table name in DB (default = "User")
 }
 ```
 
----
-
-# What Happens After Changing the Schema
-
-We change:
+## Data types and their SQL equivalents
 
 ```prisma
-name String?
+// Prisma types → PostgreSQL types
+String    → TEXT (or VARCHAR with @db.VarChar(255))
+Int       → INTEGER
+BigInt    → BIGINT
+Float     → DOUBLE PRECISION
+Decimal   → DECIMAL / NUMERIC — use for money, not Float!
+Boolean   → BOOLEAN
+DateTime  → TIMESTAMP WITH TIME ZONE
+Json      → JSONB (PostgreSQL) / JSON (MySQL)
+Bytes     → BYTEA — for binary data
+String[]  → TEXT[] — arrays (PostgreSQL only)
+
+// @db modifiers — narrow the DB-level type
+email  String @db.VarChar(255)    // limit length
+price  Decimal @db.Decimal(10, 2) // 10 digits, 2 decimal places
+bio    String @db.Text            // explicit TEXT (not VARCHAR)
 ```
 
----
+## Field attributes
 
-Run:
+```prisma
+model Product {
+  // Primary Keys
+  id     Int    @id @default(autoincrement())  // SERIAL / INTEGER
+  uuid   String @id @default(uuid())           // UUID v4
+  cuid   String @id @default(cuid())           // CUID — collision-resistant ID
 
-```bash
-npx prisma migrate dev
+  // Constraints
+  sku    String @unique
+  email  String @unique
+
+  // Defaults
+  status String @default("active")
+  count  Int    @default(0)
+  flag   Boolean @default(false)
+  createdAt DateTime @default(now())           // NOW() in SQL
+  updatedAt DateTime @updatedAt                // update trigger
+
+  // Mapping
+  productName String @map("product_name")      // camelCase in TS, snake_case in DB
+}
 ```
 
----
+## Composite constraints at the model level
 
-Prisma:
+```prisma
+model OrderItem {
+  orderId   Int
+  productId Int
+  quantity  Int
 
-1. Compares the schema
-2. Generates SQL
-3. Creates a migration
-4. Applies changes
-5. Generates a new Prisma Client
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
----
+  @@id([orderId, productId])       // composite Primary Key (many-to-many join table)
+  @@unique([orderId, productId])   // composite UNIQUE (alternative to @@id)
+  @@index([productId])             // index on foreign key (important for performance)
+  @@map("order_items")
+}
+```
 
-# A Common Question
+## Indexes — when and why
 
-What is the source of truth?
+```prisma
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique             // automatically creates an index
+  authorId  Int
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
 
-Answer:
+  // Explicit indexes — for fields used in WHERE/ORDER BY
+  @@index([authorId])                          // always index FK fields
+  @@index([status, createdAt(sort: Desc)])     // composite with sort direction
+}
+```
 
-schema.prisma.
+```txt
+Rule: always index:
+  ✓ Foreign key fields (authorId, userId, orderId)
+  ✓ Fields in frequent WHERE conditions (status, type, isActive)
+  ✓ Fields in ORDER BY when other WHERE conditions are already present
+  ✗ Do NOT index low-cardinality boolean fields (isActive = true/false)
+     → the query planner often ignores such an index and does a seq scan
+```
 
-The schema is considered the primary description of the data structure.
+## Enum — when to prefer String
 
----
+```prisma
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
 
-# Short Interview Answer
+model Order {
+  id     Int         @id @default(autoincrement())
+  status OrderStatus @default(PENDING)
+}
+```
 
-schema.prisma is the central Prisma file. It describes models, relations, datasource, and client generation settings. Based on schema.prisma, Prisma creates migrations and generates a fully typed Prisma Client.
+```typescript
+// TypeScript: Prisma exports the enum as an object
+import { OrderStatus } from '@prisma/client';
+
+const orders = await prisma.order.findMany({
+  where: { status: OrderStatus.PENDING },
+});
+
+// But: PostgreSQL Enum is hard to change in migrations (can't remove a value)
+// Alternative: String + @db.VarChar(50) — more flexible when values change frequently
+```
+
+## Common interview mistakes
+
+- **"Prisma automatically uses any table name"** — no. By default: model `User` → table `"User"` (quoted, case-sensitive in PostgreSQL). For `snake_case`: always add `@@map("users")`. Without `@@map` on PostgreSQL, errors can occur when someone creates a table without quotes.
+
+- **"Float is fine for prices"** — no. `Float` is IEEE 754 floating point and introduces rounding errors: `0.1 + 0.2 = 0.30000000000000004`. For money: `Decimal @db.Decimal(10, 2)` in the schema + `Decimal.js`, or store amounts in cents as `Int`. Never use Float for financial calculations.
+
+- **"@updatedAt always updates automatically"** — it updates on any Prisma `update` operation, but NOT on `$executeRaw`. If you update via raw SQL, `updatedAt` will not be updated. Also: `@updatedAt` is set on the Prisma Client side, not via a DB trigger.
+
+- **"Indexing every field speeds up queries"** — no. Indexes slow down INSERT/UPDATE (the index structure must be updated). Excessive indexes: waste space, slow down writes, and may be ignored by the query planner. Only index fields that appear in real `WHERE`/`JOIN`/`ORDER BY` queries.
+
+- **"UUID is always better than autoincrement"** — it depends. UUID: no predictable sequence (safer for public APIs), can be generated client-side, convenient for merging data from multiple DBs. Autoincrement: more compact (4 bytes vs 16), better locality for B-tree indexes (new rows at the end). For internal IDs + JOINs: `autoincrement`. For public resources: `uuid`.

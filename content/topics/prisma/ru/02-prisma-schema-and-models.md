@@ -1,374 +1,182 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Prisma Schema and Models
 
-## Главный файл Prisma
+## Структура schema.prisma
 
-Весь проект строится вокруг:
-
-```txt
-schema.prisma
-```
-
----
-
-# Структура schema.prisma
-
-Обычно состоит из:
+`schema.prisma` — единственный source of truth для структуры БД в Prisma-проекте. Состоит из трёх блоков: datasource (подключение к БД), generator (что генерировать), model (определения таблиц).
 
 ```prisma
-datasource db {}
+// schema.prisma — полная структура
 
-generator client {}
+generator client {
+  provider = "prisma-client-js"
+  // output = "../src/generated/client" // можно указать кастомный путь
+}
 
-model User {}
-```
-
----
-
-# Datasource
-
-Описывает подключение к базе.
-
-Пример:
-
-```prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // нужен для migrate dev на prod БД
 }
-```
 
----
-
-# Generator
-
-Генерирует Prisma Client.
-
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
-```
-
----
-
-# Model
-
-Описывает таблицу.
-
-Пример:
-
-```prisma
-model User {
-  id    Int
-  email String
-}
-```
-
----
-
-# Как Prisma превращает модель в таблицу
-
-Модель:
-
-```prisma
-model User {
-  id    Int    @id
-  email String
-}
-```
-
----
-
-Превращается примерно в:
-
-```sql
-CREATE TABLE users (
-  id INTEGER PRIMARY KEY,
-  email TEXT NOT NULL
-);
-```
-
----
-
-# Основные типы
-
-## String
-
-```prisma
-name String
-```
-
----
-
-## Int
-
-```prisma
-age Int
-```
-
----
-
-## Boolean
-
-```prisma
-active Boolean
-```
-
----
-
-## DateTime
-
-```prisma
-createdAt DateTime
-```
-
----
-
-## Float
-
-```prisma
-price Float
-```
-
----
-
-## Json
-
-```prisma
-settings Json
-```
-
----
-
-# Nullable поля
-
-Обозначаются через:
-
-```prisma
-String?
-```
-
----
-
-Пример:
-
-```prisma
-middleName String?
-```
-
----
-
-SQL аналог:
-
-```sql
-NULL
-```
-
----
-
-# Primary Key
-
-```prisma
-id Int @id
-```
-
----
-
-# Auto Increment
-
-```prisma
-id Int @id @default(autoincrement())
-```
-
----
-
-SQL:
-
-```sql
-SERIAL
-```
-
----
-
-# UUID
-
-Очень популярно.
-
-```prisma
-id String @id @default(uuid())
-```
-
----
-
-# Unique
-
-```prisma
-email String @unique
-```
-
----
-
-SQL:
-
-```sql
-UNIQUE(email)
-```
-
----
-
-# Default
-
-```prisma
-createdAt DateTime @default(now())
-```
-
----
-
-# UpdatedAt
-
-Очень популярная штука.
-
-```prisma
-updatedAt DateTime @updatedAt
-```
-
----
-
-Prisma обновляет поле автоматически.
-
----
-
-# Enum
-
-Пример:
-
-```prisma
+// Enum — тип, общий для нескольких моделей
 enum UserRole {
   ADMIN
-  USER
+  EDITOR
+  VIEWER
 }
-```
 
----
-
-Использование:
-
-```prisma
-role UserRole
-```
-
----
-
-# Индексы
-
-Простой индекс:
-
-```prisma
-@@index([email])
-```
-
----
-
-Составной индекс:
-
-```prisma
-@@index([email, createdAt])
-```
-
----
-
-Уникальный составной индекс:
-
-```prisma
-@@unique([userId, roleId])
-```
-
----
-
-# Mapping
-
-Иногда имя модели отличается от имени таблицы.
-
----
-
-Например:
-
-```prisma
 model User {
-  id Int @id
-  @@map("users")
-}
-```
-
----
-
-# Поле тоже можно переименовать
-
-```prisma
-email String @map("email_address")
-```
-
----
-
-# Полная модель
-
-```prisma
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
+  id        String   @id @default(uuid())         // UUID primary key
+  email     String   @unique                        // UNIQUE constraint
+  name      String?                                 // nullable (NULL в SQL)
+  role      UserRole @default(VIEWER)
   isActive  Boolean  @default(true)
+  score     Decimal  @default(0) @db.Decimal(10, 2) // точный decimal для денег
+  metadata  Json?                                   // JSON поле (PostgreSQL jsonb)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt                     // Prisma обновляет автоматически
 
-  @@index([email])
+  posts     Post[]   // one-to-many: у User много Post
+  profile   Profile? // one-to-one: у User один Profile (опционально)
+
+  @@index([email, createdAt])                      // составной индекс
+  @@map("users")                                   // имя таблицы в БД (по умолчанию = "User")
 }
 ```
 
----
-
-# Что происходит после изменения схемы
-
-Изменяем:
+## Типы данных и их SQL-аналоги
 
 ```prisma
-name String?
+// Prisma types → PostgreSQL types
+String    → TEXT (или VARCHAR с @db.VarChar(255))
+Int       → INTEGER
+BigInt    → BIGINT
+Float     → DOUBLE PRECISION
+Decimal   → DECIMAL / NUMERIC — используй для денег, не Float!
+Boolean   → BOOLEAN
+DateTime  → TIMESTAMP WITH TIME ZONE
+Json      → JSONB (PostgreSQL) / JSON (MySQL)
+Bytes     → BYTEA — для бинарных данных
+String[]  → TEXT[] — массивы (только PostgreSQL)
+
+// @db модификаторы — уточнить тип на уровне БД
+email  String @db.VarChar(255)  // ограничить длину
+price  Decimal @db.Decimal(10, 2) // 10 цифр, 2 после запятой
+bio    String @db.Text           // явно TEXT (не VARCHAR)
 ```
 
----
+## Атрибуты полей
 
-Запускаем:
+```prisma
+model Product {
+  // Primary Keys
+  id     Int    @id @default(autoincrement())  // SERIAL / INTEGER
+  uuid   String @id @default(uuid())           // UUID v4
+  cuid   String @id @default(cuid())           // CUID — collision-resistant ID
 
-```bash
-npx prisma migrate dev
+  // Constraints
+  sku    String @unique                         // UNIQUE
+  email  String @unique
+
+  // Defaults
+  status String @default("active")             // строковый default
+  count  Int    @default(0)
+  flag   Boolean @default(false)
+  createdAt DateTime @default(now())           // NOW() в SQL
+  updatedAt DateTime @updatedAt                // триггер обновления
+
+  // Mapping
+  productName String @map("product_name")      // camelCase в TS, snake_case в БД
+  
+  // Ignore field in migrations (вычисляемые поля)
+  // computedField String? @ignore — не создаёт колонку в БД
+}
 ```
 
----
+## Составные ограничения на уровне модели
 
-Prisma:
+```prisma
+model OrderItem {
+  orderId   Int
+  productId Int
+  quantity  Int
 
-1. Сравнивает схему
-2. Генерирует SQL
-3. Создает migration
-4. Применяет изменения
-5. Генерирует новый Prisma Client
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
----
+  @@id([orderId, productId])       // составной Primary Key (many-to-many join table)
+  @@unique([orderId, productId])   // составной UNIQUE (альтернатива @@id)
+  @@index([productId])             // индекс для foreign key (важно для производительности)
+  @@map("order_items")
+}
+```
 
-# Частый вопрос
+## Индексы — когда и зачем
 
-Что является source of truth?
+```prisma
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique             // автоматически создаёт индекс
+  authorId  Int
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
 
-Ответ:
+  // Явные индексы — для полей в WHERE/ORDER BY
+  @@index([authorId])                   // FK всегда индексировать
+  @@index([status, createdAt(sort: Desc)]) // составной с сортировкой
+  // Для full-text search:
+  // @@index([title], type: BrinIndex)  // PostgreSQL BRIN для временных серий
+}
+```
 
-schema.prisma.
+```txt
+Правило: всегда индексировать:
+  ✓ Foreign key поля (authorId, userId, orderId)
+  ✓ Поля в частых WHERE условиях (status, type, isActive)
+  ✓ Поля в ORDER BY если в WHERE уже есть другие условия
+  ✗ НЕ индексировать boolean поля с низкой кардинальностью (isActive = true/false)
+     → планировщик часто игнорирует такой индекс и делает seq scan
+```
 
-Именно схема считается основным описанием структуры данных.
+## Enum — когда лучше String
 
----
+```prisma
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
 
-# Краткий ответ для интервью
+model Order {
+  id     Int         @id @default(autoincrement())
+  status OrderStatus @default(PENDING)
+}
+```
 
-Schema.prisma — центральный файл Prisma. В нем описываются модели, связи, datasource и настройки генерации клиента. На основе schema.prisma Prisma создает миграции и генерирует полностью типизированный Prisma Client.
+```typescript
+// TypeScript: Prisma импортирует enum как object
+import { OrderStatus } from '@prisma/client';
+
+const orders = await prisma.order.findMany({
+  where: { status: OrderStatus.PENDING },
+});
+
+// Но: PostgreSQL Enum сложно менять в migration (нельзя удалить значение)
+// Альтернатива: String + @db.VarChar(50) — более гибко при частых изменениях
+```
+
+## Типичные ошибки на интервью
+
+- **"Prisma работает с любым именем таблицы автоматически"** — нет. По умолчанию: model `User` → таблица `"User"` (с кавычками, чувствительна к регистру в PostgreSQL). Для `snake_case`: всегда добавлять `@@map("users")`. Без `@@map` на PostgreSQL возможны ошибки если кто-то создаёт таблицу без кавычек.
+
+- **"Float подходит для цен"** — нет. `Float` — IEEE 754 floating point, даёт ошибки округления: `0.1 + 0.2 = 0.30000000000000004`. Для денег: `Decimal @db.Decimal(10, 2)` в schema + `Decimal.js` или хранить в копейках как `Int`. Никогда не использовать Float для финансовых расчётов.
+
+- **"@updatedAt обновляется автоматически всегда"** — обновляется при любой Prisma update операции, но НЕ при `$executeRaw`. Если обновлять через raw SQL — `updatedAt` не обновится. Также: `@updatedAt` устанавливается на стороне Prisma Client, не через триггер в БД.
+
+- **"Индекс на каждое поле ускоряет запросы"** — нет. Индексы замедляют INSERT/UPDATE (нужно обновить индексную структуру). Избыточные индексы: занимают место, замедляют запись, могут не использоваться планировщиком. Индексировать только поля в реальных `WHERE`/`JOIN`/`ORDER BY` запросах.
+
+- **"UUID лучше autoincrement всегда"** — зависит от задачи. UUID: нет предсказуемой последовательности (безопаснее для публичных API), можно генерировать на клиенте, удобно для merge данных из нескольких БД. Autoincrement: компактнее (4 байта vs 16), лучше locality для B-tree индексов (новые записи в конец). Для внутренних ID + JOIN: `autoincrement`. Для публичных ресурсов: `uuid`.
