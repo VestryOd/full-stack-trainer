@@ -1,283 +1,127 @@
 # Headless CMS and Strapi
 
-## What is a CMS
+## What is a Headless CMS
 
-CMS (Content Management System) —
-a system for managing content.
+Traditional CMSes (WordPress, Drupal) bundle the backend and frontend into a single application: content is stored in a DB, rendering happens on the server via PHP templates. The frontend is tightly coupled to the CMS.
 
----
-
-Classic examples:
+A headless CMS removes the "head" — the presentation layer. Only Content Management + API remains. The frontend (React, Next.js, mobile app) decides for itself how to display the data.
 
 ```txt
-WordPress
-Drupal
-Joomla
+Traditional CMS:                    Headless CMS (Strapi):
+──────────────────                  ──────────────────────────────────
+Editor                              Editor
+  ↓                                   ↓
+WordPress/Drupal                    Strapi Admin
+  ↓                                   ↓
+PHP Templates                       REST API / GraphQL
+  ↓                                   ↓
+HTML → Browser                      React / Next.js / Mobile / TV App
+                                    (each client renders on its own)
 ```
 
----
+## What is Strapi
 
-A CMS typically contains:
+Strapi is an open-source headless CMS built on Node.js (Koa.js under the hood). The developer describes data models (Content Types), and Strapi automatically generates:
+
+- REST API and GraphQL API
+- Admin Panel for content management
+- RBAC (Role-Based Access Control)
+- Media upload (S3, Cloudinary)
+- Webhooks
 
 ```txt
-Database
-Admin Panel
-Templates
-Frontend
+Strapi stack:
+  Node.js + Koa.js              — HTTP server
+  @strapi/database              — ORM (SQLite / PostgreSQL / MySQL)
+  Admin Panel (React)           — embedded frontend for editors
+  Content-Type Builder          — GUI for creating schemas (dev mode only)
+  Plugin system                 — extensibility (i18n, GraphQL, email, ...)
 ```
 
----
+## REST API out of the box
 
-Diagram:
+```typescript
+// After creating a "Article" Content Type, Strapi generates:
+// GET    /api/articles                — list articles
+// GET    /api/articles/:id            — one article
+// POST   /api/articles                — create
+// PUT    /api/articles/:id            — update
+// DELETE /api/articles/:id            — delete
+
+// Request with filtering, sorting, pagination, populate:
+// GET /api/articles?
+//   filters[category][name][$eq]=Tech&
+//   sort[0]=publishedAt:desc&
+//   pagination[page]=1&
+//   pagination[pageSize]=10&
+//   populate[author][fields][0]=name&
+//   populate[author][fields][1]=avatar
+
+// Response:
+{
+  "data": [
+    {
+      "id": 1,
+      "attributes": {
+        "title": "Getting Started with Strapi",
+        "publishedAt": "2024-01-15T10:00:00.000Z",
+        "author": {
+          "data": {
+            "id": 5,
+            "attributes": { "name": "Alice", "avatar": "..." }
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "pagination": { "page": 1, "pageSize": 10, "total": 42, "pageCount": 5 }
+  }
+}
+```
+
+## Strapi vs traditional NestJS/Express
 
 ```txt
-Editor
- ↓
-CMS
- ↓
-HTML
- ↓
-Browser
+Criterion             Strapi                        NestJS/Express
+──────────────────────────────────────────────────────────────────────
+Time-to-first-API     Minutes (GUI builder)         Hours/days (manual code)
+Customization         Limited to plugins            Full freedom
+Business logic        Via hooks/custom routes       No restrictions
+Scalability           Medium (monolith)             High (microservices)
+Admin Panel           Built-in                      Must be built
+RBAC                  Built-in                      Must be built
+Good for              CMS, marketing, catalogs      Any complex logic
+Not good for          High-load, complex domain     Simple CMS (overkill)
 ```
 
----
-
-# The Problem with Classic CMSs
-
-The frontend is tightly coupled to the backend.
-
----
-
-For example:
+## When to choose Strapi
 
 ```txt
-WordPress
- ↓
-PHP Templates
- ↓
-HTML
+Strapi — a good choice:
+  ✓ Marketing site / corporate website
+  ✓ Blog, news portal
+  ✓ E-commerce catalog (not payment logic)
+  ✓ Mobile app backend with simple CRUD operations
+  ✓ MVP where you need an API quickly
+  ✓ Team includes non-developer editors
+
+Strapi — a bad choice:
+  ✗ Complex business logic (trading, banking, ERP)
+  ✗ High-load (>10k req/sec — Strapi doesn't scale horizontally easily)
+  ✗ Microservices (Strapi is a monolith)
+  ✗ Need full control over the DB schema
+  ✗ Non-standard authorization
 ```
 
----
+## Common interview mistakes
 
-Hard to use with:
+- **"Strapi replaces NestJS"** — no. Strapi is a CMS for content management. NestJS is a framework for building any Node.js application. Strapi uses Koa internally and is not an alternative to NestJS/Express for complex business logic.
 
-```txt
-React
-Next.js
-Mobile Apps
-IoT
-```
+- **"Headless CMS has no admin panel"** — no. "Headless" means there is no public frontend (presentation layer). An Admin Panel for editors is there. Strapi includes a full React-based admin UI. "Headless" = no templating for end users.
 
----
+- **"Strapi only works with REST"** — no. Strapi supports GraphQL via the official `@strapi/plugin-graphql` plugin. After installing the plugin, queries, mutations, and subscriptions are automatically generated for all Content Types.
 
-# What is a Headless CMS
+- **"Content Types in Strapi can be created in production"** — no. The Content-Type Builder is only available in development mode. In production, schema changes are made via code (schema files in `src/api/`) and deployed like normal code. This is critically important for production stability.
 
-Headless CMS removes the frontend.
-
----
-
-Only the following remains:
-
-```txt
-Content Management
-+
-API
-```
-
----
-
-Diagram:
-
-```txt
-Editor
- ↓
-Strapi
- ↓
-API
- ↓
-React
-Mobile
-Next.js
-TV App
-```
-
----
-
-# Why It's Called Headless
-
-Because the following is absent:
-
-```txt
-Head
-=
-Presentation Layer
-```
-
----
-
-Only this remains:
-
-```txt
-Body
-=
-Content Backend
-```
-
----
-
-# Example
-
-Content:
-
-```txt
-Article
-```
-
----
-
-An editor changes an article via the admin panel.
-
----
-
-Strapi saves it to:
-
-```txt
-Database
-```
-
----
-
-The frontend fetches it via:
-
-```http
-GET /api/articles
-```
-
----
-
-# What is Strapi
-
-Strapi is an open-source headless CMS
-written in Node.js.
-
----
-
-Under the hood:
-
-```txt
-Node.js
-Koa
-Database Layer
-Admin Panel
-REST API
-GraphQL API
-```
-
----
-
-# The Main Idea of Strapi
-
-A developer describes models.
-
----
-
-For example:
-
-```txt
-Article
-Category
-Author
-```
-
----
-
-Strapi automatically creates:
-
-```txt
-Database Schema
-Admin UI
-REST API
-GraphQL API
-Permissions
-```
-
----
-
-# Why Strapi is Popular
-
-Very fast to get started.
-
----
-
-Without writing code you get:
-
-```txt
-CRUD
-Admin Panel
-RBAC
-Media Upload
-API
-```
-
----
-
-# When Strapi is a Good Fit
-
-- marketing websites
-- corporate websites
-- blogs
-- catalogs
-- e-commerce CMS
-- mobile backend
-
----
-
-# When Strapi May Not Be a Good Fit
-
-Very complex business logic.
-
----
-
-For example:
-
-```txt
-Banking
-Trading
-ERP
-High-load systems
-```
-
----
-
-In those cases, the following are more common:
-
-```txt
-NestJS
-Spring
-ASP.NET
-```
-
----
-
-# Headless CMS vs Traditional CMS
-
-Traditional CMS:
-
-```txt
-Backend + Frontend
-```
-
----
-
-Headless CMS:
-
-```txt
-Backend only
-```
-
----
-
-# Interview Answer
-
-A Headless CMS is a CMS that is only responsible for storing and managing content and provides an API to retrieve it. Unlike classic CMSs, the frontend is completely separated from the backend. Strapi is a popular headless CMS built on Node.js that automatically generates an API and an admin panel based on data models.
+- **"Strapi v4 and v5 are the same thing"** — no. Strapi v5 (2024) is a major breaking change: new Document Service API instead of Entity Service, new query engine, improved typing. API responses have a different structure (nested `attributes` have been removed). Always clarify the version when discussing the API structure.

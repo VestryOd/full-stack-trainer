@@ -1,420 +1,200 @@
 # Routes, Controllers and Services
 
-## Very Important Understanding
+## Auto-generation vs customization
 
-Strapi doesn't just store data.
+When a Content Type is created, Strapi automatically creates a Route, Controller, and Service with full CRUD. Customization is needed when the standard CRUD is not enough: custom endpoints, aggregation, external APIs, complex business logic.
 
----
+```typescript
+// Auto-generated Route (src/api/article/routes/article.ts):
+import { factories } from '@strapi/strapi';
 
-Under the hood it is a full-featured backend framework.
+export default factories.createCoreRouter('api::article.article');
+// Generates:
+// GET    /api/articles
+// GET    /api/articles/:id
+// POST   /api/articles
+// PUT    /api/articles/:id
+// DELETE /api/articles/:id
 
----
+// Auto-generated Controller:
+export default factories.createCoreController('api::article.article');
 
-It has:
-
-```txt
-Routes
-Controllers
-Services
-Policies
-Middlewares
+// Auto-generated Service:
+export default factories.createCoreService('api::article.article');
 ```
 
----
+## Custom Controller — extending the standard one
 
-Practically like NestJS.
+```typescript
+// src/api/article/controllers/article.ts
+import { factories } from '@strapi/strapi';
 
----
+export default factories.createCoreController(
+  'api::article.article',
+  ({ strapi }) => ({
+    // Override the find method to add a views counter
+    async find(ctx) {
+      // Call the original find via super
+      const { data, meta } = await super.find(ctx);
 
-# Automatic Generation
+      // Additional logic
+      strapi.log.info(`Articles list fetched, count: ${meta.pagination.total}`);
 
-We create:
+      return { data, meta };
+    },
 
-```txt
-Article
+    // Add a custom endpoint
+    async popular(ctx) {
+      const articles = await strapi
+        .service('api::article.article')
+        .findPopular(ctx.query);
+
+      return this.transformResponse(articles);
+    },
+
+    // sanitizeOutput — removes fields without permissions (important!)
+    async findOne(ctx) {
+      const { id } = ctx.params;
+      const { query } = ctx;
+
+      const entity = await strapi.service('api::article.article').findOne(id, query);
+      const sanitizedEntity = await this.sanitizeOutput(entity, ctx);
+
+      return this.transformResponse(sanitizedEntity);
+    },
+  }),
+);
 ```
 
----
+## Custom Service — business logic
 
-Strapi automatically generates:
+```typescript
+// src/api/article/services/article.ts
+import { factories } from '@strapi/strapi';
 
-```txt
-Route
-Controller
-Service
-```
+export default factories.createCoreService(
+  'api::article.article',
+  ({ strapi }) => ({
+    // Extend the standard service with a custom method
+    async findPopular(params = {}) {
+      return strapi.documents('api::article.article').findMany({
+        ...params,
+        filters: {
+          ...(params.filters ?? {}),
+          publishedAt: { $notNull: true },
+        },
+        sort: { views: 'desc' },
+        populate: ['author', 'category', 'coverImage'],
+        pagination: { limit: 10 },
+      });
+    },
 
----
+    // Business logic with an external API call
+    async createWithNotification(data: Record<string, unknown>) {
+      const article = await strapi.documents('api::article.article').create({ data });
 
-That's why CRUD works immediately.
-
----
-
-# Routes
-
-A Route defines:
-
-```txt
-which URL
-which Controller
-```
-
----
-
-Example:
-
-```http
-GET /api/articles
-```
-
----
-
-Is mapped to:
-
-```txt
-Article Controller
-```
-
----
-
-# Route Definition
-
-Simplified:
-
-```js
-{
-  method: 'GET',
-  path: '/articles',
-  handler: 'article.find'
-}
-```
-
----
-
-# Controller
-
-Very similar to a NestJS Controller.
-
----
-
-Main responsibility:
-
-```txt
-Request
-↓
-Response
-```
-
----
-
-Receive request data.
-
----
-
-Call a service.
-
----
-
-Return a response.
-
----
-
-# Example
-
-```js
-async find(ctx) {
-  return await strapi
-    .service('api::article.article')
-    .find();
-}
-```
-
----
-
-# What a Controller Must NOT Do
-
-A very popular interview question.
-
----
-
-Must not contain:
-
-```txt
-complex business logic
-```
-
----
-
-Because:
-
-```txt
-the Controller becomes fat
-```
-
----
-
-# Service Layer
-
-All business logic lives here.
-
----
-
-For example:
-
-```txt
-validation
-aggregation
-calling external APIs
-working with multiple entities
-```
-
----
-
-# Example
-
-```js
-async getPopularArticles() {
-
-  return await strapi
-    .documents('api::article.article')
-    .findMany({
-      sort: {
-        views: 'desc'
+      // Notify subscribers (external service)
+      try {
+        await fetch(process.env.WEBHOOK_URL!, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event: 'article.published', articleId: article.documentId }),
+        });
+      } catch (error) {
+        strapi.log.error('Failed to notify webhook', error);
       }
-    });
-}
+
+      return article;
+    },
+
+    // Aggregating data from multiple entities
+    async getDashboardStats() {
+      const [articles, authors, categories] = await Promise.all([
+        strapi.documents('api::article.article').count({ filters: { publishedAt: { $notNull: true } } }),
+        strapi.documents('api::author.author').count({}),
+        strapi.documents('api::category.category').count({}),
+      ]);
+
+      return { articles, authors, categories };
+    },
+  }),
+);
 ```
 
----
+## Custom Route
 
-# Why a Service Is Needed
-
-It can be reused.
-
----
-
-For example:
-
-```txt
-Controller A
-Controller B
-Lifecycle Hook
-Cron Job
+```typescript
+// src/api/article/routes/custom-article.ts
+// IMPORTANT: custom routes in a separate file to avoid conflicts with core routes
+export default {
+  routes: [
+    {
+      method: 'GET',
+      path: '/articles/popular',
+      handler: 'article.popular',
+      config: {
+        policies: [],
+        middlewares: [],
+        auth: false, // public endpoint
+      },
+    },
+    {
+      method: 'GET',
+      path: '/articles/dashboard/stats',
+      handler: 'article.dashboardStats',
+      config: {
+        // auth: {} — requires authentication (default)
+        policies: ['global::is-admin'], // custom Policy
+      },
+    },
+    {
+      method: 'POST',
+      path: '/articles/:id/publish',
+      handler: 'article.publish',
+      config: {
+        // middlewares: ['api::article.check-ownership'],
+      },
+    },
+  ],
+};
 ```
 
----
+## Query Engine vs Document Service
 
-All can use a single Service.
+```typescript
+// Document Service (recommended, v5+):
+// High-level API, handles populate, Draft & Publish, i18n, sanitization
+const articles = await strapi.documents('api::article.article').findMany({
+  filters: { author: { name: { $contains: 'Alice' } } },
+  populate: ['author', 'tags'],
+});
 
----
+// Query Engine (low-level, v4+):
+// Direct SQL-like queries, no automatic sanitization
+// Use when Document Service is not flexible enough
+const result = await strapi.db.query('api::article.article').findMany({
+  where: { publishedAt: { $notNull: true } },
+  orderBy: { createdAt: 'desc' },
+  populate: { author: true, tags: true },
+  limit: 10,
+  offset: 0,
+});
 
-# Document Service
-
-Starting from Strapi 5.
-
----
-
-High-level data access API.
-
----
-
-Example:
-
-```js
-strapi.documents(
-  'api::article.article'
-)
-.findMany();
+// Raw SQL (last resort):
+const [rows] = await strapi.db.connection.raw(
+  'SELECT id, title, views FROM articles WHERE views > ? ORDER BY views DESC LIMIT ?',
+  [1000, 10],
+);
 ```
 
----
+## Common interview mistakes
 
-# Query Engine
+- **"All logic goes in the Controller"** — anti-pattern. The Controller handles HTTP: read parameters from ctx, call the Service, return the response. Business logic (validation, aggregation, external calls) belongs in the Service. Thick Controller = harder to test, harder to reuse.
 
-A lower-level layer.
+- **"factories.createCoreController() can't be extended"** — it can. The second argument is a function that returns an object with methods. Call the standard method via `super.find(ctx)`. Any method can be overridden or a custom one added.
 
----
+- **"sanitizeOutput is not needed if you write the controller yourself"** — it is needed. `sanitizeOutput` removes fields the current user has no permissions for (RBAC). Without it, the service may return user emails to a public endpoint. Always call `this.sanitizeOutput(entity, ctx)` before `this.transformResponse()`.
 
-Used when finer control is needed.
+- **"Custom routes should be added to the same file as the core route"** — no. Core routes go in `routes/article.ts` (via `createCoreRouter`), custom ones in a separate file (`routes/custom-article.ts`). Strapi loads all `.ts` files from the `routes/` folder. Mixing them causes conflicts.
 
----
-
-Usually used less often.
-
----
-
-# Full Flow
-
-Request:
-
-```http
-GET /api/articles
-```
-
----
-
-Passes through:
-
-```txt
-Middleware
-↓
-Route
-↓
-Policy
-↓
-Controller
-↓
-Service
-↓
-Document Service
-↓
-Query Engine
-↓
-Database
-```
-
----
-
-Then back:
-
-```txt
-Database
-↓
-Query Engine
-↓
-Service
-↓
-Controller
-↓
-Response
-```
-
----
-
-# Custom Route
-
-A very popular interview question.
-
----
-
-Suppose we need an endpoint:
-
-```http
-GET /api/articles/popular
-```
-
----
-
-We create a route.
-
----
-
-```js
-{
-  method: 'GET',
-  path: '/articles/popular',
-  handler: 'article.popular'
-}
-```
-
----
-
-# Custom Controller
-
-```js
-async popular(ctx) {
-
-  return await strapi
-    .service('api::article.article')
-    .getPopularArticles();
-}
-```
-
----
-
-# Custom Service
-
-```js
-async getPopularArticles() {
-
-  return await strapi
-    .documents('api::article.article')
-    .findMany({
-      sort: {
-        views: 'desc'
-      }
-    });
-}
-```
-
----
-
-# Very Similar to NestJS
-
-Nest:
-
-```txt
-Controller
- ↓
-Service
- ↓
-Repository
-```
-
----
-
-Strapi:
-
-```txt
-Controller
- ↓
-Service
- ↓
-Document Service
- ↓
-Query Engine
-```
-
----
-
-# Where to Write Business Logic
-
-A very popular interview question.
-
----
-
-Correct answer:
-
-```txt
-Service Layer
-```
-
----
-
-Not the Controller.
-
----
-
-# Frequent Question
-
-Why customize a Controller
-if CRUD is already generated?
-
----
-
-Answer:
-
-When you need:
-
-```txt
-a non-standard endpoint
-data aggregation
-integration with an external API
-complex business logic
-```
-
----
-
-# Interview Answer
-
-Strapi automatically generates Routes, Controllers and Services for each Content Type. A Route defines the endpoint, a Controller handles the request and forms the response, and a Service contains the business logic. For data access in Strapi v5, the Document Service is used, which works on top of the Query Engine and the database.
+- **"Document Service and Query Engine are the same thing"** — no. Document Service (v5) is a high-level API with Draft & Publish, i18n, populate, and sanitization support. Query Engine is a low-level SQL-like API without these abstractions. Document Service is recommended for most tasks; Query Engine is for complex custom queries.

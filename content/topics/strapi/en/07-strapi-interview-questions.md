@@ -1,771 +1,302 @@
 # Strapi Interview Questions
 
----
+## Group 1: Architecture and Concept
 
-# 1. What is Strapi?
+**Q: What is Strapi and how does it differ from WordPress?**
 
-Strapi is an open-source headless CMS built on Node.js.
+Strapi is an open-source headless CMS built on Node.js (Koa.js). "Headless" means no presentation layer — no built-in frontend for end users. WordPress bundles the backend (PHP) and frontend (templates) — the frontend is tightly coupled to the CMS. Strapi provides only an Admin Panel for editors and a REST/GraphQL API for any client (React, Next.js, mobile app). Architecture: Developer creates Content Types → Strapi automatically generates Admin UI, CRUD API, RBAC, and DB schema.
 
-It lets you describe data models and automatically generates:
-
-- Admin Panel
-- REST API
-- GraphQL API
-- Permissions
-- Database Schema
-
----
-
-# 2. What is a Headless CMS?
-
-A CMS without a built-in frontend.
-
----
-
-Classic CMS:
+**Q: What happens under the hood when you create a Content Type in Strapi?**
 
 ```txt
-Backend
-+
-Frontend
+1. Strapi creates schema.json in src/api/<name>/content-types/<name>/
+2. On the next startup Strapi reads the schema and syncs the DB:
+   - Creates/updates the table in PostgreSQL/MySQL/SQLite
+   - Creates tables for relations (junction tables for M2M)
+3. Registers auto-generated routes: GET/POST/PUT/DELETE /api/<plural-name>
+4. Creates a core controller and service based on factories
+5. Updates the Admin Panel — the new Content Type appears in the UI
+6. Creates RBAC entries for the new Content Type (Public, Authenticated roles)
+
+Content-Type Builder in dev mode → changes to schema.json → restart → DB migration
+In production: only manual schema.json editing + deploy
 ```
+
+**Q: Does Strapi use Express or something else?**
+
+Koa.js. Key differences from Express: a single `ctx` object instead of `req/res`, native async/await without wrappers, onion-model middleware (vs linear next()). Strapi adds on top of Koa: router, Plugin system, Document Service, Admin Panel (embedded React app).
 
 ---
 
-Headless CMS:
+## Group 2: Content Types and Data Modeling
+
+**Q: What is the difference between Collection Type, Single Type, and Component?**
 
 ```txt
-Backend
-+
-API
+Collection Type — multiple records, full CRUD API
+  Examples: Articles, Products, Authors
+  API: GET /api/articles (list), GET /api/articles/:id (one)
+
+Single Type — one instance, always one record
+  Examples: Homepage, Footer, Global SEO Settings
+  API: GET /api/homepage (not an array), PUT /api/homepage (update)
+  No POST or DELETE
+
+Component — reusable field block, no API of its own
+  Examples: SEO, Address, FAQ Item
+  Always stored inside the parent Content Type
+  Repeatable Component — array of components of the same type
 ```
 
+**Q: What is a Dynamic Zone and when should you use it?**
+
+A Dynamic Zone is an array of components of different types. It lets an editor assemble a page from blocks in any order. Each element contains a `__component` field to identify its type.
+
+```javascript
+// schema.json:
+"sections": {
+  "type": "dynamiczone",
+  "components": ["sections.hero", "sections.faq", "sections.cta"]
+}
+
+// API response:
+"sections": [
+  { "__component": "sections.hero", "title": "Welcome" },
+  { "__component": "sections.faq", "items": [...] }
+]
+
+// Use when:
+// ✓ Marketing/Landing pages with flexible structure
+// ✓ Page Builder for editors
+// ✓ Different pages have different sets of blocks
+// ✗ When the structure is fixed — Component is simpler
+```
+
+**Q: Why is Draft & Publish important for production?**
+
+Draft & Publish lets editors work on content without immediate publication. `publishedAt === null` → Draft (not visible via the public API). `publishedAt !== null` → Published. The public API returns ONLY Published records by default. Drafts are only visible in the Admin Panel or via an Admin API token. Important for content teams: an editor prepares content, a senior editor approves and publishes it.
+
 ---
 
-The frontend is developed separately.
+## Group 3: Customization — Routes, Controllers, Services
 
----
+**Q: How do you add a custom endpoint in Strapi?**
 
-# 3. Why is Strapi called a Headless CMS?
+```typescript
+// 1. Create a route in a separate file (not in the core route):
+// src/api/article/routes/custom-article.ts
+export default {
+  routes: [{
+    method: 'GET',
+    path: '/articles/popular',
+    handler: 'article.popular',
+    config: { auth: false }, // public
+  }],
+};
 
-Because it is only responsible for:
+// 2. Add a method to the Controller:
+// src/api/article/controllers/article.ts
+export default factories.createCoreController('api::article.article', ({ strapi }) => ({
+  async popular(ctx) {
+    const articles = await strapi.service('api::article.article').findPopular();
+    return this.transformResponse(articles);
+  },
+}));
+
+// 3. Add a method to the Service:
+export default factories.createCoreService('api::article.article', ({ strapi }) => ({
+  async findPopular() {
+    return strapi.documents('api::article.article').findMany({
+      filters: { publishedAt: { $notNull: true } },
+      sort: { views: 'desc' },
+      pagination: { limit: 10 },
+    });
+  },
+}));
+```
+
+**Q: Why is sanitizeOutput needed and why can't you skip it?**
+
+`sanitizeOutput` removes from the response fields the current user has no permissions for (according to RBAC). Without it, a custom controller may return sensitive data (email, password hash, internal fields) to a public endpoint. Standard CRUD methods do this automatically. In custom methods it must be called explicitly: `await this.sanitizeOutput(entity, ctx)` before `this.transformResponse()`.
+
+**Q: Document Service vs Query Engine — when to use which?**
 
 ```txt
-content management
-data storage
-API
+Document Service (recommended, v5+):
+  strapi.documents('api::article.article').findMany(...)
+  ✓ Supports Draft & Publish (automatically filters)
+  ✓ Supports i18n locales
+  ✓ Automatic sanitization
+  ✓ populate with nested relations
+  Use for: standard CRUD operations, 90% of cases
+
+Query Engine (low-level):
+  strapi.db.query('api::article.article').findMany(...)
+  ✓ More control over SQL-like queries
+  ✓ Complex JOIN-like operations
+  ✗ No automatic Draft & Publish filtering
+  ✗ No automatic i18n support
+  Use for: complex custom queries, aggregation
 ```
 
 ---
 
-The frontend is absent.
+## Group 4: Security — Policies, Middleware, RBAC
 
----
-
-# 4. How does Strapi differ from WordPress?
-
-WordPress:
+**Q: What is the difference between a Policy and Middleware in Strapi?**
 
 ```txt
-CMS + Templates + Frontend
+Policy (analogous to NestJS Guard):
+  - Purpose: authorization check (allow/deny)
+  - Returns boolean (true = allow, false = 403)
+  - Runs AFTER middleware
+  - Knows about the current Handler and user (ctx.state.user)
+  - Applied to specific routes via route.config.policies[]
+
+Middleware (analogous to Koa/Express middleware):
+  - Purpose: request processing/transformation
+  - Calls await next() or ends the response
+  - Runs BEFORE Policy
+  - Has no knowledge of the specific Handler
+  - Can be global or route-specific
+```
+
+**Q: What types of authorization does Strapi have?**
+
+```typescript
+// 1. JWT (End Users via Users & Permissions plugin):
+// POST /api/auth/local → { jwt, user }
+// Requests: Authorization: Bearer <jwt>
+
+// 2. API Token (machine clients):
+// Admin Panel → Settings → API Tokens
+// Types: Read-only, Full-access, Custom (per Content Type + action)
+// Requests: Authorization: Bearer <api-token>
+
+// 3. Admin Session (Admin Panel users):
+// Email/password, session cookies
+// Separate RBAC with granular permissions
+
+// Difference JWT vs API Token:
+// JWT — for end users (registration/login via API)
+// API Token — for server integrations (CI/CD, Next.js server-side fetch)
 ```
 
 ---
 
-Strapi:
+## Group 5: Lifecycle Hooks and automation
+
+**Q: When to use a Lifecycle Hook instead of a Service?**
 
 ```txt
-CMS + API
+Lifecycle Hook (beforeCreate/afterCreate/...):
+  ✓ Automatic data mutation before saving (slug, permalink)
+  ✓ Audit — log every operation on the model
+  ✓ Cache invalidation on record update
+  ✓ Data-level validation (beforeDelete: check dependencies)
+  ✗ NOT complex business logic (hidden, hard to test)
+  ✗ NOT external API calls (unexpected side effects)
+
+Service:
+  ✓ Business logic, explicit and testable
+  ✓ Aggregation, calculations, rules
+  ✓ Interaction with external systems
+  ✓ Reusable from Controller, Cron Job, another Service
+```
+
+**Q: How do you avoid duplicate Cron Jobs when scaling horizontally?**
+
+When multiple Strapi instances are running, each starts its own Cron Jobs independently. Solutions: (1) Distributed lock via Redis — acquire a lock with TTL before executing the task, only one instance does the work; (2) move the Cron to a separate worker process/Lambda running as a single instance; (3) use BullMQ for a task queue with a single worker.
+
+**Q: What is bootstrap in src/index.ts and why is it needed?**
+
+```typescript
+// bootstrap is called once at Strapi startup after plugins are loaded
+export default {
+  async bootstrap({ strapi }) {
+    // Subscribe to events
+    strapi.eventHub.on('entry.create', handler);
+
+    // Seed data on first run
+    const count = await strapi.documents('api::category.category').count({});
+    if (count === 0) {
+      await strapi.documents('api::category.category').create({ data: { name: 'General' } });
+    }
+
+    // Register Cron Jobs
+    // Configure external connections
+  },
+
+  register({ strapi }) {
+    // Called BEFORE bootstrap, BEFORE plugins are loaded
+    // Register custom providers, fields, extensions
+  },
+};
 ```
 
 ---
 
-# 5. What is Strapi built on?
+## Group 6: Integration and production
 
-Under the hood:
+**Q: How do you correctly connect Next.js to Strapi?**
+
+```typescript
+// Server side of Next.js — use an API Token (not JWT):
+// - API Token does not expire on server restart
+// - No user session needed on the server
+
+// next.config.js: env.STRAPI_API_TOKEN (Full-access or Custom)
+
+// lib/strapi.ts:
+async function fetchStrapi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${process.env.STRAPI_URL}/api/${endpoint}`, {
+    headers: {
+      'Authorization': `Bearer ${process.env.STRAPI_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    ...options,
+  });
+
+  if (!res.ok) throw new Error(`Strapi error: ${res.status}`);
+  return res.json();
+}
+
+// ISR (Incremental Static Regeneration) + Webhook for invalidation:
+// Strapi Webhook → POST /api/revalidate → next.revalidatePath()
+export async function getStaticProps() {
+  const data = await fetchStrapi('articles?populate=*');
+  return { props: { articles: data.data }, revalidate: 3600 };
+}
+```
+
+**Q: What is needed for a production Strapi deploy?**
 
 ```txt
-Node.js
-Koa
-REST API
-GraphQL
-Database Layer
+DB: PostgreSQL (not SQLite — SQLite is for dev only)
+Files: AWS S3 or Cloudinary (not local — local files are lost when scaling horizontally)
+ENV variables:
+  DATABASE_URL, JWT_SECRET, APP_KEYS (4 keys!), API_TOKEN_SALT, ADMIN_JWT_SECRET
+  AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET
+Deploy: Railway, Render, Strapi Cloud, Docker (not Vercel — no persistent process)
+Admin Panel: NODE_ENV=production disables Content-Type Builder (correct)
+Content-Type changes: via code (schema.json) + deploy (like normal code)
+CORS: config/middlewares.ts → origin: ['https://yourfrontend.com']
 ```
 
----
-
-# 6. Why does Strapi use Koa?
-
-Koa provides:
+**Q: Strapi v4 vs v5 — main differences?**
 
 ```txt
-Middleware Pipeline
-Context Object
-Asynchronous Architecture
+Strapi v4 (old):
+  Entity Service API: strapi.entityService.findMany(...)
+  Response: { data: [{ id, attributes: { title, ... } }] }
+
+Strapi v5 (new, 2024):
+  Document Service API: strapi.documents('api::...').findMany(...)
+  Response: { data: [{ id, documentId, title, ... }] } ← no nested attributes!
+  documentId: string ID (instead of numeric id in v4)
+  Draft & Publish improved: versioning support
+
+Critical for integration:
+  v4: data.attributes.title
+  v5: data.title  ← direct access
 ```
-
----
-
-Strapi builds its platform on top of Koa.
-
----
-
-# 7. What is ctx in Strapi?
-
-Koa Context.
-
----
-
-Contains:
-
-```txt
-request
-response
-state
-params
-query
-```
-
----
-
-Analogous to:
-
-```txt
-req/res in Express
-```
-
----
-
-# 8. What is a Content Type?
-
-The core entity in Strapi.
-
----
-
-Similar to:
-
-```txt
-Database Table
-ORM Model
-Entity
-```
-
----
-
-# 9. What is a Collection Type?
-
-An entity with many records.
-
----
-
-Examples:
-
-```txt
-Articles
-Products
-Users
-Categories
-```
-
----
-
-# 10. What is a Single Type?
-
-An entity that exists in only one instance.
-
----
-
-Examples:
-
-```txt
-Homepage
-Footer
-Header
-Settings
-```
-
----
-
-# 11. When should you use a Collection Type?
-
-When you need to store many records.
-
----
-
-For example:
-
-```txt
-Blog Posts
-Products
-News
-```
-
----
-
-# 12. When should you use a Single Type?
-
-When a record should exist only once.
-
----
-
-For example:
-
-```txt
-Homepage
-Site Settings
-```
-
----
-
-# 13. What is a Component?
-
-A reusable data structure.
-
----
-
-Example:
-
-```txt
-Address
-```
-
----
-
-Used in:
-
-```txt
-User
-Company
-Office
-```
-
----
-
-# 14. What is a Repeatable Component?
-
-An array of components.
-
----
-
-For example:
-
-```txt
-FAQ Items
-```
-
----
-
-# 15. What is a Dynamic Zone?
-
-A set of blocks
-that an editor can combine freely.
-
----
-
-Example:
-
-```txt
-Hero
-Gallery
-FAQ
-CTA
-```
-
----
-
-Very popular for landing pages.
-
----
-
-# 16. What happens after a Content Type is created?
-
-Strapi automatically creates:
-
-- database tables
-- REST API
-- GraphQL API
-- forms in the Admin Panel
-- permissions
-
----
-
-# 17. Which databases does Strapi support?
-
-Main ones:
-
-```txt
-PostgreSQL
-MySQL
-SQLite
-```
-
----
-
-# 18. Does Strapi need its own database?
-
-Yes.
-
----
-
-Strapi always stores data in its own database.
-
----
-
-# 19. Is Strapi a separate service?
-
-Effectively yes.
-
----
-
-The architecture often looks like this:
-
-```txt
-Next.js
- ↓
-Strapi
- ↓
-PostgreSQL
-```
-
----
-
-# 20. What does the request lifecycle look like?
-
-```txt
-Request
- ↓
-Middleware
- ↓
-Route
- ↓
-Policy
- ↓
-Controller
- ↓
-Service
- ↓
-Document Service
- ↓
-Query Engine
- ↓
-Database
-```
-
----
-
-# 21. What is a Controller?
-
-Handles the request.
-
----
-
-Responsible for:
-
-```txt
-request
-response
-```
-
----
-
-# 22. Where should business logic be placed?
-
-In:
-
-```txt
-Services
-```
-
----
-
-Not in the Controller.
-
----
-
-# 23. What is a Service?
-
-The business logic layer.
-
----
-
-For example:
-
-```txt
-validation
-aggregation
-external APIs
-```
-
----
-
-# 24. What is the Document Service?
-
-A high-level data access API in Strapi v5.
-
----
-
-Example:
-
-```js
-strapi.documents(...)
-```
-
----
-
-# 25. What is the Query Engine?
-
-A low-level data access layer.
-
----
-
-Works beneath the Document Service.
-
----
-
-# 26. How does the Document Service differ from the Query Engine?
-
-Document Service:
-
-```txt
-high-level API
-```
-
----
-
-Query Engine:
-
-```txt
-low-level API
-```
-
----
-
-# 27. What is Middleware?
-
-General request processing.
-
----
-
-For example:
-
-```txt
-logging
-CORS
-request modification
-```
-
----
-
-# 28. What is a Policy?
-
-An authorization mechanism.
-
----
-
-It checks:
-
-```txt
-whether a route can be executed
-or not
-```
-
----
-
-# 29. How is a Policy similar to a NestJS Guard?
-
-Practically a direct analogy.
-
----
-
-Both solve the task of:
-
-```txt
-Authorization
-```
-
----
-
-# 30. What is RBAC?
-
-Role Based Access Control.
-
----
-
-Access management through roles.
-
----
-
-# 31. What roles exist by default?
-
-```txt
-Public
-Authenticated
-```
-
----
-
-# 32. What does the Users & Permissions Plugin do?
-
-Provides:
-
-- JWT Auth
-- Roles
-- Permissions
-- Registration
-- Login
-
----
-
-# 33. How does JWT work in Strapi?
-
-After login:
-
-```txt
-JWT Token
-```
-
----
-
-The client sends:
-
-```http
-Authorization: Bearer TOKEN
-```
-
----
-
-# 34. What is a Lifecycle Hook?
-
-A mechanism for executing code before or after data operations.
-
----
-
-# 35. What Lifecycle Hooks exist?
-
-Before an operation:
-
-```txt
-beforeCreate
-beforeUpdate
-beforeDelete
-```
-
----
-
-After an operation:
-
-```txt
-afterCreate
-afterUpdate
-afterDelete
-```
-
----
-
-# 36. When should you use a Lifecycle Hook?
-
-For:
-
-```txt
-slug generation
-audit logs
-notifications
-```
-
----
-
-# 37. Where should you NOT write business logic?
-
-In Lifecycle Hooks.
-
----
-
-Better to use:
-
-```txt
-Service Layer
-```
-
----
-
-# 38. Can you create custom routes?
-
-Yes.
-
----
-
-For example:
-
-```http
-GET /api/articles/popular
-```
-
----
-
-# 39. Can you create custom controllers?
-
-Yes.
-
----
-
-This is standard practice.
-
----
-
-# 40. Can you create custom services?
-
-Yes.
-
----
-
-That is usually where business logic lives.
-
----
-
-# 41. What is the Upload Plugin?
-
-A file management plugin.
-
----
-
-Supports:
-
-```txt
-Local Storage
-AWS S3
-Cloudinary
-Azure Blob
-```
-
----
-
-# 42. What is Draft & Publish?
-
-A content publishing mechanism.
-
----
-
-A record can be:
-
-```txt
-Draft
-Published
-```
-
----
-
-# 43. What is the i18n Plugin?
-
-A content localization plugin.
-
----
-
-Allows storing:
-
-```txt
-English
-German
-French
-```
-
-versions of a single record.
-
----
-
-# 44. Can GraphQL be used with Strapi?
-
-Yes.
-
----
-
-Through the GraphQL Plugin.
-
----
-
-Strapi automatically generates a GraphQL Schema.
-
----
-
-# 45. Can REST and GraphQL be used at the same time?
-
-Yes.
-
----
-
-This is a very common production scenario.
-
----
-
-# 46. How would you implement an endpoint accessible only by Admins?
-
-I would create a Policy:
-
-```txt
-role check
-```
-
-and attach it to the Route.
-
----
-
-# 47. How is Strapi similar to NestJS?
-
-NestJS:
-
-```txt
-Controller
-Service
-Repository
-```
-
----
-
-Strapi:
-
-```txt
-Controller
-Service
-Document Service
-```
-
----
-
-Architecturally very similar.
-
----
-
-# 48. When is Strapi a good choice?
-
-- CMS projects
-- Landing Pages
-- Blogs
-- Marketing Sites
-- Mobile Backends
-- Content-heavy projects
-
----
-
-# 49. When is Strapi a bad choice?
-
-Complex domain logic.
-
----
-
-For example:
-
-```txt
-Trading
-Banking
-ERP
-High-load microservices
-```
-
----
-
-# 50. The Most Popular Senior Question
-
-Why can Strapi be considered not just a CMS but a full-featured backend framework?
-
-Answer:
-
-Because Strapi provides a complete backend architecture with middleware, policies, controllers, services, RBAC, lifecycle hooks, plugins and database access. Beyond content management, it allows you to implement custom business logic and custom APIs in much the same way as a classic backend framework.

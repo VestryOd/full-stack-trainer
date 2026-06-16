@@ -1,514 +1,243 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Content Types и Data Modeling в Strapi
 
-## Самая важная концепция Strapi
+## Три вида Content Types
 
-Весь Strapi построен вокруг:
-
-```txt
-Content Types
-```
-
----
-
-Можно считать:
+Content Type — основная единица моделирования в Strapi. Аналог таблицы в БД + Prisma Model + NestJS Entity. Три варианта:
 
 ```txt
-Content Type
-≈
-Entity
-≈
-Database Table
-≈
-Prisma Model
+Collection Type  — множество записей (Articles, Products, Users)
+Single Type      — один экземпляр (Homepage, Footer, SEO Settings)
+Component        — переиспользуемый блок полей (Address, SEO, FAQ Item)
 ```
 
----
+```json
+// Пример schema.json для Collection Type "Article":
+// src/api/article/content-types/article/schema.json
+{
+  "kind": "collectionType",
+  "collectionName": "articles",
+  "info": {
+    "singularName": "article",
+    "pluralName": "articles",
+    "displayName": "Article"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 255
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title"
+    },
+    "content": {
+      "type": "richtext"
+    },
+    "coverImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "author": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::author.author",
+      "inversedBy": "articles"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category"
+    },
+    "tags": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag"
+    }
+  }
+}
+```
 
-Например:
+## Single Type — уникальные страницы сайта
+
+```json
+// src/api/homepage/content-types/homepage/schema.json
+{
+  "kind": "singleType",
+  "collectionName": "homepages",
+  "info": {
+    "singularName": "homepage",
+    "pluralName": "homepages",
+    "displayName": "Homepage"
+  },
+  "attributes": {
+    "heroTitle": { "type": "string" },
+    "heroSubtitle": { "type": "text" },
+    "heroImage": { "type": "media", "multiple": false },
+    "sections": {
+      "type": "dynamiczone",
+      "components": [
+        "sections.hero",
+        "sections.features",
+        "sections.testimonials",
+        "sections.faq"
+      ]
+    }
+  }
+}
+
+// API для Single Type:
+// GET /api/homepage   — одна запись (не массив!)
+// PUT /api/homepage   — обновить
+// Нет POST и DELETE — один экземпляр всегда
+```
+
+## Components — переиспользуемые блоки
+
+```json
+// src/components/shared/seo.json
+{
+  "collectionName": "components_shared_seos",
+  "info": {
+    "displayName": "SEO",
+    "icon": "search"
+  },
+  "attributes": {
+    "metaTitle": { "type": "string", "required": true },
+    "metaDescription": { "type": "text", "required": true },
+    "keywords": { "type": "string" },
+    "ogImage": { "type": "media", "multiple": false }
+  }
+}
+
+// Использование в Article:
+"seo": {
+  "type": "component",
+  "repeatable": false,
+  "component": "shared.seo"
+}
+
+// Repeatable Component — массив блоков:
+"faqItems": {
+  "type": "component",
+  "repeatable": true,
+  "component": "sections.faq-item"
+}
+// faqItems: [{ question: "...", answer: "..." }, { ... }]
+```
+
+## Dynamic Zone — конструктор страниц
+
+```json
+// Позволяет редактору собирать страницу из разных блоков в любом порядке
+"sections": {
+  "type": "dynamiczone",
+  "components": [
+    "sections.hero-banner",
+    "sections.feature-list",
+    "sections.testimonials",
+    "sections.faq",
+    "sections.cta-button"
+  ]
+}
+```
+
+```javascript
+// Ответ API с Dynamic Zone:
+{
+  "data": {
+    "id": 1,
+    "attributes": {
+      "sections": [
+        {
+          "__component": "sections.hero-banner",
+          "title": "Welcome",
+          "subtitle": "We build amazing products",
+          "image": { "data": { "id": 5, "attributes": { "url": "/uploads/hero.jpg" } } }
+        },
+        {
+          "__component": "sections.faq",
+          "items": [
+            { "question": "How does it work?", "answer": "..." }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+// Frontend (Next.js) рендерит компонент по __component:
+function renderSection(section) {
+  switch (section.__component) {
+    case 'sections.hero-banner': return <HeroBanner {...section} />;
+    case 'sections.faq':         return <FAQ items={section.items} />;
+    default: return null;
+  }
+}
+```
+
+## Draft & Publish и i18n
 
 ```txt
-Article
-Category
-Author
-Product
+Draft & Publish (включено в schema "options.draftAndPublish: true"):
+  Draft     — видно только в Admin Panel, не возвращается в API
+  Published — возвращается публичным API
+  
+  publishedAt === null → Draft
+  publishedAt !== null → Published
+
+  API по умолчанию возвращает ТОЛЬКО Published записи.
+  Для получения Draft: нужен API token с правом "draft" или в Admin Panel.
+
+i18n (плагин @strapi/plugin-i18n):
+  Каждая запись имеет localizations
+  GET /api/articles?locale=de → немецкая версия
+  Поля могут быть localized (разные значения per locale)
+  или non-localized (одно значение для всех локалей)
 ```
 
----
-
-Каждый Content Type становится:
+## Типы полей — полный справочник
 
 ```txt
-Database Table
-REST API
-GraphQL Type
-Admin UI Form
+Базовые:
+  string      — короткий текст (VARCHAR)
+  text        — длинный текст (TEXT)
+  richtext    — HTML/Markdown редактор
+  number      — целое или дробное (integer / decimal)
+  boolean     — true/false
+  date        — дата (DATE)
+  datetime    — дата + время (TIMESTAMP)
+  time        — только время
+
+Специальные:
+  uid         — slug, автогенерация из targetField
+  email       — валидация email
+  password    — хеширование при сохранении
+  enumeration — enum значения
+  json        — произвольный JSON объект
+  blocks      — Strapi Blocks Editor (rich content)
+
+Медиа:
+  media       — файл/изображение через Upload plugin
+
+Связи:
+  relation    — oneToOne, oneToMany, manyToOne, manyToMany
+  component   — встроенный компонент
+  dynamiczone — массив разнотипных компонентов
 ```
 
----
+## Типичные ошибки на интервью
 
-# Collection Type
+- **"Component — это то же самое что Collection Type"** — нет. Component не имеет своего API, не создаёт самостоятельной сущности. Это переиспользуемый блок полей, который всегда хранится внутри родительского Content Type. Collection Type — самостоятельная сущность с собственным API.
 
-Самый распространенный вариант.
+- **"Dynamic Zone — это просто массив"** — частично. Dynamic Zone — массив, но каждый элемент может быть разного типа компонента (в отличие от Repeatable Component, где все элементы одного типа). Под капотом Strapi хранит `__component` поле для определения типа при десериализации.
 
----
+- **"Draft записи не видны в API"** — правильно, но с нюансом. Через публичный API (без API token или с публичными правами) Draft недоступны. Но с Admin API token (с правами content-manager) Draft доступны. Для frontend preview (предпросмотр Draft контента) используют Strapi Preview Mode.
 
-Представим:
+- **"Single Type можно создать несколько"** — нет. Single Type физически один — повторный PUT обновляет ту же запись. Если нужно несколько Homepage-подобных сущностей — используй Collection Type.
 
-```txt
-Articles
-```
-
----
-
-У нас может быть:
-
-```txt
-Article 1
-Article 2
-Article 3
-Article 4
-```
-
----
-
-Количество записей не ограничено.
-
----
-
-Это:
-
-```txt
-Collection Type
-```
-
----
-
-# Пример
-
-```txt
-Article
-```
-
-Поля:
-
-```txt
-title
-slug
-content
-publishedAt
-```
-
----
-
-После создания Strapi автоматически генерирует:
-
-```http
-GET /api/articles
-
-GET /api/articles/:id
-
-POST /api/articles
-
-PUT /api/articles/:id
-
-DELETE /api/articles/:id
-```
-
----
-
-Очень похоже на CRUD.
-
----
-
-# Single Type
-
-Очень популярный вопрос.
-
----
-
-Single Type существует только в одном экземпляре.
-
----
-
-Пример:
-
-```txt
-Homepage
-```
-
----
-
-Нельзя создать:
-
-```txt
-Homepage 1
-Homepage 2
-Homepage 3
-```
-
----
-
-Существует только:
-
-```txt
-Homepage
-```
-
----
-
-# Типичные Single Types
-
-```txt
-Homepage
-Footer
-Header
-SEO Settings
-Company Settings
-Contacts Page
-```
-
----
-
-# Collection vs Single
-
-Collection:
-
-```txt
-много записей
-```
-
----
-
-Single:
-
-```txt
-одна запись
-```
-
----
-
-# Component
-
-Одна из сильнейших сторон Strapi.
-
----
-
-Представим:
-
-```txt
-Address
-```
-
----
-
-Поля:
-
-```txt
-country
-city
-street
-zip
-```
-
----
-
-Этот блок нужен:
-
-```txt
-User
-Company
-Office
-```
-
----
-
-Чтобы не копировать поля,
-создаем:
-
-```txt
-Component
-```
-
----
-
-# Использование
-
-```txt
-User
- └─ Address Component
-
-Company
- └─ Address Component
-```
-
----
-
-Очень похоже на:
-
-```txt
-Embedded Value Object
-```
-
----
-
-# Repeatable Component
-
-Массив компонентов.
-
----
-
-Пример:
-
-```txt
-FAQ
-```
-
----
-
-Один элемент:
-
-```txt
-question
-answer
-```
-
----
-
-На странице может быть:
-
-```txt
-10 FAQ элементов
-```
-
----
-
-Используем:
-
-```txt
-Repeatable Component
-```
-
----
-
-# Dynamic Zone
-
-Очень любят спрашивать.
-
----
-
-Уникальная фича Strapi.
-
----
-
-Позволяет собирать страницу
-из разных блоков.
-
----
-
-Пример:
-
-```txt
-Hero Section
-Gallery
-Testimonials
-FAQ
-CTA
-```
-
----
-
-Редактор может сам выбирать:
-
-```txt
-какие блоки будут на странице
-```
-
----
-
-Схема:
-
-```txt
-Page
- ↓
-Dynamic Zone
- ↓
-Hero
-Gallery
-FAQ
-CTA
-```
-
----
-
-Очень удобно для маркетинговых сайтов.
-
----
-
-# Relationships
-
-Поддерживаются стандартные связи.
-
----
-
-One-To-One
-
-```txt
-User
- ↓
-Profile
-```
-
----
-
-One-To-Many
-
-```txt
-Author
- ↓
-Articles
-```
-
----
-
-Many-To-Many
-
-```txt
-Article
- ↕
-Tags
-```
-
----
-
-# Media Fields
-
-Встроенная поддержка файлов.
-
----
-
-Например:
-
-```txt
-avatar
-coverImage
-gallery
-```
-
----
-
-Файлы хранятся через:
-
-```txt
-Upload Plugin
-```
-
----
-
-Локально.
-
-Или:
-
-```txt
-AWS S3
-Cloudinary
-Azure Blob
-```
-
----
-
-# Draft & Publish
-
-Очень популярная возможность.
-
----
-
-Контент может быть:
-
-```txt
-Draft
-```
-
-или
-
-```txt
-Published
-```
-
----
-
-Пока запись не опубликована:
-
-```txt
-frontend ее не увидит
-```
-
----
-
-# Internationalization (i18n)
-
-Плагин локализации.
-
----
-
-Например:
-
-```txt
-English
-German
-French
-```
-
----
-
-Одна статья.
-
-Несколько языковых версий.
-
----
-
-# Что происходит под капотом
-
-Создаем:
-
-```txt
-Article
-```
-
----
-
-Strapi автоматически:
-
-1. Создает таблицу.
-2. Создает связи.
-3. Обновляет Admin UI.
-4. Генерирует API.
-5. Генерирует GraphQL типы.
-
----
-
-# Частый вопрос
-
-Что бы вы использовали для Homepage?
-
-Ответ:
-
-```txt
-Single Type
-```
-
----
-
-Для Blog Posts?
-
-Ответ:
-
-```txt
-Collection Type
-```
-
----
-
-# Interview Answer
-
-Strapi использует Content Types как основную единицу моделирования данных. Collection Types предназначены для хранения множества записей, а Single Types — для уникальных сущностей, таких как Homepage или Settings. Для переиспользования структуры данных используются Components, а для построения гибких страниц — Dynamic Zones.
+- **"uid поле нужно заполнять вручную"** — нет. uid поле с `targetField` автоматически генерирует slug из указанного поля (title → my-article-title). Можно переопределить вручную, но по умолчанию генерируется автоматически при создании.

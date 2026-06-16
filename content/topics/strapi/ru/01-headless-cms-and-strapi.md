@@ -1,284 +1,127 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Headless CMS и Strapi
 
-## Что такое CMS
+## Что такое Headless CMS
 
-CMS (Content Management System) —
-система управления контентом.
+Традиционные CMS (WordPress, Drupal) объединяют backend и frontend в одном приложении: контент хранится в БД, рендеринг происходит на сервере через PHP-шаблоны. Frontend жёстко привязан к конкретной CMS.
 
----
-
-Классический пример:
+Headless CMS убирает "голову" — presentation layer. Остаётся только Content Management + API. Frontend (React, Next.js, мобильное приложение) сам решает как отображать данные.
 
 ```txt
-WordPress
-Drupal
-Joomla
+Traditional CMS:                    Headless CMS (Strapi):
+──────────────────                  ──────────────────────────────────
+Editor                              Editor
+  ↓                                   ↓
+WordPress/Drupal                    Strapi Admin
+  ↓                                   ↓
+PHP Templates                       REST API / GraphQL
+  ↓                                   ↓
+HTML → Browser                      React / Next.js / Mobile / TV App
+                                    (каждый клиент рендерит сам)
 ```
 
----
+## Что такое Strapi
 
-Обычно CMS содержит:
+Strapi — open-source headless CMS на Node.js (под капотом Koa.js). Разработчик описывает модели данных (Content Types), Strapi автоматически генерирует:
+
+- REST API и GraphQL API
+- Admin Panel для управления контентом
+- RBAC (Role-Based Access Control)
+- Media upload (S3, Cloudinary)
+- Webhooks
 
 ```txt
-Database
-Admin Panel
-Templates
-Frontend
+Strapi stack:
+  Node.js + Koa.js              — HTTP сервер
+  @strapi/database              — ORM (SQLite / PostgreSQL / MySQL)
+  Admin Panel (React)           — embedded frontend для редакторов
+  Content-Type Builder          — GUI для создания схем (только dev mode)
+  Plugin system                 — расширяемость (i18n, GraphQL, email, ...)
 ```
 
----
+## REST API из коробки
 
-Схема:
+```typescript
+// После создания Content Type "Article" Strapi генерирует:
+// GET    /api/articles                — список статей
+// GET    /api/articles/:id            — одна статья
+// POST   /api/articles                — создать
+// PUT    /api/articles/:id            — обновить
+// DELETE /api/articles/:id            — удалить
+
+// Запрос с фильтрацией, сортировкой, пагинацией, populate:
+// GET /api/articles?
+//   filters[category][name][$eq]=Tech&
+//   sort[0]=publishedAt:desc&
+//   pagination[page]=1&
+//   pagination[pageSize]=10&
+//   populate[author][fields][0]=name&
+//   populate[author][fields][1]=avatar
+
+// Ответ:
+{
+  "data": [
+    {
+      "id": 1,
+      "attributes": {
+        "title": "Getting Started with Strapi",
+        "publishedAt": "2024-01-15T10:00:00.000Z",
+        "author": {
+          "data": {
+            "id": 5,
+            "attributes": { "name": "Alice", "avatar": "..." }
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "pagination": { "page": 1, "pageSize": 10, "total": 42, "pageCount": 5 }
+  }
+}
+```
+
+## Strapi vs традиционный NestJS/Express
 
 ```txt
-Editor
- ↓
-CMS
- ↓
-HTML
- ↓
-Browser
+Критерий              Strapi                        NestJS/Express
+──────────────────────────────────────────────────────────────────────
+Time-to-first-API     Минуты (GUI builder)          Часы/дни (ручной код)
+Кастомизация          Ограничена плагинами          Полная свобода
+Бизнес-логика         Через хуки/кастомные routes   Нет ограничений
+Масштабируемость      Средняя (monolith)            Высокая (microservices)
+Admin Panel           Встроенная                    Нужно строить
+RBAC                  Встроенный                    Нужно строить
+Подходит для          CMS, маркетинг, каталоги      Любая сложная логика
+Не подходит для       High-load, сложный domain     Простой CMS (overkill)
 ```
 
----
-
-# Проблема классических CMS
-
-Frontend жестко связан с backend.
-
----
-
-Например:
+## Когда выбирать Strapi
 
 ```txt
-WordPress
- ↓
-PHP Templates
- ↓
-HTML
+Strapi — хороший выбор:
+  ✓ Marketing site / корпоративный сайт
+  ✓ Blog, новостной портал
+  ✓ E-commerce каталог (не платёжная логика)
+  ✓ Mobile app backend с простыми CRUD операциями
+  ✓ MVP где нужно быстро получить API
+  ✓ Команда включает non-developer редакторов
+
+Strapi — плохой выбор:
+  ✗ Сложная бизнес-логика (trading, banking, ERP)
+  ✗ High-load (>10k req/sec — Strapi не масштабируется горизонтально просто)
+  ✗ Microservices (Strapi — монолит)
+  ✗ Нужен полный контроль над БД схемой
+  ✗ Нестандартная авторизация
 ```
 
----
+## Типичные ошибки на интервью
 
-Сложно использовать:
+- **"Strapi заменяет NestJS"** — нет. Strapi — CMS для управления контентом. NestJS — фреймворк для создания любых Node.js приложений. Strapi использует Koa внутри и не является альтернативой NestJS/Express для сложной бизнес-логики.
 
-```txt
-React
-Next.js
-Mobile Apps
-IoT
-```
+- **"Headless CMS не имеет admin panel"** — нет. "Headless" означает что нет публичного frontend (presentation layer). Admin Panel для редакторов — есть. Strapi включает полноценный React-based admin UI. "Headless" = нет шаблонизации для конечных пользователей.
 
----
+- **"Strapi работает только с REST"** — нет. Strapi поддерживает GraphQL через официальный плагин `@strapi/plugin-graphql`. После установки плагина автоматически генерируются queries, mutations и subscriptions для всех Content Types.
 
-# Что такое Headless CMS
+- **"Content Types в Strapi можно создавать в production"** — нет. Content-Type Builder доступен только в development mode. В production изменения схемы делаются через код (schema files в `src/api/`) и деплоятся как обычный код. Это принципиально важно для стабильности production.
 
-Headless CMS убирает frontend.
-
----
-
-Остается только:
-
-```txt
-Content Management
-+
-API
-```
-
----
-
-Схема:
-
-```txt
-Editor
- ↓
-Strapi
- ↓
-API
- ↓
-React
-Mobile
-Next.js
-TV App
-```
-
----
-
-# Почему называется Headless
-
-Потому что отсутствует:
-
-```txt
-Head
-=
-Presentation Layer
-```
-
----
-
-Есть только:
-
-```txt
-Body
-=
-Content Backend
-```
-
----
-
-# Пример
-
-Контент:
-
-```txt
-Article
-```
-
----
-
-Редактор меняет статью через админку.
-
----
-
-Strapi сохраняет:
-
-```txt
-Database
-```
-
----
-
-Frontend получает:
-
-```http
-GET /api/articles
-```
-
----
-
-# Что такое Strapi
-
-Strapi — open-source headless CMS,
-написанная на Node.js.
-
----
-
-Под капотом:
-
-```txt
-Node.js
-Koa
-Database Layer
-Admin Panel
-REST API
-GraphQL API
-```
-
----
-
-# Главная идея Strapi
-
-Разработчик описывает модели.
-
----
-
-Например:
-
-```txt
-Article
-Category
-Author
-```
-
----
-
-Strapi автоматически создает:
-
-```txt
-Database Schema
-Admin UI
-REST API
-GraphQL API
-Permissions
-```
-
----
-
-# Почему Strapi популярен
-
-Очень быстрый старт.
-
----
-
-Без написания кода можно получить:
-
-```txt
-CRUD
-Admin Panel
-RBAC
-Media Upload
-API
-```
-
----
-
-# Когда Strapi подходит
-
-- маркетинговые сайты
-- корпоративные сайты
-- блоги
-- каталоги
-- e-commerce CMS
-- mobile backend
-
----
-
-# Когда Strapi может не подойти
-
-Очень сложная бизнес-логика.
-
----
-
-Например:
-
-```txt
-Banking
-Trading
-ERP
-High-load systems
-```
-
----
-
-Тогда чаще используют:
-
-```txt
-NestJS
-Spring
-ASP.NET
-```
-
----
-
-# Headless CMS vs Traditional CMS
-
-Traditional CMS:
-
-```txt
-Backend + Frontend
-```
-
----
-
-Headless CMS:
-
-```txt
-Backend only
-```
-
----
-
-# Интервью ответ
-
-Headless CMS — это CMS, которая отвечает только за хранение и управление контентом и предоставляет API для его получения. В отличие от классических CMS, frontend полностью отделен от backend. Strapi является популярной headless CMS на Node.js, которая автоматически генерирует API и административную панель на основе моделей данных.
+- **"Strapi v4 и v5 — одно и то же"** — нет. Strapi v5 (2024) — крупный breaking change: новый Document Service API вместо Entity Service, новый query engine, улучшенная типизация. API ответы имеют другую структуру (убраны вложенные `attributes`). Важно уточнять версию в разговоре об API структуре.
