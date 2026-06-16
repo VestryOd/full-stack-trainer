@@ -1,356 +1,186 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # ExecutionContext и Reflection
 
-## Самая недооцененная тема NestJS
+## Что такое ExecutionContext
 
-Очень многие используют:
+`ExecutionContext` — абстракция над текущим входящим запросом, доступная в Guards, Interceptors и Exception Filters. Абстракция нужна потому что NestJS работает с несколькими транспортами: HTTP, WebSocket, gRPC, Microservice RPC. Один и тот же Guard должен работать независимо от транспорта.
 
-```ts
-@UseGuards()
-@Roles()
-@Auth()
+```typescript
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    // context.getType() → 'http' | 'ws' | 'rpc'
+    const type = context.getType();
+
+    // context.getHandler() → метод контроллера (например: getUser)
+    const handler = context.getHandler();
+
+    // context.getClass() → класс контроллера (например: UsersController)
+    const controllerClass = context.getClass();
+
+    // switchToHttp() → только для HTTP транспорта
+    const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
+
+    return true;
+  }
+}
 ```
-
----
-
-Но не понимают:
 
 ```txt
-как это работает под капотом
+Методы switchTo*():
+  context.switchToHttp()  → { getRequest(), getResponse(), getNext() }
+  context.switchToWs()    → { getClient(), getData() }
+  context.switchToRpc()   → { getContext(), getData() }
+
+Почему нельзя сразу context.getRequest():
+  ExecutionContext не знает на каком транспорте ты работаешь.
+  switchToHttp() явно заявляет "я знаю что это HTTP запрос".
+  На WebSocket транспорте switchToHttp().getRequest() вернёт undefined.
 ```
 
----
+## Reflect Metadata — как декораторы хранят данные
 
-Для понимания нужно знать:
+Reflect Metadata — стандарт для хранения метаданных на классах и методах во время выполнения. Библиотека `reflect-metadata` (polyfill для Reflect API) используется NestJS повсеместно.
 
-```txt
-ExecutionContext
-Reflect Metadata
+```typescript
+import 'reflect-metadata'; // должен быть первым импортом в main.ts
+
+// Декоратор @Roles сохраняет роли в metadata метода/класса
+export const ROLES_KEY = 'roles';
+
+export const Roles = (...roles: string[]) =>
+  SetMetadata(ROLES_KEY, roles);
+// SetMetadata под капотом делает:
+// Reflect.defineMetadata(ROLES_KEY, roles, target, propertyKey)
+
+// Guard читает metadata через Reflector
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    // getAllAndOverride: метод-уровень приоритетнее класс-уровня
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+      context.getHandler(), // сначала проверить на методе
+      context.getClass(),   // потом на классе
+    ]);
+
+    if (!requiredRoles) return true; // нет ограничений → пропустить
+
+    const { user } = context.switchToHttp().getRequest();
+    return requiredRoles.some(role => user?.roles?.includes(role));
+  }
+}
 ```
 
----
+## Прямая работа с Reflect API
 
-# Что такое ExecutionContext
+```typescript
+// SetMetadata — встроенный хелпер NestJS (рекомендуется)
+export const Public = () => SetMetadata('isPublic', true);
 
-ExecutionContext описывает:
+// Эквивалент вручную:
+export function PublicManual(): MethodDecorator {
+  return (target, propertyKey) => {
+    Reflect.defineMetadata('isPublic', true, target, propertyKey);
+  };
+}
 
-```txt
-контекст текущего запроса
+// Чтение через reflector (в Guard):
+const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
+  context.getHandler(),
+  context.getClass(),
+]);
+
+// Прямое чтение через Reflect (без Reflector):
+const roles = Reflect.getMetadata('roles', context.getHandler());
+
+// reflector.get vs reflector.getAllAndOverride:
+// .get(key, target) — читает только с указанного target
+// .getAllAndOverride(key, [method, class]) — читает сначала с method, потом с class
+// .getAllAndMerge(key, [method, class]) — объединяет массивы с обоих (для union ролей)
 ```
 
----
+## Полный паттерн: JWT Auth Guard с @Public()
 
-Упрощенно:
+```typescript
+// public.decorator.ts
+export const IS_PUBLIC_KEY = 'isPublic';
+export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
-```txt
-кто вызвал
-что вызвал
-какие аргументы
-какой handler
-какой controller
+// jwt-auth.guard.ts
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private reflector: Reflector) {
+    super();
+  }
+
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+    // Проверить @Public() на методе ИЛИ контроллере
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) return true; // пропустить без JWT проверки
+
+    return super.canActivate(context); // стандартная JWT валидация
+  }
+}
+
+// app.module.ts — применить глобально
+providers: [
+  { provide: APP_GUARD, useClass: JwtAuthGuard }, // все эндпоинты защищены по умолчанию
+],
+
+// auth.controller.ts — публичные маршруты
+@Public()
+@Post('login')
+login(@Body() dto: LoginDto) { ... }
+
+// users.controller.ts — защищённые маршруты
+@Get('profile')  // защищён JwtAuthGuard автоматически
+getProfile(@Request() req) { return req.user; }
 ```
 
----
+## getType() для multi-transport Guards
 
-# Где используется
+```typescript
+@Injectable()
+export class UniversalGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const type = context.getType<'http' | 'ws' | 'rpc'>();
 
-Практически везде.
+    if (type === 'http') {
+      const req = context.switchToHttp().getRequest();
+      return this.validateHttpRequest(req);
+    }
 
----
+    if (type === 'ws') {
+      const data = context.switchToWs().getData();
+      return this.validateWsMessage(data);
+    }
 
-Например:
+    if (type === 'rpc') {
+      const rpcContext = context.switchToRpc().getContext();
+      return this.validateRpcCall(rpcContext);
+    }
 
-```txt
-Guards
-Interceptors
-Filters
-Custom Decorators
+    return false;
+  }
+}
 ```
 
----
+## Типичные ошибки на интервью
 
-# Пример
+- **"ExecutionContext — это просто request объект"** — нет. ExecutionContext — обёртка над контекстом выполнения, не над запросом. `getRequest()` — это один из методов только HTTP-контекста. ExecutionContext также даёт доступ к handler и controller (для metadata чтения), и работает для WebSocket и RPC.
 
-```ts
-canActivate(
-  context: ExecutionContext
-)
-```
+- **"Reflector.get() и getAllAndOverride() — одно и то же"** — нет. `get(key, handler)` читает metadata только с handler. `getAllAndOverride(key, [handler, class])` — читает сначала с handler, если нет — с class. Для `@Roles` на уровне контроллера + override на уровне метода: `getAllAndOverride` нужен обязательно.
 
----
+- **"Reflect.defineMetadata вызывается при каждом запросе"** — нет. Декораторы выполняются ОДИН РАЗ при старте приложения (при загрузке модуля). Metadata записывается в память раз и навсегда. `Reflect.getMetadata` в Guard при каждом запросе только читает — это O(1) lookup.
 
-Каждый Guard получает:
+- **"@SetMetadata можно использовать с любым типом данных"** — да, но стандарт: использовать константу для ключа (`export const ROLES_KEY = 'roles'`) во избежание typo в строках. TypeScript дженерик `reflector.getAllAndOverride<string[]>` гарантирует тип возвращаемого значения.
 
-```ts
-ExecutionContext
-```
-
----
-
-# Что можно получить
-
-Handler:
-
-```ts
-context.getHandler()
-```
-
----
-
-Controller:
-
-```ts
-context.getClass()
-```
-
----
-
-# HTTP Context
-
-Самый частый кейс.
-
----
-
-```ts
-const req =
-  context
-    .switchToHttp()
-    .getRequest();
-```
-
----
-
-Теперь доступен:
-
-```ts
-req.user
-req.headers
-req.params
-```
-
----
-
-# Почему switchToHttp()
-
-Очень популярный вопрос.
-
----
-
-Nest поддерживает:
-
-```txt
-HTTP
-GraphQL
-WebSockets
-Microservices
-```
-
----
-
-Поэтому контекст абстрактный.
-
----
-
-Нужно явно переключиться.
-
----
-
-# Другие варианты
-
-```ts
-switchToWs()
-```
-
----
-
-```ts
-switchToRpc()
-```
-
----
-
-# getHandler()
-
-Очень любят спрашивать.
-
----
-
-Возвращает:
-
-```txt
-текущий метод
-```
-
----
-
-Например:
-
-```ts
-@Get()
-findUsers()
-```
-
----
-
-Вернется:
-
-```txt
-findUsers
-```
-
----
-
-# getClass()
-
-Возвращает:
-
-```txt
-контроллер
-```
-
----
-
-Например:
-
-```ts
-UsersController
-```
-
----
-
-# Что такое Reflection
-
-Следующая важная тема.
-
----
-
-Reflection позволяет:
-
-```txt
-читать metadata
-во время выполнения
-```
-
----
-
-# Metadata
-
-Дополнительные данные,
-которые мы вешаем на класс
-или метод.
-
----
-
-Пример:
-
-```ts
-@Roles('admin')
-```
-
----
-
-Где-то нужно сохранить:
-
-```txt
-admin
-```
-
----
-
-Для этого используется metadata.
-
----
-
-# Под капотом
-
-Пример.
-
----
-
-```ts
-Reflect.defineMetadata(
-  'roles',
-  ['admin'],
-  target
-);
-```
-
----
-
-Позже:
-
-```ts
-Reflect.getMetadata(
-  'roles',
-  target
-);
-```
-
----
-
-# Почему это важно
-
-Почти весь Nest построен вокруг metadata.
-
----
-
-Например:
-
-```txt
-@Controller
-@Get
-@Post
-@Roles
-@UseGuards
-@Inject
-```
-
----
-
-Все используют metadata.
-
----
-
-# Reflector
-
-Специальный сервис Nest.
-
----
-
-Используется для чтения metadata.
-
----
-
-```ts
-constructor(
- private reflector: Reflector
-) {}
-```
-
----
-
-Пример:
-
-```ts
-const roles =
- this.reflector.get(
-   'roles',
-   context.getHandler()
- );
-```
-
----
-
-# Частый вопрос
-
-Как работает @Roles()?
-
-Ответ:
-
-Декоратор сохраняет роли в metadata через Reflect Metadata. Затем Guard читает эту metadata через Reflector и принимает решение о доступе.
-
----
-
-# Interview Answer
-
-ExecutionContext предоставляет информацию о текущем запросе и используется в Guards, Interceptors и Filters. Reflect Metadata позволяет сохранять дополнительные данные на классах и методах. Большинство декораторов NestJS работают через механизм metadata и читаются во время выполнения через сервис Reflector.
+- **"getHandler() возвращает имя метода"** — нет. Возвращает функцию-reference (`Function`), не строку. `context.getHandler().name` — даст строку с именем. Используется как ключ для `Reflect.getMetadata` потому что metadata привязана к объекту функции.

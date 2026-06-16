@@ -1,508 +1,213 @@
-# Guards vs Pipes vs Interceptors vs Middleware
+# Guards, Pipes, Interceptors, Middleware
 
-## The Most Popular NestJS Interview Question
-
-Almost guaranteed to be asked:
+## The full NestJS request pipeline
 
 ```txt
-What is the difference between:
-Middleware
-Guard
-Pipe
-Interceptor
+Incoming Request
+      ↓
+  Middleware        — Express/Fastify level, no Nest context
+      ↓
+  ExceptionFilter   — exception catching (outer wrapper)
+      ↓
+  Guard             — authorization: allow or reject
+      ↓
+  Interceptor (pre) — before next.handle()
+      ↓
+  Pipe              — transform and validate incoming data
+      ↓
+  Controller Method — business logic
+      ↓
+  Interceptor (post)— after next.handle() via .pipe()
+      ↓
+  ExceptionFilter   — exception catching from Controller
+      ↓
+  Response
 ```
 
----
+## Middleware — HTTP level, before Nest
 
-# The Main Rule
+```typescript
+// Middleware — Express-compatible, unaware of the Nest pipeline
+@Injectable()
+export class RequestIdMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    // No access to Handler, Controller, or metadata
+    req['requestId'] = crypto.randomUUID();
+    res.setHeader('X-Request-ID', req['requestId']);
 
-Each mechanism solves its own task.
-
----
-
-# Middleware
-
-Responsible for:
-
-```txt
-Request Processing
-```
-
----
-
-Examples:
-
-```txt
-Logging
-
-CORS
-
-Headers
-
-Cookies
-
-Request ID
-```
-
----
-
-# Middleware Knows Nothing
-
-Does not know about:
-
-```txt
-Controller
-Handler
-Metadata
-```
-
----
-
-Operates at the:
-
-```txt
-HTTP Layer
-```
-
----
-
-# Guard
-
-Responsible for:
-
-```txt
-Authorization
-```
-
----
-
-Question:
-
-```txt
-Allow the request?
-```
-
----
-
-or
-
-```txt
-Deny the request?
-```
-
----
-
-# Example
-
-```ts
-canActivate() {
-
- return true;
+    next(); // required! otherwise the request hangs
+  }
 }
+
+// Registration in Module:
+@Module({})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestIdMiddleware, CorsMiddleware)
+      .forRoutes('*'); // or { path: 'users', method: RequestMethod.ALL }
+  }
+}
+
+// When to use Middleware:
+// ✓ CORS, rate limiting (express-rate-limit), helmet
+// ✓ Request logging without knowing the Handler
+// ✓ Request ID generation
+// ✓ Cookie parsing, compression
+// ✗ NOT for authorization — no access to Handler metadata (@Public, @Roles)
 ```
 
----
+## Guard — authorization and access control
 
-# Typical Use Cases
+```typescript
+// Guard: return true = allow, false/throw = reject (403)
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private reflector: Reflector) {
+    super();
+  }
 
-```txt
-JWT
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+    // Access metadata via Reflector
+    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-Roles
+    if (isPublic) return true;
 
-Permissions
+    return super.canActivate(context); // verify JWT
+  }
+}
+
+// Guard runs AFTER Middleware and has full Nest context
+// Returns ForbiddenException (403) on false
+// You can throw a custom exception: throw new UnauthorizedException()
+
+// When to use Guard:
+// ✓ JWT / session validation
+// ✓ Role-based access control (@Roles)
+// ✓ Resource ownership checks
+// ✓ API key validation
+// ✗ NOT for data transformation
 ```
 
----
+## Pipe — validation and transformation of incoming data
 
-# Pipe
+```typescript
+// Built-in Pipes:
+// ParseIntPipe, ParseUUIDPipe, ParseBoolPipe, ParseArrayPipe
+// DefaultValuePipe, ParseEnumPipe
 
-Responsible for:
-
-```txt
-Transformation
-Validation
-```
-
----
-
-Question:
-
-```txt
-Are the input data correct?
-```
-
----
-
-# Example
-
-```ts
-ParseIntPipe
-```
-
----
-
-```ts
 @Get(':id')
-find(
- @Param(
-  'id',
-  ParseIntPipe
- )
- id: number
-)
-```
+findOne(@Param('id', ParseUUIDPipe) id: string) {
+  // ParseUUIDPipe: '550e8400-...' → '550e8400-...' (valid UUID)
+  // NOT a UUID → BadRequestException (400)
+  return this.usersService.findOne(id);
+}
 
----
+// ValidationPipe — the most powerful Pipe
+// In main.ts (globally):
+app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,              // strip fields NOT in the DTO
+  forbidNonWhitelisted: true,   // 400 if extra fields are present
+  transform: true,              // auto-transform types (string → number)
+  transformOptions: {
+    enableImplicitConversion: true,
+  },
+}));
 
-The Pipe transforms:
+// DTO with class-validator:
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
 
-```txt
-"123"
-```
+  @IsString()
+  @MinLength(8)
+  password: string;
 
-into
+  @IsOptional()
+  @IsString()
+  name?: string;
+}
 
-```txt
-123
-```
-
----
-
-# ValidationPipe
-
-The most popular Pipe.
-
----
-
-Uses:
-
-```txt
-class-validator
-class-transformer
-```
-
----
-
-Example:
-
-```ts
+// Pipe is applied separately to each parameter:
 @Post()
 create(
- @Body()
- dto: CreateUserDto
-)
+  @Body() dto: CreateUserDto,            // ValidationPipe applied to body
+  @Param('id', ParseIntPipe) id: number, // ParseIntPipe applied to param
+) {}
+
+// When to use Pipe:
+// ✓ Validate DTO (class-validator + ValidationPipe)
+// ✓ Transform types (string → number, string → Date)
+// ✓ Parse complex parameters
+// ✗ NOT for authorization
+// ✗ NOT for response transformation
 ```
 
----
+## Exception Filters — catching and formatting errors
 
-Validates:
+```typescript
+// ExceptionFilter: catch any exception and format the response
+@Catch(HttpException) // or @Catch() for all exceptions
+@Injectable()
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
 
-```txt
-email
-required fields
-types
-```
-
----
-
-# Sanitization
-
-A very popular interview question.
-
----
-
-```ts
-whitelist: true
-```
-
----
-
-Removes:
-
-```txt
-extra fields
-```
-
----
-
-Example:
-
-```json
-{
- "email": "...",
- "role": "admin"
+    response.status(status).json({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      message: exception.message,
+    });
+  }
 }
+
+// Apply globally:
+app.useGlobalFilters(new HttpExceptionFilter());
+// or via module:
+{ provide: APP_FILTER, useClass: HttpExceptionFilter }
+
+// When to use ExceptionFilter:
+// ✓ Standardize the error format across the API
+// ✓ Convert database/library errors to HTTP errors
+// ✓ Log errors with context
+// ✓ Hide internal details (stack trace) from the client
 ```
 
----
-
-If role is not in the DTO:
+## Decision table — when to use what
 
 ```txt
-it will be removed
+Task                                      Mechanism
+──────────────────────────────────────────────────────────────
+JWT/Session validation                    Guard
+Role-based access                         Guard + @Roles decorator
+Resource ownership                        Guard
+Validate request body                     ValidationPipe + DTO
+Transform path/query params               ParseIntPipe, ParseUUIDPipe
+Response wrapping { data, meta }          Interceptor (map)
+Request/Response logging                  Interceptor (tap)
+Caching responses                         Interceptor (switchMap)
+Timeout handling                          Interceptor (timeout)
+Error format standardization              ExceptionFilter
+CORS, Helmet, compression                 Middleware
+Request ID injection                      Middleware
+Cookie parsing                            Middleware
 ```
 
----
+## Common interview mistakes
 
-# Interceptor
+- **"Guard and Middleware can do the same thing"** — no. Middleware has no access to the Nest ExecutionContext, Handler, or decorator metadata (`@Public`, `@Roles`). A Guard has access via `context.getHandler()` and Reflector. JWT validation in Middleware works technically, but you can't implement the `@Public()` pattern (no metadata access).
 
-Responsible for:
+- **"Pipes are applied to the whole request at once"** — no. Pipes are applied to each parameter individually: `@Body()` → ValidationPipe, `@Param('id')` → ParseIntPipe, `@Query('page')` → ParseIntPipe. Different parameters can have different Pipes.
 
-```txt
-Cross Cutting Concerns
-```
+- **"ExceptionFilter is only needed for custom errors"** — no. A global ExceptionFilter is needed to: (1) standardize the error format for all HTTP responses; (2) convert database/library errors to HTTP errors; (3) log all errors with a stack trace. Without it, Nest uses its built-in filter, which returns a minimal JSON.
 
----
+- **"The order is Pipe → Guard"** — no. The correct order is: Guard → Interceptor(pre) → Pipe → Controller. Pipe runs AFTER Guard because there is no point validating data if the user isn't authorized.
 
-For example:
-
-```txt
-Logging
-
-Caching
-
-Metrics
-
-Response Mapping
-```
-
----
-
-# Comparison
-
-Middleware:
-
-```txt
-before Nest
-```
-
----
-
-Guard:
-
-```txt
-access
-```
-
----
-
-Pipe:
-
-```txt
-validation
-```
-
----
-
-Interceptor:
-
-```txt
-wrapper around execution
-```
-
----
-
-# Execution Order
-
-A very popular interview question.
-
----
-
-Full Flow.
-
----
-
-```txt
-Request
- ↓
-Middleware
- ↓
-Guard
- ↓
-Interceptor (before)
- ↓
-Pipe
- ↓
-Controller
- ↓
-Service
- ↓
-Interceptor (after)
- ↓
-Response
-```
-
----
-
-# Why Pipe Comes After Guard
-
-A very popular interview topic.
-
----
-
-Because:
-
-```txt
-no need to validate data
-if the user doesn't have access
-anyway
-```
-
----
-
-# Why Interceptor Wraps the Controller
-
-Because it:
-
-```txt
-can measure time
-log
-modify the response
-```
-
----
-
-# Real Example
-
----
-
-Middleware:
-
-```txt
-Request ID
-```
-
----
-
-Guard:
-
-```txt
-JWT
-```
-
----
-
-Pipe:
-
-```txt
-Validation
-```
-
----
-
-Interceptor:
-
-```txt
-Logging
-```
-
----
-
-Controller:
-
-```txt
-Business Logic
-```
-
----
-
-# Frequent Question
-
-Where should Roles be implemented?
-
----
-
-Correct answer:
-
-```txt
-Guard
-```
-
----
-
-Not Middleware.
-
----
-
-# Frequent Question
-
-Where should Validation be implemented?
-
----
-
-```txt
-Pipe
-```
-
----
-
-Not Guard.
-
----
-
-# Frequent Question
-
-Where should Logging be implemented?
-
----
-
-```txt
-Interceptor
-```
-
----
-
-or
-
-```txt
-Middleware
-```
-
----
-
-Depends on the task.
-
----
-
-# Frequent Question
-
-What to choose for JWT verification?
-
----
-
-Most often:
-
-```txt
-Guard
-```
-
----
-
-# Frequent Question
-
-What to choose for transforming the API response?
-
----
-
-```txt
-Interceptor
-```
-
----
-
-# Frequent Question
-
-What to choose for removing extra fields?
-
----
-
-```txt
-ValidationPipe
-```
-
----
-
-# Interview Answer
-
-Middleware operates at the HTTP level and is used for general request processing. Guards handle authorization and make the access decision. Pipes validate and transform incoming data. Interceptors wrap method execution and are used for logging, caching, error handling, and response transformation. Execution order: Middleware → Guard → Interceptor(before) → Pipe → Controller → Interceptor(after).
+- **"useGlobalGuards/Pipes/Filters and APP_GUARD/PIPE/FILTER are the same thing"** — no. `useGlobal*` in `main.ts` is outside DI and cannot inject services. `APP_*` in a module goes through DI and can inject services. If a Guard/Pipe/Filter needs ConfigService or PrismaService — use `APP_*`.

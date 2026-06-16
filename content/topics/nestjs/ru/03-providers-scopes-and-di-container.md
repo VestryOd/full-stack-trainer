@@ -1,568 +1,213 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Providers, Scopes и DI Container
 
-## Самая важная идея NestJS
+## Как работает DI Container в NestJS
 
-Практически весь Nest построен вокруг:
+NestJS DI Container — реестр провайдеров. При старте приложения Nest сканирует все модули, строит граф зависимостей (какой провайдер от каких других зависит), и создаёт экземпляры в правильном топологическом порядке. Под капотом: `Map<Token, { instance, scope, dependencies }>`.
 
-```txt
-Dependency Injection
+```typescript
+// При старте Nest делает это автоматически:
+// 1. Сканирует @Module({ providers: [UserService, PrismaService] })
+// 2. Видит: UserService конструктор требует PrismaService
+// 3. Строит граф: PrismaService → UserService → UsersController
+// 4. Создаёт в порядке: PrismaService → UserService → UsersController
+// 5. Сохраняет все instances в Container
+
+@Injectable()
+export class PrismaService { ... }
+
+@Injectable()
+export class UserService {
+  constructor(private prisma: PrismaService) {}
+  // Nest читает TypeScript metadata: constructor param type = PrismaService
+  // Ищет в Container по токену PrismaService → передаёт instance
+}
+
+@Controller('users')
+export class UsersController {
+  constructor(private users: UserService) {}
+}
 ```
 
----
+## Типы провайдеров — useClass, useValue, useFactory, useExisting
 
-# Что такое Dependency
+```typescript
+// Module providers — расширенный синтаксис
+@Module({
+  providers: [
+    // 1. Short syntax (useClass подразумевается)
+    UserService,
+    // эквивалентно: { provide: UserService, useClass: UserService }
 
-Пример.
+    // 2. useClass — подменить реализацию через интерфейс
+    { provide: UserRepository, useClass: PrismaUserRepository },
+    // Инъекция: constructor(private repo: UserRepository) — получит PrismaUserRepository
 
----
+    // 3. useValue — статическое значение (конфиг, моки)
+    { provide: 'JWT_SECRET', useValue: process.env.JWT_SECRET },
+    { provide: 'APP_CONFIG', useValue: { port: 3000, debug: false } },
 
-```ts
-class UserService {
+    // 4. useFactory — создать динамически (асинхронно)
+    {
+      provide: 'REDIS_CLIENT',
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const client = createClient({ url: config.get('REDIS_URL') });
+        await client.connect();
+        return client;
+      },
+    },
 
+    // 5. useExisting — алиас: два токена → один instance
+    { provide: 'IUserService', useExisting: UserService },
+    // Оба токена указывают на один и тот же экземпляр UserService
+  ],
+})
+export class UsersModule {}
+
+// Инъекция кастомного токена (@Inject обязателен для не-классовых токенов):
+@Injectable()
+export class AuthService {
   constructor(
-    private db: DatabaseService
+    @Inject('JWT_SECRET') private jwtSecret: string,
+    @Inject('REDIS_CLIENT') private redis: RedisClientType,
   ) {}
 }
 ```
 
----
+## Provider Scopes — Singleton, Request, Transient
 
-Здесь:
+```typescript
+import { Injectable, Scope } from '@nestjs/common';
 
-```txt
-DatabaseService
-```
-
-является зависимостью.
-
----
-
-# Без DI
-
-Создаем вручную.
-
----
-
-```ts
-const db =
- new DatabaseService();
-
-const service =
- new UserService(db);
-```
-
----
-
-Недостатки:
-
-```txt
-сильная связанность
-сложно тестировать
-сложно заменять реализации
-```
-
----
-
-# С DI
-
-```ts
-constructor(
- private db: DatabaseService
-) {}
-```
-
----
-
-Nest сам создаст объект.
-
----
-
-# Что такое DI Container
-
-Самая популярная тема.
-
----
-
-Упрощенно:
-
-```txt
-Map<Token, Instance>
-```
-
----
-
-Например:
-
-```txt
-UserService
- ↓
-instance
-
-DatabaseService
- ↓
-instance
-```
-
----
-
-При старте приложения Nest строит:
-
-```txt
-Dependency Graph
-```
-
----
-
-# Dependency Graph
-
-Пример.
-
----
-
-```txt
-UserController
-      ↓
-UserService
-      ↓
-DatabaseService
-```
-
----
-
-Nest анализирует:
-
-```txt
-constructor()
-```
-
----
-
-И понимает:
-
-```txt
-кого нужно создать первым
-```
-
----
-
-# Что происходит при старте
-
-Шаг 1
-
-Сканируются:
-
-```txt
-Modules
-Providers
-Controllers
-```
-
----
-
-Шаг 2
-
-Создается Dependency Graph.
-
----
-
-Шаг 3
-
-Создаются экземпляры.
-
----
-
-Шаг 4
-
-Сохраняются в Container.
-
----
-
-# Provider
-
-Очень популярный вопрос.
-
----
-
-Provider — любой объект,
-который может участвовать в DI.
-
----
-
-Например:
-
-```ts
+// Singleton (default) — один экземпляр на всё приложение
 @Injectable()
-export class UserService {}
-```
+export class UserService { ... }
+// эквивалентно: @Injectable({ scope: Scope.DEFAULT })
 
----
+// Request Scope — новый экземпляр на каждый HTTP запрос
+@Injectable({ scope: Scope.REQUEST })
+export class RequestContextService {
+  private readonly requestId = Math.random().toString(36);
 
-Это Provider.
-
----
-
-# Provider Token
-
-Самая недооцененная тема.
-
----
-
-Под капотом Nest ищет не класс.
-
----
-
-Он ищет:
-
-```txt
-Token
-```
-
----
-
-Обычно токеном является класс.
-
----
-
-Например:
-
-```ts
-UserService
-```
-
----
-
-Фактически:
-
-```txt
-Token → Instance
-```
-
----
-
-# Упрощенная схема
-
-```txt
-UserService
- ↓
-new UserService()
-```
-
----
-
-Хранится в контейнере.
-
----
-
-# Инъекция
-
-```ts
-constructor(
- private userService:
- UserService
-)
-```
-
----
-
-Nest ищет:
-
-```txt
-Token = UserService
-```
-
----
-
-Находит instance.
-
----
-
-Передает в конструктор.
-
----
-
-# Custom Token
-
-Очень любят спрашивать.
-
----
-
-Можно использовать строку.
-
----
-
-```ts
-{
- provide: 'API_URL',
- useValue: 'https://...'
+  getRequestId() { return this.requestId; }
 }
-```
+// Каждый запрос получает свой экземпляр с уникальным requestId
 
----
+// Transient Scope — новый экземпляр при каждой инъекции
+@Injectable({ scope: Scope.TRANSIENT })
+export class LoggerService {
+  private context: string;
 
-Инъекция:
-
-```ts
-@Inject('API_URL')
-private url: string
-```
-
----
-
-# useClass
-
-Самый простой вариант.
-
----
-
-```ts
-{
- provide: UserRepository,
- useClass: PrismaRepository
+  setContext(ctx: string) { this.context = ctx; }
+  log(msg: string) { console.log(`[${this.context}] ${msg}`); }
 }
+// UsersService и PostsService получат РАЗНЫЕ LoggerService instances
 ```
-
----
-
-Что означает:
 
 ```txt
-при запросе UserRepository
-создать PrismaRepository
+Scope.DEFAULT (Singleton):
+  Создаётся: 1 раз при старте
+  Уничтожается: при завершении приложения
+  Использование: 95% всех провайдеров
+
+Scope.REQUEST:
+  Создаётся: при каждом HTTP запросе
+  Уничтожается: когда запрос завершён
+  Использование: tenant context, request-specific data
+  Предупреждение: "scope bubble up" — все зависимости тоже становятся REQUEST
+
+Scope.TRANSIENT:
+  Создаётся: при каждой инъекции (каждый потребитель получает свой instance)
+  Использование: контекстуализированные логгеры
+  Редко нужен: в большинстве случаев Singleton достаточен
 ```
 
----
+## Scope Bubble Up — важный эффект
 
-# useValue
+```typescript
+// ПРОБЛЕМА: если REQUEST-scoped провайдер инжектируется в Singleton,
+// Singleton тоже становится REQUEST-scoped (NestJS делает это автоматически)
 
-Готовое значение.
-
----
-
-```ts
-{
- provide: 'CONFIG',
- useValue: {
-  port: 3000
- }
+@Injectable({ scope: Scope.REQUEST })
+export class RequestContext {
+  constructor(@Inject(REQUEST) private request: Request) {}
+  getUserId() { return this.request['user']?.id; }
 }
-```
 
----
-
-Часто используют для:
-
-```txt
-config
-constants
-mocks
-```
-
----
-
-# useFactory
-
-Очень популярный вопрос.
-
----
-
-Позволяет создать объект динамически.
-
----
-
-```ts
-{
- provide: DatabaseClient,
-
- useFactory: () => {
-
-  return new PrismaClient();
- }
-}
-```
-
----
-
-# useFactory с зависимостями
-
-```ts
-{
- provide: ApiClient,
-
- inject: [ConfigService],
-
- useFactory: (config) => {
-
-  return new ApiClient(
-   config.get('url')
-  );
- }
-}
-```
-
----
-
-Очень часто используется.
-
----
-
-# useExisting
-
-Менее популярный.
-
----
-
-```ts
-{
- provide: UserRepo,
- useExisting:
- PrismaRepo
-}
-```
-
----
-
-Оба токена будут указывать
-на один объект.
-
----
-
-# Scopes
-
-Очень популярный Senior вопрос.
-
----
-
-# Singleton
-
-По умолчанию.
-
----
-
-Создается:
-
-```txt
-один экземпляр
-на всё приложение
-```
-
----
-
-```ts
+// UserService был Singleton, но теперь автоматически стал REQUEST
+// потому что зависит от REQUEST-scoped RequestContext
 @Injectable()
-export class UserService {}
+export class UserService {
+  constructor(private context: RequestContext) {}
+  // ⚠️ UserService неявно стал REQUEST-scoped!
+}
+
+// Альтернатива без bubble up: передавать userId явно через параметр метода
+@Injectable()
+export class UserService {
+  async getUser(userId: string) { ... } // userId передаётся явно, не через контекст
+}
 ```
 
----
+## InjectionToken — типобезопасный токен
 
-Singleton.
+```typescript
+// Строковые токены ('JWT_SECRET') — риск typo
+// Решение: InjectionToken<T> для типобезопасности
 
----
+import { InjectionToken } from '@nestjs/common';
 
-# Request Scope
+export const JWT_SECRET = new InjectionToken<string>('JWT_SECRET');
+export const REDIS_CLIENT = new InjectionToken<RedisClientType>('REDIS_CLIENT');
 
-```ts
-@Injectable({
- scope: Scope.REQUEST
+// В Module:
+{ provide: JWT_SECRET, useValue: process.env.JWT_SECRET }
+
+// Инъекция — TypeScript знает тип:
+constructor(@Inject(JWT_SECRET) private jwtSecret: string) {}
+// vs строковый токен: тип приходится указывать вручную
+```
+
+## Circular Dependencies — как решить
+
+```typescript
+// Проблема: A зависит от B, B зависит от A → circular dependency
+
+// Решение 1: forwardRef() — отложенная ссылка
+@Injectable()
+export class AuthService {
+  constructor(
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
+  ) {}
+}
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @Inject(forwardRef(() => AuthService))
+    private authService: AuthService,
+  ) {}
+}
+
+// В Module тоже нужен forwardRef:
+@Module({
+  imports: [forwardRef(() => UsersModule)],
 })
+export class AuthModule {}
+
+// Решение 2 (лучше): вынести общую логику в третий сервис
+// AuthSharedService без циклической зависимости
 ```
 
----
+## Типичные ошибки на интервью
 
-Новый экземпляр:
+- **"@Injectable() создаёт экземпляр"** — нет. `@Injectable()` добавляет metadata (`scope`, `token`) что позволяет Nest обнаружить класс как провайдер и управлять его жизненным циклом. Экземпляр создаётся DI Container при старте (или при запросе для REQUEST scope).
 
-```txt
-на каждый запрос
-```
+- **"Все провайдеры в приложении доступны везде"** — нет. Провайдер доступен только в том модуле, где объявлен в `providers`. Для использования в другом модуле: добавить в `exports` исходного модуля и импортировать модуль. Исключение: `@Global()` модуль — его экспорты доступны везде без явного импорта.
 
----
+- **"useFactory выполняется каждый запрос"** — нет для Singleton scope. Factory вызывается ОДИН РАЗ при старте и возвращает instance, который сохраняется в Container. Для REQUEST scope: factory вызывается каждый запрос.
 
-# Пример
+- **"Request Scope — хорошая альтернатива AsyncLocalStorage"** — оба решают задачу request-specific данных. REQUEST scope: создаёт новый провайдер (и всю цепочку зависимостей) на каждый запрос — overhead на GC. AsyncLocalStorage: единственный Singleton, данные хранятся в async контексте — эффективнее. Для высоконагруженных API: AsyncLocalStorage предпочтительнее.
 
-```txt
-Request 1
- ↓
-UserService #1
-
-Request 2
- ↓
-UserService #2
-```
-
----
-
-# Transient Scope
-
-Самый редкий.
-
----
-
-```ts
-Scope.TRANSIENT
-```
-
----
-
-Новый экземпляр:
-
-```txt
-каждая инъекция
-```
-
----
-
-# Когда нужен Request Scope
-
-Например:
-
-```txt
-Tenant Context
-Current User Context
-Correlation ID
-```
-
----
-
-# Почему Request Scope опасен
-
-Очень популярный вопрос.
-
----
-
-Потому что:
-
-```txt
-создаются тысячи объектов
-```
-
----
-
-Сильнее нагрузка на GC.
-
----
-
-Поэтому:
-
-```txt
-Singleton
-```
-
-предпочтительнее.
-
----
-
-# Частый вопрос
-
-Почему DI делает код лучше?
-
----
-
-Ответ:
-
-Позволяет инвертировать зависимости, уменьшает связанность компонентов, упрощает тестирование и замену реализаций.
-
----
-
-# Interview Answer
-
-NestJS использует Dependency Injection Container, который хранит объекты по токенам и автоматически разрешает зависимости через конструкторы. Providers являются основными элементами контейнера и могут создаваться через useClass, useValue, useFactory и useExisting. По умолчанию все провайдеры являются Singleton, но также поддерживаются Request и Transient Scope.
+- **"TOKEN должен быть строкой"** — нет. Token может быть: классом (самый частый), строкой, Symbol, или `InjectionToken<T>`. InjectionToken рекомендован для кастомных токенов — типобезопасен, исключает typo, в отличие от строки.

@@ -1,324 +1,189 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Custom Decorators
 
-## Что такое декоратор
-
-Декоратор — функция,
-которая добавляет metadata
-или изменяет поведение класса,
-метода, параметра или свойства.
-
----
-
-Примеры Nest:
-
-```ts
-@Controller()
-@Get()
-@Post()
-@Inject()
-```
-
----
-
-Все они декораторы.
-
----
-
-# Зачем нужны свои декораторы
-
-Чтобы скрыть повторяющуюся логику.
-
----
-
-Например:
-
-```ts
-req.user.id
-```
-
-встречается везде.
-
----
-
-# Без декоратора
-
-```ts
-@Get()
-profile(
- @Req() req
-) {
-
- return req.user;
-}
-```
-
----
-
-# Создаем User Decorator
-
-```ts
-export const User =
- createParamDecorator(
-  (
-   data,
-   ctx: ExecutionContext
-  ) => {
-
-   const req =
-    ctx
-     .switchToHttp()
-     .getRequest();
-
-   return req.user;
-  }
- );
-```
-
----
-
-# Использование
-
-```ts
-@Get()
-profile(
- @User() user
-) {
-
- return user;
-}
-```
-
----
-
-Красиво и переиспользуемо.
-
----
-
-# Что происходит под капотом
-
-Nest вызывает:
-
-```ts
-ExecutionContext
-```
-
----
-
-Извлекает:
-
-```ts
-request.user
-```
-
----
-
-Передает значение параметру метода.
-
----
-
-# Parameter Decorators
-
-Самый популярный тип.
-
----
-
-Примеры:
-
-```ts
-@Body()
-@Param()
-@Query()
-@Headers()
-```
-
----
-
-Все работают одинаково.
-
----
-
-# Method Decorators
-
-Вешаются на метод.
-
----
-
-Пример:
-
-```ts
-@Roles('admin')
-```
-
----
-
-Создание:
-
-```ts
-export const Roles =
- (...roles: string[]) =>
-  SetMetadata(
-   'roles',
-   roles
-  );
-```
-
----
-
-# Что делает SetMetadata
-
-Под капотом:
-
-```ts
-Reflect.defineMetadata(...)
-```
-
----
-
-# Использование
-
-```ts
-@Roles('admin')
-@Get()
-users()
-```
-
----
-
-# Guard читает metadata
-
-```ts
-this.reflector.get(
- 'roles',
- context.getHandler()
+## Типы декораторов в NestJS
+
+В NestJS четыре вида декораторов: Parameter (извлечь данные из запроса), Method (добавить metadata на метод), Class (добавить metadata на контроллер/провайдер), Property (редко — для сериализации/валидации). Самые полезные для кастомизации: Parameter и Composite (комбинированные через `applyDecorators`).
+
+```typescript
+// 1. Parameter Decorator — createParamDecorator
+// Получить текущего пользователя из request без @Req()
+export const CurrentUser = createParamDecorator(
+  (data: keyof User | undefined, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    const user = request.user as User;
+
+    // data — аргумент декоратора: @CurrentUser('id') → вернёт только user.id
+    return data ? user?.[data] : user;
+  },
 );
-```
 
----
+// Использование:
+@Get('profile')
+getProfile(@CurrentUser() user: User) {
+  return user; // весь объект user
+}
 
-# Composite Decorators
-
-Очень популярный Senior вопрос.
-
----
-
-Можно объединять декораторы.
-
----
-
-Пример:
-
-```ts
-@Auth()
-```
-
----
-
-Внутри:
-
-```ts
-UseGuards(...)
-ApiBearerAuth()
-Roles(...)
-```
-
----
-
-# Реализация
-
-```ts
-export function Auth() {
-
- return applyDecorators(
-  UseGuards(AuthGuard),
-  ApiBearerAuth()
- );
+@Get('me')
+getMe(@CurrentUser('id') userId: number) {
+  return userId; // только user.id
 }
 ```
 
----
+## Decorators для metadata — @Roles, @Public
 
-# Почему это удобно
+```typescript
+// Method/Class decorator через SetMetadata
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
-Вместо:
+export const IS_PUBLIC_KEY = 'isPublic';
+export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
-```ts
-@UseGuards(...)
+// Использование:
+@Controller('admin')
+@Roles(Role.ADMIN) // применить ко всему контроллеру
+export class AdminController {
+  @Get('users')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN) // переопределить для метода
+  getUsers() { ... }
+
+  @Get('stats')
+  @Public() // публичный маршрут внутри защищённого контроллера
+  getPublicStats() { ... }
+}
+
+// RolesGuard читает оба декоратора:
+const roles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+  context.getHandler(), // метод приоритетнее
+  context.getClass(),
+]);
+```
+
+## Composite Decorators — applyDecorators
+
+```typescript
+// Вместо дублирования 4 декораторов на каждом endpoint — один @Auth()
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
+
+export function Auth(...roles: Role[]) {
+  return applyDecorators(
+    SetMetadata(ROLES_KEY, roles),      // metadata для ролей
+    UseGuards(JwtAuthGuard, RolesGuard), // guards в правильном порядке
+    ApiBearerAuth(),                     // Swagger документация
+    ApiUnauthorizedResponse({ description: 'Unauthorized' }),
+  );
+}
+
+// До:
+@UseGuards(JwtAuthGuard, RolesGuard)
+@SetMetadata('roles', [Role.ADMIN])
 @ApiBearerAuth()
-@Roles(...)
+@ApiUnauthorizedResponse({ description: 'Unauthorized' })
+@Get('users')
+getUsers() { ... }
+
+// После:
+@Auth(Role.ADMIN)
+@Get('users')
+getUsers() { ... }
 ```
 
----
+## Parameter Decorator с Pipe валидацией
 
-Получаем:
+```typescript
+// createParamDecorator возвращает сырые данные — Pipes можно навесить
+export const ParsedBody = createParamDecorator(
+  (key: string | undefined, ctx: ExecutionContext) => {
+    const body = ctx.switchToHttp().getRequest().body;
+    return key ? body?.[key] : body;
+  },
+);
 
-```ts
-@Auth()
+// С Pipe:
+@Post()
+create(@ParsedBody() body: unknown, @ParsedBody('email', new ParseUUIDPipe()) email: string) {
+  // ParseUUIDPipe валидирует email поле (если там UUID)
+}
+
+// Более реалистичный пример — заголовок с парсингом:
+export const ClientVersion = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | undefined => {
+    const req = ctx.switchToHttp().getRequest();
+    return req.headers['x-client-version'];
+  },
+);
+
+@Get()
+getData(@ClientVersion() version: string) {
+  console.log('Client version:', version);
+}
 ```
 
----
+## Class Decorator — кастомный @ApiController
 
-# Class Decorators
+```typescript
+// Composite class decorator для Swagger + global prefix
+import { Controller, applyDecorators } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
-Вешаются на класс.
+export function ApiController(prefix: string, tag?: string) {
+  return applyDecorators(
+    Controller(prefix),
+    ApiTags(tag ?? prefix),
+  );
+}
 
----
+// Использование:
+@ApiController('users', 'Users Management')
+export class UsersController { ... }
 
-Пример:
-
-```ts
-@Controller()
+// Эквивалент:
+@Controller('users')
+@ApiTags('Users Management')
+export class UsersController { ... }
 ```
 
----
+## Декораторы и TypeScript — как они работают
 
-# Property Decorators
+```typescript
+// Декораторы — это просто функции, вызываемые при загрузке класса
+// TypeScript компилирует @Decorator в:
+//   Decorator(target, propertyKey, descriptor)
 
-Используются редко.
+// Method decorator (ручная реализация):
+export function Log(): MethodDecorator {
+  return (target, propertyKey, descriptor: PropertyDescriptor) => {
+    const originalMethod = descriptor.value;
 
----
+    descriptor.value = async function (...args: unknown[]) {
+      console.log(`[${String(propertyKey)}] called with:`, args);
+      const result = await originalMethod.apply(this, args);
+      console.log(`[${String(propertyKey)}] returned:`, result);
+      return result;
+    };
 
-Обычно:
+    return descriptor;
+  };
+}
 
-```ts
-Validation
-Serialization
+// Использование:
+@Log()
+@Get(':id')
+async findOne(@Param('id') id: string) {
+  return this.usersService.findOne(+id);
+}
+// При каждом запросе: логирует вызов и результат
 ```
 
----
+## Типичные ошибки на интервью
 
-# Частый вопрос
+- **"createParamDecorator — это просто замена @Req()"** — нет. `createParamDecorator` позволяет извлекать любые данные из контекста (не только HTTP request), принимать аргумент (как `@CurrentUser('id')`), и работать с Pipes для валидации/трансформации. Это полноценная точка расширения, не просто alias.
 
-Чем декоратор отличается от middleware?
+- **"applyDecorators применяет декораторы снизу вверх"** — нет. `applyDecorators([A, B, C])` применяет в порядке A → B → C (сверху вниз, как написано). Это отличается от стекования декораторов через `@A @B @C`, где TypeScript применяет справа налево (C → B → A). В `applyDecorators` порядок предсказуем.
 
----
+- **"Декораторы выполняются при каждом запросе"** — нет. Декораторы выполняются ОДИН РАЗ при загрузке модуля (startup). Код внутри `createParamDecorator` factory функции выполняется при каждом запросе, но сам декоратор зарегистрирован один раз.
 
-Decorator:
+- **"@Roles на классе и на методе складываются"** — зависит от реализации Guard. `reflector.getAllAndOverride` берёт method если есть, иначе class (не складывает). `reflector.getAllAndMerge` объединяет массивы из обоих. Важно знать какой метод использует твой RolesGuard.
 
-```txt
-добавляет metadata
-```
-
----
-
-Middleware:
-
-```txt
-обрабатывает запрос
-```
-
----
-
-# Частый вопрос
-
-Как работает @Roles()?
-
-Ответ:
-
-@Roles использует SetMetadata и сохраняет список ролей в metadata метода. Затем Roles Guard читает эту metadata через Reflector и проверяет права пользователя.
-
----
-
-# Interview Answer
-
-Custom Decorators позволяют инкапсулировать повторяющуюся логику и работать с metadata NestJS. Они часто используются для извлечения данных из запроса, хранения ролей и создания композиции нескольких декораторов через applyDecorators.
+- **"Property decorators в NestJS не нужны"** — используются в class-validator (`@IsEmail()`, `@IsNotEmpty()`) и class-transformer (`@Expose()`, `@Transform()`). Эти библиотеки глубоко интегрированы в NestJS ValidationPipe. Property decorators хранят validation rules в metadata через `reflect-metadata`.

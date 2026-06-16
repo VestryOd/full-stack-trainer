@@ -1,383 +1,224 @@
-<!-- verified: 2026-06-05, corrections: 0 -->
 # Dynamic Modules
 
-## Очень популярный Senior вопрос
+## Зачем нужны Dynamic Modules
 
-Обычный Module:
+Статический `@Module({ providers: [...] })` — конфигурация фиксирована на уровне кода. Dynamic Module позволяет передать конфигурацию в момент импорта модуля: `JwtModule.register({ secret: env.JWT_SECRET })`. Под капотом: статический метод возвращает объект `DynamicModule` — это тот же `ModuleMetadata`, но генерированный в runtime.
 
-```ts
+```typescript
+// Статический модуль — конфигурация захардкожена
 @Module({
- providers: [...]
+  providers: [{ provide: 'DB_HOST', useValue: 'localhost' }],
 })
-```
+export class DatabaseModule {}
 
----
-
-Статический.
-
----
-
-Конфигурация известна заранее.
-
----
-
-Но что делать если:
-
-```txt
-нужна конфигурация
-из environment
-из runtime
-из внешнего API
-```
-
----
-
-Решение:
-
-```txt
-Dynamic Module
-```
-
----
-
-# Что такое Dynamic Module
-
-Модуль,
-который может генерировать
-свою конфигурацию динамически.
-
----
-
-# Самый известный пример
-
-```ts
-ConfigModule.forRoot()
-```
-
----
-
-Ты наверняка использовал.
-
----
-
-```ts
-ConfigModule.forRoot({
- isGlobal: true
-})
-```
-
----
-
-Это Dynamic Module.
-
----
-
-# Почему
-
-Потому что:
-
-```txt
-@Module(...)
-```
-
-генерируется во время выполнения.
-
----
-
-# Структура
-
-```ts
-static forRoot()
-: DynamicModule
-```
-
----
-
-Пример.
-
----
-
-```ts
+// Динамический модуль — конфигурация передаётся при импорте
 @Module({})
 export class DatabaseModule {
-
- static forRoot(
-  options
- ): DynamicModule {
-
-  return {
-
-   module:
-    DatabaseModule,
-
-   providers: [...]
-  };
- }
+  static forRoot(options: DatabaseOptions): DynamicModule {
+    return {
+      module: DatabaseModule,       // ссылка на текущий класс
+      global: options.isGlobal,     // опционально: сделать глобальным
+      providers: [
+        { provide: 'DB_OPTIONS', useValue: options },
+        DatabaseService,            // может зависеть от 'DB_OPTIONS'
+      ],
+      exports: [DatabaseService],   // что экспортировать
+    };
+  }
 }
-```
 
----
-
-# Использование
-
-```ts
-DatabaseModule.forRoot({
- host: 'localhost'
+// Использование в AppModule:
+@Module({
+  imports: [
+    DatabaseModule.forRoot({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      isGlobal: true,
+    }),
+  ],
 })
+export class AppModule {}
 ```
 
----
+## register vs registerAsync vs forRoot vs forFeature
 
-# Что возвращает
+```typescript
+// register() — синхронная конфигурация (опции известны на месте)
+JwtModule.register({ secret: 'my-secret', signOptions: { expiresIn: '1h' } })
 
-Очень важно.
-
----
-
-DynamicModule:
-
-```ts
-{
- module,
- providers,
- exports,
- imports
-}
-```
-
----
-
-Фактически:
-
-```txt
-динамически создаем @Module
-```
-
----
-
-# Зачем это нужно
-
-Позволяет:
-
-```txt
-передавать настройки
-при подключении модуля
-```
-
----
-
-# Реальный пример
-
-```ts
-JwtModule.register({
- secret: '123'
-})
-```
-
----
-
-Это Dynamic Module.
-
----
-
-# register()
-
-Очень распространенный паттерн.
-
----
-
-```ts
-Module.register()
-```
-
----
-
-Используется когда:
-
-```txt
-конфиг известен сразу
-```
-
----
-
-# registerAsync()
-
-Еще популярнее.
-
----
-
-```ts
-JwtModule.registerAsync(...)
-```
-
----
-
-Используется когда:
-
-```txt
-нужно ждать зависимости
-```
-
----
-
-Например:
-
-```txt
-ConfigService
-Vault
-AWS Secrets
-```
-
----
-
-# Пример
-
-```ts
+// registerAsync() — конфигурация зависит от других провайдеров
 JwtModule.registerAsync({
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: (config: ConfigService): JwtModuleOptions => ({
+    secret: config.getOrThrow('JWT_SECRET'),   // получить из env через ConfigService
+    signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '1h') },
+  }),
+})
 
- inject: [ConfigService],
+// forRoot() — инициализация для всего приложения (один раз в AppModule)
+// forFeature() — регистрация feature-специфичных провайдеров в конкретном модуле
 
- useFactory: (config) => ({
+// Пример forRoot + forFeature:
+TypeOrmModule.forRoot({               // в AppModule: подключение к БД
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  autoLoadEntities: true,
+})
+TypeOrmModule.forFeature([User, Post]) // в UsersModule: регистрация репозиториев
+```
 
-  secret:
-   config.get('JWT_SECRET')
+## Создание своего Dynamic Module
 
- })
+```typescript
+// cache.module.ts — configurable cache module
+export interface CacheModuleOptions {
+  ttl: number;
+  maxSize?: number;
+  prefix?: string;
+}
+
+export const CACHE_OPTIONS = new InjectionToken<CacheModuleOptions>('CACHE_OPTIONS');
+
+@Module({})
+export class CacheModule {
+  // Синхронный register
+  static register(options: CacheModuleOptions): DynamicModule {
+    return {
+      module: CacheModule,
+      providers: [
+        { provide: CACHE_OPTIONS, useValue: options },
+        CacheService,
+      ],
+      exports: [CacheService],
+    };
+  }
+
+  // Асинхронный registerAsync — когда options нужно получить из ConfigService
+  static registerAsync(asyncOptions: {
+    imports?: any[];
+    inject?: any[];
+    useFactory: (...args: any[]) => Promise<CacheModuleOptions> | CacheModuleOptions;
+  }): DynamicModule {
+    return {
+      module: CacheModule,
+      imports: asyncOptions.imports ?? [],
+      providers: [
+        {
+          provide: CACHE_OPTIONS,
+          inject: asyncOptions.inject ?? [],
+          useFactory: asyncOptions.useFactory,
+        },
+        CacheService,
+      ],
+      exports: [CacheService],
+    };
+  }
+}
+
+// cache.service.ts — использует опции
+@Injectable()
+export class CacheService {
+  constructor(
+    @Inject(CACHE_OPTIONS) private options: CacheModuleOptions,
+  ) {}
+
+  set(key: string, value: unknown) {
+    const prefixedKey = `${this.options.prefix ?? ''}:${key}`;
+    // ... кешировать с this.options.ttl
+  }
+}
+
+// Использование:
+CacheModule.registerAsync({
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    ttl: config.get('CACHE_TTL', 3600),
+    prefix: config.get('CACHE_PREFIX', 'app'),
+  }),
 })
 ```
 
----
+## useClass и useExisting в Dynamic Modules
 
-# Почему registerAsync важен
+```typescript
+// Иногда нужна конфигурация через класс (ConfigurableModuleBuilder)
+export interface ThrottlerModuleOptions {
+  ttl: number;
+  limit: number;
+}
 
-Во время старта:
+@Module({})
+export class ThrottlerModule {
+  static forRootAsync(options: {
+    imports?: any[];
+    useClass?: Type<ThrottlerModuleOptions>;
+    useExisting?: Type<ThrottlerModuleOptions>;
+    useFactory?: (...args: any[]) => ThrottlerModuleOptions;
+    inject?: any[];
+  }): DynamicModule {
+    const provider: Provider = options.useFactory
+      ? { provide: 'THROTTLER_OPTIONS', useFactory: options.useFactory, inject: options.inject }
+      : options.useClass
+        ? { provide: 'THROTTLER_OPTIONS', useClass: options.useClass }
+        : { provide: 'THROTTLER_OPTIONS', useExisting: options.useExisting };
 
-```txt
-ConfigService уже создан
+    return {
+      module: ThrottlerModule,
+      imports: options.imports ?? [],
+      providers: [provider, ThrottlerGuard],
+      exports: [ThrottlerGuard],
+    };
+  }
+}
 ```
 
----
+## ConfigurableModuleBuilder — NestJS v9+
 
-И можем использовать его.
+```typescript
+// NestJS 9+ предоставляет builder для упрощения создания Dynamic Modules
+import { ConfigurableModuleBuilder } from '@nestjs/common';
 
----
+export interface HttpModuleOptions {
+  baseUrl: string;
+  timeout?: number;
+}
 
-# Global Dynamic Module
+// Автоматически создаёт register, registerAsync, forRoot, forRootAsync
+export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
+  new ConfigurableModuleBuilder<HttpModuleOptions>()
+    .setClassMethodName('forRoot')       // имя метода (по умолчанию 'register')
+    .setExtras({ isGlobal: false }, (definition, extras) => ({
+      ...definition,
+      global: extras.isGlobal,
+    }))
+    .build();
 
-Очень популярный вопрос.
+@Module({
+  providers: [HttpService],
+  exports: [HttpService],
+})
+export class HttpModule extends ConfigurableModuleClass {}
+// Теперь HttpModule.forRoot() и HttpModule.forRootAsync() доступны автоматически
 
----
-
-Можно сделать:
-
-```ts
-@Global()
+// HttpService получает опции через MODULE_OPTIONS_TOKEN:
+@Injectable()
+export class HttpService {
+  constructor(
+    @Inject(MODULE_OPTIONS_TOKEN) private options: HttpModuleOptions,
+  ) {}
+}
 ```
 
----
+## Типичные ошибки на интервью
 
-Тогда:
+- **"Dynamic Module нельзя сделать глобальным"** — можно. Возврат `{ module, global: true, ... }` из `forRoot()` или добавление `@Global()` на класс делает все его exports доступными во всём приложении без явного импорта. ConfigModule.forRoot({ isGlobal: true }) — именно этот паттерн.
 
-```txt
-не нужно импортировать
-в каждом модуле
-```
+- **"register() и registerAsync() — одно и то же"** — нет. `register()` принимает готовые опции синхронно. `registerAsync()` принимает `useFactory` с `inject`, позволяя получить опции через DI (из ConfigService, SecretManager, etc.) асинхронно. Используй `registerAsync` когда конфиг зависит от других сервисов.
 
----
+- **"DynamicModule должен возвращать только providers"** — нет. DynamicModule = полноценный ModuleMetadata + `module` поле: может содержать `imports`, `providers`, `exports`, `controllers`, `global`. Это полноценный модуль, созданный в runtime.
 
-# forFeature()
+- **"forRoot и forFeature — просто конвенция"** — да, но важная. `forRoot` — инициализация один раз в корневом модуле (DB connection, JWT config). `forFeature` — регистрация feature-специфичных ресурсов (repository для конкретной сущности) в feature-модуле. Нарушение конвенции запутывает других разработчиков.
 
-Еще один популярный паттерн.
-
----
-
-Например:
-
-```ts
-TypeOrmModule.forFeature(...)
-```
-
----
-
-Используется для:
-
-```txt
-локальной регистрации
-repository
-entity
-feature providers
-```
-
----
-
-# Разница
-
-forRoot:
-
-```txt
-один раз
-на всё приложение
-```
-
----
-
-forFeature:
-
-```txt
-для конкретного модуля
-```
-
----
-
-# Частый вопрос
-
-Почему Dynamic Module лучше обычного Module?
-
----
-
-Ответ:
-
-Позволяет передавать конфигурацию во время подключения и создавать провайдеры динамически.
-
----
-
-# Частый вопрос
-
-Какие встроенные Dynamic Modules знаете?
-
----
-
-Например:
-
-```txt
-ConfigModule.forRoot()
-JwtModule.register()
-TypeOrmModule.forRoot()
-GraphQLModule.forRoot()
-```
-
----
-
-# Частый вопрос
-
-Когда использовать registerAsync?
-
----
-
-Когда конфигурация зависит от других провайдеров.
-
----
-
-Например:
-
-```txt
-ConfigService
-Secrets Manager
-Vault
-```
-
----
-
-# Interview Answer
-
-Dynamic Module — это модуль, который создается динамически во время выполнения и может принимать конфигурацию через методы вроде forRoot, register или registerAsync. Этот механизм активно используется во встроенных модулях NestJS, таких как ConfigModule, JwtModule и GraphQLModule.
+- **"Dynamic Module нельзя использовать с useClass/useExisting"** — можно. Provider в DynamicModule.providers может быть любым типом провайдера: useClass, useValue, useFactory, useExisting — всё работает так же как в статическом модуле.
