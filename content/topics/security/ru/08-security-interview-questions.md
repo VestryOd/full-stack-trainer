@@ -1,809 +1,265 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# Security Interview Questions (Fullstack / Senior)
+# Security: Вопросы для интервью
+
+Вопросы сгруппированы тематически. Внутри каждой группы — полный senior-ответ + типичные follow-up вопросы.
 
 ---
 
-# 1. Что такое Authentication?
+## Группа 1: Основы безопасности
 
-Проверка личности пользователя.
+### Что такое CIA Triad и почему это важно?
 
----
+CIA Triad — три фундаментальных свойства безопасности любой системы:
 
-Примеры:
+**Confidentiality** (конфиденциальность): данные доступны только авторизованным. Угрозы: перехват трафика (MITM), SQL Injection, утечка токенов. Меры: HTTPS, шифрование, RBAC.
 
-```txt
-Password
+**Integrity** (целостность): данные не могут быть изменены незаметно. Угрозы: CSRF (действие от имени пользователя), SQL Injection (изменение данных), tampering JWT без подписи. Меры: HMAC, digital signatures, JWT Signature.
 
-JWT
-
-OAuth
-
-SSO
-```
-
----
-
-# 2. Что такое Authorization?
-
-Проверка прав пользователя.
-
----
-
-Определяет:
+**Availability** (доступность): система доступна для авторизованных пользователей. Угрозы: DDoS, regex DoS, resource exhaustion. Меры: Rate Limiting, Circuit Breaker.
 
 ```txt
-что пользователь может делать
+Типичные follow-up:
+
+Q: "Что нарушает DDoS?"
+A: Availability. DDoS исчерпывает ресурсы сервера → легитимные
+   пользователи не могут получить доступ.
+
+Q: "Что нарушает перехват JWT?"
+A: Confidentiality. Злоумышленник получает доступ к данным,
+   которые предназначались только авторизованному пользователю.
+
+Q: "Что нарушает CSRF?"
+A: Integrity. Действие выполняется от имени пользователя без
+   его ведома → данные изменены неавторизованно.
 ```
 
----
+### Что такое Defense in Depth?
 
-# 3. Чем Authentication отличается от Authorization?
+Принцип многоуровневой защиты: если один уровень пробит, следующий должен остановить атаку. Нельзя полагаться на единственную защиту.
 
-Authentication:
+Пример для API endpoint: HTTPS (шифрование) → Rate Limiting (brute force) → JWT Validation (аутентификация) → Role Check (авторизация) → Zod/ValidationPipe (валидация) → Parameterized Query (injection) → Output Encoding (XSS) → Security Headers (clickjacking).
 
 ```txt
-Кто ты?
+Типичные follow-up:
+
+Q: "Что такое Security Through Obscurity? Это работает?"
+A: Попытка обезопасить систему скрытием информации (секретный URL,
+   непубличная документация). НЕ является защитой: злоумышленник
+   находит endpoints через brute force, сканирование, source code.
+   Реальная защита: авторизация на endpoint, независимо от его
+   "секретности". Принцип Kerckhoffs: система безопасна если
+   секрет — только ключ, а не алгоритм.
 ```
 
 ---
 
-Authorization:
+## Группа 2: JWT, Authentication и Tokens
+
+### Опишите структуру JWT и что происходит если payload изменить
+
+JWT — три base64url-encoded части: `header.payload.signature`.
+
+- **Header**: алгоритм (`HS256`) и тип
+- **Payload**: claims (sub, role, exp, iat, jti) — НЕ зашифрован, любой может прочитать
+- **Signature**: HMAC(header + payload, secret) — гарантирует целостность
+
+Если payload изменить (например, `role: "user" → "admin"`): signature станет невалидной при верификации. Сервер должен отклонить токен с ошибкой. Исключение: атака `alg:none` — если библиотека принимает algorithm=none, подпись не проверяется. Защита: `jwt.verify(token, secret, { algorithms: ['HS256'] })` — явное указание.
 
 ```txt
-Что тебе можно?
+Типичные follow-up:
+
+Q: "Можно ли класть пароль в JWT?"
+A: Нет. Payload только подписан, но не зашифрован. base64decode
+   payload без ключа → любой видит содержимое.
+
+Q: "Чем HS256 отличается от RS256?"
+A: HS256 — симметричный (один secret для подписи и верификации).
+   RS256 — асимметричный (private key подписывает, public key
+   верифицирует). В microservices RS256 предпочтительнее: каждый
+   сервис верифицирует через public key, не зная private key.
 ```
 
----
+### Объясните схему Access Token + Refresh Token и проблему logout
 
-# 4. Что такое RBAC?
+**Зачем два токена**: один long-lived JWT при краже — катастрофа (30 дней). Два токена: Access (15 мин, stateless) + Refresh (30 дней, хранится в БД).
 
-Role Based Access Control.
+**Flow**: Login → AccessToken (в JSON response) + RefreshToken (HttpOnly Cookie). Через 15 мин: POST /auth/refresh → новый AccessToken. Logout: удалить RefreshToken из БД + clearCookie.
 
----
-
-Доступ определяется ролью.
-
----
-
-Пример:
+**JWT Logout Problem**: Access Token stateless — нельзя "отозвать" до истечения TTL. Решения: (1) короткий TTL (15 мин), (2) Redis blacklist по jti, (3) Refresh Token Rotation (каждый refresh → новый refresh token, старый аннулируется).
 
 ```txt
-Admin
+Типичные follow-up:
 
-Manager
+Q: "Где безопасно хранить Access Token?"
+A: Memory (JS variable) — защищён от XSS, теряется при refresh страницы.
+   HttpOnly Cookie — защищён от XSS, CSRF риск (нужен sameSite=strict).
+   localStorage — НЕБЕЗОПАСНО: XSS может украсть.
 
-User
+Q: "Как обнаружить кражу Refresh Token?"
+A: Refresh Token Rotation: при каждом refresh выдаётся новый refresh
+   token, старый удаляется из БД. Если злоумышленник использует украденный
+   токен → попытка reuse уже использованного токена → alert + revoke
+   ВСЕХ refresh tokens пользователя.
+
+Q: "Что такое OAuth 2.0 и чем он отличается от аутентификации?"
+A: OAuth 2.0 — протокол делегированной АВТОРИЗАЦИИ (доступ к ресурсам).
+   Для аутентификации нужен OpenID Connect (слой поверх OAuth 2.0,
+   добавляет id_token с identity данными). "Войти через Google" =
+   OpenID Connect, не чистый OAuth 2.0.
 ```
 
 ---
 
-# 5. Что такое ABAC?
+## Группа 3: XSS, CSRF и CORS
 
-Attribute Based Access Control.
+### Объясните XSS, CSRF и чем они отличаются
 
----
+**XSS** (Cross-Site Scripting): злоумышленник внедряет JavaScript в страницы, браузер жертвы выполняет его в контексте вашего сайта. Три типа: Stored (в БД), Reflected (в URL), DOM-based (в client JS). Результат: кража токенов из localStorage/cookie, keylogger, действия от имени пользователя.
 
-Доступ определяется атрибутами.
+**CSRF** (Cross-Site Request Forgery): браузер жертвы (уже аутентифицированный) отправляет запрос к вашему сайту с evil.com. Браузер автоматически прикладывает cookie для вашего домена. Сервер не отличает от легитимного запроса.
 
----
-
-Например:
+**Ключевое отличие**: XSS — код выполняется с вашего origin. CSRF — запрос отправляется с чужого origin.
 
 ```txt
-department
+Типичные follow-up:
 
-owner
+Q: "Почему JWT в Authorization header защищает от CSRF?"
+A: Браузер автоматически отправляет cookie для домена, но НЕ
+   добавляет кастомные заголовки (Authorization) на кросс-доменные
+   запросы. Evil.com не может получить JWT из memory/localStorage
+   (same-origin policy) → не может поставить заголовок.
 
-country
+Q: "Защищает ли HttpOnly Cookie от XSS?"
+A: Частично. HttpOnly делает cookie недоступным для JS.read.
+   Но XSS всё равно может отправлять запросы с вашего origin
+   (fetch, XMLHttpRequest) → cookie автоматически прикладывается.
+   XSS + сессионная аутентификация → action hijacking.
+   Полная защита: HttpOnly + CSP (предотвращает XSS).
+
+Q: "Что такое CORS и защищает ли он сервер?"
+A: CORS — политика браузера, контролирующая кросс-доменные запросы
+   fetch/XHR. НЕ защищает сервер: curl/Postman/backend полностью
+   обходят CORS. Защищает только браузерный контекст пользователя.
+   Сервер защищают аутентификация и авторизация.
+
+Q: "Когда браузер отправляет Preflight OPTIONS?"
+A: Перед "non-simple" запросом: метод DELETE/PUT/PATCH, или
+   заголовок Authorization/Content-Type: application/json, или
+   любой кастомный заголовок. Preflight спрашивает сервер
+   "разрешён ли этот запрос?" до отправки основного.
 ```
 
 ---
 
-# 6. Что такое JWT?
+## Группа 4: Injection и Input Validation
 
-JSON Web Token.
+### Что такое SQL Injection и как защититься?
 
----
+SQL Injection: пользовательский ввод конкатенируется в SQL → злоумышленник изменяет логику запроса. Пример: `email = "' OR '1'='1' --"` → обход аутентификации. UNION attack → утечка всей таблицы. При правах DROP → удаление данных.
 
-Содержит:
+Единственная правильная защита: **parameterized queries** (данные никогда не становятся частью SQL-текста). ORM (Prisma, TypeORM) параметризует автоматически для стандартных методов, но `$queryRawUnsafe` / `query()` с конкатенацией — уязвимы.
 
 ```txt
-Header
+Типичные follow-up:
 
-Payload
+Q: "Что такое Command Injection?"
+A: Аналог SQL Injection для shell команд. Если ввод пользователя
+   передаётся в exec() → злоумышленник вставляет ; rm -rf /
+   Защита: execFile() вместо exec() (не интерпретирует metacharacters),
+   или избегать shell полностью.
 
-Signature
+Q: "Что такое Mass Assignment?"
+A: Клиент передаёт поля которые не должен менять (например role:'admin')
+   и сервер слепо применяет req.body к модели. Защита: явный whitelist
+   через DTO/Zod schema — принимать только объявленные поля.
+
+Q: "Чем Validation отличается от Sanitization?"
+A: Validation: данные корректны? (reject неправильные — 400).
+   Sanitization: данные безопасны? (трансформировать для контекста).
+   Для SQL — только parameterized queries, не ручное экранирование.
+   Для HTML — DOMPurify при необходимости рендерить HTML.
+   Оба нужны в разных контекстах.
 ```
 
 ---
 
-# 7. Зашифрован ли JWT?
+## Группа 5: Пароли и Секреты
 
-Нет.
+### Как правильно хранить пароли и почему нельзя шифровать?
 
----
+**Нельзя шифровать**: шифрование обратимо. При утечке ключа → все пароли раскрыты. Для проверки пароля при логине шифрование не нужно — достаточно сравнить хеши.
 
-JWT подписан,
-но не зашифрован.
+**Нельзя SHA-256**: разработан для скорости. GPU вычисляет 23 млрд SHA-256/сек → brute force словаря 10 млн паролей за ~0.01 сек.
 
----
+**bcrypt**: специально медленный (cost=12 → ~400ms), встраивает соль в хеш автоматически, adaptive (при росте мощности CPU — повышать cost).
 
-# 8. Можно ли хранить пароль в JWT?
-
-Нет.
-
----
-
-JWT может прочитать любой.
-
----
-
-# 9. Что такое Access Token?
-
-Короткоживущий токен доступа.
-
----
-
-Обычно:
+**Argon2id**: победитель Password Hashing Competition. Memory-hard (64MB RAM) → GPU атаки нивелированы. Рекомендован для новых проектов.
 
 ```txt
-5–30 минут
+Типичные follow-up:
+
+Q: "Что такое Rainbow Table и как bcrypt защищает?"
+A: Rainbow Table — предвычисленная таблица {password → hash}.
+   bcrypt: уникальная соль per-password → одинаковые пароли дают
+   разные хеши → таблица бесполезна (нужно строить отдельную
+   таблицу для каждого возможного salt значения — нереально).
+
+Q: "Где хранить секреты приложения в production?"
+A: AWS Secrets Manager / Parameter Store, HashiCorp Vault,
+   GCP Secret Manager. Преимущества: audit log, ротация без деплоя,
+   IAM-based access control, автоматическая ротация RDS паролей (AWS).
+   Development: .env в .gitignore.
+
+Q: "Что такое Secret Rotation и как сделать без downtime?"
+A: Периодическая смена секретов для минимизации exposure при компрометации.
+   Без downtime: (1) выпустить new_secret, (2) поддержать оба ключа
+   (try new → fallback old для JWT), (3) дождаться истечения токенов
+   со старым ключом, (4) удалить old_secret.
+   JWKS endpoint: автоматическая публикация public keys → rotation
+   без деплоя потребителей.
 ```
 
 ---
 
-# 10. Что такое Refresh Token?
+## Группа 6: OWASP и Безопасная Архитектура
 
-Долгоживущий токен
-для получения нового Access Token.
+### Назовите топ-3 уязвимости из OWASP Top 10 и объясните их
 
----
+**A01 Broken Access Control** (#1 с 2021): отсутствие проверки прав на ресурс. IDOR: пользователь меняет `/orders/123` на `/orders/124` → видит чужой заказ. Защита: ownership check на уровне каждого запроса, deny by default.
 
-# 11. Где хранить Access Token?
+**A03 Injection**: SQL, Command, NoSQL injection. Защита: parameterized queries, execFile вместо exec, Zod validation.
 
-Лучший вариант:
+**A10 SSRF**: сервер делает HTTP-запрос по URL указанному злоумышленником. В AWS: `http://169.254.169.254/latest/meta-data/` → IAM credentials. Защита: allowlist hostname + DNS rebinding protection (проверить что resolved IP не private range).
 
 ```txt
-Memory
+Типичные follow-up:
+
+Q: "Как бы вы защитили fullstack приложение (Next.js + NestJS)?"
+A: Слоями:
+   1. HTTPS + HSTS (transport)
+   2. Helmet.js security headers (CSP, X-Frame-Options, ...)
+   3. Rate Limiting (brute force / DoS)
+   4. Access Token (15мин JWT) + Refresh Token (HttpOnly Cookie, rotation)
+   5. ValidationPipe whitelist=true (Mass Assignment, invalid input)
+   6. Parameterized queries / Prisma (SQL Injection)
+   7. Zod/class-validator на каждый endpoint (input validation)
+   8. Role + ownership check (Broken Access Control)
+   9. Argon2/bcrypt для паролей
+   10. AWS Secrets Manager для секретов
+   11. SSRF protection для любых URL-fetch операций
+   12. Audit logging для auth events + 403 patterns
+
+Q: "Что такое SSRF в контексте AWS и почему это критично?"
+A: Instance Metadata Service: GET 169.254.169.254/latest/meta-data/
+   iam/security-credentials/role-name → временные AWS credentials.
+   С этими credentials → доступ к S3, RDS, другим сервисам по IAM.
+   Защита: IMDSv2 (требует токен запроса), allowlist URLs,
+   блокировка 169.254.169.254 на уровне security group.
+
+Q: "Что такое Rate Limiting и как реализовать через Redis?"
+A: Ограничение кол-ва запросов за период для защиты от brute force/DoS.
+   Redis: INCR key → TTL установить при первом INCR → если count > limit →
+   отклонить с 429. Библиотека express-rate-limit поддерживает Redis store.
+   Продвинутый: rate limit по (userId + endpoint) отдельно от (IP),
+   sliding window вместо fixed window.
 ```
-
----
-
-Допустимый:
-
-```txt
-HttpOnly Cookie
-```
-
----
-
-# 12. Где хранить Refresh Token?
-
-Чаще всего:
-
-```txt
-HttpOnly
-Secure
-SameSite Cookie
-```
-
----
-
-# 13. Почему localStorage опасен?
-
-При XSS злоумышленник может прочитать токен.
-
----
-
-# 14. Что такое XSS?
-
-Cross Site Scripting.
-
----
-
-Выполнение вредоносного JavaScript на сайте.
-
----
-
-# 15. Какие типы XSS существуют?
-
-```txt
-Stored
-
-Reflected
-
-DOM
-```
-
----
-
-# 16. Что такое Stored XSS?
-
-Скрипт сохраняется в БД.
-
----
-
-Самый опасный вариант.
-
----
-
-# 17. Что такое DOM XSS?
-
-Уязвимость возникает на клиенте.
-
----
-
-Часто через:
-
-```js
-innerHTML
-```
-
----
-
-# 18. Как защититься от XSS?
-
-```txt
-Escaping
-
-React JSX
-
-CSP
-
-HttpOnly Cookies
-```
-
----
-
-# 19. Что такое CSP?
-
-Content Security Policy.
-
----
-
-Ограничивает выполнение скриптов.
-
----
-
-# 20. Что такое CSRF?
-
-Cross Site Request Forgery.
-
----
-
-Заставляет браузер отправить запрос
-от имени пользователя.
-
----
-
-# 21. Почему JWT в Authorization Header снижает риск CSRF?
-
-Браузер автоматически не добавляет:
-
-```txt
-Authorization Header
-```
-
----
-
-# 22. Как защититься от CSRF?
-
-```txt
-CSRF Token
-
-SameSite Cookie
-
-Authorization Header
-```
-
----
-
-# 23. Что такое SameSite Cookie?
-
-Политика браузера,
-контролирующая отправку cookie
-между сайтами.
-
----
-
-# 24. Что такое CORS?
-
-Cross-Origin Resource Sharing.
-
----
-
-Политика браузера
-для междоменных запросов.
-
----
-
-# 25. Защищает ли CORS сервер?
-
-Нет.
-
----
-
-Только браузер.
-
----
-
-# 26. Что такое Preflight Request?
-
-OPTIONS запрос,
-который браузер отправляет заранее.
-
----
-
-# 27. Что такое SQL Injection?
-
-Влияние пользователя на SQL запрос.
-
----
-
-# 28. Пример SQL Injection?
-
-```sql
-' OR 1=1 --
-```
-
----
-
-# 29. Как защититься от SQL Injection?
-
-```txt
-Parameterized Queries
-
-ORM
-
-Validation
-```
-
----
-
-# 30. Защищает ли Prisma от SQL Injection?
-
-В большинстве случаев да.
-
----
-
-Но не:
-
-```txt
-$queryRawUnsafe()
-```
-
----
-
-# 31. Что такое NoSQL Injection?
-
-Аналог SQL Injection
-для NoSQL баз данных.
-
----
-
-# 32. Что такое Command Injection?
-
-Влияние пользователя
-на системные команды.
-
----
-
-# 33. Что такое Input Validation?
-
-Проверка корректности данных.
-
----
-
-# 34. Что такое Sanitization?
-
-Удаление опасного содержимого.
-
----
-
-# 35. Чем Validation отличается от Sanitization?
-
-Validation:
-
-```txt
-данные корректны?
-```
-
----
-
-Sanitization:
-
-```txt
-данные безопасны?
-```
-
----
-
-# 36. Почему нельзя доверять Frontend Validation?
-
-Потому что запрос можно отправить напрямую.
-
----
-
-# 37. Что такое Mass Assignment?
-
-Передача полей,
-которые пользователь не должен менять.
-
----
-
-# 38. Как защититься от Mass Assignment?
-
-```txt
-DTO
-
-Whitelist
-
-Field Mapping
-```
-
----
-
-# 39. Что такое HTTPS?
-
-HTTP поверх TLS.
-
----
-
-# 40. Что дает HTTPS?
-
-```txt
-шифрование
-
-целостность
-
-подлинность сервера
-```
-
----
-
-# 41. Что такое MITM?
-
-Man In The Middle.
-
----
-
-Перехват трафика между сторонами.
-
----
-
-# 42. Что такое Password Hashing?
-
-Хранение хеша вместо пароля.
-
----
-
-# 43. Чем Hashing отличается от Encryption?
-
-Hash:
-
-```txt
-необратим
-```
-
----
-
-Encryption:
-
-```txt
-обратима
-```
-
----
-
-# 44. Почему нельзя хранить пароли в открытом виде?
-
-Утечка БД раскроет все пароли.
-
----
-
-# 45. Почему SHA256 плохо подходит для паролей?
-
-Слишком быстрый.
-
----
-
-Легко брутфорсить.
-
----
-
-# 46. Что такое bcrypt?
-
-Алгоритм хеширования паролей.
-
----
-
-Специально медленный.
-
----
-
-# 47. Что такое Argon2?
-
-Современный алгоритм хеширования паролей.
-
----
-
-Считается лучшей практикой.
-
----
-
-# 48. Что такое Salt?
-
-Случайная строка,
-добавляемая перед хешированием.
-
----
-
-# 49. Зачем нужен Salt?
-
-Защищает от:
-
-```txt
-Rainbow Tables
-```
-
----
-
-# 50. Что такое Rainbow Table?
-
-Предвычисленная таблица:
-
-```txt
-password → hash
-```
-
----
-
-# 51. Что такое Secret?
-
-Конфиденциальные данные приложения.
-
----
-
-Например:
-
-```txt
-JWT Secret
-
-DB Password
-
-API Keys
-```
-
----
-
-# 52. Где хранить секреты?
-
-Production:
-
-```txt
-AWS Secrets Manager
-
-Vault
-
-Parameter Store
-```
-
----
-
-# 53. Что такое Secret Rotation?
-
-Периодическая смена секретов.
-
----
-
-# 54. Что такое OWASP?
-
-Open Worldwide Application Security Project.
-
----
-
-# 55. Что такое OWASP Top 10?
-
-Список самых опасных веб-уязвимостей.
-
----
-
-# 56. Что такое Broken Access Control?
-
-Неправильная проверка прав доступа.
-
----
-
-# 57. Почему Broken Access Control опасен?
-
-Позволяет получать доступ
-к чужим данным.
-
----
-
-# 58. Что такое Security Misconfiguration?
-
-Ошибки настройки системы.
-
----
-
-Пример:
-
-```txt
-открытый S3 Bucket
-```
-
----
-
-# 59. Что такое SSRF?
-
-Server Side Request Forgery.
-
----
-
-Заставляет сервер выполнять запросы
-к внутренним ресурсам.
-
----
-
-# 60. Почему SSRF опасен в AWS?
-
-Можно получить доступ к:
-
-```txt
-Metadata Service
-
-Internal APIs
-```
-
----
-
-# 61. Что такое Rate Limiting?
-
-Ограничение количества запросов.
-
----
-
-# 62. Зачем нужен Rate Limiting?
-
-Защита от:
-
-```txt
-Brute Force
-
-DDoS
-
-Abuse
-```
-
----
-
-# 63. Как реализовать Rate Limiting?
-
-Часто через:
-
-```txt
-Redis
-
-INCR
-
-TTL
-```
-
----
-
-# 64. Что такое Principle of Least Privilege?
-
-Минимально необходимые права.
-
----
-
-# 65. Что такое Defense in Depth?
-
-Несколько уровней защиты.
-
----
-
-Например:
-
-```txt
-HTTPS
-
-JWT
-
-RBAC
-
-Validation
-
-Rate Limiting
-```
-
----
-
-# 66. Что такое Security Headers?
-
-Дополнительные HTTP заголовки защиты.
-
----
-
-Примеры:
-
-```txt
-CSP
-
-HSTS
-
-X-Frame-Options
-```
-
----
-
-# 67. Что такое HSTS?
-
-HTTP Strict Transport Security.
-
----
-
-Заставляет браузер использовать HTTPS.
-
----
-
-# 68. Что такое X-Frame-Options?
-
-Защита от Clickjacking.
-
----
-
-# 69. Что такое Clickjacking?
-
-Обман пользователя через скрытые iframe.
-
----
-
-# 70. Самый популярный Senior вопрос
-
-Как бы вы защитили современное Next.js + NestJS приложение?
-
-Ответ:
-
-```txt
-HTTPS
-
-Access Token + Refresh Token
-
-HttpOnly Cookies
-
-RBAC
-
-DTO Validation
-
-Sanitization
-
-Parameterized Queries
-
-CSP
-
-Rate Limiting
-
-Secrets Manager
-
-Password Hashing (Argon2/Bcrypt)
-```
-
----
-
-# 71. Самый сильный Senior ответ
-
-Какие 3 самые опасные веб-уязвимости сегодня?
-
-Ответ:
-
-```txt
-Broken Access Control
-
-XSS
-
-Injection
-```
-
-Потому что именно они чаще всего приводят к компрометации данных и захвату учетных записей пользователей.

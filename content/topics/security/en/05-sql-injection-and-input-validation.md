@@ -1,395 +1,244 @@
 # SQL Injection and Input Validation
 
-## One of the Oldest Attacks
+## SQL Injection — how the attack works
 
-But still encountered today.
+SQL Injection occurs when user input is concatenated into a SQL query without escaping. An attacker can change the query's logic, bypass authentication, and read or delete data.
 
----
+```typescript
+// VULNERABLE: concatenating user input into SQL
+async function findUser(email: string) {
+  const query = `SELECT * FROM users WHERE email = '${email}'`;
+  return await db.query(query);
+}
 
-# What is SQL Injection
+// Attack #1: authentication bypass
+// email = "' OR '1'='1' --"
+// Query becomes: SELECT * FROM users WHERE email = '' OR '1'='1' --'
+// '1'='1' is always true → returns all users
+// -- comments out the rest of the query
 
-An attack
-in which the user
-influences the SQL query.
+// Attack #2: reading other users' data
+// email = "' UNION SELECT id, email, password_hash, null FROM users --"
+// Appends a second SELECT → leaks the entire table
 
----
+// Attack #3: Blind SQL Injection (when output isn't visible)
+// email = "' AND (SELECT SUBSTRING(password_hash,1,1) FROM users WHERE id=1)='a' --"
+// By timing or differing behavior → enumerate characters one by one
 
-# Bad Example
-
-```ts
-const query =
-
-`SELECT *
- FROM users
- WHERE email='${email}'`;
+// Attack #4: DROP (if DB user has sufficient privileges)
+// email = "'; DROP TABLE users; --"
 ```
 
----
+### Parameterized Queries — the only correct defense
 
-The user enters:
+```typescript
+// SAFE: parameterized query (pg/node-postgres)
+async function findUser(email: string) {
+  const result = await pool.query(
+    'SELECT * FROM users WHERE email = $1',
+    [email]  // parameter passed separately, never interpolated into SQL
+  );
+  return result.rows[0];
+}
 
-```txt
-' OR 1=1 --
-```
+// SAFE: Prisma ORM (parameterizes automatically)
+const user = await prisma.user.findUnique({
+  where: { email }, // safe by default
+});
 
----
+// SAFE: TypeORM with parameters
+const user = await userRepository.findOne({
+  where: { email }, // safe
+});
 
-We get:
+// DANGEROUS: raw query with interpolation (Prisma)
+const users = await prisma.$queryRawUnsafe(
+  `SELECT * FROM users WHERE email = '${email}'` // vulnerable!
+);
 
-```sql
-SELECT *
-FROM users
-WHERE email=''
-OR 1=1
-```
-
----
-
-Result:
-
-```txt
-all users
-```
-
----
-
-# More Dangerous Example
-
-```txt
-DROP TABLE users
-```
-
----
-
-# Why This Works
-
-Because user input
-is mixed with SQL.
-
----
-
-# Parameterized Query
-
-The main defense.
-
----
-
-Correct:
-
-```ts
-db.query(
- "SELECT * FROM users WHERE email=$1",
- [email]
+// SAFE: raw query with parameters (Prisma)
+const users = await prisma.$queryRaw`SELECT * FROM users WHERE email = ${email}`;
+// or
+const users = await prisma.$queryRaw(
+  Prisma.sql`SELECT * FROM users WHERE email = ${email}`
 );
 ```
 
----
+**Principle**: data never becomes part of the SQL text. The DB receives the query template and data separately — there's no way to "escape" the string context.
 
-Now:
+## Input Validation — why server-side validation is mandatory
+
+Frontend validation is UX, not security. Anyone can send a request directly via curl/Postman, bypassing the browser and JS entirely.
+
+```typescript
+// With Zod (Express)
+import { z } from 'zod';
+
+const createUserSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(128),
+  name: z.string().min(1).max(100).trim(),
+  // role is absent → client can't set the role
+});
+
+app.post('/api/users', async (req, res) => {
+  const result = createUserSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: result.error.flatten(),
+    });
+  }
+  const { email, password, name } = result.data; // typed, safe object
+  // ...
+});
+
+// NestJS: DTO + ValidationPipe
+import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
+
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password: string;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  name: string;
+  // role: intentionally absent
+}
+
+// main.ts
+app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,            // strips fields not declared in the DTO
+  forbidNonWhitelisted: true, // returns an error for unknown fields
+  transform: true,            // converts types (string → number)
+}));
+```
+
+## Mass Assignment — an insidious vulnerability
+
+Occurs when the server blindly applies the request body to an object or model.
+
+```typescript
+// VULNERABLE: Mass Assignment
+app.patch('/api/users/:id', authenticate, async (req, res) => {
+  // User sends: { "name": "Max", "role": "admin" }
+  await db.query(
+    'UPDATE users SET name = $1, role = $2 WHERE id = $3',
+    [req.body.name, req.body.role, req.params.id] // privilege escalation!
+  );
+});
+
+// Same pattern with ORM:
+app.patch('/api/users/:id', authenticate, async (req, res) => {
+  // INSECURE: req.body includes a role the client shouldn't be able to change
+  await prisma.user.update({
+    where: { id: req.params.id },
+    data: req.body, // accepts anything the client sends
+  });
+});
+
+// SAFE: explicit field whitelist
+app.patch('/api/users/:id', authenticate, async (req, res) => {
+  const schema = z.object({
+    name: z.string().min(1).max(100).optional(),
+    bio: z.string().max(500).optional(),
+    // role intentionally absent
+  });
+  const data = schema.parse(req.body);
+
+  await prisma.user.update({
+    where: { id: req.params.id },
+    data, // only whitelisted fields
+  });
+});
+```
+
+## Sanitization vs Validation — the difference
 
 ```txt
-SQL
+Validation:    Is the data correct?
+  Checks structure, type, format.
+  On failure → reject the request (400 Bad Request).
+  Example: is the email valid? is the password long enough?
 
-and
-
-data
+Sanitization:  Is the data safe?
+  Transforms/cleans data for safe use.
+  Doesn't reject — transforms.
+  Example: HTML escaping for display, whitespace normalization
 ```
 
----
+```typescript
+import DOMPurify from 'isomorphic-dompurify';
 
-Are separated.
+// Sanitization for HTML content (blog, CMS)
+function sanitizeHTML(rawHTML: string): string {
+  return DOMPurify.sanitize(rawHTML, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'ol', 'li'],
+    ALLOWED_ATTR: ['href', 'title'],
+  });
+}
 
----
+// Sanitization of names and string fields
+function sanitizeString(input: string): string {
+  return input.trim().replace(/\s+/g, ' ');
+}
 
-# ORM
-
-Very popular question.
-
----
-
-Prisma:
-
-```ts
-prisma.user.findMany(...)
+// For SQL: sanitization is NOT protection
+// Use only parameterized queries, not manual escaping
 ```
 
----
+## File Upload Validation — common attacks and defenses
 
-By default:
+```typescript
+import path from 'path';
+import { fileTypeFromBuffer } from 'file-type';
 
-```txt
-safe
-```
+// File upload attacks:
+// 1. Path Traversal: filename = "../../etc/passwd"
+// 2. Executable files: upload .php/.js file to the server
+// 3. Masquerading: rename malware.exe to image.jpg
+// 4. Bombs: zip bomb (1KB archive → 1GB after extraction)
+// 5. XXE: malicious SVG/XML
 
----
+// Defenses:
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-# But
+async function validateFileUpload(file: Express.Multer.File): Promise<void> {
+  // 1. Check size (before reading content)
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error('File too large');
+  }
 
-Dangerous:
+  // 2. Check magic bytes (real type), not just extension/content-type
+  const fileType = await fileTypeFromBuffer(file.buffer);
+  if (!fileType || !ALLOWED_MIME_TYPES.has(fileType.mime)) {
+    throw new Error('Invalid file type');
+  }
 
-```ts
-$queryRawUnsafe(...)
-```
+  // 3. Never trust the original filename
+  // path.basename protects against "../" but isn't sufficient
+  const safeFilename = `${crypto.randomUUID()}${path.extname(fileType.ext)}`;
 
----
-
-# Validation
-
-The next important topic.
-
----
-
-Never trust:
-
-```txt
-Frontend
-```
-
----
-
-Never.
-
----
-
-# Why
-
-Anyone can send a request via:
-
-```http
-curl
-
-Postman
-
-Swagger
-```
-
----
-
-# Validation Must Be on the Backend
-
-Always.
-
----
-
-# DTO Validation
-
-NestJS example.
-
----
-
-```ts
-@IsEmail()
-email: string;
-```
-
----
-
-# ValidationPipe
-
-```ts
-whitelist: true
-```
-
----
-
-Removes extra fields.
-
----
-
-# Very Important Example
-
-A user sends:
-
-```json
-{
- "email":"...",
- "role":"admin"
+  // 4. Store outside the web root or in object storage (S3)
+  // Never execute uploaded files as code
 }
 ```
 
----
+## Common interview mistakes
 
-If the role field is not in the DTO:
+- **"ORM fully protects against SQL Injection"** — ORM protects when using standard methods (`findBy`, `where: {}`). But `$queryRawUnsafe` (Prisma), `query()` with concatenation (TypeORM), `createQueryBuilder` with unsafe interpolation — are all vulnerable. Always audit raw queries.
 
-```txt
-it will be removed
-```
+- **"Frontend validation is sufficient"** — the client is entirely under the user's control. Server-side validation is mandatory and is the only real validation.
 
----
+- **"Sanitization = Validation"** — these are different processes. Validation checks correctness (reject or accept). Sanitization transforms data for safe use (transform). Both are needed in different contexts.
 
-# Sanitization
+- **"Escaping strings is enough to protect against SQL Injection"** — manual escaping depends on encoding, locale, DB version, and is easy to get wrong. The only reliable protection is parameterized queries / prepared statements.
 
-Very frequently asked.
-
----
-
-Validation:
-
-```txt
-is the data correct?
-```
-
----
-
-Sanitization:
-
-```txt
-is the data safe?
-```
-
----
-
-# Example
-
-Input:
-
-```html
-<script>alert()</script>
-```
-
----
-
-After sanitization:
-
-```txt
-remove dangerous HTML
-```
-
----
-
-# File Upload Validation
-
-Very popular question.
-
----
-
-Never trust:
-
-```txt
-filename
-
-extension
-```
-
----
-
-Always check:
-
-```txt
-mime type
-
-file size
-
-content type
-```
-
----
-
-# Mass Assignment
-
-Very frequently asked.
-
----
-
-The problem.
-
----
-
-There is a model:
-
-```ts
-User
-```
-
----
-
-A user sends:
-
-```json
-{
- "name":"Max",
- "role":"admin"
-}
-```
-
----
-
-If blindly saved:
-
-```ts
-db.create(req.body)
-```
-
----
-
-We get:
-
-```txt
-privilege escalation
-```
-
----
-
-# Solution
-
-Use:
-
-```txt
-DTO
-
-Whitelist
-
-Field Mapping
-```
-
----
-
-# Common Question
-
-Does an ORM protect against SQL Injection?
-
-Answer:
-
-In most cases yes.
-
----
-
-But raw queries can still be vulnerable.
-
----
-
-# Common Question
-
-Why can't you trust Frontend Validation?
-
-Answer:
-
-Because the client can be bypassed and any request can be sent directly.
-
----
-
-# Common Question
-
-What is Mass Assignment?
-
-Answer:
-
-A vulnerability where a user can pass fields they should not be allowed to modify.
-
----
-
-# Common Question
-
-What is more important: Validation or Sanitization?
-
-Answer:
-
-Both.
-
-Validation checks data correctness, while Sanitization makes data safe.
-
----
-
-# Interview Answer
-
-SQL Injection occurs when user input is mixed with SQL code. The main defense is parameterized queries and ORMs. Additionally, the server must always perform validation and sanitization of incoming data regardless of frontend checks.
+- **"Checking the Content-Type header is sufficient for file uploads"** — Content-Type is set by the client; an attacker can put anything there. Always check the file's magic bytes (actual content), not the request header.
