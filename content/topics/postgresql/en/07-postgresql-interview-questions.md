@@ -1,605 +1,245 @@
-# PostgreSQL Interview Questions (Middle → Senior)
+# PostgreSQL: Interview Questions
+
+Questions are grouped thematically. Each group includes a full senior-level answer + typical follow-up questions. Goal: reproduce the "base question → follow-ups → nuances" chain.
 
 ---
 
-# 1. What is PostgreSQL?
+## Group 1: Fundamentals and Architecture
 
-### Answer
+### What is PostgreSQL and how does it differ from other databases?
 
-PostgreSQL is an object-relational DBMS (RDBMS) that supports ACID transactions, MVCC, extended data types, indexes, JSONB, and complex SQL queries.
+PostgreSQL is an open-source object-relational database management system (ORDBMS), released under the PostgreSQL License (similar to MIT). Key features: ACID transactions via WAL, MVCC with no read locks, a rich type system (JSONB, Arrays, hstore, range types, user-defined types), and extensibility (extensions: PostGIS, pg_stat_statements, pgcrypto).
 
-PostgreSQL is suitable for both classic relational data and semi-structured data via JSONB.
+Difference from MySQL: PostgreSQL adheres more strictly to the SQL standard, natively supports complex queries (window functions, CTEs, LATERAL JOIN), and JSONB with GIN indexes; MySQL was historically faster for simple OLTP, but PostgreSQL has caught up.
+
+```txt
+Typical follow-ups:
+
+Q: "What does 'object-relational' mean?"
+A: Support for table inheritance (CREATE TABLE child INHERITS parent),
+   user-defined types (CREATE TYPE), operator overloading, arrays as
+   a native type — it goes beyond Codd's pure relational model.
+
+Q: "When to choose PostgreSQL over MySQL?"
+A: For complex queries with JOINs, analytics, JSONB workloads,
+   geospatial data (PostGIS), and when SQL standard compliance matters.
+   MySQL preferred for: simple OLTP with high write throughput
+   (MySQL Cluster), existing MySQL ecosystem.
+```
+
+### How does a SQL query flow through PostgreSQL?
+
+```txt
+1. Parser → AST (syntax check, syntax errors caught here)
+2. Analyzer → Query Tree (resolve table/column names, types)
+3. Rewriter → rules (VIEW expansion, RLS policies)
+4. Planner/Optimizer → cost-based optimization, plan selection
+5. Executor → execute the plan, return rows
+6. Buffer Manager → shared_buffers (page cache in RAM), miss → disk
+```
+
+```txt
+Typical follow-ups:
+
+Q: "What is shared_buffers?"
+A: Shared RAM cache for data pages (default 128MB, typically configured
+   to 25% of RAM). A page is read from disk once and cached; subsequent
+   reads come from RAM.
+
+Q: "What is WAL?"
+A: Write-Ahead Log — an operations journal. Before data is written to
+   disk, the record goes into WAL (fsync). Provides A (Atomicity) and D
+   (Durability): on crash — WAL replay restores the state.
+```
 
 ---
 
-# 2. What is a Primary Key?
+## Group 2: ACID and Transactions
 
-### Answer
+### Explain each ACID principle with its implementation in PostgreSQL
 
-A Primary Key is a unique identifier for a row.
+**A — Atomicity**: implemented via WAL. Either all transaction operations are applied to the heap (COMMIT), or WAL uses undo to roll them back (ROLLBACK / crash recovery). Primitives: `BEGIN / COMMIT / ROLLBACK`.
 
-Guarantees:
+**C — Consistency**: PostgreSQL enforces CONSTRAINTS (NOT NULL, CHECK, FOREIGN KEY, UNIQUE) at COMMIT time. Business-logic "consistency" (can't go negative) — only if there's a `CHECK (balance >= 0)`.
 
-- uniqueness
-- NOT NULL
+**I — Isolation**: implemented via MVCC snapshots. Three levels: READ COMMITTED (snapshot per statement), REPEATABLE READ (snapshot per transaction), SERIALIZABLE (SSI — dependency tracking).
 
-Example:
+**D — Durability**: WAL fsync before confirming COMMIT. `synchronous_commit = on` guarantees D; `off` — faster but risks losing ~200ms of data on crash.
+
+```txt
+Typical follow-ups:
+
+Q: "What is SAVEPOINT?"
+A: A partial rollback point within a transaction. ROLLBACK TO SAVEPOINT
+   undoes only operations after the SAVEPOINT, not the whole transaction.
+   Use case: try an operation, roll it back on error, continue the
+   transaction a different way.
+
+Q: "What happens if you don't call COMMIT/ROLLBACK?"
+A: On connection drop, PostgreSQL automatically ROLLBACKs the unfinished
+   transaction. Problem: if a pool connection is "returned" without
+   COMMIT/ROLLBACK — the next client gets a transaction in "aborted"
+   state, all queries rejected until explicit ROLLBACK.
+```
+
+### How does Deadlock work and how do you prevent it?
+
+Deadlock = cyclic lock wait: Transaction A holds row 1 and waits for row 2; Transaction B holds row 2 and waits for row 1 → neither can proceed.
+
+PostgreSQL detects deadlock via the lock-wait graph after `deadlock_timeout` (default 1 sec) and rolls back the "victim" with `ERROR: deadlock detected` (SQLSTATE 40P01).
+
+Prevention: always update rows in the SAME ORDER (`WHERE id = 1`, then `WHERE id = 2` — in both transactions). The application must catch 40P01 and retry the transaction.
+
+```txt
+Typical follow-ups:
+
+Q: "How is deadlock different from lock contention?"
+A: Lock contention — high competition for one lock (one waits for the
+   other to release). Resolves itself on COMMIT/ROLLBACK. Deadlock —
+   CYCLIC waiting, fundamentally unresolvable without external
+   intervention (DBMS rolls back one transaction).
+```
+
+---
+
+## Group 3: Isolation Levels
+
+### Describe the difference between READ COMMITTED, REPEATABLE READ, and SERIALIZABLE
+
+**READ COMMITTED** (default): snapshot is created per STATEMENT. Sees all commits before each SELECT → Non-Repeatable Read is possible (repeated SELECT returns a different value if another transaction COMMITted between them).
+
+**REPEATABLE READ**: snapshot is created ONCE per transaction. All SELECTs see the same data. PostgreSQL (via MVCC) additionally prevents Phantom Reads (the standard doesn't require this). Write-Skew Anomaly is possible.
+
+**SERIALIZABLE** (SSI): PostgreSQL tracks read/write dependencies between transactions. If their concurrent result isn't equivalent to any sequential order — rolls one back with `ERROR: could not serialize access` (SQLSTATE 40001). Application must handle retries.
+
+```txt
+Typical follow-ups:
+
+Q: "What is Write-Skew Anomaly?"
+A: Both doctors read "2 doctors on duty" and both go home — now nobody
+   is there. Each transaction individually doesn't violate the invariant
+   (someone is still on duty), but together they do. REPEATABLE READ
+   doesn't protect against this; SERIALIZABLE detects the conflict
+   via SSI.
+
+Q: "Does PostgreSQL support READ UNCOMMITTED?"
+A: Technically yes (SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED),
+   but it's implemented as READ COMMITTED — dirty reads are physically
+   impossible because of MVCC.
+```
+
+---
+
+## Group 4: Indexes and Internals
+
+### Explain B-Tree indexes, the Left Prefix Rule, and when the Planner skips an index
+
+**B-Tree** — a balanced tree with O(log N) height. Leaf nodes are sorted and linked (doubly-linked list) → efficient for range queries. Supports: =, <, <=, >, >=, BETWEEN, ORDER BY.
+
+**Left Prefix Rule** for composite index `(a, b, c)`: data is sorted first by `a`, then by `b` within one `a`, then by `c`. Without fixing `a`, you can't efficiently find `b` — it's scattered across the entire index. Rule: the index works for `(a)`, `(a, b)`, `(a, b, c)`, but not for `(b)` or `(c)` alone.
+
+**When the Planner skips the index**: low selectivity (WHERE country = 'USA' with 90% USA users → Seq Scan is cheaper), small table, function in WHERE (`WHERE LOWER(email) = ...`), implicit type cast, `random_page_cost` too high for SSD.
+
+```txt
+Typical follow-ups:
+
+Q: "What is a Partial Index?"
+A: An index with a WHERE clause: CREATE INDEX ... ON orders(created_at)
+   WHERE status = 'pending'. Indexes only a subset of rows → smaller,
+   faster. A query with the same WHERE automatically uses it.
+
+Q: "What is an Index-Only Scan?"
+A: All needed SELECT data is taken directly from the index (key + INCLUDE
+   columns) without touching the heap. Requires: all SELECT fields in
+   the index AND Visibility Map = "all-visible" for heap pages.
+
+Q: "How does BRIN differ from B-Tree?"
+A: BRIN stores min/max values per block ranges (tens of KB vs GBs for
+   B-Tree). Effective only with HIGH CORRELATION between physical row
+   order and column value (time-series, append-only logs). For random
+   data, BRIN is useless.
+```
+
+---
+
+## Group 5: MVCC, VACUUM, Locks
+
+### Explain MVCC — the mechanism and why PostgreSQL stores multiple row versions
+
+MVCC (Multi-Version Concurrency Control): instead of locking a row on read — store multiple versions of one row simultaneously.
+
+On UPDATE: the old row is NOT overwritten. Its `xmax` gets the XID of the current transaction. A NEW row with `xmin` = transaction's XID is inserted into the heap. Each reading transaction uses its own snapshot (xmin/xmax/xip) to determine the visibility of each row version.
+
+Result: "readers don't block writers, writers don't block readers" — parallelism without read locks.
+
+```txt
+Typical follow-ups:
+
+Q: "What is a dead tuple and how does it appear?"
+A: An old row version after UPDATE or DELETE with a set xmax. No longer
+   needed by any transaction, but still physically in the heap. Takes
+   up space, slows down Seq Scan (visibility must be checked for each
+   version).
+
+Q: "What does VACUUM do vs VACUUM FULL?"
+A: VACUUM: marks dead tuple space as free (FSM), removes dead index
+   entries, updates Visibility Map. Does NOT return space to the OS.
+   VACUUM FULL: rebuilds the table from scratch (ACCESS EXCLUSIVE LOCK
+   → everything is blocked), returns space to the OS. For production
+   use pg_repack.
+
+Q: "Why does VACUUM matter for XID Wraparound?"
+A: PostgreSQL uses a 32-bit XID (transaction counter). VACUUM "freezes"
+   old rows (resets xmin for rows visible to ALL transactions). Without
+   freezing, after 2^32 transactions — wraparound: PostgreSQL stops
+   accepting queries to prevent data loss.
+
+Q: "When is SELECT ... FOR UPDATE needed?"
+A: For the "check-then-act" pattern: read a value → check a business
+   condition → update. Without FOR UPDATE — race condition (two
+   transactions read the same value, both "see" the condition satisfied,
+   both update → invariant violated). For plain reads without a
+   subsequent UPDATE — not needed.
+```
+
+---
+
+## Group 6: Query Planner and Performance
+
+### How does EXPLAIN ANALYZE work and what should you look for?
+
+`EXPLAIN` — shows the execution plan (estimated cost, rows) without actually running the query. `EXPLAIN ANALYZE` — really executes the query and adds actual time, actual rows, loops.
+
+What to look for:
+- **Seq Scan on a large table with WHERE** → needs an index
+- **estimated rows ≠ actual rows** (rows=100 vs actual=100000) → stale statistics → `ANALYZE`
+- **Nested Loop with high loops** → N+1 problem in SQL, needs index on inner
+- **Sort Method: external merge Disk** → work_mem too small (`SET work_mem = '256MB'` in session)
+- **high shared read** → data doesn't fit in shared_buffers, heavy disk I/O
 
 ```sql
-id UUID PRIMARY KEY
+-- Always use BUFFERS for the full I/O picture
+EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ...;
 ```
-
----
-
-# 3. What is a Foreign Key?
-
-### Answer
-
-A Foreign Key links tables together.
-
-Example:
-
-```sql
-user_id REFERENCES users(id)
-```
-
-Guarantees referential integrity.
-
-That is, you cannot create a record
-referencing a non-existent user.
-
----
-
-# 4. What types of relationships exist?
-
-### Answer
-
-One-To-One
 
 ```txt
-User → Profile
+Typical follow-ups:
+
+Q: "Why does the Planner sometimes choose Seq Scan when an index exists?"
+A: Planner estimates cost: with low selectivity (many rows match), random
+   I/O through the index costs more than sequential Seq Scan. Also:
+   random_page_cost too high for SSD (should be lowered to 1.1-2.0);
+   a function in WHERE prevents index use.
+
+Q: "What is pg_stat_statements?"
+A: An extension that accumulates statistics for ALL executed queries
+   (total_exec_time, calls, mean_exec_time). Allows finding "expensive"
+   queries in production without EXPLAIN ANALYZing each one.
+   Requires shared_preload_libraries = 'pg_stat_statements'.
+
+Q: "How do you find slow queries in production without downtime?"
+A: pg_stat_statements is the most common answer. Also: pg_stat_activity
+   (currently active queries), log_min_duration_statement (log queries
+   slower than N ms to the PostgreSQL log), auto_explain (automatically
+   log EXPLAIN for slow queries).
 ```
-
-One-To-Many
-
-```txt
-User → Posts
-```
-
-Many-To-Many
-
-```txt
-Users ↔ Roles
-```
-
-Usually through a join table.
-
----
-
-# 5. What is normalization?
-
-### Answer
-
-Normalization is the process of eliminating data duplication.
-
-For example, instead of:
-
-```txt
-post_author_name
-post_author_email
-```
-
-we use:
-
-```txt
-posts.user_id
-```
-
-and a separate users table.
-
----
-
-# 6. What is denormalization?
-
-### Answer
-
-Intentional data duplication for performance.
-
-For example:
-
-```txt
-order.total_price
-```
-
-can be stored in the table,
-instead of recalculating via JOIN.
-
----
-
-# 7. What is a transaction?
-
-### Answer
-
-A transaction is a group of operations
-that executes as a single unit.
-
-Either all operations complete:
-
-```sql
-COMMIT;
-```
-
-Or none:
-
-```sql
-ROLLBACK;
-```
-
----
-
-# 8. What does ACID stand for?
-
-### Answer
-
-Atomicity
-
-Either all or nothing.
-
-Consistency
-
-Data remains correct.
-
-Isolation
-
-Transactions do not interfere with each other.
-
-Durability
-
-After COMMIT, data will not be lost.
-
----
-
-# 9. What is MVCC?
-
-### Answer
-
-MVCC (Multi-Version Concurrency Control) —
-PostgreSQL's concurrency mechanism.
-
-Instead of modifying a row, a new version of the row is created.
-
-This allows:
-
-```txt
-readers don't block writers
-writers don't block readers
-```
-
----
-
-# 10. Why does PostgreSQL perform well under load?
-
-### Answer
-
-The main reason is MVCC.
-
-Reads typically do not block writes,
-and writes do not block reads.
-
-Also helps:
-
-- indexes
-- planner
-- vacuum
-- connection pooling
-
----
-
-# 11. What is a Dirty Read?
-
-### Answer
-
-Reading data from an uncommitted transaction.
-
-PostgreSQL does not allow Dirty Reads.
-
-Even Read Uncommitted behaves as Read Committed.
-
----
-
-# 12. What is a Non-Repeatable Read?
-
-### Answer
-
-The same SELECT within a transaction
-returns different values.
-
----
-
-# 13. What is a Phantom Read?
-
-### Answer
-
-A repeated query returns new rows
-that appeared after the first SELECT.
-
----
-
-# 14. What isolation levels does PostgreSQL have?
-
-### Answer
-
-Read Committed
-
-The default.
-
-Repeatable Read
-
-All SELECTs work with one snapshot.
-
-Serializable
-
-Maximum isolation.
-
----
-
-# 15. What isolation level is used by default?
-
-### Answer
-
-Read Committed.
-
----
-
-# 16. How does Repeatable Read differ from Read Committed?
-
-### Answer
-
-Read Committed:
-
-each SELECT can see new commits.
-
-Repeatable Read:
-
-the entire transaction works with one data snapshot.
-
----
-
-# 17. What is Serializable?
-
-### Answer
-
-The strictest isolation level.
-
-PostgreSQL behaves as if
-transactions executed sequentially.
-
-On conflict, one transaction is terminated with an error:
-
-```txt
-could not serialize access
-```
-
----
-
-# 18. What is an index?
-
-### Answer
-
-An index is an additional data structure
-that speeds up row lookups.
-
-Allows searching in:
-
-```txt
-O(log n)
-```
-
-instead of:
-
-```txt
-O(n)
-```
-
----
-
-# 19. What index does PostgreSQL use by default?
-
-### Answer
-
-B-Tree.
-
----
-
-# 20. Why is searching by index faster?
-
-### Answer
-
-Because B-Tree allows searching logarithmically.
-
-For:
-
-```txt
-1 000 000 rows
-```
-
-it takes approximately:
-
-```txt
-20 steps
-```
-
-instead of a full table scan.
-
----
-
-# 21. What indexes do you know in PostgreSQL?
-
-### Answer
-
-B-Tree
-
-The primary index.
-
-GIN
-
-JSONB, Full Text Search.
-
-GiST
-
-Geodata.
-
-Hash
-
-Equality search.
-
-BRIN
-
-Very large tables.
-
----
-
-# 22. What is a Composite Index?
-
-### Answer
-
-An index on multiple columns.
-
-Example:
-
-```sql
-(name, age)
-```
-
----
-
-# 23. What is the Left Prefix Rule?
-
-### Answer
-
-For an index:
-
-```sql
-(name, age)
-```
-
-the index works for:
-
-```sql
-WHERE name = ...
-```
-
-and
-
-```sql
-WHERE name = ... AND age = ...
-```
-
-But is usually inefficient for:
-
-```sql
-WHERE age = ...
-```
-
----
-
-# 24. Why might PostgreSQL not use an index?
-
-### Answer
-
-The Planner estimates cost.
-
-If the selectivity is too low,
-an index may be slower
-than a full table scan.
-
----
-
-# 25. What is EXPLAIN?
-
-### Answer
-
-Shows the query execution plan.
-
----
-
-# 26. How does EXPLAIN differ from EXPLAIN ANALYZE?
-
-### Answer
-
-EXPLAIN shows the estimated plan.
-
-EXPLAIN ANALYZE actually executes the query
-and shows actual values.
-
----
-
-# 27. What is Seq Scan?
-
-### Answer
-
-Sequential Scan.
-
-Full pass through the table.
-
----
-
-# 28. What is Index Scan?
-
-### Answer
-
-Search via index.
-
-Usually used for point queries.
-
----
-
-# 29. What is Index Only Scan?
-
-### Answer
-
-PostgreSQL retrieves data only from the index,
-without reading the table itself.
-
-This is one of the fastest execution options.
-
----
-
-# 30. What is Bitmap Scan?
-
-### Answer
-
-A hybrid option.
-
-Used when a large number of rows match.
-
----
-
-# 31. What is VACUUM?
-
-### Answer
-
-Cleans up dead tuples
-left behind by MVCC.
-
----
-
-# 32. What is Autovacuum?
-
-### Answer
-
-A background PostgreSQL process
-that automatically runs VACUUM and ANALYZE.
-
----
-
-# 33. Why should you not disable Autovacuum?
-
-### Answer
-
-The following appear:
-
-- dead tuples
-- table bloat
-- index bloat
-
-Over time, performance degrades significantly.
-
----
-
-# 34. What is a dead tuple?
-
-### Answer
-
-An old row version
-that is no longer needed by any transaction.
-
----
-
-# 35. What is table bloat?
-
-### Answer
-
-Table growth caused by accumulation of dead tuples.
-
----
-
-# 36. What is FOR UPDATE?
-
-### Answer
-
-Takes a row-level lock.
-
-Example:
-
-```sql
-SELECT *
-FROM accounts
-WHERE id = 1
-FOR UPDATE;
-```
-
-Used to prevent race conditions.
-
----
-
-# 37. What is a deadlock?
-
-### Answer
-
-Two transactions are waiting for each other.
-
-Example:
-
-```txt
-A holds row1
-waits for row2
-
-B holds row2
-waits for row1
-```
-
-PostgreSQL automatically terminates one of them.
-
----
-
-# 38. What is JSONB?
-
-### Answer
-
-PostgreSQL's binary JSON format.
-
-Supports:
-
-- indexing
-- fast search
-- JSON operations
-
-Usually preferred over JSON.
-
----
-
-# 39. What is a Connection Pool?
-
-### Answer
-
-A mechanism for reusing database connections.
-
-Creating a connection is expensive,
-so applications use a connection pool.
-
----
-
-# 40. The Most Common Senior Question
-
-Why is PostgreSQL able to handle large numbers of concurrent transactions without total locks?
-
-### Answer
-
-Thanks to MVCC.
-
-UPDATE creates a new version of a row,
-rather than modifying the existing one.
-
-Therefore reads and writes typically do not block each other,
-and old row versions are cleaned up via VACUUM.

@@ -1,500 +1,252 @@
 # Query Planner and EXPLAIN ANALYZE
 
-## The Most Underrated Component of PostgreSQL
+## The Planner — PostgreSQL's most complex component, responsible for the difference between 5 ms and 5 minutes
 
-Many people think:
-
-```txt
-SQL -> executes
-```
-
----
-
-In reality:
+SQL is a declarative language: you describe **what** you want, not **how** to get it. The Planner/Optimizer's job is to transform that declarative "what" into a concrete execution plan: which indexes to use, in what order to scan tables, which JOIN algorithm to apply.
 
 ```txt
-SQL
- ↓
-Parser
- ↓
-Planner
- ↓
-Executor
+SQL text
+    │  Parser: AST
+    ↓
+Query Tree
+    │  Rewriter: VIEW expansion, RLS
+    ↓
+Logical Plan
+    │  Planner: enumerate plans, estimate cost of each
+    ↓
+Best Physical Plan
+    │  Executor: runs it
+    ↓
+Result
 ```
 
----
+## Cost model — what the Planner actually estimates
 
-Planner is the brain of PostgreSQL.
+```txt
+PostgreSQL Planner is a cost-based optimizer. It doesn't know exact
+execution times, but estimates the "cost" of each plan in abstract units:
 
----
+  seq_page_cost     = 1.0    (cost of reading one page via Sequential
+                              Scan — the base unit)
+  random_page_cost  = 4.0    (cost of random-access to one page —
+                              Index Scan does random I/O)
+  cpu_tuple_cost    = 0.01   (CPU cost per row)
+  cpu_index_tuple_cost = 0.005
+  cpu_operator_cost = 0.0025
 
-# What the Planner Does
+Plan cost = sum of all I/O and CPU operations weighted by these parameters.
+The Planner picks the plan with the MINIMUM estimated cost.
+```
 
-Receives a query:
+```txt
+Why random_page_cost = 4.0 by default but often needs to be lowered:
+  HDD: random I/O is 10-100x more expensive than sequential → 4.0 is right
+  SSD: random I/O is only ~2x more expensive → lower it to 1.1-2.0
+
+  ALTER SYSTEM SET random_page_cost = 1.1;  -- for SSD/NVMe
+  SELECT pg_reload_conf();
+
+  Without this, on an SSD server PostgreSQL will AVOID Index Scan in
+  favor of Seq Scan, thinking index access is "expensive."
+```
+
+## Data access methods — what the Planner chooses
 
 ```sql
-SELECT *
-FROM users
-WHERE email = 'max@test.com';
+EXPLAIN SELECT * FROM users WHERE email = 'max@test.com';
 ```
-
----
-
-And decides:
 
 ```txt
-how to get the result fastest
+Sequential Scan (Seq Scan):
+  Reads ALL table pages in order (sequential I/O — fast).
+  When used:
+    - no index on the column
+    - index exists but selectivity is low (many rows match)
+    - table is small (index is slower due to overhead)
+    - after heavy UPDATE (table bloat → many empty pages)
+  Cost: O(n) = seq_page_cost × N_pages + cpu_tuple_cost × N_rows
+
+Index Scan:
+  1. Traverse B-Tree: O(log N)
+  2. For each found key: random I/O to heap (ctid → row)
+  When used: high selectivity (few rows match)
+  Cost: O(log N + K × random_page_cost), where K = row count
+
+Bitmap Index Scan + Bitmap Heap Scan:
+  1. First: traverse index, build in-memory bitmap (page numbers)
+  2. Then: read heap pages IN ORDER (sequential I/O!)
+  When used: medium selectivity (many rows, but not all)
+  Advantage over Index Scan: re-sorts pages → sequential I/O
+  Cost: between Seq Scan and Index Scan
+
+Index Only Scan:
+  All needed data is in the index (key + INCLUDE columns).
+  Heap may NOT be read (if Visibility Map says "all-visible").
+  Fastest option for covering indexes.
 ```
 
----
-
-# Possible Options
-
-For example:
+## JOIN algorithms — three fundamentally different approaches
 
 ```txt
-Seq Scan
-Index Scan
-Bitmap Index Scan
-Index Only Scan
+Nested Loop Join:
+  FOR EACH row IN outer_table:
+    FOR EACH row IN inner_table WHERE join_condition:
+      output
+  Cost: O(N × M) — only good for small tables
+  Or: O(N × log M) if there's an index on the inner table
+  When: small outer result set, index available on inner
+
+Hash Join:
+  1. Build phase: builds a hash table from the SMALLER table
+  2. Probe phase: FOR EACH row IN larger_table → lookup in hash table
+  Cost: O(N + M) — great for large tables without indexes
+  Constraint: hash table must fit in work_mem
+  When: large non-indexed joins, equality conditions (=)
+
+Merge Join:
+  Both tables sorted on the join key → one pass O(N + M)
+  Cost: O(N×log N + M×log M) if sorting needed,
+        O(N + M) if already sorted (sorted index)
+  When: both tables are large, index exists or ORDER BY used
 ```
 
----
-
-Planner chooses the best.
-
----
-
-# Why This Matters
-
-The same query can run in:
-
-```txt
-5 ms
-```
-
-or
-
-```txt
-5 minutes
-```
-
----
-
-Depending on the chosen plan.
-
----
-
-# Seq Scan
-
-Sequential Scan.
-
----
-
-The simplest option.
-
----
-
-PostgreSQL reads the entire table.
-
----
-
-Conceptually:
-
-```txt
-row1
-row2
-row3
-...
-row10M
-```
-
----
-
-Complexity:
-
-```txt
-O(n)
-```
-
----
-
-# When Seq Scan Is Fine
-
-Small tables.
-
----
-
-For example:
-
-```txt
-50 rows
-```
-
----
-
-An index would actually be slower.
-
----
-
-# Index Scan
-
-An index is used.
-
----
-
-Algorithm:
-
-```txt
-find the value in the index
-get the pointer
-read the row
-```
-
----
-
-Usually:
-
-```txt
-O(log n)
-```
-
----
-
-# Bitmap Index Scan
-
-Sometimes the Planner combines the index with page-level reads.
-
----
-
-Especially useful when:
-
-```txt
-many matching rows
-```
-
----
-
-For example:
+## EXPLAIN and EXPLAIN ANALYZE — reading the output
 
 ```sql
-WHERE status='ACTIVE'
+EXPLAIN ANALYZE BUFFERS
+SELECT u.id, u.email, COUNT(o.id) AS order_count
+FROM users u
+LEFT JOIN orders o ON o.user_id = u.id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id, u.email
+ORDER BY order_count DESC
+LIMIT 10;
 ```
-
----
-
-if there are:
 
 ```txt
-100 000
+Sample output (simplified):
+ Limit  (cost=1245.67..1245.70 rows=10 width=40)
+        (actual time=23.456..23.458 rows=10 loops=1)
+   ->  Sort  (cost=1245.67..1248.17 rows=1000 width=40)
+             (actual time=23.454..23.455 rows=10 loops=1)
+         Sort Key: count(o.id) DESC
+         Sort Method: top-N heapsort  Memory: 26kB
+         ->  HashAggregate  (cost=...)
+               (actual time=22.1..22.8 rows=1000 loops=1)
+               ->  Hash Left Join  (cost=...)
+                     Hash Cond: (o.user_id = u.id)
+                     ->  Index Scan using idx_users_created
+                           on users u
+                           Index Cond: (created_at > '2024-01-01')
+                           (actual time=0.08..5.2 rows=5000 loops=1)
+                     ->  Hash  (cost=...)
+                           Buckets: 32768  Batches: 1  Memory Usage: 1024kB
+                           ->  Seq Scan on orders o
+                               (actual time=0.02..8.3 rows=85000 loops=1)
+ Planning Time: 1.2 ms
+ Execution Time: 23.5 ms
 ```
 
-such users.
+```txt
+Key metrics to analyze:
 
----
+1. cost=start..total:
+   - start cost: time to first row (important for LIMIT)
+   - total cost: estimated full cost
+   If actual rows differs greatly from estimated rows → stale
+   statistics → need ANALYZE
 
-# Index Only Scan
+2. actual time=X..Y rows=Z loops=N:
+   - X: time to first row
+   - Y: time to last row
+   - Z: rows actually returned
+   - loops=N: node was executed N times (key for Nested Loop inner)
+   Real time = Y × N
 
-The fastest option.
+3. Buffers (with BUFFERS):
+   - shared hit=X: pages read from shared_buffers (RAM) — fast
+   - shared read=Y: pages read from disk — slow
+   High shared read → doesn't fit in cache or no cache
 
----
+4. RED FLAGS in EXPLAIN ANALYZE:
+   - Seq Scan on a large table with WHERE → need an index
+   - estimated rows << actual rows (rows=1000 vs actual=100000)
+     → stale statistics → run ANALYZE
+   - Nested Loop with loops=10000 → 10000 hits on inner → need index
+   - Sort Method: external merge Disk → work_mem too small
+     (SET work_mem = '256MB' for heavy analytic queries)
+```
 
-The table is not read at all.
-
----
-
-Data is taken only from the index.
-
----
-
-Example:
+## Common causes of slow queries and how to diagnose them
 
 ```sql
-SELECT email
-FROM users
-WHERE email='a@test.com';
+-- 1. Missing or wrong index
+EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'pending' AND user_id = 42;
+-- If Seq Scan: add index on (user_id, status) or (status, user_id)
+
+-- 2. Stale statistics
+ANALYZE orders;  -- update stats
+-- Or check: SELECT * FROM pg_stat_user_tables WHERE relname = 'orders';
+-- large n_dead_tup → need VACUUM
+
+-- 3. Wrong join order / hash join out of memory
+SET work_mem = '256MB';  -- for this session only (not globally!)
+EXPLAIN ANALYZE ...;     -- repeat and compare plan
+
+-- 4. Function in WHERE breaks index usage
+-- BAD:  WHERE LOWER(email) = 'max@test.com' — doesn't use idx_users_email
+-- GOOD: create a functional index
+CREATE INDEX idx_users_email_lower ON users (LOWER(email));
+
+-- 5. Implicit cast breaks index
+-- If user_id is BIGINT but a VARCHAR is passed:
+WHERE user_id = '42'  -- implicit cast VARCHAR→BIGINT → index often skipped
+-- Fix: pass the correct type
+WHERE user_id = 42
 ```
 
----
-
-If email is already in the index.
-
----
-
-# How the Planner Knows What Is Faster
-
-From statistics.
-
----
-
-PostgreSQL collects:
-
-```txt
-row counts
-value distribution
-selectivity
-```
-
----
-
-# ANALYZE
-
-Updates statistics.
-
----
-
-Runs automatically via:
-
-```txt
-autovacuum
-```
-
----
-
-Or manually:
+## pg_stat_statements — monitoring slow queries in production
 
 ```sql
-ANALYZE users;
+-- Enable the extension (in postgresql.conf):
+-- shared_preload_libraries = 'pg_stat_statements'
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+-- Top 10 most expensive queries
+SELECT
+  round(total_exec_time::numeric, 2) AS total_ms,
+  calls,
+  round(mean_exec_time::numeric, 2)  AS avg_ms,
+  round((100 * total_exec_time / sum(total_exec_time) OVER ())::numeric, 1) AS pct,
+  left(query, 100) AS query_snippet
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 10;
 ```
 
----
-
-# Selectivity
-
-A very important topic.
-
----
-
-Imagine:
+## Connection to other topics
 
 ```txt
-users = 10M rows
+[Indexes and Internals]       — index types and when the Planner
+                                 chooses them; selectivity and Left
+                                 Prefix Rule
+[MVCC, Locks, and Vacuum]     — autovacuum/ANALYZE updates statistics
+                                 for the Planner; HOT Update and its
+                                 impact on plans
+[Isolation Levels]            — isolation level affects the snapshot
+                                 used during planning (rare, but
+                                 important for edge cases)
 ```
 
----
+## Common interview mistakes
 
-Field:
+- **"EXPLAIN shows real execution time"** — EXPLAIN without ANALYZE shows only the ESTIMATED cost without actually running the query. Only EXPLAIN ANALYZE executes the query and shows real time and row counts.
 
-```txt
-country
-```
+- **"The Planner always picks the right plan"** — the Planner gets it wrong with stale statistics (actual rows >> estimated rows in EXPLAIN ANALYZE), with non-uniform data distributions, and when correlation ≈ 0 (random row order).
 
----
+- **"Index Scan is always faster than Seq Scan"** — Seq Scan can be faster with low selectivity (many rows match), on SSDs where random vs sequential I/O gap is small, and always for small tables.
 
-95% of users:
+- **"random_page_cost should always stay at 4.0"** — this value is optimal for HDDs. On SSDs it should be lowered to 1.1-2.0, otherwise the Planner avoids Index Scan.
 
-```txt
-USA
-```
-
----
-
-Query:
-
-```sql
-WHERE country='USA'
-```
-
----
-
-The index is useless.
-
----
-
-Planner will choose:
-
-```txt
-Seq Scan
-```
-
----
-
-Because almost the entire table would need to be read anyway.
-
----
-
-# Cost Based Optimizer
-
-The Planner does not know the exact execution time.
-
----
-
-It estimates cost.
-
----
-
-Conceptually:
-
-```txt
-Seq Scan cost = 500
-Index Scan cost = 200
-```
-
----
-
-The lower cost is chosen.
-
----
-
-# EXPLAIN
-
-Shows the execution plan.
-
----
-
-Example:
-
-```sql
-EXPLAIN
-SELECT *
-FROM users
-WHERE email='test@test.com';
-```
-
----
-
-Result:
-
-```txt
-Index Scan using idx_users_email
-```
-
----
-
-# EXPLAIN ANALYZE
-
-The most important command.
-
----
-
-It not only shows the plan.
-
----
-
-It actually executes the query.
-
----
-
-And shows:
-
-```txt
-actual time
-rows
-loops
-buffers
-```
-
----
-
-Example:
-
-```sql
-EXPLAIN ANALYZE
-SELECT *
-FROM users
-WHERE email='test@test.com';
-```
-
----
-
-# What to Look At
-
-## Actual Time
-
-The real execution time.
-
----
-
-## Rows
-
-How many rows were actually read.
-
----
-
-## Cost
-
-The Planner's estimate.
-
----
-
-## Scan Type
-
-Very important.
-
----
-
-Look for:
-
-```txt
-Seq Scan
-Index Scan
-Bitmap Scan
-Index Only Scan
-```
-
----
-
-# Why the Planner Makes Mistakes
-
-Statistics are stale.
-
----
-
-For example:
-
-```txt
-was 100 rows
-became 10 million
-```
-
----
-
-Planner makes wrong decisions.
-
----
-
-Helps:
-
-```sql
-ANALYZE;
-```
-
----
-
-# A Very Common Question
-
-Why does PostgreSQL not use an index?
-
----
-
-Answer:
-
-Because the Planner determined that
-the cost of using the index is higher
-than the cost of a full table scan.
-
----
-
-# Another Common Question
-
-Why can a query suddenly become slow?
-
----
-
-Causes:
-
-```txt
-stale statistics
-table bloat
-a bad plan
-changed data distribution
-missing index
-```
-
----
-
-# Senior Interview Answer
-
-What does the Query Planner do?
-
-The Planner analyzes a SQL query and, based on statistics, chooses the most efficient execution plan. PostgreSQL uses cost-based optimization and can choose between Sequential Scan, Index Scan, Bitmap Scan, and other data access strategies. EXPLAIN ANALYZE is used to inspect execution plans.
+- **"work_mem is a global setting for the whole server"** — work_mem is allocated PER OPERATION (sort, hash) and PER CONNECTION. SET work_mem = '1GB' with 100 concurrent connections = potentially 100 GB of RAM. Correct: SET work_mem locally in a session for heavy analytic queries.

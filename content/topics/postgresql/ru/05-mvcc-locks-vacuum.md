@@ -1,592 +1,265 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # MVCC, Locks и VACUUM
 
-## Главная проблема любой базы данных
+## MVCC — фундаментальный механизм PostgreSQL, объясняющий почему "читатели не блокируют писателей"
 
-Представим:
+Наивное решение конкурентного доступа — блокировки: Reader берёт shared lock, Writer ждёт; Writer берёт exclusive lock, все Readers ждут. Это работает, но превращается в узкое место под нагрузкой.
 
-Пользователь A читает данные.
+PostgreSQL решает это через **MVCC (Multi-Version Concurrency Control)**: вместо блокировки строки при чтении — хранить несколько версий одной строки одновременно. Каждая транзакция видит консистентный "снапшот" данных на момент своего старта, не блокируя других.
 
-Одновременно пользователь B обновляет данные.
-
-Возникает вопрос:
-
-```txt
-Что должен увидеть пользователь A?
-```
-
-Старые данные?
-
-Новые данные?
-
-Ждать завершения UPDATE?
-
----
-
-# Наивное решение
-
-Использовать блокировки.
-
-Например:
-
-```txt
-Reader берет lock
-Writer ждет
-```
-
-или
-
-```txt
-Writer берет lock
-Reader ждет
-```
-
----
-
-Проблема:
-
-Под нагрузкой всё начинает блокировать друг друга.
-
----
-
-# Решение PostgreSQL
-
-MVCC
-
-Multi-Version Concurrency Control
-
----
-
-Главная идея MVCC
-
-PostgreSQL не изменяет строку напрямую.
-
-Он создает новую версию строки.
-
----
-
-Допустим есть запись:
-
-```txt
-id=1
-balance=100
-```
-
----
-
-UPDATE
+## Как UPDATE на самом деле работает — не "перезапись", а "создание новой версии"
 
 ```sql
-UPDATE accounts
-SET balance = 200
-WHERE id = 1;
+UPDATE accounts SET balance = 200 WHERE id = 1;
 ```
-
----
-
-Что происходит на самом деле
-
-НЕ:
 
 ```txt
-100 → 200
+Что ПРОИСХОДИТ ФИЗИЧЕСКИ:
+  1. Старая строка (balance=100) НЕ УДАЛЯЕТСЯ. В её xmax
+     записывается Transaction ID (XID) текущей транзакции.
+  2. В heap вставляется НОВАЯ строка (balance=200) с xmin =
+     XID текущей транзакции.
+  3. При COMMIT: новая версия становится "видимой" для
+     транзакций, стартовавших после COMMIT.
+  4. Старая версия (xmax != 0) становится "мёртвой" — dead tuple.
+
+Heap-файл после UPDATE (упрощённо):
+  ┌──────────────────────────────┐
+  │ xmin=100, xmax=200, bal=100  │  ← dead tuple (xmax заполнен)
+  ├──────────────────────────────┤
+  │ xmin=200, xmax=0,   bal=200  │  ← live tuple (xmax=0 → живой)
+  └──────────────────────────────┘
 ```
-
----
-
-А:
 
 ```txt
-Version 1
-balance = 100
-
-Version 2
-balance = 200
+Ключевые поля каждого tuple в heap:
+  xmin  — XID транзакции, создавшей строку (INSERT или UPDATE)
+  xmax  — XID транзакции, "удалившей" строку (DELETE или UPDATE-old)
+          0 = строка живая (не удалена)
+  infomask — битовые флаги (committed, aborted и т.д.)
+  ctid  — указатель на самую свежую версию строки
+          (UPDATE-цепочка: ctid старой → новая версия)
 ```
 
----
-
-Старая версия остается существовать.
-
----
-
-# Почему это круто
-
-Reader может читать:
+## Снапшот транзакции — как PostgreSQL решает "что видно?"
 
 ```txt
-Version 1
+При старте транзакции (в момент первого оператора для READ
+COMMITTED, в момент BEGIN для REPEATABLE READ) PostgreSQL
+создаёт снапшот, содержащий:
+
+  xmin   — минимальный активный XID в момент снапшота
+  xmax   — следующий XID, который будет выдан
+  xip    — список активных (незавершённых) транзакций
+
+Строка ВИДИМА для транзакции, если:
+  1. xmin < snapshot.xmin  (создана до снапшота)
+     ИЛИ xmin входит в "завершённые до снапшота"
+     (через pg_clog/pg_xact — commit log)
+  2. xmax = 0 ИЛИ xmax относится к aborted транзакции
+     ИЛИ xmax >= snapshot.xmax (создана после снапшота)
+
+Это объясняет поведение уровней изоляции:
+  READ COMMITTED:   снапшот обновляется на каждый оператор
+  REPEATABLE READ:  снапшот создаётся один раз на транзакцию
 ```
 
-Пока Writer создает:
+## HOT Update — оптимизация для частых UPDATE одной строки
 
 ```txt
-Version 2
+Обычный UPDATE: новая версия строки → в неё нужно обновить
+ВСЕ индексы (новый ctid). Это дорого при множестве индексов.
+
+HOT (Heap-Only Tuple) Update: если:
+  1. Новая версия влезает на ту же heap-страницу, что и старая
+  2. Обновляемый столбец НЕ индексирован
+
+...то PostgreSQL создаёт цепочку внутри страницы:
+  ctid старой строки → ctid новой строки (на той же странице)
+
+Индексы НЕ обновляются — они по-прежнему указывают на старую
+строку, а из неё PostgreSQL проходит по HOT-цепочке к актуальной
+версии. Экономия: нет page split в индексах, меньше WAL, быстрее.
+
+Практическое следствие: fillfactor < 100 для таблиц с частыми
+UPDATE позволяет HOT Update резервировать свободное место на
+странице для новых версий:
+  ALTER TABLE accounts SET (fillfactor = 70);
+  -- 30% каждой страницы зарезервировано для HOT Updates
 ```
 
----
-
-Получаем:
+## Dead Tuples и Table Bloat — почему таблицы "пухнут"
 
 ```txt
-Readers don't block writers
-Writers don't block readers
+Каждый UPDATE и DELETE оставляют dead tuples:
+  - UPDATE: старая версия строки с заполненным xmax
+  - DELETE: единственная версия строки с заполненным xmax
+
+Dead tuples занимают дисковое место и "загрязняют" страницы:
+  SELECT *  → PostgreSQL читает страницу → видит dead tuple →
+  проверяет видимость → tuple не виден → пропускает.
+  Лишнее I/O при каждом Seq Scan.
+
+Table bloat: после интенсивного UPDATE/DELETE таблица может
+занимать в 5-10 раз больше места, чем содержит "живых" данных.
+Это также означает, что индексы имеют "дыры" (dead index entries).
 ```
 
----
-
-Это одна из главных причин высокой производительности PostgreSQL.
-
----
-
-# Tuple Versions
-
-Каждая строка в PostgreSQL содержит служебные поля.
-
-Упрощенно:
-
-```txt
-xmin
-xmax
-```
-
----
-
-# xmin
-
-Transaction ID создавшей транзакции.
-
----
-
-Например:
-
-```txt
-Transaction #100
-INSERT row
-```
-
----
-
-Тогда:
-
-```txt
-xmin = 100
-```
-
----
-
-# xmax
-
-Transaction ID удалившей строку.
-
----
-
-Например:
-
-```txt
-Transaction #200
-DELETE row
-```
-
----
-
-Тогда:
-
-```txt
-xmax = 200
-```
-
----
-
-# Как работает SELECT
-
-Когда транзакция делает:
+## VACUUM — механизм очистки dead tuples
 
 ```sql
-SELECT *
-FROM users;
-```
+-- Ручной запуск (обычно не нужен при настроенном autovacuum)
+VACUUM users;
 
-PostgreSQL смотрит:
+-- Со статистикой
+VACUUM VERBOSE ANALYZE users;
+```
 
 ```txt
-мой snapshot
-xmin
-xmax
+Что делает VACUUM:
+  1. Сканирует таблицу, ищет dead tuples
+  2. Помечает их пространство как "свободное" (в FSM —
+     Free Space Map) для повторного использования новыми строками
+  3. Удаляет dead index entries (для каждого индекса таблицы)
+  4. Обновляет Visibility Map (страницы, где все tuples "all-visible"
+     → позволяет Index-Only Scan)
+  5. Обновляет pg_class.relpages / reltuples (статистику для Planner)
+
+Чего VACUUM НЕ делает:
+  - НЕ возвращает освобождённое место ОС (страницы остаются в
+    файле, просто помечаются как доступные для reuse)
+  - НЕ дефрагментирует данные внутри страниц
+
+VACUUM не берёт ACCESS EXCLUSIVE LOCK → можно запускать конкурентно
+с обычными SELECT/INSERT/UPDATE/DELETE (берёт только ShareUpdateExclusiveLock).
 ```
 
----
-
-И решает:
-
-```txt
-видна строка
-или не видна
-```
-
----
-
-# Snapshot
-
-При старте транзакции создается snapshot.
-
----
-
-Snapshot содержит:
-
-```txt
-какие транзакции завершены
-какие активны
-```
-
----
-
-Поэтому две транзакции могут видеть разные версии одной строки.
-
----
-
-# Пример MVCC
-
-Transaction A
+## VACUUM FULL — радикальное средство от bloat
 
 ```sql
+VACUUM FULL users;
+-- Аналог: CLUSTER users USING idx_users_pk (с сортировкой)
+```
+
+```txt
+VACUUM FULL:
+  1. Перестраивает таблицу с нуля (CREATE TABLE ... AS SELECT live tuples)
+  2. Перестраивает все индексы
+  3. Возвращает освобождённое место ОС (файл уменьшается)
+
+Цена: берёт ACCESS EXCLUSIVE LOCK на таблицу → ВСЕ запросы к таблице
+блокируются на всё время выполнения. Для таблицы 100 ГБ — часы.
+
+Альтернатива для production: pg_repack (расширение, которое делает
+то же самое без долгой блокировки через временную таблицу + триггеры).
+```
+
+## Autovacuum — как настроить и почему нельзя отключать
+
+```txt
+autovacuum_vacuum_threshold    = 50      -- мин. количество dead tuples
+autovacuum_vacuum_scale_factor = 0.2     -- + 20% от количества строк
+
+Autovacuum запускается когда:
+  dead_tuples > threshold + scale_factor * reltuples
+
+Для таблицы с 1 000 000 строк: порог = 50 + 0.2 * 1 000 000 = 200 050 dead tuples.
+При высоком UPDATE-rate это означает большой bloat до первого autovacuum.
+```
+
+```sql
+-- Тюнинг autovacuum для горячих таблиц (много UPDATE/DELETE)
+ALTER TABLE orders SET (
+  autovacuum_vacuum_scale_factor = 0.01,  -- запускать раньше: 1% вместо 20%
+  autovacuum_vacuum_threshold    = 100,   -- и меньший минимальный порог
+  autovacuum_analyze_scale_factor = 0.005 -- обновлять статистику чаще
+);
+```
+
+```txt
+Почему нельзя отключать autovacuum (autovacuum = off):
+  1. Table bloat → деградация производительности Seq Scan
+  2. Index bloat → деградация Index Scan
+  3. XID Wraparound (критическая ситуация): PostgreSQL использует
+     32-битный XID (счётчик транзакций). После 2^32 ≈ 4 млрд
+     транзакций происходит wraparound. VACUUM "замораживает"
+     старые XID (обнуляет xmin для очень старых строк). Без
+     VACUUM → PostgreSQL shutdown при достижении "опасного порога"
+     с сообщением "database is not accepting commands to avoid
+     wraparound data loss"
+```
+
+## Locks — когда MVCC недостаточно
+
+```sql
+-- Оптимистичный подход (MVCC): две транзакции читают, потом UPDATE
+-- Проблема: race condition при "check-then-act"
 BEGIN;
-SELECT balance;
-```
+SELECT balance FROM accounts WHERE id = 1;  -- читаем 100
+-- Другая транзакция тоже прочитала 100 и делает UPDATE...
+UPDATE accounts SET balance = balance - 50 WHERE id = 1;
+COMMIT;
 
-Видит:
-
-```txt
-100
-```
-
----
-
-Transaction B
-
-```sql
-UPDATE balance=200;
+-- Пессимистичный подход: явная блокировка строки
+BEGIN;
+SELECT balance FROM accounts WHERE id = 1 FOR UPDATE;
+-- Теперь другие транзакции, пытающиеся делать SELECT ... FOR UPDATE
+-- на эту строку, ЖДУТ до COMMIT/ROLLBACK
+UPDATE accounts SET balance = balance - 50 WHERE id = 1;
 COMMIT;
 ```
 
----
-
-Transaction A снова делает:
-
 ```sql
-SELECT balance;
+-- FOR UPDATE NOWAIT — немедленная ошибка вместо ожидания
+SELECT * FROM orders WHERE id = 1 FOR UPDATE NOWAIT;
+-- ERROR: could not obtain lock on row in relation "orders"
+
+-- FOR UPDATE SKIP LOCKED — пропустить заблокированные строки
+-- (паттерн для очередей задач: каждый worker берёт "свою" задачу)
+SELECT * FROM tasks WHERE status = 'pending'
+ORDER BY created_at
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
 ```
-
----
-
-Repeatable Read:
 
 ```txt
-100
+Уровни блокировок таблицы (от мягкого к жёсткому):
+  AccessShareLock         — SELECT (берётся автоматически)
+  RowShareLock            — SELECT ... FOR UPDATE
+  RowExclusiveLock        — INSERT/UPDATE/DELETE
+  ShareUpdateExclusiveLock — VACUUM, CREATE INDEX CONCURRENTLY
+  ShareLock               — CREATE INDEX (non-concurrent)
+  ExclusiveLock           — REFRESH MATERIALIZED VIEW CONCURRENTLY
+  AccessExclusiveLock     — ALTER TABLE, VACUUM FULL, DROP TABLE
+                           (блокирует ВСЁ, включая SELECT)
+
+DDL-операции в production нужно делать с осторожностью — ALTER TABLE
+берёт AccessExclusiveLock → блокирует все запросы к таблице.
 ```
 
----
-
-Read Committed:
+## Связь с другими темами
 
 ```txt
-200
+[ACID and Transactions]       — как WAL обеспечивает Durability и
+                                 Atomicity; deadlock как частный
+                                 случай конкурентности
+[Isolation Levels]            — снапшоты MVCC как основа
+                                 READ COMMITTED / REPEATABLE READ
+[Indexes and Internals]       — dead tuples в индексах, HOT Update
+                                 как оптимизация, Index-Only Scan
+                                 и Visibility Map
+[Query Planner and EXPLAIN]   — устаревшая статистика из-за
+                                 пропущенного ANALYZE → неверные планы
 ```
 
----
+## Типичные ошибки на интервью
 
-# Проблема MVCC
+- **"UPDATE изменяет строку на месте"** — в PostgreSQL UPDATE создаёт новую версию строки (new tuple) и помечает старую как мёртвую через xmax. Старая версия остаётся в heap до VACUUM.
 
-Старые версии строк остаются.
+- **"MVCC полностью устраняет блокировки"** — MVCC устраняет блокировки чтения ("читатели не блокируют писателей"), но не устраняет блокировки записи на уровне строки (два конкурентных UPDATE одной строки — второй ждёт первого).
 
----
+- **"VACUUM уменьшает размер файла таблицы"** — VACUUM только помечает место dead tuples как доступное для reuse. Физический размер файла уменьшает только VACUUM FULL (с ACCESS EXCLUSIVE LOCK) или pg_repack.
 
-Например:
+- **"autovacuum можно отключить, если делать VACUUM вручную"** — риск XID Wraparound: без регулярного "замораживания" старых XID PostgreSQL вынужден аварийно остановить приём запросов для защиты от потери данных.
 
-```sql
-UPDATE users
-SET name='John';
-```
-
----
-
-Старая версия строки не удаляется сразу.
-
----
-
-Появляется:
-
-```txt
-dead tuple
-```
-
----
-
-# Dead Tuple
-
-Строка больше никому не нужна.
-
-Но всё еще лежит на диске.
-
----
-
-Пример
-
-```txt
-Version 1 ← dead
-Version 2 ← active
-```
-
----
-
-Со временем их становится много.
-
----
-
-# Что будет без очистки
-
-Таблицы начинают расти.
-
----
-
-Например:
-
-```txt
-100 MB данных
-```
-
-через год:
-
-```txt
-5 GB таблица
-```
-
----
-
-Хотя живых данных всё еще:
-
-```txt
-100 MB
-```
-
----
-
-Это называется:
-
-```txt
-table bloat
-```
-
----
-
-# VACUUM
-
-VACUUM очищает dead tuples.
-
----
-
-Он:
-
-```txt
-находит старые версии строк
-освобождает место
-обновляет статистику
-```
-
----
-
-# Важно
-
-VACUUM НЕ уменьшает размер файла.
-
-Он делает место доступным для повторного использования.
-
----
-
-# VACUUM FULL
-
-Другой режим.
-
----
-
-Он:
-
-```txt
-перестраивает таблицу
-возвращает место ОС
-```
-
----
-
-Но:
-
-```txt
-берет ACCESS EXCLUSIVE LOCK
-```
-
----
-
-Поэтому используется редко.
-
----
-
-# AUTOVACUUM
-
-В большинстве случаев работает автоматически.
-
----
-
-Специальный процесс PostgreSQL:
-
-```txt
-autovacuum worker
-```
-
----
-
-Следит за:
-
-```txt
-dead tuples
-statistics
-table bloat
-```
-
----
-
-# Почему нельзя отключать Autovacuum
-
-Очень популярный вопрос.
-
----
-
-Если отключить:
-
-```txt
-dead tuples растут
-индексы раздуваются
-таблицы растут
-производительность падает
-```
-
----
-
-Через некоторое время база начнет деградировать.
-
----
-
-# Locks
-
-MVCC не отменяет блокировки полностью.
-
----
-
-PostgreSQL всё еще использует locks.
-
----
-
-Но гораздо реже.
-
----
-
-# Row Lock
-
-Блокируется отдельная строка.
-
----
-
-Например:
-
-```sql
-SELECT *
-FROM users
-WHERE id = 1
-FOR UPDATE;
-```
-
----
-
-Теперь никто не может изменить эту строку.
-
----
-
-# Когда нужен FOR UPDATE
-
-Очень любят спрашивать.
-
----
-
-Например:
-
-```txt
-остатки товара
-баланс счета
-бронирование мест
-```
-
----
-
-Чтобы избежать race condition.
-
----
-
-# Table Lock
-
-Блокируется вся таблица.
-
----
-
-Например:
-
-```sql
-ALTER TABLE users
-ADD COLUMN age INTEGER;
-```
-
----
-
-Некоторые DDL операции берут table lock.
-
----
-
-# Deadlock
-
-Transaction A
-
-```txt
-lock row1
-ждет row2
-```
-
----
-
-Transaction B
-
-```txt
-lock row2
-ждет row1
-```
-
----
-
-Получается цикл.
-
----
-
-PostgreSQL обнаруживает deadlock автоматически.
-
----
-
-Одну транзакцию завершает ошибкой:
-
-```txt
-deadlock detected
-```
-
----
-
-# Senior Interview Answer
-
-Что такое MVCC?
-
-MVCC (Multi-Version Concurrency Control) — механизм конкурентного доступа PostgreSQL, при котором UPDATE создает новую версию строки вместо изменения существующей. Благодаря этому чтение и запись практически не блокируют друг друга. Старые версии строк очищаются процессом VACUUM.
+- **"SELECT ... FOR UPDATE нужен для всех транзакций при чтении"** — FOR UPDATE нужен только при паттерне "check-then-act" (прочитал, проверил условие, обновил), где race condition может нарушить бизнес-инвариант. Для обычного чтения — MVCC достаточно.
