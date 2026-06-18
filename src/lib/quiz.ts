@@ -11,8 +11,30 @@ function readTopicQuiz(topicId: string): QuizQuestion[] {
   return JSON.parse(raw) as QuizQuestion[];
 }
 
-function shuffled<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
+function fisherYates<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function shuffleOptions(question: QuizQuestion): QuizQuestion {
+  const len = question.options.en.length;
+  const perm = Array.from({ length: len }, (_, i) => i);
+  for (let i = len - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [perm[i], perm[j]] = [perm[j], perm[i]];
+  }
+  return {
+    ...question,
+    options: {
+      en: perm.map((i) => question.options.en[i]),
+      ru: perm.map((i) => (question.options.ru ?? question.options.en)[i]),
+    },
+    correctIndex: perm.indexOf(question.correctIndex),
+  };
 }
 
 function dedupeById(questions: QuizQuestion[]): QuizQuestion[] {
@@ -32,9 +54,14 @@ export function getAvailableQuizTopics(): string[] {
     .map((f) => f.replace(/\.json$/, ''));
 }
 
+export function getTopicQuestionCount(topicId: string): number {
+  return readTopicQuiz(topicId).length;
+}
+
 export function getQuizQuestions(topicIds?: string[], count?: number): QuizQuestion[] {
   const topics = topicIds ?? getAvailableQuizTopics();
   const pool = topics.flatMap((topicId) => readTopicQuiz(topicId));
-  const selected = shuffled(dedupeById(pool));
-  return count !== undefined ? selected.slice(0, count) : selected;
+  const selected = fisherYates(dedupeById(pool));
+  const sliced = count !== undefined ? selected.slice(0, count) : selected;
+  return sliced.map(shuffleOptions);
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTopicById } from '@/constants/topics';
-import { getAvailableQuizTopics, getQuizQuestions } from '@/lib/quiz';
+import { getAvailableQuizTopics, getQuizQuestions, getTopicQuestionCount } from '@/lib/quiz';
 import { renderArticleHtml } from '@/components/theory/ArticleRenderer';
 import type { QuizQuestionWithHtml } from '@/components/quiz/QuizCard';
 import { QuizSession } from './QuizSession';
@@ -23,10 +23,10 @@ export function generateMetadata({ params }: Props): Metadata {
 }
 
 export function generateStaticParams() {
-  const counts = [5, 10, 20];
   const params: { sessionId: string }[] = [];
   for (const topicId of getAvailableQuizTopics()) {
-    for (const count of counts) {
+    const total = getTopicQuestionCount(topicId);
+    for (let count = 1; count <= total; count++) {
       params.push({ sessionId: `${topicId}-${count}` });
     }
   }
