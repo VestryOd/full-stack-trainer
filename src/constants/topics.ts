@@ -26,6 +26,7 @@ export const TOPICS: readonly Topic[] = [
   { id: 'system-design',   label: 'System Design',         level: 'medium' },
   { id: 'architecture',    label: 'Architecture Patterns',  level: 'medium' },
   { id: 'git',             label: 'Git + Git Flow',         level: 'light' },
+  { id: 'cicd-devops',    label: 'CI/CD & DevOps',         level: 'deep' },
   { id: 'ci-cd',           label: 'CI/CD',                  level: 'light' },
   { id: 'docker',          label: 'Docker',                 level: 'light' },
   { id: 'bundlers',        label: 'Webpack / Vite',         level: 'light' },
