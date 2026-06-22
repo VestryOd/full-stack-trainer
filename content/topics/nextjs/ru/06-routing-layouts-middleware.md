@@ -20,18 +20,21 @@ app/
 
 ```tsx
 // app/blog/[id]/page.tsx
-interface PageProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
-export default async function BlogPost({ params, searchParams }: PageProps) {
-  const post = await getPost(params.id);
+// Next.js 15: params и searchParams теперь Promise
+export default async function BlogPost({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { id } = await params;
+  const post = await getPost(id);
   return <Article post={post} />;
 }
 ```
 
-`params.id` всегда `string` (или `string[]` для catch-all) — даже если по смыслу это число, Next не делает автоматического приведения типов. Частая ошибка — забыть `Number(params.id)`/`parseInt` перед использованием в запросе к БД, где ожидается числовой ID.
+`id` (из `await params`) всегда `string` (или `string[]` для catch-all) — даже если по смыслу это число, Next не делает автоматического приведения типов. Частая ошибка — забыть `Number(params.id)`/`parseInt` перед использованием в запросе к БД, где ожидается числовой ID.
 
 ### Catch-all и Optional Catch-all
 
@@ -45,9 +48,10 @@ app/docs/[[...slug]]/page.tsx   → /docs, /docs/a, /docs/a/b
 
 ```tsx
 // app/docs/[...slug]/page.tsx
-export default function DocsPage({ params }: { params: { slug: string[] } }) {
-  // /docs/react/hooks/useEffect → params.slug = ['react', 'hooks', 'useEffect']
-  const path = params.slug.join('/');
+export default async function DocsPage({ params }: { params: Promise<{ slug: string[] }> }) {
+  const { slug } = await params; // Next.js 15: params стал async
+  // /docs/react/hooks/useEffect → slug = ['react', 'hooks', 'useEffect']
+  const path = slug.join('/');
   return <DocContent path={path} />;
 }
 ```

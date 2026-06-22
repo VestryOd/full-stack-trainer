@@ -75,7 +75,8 @@ export async function getServerSideProps(context) {
 import { cookies } from 'next/headers';
 
 export default async function ProfilePage() {
-  const sessionId = cookies().get('session')?.value;
+  const cookieStore = await cookies(); // Next.js 15: cookies() is async
+  const sessionId = cookieStore.get('session')?.value;
   const user = await fetch(`https://api.example.com/me`, {
     headers: { Authorization: `Bearer ${sessionId}` },
     cache: 'no-store', // → forces SSR for this fetch

@@ -202,8 +202,9 @@ App Router: декларативный Metadata API, статический ил
 // app/blog/[slug]/page.tsx
 import type { Metadata } from 'next';
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await getPost(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params; // Next.js 15: params стал async
+  const post = await getPost(slug);
   return {
     title: post.title,
     description: post.excerpt,

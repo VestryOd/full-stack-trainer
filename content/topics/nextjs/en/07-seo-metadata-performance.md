@@ -18,8 +18,9 @@ export const metadata: Metadata = {
 };
 
 // app/products/[id]/page.tsx
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const product = await getProduct(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params; // Next.js 15: params is async
+  const product = await getProduct(id);
 
   return {
     title: product.name, // final title: "Product Name | Acme Store"
@@ -89,8 +90,9 @@ For very large catalogs (>50,000 URLs — the per-file limit in the sitemap prot
 Next doesn't provide a dedicated API for structured data — it's plain JSON inserted into a `<script type="application/ld+json">` via JSX:
 
 ```tsx
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params; // Next.js 15: params is async
+  const product = await getProduct(id);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -198,12 +200,13 @@ A good senior answer doesn't just name the metrics — it connects a *specific N
 ```tsx
 import { Suspense } from 'react';
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params; // Next.js 15: params is async
   return (
     <div>
-      <ProductHeader id={params.id} /> {/* fast fetch — part of the shell */}
+      <ProductHeader id={id} /> {/* fast fetch — part of the shell */}
       <Suspense fallback={<ReviewsSkeleton />}>
-        <Reviews id={params.id} /> {/* slow fetch — streamed separately */}
+        <Reviews id={id} /> {/* slow fetch — streamed separately */}
       </Suspense>
     </div>
   );

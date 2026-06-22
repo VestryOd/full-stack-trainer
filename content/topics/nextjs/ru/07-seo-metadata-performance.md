@@ -19,8 +19,9 @@ export const metadata: Metadata = {
 };
 
 // app/products/[id]/page.tsx
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const product = await getProduct(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params; // Next.js 15: params стал async
+  const product = await getProduct(id);
 
   return {
     title: product.name, // итоговый title: "Product Name | Acme Store"
@@ -90,8 +91,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 Next не предоставляет отдельный API для structured data — это обычный JSON, вставляемый в `<script type="application/ld+json">` через JSX:
 
 ```tsx
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params; // Next.js 15: params стал async
+  const product = await getProduct(id);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -199,12 +201,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```tsx
 import { Suspense } from 'react';
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params; // Next.js 15: params стал async
   return (
     <div>
-      <ProductHeader id={params.id} /> {/* быстрый fetch — в основном shell */}
+      <ProductHeader id={id} /> {/* быстрый fetch — в основном shell */}
       <Suspense fallback={<ReviewsSkeleton />}>
-        <Reviews id={params.id} /> {/* медленный fetch — стримится отдельно */}
+        <Reviews id={id} /> {/* медленный fetch — стримится отдельно */}
       </Suspense>
     </div>
   );

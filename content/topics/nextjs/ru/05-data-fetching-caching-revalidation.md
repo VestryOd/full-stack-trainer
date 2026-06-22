@@ -160,8 +160,9 @@ export async function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
 }
 
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-  const post = await getPost(params.slug);
+export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params; // Next.js 15: params стал async
+  const post = await getPost(slug);
   return <Article post={post} />;
 }
 ```
@@ -193,14 +194,16 @@ export async function generateStaticParams() {
   return popular.map((id) => ({ id }));
 }
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params; // Next.js 15: params стал async
+
   // Данные о товаре меняются нечасто — ISR с тегом для on-demand инвалидации
-  const product = await fetch(`https://api.example.com/products/${params.id}`, {
-    next: { revalidate: 3600, tags: [`product-${params.id}`] },
+  const product = await fetch(`https://api.example.com/products/${id}`, {
+    next: { revalidate: 3600, tags: [`product-${id}`] },
   }).then((r) => r.json());
 
   // Цена/наличие — почти real-time, отдельный динамический fetch
-  const stock = await fetch(`https://api.example.com/stock/${params.id}`, {
+  const stock = await fetch(`https://api.example.com/stock/${id}`, {
     cache: 'no-store',
   }).then((r) => r.json());
 
