@@ -21,6 +21,13 @@ interface QuestionFiltersProps {
 
 const DIFFICULTIES: QuestionDifficulty[] = ['junior', 'middle', 'senior', 'advanced'];
 
+const DIFFICULTY_ORDER: Record<QuestionDifficulty, number> = {
+  junior: 0,
+  middle: 1,
+  senior: 2,
+  advanced: 3,
+};
+
 const DIFFICULTY_STYLES: Record<QuestionDifficulty, string> = {
   junior:   'data-[active=true]:bg-green-500/20 data-[active=true]:text-green-400 data-[active=true]:border-green-500/40',
   middle:   'data-[active=true]:bg-blue-500/20 data-[active=true]:text-blue-400 data-[active=true]:border-blue-500/40',
@@ -43,16 +50,18 @@ export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps)
   }, [questions]);
 
   const filtered = useMemo(() => {
-    return questions.filter((q) => {
-      if (activeDifficulties.size > 0 && !activeDifficulties.has(q.difficulty)) return false;
-      if (activeTags.size > 0 && !(q.tags ?? []).some((t) => activeTags.has(t))) return false;
-      if (search) {
-        const needle = search.toLowerCase();
-        const haystack = `${q.question.en} ${q.question.ru} ${(q.tags ?? []).join(' ')}`.toLowerCase();
-        if (!haystack.includes(needle)) return false;
-      }
-      return true;
-    });
+    return questions
+      .filter((q) => {
+        if (activeDifficulties.size > 0 && !activeDifficulties.has(q.difficulty)) return false;
+        if (activeTags.size > 0 && !(q.tags ?? []).some((t) => activeTags.has(t))) return false;
+        if (search) {
+          const needle = search.toLowerCase();
+          const haystack = `${q.question.en} ${q.question.ru} ${(q.tags ?? []).join(' ')}`.toLowerCase();
+          if (!haystack.includes(needle)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => DIFFICULTY_ORDER[a.difficulty] - DIFFICULTY_ORDER[b.difficulty]);
   }, [questions, activeDifficulties, activeTags, search]);
 
   function toggleDifficulty(d: QuestionDifficulty) {

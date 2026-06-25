@@ -160,401 +160,6 @@
     ]
   },
   {
-    "id": "javascript-q-9",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain the JavaScript event loop — call stack, task queue, and microtask queue.",
-      "ru": "Объясните событийный цикл JavaScript — стек вызовов, очередь задач и очередь микрозадач."
-    },
-    "answer": {
-      "en": "### The Event Loop\n\nJavaScript is single-threaded. The event loop is the mechanism that allows it to handle asynchronous work without blocking.\n\n**Components:**\n- **Call Stack** — a LIFO stack of execution contexts. Synchronous code runs here.\n- **Web APIs / Node.js APIs** — handle async work (setTimeout, fetch, fs.readFile) off the main thread.\n- **Task Queue (Macrotask queue)** — completed async callbacks waiting to run: `setTimeout`, `setInterval`, I/O, UI events.\n- **Microtask Queue** — higher-priority queue: resolved Promise callbacks (`.then`/`.catch`/`.finally`), `queueMicrotask`, `MutationObserver`.\n\n**Event loop cycle:**\n1. Execute all synchronous code on the call stack.\n2. Drain the **entire** microtask queue (process all microtasks, including new ones added during this step).\n3. Take **one** macrotask from the task queue and execute it.\n4. Drain the microtask queue again.\n5. Repeat.\n\n```javascript\nconsole.log('1 - sync');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve().then(() => console.log('3 - microtask'));\n\nconsole.log('4 - sync');\n\n// Output order:\n// 1 - sync\n// 4 - sync\n// 3 - microtask   <-- microtasks before macrotasks!\n// 2 - macrotask\n```\n\n**Key insight:** microtasks (Promises) always run before the next macrotask, regardless of when they were queued. This means a chain of resolved Promises can starve macrotasks if it never ends.",
-      "ru": "### Событийный цикл (Event Loop)\n\nJavaScript однопоточный. Событийный цикл — это механизм, позволяющий обрабатывать асинхронную работу без блокировки.\n\n**Составные части:**\n- **Стек вызовов (Call Stack)** — LIFO-стек контекстов выполнения. Здесь выполняется синхронный код.\n- **Web API / Node.js API** — обрабатывают асинхронную работу вне основного потока (setTimeout, fetch, fs.readFile).\n- **Очередь задач (Macrotask queue)** — завершённые асинхронные коллбэки, ожидающие выполнения: `setTimeout`, `setInterval`, I/O, события UI.\n- **Очередь микрозадач (Microtask queue)** — очередь с более высоким приоритетом: коллбэки выполненных Promise (`.then`/`.catch`/`.finally`), `queueMicrotask`, `MutationObserver`.\n\n**Цикл событийного цикла:**\n1. Выполнить весь синхронный код в стеке вызовов.\n2. Полностью опустошить очередь **микрозадач** (включая новые, добавленные в процессе).\n3. Взять **одну** макрозадачу из очереди задач и выполнить её.\n4. Снова опустошить очередь микрозадач.\n5. Повторить.\n\n```javascript\nconsole.log('1 - sync');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve().then(() => console.log('3 - microtask'));\n\nconsole.log('4 - sync');\n\n// Порядок вывода:\n// 1 - sync\n// 4 - sync\n// 3 - microtask   <-- микрозадачи раньше макрозадач!\n// 2 - macrotask\n```\n\n**Ключевой момент:** микрозадачи (Promise) всегда выполняются до следующей макрозадачи, независимо от того, когда они были поставлены в очередь. Бесконечная цепочка выполненных Promise может «заморозить» макрозадачи."
-    },
-    "tags": [
-      "event-loop",
-      "call-stack",
-      "microtask",
-      "macrotask",
-      "promises",
-      "async"
-    ]
-  },
-  {
-    "id": "javascript-q-10",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "How do Promises work? Explain the Promise state machine.",
-      "ru": "Как работают Promise? Объясните конечный автомат состояний Promise."
-    },
-    "answer": {
-      "en": "### Promises\n\nA Promise is an object representing the eventual completion or failure of an asynchronous operation. It is a state machine with three states:\n\n- **Pending** — initial state, neither fulfilled nor rejected.\n- **Fulfilled** — the operation completed successfully. The promise has a result value.\n- **Rejected** — the operation failed. The promise has a reason (error).\n\nTransitions are **irreversible** — once settled (fulfilled or rejected) a promise never changes state.\n\n```javascript\nconst p = new Promise((resolve, reject) => {\n  // executor runs synchronously\n  const success = true;\n  if (success) {\n    resolve('data'); // transitions to Fulfilled\n  } else {\n    reject(new Error('failed')); // transitions to Rejected\n  }\n});\n\np\n  .then(value => console.log('Fulfilled:', value))  // 'data'\n  .catch(err => console.error('Rejected:', err))\n  .finally(() => console.log('Always runs'));\n```\n\n**Chaining:** `.then()` returns a new Promise, enabling chains. If the callback returns a value, the next promise fulfills with it. If it returns a Promise, the chain waits for that promise.\n\n```javascript\nfetch('/api/user')\n  .then(res => res.json())       // returns a new Promise\n  .then(user => user.name)       // transforms the value\n  .then(name => console.log(name))\n  .catch(err => console.error(err));\n```\n\n**Error propagation:** a rejection skips all `.then` handlers until a `.catch` (or a `.then(null, onRejected)`) is found.\n\n**Executor runs synchronously.** Only the callbacks (`.then`/`.catch`) are scheduled as microtasks.",
-      "ru": "### Промисы (Promises)\n\nПромис — это объект, представляющий итоговое завершение или неудачу асинхронной операции. Это конечный автомат с тремя состояниями:\n\n- **Pending (ожидание)** — начальное состояние, ни выполнен, ни отклонён.\n- **Fulfilled (выполнен)** — операция завершилась успешно. Промис имеет значение результата.\n- **Rejected (отклонён)** — операция завершилась с ошибкой. Промис имеет причину (ошибку).\n\nПереходы **необратимы** — как только промис перешёл в settled-состояние, оно не меняется.\n\n```javascript\nconst p = new Promise((resolve, reject) => {\n  // executor выполняется синхронно\n  const success = true;\n  if (success) {\n    resolve('data'); // переход в Fulfilled\n  } else {\n    reject(new Error('failed')); // переход в Rejected\n  }\n});\n\np\n  .then(value => console.log('Fulfilled:', value))  // 'data'\n  .catch(err => console.error('Rejected:', err))\n  .finally(() => console.log('Выполняется всегда'));\n```\n\n**Цепочки:** `.then()` возвращает новый Promise, что позволяет строить цепочки. Если коллбэк возвращает значение, следующий промис выполняется с ним. Если возвращает промис, цепочка ждёт его.\n\n```javascript\nfetch('/api/user')\n  .then(res => res.json())       // возвращает новый Promise\n  .then(user => user.name)       // трансформирует значение\n  .then(name => console.log(name))\n  .catch(err => console.error(err));\n```\n\n**Распространение ошибок:** отклонение пропускает все `.then`-обработчики до ближайшего `.catch` (или `.then(null, onRejected)`).\n\n**Executor выполняется синхронно.** Только коллбэки (`.then`/`.catch`) ставятся в очередь как микрозадачи."
-    },
-    "tags": [
-      "promises",
-      "async",
-      "state-machine",
-      "microtask",
-      "error-handling"
-    ]
-  },
-  {
-    "id": "javascript-q-11",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "How does async/await work under the hood? How does it relate to Promises and generators?",
-      "ru": "Как работает async/await под капотом? Как это связано с промисами и генераторами?"
-    },
-    "answer": {
-      "en": "### async/await under the hood\n\n`async/await` is syntactic sugar over Promises. An `async` function always returns a Promise, and `await` pauses execution of that function until the awaited Promise settles.\n\n**Relationship to Promises:**\n\n```javascript\n// These are equivalent:\nasync function fetchUser(id) {\n  const res = await fetch(`/api/users/${id}`);\n  const user = await res.json();\n  return user.name;\n}\n\n// Desugars to roughly:\nfunction fetchUser(id) {\n  return fetch(`/api/users/${id}`)\n    .then(res => res.json())\n    .then(user => user.name);\n}\n```\n\n**Relationship to generators:**\nBefore `async/await` (ES2017), the same pattern was achieved with generator functions (`function*`) + a runner that advanced the generator each time a Promise resolved. `async/await` is essentially a built-in version of that pattern.\n\n```javascript\n// Generator-based async (conceptually)\nfunction* fetchUserGen(id) {\n  const res = yield fetch(`/api/users/${id}`);\n  const user = yield res.json();\n  return user.name;\n}\n// A runner would call .next(resolvedValue) each time\n```\n\n**How await works:**\n1. `await expr` evaluates `expr` (wraps it in `Promise.resolve()` if not already a Promise).\n2. The async function suspends, returning control to the caller.\n3. When the Promise settles, a microtask is queued to resume the function.\n4. Execution resumes with the resolved value (or throws if rejected).\n\n```javascript\nasync function example() {\n  console.log('A');\n  const result = await Promise.resolve('B');\n  console.log(result); // 'B' — runs as microtask\n  console.log('C');\n}\nexample();\nconsole.log('D');\n// Output: A, D, B, C\n```",
-      "ru": "### async/await под капотом\n\n`async/await` — это синтаксический сахар над промисами. Функция `async` всегда возвращает промис, а `await` приостанавливает выполнение функции до тех пор, пока ожидаемый промис не завершится.\n\n**Связь с промисами:**\n\n```javascript\n// Эти функции эквивалентны:\nasync function fetchUser(id) {\n  const res = await fetch(`/api/users/${id}`);\n  const user = await res.json();\n  return user.name;\n}\n\n// Приблизительно разворачивается в:\nfunction fetchUser(id) {\n  return fetch(`/api/users/${id}`)\n    .then(res => res.json())\n    .then(user => user.name);\n}\n```\n\n**Связь с генераторами:**\nДо `async/await` (ES2017) тот же паттерн реализовывался через функции-генераторы (`function*`) + «раннер», продвигающий генератор при каждом выполнении промиса. `async/await` — это, по сути, встроенная версия этого паттерна.\n\n```javascript\n// Async на генераторах (концептуально)\nfunction* fetchUserGen(id) {\n  const res = yield fetch(`/api/users/${id}`);\n  const user = yield res.json();\n  return user.name;\n}\n// Раннер вызывал бы .next(resolvedValue) при каждом выполнении\n```\n\n**Как работает await:**\n1. `await expr` вычисляет `expr` (оборачивает в `Promise.resolve()`, если это не промис).\n2. Async-функция приостанавливается, возвращая управление вызывающему коду.\n3. Когда промис завершается, в очередь ставится микрозадача для возобновления функции.\n4. Выполнение возобновляется с разрешённым значением (или выбрасывается исключение при отклонении).\n\n```javascript\nasync function example() {\n  console.log('A');\n  const result = await Promise.resolve('B');\n  console.log(result); // 'B' — выполняется как микрозадача\n  console.log('C');\n}\nexample();\nconsole.log('D');\n// Вывод: A, D, B, C\n```"
-    },
-    "tags": [
-      "async-await",
-      "promises",
-      "generators",
-      "microtask",
-      "syntactic-sugar"
-    ]
-  },
-  {
-    "id": "javascript-q-12",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "How does the `this` keyword work in JavaScript? Cover arrow functions vs regular functions.",
-      "ru": "Как работает ключевое слово `this` в JavaScript? Рассмотрите стрелочные и обычные функции."
-    },
-    "answer": {
-      "en": "### The `this` keyword\n\n`this` refers to the **execution context** — the object the function is called on. Its value is determined at **call time**, not at definition time (except for arrow functions).\n\n**Rules for regular functions:**\n1. **Default binding** — in sloppy mode, `this` is the global object (`window`/`global`). In strict mode, `this` is `undefined`.\n2. **Implicit binding** — called as a method of an object: `obj.method()` → `this === obj`.\n3. **Explicit binding** — `call`, `apply`, `bind` set `this` explicitly.\n4. **`new` binding** — when called with `new`, `this` is the newly created object.\n\n```javascript\nconst obj = {\n  name: 'Alice',\n  greet() {\n    console.log(this.name); // 'Alice' — implicit binding\n  },\n  greetLater() {\n    setTimeout(function() {\n      console.log(this.name); // undefined — 'this' is global/undefined\n    }, 100);\n  },\n  greetLaterArrow() {\n    setTimeout(() => {\n      console.log(this.name); // 'Alice' — arrow captures lexical this\n    }, 100);\n  }\n};\n```\n\n**Arrow functions:**\n- Do NOT have their own `this`.\n- Capture `this` **lexically** — from the surrounding scope at definition time.\n- Cannot be used as constructors (no `new`).\n- `.call()`, `.apply()`, `.bind()` cannot change their `this`.\n\n```javascript\nclass Timer {\n  constructor() {\n    this.seconds = 0;\n  }\n  start() {\n    // Arrow function keeps 'this' pointing to the Timer instance\n    setInterval(() => {\n      this.seconds++;\n    }, 1000);\n  }\n}\n```",
-      "ru": "### Ключевое слово `this`\n\n`this` ссылается на **контекст выполнения** — объект, на котором вызвана функция. Его значение определяется в момент **вызова**, а не определения (кроме стрелочных функций).\n\n**Правила для обычных функций:**\n1. **Привязка по умолчанию** — в нестрогом режиме `this` равен глобальному объекту (`window`/`global`). В строгом режиме `this` равен `undefined`.\n2. **Неявная привязка** — вызов как метода объекта: `obj.method()` → `this === obj`.\n3. **Явная привязка** — `call`, `apply`, `bind` задают `this` явно.\n4. **Привязка через `new`** — при вызове с `new`, `this` — это новый созданный объект.\n\n```javascript\nconst obj = {\n  name: 'Alice',\n  greet() {\n    console.log(this.name); // 'Alice' — неявная привязка\n  },\n  greetLater() {\n    setTimeout(function() {\n      console.log(this.name); // undefined — 'this' глобальный/undefined\n    }, 100);\n  },\n  greetLaterArrow() {\n    setTimeout(() => {\n      console.log(this.name); // 'Alice' — стрелка захватывает лексический this\n    }, 100);\n  }\n};\n```\n\n**Стрелочные функции:**\n- НЕ имеют собственного `this`.\n- Захватывают `this` **лексически** — из окружающей области в момент определения.\n- Нельзя использовать как конструкторы (без `new`).\n- `.call()`, `.apply()`, `.bind()` не могут изменить их `this`.\n\n```javascript\nclass Timer {\n  constructor() {\n    this.seconds = 0;\n  }\n  start() {\n    // Стрелочная функция сохраняет 'this' как экземпляр Timer\n    setInterval(() => {\n      this.seconds++;\n    }, 1000);\n  }\n}\n```"
-    },
-    "tags": [
-      "this",
-      "context",
-      "arrow-function",
-      "bind",
-      "call",
-      "apply"
-    ]
-  },
-  {
-    "id": "javascript-q-13",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain prototypal inheritance — the prototype chain, Object.create, __proto__ vs prototype.",
-      "ru": "Объясните прототипное наследование — цепочка прототипов, Object.create, __proto__ vs prototype."
-    },
-    "answer": {
-      "en": "### Prototypal Inheritance\n\nIn JavaScript, objects inherit from other objects through the **prototype chain**. Every object has an internal `[[Prototype]]` slot pointing to another object (or `null`).\n\n**`__proto__` vs `.prototype`:**\n- `__proto__` (or `Object.getPrototypeOf(obj)`) — the actual prototype of an object instance. Every object has this.\n- `.prototype` — a property that exists **only on functions**. When you call a function with `new`, the new object's `[[Prototype]]` is set to `Function.prototype`.\n\n```javascript\nfunction Animal(name) {\n  this.name = name;\n}\nAnimal.prototype.speak = function() {\n  return `${this.name} makes a sound.`;\n};\n\nconst dog = new Animal('Rex');\nconsole.log(dog.speak());               // 'Rex makes a sound.'\nconsole.log(Object.getPrototypeOf(dog) === Animal.prototype); // true\nconsole.log(dog.__proto__ === Animal.prototype);              // true\n\n// Prototype chain lookup:\n// dog -> Animal.prototype -> Object.prototype -> null\n```\n\n**Object.create:**\n\n```javascript\nconst animalProto = {\n  speak() {\n    return `${this.name} makes a sound.`;\n  }\n};\n\nconst cat = Object.create(animalProto);\ncat.name = 'Whiskers';\nconsole.log(cat.speak()); // 'Whiskers makes a sound.'\nconsole.log(Object.getPrototypeOf(cat) === animalProto); // true\n```\n\n**ES6 classes** are syntactic sugar over the prototype system:\n\n```javascript\nclass Dog extends Animal {\n  speak() {\n    return `${this.name} barks.`;\n  }\n}\n// Dog.prototype.__proto__ === Animal.prototype\n```",
-      "ru": "### Прототипное наследование\n\nВ JavaScript объекты наследуют от других объектов через **цепочку прототипов**. Каждый объект имеет внутренний слот `[[Prototype]]`, указывающий на другой объект (или `null`).\n\n**`__proto__` vs `.prototype`:**\n- `__proto__` (или `Object.getPrototypeOf(obj)`) — фактический прототип экземпляра объекта. Есть у каждого объекта.\n- `.prototype` — свойство, существующее **только у функций**. При вызове функции через `new`, `[[Prototype]]` нового объекта устанавливается в `Function.prototype`.\n\n```javascript\nfunction Animal(name) {\n  this.name = name;\n}\nAnimal.prototype.speak = function() {\n  return `${this.name} издаёт звук.`;\n};\n\nconst dog = new Animal('Рекс');\nconsole.log(dog.speak());               // 'Рекс издаёт звук.'\nconsole.log(Object.getPrototypeOf(dog) === Animal.prototype); // true\nconsole.log(dog.__proto__ === Animal.prototype);              // true\n\n// Поиск по цепочке прототипов:\n// dog -> Animal.prototype -> Object.prototype -> null\n```\n\n**Object.create:**\n\n```javascript\nconst animalProto = {\n  speak() {\n    return `${this.name} издаёт звук.`;\n  }\n};\n\nconst cat = Object.create(animalProto);\ncat.name = 'Мурзик';\nconsole.log(cat.speak()); // 'Мурзик издаёт звук.'\nconsole.log(Object.getPrototypeOf(cat) === animalProto); // true\n```\n\n**Классы ES6** — это синтаксический сахар над прототипной системой:\n\n```javascript\nclass Dog extends Animal {\n  speak() {\n    return `${this.name} лает.`;\n  }\n}\n// Dog.prototype.__proto__ === Animal.prototype\n```"
-    },
-    "tags": [
-      "prototype",
-      "inheritance",
-      "prototype-chain",
-      "Object.create",
-      "__proto__",
-      "class"
-    ]
-  },
-  {
-    "id": "javascript-q-14",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain Promise.all, Promise.allSettled, Promise.race, and Promise.any — differences and use cases.",
-      "ru": "Объясните Promise.all, Promise.allSettled, Promise.race и Promise.any — различия и сценарии использования."
-    },
-    "answer": {
-      "en": "### Promise combinators\n\nAll four methods accept an iterable of Promises and return a single Promise.\n\n| Method | Resolves when | Rejects when | Value |\n|---|---|---|---|\n| `Promise.all` | ALL fulfill | ANY rejects (fast-fail) | Array of values |\n| `Promise.allSettled` | ALL settle (any outcome) | Never | Array of `{status, value/reason}` |\n| `Promise.race` | FIRST settles (any outcome) | FIRST rejects | First settled value |\n| `Promise.any` | FIRST fulfills | ALL reject | First fulfilled value |\n\n```javascript\nconst p1 = Promise.resolve(1);\nconst p2 = Promise.resolve(2);\nconst p3 = Promise.reject(new Error('fail'));\n\n// Promise.all — fails fast\nPromise.all([p1, p2])\n  .then(values => console.log(values)); // [1, 2]\nPromise.all([p1, p3])\n  .catch(err => console.error(err.message)); // 'fail'\n\n// Promise.allSettled — never rejects\nPromise.allSettled([p1, p3])\n  .then(results => console.log(results));\n// [{status:'fulfilled',value:1},{status:'rejected',reason:Error}]\n\n// Promise.race — first to settle wins\nPromise.race([new Promise(r => setTimeout(r, 100, 'slow')),\n              Promise.resolve('fast')])\n  .then(v => console.log(v)); // 'fast'\n\n// Promise.any — first to FULFILL wins\nPromise.any([p3, p1, p2])\n  .then(v => console.log(v)); // 1\n```\n\n**Use cases:**\n- `Promise.all` — fetch multiple resources in parallel when you need all of them (e.g., load user + settings + permissions).\n- `Promise.allSettled` — run multiple operations and report success/failure for each (batch jobs, analytics).\n- `Promise.race` — implement timeouts: race a real request against a `setTimeout` rejection.\n- `Promise.any` — try multiple CDN mirrors or service replicas, use the first that responds.",
-      "ru": "### Комбинаторы Promise\n\nВсе четыре метода принимают итерируемый объект из промисов и возвращают один промис.\n\n| Метод | Выполняется когда | Отклоняется когда | Значение |\n|---|---|---|---|\n| `Promise.all` | ВСЕ выполнились | ЛЮБОЙ отклонился (fast-fail) | Массив значений |\n| `Promise.allSettled` | ВСЕ завершились (любой исход) | Никогда | Массив `{status, value/reason}` |\n| `Promise.race` | ПЕРВЫЙ завершился (любой исход) | ПЕРВЫЙ отклонился | Значение первого |\n| `Promise.any` | ПЕРВЫЙ выполнился | ВСЕ отклонились | Значение первого выполненного |\n\n```javascript\nconst p1 = Promise.resolve(1);\nconst p2 = Promise.resolve(2);\nconst p3 = Promise.reject(new Error('fail'));\n\n// Promise.all — быстрый сбой\nPromise.all([p1, p2])\n  .then(values => console.log(values)); // [1, 2]\nPromise.all([p1, p3])\n  .catch(err => console.error(err.message)); // 'fail'\n\n// Promise.allSettled — никогда не отклоняется\nPromise.allSettled([p1, p3])\n  .then(results => console.log(results));\n// [{status:'fulfilled',value:1},{status:'rejected',reason:Error}]\n\n// Promise.race — первый завершившийся побеждает\nPromise.race([new Promise(r => setTimeout(r, 100, 'slow')),\n              Promise.resolve('fast')])\n  .then(v => console.log(v)); // 'fast'\n\n// Promise.any — первый ВЫПОЛНЕННЫЙ побеждает\nPromise.any([p3, p1, p2])\n  .then(v => console.log(v)); // 1\n```\n\n**Сценарии использования:**\n- `Promise.all` — параллельная загрузка нескольких ресурсов, когда нужны все (пользователь + настройки + права).\n- `Promise.allSettled` — несколько операций с индивидуальным отчётом об успехе/ошибке (пакетные задания).\n- `Promise.race` — тайм-аут: гонка реального запроса с `setTimeout`-отклонением.\n- `Promise.any` — несколько CDN-зеркал или реплик сервиса — использовать первый, который ответит."
-    },
-    "tags": [
-      "promises",
-      "Promise.all",
-      "Promise.allSettled",
-      "Promise.race",
-      "Promise.any",
-      "async"
-    ]
-  },
-  {
-    "id": "javascript-q-15",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain destructuring, rest, and spread — practical patterns and edge cases.",
-      "ru": "Объясните деструктуризацию, rest и spread — практические паттерны и крайние случаи."
-    },
-    "answer": {
-      "en": "### Destructuring, Rest, Spread\n\n**Destructuring** — extract values from arrays/objects into variables.\n\n```javascript\n// Object destructuring with rename and default\nconst { name: userName = 'Anonymous', age } = { name: 'Alice', age: 30 };\nconsole.log(userName); // 'Alice'\n\n// Array destructuring\nconst [first, , third] = [1, 2, 3]; // skip index 1\nconsole.log(first, third); // 1 3\n\n// Nested destructuring\nconst { address: { city } } = { address: { city: 'Kyiv' } };\nconsole.log(city); // 'Kyiv'\n\n// Function parameter destructuring\nfunction greet({ name, greeting = 'Hello' }) {\n  console.log(`${greeting}, ${name}!`);\n}\ngreet({ name: 'Bob' }); // 'Hello, Bob!'\n```\n\n**Rest** — collect remaining elements into an array/object.\n\n```javascript\nconst [head, ...tail] = [1, 2, 3, 4];\nconsole.log(head, tail); // 1  [2, 3, 4]\n\nconst { a, ...rest } = { a: 1, b: 2, c: 3 };\nconsole.log(rest); // { b: 2, c: 3 }\n\nfunction sum(...nums) {\n  return nums.reduce((acc, n) => acc + n, 0);\n}\n```\n\n**Spread** — expand an iterable into individual elements.\n\n```javascript\nconst arr1 = [1, 2];\nconst arr2 = [3, 4];\nconst merged = [...arr1, ...arr2]; // [1, 2, 3, 4]\n\nconst base = { theme: 'dark', lang: 'en' };\nconst updated = { ...base, lang: 'ru' }; // override lang\n\n// Shallow clone (beware: nested objects are still shared)\nconst clone = { ...original };\n```\n\n**Edge cases:**\n- Spreading a string: `[...'abc']` → `['a', 'b', 'c']`.\n- Rest must be **last** in a destructuring pattern.\n- Spreading `undefined` or `null` in an array throws `TypeError`; in an object it's a no-op.",
-      "ru": "### Деструктуризация, Rest, Spread\n\n**Деструктуризация** — извлечение значений из массивов/объектов в переменные.\n\n```javascript\n// Деструктуризация объекта с переименованием и значением по умолчанию\nconst { name: userName = 'Anonymous', age } = { name: 'Alice', age: 30 };\nconsole.log(userName); // 'Alice'\n\n// Деструктуризация массива\nconst [first, , third] = [1, 2, 3]; // пропустить индекс 1\nconsole.log(first, third); // 1 3\n\n// Вложенная деструктуризация\nconst { address: { city } } = { address: { city: 'Киев' } };\nconsole.log(city); // 'Киев'\n\n// Деструктуризация параметров функции\nfunction greet({ name, greeting = 'Привет' }) {\n  console.log(`${greeting}, ${name}!`);\n}\ngreet({ name: 'Bob' }); // 'Привет, Bob!'\n```\n\n**Rest** — собирает оставшиеся элементы в массив/объект.\n\n```javascript\nconst [head, ...tail] = [1, 2, 3, 4];\nconsole.log(head, tail); // 1  [2, 3, 4]\n\nconst { a, ...rest } = { a: 1, b: 2, c: 3 };\nconsole.log(rest); // { b: 2, c: 3 }\n\nfunction sum(...nums) {\n  return nums.reduce((acc, n) => acc + n, 0);\n}\n```\n\n**Spread** — разворачивает итерируемый объект в отдельные элементы.\n\n```javascript\nconst arr1 = [1, 2];\nconst arr2 = [3, 4];\nconst merged = [...arr1, ...arr2]; // [1, 2, 3, 4]\n\nconst base = { theme: 'dark', lang: 'en' };\nconst updated = { ...base, lang: 'ru' }; // переопределить lang\n\n// Неглубокое копирование (внимание: вложенные объекты остаются общими)\nconst clone = { ...original };\n```\n\n**Крайние случаи:**\n- Spread строки: `[...'abc']` → `['a', 'b', 'c']`.\n- Rest должен быть **последним** в паттерне деструктуризации.\n- Spread `undefined` или `null` в массиве выбрасывает `TypeError`; в объекте — ничего не делает."
-    },
-    "tags": [
-      "destructuring",
-      "rest",
-      "spread",
-      "es6",
-      "array",
-      "object"
-    ]
-  },
-  {
-    "id": "javascript-q-16",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain higher-order functions — map, filter, reduce in depth, with composition.",
-      "ru": "Объясните функции высшего порядка — map, filter, reduce подробно, с примерами композиции."
-    },
-    "answer": {
-      "en": "### Higher-Order Functions\n\nA **higher-order function (HOF)** is a function that takes a function as an argument and/or returns a function.\n\n**map** — transforms each element, returns a new array of the same length.\n**filter** — selects elements matching a predicate, returns a new (possibly shorter) array.\n**reduce** — accumulates all elements into a single value.\n\n```javascript\nconst orders = [\n  { product: 'Laptop', price: 1200, qty: 1 },\n  { product: 'Mouse',  price: 25,   qty: 3 },\n  { product: 'Desk',   price: 400,  qty: 0 },\n];\n\n// filter — only items in stock\nconst inStock = orders.filter(o => o.qty > 0);\n\n// map — calculate line totals\nconst totals = inStock.map(o => o.price * o.qty);\n\n// reduce — sum all totals\nconst grandTotal = totals.reduce((acc, t) => acc + t, 0);\nconsole.log(grandTotal); // 1200 + 75 = 1275\n\n// Chained in one expression:\nconst result = orders\n  .filter(o => o.qty > 0)\n  .map(o => o.price * o.qty)\n  .reduce((acc, t) => acc + t, 0);\n```\n\n**reduce is universal** — you can implement map and filter with it:\n\n```javascript\nconst myMap = (arr, fn) =>\n  arr.reduce((acc, el) => [...acc, fn(el)], []);\n\nconst myFilter = (arr, fn) =>\n  arr.reduce((acc, el) => fn(el) ? [...acc, el] : acc, []);\n```\n\n**Function composition:**\n\n```javascript\nconst compose = (...fns) => x => fns.reduceRight((v, f) => f(v), x);\nconst pipe    = (...fns) => x => fns.reduce((v, f) => f(v), x);\n\nconst transform = pipe(\n  arr => arr.filter(n => n > 0),\n  arr => arr.map(n => n * 2),\n  arr => arr.reduce((a, b) => a + b, 0)\n);\nconsole.log(transform([-1, 2, 3, -4, 5])); // 20\n```",
-      "ru": "### Функции высшего порядка\n\n**Функция высшего порядка (HOF)** — это функция, принимающая другую функцию в качестве аргумента и/или возвращающая функцию.\n\n**map** — трансформирует каждый элемент, возвращает новый массив той же длины.\n**filter** — выбирает элементы, соответствующие предикату, возвращает новый (возможно, короче) массив.\n**reduce** — накапливает все элементы в одно значение.\n\n```javascript\nconst orders = [\n  { product: 'Ноутбук', price: 1200, qty: 1 },\n  { product: 'Мышь',    price: 25,   qty: 3 },\n  { product: 'Стол',    price: 400,  qty: 0 },\n];\n\n// filter — только товары в наличии\nconst inStock = orders.filter(o => o.qty > 0);\n\n// map — рассчитать сумму по строке\nconst totals = inStock.map(o => o.price * o.qty);\n\n// reduce — итоговая сумма\nconst grandTotal = totals.reduce((acc, t) => acc + t, 0);\nconsole.log(grandTotal); // 1200 + 75 = 1275\n\n// Всё в одной цепочке:\nconst result = orders\n  .filter(o => o.qty > 0)\n  .map(o => o.price * o.qty)\n  .reduce((acc, t) => acc + t, 0);\n```\n\n**reduce универсален** — через него можно реализовать map и filter:\n\n```javascript\nconst myMap = (arr, fn) =>\n  arr.reduce((acc, el) => [...acc, fn(el)], []);\n\nconst myFilter = (arr, fn) =>\n  arr.reduce((acc, el) => fn(el) ? [...acc, el] : acc, []);\n```\n\n**Композиция функций:**\n\n```javascript\nconst compose = (...fns) => x => fns.reduceRight((v, f) => f(v), x);\nconst pipe    = (...fns) => x => fns.reduce((v, f) => f(v), x);\n\nconst transform = pipe(\n  arr => arr.filter(n => n > 0),\n  arr => arr.map(n => n * 2),\n  arr => arr.reduce((a, b) => a + b, 0)\n);\nconsole.log(transform([-1, 2, 3, -4, 5])); // 20\n```"
-    },
-    "tags": [
-      "higher-order-functions",
-      "map",
-      "filter",
-      "reduce",
-      "composition",
-      "functional"
-    ]
-  },
-  {
-    "id": "javascript-q-17",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "What are IIFEs and why were they used? How do ES modules solve the same problem?",
-      "ru": "Что такое IIFE и зачем они применялись? Как ES-модули решают ту же проблему?"
-    },
-    "answer": {
-      "en": "### IIFEs (Immediately Invoked Function Expressions)\n\nAn IIFE is a function that is defined and immediately called. Its primary purpose was to create a **private scope** and avoid polluting the global namespace — critical before ES6 block scoping and modules.\n\n```javascript\n// Classic IIFE pattern\n(function() {\n  var privateVar = 'I am private';\n  console.log(privateVar); // accessible here\n})();\n// console.log(privateVar); // ReferenceError — not in global scope\n\n// IIFE with argument\n(function(global) {\n  global.myLib = {};\n})(window);\n\n// Arrow IIFE (ES6)\n(() => {\n  const config = { debug: true };\n  // config is private\n})();\n```\n\n**Why IIFEs were needed:**\n1. `var` is function-scoped, not block-scoped — only functions created new scopes.\n2. No native module system — all JS loaded into one global scope.\n3. Libraries (jQuery, Underscore) used IIFEs to expose only a controlled API.\n\n**How ES Modules solve this:**\n\n```javascript\n// utils.js — each module has its own scope\nconst privateHelper = () => 'private';\nexport const publicAPI = () => privateHelper();\n\n// main.js\nimport { publicAPI } from './utils.js';\n// privateHelper is not accessible here\n```\n\n- Each ESM file has its own **module scope** — variables don't leak to global.\n- Explicit `export`/`import` replaces the ad-hoc return-from-IIFE pattern.\n- Static imports enable **tree shaking** (dead code elimination by bundlers).\n- IIFEs are rarely needed in modern code, but still appear in config files and legacy bundles.",
-      "ru": "### IIFE (Немедленно вызываемые функциональные выражения)\n\nIIFE — это функция, которая определяется и сразу вызывается. Их основная цель — создать **приватную область видимости** и не загрязнять глобальное пространство имён. Это было критично до появления блочной области видимости и модулей в ES6.\n\n```javascript\n// Классический паттерн IIFE\n(function() {\n  var privateVar = 'Я приватный';\n  console.log(privateVar); // доступно здесь\n})();\n// console.log(privateVar); // ReferenceError — не в глобальной области\n\n// IIFE с аргументом\n(function(global) {\n  global.myLib = {};\n})(window);\n\n// Стрелочный IIFE (ES6)\n(() => {\n  const config = { debug: true };\n  // config приватный\n})();\n```\n\n**Зачем нужны были IIFE:**\n1. `var` имеет функциональную область видимости, не блочную — только функции создавали новые области.\n2. Нет нативной системы модулей — весь JS загружался в одну глобальную область.\n3. Библиотеки (jQuery, Underscore) использовали IIFE для экспорта только контролируемого API.\n\n**Как ES Modules решают это:**\n\n```javascript\n// utils.js — у каждого модуля своя область видимости\nconst privateHelper = () => 'private';\nexport const publicAPI = () => privateHelper();\n\n// main.js\nimport { publicAPI } from './utils.js';\n// privateHelper здесь недоступен\n```\n\n- Каждый ESM-файл имеет собственную **область видимости модуля** — переменные не утекают в глобальное пространство.\n- Явные `export`/`import` заменяют возврат значений из IIFE.\n- Статические импорты позволяют бандлерам выполнять **tree shaking** (удаление мёртвого кода).\n- IIFE редко нужны в современном коде, но ещё встречаются в конфигах и легаси-бандлах."
-    },
-    "tags": [
-      "iife",
-      "scope",
-      "modules",
-      "es-modules",
-      "global-scope",
-      "namespacing"
-    ]
-  },
-  {
-    "id": "javascript-q-18",
-    "topicId": "javascript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain call, apply, and bind — differences and use cases.",
-      "ru": "Объясните call, apply и bind — различия и сценарии использования."
-    },
-    "answer": {
-      "en": "### call, apply, bind\n\nAll three methods explicitly set the `this` context of a function. They differ in how they pass arguments and when the function is invoked.\n\n**call** — invokes the function immediately, arguments passed **individually**.\n**apply** — invokes the function immediately, arguments passed as an **array**.\n**bind** — returns a **new function** with `this` (and optionally arguments) permanently bound. Does not invoke immediately.\n\n```javascript\nfunction greet(greeting, punctuation) {\n  return `${greeting}, ${this.name}${punctuation}`;\n}\n\nconst user = { name: 'Alice' };\n\n// call — args as individual values\nconsole.log(greet.call(user, 'Hello', '!'));   // 'Hello, Alice!'\n\n// apply — args as an array\nconsole.log(greet.apply(user, ['Hi', '?']));   // 'Hi, Alice?'\n\n// bind — returns new function, call it later\nconst greetAlice = greet.bind(user, 'Hey');\nconsole.log(greetAlice('.')); // 'Hey, Alice.'\nconsole.log(greetAlice('!')); // 'Hey, Alice!'\n```\n\n**Practical use cases:**\n\n```javascript\n// 1. Borrow a method from another object\nconst arrayLike = { 0: 'a', 1: 'b', length: 2 };\nconst arr = Array.prototype.slice.call(arrayLike); // ['a', 'b']\n\n// 2. bind for event handlers (class methods)\nclass Button {\n  constructor(label) { this.label = label; }\n  handleClick() { console.log(this.label); }\n  attach(el) {\n    el.addEventListener('click', this.handleClick.bind(this));\n  }\n}\n\n// 3. apply for spreading args before ES6 spread\nconst nums = [3, 1, 4, 1, 5];\nconsole.log(Math.max.apply(null, nums)); // 5\n// Modern equivalent:\nconsole.log(Math.max(...nums)); // 5\n```",
-      "ru": "### call, apply и bind\n\nВсе три метода явно задают контекст `this` для функции. Они различаются способом передачи аргументов и моментом вызова.\n\n**call** — вызывает функцию немедленно, аргументы передаются **по одному**.\n**apply** — вызывает функцию немедленно, аргументы передаются **массивом**.\n**bind** — возвращает **новую функцию** с постоянно привязанным `this` (и опционально аргументами). Не вызывает немедленно.\n\n```javascript\nfunction greet(greeting, punctuation) {\n  return `${greeting}, ${this.name}${punctuation}`;\n}\n\nconst user = { name: 'Alice' };\n\n// call — аргументы по одному\nconsole.log(greet.call(user, 'Привет', '!'));   // 'Привет, Alice!'\n\n// apply — аргументы массивом\nconsole.log(greet.apply(user, ['Хай', '?']));   // 'Хай, Alice?'\n\n// bind — возвращает новую функцию, вызов позже\nconst greetAlice = greet.bind(user, 'Эй');\nconsole.log(greetAlice('.')); // 'Эй, Alice.'\nconsole.log(greetAlice('!')); // 'Эй, Alice!'\n```\n\n**Практические сценарии:**\n\n```javascript\n// 1. Заимствование метода другого объекта\nconst arrayLike = { 0: 'a', 1: 'b', length: 2 };\nconst arr = Array.prototype.slice.call(arrayLike); // ['a', 'b']\n\n// 2. bind для обработчиков событий (методы класса)\nclass Button {\n  constructor(label) { this.label = label; }\n  handleClick() { console.log(this.label); }\n  attach(el) {\n    el.addEventListener('click', this.handleClick.bind(this));\n  }\n}\n\n// 3. apply для spread аргументов до ES6\nconst nums = [3, 1, 4, 1, 5];\nconsole.log(Math.max.apply(null, nums)); // 5\n// Современный эквивалент:\nconsole.log(Math.max(...nums)); // 5\n```"
-    },
-    "tags": [
-      "call",
-      "apply",
-      "bind",
-      "this",
-      "context",
-      "function"
-    ]
-  },
-  {
-    "id": "javascript-q-19",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "What is the difference between microtasks and macrotasks? Name the queues and their priority order.",
-      "ru": "В чём разница между микрозадачами и макрозадачами? Назовите очереди и порядок их приоритетов."
-    },
-    "answer": {
-      "en": "### Microtasks vs Macrotasks\n\nThe JavaScript runtime maintains two separate queues. **Microtask queue** (higher priority) holds callbacks scheduled by `Promise.then/catch/finally`, `queueMicrotask()`, and `MutationObserver`. **Macrotask queue** (lower priority) holds callbacks from `setTimeout`, `setInterval`, `setImmediate` (Node.js), and I/O events.\n\nAfter every macrotask the engine drains the **entire** microtask queue before picking the next macrotask. This means microtasks can starve macrotasks if they keep adding new microtasks.\n\n```typescript\nconsole.log('1 - synchronous');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve()\n  .then(() => console.log('3 - microtask 1'))\n  .then(() => console.log('4 - microtask 2'));\n\nconsole.log('5 - synchronous');\n// Output order: 1, 5, 3, 4, 2\n```\n\n**Common trap:** Candidates assume `setTimeout(fn, 0)` runs immediately after the current code. In reality every resolved Promise callback executes first. Also, microtasks added *inside* a microtask run in the same microtask checkpoint.",
-      "ru": "### Микрозадачи vs макрозадачи\n\nJavaScript runtime поддерживает две раздельные очереди. **Очередь микрозадач** (высший приоритет) содержит колбэки из `Promise.then/catch/finally`, `queueMicrotask()` и `MutationObserver`. **Очередь макрозадач** (низший приоритет) — колбэки из `setTimeout`, `setInterval`, `setImmediate` (Node.js) и I/O-событий.\n\nПосле каждой макрозадачи движок полностью опустошает **всю** очередь микрозадач перед следующей макрозадачей.\n\n```typescript\nconsole.log('1 - synchronous');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve()\n  .then(() => console.log('3 - microtask 1'))\n  .then(() => console.log('4 - microtask 2'));\n\nconsole.log('5 - synchronous');\n// Порядок вывода: 1, 5, 3, 4, 2\n```\n\n**Частая ошибка:** Кандидаты считают, что `setTimeout(fn, 0)` выполняется сразу после текущего кода. На самом деле сначала отработают все колбэки разрезолвенных Promise."
-    },
-    "tags": [
-      "event-loop",
-      "microtasks",
-      "macrotasks",
-      "promises"
-    ]
-  },
-  {
-    "id": "javascript-q-20",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "Trace the exact execution order of this code snippet and explain each step:\nPromise.resolve().then(() => console.log('p1'));\nsetTimeout(() => console.log('t1'), 0);\nPromise.resolve().then(() => { setTimeout(() => console.log('t2'), 0); console.log('p2'); });\nconsole.log('sync');",
-      "ru": "Разберите точный порядок выполнения этого кода и объясните каждый шаг: Promise.resolve().then(() => console.log('p1')); setTimeout(() => console.log('t1'), 0); Promise.resolve().then(() => { setTimeout(() => console.log('t2'), 0); console.log('p2'); }); console.log('sync');"
-    },
-    "answer": {
-      "en": "### Promise + setTimeout Execution Order\n\nOutput: `sync → p1 → p2 → t1 → t2`\n\n1. Two `.then()` callbacks enter the microtask queue.\n2. `setTimeout('t1', 0)` enters the macrotask queue.\n3. `'sync'` logs (synchronous code).\n4. Call stack empties → microtask checkpoint: `p1` logs, then `p2` logs. Inside `p2`'s callback, `setTimeout('t2', 0)` is added to the macrotask queue.\n5. Microtask queue empty → pick macrotask: `t1` logs.\n6. Next macrotask: `t2` logs.\n\n```typescript\nPromise.resolve().then(() => console.log('p1'));\nsetTimeout(() => console.log('t1'), 0);\nPromise.resolve().then(() => {\n  setTimeout(() => console.log('t2'), 0);\n  console.log('p2');\n});\nconsole.log('sync');\n// sync, p1, p2, t1, t2\n```\n\n**Common trap:** Many candidates say `t2` runs before `t1` since it was scheduled inside a microtask. But `t1` was already in the macrotask queue *before* the microtask checkpoint ran, so `t1` always precedes `t2`.",
-      "ru": "### Порядок выполнения Promise + setTimeout\n\nВывод: `sync → p1 → p2 → t1 → t2`\n\n1. Два `.then()`-колбэка попадают в очередь микрозадач.\n2. `setTimeout('t1', 0)` попадает в очередь макрозадач.\n3. Выводится `'sync'` (синхронный код).\n4. Стек пуст → точка проверки: выводится `p1`, затем `p2`. Внутри колбэка `p2` `setTimeout('t2', 0)` добавляется в очередь макрозадач.\n5. Очередь микрозадач пуста → берём макрозадачу: выводится `t1`.\n6. Следующая макрозадача: выводится `t2`.\n\n```typescript\nPromise.resolve().then(() => console.log('p1'));\nsetTimeout(() => console.log('t1'), 0);\nPromise.resolve().then(() => {\n  setTimeout(() => console.log('t2'), 0);\n  console.log('p2');\n});\nconsole.log('sync');\n// sync, p1, p2, t1, t2\n```\n\n**Частая ошибка:** Многие говорят, что `t2` выполнится раньше `t1`, так как был запланирован внутри микрозадачи. Но `t1` уже находился в очереди макрозадач до точки проверки микрозадач."
-    },
-    "tags": [
-      "event-loop",
-      "microtasks",
-      "promises",
-      "execution-order"
-    ]
-  },
-  {
-    "id": "javascript-q-21",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "How does `process.nextTick` in Node.js fit into the event loop? How does it differ from `Promise.then` and `setImmediate`?",
-      "ru": "Как `process.nextTick` в Node.js вписывается в event loop? Чем он отличается от `Promise.then` и `setImmediate`?"
-    },
-    "answer": {
-      "en": "### process.nextTick vs Promise.then vs setImmediate\n\nNode.js has a dedicated **nextTick queue** processed before the Promise microtask queue. Priority within one iteration:\n\n1. `process.nextTick` (nextTick queue — highest)\n2. `Promise.then/catch/finally` (microtask queue)\n3. `setImmediate` (check phase — next iteration)\n4. `setTimeout(fn, 0)` (timers phase — next iteration)\n\n```typescript\nsetImmediate(() => console.log('setImmediate'));\nsetTimeout(() => console.log('setTimeout'), 0);\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n// Output: nextTick, Promise, then setTimeout or setImmediate (non-deterministic)\n```\n\n`setTimeout` vs `setImmediate` order from the main module is **non-deterministic** (OS timer precision). Inside an I/O callback, `setImmediate` always fires before `setTimeout(fn, 0)`.\n\n**Common trap:** Recursive `process.nextTick` starves the entire event loop because Node.js never leaves the current phase while the nextTick queue keeps refilling. Prefer `queueMicrotask()` or `setImmediate()` for non-critical deferred work.",
-      "ru": "### process.nextTick vs Promise.then vs setImmediate\n\nNode.js имеет выделенную **очередь nextTick**, обрабатываемую до очереди микрозадач Promise. Порядок в одной итерации:\n\n1. `process.nextTick` (очередь nextTick — наивысший)\n2. `Promise.then/catch/finally` (очередь микрозадач)\n3. `setImmediate` (фаза check — следующая итерация)\n4. `setTimeout(fn, 0)` (фаза timers — следующая итерация)\n\n```typescript\nsetImmediate(() => console.log('setImmediate'));\nsetTimeout(() => console.log('setTimeout'), 0);\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n// Вывод: nextTick, Promise, затем setTimeout или setImmediate (недетерминировано)\n```\n\nПорядок `setTimeout` vs `setImmediate` из главного модуля **недетерминирован**. Изнутри I/O-колбэка `setImmediate` всегда выполняется раньше `setTimeout(fn, 0)`.\n\n**Частая ошибка:** Рекурсивный `process.nextTick` может заморозить event loop, так как Node.js не покинет текущую фазу, пока очередь пополняется."
-    },
-    "tags": [
-      "nodejs",
-      "event-loop",
-      "process.nextTick",
-      "setImmediate"
-    ]
-  },
-  {
-    "id": "javascript-q-22",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "What happens when you throw inside a Promise executor vs inside a `.then()` callback? How does error propagation work in Promise chains?",
-      "ru": "Что происходит при выбросе исключения внутри executor Promise vs внутри колбэка `.then()`? Как работает распространение ошибок в цепочках Promise?"
-    },
-    "answer": {
-      "en": "### Promise Error Propagation\n\nA throw inside the **executor** automatically converts the Promise to rejected state — identical to calling `reject(error)`. A throw inside a **`.then()` callback** rejects the Promise returned by that `.then()`, propagating the rejection down the chain until a `.catch()` is found.\n\n```typescript\n// Executor throw === reject()\nconst p1 = new Promise((resolve, reject) => {\n  throw new Error('executor error');\n});\np1.catch(e => console.log(e.message)); // 'executor error'\n\n// .then() throw propagates down chain\nPromise.resolve('ok')\n  .then(val => { throw new Error('then error'); })\n  .then(val => console.log('skipped'))  // never runs\n  .catch(e => console.log(e.message))   // 'then error'\n  .then(() => console.log('continues')); // runs after catch\n```\n\n`.catch(fn)` is syntactic sugar for `.then(undefined, fn)`. After `.catch()` resolves successfully, the chain continues in fulfilled state.\n\n**Common trap:** Throwing inside `setTimeout` inside a `.then()` is NOT caught by the Promise chain — it becomes an uncaught exception. Only synchronous throws and explicit `reject()` calls are intercepted by Promise error handling.",
-      "ru": "### Распространение ошибок в Promise\n\nВыброс внутри **executor** автоматически переводит Promise в состояние rejected — идентично вызову `reject(error)`. Выброс внутри **колбэка `.then()`** отклоняет Promise, возвращаемый этим `.then()`, и ошибка распространяется по цепочке до `.catch()`.\n\n```typescript\n// throw в executor === reject()\nconst p1 = new Promise((resolve, reject) => {\n  throw new Error('executor error');\n});\np1.catch(e => console.log(e.message)); // 'executor error'\n\n// throw в .then() распространяется по цепочке\nPromise.resolve('ok')\n  .then(val => { throw new Error('then error'); })\n  .then(val => console.log('пропущено'))  // не выполнится\n  .catch(e => console.log(e.message))    // 'then error'\n  .then(() => console.log('продолжается')); // выполняется\n```\n\n**Частая ошибка:** Выброс внутри `setTimeout` внутри `.then()` НЕ перехватывается цепочкой Promise — он становится необработанным исключением."
-    },
-    "tags": [
-      "promises",
-      "error-handling",
-      "async"
-    ]
-  },
-  {
-    "id": "javascript-q-23",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "What is Promise chaining? Explain the rules for how `.then()` determines the state of the returned Promise.",
-      "ru": "Что такое цепочка Promise? Объясните правила, по которым `.then()` определяет состояние возвращаемого Promise."
-    },
-    "answer": {
-      "en": "### Promise Chaining Rules\n\nEvery `.then(onFulfilled, onRejected)` returns a **new Promise**. Its resolution depends on what the handler returns:\n\n- Plain value `x` → fulfills with `x`\n- Another Promise `p` → adopts `p`'s state (flattened, one level)\n- Throws an error → rejects with that error\n- Returns nothing → fulfills with `undefined`\n\n```typescript\nPromise.resolve(1)\n  .then(n => n + 1)                    // fulfilled(2)\n  .then(n => Promise.resolve(n * 10)) // fulfilled(20) - flattened\n  .then(n => {\n    if (n > 10) throw new Error('too big');\n    return n;\n  })\n  .catch(e => 0)                      // fulfilled(0) - recovered\n  .then(n => console.log(n));         // logs: 0\n```\n\nFlattening applies one level: `Promise.resolve(Promise.resolve(42))` resolves to `42`, not to a nested Promise.\n\n**Common trap:** Forgetting to `return` inside a `.then()` handler. Without `return`, the next handler receives `undefined`. This is the most common source of subtle async bugs where values silently disappear in a chain.",
-      "ru": "### Правила цепочки Promise\n\nКаждый `.then(onFulfilled, onRejected)` возвращает **новый Promise**. Его состояние зависит от того, что вернёт обработчик:\n\n- Обычное значение `x` → fulfilled с `x`\n- Другой Promise `p` → принимает состояние `p` (разворачивается, один уровень)\n- Бросает ошибку → rejected с этой ошибкой\n- Не возвращает ничего → fulfilled с `undefined`\n\n```typescript\nPromise.resolve(1)\n  .then(n => n + 1)                    // fulfilled(2)\n  .then(n => Promise.resolve(n * 10)) // fulfilled(20) - разворачивается\n  .then(n => {\n    if (n > 10) throw new Error('слишком большое');\n    return n;\n  })\n  .catch(e => 0)                      // fulfilled(0) - восстановлено\n  .then(n => console.log(n));         // выводит: 0\n```\n\n**Частая ошибка:** Забыть `return` внутри `.then()`. Без `return` следующий обработчик получает `undefined`. Это самая распространённая причина незаметных асинхронных багов."
-    },
-    "tags": [
-      "promises",
-      "async",
-      "chaining"
-    ]
-  },
-  {
-    "id": "javascript-q-24",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "How does `async/await` transform execution? What does `await` do to the call stack, and what is the microtask cost of each `await`?",
-      "ru": "Как `async/await` трансформирует выполнение? Что `await` делает со стеком вызовов и какова стоимость каждого `await` в микрозадачах?"
-    },
-    "answer": {
-      "en": "### async/await Internals\n\nAn `async` function implicitly returns a Promise. Each `await expr`:\n1. Evaluates `expr`, wraps in `Promise.resolve(expr)`\n2. Schedules the rest of the function as a `.then()` microtask\n3. **Suspends** the function, returns control to caller\n4. When the awaited Promise resolves, resumes in a microtask\n\n```typescript\nasync function fetchData() {\n  console.log('A');\n  const result = await Promise.resolve('data');\n  console.log('B', result); // runs in microtask\n  return result;\n}\n\nconsole.log('1');\nfetchData().then(() => console.log('C'));\nconsole.log('2');\n// Output: 1, A, 2, B data, C\n```\n\nEach `await` costs at least **one microtask tick**. In V8 >= Node 12, awaiting a native Promise is optimized to 1 tick; awaiting a non-native thenable still costs 2 ticks.\n\n**Common trap:** Each `await` fully suspends the function — it is not on the call stack during the wait, which affects error stack traces. Also, sequential `await` calls that could be parallel are a common performance mistake: use `Promise.all` to run independent async operations concurrently.",
-      "ru": "### Внутреннее устройство async/await\n\nФункция с `async` неявно возвращает Promise. Каждый `await expr`:\n1. Вычисляет `expr`, оборачивает в `Promise.resolve(expr)`\n2. Планирует продолжение функции как микрозадачу `.then()`\n3. **Приостанавливает** функцию, передаёт управление вызывающему коду\n4. Когда Promise разрешается — возобновляет функцию в микрозадаче\n\n```typescript\nasync function fetchData() {\n  console.log('A');\n  const result = await Promise.resolve('data');\n  console.log('B', result); // выполняется в микрозадаче\n  return result;\n}\n\nconsole.log('1');\nfetchData().then(() => console.log('C'));\nconsole.log('2');\n// Вывод: 1, A, 2, B data, C\n```\n\n**Частая ошибка:** Последовательные `await`, которые могли бы выполняться параллельно, — распространённая ошибка производительности. Используйте `Promise.all` для запуска независимых асинхронных операций одновременно."
-    },
-    "tags": [
-      "async-await",
-      "microtasks",
-      "promises",
-      "v8"
-    ]
-  },
-  {
-    "id": "javascript-q-25",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "Compare Promise.all, Promise.allSettled, Promise.race, and Promise.any — behaviour on rejection, short-circuiting, and practical use cases.",
-      "ru": "Сравните Promise.all, Promise.allSettled, Promise.race и Promise.any — поведение при отклонении, досрочное завершение и практические сценарии."
-    },
-    "answer": {
-      "en": "### Promise Combinators\n\n`Promise.all([p1,p2,p3])` — rejects immediately if any input rejects (fast-fail); resolves with array of all values. Use for parallel independent fetches where all are required.\n\n`Promise.allSettled([...])` — never rejects; waits for all to settle and returns `{status, value/reason}[]`. Use when you need all results regardless of failures.\n\n`Promise.race([...])` — resolves/rejects with whichever Promise settles first. Classic timeout pattern.\n\n`Promise.any([...])` — resolves with the first fulfilled; only rejects if **all** reject (throws `AggregateError`). Use for fastest-server / fallback patterns.\n\n```typescript\n// Timeout pattern\nfunction withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {\n  const timeout = new Promise<never>((_, reject) =>\n    setTimeout(() => reject(new Error(`Timeout ${ms}ms`)), ms)\n  );\n  return Promise.race([p, timeout]);\n}\n\n// Collect all results including failures\nconst results = await Promise.allSettled([fetch('/a'), fetch('/b')]);\nconst ok = results\n  .filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled')\n  .map(r => r.value);\n```\n\n**Common trap:** `Promise.all` does NOT cancel other Promises on rejection — they keep running but results are discarded. Also, `Promise.any` throws `AggregateError` (with an `errors` array) when all reject — many developers only check `error.message` and miss the individual errors.",
-      "ru": "### Комбинаторы Promise\n\n`Promise.all([p1,p2,p3])` — немедленно отклоняется при отклонении любого; разрешается с массивом всех значений. Для параллельных запросов, где нужны все результаты.\n\n`Promise.allSettled([...])` — никогда не отклоняется; ждёт всех и возвращает `{status, value/reason}[]`.\n\n`Promise.race([...])` — разрешается/отклоняется со значением первого завершившегося. Паттерн таймаута.\n\n`Promise.any([...])` — разрешается первым выполненным; отклоняется только если **все** отклонены (AggregateError).\n\n```typescript\n// Паттерн таймаута\nfunction withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {\n  const timeout = new Promise<never>((_, reject) =>\n    setTimeout(() => reject(new Error(`Таймаут ${ms}мс`)), ms)\n  );\n  return Promise.race([p, timeout]);\n}\n\n// Сбор всех результатов включая ошибки\nconst results = await Promise.allSettled([fetch('/a'), fetch('/b')]);\nconst ok = results\n  .filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled')\n  .map(r => r.value);\n```\n\n**Частая ошибка:** `Promise.all` НЕ отменяет остальные Promise. `Promise.any` бросает `AggregateError` с массивом `errors` при полном отклонении — многие проверяют только `error.message`."
-    },
-    "tags": [
-      "promises",
-      "async",
-      "promise-combinators"
-    ]
-  },
-  {
-    "id": "javascript-q-26",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "What is a stale closure in async code? Give a concrete example with setTimeout or useEffect.",
-      "ru": "Что такое устаревшее замыкание (stale closure) в асинхронном коде? Приведите конкретный пример с setTimeout или useEffect."
-    },
-    "answer": {
-      "en": "### Stale Closures\n\nA stale closure happens when an async callback captures a variable at creation time, but the variable has changed by execution time — the callback still sees the old value.\n\n```typescript\n// Stale closure in setInterval\nfunction startCounter() {\n  let count = 0;\n  const id = setInterval(() => {\n    count++;\n    // If you pass 'count' to a function that closed over it earlier:\n    reportStale(count); // 'count' inside reportStale may be stale\n  }, 1000);\n}\n\n// Classic React stale closure in useEffect\nfunction Counter() {\n  const [count, setCount] = React.useState(0);\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      // 'count' is captured as 0 on mount, never updates\n      setCount(count + 1); // always sets to 1!\n    }, 1000);\n    return () => clearInterval(id);\n  }, []); // missing 'count' in dependency array\n\n  // Fix: functional update avoids stale closure\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      setCount(prev => prev + 1); // correct\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n}\n```\n\n**Common trap:** In React, the ESLint rule `react-hooks/exhaustive-deps` catches missing dependencies, but many developers add `// eslint-disable-next-line` without understanding that they're introducing a stale closure bug. The functional update form `setState(prev => ...)` is often the right fix.",
-      "ru": "### Устаревшие замыкания\n\nУстаревшее замыкание возникает, когда асинхронный колбэк захватывает переменную в момент создания, но к моменту выполнения она изменилась.\n\n```typescript\n// Классическое устаревшее замыкание в React useEffect\nfunction Counter() {\n  const [count, setCount] = React.useState(0);\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      // 'count' захвачен как 0 при монтировании, не обновляется\n      setCount(count + 1); // всегда устанавливает 1!\n    }, 1000);\n    return () => clearInterval(id);\n  }, []); // отсутствует 'count' в зависимостях\n\n  // Исправление: функциональное обновление\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      setCount(prev => prev + 1); // правильно\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n}\n```\n\n**Частая ошибка:** В React правило ESLint `react-hooks/exhaustive-deps` обнаруживает пропущенные зависимости, но многие добавляют `// eslint-disable-next-line`, не понимая последствий."
-    },
-    "tags": [
-      "closures",
-      "async",
-      "event-loop",
-      "react"
-    ]
-  },
-  {
-    "id": "javascript-q-27",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "How does the event loop handle errors thrown in macrotasks vs microtasks? What is `unhandledRejection` and how does behaviour differ between Node.js and browsers?",
-      "ru": "Как event loop обрабатывает ошибки в макрозадачах вс микрозадачах? Что такое `unhandledRejection` и чем поведение Node.js отличается от браузеров?"
-    },
-    "answer": {
-      "en": "### Error Handling Across the Event Loop\n\nErrors thrown in a **macrotask** (e.g., inside `setTimeout`) are NOT caught by try/catch in calling code — the call stack is different. They become uncaught exceptions.\n\nUnhandled Promise rejections (no `.catch()`) trigger `unhandledRejection`.\n\n```typescript\n// Macrotask error - NOT caught\ntry {\n  setTimeout(() => { throw new Error('macro'); }, 0);\n} catch (e) { /* never reached */ }\n\n// Node.js global handler\nprocess.on('unhandledRejection', (reason, promise) => {\n  console.error('Unhandled Rejection:', reason);\n  process.exit(1); // recommended in production\n});\n\n// Browser global handler\nwindow.addEventListener('unhandledrejection', (event) => {\n  event.preventDefault(); // suppress console error\n  console.error(event.reason);\n});\n```\n\n**Node.js vs Browser:**\n- Node.js ≥ 15: unhandled rejection **terminates the process** by default\n- Node.js 14 and earlier: emits a deprecation warning\n- Browsers: fires `unhandledrejection` event, page continues running\n\n**Common trap:** A Promise rejection is 'handled' only if `.catch()` is attached **synchronously** (same microtask checkpoint). Attaching `.catch()` in a `setTimeout` is too late — `unhandledRejection` already fired.",
-      "ru": "### Обработка ошибок в event loop\n\nОшибки в **макрозадачах** (setTimeout) НЕ перехватываются try/catch — стек вызовов другой. Становятся необработанными исключениями.\n\n```typescript\n// Ошибка в макрозадаче — НЕ перехватывается\ntry {\n  setTimeout(() => { throw new Error('macro'); }, 0);\n} catch (e) { /* никогда не достигается */ }\n\n// Глобальный обработчик Node.js\nprocess.on('unhandledRejection', (reason, promise) => {\n  console.error('Необработанное отклонение:', reason);\n  process.exit(1); // рекомендуется в production\n});\n\n// Браузерный обработчик\nwindow.addEventListener('unhandledrejection', (event) => {\n  console.error(event.reason);\n});\n```\n\n**Node.js vs браузер:**\n- Node.js ≥ 15: необработанное отклонение **завершает процесс** по умолчанию\n- Браузеры: генерируется событие, страница продолжает работать\n\n**Частая ошибка:** Отклонение считается обработанным только если `.catch()` прикреплён **синхронно** (в той же точке микрозадач). Прикрепление `.catch()` в `setTimeout` — слишком поздно."
-    },
-    "tags": [
-      "event-loop",
-      "error-handling",
-      "promises",
-      "nodejs"
-    ]
-  },
-  {
-    "id": "javascript-q-28",
-    "topicId": "javascript",
-    "difficulty": "senior",
-    "question": {
-      "en": "How does `queueMicrotask()` work and when should you prefer it over `Promise.resolve().then()`?",
-      "ru": "Как работает `queueMicrotask()` и когда его предпочтительнее использовать вместо `Promise.resolve().then()`?"
-    },
-    "answer": {
-      "en": "### queueMicrotask() vs Promise.resolve().then()\n\n`queueMicrotask(fn)` adds `fn` directly to the microtask queue without allocating a Promise object. It is the low-level primitive that `Promise.then` uses internally and was standardized in the Web API spec.\n\n```typescript\n// Old pattern - allocates a Promise object\nPromise.resolve().then(() => doSomething());\n\n// Preferred for library code - no Promise allocation\nqueueMicrotask(() => doSomething());\n\n// Same priority, same checkpoint\nconsole.log('sync');\nqueueMicrotask(() => console.log('q1'));\nPromise.resolve().then(() => console.log('p1'));\n// Output: sync, q1, p1 (order between q1 and p1 is FIFO)\n```\n\n**When to prefer `queueMicrotask`:**\n- Library internals that defer work without Promise overhead\n- Batching DOM mutations before a read operation\n- Implementing custom scheduler primitives\n\n**When to use `Promise.resolve().then()`:**\n- When you need the result to be a Promise you can chain or await\n- When error handling as a rejection matters\n\n**Common trap:** Unlike `Promise.resolve().then()`, errors thrown inside `queueMicrotask` callbacks become **uncaught exceptions**, not unhandled rejections. Always wrap in try/catch inside the callback if errors are possible.",
-      "ru": "### queueMicrotask() vs Promise.resolve().then()\n\n`queueMicrotask(fn)` добавляет `fn` напрямую в очередь микрозадач без аллокации объекта Promise. Это низкоуровневый примитив, который `Promise.then` использует внутри.\n\n```typescript\n// Старый паттерн — аллоцирует объект Promise\nPromise.resolve().then(() => doSomething());\n\n// Предпочтительный — без аллокации\nqueueMicrotask(() => doSomething());\n\nconsole.log('sync');\nqueueMicrotask(() => console.log('q1'));\nPromise.resolve().then(() => console.log('p1'));\n// Вывод: sync, q1, p1 (FIFO порядок)\n```\n\n**Когда предпочитать `queueMicrotask`:**\n- Внутренности библиотек, деферащих работу без накладных расходов Promise\n- Пакетирование DOM-мутаций перед операцией чтения\n\n**Частая ошибка:** Ошибки внутри `queueMicrotask` становятся необработанными исключениями, а не необработанными отклонениями Promise."
-    },
-    "tags": [
-      "microtasks",
-      "event-loop",
-      "performance",
-      "promises"
-    ]
-  },
-  {
     "id": "javascript-q-29",
     "topicId": "javascript",
     "difficulty": "junior",
@@ -1214,6 +819,214 @@
     ]
   },
   {
+    "id": "javascript-q-9",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the JavaScript event loop — call stack, task queue, and microtask queue.",
+      "ru": "Объясните событийный цикл JavaScript — стек вызовов, очередь задач и очередь микрозадач."
+    },
+    "answer": {
+      "en": "### The Event Loop\n\nJavaScript is single-threaded. The event loop is the mechanism that allows it to handle asynchronous work without blocking.\n\n**Components:**\n- **Call Stack** — a LIFO stack of execution contexts. Synchronous code runs here.\n- **Web APIs / Node.js APIs** — handle async work (setTimeout, fetch, fs.readFile) off the main thread.\n- **Task Queue (Macrotask queue)** — completed async callbacks waiting to run: `setTimeout`, `setInterval`, I/O, UI events.\n- **Microtask Queue** — higher-priority queue: resolved Promise callbacks (`.then`/`.catch`/`.finally`), `queueMicrotask`, `MutationObserver`.\n\n**Event loop cycle:**\n1. Execute all synchronous code on the call stack.\n2. Drain the **entire** microtask queue (process all microtasks, including new ones added during this step).\n3. Take **one** macrotask from the task queue and execute it.\n4. Drain the microtask queue again.\n5. Repeat.\n\n```javascript\nconsole.log('1 - sync');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve().then(() => console.log('3 - microtask'));\n\nconsole.log('4 - sync');\n\n// Output order:\n// 1 - sync\n// 4 - sync\n// 3 - microtask   <-- microtasks before macrotasks!\n// 2 - macrotask\n```\n\n**Key insight:** microtasks (Promises) always run before the next macrotask, regardless of when they were queued. This means a chain of resolved Promises can starve macrotasks if it never ends.",
+      "ru": "### Событийный цикл (Event Loop)\n\nJavaScript однопоточный. Событийный цикл — это механизм, позволяющий обрабатывать асинхронную работу без блокировки.\n\n**Составные части:**\n- **Стек вызовов (Call Stack)** — LIFO-стек контекстов выполнения. Здесь выполняется синхронный код.\n- **Web API / Node.js API** — обрабатывают асинхронную работу вне основного потока (setTimeout, fetch, fs.readFile).\n- **Очередь задач (Macrotask queue)** — завершённые асинхронные коллбэки, ожидающие выполнения: `setTimeout`, `setInterval`, I/O, события UI.\n- **Очередь микрозадач (Microtask queue)** — очередь с более высоким приоритетом: коллбэки выполненных Promise (`.then`/`.catch`/`.finally`), `queueMicrotask`, `MutationObserver`.\n\n**Цикл событийного цикла:**\n1. Выполнить весь синхронный код в стеке вызовов.\n2. Полностью опустошить очередь **микрозадач** (включая новые, добавленные в процессе).\n3. Взять **одну** макрозадачу из очереди задач и выполнить её.\n4. Снова опустошить очередь микрозадач.\n5. Повторить.\n\n```javascript\nconsole.log('1 - sync');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve().then(() => console.log('3 - microtask'));\n\nconsole.log('4 - sync');\n\n// Порядок вывода:\n// 1 - sync\n// 4 - sync\n// 3 - microtask   <-- микрозадачи раньше макрозадач!\n// 2 - macrotask\n```\n\n**Ключевой момент:** микрозадачи (Promise) всегда выполняются до следующей макрозадачи, независимо от того, когда они были поставлены в очередь. Бесконечная цепочка выполненных Promise может «заморозить» макрозадачи."
+    },
+    "tags": [
+      "event-loop",
+      "call-stack",
+      "microtask",
+      "macrotask",
+      "promises",
+      "async"
+    ]
+  },
+  {
+    "id": "javascript-q-10",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do Promises work? Explain the Promise state machine.",
+      "ru": "Как работают Promise? Объясните конечный автомат состояний Promise."
+    },
+    "answer": {
+      "en": "### Promises\n\nA Promise is an object representing the eventual completion or failure of an asynchronous operation. It is a state machine with three states:\n\n- **Pending** — initial state, neither fulfilled nor rejected.\n- **Fulfilled** — the operation completed successfully. The promise has a result value.\n- **Rejected** — the operation failed. The promise has a reason (error).\n\nTransitions are **irreversible** — once settled (fulfilled or rejected) a promise never changes state.\n\n```javascript\nconst p = new Promise((resolve, reject) => {\n  // executor runs synchronously\n  const success = true;\n  if (success) {\n    resolve('data'); // transitions to Fulfilled\n  } else {\n    reject(new Error('failed')); // transitions to Rejected\n  }\n});\n\np\n  .then(value => console.log('Fulfilled:', value))  // 'data'\n  .catch(err => console.error('Rejected:', err))\n  .finally(() => console.log('Always runs'));\n```\n\n**Chaining:** `.then()` returns a new Promise, enabling chains. If the callback returns a value, the next promise fulfills with it. If it returns a Promise, the chain waits for that promise.\n\n```javascript\nfetch('/api/user')\n  .then(res => res.json())       // returns a new Promise\n  .then(user => user.name)       // transforms the value\n  .then(name => console.log(name))\n  .catch(err => console.error(err));\n```\n\n**Error propagation:** a rejection skips all `.then` handlers until a `.catch` (or a `.then(null, onRejected)`) is found.\n\n**Executor runs synchronously.** Only the callbacks (`.then`/`.catch`) are scheduled as microtasks.",
+      "ru": "### Промисы (Promises)\n\nПромис — это объект, представляющий итоговое завершение или неудачу асинхронной операции. Это конечный автомат с тремя состояниями:\n\n- **Pending (ожидание)** — начальное состояние, ни выполнен, ни отклонён.\n- **Fulfilled (выполнен)** — операция завершилась успешно. Промис имеет значение результата.\n- **Rejected (отклонён)** — операция завершилась с ошибкой. Промис имеет причину (ошибку).\n\nПереходы **необратимы** — как только промис перешёл в settled-состояние, оно не меняется.\n\n```javascript\nconst p = new Promise((resolve, reject) => {\n  // executor выполняется синхронно\n  const success = true;\n  if (success) {\n    resolve('data'); // переход в Fulfilled\n  } else {\n    reject(new Error('failed')); // переход в Rejected\n  }\n});\n\np\n  .then(value => console.log('Fulfilled:', value))  // 'data'\n  .catch(err => console.error('Rejected:', err))\n  .finally(() => console.log('Выполняется всегда'));\n```\n\n**Цепочки:** `.then()` возвращает новый Promise, что позволяет строить цепочки. Если коллбэк возвращает значение, следующий промис выполняется с ним. Если возвращает промис, цепочка ждёт его.\n\n```javascript\nfetch('/api/user')\n  .then(res => res.json())       // возвращает новый Promise\n  .then(user => user.name)       // трансформирует значение\n  .then(name => console.log(name))\n  .catch(err => console.error(err));\n```\n\n**Распространение ошибок:** отклонение пропускает все `.then`-обработчики до ближайшего `.catch` (или `.then(null, onRejected)`).\n\n**Executor выполняется синхронно.** Только коллбэки (`.then`/`.catch`) ставятся в очередь как микрозадачи."
+    },
+    "tags": [
+      "promises",
+      "async",
+      "state-machine",
+      "microtask",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "javascript-q-11",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does async/await work under the hood? How does it relate to Promises and generators?",
+      "ru": "Как работает async/await под капотом? Как это связано с промисами и генераторами?"
+    },
+    "answer": {
+      "en": "### async/await under the hood\n\n`async/await` is syntactic sugar over Promises. An `async` function always returns a Promise, and `await` pauses execution of that function until the awaited Promise settles.\n\n**Relationship to Promises:**\n\n```javascript\n// These are equivalent:\nasync function fetchUser(id) {\n  const res = await fetch(`/api/users/${id}`);\n  const user = await res.json();\n  return user.name;\n}\n\n// Desugars to roughly:\nfunction fetchUser(id) {\n  return fetch(`/api/users/${id}`)\n    .then(res => res.json())\n    .then(user => user.name);\n}\n```\n\n**Relationship to generators:**\nBefore `async/await` (ES2017), the same pattern was achieved with generator functions (`function*`) + a runner that advanced the generator each time a Promise resolved. `async/await` is essentially a built-in version of that pattern.\n\n```javascript\n// Generator-based async (conceptually)\nfunction* fetchUserGen(id) {\n  const res = yield fetch(`/api/users/${id}`);\n  const user = yield res.json();\n  return user.name;\n}\n// A runner would call .next(resolvedValue) each time\n```\n\n**How await works:**\n1. `await expr` evaluates `expr` (wraps it in `Promise.resolve()` if not already a Promise).\n2. The async function suspends, returning control to the caller.\n3. When the Promise settles, a microtask is queued to resume the function.\n4. Execution resumes with the resolved value (or throws if rejected).\n\n```javascript\nasync function example() {\n  console.log('A');\n  const result = await Promise.resolve('B');\n  console.log(result); // 'B' — runs as microtask\n  console.log('C');\n}\nexample();\nconsole.log('D');\n// Output: A, D, B, C\n```",
+      "ru": "### async/await под капотом\n\n`async/await` — это синтаксический сахар над промисами. Функция `async` всегда возвращает промис, а `await` приостанавливает выполнение функции до тех пор, пока ожидаемый промис не завершится.\n\n**Связь с промисами:**\n\n```javascript\n// Эти функции эквивалентны:\nasync function fetchUser(id) {\n  const res = await fetch(`/api/users/${id}`);\n  const user = await res.json();\n  return user.name;\n}\n\n// Приблизительно разворачивается в:\nfunction fetchUser(id) {\n  return fetch(`/api/users/${id}`)\n    .then(res => res.json())\n    .then(user => user.name);\n}\n```\n\n**Связь с генераторами:**\nДо `async/await` (ES2017) тот же паттерн реализовывался через функции-генераторы (`function*`) + «раннер», продвигающий генератор при каждом выполнении промиса. `async/await` — это, по сути, встроенная версия этого паттерна.\n\n```javascript\n// Async на генераторах (концептуально)\nfunction* fetchUserGen(id) {\n  const res = yield fetch(`/api/users/${id}`);\n  const user = yield res.json();\n  return user.name;\n}\n// Раннер вызывал бы .next(resolvedValue) при каждом выполнении\n```\n\n**Как работает await:**\n1. `await expr` вычисляет `expr` (оборачивает в `Promise.resolve()`, если это не промис).\n2. Async-функция приостанавливается, возвращая управление вызывающему коду.\n3. Когда промис завершается, в очередь ставится микрозадача для возобновления функции.\n4. Выполнение возобновляется с разрешённым значением (или выбрасывается исключение при отклонении).\n\n```javascript\nasync function example() {\n  console.log('A');\n  const result = await Promise.resolve('B');\n  console.log(result); // 'B' — выполняется как микрозадача\n  console.log('C');\n}\nexample();\nconsole.log('D');\n// Вывод: A, D, B, C\n```"
+    },
+    "tags": [
+      "async-await",
+      "promises",
+      "generators",
+      "microtask",
+      "syntactic-sugar"
+    ]
+  },
+  {
+    "id": "javascript-q-12",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "How does the `this` keyword work in JavaScript? Cover arrow functions vs regular functions.",
+      "ru": "Как работает ключевое слово `this` в JavaScript? Рассмотрите стрелочные и обычные функции."
+    },
+    "answer": {
+      "en": "### The `this` keyword\n\n`this` refers to the **execution context** — the object the function is called on. Its value is determined at **call time**, not at definition time (except for arrow functions).\n\n**Rules for regular functions:**\n1. **Default binding** — in sloppy mode, `this` is the global object (`window`/`global`). In strict mode, `this` is `undefined`.\n2. **Implicit binding** — called as a method of an object: `obj.method()` → `this === obj`.\n3. **Explicit binding** — `call`, `apply`, `bind` set `this` explicitly.\n4. **`new` binding** — when called with `new`, `this` is the newly created object.\n\n```javascript\nconst obj = {\n  name: 'Alice',\n  greet() {\n    console.log(this.name); // 'Alice' — implicit binding\n  },\n  greetLater() {\n    setTimeout(function() {\n      console.log(this.name); // undefined — 'this' is global/undefined\n    }, 100);\n  },\n  greetLaterArrow() {\n    setTimeout(() => {\n      console.log(this.name); // 'Alice' — arrow captures lexical this\n    }, 100);\n  }\n};\n```\n\n**Arrow functions:**\n- Do NOT have their own `this`.\n- Capture `this` **lexically** — from the surrounding scope at definition time.\n- Cannot be used as constructors (no `new`).\n- `.call()`, `.apply()`, `.bind()` cannot change their `this`.\n\n```javascript\nclass Timer {\n  constructor() {\n    this.seconds = 0;\n  }\n  start() {\n    // Arrow function keeps 'this' pointing to the Timer instance\n    setInterval(() => {\n      this.seconds++;\n    }, 1000);\n  }\n}\n```",
+      "ru": "### Ключевое слово `this`\n\n`this` ссылается на **контекст выполнения** — объект, на котором вызвана функция. Его значение определяется в момент **вызова**, а не определения (кроме стрелочных функций).\n\n**Правила для обычных функций:**\n1. **Привязка по умолчанию** — в нестрогом режиме `this` равен глобальному объекту (`window`/`global`). В строгом режиме `this` равен `undefined`.\n2. **Неявная привязка** — вызов как метода объекта: `obj.method()` → `this === obj`.\n3. **Явная привязка** — `call`, `apply`, `bind` задают `this` явно.\n4. **Привязка через `new`** — при вызове с `new`, `this` — это новый созданный объект.\n\n```javascript\nconst obj = {\n  name: 'Alice',\n  greet() {\n    console.log(this.name); // 'Alice' — неявная привязка\n  },\n  greetLater() {\n    setTimeout(function() {\n      console.log(this.name); // undefined — 'this' глобальный/undefined\n    }, 100);\n  },\n  greetLaterArrow() {\n    setTimeout(() => {\n      console.log(this.name); // 'Alice' — стрелка захватывает лексический this\n    }, 100);\n  }\n};\n```\n\n**Стрелочные функции:**\n- НЕ имеют собственного `this`.\n- Захватывают `this` **лексически** — из окружающей области в момент определения.\n- Нельзя использовать как конструкторы (без `new`).\n- `.call()`, `.apply()`, `.bind()` не могут изменить их `this`.\n\n```javascript\nclass Timer {\n  constructor() {\n    this.seconds = 0;\n  }\n  start() {\n    // Стрелочная функция сохраняет 'this' как экземпляр Timer\n    setInterval(() => {\n      this.seconds++;\n    }, 1000);\n  }\n}\n```"
+    },
+    "tags": [
+      "this",
+      "context",
+      "arrow-function",
+      "bind",
+      "call",
+      "apply"
+    ]
+  },
+  {
+    "id": "javascript-q-13",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain prototypal inheritance — the prototype chain, Object.create, __proto__ vs prototype.",
+      "ru": "Объясните прототипное наследование — цепочка прототипов, Object.create, __proto__ vs prototype."
+    },
+    "answer": {
+      "en": "### Prototypal Inheritance\n\nIn JavaScript, objects inherit from other objects through the **prototype chain**. Every object has an internal `[[Prototype]]` slot pointing to another object (or `null`).\n\n**`__proto__` vs `.prototype`:**\n- `__proto__` (or `Object.getPrototypeOf(obj)`) — the actual prototype of an object instance. Every object has this.\n- `.prototype` — a property that exists **only on functions**. When you call a function with `new`, the new object's `[[Prototype]]` is set to `Function.prototype`.\n\n```javascript\nfunction Animal(name) {\n  this.name = name;\n}\nAnimal.prototype.speak = function() {\n  return `${this.name} makes a sound.`;\n};\n\nconst dog = new Animal('Rex');\nconsole.log(dog.speak());               // 'Rex makes a sound.'\nconsole.log(Object.getPrototypeOf(dog) === Animal.prototype); // true\nconsole.log(dog.__proto__ === Animal.prototype);              // true\n\n// Prototype chain lookup:\n// dog -> Animal.prototype -> Object.prototype -> null\n```\n\n**Object.create:**\n\n```javascript\nconst animalProto = {\n  speak() {\n    return `${this.name} makes a sound.`;\n  }\n};\n\nconst cat = Object.create(animalProto);\ncat.name = 'Whiskers';\nconsole.log(cat.speak()); // 'Whiskers makes a sound.'\nconsole.log(Object.getPrototypeOf(cat) === animalProto); // true\n```\n\n**ES6 classes** are syntactic sugar over the prototype system:\n\n```javascript\nclass Dog extends Animal {\n  speak() {\n    return `${this.name} barks.`;\n  }\n}\n// Dog.prototype.__proto__ === Animal.prototype\n```",
+      "ru": "### Прототипное наследование\n\nВ JavaScript объекты наследуют от других объектов через **цепочку прототипов**. Каждый объект имеет внутренний слот `[[Prototype]]`, указывающий на другой объект (или `null`).\n\n**`__proto__` vs `.prototype`:**\n- `__proto__` (или `Object.getPrototypeOf(obj)`) — фактический прототип экземпляра объекта. Есть у каждого объекта.\n- `.prototype` — свойство, существующее **только у функций**. При вызове функции через `new`, `[[Prototype]]` нового объекта устанавливается в `Function.prototype`.\n\n```javascript\nfunction Animal(name) {\n  this.name = name;\n}\nAnimal.prototype.speak = function() {\n  return `${this.name} издаёт звук.`;\n};\n\nconst dog = new Animal('Рекс');\nconsole.log(dog.speak());               // 'Рекс издаёт звук.'\nconsole.log(Object.getPrototypeOf(dog) === Animal.prototype); // true\nconsole.log(dog.__proto__ === Animal.prototype);              // true\n\n// Поиск по цепочке прототипов:\n// dog -> Animal.prototype -> Object.prototype -> null\n```\n\n**Object.create:**\n\n```javascript\nconst animalProto = {\n  speak() {\n    return `${this.name} издаёт звук.`;\n  }\n};\n\nconst cat = Object.create(animalProto);\ncat.name = 'Мурзик';\nconsole.log(cat.speak()); // 'Мурзик издаёт звук.'\nconsole.log(Object.getPrototypeOf(cat) === animalProto); // true\n```\n\n**Классы ES6** — это синтаксический сахар над прототипной системой:\n\n```javascript\nclass Dog extends Animal {\n  speak() {\n    return `${this.name} лает.`;\n  }\n}\n// Dog.prototype.__proto__ === Animal.prototype\n```"
+    },
+    "tags": [
+      "prototype",
+      "inheritance",
+      "prototype-chain",
+      "Object.create",
+      "__proto__",
+      "class"
+    ]
+  },
+  {
+    "id": "javascript-q-14",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain Promise.all, Promise.allSettled, Promise.race, and Promise.any — differences and use cases.",
+      "ru": "Объясните Promise.all, Promise.allSettled, Promise.race и Promise.any — различия и сценарии использования."
+    },
+    "answer": {
+      "en": "### Promise combinators\n\nAll four methods accept an iterable of Promises and return a single Promise.\n\n| Method | Resolves when | Rejects when | Value |\n|---|---|---|---|\n| `Promise.all` | ALL fulfill | ANY rejects (fast-fail) | Array of values |\n| `Promise.allSettled` | ALL settle (any outcome) | Never | Array of `{status, value/reason}` |\n| `Promise.race` | FIRST settles (any outcome) | FIRST rejects | First settled value |\n| `Promise.any` | FIRST fulfills | ALL reject | First fulfilled value |\n\n```javascript\nconst p1 = Promise.resolve(1);\nconst p2 = Promise.resolve(2);\nconst p3 = Promise.reject(new Error('fail'));\n\n// Promise.all — fails fast\nPromise.all([p1, p2])\n  .then(values => console.log(values)); // [1, 2]\nPromise.all([p1, p3])\n  .catch(err => console.error(err.message)); // 'fail'\n\n// Promise.allSettled — never rejects\nPromise.allSettled([p1, p3])\n  .then(results => console.log(results));\n// [{status:'fulfilled',value:1},{status:'rejected',reason:Error}]\n\n// Promise.race — first to settle wins\nPromise.race([new Promise(r => setTimeout(r, 100, 'slow')),\n              Promise.resolve('fast')])\n  .then(v => console.log(v)); // 'fast'\n\n// Promise.any — first to FULFILL wins\nPromise.any([p3, p1, p2])\n  .then(v => console.log(v)); // 1\n```\n\n**Use cases:**\n- `Promise.all` — fetch multiple resources in parallel when you need all of them (e.g., load user + settings + permissions).\n- `Promise.allSettled` — run multiple operations and report success/failure for each (batch jobs, analytics).\n- `Promise.race` — implement timeouts: race a real request against a `setTimeout` rejection.\n- `Promise.any` — try multiple CDN mirrors or service replicas, use the first that responds.",
+      "ru": "### Комбинаторы Promise\n\nВсе четыре метода принимают итерируемый объект из промисов и возвращают один промис.\n\n| Метод | Выполняется когда | Отклоняется когда | Значение |\n|---|---|---|---|\n| `Promise.all` | ВСЕ выполнились | ЛЮБОЙ отклонился (fast-fail) | Массив значений |\n| `Promise.allSettled` | ВСЕ завершились (любой исход) | Никогда | Массив `{status, value/reason}` |\n| `Promise.race` | ПЕРВЫЙ завершился (любой исход) | ПЕРВЫЙ отклонился | Значение первого |\n| `Promise.any` | ПЕРВЫЙ выполнился | ВСЕ отклонились | Значение первого выполненного |\n\n```javascript\nconst p1 = Promise.resolve(1);\nconst p2 = Promise.resolve(2);\nconst p3 = Promise.reject(new Error('fail'));\n\n// Promise.all — быстрый сбой\nPromise.all([p1, p2])\n  .then(values => console.log(values)); // [1, 2]\nPromise.all([p1, p3])\n  .catch(err => console.error(err.message)); // 'fail'\n\n// Promise.allSettled — никогда не отклоняется\nPromise.allSettled([p1, p3])\n  .then(results => console.log(results));\n// [{status:'fulfilled',value:1},{status:'rejected',reason:Error}]\n\n// Promise.race — первый завершившийся побеждает\nPromise.race([new Promise(r => setTimeout(r, 100, 'slow')),\n              Promise.resolve('fast')])\n  .then(v => console.log(v)); // 'fast'\n\n// Promise.any — первый ВЫПОЛНЕННЫЙ побеждает\nPromise.any([p3, p1, p2])\n  .then(v => console.log(v)); // 1\n```\n\n**Сценарии использования:**\n- `Promise.all` — параллельная загрузка нескольких ресурсов, когда нужны все (пользователь + настройки + права).\n- `Promise.allSettled` — несколько операций с индивидуальным отчётом об успехе/ошибке (пакетные задания).\n- `Promise.race` — тайм-аут: гонка реального запроса с `setTimeout`-отклонением.\n- `Promise.any` — несколько CDN-зеркал или реплик сервиса — использовать первый, который ответит."
+    },
+    "tags": [
+      "promises",
+      "Promise.all",
+      "Promise.allSettled",
+      "Promise.race",
+      "Promise.any",
+      "async"
+    ]
+  },
+  {
+    "id": "javascript-q-15",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain destructuring, rest, and spread — practical patterns and edge cases.",
+      "ru": "Объясните деструктуризацию, rest и spread — практические паттерны и крайние случаи."
+    },
+    "answer": {
+      "en": "### Destructuring, Rest, Spread\n\n**Destructuring** — extract values from arrays/objects into variables.\n\n```javascript\n// Object destructuring with rename and default\nconst { name: userName = 'Anonymous', age } = { name: 'Alice', age: 30 };\nconsole.log(userName); // 'Alice'\n\n// Array destructuring\nconst [first, , third] = [1, 2, 3]; // skip index 1\nconsole.log(first, third); // 1 3\n\n// Nested destructuring\nconst { address: { city } } = { address: { city: 'Kyiv' } };\nconsole.log(city); // 'Kyiv'\n\n// Function parameter destructuring\nfunction greet({ name, greeting = 'Hello' }) {\n  console.log(`${greeting}, ${name}!`);\n}\ngreet({ name: 'Bob' }); // 'Hello, Bob!'\n```\n\n**Rest** — collect remaining elements into an array/object.\n\n```javascript\nconst [head, ...tail] = [1, 2, 3, 4];\nconsole.log(head, tail); // 1  [2, 3, 4]\n\nconst { a, ...rest } = { a: 1, b: 2, c: 3 };\nconsole.log(rest); // { b: 2, c: 3 }\n\nfunction sum(...nums) {\n  return nums.reduce((acc, n) => acc + n, 0);\n}\n```\n\n**Spread** — expand an iterable into individual elements.\n\n```javascript\nconst arr1 = [1, 2];\nconst arr2 = [3, 4];\nconst merged = [...arr1, ...arr2]; // [1, 2, 3, 4]\n\nconst base = { theme: 'dark', lang: 'en' };\nconst updated = { ...base, lang: 'ru' }; // override lang\n\n// Shallow clone (beware: nested objects are still shared)\nconst clone = { ...original };\n```\n\n**Edge cases:**\n- Spreading a string: `[...'abc']` → `['a', 'b', 'c']`.\n- Rest must be **last** in a destructuring pattern.\n- Spreading `undefined` or `null` in an array throws `TypeError`; in an object it's a no-op.",
+      "ru": "### Деструктуризация, Rest, Spread\n\n**Деструктуризация** — извлечение значений из массивов/объектов в переменные.\n\n```javascript\n// Деструктуризация объекта с переименованием и значением по умолчанию\nconst { name: userName = 'Anonymous', age } = { name: 'Alice', age: 30 };\nconsole.log(userName); // 'Alice'\n\n// Деструктуризация массива\nconst [first, , third] = [1, 2, 3]; // пропустить индекс 1\nconsole.log(first, third); // 1 3\n\n// Вложенная деструктуризация\nconst { address: { city } } = { address: { city: 'Киев' } };\nconsole.log(city); // 'Киев'\n\n// Деструктуризация параметров функции\nfunction greet({ name, greeting = 'Привет' }) {\n  console.log(`${greeting}, ${name}!`);\n}\ngreet({ name: 'Bob' }); // 'Привет, Bob!'\n```\n\n**Rest** — собирает оставшиеся элементы в массив/объект.\n\n```javascript\nconst [head, ...tail] = [1, 2, 3, 4];\nconsole.log(head, tail); // 1  [2, 3, 4]\n\nconst { a, ...rest } = { a: 1, b: 2, c: 3 };\nconsole.log(rest); // { b: 2, c: 3 }\n\nfunction sum(...nums) {\n  return nums.reduce((acc, n) => acc + n, 0);\n}\n```\n\n**Spread** — разворачивает итерируемый объект в отдельные элементы.\n\n```javascript\nconst arr1 = [1, 2];\nconst arr2 = [3, 4];\nconst merged = [...arr1, ...arr2]; // [1, 2, 3, 4]\n\nconst base = { theme: 'dark', lang: 'en' };\nconst updated = { ...base, lang: 'ru' }; // переопределить lang\n\n// Неглубокое копирование (внимание: вложенные объекты остаются общими)\nconst clone = { ...original };\n```\n\n**Крайние случаи:**\n- Spread строки: `[...'abc']` → `['a', 'b', 'c']`.\n- Rest должен быть **последним** в паттерне деструктуризации.\n- Spread `undefined` или `null` в массиве выбрасывает `TypeError`; в объекте — ничего не делает."
+    },
+    "tags": [
+      "destructuring",
+      "rest",
+      "spread",
+      "es6",
+      "array",
+      "object"
+    ]
+  },
+  {
+    "id": "javascript-q-16",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain higher-order functions — map, filter, reduce in depth, with composition.",
+      "ru": "Объясните функции высшего порядка — map, filter, reduce подробно, с примерами композиции."
+    },
+    "answer": {
+      "en": "### Higher-Order Functions\n\nA **higher-order function (HOF)** is a function that takes a function as an argument and/or returns a function.\n\n**map** — transforms each element, returns a new array of the same length.\n**filter** — selects elements matching a predicate, returns a new (possibly shorter) array.\n**reduce** — accumulates all elements into a single value.\n\n```javascript\nconst orders = [\n  { product: 'Laptop', price: 1200, qty: 1 },\n  { product: 'Mouse',  price: 25,   qty: 3 },\n  { product: 'Desk',   price: 400,  qty: 0 },\n];\n\n// filter — only items in stock\nconst inStock = orders.filter(o => o.qty > 0);\n\n// map — calculate line totals\nconst totals = inStock.map(o => o.price * o.qty);\n\n// reduce — sum all totals\nconst grandTotal = totals.reduce((acc, t) => acc + t, 0);\nconsole.log(grandTotal); // 1200 + 75 = 1275\n\n// Chained in one expression:\nconst result = orders\n  .filter(o => o.qty > 0)\n  .map(o => o.price * o.qty)\n  .reduce((acc, t) => acc + t, 0);\n```\n\n**reduce is universal** — you can implement map and filter with it:\n\n```javascript\nconst myMap = (arr, fn) =>\n  arr.reduce((acc, el) => [...acc, fn(el)], []);\n\nconst myFilter = (arr, fn) =>\n  arr.reduce((acc, el) => fn(el) ? [...acc, el] : acc, []);\n```\n\n**Function composition:**\n\n```javascript\nconst compose = (...fns) => x => fns.reduceRight((v, f) => f(v), x);\nconst pipe    = (...fns) => x => fns.reduce((v, f) => f(v), x);\n\nconst transform = pipe(\n  arr => arr.filter(n => n > 0),\n  arr => arr.map(n => n * 2),\n  arr => arr.reduce((a, b) => a + b, 0)\n);\nconsole.log(transform([-1, 2, 3, -4, 5])); // 20\n```",
+      "ru": "### Функции высшего порядка\n\n**Функция высшего порядка (HOF)** — это функция, принимающая другую функцию в качестве аргумента и/или возвращающая функцию.\n\n**map** — трансформирует каждый элемент, возвращает новый массив той же длины.\n**filter** — выбирает элементы, соответствующие предикату, возвращает новый (возможно, короче) массив.\n**reduce** — накапливает все элементы в одно значение.\n\n```javascript\nconst orders = [\n  { product: 'Ноутбук', price: 1200, qty: 1 },\n  { product: 'Мышь',    price: 25,   qty: 3 },\n  { product: 'Стол',    price: 400,  qty: 0 },\n];\n\n// filter — только товары в наличии\nconst inStock = orders.filter(o => o.qty > 0);\n\n// map — рассчитать сумму по строке\nconst totals = inStock.map(o => o.price * o.qty);\n\n// reduce — итоговая сумма\nconst grandTotal = totals.reduce((acc, t) => acc + t, 0);\nconsole.log(grandTotal); // 1200 + 75 = 1275\n\n// Всё в одной цепочке:\nconst result = orders\n  .filter(o => o.qty > 0)\n  .map(o => o.price * o.qty)\n  .reduce((acc, t) => acc + t, 0);\n```\n\n**reduce универсален** — через него можно реализовать map и filter:\n\n```javascript\nconst myMap = (arr, fn) =>\n  arr.reduce((acc, el) => [...acc, fn(el)], []);\n\nconst myFilter = (arr, fn) =>\n  arr.reduce((acc, el) => fn(el) ? [...acc, el] : acc, []);\n```\n\n**Композиция функций:**\n\n```javascript\nconst compose = (...fns) => x => fns.reduceRight((v, f) => f(v), x);\nconst pipe    = (...fns) => x => fns.reduce((v, f) => f(v), x);\n\nconst transform = pipe(\n  arr => arr.filter(n => n > 0),\n  arr => arr.map(n => n * 2),\n  arr => arr.reduce((a, b) => a + b, 0)\n);\nconsole.log(transform([-1, 2, 3, -4, 5])); // 20\n```"
+    },
+    "tags": [
+      "higher-order-functions",
+      "map",
+      "filter",
+      "reduce",
+      "composition",
+      "functional"
+    ]
+  },
+  {
+    "id": "javascript-q-17",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are IIFEs and why were they used? How do ES modules solve the same problem?",
+      "ru": "Что такое IIFE и зачем они применялись? Как ES-модули решают ту же проблему?"
+    },
+    "answer": {
+      "en": "### IIFEs (Immediately Invoked Function Expressions)\n\nAn IIFE is a function that is defined and immediately called. Its primary purpose was to create a **private scope** and avoid polluting the global namespace — critical before ES6 block scoping and modules.\n\n```javascript\n// Classic IIFE pattern\n(function() {\n  var privateVar = 'I am private';\n  console.log(privateVar); // accessible here\n})();\n// console.log(privateVar); // ReferenceError — not in global scope\n\n// IIFE with argument\n(function(global) {\n  global.myLib = {};\n})(window);\n\n// Arrow IIFE (ES6)\n(() => {\n  const config = { debug: true };\n  // config is private\n})();\n```\n\n**Why IIFEs were needed:**\n1. `var` is function-scoped, not block-scoped — only functions created new scopes.\n2. No native module system — all JS loaded into one global scope.\n3. Libraries (jQuery, Underscore) used IIFEs to expose only a controlled API.\n\n**How ES Modules solve this:**\n\n```javascript\n// utils.js — each module has its own scope\nconst privateHelper = () => 'private';\nexport const publicAPI = () => privateHelper();\n\n// main.js\nimport { publicAPI } from './utils.js';\n// privateHelper is not accessible here\n```\n\n- Each ESM file has its own **module scope** — variables don't leak to global.\n- Explicit `export`/`import` replaces the ad-hoc return-from-IIFE pattern.\n- Static imports enable **tree shaking** (dead code elimination by bundlers).\n- IIFEs are rarely needed in modern code, but still appear in config files and legacy bundles.",
+      "ru": "### IIFE (Немедленно вызываемые функциональные выражения)\n\nIIFE — это функция, которая определяется и сразу вызывается. Их основная цель — создать **приватную область видимости** и не загрязнять глобальное пространство имён. Это было критично до появления блочной области видимости и модулей в ES6.\n\n```javascript\n// Классический паттерн IIFE\n(function() {\n  var privateVar = 'Я приватный';\n  console.log(privateVar); // доступно здесь\n})();\n// console.log(privateVar); // ReferenceError — не в глобальной области\n\n// IIFE с аргументом\n(function(global) {\n  global.myLib = {};\n})(window);\n\n// Стрелочный IIFE (ES6)\n(() => {\n  const config = { debug: true };\n  // config приватный\n})();\n```\n\n**Зачем нужны были IIFE:**\n1. `var` имеет функциональную область видимости, не блочную — только функции создавали новые области.\n2. Нет нативной системы модулей — весь JS загружался в одну глобальную область.\n3. Библиотеки (jQuery, Underscore) использовали IIFE для экспорта только контролируемого API.\n\n**Как ES Modules решают это:**\n\n```javascript\n// utils.js — у каждого модуля своя область видимости\nconst privateHelper = () => 'private';\nexport const publicAPI = () => privateHelper();\n\n// main.js\nimport { publicAPI } from './utils.js';\n// privateHelper здесь недоступен\n```\n\n- Каждый ESM-файл имеет собственную **область видимости модуля** — переменные не утекают в глобальное пространство.\n- Явные `export`/`import` заменяют возврат значений из IIFE.\n- Статические импорты позволяют бандлерам выполнять **tree shaking** (удаление мёртвого кода).\n- IIFE редко нужны в современном коде, но ещё встречаются в конфигах и легаси-бандлах."
+    },
+    "tags": [
+      "iife",
+      "scope",
+      "modules",
+      "es-modules",
+      "global-scope",
+      "namespacing"
+    ]
+  },
+  {
+    "id": "javascript-q-18",
+    "topicId": "javascript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain call, apply, and bind — differences and use cases.",
+      "ru": "Объясните call, apply и bind — различия и сценарии использования."
+    },
+    "answer": {
+      "en": "### call, apply, bind\n\nAll three methods explicitly set the `this` context of a function. They differ in how they pass arguments and when the function is invoked.\n\n**call** — invokes the function immediately, arguments passed **individually**.\n**apply** — invokes the function immediately, arguments passed as an **array**.\n**bind** — returns a **new function** with `this` (and optionally arguments) permanently bound. Does not invoke immediately.\n\n```javascript\nfunction greet(greeting, punctuation) {\n  return `${greeting}, ${this.name}${punctuation}`;\n}\n\nconst user = { name: 'Alice' };\n\n// call — args as individual values\nconsole.log(greet.call(user, 'Hello', '!'));   // 'Hello, Alice!'\n\n// apply — args as an array\nconsole.log(greet.apply(user, ['Hi', '?']));   // 'Hi, Alice?'\n\n// bind — returns new function, call it later\nconst greetAlice = greet.bind(user, 'Hey');\nconsole.log(greetAlice('.')); // 'Hey, Alice.'\nconsole.log(greetAlice('!')); // 'Hey, Alice!'\n```\n\n**Practical use cases:**\n\n```javascript\n// 1. Borrow a method from another object\nconst arrayLike = { 0: 'a', 1: 'b', length: 2 };\nconst arr = Array.prototype.slice.call(arrayLike); // ['a', 'b']\n\n// 2. bind for event handlers (class methods)\nclass Button {\n  constructor(label) { this.label = label; }\n  handleClick() { console.log(this.label); }\n  attach(el) {\n    el.addEventListener('click', this.handleClick.bind(this));\n  }\n}\n\n// 3. apply for spreading args before ES6 spread\nconst nums = [3, 1, 4, 1, 5];\nconsole.log(Math.max.apply(null, nums)); // 5\n// Modern equivalent:\nconsole.log(Math.max(...nums)); // 5\n```",
+      "ru": "### call, apply и bind\n\nВсе три метода явно задают контекст `this` для функции. Они различаются способом передачи аргументов и моментом вызова.\n\n**call** — вызывает функцию немедленно, аргументы передаются **по одному**.\n**apply** — вызывает функцию немедленно, аргументы передаются **массивом**.\n**bind** — возвращает **новую функцию** с постоянно привязанным `this` (и опционально аргументами). Не вызывает немедленно.\n\n```javascript\nfunction greet(greeting, punctuation) {\n  return `${greeting}, ${this.name}${punctuation}`;\n}\n\nconst user = { name: 'Alice' };\n\n// call — аргументы по одному\nconsole.log(greet.call(user, 'Привет', '!'));   // 'Привет, Alice!'\n\n// apply — аргументы массивом\nconsole.log(greet.apply(user, ['Хай', '?']));   // 'Хай, Alice?'\n\n// bind — возвращает новую функцию, вызов позже\nconst greetAlice = greet.bind(user, 'Эй');\nconsole.log(greetAlice('.')); // 'Эй, Alice.'\nconsole.log(greetAlice('!')); // 'Эй, Alice!'\n```\n\n**Практические сценарии:**\n\n```javascript\n// 1. Заимствование метода другого объекта\nconst arrayLike = { 0: 'a', 1: 'b', length: 2 };\nconst arr = Array.prototype.slice.call(arrayLike); // ['a', 'b']\n\n// 2. bind для обработчиков событий (методы класса)\nclass Button {\n  constructor(label) { this.label = label; }\n  handleClick() { console.log(this.label); }\n  attach(el) {\n    el.addEventListener('click', this.handleClick.bind(this));\n  }\n}\n\n// 3. apply для spread аргументов до ES6\nconst nums = [3, 1, 4, 1, 5];\nconsole.log(Math.max.apply(null, nums)); // 5\n// Современный эквивалент:\nconsole.log(Math.max(...nums)); // 5\n```"
+    },
+    "tags": [
+      "call",
+      "apply",
+      "bind",
+      "this",
+      "context",
+      "function"
+    ]
+  },
+  {
     "id": "javascript-q-65",
     "topicId": "javascript",
     "difficulty": "middle",
@@ -1576,6 +1389,193 @@
       "commonjs",
       "esm",
       "import-export"
+    ]
+  },
+  {
+    "id": "javascript-q-19",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is the difference between microtasks and macrotasks? Name the queues and their priority order.",
+      "ru": "В чём разница между микрозадачами и макрозадачами? Назовите очереди и порядок их приоритетов."
+    },
+    "answer": {
+      "en": "### Microtasks vs Macrotasks\n\nThe JavaScript runtime maintains two separate queues. **Microtask queue** (higher priority) holds callbacks scheduled by `Promise.then/catch/finally`, `queueMicrotask()`, and `MutationObserver`. **Macrotask queue** (lower priority) holds callbacks from `setTimeout`, `setInterval`, `setImmediate` (Node.js), and I/O events.\n\nAfter every macrotask the engine drains the **entire** microtask queue before picking the next macrotask. This means microtasks can starve macrotasks if they keep adding new microtasks.\n\n```typescript\nconsole.log('1 - synchronous');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve()\n  .then(() => console.log('3 - microtask 1'))\n  .then(() => console.log('4 - microtask 2'));\n\nconsole.log('5 - synchronous');\n// Output order: 1, 5, 3, 4, 2\n```\n\n**Common trap:** Candidates assume `setTimeout(fn, 0)` runs immediately after the current code. In reality every resolved Promise callback executes first. Also, microtasks added *inside* a microtask run in the same microtask checkpoint.",
+      "ru": "### Микрозадачи vs макрозадачи\n\nJavaScript runtime поддерживает две раздельные очереди. **Очередь микрозадач** (высший приоритет) содержит колбэки из `Promise.then/catch/finally`, `queueMicrotask()` и `MutationObserver`. **Очередь макрозадач** (низший приоритет) — колбэки из `setTimeout`, `setInterval`, `setImmediate` (Node.js) и I/O-событий.\n\nПосле каждой макрозадачи движок полностью опустошает **всю** очередь микрозадач перед следующей макрозадачей.\n\n```typescript\nconsole.log('1 - synchronous');\n\nsetTimeout(() => console.log('2 - macrotask'), 0);\n\nPromise.resolve()\n  .then(() => console.log('3 - microtask 1'))\n  .then(() => console.log('4 - microtask 2'));\n\nconsole.log('5 - synchronous');\n// Порядок вывода: 1, 5, 3, 4, 2\n```\n\n**Частая ошибка:** Кандидаты считают, что `setTimeout(fn, 0)` выполняется сразу после текущего кода. На самом деле сначала отработают все колбэки разрезолвенных Promise."
+    },
+    "tags": [
+      "event-loop",
+      "microtasks",
+      "macrotasks",
+      "promises"
+    ]
+  },
+  {
+    "id": "javascript-q-20",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "Trace the exact execution order of this code snippet and explain each step:\nPromise.resolve().then(() => console.log('p1'));\nsetTimeout(() => console.log('t1'), 0);\nPromise.resolve().then(() => { setTimeout(() => console.log('t2'), 0); console.log('p2'); });\nconsole.log('sync');",
+      "ru": "Разберите точный порядок выполнения этого кода и объясните каждый шаг: Promise.resolve().then(() => console.log('p1')); setTimeout(() => console.log('t1'), 0); Promise.resolve().then(() => { setTimeout(() => console.log('t2'), 0); console.log('p2'); }); console.log('sync');"
+    },
+    "answer": {
+      "en": "### Promise + setTimeout Execution Order\n\nOutput: `sync → p1 → p2 → t1 → t2`\n\n1. Two `.then()` callbacks enter the microtask queue.\n2. `setTimeout('t1', 0)` enters the macrotask queue.\n3. `'sync'` logs (synchronous code).\n4. Call stack empties → microtask checkpoint: `p1` logs, then `p2` logs. Inside `p2`'s callback, `setTimeout('t2', 0)` is added to the macrotask queue.\n5. Microtask queue empty → pick macrotask: `t1` logs.\n6. Next macrotask: `t2` logs.\n\n```typescript\nPromise.resolve().then(() => console.log('p1'));\nsetTimeout(() => console.log('t1'), 0);\nPromise.resolve().then(() => {\n  setTimeout(() => console.log('t2'), 0);\n  console.log('p2');\n});\nconsole.log('sync');\n// sync, p1, p2, t1, t2\n```\n\n**Common trap:** Many candidates say `t2` runs before `t1` since it was scheduled inside a microtask. But `t1` was already in the macrotask queue *before* the microtask checkpoint ran, so `t1` always precedes `t2`.",
+      "ru": "### Порядок выполнения Promise + setTimeout\n\nВывод: `sync → p1 → p2 → t1 → t2`\n\n1. Два `.then()`-колбэка попадают в очередь микрозадач.\n2. `setTimeout('t1', 0)` попадает в очередь макрозадач.\n3. Выводится `'sync'` (синхронный код).\n4. Стек пуст → точка проверки: выводится `p1`, затем `p2`. Внутри колбэка `p2` `setTimeout('t2', 0)` добавляется в очередь макрозадач.\n5. Очередь микрозадач пуста → берём макрозадачу: выводится `t1`.\n6. Следующая макрозадача: выводится `t2`.\n\n```typescript\nPromise.resolve().then(() => console.log('p1'));\nsetTimeout(() => console.log('t1'), 0);\nPromise.resolve().then(() => {\n  setTimeout(() => console.log('t2'), 0);\n  console.log('p2');\n});\nconsole.log('sync');\n// sync, p1, p2, t1, t2\n```\n\n**Частая ошибка:** Многие говорят, что `t2` выполнится раньше `t1`, так как был запланирован внутри микрозадачи. Но `t1` уже находился в очереди макрозадач до точки проверки микрозадач."
+    },
+    "tags": [
+      "event-loop",
+      "microtasks",
+      "promises",
+      "execution-order"
+    ]
+  },
+  {
+    "id": "javascript-q-21",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does `process.nextTick` in Node.js fit into the event loop? How does it differ from `Promise.then` and `setImmediate`?",
+      "ru": "Как `process.nextTick` в Node.js вписывается в event loop? Чем он отличается от `Promise.then` и `setImmediate`?"
+    },
+    "answer": {
+      "en": "### process.nextTick vs Promise.then vs setImmediate\n\nNode.js has a dedicated **nextTick queue** processed before the Promise microtask queue. Priority within one iteration:\n\n1. `process.nextTick` (nextTick queue — highest)\n2. `Promise.then/catch/finally` (microtask queue)\n3. `setImmediate` (check phase — next iteration)\n4. `setTimeout(fn, 0)` (timers phase — next iteration)\n\n```typescript\nsetImmediate(() => console.log('setImmediate'));\nsetTimeout(() => console.log('setTimeout'), 0);\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n// Output: nextTick, Promise, then setTimeout or setImmediate (non-deterministic)\n```\n\n`setTimeout` vs `setImmediate` order from the main module is **non-deterministic** (OS timer precision). Inside an I/O callback, `setImmediate` always fires before `setTimeout(fn, 0)`.\n\n**Common trap:** Recursive `process.nextTick` starves the entire event loop because Node.js never leaves the current phase while the nextTick queue keeps refilling. Prefer `queueMicrotask()` or `setImmediate()` for non-critical deferred work.",
+      "ru": "### process.nextTick vs Promise.then vs setImmediate\n\nNode.js имеет выделенную **очередь nextTick**, обрабатываемую до очереди микрозадач Promise. Порядок в одной итерации:\n\n1. `process.nextTick` (очередь nextTick — наивысший)\n2. `Promise.then/catch/finally` (очередь микрозадач)\n3. `setImmediate` (фаза check — следующая итерация)\n4. `setTimeout(fn, 0)` (фаза timers — следующая итерация)\n\n```typescript\nsetImmediate(() => console.log('setImmediate'));\nsetTimeout(() => console.log('setTimeout'), 0);\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n// Вывод: nextTick, Promise, затем setTimeout или setImmediate (недетерминировано)\n```\n\nПорядок `setTimeout` vs `setImmediate` из главного модуля **недетерминирован**. Изнутри I/O-колбэка `setImmediate` всегда выполняется раньше `setTimeout(fn, 0)`.\n\n**Частая ошибка:** Рекурсивный `process.nextTick` может заморозить event loop, так как Node.js не покинет текущую фазу, пока очередь пополняется."
+    },
+    "tags": [
+      "nodejs",
+      "event-loop",
+      "process.nextTick",
+      "setImmediate"
+    ]
+  },
+  {
+    "id": "javascript-q-22",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "What happens when you throw inside a Promise executor vs inside a `.then()` callback? How does error propagation work in Promise chains?",
+      "ru": "Что происходит при выбросе исключения внутри executor Promise vs внутри колбэка `.then()`? Как работает распространение ошибок в цепочках Promise?"
+    },
+    "answer": {
+      "en": "### Promise Error Propagation\n\nA throw inside the **executor** automatically converts the Promise to rejected state — identical to calling `reject(error)`. A throw inside a **`.then()` callback** rejects the Promise returned by that `.then()`, propagating the rejection down the chain until a `.catch()` is found.\n\n```typescript\n// Executor throw === reject()\nconst p1 = new Promise((resolve, reject) => {\n  throw new Error('executor error');\n});\np1.catch(e => console.log(e.message)); // 'executor error'\n\n// .then() throw propagates down chain\nPromise.resolve('ok')\n  .then(val => { throw new Error('then error'); })\n  .then(val => console.log('skipped'))  // never runs\n  .catch(e => console.log(e.message))   // 'then error'\n  .then(() => console.log('continues')); // runs after catch\n```\n\n`.catch(fn)` is syntactic sugar for `.then(undefined, fn)`. After `.catch()` resolves successfully, the chain continues in fulfilled state.\n\n**Common trap:** Throwing inside `setTimeout` inside a `.then()` is NOT caught by the Promise chain — it becomes an uncaught exception. Only synchronous throws and explicit `reject()` calls are intercepted by Promise error handling.",
+      "ru": "### Распространение ошибок в Promise\n\nВыброс внутри **executor** автоматически переводит Promise в состояние rejected — идентично вызову `reject(error)`. Выброс внутри **колбэка `.then()`** отклоняет Promise, возвращаемый этим `.then()`, и ошибка распространяется по цепочке до `.catch()`.\n\n```typescript\n// throw в executor === reject()\nconst p1 = new Promise((resolve, reject) => {\n  throw new Error('executor error');\n});\np1.catch(e => console.log(e.message)); // 'executor error'\n\n// throw в .then() распространяется по цепочке\nPromise.resolve('ok')\n  .then(val => { throw new Error('then error'); })\n  .then(val => console.log('пропущено'))  // не выполнится\n  .catch(e => console.log(e.message))    // 'then error'\n  .then(() => console.log('продолжается')); // выполняется\n```\n\n**Частая ошибка:** Выброс внутри `setTimeout` внутри `.then()` НЕ перехватывается цепочкой Promise — он становится необработанным исключением."
+    },
+    "tags": [
+      "promises",
+      "error-handling",
+      "async"
+    ]
+  },
+  {
+    "id": "javascript-q-23",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is Promise chaining? Explain the rules for how `.then()` determines the state of the returned Promise.",
+      "ru": "Что такое цепочка Promise? Объясните правила, по которым `.then()` определяет состояние возвращаемого Promise."
+    },
+    "answer": {
+      "en": "### Promise Chaining Rules\n\nEvery `.then(onFulfilled, onRejected)` returns a **new Promise**. Its resolution depends on what the handler returns:\n\n- Plain value `x` → fulfills with `x`\n- Another Promise `p` → adopts `p`'s state (flattened, one level)\n- Throws an error → rejects with that error\n- Returns nothing → fulfills with `undefined`\n\n```typescript\nPromise.resolve(1)\n  .then(n => n + 1)                    // fulfilled(2)\n  .then(n => Promise.resolve(n * 10)) // fulfilled(20) - flattened\n  .then(n => {\n    if (n > 10) throw new Error('too big');\n    return n;\n  })\n  .catch(e => 0)                      // fulfilled(0) - recovered\n  .then(n => console.log(n));         // logs: 0\n```\n\nFlattening applies one level: `Promise.resolve(Promise.resolve(42))` resolves to `42`, not to a nested Promise.\n\n**Common trap:** Forgetting to `return` inside a `.then()` handler. Without `return`, the next handler receives `undefined`. This is the most common source of subtle async bugs where values silently disappear in a chain.",
+      "ru": "### Правила цепочки Promise\n\nКаждый `.then(onFulfilled, onRejected)` возвращает **новый Promise**. Его состояние зависит от того, что вернёт обработчик:\n\n- Обычное значение `x` → fulfilled с `x`\n- Другой Promise `p` → принимает состояние `p` (разворачивается, один уровень)\n- Бросает ошибку → rejected с этой ошибкой\n- Не возвращает ничего → fulfilled с `undefined`\n\n```typescript\nPromise.resolve(1)\n  .then(n => n + 1)                    // fulfilled(2)\n  .then(n => Promise.resolve(n * 10)) // fulfilled(20) - разворачивается\n  .then(n => {\n    if (n > 10) throw new Error('слишком большое');\n    return n;\n  })\n  .catch(e => 0)                      // fulfilled(0) - восстановлено\n  .then(n => console.log(n));         // выводит: 0\n```\n\n**Частая ошибка:** Забыть `return` внутри `.then()`. Без `return` следующий обработчик получает `undefined`. Это самая распространённая причина незаметных асинхронных багов."
+    },
+    "tags": [
+      "promises",
+      "async",
+      "chaining"
+    ]
+  },
+  {
+    "id": "javascript-q-24",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does `async/await` transform execution? What does `await` do to the call stack, and what is the microtask cost of each `await`?",
+      "ru": "Как `async/await` трансформирует выполнение? Что `await` делает со стеком вызовов и какова стоимость каждого `await` в микрозадачах?"
+    },
+    "answer": {
+      "en": "### async/await Internals\n\nAn `async` function implicitly returns a Promise. Each `await expr`:\n1. Evaluates `expr`, wraps in `Promise.resolve(expr)`\n2. Schedules the rest of the function as a `.then()` microtask\n3. **Suspends** the function, returns control to caller\n4. When the awaited Promise resolves, resumes in a microtask\n\n```typescript\nasync function fetchData() {\n  console.log('A');\n  const result = await Promise.resolve('data');\n  console.log('B', result); // runs in microtask\n  return result;\n}\n\nconsole.log('1');\nfetchData().then(() => console.log('C'));\nconsole.log('2');\n// Output: 1, A, 2, B data, C\n```\n\nEach `await` costs at least **one microtask tick**. In V8 >= Node 12, awaiting a native Promise is optimized to 1 tick; awaiting a non-native thenable still costs 2 ticks.\n\n**Common trap:** Each `await` fully suspends the function — it is not on the call stack during the wait, which affects error stack traces. Also, sequential `await` calls that could be parallel are a common performance mistake: use `Promise.all` to run independent async operations concurrently.",
+      "ru": "### Внутреннее устройство async/await\n\nФункция с `async` неявно возвращает Promise. Каждый `await expr`:\n1. Вычисляет `expr`, оборачивает в `Promise.resolve(expr)`\n2. Планирует продолжение функции как микрозадачу `.then()`\n3. **Приостанавливает** функцию, передаёт управление вызывающему коду\n4. Когда Promise разрешается — возобновляет функцию в микрозадаче\n\n```typescript\nasync function fetchData() {\n  console.log('A');\n  const result = await Promise.resolve('data');\n  console.log('B', result); // выполняется в микрозадаче\n  return result;\n}\n\nconsole.log('1');\nfetchData().then(() => console.log('C'));\nconsole.log('2');\n// Вывод: 1, A, 2, B data, C\n```\n\n**Частая ошибка:** Последовательные `await`, которые могли бы выполняться параллельно, — распространённая ошибка производительности. Используйте `Promise.all` для запуска независимых асинхронных операций одновременно."
+    },
+    "tags": [
+      "async-await",
+      "microtasks",
+      "promises",
+      "v8"
+    ]
+  },
+  {
+    "id": "javascript-q-25",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "Compare Promise.all, Promise.allSettled, Promise.race, and Promise.any — behaviour on rejection, short-circuiting, and practical use cases.",
+      "ru": "Сравните Promise.all, Promise.allSettled, Promise.race и Promise.any — поведение при отклонении, досрочное завершение и практические сценарии."
+    },
+    "answer": {
+      "en": "### Promise Combinators\n\n`Promise.all([p1,p2,p3])` — rejects immediately if any input rejects (fast-fail); resolves with array of all values. Use for parallel independent fetches where all are required.\n\n`Promise.allSettled([...])` — never rejects; waits for all to settle and returns `{status, value/reason}[]`. Use when you need all results regardless of failures.\n\n`Promise.race([...])` — resolves/rejects with whichever Promise settles first. Classic timeout pattern.\n\n`Promise.any([...])` — resolves with the first fulfilled; only rejects if **all** reject (throws `AggregateError`). Use for fastest-server / fallback patterns.\n\n```typescript\n// Timeout pattern\nfunction withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {\n  const timeout = new Promise<never>((_, reject) =>\n    setTimeout(() => reject(new Error(`Timeout ${ms}ms`)), ms)\n  );\n  return Promise.race([p, timeout]);\n}\n\n// Collect all results including failures\nconst results = await Promise.allSettled([fetch('/a'), fetch('/b')]);\nconst ok = results\n  .filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled')\n  .map(r => r.value);\n```\n\n**Common trap:** `Promise.all` does NOT cancel other Promises on rejection — they keep running but results are discarded. Also, `Promise.any` throws `AggregateError` (with an `errors` array) when all reject — many developers only check `error.message` and miss the individual errors.",
+      "ru": "### Комбинаторы Promise\n\n`Promise.all([p1,p2,p3])` — немедленно отклоняется при отклонении любого; разрешается с массивом всех значений. Для параллельных запросов, где нужны все результаты.\n\n`Promise.allSettled([...])` — никогда не отклоняется; ждёт всех и возвращает `{status, value/reason}[]`.\n\n`Promise.race([...])` — разрешается/отклоняется со значением первого завершившегося. Паттерн таймаута.\n\n`Promise.any([...])` — разрешается первым выполненным; отклоняется только если **все** отклонены (AggregateError).\n\n```typescript\n// Паттерн таймаута\nfunction withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {\n  const timeout = new Promise<never>((_, reject) =>\n    setTimeout(() => reject(new Error(`Таймаут ${ms}мс`)), ms)\n  );\n  return Promise.race([p, timeout]);\n}\n\n// Сбор всех результатов включая ошибки\nconst results = await Promise.allSettled([fetch('/a'), fetch('/b')]);\nconst ok = results\n  .filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled')\n  .map(r => r.value);\n```\n\n**Частая ошибка:** `Promise.all` НЕ отменяет остальные Promise. `Promise.any` бросает `AggregateError` с массивом `errors` при полном отклонении — многие проверяют только `error.message`."
+    },
+    "tags": [
+      "promises",
+      "async",
+      "promise-combinators"
+    ]
+  },
+  {
+    "id": "javascript-q-26",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "What is a stale closure in async code? Give a concrete example with setTimeout or useEffect.",
+      "ru": "Что такое устаревшее замыкание (stale closure) в асинхронном коде? Приведите конкретный пример с setTimeout или useEffect."
+    },
+    "answer": {
+      "en": "### Stale Closures\n\nA stale closure happens when an async callback captures a variable at creation time, but the variable has changed by execution time — the callback still sees the old value.\n\n```typescript\n// Stale closure in setInterval\nfunction startCounter() {\n  let count = 0;\n  const id = setInterval(() => {\n    count++;\n    // If you pass 'count' to a function that closed over it earlier:\n    reportStale(count); // 'count' inside reportStale may be stale\n  }, 1000);\n}\n\n// Classic React stale closure in useEffect\nfunction Counter() {\n  const [count, setCount] = React.useState(0);\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      // 'count' is captured as 0 on mount, never updates\n      setCount(count + 1); // always sets to 1!\n    }, 1000);\n    return () => clearInterval(id);\n  }, []); // missing 'count' in dependency array\n\n  // Fix: functional update avoids stale closure\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      setCount(prev => prev + 1); // correct\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n}\n```\n\n**Common trap:** In React, the ESLint rule `react-hooks/exhaustive-deps` catches missing dependencies, but many developers add `// eslint-disable-next-line` without understanding that they're introducing a stale closure bug. The functional update form `setState(prev => ...)` is often the right fix.",
+      "ru": "### Устаревшие замыкания\n\nУстаревшее замыкание возникает, когда асинхронный колбэк захватывает переменную в момент создания, но к моменту выполнения она изменилась.\n\n```typescript\n// Классическое устаревшее замыкание в React useEffect\nfunction Counter() {\n  const [count, setCount] = React.useState(0);\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      // 'count' захвачен как 0 при монтировании, не обновляется\n      setCount(count + 1); // всегда устанавливает 1!\n    }, 1000);\n    return () => clearInterval(id);\n  }, []); // отсутствует 'count' в зависимостях\n\n  // Исправление: функциональное обновление\n  React.useEffect(() => {\n    const id = setInterval(() => {\n      setCount(prev => prev + 1); // правильно\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n}\n```\n\n**Частая ошибка:** В React правило ESLint `react-hooks/exhaustive-deps` обнаруживает пропущенные зависимости, но многие добавляют `// eslint-disable-next-line`, не понимая последствий."
+    },
+    "tags": [
+      "closures",
+      "async",
+      "event-loop",
+      "react"
+    ]
+  },
+  {
+    "id": "javascript-q-27",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does the event loop handle errors thrown in macrotasks vs microtasks? What is `unhandledRejection` and how does behaviour differ between Node.js and browsers?",
+      "ru": "Как event loop обрабатывает ошибки в макрозадачах вс микрозадачах? Что такое `unhandledRejection` и чем поведение Node.js отличается от браузеров?"
+    },
+    "answer": {
+      "en": "### Error Handling Across the Event Loop\n\nErrors thrown in a **macrotask** (e.g., inside `setTimeout`) are NOT caught by try/catch in calling code — the call stack is different. They become uncaught exceptions.\n\nUnhandled Promise rejections (no `.catch()`) trigger `unhandledRejection`.\n\n```typescript\n// Macrotask error - NOT caught\ntry {\n  setTimeout(() => { throw new Error('macro'); }, 0);\n} catch (e) { /* never reached */ }\n\n// Node.js global handler\nprocess.on('unhandledRejection', (reason, promise) => {\n  console.error('Unhandled Rejection:', reason);\n  process.exit(1); // recommended in production\n});\n\n// Browser global handler\nwindow.addEventListener('unhandledrejection', (event) => {\n  event.preventDefault(); // suppress console error\n  console.error(event.reason);\n});\n```\n\n**Node.js vs Browser:**\n- Node.js ≥ 15: unhandled rejection **terminates the process** by default\n- Node.js 14 and earlier: emits a deprecation warning\n- Browsers: fires `unhandledrejection` event, page continues running\n\n**Common trap:** A Promise rejection is 'handled' only if `.catch()` is attached **synchronously** (same microtask checkpoint). Attaching `.catch()` in a `setTimeout` is too late — `unhandledRejection` already fired.",
+      "ru": "### Обработка ошибок в event loop\n\nОшибки в **макрозадачах** (setTimeout) НЕ перехватываются try/catch — стек вызовов другой. Становятся необработанными исключениями.\n\n```typescript\n// Ошибка в макрозадаче — НЕ перехватывается\ntry {\n  setTimeout(() => { throw new Error('macro'); }, 0);\n} catch (e) { /* никогда не достигается */ }\n\n// Глобальный обработчик Node.js\nprocess.on('unhandledRejection', (reason, promise) => {\n  console.error('Необработанное отклонение:', reason);\n  process.exit(1); // рекомендуется в production\n});\n\n// Браузерный обработчик\nwindow.addEventListener('unhandledrejection', (event) => {\n  console.error(event.reason);\n});\n```\n\n**Node.js vs браузер:**\n- Node.js ≥ 15: необработанное отклонение **завершает процесс** по умолчанию\n- Браузеры: генерируется событие, страница продолжает работать\n\n**Частая ошибка:** Отклонение считается обработанным только если `.catch()` прикреплён **синхронно** (в той же точке микрозадач). Прикрепление `.catch()` в `setTimeout` — слишком поздно."
+    },
+    "tags": [
+      "event-loop",
+      "error-handling",
+      "promises",
+      "nodejs"
+    ]
+  },
+  {
+    "id": "javascript-q-28",
+    "topicId": "javascript",
+    "difficulty": "senior",
+    "question": {
+      "en": "How does `queueMicrotask()` work and when should you prefer it over `Promise.resolve().then()`?",
+      "ru": "Как работает `queueMicrotask()` и когда его предпочтительнее использовать вместо `Promise.resolve().then()`?"
+    },
+    "answer": {
+      "en": "### queueMicrotask() vs Promise.resolve().then()\n\n`queueMicrotask(fn)` adds `fn` directly to the microtask queue without allocating a Promise object. It is the low-level primitive that `Promise.then` uses internally and was standardized in the Web API spec.\n\n```typescript\n// Old pattern - allocates a Promise object\nPromise.resolve().then(() => doSomething());\n\n// Preferred for library code - no Promise allocation\nqueueMicrotask(() => doSomething());\n\n// Same priority, same checkpoint\nconsole.log('sync');\nqueueMicrotask(() => console.log('q1'));\nPromise.resolve().then(() => console.log('p1'));\n// Output: sync, q1, p1 (order between q1 and p1 is FIFO)\n```\n\n**When to prefer `queueMicrotask`:**\n- Library internals that defer work without Promise overhead\n- Batching DOM mutations before a read operation\n- Implementing custom scheduler primitives\n\n**When to use `Promise.resolve().then()`:**\n- When you need the result to be a Promise you can chain or await\n- When error handling as a rejection matters\n\n**Common trap:** Unlike `Promise.resolve().then()`, errors thrown inside `queueMicrotask` callbacks become **uncaught exceptions**, not unhandled rejections. Always wrap in try/catch inside the callback if errors are possible.",
+      "ru": "### queueMicrotask() vs Promise.resolve().then()\n\n`queueMicrotask(fn)` добавляет `fn` напрямую в очередь микрозадач без аллокации объекта Promise. Это низкоуровневый примитив, который `Promise.then` использует внутри.\n\n```typescript\n// Старый паттерн — аллоцирует объект Promise\nPromise.resolve().then(() => doSomething());\n\n// Предпочтительный — без аллокации\nqueueMicrotask(() => doSomething());\n\nconsole.log('sync');\nqueueMicrotask(() => console.log('q1'));\nPromise.resolve().then(() => console.log('p1'));\n// Вывод: sync, q1, p1 (FIFO порядок)\n```\n\n**Когда предпочитать `queueMicrotask`:**\n- Внутренности библиотек, деферащих работу без накладных расходов Promise\n- Пакетирование DOM-мутаций перед операцией чтения\n\n**Частая ошибка:** Ошибки внутри `queueMicrotask` становятся необработанными исключениями, а не необработанными отклонениями Promise."
+    },
+    "tags": [
+      "microtasks",
+      "event-loop",
+      "performance",
+      "promises"
     ]
   },
   {

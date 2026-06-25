@@ -56,6 +56,60 @@
   {
     "id": "tdd-q-4",
     "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain the red-green-refactor cycle in TDD. What happens in each phase and why is this order important?",
+      "ru": "Объясните цикл red-green-refactor в TDD. Что происходит на каждом этапе и почему важен такой порядок?"
+    },
+    "answer": {
+      "en": "### Red-Green-Refactor Cycle\n\nRed: write a failing test first. Green: write minimal code to pass it. Refactor: improve code quality without changing behavior. This order ensures tests drive design and prevents over-engineering.\n\n```typescript\n// RED: test fails\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// GREEN: minimal implementation\nfunction add(a: number, b: number) { return a + b; }\n\n// REFACTOR: improve (if needed)\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Common interview trap:** Thinking refactoring means adding new features instead of just improving existing code.",
+      "ru": "### Цикл Red-Green-Refactor\n\nRed: сначала пишем failing тест. Green: пишем минимальный код для прохождения. Refactor: улучшаем качество без изменения поведения. Такой порядок гарантирует, что тесты ведут разработку.\n\n```typescript\n// RED: тест падает\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// GREEN: минимальная реализация\nfunction add(a: number, b: number) { return a + b; }\n\n// REFACTOR: улучшаем код\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Типичная ошибка:** Думать, что рефакторинг означает добавление новых функций вместо улучшения существующего кода."
+    },
+    "tags": [
+      "red-green-refactor",
+      "tdd-cycle",
+      "test-first"
+    ]
+  },
+  {
+    "id": "tdd-q-5",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What makes a good unit test? Describe at least 3 key characteristics with examples.",
+      "ru": "Что делает unit test хорошим? Опишите минимум 3 ключевые характеристики с примерами."
+    },
+    "answer": {
+      "en": "### Characteristics of Good Unit Tests\n\nA good test is: isolated (tests one responsibility), fast (no external dependencies), and deterministic (always same result). Tests should be independent and not rely on execution order or shared state.\n\n```typescript\n// GOOD: isolated, focused\ntest('should calculate discount correctly', () => {\n  const result = calculateDiscount(100, 0.2);\n  expect(result).toBe(80);\n});\n\n// BAD: depends on database, slow, not isolated\ntest('should fetch and save user', async () => {\n  const user = await db.query('SELECT * FROM users');\n  expect(user).toBeDefined();\n});\n```\n\n**Common interview trap:** Writing integration tests and calling them unit tests.",
+      "ru": "### Характеристики хорошего Unit Test\n\nХороший тест: изолирован (тестирует одну ответственность), быстр (без внешних зависимостей), детерминирован (всегда один результат). Тесты должны быть независимы друг от друга.\n\n```typescript\n// ХОРОШО: изолирован, сфокусирован\ntest('should calculate discount correctly', () => {\n  const result = calculateDiscount(100, 0.2);\n  expect(result).toBe(80);\n});\n\n// ПЛОХО: зависит от БД, медленный\ntest('should fetch and save user', async () => {\n  const user = await db.query('SELECT * FROM users');\n  expect(user).toBeDefined();\n});\n```\n\n**Типичная ошибка:** Писать интеграционные тесты и называть их unit тестами."
+    },
+    "tags": [
+      "unit-test-quality",
+      "test-isolation",
+      "deterministic-tests"
+    ]
+  },
+  {
+    "id": "tdd-q-6",
+    "topicId": "tdd",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are good test naming conventions? Show examples of good and bad test names.",
+      "ru": "Какие хорошие соглашения по названию тестов? Покажите примеры хороших и плохих названий тестов."
+    },
+    "answer": {
+      "en": "### Test Naming Conventions\n\nGood test names follow pattern: `should [expected behavior] when [condition]` or `[unit] returns [result] given [input]`. Names should be descriptive enough that failing test tells you what went wrong without reading code.\n\n```typescript\n// GOOD: clear intent\ntest('should return user discount when loyalty years exceed 5', () => {\n  expect(calculateDiscount(user, 6)).toBe(0.15);\n});\n\ntest('should throw error when email is invalid', () => {\n  expect(() => validateEmail('not-email')).toThrow();\n});\n\n// BAD: vague\ntest('test user', () => {});\ntest('check discount', () => {});\n```\n\n**Common interview trap:** Using generic names like 'test1' or 'should work' that don't describe the scenario.",
+      "ru": "### Соглашения по названию тестов\n\nХорошие имена следуют паттерну: `should [ожидаемое поведение] when [условие]` или `[единица] returns [результат] given [вход]`. Названия должны быть достаточно описательными, чтобы падающий тест рассказал, что пошло не так.\n\n```typescript\n// ХОРОШО: ясное намерение\ntest('should return user discount when loyalty years exceed 5', () => {\n  expect(calculateDiscount(user, 6)).toBe(0.15);\n});\n\ntest('should throw error when email is invalid', () => {\n  expect(() => validateEmail('not-email')).toThrow();\n});\n\n// ПЛОХО: неясные названия\ntest('test user', () => {});\ntest('check discount', () => {});\n```\n\n**Типичная ошибка:** Использование общих имен вроде 'test1' или 'should work' без описания сценария."
+    },
+    "tags": [
+      "test-naming",
+      "naming-conventions",
+      "test-readability"
+    ]
+  },
+  {
+    "id": "tdd-q-7",
+    "topicId": "tdd",
     "difficulty": "middle",
     "question": {
       "en": "What are the main benefits and costs of applying TDD in a real project? How do you decide when TDD is worth the overhead?",
@@ -72,7 +126,7 @@
     ]
   },
   {
-    "id": "tdd-q-9",
+    "id": "tdd-q-8",
     "topicId": "tdd",
     "difficulty": "middle",
     "question": {
@@ -92,7 +146,121 @@
     ]
   },
   {
+    "id": "tdd-q-9",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are the main benefits and costs of adopting TDD in a production environment? How do you balance them?",
+      "ru": "Каковы основные преимущества и затраты на внедрение TDD в production? Как вы их балансируете?"
+    },
+    "answer": {
+      "en": "### Benefits vs Costs Trade-off\n\nBenefits include better design, fewer bugs, and easier refactoring. Costs are slower initial development and test maintenance overhead. Balance by applying TDD selectively to critical business logic and complex algorithms, not UI scaffolding.\n\n```typescript\n// TDD for complex business logic\ndescribe('calculateDiscount', () => {\n  it('should apply tiered discount correctly', () => {\n    expect(calculateDiscount(100, 'premium')).toBe(80);\n    expect(calculateDiscount(50, 'basic')).toBe(50);\n  });\n});\n```\n\n**Common interview trap:** Saying TDD has no costs or is always mandatory.",
+      "ru": "### Баланс преимуществ и затрат\n\nПреимущества: лучший дизайн, меньше ошибок, легче рефакторить. Затраты: медленнее разработка, поддержка тестов. Применяйте TDD избирательно для критичной бизнес-логики, не для UI скаффолдинга.\n\n```typescript\n// TDD для сложной бизнес-логики\ndescribe('calculateDiscount', () => {\n  it('should apply tiered discount correctly', () => {\n    expect(calculateDiscount(100, 'premium')).toBe(80);\n    expect(calculateDiscount(50, 'basic')).toBe(50);\n  });\n});\n```\n\n**Типичная ошибка:** Утверждение, что TDD не имеет затрат или всегда обязателен."
+    },
+    "tags": [
+      "tdd-benefits",
+      "cost-analysis",
+      "pragmatic-testing"
+    ]
+  },
+  {
     "id": "tdd-q-10",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain the difference between stubs, mocks, and spies as test doubles. When would you use each in a TDD workflow?",
+      "ru": "Объясните разницу между стабами, моками и шпионами как тестовыми двойниками. Когда вы используете каждый в TDD?"
+    },
+    "answer": {
+      "en": "### Test Doubles Classification\n\nStubs provide canned responses, mocks verify interactions were called correctly, spies observe calls without replacing behavior. Use stubs for dependencies you don't care about, mocks to verify your code called external APIs correctly, spies when you need both observation and real behavior.\n\n```typescript\n// Stub: returns fixed value\nconst mockApi = { fetch: () => ({ data: 'test' }) };\n\n// Mock: verifies call was made\nconst mockApi = jest.fn().mockResolvedValue({ data: 'test' });\nexpect(mockApi).toHaveBeenCalledWith('/users');\n\n// Spy: wraps real function\nconst spy = jest.spyOn(api, 'fetch');\n```\n\n**Common interview trap:** Treating all test doubles as the same thing.",
+      "ru": "### Классификация тестовых двойников\n\nСтабы предоставляют готовые ответы, моки проверяют, что взаимодействия произошли, шпионы наблюдают без замены поведения. Используйте стабы для неважных зависимостей, моки для проверки вызовов API, шпионы когда нужны наблюдение и реальное поведение.\n\n```typescript\n// Стаб: возвращает фиксированное значение\nconst mockApi = { fetch: () => ({ data: 'test' }) };\n\n// Мок: проверяет вызов\nconst mockApi = jest.fn().mockResolvedValue({ data: 'test' });\nexpect(mockApi).toHaveBeenCalledWith('/users');\n\n// Шпион: оборачивает реальную функцию\nconst spy = jest.spyOn(api, 'fetch');\n```\n\n**Типичная ошибка:** Все тестовые двойники как одно и то же."
+    },
+    "tags": [
+      "test-doubles",
+      "mocks",
+      "stubs",
+      "spies"
+    ]
+  },
+  {
+    "id": "tdd-q-11",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "What is the difference between outside-in (London school) and inside-out (Detroit school) TDD? When would you prefer one over the other?",
+      "ru": "В чем разница между outside-in (London school) и inside-out (Detroit school) TDD? Когда вы предпочтёте одну другой?"
+    },
+    "answer": {
+      "en": "### TDD Schools Comparison\n\nOutside-in starts with integration tests for user behavior, then mocks dependencies; inside-out starts with unit tests for individual functions. Use outside-in for feature-driven work to prevent over-engineering, inside-out for library code where contracts are clearer.\n\n```typescript\n// Outside-in: test user flow first\nit('should display user profile', () => {\n  const mockApi = jest.fn().mockResolvedValue({ name: 'John' });\n  expect(renderUserProfile()).toContainText('John');\n});\n\n// Inside-out: test utils first\nit('should format user name', () => {\n  expect(formatName('john')).toBe('John');\n});\n```\n\n**Common interview trap:** Not mentioning when each approach shines.",
+      "ru": "### Сравнение школ TDD\n\nOutside-in начинает с интеграционных тестов поведения пользователя, потом мокирует зависимости; inside-out начинает с unit-тестов функций. Используйте outside-in для feature-driven работы, inside-out для библиотечного кода.\n\n```typescript\n// Outside-in: сначала тест пользовательского потока\nit('should display user profile', () => {\n  const mockApi = jest.fn().mockResolvedValue({ name: 'John' });\n  expect(renderUserProfile()).toContainText('John');\n});\n\n// Inside-out: сначала тест утилит\nit('should format user name', () => {\n  expect(formatName('john')).toBe('John');\n});\n```\n\n**Типичная ошибка:** Не упоминать, когда каждый подход работает лучше."
+    },
+    "tags": [
+      "outside-in-tdd",
+      "inside-out-tdd",
+      "london-school",
+      "detroit-school"
+    ]
+  },
+  {
+    "id": "tdd-q-12",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do you apply TDD principles to React components? What are the specific challenges and how do you overcome them?",
+      "ru": "Как вы применяете принципы TDD к React компонентам? Какие конкретные проблемы и как их решить?"
+    },
+    "answer": {
+      "en": "### TDD for React Components\n\nTest component behavior (renders, clicks, state changes) not implementation. Challenge: React's hook dependencies and async state updates. Overcome with React Testing Library to test user interactions, not DOM structure, and proper async utilities like waitFor.\n\n```typescript\nit('should increment count on button click', async () => {\n  render(<Counter />);\n  const button = screen.getByRole('button');\n  fireEvent.click(button);\n  await waitFor(() => {\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n});\n```\n\n**Common interview trap:** Testing implementation details like state directly.",
+      "ru": "### TDD для React компонентов\n\nТестируйте поведение (рендеринг, клики, изменения состояния), не реализацию. Проблема: зависимости хуков и асинхронные обновления. Решение: React Testing Library для тестирования взаимодействий, не DOM структуры, и waitFor.\n\n```typescript\nit('should increment count on button click', async () => {\n  render(<Counter />);\n  const button = screen.getByRole('button');\n  fireEvent.click(button);\n  await waitFor(() => {\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n});\n```\n\n**Типичная ошибка:** Тестирование деталей реализации, а не поведения."
+    },
+    "tags": [
+      "react-testing",
+      "tdd-components",
+      "testing-library",
+      "component-behavior"
+    ]
+  },
+  {
+    "id": "tdd-q-13",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "You're writing a React form component with complex validation. How would you apply TDD and what test structure would you follow?",
+      "ru": "Вы пишете React форму с сложной валидацией. Как вы применили бы TDD и какую структуру тестов использовали бы?"
+    },
+    "answer": {
+      "en": "### TDD for Form Components\n\nStart with validation logic tests (pure functions), then test form UI behavior (input changes, error display). Use arrange-act-assert pattern. Mock API calls and test async submission separately. This keeps validation logic decoupled and testable.\n\n```typescript\n// Step 1: Test validation logic\nit('should reject invalid email', () => {\n  expect(validateEmail('invalid')).toBeFalsy();\n});\n\n// Step 2: Test form behavior\nit('should show error on invalid email', async () => {\n  render(<Form />);\n  fireEvent.change(screen.getByName('email'), { target: { value: 'invalid' } });\n  await waitFor(() => {\n    expect(screen.getByText('Invalid email')).toBeInTheDocument();\n  });\n});\n```\n\n**Common interview trap:** Testing form with API calls in the same test.",
+      "ru": "### TDD для форм\n\nНачните с тестов логики валидации (чистые функции), потом UI поведения (изменения инпутов, ошибки). Используйте arrange-act-assert. Мокируйте API и тестируйте отправку отдельно.\n\n```typescript\n// Шаг 1: Тест логики валидации\nit('should reject invalid email', () => {\n  expect(validateEmail('invalid')).toBeFalsy();\n});\n\n// Шаг 2: Тест поведения формы\nit('should show error on invalid email', async () => {\n  render(<Form />);\n  fireEvent.change(screen.getByName('email'), { target: { value: 'invalid' } });\n  await waitFor(() => {\n    expect(screen.getByText('Invalid email')).toBeInTheDocument();\n  });\n});\n```\n\n**Типичная ошибка:** Тестирование формы с API вызовами в одном тесте."
+    },
+    "tags": [
+      "react-form-testing",
+      "validation-logic",
+      "separation-of-concerns",
+      "tdd-strategy"
+    ]
+  },
+  {
+    "id": "tdd-q-14",
+    "topicId": "tdd",
+    "difficulty": "middle",
+    "question": {
+      "en": "Compare outside-in and inside-out TDD approaches. When would you choose each for developing a React component, and how do test doubles play different roles in each approach?",
+      "ru": "Сравните подходы outside-in и inside-out в TDD. Когда вы выбрали бы каждый при разработке React компонента и какую роль играют test doubles в каждом подходе?"
+    },
+    "answer": {
+      "en": "### Outside-in vs Inside-out TDD\n\nOutside-in (top-down) starts with integration tests for user behavior, then creates mocks for dependencies. Inside-out (bottom-up) builds individual units first with their tests. For React components, outside-in tests the component's public API first using render+userEvent, mocking child components and API calls; inside-out tests isolated logic units (hooks, utilities) before assembling them.\n\n```typescript\n// Outside-in: test component behavior first\nit('displays user data after fetch', () => {\n  const mockApi = { getUser: vi.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(screen.getByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: test hook first, then component\nit('useUser hook fetches data', () => {\n  const { result } = renderHook(() => useUser('1'));\n  expect(result.current.data).toEqual({ name: 'John' });\n});\n```\n\n**Common interview trap:** Claiming one approach is always better; they're complementary—use outside-in for UI flows, inside-out for complex business logic.",
+      "ru": "### Outside-in vs Inside-out в TDD\n\nOutside-in (сверху вниз) начинается с интеграционных тестов поведения пользователя, затем создаёт моки для зависимостей. Inside-out (снизу вверх) сначала строит отдельные юниты с их тестами. Для React компонентов outside-in тестирует публичный API компонента с render+userEvent, мокируя дочерние компоненты и API вызовы; inside-out тестирует изолированную логику (хуки, утилиты) перед их объединением.\n\n```typescript\n// Outside-in: сначала тестируем поведение компонента\nit('отображает данные пользователя после загрузки', () => {\n  const mockApi = { getUser: vi.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(screen.getByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: сначала тестируем хук, потом компонент\nit('useUser хук загружает данные', () => {\n  const { result } = renderHook(() => useUser('1'));\n  expect(result.current.data).toEqual({ name: 'John' });\n});\n```\n\n**Типичная ошибка:** Утверждение, что один подход всегда лучше; они дополняют друг друга—используйте outside-in для UI потоков, inside-out для сложной бизнес-логики."
+    },
+    "tags": [
+      "outside-in-tdd",
+      "inside-out-tdd",
+      "test-doubles",
+      "react-testing",
+      "integration-tests"
+    ]
+  },
+  {
+    "id": "tdd-q-15",
     "topicId": "tdd",
     "difficulty": "senior",
     "question": {
@@ -111,7 +279,7 @@
     ]
   },
   {
-    "id": "tdd-q-11",
+    "id": "tdd-q-16",
     "topicId": "tdd",
     "difficulty": "senior",
     "question": {
@@ -131,7 +299,7 @@
     ]
   },
   {
-    "id": "tdd-q-12",
+    "id": "tdd-q-17",
     "topicId": "tdd",
     "difficulty": "senior",
     "question": {
@@ -151,7 +319,7 @@
     ]
   },
   {
-    "id": "tdd-q-13",
+    "id": "tdd-q-18",
     "topicId": "tdd",
     "difficulty": "senior",
     "question": {
@@ -171,7 +339,7 @@
     ]
   },
   {
-    "id": "tdd-q-14",
+    "id": "tdd-q-19",
     "topicId": "tdd",
     "difficulty": "senior",
     "question": {
@@ -191,7 +359,7 @@
     ]
   },
   {
-    "id": "tdd-q-15",
+    "id": "tdd-q-20",
     "topicId": "tdd",
     "difficulty": "senior",
     "question": {
@@ -208,174 +376,6 @@
       "mutation-testing",
       "pragmatic-tdd",
       "async-testing"
-    ]
-  },
-  {
-    "id": "tdd-q-12",
-    "topicId": "tdd",
-    "difficulty": "junior",
-    "question": {
-      "en": "Explain the red-green-refactor cycle in TDD. What happens in each phase and why is this order important?",
-      "ru": "Объясните цикл red-green-refactor в TDD. Что происходит на каждом этапе и почему важен такой порядок?"
-    },
-    "answer": {
-      "en": "### Red-Green-Refactor Cycle\n\nRed: write a failing test first. Green: write minimal code to pass it. Refactor: improve code quality without changing behavior. This order ensures tests drive design and prevents over-engineering.\n\n```typescript\n// RED: test fails\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// GREEN: minimal implementation\nfunction add(a: number, b: number) { return a + b; }\n\n// REFACTOR: improve (if needed)\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Common interview trap:** Thinking refactoring means adding new features instead of just improving existing code.",
-      "ru": "### Цикл Red-Green-Refactor\n\nRed: сначала пишем failing тест. Green: пишем минимальный код для прохождения. Refactor: улучшаем качество без изменения поведения. Такой порядок гарантирует, что тесты ведут разработку.\n\n```typescript\n// RED: тест падает\ntest('should add two numbers', () => {\n  expect(add(2, 3)).toBe(5);\n});\n\n// GREEN: минимальная реализация\nfunction add(a: number, b: number) { return a + b; }\n\n// REFACTOR: улучшаем код\nconst add = (a: number, b: number): number => a + b;\n```\n\n**Типичная ошибка:** Думать, что рефакторинг означает добавление новых функций вместо улучшения существующего кода."
-    },
-    "tags": [
-      "red-green-refactor",
-      "tdd-cycle",
-      "test-first"
-    ]
-  },
-  {
-    "id": "tdd-q-13",
-    "topicId": "tdd",
-    "difficulty": "junior",
-    "question": {
-      "en": "What makes a good unit test? Describe at least 3 key characteristics with examples.",
-      "ru": "Что делает unit test хорошим? Опишите минимум 3 ключевые характеристики с примерами."
-    },
-    "answer": {
-      "en": "### Characteristics of Good Unit Tests\n\nA good test is: isolated (tests one responsibility), fast (no external dependencies), and deterministic (always same result). Tests should be independent and not rely on execution order or shared state.\n\n```typescript\n// GOOD: isolated, focused\ntest('should calculate discount correctly', () => {\n  const result = calculateDiscount(100, 0.2);\n  expect(result).toBe(80);\n});\n\n// BAD: depends on database, slow, not isolated\ntest('should fetch and save user', async () => {\n  const user = await db.query('SELECT * FROM users');\n  expect(user).toBeDefined();\n});\n```\n\n**Common interview trap:** Writing integration tests and calling them unit tests.",
-      "ru": "### Характеристики хорошего Unit Test\n\nХороший тест: изолирован (тестирует одну ответственность), быстр (без внешних зависимостей), детерминирован (всегда один результат). Тесты должны быть независимы друг от друга.\n\n```typescript\n// ХОРОШО: изолирован, сфокусирован\ntest('should calculate discount correctly', () => {\n  const result = calculateDiscount(100, 0.2);\n  expect(result).toBe(80);\n});\n\n// ПЛОХО: зависит от БД, медленный\ntest('should fetch and save user', async () => {\n  const user = await db.query('SELECT * FROM users');\n  expect(user).toBeDefined();\n});\n```\n\n**Типичная ошибка:** Писать интеграционные тесты и называть их unit тестами."
-    },
-    "tags": [
-      "unit-test-quality",
-      "test-isolation",
-      "deterministic-tests"
-    ]
-  },
-  {
-    "id": "tdd-q-14",
-    "topicId": "tdd",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are good test naming conventions? Show examples of good and bad test names.",
-      "ru": "Какие хорошие соглашения по названию тестов? Покажите примеры хороших и плохих названий тестов."
-    },
-    "answer": {
-      "en": "### Test Naming Conventions\n\nGood test names follow pattern: `should [expected behavior] when [condition]` or `[unit] returns [result] given [input]`. Names should be descriptive enough that failing test tells you what went wrong without reading code.\n\n```typescript\n// GOOD: clear intent\ntest('should return user discount when loyalty years exceed 5', () => {\n  expect(calculateDiscount(user, 6)).toBe(0.15);\n});\n\ntest('should throw error when email is invalid', () => {\n  expect(() => validateEmail('not-email')).toThrow();\n});\n\n// BAD: vague\ntest('test user', () => {});\ntest('check discount', () => {});\n```\n\n**Common interview trap:** Using generic names like 'test1' or 'should work' that don't describe the scenario.",
-      "ru": "### Соглашения по названию тестов\n\nХорошие имена следуют паттерну: `should [ожидаемое поведение] when [условие]` или `[единица] returns [результат] given [вход]`. Названия должны быть достаточно описательными, чтобы падающий тест рассказал, что пошло не так.\n\n```typescript\n// ХОРОШО: ясное намерение\ntest('should return user discount when loyalty years exceed 5', () => {\n  expect(calculateDiscount(user, 6)).toBe(0.15);\n});\n\ntest('should throw error when email is invalid', () => {\n  expect(() => validateEmail('not-email')).toThrow();\n});\n\n// ПЛОХО: неясные названия\ntest('test user', () => {});\ntest('check discount', () => {});\n```\n\n**Типичная ошибка:** Использование общих имен вроде 'test1' или 'should work' без описания сценария."
-    },
-    "tags": [
-      "test-naming",
-      "naming-conventions",
-      "test-readability"
-    ]
-  },
-  {
-    "id": "tdd-q-15",
-    "topicId": "tdd",
-    "difficulty": "middle",
-    "question": {
-      "en": "What are the main benefits and costs of adopting TDD in a production environment? How do you balance them?",
-      "ru": "Каковы основные преимущества и затраты на внедрение TDD в production? Как вы их балансируете?"
-    },
-    "answer": {
-      "en": "### Benefits vs Costs Trade-off\n\nBenefits include better design, fewer bugs, and easier refactoring. Costs are slower initial development and test maintenance overhead. Balance by applying TDD selectively to critical business logic and complex algorithms, not UI scaffolding.\n\n```typescript\n// TDD for complex business logic\ndescribe('calculateDiscount', () => {\n  it('should apply tiered discount correctly', () => {\n    expect(calculateDiscount(100, 'premium')).toBe(80);\n    expect(calculateDiscount(50, 'basic')).toBe(50);\n  });\n});\n```\n\n**Common interview trap:** Saying TDD has no costs or is always mandatory.",
-      "ru": "### Баланс преимуществ и затрат\n\nПреимущества: лучший дизайн, меньше ошибок, легче рефакторить. Затраты: медленнее разработка, поддержка тестов. Применяйте TDD избирательно для критичной бизнес-логики, не для UI скаффолдинга.\n\n```typescript\n// TDD для сложной бизнес-логики\ndescribe('calculateDiscount', () => {\n  it('should apply tiered discount correctly', () => {\n    expect(calculateDiscount(100, 'premium')).toBe(80);\n    expect(calculateDiscount(50, 'basic')).toBe(50);\n  });\n});\n```\n\n**Типичная ошибка:** Утверждение, что TDD не имеет затрат или всегда обязателен."
-    },
-    "tags": [
-      "tdd-benefits",
-      "cost-analysis",
-      "pragmatic-testing"
-    ]
-  },
-  {
-    "id": "tdd-q-16",
-    "topicId": "tdd",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain the difference between stubs, mocks, and spies as test doubles. When would you use each in a TDD workflow?",
-      "ru": "Объясните разницу между стабами, моками и шпионами как тестовыми двойниками. Когда вы используете каждый в TDD?"
-    },
-    "answer": {
-      "en": "### Test Doubles Classification\n\nStubs provide canned responses, mocks verify interactions were called correctly, spies observe calls without replacing behavior. Use stubs for dependencies you don't care about, mocks to verify your code called external APIs correctly, spies when you need both observation and real behavior.\n\n```typescript\n// Stub: returns fixed value\nconst mockApi = { fetch: () => ({ data: 'test' }) };\n\n// Mock: verifies call was made\nconst mockApi = jest.fn().mockResolvedValue({ data: 'test' });\nexpect(mockApi).toHaveBeenCalledWith('/users');\n\n// Spy: wraps real function\nconst spy = jest.spyOn(api, 'fetch');\n```\n\n**Common interview trap:** Treating all test doubles as the same thing.",
-      "ru": "### Классификация тестовых двойников\n\nСтабы предоставляют готовые ответы, моки проверяют, что взаимодействия произошли, шпионы наблюдают без замены поведения. Используйте стабы для неважных зависимостей, моки для проверки вызовов API, шпионы когда нужны наблюдение и реальное поведение.\n\n```typescript\n// Стаб: возвращает фиксированное значение\nconst mockApi = { fetch: () => ({ data: 'test' }) };\n\n// Мок: проверяет вызов\nconst mockApi = jest.fn().mockResolvedValue({ data: 'test' });\nexpect(mockApi).toHaveBeenCalledWith('/users');\n\n// Шпион: оборачивает реальную функцию\nconst spy = jest.spyOn(api, 'fetch');\n```\n\n**Типичная ошибка:** Все тестовые двойники как одно и то же."
-    },
-    "tags": [
-      "test-doubles",
-      "mocks",
-      "stubs",
-      "spies"
-    ]
-  },
-  {
-    "id": "tdd-q-17",
-    "topicId": "tdd",
-    "difficulty": "middle",
-    "question": {
-      "en": "What is the difference between outside-in (London school) and inside-out (Detroit school) TDD? When would you prefer one over the other?",
-      "ru": "В чем разница между outside-in (London school) и inside-out (Detroit school) TDD? Когда вы предпочтёте одну другой?"
-    },
-    "answer": {
-      "en": "### TDD Schools Comparison\n\nOutside-in starts with integration tests for user behavior, then mocks dependencies; inside-out starts with unit tests for individual functions. Use outside-in for feature-driven work to prevent over-engineering, inside-out for library code where contracts are clearer.\n\n```typescript\n// Outside-in: test user flow first\nit('should display user profile', () => {\n  const mockApi = jest.fn().mockResolvedValue({ name: 'John' });\n  expect(renderUserProfile()).toContainText('John');\n});\n\n// Inside-out: test utils first\nit('should format user name', () => {\n  expect(formatName('john')).toBe('John');\n});\n```\n\n**Common interview trap:** Not mentioning when each approach shines.",
-      "ru": "### Сравнение школ TDD\n\nOutside-in начинает с интеграционных тестов поведения пользователя, потом мокирует зависимости; inside-out начинает с unit-тестов функций. Используйте outside-in для feature-driven работы, inside-out для библиотечного кода.\n\n```typescript\n// Outside-in: сначала тест пользовательского потока\nit('should display user profile', () => {\n  const mockApi = jest.fn().mockResolvedValue({ name: 'John' });\n  expect(renderUserProfile()).toContainText('John');\n});\n\n// Inside-out: сначала тест утилит\nit('should format user name', () => {\n  expect(formatName('john')).toBe('John');\n});\n```\n\n**Типичная ошибка:** Не упоминать, когда каждый подход работает лучше."
-    },
-    "tags": [
-      "outside-in-tdd",
-      "inside-out-tdd",
-      "london-school",
-      "detroit-school"
-    ]
-  },
-  {
-    "id": "tdd-q-18",
-    "topicId": "tdd",
-    "difficulty": "middle",
-    "question": {
-      "en": "How do you apply TDD principles to React components? What are the specific challenges and how do you overcome them?",
-      "ru": "Как вы применяете принципы TDD к React компонентам? Какие конкретные проблемы и как их решить?"
-    },
-    "answer": {
-      "en": "### TDD for React Components\n\nTest component behavior (renders, clicks, state changes) not implementation. Challenge: React's hook dependencies and async state updates. Overcome with React Testing Library to test user interactions, not DOM structure, and proper async utilities like waitFor.\n\n```typescript\nit('should increment count on button click', async () => {\n  render(<Counter />);\n  const button = screen.getByRole('button');\n  fireEvent.click(button);\n  await waitFor(() => {\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n});\n```\n\n**Common interview trap:** Testing implementation details like state directly.",
-      "ru": "### TDD для React компонентов\n\nТестируйте поведение (рендеринг, клики, изменения состояния), не реализацию. Проблема: зависимости хуков и асинхронные обновления. Решение: React Testing Library для тестирования взаимодействий, не DOM структуры, и waitFor.\n\n```typescript\nit('should increment count on button click', async () => {\n  render(<Counter />);\n  const button = screen.getByRole('button');\n  fireEvent.click(button);\n  await waitFor(() => {\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n});\n```\n\n**Типичная ошибка:** Тестирование деталей реализации, а не поведения."
-    },
-    "tags": [
-      "react-testing",
-      "tdd-components",
-      "testing-library",
-      "component-behavior"
-    ]
-  },
-  {
-    "id": "tdd-q-19",
-    "topicId": "tdd",
-    "difficulty": "middle",
-    "question": {
-      "en": "You're writing a React form component with complex validation. How would you apply TDD and what test structure would you follow?",
-      "ru": "Вы пишете React форму с сложной валидацией. Как вы применили бы TDD и какую структуру тестов использовали бы?"
-    },
-    "answer": {
-      "en": "### TDD for Form Components\n\nStart with validation logic tests (pure functions), then test form UI behavior (input changes, error display). Use arrange-act-assert pattern. Mock API calls and test async submission separately. This keeps validation logic decoupled and testable.\n\n```typescript\n// Step 1: Test validation logic\nit('should reject invalid email', () => {\n  expect(validateEmail('invalid')).toBeFalsy();\n});\n\n// Step 2: Test form behavior\nit('should show error on invalid email', async () => {\n  render(<Form />);\n  fireEvent.change(screen.getByName('email'), { target: { value: 'invalid' } });\n  await waitFor(() => {\n    expect(screen.getByText('Invalid email')).toBeInTheDocument();\n  });\n});\n```\n\n**Common interview trap:** Testing form with API calls in the same test.",
-      "ru": "### TDD для форм\n\nНачните с тестов логики валидации (чистые функции), потом UI поведения (изменения инпутов, ошибки). Используйте arrange-act-assert. Мокируйте API и тестируйте отправку отдельно.\n\n```typescript\n// Шаг 1: Тест логики валидации\nit('should reject invalid email', () => {\n  expect(validateEmail('invalid')).toBeFalsy();\n});\n\n// Шаг 2: Тест поведения формы\nit('should show error on invalid email', async () => {\n  render(<Form />);\n  fireEvent.change(screen.getByName('email'), { target: { value: 'invalid' } });\n  await waitFor(() => {\n    expect(screen.getByText('Invalid email')).toBeInTheDocument();\n  });\n});\n```\n\n**Типичная ошибка:** Тестирование формы с API вызовами в одном тесте."
-    },
-    "tags": [
-      "react-form-testing",
-      "validation-logic",
-      "separation-of-concerns",
-      "tdd-strategy"
-    ]
-  },
-  {
-    "id": "tdd-q-20",
-    "topicId": "tdd",
-    "difficulty": "middle",
-    "question": {
-      "en": "Compare outside-in and inside-out TDD approaches. When would you choose each for developing a React component, and how do test doubles play different roles in each approach?",
-      "ru": "Сравните подходы outside-in и inside-out в TDD. Когда вы выбрали бы каждый при разработке React компонента и какую роль играют test doubles в каждом подходе?"
-    },
-    "answer": {
-      "en": "### Outside-in vs Inside-out TDD\n\nOutside-in (top-down) starts with integration tests for user behavior, then creates mocks for dependencies. Inside-out (bottom-up) builds individual units first with their tests. For React components, outside-in tests the component's public API first using render+userEvent, mocking child components and API calls; inside-out tests isolated logic units (hooks, utilities) before assembling them.\n\n```typescript\n// Outside-in: test component behavior first\nit('displays user data after fetch', () => {\n  const mockApi = { getUser: vi.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(screen.getByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: test hook first, then component\nit('useUser hook fetches data', () => {\n  const { result } = renderHook(() => useUser('1'));\n  expect(result.current.data).toEqual({ name: 'John' });\n});\n```\n\n**Common interview trap:** Claiming one approach is always better; they're complementary—use outside-in for UI flows, inside-out for complex business logic.",
-      "ru": "### Outside-in vs Inside-out в TDD\n\nOutside-in (сверху вниз) начинается с интеграционных тестов поведения пользователя, затем создаёт моки для зависимостей. Inside-out (снизу вверх) сначала строит отдельные юниты с их тестами. Для React компонентов outside-in тестирует публичный API компонента с render+userEvent, мокируя дочерние компоненты и API вызовы; inside-out тестирует изолированную логику (хуки, утилиты) перед их объединением.\n\n```typescript\n// Outside-in: сначала тестируем поведение компонента\nit('отображает данные пользователя после загрузки', () => {\n  const mockApi = { getUser: vi.fn().mockResolvedValue({ name: 'John' }) };\n  render(<UserProfile api={mockApi} userId=\"1\" />);\n  expect(screen.getByText('John')).toBeInTheDocument();\n});\n\n// Inside-out: сначала тестируем хук, потом компонент\nit('useUser хук загружает данные', () => {\n  const { result } = renderHook(() => useUser('1'));\n  expect(result.current.data).toEqual({ name: 'John' });\n});\n```\n\n**Типичная ошибка:** Утверждение, что один подход всегда лучше; они дополняют друг друга—используйте outside-in для UI потоков, inside-out для сложной бизнес-логики."
-    },
-    "tags": [
-      "outside-in-tdd",
-      "inside-out-tdd",
-      "test-doubles",
-      "react-testing",
-      "integration-tests"
     ]
   },
   {

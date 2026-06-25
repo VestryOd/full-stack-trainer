@@ -99,6 +99,306 @@
   {
     "id": "typescript-q-6",
     "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are the basic TypeScript primitive types and how do they differ from JavaScript types?",
+      "ru": "Какие базовые типы TypeScript существуют и чем они отличаются от типов JavaScript?"
+    },
+    "answer": {
+      "en": "### TypeScript Primitive Types\n\nTypeScript adds static type checking on top of JavaScript's runtime types. The basic primitives include `string`, `number`, `boolean`, `null`, `undefined`, `symbol`, and `bigint`. TypeScript enforces these types at compile-time, catching errors before execution. Unlike JavaScript, which determines types dynamically at runtime, TypeScript requires explicit type declarations or inference.\n\n```typescript\nconst name: string = \"John\";\nconst age: number = 25;\nconst active: boolean = true;\nconst nothing: null = null;\nconst notDefined: undefined = undefined;\n\n// Type error at compile-time\nconst invalid: string = 123; // Error!\n```\n\n\n**Common interview trap:** Candidates confuse `null` and `undefined` types—they are distinct in TypeScript typing, though JavaScript treats them similarly at runtime.",
+      "ru": "### Базовые типы TypeScript\n\nTypeScript добавляет статическую типизацию поверх динамической системы типов JavaScript. Базовые примитивы включают `string`, `number`, `boolean`, `null`, `undefined`, `symbol` и `bigint`. TypeScript проверяет типы на этапе компиляции, перехватывая ошибки до выполнения кода. В отличие от JavaScript, где типы определяются во время выполнения, TypeScript требует явного объявления или вывода типов.\n\n```typescript\nconst name: string = \"John\";\nconst age: number = 25;\nconst active: boolean = true;\nconst nothing: null = null;\nconst notDefined: undefined = undefined;\n\nconst invalid: string = 123; // Ошибка!\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты путают типы `null` и `undefined`—они различны в типизации TypeScript, хотя JavaScript обрабатывает их аналогично."
+    },
+    "tags": [
+      "primitive-types",
+      "type-checking",
+      "type-system"
+    ]
+  },
+  {
+    "id": "typescript-q-7",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between `interface` and `type` in TypeScript? When should you use each?",
+      "ru": "В чём разница между `interface` и `type` в TypeScript? Когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Interface vs Type\n\nBoth define shapes for objects, but have key differences. Interfaces are specifically for object shapes and support declaration merging—multiple declarations with the same name combine. Types are more flexible, supporting unions, tuples, and primitives. Interfaces use structural subtyping naturally and are better for class contracts. Use `interface` for object contracts and APIs; use `type` for unions, function signatures, and complex compositions.\n\n```typescript\n// Interface - object-focused, mergeable\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n} // Merges to { name, age }\n\n// Type - flexible, unions allowed\ntype ID = string | number;\ntype Config = { debug: boolean } | null;\n\n// Interface for class\ninterface Animal {\n  move(): void;\n}\nclass Dog implements Animal {\n  move() { console.log(\"running\"); }\n}\n```\n\n\n**Common interview trap:** Thinking interfaces and types are completely interchangeable—declaration merging only works with interfaces.",
+      "ru": "### Interface vs Type\n\nОба определяют структуры для объектов, но имеют ключевые различия. Интерфейсы специализированы на объектах и поддерживают слияние объявлений—несколько объявлений с одним именем объединяются. Типы более гибкие, поддерживают объединения, кортежи и примитивы. Интерфейсы используют структурную типизацию и лучше для контрактов классов. Используйте `interface` для контрактов объектов, `type` для объединений и сложных композиций.\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n}\n\ntype ID = string | number;\ntype Config = { debug: boolean } | null;\n\ninterface Animal {\n  move(): void;\n}\nclass Dog implements Animal {\n  move() { console.log(\"running\"); }\n}\n```\n\n\n**Типичная ошибка на интервью:** Мнение, что интерфейсы и типы полностью взаимозаменяемы—слияние работает только с интерфейсами."
+    },
+    "tags": [
+      "interface",
+      "type",
+      "object-shapes",
+      "declaration-merging"
+    ]
+  },
+  {
+    "id": "typescript-q-8",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do enums work in TypeScript and what are their limitations?",
+      "ru": "Как работают enum в TypeScript и какие у них ограничения?"
+    },
+    "answer": {
+      "en": "### TypeScript Enums\n\nEnums allow you to define a set of named constants. String enums map names to string values, while numeric enums map to numbers (auto-incrementing by default). Enums are transpiled to objects in JavaScript, creating actual runtime code. A limitation is that reverse mappings exist for numeric enums but not strings. Enums can be confusing when mixed with unions; many prefer `as const` assertions or type unions for simpler cases.\n\n```typescript\n// Numeric enum\nenum Status {\n  Active = 0,\n  Inactive = 1\n}\nconst status: Status = Status.Active;\n\n// String enum\nenum Role {\n  Admin = \"admin\",\n  User = \"user\"\n}\n\n// Reverse mapping (numeric only)\nconsole.log(Status[0]); // \"Active\"\n\n// Modern alternative: as const\nconst ROLES = { Admin: \"admin\", User: \"user\" } as const;\ntype Role = typeof ROLES[keyof typeof ROLES];\n```\n\n\n**Common interview trap:** Not realizing enums create actual runtime objects, increasing bundle size compared to type-only unions.",
+      "ru": "### Enum в TypeScript\n\nEnum позволяют определять набор именованных констант. Строковые enum сопоставляют имена со строковыми значениями, числовые—с числами (с автоинкрементом по умолчанию). Enum компилируются в объекты JavaScript, создавая реальный код. Ограничение: обратные сопоставления существуют только для числовых enum. Enum могут быть запутанными при смешивании с объединениями; многие предпочитают `as const` или type-объединения.\n\n```typescript\nenum Status {\n  Active = 0,\n  Inactive = 1\n}\nconst status: Status = Status.Active;\n\nenum Role {\n  Admin = \"admin\",\n  User = \"user\"\n}\n\nconsole.log(Status[0]); // \"Active\"\n\nconst ROLES = { Admin: \"admin\", User: \"user\" } as const;\ntype Role = typeof ROLES[keyof typeof ROLES];\n```\n\n\n**Типичная ошибка на интервью:** Не знание, что enum создают реальные объекты, увеличивая размер bundle."
+    },
+    "tags": [
+      "enums",
+      "numeric-enums",
+      "string-enums",
+      "runtime-objects"
+    ]
+  },
+  {
+    "id": "typescript-q-9",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are type assertions and when should you use them? What's the difference between `as` and angle-bracket syntax?",
+      "ru": "Что такое type assertions и когда их использовать? В чём разница между синтаксисом `as` и угловых скобок?"
+    },
+    "answer": {
+      "en": "### Type Assertions\n\nType assertions tell TypeScript to treat a value as a specific type, overriding type inference. The `as` keyword and angle-bracket `<Type>` syntax are equivalent, but `as` is preferred because angle-bracket conflicts with JSX syntax. Assertions don't perform runtime checks—they're erased at compile-time. Use them when you know more than TypeScript's type inference, but sparingly to avoid hiding type errors. They're useful for DOM manipulation where types are narrower than reality.\n\n```typescript\nconst value: unknown = \"hello\";\nconst length1 = (value as string).length; // Preferred\nconst length2 = (<string>value).length;    // Avoid in JSX\n\n// DOM assertion\nconst button = document.getElementById(\"btn\") as HTMLButtonElement;\nbutton.click();\n\n// Risky - no runtime checking\nconst num = \"123\" as number; // Compiles but still a string!\n```\n\n\n**Common interview trap:** Thinking assertions perform runtime type coercion—they don't. The value type doesn't change, only TypeScript's understanding of it.",
+      "ru": "### Type Assertions\n\nType assertions говорят TypeScript рассматривать значение как конкретный тип, переопределяя вывод типов. Ключевое слово `as` и синтаксис угловых скобок `<Type>` эквивалентны, но `as` предпочтителен, так как угловые скобки конфликтуют с JSX. Assertions не выполняют проверки во время выполнения—они стираются при компиляции. Используйте их, когда вы знаете больше, чем вывод типов, но редко.\n\n```typescript\nconst value: unknown = \"hello\";\nconst length1 = (value as string).length;\nconst length2 = (<string>value).length;\n\nconst button = document.getElementById(\"btn\") as HTMLButtonElement;\nbutton.click();\n\nconst num = \"123\" as number; // Компилируется, но остаётся строкой!\n```\n\n\n**Типичная ошибка на интервью:** Думать, что assertions выполняют преобразование типов во время выполнения—они этого не делают."
+    },
+    "tags": [
+      "type-assertions",
+      "as-keyword",
+      "type-casting",
+      "jsx-syntax"
+    ]
+  },
+  {
+    "id": "typescript-q-10",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is optional chaining (`?.`) and nullish coalescing (`??`)? How do they simplify null/undefined handling?",
+      "ru": "Что такое optional chaining (`?.`) и nullish coalescing (`??`)? Как они упрощают работу с null/undefined?"
+    },
+    "answer": {
+      "en": "### Optional Chaining ( ?. )\n\nShort-circuits property access and returns `undefined` if any intermediate value is `null` or `undefined`, instead of throwing a TypeError.\n\n```typescript\ninterface Profile { address?: { city: string } }\ninterface User { profile: Profile | null }\n\nconst user: User | null = null;\n\n// Without optional chaining — throws at runtime\nconst city = user.profile.address.city; // TypeError: Cannot read properties of null\n\n// With optional chaining — returns undefined safely\nconst city = user?.profile?.address?.city; // undefined\nconst fn = user?.getProfile?.(); // call optional method\nconst el = arr?.[0]; // optional array index\n```\n\n### Nullish Coalescing ( ?? )\n\nReturns the right-hand side only when the left side is `null` or `undefined` — unlike `||` which also triggers on `0`, `\"\"`, and `false`.\n\n```typescript\nconst count = 0 ?? 10;  // 0   — 0 is not nullish\nconst count2 = 0 || 10; // 10  — 0 is falsy\n\nconst name = user?.profile?.name ?? 'Anonymous'; // fallback only if null/undefined\n```\n\n**Common interview trap:** Confusing `??` with `||`. The key difference is that `||` treats `0`, `\"\"`, and `false` as falsy and replaces them, while `??` only triggers on `null` or `undefined`. Using `||` for numeric or boolean config values often produces subtle bugs where `0` or `false` are unexpectedly replaced with defaults.",
+      "ru": "### Optional Chaining ( ?. )\n\nКороткое замыкание доступа к свойствам: возвращает `undefined`, если любое промежуточное значение равно `null` или `undefined`, вместо выброса TypeError.\n\n```typescript\ninterface Profile { address?: { city: string } }\ninterface User { profile: Profile | null }\n\nconst user: User | null = null;\n\n// Без optional chaining — ошибка во время выполнения\nconst city = user.profile.address.city; // TypeError: Cannot read properties of null\n\n// С optional chaining — безопасно возвращает undefined\nconst city = user?.profile?.address?.city; // undefined\nconst fn = user?.getProfile?.(); // вызов опционального метода\nconst el = arr?.[0]; // опциональный доступ к элементу массива\n```\n\n### Nullish Coalescing ( ?? )\n\nВозвращает правую часть только когда левая равна `null` или `undefined` — в отличие от `||`, который срабатывает и на `0`, `\"\"`, `false`.\n\n```typescript\nconst count = 0 ?? 10;  // 0   — 0 не является nullish\nconst count2 = 0 || 10; // 10  — 0 является falsy\n\nconst name = user?.profile?.name ?? 'Anonymous'; // fallback только если null/undefined\n```\n\n**Типичная ошибка на интервью:** Путаница между `??` и `||`. Ключевое отличие: `||` воспринимает `0`, `\"\"` и `false` как falsy и заменяет их, а `??` срабатывает только на `null` или `undefined`. Использование `||` для числовых или булевых значений конфига часто приводит к тонким багам, когда `0` или `false` неожиданно заменяются значением по умолчанию."
+    },
+    "tags": [
+      "optional-chaining",
+      "nullish-coalescing",
+      "null-handling",
+      "undefined"
+    ]
+  },
+  {
+    "id": "typescript-q-11",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain TypeScript generics with a practical example. How do generics improve type safety?",
+      "ru": "Объясните generics в TypeScript на практическом примере. Как generics улучшают type safety?"
+    },
+    "answer": {
+      "en": "### TypeScript Generics\n\nGenerics allow functions, types, and classes to work with multiple types while maintaining type safety. They use placeholders (type variables like `T`, `K`, `V`) that are filled in when used. Generics enable reusable, type-safe code without sacrificing flexibility. A generic function can accept any type while still knowing what type it's working with, preventing errors like treating a number as a string.\n\n```typescript\n// Without generics - loses type info\nfunction identity(value: any): any {\n  return value;\n}\nconst result = identity(\"hello\");\nconst upper = result.toUpperCase(); // No type checking\n\n// With generics - preserves type\nfunction genericIdentity<T>(value: T): T {\n  return value;\n}\nconst result2 = genericIdentity(\"hello\");\nconst upper2 = result2.toUpperCase(); // Type-safe!\n\n// Practical: generic function for array filtering\nfunction filterByType<T>(items: T[], predicate: (item: T) => boolean): T[] {\n  return items.filter(predicate);\n}\n\nconst nums = filterByType([1, 2, 3], n => n > 1);\n```\n\n\n**Common interview trap:** Thinking generics add runtime overhead—they're compile-time only and completely erased in the compiled JavaScript.",
+      "ru": "### Generics в TypeScript\n\nGenerics позволяют функциям, типам и классам работать с несколькими типами, сохраняя type safety. Они используют переменные типов (как `T`, `K`, `V`), которые заполняются при использовании. Generics обеспечивают переиспользуемый, типобезопасный код без потери гибкости.\n\n```typescript\nfunction identity(value: any): any {\n  return value;\n}\n\nfunction genericIdentity<T>(value: T): T {\n  return value;\n}\n\nconst result = genericIdentity(\"hello\");\nconst upper = result.toUpperCase();\n\nfunction filterByType<T>(items: T[], predicate: (item: T) => boolean): T[] {\n  return items.filter(predicate);\n}\n\nconst nums = filterByType([1, 2, 3], n => n > 1);\n```\n\n\n**Типичная ошибка на интервью:** Думать, что generics добавляют runtime overhead—они полностью стираются при компиляции."
+    },
+    "tags": [
+      "generics",
+      "type-variables",
+      "type-safety",
+      "reusability"
+    ]
+  },
+  {
+    "id": "typescript-q-12",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are utility types like `Partial`, `Required`, `Pick`, and `Omit`? Provide practical use cases.",
+      "ru": "Что такое utility types вроде `Partial`, `Required`, `Pick` и `Omit`? Приведите примеры использования."
+    },
+    "answer": {
+      "en": "### Utility Types\n\nUtility types transform existing types to create new ones. `Partial<T>` makes all properties optional, `Required<T>` makes them required, `Pick<T, K>` selects specific properties, and `Omit<T, K>` excludes properties. They reduce repetition and improve maintainability. `Partial` is useful for partial updates, `Required` for API responses, `Pick` for API payloads, and `Omit` for responses without sensitive fields.\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n  role: string;\n}\n\n// Partial - optional properties\ntype UpdateUser = Partial<User>; // All optional\nconst update: UpdateUser = { name: \"Jane\" }; // Valid\n\n// Required - force all required\ntype StrictUser = Required<User>;\n\n// Pick - select specific properties\ntype UserPreview = Pick<User, \"id\" | \"name\">;\n\n// Omit - exclude properties (hide sensitive data)\ntype UserResponse = Omit<User, \"role\">;\nconst response: UserResponse = { id: 1, name: \"John\", email: \"j@ex.com\" };\n```\n\n\n**Common interview trap:** Thinking `Partial<T>` and `Readonly<T>` do the same thing—`Partial` affects optionality, `Readonly` affects immutability.",
+      "ru": "### Utility Types\n\nUtility types трансформируют существующие типы для создания новых. `Partial<T>` делает все свойства опциональными, `Required<T>` делает их обязательными, `Pick<T, K>` выбирает конкретные свойства, `Omit<T, K>` исключает свойства. Они снижают повторение кода.\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n  role: string;\n}\n\ntype UpdateUser = Partial<User>;\nconst update: UpdateUser = { name: \"Jane\" };\n\ntype StrictUser = Required<User>;\n\ntype UserPreview = Pick<User, \"id\" | \"name\">;\n\ntype UserResponse = Omit<User, \"role\">;\nconst response: UserResponse = { id: 1, name: \"John\", email: \"j@ex.com\" };\n```\n\n\n**Типичная ошибка на интервью:** Путание `Partial<T>` и `Readonly<T>`—Partial для опциональности, Readonly для неизменяемости."
+    },
+    "tags": [
+      "utility-types",
+      "partial",
+      "required",
+      "pick",
+      "omit",
+      "type-transformation"
+    ]
+  },
+  {
+    "id": "typescript-q-13",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the `Readonly` utility type and how does it differ from `const`? Can you modify a readonly property?",
+      "ru": "Что такое utility type `Readonly` и чем он отличается от `const`? Можно ли изменить readonly-свойство?"
+    },
+    "answer": {
+      "en": "### Readonly Utility Type\n\n`Readonly<T>` makes all properties immutable at the type level—preventing accidental modifications. It differs from `const`: `const` prevents variable reassignment at runtime, while `Readonly` only prevents property modification at compile-time. Readonly is purely a TypeScript feature erased after compilation. Attempting to modify a readonly property causes a compile error, but the property isn't truly immutable at runtime—JavaScript can still modify it via direct assignment or Object methods.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\n// Readonly version\ntype ReadonlyUser = Readonly<User>;\nconst user: ReadonlyUser = { name: \"John\", age: 30 };\nuser.name = \"Jane\"; // Compile error!\n\n// const vs Readonly\nconst config = { debug: true }; // Variable reassignment prevented\nconfig.debug = false; // Still allowed\n\ntype ReadonlyConfig = Readonly<typeof config>;\nconst config2: ReadonlyConfig = { debug: true };\nconfig2.debug = false; // Compile error\n\n// Nested readonly\ntype DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n```\n\n\n**Common interview trap:** Thinking `Readonly` provides runtime immutability—it's compile-time only. Code can still modify readonly properties using JavaScript tricks.",
+      "ru": "### Readonly Utility Type\n\n`Readonly<T>` делает все свойства неизменяемыми на уровне типов. Отличается от `const`: `const` предотвращает переприсваивание переменной во время выполнения, `Readonly` только на этапе компиляции. Попытка изменить readonly-свойство вызывает ошибку компиляции, но свойство не действительно неизменяемо во время выполнения.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype ReadonlyUser = Readonly<User>;\nconst user: ReadonlyUser = { name: \"John\", age: 30 };\nuser.name = \"Jane\"; // Ошибка компиляции!\n\nconst config = { debug: true };\nconfig.debug = false; // Разрешено\n\ntype ReadonlyConfig = Readonly<typeof config>;\nconst config2: ReadonlyConfig = { debug: true };\nconfig2.debug = false; // Ошибка компиляции\n```\n\n\n**Типичная ошибка на интервью:** Думать, что `Readonly` обеспечивает runtime-неизменяемость—это только compile-time."
+    },
+    "tags": [
+      "readonly",
+      "immutability",
+      "const",
+      "type-level-safety"
+    ]
+  },
+  {
+    "id": "typescript-q-14",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between `type` and `interface` in TypeScript, and when would you use each one?",
+      "ru": "В чём разница между `type` и `interface` в TypeScript и когда использовать каждый?"
+    },
+    "answer": {
+      "en": "### Types vs Interfaces\n\n`interface` is designed for object shapes and supports declaration merging, while `type` is more flexible and can represent unions, primitives, and tuples. Use `interface` for class contracts and object definitions, `type` for unions and complex shapes.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype ID = string | number;\ntype Config = { debug: boolean } & User;\n```\n\n**Common interview trap:** Both can represent objects similarly, but only `type` supports union types and only `interface` supports declaration merging.",
+      "ru": "### Types vs Interfaces\n\n`interface` предназначен для объектов и поддерживает объединение объявлений, а `type` более гибкий и может представлять объединения, примитивы и кортежи. Используйте `interface` для контрактов классов, `type` для объединений.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype ID = string | number;\ntype Config = { debug: boolean } & User;\n```\n\n**Типичная ошибка:** Оба могут представлять объекты, но только `type` поддерживает union типы и только `interface` поддерживает объединение объявлений."
+    },
+    "tags": [
+      "type-vs-interface",
+      "object-definitions"
+    ]
+  },
+  {
+    "id": "typescript-q-15",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what optional chaining (`?.`) does and provide an example where it prevents runtime errors.",
+      "ru": "Объясните, что делает опциональная цепочка (`?.`) и приведите пример, где она предотвращает ошибки во время выполнения."
+    },
+    "answer": {
+      "en": "### Optional Chaining\n\nOptional chaining (`?.`) safely accesses nested properties without throwing an error if an intermediate value is `null` or `undefined`. It returns `undefined` if the chain breaks, preventing \"Cannot read property of undefined\" errors.\n\n```typescript\nconst user = { profile: { name: 'John' } };\nconst city = user?.profile?.address?.city; // undefined, no error\n\nconst age = user.profile?.age?.years; // undefined, safe access\n```\n\n**Common interview trap:** Optional chaining doesn't throw errors—it returns `undefined` and continues execution safely.",
+      "ru": "### Опциональная цепочка\n\nОпциональная цепочка (`?.`) безопасно обращается к вложенным свойствам без ошибки, если промежуточное значение `null` или `undefined`. Она возвращает `undefined`, если цепь прерывается.\n\n```typescript\nconst user = { profile: { name: 'John' } };\nconst city = user?.profile?.address?.city; // undefined, без ошибки\n\nconst age = user.profile?.age?.years; // undefined, безопасно\n```\n\n**Типичная ошибка:** Опциональная цепочка не выбрасывает ошибки — она возвращает `undefined` и продолжает выполнение."
+    },
+    "tags": [
+      "optional-chaining",
+      "null-safety"
+    ]
+  },
+  {
+    "id": "typescript-q-16",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are generics in TypeScript and how do you use them to create reusable components?",
+      "ru": "Что такое дженерики в TypeScript и как их использовать для создания переиспользуемых компонентов?"
+    },
+    "answer": {
+      "en": "### Generics Basics\n\nGenerics allow you to write flexible, type-safe code that works with multiple types by using type parameters. They're defined with angle brackets and enable reusable functions and classes without sacrificing type safety.\n\n```typescript\nfunction identity<T>(value: T): T {\n  return value;\n}\n\ninterface Container<T> {\n  item: T;\n  getItem(): T;\n}\n\nconst result = identity<string>('hello');\n```\n\n**Common interview trap:** Thinking generics enable runtime type checking. Generics are completely erased at compilation — `T` does not exist in the emitted JavaScript. This means you cannot write `value instanceof T` inside a generic function; `T` is invisible at runtime. Runtime type checking always requires concrete types or runtime values.",
+      "ru": "### Основы дженериков\n\nДженерики позволяют писать гибкий, типобезопасный код, работающий с несколькими типами через параметры типов. Они определяются с углыми скобками и позволяют создавать переиспользуемые функции и классы.\n\n```typescript\nfunction identity<T>(value: T): T {\n  return value;\n}\n\ninterface Container<T> {\n  item: T;\n  getItem(): T;\n}\n\nconst result = identity<string>('hello');\n```\n\n**Типичная ошибка на интервью:** Думать, что дженерики позволяют проверять типы во время выполнения. Дженерики полностью стираются при компиляции — `T` не существует в JavaScript. Это означает, что внутри дженерик-функции нельзя написать `value instanceof T`; `T` невидим в runtime. Проверка типов во время выполнения всегда требует конкретных типов или runtime-значений."
+    },
+    "tags": [
+      "generics",
+      "reusable-components",
+      "type-parameters"
+    ]
+  },
+  {
+    "id": "typescript-q-17",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "Describe the difference between `Partial<T>` and `Required<T>` utility types and when to use them.",
+      "ru": "Опишите разницу между утилит-типами `Partial<T>` и `Required<T>` и когда их использовать."
+    },
+    "answer": {
+      "en": "### Partial vs Required\n\n`Partial<T>` makes all properties optional, useful for partial updates. `Required<T>` makes all properties mandatory, useful for ensuring complete objects. Both are utility types that modify existing types.\n\n```typescript\ninterface User {\n  name: string;\n  email?: string;\n}\n\ntype PartialUser = Partial<User>; // both optional\ntype CompleteUser = Required<User>; // both required\n\nconst update: PartialUser = { name: 'John' };\n```\n\n**Common interview trap:** Confusing `Partial<T>` with a deep partial. `Partial<T>` only makes top-level properties optional — nested required properties remain required within their own structure. If `User` has `address: { city: string }`, then `Partial<User>` gives `address?: { city: string }`: `address` is optional, but if provided, `city` is still required inside it.",
+      "ru": "### Partial vs Required\n\n`Partial<T>` делает все свойства опциональными, полезно для частичных обновлений. `Required<T>` делает все свойства обязательными, полезно для полных объектов. Оба — утилит-типы для модификации типов.\n\n```typescript\ninterface User {\n  name: string;\n  email?: string;\n}\n\ntype PartialUser = Partial<User>; // оба опциональны\ntype CompleteUser = Required<User>; // оба обязательны\n\nconst update: PartialUser = { name: 'John' };\n```\n\n**Типичная ошибка на интервью:** Путаница между `Partial<T>` и глубоким Partial. `Partial<T>` делает опциональными только свойства верхнего уровня — вложенные обязательные свойства остаются обязательными внутри своей структуры. Если у `User` есть `address: { city: string }`, то `Partial<User>` даст `address?: { city: string }`: `address` опционален, но если указан, `city` внутри по-прежнему обязателен."
+    },
+    "tags": [
+      "utility-types",
+      "Partial",
+      "Required",
+      "type-modifiers"
+    ]
+  },
+  {
+    "id": "typescript-q-18",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are enums in TypeScript and what is the difference between string and numeric enums?",
+      "ru": "Что такое enums в TypeScript и какая разница между строковыми и числовыми перечислениями?"
+    },
+    "answer": {
+      "en": "### Enums Overview\n\nEnums define a set of named constants that can be numeric or string-based. Numeric enums auto-increment by default, while string enums require explicit values. String enums are more readable and debuggable.\n\n```typescript\nenum Direction { Up = 0, Down = 1, Left = 2, Right = 3 }\nenum Status { Active = 'ACTIVE', Inactive = 'INACTIVE' }\n\nconst dir: Direction = Direction.Up;\nconst status: Status = Status.Active;\n```\n\n**Common interview trap:** Numeric enums are compiled to objects with reverse mappings; string enums don't have this overhead and are preferred for clarity.",
+      "ru": "### Обзор Enums\n\nEnums определяют набор именованных констант, которые могут быть числовыми или строковыми. Числовые перечисления автоматически увеличиваются, строковые требуют явных значений. Строковые более понятны.\n\n```typescript\nenum Direction { Up = 0, Down = 1, Left = 2, Right = 3 }\nenum Status { Active = 'ACTIVE', Inactive = 'INACTIVE' }\n\nconst dir: Direction = Direction.Up;\nconst status: Status = Status.Active;\n```\n\n**Типичная ошибка:** Числовые enums компилируются в объекты с обратными отображениями; строковые этого не имеют и предпочтительнее для ясности."
+    },
+    "tags": [
+      "enums",
+      "numeric-enums",
+      "string-enums",
+      "constants"
+    ]
+  },
+  {
+    "id": "typescript-q-19",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between `interface` and `type` in TypeScript? When would you use one over the other?",
+      "ru": "В чем разница между `interface` и `type` в TypeScript? Когда использовать один вместо другого?"
+    },
+    "answer": {
+      "en": "### Interface vs Type\n\nInterfaces are designed for object shapes and support declaration merging, while types are more flexible and can represent any shape including unions and primitives. Use interfaces for public APIs and class contracts, types for everything else.\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n} // merges to { name, age }\n\ntype Admin = User & { role: 'admin' };\ntype Status = 'active' | 'inactive';\n```\n\n**Common interview trap:** Thinking they're interchangeable—declaration merging only works with interfaces.",
+      "ru": "### Interface vs Type\n\nИнтерфейсы предназначены для описания объектов и поддерживают объединение объявлений, а типы более гибкие и могут представлять объединения и примитивы. Используйте интерфейсы для публичных API и контрактов классов, типы для всего остального.\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n} // объединяется в { name, age }\n\ntype Admin = User & { role: 'admin' };\ntype Status = 'active' | 'inactive';\n```\n\n**Типичная ошибка:** Думать, что они полностью взаимозаменяемы—объединение работает только с интерфейсами."
+    },
+    "tags": [
+      "interfaces",
+      "types",
+      "declaration-merging"
+    ]
+  },
+  {
+    "id": "typescript-q-20",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what optional chaining (`?.`) does and show an example where it prevents runtime errors compared to standard property access.",
+      "ru": "Объясните, что делает опциональная цепочка (`?.`) и покажите пример, где она предотвращает ошибки времени выполнения по сравнению со стандартным доступом к свойствам."
+    },
+    "answer": {
+      "en": "### Optional Chaining\n\nOptional chaining (`?.`) safely accesses nested properties and returns `undefined` if any intermediate value is `null` or `undefined`, preventing \"Cannot read property of null\" errors. It short-circuits evaluation immediately.\n\n```typescript\nconst user = { profile: null };\n\n// Without optional chaining - throws error\nconst city = user.profile.address.city; // TypeError!\n\n// With optional chaining - returns undefined\nconst city = user.profile?.address?.city; // undefined\n```\n\n**Common interview trap:** Confusing it with nullish coalescing (`??`)—optional chaining accesses, coalescing provides defaults.",
+      "ru": "### Optional Chaining\n\nОпциональная цепочка (`?.`) безопасно обращается к вложенным свойствам и возвращает `undefined`, если любое промежуточное значение равно `null` или `undefined`, предотвращая ошибки \"Cannot read property of null\". Она сразу же прерывает вычисление.\n\n```typescript\nconst user = { profile: null };\n\n// Без опциональной цепочки - выбрасывает ошибку\nconst city = user.profile.address.city; // TypeError!\n\n// С опциональной цепочкой - возвращает undefined\nconst city = user.profile?.address?.city; // undefined\n```\n\n**Типичная ошибка:** Путать с объединением Nullish (`??`)—опциональная цепочка обращается, объединение задает значения по умолчанию."
+    },
+    "tags": [
+      "optional-chaining",
+      "nullish-values",
+      "error-prevention"
+    ]
+  },
+  {
+    "id": "typescript-q-21",
+    "topicId": "typescript",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are utility types like `Partial`, `Required`, `Pick`, and `Omit`? Provide a practical example of when you'd use each.",
+      "ru": "Что такое утилитарные типы как `Partial`, `Required`, `Pick` и `Omit`? Приведите практический пример того, когда вы бы использовали каждый."
+    },
+    "answer": {
+      "en": "### Utility Types\n\nUtility types transform existing types into new ones: `Partial` makes all properties optional, `Required` makes them required, `Pick` selects specific properties, and `Omit` excludes properties. They reduce code duplication in common patterns.\n\n```typescript\ntype User = { name: string; email: string; age: number };\n\ntype PartialUser = Partial<User>; // all optional\ntype UpdateUser = Required<Partial<User>>; // explicitly required again\ntype UserPreview = Pick<User, 'name' | 'email'>; // only name and email\ntype UserWithoutEmail = Omit<User, 'email'>; // everything except email\n```\n\n**Common interview trap:** Using `Partial` when you need `Pick`—they solve different problems.",
+      "ru": "### Утилитарные типы\n\nУтилитарные типы преобразуют существующие типы в новые: `Partial` делает все свойства опциональными, `Required` делает их обязательными, `Pick` выбирает определенные свойства, а `Omit` исключает свойства. Они уменьшают дублирование кода в типичных паттернах.\n\n```typescript\ntype User = { name: string; email: string; age: number };\n\ntype PartialUser = Partial<User>; // все опциональны\ntype UpdateUser = Required<Partial<User>>; // явно требуется снова\ntype UserPreview = Pick<User, 'name' | 'email'>; // только name и email\ntype UserWithoutEmail = Omit<User, 'email'>; // всё кроме email\n```\n\n**Типичная ошибка:** Использовать `Partial` вместо `Pick`—они решают разные задачи."
+    },
+    "tags": [
+      "utility-types",
+      "Partial",
+      "Required",
+      "Pick",
+      "Omit",
+      "type-composition"
+    ]
+  },
+  {
+    "id": "typescript-q-22",
+    "topicId": "typescript",
     "difficulty": "middle",
     "question": {
       "en": "What are generics in TypeScript? Explain basic syntax, constraints with extends, and default type parameters.",
@@ -117,7 +417,7 @@
     ]
   },
   {
-    "id": "typescript-q-7",
+    "id": "typescript-q-23",
     "topicId": "typescript",
     "difficulty": "middle",
     "question": {
@@ -139,7 +439,7 @@
     ]
   },
   {
-    "id": "typescript-q-8",
+    "id": "typescript-q-24",
     "topicId": "typescript",
     "difficulty": "middle",
     "question": {
@@ -157,159 +457,6 @@
       "instanceof",
       "discriminated-union",
       "type-predicate"
-    ]
-  },
-  {
-    "id": "typescript-q-9",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are the basic TypeScript primitive types and how do they differ from JavaScript types?",
-      "ru": "Какие базовые типы TypeScript существуют и чем они отличаются от типов JavaScript?"
-    },
-    "answer": {
-      "en": "### TypeScript Primitive Types\n\nTypeScript adds static type checking on top of JavaScript's runtime types. The basic primitives include `string`, `number`, `boolean`, `null`, `undefined`, `symbol`, and `bigint`. TypeScript enforces these types at compile-time, catching errors before execution. Unlike JavaScript, which determines types dynamically at runtime, TypeScript requires explicit type declarations or inference.\n\n```typescript\nconst name: string = \"John\";\nconst age: number = 25;\nconst active: boolean = true;\nconst nothing: null = null;\nconst notDefined: undefined = undefined;\n\n// Type error at compile-time\nconst invalid: string = 123; // Error!\n```\n\n\n**Common interview trap:** Candidates confuse `null` and `undefined` types—they are distinct in TypeScript typing, though JavaScript treats them similarly at runtime.",
-      "ru": "### Базовые типы TypeScript\n\nTypeScript добавляет статическую типизацию поверх динамической системы типов JavaScript. Базовые примитивы включают `string`, `number`, `boolean`, `null`, `undefined`, `symbol` и `bigint`. TypeScript проверяет типы на этапе компиляции, перехватывая ошибки до выполнения кода. В отличие от JavaScript, где типы определяются во время выполнения, TypeScript требует явного объявления или вывода типов.\n\n```typescript\nconst name: string = \"John\";\nconst age: number = 25;\nconst active: boolean = true;\nconst nothing: null = null;\nconst notDefined: undefined = undefined;\n\nconst invalid: string = 123; // Ошибка!\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты путают типы `null` и `undefined`—они различны в типизации TypeScript, хотя JavaScript обрабатывает их аналогично."
-    },
-    "tags": [
-      "primitive-types",
-      "type-checking",
-      "type-system"
-    ]
-  },
-  {
-    "id": "typescript-q-10",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What is the difference between `interface` and `type` in TypeScript? When should you use each?",
-      "ru": "В чём разница между `interface` и `type` в TypeScript? Когда использовать каждый?"
-    },
-    "answer": {
-      "en": "### Interface vs Type\n\nBoth define shapes for objects, but have key differences. Interfaces are specifically for object shapes and support declaration merging—multiple declarations with the same name combine. Types are more flexible, supporting unions, tuples, and primitives. Interfaces use structural subtyping naturally and are better for class contracts. Use `interface` for object contracts and APIs; use `type` for unions, function signatures, and complex compositions.\n\n```typescript\n// Interface - object-focused, mergeable\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n} // Merges to { name, age }\n\n// Type - flexible, unions allowed\ntype ID = string | number;\ntype Config = { debug: boolean } | null;\n\n// Interface for class\ninterface Animal {\n  move(): void;\n}\nclass Dog implements Animal {\n  move() { console.log(\"running\"); }\n}\n```\n\n\n**Common interview trap:** Thinking interfaces and types are completely interchangeable—declaration merging only works with interfaces.",
-      "ru": "### Interface vs Type\n\nОба определяют структуры для объектов, но имеют ключевые различия. Интерфейсы специализированы на объектах и поддерживают слияние объявлений—несколько объявлений с одним именем объединяются. Типы более гибкие, поддерживают объединения, кортежи и примитивы. Интерфейсы используют структурную типизацию и лучше для контрактов классов. Используйте `interface` для контрактов объектов, `type` для объединений и сложных композиций.\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n}\n\ntype ID = string | number;\ntype Config = { debug: boolean } | null;\n\ninterface Animal {\n  move(): void;\n}\nclass Dog implements Animal {\n  move() { console.log(\"running\"); }\n}\n```\n\n\n**Типичная ошибка на интервью:** Мнение, что интерфейсы и типы полностью взаимозаменяемы—слияние работает только с интерфейсами."
-    },
-    "tags": [
-      "interface",
-      "type",
-      "object-shapes",
-      "declaration-merging"
-    ]
-  },
-  {
-    "id": "typescript-q-11",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "How do enums work in TypeScript and what are their limitations?",
-      "ru": "Как работают enum в TypeScript и какие у них ограничения?"
-    },
-    "answer": {
-      "en": "### TypeScript Enums\n\nEnums allow you to define a set of named constants. String enums map names to string values, while numeric enums map to numbers (auto-incrementing by default). Enums are transpiled to objects in JavaScript, creating actual runtime code. A limitation is that reverse mappings exist for numeric enums but not strings. Enums can be confusing when mixed with unions; many prefer `as const` assertions or type unions for simpler cases.\n\n```typescript\n// Numeric enum\nenum Status {\n  Active = 0,\n  Inactive = 1\n}\nconst status: Status = Status.Active;\n\n// String enum\nenum Role {\n  Admin = \"admin\",\n  User = \"user\"\n}\n\n// Reverse mapping (numeric only)\nconsole.log(Status[0]); // \"Active\"\n\n// Modern alternative: as const\nconst ROLES = { Admin: \"admin\", User: \"user\" } as const;\ntype Role = typeof ROLES[keyof typeof ROLES];\n```\n\n\n**Common interview trap:** Not realizing enums create actual runtime objects, increasing bundle size compared to type-only unions.",
-      "ru": "### Enum в TypeScript\n\nEnum позволяют определять набор именованных констант. Строковые enum сопоставляют имена со строковыми значениями, числовые—с числами (с автоинкрементом по умолчанию). Enum компилируются в объекты JavaScript, создавая реальный код. Ограничение: обратные сопоставления существуют только для числовых enum. Enum могут быть запутанными при смешивании с объединениями; многие предпочитают `as const` или type-объединения.\n\n```typescript\nenum Status {\n  Active = 0,\n  Inactive = 1\n}\nconst status: Status = Status.Active;\n\nenum Role {\n  Admin = \"admin\",\n  User = \"user\"\n}\n\nconsole.log(Status[0]); // \"Active\"\n\nconst ROLES = { Admin: \"admin\", User: \"user\" } as const;\ntype Role = typeof ROLES[keyof typeof ROLES];\n```\n\n\n**Типичная ошибка на интервью:** Не знание, что enum создают реальные объекты, увеличивая размер bundle."
-    },
-    "tags": [
-      "enums",
-      "numeric-enums",
-      "string-enums",
-      "runtime-objects"
-    ]
-  },
-  {
-    "id": "typescript-q-12",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are type assertions and when should you use them? What's the difference between `as` and angle-bracket syntax?",
-      "ru": "Что такое type assertions и когда их использовать? В чём разница между синтаксисом `as` и угловых скобок?"
-    },
-    "answer": {
-      "en": "### Type Assertions\n\nType assertions tell TypeScript to treat a value as a specific type, overriding type inference. The `as` keyword and angle-bracket `<Type>` syntax are equivalent, but `as` is preferred because angle-bracket conflicts with JSX syntax. Assertions don't perform runtime checks—they're erased at compile-time. Use them when you know more than TypeScript's type inference, but sparingly to avoid hiding type errors. They're useful for DOM manipulation where types are narrower than reality.\n\n```typescript\nconst value: unknown = \"hello\";\nconst length1 = (value as string).length; // Preferred\nconst length2 = (<string>value).length;    // Avoid in JSX\n\n// DOM assertion\nconst button = document.getElementById(\"btn\") as HTMLButtonElement;\nbutton.click();\n\n// Risky - no runtime checking\nconst num = \"123\" as number; // Compiles but still a string!\n```\n\n\n**Common interview trap:** Thinking assertions perform runtime type coercion—they don't. The value type doesn't change, only TypeScript's understanding of it.",
-      "ru": "### Type Assertions\n\nType assertions говорят TypeScript рассматривать значение как конкретный тип, переопределяя вывод типов. Ключевое слово `as` и синтаксис угловых скобок `<Type>` эквивалентны, но `as` предпочтителен, так как угловые скобки конфликтуют с JSX. Assertions не выполняют проверки во время выполнения—они стираются при компиляции. Используйте их, когда вы знаете больше, чем вывод типов, но редко.\n\n```typescript\nconst value: unknown = \"hello\";\nconst length1 = (value as string).length;\nconst length2 = (<string>value).length;\n\nconst button = document.getElementById(\"btn\") as HTMLButtonElement;\nbutton.click();\n\nconst num = \"123\" as number; // Компилируется, но остаётся строкой!\n```\n\n\n**Типичная ошибка на интервью:** Думать, что assertions выполняют преобразование типов во время выполнения—они этого не делают."
-    },
-    "tags": [
-      "type-assertions",
-      "as-keyword",
-      "type-casting",
-      "jsx-syntax"
-    ]
-  },
-  {
-    "id": "typescript-q-13",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What is optional chaining (`?.`) and nullish coalescing (`??`)? How do they simplify null/undefined handling?",
-      "ru": "Что такое optional chaining (`?.`) и nullish coalescing (`??`)? Как они упрощают работу с null/undefined?"
-    },
-    "answer": {
-      "en": "### Optional Chaining ( ?. )\n\nShort-circuits property access and returns `undefined` if any intermediate value is `null` or `undefined`, instead of throwing a TypeError.\n\n```typescript\ninterface Profile { address?: { city: string } }\ninterface User { profile: Profile | null }\n\nconst user: User | null = null;\n\n// Without optional chaining — throws at runtime\nconst city = user.profile.address.city; // TypeError: Cannot read properties of null\n\n// With optional chaining — returns undefined safely\nconst city = user?.profile?.address?.city; // undefined\nconst fn = user?.getProfile?.(); // call optional method\nconst el = arr?.[0]; // optional array index\n```\n\n### Nullish Coalescing ( ?? )\n\nReturns the right-hand side only when the left side is `null` or `undefined` — unlike `||` which also triggers on `0`, `\"\"`, and `false`.\n\n```typescript\nconst count = 0 ?? 10;  // 0   — 0 is not nullish\nconst count2 = 0 || 10; // 10  — 0 is falsy\n\nconst name = user?.profile?.name ?? 'Anonymous'; // fallback only if null/undefined\n```\n\n**Common interview trap:** Confusing `??` with `||`. The key difference is that `||` treats `0`, `\"\"`, and `false` as falsy and replaces them, while `??` only triggers on `null` or `undefined`. Using `||` for numeric or boolean config values often produces subtle bugs where `0` or `false` are unexpectedly replaced with defaults.",
-      "ru": "### Optional Chaining ( ?. )\n\nКороткое замыкание доступа к свойствам: возвращает `undefined`, если любое промежуточное значение равно `null` или `undefined`, вместо выброса TypeError.\n\n```typescript\ninterface Profile { address?: { city: string } }\ninterface User { profile: Profile | null }\n\nconst user: User | null = null;\n\n// Без optional chaining — ошибка во время выполнения\nconst city = user.profile.address.city; // TypeError: Cannot read properties of null\n\n// С optional chaining — безопасно возвращает undefined\nconst city = user?.profile?.address?.city; // undefined\nconst fn = user?.getProfile?.(); // вызов опционального метода\nconst el = arr?.[0]; // опциональный доступ к элементу массива\n```\n\n### Nullish Coalescing ( ?? )\n\nВозвращает правую часть только когда левая равна `null` или `undefined` — в отличие от `||`, который срабатывает и на `0`, `\"\"`, `false`.\n\n```typescript\nconst count = 0 ?? 10;  // 0   — 0 не является nullish\nconst count2 = 0 || 10; // 10  — 0 является falsy\n\nconst name = user?.profile?.name ?? 'Anonymous'; // fallback только если null/undefined\n```\n\n**Типичная ошибка на интервью:** Путаница между `??` и `||`. Ключевое отличие: `||` воспринимает `0`, `\"\"` и `false` как falsy и заменяет их, а `??` срабатывает только на `null` или `undefined`. Использование `||` для числовых или булевых значений конфига часто приводит к тонким багам, когда `0` или `false` неожиданно заменяются значением по умолчанию."
-    },
-    "tags": [
-      "optional-chaining",
-      "nullish-coalescing",
-      "null-handling",
-      "undefined"
-    ]
-  },
-  {
-    "id": "typescript-q-14",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "Explain TypeScript generics with a practical example. How do generics improve type safety?",
-      "ru": "Объясните generics в TypeScript на практическом примере. Как generics улучшают type safety?"
-    },
-    "answer": {
-      "en": "### TypeScript Generics\n\nGenerics allow functions, types, and classes to work with multiple types while maintaining type safety. They use placeholders (type variables like `T`, `K`, `V`) that are filled in when used. Generics enable reusable, type-safe code without sacrificing flexibility. A generic function can accept any type while still knowing what type it's working with, preventing errors like treating a number as a string.\n\n```typescript\n// Without generics - loses type info\nfunction identity(value: any): any {\n  return value;\n}\nconst result = identity(\"hello\");\nconst upper = result.toUpperCase(); // No type checking\n\n// With generics - preserves type\nfunction genericIdentity<T>(value: T): T {\n  return value;\n}\nconst result2 = genericIdentity(\"hello\");\nconst upper2 = result2.toUpperCase(); // Type-safe!\n\n// Practical: generic function for array filtering\nfunction filterByType<T>(items: T[], predicate: (item: T) => boolean): T[] {\n  return items.filter(predicate);\n}\n\nconst nums = filterByType([1, 2, 3], n => n > 1);\n```\n\n\n**Common interview trap:** Thinking generics add runtime overhead—they're compile-time only and completely erased in the compiled JavaScript.",
-      "ru": "### Generics в TypeScript\n\nGenerics позволяют функциям, типам и классам работать с несколькими типами, сохраняя type safety. Они используют переменные типов (как `T`, `K`, `V`), которые заполняются при использовании. Generics обеспечивают переиспользуемый, типобезопасный код без потери гибкости.\n\n```typescript\nfunction identity(value: any): any {\n  return value;\n}\n\nfunction genericIdentity<T>(value: T): T {\n  return value;\n}\n\nconst result = genericIdentity(\"hello\");\nconst upper = result.toUpperCase();\n\nfunction filterByType<T>(items: T[], predicate: (item: T) => boolean): T[] {\n  return items.filter(predicate);\n}\n\nconst nums = filterByType([1, 2, 3], n => n > 1);\n```\n\n\n**Типичная ошибка на интервью:** Думать, что generics добавляют runtime overhead—они полностью стираются при компиляции."
-    },
-    "tags": [
-      "generics",
-      "type-variables",
-      "type-safety",
-      "reusability"
-    ]
-  },
-  {
-    "id": "typescript-q-15",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are utility types like `Partial`, `Required`, `Pick`, and `Omit`? Provide practical use cases.",
-      "ru": "Что такое utility types вроде `Partial`, `Required`, `Pick` и `Omit`? Приведите примеры использования."
-    },
-    "answer": {
-      "en": "### Utility Types\n\nUtility types transform existing types to create new ones. `Partial<T>` makes all properties optional, `Required<T>` makes them required, `Pick<T, K>` selects specific properties, and `Omit<T, K>` excludes properties. They reduce repetition and improve maintainability. `Partial` is useful for partial updates, `Required` for API responses, `Pick` for API payloads, and `Omit` for responses without sensitive fields.\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n  role: string;\n}\n\n// Partial - optional properties\ntype UpdateUser = Partial<User>; // All optional\nconst update: UpdateUser = { name: \"Jane\" }; // Valid\n\n// Required - force all required\ntype StrictUser = Required<User>;\n\n// Pick - select specific properties\ntype UserPreview = Pick<User, \"id\" | \"name\">;\n\n// Omit - exclude properties (hide sensitive data)\ntype UserResponse = Omit<User, \"role\">;\nconst response: UserResponse = { id: 1, name: \"John\", email: \"j@ex.com\" };\n```\n\n\n**Common interview trap:** Thinking `Partial<T>` and `Readonly<T>` do the same thing—`Partial` affects optionality, `Readonly` affects immutability.",
-      "ru": "### Utility Types\n\nUtility types трансформируют существующие типы для создания новых. `Partial<T>` делает все свойства опциональными, `Required<T>` делает их обязательными, `Pick<T, K>` выбирает конкретные свойства, `Omit<T, K>` исключает свойства. Они снижают повторение кода.\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n  role: string;\n}\n\ntype UpdateUser = Partial<User>;\nconst update: UpdateUser = { name: \"Jane\" };\n\ntype StrictUser = Required<User>;\n\ntype UserPreview = Pick<User, \"id\" | \"name\">;\n\ntype UserResponse = Omit<User, \"role\">;\nconst response: UserResponse = { id: 1, name: \"John\", email: \"j@ex.com\" };\n```\n\n\n**Типичная ошибка на интервью:** Путание `Partial<T>` и `Readonly<T>`—Partial для опциональности, Readonly для неизменяемости."
-    },
-    "tags": [
-      "utility-types",
-      "partial",
-      "required",
-      "pick",
-      "omit",
-      "type-transformation"
-    ]
-  },
-  {
-    "id": "typescript-q-16",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What is the `Readonly` utility type and how does it differ from `const`? Can you modify a readonly property?",
-      "ru": "Что такое utility type `Readonly` и чем он отличается от `const`? Можно ли изменить readonly-свойство?"
-    },
-    "answer": {
-      "en": "### Readonly Utility Type\n\n`Readonly<T>` makes all properties immutable at the type level—preventing accidental modifications. It differs from `const`: `const` prevents variable reassignment at runtime, while `Readonly` only prevents property modification at compile-time. Readonly is purely a TypeScript feature erased after compilation. Attempting to modify a readonly property causes a compile error, but the property isn't truly immutable at runtime—JavaScript can still modify it via direct assignment or Object methods.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\n// Readonly version\ntype ReadonlyUser = Readonly<User>;\nconst user: ReadonlyUser = { name: \"John\", age: 30 };\nuser.name = \"Jane\"; // Compile error!\n\n// const vs Readonly\nconst config = { debug: true }; // Variable reassignment prevented\nconfig.debug = false; // Still allowed\n\ntype ReadonlyConfig = Readonly<typeof config>;\nconst config2: ReadonlyConfig = { debug: true };\nconfig2.debug = false; // Compile error\n\n// Nested readonly\ntype DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n```\n\n\n**Common interview trap:** Thinking `Readonly` provides runtime immutability—it's compile-time only. Code can still modify readonly properties using JavaScript tricks.",
-      "ru": "### Readonly Utility Type\n\n`Readonly<T>` делает все свойства неизменяемыми на уровне типов. Отличается от `const`: `const` предотвращает переприсваивание переменной во время выполнения, `Readonly` только на этапе компиляции. Попытка изменить readonly-свойство вызывает ошибку компиляции, но свойство не действительно неизменяемо во время выполнения.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype ReadonlyUser = Readonly<User>;\nconst user: ReadonlyUser = { name: \"John\", age: 30 };\nuser.name = \"Jane\"; // Ошибка компиляции!\n\nconst config = { debug: true };\nconfig.debug = false; // Разрешено\n\ntype ReadonlyConfig = Readonly<typeof config>;\nconst config2: ReadonlyConfig = { debug: true };\nconfig2.debug = false; // Ошибка компиляции\n```\n\n\n**Типичная ошибка на интервью:** Думать, что `Readonly` обеспечивает runtime-неизменяемость—это только compile-time."
-    },
-    "tags": [
-      "readonly",
-      "immutability",
-      "const",
-      "type-level-safety"
     ]
   },
   {
@@ -505,6 +652,185 @@
   {
     "id": "typescript-q-35",
     "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain generic constraints in TypeScript. How would you constrain a generic type to only accept objects with a specific property?",
+      "ru": "Объясните ограничения генериков в TypeScript. Как вы ограничили бы универсальный тип, чтобы он принимал только объекты с определённым свойством?"
+    },
+    "answer": {
+      "en": "### Generic Constraints with extends\n\nGeneric constraints limit which types can be passed to a generic using the `extends` keyword. This ensures type safety by guaranteeing certain properties exist.\n\n```typescript\ninterface HasId { id: number; }\n\nfunction getId<T extends HasId>(obj: T): number {\n  return obj.id;\n}\n\ngetId({ id: 1, name: 'John' }); // ✓\ngetId({ name: 'John' }); // ✗ Error: missing id\n```\n\n**Common interview trap:** Adding a generic when a plain parameter type would do. `function getId<T extends HasId>(obj: T)` and `function getId(obj: HasId)` differ: the generic version preserves the full caller type `T` in the return value, while the plain version loses it. Use a generic only when the return type or another parameter needs to reference `T`; otherwise a concrete constraint type is simpler and equally type-safe.",
+      "ru": "### Ограничения генериков с extends\n\nОграничения генериков ограничивают, какие типы могут быть переданы универсальному типу, используя ключевое слово `extends`. Это гарантирует наличие определённых свойств.\n\n```typescript\ninterface HasId { id: number; }\n\nfunction getId<T extends HasId>(obj: T): number {\n  return obj.id;\n}\n\ngetId({ id: 1, name: 'John' }); // ✓\ngetId({ name: 'John' }); // ✗ Error: missing id\n```\n\n**Типичная ошибка на интервью:** Добавление generic там, где подошёл бы обычный параметр типа. `function getId<T extends HasId>(obj: T)` и `function getId(obj: HasId)` отличаются: generic-версия сохраняет полный тип `T` вызывающего в возвращаемом значении, простая — теряет его. Используйте generic только когда возвращаемый тип или другой параметр должны ссылаться на `T`; иначе конкретный тип-constraint проще и столь же безопасен."
+    },
+    "tags": [
+      "generic-constraints",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "typescript-q-36",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are conditional types and how would you use them to create a type that returns different types based on input?",
+      "ru": "Что такое условные типы и как вы использовали бы их для создания типа, который возвращает разные типы в зависимости от входных данных?"
+    },
+    "answer": {
+      "en": "### Conditional Types with Ternary\n\nConditional types use a ternary syntax to return different types based on a condition. They're useful for creating flexible, dependent type relationships.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Str = Flatten<string[]>; // string\n```\n\n**Common interview trap:** Not understanding that `infer` captures type variables in conditional branches.",
+      "ru": "### Условные типы с тернарной операцией\n\nУсловные типы используют синтаксис тернарной операции для возврата разных типов на основе условия. Они полезны для создания гибких зависимых отношений типов.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Str = Flatten<string[]>; // string\n```\n\n**Типичная ошибка:** Непонимание того, что `infer` захватывает переменные типа в условных ветвях."
+    },
+    "tags": [
+      "conditional-types",
+      "infer-keyword",
+      "type-transformation"
+    ]
+  },
+  {
+    "id": "typescript-q-37",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "How do mapped types work? Create a mapped type that converts all properties of an object to readonly versions.",
+      "ru": "Как работают отображаемые типы? Создайте отображаемый тип, который преобразует все свойства объекта в версии readonly."
+    },
+    "answer": {
+      "en": "### Mapped Types with in keyof\n\nMapped types iterate over object properties using `in keyof` and transform each property. They're essential for bulk type transformations.\n\n```typescript\ntype ReadonlyVersion<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ninterface User { name: string; age: number; }\ntype ReadonlyUser = ReadonlyVersion<User>;\n// { readonly name: string; readonly age: number; }\n\nconst user: ReadonlyUser = { name: 'John', age: 30 };\nuser.name = 'Jane'; // ✗ Error\n```\n\n**Common interview trap:** Confusing mapped types with conditional types; they solve different problems.",
+      "ru": "### Отображаемые типы с in keyof\n\nОтображаемые типы проходят по свойствам объекта, используя `in keyof`, и преобразуют каждое свойство. Они незаменимы для массовых преобразований типов.\n\n```typescript\ntype ReadonlyVersion<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ninterface User { name: string; age: number; }\ntype ReadonlyUser = ReadonlyVersion<User>;\n// { readonly name: string; readonly age: number; }\n\nconst user: ReadonlyUser = { name: 'John', age: 30 };\nuser.name = 'Jane'; // ✗ Error\n```\n\n**Типичная ошибка:** Путаница между отображаемыми типами и условными типами; они решают разные проблемы."
+    },
+    "tags": [
+      "mapped-types",
+      "keyof-operator",
+      "property-transformation"
+    ]
+  },
+  {
+    "id": "typescript-q-38",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are template literal types? Show an example of creating type-safe API event names using template literals.",
+      "ru": "Что такое типы шаблонных литералов? Покажите пример создания типобезопасных названий событий API с использованием шаблонных литералов."
+    },
+    "answer": {
+      "en": "### Template Literal Types for Event Names\n\nTemplate literal types combine string literals with generics to create complex string types. They're powerful for creating type-safe string unions.\n\n```typescript\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>; // 'onClick'\n\ntype ApiEndpoint<Method extends string, Path extends string> = \n  `${Method}-${Path}`;\ntype GetUsers = ApiEndpoint<'GET', 'users'>; // 'GET-users'\n\nconst handler: ClickEvent = 'onClick'; // ✓\n```\n\n**Common interview trap:** Forgetting that template literal types need `Capitalize` utility to transform strings correctly.",
+      "ru": "### Типы шаблонных литералов для названий событий\n\nТипы шаблонных литералов объединяют строковые литералы с генериками для создания сложных строковых типов. Они мощны для создания типобезопасных объединений строк.\n\n```typescript\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>; // 'onClick'\n\ntype ApiEndpoint<Method extends string, Path extends string> = \n  `${Method}-${Path}`;\ntype GetUsers = ApiEndpoint<'GET', 'users'>; // 'GET-users'\n\nconst handler: ClickEvent = 'onClick'; // ✓\n```\n\n**Типичная ошибка:** Забывание того, что типы шаблонных литералов нуждаются в утилите `Capitalize` для правильного преобразования строк."
+    },
+    "tags": [
+      "template-literal-types",
+      "string-manipulation",
+      "type-inference"
+    ]
+  },
+  {
+    "id": "typescript-q-39",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain discriminated unions and type guards. How would you safely narrow a union type that has a discriminant property?",
+      "ru": "Объясните дискриминируемые объединения и защиту типов. Как вы безопасно сузили бы тип объединения, который имеет дискриминирующее свойство?"
+    },
+    "answer": {
+      "en": "### Discriminated Unions with Type Guards\n\nDiscriminated unions use a common property (discriminant) to distinguish between union members. Type guards narrow the type safely within conditionals.\n\n```typescript\ntype Circle = { kind: 'circle'; radius: number };\ntype Square = { kind: 'square'; side: number };\ntype Shape = Circle | Square;\n\nfunction getArea(shape: Shape): number {\n  if (shape.kind === 'circle') {\n    return Math.PI * shape.radius ** 2; // shape is Circle here\n  }\n  return shape.side ** 2; // shape is Square here\n}\n```\n\n**Common interview trap:** Using type guards without a discriminant makes narrowing inefficient and error-prone.",
+      "ru": "### Дискриминируемые объединения с защитой типов\n\nДискриминируемые объединения используют общее свойство (дискриминант) для различения членов объединения. Защита типов безопасно сужает тип внутри условных операторов.\n\n```typescript\ntype Circle = { kind: 'circle'; radius: number };\ntype Square = { kind: 'square'; side: number };\ntype Shape = Circle | Square;\n\nfunction getArea(shape: Shape): number {\n  if (shape.kind === 'circle') {\n    return Math.PI * shape.radius ** 2; // shape is Circle здесь\n  }\n  return shape.side ** 2; // shape is Square здесь\n}\n```\n\n**Типичная ошибка:** Использование защиты типов без дискриминанта делает сужение неэффективным и подверженным ошибкам."
+    },
+    "tags": [
+      "discriminated-unions",
+      "type-guards",
+      "type-narrowing"
+    ]
+  },
+  {
+    "id": "typescript-q-40",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain generic constraints and provide an example where you constrain a generic type to objects with a specific property.",
+      "ru": "Объясните ограничения обобщенных типов и приведите пример, где вы ограничиваете обобщенный тип объектами с определенным свойством."
+    },
+    "answer": {
+      "en": "### Generic Constraints with extends\n\nGeneric constraints limit what types can be passed to a generic function or class using the `extends` keyword. This ensures type safety by restricting the generic parameter to types that meet specific requirements.\n\n```typescript\nfunction getProperty<T extends { name: string }>(obj: T, key: 'name'): string {\n  return obj.name;\n}\n\nconst user = { name: 'John', age: 30 };\ngetProperty(user, 'name'); // OK\ngetProperty({ age: 25 }, 'name'); // Error: missing 'name'\n```\n\n**Common interview trap:** Assuming `T extends { name: string }` means `T` is exactly `{ name: string }`. Constraints define a structural minimum — `T` can have any additional properties beyond the required ones. The return type `T` is the full caller-supplied type, not the constraint type. This is the whole point: you can write `function withId<T extends HasId>(obj: T): T & { timestamp: number }` and preserve extra properties from the caller.",
+      "ru": "### Ограничения обобщенных типов с extends\n\nОграничения обобщенных типов ограничивают, какие типы можно передать обобщенной функции или классу, используя ключевое слово `extends`. Это обеспечивает безопасность типов, ограничивая параметр обобщения типами, соответствующими конкретным требованиям.\n\n```typescript\nfunction getProperty<T extends { name: string }>(obj: T, key: 'name'): string {\n  return obj.name;\n}\n\nconst user = { name: 'John', age: 30 };\ngetProperty(user, 'name'); // OK\ngetProperty({ age: 25 }, 'name'); // Error: missing 'name'\n```\n\n**Типичная ошибка на интервью:** Предположение, что `T extends { name: string }` означает, что `T` — это ровно `{ name: string }`. Constraint задаёт структурный минимум — `T` может иметь любые дополнительные свойства сверх обязательных. Возвращаемый тип `T` — это полный тип, переданный вызывающим, а не тип-constraint. В этом и есть смысл: можно написать `function withId<T extends HasId>(obj: T): T & { timestamp: number }` и сохранить все дополнительные свойства."
+    },
+    "tags": [
+      "generic-constraints",
+      "extends-keyword",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "typescript-q-41",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are conditional types and how would you use them to extract types based on a condition? Show an example with a utility type.",
+      "ru": "Что такое условные типы и как их использовать для извлечения типов на основе условия? Покажите пример с типом утилиты."
+    },
+    "answer": {
+      "en": "### Conditional Types\n\nConditional types use the `extends` keyword to create branching logic in the type system: `T extends U ? X : Y`. They enable type extraction and transformation based on conditions, similar to ternary operators for types.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Flat = Flatten<string[]>; // string\n```\n\n**Common interview trap:** The `infer` keyword only works inside conditional types and captures the inferred type for later use.",
+      "ru": "### Условные типы\n\nУсловные типы используют ключевое слово `extends` для создания логики ветвления в системе типов: `T extends U ? X : Y`. Они позволяют извлекать и преобразовывать типы на основе условий, как тернарные операторы для типов.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Flat = Flatten<string[]>; // string\n```\n\n**Типичная ошибка:** Ключевое слово `infer` работает только внутри условных типов и фиксирует выведенный тип для дальнейшего использования."
+    },
+    "tags": [
+      "conditional-types",
+      "infer-keyword",
+      "type-transformation"
+    ]
+  },
+  {
+    "id": "typescript-q-42",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain mapped types and demonstrate how to create a utility type that makes all properties of an object readonly.",
+      "ru": "Объясните типы отображения и продемонстрируйте, как создать тип утилиты, который делает все свойства объекта только для чтения."
+    },
+    "answer": {
+      "en": "### Mapped Types\n\nMapped types transform object keys and values into new types using the `in` keyword to iterate over object properties. They allow bulk type transformations across all properties of an existing type.\n\n```typescript\ntype Readonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ntype User = { name: string; age: number };\ntype ReadonlyUser = Readonly<User>;\n// { readonly name: string; readonly age: number }\n```\n\n**Common interview trap:** Mapped types iterate over `keyof T`, not the values themselves; you must explicitly reference `T[K]` to get property values.",
+      "ru": "### Типы отображения\n\nТипы отображения преобразуют ключи и значения объектов в новые типы, используя ключевое слово `in` для итерации по свойствам объекта. Они позволяют выполнять массовые преобразования типов для всех свойств существующего типа.\n\n```typescript\ntype Readonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ntype User = { name: string; age: number };\ntype ReadonlyUser = Readonly<User>;\n// { readonly name: string; readonly age: number }\n```\n\n**Типичная ошибка:** Типы отображения итерируют по `keyof T`, а не по самим значениям; вы должны явно ссылаться на `T[K]` для получения значений свойств."
+    },
+    "tags": [
+      "mapped-types",
+      "keyof-operator",
+      "type-transformation"
+    ]
+  },
+  {
+    "id": "typescript-q-43",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "What are template literal types and how can they be used to create strongly-typed string manipulations? Provide a practical example.",
+      "ru": "Что такое типы шаблонных литералов и как их можно использовать для создания строго типизированных манипуляций строками? Приведите практический пример."
+    },
+    "answer": {
+      "en": "### Template Literal Types\n\nTemplate literal types combine string literal types with unions to create precise string patterns. They enable type-safe string operations like building event names or URL paths with validation at compile time.\n\n```typescript\ntype Event = 'click' | 'hover' | 'focus';\ntype Handler<E extends Event> = `on${Capitalize<E>}`; // 'onClick' | 'onHover' | 'onFocus'\ntype OnClick = Handler<'click'>; // 'onClick'\n\ntype HTTPMethod = 'GET' | 'POST';\ntype Route<M extends HTTPMethod> = `/${Lowercase<M>}/api`;\ntype GetRoute = Route<'GET'>; // '/get/api'\n```\n\n**Common interview trap:** Template literal types work with string unions, not arbitrary strings; TypeScript resolves all combinations at compile time.",
+      "ru": "### Типы шаблонных литералов\n\nТипы шаблонных литералов объединяют типы строковых литералов с объединениями для создания точных шаблонов строк. Они обеспечивают безопасность типов при работе со строками, такие как построение имен событий или путей URL с валидацией во время компиляции.\n\n```typescript\ntype Event = 'click' | 'hover' | 'focus';\ntype Handler<E extends Event> = `on${Capitalize<E>}`;\ntype OnClick = Handler<'click'>; // 'onClick'\n\ntype HTTPMethod = 'GET' | 'POST';\ntype Route<M extends HTTPMethod> = `/${Lowercase<M>}/api`;\ntype GetRoute = Route<'GET'>; // '/get/api'\n```\n\n**Типичная ошибка:** Типы шаблонных литералов работают со строковыми объединениями, а не с произвольными строками; TypeScript разрешает все комбинации во время компиляции."
+    },
+    "tags": [
+      "template-literal-types",
+      "string-manipulation",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "typescript-q-44",
+    "topicId": "typescript",
+    "difficulty": "middle",
+    "question": {
+      "en": "Explain discriminated unions and type guards. Show how to safely narrow types in a function when working with multiple possible shapes.",
+      "ru": "Объясните дискриминированные объединения и охранители типов. Покажите, как безопасно сужать типы в функции при работе с несколькими возможными формами."
+    },
+    "answer": {
+      "en": "### Discriminated Unions and Type Guards\n\nDiscriminated unions use a common literal property (the discriminator) to distinguish between union members. Type guards like `typeof`, `instanceof`, or checking the discriminator property safely narrow union types within conditional blocks.\n\n```typescript\ntype Success = { status: 'success'; data: string };\ntype Error = { status: 'error'; message: string };\ntype Response = Success | Error;\n\nfunction handle(res: Response) {\n  if (res.status === 'success') {\n    console.log(res.data); // TypeScript knows it's Success\n  } else {\n    console.log(res.message); // TypeScript knows it's Error\n  }\n}\n```\n\n**Common interview trap:** The discriminator property must exist on all union members and have different literal values; generic types won't work as discriminators.",
+      "ru": "### Дискриминированные объединения и охранители типов\n\nДискриминированные объединения используют общее буквальное свойство (дискриминатор) для различения членов объединения. Охранители типов, такие как `typeof`, `instanceof` или проверка свойства дискриминатора, безопасно сужают типы объединения внутри условных блоков.\n\n```typescript\ntype Success = { status: 'success'; data: string };\ntype Error = { status: 'error'; message: string };\ntype Response = Success | Error;\n\nfunction handle(res: Response) {\n  if (res.status === 'success') {\n    console.log(res.data); // TypeScript знает, что это Success\n  } else {\n    console.log(res.message); // TypeScript знает, что это Error\n  }\n}\n```\n\n**Типичная ошибка:** Свойство дискриминатора должно существовать на всех членах объединения и иметь разные буквальные значения; универсальные типы не будут работать в качестве дискриминаторов."
+    },
+    "tags": [
+      "discriminated-unions",
+      "type-guards",
+      "type-narrowing"
+    ]
+  },
+  {
+    "id": "typescript-q-45",
+    "topicId": "typescript",
     "difficulty": "senior",
     "question": {
       "en": "Explain the `infer` keyword in TypeScript and demonstrate how it extracts types from complex generic structures.",
@@ -521,7 +847,7 @@
     ]
   },
   {
-    "id": "typescript-q-36",
+    "id": "typescript-q-46",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -539,7 +865,7 @@
     ]
   },
   {
-    "id": "typescript-q-37",
+    "id": "typescript-q-47",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -558,7 +884,7 @@
     ]
   },
   {
-    "id": "typescript-q-38",
+    "id": "typescript-q-48",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -576,7 +902,7 @@
     ]
   },
   {
-    "id": "typescript-q-39",
+    "id": "typescript-q-49",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -594,7 +920,7 @@
     ]
   },
   {
-    "id": "typescript-q-40",
+    "id": "typescript-q-50",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -612,7 +938,7 @@
     ]
   },
   {
-    "id": "typescript-q-41",
+    "id": "typescript-q-51",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -630,7 +956,7 @@
     ]
   },
   {
-    "id": "typescript-q-42",
+    "id": "typescript-q-52",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -648,7 +974,7 @@
     ]
   },
   {
-    "id": "typescript-q-43",
+    "id": "typescript-q-53",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -666,7 +992,7 @@
     ]
   },
   {
-    "id": "typescript-q-44",
+    "id": "typescript-q-54",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -684,7 +1010,7 @@
     ]
   },
   {
-    "id": "typescript-q-45",
+    "id": "typescript-q-55",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -702,7 +1028,7 @@
     ]
   },
   {
-    "id": "typescript-q-46",
+    "id": "typescript-q-56",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -720,513 +1046,7 @@
     ]
   },
   {
-    "id": "typescript-q-47",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Explain phantom types in TypeScript and demonstrate how they can be used to create type-safe APIs without runtime overhead.",
-      "ru": "Объясните phantom types в TypeScript и продемонстрируйте, как их использовать для создания type-safe APIs без runtime overhead."
-    },
-    "answer": {
-      "en": "### Phantom Types for Type Safety\n\nPhantom types are generic type parameters that don't appear in runtime values. They exist only at compile-time to enforce type constraints. This pattern is powerful for creating type-safe wrappers that disappear after compilation.\n\nPhantom types help track state or capabilities without adding runtime cost. You can enforce invariants like 'this value is validated' or 'this operation is authorized' purely through the type system.\n\n```typescript\ntype Brand<T, B> = T & { readonly __brand: B };\ntype ValidatedEmail = Brand<string, 'ValidatedEmail'>;\ntype UserId = Brand<number, 'UserId'>;\n\nfunction validateEmail(email: string): ValidatedEmail {\n  if (!email.includes('@')) throw new Error('Invalid');\n  return email as ValidatedEmail;\n}\n\nfunction sendEmail(to: ValidatedEmail) {\n  console.log(`Sending to ${to}`);\n}\n\nconst email = validateEmail('user@example.com');\nsendEmail(email);\n```\n\n\n**Common interview trap:** Candidates often forget that phantom types must be enforceable—the validation function must be the only way to create the branded type, otherwise the guarantee is worthless.",
-      "ru": "### Phantom Types для Type Safety\n\nPhantom types — это параметры generics, которые не появляются в runtime значениях. Они существуют только на этапе компиляции для обеспечения type constraints. Этот паттерн мощен для создания type-safe оберток без runtime издержек.\n\nPhantom types помогают отслеживать состояние или возможности без дополнительных затрат. Вы можете обеспечить инварианты типа 'это значение проверено' или 'эта операция авторизована' чисто через type system.\n\n```typescript\ntype Brand<T, B> = T & { readonly __brand: B };\ntype ValidatedEmail = Brand<string, 'ValidatedEmail'>;\ntype UserId = Brand<number, 'UserId'>;\n\nfunction validateEmail(email: string): ValidatedEmail {\n  if (!email.includes('@')) throw new Error('Invalid');\n  return email as ValidatedEmail;\n}\n\nfunction sendEmail(to: ValidatedEmail) {\n  console.log(`Sending to ${to}`);\n}\n\nconst email = validateEmail('user@example.com');\nsendEmail(email);\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты часто забывают, что phantom types должны быть обеспечены—функция валидации должна быть единственным способом создать branded type, иначе гарантия бесполезна."
-    },
-    "tags": [
-      "phantom-types",
-      "branded-types",
-      "type-safety"
-    ]
-  },
-  {
-    "id": "typescript-q-48",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "What are branded types and how do they differ from nominal typing? Create an example that prevents mixing incompatible branded values.",
-      "ru": "Что такое branded types и чем они отличаются от nominal typing? Создайте пример, который предотвращает смешивание несовместимых branded значений."
-    },
-    "answer": {
-      "en": "### Branded Types vs Nominal Typing\n\nBranded types use structural typing with a phantom property to emulate nominal typing. Unlike true nominal systems (like Java classes), TypeScript's branded types create distinct types from the same underlying type using a unique brand identifier.\n\nThe key difference: branded types are enforced only at compile-time through structural identity of the brand property, while nominal typing relies on declaration identity. This allows us to distinguish `UserId` from `PostId` even though both are numbers.\n\n```typescript\ntype UserId = number & { readonly __brand: 'UserId' };\ntype PostId = number & { readonly __brand: 'PostId' };\n\nfunction getUser(id: UserId) { return { id }; }\nfunction getPost(id: PostId) { return { id }; }\n\nconst userId = 1 as UserId;\nconst postId = 1 as PostId;\n\ngetUser(userId); // ✓\n// getUser(postId); // ✗ Type error\n\nfunction brandUserId(id: number): UserId { return id as UserId; }\n```\n\n\n**Common interview trap:** Candidates assume `as` casts are safe—but casting bypasses the protection entirely. Production code needs validation functions, not blind casts.",
-      "ru": "### Branded Types vs Nominal Typing\n\nBranded types используют structural typing с phantom property для эмуляции nominal typing. В отличие от истинных nominal систем (как Java классы), branded types в TypeScript создают различные типы из одного базового типа используя уникальный brand identifier.\n\nКлючевое отличие: branded types обеспечиваются только на compile-time через structural identity property, в то время как nominal typing полагается на declaration identity. Это позволяет различать `UserId` от `PostId` даже если оба это numbers.\n\n```typescript\ntype UserId = number & { readonly __brand: 'UserId' };\ntype PostId = number & { readonly __brand: 'PostId' };\n\nfunction getUser(id: UserId) { return { id }; }\nfunction getPost(id: PostId) { return { id }; }\n\nconst userId = 1 as UserId;\nconst postId = 1 as PostId;\n\ngetUser(userId); // ✓\n// getUser(postId); // ✗ Type error\n\nfunction brandUserId(id: number): UserId { return id as UserId; }\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты предполагают, что `as` casts безопасны—но приведение полностью обходит защиту. Production code нужны validation functions, а не blind casts."
-    },
-    "tags": [
-      "branded-types",
-      "nominal-typing",
-      "type-distinction"
-    ]
-  },
-  {
-    "id": "typescript-q-49",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Implement a type-safe builder pattern using TypeScript generics that ensures all required properties are set before calling build().",
-      "ru": "Реализуйте type-safe builder pattern используя TypeScript generics, который гарантирует, что все обязательные свойства установлены перед вызовом build()."
-    },
-    "answer": {
-      "en": "### Type-Safe Builder Pattern\n\nThe builder pattern with TypeScript can track which properties have been set at the type level. Use a boolean-indexed generic to represent the state of each property, ensuring compile-time verification that all required fields are configured before building.\n\nThis approach uses union types and conditional types to make `build()` only callable when all required properties are set. Each setter returns a new builder state with that property marked as true.\n\n```typescript\ntype Builder<T extends Record<string, any>, R extends Record<string, boolean>> = {\n  build(): R extends Record<string, true> ? T : never;\n  setName(name: string): Builder<T, R & { name: true }>;\n  setAge(age: number): Builder<T, R & { age: true }>;\n};\n\nfunction createBuilder<T>(): Builder<T, {}> {\n  const state: any = {};\n  return {\n    setName(name: string) { return createBuilder(); },\n    setAge(age: number) { return createBuilder(); },\n    build() { return state; }\n  };\n}\n\nconst builder = createBuilder();\nbuilder.setName('John').setAge(30).build(); // ✓\n// builder.build(); // ✗ Type error\n```\n\n\n**Common interview trap:** Candidates implement builders that don't actually track state in the type system, making `build()` callable before all properties are set.",
-      "ru": "### Type-Safe Builder Pattern\n\nBuilder pattern в TypeScript может отслеживать какие свойства были установлены на уровне типов. Используйте boolean-indexed generics для представления состояния каждого свойства, обеспечивая compile-time верификацию что все обязательные поля сконфигурированы перед build().\n\nЭтот подход использует union types и conditional types чтобы сделать `build()` вызываемым только когда все обязательные свойства установлены. Каждый setter возвращает новое состояние builder с этим свойством отмеченным как true.\n\n```typescript\ntype Builder<T extends Record<string, any>, R extends Record<string, boolean>> = {\n  build(): R extends Record<string, true> ? T : never;\n  setName(name: string): Builder<T, R & { name: true }>;\n  setAge(age: number): Builder<T, R & { age: true }>;\n};\n\nfunction createBuilder<T>(): Builder<T, {}> {\n  const state: any = {};\n  return {\n    setName(name: string) { return createBuilder(); },\n    setAge(age: number) { return createBuilder(); },\n    build() { return state; }\n  };\n}\n\nconst builder = createBuilder();\nbuilder.setName('John').setAge(30).build(); // ✓\n// builder.build(); // ✗ Type error\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты реализуют builders которые не отслеживают состояние в type system, делая `build()` вызываемым до того как все свойства установлены."
-    },
-    "tags": [
-      "builder-pattern",
-      "generics",
-      "state-tracking"
-    ]
-  },
-  {
-    "id": "typescript-q-50",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Explain exhaustiveness checking in TypeScript. How can you ensure at compile-time that all cases in a union type are handled?",
-      "ru": "Объясните exhaustiveness checking в TypeScript. Как гарантировать на compile-time что все cases в union type обработаны?"
-    },
-    "answer": {
-      "en": "### Exhaustiveness Checking\n\nExhaustiveness checking ensures every variant of a union type is handled. Use the never type pattern: assign unhandled cases to a variable of type `never`, forcing a compile-time error if any case is missing.\n\nThis technique works because if all union members are handled, the remaining type is `never`. If a new union member is added later, TypeScript will catch the missing handler immediately.\n\n```typescript\ntype Status = 'pending' | 'success' | 'error';\n\nfunction handleStatus(status: Status): string {\n  switch (status) {\n    case 'pending':\n      return 'Waiting...';\n    case 'success':\n      return 'Done!';\n    case 'error':\n      return 'Failed!'\n    default:\n      const _exhaustive: never = status;\n      return _exhaustive;\n  }\n}\n\ntype Result<T> = { type: 'ok'; data: T } | { type: 'err'; error: string };\n\nfunction processResult<T>(r: Result<T>) {\n  switch (r.type) {\n    case 'ok': return r.data;\n    case 'err': return null;\n    default:\n      const _: never = r;\n  }\n}\n```\n\n\n**Common interview trap:** Candidates forget the `default` branch—without it, new union members won't trigger compilation errors because they fall through silently.",
-      "ru": "### Exhaustiveness Checking\n\nExhaustiveness checking гарантирует что каждый вариант union type обработан. Используйте never type pattern: присвойте необработанные cases переменной типа `never`, заставляя compile-time error если какой-то case отсутствует.\n\nЭта техника работает потому что если все union members обработаны, оставшийся тип это `never`. Если новый union member добавлен позже, TypeScript сразу поймает отсутствующий handler.\n\n```typescript\ntype Status = 'pending' | 'success' | 'error';\n\nfunction handleStatus(status: Status): string {\n  switch (status) {\n    case 'pending':\n      return 'Waiting...';\n    case 'success':\n      return 'Done!';\n    case 'error':\n      return 'Failed!';\n    default:\n      const _exhaustive: never = status;\n      return _exhaustive;\n  }\n}\n\ntype Result<T> = { type: 'ok'; data: T } | { type: 'err'; error: string };\n\nfunction processResult<T>(r: Result<T>) {\n  switch (r.type) {\n    case 'ok': return r.data;\n    case 'err': return null;\n    default:\n      const _: never = r;\n  }\n}\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают `default` branch—без него новые union members не вызовут compilation errors потому что они pass through молча."
-    },
-    "tags": [
-      "exhaustiveness-checking",
-      "union-types",
-      "never-type"
-    ]
-  },
-  {
-    "id": "typescript-q-51",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Demonstrate advanced infer patterns in TypeScript. Show how to extract and transform nested type information using conditional types.",
-      "ru": "Продемонстрируйте advanced infer patterns в TypeScript. Покажите как извлекать и трансформировать nested type information используя conditional types."
-    },
-    "answer": {
-      "en": "### Advanced Infer Patterns\n\nThe `infer` keyword in conditional types allows pattern matching on types. You can extract parts of complex types and use them in the result. This enables powerful type transformations without runtime overhead.\n\nInfer works left-to-right and is greedy by default. You can use multiple infers to destructure nested structures, including function signatures, array elements, and promise values.\n\n```typescript\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype FlattenDeep<T> = T extends Array<infer U> \n  ? FlattenDeep<U> \n  : T;\n\ntype Params<T> = T extends (...args: infer P) => any ? P : never;\ntype ReturnType<T> = T extends (...args: any) => infer R ? R : never;\n\ntype Awaited<T> = T extends Promise<infer U> ? U : T;\n\nfunction fn(x: string, y: number): boolean { return true; }\ntype FnParams = Params<typeof fn>; // [string, number]\ntype FnReturn = ReturnType<typeof fn>; // boolean\ntype Unwrapped = Awaited<Promise<string>>; // string\n```\n\n\n**Common interview trap:** Candidates use `infer` in simple cases but struggle when nesting multiple infers or dealing with distributive conditional types in unions.",
-      "ru": "### Advanced Infer Patterns\n\nКлючевое слово `infer` в conditional types позволяет pattern matching на типах. Вы можете извлекать части сложных типов и использовать их в результате. Это позволяет мощные type transformations без runtime overhead.\n\nInfer работает слева-направо и жадно по умолчанию. Вы можете использовать множественные infers для destructuring nested структур, включая function signatures, array elements, и promise values.\n\n```typescript\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype FlattenDeep<T> = T extends Array<infer U> \n  ? FlattenDeep<U> \n  : T;\n\ntype Params<T> = T extends (...args: infer P) => any ? P : never;\ntype ReturnType<T> = T extends (...args: any) => infer R ? R : never;\n\ntype Awaited<T> = T extends Promise<infer U> ? U : T;\n\nfunction fn(x: string, y: number): boolean { return true; }\ntype FnParams = Params<typeof fn>; // [string, number]\ntype FnReturn = ReturnType<typeof fn>; // boolean\ntype Unwrapped = Awaited<Promise<string>>; // string\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты используют `infer` в простых cases но борются когда nesting множественные infers или dealing с distributive conditional types в unions."
-    },
-    "tags": [
-      "infer-keyword",
-      "conditional-types",
-      "type-extraction"
-    ]
-  },
-  {
-    "id": "typescript-q-52",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "What is type-level programming? Explain how to perform computations at the type level and provide an example of a recursive type utility.",
-      "ru": "Что такое type-level programming? Объясните как выполнять вычисления на уровне типов и дайте пример recursive type utility."
-    },
-    "answer": {
-      "en": "### Type-Level Programming\n\nType-level programming uses TypeScript's type system as a computational language. You write logic that executes during type checking, not at runtime. This enables powerful abstractions like tuple length calculations, recursive transformations, and compile-time validations.\n\nRecursive types allow types to reference themselves, enabling iteration over structures. Combined with conditional types and infer, they create sophisticated type utilities that would require runtime code in other languages.\n\n```typescript\ntype Length<T extends any[]> = T extends { length: infer L } ? L : never;\n\ntype Repeat<T, N extends number, A extends any[] = []> = \n  A['length'] extends N ? A : Repeat<T, N, [...A, T]>;\n\ntype Add<A extends number, B extends number> = \n  [...Repeat<1, A>, ...Repeat<1, B>]['length'];\n\ntype DeepReadonly<T> = T extends object \n  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }\n  : T;\n\ntype Three = Add<1, 2>; // 3\ntype ReadonlyConfig = DeepReadonly<{ a: { b: number } }>;\n```\n\n\n**Common interview trap:** Candidates struggle with the difference between type computation and runtime computation—type-level programs are limited by TypeScript's type system constraints, not execution environment.",
-      "ru": "### Type-Level Programming\n\nType-level programming использует type system TypeScript как computational language. Вы пишете логику которая выполняется во время type checking, не в runtime. Это позволяет мощные abstractions как tuple length calculations, recursive transformations, и compile-time validations.\n\nRecursive types позволяют типам ссылаться на себя, enabling iteration over structures. Combined с conditional types и infer, они создают sophisticated type utilities которые требовали бы runtime code в других языках.\n\n```typescript\ntype Length<T extends any[]> = T extends { length: infer L } ? L : never;\n\ntype Repeat<T, N extends number, A extends any[] = []> = \n  A['length'] extends N ? A : Repeat<T, N, [...A, T]>;\n\ntype Add<A extends number, B extends number> = \n  [...Repeat<1, A>, ...Repeat<1, B>]['length'];\n\ntype DeepReadonly<T> = T extends object \n  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }\n  : T;\n\ntype Three = Add<1, 2>; // 3\ntype ReadonlyConfig = DeepReadonly<{ a: { b: number } }>;\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты борются с разницей между type computation и runtime computation—type-level programs ограничены constraints типа system TypeScript, не execution environment."
-    },
-    "tags": [
-      "type-level-programming",
-      "recursive-types",
-      "type-utilities"
-    ]
-  },
-  {
-    "id": "typescript-q-53",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Explain the TypeScript Compiler API basics. How can you programmatically parse and analyze TypeScript code?",
-      "ru": "Объясните основы TypeScript Compiler API. Как вы можете программно парсить и анализировать TypeScript код?"
-    },
-    "answer": {
-      "en": "### TypeScript Compiler API Basics\n\nThe TypeScript Compiler API allows programmatic access to parsing, type-checking, and AST manipulation. Use `createSourceFile()` to parse code into an Abstract Syntax Tree (AST), then traverse it with visitors to analyze or transform nodes.\n\nThe API exposes syntax kinds, symbols, and type information, enabling tools like linters, code generators, and refactoring engines. You can walk the AST recursively or use built-in utilities like `forEachChild()` for traversal.\n\n```typescript\nimport ts from 'typescript';\n\nconst code = `const x: number = 42;`;\nconst sourceFile = ts.createSourceFile(\n  'test.ts',\n  code,\n  ts.ScriptTarget.Latest,\n  true\n);\n\nfunction visit(node: ts.Node) {\n  console.log(ts.SyntaxKind[node.kind]);\n  ts.forEachChild(node, visit);\n}\n\nvisit(sourceFile);\n\nconst compilerHost: ts.CompilerHost = {\n  getSourceFile: (filename) => sourceFile,\n  getDefaultLibFileName: () => 'lib.d.ts',\n  writeFile: () => {},\n  getCurrentDirectory: () => '',\n  getDirectories: () => [],\n  fileExists: () => true,\n  readFile: () => '',\n  getCanonicalFileName: (f) => f,\n  useCaseSensitiveFileNames: () => true,\n  getNewLine: () => '\\n'\n};\n```\n\n\n**Common interview trap:** Candidates confuse the Compiler API with transpilation—the API primarily reads and analyzes, not transpiles. Use the `emit()` function for actual transpilation.",
-      "ru": "### TypeScript Compiler API Basics\n\nTypeScript Compiler API обеспечивает программный доступ к parsing, type-checking, и AST manipulation. Используйте `createSourceFile()` для парсинга кода в Abstract Syntax Tree (AST), затем traverse его с visitors для анализа или трансформации nodes.\n\nAPI exposing syntax kinds, symbols, и type information, enabling tools как linters, code generators, и refactoring engines. Вы можете walk AST recursively или использовать built-in utilities как `forEachChild()` для traversal.\n\n```typescript\nimport ts from 'typescript';\n\nconst code = `const x: number = 42;`;\nconst sourceFile = ts.createSourceFile(\n  'test.ts',\n  code,\n  ts.ScriptTarget.Latest,\n  true\n);\n\nfunction visit(node: ts.Node) {\n  console.log(ts.SyntaxKind[node.kind]);\n  ts.forEachChild(node, visit);\n}\n\nvisit(sourceFile);\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты путают Compiler API с transpilation—API primarily reads и analyzes, не transpiles. Используйте `emit()` function для actual transpilation."
-    },
-    "tags": [
-      "compiler-api",
-      "ast-parsing",
-      "programmatic-analysis"
-    ]
-  },
-  {
-    "id": "typescript-q-54",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Create a type-safe configuration system using branded types and builders that validates structure at compile-time.",
-      "ru": "Создайте type-safe систему конфигурации используя branded types и builders которая валидирует структуру на compile-time."
-    },
-    "answer": {
-      "en": "### Type-Safe Configuration System\n\nCombine branded types with builders to create configurations that enforce both structure and validation rules at compile-time. Each step returns a more specific type, preventing incomplete or invalid configurations from being used.\n\nThis pattern uses type predicates and exhaustiveness checking to ensure only valid configurations reach runtime. The brand serves as proof that validation occurred.\n\n```typescript\ntype Validated<T> = T & { readonly __validated: true };\n\ninterface ConfigInput {\n  host: string;\n  port: number;\n  ssl: boolean;\n}\n\ntype ValidConfig = Validated<ConfigInput>;\n\nclass ConfigBuilder {\n  private config: Partial<ConfigInput> = {};\n  \n  setHost(h: string): this { this.config.host = h; return this; }\n  setPort(p: number): this { this.config.port = p; return this; }\n  setSSL(s: boolean): this { this.config.ssl = s; return this; }\n  \n  build(): ValidConfig {\n    const required: (keyof ConfigInput)[] = ['host', 'port', 'ssl'];\n    for (const key of required) {\n      if (!(key in this.config)) throw new Error(`Missing ${key}`);\n    }\n    return this.config as ValidConfig;\n  }\n}\n\nconst config = new ConfigBuilder()\n  .setHost('localhost')\n  .setPort(3000)\n  .setSSL(true)\n  .build();\n```\n\n\n**Common interview trap:** Candidates create branded types but don't enforce that only validated configs are accepted in functions—the brand must be checked in function signatures.",
-      "ru": "### Type-Safe Configuration System\n\nCombine branded types с builders для создания configurations которые enforce структуру и validation rules на compile-time. Каждый step возвращает более специфичный тип, preventing incomplete или invalid configurations от использования.\n\nЭтот паттерн использует type predicates и exhaustiveness checking чтобы гарантировать что только valid configurations достигают runtime. Brand служит как proof что validation occurred.\n\n```typescript\ntype Validated<T> = T & { readonly __validated: true };\n\ninterface ConfigInput {\n  host: string;\n  port: number;\n  ssl: boolean;\n}\n\ntype ValidConfig = Validated<ConfigInput>;\n\nclass ConfigBuilder {\n  private config: Partial<ConfigInput> = {};\n  \n  setHost(h: string): this { this.config.host = h; return this; }\n  setPort(p: number): this { this.config.port = p; return this; }\n  setSSL(s: boolean): this { this.config.ssl = s; return this; }\n  \n  build(): ValidConfig {\n    const required: (keyof ConfigInput)[] = ['host', 'port', 'ssl'];\n    for (const key of required) {\n      if (!(key in this.config)) throw new Error(`Missing ${key}`);\n    }\n    return this.config as ValidConfig;\n  }\n}\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты создают branded types но не enforce что только validated configs accepted в functions—brand должен быть checked в function signatures."
-    },
-    "tags": [
-      "branded-types",
-      "builder-pattern",
-      "validation"
-    ]
-  },
-  {
-    "id": "typescript-q-55",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Explain how distributive conditional types work in TypeScript. How does applying a conditional type to a union differ from a single type?",
-      "ru": "Объясните как работают distributive conditional types в TypeScript. Чем отличается применение conditional type к union от single type?"
-    },
-    "answer": {
-      "en": "### Distributive Conditional Types\n\nWhen a conditional type is applied to a union, TypeScript automatically distributes it across each union member. This means `T extends U ? X : Y` applied to `A | B` results in `(A extends U ? X : Y) | (B extends U ? X : Y)`, not the conditional applied to the entire union.\n\nDistribution is automatic for conditional types in type parameters. Wrap the conditional in an array to prevent distribution if you need to treat the union as a single entity.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype Result1 = IsString<string | number>; // true | false (distributed)\n\ntype IsStringArray<T> = T extends string ? true : false;\ntype NoDistribute<T> = [T] extends [string] ? true : false;\ntype Result2 = NoDistribute<string | number>; // false (not distributed)\n\ntype Exclude<T, U> = T extends U ? never : T;\ntype Without = Exclude<'a' | 'b' | 'c', 'b'>; // 'a' | 'c'\n\ntype Filter<T, U> = T extends U ? T : never;\ntype OnlyStrings = Filter<string | number | boolean, string>; // string\n```\n\n\n**Common interview trap:** Candidates don't realize distribution happens by default—they expect `never` but get `true | false` from distributive conditionals applied to unions.",
-      "ru": "### Distributive Conditional Types\n\nКогда conditional type применяется к union, TypeScript автоматически распределяет его через каждый union member. Это означает `T extends U ? X : Y` применено к `A | B` результирует `(A extends U ? X : Y) | (B extends U ? X : Y)`, не conditional применный ко всему union.\n\nDistribution автоматическое для conditional types в type parameters. Wrap conditional в array для prevent distribution если вам нужно treat union как single entity.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype Result1 = IsString<string | number>; // true | false (distributed)\n\ntype NoDistribute<T> = [T] extends [string] ? true : false;\ntype Result2 = NoDistribute<string | number>; // false (not distributed)\n\ntype Exclude<T, U> = T extends U ? never : T;\ntype Without = Exclude<'a' | 'b' | 'c', 'b'>; // 'a' | 'c'\n\ntype Filter<T, U> = T extends U ? T : never;\ntype OnlyStrings = Filter<string | number | boolean, string>; // string\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты не осознают что distribution happens by default—они ожидают `never` но получают `true | false` от distributive conditionals применные к unions."
-    },
-    "tags": [
-      "distributive-conditional-types",
-      "union-types",
-      "conditional-types"
-    ]
-  },
-  {
-    "id": "typescript-q-56",
-    "topicId": "typescript",
-    "difficulty": "advanced",
-    "question": {
-      "en": "Design a type-safe event emitter using generics and conditional types that enforces correct event names and payload types.",
-      "ru": "Разработайте type-safe event emitter используя generics и conditional types который enforces корректные event names и payload types."
-    },
-    "answer": {
-      "en": "### Type-Safe Event Emitter\n\nA type-safe event emitter uses mapped types and conditional types to ensure listeners match event signatures. Define an event map as a type, then use it to validate both `emit()` and `on()` operations at compile-time.\n\nThe key is mapping event names to payloads, then using function overloads or conditional logic to extract the correct payload type for each event. This prevents listeners from receiving unexpected data.\n\n```typescript\ntype EventMap = {\n  user_login: { userId: number };\n  user_logout: { timestamp: number };\n  message: { text: string; author: string };\n};\n\nclass EventEmitter<Events extends Record<string, any>> {\n  private listeners: Map<string, Set<Function>> = new Map();\n  \n  on<K extends keyof Events>(\n    event: K,\n    listener: (payload: Events[K]) => void\n  ): void {\n    if (!this.listeners.has(event as string)) {\n      this.listeners.set(event as string, new Set());\n    }\n    this.listeners.get(event as string)!.add(listener);\n  }\n  \n  emit<K extends keyof Events>(event: K, payload: Events[K]): void {\n    this.listeners.get(event as string)?.forEach(l => l(payload));\n  }\n}\n\nconst emitter = new EventEmitter<EventMap>();\nemitter.on('user_login', (p) => console.log(p.userId)); // ✓\n// emitter.on('user_login', (p) => p.text); // ✗ Property 'text' doesn't exist\n```\n\n\n**Common interview trap:** Candidates forget to use generics in the method signatures—without `<K extends keyof Events>`, the payload type becomes `any` and type safety is lost.",
-      "ru": "### Type-Safe Event Emitter\n\nType-safe event emitter использует mapped types и conditional types для обеспечения что listeners match event signatures. Define event map как type, затем используйте его для валидации обоих `emit()` и `on()` операций на compile-time.\n\nКлюч это mapping event names к payloads, затем используя function overloads или conditional logic для extract корректного payload type для каждого event. Это prevents listeners от receiving unexpected data.\n\n```typescript\ntype EventMap = {\n  user_login: { userId: number };\n  user_logout: { timestamp: number };\n  message: { text: string; author: string };\n};\n\nclass EventEmitter<Events extends Record<string, any>> {\n  private listeners: Map<string, Set<Function>> = new Map();\n  \n  on<K extends keyof Events>(\n    event: K,\n    listener: (payload: Events[K]) => void\n  ): void {\n    if (!this.listeners.has(event as string)) {\n      this.listeners.set(event as string, new Set());\n    }\n    this.listeners.get(event as string)!.add(listener);\n  }\n  \n  emit<K extends keyof Events>(event: K, payload: Events[K]): void {\n    this.listeners.get(event as string)?.forEach(l => l(payload));\n  }\n}\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают использовать generics в method signatures—без `<K extends keyof Events>`, payload type становится `any` и type safety теряется."
-    },
-    "tags": [
-      "generic-events",
-      "mapped-types",
-      "type-safety"
-    ]
-  },
-  {
-    "id": "typescript-q-49",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What is the difference between `type` and `interface` in TypeScript, and when would you use each one?",
-      "ru": "В чём разница между `type` и `interface` в TypeScript и когда использовать каждый?"
-    },
-    "answer": {
-      "en": "### Types vs Interfaces\n\n`interface` is designed for object shapes and supports declaration merging, while `type` is more flexible and can represent unions, primitives, and tuples. Use `interface` for class contracts and object definitions, `type` for unions and complex shapes.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype ID = string | number;\ntype Config = { debug: boolean } & User;\n```\n\n**Common interview trap:** Both can represent objects similarly, but only `type` supports union types and only `interface` supports declaration merging.",
-      "ru": "### Types vs Interfaces\n\n`interface` предназначен для объектов и поддерживает объединение объявлений, а `type` более гибкий и может представлять объединения, примитивы и кортежи. Используйте `interface` для контрактов классов, `type` для объединений.\n\n```typescript\ninterface User {\n  name: string;\n  age: number;\n}\n\ntype ID = string | number;\ntype Config = { debug: boolean } & User;\n```\n\n**Типичная ошибка:** Оба могут представлять объекты, но только `type` поддерживает union типы и только `interface` поддерживает объединение объявлений."
-    },
-    "tags": [
-      "type-vs-interface",
-      "object-definitions"
-    ]
-  },
-  {
-    "id": "typescript-q-50",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "Explain what optional chaining (`?.`) does and provide an example where it prevents runtime errors.",
-      "ru": "Объясните, что делает опциональная цепочка (`?.`) и приведите пример, где она предотвращает ошибки во время выполнения."
-    },
-    "answer": {
-      "en": "### Optional Chaining\n\nOptional chaining (`?.`) safely accesses nested properties without throwing an error if an intermediate value is `null` or `undefined`. It returns `undefined` if the chain breaks, preventing \"Cannot read property of undefined\" errors.\n\n```typescript\nconst user = { profile: { name: 'John' } };\nconst city = user?.profile?.address?.city; // undefined, no error\n\nconst age = user.profile?.age?.years; // undefined, safe access\n```\n\n**Common interview trap:** Optional chaining doesn't throw errors—it returns `undefined` and continues execution safely.",
-      "ru": "### Опциональная цепочка\n\nОпциональная цепочка (`?.`) безопасно обращается к вложенным свойствам без ошибки, если промежуточное значение `null` или `undefined`. Она возвращает `undefined`, если цепь прерывается.\n\n```typescript\nconst user = { profile: { name: 'John' } };\nconst city = user?.profile?.address?.city; // undefined, без ошибки\n\nconst age = user.profile?.age?.years; // undefined, безопасно\n```\n\n**Типичная ошибка:** Опциональная цепочка не выбрасывает ошибки — она возвращает `undefined` и продолжает выполнение."
-    },
-    "tags": [
-      "optional-chaining",
-      "null-safety"
-    ]
-  },
-  {
-    "id": "typescript-q-51",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are generics in TypeScript and how do you use them to create reusable components?",
-      "ru": "Что такое дженерики в TypeScript и как их использовать для создания переиспользуемых компонентов?"
-    },
-    "answer": {
-      "en": "### Generics Basics\n\nGenerics allow you to write flexible, type-safe code that works with multiple types by using type parameters. They're defined with angle brackets and enable reusable functions and classes without sacrificing type safety.\n\n```typescript\nfunction identity<T>(value: T): T {\n  return value;\n}\n\ninterface Container<T> {\n  item: T;\n  getItem(): T;\n}\n\nconst result = identity<string>('hello');\n```\n\n**Common interview trap:** Thinking generics enable runtime type checking. Generics are completely erased at compilation — `T` does not exist in the emitted JavaScript. This means you cannot write `value instanceof T` inside a generic function; `T` is invisible at runtime. Runtime type checking always requires concrete types or runtime values.",
-      "ru": "### Основы дженериков\n\nДженерики позволяют писать гибкий, типобезопасный код, работающий с несколькими типами через параметры типов. Они определяются с углыми скобками и позволяют создавать переиспользуемые функции и классы.\n\n```typescript\nfunction identity<T>(value: T): T {\n  return value;\n}\n\ninterface Container<T> {\n  item: T;\n  getItem(): T;\n}\n\nconst result = identity<string>('hello');\n```\n\n**Типичная ошибка на интервью:** Думать, что дженерики позволяют проверять типы во время выполнения. Дженерики полностью стираются при компиляции — `T` не существует в JavaScript. Это означает, что внутри дженерик-функции нельзя написать `value instanceof T`; `T` невидим в runtime. Проверка типов во время выполнения всегда требует конкретных типов или runtime-значений."
-    },
-    "tags": [
-      "generics",
-      "reusable-components",
-      "type-parameters"
-    ]
-  },
-  {
-    "id": "typescript-q-52",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "Describe the difference between `Partial<T>` and `Required<T>` utility types and when to use them.",
-      "ru": "Опишите разницу между утилит-типами `Partial<T>` и `Required<T>` и когда их использовать."
-    },
-    "answer": {
-      "en": "### Partial vs Required\n\n`Partial<T>` makes all properties optional, useful for partial updates. `Required<T>` makes all properties mandatory, useful for ensuring complete objects. Both are utility types that modify existing types.\n\n```typescript\ninterface User {\n  name: string;\n  email?: string;\n}\n\ntype PartialUser = Partial<User>; // both optional\ntype CompleteUser = Required<User>; // both required\n\nconst update: PartialUser = { name: 'John' };\n```\n\n**Common interview trap:** Confusing `Partial<T>` with a deep partial. `Partial<T>` only makes top-level properties optional — nested required properties remain required within their own structure. If `User` has `address: { city: string }`, then `Partial<User>` gives `address?: { city: string }`: `address` is optional, but if provided, `city` is still required inside it.",
-      "ru": "### Partial vs Required\n\n`Partial<T>` делает все свойства опциональными, полезно для частичных обновлений. `Required<T>` делает все свойства обязательными, полезно для полных объектов. Оба — утилит-типы для модификации типов.\n\n```typescript\ninterface User {\n  name: string;\n  email?: string;\n}\n\ntype PartialUser = Partial<User>; // оба опциональны\ntype CompleteUser = Required<User>; // оба обязательны\n\nconst update: PartialUser = { name: 'John' };\n```\n\n**Типичная ошибка на интервью:** Путаница между `Partial<T>` и глубоким Partial. `Partial<T>` делает опциональными только свойства верхнего уровня — вложенные обязательные свойства остаются обязательными внутри своей структуры. Если у `User` есть `address: { city: string }`, то `Partial<User>` даст `address?: { city: string }`: `address` опционален, но если указан, `city` внутри по-прежнему обязателен."
-    },
-    "tags": [
-      "utility-types",
-      "Partial",
-      "Required",
-      "type-modifiers"
-    ]
-  },
-  {
-    "id": "typescript-q-53",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are enums in TypeScript and what is the difference between string and numeric enums?",
-      "ru": "Что такое enums в TypeScript и какая разница между строковыми и числовыми перечислениями?"
-    },
-    "answer": {
-      "en": "### Enums Overview\n\nEnums define a set of named constants that can be numeric or string-based. Numeric enums auto-increment by default, while string enums require explicit values. String enums are more readable and debuggable.\n\n```typescript\nenum Direction { Up = 0, Down = 1, Left = 2, Right = 3 }\nenum Status { Active = 'ACTIVE', Inactive = 'INACTIVE' }\n\nconst dir: Direction = Direction.Up;\nconst status: Status = Status.Active;\n```\n\n**Common interview trap:** Numeric enums are compiled to objects with reverse mappings; string enums don't have this overhead and are preferred for clarity.",
-      "ru": "### Обзор Enums\n\nEnums определяют набор именованных констант, которые могут быть числовыми или строковыми. Числовые перечисления автоматически увеличиваются, строковые требуют явных значений. Строковые более понятны.\n\n```typescript\nenum Direction { Up = 0, Down = 1, Left = 2, Right = 3 }\nenum Status { Active = 'ACTIVE', Inactive = 'INACTIVE' }\n\nconst dir: Direction = Direction.Up;\nconst status: Status = Status.Active;\n```\n\n**Типичная ошибка:** Числовые enums компилируются в объекты с обратными отображениями; строковые этого не имеют и предпочтительнее для ясности."
-    },
-    "tags": [
-      "enums",
-      "numeric-enums",
-      "string-enums",
-      "constants"
-    ]
-  },
-  {
-    "id": "typescript-q-54",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What is the difference between `interface` and `type` in TypeScript? When would you use one over the other?",
-      "ru": "В чем разница между `interface` и `type` в TypeScript? Когда использовать один вместо другого?"
-    },
-    "answer": {
-      "en": "### Interface vs Type\n\nInterfaces are designed for object shapes and support declaration merging, while types are more flexible and can represent any shape including unions and primitives. Use interfaces for public APIs and class contracts, types for everything else.\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n} // merges to { name, age }\n\ntype Admin = User & { role: 'admin' };\ntype Status = 'active' | 'inactive';\n```\n\n**Common interview trap:** Thinking they're interchangeable—declaration merging only works with interfaces.",
-      "ru": "### Interface vs Type\n\nИнтерфейсы предназначены для описания объектов и поддерживают объединение объявлений, а типы более гибкие и могут представлять объединения и примитивы. Используйте интерфейсы для публичных API и контрактов классов, типы для всего остального.\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n} // объединяется в { name, age }\n\ntype Admin = User & { role: 'admin' };\ntype Status = 'active' | 'inactive';\n```\n\n**Типичная ошибка:** Думать, что они полностью взаимозаменяемы—объединение работает только с интерфейсами."
-    },
-    "tags": [
-      "interfaces",
-      "types",
-      "declaration-merging"
-    ]
-  },
-  {
-    "id": "typescript-q-55",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "Explain what optional chaining (`?.`) does and show an example where it prevents runtime errors compared to standard property access.",
-      "ru": "Объясните, что делает опциональная цепочка (`?.`) и покажите пример, где она предотвращает ошибки времени выполнения по сравнению со стандартным доступом к свойствам."
-    },
-    "answer": {
-      "en": "### Optional Chaining\n\nOptional chaining (`?.`) safely accesses nested properties and returns `undefined` if any intermediate value is `null` or `undefined`, preventing \"Cannot read property of null\" errors. It short-circuits evaluation immediately.\n\n```typescript\nconst user = { profile: null };\n\n// Without optional chaining - throws error\nconst city = user.profile.address.city; // TypeError!\n\n// With optional chaining - returns undefined\nconst city = user.profile?.address?.city; // undefined\n```\n\n**Common interview trap:** Confusing it with nullish coalescing (`??`)—optional chaining accesses, coalescing provides defaults.",
-      "ru": "### Optional Chaining\n\nОпциональная цепочка (`?.`) безопасно обращается к вложенным свойствам и возвращает `undefined`, если любое промежуточное значение равно `null` или `undefined`, предотвращая ошибки \"Cannot read property of null\". Она сразу же прерывает вычисление.\n\n```typescript\nconst user = { profile: null };\n\n// Без опциональной цепочки - выбрасывает ошибку\nconst city = user.profile.address.city; // TypeError!\n\n// С опциональной цепочкой - возвращает undefined\nconst city = user.profile?.address?.city; // undefined\n```\n\n**Типичная ошибка:** Путать с объединением Nullish (`??`)—опциональная цепочка обращается, объединение задает значения по умолчанию."
-    },
-    "tags": [
-      "optional-chaining",
-      "nullish-values",
-      "error-prevention"
-    ]
-  },
-  {
-    "id": "typescript-q-56",
-    "topicId": "typescript",
-    "difficulty": "junior",
-    "question": {
-      "en": "What are utility types like `Partial`, `Required`, `Pick`, and `Omit`? Provide a practical example of when you'd use each.",
-      "ru": "Что такое утилитарные типы как `Partial`, `Required`, `Pick` и `Omit`? Приведите практический пример того, когда вы бы использовали каждый."
-    },
-    "answer": {
-      "en": "### Utility Types\n\nUtility types transform existing types into new ones: `Partial` makes all properties optional, `Required` makes them required, `Pick` selects specific properties, and `Omit` excludes properties. They reduce code duplication in common patterns.\n\n```typescript\ntype User = { name: string; email: string; age: number };\n\ntype PartialUser = Partial<User>; // all optional\ntype UpdateUser = Required<Partial<User>>; // explicitly required again\ntype UserPreview = Pick<User, 'name' | 'email'>; // only name and email\ntype UserWithoutEmail = Omit<User, 'email'>; // everything except email\n```\n\n**Common interview trap:** Using `Partial` when you need `Pick`—they solve different problems.",
-      "ru": "### Утилитарные типы\n\nУтилитарные типы преобразуют существующие типы в новые: `Partial` делает все свойства опциональными, `Required` делает их обязательными, `Pick` выбирает определенные свойства, а `Omit` исключает свойства. Они уменьшают дублирование кода в типичных паттернах.\n\n```typescript\ntype User = { name: string; email: string; age: number };\n\ntype PartialUser = Partial<User>; // все опциональны\ntype UpdateUser = Required<Partial<User>>; // явно требуется снова\ntype UserPreview = Pick<User, 'name' | 'email'>; // только name и email\ntype UserWithoutEmail = Omit<User, 'email'>; // всё кроме email\n```\n\n**Типичная ошибка:** Использовать `Partial` вместо `Pick`—они решают разные задачи."
-    },
-    "tags": [
-      "utility-types",
-      "Partial",
-      "Required",
-      "Pick",
-      "Omit",
-      "type-composition"
-    ]
-  },
-  {
     "id": "typescript-q-57",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain generic constraints in TypeScript. How would you constrain a generic type to only accept objects with a specific property?",
-      "ru": "Объясните ограничения генериков в TypeScript. Как вы ограничили бы универсальный тип, чтобы он принимал только объекты с определённым свойством?"
-    },
-    "answer": {
-      "en": "### Generic Constraints with extends\n\nGeneric constraints limit which types can be passed to a generic using the `extends` keyword. This ensures type safety by guaranteeing certain properties exist.\n\n```typescript\ninterface HasId { id: number; }\n\nfunction getId<T extends HasId>(obj: T): number {\n  return obj.id;\n}\n\ngetId({ id: 1, name: 'John' }); // ✓\ngetId({ name: 'John' }); // ✗ Error: missing id\n```\n\n**Common interview trap:** Adding a generic when a plain parameter type would do. `function getId<T extends HasId>(obj: T)` and `function getId(obj: HasId)` differ: the generic version preserves the full caller type `T` in the return value, while the plain version loses it. Use a generic only when the return type or another parameter needs to reference `T`; otherwise a concrete constraint type is simpler and equally type-safe.",
-      "ru": "### Ограничения генериков с extends\n\nОграничения генериков ограничивают, какие типы могут быть переданы универсальному типу, используя ключевое слово `extends`. Это гарантирует наличие определённых свойств.\n\n```typescript\ninterface HasId { id: number; }\n\nfunction getId<T extends HasId>(obj: T): number {\n  return obj.id;\n}\n\ngetId({ id: 1, name: 'John' }); // ✓\ngetId({ name: 'John' }); // ✗ Error: missing id\n```\n\n**Типичная ошибка на интервью:** Добавление generic там, где подошёл бы обычный параметр типа. `function getId<T extends HasId>(obj: T)` и `function getId(obj: HasId)` отличаются: generic-версия сохраняет полный тип `T` вызывающего в возвращаемом значении, простая — теряет его. Используйте generic только когда возвращаемый тип или другой параметр должны ссылаться на `T`; иначе конкретный тип-constraint проще и столь же безопасен."
-    },
-    "tags": [
-      "generic-constraints",
-      "type-safety"
-    ]
-  },
-  {
-    "id": "typescript-q-58",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "What are conditional types and how would you use them to create a type that returns different types based on input?",
-      "ru": "Что такое условные типы и как вы использовали бы их для создания типа, который возвращает разные типы в зависимости от входных данных?"
-    },
-    "answer": {
-      "en": "### Conditional Types with Ternary\n\nConditional types use a ternary syntax to return different types based on a condition. They're useful for creating flexible, dependent type relationships.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Str = Flatten<string[]>; // string\n```\n\n**Common interview trap:** Not understanding that `infer` captures type variables in conditional branches.",
-      "ru": "### Условные типы с тернарной операцией\n\nУсловные типы используют синтаксис тернарной операции для возврата разных типов на основе условия. Они полезны для создания гибких зависимых отношений типов.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Str = Flatten<string[]>; // string\n```\n\n**Типичная ошибка:** Непонимание того, что `infer` захватывает переменные типа в условных ветвях."
-    },
-    "tags": [
-      "conditional-types",
-      "infer-keyword",
-      "type-transformation"
-    ]
-  },
-  {
-    "id": "typescript-q-59",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "How do mapped types work? Create a mapped type that converts all properties of an object to readonly versions.",
-      "ru": "Как работают отображаемые типы? Создайте отображаемый тип, который преобразует все свойства объекта в версии readonly."
-    },
-    "answer": {
-      "en": "### Mapped Types with in keyof\n\nMapped types iterate over object properties using `in keyof` and transform each property. They're essential for bulk type transformations.\n\n```typescript\ntype ReadonlyVersion<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ninterface User { name: string; age: number; }\ntype ReadonlyUser = ReadonlyVersion<User>;\n// { readonly name: string; readonly age: number; }\n\nconst user: ReadonlyUser = { name: 'John', age: 30 };\nuser.name = 'Jane'; // ✗ Error\n```\n\n**Common interview trap:** Confusing mapped types with conditional types; they solve different problems.",
-      "ru": "### Отображаемые типы с in keyof\n\nОтображаемые типы проходят по свойствам объекта, используя `in keyof`, и преобразуют каждое свойство. Они незаменимы для массовых преобразований типов.\n\n```typescript\ntype ReadonlyVersion<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ninterface User { name: string; age: number; }\ntype ReadonlyUser = ReadonlyVersion<User>;\n// { readonly name: string; readonly age: number; }\n\nconst user: ReadonlyUser = { name: 'John', age: 30 };\nuser.name = 'Jane'; // ✗ Error\n```\n\n**Типичная ошибка:** Путаница между отображаемыми типами и условными типами; они решают разные проблемы."
-    },
-    "tags": [
-      "mapped-types",
-      "keyof-operator",
-      "property-transformation"
-    ]
-  },
-  {
-    "id": "typescript-q-60",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "What are template literal types? Show an example of creating type-safe API event names using template literals.",
-      "ru": "Что такое типы шаблонных литералов? Покажите пример создания типобезопасных названий событий API с использованием шаблонных литералов."
-    },
-    "answer": {
-      "en": "### Template Literal Types for Event Names\n\nTemplate literal types combine string literals with generics to create complex string types. They're powerful for creating type-safe string unions.\n\n```typescript\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>; // 'onClick'\n\ntype ApiEndpoint<Method extends string, Path extends string> = \n  `${Method}-${Path}`;\ntype GetUsers = ApiEndpoint<'GET', 'users'>; // 'GET-users'\n\nconst handler: ClickEvent = 'onClick'; // ✓\n```\n\n**Common interview trap:** Forgetting that template literal types need `Capitalize` utility to transform strings correctly.",
-      "ru": "### Типы шаблонных литералов для названий событий\n\nТипы шаблонных литералов объединяют строковые литералы с генериками для создания сложных строковых типов. Они мощны для создания типобезопасных объединений строк.\n\n```typescript\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>; // 'onClick'\n\ntype ApiEndpoint<Method extends string, Path extends string> = \n  `${Method}-${Path}`;\ntype GetUsers = ApiEndpoint<'GET', 'users'>; // 'GET-users'\n\nconst handler: ClickEvent = 'onClick'; // ✓\n```\n\n**Типичная ошибка:** Забывание того, что типы шаблонных литералов нуждаются в утилите `Capitalize` для правильного преобразования строк."
-    },
-    "tags": [
-      "template-literal-types",
-      "string-manipulation",
-      "type-inference"
-    ]
-  },
-  {
-    "id": "typescript-q-61",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain discriminated unions and type guards. How would you safely narrow a union type that has a discriminant property?",
-      "ru": "Объясните дискриминируемые объединения и защиту типов. Как вы безопасно сузили бы тип объединения, который имеет дискриминирующее свойство?"
-    },
-    "answer": {
-      "en": "### Discriminated Unions with Type Guards\n\nDiscriminated unions use a common property (discriminant) to distinguish between union members. Type guards narrow the type safely within conditionals.\n\n```typescript\ntype Circle = { kind: 'circle'; radius: number };\ntype Square = { kind: 'square'; side: number };\ntype Shape = Circle | Square;\n\nfunction getArea(shape: Shape): number {\n  if (shape.kind === 'circle') {\n    return Math.PI * shape.radius ** 2; // shape is Circle here\n  }\n  return shape.side ** 2; // shape is Square here\n}\n```\n\n**Common interview trap:** Using type guards without a discriminant makes narrowing inefficient and error-prone.",
-      "ru": "### Дискриминируемые объединения с защитой типов\n\nДискриминируемые объединения используют общее свойство (дискриминант) для различения членов объединения. Защита типов безопасно сужает тип внутри условных операторов.\n\n```typescript\ntype Circle = { kind: 'circle'; radius: number };\ntype Square = { kind: 'square'; side: number };\ntype Shape = Circle | Square;\n\nfunction getArea(shape: Shape): number {\n  if (shape.kind === 'circle') {\n    return Math.PI * shape.radius ** 2; // shape is Circle здесь\n  }\n  return shape.side ** 2; // shape is Square здесь\n}\n```\n\n**Типичная ошибка:** Использование защиты типов без дискриминанта делает сужение неэффективным и подверженным ошибкам."
-    },
-    "tags": [
-      "discriminated-unions",
-      "type-guards",
-      "type-narrowing"
-    ]
-  },
-  {
-    "id": "typescript-q-62",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain generic constraints and provide an example where you constrain a generic type to objects with a specific property.",
-      "ru": "Объясните ограничения обобщенных типов и приведите пример, где вы ограничиваете обобщенный тип объектами с определенным свойством."
-    },
-    "answer": {
-      "en": "### Generic Constraints with extends\n\nGeneric constraints limit what types can be passed to a generic function or class using the `extends` keyword. This ensures type safety by restricting the generic parameter to types that meet specific requirements.\n\n```typescript\nfunction getProperty<T extends { name: string }>(obj: T, key: 'name'): string {\n  return obj.name;\n}\n\nconst user = { name: 'John', age: 30 };\ngetProperty(user, 'name'); // OK\ngetProperty({ age: 25 }, 'name'); // Error: missing 'name'\n```\n\n**Common interview trap:** Assuming `T extends { name: string }` means `T` is exactly `{ name: string }`. Constraints define a structural minimum — `T` can have any additional properties beyond the required ones. The return type `T` is the full caller-supplied type, not the constraint type. This is the whole point: you can write `function withId<T extends HasId>(obj: T): T & { timestamp: number }` and preserve extra properties from the caller.",
-      "ru": "### Ограничения обобщенных типов с extends\n\nОграничения обобщенных типов ограничивают, какие типы можно передать обобщенной функции или классу, используя ключевое слово `extends`. Это обеспечивает безопасность типов, ограничивая параметр обобщения типами, соответствующими конкретным требованиям.\n\n```typescript\nfunction getProperty<T extends { name: string }>(obj: T, key: 'name'): string {\n  return obj.name;\n}\n\nconst user = { name: 'John', age: 30 };\ngetProperty(user, 'name'); // OK\ngetProperty({ age: 25 }, 'name'); // Error: missing 'name'\n```\n\n**Типичная ошибка на интервью:** Предположение, что `T extends { name: string }` означает, что `T` — это ровно `{ name: string }`. Constraint задаёт структурный минимум — `T` может иметь любые дополнительные свойства сверх обязательных. Возвращаемый тип `T` — это полный тип, переданный вызывающим, а не тип-constraint. В этом и есть смысл: можно написать `function withId<T extends HasId>(obj: T): T & { timestamp: number }` и сохранить все дополнительные свойства."
-    },
-    "tags": [
-      "generic-constraints",
-      "extends-keyword",
-      "type-safety"
-    ]
-  },
-  {
-    "id": "typescript-q-63",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "What are conditional types and how would you use them to extract types based on a condition? Show an example with a utility type.",
-      "ru": "Что такое условные типы и как их использовать для извлечения типов на основе условия? Покажите пример с типом утилиты."
-    },
-    "answer": {
-      "en": "### Conditional Types\n\nConditional types use the `extends` keyword to create branching logic in the type system: `T extends U ? X : Y`. They enable type extraction and transformation based on conditions, similar to ternary operators for types.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Flat = Flatten<string[]>; // string\n```\n\n**Common interview trap:** The `infer` keyword only works inside conditional types and captures the inferred type for later use.",
-      "ru": "### Условные типы\n\nУсловные типы используют ключевое слово `extends` для создания логики ветвления в системе типов: `T extends U ? X : Y`. Они позволяют извлекать и преобразовывать типы на основе условий, как тернарные операторы для типов.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\ntype A = IsString<'hello'>; // true\ntype B = IsString<number>; // false\n\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype Flat = Flatten<string[]>; // string\n```\n\n**Типичная ошибка:** Ключевое слово `infer` работает только внутри условных типов и фиксирует выведенный тип для дальнейшего использования."
-    },
-    "tags": [
-      "conditional-types",
-      "infer-keyword",
-      "type-transformation"
-    ]
-  },
-  {
-    "id": "typescript-q-64",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain mapped types and demonstrate how to create a utility type that makes all properties of an object readonly.",
-      "ru": "Объясните типы отображения и продемонстрируйте, как создать тип утилиты, который делает все свойства объекта только для чтения."
-    },
-    "answer": {
-      "en": "### Mapped Types\n\nMapped types transform object keys and values into new types using the `in` keyword to iterate over object properties. They allow bulk type transformations across all properties of an existing type.\n\n```typescript\ntype Readonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ntype User = { name: string; age: number };\ntype ReadonlyUser = Readonly<User>;\n// { readonly name: string; readonly age: number }\n```\n\n**Common interview trap:** Mapped types iterate over `keyof T`, not the values themselves; you must explicitly reference `T[K]` to get property values.",
-      "ru": "### Типы отображения\n\nТипы отображения преобразуют ключи и значения объектов в новые типы, используя ключевое слово `in` для итерации по свойствам объекта. Они позволяют выполнять массовые преобразования типов для всех свойств существующего типа.\n\n```typescript\ntype Readonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ntype User = { name: string; age: number };\ntype ReadonlyUser = Readonly<User>;\n// { readonly name: string; readonly age: number }\n```\n\n**Типичная ошибка:** Типы отображения итерируют по `keyof T`, а не по самим значениям; вы должны явно ссылаться на `T[K]` для получения значений свойств."
-    },
-    "tags": [
-      "mapped-types",
-      "keyof-operator",
-      "type-transformation"
-    ]
-  },
-  {
-    "id": "typescript-q-65",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "What are template literal types and how can they be used to create strongly-typed string manipulations? Provide a practical example.",
-      "ru": "Что такое типы шаблонных литералов и как их можно использовать для создания строго типизированных манипуляций строками? Приведите практический пример."
-    },
-    "answer": {
-      "en": "### Template Literal Types\n\nTemplate literal types combine string literal types with unions to create precise string patterns. They enable type-safe string operations like building event names or URL paths with validation at compile time.\n\n```typescript\ntype Event = 'click' | 'hover' | 'focus';\ntype Handler<E extends Event> = `on${Capitalize<E>}`; // 'onClick' | 'onHover' | 'onFocus'\ntype OnClick = Handler<'click'>; // 'onClick'\n\ntype HTTPMethod = 'GET' | 'POST';\ntype Route<M extends HTTPMethod> = `/${Lowercase<M>}/api`;\ntype GetRoute = Route<'GET'>; // '/get/api'\n```\n\n**Common interview trap:** Template literal types work with string unions, not arbitrary strings; TypeScript resolves all combinations at compile time.",
-      "ru": "### Типы шаблонных литералов\n\nТипы шаблонных литералов объединяют типы строковых литералов с объединениями для создания точных шаблонов строк. Они обеспечивают безопасность типов при работе со строками, такие как построение имен событий или путей URL с валидацией во время компиляции.\n\n```typescript\ntype Event = 'click' | 'hover' | 'focus';\ntype Handler<E extends Event> = `on${Capitalize<E>}`;\ntype OnClick = Handler<'click'>; // 'onClick'\n\ntype HTTPMethod = 'GET' | 'POST';\ntype Route<M extends HTTPMethod> = `/${Lowercase<M>}/api`;\ntype GetRoute = Route<'GET'>; // '/get/api'\n```\n\n**Типичная ошибка:** Типы шаблонных литералов работают со строковыми объединениями, а не с произвольными строками; TypeScript разрешает все комбинации во время компиляции."
-    },
-    "tags": [
-      "template-literal-types",
-      "string-manipulation",
-      "type-safety"
-    ]
-  },
-  {
-    "id": "typescript-q-66",
-    "topicId": "typescript",
-    "difficulty": "middle",
-    "question": {
-      "en": "Explain discriminated unions and type guards. Show how to safely narrow types in a function when working with multiple possible shapes.",
-      "ru": "Объясните дискриминированные объединения и охранители типов. Покажите, как безопасно сужать типы в функции при работе с несколькими возможными формами."
-    },
-    "answer": {
-      "en": "### Discriminated Unions and Type Guards\n\nDiscriminated unions use a common literal property (the discriminator) to distinguish between union members. Type guards like `typeof`, `instanceof`, or checking the discriminator property safely narrow union types within conditional blocks.\n\n```typescript\ntype Success = { status: 'success'; data: string };\ntype Error = { status: 'error'; message: string };\ntype Response = Success | Error;\n\nfunction handle(res: Response) {\n  if (res.status === 'success') {\n    console.log(res.data); // TypeScript knows it's Success\n  } else {\n    console.log(res.message); // TypeScript knows it's Error\n  }\n}\n```\n\n**Common interview trap:** The discriminator property must exist on all union members and have different literal values; generic types won't work as discriminators.",
-      "ru": "### Дискриминированные объединения и охранители типов\n\nДискриминированные объединения используют общее буквальное свойство (дискриминатор) для различения членов объединения. Охранители типов, такие как `typeof`, `instanceof` или проверка свойства дискриминатора, безопасно сужают типы объединения внутри условных блоков.\n\n```typescript\ntype Success = { status: 'success'; data: string };\ntype Error = { status: 'error'; message: string };\ntype Response = Success | Error;\n\nfunction handle(res: Response) {\n  if (res.status === 'success') {\n    console.log(res.data); // TypeScript знает, что это Success\n  } else {\n    console.log(res.message); // TypeScript знает, что это Error\n  }\n}\n```\n\n**Типичная ошибка:** Свойство дискриминатора должно существовать на всех членах объединения и иметь разные буквальные значения; универсальные типы не будут работать в качестве дискриминаторов."
-    },
-    "tags": [
-      "discriminated-unions",
-      "type-guards",
-      "type-narrowing"
-    ]
-  },
-  {
-    "id": "typescript-q-67",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1244,7 +1064,7 @@
     ]
   },
   {
-    "id": "typescript-q-68",
+    "id": "typescript-q-58",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1263,7 +1083,7 @@
     ]
   },
   {
-    "id": "typescript-q-69",
+    "id": "typescript-q-59",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1282,7 +1102,7 @@
     ]
   },
   {
-    "id": "typescript-q-70",
+    "id": "typescript-q-60",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1300,7 +1120,7 @@
     ]
   },
   {
-    "id": "typescript-q-71",
+    "id": "typescript-q-61",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1319,7 +1139,7 @@
     ]
   },
   {
-    "id": "typescript-q-72",
+    "id": "typescript-q-62",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1338,7 +1158,7 @@
     ]
   },
   {
-    "id": "typescript-q-73",
+    "id": "typescript-q-63",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1357,7 +1177,7 @@
     ]
   },
   {
-    "id": "typescript-q-74",
+    "id": "typescript-q-64",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1375,7 +1195,7 @@
     ]
   },
   {
-    "id": "typescript-q-75",
+    "id": "typescript-q-65",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1394,7 +1214,7 @@
     ]
   },
   {
-    "id": "typescript-q-76",
+    "id": "typescript-q-66",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1413,7 +1233,7 @@
     ]
   },
   {
-    "id": "typescript-q-77",
+    "id": "typescript-q-67",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1431,7 +1251,7 @@
     ]
   },
   {
-    "id": "typescript-q-78",
+    "id": "typescript-q-68",
     "topicId": "typescript",
     "difficulty": "senior",
     "question": {
@@ -1447,6 +1267,186 @@
       "infer-keyword",
       "deep-readonly",
       "mapped-types"
+    ]
+  },
+  {
+    "id": "typescript-q-69",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain phantom types in TypeScript and demonstrate how they can be used to create type-safe APIs without runtime overhead.",
+      "ru": "Объясните phantom types в TypeScript и продемонстрируйте, как их использовать для создания type-safe APIs без runtime overhead."
+    },
+    "answer": {
+      "en": "### Phantom Types for Type Safety\n\nPhantom types are generic type parameters that don't appear in runtime values. They exist only at compile-time to enforce type constraints. This pattern is powerful for creating type-safe wrappers that disappear after compilation.\n\nPhantom types help track state or capabilities without adding runtime cost. You can enforce invariants like 'this value is validated' or 'this operation is authorized' purely through the type system.\n\n```typescript\ntype Brand<T, B> = T & { readonly __brand: B };\ntype ValidatedEmail = Brand<string, 'ValidatedEmail'>;\ntype UserId = Brand<number, 'UserId'>;\n\nfunction validateEmail(email: string): ValidatedEmail {\n  if (!email.includes('@')) throw new Error('Invalid');\n  return email as ValidatedEmail;\n}\n\nfunction sendEmail(to: ValidatedEmail) {\n  console.log(`Sending to ${to}`);\n}\n\nconst email = validateEmail('user@example.com');\nsendEmail(email);\n```\n\n\n**Common interview trap:** Candidates often forget that phantom types must be enforceable—the validation function must be the only way to create the branded type, otherwise the guarantee is worthless.",
+      "ru": "### Phantom Types для Type Safety\n\nPhantom types — это параметры generics, которые не появляются в runtime значениях. Они существуют только на этапе компиляции для обеспечения type constraints. Этот паттерн мощен для создания type-safe оберток без runtime издержек.\n\nPhantom types помогают отслеживать состояние или возможности без дополнительных затрат. Вы можете обеспечить инварианты типа 'это значение проверено' или 'эта операция авторизована' чисто через type system.\n\n```typescript\ntype Brand<T, B> = T & { readonly __brand: B };\ntype ValidatedEmail = Brand<string, 'ValidatedEmail'>;\ntype UserId = Brand<number, 'UserId'>;\n\nfunction validateEmail(email: string): ValidatedEmail {\n  if (!email.includes('@')) throw new Error('Invalid');\n  return email as ValidatedEmail;\n}\n\nfunction sendEmail(to: ValidatedEmail) {\n  console.log(`Sending to ${to}`);\n}\n\nconst email = validateEmail('user@example.com');\nsendEmail(email);\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты часто забывают, что phantom types должны быть обеспечены—функция валидации должна быть единственным способом создать branded type, иначе гарантия бесполезна."
+    },
+    "tags": [
+      "phantom-types",
+      "branded-types",
+      "type-safety"
+    ]
+  },
+  {
+    "id": "typescript-q-70",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What are branded types and how do they differ from nominal typing? Create an example that prevents mixing incompatible branded values.",
+      "ru": "Что такое branded types и чем они отличаются от nominal typing? Создайте пример, который предотвращает смешивание несовместимых branded значений."
+    },
+    "answer": {
+      "en": "### Branded Types vs Nominal Typing\n\nBranded types use structural typing with a phantom property to emulate nominal typing. Unlike true nominal systems (like Java classes), TypeScript's branded types create distinct types from the same underlying type using a unique brand identifier.\n\nThe key difference: branded types are enforced only at compile-time through structural identity of the brand property, while nominal typing relies on declaration identity. This allows us to distinguish `UserId` from `PostId` even though both are numbers.\n\n```typescript\ntype UserId = number & { readonly __brand: 'UserId' };\ntype PostId = number & { readonly __brand: 'PostId' };\n\nfunction getUser(id: UserId) { return { id }; }\nfunction getPost(id: PostId) { return { id }; }\n\nconst userId = 1 as UserId;\nconst postId = 1 as PostId;\n\ngetUser(userId); // ✓\n// getUser(postId); // ✗ Type error\n\nfunction brandUserId(id: number): UserId { return id as UserId; }\n```\n\n\n**Common interview trap:** Candidates assume `as` casts are safe—but casting bypasses the protection entirely. Production code needs validation functions, not blind casts.",
+      "ru": "### Branded Types vs Nominal Typing\n\nBranded types используют structural typing с phantom property для эмуляции nominal typing. В отличие от истинных nominal систем (как Java классы), branded types в TypeScript создают различные типы из одного базового типа используя уникальный brand identifier.\n\nКлючевое отличие: branded types обеспечиваются только на compile-time через structural identity property, в то время как nominal typing полагается на declaration identity. Это позволяет различать `UserId` от `PostId` даже если оба это numbers.\n\n```typescript\ntype UserId = number & { readonly __brand: 'UserId' };\ntype PostId = number & { readonly __brand: 'PostId' };\n\nfunction getUser(id: UserId) { return { id }; }\nfunction getPost(id: PostId) { return { id }; }\n\nconst userId = 1 as UserId;\nconst postId = 1 as PostId;\n\ngetUser(userId); // ✓\n// getUser(postId); // ✗ Type error\n\nfunction brandUserId(id: number): UserId { return id as UserId; }\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты предполагают, что `as` casts безопасны—но приведение полностью обходит защиту. Production code нужны validation functions, а не blind casts."
+    },
+    "tags": [
+      "branded-types",
+      "nominal-typing",
+      "type-distinction"
+    ]
+  },
+  {
+    "id": "typescript-q-71",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Implement a type-safe builder pattern using TypeScript generics that ensures all required properties are set before calling build().",
+      "ru": "Реализуйте type-safe builder pattern используя TypeScript generics, который гарантирует, что все обязательные свойства установлены перед вызовом build()."
+    },
+    "answer": {
+      "en": "### Type-Safe Builder Pattern\n\nThe builder pattern with TypeScript can track which properties have been set at the type level. Use a boolean-indexed generic to represent the state of each property, ensuring compile-time verification that all required fields are configured before building.\n\nThis approach uses union types and conditional types to make `build()` only callable when all required properties are set. Each setter returns a new builder state with that property marked as true.\n\n```typescript\ntype Builder<T extends Record<string, any>, R extends Record<string, boolean>> = {\n  build(): R extends Record<string, true> ? T : never;\n  setName(name: string): Builder<T, R & { name: true }>;\n  setAge(age: number): Builder<T, R & { age: true }>;\n};\n\nfunction createBuilder<T>(): Builder<T, {}> {\n  const state: any = {};\n  return {\n    setName(name: string) { return createBuilder(); },\n    setAge(age: number) { return createBuilder(); },\n    build() { return state; }\n  };\n}\n\nconst builder = createBuilder();\nbuilder.setName('John').setAge(30).build(); // ✓\n// builder.build(); // ✗ Type error\n```\n\n\n**Common interview trap:** Candidates implement builders that don't actually track state in the type system, making `build()` callable before all properties are set.",
+      "ru": "### Type-Safe Builder Pattern\n\nBuilder pattern в TypeScript может отслеживать какие свойства были установлены на уровне типов. Используйте boolean-indexed generics для представления состояния каждого свойства, обеспечивая compile-time верификацию что все обязательные поля сконфигурированы перед build().\n\nЭтот подход использует union types и conditional types чтобы сделать `build()` вызываемым только когда все обязательные свойства установлены. Каждый setter возвращает новое состояние builder с этим свойством отмеченным как true.\n\n```typescript\ntype Builder<T extends Record<string, any>, R extends Record<string, boolean>> = {\n  build(): R extends Record<string, true> ? T : never;\n  setName(name: string): Builder<T, R & { name: true }>;\n  setAge(age: number): Builder<T, R & { age: true }>;\n};\n\nfunction createBuilder<T>(): Builder<T, {}> {\n  const state: any = {};\n  return {\n    setName(name: string) { return createBuilder(); },\n    setAge(age: number) { return createBuilder(); },\n    build() { return state; }\n  };\n}\n\nconst builder = createBuilder();\nbuilder.setName('John').setAge(30).build(); // ✓\n// builder.build(); // ✗ Type error\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты реализуют builders которые не отслеживают состояние в type system, делая `build()` вызываемым до того как все свойства установлены."
+    },
+    "tags": [
+      "builder-pattern",
+      "generics",
+      "state-tracking"
+    ]
+  },
+  {
+    "id": "typescript-q-72",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain exhaustiveness checking in TypeScript. How can you ensure at compile-time that all cases in a union type are handled?",
+      "ru": "Объясните exhaustiveness checking в TypeScript. Как гарантировать на compile-time что все cases в union type обработаны?"
+    },
+    "answer": {
+      "en": "### Exhaustiveness Checking\n\nExhaustiveness checking ensures every variant of a union type is handled. Use the never type pattern: assign unhandled cases to a variable of type `never`, forcing a compile-time error if any case is missing.\n\nThis technique works because if all union members are handled, the remaining type is `never`. If a new union member is added later, TypeScript will catch the missing handler immediately.\n\n```typescript\ntype Status = 'pending' | 'success' | 'error';\n\nfunction handleStatus(status: Status): string {\n  switch (status) {\n    case 'pending':\n      return 'Waiting...';\n    case 'success':\n      return 'Done!';\n    case 'error':\n      return 'Failed!'\n    default:\n      const _exhaustive: never = status;\n      return _exhaustive;\n  }\n}\n\ntype Result<T> = { type: 'ok'; data: T } | { type: 'err'; error: string };\n\nfunction processResult<T>(r: Result<T>) {\n  switch (r.type) {\n    case 'ok': return r.data;\n    case 'err': return null;\n    default:\n      const _: never = r;\n  }\n}\n```\n\n\n**Common interview trap:** Candidates forget the `default` branch—without it, new union members won't trigger compilation errors because they fall through silently.",
+      "ru": "### Exhaustiveness Checking\n\nExhaustiveness checking гарантирует что каждый вариант union type обработан. Используйте never type pattern: присвойте необработанные cases переменной типа `never`, заставляя compile-time error если какой-то case отсутствует.\n\nЭта техника работает потому что если все union members обработаны, оставшийся тип это `never`. Если новый union member добавлен позже, TypeScript сразу поймает отсутствующий handler.\n\n```typescript\ntype Status = 'pending' | 'success' | 'error';\n\nfunction handleStatus(status: Status): string {\n  switch (status) {\n    case 'pending':\n      return 'Waiting...';\n    case 'success':\n      return 'Done!';\n    case 'error':\n      return 'Failed!';\n    default:\n      const _exhaustive: never = status;\n      return _exhaustive;\n  }\n}\n\ntype Result<T> = { type: 'ok'; data: T } | { type: 'err'; error: string };\n\nfunction processResult<T>(r: Result<T>) {\n  switch (r.type) {\n    case 'ok': return r.data;\n    case 'err': return null;\n    default:\n      const _: never = r;\n  }\n}\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают `default` branch—без него новые union members не вызовут compilation errors потому что они pass through молча."
+    },
+    "tags": [
+      "exhaustiveness-checking",
+      "union-types",
+      "never-type"
+    ]
+  },
+  {
+    "id": "typescript-q-73",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Demonstrate advanced infer patterns in TypeScript. Show how to extract and transform nested type information using conditional types.",
+      "ru": "Продемонстрируйте advanced infer patterns в TypeScript. Покажите как извлекать и трансформировать nested type information используя conditional types."
+    },
+    "answer": {
+      "en": "### Advanced Infer Patterns\n\nThe `infer` keyword in conditional types allows pattern matching on types. You can extract parts of complex types and use them in the result. This enables powerful type transformations without runtime overhead.\n\nInfer works left-to-right and is greedy by default. You can use multiple infers to destructure nested structures, including function signatures, array elements, and promise values.\n\n```typescript\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype FlattenDeep<T> = T extends Array<infer U> \n  ? FlattenDeep<U> \n  : T;\n\ntype Params<T> = T extends (...args: infer P) => any ? P : never;\ntype ReturnType<T> = T extends (...args: any) => infer R ? R : never;\n\ntype Awaited<T> = T extends Promise<infer U> ? U : T;\n\nfunction fn(x: string, y: number): boolean { return true; }\ntype FnParams = Params<typeof fn>; // [string, number]\ntype FnReturn = ReturnType<typeof fn>; // boolean\ntype Unwrapped = Awaited<Promise<string>>; // string\n```\n\n\n**Common interview trap:** Candidates use `infer` in simple cases but struggle when nesting multiple infers or dealing with distributive conditional types in unions.",
+      "ru": "### Advanced Infer Patterns\n\nКлючевое слово `infer` в conditional types позволяет pattern matching на типах. Вы можете извлекать части сложных типов и использовать их в результате. Это позволяет мощные type transformations без runtime overhead.\n\nInfer работает слева-направо и жадно по умолчанию. Вы можете использовать множественные infers для destructuring nested структур, включая function signatures, array elements, и promise values.\n\n```typescript\ntype Flatten<T> = T extends Array<infer U> ? U : T;\ntype FlattenDeep<T> = T extends Array<infer U> \n  ? FlattenDeep<U> \n  : T;\n\ntype Params<T> = T extends (...args: infer P) => any ? P : never;\ntype ReturnType<T> = T extends (...args: any) => infer R ? R : never;\n\ntype Awaited<T> = T extends Promise<infer U> ? U : T;\n\nfunction fn(x: string, y: number): boolean { return true; }\ntype FnParams = Params<typeof fn>; // [string, number]\ntype FnReturn = ReturnType<typeof fn>; // boolean\ntype Unwrapped = Awaited<Promise<string>>; // string\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты используют `infer` в простых cases но борются когда nesting множественные infers или dealing с distributive conditional types в unions."
+    },
+    "tags": [
+      "infer-keyword",
+      "conditional-types",
+      "type-extraction"
+    ]
+  },
+  {
+    "id": "typescript-q-74",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "What is type-level programming? Explain how to perform computations at the type level and provide an example of a recursive type utility.",
+      "ru": "Что такое type-level programming? Объясните как выполнять вычисления на уровне типов и дайте пример recursive type utility."
+    },
+    "answer": {
+      "en": "### Type-Level Programming\n\nType-level programming uses TypeScript's type system as a computational language. You write logic that executes during type checking, not at runtime. This enables powerful abstractions like tuple length calculations, recursive transformations, and compile-time validations.\n\nRecursive types allow types to reference themselves, enabling iteration over structures. Combined with conditional types and infer, they create sophisticated type utilities that would require runtime code in other languages.\n\n```typescript\ntype Length<T extends any[]> = T extends { length: infer L } ? L : never;\n\ntype Repeat<T, N extends number, A extends any[] = []> = \n  A['length'] extends N ? A : Repeat<T, N, [...A, T]>;\n\ntype Add<A extends number, B extends number> = \n  [...Repeat<1, A>, ...Repeat<1, B>]['length'];\n\ntype DeepReadonly<T> = T extends object \n  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }\n  : T;\n\ntype Three = Add<1, 2>; // 3\ntype ReadonlyConfig = DeepReadonly<{ a: { b: number } }>;\n```\n\n\n**Common interview trap:** Candidates struggle with the difference between type computation and runtime computation—type-level programs are limited by TypeScript's type system constraints, not execution environment.",
+      "ru": "### Type-Level Programming\n\nType-level programming использует type system TypeScript как computational language. Вы пишете логику которая выполняется во время type checking, не в runtime. Это позволяет мощные abstractions как tuple length calculations, recursive transformations, и compile-time validations.\n\nRecursive types позволяют типам ссылаться на себя, enabling iteration over structures. Combined с conditional types и infer, они создают sophisticated type utilities которые требовали бы runtime code в других языках.\n\n```typescript\ntype Length<T extends any[]> = T extends { length: infer L } ? L : never;\n\ntype Repeat<T, N extends number, A extends any[] = []> = \n  A['length'] extends N ? A : Repeat<T, N, [...A, T]>;\n\ntype Add<A extends number, B extends number> = \n  [...Repeat<1, A>, ...Repeat<1, B>]['length'];\n\ntype DeepReadonly<T> = T extends object \n  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }\n  : T;\n\ntype Three = Add<1, 2>; // 3\ntype ReadonlyConfig = DeepReadonly<{ a: { b: number } }>;\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты борются с разницей между type computation и runtime computation—type-level programs ограничены constraints типа system TypeScript, не execution environment."
+    },
+    "tags": [
+      "type-level-programming",
+      "recursive-types",
+      "type-utilities"
+    ]
+  },
+  {
+    "id": "typescript-q-75",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain the TypeScript Compiler API basics. How can you programmatically parse and analyze TypeScript code?",
+      "ru": "Объясните основы TypeScript Compiler API. Как вы можете программно парсить и анализировать TypeScript код?"
+    },
+    "answer": {
+      "en": "### TypeScript Compiler API Basics\n\nThe TypeScript Compiler API allows programmatic access to parsing, type-checking, and AST manipulation. Use `createSourceFile()` to parse code into an Abstract Syntax Tree (AST), then traverse it with visitors to analyze or transform nodes.\n\nThe API exposes syntax kinds, symbols, and type information, enabling tools like linters, code generators, and refactoring engines. You can walk the AST recursively or use built-in utilities like `forEachChild()` for traversal.\n\n```typescript\nimport ts from 'typescript';\n\nconst code = `const x: number = 42;`;\nconst sourceFile = ts.createSourceFile(\n  'test.ts',\n  code,\n  ts.ScriptTarget.Latest,\n  true\n);\n\nfunction visit(node: ts.Node) {\n  console.log(ts.SyntaxKind[node.kind]);\n  ts.forEachChild(node, visit);\n}\n\nvisit(sourceFile);\n\nconst compilerHost: ts.CompilerHost = {\n  getSourceFile: (filename) => sourceFile,\n  getDefaultLibFileName: () => 'lib.d.ts',\n  writeFile: () => {},\n  getCurrentDirectory: () => '',\n  getDirectories: () => [],\n  fileExists: () => true,\n  readFile: () => '',\n  getCanonicalFileName: (f) => f,\n  useCaseSensitiveFileNames: () => true,\n  getNewLine: () => '\\n'\n};\n```\n\n\n**Common interview trap:** Candidates confuse the Compiler API with transpilation—the API primarily reads and analyzes, not transpiles. Use the `emit()` function for actual transpilation.",
+      "ru": "### TypeScript Compiler API Basics\n\nTypeScript Compiler API обеспечивает программный доступ к parsing, type-checking, и AST manipulation. Используйте `createSourceFile()` для парсинга кода в Abstract Syntax Tree (AST), затем traverse его с visitors для анализа или трансформации nodes.\n\nAPI exposing syntax kinds, symbols, и type information, enabling tools как linters, code generators, и refactoring engines. Вы можете walk AST recursively или использовать built-in utilities как `forEachChild()` для traversal.\n\n```typescript\nimport ts from 'typescript';\n\nconst code = `const x: number = 42;`;\nconst sourceFile = ts.createSourceFile(\n  'test.ts',\n  code,\n  ts.ScriptTarget.Latest,\n  true\n);\n\nfunction visit(node: ts.Node) {\n  console.log(ts.SyntaxKind[node.kind]);\n  ts.forEachChild(node, visit);\n}\n\nvisit(sourceFile);\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты путают Compiler API с transpilation—API primarily reads и analyzes, не transpiles. Используйте `emit()` function для actual transpilation."
+    },
+    "tags": [
+      "compiler-api",
+      "ast-parsing",
+      "programmatic-analysis"
+    ]
+  },
+  {
+    "id": "typescript-q-76",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Create a type-safe configuration system using branded types and builders that validates structure at compile-time.",
+      "ru": "Создайте type-safe систему конфигурации используя branded types и builders которая валидирует структуру на compile-time."
+    },
+    "answer": {
+      "en": "### Type-Safe Configuration System\n\nCombine branded types with builders to create configurations that enforce both structure and validation rules at compile-time. Each step returns a more specific type, preventing incomplete or invalid configurations from being used.\n\nThis pattern uses type predicates and exhaustiveness checking to ensure only valid configurations reach runtime. The brand serves as proof that validation occurred.\n\n```typescript\ntype Validated<T> = T & { readonly __validated: true };\n\ninterface ConfigInput {\n  host: string;\n  port: number;\n  ssl: boolean;\n}\n\ntype ValidConfig = Validated<ConfigInput>;\n\nclass ConfigBuilder {\n  private config: Partial<ConfigInput> = {};\n  \n  setHost(h: string): this { this.config.host = h; return this; }\n  setPort(p: number): this { this.config.port = p; return this; }\n  setSSL(s: boolean): this { this.config.ssl = s; return this; }\n  \n  build(): ValidConfig {\n    const required: (keyof ConfigInput)[] = ['host', 'port', 'ssl'];\n    for (const key of required) {\n      if (!(key in this.config)) throw new Error(`Missing ${key}`);\n    }\n    return this.config as ValidConfig;\n  }\n}\n\nconst config = new ConfigBuilder()\n  .setHost('localhost')\n  .setPort(3000)\n  .setSSL(true)\n  .build();\n```\n\n\n**Common interview trap:** Candidates create branded types but don't enforce that only validated configs are accepted in functions—the brand must be checked in function signatures.",
+      "ru": "### Type-Safe Configuration System\n\nCombine branded types с builders для создания configurations которые enforce структуру и validation rules на compile-time. Каждый step возвращает более специфичный тип, preventing incomplete или invalid configurations от использования.\n\nЭтот паттерн использует type predicates и exhaustiveness checking чтобы гарантировать что только valid configurations достигают runtime. Brand служит как proof что validation occurred.\n\n```typescript\ntype Validated<T> = T & { readonly __validated: true };\n\ninterface ConfigInput {\n  host: string;\n  port: number;\n  ssl: boolean;\n}\n\ntype ValidConfig = Validated<ConfigInput>;\n\nclass ConfigBuilder {\n  private config: Partial<ConfigInput> = {};\n  \n  setHost(h: string): this { this.config.host = h; return this; }\n  setPort(p: number): this { this.config.port = p; return this; }\n  setSSL(s: boolean): this { this.config.ssl = s; return this; }\n  \n  build(): ValidConfig {\n    const required: (keyof ConfigInput)[] = ['host', 'port', 'ssl'];\n    for (const key of required) {\n      if (!(key in this.config)) throw new Error(`Missing ${key}`);\n    }\n    return this.config as ValidConfig;\n  }\n}\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты создают branded types но не enforce что только validated configs accepted в functions—brand должен быть checked в function signatures."
+    },
+    "tags": [
+      "branded-types",
+      "builder-pattern",
+      "validation"
+    ]
+  },
+  {
+    "id": "typescript-q-77",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Explain how distributive conditional types work in TypeScript. How does applying a conditional type to a union differ from a single type?",
+      "ru": "Объясните как работают distributive conditional types в TypeScript. Чем отличается применение conditional type к union от single type?"
+    },
+    "answer": {
+      "en": "### Distributive Conditional Types\n\nWhen a conditional type is applied to a union, TypeScript automatically distributes it across each union member. This means `T extends U ? X : Y` applied to `A | B` results in `(A extends U ? X : Y) | (B extends U ? X : Y)`, not the conditional applied to the entire union.\n\nDistribution is automatic for conditional types in type parameters. Wrap the conditional in an array to prevent distribution if you need to treat the union as a single entity.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype Result1 = IsString<string | number>; // true | false (distributed)\n\ntype IsStringArray<T> = T extends string ? true : false;\ntype NoDistribute<T> = [T] extends [string] ? true : false;\ntype Result2 = NoDistribute<string | number>; // false (not distributed)\n\ntype Exclude<T, U> = T extends U ? never : T;\ntype Without = Exclude<'a' | 'b' | 'c', 'b'>; // 'a' | 'c'\n\ntype Filter<T, U> = T extends U ? T : never;\ntype OnlyStrings = Filter<string | number | boolean, string>; // string\n```\n\n\n**Common interview trap:** Candidates don't realize distribution happens by default—they expect `never` but get `true | false` from distributive conditionals applied to unions.",
+      "ru": "### Distributive Conditional Types\n\nКогда conditional type применяется к union, TypeScript автоматически распределяет его через каждый union member. Это означает `T extends U ? X : Y` применено к `A | B` результирует `(A extends U ? X : Y) | (B extends U ? X : Y)`, не conditional применный ко всему union.\n\nDistribution автоматическое для conditional types в type parameters. Wrap conditional в array для prevent distribution если вам нужно treat union как single entity.\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype Result1 = IsString<string | number>; // true | false (distributed)\n\ntype NoDistribute<T> = [T] extends [string] ? true : false;\ntype Result2 = NoDistribute<string | number>; // false (not distributed)\n\ntype Exclude<T, U> = T extends U ? never : T;\ntype Without = Exclude<'a' | 'b' | 'c', 'b'>; // 'a' | 'c'\n\ntype Filter<T, U> = T extends U ? T : never;\ntype OnlyStrings = Filter<string | number | boolean, string>; // string\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты не осознают что distribution happens by default—они ожидают `never` но получают `true | false` от distributive conditionals применные к unions."
+    },
+    "tags": [
+      "distributive-conditional-types",
+      "union-types",
+      "conditional-types"
+    ]
+  },
+  {
+    "id": "typescript-q-78",
+    "topicId": "typescript",
+    "difficulty": "advanced",
+    "question": {
+      "en": "Design a type-safe event emitter using generics and conditional types that enforces correct event names and payload types.",
+      "ru": "Разработайте type-safe event emitter используя generics и conditional types который enforces корректные event names и payload types."
+    },
+    "answer": {
+      "en": "### Type-Safe Event Emitter\n\nA type-safe event emitter uses mapped types and conditional types to ensure listeners match event signatures. Define an event map as a type, then use it to validate both `emit()` and `on()` operations at compile-time.\n\nThe key is mapping event names to payloads, then using function overloads or conditional logic to extract the correct payload type for each event. This prevents listeners from receiving unexpected data.\n\n```typescript\ntype EventMap = {\n  user_login: { userId: number };\n  user_logout: { timestamp: number };\n  message: { text: string; author: string };\n};\n\nclass EventEmitter<Events extends Record<string, any>> {\n  private listeners: Map<string, Set<Function>> = new Map();\n  \n  on<K extends keyof Events>(\n    event: K,\n    listener: (payload: Events[K]) => void\n  ): void {\n    if (!this.listeners.has(event as string)) {\n      this.listeners.set(event as string, new Set());\n    }\n    this.listeners.get(event as string)!.add(listener);\n  }\n  \n  emit<K extends keyof Events>(event: K, payload: Events[K]): void {\n    this.listeners.get(event as string)?.forEach(l => l(payload));\n  }\n}\n\nconst emitter = new EventEmitter<EventMap>();\nemitter.on('user_login', (p) => console.log(p.userId)); // ✓\n// emitter.on('user_login', (p) => p.text); // ✗ Property 'text' doesn't exist\n```\n\n\n**Common interview trap:** Candidates forget to use generics in the method signatures—without `<K extends keyof Events>`, the payload type becomes `any` and type safety is lost.",
+      "ru": "### Type-Safe Event Emitter\n\nType-safe event emitter использует mapped types и conditional types для обеспечения что listeners match event signatures. Define event map как type, затем используйте его для валидации обоих `emit()` и `on()` операций на compile-time.\n\nКлюч это mapping event names к payloads, затем используя function overloads или conditional logic для extract корректного payload type для каждого event. Это prevents listeners от receiving unexpected data.\n\n```typescript\ntype EventMap = {\n  user_login: { userId: number };\n  user_logout: { timestamp: number };\n  message: { text: string; author: string };\n};\n\nclass EventEmitter<Events extends Record<string, any>> {\n  private listeners: Map<string, Set<Function>> = new Map();\n  \n  on<K extends keyof Events>(\n    event: K,\n    listener: (payload: Events[K]) => void\n  ): void {\n    if (!this.listeners.has(event as string)) {\n      this.listeners.set(event as string, new Set());\n    }\n    this.listeners.get(event as string)!.add(listener);\n  }\n  \n  emit<K extends keyof Events>(event: K, payload: Events[K]): void {\n    this.listeners.get(event as string)?.forEach(l => l(payload));\n  }\n}\n```\n\n\n**Типичная ошибка на интервью:** Кандидаты забывают использовать generics в method signatures—без `<K extends keyof Events>`, payload type становится `any` и type safety теряется."
+    },
+    "tags": [
+      "generic-events",
+      "mapped-types",
+      "type-safety"
     ]
   },
   {
