@@ -91,10 +91,40 @@
   }
 }
 
+/* ── ShikiMono: system monospace font override for code blocks ──────
+   On macOS + Chromium, box-drawing characters (U+2500-257F) and certain
+   arrows/symbols are intercepted by "Apple Symbols" (a proportional font),
+   making them 1.6× wider than ASCII — which breaks ASCII diagram alignment.
+   A @font-face with explicit unicode-range takes priority over the system
+   font substitution layer, so we use it to lock in a good monospace font
+   (Menlo on macOS, Consolas on Windows, DejaVu/Liberation on Linux). */
+@font-face {
+  font-family: 'ShikiMono';
+  src: local('Menlo'), local('Monaco'),
+       local('Consolas'), local('Cascadia Code'), local('Cascadia Mono'),
+       local('DejaVu Sans Mono'), local('Liberation Mono'),
+       local('Fira Code'), local('Courier New');
+  unicode-range: U+2190-21FF, U+2500-257F, U+2580-259F, U+25A0-25FF;
+}
+@font-face {
+  font-family: 'ShikiMono';
+  src: local('Menlo'), local('Monaco'),
+       local('Consolas'), local('Cascadia Code'), local('Cascadia Mono'),
+       local('DejaVu Sans Mono'), local('Liberation Mono'),
+       local('Fira Code'), local('Courier New');
+}
+
 /* ── Shiki code blocks ──────────────────────────────────────────── */
 .shiki {
   @apply rounded-md overflow-x-auto text-sm leading-relaxed;
   padding: 1rem;
+  /* Tailwind preflight sets `code { font-family: ui-monospace... }` which overrides
+     inherited value, so we target .shiki code explicitly. */
+  font-family: 'ShikiMono', ui-monospace, monospace;
+}
+
+.shiki code {
+  font-family: 'ShikiMono', ui-monospace, monospace;
 }
 
 .shiki code {
