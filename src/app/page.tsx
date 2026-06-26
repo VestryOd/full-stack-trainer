@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: '/questions', titleKey: 'nav.questions', descKey: 'home.questionsDesc', icon: '❓' },
   { href: '/quiz',      titleKey: 'nav.quiz',      descKey: 'home.quizDesc',      icon: '🧠' },
   { href: '/tasks',     titleKey: 'nav.tasks',     descKey: 'home.tasksDesc',     icon: '💻' },
+  { href: '/interview', titleKey: 'nav.interview', descKey: 'home.interviewDesc', icon: '🎯' },
 ] as const;
 
 const LEVEL_COLORS = {

@@ -18,10 +18,11 @@ import {
 } from '@/components/ui/sheet';
 
 const NAV_LINKS = [
-  { href: '/theory', key: 'nav.theory' },
-  { href: '/questions', key: 'nav.questions' },
-  { href: '/quiz', key: 'nav.quiz' },
-  { href: '/tasks', key: 'nav.tasks' },
+  { href: '/theory',     key: 'nav.theory' },
+  { href: '/questions',  key: 'nav.questions' },
+  { href: '/quiz',       key: 'nav.quiz' },
+  { href: '/tasks',      key: 'nav.tasks' },
+  { href: '/interview',  key: 'nav.interview' },
 ] as const;
 
 export function Navbar() {

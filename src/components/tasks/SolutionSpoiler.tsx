@@ -10,11 +10,17 @@ interface SolutionSpoilerProps {
   label?: string;
   hideLabel?: string;
   revealLabel?: string;
+  onReveal?: () => void;
 }
 
-export function SolutionSpoiler({ children, label, hideLabel, revealLabel }: SolutionSpoilerProps) {
+export function SolutionSpoiler({ children, label, hideLabel, revealLabel, onReveal }: SolutionSpoilerProps) {
   const { t2 } = useLocale();
   const [revealed, setRevealed] = useState(false);
+
+  function reveal() {
+    if (!revealed) onReveal?.();
+    setRevealed(true);
+  }
 
   const showLabel = label ?? t2('tasks.showSolution');
   const hiddenLabel = hideLabel ?? t2('tasks.hideSolution');
@@ -24,7 +30,7 @@ export function SolutionSpoiler({ children, label, hideLabel, revealLabel }: Sol
     <div className="relative border border-border rounded-md overflow-hidden">
       {/* Header toggle */}
       <button
-        onClick={() => setRevealed((v) => !v)}
+        onClick={() => { if (!revealed) onReveal?.(); setRevealed((v) => !v); }}
         aria-expanded={revealed}
         className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-left hover:bg-muted/50 transition-colors border-b border-border"
       >
@@ -53,7 +59,7 @@ export function SolutionSpoiler({ children, label, hideLabel, revealLabel }: Sol
         {!revealed && (
           <div
             className="absolute inset-0 flex items-center justify-center cursor-pointer"
-            onClick={() => setRevealed(true)}
+            onClick={reveal}
             role="button"
             aria-label={revealActionLabel}
           >
