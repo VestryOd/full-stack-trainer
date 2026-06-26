@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { QuizCard, type QuizQuestionWithHtml } from '@/components/quiz/QuizCard';
 import { QuizProgress } from '@/components/quiz/QuizProgress';
 import { QuizResult } from '@/components/quiz/QuizResult';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLocale } from '@/context/LocaleContext';
 
 interface QuizSessionProps {
   initialQuestions: QuizQuestionWithHtml[];
+  topicBadge?: string;
 }
 
 function dedupeById(questions: QuizQuestionWithHtml[]): QuizQuestionWithHtml[] {
@@ -20,7 +22,7 @@ function dedupeById(questions: QuizQuestionWithHtml[]): QuizQuestionWithHtml[] {
   });
 }
 
-export function QuizSession({ initialQuestions }: QuizSessionProps) {
+export function QuizSession({ initialQuestions, topicBadge }: QuizSessionProps) {
   const { t2 } = useLocale();
   const [questions] = useState<QuizQuestionWithHtml[]>(() => dedupeById(initialQuestions));
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -65,6 +67,13 @@ export function QuizSession({ initialQuestions }: QuizSessionProps) {
   return (
     <div className="container py-8 max-w-2xl space-y-6">
       <QuizProgress current={currentIndex + 1} total={questions.length} correct={correct} />
+      {topicBadge && (
+        <div>
+          <Badge variant="secondary" className="text-xs font-mono">
+            {t2('quiz.randomMixed')}: {topicBadge}
+          </Badge>
+        </div>
+      )}
       <QuizCard question={current} selectedIndex={selectedIndex} onSelect={handleSelect} />
       {selectedIndex !== null && (
         <div className="flex justify-end">

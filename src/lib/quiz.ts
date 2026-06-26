@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { QuizQuestion } from '@/types';
+import { fisherYates, shuffleOptions, dedupeById } from './quiz-utils';
 
 const QUIZ_DIR = path.join(process.cwd(), 'content', 'quiz');
 
@@ -9,41 +10,6 @@ function readTopicQuiz(topicId: string): QuizQuestion[] {
   if (!fs.existsSync(filePath)) return [];
   const raw = fs.readFileSync(filePath, 'utf-8');
   return JSON.parse(raw) as QuizQuestion[];
-}
-
-function fisherYates<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-function shuffleOptions(question: QuizQuestion): QuizQuestion {
-  const len = question.options.en.length;
-  const perm = Array.from({ length: len }, (_, i) => i);
-  for (let i = len - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [perm[i], perm[j]] = [perm[j], perm[i]];
-  }
-  return {
-    ...question,
-    options: {
-      en: perm.map((i) => question.options.en[i]),
-      ru: perm.map((i) => (question.options.ru ?? question.options.en)[i]),
-    },
-    correctIndex: perm.indexOf(question.correctIndex),
-  };
-}
-
-function dedupeById(questions: QuizQuestion[]): QuizQuestion[] {
-  const seen = new Set<string>();
-  return questions.filter((q) => {
-    if (seen.has(q.id)) return false;
-    seen.add(q.id);
-    return true;
-  });
 }
 
 export function getAvailableQuizTopics(): string[] {
@@ -64,4 +30,12 @@ export function getQuizQuestions(topicIds?: string[], count?: number): QuizQuest
   const selected = fisherYates(dedupeById(pool));
   const sliced = count !== undefined ? selected.slice(0, count) : selected;
   return sliced.map(shuffleOptions);
+}
+
+export function getAllQuizQuestionsPerTopic(): Record<string, QuizQuestion[]> {
+  const result: Record<string, QuizQuestion[]> = {};
+  for (const topicId of getAvailableQuizTopics()) {
+    result[topicId] = readTopicQuiz(topicId);
+  }
+  return result;
 }
