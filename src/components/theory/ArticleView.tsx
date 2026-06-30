@@ -92,24 +92,24 @@ export function ArticleView({
           {prevSlug ? (
             <Link
               href={`/theory/${topicId}/${prevSlug}`}
-              className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors max-w-xs"
+              className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-w-0 flex-1"
             >
               <ChevronLeft className="h-4 w-4 flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
               <span className="truncate">{slugToLabel(prevSlug)}</span>
             </Link>
           ) : (
-            <div />
+            <div className="flex-1" />
           )}
           {nextSlug ? (
             <Link
               href={`/theory/${topicId}/${nextSlug}`}
-              className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors max-w-xs text-right"
+              className="group flex items-center justify-end gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-w-0 flex-1"
             >
-              <span className="truncate">{slugToLabel(nextSlug)}</span>
+              <span className="truncate text-right">{slugToLabel(nextSlug)}</span>
               <ChevronRight className="h-4 w-4 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           ) : (
-            <div />
+            <div className="flex-1" />
           )}
         </nav>
       )}
