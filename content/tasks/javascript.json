@@ -1,6 +1,6 @@
 [
   {
-    "id": "js-closure-counter",
+    "id": "javascript-t-1",
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
@@ -8,19 +8,20 @@
       "ru": "Счётчик на замыкании"
     },
     "description": {
-      "en": "Implement a createCounter function that uses closure to maintain private state. Each call to the returned increment function should increase the counter by 1.",
-      "ru": "Реализуйте функцию createCounter, которая использует замыкание для хранения приватного состояния. Каждый вызов возвращаемой функции increment должен увеличивать счётчик на 1."
+      "en": "Implement a `createCounter` function that uses a closure to keep a private counter value. The returned object should expose `increment`, `decrement`, `reset`, and `getValue` methods, with no way to read or modify the count from outside those methods.\n\n**Requirements:**\n- Use closure to keep the counter private (no property on the returned object should hold the raw number)\n- Support an optional `initialValue` parameter, defaulting to 0\n- `increment`/`decrement` return the new value after the change\n- `reset` sets the counter back to `initialValue` and returns it\n\n**Function signature:**\n```typescript\nfunction createCounter(initialValue?: number): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n}\n```\n\n**Example:**\n```typescript\nconst counter = createCounter(10);\ncounter.increment(); // 11\ncounter.increment(); // 12\ncounter.decrement(); // 11\ncounter.getValue();  // 11\ncounter.reset();     // 10\n```\n\n**Edge cases:**\n- Negative or omitted `initialValue`\n- Two counters created separately must not share state\n- `reset` must restore the original `initialValue`, not 0",
+      "ru": "Реализуйте функцию `createCounter`, которая с помощью замыкания хранит приватное значение счётчика. Возвращаемый объект должен предоставлять методы `increment`, `decrement`, `reset` и `getValue`, при этом снаружи не должно быть способа прочитать или изменить count напрямую.\n\n**Требования:**\n- Используйте замыкание, чтобы count был приватным (никакое свойство возвращаемого объекта не должно хранить голое число)\n- Поддержите необязательный параметр `initialValue` со значением по умолчанию 0\n- `increment`/`decrement` возвращают новое значение после изменения\n- `reset` возвращает счётчик к `initialValue` и возвращает это значение\n\n**Сигнатура функции:**\n```typescript\nfunction createCounter(initialValue?: number): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n}\n```\n\n**Пример:**\n```typescript\nconst counter = createCounter(10);\ncounter.increment(); // 11\ncounter.increment(); // 12\ncounter.decrement(); // 11\ncounter.getValue();  // 11\ncounter.reset();     // 10\n```\n\n**Граничные случаи:**\n- Отрицательный или отсутствующий `initialValue`\n- Два счётчика, созданные отдельно, не должны делить состояние\n- `reset` должен возвращать именно исходный `initialValue`, а не 0"
     },
-    "starterCode": "function createCounter() {\n  // your code here\n}\n\nconst counter = createCounter();\nconsole.log(counter.increment()); // 1\nconsole.log(counter.increment()); // 2\nconsole.log(counter.value());     // 2",
-    "solution": "function createCounter() {\n  let count = 0;\n  return {\n    increment() { return ++count; },\n    value()     { return count; },\n  };\n}",
+    "starterCode": "function createCounter(initialValue: number = 0): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n} {\n  // Keep count in a variable captured by closure, not on the returned object\n  // increment/decrement should mutate it and return the new value\n  // reset should restore initialValue\n}",
+    "solution": "function createCounter(initialValue: number = 0): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n} {\n  let count = initialValue;\n\n  return {\n    increment: () => ++count,\n    decrement: () => --count,\n    reset: () => {\n      count = initialValue;\n      return count;\n    },\n    getValue: () => count\n  };\n}",
     "solutionExplanation": {
-      "en": "The function returns an object whose methods close over the private `count` variable. Each call to increment mutates count and returns its new value. `count` is not accessible from outside — that is the closure pattern.",
-      "ru": "Функция возвращает объект, методы которого захватывают приватную переменную `count` через замыкание. Каждый вызов increment изменяет count и возвращает новое значение. Снаружи count недоступен — это и есть паттерн замыкания."
+      "en": "**Approach:** `count` lives only inside the scope of `createCounter`. The four returned methods are closures — each one keeps a reference to that same scope, so they can all read and write `count`, but nothing outside the function can. Every call to `createCounter` creates a brand-new scope, so separate counters never share state, and `reset` works because `initialValue` is captured alongside `count` and never overwritten.\n\n**Time complexity:** O(1) for every method call.\n**Space complexity:** O(1) per counter instance — one number kept alive by the closure.\n\n**Common pitfall:** Storing `count` as a property on the returned object (e.g. `{ count: 0, increment() {...} }`) defeats the whole point — it's now publicly mutable from outside (`counter.count = 999`). Also watch `count++` vs `++count`: the former returns the value *before* incrementing, which silently breaks the documented return contract.",
+      "ru": "**Подход:** переменная `count` существует только внутри области видимости `createCounter`. Четыре возвращаемых метода — это замыкания: каждый хранит ссылку на эту область, поэтому все они могут читать и менять `count`, а снаружи функции доступа нет. Каждый вызов `createCounter` создаёт новую область видимости, поэтому разные счётчики не делят состояние, а `reset` работает, потому что `initialValue` захватывается вместе с `count` и никогда не перезаписывается.\n\n**Временная сложность:** O(1) для каждого вызова метода.\n**Пространственная сложность:** O(1) на экземпляр счётчика — одно число, живущее в замыкании.\n\n**Частая ловушка:** хранить `count` как свойство возвращаемого объекта (`{ count: 0, increment() {...} }`) — это сводит на нет весь смысл задачи: снаружи можно просто сделать `counter.count = 999`. Также стоит различать `count++` и `++count` — первое вернёт значение *до* инкремента и незаметно нарушит контракт возвращаемого значения."
     },
     "tags": [
       "closures",
-      "functions",
-      "state"
+      "encapsulation",
+      "state-management",
+      "object-methods"
     ]
   },
   {
@@ -28,18 +29,18 @@
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
-      "en": "Transform and Filter User Data",
-      "ru": "Преобразование и фильтрация данных пользователей"
+      "en": "Filter and Discount Products",
+      "ru": "Фильтрация и скидка на товары"
     },
     "description": {
-      "en": "Given an array of user objects, filter users who are adults (age >= 18) and return an array of strings with their names in uppercase.\n\n**Requirements:**\n- Use array methods (filter and map)\n- Filter for users with age >= 18\n- Transform names to uppercase\n- Handle empty arrays\n\n**Function signature:**\ntypescript\nfunction getAdultNames(users: Array<{name: string; age: number}>): string[]\n\n\n**Example:**\n\nInput: [\n  {name: \"alice\", age: 25},\n  {name: \"bob\", age: 17},\n  {name: \"charlie\", age: 30}\n]\nOutput: [\"ALICE\", \"CHARLIE\"]\n\n\n**Edge cases:**\n- Empty input array\n- All users under 18\n- All users 18 or older",
-      "ru": "Дан массив объектов пользователей, отфильтруйте взрослых (возраст >= 18) и верните массив строк с их именами в верхнем регистре.\n\n**Требования:**\n- Используйте методы массива (filter и map)\n- Отфильтруйте пользователей с возрастом >= 18\n- Преобразуйте имена в верхний регистр\n- Обработайте пустые массивы\n\n**Сигнатура функции:**\ntypescript\nfunction getAdultNames(users: Array<{name: string; age: number}>): string[]\n\n\n**Пример:**\n\nВход: [\n  {name: \"alice\", age: 25},\n  {name: \"bob\", age: 17},\n  {name: \"charlie\", age: 30}\n]\nВыход: [\"ALICE\", \"CHARLIE\"]\n\n\n**Граничные случаи:**\n- Пустой входной массив\n- Все пользователи младше 18\n- Все пользователи 18 лет или старше"
+      "en": "You're given an array of products with a `name` and a `price`. Write a function that keeps only products priced at or above a minimum threshold, then applies a discount percentage to the remaining ones.\n\n**Requirements:**\n- Use `filter` to drop products below `minPrice` (and any with a non-positive price)\n- Use `map` to build new objects — do not mutate the original product objects\n- Return `{ name, discountedPrice }`, where `discountedPrice = price * (1 - discountPercent / 100)`\n\n**Function signature:**\n```typescript\nfunction discountProducts(\n  products: Array<{ name: string; price: number }>,\n  minPrice: number,\n  discountPercent: number\n): Array<{ name: string; discountedPrice: number }>\n```\n\n**Example:**\n```typescript\ndiscountProducts(\n  [{ name: \"Laptop\", price: 1000 }, { name: \"Mouse\", price: 25 }, { name: \"Keyboard\", price: 75 }],\n  50,\n  10\n);\n// [{ name: \"Laptop\", discountedPrice: 900 }, { name: \"Keyboard\", discountedPrice: 67.5 }]\n```\n\n**Edge cases:**\n- Empty input array → empty output\n- Every product filtered out → empty output\n- `discountPercent = 0` → prices pass through unchanged\n- Negative or zero prices must never appear in the output",
+      "ru": "Дан массив товаров с полями `name` и `price`. Напишите функцию, которая оставляет только товары с ценой не ниже порога, а затем применяет к оставшимся процент скидки.\n\n**Требования:**\n- Используйте `filter`, чтобы отбросить товары дешевле `minPrice` (а также с неположительной ценой)\n- Используйте `map`, чтобы построить новые объекты — не мутируйте исходные объекты товаров\n- Верните `{ name, discountedPrice }`, где `discountedPrice = price * (1 - discountPercent / 100)`\n\n**Сигнатура функции:**\n```typescript\nfunction discountProducts(\n  products: Array<{ name: string; price: number }>,\n  minPrice: number,\n  discountPercent: number\n): Array<{ name: string; discountedPrice: number }>\n```\n\n**Пример:**\n```typescript\ndiscountProducts(\n  [{ name: \"Ноутбук\", price: 1000 }, { name: \"Мышка\", price: 25 }, { name: \"Клавиатура\", price: 75 }],\n  50,\n  10\n);\n// [{ name: \"Ноутбук\", discountedPrice: 900 }, { name: \"Клавиатура\", discountedPrice: 67.5 }]\n```\n\n**Граничные случаи:**\n- Пустой входной массив → пустой результат\n- Все товары отфильтрованы → пустой результат\n- `discountPercent = 0` → цены не меняются\n- Отрицательные или нулевые цены никогда не должны попадать в результат"
     },
-    "starterCode": "function getAdultNames(users: Array<{name: string; age: number}>): string[] {\n  // Filter for adults and transform names to uppercase\n  // Use filter() and map() methods\n}",
-    "solution": "function getAdultNames(users: Array<{name: string; age: number}>): string[] {\n  return users\n    .filter(user => user.age >= 18)\n    .map(user => user.name.toUpperCase());\n}",
+    "starterCode": "function discountProducts(\n  products: Array<{ name: string; price: number }>,\n  minPrice: number,\n  discountPercent: number\n): Array<{ name: string; discountedPrice: number }> {\n  // 1. filter out products below minPrice or with price <= 0\n  // 2. map remaining products to { name, discountedPrice }\n}",
+    "solution": "function discountProducts(\n  products: Array<{ name: string; price: number }>,\n  minPrice: number,\n  discountPercent: number\n): Array<{ name: string; discountedPrice: number }> {\n  return products\n    .filter(product => product.price >= minPrice && product.price > 0)\n    .map(product => ({\n      name: product.name,\n      discountedPrice: product.price * (1 - discountPercent / 100)\n    }));\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Chain the filter method to select adults (age >= 18), then use map to transform their names to uppercase. This is a common pattern for data transformation pipelines.\n\n**Time complexity:** O(n) where n is the number of users. Both filter and map iterate through the array once.\n**Space complexity:** O(m) where m is the number of adults. The output array contains at most n elements.\n\n**Common mistakes:**\n- Forgetting to chain methods and using separate loops\n- Not handling the case where the input array is empty (which works fine with this approach)\n- Using incorrect comparison operator (< instead of >=)",
-      "ru": "**Подход:** Объединьте методы filter для выбора взрослых (возраст >= 18) и map для преобразования имен в верхний регистр. Это частый паттерн для конвейеров преобразования данных.\n\n**Временная сложность:** O(n), где n — количество пользователей. И filter, и map проходят по массиву один раз.\n**Пространственная сложность:** O(m), где m — количество взрослых. Выходной массив содержит максимум n элементов.\n\n**Типичные ошибки:**\n- Забывают объединять методы и используют отдельные циклы\n- Не обрабатывают случай пустого входного массива (этот подход работает корректно)\n- Используют неправильный оператор сравнения (< вместо >=)"
+      "en": "**Approach:** Chain `filter` then `map` instead of a manual loop with an `if` and a push. `filter` narrows the array down to valid, eligible products in one pass; `map` transforms each survivor into the output shape in a second pass. Chaining keeps each function doing exactly one job, which is easier to read and test than a hand-rolled loop that does both at once.\n\n**Time complexity:** O(n) — one pass for `filter`, one pass for `map`.\n**Space complexity:** O(m), where m is the number of products that pass the filter (the output array, plus the intermediate filtered array).\n\n**Common pitfall:** Doing the discount math inside `filter`'s callback, or mutating the original `product` object inside `map` (e.g. `product.price *= ...; return product;`). The task explicitly asks for new objects — reusing or mutating the input silently corrupts the caller's original data if they hold a reference to it elsewhere.",
+      "ru": "**Подход:** используем цепочку `filter` → `map` вместо ручного цикла с `if` и `push`. `filter` за один проход оставляет только валидные подходящие товары, `map` за второй проход превращает каждый оставшийся объект в нужную форму. Такое разделение держит каждую функцию ответственной ровно за одну вещь — это читается и тестируется проще, чем цикл, который делает всё сразу.\n\n**Временная сложность:** O(n) — один проход для `filter`, один для `map`.\n**Пространственная сложность:** O(m), где m — количество товаров, прошедших фильтр (результирующий массив плюс промежуточный отфильтрованный).\n\n**Частая ловушка:** считать скидку прямо внутри колбэка `filter`, либо мутировать исходный объект `product` внутри `map` (например `product.price *= ...; return product;`). В задаче явно требуются новые объекты — переиспользование или мутация входных данных незаметно портит оригинальные объекты, если вызывающий код где-то ещё держит на них ссылку."
     },
     "tags": [
       "array-methods",
@@ -53,23 +54,23 @@
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
-      "en": "Calculate Total Cart Price with Reduce",
-      "ru": "Вычисление общей стоимости корзины с помощью Reduce"
+      "en": "Cart Total with Reduce and Tax",
+      "ru": "Сумма корзины через reduce и налог"
     },
     "description": {
-      "en": "Given an array of product objects with price and quantity properties, calculate the total price of all items in the cart using the reduce method.\n\n**Requirements:**\n- Use the reduce method to sum up total cost\n- Total cost = price * quantity for each item\n- Return a number rounded to 2 decimal places\n- Handle empty carts\n\n**Function signature:**\ntypescript\nfunction calculateCartTotal(items: Array<{price: number; quantity: number}>): number\n\n\n**Example:**\n\nInput: [\n  {price: 10.50, quantity: 2},\n  {price: 5.25, quantity: 3},\n  {price: 15.00, quantity: 1}\n]\nOutput: 46.75\n\n\n**Edge cases:**\n- Empty cart array\n- Single item\n- Items with zero quantity\n- Floating point calculations",
-      "ru": "Дан массив объектов товаров со свойствами цены и количества, вычислите общую стоимость всех товаров в корзине, используя метод reduce.\n\n**Требования:**\n- Используйте метод reduce для суммирования общей стоимости\n- Общая стоимость = цена * количество для каждого товара\n- Верните число, округленное до 2 десятичных знаков\n- Обработайте пустые корзины\n\n**Сигнатура функции:**\ntypescript\nfunction calculateCartTotal(items: Array<{price: number; quantity: number}>): number\n\n\n**Пример:**\n\nВход: [\n  {price: 10.50, quantity: 2},\n  {price: 5.25, quantity: 3},\n  {price: 15.00, quantity: 1}\n]\nВыход: 46.75\n\n\n**Граничные случаи:**\n- Пустая корзина\n- Один товар\n- Товары с нулевым количеством\n- Вычисления с плавающей точкой"
+      "en": "Given an array of cart items with `price` and `quantity`, calculate the total cost including tax using `reduce`.\n\n**Requirements:**\n- Use `reduce` to sum `price * quantity` across all items into a subtotal\n- Apply `taxRate` as a multiplier: `total = subtotal * (1 + taxRate)`\n- Round the final result to 2 decimal places\n- An empty cart returns `0`\n\n**Function signature:**\n```typescript\nfunction calculateCartTotal(\n  items: Array<{ price: number; quantity: number }>,\n  taxRate: number\n): number\n```\n\n**Example:**\n```typescript\ncalculateCartTotal(\n  [{ price: 1.5, quantity: 3 }, { price: 0.5, quantity: 2 }],\n  0.1\n);\n// subtotal = 1.5*3 + 0.5*2 = 5.5\n// total = 5.5 * 1.1 = 6.05\n```\n\n**Edge cases:**\n- Empty array → `0`\n- Items with `quantity: 0` contribute nothing\n- `taxRate = 0` → result equals the subtotal\n- Floating-point rounding (e.g. avoid results like `6.049999999999999`)",
+      "ru": "Дан массив товаров корзины с полями `price` и `quantity`. Посчитайте итоговую сумму с учётом налога, используя `reduce`.\n\n**Требования:**\n- Используйте `reduce`, чтобы просуммировать `price * quantity` по всем товарам в подытог\n- Примените `taxRate` как множитель: `total = subtotal * (1 + taxRate)`\n- Округлите итог до 2 знаков после запятой\n- Пустая корзина возвращает `0`\n\n**Сигнатура функции:**\n```typescript\nfunction calculateCartTotal(\n  items: Array<{ price: number; quantity: number }>,\n  taxRate: number\n): number\n```\n\n**Пример:**\n```typescript\ncalculateCartTotal(\n  [{ price: 1.5, quantity: 3 }, { price: 0.5, quantity: 2 }],\n  0.1\n);\n// подытог = 1.5*3 + 0.5*2 = 5.5\n// итог = 5.5 * 1.1 = 6.05\n```\n\n**Граничные случаи:**\n- Пустой массив → `0`\n- Товары с `quantity: 0` не дают вклада в сумму\n- `taxRate = 0` → результат равен подытогу\n- Округление чисел с плавающей точкой (избегайте результатов вроде `6.049999999999999`)"
     },
-    "starterCode": "function calculateCartTotal(items: Array<{price: number; quantity: number}>): number {\n  // Use reduce to calculate total price (price * quantity for each item)\n  // Round result to 2 decimal places\n}",
-    "solution": "function calculateCartTotal(items: Array<{price: number; quantity: number}>): number {\n  return Math.round(\n    items.reduce((total, item) => total + item.price * item.quantity, 0) * 100\n  ) / 100;\n}",
+    "starterCode": "function calculateCartTotal(\n  items: Array<{ price: number; quantity: number }>,\n  taxRate: number\n): number {\n  // 1. reduce items into a subtotal (price * quantity summed, start from 0)\n  // 2. multiply subtotal by (1 + taxRate)\n  // 3. round to 2 decimal places\n}",
+    "solution": "function calculateCartTotal(\n  items: Array<{ price: number; quantity: number }>,\n  taxRate: number\n): number {\n  const subtotal = items.reduce(\n    (acc, item) => acc + item.price * item.quantity,\n    0\n  );\n  const totalWithTax = subtotal * (1 + taxRate);\n  return Math.round(totalWithTax * 100) / 100;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use reduce with an initial accumulator value of 0. For each item, multiply price by quantity and add to the accumulator. To handle floating point precision issues, multiply by 100, round to nearest integer, then divide by 100 to get 2 decimal places.\n\n**Time complexity:** O(n) where n is the number of items. The reduce method iterates through the array once.\n**Space complexity:** O(1) as we only use a single accumulator variable.\n\n**Common mistakes:**\n- Forgetting the initial value (0) in reduce, which can cause issues\n- Not rounding properly, leading to floating point precision errors\n- Using toFixed() instead of Math.round for consistent number type\n- Not multiplying price by quantity for each item",
-      "ru": "**Подход:** Используйте reduce с начальным значением аккумулятора 0. Для каждого товара умножьте цену на количество и добавьте к аккумулятору. Для обработки проблем с точностью плавающей точки умножьте на 100, округлите до ближайшего целого числа, а затем разделите на 100 для получения 2 десятичных знаков.\n\n**Временная сложность:** O(n), где n — количество товаров. Метод reduce проходит по массиву один раз.\n**Пространственная сложность:** O(1), так как мы используем только одну переменную аккумулятора.\n\n**Типичные ошибки:**\n- Забывают начальное значение (0) в reduce, что может вызвать проблемы\n- Неправильное округление, приводящее к ошибкам точности плавающей точки\n- Использование toFixed() вместо Math.round для согласованного типа числа\n- Не умножение цены на количество для каждого товара"
+      "en": "**Approach:** `reduce` walks the array once, carrying a running `acc` that starts at `0` (the mandatory initial value) and grows by `price * quantity` for each item. Once the subtotal is known, tax is applied as a single multiplication — there's no need to fold the tax rate into the reduce callback itself, since it's a flat rate applied to the sum, not per item. The final `Math.round(x * 100) / 100` trick avoids binary floating-point artifacts that plain multiplication/division can leave behind.\n\n**Time complexity:** O(n) — one pass through `items`.\n**Space complexity:** O(1) — only a running accumulator is kept.\n\n**Common pitfall:** Omitting the initial value `0` in `reduce` — with an empty array, `reduce` without an initial value throws a `TypeError` instead of returning `0`. Another common mistake is rounding with `.toFixed(2)`, which returns a *string*, silently changing the function's return type from `number` to `\"6.05\"`.",
+      "ru": "**Подход:** `reduce` проходит по массиву один раз, накапливая `acc`, который стартует с `0` (обязательное начальное значение) и растёт на `price * quantity` для каждого товара. Когда подытог известен, налог применяется одним умножением — не нужно встраивать ставку налога в сам колбэк reduce, так как это плоская ставка на сумму, а не на каждый товар отдельно. Финальный приём `Math.round(x * 100) / 100` убирает артефакты бинарной арифметики с плавающей точкой, которые оставляют обычные умножение/деление.\n\n**Временная сложность:** O(n) — один проход по `items`.\n**Пространственная сложность:** O(1) — хранится только аккумулятор.\n\n**Частая ловушка:** забыть начальное значение `0` в `reduce` — на пустом массиве `reduce` без начального значения выбросит `TypeError` вместо возврата `0`. Ещё одна частая ошибка — округление через `.toFixed(2)`, который возвращает *строку*, незаметно меняя тип результата с `number` на `\"6.05\"`."
     },
     "tags": [
       "reduce",
+      "accumulator",
       "array-methods",
-      "accumulation",
       "mathematical-operations"
     ]
   },
@@ -78,24 +79,23 @@
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
-      "en": "Create a Counter Closure",
-      "ru": "Создание замыкания счетчика"
+      "en": "Palindrome Checker",
+      "ru": "Проверка на палиндром"
     },
     "description": {
-      "en": "Create a function that returns a counter object with methods to increment, decrement, and get the current count. The counter value should be private and only accessible through the returned methods.\n\n**Requirements:**\n- Use closure to maintain private state\n- Return an object with increment(), decrement(), and getCount() methods\n- Counter should start at 0 or an optional initial value\n- Each function call returns a new independent counter\n\n**Function signature:**\ntypescript\nfunction createCounter(initialValue?: number): {increment: () => number; decrement: () => number; getCount: () => number}\n\n\n**Example:**\n\nconst counter1 = createCounter();\ncounter1.increment(); // returns 1\ncounter1.increment(); // returns 2\ncounter1.decrement(); // returns 1\ncounter1.getCount(); // returns 1\n\nconst counter2 = createCounter(10);\ncounter2.increment(); // returns 11\ncounter1.getCount(); // still 1, independent state\n\n\n**Edge cases:**\n- Negative initial values\n- Multiple counters should have independent state\n- Methods should return the new count value",
-      "ru": "Создайте функцию, которая возвращает объект счетчика с методами для увеличения, уменьшения и получения текущего значения. Значение счетчика должно быть приватным и доступным только через возвращаемые методы.\n\n**Требования:**\n- Используйте замыкание для сохранения приватного состояния\n- Верните объект с методами increment(), decrement() и getCount()\n- Счетчик должен начинаться с 0 или необязательного начального значения\n- Каждый вызов функции возвращает новый независимый счетчик\n\n**Сигнатура функции:**\ntypescript\nfunction createCounter(initialValue?: number): {increment: () => number; decrement: () => number; getCount: () => number}\n\n\n**Пример:**\n\nconst counter1 = createCounter();\ncounter1.increment(); // возвращает 1\ncounter1.increment(); // возвращает 2\ncounter1.decrement(); // возвращает 1\ncounter1.getCount(); // возвращает 1\n\nconst counter2 = createCounter(10);\ncounter2.increment(); // возвращает 11\ncounter1.getCount(); // все еще 1, независимое состояние\n\n\n**Граничные случаи:**\n- Отрицательные начальные значения\n- Несколько счетчиков должны иметь независимое состояние\n- Методы должны возвращать новое значение счетчика"
+      "en": "Write a function that checks whether a string is a palindrome — the same forwards and backwards — ignoring case, spaces, and punctuation.\n\n**Requirements:**\n- Case-insensitive comparison\n- Ignore any character that isn't a letter or digit (spaces, punctuation, etc.)\n- Return `true`/`false`\n\n**Function signature:**\n```typescript\nfunction isPalindrome(input: string): boolean\n```\n\n**Example:**\n```typescript\nisPalindrome(\"racecar\");                    // true\nisPalindrome(\"A man, a plan, a canal: Panama\"); // true\nisPalindrome(\"hello\");                        // false\n```\n\n**Edge cases:**\n- Empty string → `true`\n- Single character → `true`\n- String with only punctuation/spaces → `true`",
+      "ru": "Напишите функцию, проверяющую, является ли строка палиндромом — читается одинаково в обе стороны — без учёта регистра, пробелов и пунктуации.\n\n**Требования:**\n- Сравнение без учёта регистра\n- Игнорировать все символы, кроме букв и цифр (пробелы, пунктуация и т.д.)\n- Вернуть `true`/`false`\n\n**Сигнатура функции:**\n```typescript\nfunction isPalindrome(input: string): boolean\n```\n\n**Пример:**\n```typescript\nisPalindrome(\"racecar\");                    // true\nisPalindrome(\"A man, a plan, a canal: Panama\"); // true\nisPalindrome(\"hello\");                        // false\n```\n\n**Граничные случаи:**\n- Пустая строка → `true`\n- Один символ → `true`\n- Строка только из пунктуации/пробелов → `true`"
     },
-    "starterCode": "function createCounter(initialValue?: number): {increment: () => number; decrement: () => number; getCount: () => number} {\n  // Implement closure-based counter\n  // Return object with increment, decrement, and getCount methods\n}",
-    "solution": "function createCounter(initialValue?: number): {increment: () => number; decrement: () => number; getCount: () => number} {\n  let count = initialValue ?? 0;\n  \n  return {\n    increment(): number {\n      return ++count;\n    },\n    decrement(): number {\n      return --count;\n    },\n    getCount(): number {\n      return count;\n    }\n  };\n}",
+    "starterCode": "function isPalindrome(input: string): boolean {\n  // 1. normalize: lowercase + strip non-alphanumeric characters\n  // 2. compare the normalized string to its reverse\n}",
+    "solution": "function isPalindrome(input: string): boolean {\n  const normalized = input.toLowerCase().replace(/[^a-z0-9]/g, \"\");\n  const reversed = normalized.split(\"\").reverse().join(\"\");\n  return normalized === reversed;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use a closure to create a private `count` variable. The returned object contains three methods that all have access to this variable through closure. Each call to createCounter creates a new scope with its own `count` variable, ensuring independence between counters.\n\n**Time complexity:** O(1) for all operations (increment, decrement, getCount).\n**Space complexity:** O(1) for each counter instance.\n\n**Common mistakes:**\n- Using a global variable instead of closure, causing counters to share state\n- Forgetting to use `??` (nullish coalescing) and instead using `||`, which fails with 0 as initial value\n- Returning the count as a value instead of a reference, leading to stale values\n- Not understanding that each createCounter() call creates a new independent closure",
-      "ru": "**Подход:** Используйте замыкание для создания приватной переменной `count`. Возвращаемый объект содержит три метода, которые имеют доступ к этой переменной через замыкание. Каждый вызов createCounter создает новую область видимости со своей переменной `count`, обеспечивая независимость между счетчиками.\n\n**Временная сложность:** O(1) для всех операций (increment, decrement, getCount).\n**Пространственная сложность:** O(1) для каждого экземпляра счетчика.\n\n**Типичные ошибки:**\n- Использование глобальной переменной вместо замыкания, вызывающее общее состояние счетчиков\n- Забывают использовать `??` (оператор нулевого слияния) и вместо этого используют `||`, что не работает при начальном значении 0\n- Возвращение count как значения вместо ссылки, приводящее к устаревшим значениям\n- Неправильное понимание того, что каждый вызов createCounter() создает новое независимое замыкание"
+      "en": "**Approach:** Normalize first, compare second. Lowercase the string and strip everything that isn't a letter or digit with a regex, so `\"A man, a plan\"` and `\"amanaplan\"` become directly comparable. Then reverse the normalized string (`split` into characters, `reverse`, `join` back) and check equality against the original normalized string.\n\n**Time complexity:** O(n), where n is the string length — normalizing, reversing, and comparing are each a single pass.\n**Space complexity:** O(n) for the normalized and reversed copies.\n\n**Common pitfall:** Forgetting to normalize case or punctuation before comparing, which makes realistic inputs like `\"A man, a plan, a canal: Panama\"` fail even though they're semantically palindromes. Another one: comparing with `===` on the original (non-reversed) string against itself instead of against the *reversed* copy — an easy copy-paste mistake that always returns `true`.",
+      "ru": "**Подход:** сначала нормализация, потом сравнение. Приводим строку к нижнему регистру и regex'ом убираем всё, что не буква и не цифра, чтобы `\"A man, a plan\"` и `\"amanaplan\"` стали напрямую сравнимыми. Затем разворачиваем нормализованную строку (`split` на символы, `reverse`, `join` обратно) и сравниваем с исходной нормализованной строкой.\n\n**Временная сложность:** O(n), где n — длина строки: нормализация, разворот и сравнение — каждое за один проход.\n**Пространственная сложность:** O(n) для нормализованной и развёрнутой копий.\n\n**Частая ловушка:** забыть нормализовать регистр или пунктуацию перед сравнением — тогда реалистичные строки вроде `\"A man, a plan, a canal: Panama\"` не пройдут проверку, хотя семантически являются палиндромами. Ещё одна: по ошибке сравнить исходную (неразвёрнутую) строку саму с собой вместо развёрнутой копии — легко возникает при копипасте и всегда даёт `true`."
     },
     "tags": [
-      "closure",
-      "private-state",
-      "object-methods",
-      "encapsulation"
+      "strings",
+      "regex",
+      "algorithms"
     ]
   },
   {
@@ -103,24 +103,23 @@
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
-      "en": "Transform and Filter Product Prices",
-      "ru": "Трансформация и фильтрация цен товаров"
+      "en": "Factorial with Recursion",
+      "ru": "Факториал через рекурсию"
     },
     "description": {
-      "en": "## Task: Transform and Filter Product Prices\n\nYou have an array of product objects with names and prices. Create a function that:\n1. Filters out products with prices less than a minimum threshold\n2. Applies a discount percentage to remaining products\n3. Returns an array of objects with original name and discounted price\n\n**Function signature:**\ntypescript\nfunction discountProducts(products: Array<{name: string, price: number}>, minPrice: number, discountPercent: number): Array<{name: string, discountedPrice: number}>\n\n\n**Example:**\n- Input: `products = [{name: \"Laptop\", price: 1000}, {name: \"Mouse\", price: 25}, {name: \"Keyboard\", price: 75}]`, `minPrice = 50`, `discountPercent = 10`\n- Output: `[{name: \"Laptop\", discountedPrice: 900}, {name: \"Keyboard\", discountedPrice: 67.5}]`\n\n**Edge cases:**\n- Empty array should return empty array\n- All products filtered out should return empty array\n- Discount of 0% should return original prices\n- Negative prices should be filtered out",
-      "ru": "## Задача: Трансформация и фильтрация цен товаров\n\nУ вас есть массив объектов товаров с названиями и ценами. Создайте функцию, которая:\n1. Фильтрует товары с ценой ниже минимального порога\n2. Применяет процент скидки к оставшимся товарам\n3. Возвращает массив объектов с исходным названием и скидочной ценой\n\n**Сигнатура функции:**\ntypescript\nfunction discountProducts(products: Array<{name: string, price: number}>, minPrice: number, discountPercent: number): Array<{name: string, discountedPrice: number}>\n\n\n**Пример:**\n- Входные данные: `products = [{name: \"Ноутбук\", price: 1000}, {name: \"Мышка\", price: 25}, {name: \"Клавиатура\", price: 75}]`, `minPrice = 50`, `discountPercent = 10`\n- Выходные данные: `[{name: \"Ноутбук\", discountedPrice: 900}, {name: \"Клавиатура\", discountedPrice: 67.5}]`\n\n**Граничные случаи:**\n- Пустой массив должен вернуть пустой массив\n- Если все товары отфильтрованы, вернуть пустой массив\n- Скидка 0% должна вернуть исходные цены\n- Отрицательные цены должны быть отфильтрованы"
+      "en": "Implement `factorial` recursively (no loops). `factorial(n)` is the product of all integers from 1 to `n`, with `factorial(0) = 1`.\n\n**Requirements:**\n- Must use recursion, not a loop\n- Throw an `Error` for negative input\n- `factorial(0)` and `factorial(1)` both return `1`\n\n**Function signature:**\n```typescript\nfunction factorial(n: number): number\n```\n\n**Example:**\n```typescript\nfactorial(5); // 120  (5*4*3*2*1)\nfactorial(0); // 1\n```\n\n**Edge cases:**\n- `n = 0` → `1` (base case)\n- Negative `n` → throw\n- Non-integer `n` (e.g. 3.5) is out of scope — you can assume integers only",
+      "ru": "Реализуйте `factorial` рекурсивно (без циклов). `factorial(n)` — произведение всех целых чисел от 1 до `n`, при этом `factorial(0) = 1`.\n\n**Требования:**\n- Обязательно рекурсия, а не цикл\n- При отрицательном входе выбросить `Error`\n- `factorial(0)` и `factorial(1)` оба возвращают `1`\n\n**Сигнатура функции:**\n```typescript\nfunction factorial(n: number): number\n```\n\n**Пример:**\n```typescript\nfactorial(5); // 120  (5*4*3*2*1)\nfactorial(0); // 1\n```\n\n**Граничные случаи:**\n- `n = 0` → `1` (базовый случай)\n- Отрицательное `n` → выбросить исключение\n- Нецелое `n` (например 3.5) вне рамок задачи — можно считать, что вход всегда целый"
     },
-    "starterCode": "function discountProducts(\n  products: Array<{ name: string; price: number }>,\n  minPrice: number,\n  discountPercent: number\n): Array<{ name: string; discountedPrice: number }> {\n  // Use filter and map to solve this\n  // Filter products by minPrice threshold\n  // Map to apply discount and restructure objects\n}",
-    "solution": "function discountProducts(\n  products: Array<{ name: string; price: number }>,\n  minPrice: number,\n  discountPercent: number\n): Array<{ name: string; discountedPrice: number }> {\n  return products\n    .filter(product => product.price >= minPrice && product.price > 0)\n    .map(product => ({\n      name: product.name,\n      discountedPrice: product.price * (1 - discountPercent / 100)\n    }));\n}",
+    "starterCode": "function factorial(n: number): number {\n  // base case(s) first: what should factorial(0) return?\n  // guard: throw for negative n\n  // recursive case: n * factorial(n - 1)\n}",
+    "solution": "function factorial(n: number): number {\n  if (n < 0) {\n    throw new Error(\"factorial is not defined for negative numbers\");\n  }\n  if (n === 0 || n === 1) {\n    return 1;\n  }\n  return n * factorial(n - 1);\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Chain array methods to filter and transform data in one pass. First filter products that meet the minimum price threshold and have positive prices, then map each remaining product to a new object structure with the discounted price calculated.\n\n**Time complexity:** O(n) - single pass through the array for filter, then single pass for map\n**Space complexity:** O(m) where m is the number of products that pass the filter\n\n**Common mistakes:**\n- Forgetting to check for negative prices in the filter\n- Applying discount incorrectly (e.g., using subtraction instead of multiplication)\n- Not filtering before mapping, leading to unnecessary object creations\n- Modifying the original product objects instead of creating new ones",
-      "ru": "**Подход:** Цепочка методов массива для фильтрации и трансформации данных в одном проходе. Сначала фильтруем товары, которые соответствуют минимальной цене и имеют положительные цены, затем преобразуем каждый оставшийся товар в новый объект со скидочной ценой.\n\n**Временная сложность:** O(n) - один проход для фильтра, затем один проход для map\n**Пространственная сложность:** O(m), где m - количество товаров, прошедших фильтр\n\n**Типичные ошибки:**\n- Забывают проверить отрицательные цены в фильтре\n- Неправильно применяют скидку (например, используют вычитание вместо умножения)\n- Не фильтруют перед map, что приводит к ненужному созданию объектов\n- Изменяют исходные объекты товаров вместо создания новых"
+      "en": "**Approach:** Every recursive function needs a base case that stops the recursion and a recursive case that makes progress toward it. Here the base case is `n === 0 || n === 1`, both returning `1` directly. The recursive case multiplies `n` by the result of `factorial(n - 1)` — each call gets a strictly smaller `n`, guaranteeing the recursion terminates. The negative check runs first, before any recursive call, so it only needs to fire once.\n\n**Time complexity:** O(n) — one call per integer from `n` down to the base case.\n**Space complexity:** O(n) — each recursive call adds a frame to the call stack until the base case is hit.\n\n**Common pitfall:** Forgetting the base case entirely, or writing it as `n === 0` only — then `factorial(1)` still recurses down to `factorial(0)`, which is technically correct but wasteful; the real danger is missing the base case altogether, which causes infinite recursion and a `RangeError: Maximum call stack size exceeded`. Also, for large `n` (roughly >10000 depending on the engine), this recursive approach can blow the stack — an iterative version would be needed in production code for unbounded input.",
+      "ru": "**Подход:** любая рекурсивная функция нуждается в базовом случае, останавливающем рекурсию, и рекурсивном случае, который приближает к этому базовому случаю. Здесь базовый случай — `n === 0 || n === 1`, оба сразу возвращают `1`. Рекурсивный случай умножает `n` на результат `factorial(n - 1)` — каждый вызов получает строго меньшее `n`, что гарантирует завершение рекурсии. Проверка на отрицательное число выполняется первой, до любого рекурсивного вызова, поэтому срабатывает только один раз.\n\n**Временная сложность:** O(n) — по одному вызову на каждое целое число от `n` до базового случая.\n**Пространственная сложность:** O(n) — каждый рекурсивный вызов добавляет фрейм в стек вызовов до достижения базового случая.\n\n**Частая ловушка:** полностью забыть базовый случай — это приведёт к бесконечной рекурсии и `RangeError: Maximum call stack size exceeded`. Также при больших `n` (примерно >10000, зависит от движка) такой рекурсивный подход может переполнить стек — для неограниченного входа в продакшене понадобится итеративная версия."
     },
     "tags": [
-      "array-methods",
-      "filter",
-      "map",
-      "object-operations"
+      "recursion",
+      "functions",
+      "algorithms"
     ]
   },
   {
@@ -128,24 +127,23 @@
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
-      "en": "Calculate Total with Reduce and Accumulator",
-      "ru": "Расчет суммы с помощью reduce и аккумулятора"
+      "en": "Merge User Settings (Shallow Merge)",
+      "ru": "Слияние настроек пользователя (неглубокое)"
     },
     "description": {
-      "en": "## Task: Calculate Total with Reduce\n\nImplement a function that uses the `reduce` method to calculate the total cost of items in a shopping cart, including a tax calculation.\n\n**Function signature:**\ntypescript\nfunction calculateCartTotal(items: Array<{name: string, price: number, quantity: number}>, taxRate: number): number\n\n\n**Example:**\n- Input: `items = [{name: \"Apple\", price: 1.5, quantity: 3}, {name: \"Banana\", price: 0.5, quantity: 2}]`, `taxRate = 0.1`\n- Output: `5.95` (subtotal: (1.5*3 + 0.5*2) = 5.5, with 10% tax: 5.5 * 1.1 = 6.05)\n\nWait, let me recalculate: subtotal = 4.5 + 1.0 = 5.5, with tax = 5.5 * 1.1 = 6.05\n\n- Output: `6.05`\n\n**Edge cases:**\n- Empty cart should return 0\n- Zero quantity items should be treated as 0 cost\n- Tax rate can be 0 (no tax)\n- Prices should be rounded to 2 decimal places",
-      "ru": "## Задача: Расчет суммы с помощью reduce\n\nРеализуйте функцию, которая использует метод `reduce` для расчета общей стоимости товаров в корзине, включая расчет налога.\n\n**Сигнатура функции:**\ntypescript\nfunction calculateCartTotal(items: Array<{name: string, price: number, quantity: number}>, taxRate: number): number\n\n\n**Пример:**\n- Входные данные: `items = [{name: \"Яблоко\", price: 1.5, quantity: 3}, {name: \"Банан\", price: 0.5, quantity: 2}]`, `taxRate = 0.1`\n- Промежуточный расчет: подитог = (1.5*3 + 0.5*2) = 5.5, с налогом 10%: 5.5 * 1.1 = 6.05\n- Выходные данные: `6.05`\n\n**Граничные случаи:**\n- Пустая корзина должна вернуть 0\n- Товары с нулевым количеством должны быть 0\n- Налоговая ставка может быть 0 (без налога)\n- Цены должны быть округлены до 2 знаков после запятой"
+      "en": "Write a function that merges a user's custom settings on top of a default settings object, without mutating either input. Keys present in `overrides` should replace the same key in `defaults`; keys only in `defaults` should be kept as-is.\n\n**Requirements:**\n- Do not mutate `defaults` or `overrides`\n- The merge is shallow — only top-level keys are merged (nested objects are replaced wholesale, not deep-merged)\n- Return a brand-new object\n\n**Function signature:**\n```typescript\nfunction mergeSettings(\n  defaults: Record<string, unknown>,\n  overrides: Record<string, unknown>\n): Record<string, unknown>\n```\n\n**Example:**\n```typescript\nmergeSettings(\n  { theme: \"light\", notifications: true, fontSize: 14 },\n  { theme: \"dark\", fontSize: 16 }\n);\n// { theme: \"dark\", notifications: true, fontSize: 16 }\n```\n\n**Edge cases:**\n- `overrides` is an empty object → result equals `defaults` (as a new object)\n- `overrides` has keys not present in `defaults` → they're added to the result\n- Nested object values are replaced entirely, not merged key-by-key",
+      "ru": "Напишите функцию, которая накладывает пользовательские настройки поверх дефолтных, не мутируя ни один из входных объектов. Ключи из `overrides` должны заменять одноимённые ключи в `defaults`; ключи, которых нет в `overrides`, остаются как есть.\n\n**Требования:**\n- Не мутировать `defaults` и `overrides`\n- Слияние неглубокое — мержатся только ключи верхнего уровня (вложенные объекты полностью заменяются, а не мержатся рекурсивно)\n- Вернуть новый объект\n\n**Сигнатура функции:**\n```typescript\nfunction mergeSettings(\n  defaults: Record<string, unknown>,\n  overrides: Record<string, unknown>\n): Record<string, unknown>\n```\n\n**Пример:**\n```typescript\nmergeSettings(\n  { theme: \"light\", notifications: true, fontSize: 14 },\n  { theme: \"dark\", fontSize: 16 }\n);\n// { theme: \"dark\", notifications: true, fontSize: 16 }\n```\n\n**Граничные случаи:**\n- Пустой `overrides` → результат равен `defaults` (но это новый объект)\n- В `overrides` есть ключи, которых нет в `defaults` → они добавляются в результат\n- Вложенные объекты заменяются целиком, а не мержатся по ключам"
     },
-    "starterCode": "function calculateCartTotal(\n  items: Array<{ name: string; price: number; quantity: number }>,\n  taxRate: number\n): number {\n  // Use reduce to accumulate the total cost\n  // Calculate subtotal first, then apply tax\n  // Return result rounded to 2 decimal places\n}",
-    "solution": "function calculateCartTotal(\n  items: Array<{ name: string; price: number; quantity: number }>,\n  taxRate: number\n): number {\n  const subtotal = items.reduce(\n    (acc, item) => acc + item.price * item.quantity,\n    0\n  );\n  const totalWithTax = subtotal * (1 + taxRate);\n  return Math.round(totalWithTax * 100) / 100;\n}",
+    "starterCode": "function mergeSettings(\n  defaults: Record<string, unknown>,\n  overrides: Record<string, unknown>\n): Record<string, unknown> {\n  // combine both objects into a new one without mutating either input\n  // overrides should win on key collisions\n}",
+    "solution": "function mergeSettings(\n  defaults: Record<string, unknown>,\n  overrides: Record<string, unknown>\n): Record<string, unknown> {\n  return { ...defaults, ...overrides };\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use reduce to accumulate the subtotal by multiplying each item's price by its quantity and adding to the accumulator starting from 0. After getting the subtotal, apply the tax rate multiplier and round the result to 2 decimal places using Math.round to avoid floating-point precision issues.\n\n**Time complexity:** O(n) - single pass through items array\n**Space complexity:** O(1) - only uses constant extra space for accumulator variables\n\n**Common mistakes:**\n- Forgetting to initialize accumulator with 0 in reduce\n- Not accounting for quantity in the calculation\n- Using improper rounding methods that lead to floating-point errors\n- Applying tax before all items are summed\n- Not handling empty array edge case properly",
-      "ru": "**Подход:** Используйте reduce для накопления подитога путем умножения цены каждого товара на его количество и добавления к аккумулятору, начиная с 0. После получения подитога примените множитель налоговой ставки и округлите результат до 2 знаков после запятой, используя Math.round, чтобы избежать проблем с точностью с плавающей точкой.\n\n**Временная сложность:** O(n) - один проход через массив items\n**Пространственная сложность:** O(1) - использует только константное дополнительное пространство для переменных аккумулятора\n\n**Типичные ошибки:**\n- Забывают инициализировать аккумулятор с 0 в reduce\n- Не учитывают количество в расчете\n- Используют неправильные методы округления, приводящие к ошибкам с плавающей точкой\n- Применяют налог до суммирования всех товаров\n- Не обрабатывают правильно граничный случай пустого массива"
+      "en": "**Approach:** The object spread operator copies enumerable own properties into a new object literal, left to right. Spreading `defaults` first and `overrides` second means any key that exists in both gets the `overrides` value, because later spreads overwrite earlier ones in a literal. Neither source object is touched — a fresh object is created each call.\n\n**Time complexity:** O(k), where k is the total number of keys across both objects.\n**Space complexity:** O(k) for the new merged object.\n\n**Common pitfall:** Using `Object.assign(defaults, overrides)` instead of `Object.assign({}, defaults, overrides)` — the first form mutates `defaults` in place (it's the target, not a fresh object), silently corrupting a shared defaults config that other code might depend on. The same mistake with spread would look like `Object.assign(defaults, {...overrides})`, which has the identical mutation bug.",
+      "ru": "**Подход:** оператор spread для объектов копирует собственные перечисляемые свойства в новый объектный литерал слева направо. Сначала распаковываем `defaults`, затем `overrides` — если ключ есть в обоих, побеждает значение из `overrides`, потому что более поздний spread перезаписывает более ранний внутри литерала. Ни один из исходных объектов не трогается — каждый вызов создаёт новый объект.\n\n**Временная сложность:** O(k), где k — суммарное количество ключей в обоих объектах.\n**Пространственная сложность:** O(k) для нового объединённого объекта.\n\n**Частая ловушка:** использовать `Object.assign(defaults, overrides)` вместо `Object.assign({}, defaults, overrides)` — первый вариант мутирует `defaults` на месте (он выступает как target, а не новый объект), незаметно портя общий конфиг настроек, на который может рассчитывать другой код."
     },
     "tags": [
-      "reduce",
-      "accumulator",
-      "array-methods",
-      "math-operations"
+      "objects",
+      "spread-operator",
+      "object-operations"
     ]
   },
   {
@@ -153,28 +151,172 @@
     "topicId": "javascript",
     "difficulty": "easy",
     "title": {
-      "en": "Create a Counter Closure Function",
-      "ru": "Создание функции счетчика с замыканием"
+      "en": "Polyfill: Custom Array.map",
+      "ru": "Полифилл: собственная реализация Array.map"
     },
     "description": {
-      "en": "## Task: Create a Counter Closure\n\nImplement a function that returns a counter object with methods to increment, decrement, reset, and get the current value. Use closures to maintain private state.\n\n**Function signature:**\ntypescript\nfunction createCounter(initialValue: number = 0): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n}\n\n\n**Example:**\ntypescript\nconst counter = createCounter(10);\ncounter.increment(); // returns 11\ncounter.increment(); // returns 12\ncounter.decrement(); // returns 11\ncounter.getValue(); // returns 11\ncounter.reset(); // returns 10\ncounter.getValue(); // returns 10\n\n\n**Edge cases:**\n- Initial value can be negative\n- Multiple counter instances should have independent state\n- Calling methods in any order should work correctly\n- No direct access to the internal count variable should be possible",
-      "ru": "## Задача: Создание функции счетчика с замыканием\n\nРеализуйте функцию, которая возвращает объект счетчика с методами для увеличения, уменьшения, сброса и получения текущего значения. Используйте замыкания для сохранения приватного состояния.\n\n**Сигнатура функции:**\ntypescript\nfunction createCounter(initialValue: number = 0): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n}\n\n\n**Пример:**\ntypescript\nconst counter = createCounter(10);\ncounter.increment(); // возвращает 11\ncounter.increment(); // возвращает 12\ncounter.decrement(); // возвращает 11\ncounter.getValue(); // возвращает 11\ncounter.reset(); // возвращает 10\ncounter.getValue(); // возвращает 10\n\n\n**Граничные случаи:**\n- Начальное значение может быть отрицательным\n- Несколько экземпляров счетчика должны иметь независимое состояние\n- Вызов методов в любом порядке должен работать корректно\n- Не должно быть прямого доступа к внутренней переменной count"
+      "en": "Implement your own version of `Array.prototype.map` from scratch, called `myMap`, without using the built-in `map`.\n\n**Requirements:**\n- Accept a callback `(item, index, array) => newItem`, matching the native `map` callback signature\n- Return a new array; do not mutate the original\n- Preserve the order and length of the input array\n\n**Function signature:**\n```typescript\nfunction myMap<T, U>(\n  arr: T[],\n  callback: (item: T, index: number, array: T[]) => U\n): U[]\n```\n\n**Example:**\n```typescript\nmyMap([1, 2, 3], x => x * 2); // [2, 4, 6]\nmyMap([\"a\", \"b\"], (item, index) => `${index}:${item}`); // [\"0:a\", \"1:b\"]\n```\n\n**Edge cases:**\n- Empty array → empty array\n- Callback that uses the `index` and `array` arguments, not just `item`\n- Original array must be unchanged after the call",
+      "ru": "Реализуйте собственную версию `Array.prototype.map` с нуля, назовите её `myMap`, не используя встроенный `map`.\n\n**Требования:**\n- Принимает колбэк `(item, index, array) => newItem`, совпадающий по сигнатуре с нативным колбэком `map`\n- Возвращает новый массив; не мутирует исходный\n- Сохраняет порядок и длину входного массива\n\n**Сигнатура функции:**\n```typescript\nfunction myMap<T, U>(\n  arr: T[],\n  callback: (item: T, index: number, array: T[]) => U\n): U[]\n```\n\n**Пример:**\n```typescript\nmyMap([1, 2, 3], x => x * 2); // [2, 4, 6]\nmyMap([\"a\", \"b\"], (item, index) => `${index}:${item}`); // [\"0:a\", \"1:b\"]\n```\n\n**Граничные случаи:**\n- Пустой массив → пустой массив\n- Колбэк, использующий аргументы `index` и `array`, а не только `item`\n- Исходный массив после вызова должен остаться без изменений"
     },
-    "starterCode": "function createCounter(initialValue: number = 0): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n} {\n  // Create a private count variable using closure\n  // Return an object with methods that access and modify count\n  // Each method should return the new count value\n}",
-    "solution": "function createCounter(initialValue: number = 0): {\n  increment: () => number;\n  decrement: () => number;\n  reset: () => number;\n  getValue: () => number;\n} {\n  let count = initialValue;\n\n  return {\n    increment: () => ++count,\n    decrement: () => --count,\n    reset: () => {\n      count = initialValue;\n      return count;\n    },\n    getValue: () => count\n  };\n}",
+    "starterCode": "function myMap<T, U>(\n  arr: T[],\n  callback: (item: T, index: number, array: T[]) => U\n): U[] {\n  // loop over arr, call callback(item, index, arr) for each element\n  // push each result into a new array and return it\n}",
+    "solution": "function myMap<T, U>(\n  arr: T[],\n  callback: (item: T, index: number, array: T[]) => U\n): U[] {\n  const result: U[] = [];\n  for (let i = 0; i < arr.length; i++) {\n    result.push(callback(arr[i], i, arr));\n  }\n  return result;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use a closure to create a private `count` variable that is not directly accessible from outside. The returned object contains methods that all reference and modify this private variable. Each method (increment, decrement, getValue, reset) forms a closure over the count variable, allowing them to access and modify it while keeping it protected from external modification.\n\n**Time complexity:** O(1) - all operations are constant time\n**Space complexity:** O(1) - each counter instance stores only one number in closure scope\n\n**Common mistakes:**\n- Declaring count outside the function scope, breaking encapsulation\n- Using `count++` instead of `++count`, returning the old value instead of new\n- Forgetting to return the value from methods\n- Not preserving initialValue for proper reset functionality\n- Creating count as a property of the return object, making it publicly accessible",
-      "ru": "**Подход:** Используйте замыкание для создания приватной переменной `count`, которая не доступна напрямую снаружи. Возвращаемый объект содержит методы, которые все ссылаются и изменяют эту приватную переменную. Каждый метод (increment, decrement, getValue, reset) образует замыкание над переменной count, позволяя им получать доступ и изменять её, одновременно защищая от внешних модификаций.\n\n**Временная сложность:** O(1) - все операции выполняются за постоянное время\n**Пространственная сложность:** O(1) - каждый экземпляр счетчика хранит только одно число в области замыкания\n\n**Типичные ошибки:**\n- Объявление count вне области функции, нарушение инкапсуляции\n- Использование `count++` вместо `++count`, возврат старого значения вместо нового\n- Забывают возвращать значение из методов\n- Не сохраняют initialValue для правильной функциональности reset\n- Создание count как свойства возвращаемого объекта, делая его публичным"
+      "en": "**Approach:** A plain `for` loop with an index gives access to everything the native `map` callback signature promises — the item, its index, and the full array — which a `for...of` loop can't provide without extra bookkeeping. Each callback result is pushed into a fresh `result` array, so the input `arr` is never touched. This is the core exercise behind understanding what `map` actually does under the hood: it's just a loop with a standard result-building pattern.\n\n**Time complexity:** O(n) — one callback invocation per element.\n**Space complexity:** O(n) for the new result array.\n\n**Common pitfall:** Only passing `item` to the callback and forgetting `index` and `array` — code relying on `myMap` as a drop-in replacement for the native `map` would silently break if it uses the index (a very common pattern, e.g. `myMap(items, (item, i) => \\`${i}: ${item}\\`)`). Another common mistake is mutating `arr` in place instead of building a separate `result` array.",
+      "ru": "**Подход:** обычный `for`-цикл с индексом даёт доступ ко всему, что обещает сигнатура нативного колбэка `map` — элемент, его индекс и весь массив — чего `for...of` без дополнительного кода не даёт. Каждый результат колбэка добавляется в новый массив `result`, поэтому исходный `arr` не трогается. Это ключевое упражнение для понимания того, что `map` на самом деле делает под капотом: это просто цикл со стандартным паттерном сборки результата.\n\n**Временная сложность:** O(n) — один вызов колбэка на элемент.\n**Пространственная сложность:** O(n) для нового результирующего массива.\n\n**Частая ловушка:** передавать в колбэк только `item`, забыв про `index` и `array` — код, рассчитывающий на `myMap` как полноценную замену нативного `map`, незаметно сломается, если использует индекс (очень частый паттерн, например `myMap(items, (item, i) => \\`${i}: ${item}\\`)`). Ещё одна частая ошибка — мутировать `arr` на месте вместо сборки отдельного массива `result`."
     },
     "tags": [
-      "closures",
-      "encapsulation",
-      "state-management",
-      "object-methods"
+      "array-methods",
+      "polyfill",
+      "higher-order-functions"
     ]
   },
   {
     "id": "javascript-t-8",
+    "topicId": "javascript",
+    "difficulty": "easy",
+    "title": {
+      "en": "Remove Duplicate Values from an Array",
+      "ru": "Удаление дубликатов из массива"
+    },
+    "description": {
+      "en": "Write a function that removes duplicate values from an array of primitives (numbers or strings), preserving the order of first occurrence.\n\n**Requirements:**\n- Input contains only primitives (numbers and/or strings)\n- Output preserves the order in which each unique value first appeared\n- Do not mutate the input array\n\n**Function signature:**\n```typescript\nfunction removeDuplicates<T extends string | number>(arr: T[]): T[]\n```\n\n**Example:**\n```typescript\nremoveDuplicates([1, 2, 2, 3, 1, 4]); // [1, 2, 3, 4]\nremoveDuplicates([\"a\", \"b\", \"a\", \"c\"]); // [\"a\", \"b\", \"c\"]\n```\n\n**Edge cases:**\n- Empty array → empty array\n- Array with no duplicates → returned unchanged (order preserved)\n- Array where every element is the same → single-element array",
+      "ru": "Напишите функцию, которая удаляет дубликаты из массива примитивов (чисел или строк), сохраняя порядок первого появления каждого значения.\n\n**Требования:**\n- Вход содержит только примитивы (числа и/или строки)\n- Порядок результата — порядок первого появления каждого уникального значения\n- Не мутировать исходный массив\n\n**Сигнатура функции:**\n```typescript\nfunction removeDuplicates<T extends string | number>(arr: T[]): T[]\n```\n\n**Пример:**\n```typescript\nremoveDuplicates([1, 2, 2, 3, 1, 4]); // [1, 2, 3, 4]\nremoveDuplicates([\"a\", \"b\", \"a\", \"c\"]); // [\"a\", \"b\", \"c\"]\n```\n\n**Граничные случаи:**\n- Пустой массив → пустой массив\n- Массив без дубликатов → возвращается без изменений (порядок сохранён)\n- Массив, где все элементы одинаковы → массив из одного элемента"
+    },
+    "starterCode": "function removeDuplicates<T extends string | number>(arr: T[]): T[] {\n  // Set preserves insertion order for primitives in JS\n  // convert to Set, then back to array\n}",
+    "solution": "function removeDuplicates<T extends string | number>(arr: T[]): T[] {\n  return [...new Set(arr)];\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** `Set` only stores unique values and, for primitives, iterates in insertion order — the order elements were first added, which matches \"first occurrence\" order exactly. Passing `arr` into `new Set(arr)` inserts each element once (later duplicates are silently ignored since they're already present), and spreading the Set back into an array gives the deduplicated result. `arr` itself is never modified since `Set` only reads from it.\n\n**Time complexity:** O(n) — `Set` uses hash-based lookups internally, so each insertion/lookup is O(1) on average.\n**Space complexity:** O(n) for the Set and the resulting array.\n\n**Common pitfall:** Reaching for a nested loop or `indexOf`-based filter (`arr.filter((item, i) => arr.indexOf(item) === i)`) as the \"obvious\" solution — it works, but it's O(n²) because `indexOf` itself scans the array, which matters once arrays get large. Also, this `Set`-based approach only dedupes primitives correctly — it does *not* dedupe objects by content, since two distinct object references are never `===` even with identical properties.",
+      "ru": "**Подход:** `Set` хранит только уникальные значения и для примитивов итерируется в порядке добавления — то есть в том порядке, в котором элементы впервые встретились, что в точности совпадает с требуемым порядком \"первого появления\". При передаче `arr` в `new Set(arr)` каждый элемент добавляется один раз (повторные дубликаты просто игнорируются, так как уже присутствуют), а разворачивание Set обратно в массив даёт результат без дублей. Сам `arr` не меняется, так как `Set` только читает из него.\n\n**Временная сложность:** O(n) — `Set` внутри использует хеш-таблицу, поэтому вставка/поиск в среднем O(1).\n**Пространственная сложность:** O(n) для Set и результирующего массива.\n\n**Частая ловушка:** тянуться к вложенному циклу или `filter` на основе `indexOf` (`arr.filter((item, i) => arr.indexOf(item) === i)`) как к \"очевидному\" решению — оно работает, но за O(n²), потому что сам `indexOf` сканирует массив, что становится заметно на больших массивах. Также стоит помнить: этот подход через `Set` корректно дедуплицирует только примитивы — он *не* дедуплицирует объекты по содержимому, так как две разные ссылки на объект никогда не равны через `===`, даже с идентичными свойствами."
+    },
+    "tags": [
+      "array-methods",
+      "set",
+      "deduplication"
+    ]
+  },
+  {
+    "id": "javascript-t-9",
+    "topicId": "javascript",
+    "difficulty": "easy",
+    "title": {
+      "en": "Word Frequency Counter",
+      "ru": "Счётчик частоты слов"
+    },
+    "description": {
+      "en": "Write a function that counts how many times each word appears in a sentence, case-insensitively, ignoring punctuation.\n\n**Requirements:**\n- Split on whitespace, lowercase every word, strip surrounding punctuation from each word\n- Return an object mapping each word to its count\n- Words that appear once still show up in the result with count `1`\n\n**Function signature:**\n```typescript\nfunction wordFrequency(text: string): Record<string, number>\n```\n\n**Example:**\n```typescript\nwordFrequency(\"The cat sat. The cat ran!\");\n// { the: 2, cat: 2, sat: 1, ran: 1 }\n```\n\n**Edge cases:**\n- Empty string → `{}`\n- String with only punctuation/whitespace → `{}`\n- Repeated punctuation shouldn't create separate word entries (`\"cat!\"` and `\"cat\"` count as the same word)",
+      "ru": "Напишите функцию, которая считает, сколько раз каждое слово встречается в предложении, без учёта регистра и пунктуации.\n\n**Требования:**\n- Разбейте по пробелам, приведите каждое слово к нижнему регистру, уберите окружающую пунктуацию\n- Верните объект, сопоставляющий каждое слово его количеству\n- Слова, встретившиеся один раз, всё равно попадают в результат со значением `1`\n\n**Сигнатура функции:**\n```typescript\nfunction wordFrequency(text: string): Record<string, number>\n```\n\n**Пример:**\n```typescript\nwordFrequency(\"The cat sat. The cat ran!\");\n// { the: 2, cat: 2, sat: 1, ran: 1 }\n```\n\n**Граничные случаи:**\n- Пустая строка → `{}`\n- Строка только из пунктуации/пробелов → `{}`\n- Повторяющаяся пунктуация не должна создавать отдельные записи слова (`\"cat!\"` и `\"cat\"` считаются одним словом)"
+    },
+    "starterCode": "function wordFrequency(text: string): Record<string, number> {\n  // 1. lowercase, split on whitespace\n  // 2. strip punctuation from each token\n  // 3. count occurrences into a Record<string, number>, skipping empty tokens\n}",
+    "solution": "function wordFrequency(text: string): Record<string, number> {\n  const words = text\n    .toLowerCase()\n    .split(/\\s+/)\n    .map(word => word.replace(/[^a-z0-9']/g, \"\"))\n    .filter(word => word.length > 0);\n\n  const counts: Record<string, number> = {};\n  for (const word of words) {\n    counts[word] = (counts[word] ?? 0) + 1;\n  }\n  return counts;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Normalize before counting: lowercase the whole string, split on runs of whitespace, then strip leading/trailing punctuation from each token with a regex. `filter` drops any token that became empty (e.g. a lone `\"!\"` between spaces). Then a single pass builds the frequency map, using `counts[word] ?? 0` to handle the first-seen case without a separate existence check.\n\n**Time complexity:** O(n), where n is the length of the text — splitting, mapping, and counting are each linear passes.\n**Space complexity:** O(u), where u is the number of unique words (plus O(n) for the intermediate tokens array).\n\n**Common pitfall:** Splitting on whitespace but not stripping punctuation, so `\"cat.\"` and `\"cat\"` end up as two separate keys in the result — a subtle bug that only shows up with real-world text containing periods, commas, or exclamation marks. Also watch `counts[word] ?? 0` vs `counts[word] || 0`: for words this doesn't matter (counts are never `0` before increment), but it's a habit worth having since `||` breaks when a legitimate value of `0` is possible elsewhere.",
+      "ru": "**Подход:** сначала нормализация, потом подсчёт: приводим всю строку к нижнему регистру, разбиваем по последовательностям пробелов, затем regex'ом убираем пунктуацию по краям каждого токена. `filter` отбрасывает токены, ставшие пустыми (например одиночный `\"!\"` между пробелами). Затем за один проход строится карта частот, `counts[word] ?? 0` обрабатывает случай первого появления без отдельной проверки на существование ключа.\n\n**Временная сложность:** O(n), где n — длина текста: разбиение, map и подсчёт — линейные проходы.\n**Пространственная сложность:** O(u), где u — число уникальных слов (плюс O(n) на промежуточный массив токенов).\n\n**Частая ловушка:** разбить по пробелам, но не убрать пунктуацию — тогда `\"cat.\"` и `\"cat\"` окажутся двумя разными ключами в результате — незаметный баг, который проявляется только на реальном тексте с точками, запятыми или восклицательными знаками. Также стоит различать `counts[word] ?? 0` и `counts[word] || 0`: здесь разницы нет (счётчик никогда не бывает `0` до инкремента), но это полезная привычка, так как `||` ломается там, где легитимное значение `0` возможно."
+    },
+    "tags": [
+      "strings",
+      "objects",
+      "regex",
+      "data-transformation"
+    ]
+  },
+  {
+    "id": "javascript-t-10",
+    "topicId": "javascript",
+    "difficulty": "easy",
+    "title": {
+      "en": "Combine Values with Rest and Default Parameters",
+      "ru": "Объединение значений через rest- и дефолтные параметры"
+    },
+    "description": {
+      "en": "Write a function `combineTags` that takes a required `baseTag`, an optional `separator` (default `\", \"`), and any number of additional tags via rest parameters, then returns them all joined into a single string, with duplicates removed.\n\n**Requirements:**\n- Use a default parameter for `separator`\n- Use a rest parameter to collect the extra tags\n- Deduplicate the full list (including `baseTag`) before joining, preserving first-occurrence order\n\n**Function signature:**\n```typescript\nfunction combineTags(baseTag: string, separator: string = \", \", ...extraTags: string[]): string\n```\n\n**Example:**\n```typescript\ncombineTags(\"js\", \" | \", \"react\", \"js\", \"node\"); // \"js | react | node\"\ncombineTags(\"js\", undefined, \"react\");            // \"js, react\"\n```\n\n**Edge cases:**\n- No extra tags → just `baseTag` returned\n- Passing `undefined` explicitly for `separator` should still trigger the default\n- All tags identical (including `baseTag`) → single tag in the result",
+      "ru": "Напишите функцию `combineTags`, которая принимает обязательный `baseTag`, необязательный `separator` (по умолчанию `\", \"`) и любое количество дополнительных тегов через rest-параметр, а затем возвращает их все, объединённые в одну строку, без дубликатов.\n\n**Требования:**\n- Используйте дефолтный параметр для `separator`\n- Используйте rest-параметр для сбора дополнительных тегов\n- Уберите дубликаты из полного списка (включая `baseTag`) перед объединением, сохранив порядок первого появления\n\n**Сигнатура функции:**\n```typescript\nfunction combineTags(baseTag: string, separator: string = \", \", ...extraTags: string[]): string\n```\n\n**Пример:**\n```typescript\ncombineTags(\"js\", \" | \", \"react\", \"js\", \"node\"); // \"js | react | node\"\ncombineTags(\"js\", undefined, \"react\");            // \"js, react\"\n```\n\n**Граничные случаи:**\n- Нет дополнительных тегов → возвращается только `baseTag`\n- Явная передача `undefined` для `separator` всё равно должна включить дефолт\n- Все теги совпадают (включая `baseTag`) → в результате один тег"
+    },
+    "starterCode": "function combineTags(baseTag: string, separator: string = \", \", ...extraTags: string[]): string {\n  // build a full list starting with baseTag, then extraTags\n  // deduplicate, preserving order\n  // join with separator\n}",
+    "solution": "function combineTags(baseTag: string, separator: string = \", \", ...extraTags: string[]): string {\n  const allTags = [baseTag, ...extraTags];\n  const uniqueTags = [...new Set(allTags)];\n  return uniqueTags.join(separator);\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** The rest parameter `...extraTags` gathers every argument after `separator` into a real array, so any number of extra tags can be passed without an explicit array argument at the call site. `baseTag` is prepended manually since it arrives as its own parameter, not part of the rest group. From there it's the same dedupe-preserving-order trick as elsewhere: through a `Set` and back into an array, then `join(separator)`.\n\n**Time complexity:** O(k), where k is the total number of tags (base + extra).\n**Space complexity:** O(k) for the intermediate arrays.\n\n**Common pitfall:** Passing `undefined` explicitly for `separator` and expecting the default *not* to apply — default parameters in JS/TS trigger whenever the argument is `undefined`, whether it's omitted entirely or passed explicitly as `undefined`. This surprises people coming from languages where an explicit `undefined`/`null` skips the default. Also, rest parameters must always come last in the parameter list — `...extraTags` before `separator` would be a syntax error.",
+      "ru": "**Подход:** rest-параметр `...extraTags` собирает все аргументы после `separator` в настоящий массив, поэтому можно передать любое количество дополнительных тегов без явного массива на месте вызова. `baseTag` добавляется в начало вручную, так как он приходит отдельным параметром, а не частью rest-группы. Дальше используется тот же приём дедупликации с сохранением порядка: через `Set` и обратно в массив, затем `join(separator)`.\n\n**Временная сложность:** O(k), где k — общее количество тегов (base + extra).\n**Пространственная сложность:** O(k) для промежуточных массивов.\n\n**Частая ловушка:** явно передать `undefined` в качестве `separator`, ожидая, что дефолт *не* сработает — дефолтные параметры в JS/TS срабатывают всегда, когда аргумент равен `undefined`, независимо от того, опущен он полностью или передан явно как `undefined`. Это удивляет тех, кто пришёл из языков, где явный `undefined`/`null` пропускает дефолт. Также rest-параметр всегда должен быть последним в списке параметров — `...extraTags` перед `separator` была бы синтаксической ошибкой."
+    },
+    "tags": [
+      "rest-parameters",
+      "default-parameters",
+      "functions"
+    ]
+  },
+  {
+    "id": "javascript-t-11",
+    "topicId": "javascript",
+    "difficulty": "easy",
+    "title": {
+      "en": "Fix Lost `this` with bind",
+      "ru": "Восстановление контекста `this` через bind"
+    },
+    "description": {
+      "en": "Given an object with a method that reads `this`, write a function `getBoundGreeter` that extracts the method and returns a version of it that keeps working correctly even when called without its original object — i.e. `this` must stay bound to the original object.\n\n**Requirements:**\n- Do not change how `user.greet` is defined\n- The returned function must produce the same result whether it's called directly, stored in a variable and called later, or passed as a callback\n- Use `bind` (not a wrapper arrow function) to solve it\n\n**Function signature:**\n```typescript\ninterface User {\n  name: string;\n  greet(): string;\n}\n\nfunction getBoundGreeter(user: User): () => string\n```\n\n**Example:**\n```typescript\nconst user = { name: \"Alice\", greet(): string { return `Hi, I'm ${this.name}`; } };\nconst greet = getBoundGreeter(user);\ngreet(); // \"Hi, I'm Alice\" — even though it's called with no receiver\n```\n\n**Edge cases:**\n- The extracted method is called after being passed around (e.g. `setTimeout(greet, 0)`) and must still resolve `this` correctly\n- Calling `user.greet()` directly (unbound) should still work as before — `getBoundGreeter` doesn't change `user` itself",
+      "ru": "Дан объект с методом, который читает `this`. Напишите функцию `getBoundGreeter`, которая достаёт этот метод и возвращает его версию, продолжающую корректно работать даже при вызове без исходного объекта — то есть `this` должен оставаться привязанным к исходному объекту.\n\n**Требования:**\n- Не меняйте, как определён `user.greet`\n- Возвращённая функция должна давать одинаковый результат при прямом вызове, при сохранении в переменную и последующем вызове, или при передаче как колбэк\n- Решите через `bind` (не через функцию-обёртку со стрелочной функцией)\n\n**Сигнатура функции:**\n```typescript\ninterface User {\n  name: string;\n  greet(): string;\n}\n\nfunction getBoundGreeter(user: User): () => string\n```\n\n**Пример:**\n```typescript\nconst user = { name: \"Alice\", greet(): string { return `Hi, I'm ${this.name}`; } };\nconst greet = getBoundGreeter(user);\ngreet(); // \"Hi, I'm Alice\" — несмотря на вызов без receiver'а\n```\n\n**Граничные случаи:**\n- Извлечённый метод передаётся дальше (например `setTimeout(greet, 0)`) и всё равно должен корректно резолвить `this`\n- Прямой вызов `user.greet()` (без extraction) должен продолжать работать как раньше — `getBoundGreeter` не меняет сам `user`"
+    },
+    "starterCode": "interface User {\n  name: string;\n  greet(): string;\n}\n\nfunction getBoundGreeter(user: User): () => string {\n  // extract user.greet and bind its `this` to user\n}",
+    "solution": "interface User {\n  name: string;\n  greet(): string;\n}\n\nfunction getBoundGreeter(user: User): () => string {\n  return user.greet.bind(user);\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** `user.greet` is a reference to a plain function — once you pull it out of the object (`const greet = user.greet`), it loses its connection to `user`. `this` inside a regular function is determined by *how* the function is called, not where it's defined, so calling the detached `greet()` alone gives `this === undefined` in strict mode. `.bind(user)` creates a new function permanently locked to `this = user`, regardless of how or where that new function is later invoked.\n\n**Time complexity:** O(1) — `bind` is a constant-time operation that wraps the function once.\n**Space complexity:** O(1) — one new bound function is created.\n\n**Common pitfall:** Assuming `greet()` still \"remembers\" it came from `user` just because it was defined as a method — methods aren't special in this respect; they're regular functions whose `this` depends entirely on call-site, not on definition-site. This is exactly why `setTimeout(user.greet, 0)` or React class-component handlers passed as `onClick={this.handleClick}` (without binding) silently break — the fix in both cases is the same `.bind()` pattern shown here.",
+      "ru": "**Подход:** `user.greet` — это ссылка на обычную функцию; как только её извлекают из объекта (`const greet = user.greet`), она теряет связь с `user`. Значение `this` внутри обычной функции определяется тем, *как* функция вызвана, а не тем, где она определена, поэтому вызов отделённой `greet()` сам по себе даёт `this === undefined` в strict mode. `.bind(user)` создаёт новую функцию, у которой `this = user` зафиксирован навсегда, независимо от того, как и откуда эту новую функцию вызовут потом.\n\n**Временная сложность:** O(1) — `bind` работает за константное время, один раз оборачивая функцию.\n**Пространственная сложность:** O(1) — создаётся одна новая привязанная функция.\n\n**Частая ловушка:** считать, что `greet()` \"помнит\", что она из `user`, просто потому что была определена как метод — методы в этом смысле ничем не отличаются от обычных функций: их `this` целиком зависит от места вызова, а не от места определения. Именно поэтому `setTimeout(user.greet, 0)` или обработчики в React class-компонентах вида `onClick={this.handleClick}` (без bind) незаметно ломаются — решение в обоих случаях тот же паттерн `.bind()`."
+    },
+    "tags": [
+      "this-context",
+      "bind",
+      "functions"
+    ]
+  },
+  {
+    "id": "javascript-t-12",
+    "topicId": "javascript",
+    "difficulty": "easy",
+    "title": {
+      "en": "Flatten an Array One Level Deep",
+      "ru": "Разворачивание массива на один уровень"
+    },
+    "description": {
+      "en": "Write a function that flattens an array by exactly one level — nested arrays directly inside the input become part of the top level, but arrays nested two or more levels deep stay as arrays.\n\n**Requirements:**\n- Only flatten one level (do not fully/recursively flatten)\n- Non-array elements are kept as-is\n- Do not mutate the input array\n\n**Function signature:**\n```typescript\nfunction flattenOnce<T>(arr: Array<T | T[]>): T[]\n```\n\n**Example:**\n```typescript\nflattenOnce([1, [2, 3], 4, [5, [6, 7]]]);\n// [1, 2, 3, 4, 5, [6, 7]]   <- [6, 7] stays nested, it's two levels deep\n```\n\n**Edge cases:**\n- Empty array → empty array\n- Array with no nested arrays → returned unchanged\n- An empty nested array `[]` contributes nothing to the output",
+      "ru": "Напишите функцию, разворачивающую массив ровно на один уровень вложенности — вложенные массивы, лежащие непосредственно во входном массиве, становятся частью верхнего уровня, но массивы, вложенные на два и более уровней, остаются массивами.\n\n**Требования:**\n- Разворачивать только на один уровень (не рекурсивно, не полностью)\n- Элементы, не являющиеся массивами, остаются как есть\n- Не мутировать исходный массив\n\n**Сигнатура функции:**\n```typescript\nfunction flattenOnce<T>(arr: Array<T | T[]>): T[]\n```\n\n**Пример:**\n```typescript\nflattenOnce([1, [2, 3], 4, [5, [6, 7]]]);\n// [1, 2, 3, 4, 5, [6, 7]]   <- [6, 7] остаётся вложенным, это второй уровень\n```\n\n**Граничные случаи:**\n- Пустой массив → пустой массив\n- Массив без вложенных массивов → возвращается без изменений\n- Пустой вложенный массив `[]` ничего не добавляет в результат"
+    },
+    "starterCode": "function flattenOnce<T>(arr: Array<T | T[]>): T[] {\n  // for each element: if it's an array, spread its items into the result\n  // otherwise, push the element itself\n}",
+    "solution": "function flattenOnce<T>(arr: Array<T | T[]>): T[] {\n  const result: T[] = [];\n  for (const item of arr) {\n    if (Array.isArray(item)) {\n      result.push(...item);\n    } else {\n      result.push(item);\n    }\n  }\n  return result;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Walk the array once, and for each element check `Array.isArray`. If it's an array, spread its contents directly into `result` — this only unwraps one layer, since spreading an array whose own elements happen to be arrays just copies those inner arrays over as-is, it doesn't recurse into them. Non-array elements are pushed straight through unchanged. This mirrors exactly what the built-in `arr.flat()` (with no argument, i.e. default depth 1) does.\n\n**Time complexity:** O(n), where n is the total number of elements across the top level and one level of nesting.\n**Space complexity:** O(n) for the result array.\n\n**Common pitfall:** Reaching for a recursive solution that flattens *all* levels — that solves a different, harder problem (`arr.flat(Infinity)`) and produces the wrong output for this task, since `[5, [6, 7]]`'s inner `[6, 7]` must stay nested. It's an easy trap because \"flatten an array\" often means fully flatten in casual conversation, but the explicit \"one level\" requirement changes the correct implementation.",
+      "ru": "**Подход:** проходим по массиву один раз, для каждого элемента проверяем `Array.isArray`. Если это массив — распаковываем его содержимое прямо в `result` через spread; это разворачивает только один слой, потому что spread массива, чьи собственные элементы сами являются массивами, просто копирует эти внутренние массивы как есть, не углубляясь в них. Элементы, не являющиеся массивами, просто добавляются без изменений. Это в точности повторяет поведение встроенного `arr.flat()` без аргумента (глубина по умолчанию — 1).\n\n**Временная сложность:** O(n), где n — общее число элементов на верхнем уровне и на одном уровне вложенности.\n**Пространственная сложность:** O(n) для результирующего массива.\n\n**Частая ловушка:** потянуться к рекурсивному решению, разворачивающему *все* уровни — это решает другую, более сложную задачу (`arr.flat(Infinity)`) и даёт неверный результат здесь, так как `[6, 7]` внутри `[5, [6, 7]]` должен остаться вложенным. Легко попасться в эту ловушку, потому что в разговорной речи \"развернуть массив\" часто подразумевает полное разворачивание, но явное требование \"один уровень\" меняет правильную реализацию."
+    },
+    "tags": [
+      "arrays",
+      "array-methods",
+      "spread-operator"
+    ]
+  },
+  {
+    "id": "javascript-t-13",
+    "topicId": "javascript",
+    "difficulty": "easy",
+    "title": {
+      "en": "Two Sum",
+      "ru": "Два слагаемых (Two Sum)"
+    },
+    "description": {
+      "en": "Given an array of numbers and a target sum, return the indices of the two numbers that add up to the target. Assume exactly one valid solution exists, and the same element can't be used twice.\n\n**Requirements:**\n- Return a tuple/array of two indices, `[i, j]` with `i < j`\n- Must be more efficient than the brute-force O(n²) nested loop\n- Assume exactly one valid pair exists in the input\n\n**Function signature:**\n```typescript\nfunction twoSum(nums: number[], target: number): [number, number]\n```\n\n**Example:**\n```typescript\ntwoSum([2, 7, 11, 15], 9); // [0, 1]   (nums[0] + nums[1] === 9)\ntwoSum([3, 2, 4], 6);      // [1, 2]   (nums[1] + nums[2] === 6)\n```\n\n**Edge cases:**\n- Negative numbers in the array\n- Target achieved using the same value twice, but at different indices (e.g. `[3, 3]`, target `6` → `[0, 1]`)\n- Solution pair not at the start of the array",
+      "ru": "Дан массив чисел и целевая сумма. Верните индексы двух чисел, дающих в сумме target. Гарантируется ровно одно валидное решение, и один и тот же элемент нельзя использовать дважды.\n\n**Требования:**\n- Вернуть пару индексов `[i, j]`, где `i < j`\n- Решение должно быть эффективнее прямого перебора за O(n²)\n- Гарантируется ровно одна валидная пара во входных данных\n\n**Сигнатура функции:**\n```typescript\nfunction twoSum(nums: number[], target: number): [number, number]\n```\n\n**Пример:**\n```typescript\ntwoSum([2, 7, 11, 15], 9); // [0, 1]   (nums[0] + nums[1] === 9)\ntwoSum([3, 2, 4], 6);      // [1, 2]   (nums[1] + nums[2] === 6)\n```\n\n**Граничные случаи:**\n- Отрицательные числа в массиве\n- Сумма достигается одинаковым значением дважды, но на разных индексах (например `[3, 3]`, target `6` → `[0, 1]`)\n- Пара-решение находится не в начале массива"
+    },
+    "starterCode": "function twoSum(nums: number[], target: number): [number, number] {\n  // for each number, check if (target - number) was already seen\n  // use a Map<value, index> to look up complements in O(1)\n}",
+    "solution": "function twoSum(nums: number[], target: number): [number, number] {\n  const seen = new Map<number, number>();\n\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (seen.has(complement)) {\n      return [seen.get(complement)!, i];\n    }\n    seen.set(nums[i], i);\n  }\n\n  throw new Error(\"No two sum solution found\");\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Instead of checking every pair (O(n²)), do a single pass while keeping a `Map` of every value seen so far mapped to its index. At each element, compute the `complement` needed to reach `target` and check the map — if it's already there, that earlier index plus the current index is the answer, found in O(1). If not, record the current value and move on. Because the map is checked *before* the current value is added, an element can never pair with itself.\n\n**Time complexity:** O(n) — a single pass, with O(1) average-case Map lookups and insertions.\n**Space complexity:** O(n) for the map, in the worst case storing almost every element before finding a match.\n\n**Common pitfall:** Adding the current value to the map *before* checking for its complement — this would let an element pair with itself when `target === 2 * nums[i]`, producing `[i, i]`, which is invalid since the problem requires two distinct indices. The order of \"check, then insert\" is what prevents this.",
+      "ru": "**Подход:** вместо проверки каждой пары (O(n²)) делаем один проход, поддерживая `Map` из уже увиденных значений в их индексы. На каждом элементе вычисляем `complement` — сколько не хватает до `target` — и проверяем map: если такое значение уже встречалось, его индекс вместе с текущим индексом и есть ответ, найденный за O(1). Если нет — записываем текущее значение и идём дальше. Так как map проверяется *до* добавления текущего значения, элемент никогда не может составить пару сам с собой.\n\n**Временная сложность:** O(n) — один проход, вставка и поиск в Map в среднем за O(1).\n**Пространственная сложность:** O(n) для map, в худшем случае почти все элементы будут сохранены до нахождения пары.\n\n**Частая ловушка:** добавлять текущее значение в map *до* проверки его дополнения — тогда элемент мог бы составить пару сам с собой при `target === 2 * nums[i]`, давая `[i, i]`, что недопустимо, поскольку задача требует два различных индекса. Именно порядок \"сначала проверка, потом вставка\" предотвращает эту ошибку."
+    },
+    "tags": [
+      "arrays",
+      "hash-map",
+      "algorithms"
+    ]
+  },
+  {
+    "id": "javascript-t-14",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -198,7 +340,7 @@
     ]
   },
   {
-    "id": "javascript-t-9",
+    "id": "javascript-t-15",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -222,7 +364,7 @@
     ]
   },
   {
-    "id": "javascript-t-10",
+    "id": "javascript-t-16",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -246,7 +388,7 @@
     ]
   },
   {
-    "id": "javascript-t-11",
+    "id": "javascript-t-17",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -270,7 +412,7 @@
     ]
   },
   {
-    "id": "javascript-t-12",
+    "id": "javascript-t-18",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -294,7 +436,7 @@
     ]
   },
   {
-    "id": "javascript-t-13",
+    "id": "javascript-t-19",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -318,7 +460,7 @@
     ]
   },
   {
-    "id": "javascript-t-14",
+    "id": "javascript-t-20",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -342,7 +484,7 @@
     ]
   },
   {
-    "id": "javascript-t-15",
+    "id": "javascript-t-21",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -366,7 +508,7 @@
     ]
   },
   {
-    "id": "javascript-t-16",
+    "id": "javascript-t-22",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -390,7 +532,7 @@
     ]
   },
   {
-    "id": "javascript-t-17",
+    "id": "javascript-t-23",
     "topicId": "javascript",
     "difficulty": "medium",
     "title": {
@@ -415,7 +557,7 @@
     ]
   },
   {
-    "id": "javascript-t-18",
+    "id": "javascript-t-24",
     "topicId": "javascript",
     "difficulty": "hard",
     "title": {
@@ -440,7 +582,7 @@
     ]
   },
   {
-    "id": "javascript-t-19",
+    "id": "javascript-t-25",
     "topicId": "javascript",
     "difficulty": "hard",
     "title": {
@@ -465,7 +607,7 @@
     ]
   },
   {
-    "id": "javascript-t-20",
+    "id": "javascript-t-26",
     "topicId": "javascript",
     "difficulty": "hard",
     "title": {
@@ -490,7 +632,7 @@
     ]
   },
   {
-    "id": "javascript-t-21",
+    "id": "javascript-t-27",
     "topicId": "javascript",
     "difficulty": "hard",
     "title": {
@@ -515,7 +657,7 @@
     ]
   },
   {
-    "id": "javascript-t-22",
+    "id": "javascript-t-28",
     "topicId": "javascript",
     "difficulty": "hard",
     "title": {
@@ -540,7 +682,7 @@
     ]
   },
   {
-    "id": "javascript-t-23",
+    "id": "javascript-t-29",
     "topicId": "javascript",
     "difficulty": "hard",
     "title": {
