@@ -8,20 +8,19 @@
       "ru": "Два числа (Two Sum)"
     },
     "description": {
-      "en": "Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to the target.\n\nYou may assume that each input has exactly one solution, and you cannot use the same element twice.\n\n**Function signature:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Example:**\n- Input: `nums = [2, 7, 11, 15]`, `target = 9`\n- Output: `[0, 1]`\n- Explanation: `nums[0] + nums[1] = 2 + 7 = 9`, so return `[0, 1]`\n\n**Edge cases:**\n- Array with exactly 2 elements\n- Negative numbers in the array\n- Large numbers\n- Target is sum of first and last elements",
-      "ru": "Дан массив целых чисел `nums` и целое число `target`. Верните индексы двух чисел, которые в сумме дают `target`.\n\nМожно предположить, что каждый вход имеет ровно одно решение, и нельзя использовать один и тот же элемент дважды.\n\n**Сигнатура функции:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Пример:**\n- Вход: `nums = [2, 7, 11, 15]`, `target = 9`\n- Выход: `[0, 1]`\n- Объяснение: `nums[0] + nums[1] = 2 + 7 = 9`, поэтому вернуть `[0, 1]`\n\n**Граничные случаи:**\n- Массив ровно с 2 элементами\n- Отрицательные числа в массиве\n- Большие числа\n- Целевое число — сумма первого и последнего элементов"
+      "en": "Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to `target`.\n\nYou may assume that each input has exactly one valid solution, and you may not use the same array element twice.\n\n**Requirements:**\n- Return the indices as a two-element array, in any order\n- Solve it in a single pass over the array (no nested loops)\n\n**Function signature:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Example:**\n- Input: `nums = [2, 7, 11, 15]`, `target = 9`\n- Output: `[0, 1]`\n- Explanation: `nums[0] + nums[1] = 2 + 7 = 9`, so return `[0, 1]`\n\n**Edge cases:**\n- Array with exactly 2 elements\n- Negative numbers in the array\n- Target achieved only by the first and last elements\n- Duplicate values in the array (e.g. `nums = [3, 3]`, `target = 6`)",
+      "ru": "Дан массив целых чисел `nums` и целое число `target`. Нужно вернуть индексы двух чисел, которые в сумме дают `target`.\n\nМожно считать, что для каждого входа есть ровно одно решение и один и тот же элемент массива нельзя использовать дважды.\n\n**Требования:**\n- Вернуть индексы в виде массива из двух элементов, порядок не важен\n- Решить задачу за один проход по массиву (без вложенных циклов)\n\n**Сигнатура функции:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Пример:**\n- Вход: `nums = [2, 7, 11, 15]`, `target = 9`\n- Выход: `[0, 1]`\n- Объяснение: `nums[0] + nums[1] = 2 + 7 = 9`, поэтому возвращаем `[0, 1]`\n\n**Граничные случаи:**\n- Массив ровно из 2 элементов\n- Отрицательные числа в массиве\n- Целевая сумма достигается только первым и последним элементами\n- Повторяющиеся значения в массиве (например `nums = [3, 3]`, `target = 6`)"
     },
-    "starterCode": "function twoSum(nums: number[], target: number): number[] {\n  // Use a hash map to store num -> index mapping\n  // For each num, check if (target - num) exists in the map\n  // Return the indices when found\n}",
-    "solution": "function twoSum(nums: number[], target: number): number[] {\n  const map = new Map<number, number>();\n  \n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    \n    if (map.has(complement)) {\n      return [map.get(complement)!, i];\n    }\n    \n    map.set(nums[i], i);\n  }\n  \n  return [];\n}",
+    "starterCode": "function twoSum(nums: number[], target: number): number[] {\n  // Create a Map to store value -> index as you iterate\n  // For the current number, compute the complement = target - num\n  // If the complement is already in the map, return [mapIndex, currentIndex]\n  // Otherwise, store the current number and its index in the map, then continue\n}",
+    "solution": "function twoSum(nums: number[], target: number): number[] {\n  const seen = new Map<number, number>();\n\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n\n    if (seen.has(complement)) {\n      return [seen.get(complement)!, i];\n    }\n\n    seen.set(nums[i], i);\n  }\n\n  return [];\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use a hash map to store each number and its index as we iterate through the array. For each number, calculate its complement (target - current number) and check if it exists in the map. If it does, we found our pair.\n\n**Time complexity:** O(n) — single pass through the array\n**Space complexity:** O(n) — hash map can store up to n elements\n\n**Common mistakes:**\n- Using nested loops (brute force) resulting in O(n²) time\n- Forgetting to check if complement exists before returning\n- Using the same element twice by not properly tracking indices\n- Returning indices in wrong order",
-      "ru": "**Подход:** Используйте хеш-таблицу для хранения каждого числа и его индекса по мере перемещения по массиву. Для каждого числа вычислите его дополнение (target - текущее число) и проверьте, существует ли оно в таблице. Если существует, мы нашли нашу пару.\n\n**Временная сложность:** O(n) — один проход по массиву\n**Пространственная сложность:** O(n) — хеш-таблица может хранить до n элементов\n\n**Типичные ошибки:**\n- Использование вложенных циклов (перебор) со сложностью O(n²)\n- Забывание проверить наличие дополнения перед возвратом\n- Использование одного и того же элемента дважды из-за неправильного отслеживания индексов\n- Возврат индексов в неправильном порядке"
+      "en": "**Approach:** Walk the array once while maintaining a hash map from value to index. For each element, compute the complement (`target - nums[i]`) and check whether it's already in the map — if it is, those two indices are the answer. Only after that check do you insert the current value into the map, which is what guarantees an element is never paired with itself.\n\n**Time complexity:** O(n) — a single pass, with O(1) average lookup/insert on the map.\n**Space complexity:** O(n) — the map can hold up to n entries in the worst case.\n\n**Common pitfall:** Inserting the current number into the map *before* checking for its complement. If `nums = [3, 3]` and `target = 6`, inserting first means the complement check for the second `3` matches against itself at the same index instead of the first `3`'s index — silently producing a wrong (or self-referential) pair. Always check, then insert.",
+      "ru": "**Подход:** Проходим массив один раз, поддерживая хеш-таблицу «значение → индекс». Для каждого элемента вычисляем дополнение (`target - nums[i]`) и проверяем, есть ли оно уже в таблице — если да, это и есть искомая пара индексов. Только после этой проверки текущее значение добавляется в таблицу — именно это гарантирует, что элемент не спарится сам с собой.\n\n**Временная сложность:** O(n) — один проход, поиск и вставка в map в среднем O(1).\n**Пространственная сложность:** O(n) — в худшем случае в map попадут все n элементов.\n\n**Частая ловушка:** Добавление текущего числа в map *до* проверки его дополнения. Если `nums = [3, 3]` и `target = 6`, при вставке до проверки дополнение для второй тройки совпадёт с ней самой (тот же индекс), а не с первой тройкой — получится незаметно неверная (или самоссылающаяся) пара. Правило: сначала проверка, потом вставка."
     },
     "tags": [
       "hash-map",
-      "two-pointers",
       "array",
-      "linear-search"
+      "one-pass"
     ]
   },
   {
@@ -30,23 +29,22 @@
     "difficulty": "easy",
     "title": {
       "en": "Valid Parentheses",
-      "ru": "Правильные скобки (Valid Parentheses)"
+      "ru": "Корректные скобки (Valid Parentheses)"
     },
     "description": {
-      "en": "Given a string `s` containing just the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine if the input string is valid.\n\nAn input string is valid if:\n1. Open brackets must be closed by the same type of closing bracket\n2. Open brackets must be closed in the correct order\n3. Every closing bracket has a corresponding opening bracket of the same type\n\n**Function signature:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Examples:**\n- Input: `s = \"()\"` → Output: `true`\n- Input: `s = \"()[]{}\"`  → Output: `true`\n- Input: `s = \"(]\"` → Output: `false`\n- Input: `s = \"([)]\"` → Output: `false`\n- Input: `s = \"{[]}\"` → Output: `true`\n\n**Edge cases:**\n- Empty string\n- Single character\n- Only opening brackets\n- Only closing brackets\n- Odd length string",
-      "ru": "Дана строка `s`, содержащая только символы `'('`, `')'`, `'{'`, `'}'`, `'['` и `']'`. Определите, является ли входная строка правильной.\n\nВходная строка считается правильной, если:\n1. Открывающие скобки должны быть закрыты скобками того же типа\n2. Открывающие скобки должны быть закрыты в правильном порядке\n3. Каждая закрывающая скобка имеет соответствующую открывающую скобку того же типа\n\n**Сигнатура функции:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Примеры:**\n- Вход: `s = \"()\"` → Выход: `true`\n- Вход: `s = \"()[]{}\"`  → Выход: `true`\n- Вход: `s = \"(]\"` → Выход: `false`\n- Вход: `s = \"([)]\"` → Выход: `false`\n- Вход: `s = \"{[]}\"` → Выход: `true`\n\n**Граничные случаи:**\n- Пустая строка\n- Один символ\n- Только открывающие скобки\n- Только закрывающие скобки\n- Строка нечетной длины"
+      "en": "Given a string `s` containing only the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine whether the string is valid.\n\nA string is valid if:\n1. Every open bracket is closed by the same type of bracket\n2. Open brackets are closed in the correct order (last opened, first closed)\n3. Every closing bracket has a matching, previously unmatched opening bracket\n\n**Requirements:**\n- Return `true` for an empty string\n- Solve it in a single pass over the string using O(n) time\n\n**Function signature:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Examples:**\n- Input: `s = \"()\"` → Output: `true`\n- Input: `s = \"()[]{}\"` → Output: `true`\n- Input: `s = \"(]\"` → Output: `false`\n- Input: `s = \"([)]\"` → Output: `false`\n- Input: `s = \"{[]}\"` → Output: `true`\n\n**Edge cases:**\n- Empty string\n- Odd-length string (always invalid)\n- Only opening brackets, e.g. `\"((((\"`\n- Only closing brackets, e.g. `\")))) \"`",
+      "ru": "Дана строка `s`, состоящая только из символов `'('`, `')'`, `'{'`, `'}'`, `'['` и `']'`. Нужно определить, корректна ли строка.\n\nСтрока корректна, если:\n1. Каждая открывающая скобка закрывается скобкой того же типа\n2. Скобки закрываются в правильном порядке (последняя открытая — первая закрытая)\n3. У каждой закрывающей скобки есть соответствующая, ещё не использованная открывающая\n\n**Требования:**\n- Для пустой строки вернуть `true`\n- Решить задачу за один проход по строке за O(n)\n\n**Сигнатура функции:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Примеры:**\n- Вход: `s = \"()\"` → Выход: `true`\n- Вход: `s = \"()[]{}\"` → Выход: `true`\n- Вход: `s = \"(]\"` → Выход: `false`\n- Вход: `s = \"([)]\"` → Выход: `false`\n- Вход: `s = \"{[]}\"` → Выход: `true`\n\n**Граничные случаи:**\n- Пустая строка\n- Строка нечётной длины (всегда некорректна)\n- Только открывающие скобки, например `\"((((\"`\n- Только закрывающие скобки, например `\")))) \"`"
     },
-    "starterCode": "function isValid(s: string): boolean {\n  // Use a stack to track opening brackets\n  // When you encounter a closing bracket, check if it matches the top of stack\n  // At the end, stack should be empty for valid string\n}",
-    "solution": "function isValid(s: string): boolean {\n  const stack: string[] = [];\n  const pairs: { [key: string]: string } = {\n    ')': '(',\n    '}': '{',\n    ']': '['\n  };\n  \n  for (const char of s) {\n    if (pairs[char]) {\n      // It's a closing bracket\n      if (stack.length === 0 || stack[stack.length - 1] !== pairs[char]) {\n        return false;\n      }\n      stack.pop();\n    } else {\n      // It's an opening bracket\n      stack.push(char);\n    }\n  }\n  \n  return stack.length === 0;\n}",
+    "starterCode": "function isValid(s: string): boolean {\n  // Use a stack to track open brackets\n  // Map each closing bracket to its matching opening bracket\n  // On an opening bracket, push it onto the stack\n  // On a closing bracket, pop the stack and check it matches; if not (or stack is empty), return false\n  // After the loop, the string is valid only if the stack is empty\n}",
+    "solution": "function isValid(s: string): boolean {\n  const pairs: Record<string, string> = {\n    ')': '(',\n    ']': '[',\n    '}': '{',\n  };\n  const stack: string[] = [];\n\n  for (const char of s) {\n    if (char === '(' || char === '[' || char === '{') {\n      stack.push(char);\n      continue;\n    }\n\n    if (stack.pop() !== pairs[char]) {\n      return false;\n    }\n  }\n\n  return stack.length === 0;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use a stack data structure to keep track of opening brackets. When encountering a closing bracket, check if it matches the most recent opening bracket (top of stack). If it matches, pop from the stack; if not, the string is invalid. At the end, if the stack is empty, all brackets were properly matched.\n\n**Time complexity:** O(n) — single pass through the string\n**Space complexity:** O(n) — stack can contain up to n/2 opening brackets\n\n**Common mistakes:**\n- Not checking if stack is empty before accessing top element\n- Using incorrect bracket pairs mapping\n- Forgetting to check if stack is empty at the end\n- Not properly handling all three types of brackets",
-      "ru": "**Подход:** Используйте стек для отслеживания открывающих скобок. При встрече с закрывающей скобкой проверьте, соответствует ли она самой последней открывающей скобке (вершина стека). Если совпадает, извлеките из стека; если нет, строка недействительна. В конце, если стек пуст, все скобки были правильно сопоставлены.\n\n**Временная сложность:** O(n) — один проход по строке\n**Пространственная сложность:** O(n) — стек может содержать до n/2 открывающих скобок\n\n**Типичные ошибки:**\n- Непроверка пуст ли стек перед доступом к верхнему элементу\n- Использование неправильного отображения пар скобок\n- Забывание проверить, пуст ли стек в конце\n- Неправильная обработка всех трех типов скобок"
+      "en": "**Approach:** A stack naturally models \"last opened, first closed\". Push every opening bracket. On a closing bracket, pop the stack and check it's the matching opener — a mismatch (or an empty stack, meaning there was nothing to close) means the string is invalid immediately. After the loop, a non-empty stack means some opening brackets were never closed.\n\n**Time complexity:** O(n) — one pass through the string.\n**Space complexity:** O(n) — in the worst case (all opening brackets) the stack holds n/2 characters.\n\n**Common pitfall:** Popping from the stack without first checking it's non-empty. `stack.pop()` on an empty array returns `undefined` in JS/TS, so `\"]\"` alone would compare `undefined !== '['` — which happens to work here, but relying on that instead of an explicit empty check is fragile and a common source of off-by-one bugs when the comparison logic changes.",
+      "ru": "**Подход:** Стек естественно моделирует правило «последняя открытая — первая закрытая». Каждую открывающую скобку кладём в стек. На закрывающей скобке снимаем верхний элемент стека и проверяем, что это парная открывающая — несовпадение (или пустой стек, то есть закрывать нечего) сразу означает, что строка некорректна. После прохода непустой стек означает, что часть открывающих скобок так и не была закрыта.\n\n**Временная сложность:** O(n) — один проход по строке.\n**Пространственная сложность:** O(n) — в худшем случае (только открывающие скобки) в стеке окажется n/2 символов.\n\n**Частая ловушка:** Снимать элемент со стека, не проверив заранее, что он не пуст. `stack.pop()` на пустом массиве в JS/TS вернёт `undefined`, поэтому для `\"]\"` сравнение `undefined !== '['` случайно сработает верно — но полагаться на это вместо явной проверки на пустоту хрупко и частый источник off-by-one ошибок при изменении логики сравнения."
     },
     "tags": [
       "stack",
       "string",
-      "bracket-matching",
-      "data-structures"
+      "bracket-matching"
     ]
   },
   {
@@ -55,23 +53,22 @@
     "difficulty": "easy",
     "title": {
       "en": "Fibonacci with Memoization",
-      "ru": "Числа Фибоначчи с мемоизацией"
+      "ru": "Фибоначчи с мемоизацией"
     },
     "description": {
-      "en": "Implement a function to compute the nth Fibonacci number using memoization to optimize performance.\n\nThe Fibonacci sequence is defined as:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) for n > 1\n\n**Function signature:**\ntypescript\nfunction fib(n: number): number\n\n\n**Examples:**\n- Input: `n = 0` → Output: `0`\n- Input: `n = 1` → Output: `1`\n- Input: `n = 4` → Output: `3` (sequence: 0, 1, 1, 2, 3)\n- Input: `n = 10` → Output: `55`\n- Input: `n = 6` → Output: `8`\n\n**Requirements:**\n- Use memoization to cache computed results\n- Avoid recomputing the same Fibonacci numbers\n- Handle large values of n efficiently\n\n**Edge cases:**\n- n = 0\n- n = 1\n- Large n values (e.g., n = 50)",
-      "ru": "Реализуйте функцию для вычисления n-го числа Фибоначчи с использованием мемоизации для оптимизации производительности.\n\nПоследовательность Фибоначчи определяется как:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) для n > 1\n\n**Сигнатура функции:**\ntypescript\nfunction fib(n: number): number\n\n\n**Примеры:**\n- Вход: `n = 0` → Выход: `0`\n- Вход: `n = 1` → Выход: `1`\n- Вход: `n = 4` → Выход: `3` (последовательность: 0, 1, 1, 2, 3)\n- Вход: `n = 10` → Выход: `55`\n- Вход: `n = 6` → Выход: `8`\n\n**Требования:**\n- Используйте мемоизацию для кеширования вычисленных результатов\n- Избегайте переработки одних и тех же чисел Фибоначчи\n- Эффективно обрабатывайте большие значения n\n\n**Граничные случаи:**\n- n = 0\n- n = 1\n- Большие значения n (например, n = 50)"
+      "en": "Implement a function that computes the nth Fibonacci number using memoization to avoid redundant recomputation.\n\nThe Fibonacci sequence is defined as:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) for n > 1\n\n**Requirements:**\n- Use memoization (a cache) so each F(k) is computed only once\n- Handle values of n up to at least 50 efficiently\n\n**Function signature:**\ntypescript\nfunction fib(n: number): number\n\n\n**Examples:**\n- Input: `n = 0` → Output: `0`\n- Input: `n = 1` → Output: `1`\n- Input: `n = 6` → Output: `8` (sequence: 0, 1, 1, 2, 3, 5, 8)\n- Input: `n = 10` → Output: `55`\n\n**Edge cases:**\n- `n = 0` and `n = 1` (base cases)\n- Large `n` (e.g. `n = 50`) — must not blow the call stack or take exponential time\n- The function is called multiple times in a row — the cache should still help across calls if implemented at module scope",
+      "ru": "Реализуйте функцию, вычисляющую n-ное число Фибоначчи с мемоизацией, чтобы избежать повторных вычислений.\n\nПоследовательность Фибоначчи определена так:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) при n > 1\n\n**Требования:**\n- Использовать мемоизацию (кеш), чтобы каждое F(k) вычислялось ровно один раз\n- Эффективно обрабатывать n вплоть хотя бы до 50\n\n**Сигнатура функции:**\ntypescript\nfunction fib(n: number): number\n\n\n**Примеры:**\n- Вход: `n = 0` → Выход: `0`\n- Вход: `n = 1` → Выход: `1`\n- Вход: `n = 6` → Выход: `8` (последовательность: 0, 1, 1, 2, 3, 5, 8)\n- Вход: `n = 10` → Выход: `55`\n\n**Граничные случаи:**\n- `n = 0` и `n = 1` (базовые случаи)\n- Большое `n` (например `n = 50`) — не должно приводить к переполнению стека вызовов или экспоненциальному времени\n- Функция вызывается несколько раз подряд — кеш должен работать между вызовами, если он объявлен на уровне модуля"
     },
-    "starterCode": "function fib(n: number): number {\n  // Create a memoization cache (Map or object)\n  // Implement recursive function with base cases\n  // Check cache before computing, store result after computing\n  // Return the cached or computed result\n}",
-    "solution": "function fib(n: number): number {\n  const memo: Map<number, number> = new Map();\n  \n  function fibonacci(num: number): number {\n    // Base cases\n    if (num === 0) return 0;\n    if (num === 1) return 1;\n    \n    // Check if already computed\n    if (memo.has(num)) {\n      return memo.get(num)!;\n    }\n    \n    // Compute and store in memo\n    const result = fibonacci(num - 1) + fibonacci(num - 2);\n    memo.set(num, result);\n    \n    return result;\n  }\n  \n  return fibonacci(n);\n}",
+    "starterCode": "// Declare the memo cache OUTSIDE the function so it persists across calls\nconst memo = new Map<number, number>();\n\nfunction fib(n: number): number {\n  // Base cases: if n is 0 or 1, return n directly\n  // If the result for n is already in memo, return it\n  // Otherwise compute fib(n-1) + fib(n-2), store it in memo, then return it\n}",
+    "solution": "const memo = new Map<number, number>();\n\nfunction fib(n: number): number {\n  if (n <= 1) return n;\n\n  if (memo.has(n)) {\n    return memo.get(n)!;\n  }\n\n  const result = fib(n - 1) + fib(n - 2);\n  memo.set(n, result);\n  return result;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use recursive definition of Fibonacci with memoization. Create a Map to cache previously computed values. Before computing F(n), check if it's already in the cache. This converts exponential time complexity of naive recursion to linear.\n\n**Time complexity:** O(n) — each Fibonacci number from 0 to n is computed exactly once\n**Space complexity:** O(n) — memo map stores up to n+1 values, plus O(n) for recursion call stack\n\n**Common mistakes:**\n- Forgetting to check memo before recursive calls\n- Not handling base cases (0 and 1) properly\n- Using a global memo that persists across function calls (can be intentional for optimization)\n- Creating new memo for each call (defeats purpose of memoization)\n- Not returning memoized value before recursing",
-      "ru": "**Подход:** Используйте рекурсивное определение Фибоначчи с мемоизацией. Создайте Map для кеширования ранее вычисленных значений. Перед вычислением F(n) проверьте, есть ли оно уже в кеше. Это преобразует экспоненциальную временную сложность наивной рекурсии в линейную.\n\n**Временная сложность:** O(n) — каждое число Фибоначчи от 0 до n вычисляется ровно один раз\n**Пространственная сложность:** O(n) — карта memo хранит до n+1 значений, плюс O(n) для стека вызовов рекурсии\n\n**Типичные ошибки:**\n- Забывание проверить memo перед рекурсивными вызовами\n- Неправильная обработка базовых случаев (0 и 1)\n- Использование глобального memo, который сохраняется между вызовами функций (может быть намеренным для оптимизации)\n- Создание нового memo для каждого вызова (отменяет цель мемоизации)\n- Непроверка и возврат мемоизированного значения перед рекурсией"
+      "en": "**Approach:** Naive recursive Fibonacci recomputes the same subproblems exponentially many times (F(5) recomputes F(3) twice, F(2) three times, and so on). Memoization fixes this by caching each F(k) the first time it's computed and returning the cached value on every later request, turning the exponential recursion tree into a linear number of unique calls.\n\n**Time complexity:** O(n) — each value from 0 to n is computed exactly once.\n**Space complexity:** O(n) — O(n) for the memo cache plus O(n) for the recursion call stack in the worst case.\n\n**Common pitfall:** Declaring the `memo` map *inside* the function body instead of outside it. If `memo` is created fresh on every call to `fib`, it never persists between top-level invocations — each call still benefits from memoization *within itself* (avoiding the exponential blowup), but repeated calls like `fib(10); fib(10);` recompute everything from scratch the second time, silently defeating the whole point of caching across calls.",
+      "ru": "**Подход:** Наивная рекурсивная реализация Фибоначчи экспоненциально много раз пересчитывает одни и те же подзадачи (F(5) дважды пересчитывает F(3), трижды F(2) и так далее). Мемоизация решает это: каждое F(k) кешируется при первом вычислении, а при повторном запросе просто отдаётся из кеша — экспоненциальное дерево рекурсии превращается в линейное число уникальных вызовов.\n\n**Временная сложность:** O(n) — каждое значение от 0 до n вычисляется ровно один раз.\n**Пространственная сложность:** O(n) — O(n) на кеш memo плюс O(n) на стек вызовов рекурсии в худшем случае.\n\n**Частая ловушка:** Объявить `memo` *внутри* тела функции вместо того, чтобы вынести наружу. Если `memo` создаётся заново при каждом вызове `fib`, кеш не сохраняется между вызовами верхнего уровня — внутри одного вызова мемоизация всё ещё работает (экспоненциального взрыва не будет), но повторные вызовы вроде `fib(10); fib(10);` во второй раз пересчитывают всё с нуля, незаметно сводя на нет весь смысл кеширования между вызовами."
     },
     "tags": [
       "memoization",
       "recursion",
-      "dynamic-programming",
-      "fibonacci"
+      "dynamic-programming"
     ]
   },
   {
@@ -79,24 +76,23 @@
     "topicId": "algorithms",
     "difficulty": "easy",
     "title": {
-      "en": "Two Sum",
-      "ru": "Два числа с заданной суммой"
+      "en": "Reverse a Linked List",
+      "ru": "Разворот связного списка"
     },
     "description": {
-      "en": "Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to the target.\n\nYou may assume each input has exactly one solution, and you cannot use the same element twice.\n\n**Function signature:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Example:**\n- Input: `nums = [2, 7, 11, 15]`, `target = 9`\n- Output: `[0, 1]`\n- Explanation: `nums[0] + nums[1] = 2 + 7 = 9`\n\n**Edge cases:**\n- Array with exactly 2 elements\n- Negative numbers in array\n- Large numbers that might overflow\n- Target could be negative",
-      "ru": "Дан массив целых чисел `nums` и целое число `target`. Верните индексы двух чисел, которые в сумме дают target.\n\nМожно предположить, что каждый вход имеет ровно одно решение, и нельзя использовать один и тот же элемент дважды.\n\n**Сигнатура функции:**\ntypescript\nfunction twoSum(nums: number[], target: number): number[]\n\n\n**Пример:**\n- Входные данные: `nums = [2, 7, 11, 15]`, `target = 9`\n- Выход: `[0, 1]`\n- Объяснение: `nums[0] + nums[1] = 2 + 7 = 9`\n\n**Граничные случаи:**\n- Массив ровно из 2 элементов\n- Отрицательные числа в массиве\n- Большие числа, которые могут переполниться\n- Target может быть отрицательным"
+      "en": "Given the head of a singly linked list, reverse the list in place and return the new head.\n\n**Requirements:**\n- Reverse the list iteratively, without allocating a new list\n- Use O(1) extra space (not counting the input/output list itself)\n\n**Function signature:**\ntypescript\ninterface ListNode {\n  val: number;\n  next: ListNode | null;\n}\n\nfunction reverseList(head: ListNode | null): ListNode | null\n\n\n**Example:**\n- Input: `1 -> 2 -> 3 -> 4 -> 5 -> null`\n- Output: `5 -> 4 -> 3 -> 2 -> 1 -> null`\n\n**Edge cases:**\n- Empty list (`head = null`)\n- Single-node list\n- Two-node list",
+      "ru": "Дана голова односвязного списка. Нужно развернуть список на месте и вернуть новую голову.\n\n**Требования:**\n- Разворачивать список итеративно, не создавая новый список\n- Использовать O(1) дополнительной памяти (не считая самого списка)\n\n**Сигнатура функции:**\ntypescript\ninterface ListNode {\n  val: number;\n  next: ListNode | null;\n}\n\nfunction reverseList(head: ListNode | null): ListNode | null\n\n\n**Пример:**\n- Вход: `1 -> 2 -> 3 -> 4 -> 5 -> null`\n- Выход: `5 -> 4 -> 3 -> 2 -> 1 -> null`\n\n**Граничные случаи:**\n- Пустой список (`head = null`)\n- Список из одного узла\n- Список из двух узлов"
     },
-    "starterCode": "function twoSum(nums: number[], target: number): number[] {\n  // Use a hash map to store value -> index\n  // Iterate through the array once\n  // For each number, check if (target - number) exists in the map\n  // Return the indices when a match is found\n}",
-    "solution": "function twoSum(nums: number[], target: number): number[] {\n  const map = new Map<number, number>();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (map.has(complement)) {\n      return [map.get(complement)!, i];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}",
+    "starterCode": "interface ListNode {\n  val: number;\n  next: ListNode | null;\n}\n\nfunction reverseList(head: ListNode | null): ListNode | null {\n  // Keep track of the previous node (starts as null) and the current node\n  // At each step, save current.next before overwriting it\n  // Point current.next back to the previous node\n  // Advance previous and current one step forward\n  // When current becomes null, previous is the new head\n}",
+    "solution": "interface ListNode {\n  val: number;\n  next: ListNode | null;\n}\n\nfunction reverseList(head: ListNode | null): ListNode | null {\n  let prev: ListNode | null = null;\n  let current = head;\n\n  while (current !== null) {\n    const next = current.next;\n    current.next = prev;\n    prev = current;\n    current = next;\n  }\n\n  return prev;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use a hash map (object/Map) to store each number and its index as we iterate. For each number, calculate the complement needed to reach the target and check if it already exists in the map. This transforms the problem from O(n²) brute force to O(n) by trading space for time.\n\n**Time complexity:** O(n) - single pass through the array\n**Space complexity:** O(n) - hash map can store up to n elements\n\n**Common mistakes:**\n- Using nested loops (O(n²)) instead of hash map\n- Not handling the case where the same element shouldn't be used twice (adding element to map after checking complement)\n- Not returning an empty array or correct indices\n- Using object keys which convert to strings",
-      "ru": "**Подход:** Используйте хеш-таблицу для хранения каждого числа и его индекса во время итерации. Для каждого числа вычислите дополнение, необходимое для достижения целевого значения, и проверьте, существует ли оно в таблице. Это преобразует задачу из O(n²) в O(n) путем обмена памяти на время.\n\n**Временная сложность:** O(n) - одиночный проход через массив\n**Пространственная сложность:** O(n) - хеш-таблица может хранить до n элементов\n\n**Типичные ошибки:**\n- Использование вложенных циклов (O(n²)) вместо хеш-таблицы\n- Неправильная обработка случая, когда один элемент нельзя использовать дважды (добавление элемента в map после проверки дополнения)\n- Неправильный возврат пустого массива или индексов\n- Использование объектов вместо Map (ключи преобразуются в строки)"
+      "en": "**Approach:** Walk the list once with two pointers, `prev` and `current`. Before rewiring `current.next` to point backward, the original `next` pointer must be saved off, otherwise the rest of the list becomes unreachable. Each iteration flips one link and advances both pointers. When `current` reaches `null`, `prev` is sitting on the last node visited — the new head.\n\n**Time complexity:** O(n) — one pass over all nodes.\n**Space complexity:** O(1) — only a constant number of pointers are used, the list is reversed in place.\n\n**Common pitfall:** Reassigning `current.next = prev` before saving `current.next` into a temporary variable. Doing the rewire first destroys the only reference to the rest of the original list, so the traversal can never reach the remaining nodes — the result silently ends up as just the first one or two nodes instead of the full reversed list.",
+      "ru": "**Подход:** Проходим список один раз двумя указателями, `prev` и `current`. Перед тем как перенаправить `current.next` назад, нужно сохранить исходный `next` — иначе оставшаяся часть списка станет недостижимой. На каждой итерации переворачивается одна связь и оба указателя сдвигаются вперёд. Когда `current` становится `null`, `prev` указывает на последний посещённый узел — это и есть новая голова.\n\n**Временная сложность:** O(n) — один проход по всем узлам.\n**Пространственная сложность:** O(1) — используется константное число указателей, список разворачивается на месте.\n\n**Частая ловушка:** Присвоить `current.next = prev` до того, как сохранить `current.next` во временную переменную. Если сначала сделать перенаправление, теряется единственная ссылка на оставшуюся часть исходного списка, и обход до неё уже не доберётся — результатом незаметно окажутся только первый один-два узла вместо полностью развёрнутого списка."
     },
     "tags": [
-      "hash-map",
-      "two-pointer-concept",
-      "array",
-      "one-pass"
+      "linked-list",
+      "two-pointers",
+      "in-place"
     ]
   },
   {
@@ -104,24 +100,22 @@
     "topicId": "algorithms",
     "difficulty": "easy",
     "title": {
-      "en": "Valid Parentheses",
-      "ru": "Проверка корректности скобок"
+      "en": "Valid Palindrome",
+      "ru": "Палиндром (Valid Palindrome)"
     },
     "description": {
-      "en": "Given a string `s` containing only the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine if the input string is valid.\n\nA string is valid if:\n1. Open brackets must be closed by the same type of closing bracket\n2. Every closing bracket has a corresponding opening bracket of the same type\n3. Brackets must be closed in the correct order\n\n**Function signature:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Examples:**\n- Input: `s = \"()\"` → Output: `true`\n- Input: `s = \"()[]{}\"` → Output: `true`\n- Input: `s = \"(]\"` → Output: `false`\n- Input: `s = \"([)]\"` → Output: `false`\n- Input: `s = \"{[]}\"` → Output: `true`\n\n**Edge cases:**\n- Empty string (should return true)\n- Single character\n- Only opening brackets\n- Only closing brackets\n- Mixed and nested brackets",
-      "ru": "Дана строка `s`, содержащая только символы `'('`, `')'`, `'{'`, `'}'`, `'['` и `']'`. Определите, является ли входная строка корректной.\n\nСтрока является корректной если:\n1. Открывающие скобки должны быть закрыты закрывающими скобками того же типа\n2. Каждая закрывающая скобка имеет соответствующую открывающую скобку того же типа\n3. Скобки должны быть закрыты в правильном порядке\n\n**Сигнатура функции:**\ntypescript\nfunction isValid(s: string): boolean\n\n\n**Примеры:**\n- Входные данные: `s = \"()\"` → Выход: `true`\n- Входные данные: `s = \"()[]{}\"` → Выход: `true`\n- Входные данные: `s = \"(]\"` → Выход: `false`\n- Входные данные: `s = \"([)]\"` → Выход: `false`\n- Входные данные: `s = \"{[]}\"` → Выход: `true`\n\n**Граничные случаи:**\n- Пустая строка (должна вернуть true)\n- Одиночный символ\n- Только открывающие скобки\n- Только закрывающие скобки\n- Смешанные и вложенные скобки"
+      "en": "Given a string `s`, determine if it is a palindrome, considering only alphanumeric characters and ignoring case.\n\n**Requirements:**\n- Ignore all non-alphanumeric characters (spaces, punctuation, etc.)\n- Comparison must be case-insensitive\n- Solve it with O(1) extra space using two pointers (no building a cleaned copy of the string... or if you do, explain the trade-off in your notes)\n\n**Function signature:**\ntypescript\nfunction isPalindrome(s: string): boolean\n\n\n**Examples:**\n- Input: `s = \"A man, a plan, a canal: Panama\"` → Output: `true`\n- Input: `s = \"race a car\"` → Output: `false`\n- Input: `s = \" \"` → Output: `true` (empty after removing non-alphanumeric characters)\n\n**Edge cases:**\n- Empty string\n- String with only non-alphanumeric characters\n- Single character\n- Mixed case letters",
+      "ru": "Дана строка `s`. Нужно определить, является ли она палиндромом, учитывая только буквенно-цифровые символы и игнорируя регистр.\n\n**Требования:**\n- Игнорировать все не буквенно-цифровые символы (пробелы, пунктуацию и т.д.)\n- Сравнение должно быть регистронезависимым\n- Решить задачу за O(1) дополнительной памяти с помощью двух указателей (без построения очищенной копии строки — а если всё же строите копию, отметьте это как компромисс)\n\n**Сигнатура функции:**\ntypescript\nfunction isPalindrome(s: string): boolean\n\n\n**Примеры:**\n- Вход: `s = \"A man, a plan, a canal: Panama\"` → Выход: `true`\n- Вход: `s = \"race a car\"` → Выход: `false`\n- Вход: `s = \" \"` → Выход: `true` (после удаления не буквенно-цифровых символов строка пуста)\n\n**Граничные случаи:**\n- Пустая строка\n- Строка только из не буквенно-цифровых символов\n- Один символ\n- Смешанный регистр букв"
     },
-    "starterCode": "function isValid(s: string): boolean {\n  // Use a stack to track opening brackets\n  // Iterate through each character\n  // Push opening brackets onto the stack\n  // For closing brackets, check if the top of stack matches\n  // At the end, stack should be empty\n}",
-    "solution": "function isValid(s: string): boolean {\n  const stack: string[] = [];\n  const pairs: Record<string, string> = {\n    ')': '(',\n    '}': '{',\n    ']': '['\n  };\n\n  for (const char of s) {\n    if (char in pairs) {\n      if (stack.length === 0 || stack[stack.length - 1] !== pairs[char]) {\n        return false;\n      }\n      stack.pop();\n    } else {\n      stack.push(char);\n    }\n  }\n\n  return stack.length === 0;\n}",
+    "starterCode": "function isPalindrome(s: string): boolean {\n  // Use two pointers, one at the start (left) and one at the end (right)\n  // Skip left forward while it points to a non-alphanumeric character\n  // Skip right backward while it points to a non-alphanumeric character\n  // Compare the lowercased characters at left and right; if they differ, return false\n  // Move left forward and right backward, repeat until left >= right\n}",
+    "solution": "function isPalindrome(s: string): boolean {\n  const isAlnum = (char: string) => /[a-z0-9]/i.test(char);\n\n  let left = 0;\n  let right = s.length - 1;\n\n  while (left < right) {\n    while (left < right && !isAlnum(s[left])) left++;\n    while (left < right && !isAlnum(s[right])) right--;\n\n    if (s[left].toLowerCase() !== s[right].toLowerCase()) {\n      return false;\n    }\n\n    left++;\n    right--;\n  }\n\n  return true;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Use a stack data structure to match opening and closing brackets. Iterate through each character: if it's an opening bracket, push to stack; if it's a closing bracket, check if the top of the stack matches (using a mapping). At the end, the stack must be empty for the string to be valid. This ensures correct nesting and matching.\n\n**Time complexity:** O(n) - single pass through the string\n**Space complexity:** O(n) - stack can contain up to n/2 opening brackets\n\n**Common mistakes:**\n- Not checking if stack is empty before popping\n- Checking the wrong character type in the pairs mapping\n- Forgetting to return false when closing bracket doesn't match\n- Not verifying the stack is empty at the end (handles extra opening brackets)\n- Using array methods like pop() without checking length first",
-      "ru": "**Подход:** Используйте структуру данных стек для соответствия открывающих и закрывающих скобок. Итерируйте по каждому символу: если это открывающая скобка, поместите в стек; если это закрывающая скобка, проверьте соответствие с вершиной стека (используя маппинг). В конце стек должен быть пуст для корректности строки. Это гарантирует правильную вложенность и соответствие.\n\n**Временная сложность:** O(n) - одиночный проход через строку\n**Пространственная сложность:** O(n) - стек может содержать до n/2 открывающих скобок\n\n**Типичные ошибки:**\n- Отсутствие проверки пустоты стека перед извлечением\n- Проверка неправильного символа в маппинге пар\n- Забывчивость о возврате false при несовпадении закрывающей скобки\n- Отсутствие проверки пустоты стека в конце (обработка лишних открывающих скобок)\n- Использование методов массива без проверки длины"
+      "en": "**Approach:** Two pointers start at opposite ends and move toward the middle. Each pointer skips over non-alphanumeric characters before a comparison happens, so punctuation and spaces are effectively ignored without ever building a separate cleaned string. Comparing lowercased characters handles case-insensitivity. As soon as one mismatch is found, the string can't be a palindrome.\n\n**Time complexity:** O(n) — each character is visited at most once across both pointers.\n**Space complexity:** O(1) — only two index variables are used, no auxiliary string is built.\n\n**Common pitfall:** Using only one `while` loop condition (e.g. skipping only on `left`, not checking `left < right` inside the inner skip loops). If the skip loops don't also bound themselves by `left < right`, a string made entirely of punctuation (e.g. `\"...,,,\"`) can push `left` past `right` and off the end of the string, causing `s[left]` to be `undefined` and the comparison to behave unpredictably instead of correctly returning `true`.",
+      "ru": "**Подход:** Два указателя стартуют с разных концов строки и движутся навстречу друг другу. Перед каждым сравнением оба указателя пропускают не буквенно-цифровые символы, так что пунктуация и пробелы фактически игнорируются без построения отдельной очищенной строки. Сравнение символов в нижнем регистре обеспечивает регистронезависимость. Как только найдено первое несовпадение, строка точно не палиндром.\n\n**Временная сложность:** O(n) — каждый символ посещается не более одного раза суммарно обоими указателями.\n**Пространственная сложность:** O(1) — используются только две переменные-индексы, вспомогательная строка не строится.\n\n**Частая ловушка:** Не ограничивать внутренние циклы пропуска условием `left < right`. Если циклы пропуска символов не проверяют это условие сами, строка, состоящая целиком из пунктуации (например `\"...,,,\"`), может увести `left` за `right` и за пределы строки — тогда `s[left]` окажется `undefined`, и сравнение поведёт себя непредсказуемо вместо корректного `true`."
     },
     "tags": [
-      "stack",
-      "string",
-      "pattern-matching",
-      "nesting"
+      "two-pointers",
+      "string"
     ]
   },
   {
@@ -129,28 +123,169 @@
     "topicId": "algorithms",
     "difficulty": "easy",
     "title": {
-      "en": "Fibonacci with Memoization",
-      "ru": "Числа Фибоначчи с мемоизацией"
+      "en": "Binary Search",
+      "ru": "Бинарный поиск"
     },
     "description": {
-      "en": "Implement the Fibonacci sequence using memoization to optimize recursive calls.\n\nThe Fibonacci sequence is defined as:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) for n > 1\n\n**Function signature:**\ntypescript\nfunction fibonacci(n: number): number\n\n\n**Examples:**\n- Input: `n = 0` → Output: `0`\n- Input: `n = 5` → Output: `5` (sequence: 0, 1, 1, 2, 3, 5)\n- Input: `n = 10` → Output: `55`\n- Input: `n = 50` → Output: `12586269025`\n\n**Requirements:**\n- Use memoization (caching) to avoid redundant calculations\n- Solution should handle large n values efficiently\n- Return the correct Fibonacci number for non-negative integers\n\n**Edge cases:**\n- n = 0 and n = 1\n- Large n values (> 40)\n- Negative numbers should not be accepted",
-      "ru": "Реализуйте последовательность Фибоначчи с использованием мемоизации для оптимизации рекурсивных вызовов.\n\nПоследовательность Фибоначчи определяется как:\n- F(0) = 0\n- F(1) = 1\n- F(n) = F(n-1) + F(n-2) для n > 1\n\n**Сигнатура функции:**\ntypescript\nfunction fibonacci(n: number): number\n\n\n**Примеры:**\n- Входные данные: `n = 0` → Выход: `0`\n- Входные данные: `n = 5` → Выход: `5` (последовательность: 0, 1, 1, 2, 3, 5)\n- Входные данные: `n = 10` → Выход: `55`\n- Входные данные: `n = 50` → Выход: `12586269025`\n\n**Требования:**\n- Используйте мемоизацию (кеширование) для избежания избыточных вычислений\n- Решение должно эффективно обрабатывать большие значения n\n- Возвращайте правильное число Фибоначчи для неотрицательных целых чисел\n\n**Граничные случаи:**\n- n = 0 и n = 1\n- Большие значения n (> 40)\n- Отрицательные числа должны отвергаться"
+      "en": "Given a sorted (ascending) array of distinct integers `nums` and a `target`, return the index of `target` if it exists in the array, or `-1` if it does not.\n\n**Requirements:**\n- Solve it in O(log n) time using classic binary search\n- Do not use `Array.prototype.indexOf` or any linear scan\n\n**Function signature:**\ntypescript\nfunction search(nums: number[], target: number): number\n\n\n**Example:**\n- Input: `nums = [-1, 0, 3, 5, 9, 12]`, `target = 9`\n- Output: `4`\n\n**Edge cases:**\n- Target not present in the array\n- Empty array\n- Single-element array\n- Target is the first or last element",
+      "ru": "Дан отсортированный по возрастанию массив различных целых чисел `nums` и число `target`. Нужно вернуть индекс `target` в массиве, если он там есть, или `-1`, если его нет.\n\n**Требования:**\n- Решить задачу за O(log n) с помощью классического бинарного поиска\n- Не использовать `Array.prototype.indexOf` или линейный перебор\n\n**Сигнатура функции:**\ntypescript\nfunction search(nums: number[], target: number): number\n\n\n**Пример:**\n- Вход: `nums = [-1, 0, 3, 5, 9, 12]`, `target = 9`\n- Выход: `4`\n\n**Граничные случаи:**\n- Целевого значения нет в массиве\n- Пустой массив\n- Массив из одного элемента\n- Целевое значение — первый или последний элемент"
     },
-    "starterCode": "function fibonacci(n: number): number {\n  // Create a memo object or Map to store computed values\n  // Use a helper recursive function that checks memo first\n  // If value exists in memo, return it\n  // Otherwise compute, store in memo, and return\n}\n\n// Alternative: Create a closure with memo\nconst fibonacci = (() => {\n  const memo: Record<number, number> = {};\n  return (n: number): number => {\n    // Implementation here\n  };\n})();",
-    "solution": "function fibonacci(n: number): number {\n  const memo: Record<number, number> = {};\n\n  function fib(num: number): number {\n    if (num in memo) {\n      return memo[num];\n    }\n    if (num <= 1) {\n      return num;\n    }\n    memo[num] = fib(num - 1) + fib(num - 2);\n    return memo[num];\n  }\n\n  return fib(n);\n}",
+    "starterCode": "function search(nums: number[], target: number): number {\n  // Keep left and right pointers spanning the whole array\n  // While left <= right, compute mid = left + Math.floor((right - left) / 2)\n  // If nums[mid] === target, return mid\n  // If nums[mid] < target, search the right half (move left = mid + 1)\n  // Otherwise search the left half (move right = mid - 1)\n  // If the loop ends without finding target, return -1\n}",
+    "solution": "function search(nums: number[], target: number): number {\n  let left = 0;\n  let right = nums.length - 1;\n\n  while (left <= right) {\n    const mid = left + Math.floor((right - left) / 2);\n\n    if (nums[mid] === target) {\n      return mid;\n    }\n\n    if (nums[mid] < target) {\n      left = mid + 1;\n    } else {\n      right = mid - 1;\n    }\n  }\n\n  return -1;\n}",
     "solutionExplanation": {
-      "en": "**Approach:** Memoization stores previously computed Fibonacci numbers to avoid recalculating them. Without memoization, computing F(n) has exponential time complexity O(2^n) because it recalculates the same values repeatedly. With memoization, each value is computed only once and retrieved from the cache on subsequent calls.\n\n**Time complexity:** O(n) - each Fibonacci number from 0 to n is calculated exactly once\n**Space complexity:** O(n) - memo object stores up to n values, plus O(n) for the call stack depth\n\n**Common mistakes:**\n- Forgetting to check the memo before recursive calls (losing optimization benefit)\n- Not handling base cases (0 and 1) correctly\n- Using the wrong key to store in memo\n- Declaring memo inside the function but resetting it on each call (losing cache between calls if used repeatedly)\n- Not returning the memoized value\n- Computing without checking if value already exists",
-      "ru": "**Подход:** Мемоизация сохраняет ранее вычисленные числа Фибоначчи, чтобы избежать их пересчета. Без мемоизации вычисление F(n) имеет экспоненциальную временную сложность O(2^n), потому что оно повторно вычисляет одни и те же значения. С мемоизацией каждое значение вычисляется только один раз и извлекается из кеша при последующих вызовах.\n\n**Временная сложность:** O(n) - каждое число Фибоначчи от 0 до n вычисляется ровно один раз\n**Пространственная сложность:** O(n) - объект memo хранит до n значений, плюс O(n) для глубины стека вызовов\n\n**Типичные ошибки:**\n- Забывчивость о проверке memo перед рекурсивными вызовами (потеря преимущества оптимизации)\n- Неправильная обработка базовых случаев (0 и 1)\n- Использование неправильного ключа для хранения в memo\n- Объявление memo внутри функции с его сбросом при каждом вызове (потеря кеша между вызовами)\n- Отсутствие возврата мемоизированного значения\n- Вычисление без проверки существования значения"
+      "en": "**Approach:** Because the array is sorted, comparing the middle element to the target eliminates half of the remaining search space on every iteration. If the middle value is too small, the target (if present) must be in the right half; if too large, it must be in the left half. The loop continues shrinking the `[left, right]` window until it either finds the target or the window becomes empty (`left > right`).\n\n**Time complexity:** O(log n) — the search space halves on each iteration.\n**Space complexity:** O(1) — only a few index variables, no recursion stack.\n\n**Common pitfall:** Computing `mid = Math.floor((left + right) / 2)` directly instead of `left + Math.floor((right - left) / 2)`. For very large arrays, `left + right` can in principle overflow a language's safe integer range (this specific case is rarely hit in JS because numbers are 64-bit floats, but the habit matters in languages with fixed-width integers, and it's a common line interviewers probe on). The bigger everyday pitfall is an off-by-one in the boundary updates — using `right = mid` instead of `right = mid - 1` can cause an infinite loop when `left` and `right` converge without the target being found.",
+      "ru": "**Подход:** Поскольку массив отсортирован, сравнение среднего элемента с целевым значением на каждой итерации отбрасывает половину оставшегося пространства поиска. Если среднее значение меньше цели, искомый элемент (если он есть) находится в правой половине; если больше — в левой. Цикл продолжает сужать окно `[left, right]`, пока либо не найдёт цель, либо окно не станет пустым (`left > right`).\n\n**Временная сложность:** O(log n) — пространство поиска сокращается вдвое на каждой итерации.\n**Пространственная сложность:** O(1) — используется несколько переменных-индексов, без рекурсии.\n\n**Частая ловушка:** Вычислять `mid = Math.floor((left + right) / 2)` напрямую вместо `left + Math.floor((right - left) / 2)`. Для очень больших массивов `left + right` в принципе может выйти за пределы безопасного диапазона целых чисел (в JS это редко проявляется из-за 64-битных чисел с плавающей точкой, но привычка важна в языках с фиксированной разрядностью, и это частый вопрос на собеседовании). Более бытовая ловушка — ошибка на единицу в обновлении границ: использование `right = mid` вместо `right = mid - 1` может привести к бесконечному циклу, когда `left` и `right` сходятся, а цель так и не найдена."
     },
     "tags": [
-      "memoization",
-      "dynamic-programming",
-      "recursion",
-      "optimization"
+      "binary-search",
+      "array",
+      "divide-and-conquer"
     ]
   },
   {
     "id": "algorithms-t-7",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Merge Two Sorted Arrays",
+      "ru": "Слияние двух отсортированных массивов"
+    },
+    "description": {
+      "en": "Given two arrays `a` and `b`, each sorted in ascending order, return a single array containing all elements of both, sorted in ascending order.\n\n**Requirements:**\n- Do not use `[...a, ...b].sort()` — merge the two arrays directly, the way merge sort's merge step works\n- Run in O(n + m) time, where n and m are the lengths of `a` and `b`\n\n**Function signature:**\ntypescript\nfunction mergeSorted(a: number[], b: number[]): number[]\n\n\n**Example:**\n- Input: `a = [1, 3, 5]`, `b = [2, 4, 6]`\n- Output: `[1, 2, 3, 4, 5, 6]`\n\n**Edge cases:**\n- One array is empty\n- Both arrays are empty\n- Arrays of different lengths\n- Duplicate values across or within the arrays",
+      "ru": "Даны два массива `a` и `b`, каждый отсортирован по возрастанию. Нужно вернуть один массив, содержащий все элементы обоих, отсортированный по возрастанию.\n\n**Требования:**\n- Не использовать `[...a, ...b].sort()` — слить массивы напрямую, как это делает шаг merge в сортировке слиянием\n- Работать за O(n + m), где n и m — длины `a` и `b`\n\n**Сигнатура функции:**\ntypescript\nfunction mergeSorted(a: number[], b: number[]): number[]\n\n\n**Пример:**\n- Вход: `a = [1, 3, 5]`, `b = [2, 4, 6]`\n- Выход: `[1, 2, 3, 4, 5, 6]`\n\n**Граничные случаи:**\n- Один из массивов пуст\n- Оба массива пусты\n- Массивы разной длины\n- Повторяющиеся значения внутри массивов или между ними"
+    },
+    "starterCode": "function mergeSorted(a: number[], b: number[]): number[] {\n  // Use two pointers, i for a and j for b, and a result array\n  // While both pointers are in range, compare a[i] and b[j]\n  // Push the smaller one into the result and advance that pointer\n  // When one array is exhausted, push the remaining elements of the other array\n}",
+    "solution": "function mergeSorted(a: number[], b: number[]): number[] {\n  const result: number[] = [];\n  let i = 0;\n  let j = 0;\n\n  while (i < a.length && j < b.length) {\n    if (a[i] <= b[j]) {\n      result.push(a[i]);\n      i++;\n    } else {\n      result.push(b[j]);\n      j++;\n    }\n  }\n\n  while (i < a.length) {\n    result.push(a[i]);\n    i++;\n  }\n\n  while (j < b.length) {\n    result.push(b[j]);\n    j++;\n  }\n\n  return result;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Since both inputs are already sorted, the smallest remaining element overall is always at the front of one of the two arrays. Two pointers walk `a` and `b` in lockstep, and at each step the smaller of the two current elements is appended to the result. Once one array runs out, everything left in the other is already sorted and can be copied over directly.\n\n**Time complexity:** O(n + m) — each element from both arrays is visited exactly once.\n**Space complexity:** O(n + m) — the result array holds all elements from both inputs.\n\n**Common pitfall:** Forgetting the two cleanup loops after the main comparison loop. Once one pointer reaches the end of its array, the main `while (i < a.length && j < b.length)` loop exits immediately — without the trailing `while (i < a.length)` / `while (j < b.length)` loops, the remaining tail of the longer array is silently dropped from the result.",
+      "ru": "**Подход:** Раз оба входных массива уже отсортированы, наименьший из оставшихся элементов всегда находится в начале одного из двух массивов. Два указателя синхронно проходят по `a` и `b`, и на каждом шаге в результат добавляется меньший из двух текущих элементов. Когда один массив заканчивается, оставшаяся часть другого уже отсортирована и просто копируется целиком.\n\n**Временная сложность:** O(n + m) — каждый элемент обоих массивов посещается ровно один раз.\n**Пространственная сложность:** O(n + m) — результирующий массив хранит все элементы обоих входов.\n\n**Частая ловушка:** Забыть два «хвостовых» цикла после основного цикла сравнения. Как только один из указателей доходит до конца своего массива, основной цикл `while (i < a.length && j < b.length)` сразу завершается — без хвостовых `while (i < a.length)` / `while (j < b.length)` оставшийся хвост более длинного массива незаметно теряется и не попадает в результат."
+    },
+    "tags": [
+      "array",
+      "two-pointers",
+      "merge"
+    ]
+  },
+  {
+    "id": "algorithms-t-8",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Move Zeroes",
+      "ru": "Перемещение нулей (Move Zeroes)"
+    },
+    "description": {
+      "en": "Given an array of integers `nums`, move all `0`s to the end of the array while maintaining the relative order of the non-zero elements. Do this in place, without making a copy of the array.\n\n**Requirements:**\n- Modify `nums` in place; the function can return `void` (or the mutated array, but the mutation is what's graded)\n- Minimize the total number of writes/swaps (don't just filter and re-fill naively if it costs extra passes — a single-pass two-pointer approach is expected)\n\n**Function signature:**\ntypescript\nfunction moveZeroes(nums: number[]): void\n\n\n**Example:**\n- Input: `nums = [0, 1, 0, 3, 12]`\n- After call: `nums = [1, 3, 12, 0, 0]`\n\n**Edge cases:**\n- Array with no zeroes\n- Array of all zeroes\n- Single-element array\n- Zeroes already at the end",
+      "ru": "Дан массив целых чисел `nums`. Нужно переместить все `0` в конец массива, сохранив относительный порядок ненулевых элементов. Сделать это на месте, без создания копии массива.\n\n**Требования:**\n- Изменить `nums` на месте; функция может возвращать `void` (или изменённый массив, но оценивается именно мутация)\n- Минимизировать число записей/перестановок (не делать просто filter + дозаполнение нулями, если это требует лишних проходов — ожидается подход в один проход с двумя указателями)\n\n**Сигнатура функции:**\ntypescript\nfunction moveZeroes(nums: number[]): void\n\n\n**Пример:**\n- Вход: `nums = [0, 1, 0, 3, 12]`\n- После вызова: `nums = [1, 3, 12, 0, 0]`\n\n**Граничные случаи:**\n- Массив без нулей\n- Массив из одних нулей\n- Массив из одного элемента\n- Нули уже в конце"
+    },
+    "starterCode": "function moveZeroes(nums: number[]): void {\n  // Keep a pointer `insertPos` for where the next non-zero element should go\n  // Walk the array; whenever nums[i] is non-zero, swap it into position insertPos and advance insertPos\n  // After the walk, every non-zero element has been moved to the front in order,\n  // and everything from insertPos onward should be zero\n}",
+    "solution": "function moveZeroes(nums: number[]): void {\n  let insertPos = 0;\n\n  for (let i = 0; i < nums.length; i++) {\n    if (nums[i] !== 0) {\n      [nums[insertPos], nums[i]] = [nums[i], nums[insertPos]];\n      insertPos++;\n    }\n  }\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** `insertPos` marks the boundary of the non-zero region built so far. Scanning left to right, every time a non-zero element is found it's swapped into `insertPos` (which, up to that point, either holds a zero or is the same position — the swap is a no-op in that case) and `insertPos` advances. Because elements are only ever swapped forward relative to their scan order, the relative order of non-zero elements is preserved, and all zeroes naturally end up pushed to the back.\n\n**Time complexity:** O(n) — a single pass through the array.\n**Space complexity:** O(1) — the array is modified in place with no auxiliary storage.\n\n**Common pitfall:** Using `nums[insertPos] = nums[i]; nums[i] = 0;` instead of a true swap. That approach *seems* fine at first glance, but it blindly overwrites `nums[i]` with `0` even when `i === insertPos` was already the correct non-zero value, and more importantly it discards whatever value was previously sitting at `insertPos` instead of relocating it — a real swap (or careful conditional) is needed so no non-zero value is silently lost.",
+      "ru": "**Подход:** `insertPos` отмечает границу уже построенной ненулевой области. При проходе слева направо каждый найденный ненулевой элемент меняется местами с позицией `insertPos` (которая до этого момента либо содержит ноль, либо совпадает с текущей позицией — тогда обмен ничего не меняет), после чего `insertPos` сдвигается вперёд. Поскольку элементы переставляются только вперёд относительно порядка обхода, относительный порядок ненулевых элементов сохраняется, а нули естественным образом вытесняются в конец.\n\n**Временная сложность:** O(n) — один проход по массиву.\n**Пространственная сложность:** O(1) — массив изменяется на месте без дополнительной памяти.\n\n**Частая ловушка:** Использовать `nums[insertPos] = nums[i]; nums[i] = 0;` вместо настоящего обмена. На первый взгляд это выглядит рабочим, но такой код слепо перезаписывает `nums[i]` нулём даже когда `i === insertPos` уже было верным ненулевым значением, а главное — теряет то значение, что раньше стояло на `insertPos`, вместо того чтобы его переместить. Нужен настоящий обмен (или аккуратное условие), чтобы ни одно ненулевое значение не потерялось незаметно."
+    },
+    "tags": [
+      "array",
+      "two-pointers",
+      "in-place"
+    ]
+  },
+  {
+    "id": "algorithms-t-9",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Maximum Depth of Binary Tree",
+      "ru": "Максимальная глубина бинарного дерева"
+    },
+    "description": {
+      "en": "Given the root of a binary tree, return its maximum depth — the number of nodes along the longest path from the root down to the farthest leaf node.\n\n**Requirements:**\n- Handle the empty tree case (`root = null`) by returning `0`\n- A tree with a single node has depth `1`\n\n**Function signature:**\ntypescript\ninterface TreeNode {\n  val: number;\n  left: TreeNode | null;\n  right: TreeNode | null;\n}\n\nfunction maxDepth(root: TreeNode | null): number\n\n\n**Example:**\n- Input: a tree with root `3`, left child `9` (leaf), right child `20` with children `15` and `7`\n- Output: `3` (path `3 -> 20 -> 15`, or `3 -> 20 -> 7`)\n\n**Edge cases:**\n- Empty tree (`root = null`)\n- Single-node tree\n- Skewed tree (every node has only a left child, or only a right child)\n- Balanced tree",
+      "ru": "Дан корень бинарного дерева. Нужно вернуть его максимальную глубину — количество узлов на самом длинном пути от корня до самого дальнего листа.\n\n**Требования:**\n- Для пустого дерева (`root = null`) вернуть `0`\n- Дерево из одного узла имеет глубину `1`\n\n**Сигнатура функции:**\ntypescript\ninterface TreeNode {\n  val: number;\n  left: TreeNode | null;\n  right: TreeNode | null;\n}\n\nfunction maxDepth(root: TreeNode | null): number\n\n\n**Пример:**\n- Вход: дерево с корнем `3`, левым потомком `9` (лист), правым потомком `20` с детьми `15` и `7`\n- Выход: `3` (путь `3 -> 20 -> 15` или `3 -> 20 -> 7`)\n\n**Граничные случаи:**\n- Пустое дерево (`root = null`)\n- Дерево из одного узла\n- Вырожденное дерево (у каждого узла только левый или только правый потомок)\n- Сбалансированное дерево"
+    },
+    "starterCode": "interface TreeNode {\n  val: number;\n  left: TreeNode | null;\n  right: TreeNode | null;\n}\n\nfunction maxDepth(root: TreeNode | null): number {\n  // Base case: if root is null, depth is 0\n  // Otherwise, recursively find the depth of the left and right subtrees\n  // The depth of this node is 1 + the larger of the two subtree depths\n}",
+    "solution": "interface TreeNode {\n  val: number;\n  left: TreeNode | null;\n  right: TreeNode | null;\n}\n\nfunction maxDepth(root: TreeNode | null): number {\n  if (root === null) {\n    return 0;\n  }\n\n  const leftDepth = maxDepth(root.left);\n  const rightDepth = maxDepth(root.right);\n\n  return 1 + Math.max(leftDepth, rightDepth);\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** The depth of a tree rooted at a node is defined recursively: an empty tree has depth 0, and a non-empty tree's depth is one more than the deeper of its two subtrees. This is a straightforward post-order DFS — recurse into both children first, then combine their results with the current node.\n\n**Time complexity:** O(n) — every node is visited exactly once.\n**Space complexity:** O(h) — where h is the tree's height, due to the recursion call stack; O(n) in the worst case for a completely skewed tree, O(log n) for a balanced one.\n\n**Common pitfall:** Using `Math.max(leftDepth, rightDepth)` without adding `1` for the current node, or forgetting one of the two recursive calls (e.g. only recursing into `root.left`). Either mistake produces a depth that's systematically off — either missing the current level entirely, or ignoring whichever subtree happens to be deeper.",
+      "ru": "**Подход:** Глубина дерева с корнем в узле определяется рекурсивно: пустое дерево имеет глубину 0, а непустое дерево — на единицу больше глубины более глубокого из двух поддеревьев. Это простой обход DFS в постпорядке — сначала рекурсия в оба поддерева, затем объединение результатов с текущим узлом.\n\n**Временная сложность:** O(n) — каждый узел посещается ровно один раз.\n**Пространственная сложность:** O(h), где h — высота дерева, из-за стека вызовов рекурсии; O(n) в худшем случае для полностью вырожденного дерева, O(log n) для сбалансированного.\n\n**Частая ловушка:** Использовать `Math.max(leftDepth, rightDepth)` без прибавления `1` за текущий узел, либо забыть один из двух рекурсивных вызовов (например, рекурсию только в `root.left`). Любая из этих ошибок систематически занижает глубину — либо полностью пропуская текущий уровень, либо игнорируя то поддерево, которое на самом деле глубже."
+    },
+    "tags": [
+      "tree",
+      "dfs",
+      "recursion"
+    ]
+  },
+  {
+    "id": "algorithms-t-10",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "First Unique Character in a String",
+      "ru": "Первый уникальный символ в строке"
+    },
+    "description": {
+      "en": "Given a string `s`, return the index of the first character that does not repeat elsewhere in the string. If no such character exists, return `-1`.\n\n**Requirements:**\n- Case-sensitive comparison (`'A'` and `'a'` are different characters)\n- Solve it in O(n) time, not O(n²) with repeated `indexOf`/`lastIndexOf` scans\n\n**Function signature:**\ntypescript\nfunction firstUniqChar(s: string): number\n\n\n**Examples:**\n- Input: `s = \"leetcode\"` → Output: `0` (`'l'` never repeats)\n- Input: `s = \"loveleetcode\"` → Output: `2` (`'v'` is the first non-repeating character)\n- Input: `s = \"aabb\"` → Output: `-1`\n\n**Edge cases:**\n- Empty string\n- All characters repeat\n- All characters are unique\n- Single-character string",
+      "ru": "Дана строка `s`. Нужно вернуть индекс первого символа, который не повторяется больше нигде в строке. Если такого символа нет, вернуть `-1`.\n\n**Требования:**\n- Сравнение с учётом регистра (`'A'` и `'a'` — разные символы)\n- Решить задачу за O(n), а не за O(n²) с повторными сканами через `indexOf`/`lastIndexOf`\n\n**Сигнатура функции:**\ntypescript\nfunction firstUniqChar(s: string): number\n\n\n**Примеры:**\n- Вход: `s = \"leetcode\"` → Выход: `0` (`'l'` нигде не повторяется)\n- Вход: `s = \"loveleetcode\"` → Выход: `2` (`'v'` — первый неповторяющийся символ)\n- Вход: `s = \"aabb\"` → Выход: `-1`\n\n**Граничные случаи:**\n- Пустая строка\n- Все символы повторяются\n- Все символы уникальны\n- Строка из одного символа"
+    },
+    "starterCode": "function firstUniqChar(s: string): number {\n  // First pass: build a frequency count of each character using a Map\n  // Second pass: walk the string in order and return the index of the\n  // first character whose count in the map is exactly 1\n  // If nothing qualifies, return -1\n}",
+    "solution": "function firstUniqChar(s: string): number {\n  const counts = new Map<string, number>();\n\n  for (const char of s) {\n    counts.set(char, (counts.get(char) ?? 0) + 1);\n  }\n\n  for (let i = 0; i < s.length; i++) {\n    if (counts.get(s[i]) === 1) {\n      return i;\n    }\n  }\n\n  return -1;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Two linear passes. The first pass builds a frequency map of every character in the string. The second pass walks the string in its original order and returns the index of the first character whose total count is 1 — because this second pass respects the original order, it correctly finds the *first* unique character, not just *a* unique one.\n\n**Time complexity:** O(n) — two passes over a string of length n, each O(n).\n**Space complexity:** O(k) — where k is the number of distinct characters (bounded by the alphabet size, so effectively O(1) for typical ASCII/Unicode alphabets, O(n) in the theoretical worst case with an unbounded character set).\n\n**Common pitfall:** Trying to answer the question in a single pass by returning as soon as a character with count 1 is found *while still building the frequency map* — at that point the count for that character isn't final, since it could still appear again later in the string. The frequency map must be fully built before the second pass starts checking counts.",
+      "ru": "**Подход:** Два линейных прохода. Первый строит частотную карту всех символов строки. Второй проходит строку в исходном порядке и возвращает индекс первого символа, чья итоговая частота равна 1 — именно благодаря тому, что второй проход идёт в исходном порядке, находится действительно *первый* уникальный символ, а не просто какой-то уникальный.\n\n**Временная сложность:** O(n) — два прохода по строке длины n, каждый за O(n).\n**Пространственная сложность:** O(k), где k — число различных символов (ограничено размером алфавита, то есть фактически O(1) для типичных ASCII/Unicode алфавитов, O(n) в теоретическом худшем случае с неограниченным набором символов).\n\n**Частая ловушка:** Пытаться решить задачу за один проход, возвращая индекс символа, как только его счётчик становится равным 1, *прямо во время построения частотной карты* — на этом этапе счётчик ещё не финальный, символ может встретиться повторно позже в строке. Частотная карта должна быть полностью построена до того, как второй проход начнёт проверять счётчики."
+    },
+    "tags": [
+      "hash-map",
+      "string",
+      "frequency-count"
+    ]
+  },
+  {
+    "id": "algorithms-t-11",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Maximum Sum Subarray of Size K",
+      "ru": "Максимальная сумма подмассива размера K"
+    },
+    "description": {
+      "en": "Given an array of integers `nums` and a positive integer `k`, find the maximum sum of any contiguous subarray of exactly `k` elements.\n\n**Requirements:**\n- Assume `k` is always between 1 and `nums.length` inclusive\n- Solve it in O(n) time using a sliding window (not by recomputing the sum of every window from scratch)\n\n**Function signature:**\ntypescript\nfunction maxSumSubarray(nums: number[], k: number): number\n\n\n**Example:**\n- Input: `nums = [2, 1, 5, 1, 3, 2]`, `k = 3`\n- Output: `9` (the subarray `[5, 1, 3]`)\n\n**Edge cases:**\n- `k` equals `nums.length` (only one possible window)\n- `k = 1` (the answer is just the maximum element)\n- Array with negative numbers",
+      "ru": "Дан массив целых чисел `nums` и положительное целое число `k`. Нужно найти максимальную сумму среди всех непрерывных подмассивов ровно из `k` элементов.\n\n**Требования:**\n- Считать, что `k` всегда находится в диапазоне от 1 до `nums.length` включительно\n- Решить задачу за O(n) с помощью скользящего окна (без пересчёта суммы каждого окна с нуля)\n\n**Сигнатура функции:**\ntypescript\nfunction maxSumSubarray(nums: number[], k: number): number\n\n\n**Пример:**\n- Вход: `nums = [2, 1, 5, 1, 3, 2]`, `k = 3`\n- Выход: `9` (подмассив `[5, 1, 3]`)\n\n**Граничные случаи:**\n- `k` равно `nums.length` (только одно возможное окно)\n- `k = 1` (ответ — просто максимальный элемент)\n- Массив с отрицательными числами"
+    },
+    "starterCode": "function maxSumSubarray(nums: number[], k: number): number {\n  // Compute the sum of the first window of size k as a starting point\n  // Slide the window one element at a time: add the new element entering\n  // the window, subtract the element leaving the window\n  // Track the maximum sum seen across all windows\n}",
+    "solution": "function maxSumSubarray(nums: number[], k: number): number {\n  let windowSum = 0;\n\n  for (let i = 0; i < k; i++) {\n    windowSum += nums[i];\n  }\n\n  let maxSum = windowSum;\n\n  for (let i = k; i < nums.length; i++) {\n    windowSum += nums[i] - nums[i - k];\n    maxSum = Math.max(maxSum, windowSum);\n  }\n\n  return maxSum;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** Instead of summing each window of size k from scratch (which would be O(n*k)), maintain a running `windowSum` and slide it: when the window moves one position to the right, exactly one element leaves (the leftmost of the old window) and one enters (the new rightmost element). Updating the sum with `+nums[i] - nums[i-k]` is O(1) per slide, so the whole scan is O(n).\n\n**Time complexity:** O(n) — the initial window sum is O(k), and each of the remaining n-k slides is O(1).\n**Space complexity:** O(1) — only a running sum and a max tracker are kept.\n\n**Common pitfall:** Recomputing the sum of every window independently (e.g. nested loops, or `nums.slice(i, i+k).reduce(...)` inside the main loop), which silently turns an intended O(n) sliding-window solution into O(n*k) — it produces the correct answer but defeats the purpose of the technique and fails on larger inputs.",
+      "ru": "**Подход:** Вместо того чтобы суммировать каждое окно размера k с нуля (что дало бы O(n*k)), поддерживается текущая сумма `windowSum`, которая скользит вместе с окном: при сдвиге окна на одну позицию вправо ровно один элемент покидает окно (самый левый из старого окна), и один элемент входит (новый самый правый). Обновление суммы через `+nums[i] - nums[i-k]` занимает O(1) на сдвиг, поэтому весь проход — O(n).\n\n**Временная сложность:** O(n) — сумма первого окна считается за O(k), каждый из оставшихся n-k сдвигов — за O(1).\n**Пространственная сложность:** O(1) — хранятся только текущая сумма и максимум.\n\n**Частая ловушка:** Пересчитывать сумму каждого окна независимо (например вложенными циклами или `nums.slice(i, i+k).reduce(...)` внутри основного цикла) — это незаметно превращает задуманное O(n) решение со скользящим окном в O(n*k): ответ получится верным, но сама техника теряет смысл и решение не справится с большими входными данными."
+    },
+    "tags": [
+      "sliding-window",
+      "array"
+    ]
+  },
+  {
+    "id": "algorithms-t-12",
+    "topicId": "algorithms",
+    "difficulty": "easy",
+    "title": {
+      "en": "Contains Duplicate",
+      "ru": "Наличие дубликата (Contains Duplicate)"
+    },
+    "description": {
+      "en": "Given an array of integers `nums`, return `true` if any value appears at least twice in the array, and `false` if every element is distinct.\n\n**Requirements:**\n- Solve it in O(n) time on average\n- Do not sort the array first (that would work, but the expected approach uses a hash set)\n\n**Function signature:**\ntypescript\nfunction containsDuplicate(nums: number[]): boolean\n\n\n**Examples:**\n- Input: `nums = [1, 2, 3, 1]` → Output: `true`\n- Input: `nums = [1, 2, 3, 4]` → Output: `false`\n- Input: `nums = [1, 1, 1, 3, 3, 4, 3, 2, 4, 2]` → Output: `true`\n\n**Edge cases:**\n- Empty array\n- Single-element array\n- All elements identical\n- Negative numbers mixed with positive ones",
+      "ru": "Дан массив целых чисел `nums`. Нужно вернуть `true`, если хотя бы одно значение встречается в массиве два и более раз, и `false`, если все элементы различны.\n\n**Требования:**\n- Решить задачу за O(n) в среднем\n- Не сортировать массив предварительно (это тоже сработает, но ожидаемый подход — через хеш-множество)\n\n**Сигнатура функции:**\ntypescript\nfunction containsDuplicate(nums: number[]): boolean\n\n\n**Примеры:**\n- Вход: `nums = [1, 2, 3, 1]` → Выход: `true`\n- Вход: `nums = [1, 2, 3, 4]` → Выход: `false`\n- Вход: `nums = [1, 1, 1, 3, 3, 4, 3, 2, 4, 2]` → Выход: `true`\n\n**Граничные случаи:**\n- Пустой массив\n- Массив из одного элемента\n- Все элементы одинаковые\n- Отрицательные числа вперемешку с положительными"
+    },
+    "starterCode": "function containsDuplicate(nums: number[]): boolean {\n  // Use a Set to track values seen so far\n  // For each number, check if it's already in the set before adding it\n  // If it is, a duplicate was found — return true immediately\n  // If the loop finishes without finding one, return false\n}",
+    "solution": "function containsDuplicate(nums: number[]): boolean {\n  const seen = new Set<number>();\n\n  for (const num of nums) {\n    if (seen.has(num)) {\n      return true;\n    }\n    seen.add(num);\n  }\n\n  return false;\n}",
+    "solutionExplanation": {
+      "en": "**Approach:** A `Set` gives O(1) average-time membership checks and insertions. Walking the array once, each number is checked against the set before being added — if it's already there, a duplicate has been found and the function can return immediately without scanning the rest of the array.\n\n**Time complexity:** O(n) average — a single pass with O(1) average set operations; O(n) worst case for set operations under hash collisions, though this is rare in practice.\n**Space complexity:** O(n) — in the worst case (no duplicates), the set grows to hold every element.\n\n**Common pitfall:** Using `new Set(nums).size === nums.length` as a one-liner instead of an early-exit loop. It's correct, but it always processes the entire array even when a duplicate appears at index 1 of a 100,000-element array — the loop-based version is preferable when early termination actually matters, and interviewers often ask for exactly that reasoning.",
+      "ru": "**Подход:** `Set` даёт проверку наличия элемента и вставку за O(1) в среднем. При проходе по массиву каждое число проверяется на наличие в множестве до того, как добавляется туда — если оно уже есть, дубликат найден, и функция может сразу вернуть результат, не досматривая оставшуюся часть массива.\n\n**Временная сложность:** O(n) в среднем — один проход с операциями над множеством в среднем за O(1); O(n) в худшем случае из-за коллизий хеша, что на практике редкость.\n**Пространственная сложность:** O(n) — в худшем случае (дубликатов нет) множество вырастет до размера всего массива.\n\n**Частая ловушка:** Использовать однострочник `new Set(nums).size === nums.length` вместо цикла с ранним выходом. Он корректен, но всегда обрабатывает весь массив целиком, даже если дубликат находится уже на индексе 1 в массиве из 100 000 элементов — версия с циклом предпочтительнее, когда ранний выход действительно важен, и на собеседовании часто спрашивают именно про это рассуждение."
+    },
+    "tags": [
+      "hash-set",
+      "array"
+    ]
+  },
+  {
+    "id": "algorithms-t-13",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -175,7 +310,7 @@
     ]
   },
   {
-    "id": "algorithms-t-8",
+    "id": "algorithms-t-14",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -200,7 +335,7 @@
     ]
   },
   {
-    "id": "algorithms-t-9",
+    "id": "algorithms-t-15",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -225,7 +360,7 @@
     ]
   },
   {
-    "id": "algorithms-t-10",
+    "id": "algorithms-t-16",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -250,7 +385,7 @@
     ]
   },
   {
-    "id": "algorithms-t-11",
+    "id": "algorithms-t-17",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -276,7 +411,7 @@
     ]
   },
   {
-    "id": "algorithms-t-12",
+    "id": "algorithms-t-18",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -301,7 +436,7 @@
     ]
   },
   {
-    "id": "algorithms-t-13",
+    "id": "algorithms-t-19",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -325,7 +460,7 @@
     ]
   },
   {
-    "id": "algorithms-t-14",
+    "id": "algorithms-t-20",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -350,7 +485,7 @@
     ]
   },
   {
-    "id": "algorithms-t-15",
+    "id": "algorithms-t-21",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -375,7 +510,7 @@
     ]
   },
   {
-    "id": "algorithms-t-16",
+    "id": "algorithms-t-22",
     "topicId": "algorithms",
     "difficulty": "medium",
     "title": {
@@ -401,7 +536,7 @@
     ]
   },
   {
-    "id": "algorithms-t-17",
+    "id": "algorithms-t-23",
     "topicId": "algorithms",
     "difficulty": "hard",
     "title": {
@@ -426,7 +561,7 @@
     ]
   },
   {
-    "id": "algorithms-t-18",
+    "id": "algorithms-t-24",
     "topicId": "algorithms",
     "difficulty": "hard",
     "title": {
@@ -452,7 +587,7 @@
     ]
   },
   {
-    "id": "algorithms-t-19",
+    "id": "algorithms-t-25",
     "topicId": "algorithms",
     "difficulty": "hard",
     "title": {
@@ -478,7 +613,7 @@
     ]
   },
   {
-    "id": "algorithms-t-20",
+    "id": "algorithms-t-26",
     "topicId": "algorithms",
     "difficulty": "hard",
     "title": {
@@ -503,7 +638,7 @@
     ]
   },
   {
-    "id": "algorithms-t-21",
+    "id": "algorithms-t-27",
     "topicId": "algorithms",
     "difficulty": "hard",
     "title": {
@@ -528,7 +663,7 @@
     ]
   },
   {
-    "id": "algorithms-t-22",
+    "id": "algorithms-t-28",
     "topicId": "algorithms",
     "difficulty": "hard",
     "title": {
