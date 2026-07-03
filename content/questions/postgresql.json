@@ -4,16 +4,17 @@
     "topicId": "postgresql",
     "difficulty": "junior",
     "question": {
-      "en": "Write a SELECT query that retrieves all users with their email addresses, ordered by creation date in descending order.",
-      "ru": "Напишите запрос SELECT, который получает всех пользователей с их адресами электронной почты, упорядоченные по дате создания в убывающем порядке."
+      "en": "Write a SELECT query that retrieves all users older than 25, ordered by their name in ascending order.",
+      "ru": "Напиши SELECT-запрос, который выбирает всех пользователей старше 25 лет, отсортированных по имени по возрастанию."
     },
     "answer": {
-      "en": "### SELECT with ORDER BY\n\n`SELECT` retrieves rows; `ORDER BY` sorts them. The logical execution order is `FROM → WHERE → SELECT → ORDER BY`, which means `ORDER BY` runs after projection — so it can reference column aliases defined in `SELECT`. You can sort by multiple columns with mixed directions: `ORDER BY created_at DESC, name ASC`.\n\n```typescript\nconst query = `\n  SELECT id, name, email, created_at\n  FROM users\n  ORDER BY created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log(result.rows);\n```\n\n**Common interview trap:** `NULL` values sort **last** with `ASC` and **first** with `DESC` by default. If you need NULLs at the bottom regardless of direction, write `ORDER BY created_at DESC NULLS LAST`. Also, you can reference a `SELECT` alias in `ORDER BY` (`ORDER BY full_name`), but you cannot use it in `WHERE` or `GROUP BY` — those clauses execute before `SELECT` and the alias doesn't exist yet.",
-      "ru": "### SELECT с ORDER BY\n\n`SELECT` извлекает строки; `ORDER BY` сортирует их. Логический порядок выполнения: `FROM → WHERE → SELECT → ORDER BY` — это означает, что `ORDER BY` выполняется после проекции, поэтому он может ссылаться на псевдонимы столбцов из `SELECT`. Можно сортировать по нескольким столбцам с разными направлениями: `ORDER BY created_at DESC, name ASC`.\n\n```typescript\nconst query = `\n  SELECT id, name, email, created_at\n  FROM users\n  ORDER BY created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log(result.rows);\n```\n\n**Типичная ошибка на интервью:** `NULL` значения сортируются **последними** при `ASC` и **первыми** при `DESC` по умолчанию. Если нужно, чтобы NULL всегда были в конце, пишите `ORDER BY created_at DESC NULLS LAST`. Также: псевдоним из `SELECT` можно использовать в `ORDER BY` (`ORDER BY full_name`), но нельзя в `WHERE` или `GROUP BY` — эти предложения выполняются до `SELECT`, и псевдоним ещё не существует."
+      "en": "A basic SELECT reads rows, WHERE filters them before any ordering happens, and ORDER BY sorts the final result set. PostgreSQL executes these logically in the order FROM -> WHERE -> SELECT -> ORDER BY, even though you write SELECT first — that's why you can filter on columns that aren't in the SELECT list, but you can't (in standard SQL) ORDER BY an alias defined in SELECT without PostgreSQL's specific alias support kicking in.\n\n```sql\nSELECT id, name, age\nFROM users\nWHERE age > 25\nORDER BY name ASC;\n```\n\nASC is the default, so `ORDER BY name` alone works too, but writing it explicitly makes intent clear in code review.\n\n**Common pitfall:** Forgetting that ORDER BY has no guaranteed effect unless you write it — relying on \"insertion order\" or primary key order to appear sorted works by accident on small tables and breaks the moment the planner picks a different scan path, an index is added, or a VACUUM reshuffles physical row order.",
+      "ru": "Обычный SELECT читает строки, WHERE фильтрует их до всякой сортировки, а ORDER BY сортирует уже итоговый результат. Логически PostgreSQL выполняет это в порядке FROM -> WHERE -> SELECT -> ORDER BY, хотя пишешь SELECT первым — поэтому можно фильтровать по колонкам, которых нет в SELECT, но нельзя (по стандарту SQL) сортировать по алиасу из SELECT без специальной поддержки алиасов в PostgreSQL.\n\n```sql\nSELECT id, name, age\nFROM users\nWHERE age > 25\nORDER BY name ASC;\n```\n\nASC используется по умолчанию, так что `ORDER BY name` без указания направления сработает так же, но явное указание делает намерение понятным на код-ревью.\n\n**Частая ловушка:** Считать, что без ORDER BY результат всё равно придёт \"как вставлялось\" или отсортированным по первичному ключу — на маленькой таблице это может казаться правдой случайно, а потом ломается, как только планировщик выберет другой способ сканирования, добавится индекс или VACUUM физически переместит строки."
     },
     "tags": [
-      "SELECT",
-      "ORDER-BY",
+      "select-statement",
+      "where-clause",
+      "order-by",
       "basic-queries"
     ]
   },
@@ -23,176 +24,11 @@
     "difficulty": "junior",
     "question": {
       "en": "Explain PRIMARY KEY and FOREIGN KEY constraints. Why are they important in database design?",
-      "ru": "Объясните ограничения PRIMARY KEY и FOREIGN KEY. Почему они важны в проектировании баз данных?"
+      "ru": "Объясни ограничения PRIMARY KEY и FOREIGN KEY. Почему они важны для проектирования базы данных?"
     },
     "answer": {
-      "en": "### PRIMARY KEY and FOREIGN KEY\n\nA PRIMARY KEY uniquely identifies each row in a table and cannot be NULL. It ensures data integrity by preventing duplicate records. A FOREIGN KEY references a PRIMARY KEY in another table, establishing relationships between tables and enforcing referential integrity.\n\n```typescript\nconst createUsers = `\n  CREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    name VARCHAR(255) NOT NULL\n  );\n`;\n\nconst createPosts = `\n  CREATE TABLE posts (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER NOT NULL,\n    title VARCHAR(255),\n    FOREIGN KEY (user_id) REFERENCES users(id)\n  );\n`;\n\nawait client.query(createUsers);\nawait client.query(createPosts);```\n\n\n**Common interview trap:** Thinking FOREIGN KEY is optional—it's critical for data consistency and preventing orphaned records.",
-      "ru": "### PRIMARY KEY и FOREIGN KEY\n\nPRIMARY KEY уникально идентифицирует каждую строку в таблице и не может быть NULL. Это гарантирует целостность данных, предотвращая дублирующиеся записи. FOREIGN KEY ссылается на PRIMARY KEY в другой таблице, устанавливая связи между таблицами и обеспечивая ссылочную целостность.\n\n```typescript\nconst createUsers = `\n  CREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    name VARCHAR(255) NOT NULL\n  );\n`;\n\nconst createPosts = `\n  CREATE TABLE posts (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER NOT NULL,\n    title VARCHAR(255),\n    FOREIGN KEY (user_id) REFERENCES users(id)\n  );\n`;\n\nawait client.query(createUsers);\nawait client.query(createPosts);```\n\n\n**Типичная ошибка на интервью:** Думать, что FOREIGN KEY опциональный—это критично для согласованности данных."
-    },
-    "tags": [
-      "PRIMARY-KEY",
-      "FOREIGN-KEY",
-      "constraints",
-      "data-integrity"
-    ]
-  },
-  {
-    "id": "postgresql-q-3",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write an INSERT query to add a new user to the database with name and email fields.",
-      "ru": "Напишите запрос INSERT для добавления нового пользователя в базу данных с полями name и email."
-    },
-    "answer": {
-      "en": "### INSERT Statement\n\nINSERT adds new rows to a table. You specify column names and corresponding values. Always specify columns explicitly for clarity and flexibility. The RETURNING clause returns inserted data, useful for getting generated IDs.\n\n```typescript\nconst query = `\n  INSERT INTO users (name, email)\n  VALUES ($1, $2)\n  RETURNING id, name, email, created_at;\n`;\n\nconst values = ['John Doe', 'john@example.com'];\nconst result = await client.query(query, values);\nconsole.log('Created user:', result.rows[0]);```\n\n\n**Common interview trap:** Not using parameterized queries ($1, $2)—this leaves you vulnerable to SQL injection attacks.",
-      "ru": "### Оператор INSERT\n\nINSERT добавляет новые строки в таблицу. Вы указываете имена столбцов и соответствующие значения. Всегда явно указывайте столбцы для ясности и гибкости. Предложение RETURNING возвращает вставленные данные, полезно для получения созданных ID.\n\n```typescript\nconst query = `\n  INSERT INTO users (name, email)\n  VALUES ($1, $2)\n  RETURNING id, name, email, created_at;\n`;\n\nconst values = ['John Doe', 'john@example.com'];\nconst result = await client.query(query, values);\nconsole.log('Created user:', result.rows[0]);```\n\n\n**Типичная ошибка на интервью:** Не использовать параметризованные запросы ($1, $2)—это уязвимо для SQL-инъекций."
-    },
-    "tags": [
-      "INSERT",
-      "basic-queries",
-      "parameterized-queries"
-    ]
-  },
-  {
-    "id": "postgresql-q-4",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write a query using JOIN to get all posts with their corresponding user names and emails.",
-      "ru": "Напишите запрос с использованием JOIN для получения всех постов с соответствующими именами и адресами электронной почты пользователей."
-    },
-    "answer": {
-      "en": "### INNER JOIN\n\n`INNER JOIN` returns rows only when the join condition matches in **both** tables. If a post has a `user_id` that doesn't exist in `users` (or is `NULL`), it is silently excluded. Table aliases (`p`, `u`) prevent column name ambiguity and keep the query readable.\n\n```typescript\nconst query = `\n  SELECT p.id, p.title, p.content, u.name, u.email\n  FROM posts p\n  INNER JOIN users u ON p.user_id = u.id\n  ORDER BY p.created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts with authors:', result.rows);\n```\n\n**Common interview trap:** If `posts.user_id` has no index, every row in `posts` triggers a lookup in `users` — this is a nested-loop scan that scales as O(n×m). Always index the foreign key column on the \"many\" side of the relationship. Also decide carefully whether `INNER JOIN` is correct: if posts without an author should still appear, use `LEFT JOIN` instead.",
-      "ru": "### INNER JOIN\n\n`INNER JOIN` возвращает строки только при совпадении условия соединения в **обеих** таблицах. Если у поста `user_id` не существует в `users` (или равен `NULL`), он молча исключается. Псевдонимы таблиц (`p`, `u`) устраняют неоднозначность имён столбцов и делают запрос читаемым.\n\n```typescript\nconst query = `\n  SELECT p.id, p.title, p.content, u.name, u.email\n  FROM posts p\n  INNER JOIN users u ON p.user_id = u.id\n  ORDER BY p.created_at DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts with authors:', result.rows);\n```\n\n**Типичная ошибка на интервью:** Если у `posts.user_id` нет индекса, каждая строка в `posts` вызывает поиск в `users` — это вложенный цикл, масштабируемый как O(n×m). Всегда индексируйте столбец внешнего ключа на стороне «многих». Также осознанно выбирайте тип JOIN: если посты без автора тоже должны отображаться — используйте `LEFT JOIN`."
-    },
-    "tags": [
-      "JOIN",
-      "INNER-JOIN",
-      "relationships"
-    ]
-  },
-  {
-    "id": "postgresql-q-5",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write a query using WHERE and GROUP BY to count how many posts each user has created.",
-      "ru": "Напишите запрос с использованием WHERE и GROUP BY, чтобы подсчитать, сколько постов создал каждый пользователь."
-    },
-    "answer": {
-      "en": "### WHERE and GROUP BY\n\nWHERE filters rows before grouping. GROUP BY aggregates rows by specified columns. Use aggregate functions like COUNT(), SUM(), AVG() with GROUP BY. HAVING filters results after grouping, unlike WHERE which filters before.\n\n```typescript\nconst query = `\n  SELECT u.id, u.name, COUNT(p.id) as post_count\n  FROM users u\n  LEFT JOIN posts p ON u.id = p.user_id\n  WHERE u.created_at > NOW() - INTERVAL '1 year'\n  GROUP BY u.id, u.name\n  ORDER BY post_count DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts per user:', result.rows);```\n\n\n**Common interview trap:** Forgetting to include non-aggregated columns in GROUP BY clause, causing errors.",
-      "ru": "### WHERE и GROUP BY\n\nWHERE фильтрует строки перед группировкой. GROUP BY агрегирует строки по указанным столбцам. Используйте функции агрегации как COUNT(), SUM(), AVG() с GROUP BY. HAVING фильтрует результаты после группировки, в отличие от WHERE.\n\n```typescript\nconst query = `\n  SELECT u.id, u.name, COUNT(p.id) as post_count\n  FROM users u\n  LEFT JOIN posts p ON u.id = p.user_id\n  WHERE u.created_at > NOW() - INTERVAL '1 year'\n  GROUP BY u.id, u.name\n  ORDER BY post_count DESC;\n`;\n\nconst result = await client.query(query);\nconsole.log('Posts per user:', result.rows);```\n\n\n**Типичная ошибка на интервью:** Забыть включить неагрегированные столбцы в GROUP BY."
-    },
-    "tags": [
-      "WHERE",
-      "GROUP-BY",
-      "aggregate-functions",
-      "filtering"
-    ]
-  },
-  {
-    "id": "postgresql-q-6",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write an UPDATE query to change a user's email address where the user ID matches a specific value.",
-      "ru": "Напишите запрос UPDATE для изменения адреса электронной почты пользователя, где ID пользователя совпадает с конкретным значением."
-    },
-    "answer": {
-      "en": "### UPDATE Statement\n\nUPDATE modifies existing records. Always use WHERE to target specific rows—without it, all rows are updated. Use parameterized queries to prevent SQL injection. RETURNING shows updated data.\n\n```typescript\nconst query = `\n  UPDATE users\n  SET email = $1, updated_at = NOW()\n  WHERE id = $2\n  RETURNING id, name, email, updated_at;\n`;\n\nconst values = ['newemail@example.com', 5];\nconst result = await client.query(query, values);\nconsole.log('Updated user:', result.rows[0]);```\n\n\n**Common interview trap:** Forgetting WHERE clause—this updates ALL records instead of just one, causing data loss.",
-      "ru": "### Оператор UPDATE\n\nUPDATE изменяет существующие записи. Всегда используйте WHERE для целевых строк—без него обновляются все строки. Используйте параметризованные запросы. RETURNING показывает обновленные данные.\n\n```typescript\nconst query = `\n  UPDATE users\n  SET email = $1, updated_at = NOW()\n  WHERE id = $2\n  RETURNING id, name, email, updated_at;\n`;\n\nconst values = ['newemail@example.com', 5];\nconst result = await client.query(query, values);\nconsole.log('Updated user:', result.rows[0]);```\n\n\n**Типичная ошибка на интервью:** Забыть WHERE—обновляются ВСЕ записи вместо одной."
-    },
-    "tags": [
-      "UPDATE",
-      "WHERE",
-      "basic-queries",
-      "data-modification"
-    ]
-  },
-  {
-    "id": "postgresql-q-7",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Explain what indexes are and write a CREATE INDEX statement for a users table on the email column.",
-      "ru": "Объясните, что такое индексы, и напишите оператор CREATE INDEX для таблицы users на столбце email."
-    },
-    "answer": {
-      "en": "### Database Indexes\n\nIndexes speed up queries by creating a sorted data structure that allows faster lookups. They slow down INSERT/UPDATE/DELETE operations slightly since the index must also be updated. Create indexes on frequently queried columns like email, username, or IDs. UNIQUE indexes also enforce uniqueness.\n\n```typescript\nconst createIndex = `\n  CREATE INDEX idx_users_email ON users(email);\n`;\n\nconst createUniqueIndex = `\n  CREATE UNIQUE INDEX idx_users_email_unique ON users(email);\n`;\n\nawait client.query(createIndex);\nconsole.log('Index created successfully');```\n\n\n**Common interview trap:** Creating too many indexes thinking they always help—they consume memory and slow mutations; use only on frequently queried columns.",
-      "ru": "### Индексы базы данных\n\nИндексы ускоряют запросы, создавая отсортированную структуру данных для более быстрого поиска. Они немного замедляют INSERT/UPDATE/DELETE, так как индекс также должен обновляться. Создавайте индексы на часто запрашиваемых столбцах. UNIQUE индексы также обеспечивают уникальность.\n\n```typescript\nconst createIndex = `\n  CREATE INDEX idx_users_email ON users(email);\n`;\n\nconst createUniqueIndex = `\n  CREATE UNIQUE INDEX idx_users_email_unique ON users(email);\n`;\n\nawait client.query(createIndex);\nconsole.log('Index created successfully');```\n\n\n**Типичная ошибка на интервью:** Создавать слишком много индексов, думая они всегда помогают—они потребляют память и замедляют мутации."
-    },
-    "tags": [
-      "indexes",
-      "performance",
-      "CREATE-INDEX",
-      "UNIQUE"
-    ]
-  },
-  {
-    "id": "postgresql-q-36",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write a SQL query to select all users where age is greater than 25, ordered by name in ascending order.",
-      "ru": "Напишите SQL запрос для выбора всех пользователей, где возраст больше 25, отсортированных по имени в возрастающем порядке."
-    },
-    "answer": {
-      "en": "### SELECT with WHERE and ORDER BY — Execution Order\n\nSQL has a logical processing order that differs from how you write it: `FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY`. `WHERE` filters rows **before** `ORDER BY` sorts them. This matters: you cannot use a `SELECT`-level alias in `WHERE` (it doesn't exist yet), but you **can** use it in `ORDER BY`.\n\n```sql\n-- Alias in ORDER BY is fine (ORDER BY runs after SELECT)\nSELECT id, first_name || ' ' || last_name AS full_name\nFROM users\nWHERE age > 25\nORDER BY full_name ASC;\n\n-- Using alias in WHERE fails — WHERE executes before SELECT\n-- WHERE full_name LIKE 'John%'  ← column \"full_name\" does not exist\n\n-- Sort NULLs explicitly (default: NULLS LAST for ASC)\nSELECT id, name FROM users\nWHERE age > 25\nORDER BY name ASC NULLS LAST;\n```\n\n**Common interview trap:** `NULL` values sort **last** with `ASC` and **first** with `DESC` by default — this often produces unexpected results when sorting timestamps or optional fields. Use `NULLS FIRST` / `NULLS LAST` to make behavior explicit. Also, sorting by a column not in the `SELECT` list is perfectly valid SQL (`ORDER BY salary` even if salary isn't selected), but some ORM query builders silently strip it.",
-      "ru": "### SELECT с WHERE и ORDER BY — порядок выполнения\n\nВ SQL логический порядок обработки отличается от того, как вы пишете запрос: `FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY`. `WHERE` фильтрует строки **до** того, как `ORDER BY` их сортирует. Это важно: нельзя использовать псевдоним из `SELECT` в `WHERE` (его ещё нет), но **можно** использовать его в `ORDER BY`.\n\n```sql\n-- Псевдоним в ORDER BY допустим (ORDER BY выполняется после SELECT)\nSELECT id, first_name || ' ' || last_name AS full_name\nFROM users\nWHERE age > 25\nORDER BY full_name ASC;\n\n-- Псевдоним в WHERE не работает — WHERE выполняется до SELECT\n-- WHERE full_name LIKE 'John%'  ← column \"full_name\" does not exist\n\n-- Явно управляйте расположением NULL (по умолч.: NULLS LAST для ASC)\nSELECT id, name FROM users\nWHERE age > 25\nORDER BY name ASC NULLS LAST;\n```\n\n**Типичная ошибка на интервью:** `NULL` значения сортируются **последними** при `ASC` и **первыми** при `DESC` по умолчанию — это часто приводит к неожиданным результатам при сортировке timestamp или необязательных полей. Используйте `NULLS FIRST` / `NULLS LAST` для явного поведения. Также: сортировка по столбцу, которого нет в `SELECT`, — это валидный SQL (`ORDER BY salary` даже если salary не выбирается), но некоторые ORM молча убирают её."
-    },
-    "tags": [
-      "select-statement",
-      "where-clause",
-      "order-by"
-    ]
-  },
-  {
-    "id": "postgresql-q-37",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "What is the difference between INNER JOIN and LEFT JOIN? Provide a practical example.",
-      "ru": "В чём разница между INNER JOIN и LEFT JOIN? Приведите практический пример."
-    },
-    "answer": {
-      "en": "### INNER JOIN vs LEFT JOIN\n\n`INNER JOIN` returns rows only when the join condition matches in **both** tables — users without orders are excluded. `LEFT JOIN` returns **all** rows from the left table; for rows with no match on the right side, right-table columns are filled with `NULL`.\n\n```sql\n-- INNER JOIN: users without orders are silently dropped\nSELECT u.name, o.order_id\nFROM users u\nINNER JOIN orders o ON u.id = o.user_id;\n\n-- LEFT JOIN: all users appear; NULL in order_id means no orders\nSELECT u.name, o.order_id\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id;\n\n-- Find users with NO orders at all\nSELECT u.name\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.user_id IS NULL;\n```\n\n**Common interview trap:** Adding a `WHERE` condition on the right-table column (e.g., `WHERE o.status = 'active'`) to a `LEFT JOIN` silently converts it into an `INNER JOIN` — rows where the right side is `NULL` fail the filter and disappear. To filter only matched rows while keeping unmatched ones, move the condition into the `ON` clause: `LEFT JOIN orders o ON u.id = o.user_id AND o.status = 'active'`.",
-      "ru": "### INNER JOIN vs LEFT JOIN\n\n`INNER JOIN` возвращает строки только при совпадении условия в **обеих** таблицах — пользователи без заказов исключаются. `LEFT JOIN` возвращает **все** строки из левой таблицы; для строк без совпадения справа столбцы правой таблицы заполняются `NULL`.\n\n```sql\n-- INNER JOIN: пользователи без заказов молча исключаются\nSELECT u.name, o.order_id\nFROM users u\nINNER JOIN orders o ON u.id = o.user_id;\n\n-- LEFT JOIN: все пользователи, NULL в order_id означает нет заказов\nSELECT u.name, o.order_id\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id;\n\n-- Найти пользователей без заказов\nSELECT u.name\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.user_id IS NULL;\n```\n\n**Типичная ошибка на интервью:** Добавление условия `WHERE` на столбец правой таблицы (например, `WHERE o.status = 'active'`) к `LEFT JOIN` молча превращает его в `INNER JOIN` — строки, где правая сторона `NULL`, не проходят фильтр и исчезают. Чтобы фильтровать только совпавшие строки, оставляя несовпавшие, перенесите условие в `ON`: `LEFT JOIN orders o ON u.id = o.user_id AND o.status = 'active'`."
-    },
-    "tags": [
-      "joins",
-      "inner-join",
-      "left-join"
-    ]
-  },
-  {
-    "id": "postgresql-q-38",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write an INSERT statement to add a new product with name 'Laptop', price 999.99, and category_id 5.",
-      "ru": "Напишите оператор INSERT для добавления нового продукта с именем 'Laptop', ценой 999.99 и category_id 5."
-    },
-    "answer": {
-      "en": "### INSERT Statement\n\nSpecify column names and values in the same order. Always explicitly list columns to avoid issues if the table structure changes.\n\n```typescript\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5);\n```\n\n**Common interview trap:** Omitting column names makes queries fragile; if a column is added to the table, the insert fails.",
-      "ru": "### Оператор INSERT\n\nУкажите имена столбцов и значения в одинаковом порядке. Всегда явно перечисляйте столбцы, чтобы избежать проблем при изменении структуры таблицы.\n\n```typescript\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5);\n```\n\n**Типичная ошибка:** Пропуск имён столбцов делает запросы хрупкими; если столбец добавлен в таблицу, INSERT не выполняется."
-    },
-    "tags": [
-      "insert-statement",
-      "basic-dml"
-    ]
-  },
-  {
-    "id": "postgresql-q-39",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Explain PRIMARY KEY and FOREIGN KEY constraints. Why are they important for data integrity?",
-      "ru": "Объясните ограничения PRIMARY KEY и FOREIGN KEY. Почему они важны для целостности данных?"
-    },
-    "answer": {
-      "en": "### PRIMARY and FOREIGN Keys\n\nPRIMARY KEY uniquely identifies each row and prevents duplicates/nulls. FOREIGN KEY links one table to another, ensuring referential integrity. Together they prevent orphaned records and invalid relationships.\n\n```typescript\nCREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR UNIQUE\n);\nCREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  user_id INTEGER REFERENCES users(id)\n);\n```\n\n**Common interview trap:** FOREIGN KEY prevents deletion of referenced rows unless CASCADE is used; this can silently fail.",
-      "ru": "### PRIMARY и FOREIGN Keys\n\nPRIMARY KEY уникально идентифицирует каждую строку и предотвращает дубликаты/NULL. FOREIGN KEY связывает одну таблицу с другой, обеспечивая ссылочную целостность. Вместе они предотвращают сиротские записи и невалидные отношения.\n\n```typescript\nCREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR UNIQUE\n);\nCREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  user_id INTEGER REFERENCES users(id)\n);\n```\n\n**Типичная ошибка:** FOREIGN KEY предотвращает удаление Referenced строк, если не используется CASCADE; это может молча не выполниться."
+      "en": "A PRIMARY KEY uniquely identifies each row in a table — it's a combination of NOT NULL and UNIQUE, and PostgreSQL automatically builds a B-tree index on it so lookups by that key are fast. A FOREIGN KEY enforces that a value in one table must already exist as a key in another table, which is how you protect relationships between tables (e.g. an order can't reference a customer_id that doesn't exist).\n\n```sql\nCREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    email TEXT NOT NULL UNIQUE\n);\n\nCREATE TABLE orders (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER NOT NULL REFERENCES users(id),\n    total NUMERIC(10, 2) NOT NULL\n);\n```\n\nWith this in place, `INSERT INTO orders (user_id, total) VALUES (999, 50)` fails if no user with id 999 exists — the database itself guarantees referential integrity instead of relying on application code to check it every time.\n\n**Common pitfall:** Adding a FOREIGN KEY without thinking about ON DELETE behavior. By default it's ON DELETE NO ACTION, so deleting a referenced user throws an error if any orders point to them — which surprises people who expected the delete to just work or to cascade automatically.",
+      "ru": "PRIMARY KEY уникально идентифицирует каждую строку таблицы — это комбинация NOT NULL и UNIQUE, и PostgreSQL автоматически строит на нём B-tree индекс, так что поиск по этому ключу быстрый. FOREIGN KEY гарантирует, что значение в одной таблице обязательно существует как ключ в другой таблице — именно так защищаются связи между таблицами (например, заказ не может ссылаться на несуществующий customer_id).\n\n```sql\nCREATE TABLE users (\n    id SERIAL PRIMARY KEY,\n    email TEXT NOT NULL UNIQUE\n);\n\nCREATE TABLE orders (\n    id SERIAL PRIMARY KEY,\n    user_id INTEGER NOT NULL REFERENCES users(id),\n    total NUMERIC(10, 2) NOT NULL\n);\n```\n\nС такой схемой `INSERT INTO orders (user_id, total) VALUES (999, 50)` упадёт с ошибкой, если пользователя с id 999 не существует — целостность данных гарантирует сама база, а не проверки в коде приложения на каждый чих.\n\n**Частая ловушка:** Добавить FOREIGN KEY, не подумав про поведение ON DELETE. По умолчанию это ON DELETE NO ACTION, поэтому удаление пользователя, на которого ссылаются заказы, упадёт с ошибкой — это удивляет тех, кто ожидал, что удаление просто сработает или каскадно удалит связанные записи."
     },
     "tags": [
       "primary-key",
@@ -202,16 +38,89 @@
     ]
   },
   {
-    "id": "postgresql-q-40",
+    "id": "postgresql-q-3",
     "topicId": "postgresql",
     "difficulty": "junior",
     "question": {
-      "en": "Write a query using GROUP BY to count the number of orders per user, and filter groups where count is greater than 2.",
-      "ru": "Напишите запрос с GROUP BY для подсчёта количества заказов на пользователя и фильтрацию групп с количеством больше 2."
+      "en": "Write an INSERT query to add a new product with name 'Laptop', price 999.99, and category_id 5.",
+      "ru": "Напиши INSERT-запрос, добавляющий новый товар с именем 'Laptop', ценой 999.99 и category_id 5."
     },
     "answer": {
-      "en": "### GROUP BY with HAVING\n\nGROUP BY aggregates rows by column(s), then HAVING filters grouped results (WHERE filters before grouping). Use COUNT() to aggregate.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) > 2;\n```\n\n**Common interview trap:** Using WHERE instead of HAVING to filter groups; WHERE executes before GROUP BY, so it won't work as intended.",
-      "ru": "### GROUP BY с HAVING\n\nGROUP BY агрегирует строки по столбцам, затем HAVING фильтрует результаты группировки (WHERE фильтрует до группировки). Используйте COUNT() для агрегации.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) > 2;\n```\n\n**Типичная ошибка:** Использование WHERE вместо HAVING для фильтрации групп; WHERE выполняется до GROUP BY, поэтому не сработает как задумано."
+      "en": "INSERT adds a new row by listing the target columns and the values that go into them, in matching positions. Naming columns explicitly (instead of relying on table column order) is what keeps the query working after someone adds a column to the table later.\n\n```sql\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5);\n```\n\nIf you want the inserted row back (e.g. to get the generated id) without a second SELECT, PostgreSQL supports RETURNING:\n\n```sql\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5)\nRETURNING id;\n```\n\n**Common pitfall:** Skipping the column list and writing `INSERT INTO products VALUES ('Laptop', 999.99, 5)`. It works only as long as the value order exactly matches the table's current column order — the first schema migration that adds or reorders a column silently inserts values into the wrong columns instead of failing loudly.",
+      "ru": "INSERT добавляет новую строку, перечисляя целевые колонки и значения, которые в них попадут, по позициям. Явное перечисление колонок (а не расчёт на порядок колонок в таблице) — это то, что не даёт запросу сломаться, когда кто-то позже добавит новую колонку в таблицу.\n\n```sql\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5);\n```\n\nЕсли нужно получить вставленную строку обратно (например, сгенерированный id) без второго SELECT, в PostgreSQL есть RETURNING:\n\n```sql\nINSERT INTO products (name, price, category_id)\nVALUES ('Laptop', 999.99, 5)\nRETURNING id;\n```\n\n**Частая ловушка:** Пропустить список колонок и написать `INSERT INTO products VALUES ('Laptop', 999.99, 5)`. Это работает только пока порядок значений точно совпадает с текущим порядком колонок в таблице — первая же миграция, добавляющая или переставляющая колонку, молча вставит значения не в те колонки вместо того, чтобы явно упасть с ошибкой."
+    },
+    "tags": [
+      "insert-statement",
+      "returning-clause",
+      "basic-dml"
+    ]
+  },
+  {
+    "id": "postgresql-q-4",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using INNER JOIN to get all posts with their corresponding author names and emails.",
+      "ru": "Напиши запрос с INNER JOIN, который получает все посты вместе с именем и email их автора."
+    },
+    "answer": {
+      "en": "INNER JOIN combines rows from two tables by matching a column between them, but it only keeps rows that have a match on both sides — a post with no matching user, or a user with no posts, simply won't appear in the result.\n\n```sql\nSELECT posts.id, posts.title, users.name, users.email\nFROM posts\nINNER JOIN users ON posts.user_id = users.id;\n```\n\nUnder the hood the planner picks a join strategy — nested loop, hash join, or merge join — based on table sizes and available indexes, but the logical result is the same regardless: only matched pairs survive.\n\n**Common pitfall:** Using INNER JOIN when you actually need to see rows without a match too (e.g. \"all posts, even ones whose author account was deleted\"). INNER JOIN silently drops those rows instead of erroring, so the bug shows up as \"missing data\" in the app rather than a query failure — that's the case where you'd reach for LEFT JOIN instead.",
+      "ru": "INNER JOIN соединяет строки из двух таблиц по совпадающей колонке, но оставляет только те строки, для которых есть совпадение с обеих сторон — пост без подходящего пользователя или пользователь без постов просто не попадут в результат.\n\n```sql\nSELECT posts.id, posts.title, users.name, users.email\nFROM posts\nINNER JOIN users ON posts.user_id = users.id;\n```\n\nПод капотом планировщик выбирает стратегию джойна — nested loop, hash join или merge join — в зависимости от размера таблиц и доступных индексов, но логический результат от этого не меняется: остаются только совпавшие пары.\n\n**Частая ловушка:** Использовать INNER JOIN там, где на самом деле нужно видеть и строки без совпадения (например, \"все посты, даже если аккаунт автора удалён\"). INNER JOIN молча выбрасывает такие строки вместо ошибки, поэтому баг проявляется как \"пропавшие данные\" в приложении, а не как падение запроса — в этом случае нужен LEFT JOIN."
+    },
+    "tags": [
+      "joins",
+      "inner-join",
+      "relationships"
+    ]
+  },
+  {
+    "id": "postgresql-q-5",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query to retrieve all users with their associated orders, including users who have no orders. Explain which JOIN type you need and why.",
+      "ru": "Напиши запрос, который получает всех пользователей вместе с их заказами, включая пользователей без заказов. Объясни, какой JOIN нужен и почему."
+    },
+    "answer": {
+      "en": "LEFT JOIN keeps every row from the left (first) table regardless of whether it has a match in the right table. When there's no match, the columns coming from the right table are filled with NULL instead of the row being dropped, which is exactly what INNER JOIN would do.\n\n```sql\nSELECT users.id, users.name, orders.id AS order_id, orders.total\nFROM users\nLEFT JOIN orders ON orders.user_id = users.id;\n```\n\nA user with zero orders still shows up once, with `order_id` and `total` as NULL. You need LEFT JOIN here specifically because the requirement says \"including users who have no orders\" — that phrase is the signal that some left-side rows won't have a match, and you don't want to lose them.\n\n**Common pitfall:** Putting a filter on the right-side table in the WHERE clause instead of the ON clause, e.g. `WHERE orders.total > 100`. WHERE runs after the join, so it silently turns the LEFT JOIN back into an effective INNER JOIN by discarding the NULL rows for users with no orders — the fix is to move that condition into the ON clause if you still want to keep unmatched users.",
+      "ru": "LEFT JOIN оставляет каждую строку из левой (первой) таблицы независимо от того, нашлось ли для неё совпадение в правой таблице. Если совпадения нет, колонки из правой таблицы заполняются NULL, а не выбрасывают строку — именно так и поступил бы INNER JOIN.\n\n```sql\nSELECT users.id, users.name, orders.id AS order_id, orders.total\nFROM users\nLEFT JOIN orders ON orders.user_id = users.id;\n```\n\nПользователь без единого заказа всё равно появится один раз, с `order_id` и `total` равными NULL. Здесь нужен именно LEFT JOIN, потому что в условии сказано \"включая пользователей без заказов\" — эта фраза и есть сигнал, что часть строк слева останется без пары, и терять их нельзя.\n\n**Частая ловушка:** Поставить фильтр по правой таблице в WHERE вместо ON, например `WHERE orders.total > 100`. WHERE выполняется уже после джойна, поэтому он молча превращает LEFT JOIN обратно в фактический INNER JOIN, отбрасывая NULL-строки пользователей без заказов — чтобы сохранить непарные строки, такое условие нужно переносить в ON."
+    },
+    "tags": [
+      "joins",
+      "left-join",
+      "data-retrieval"
+    ]
+  },
+  {
+    "id": "postgresql-q-6",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using GROUP BY and an aggregate function to count how many posts each user has created.",
+      "ru": "Напиши запрос с GROUP BY и агрегатной функцией, который считает, сколько постов создал каждый пользователь."
+    },
+    "answer": {
+      "en": "GROUP BY collapses rows that share the same value in the grouping column into a single output row, and an aggregate function like COUNT, SUM, or AVG then computes one value per group instead of per row.\n\n```sql\nSELECT users.id, users.name, COUNT(posts.id) AS post_count\nFROM users\nLEFT JOIN posts ON posts.user_id = users.id\nGROUP BY users.id, users.name;\n```\n\nLEFT JOIN is used here (not INNER JOIN) so that users with zero posts still show up with `post_count = 0` instead of disappearing from the result. COUNT(posts.id) counts non-NULL values, which is why a user with no matching post row correctly counts as 0.\n\n**Common pitfall:** Listing every non-aggregated column you SELECT in GROUP BY, or forgetting one. PostgreSQL enforces this strictly: any column in SELECT that isn't wrapped in an aggregate function must appear in GROUP BY, or the query fails with \"column must appear in the GROUP BY clause or be used in an aggregate function\" — unlike some other databases that silently pick an arbitrary row's value.",
+      "ru": "GROUP BY схлопывает строки с одинаковым значением в колонке группировки в одну итоговую строку, а агрегатная функция вроде COUNT, SUM или AVG считает одно значение на группу, а не на строку.\n\n```sql\nSELECT users.id, users.name, COUNT(posts.id) AS post_count\nFROM users\nLEFT JOIN posts ON posts.user_id = users.id\nGROUP BY users.id, users.name;\n```\n\nЗдесь используется LEFT JOIN (не INNER JOIN), чтобы пользователи без единого поста всё равно попали в результат с `post_count = 0`, а не пропали совсем. COUNT(posts.id) считает не-NULL значения, поэтому пользователь без совпавшей строки поста корректно даёт 0.\n\n**Частая ловушка:** Забыть перечислить в GROUP BY какую-то из неагрегированных колонок из SELECT. PostgreSQL следит за этим строго: любая колонка в SELECT, не обёрнутая в агрегатную функцию, обязана быть в GROUP BY, иначе запрос падает с ошибкой \"column must appear in the GROUP BY clause or be used in an aggregate function\" — в отличие от некоторых других баз, которые молча берут значение из произвольной строки."
+    },
+    "tags": [
+      "group-by",
+      "aggregate-functions",
+      "count-function",
+      "left-join"
+    ]
+  },
+  {
+    "id": "postgresql-q-7",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using GROUP BY and HAVING to find the total number of orders per user, excluding users with fewer than 3 orders.",
+      "ru": "Напиши запрос с GROUP BY и HAVING, который находит общее количество заказов на пользователя, исключая пользователей с менее чем 3 заказами."
+    },
+    "answer": {
+      "en": "HAVING filters groups after aggregation, while WHERE filters individual rows before grouping happens. You need HAVING here specifically because the condition (\"fewer than 3 orders\") is about the aggregated count, and COUNT() doesn't exist yet at the point WHERE would run.\n\n```sql\nSELECT user_id, COUNT(*) AS order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) >= 3;\n```\n\nIf you also needed to filter individual orders first (e.g. only completed orders), that condition goes in WHERE, and HAVING still filters the resulting group counts:\n\n```sql\nSELECT user_id, COUNT(*) AS order_count\nFROM orders\nWHERE status = 'completed'\nGROUP BY user_id\nHAVING COUNT(*) >= 3;\n```\n\n**Common pitfall:** Trying to write `WHERE COUNT(*) >= 3` directly. PostgreSQL rejects this with an error because aggregate functions aren't allowed in WHERE — conceptually, WHERE runs before rows are grouped, so there's no count to compare against yet at that stage.",
+      "ru": "HAVING фильтрует уже сформированные группы после агрегации, а WHERE фильтрует отдельные строки до группировки. Здесь нужен именно HAVING, потому что условие (\"менее 3 заказов\") относится к агрегированному счётчику, а COUNT() на этапе, где выполняется WHERE, ещё не существует.\n\n```sql\nSELECT user_id, COUNT(*) AS order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) >= 3;\n```\n\nЕсли нужно ещё и отфильтровать отдельные заказы заранее (например, только завершённые), это условие идёт в WHERE, а HAVING по-прежнему фильтрует итоговые счётчики по группам:\n\n```sql\nSELECT user_id, COUNT(*) AS order_count\nFROM orders\nWHERE status = 'completed'\nGROUP BY user_id\nHAVING COUNT(*) >= 3;\n```\n\n**Частая ловушка:** Попытаться написать `WHERE COUNT(*) >= 3` напрямую. PostgreSQL отклонит это с ошибкой, потому что агрегатные функции запрещены в WHERE — концептуально WHERE выполняется до группировки строк, так что сравнивать на этом этапе просто не с чем."
     },
     "tags": [
       "group-by",
@@ -221,43 +130,140 @@
     ]
   },
   {
-    "id": "postgresql-q-41",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write a SQL query to retrieve all users with their associated orders, including users who have no orders. Explain which JOIN type you would use and why.",
-      "ru": "Напишите SQL-запрос для получения всех пользователей с их заказами, включая пользователей без заказов. Объясните, какой тип JOIN вы используете и почему."
-    },
-    "answer": {
-      "en": "### LEFT JOIN for Unmatched Records\n\nA LEFT JOIN preserves all rows from the left table (users) and matches them with the right table (orders). If no matching order exists, NULL values appear in order columns. This ensures no users are filtered out.\n\n```typescript\nSELECT u.id, u.name, o.order_id, o.total\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nORDER BY u.id;\n```\n\n**Common interview trap:** Confusing LEFT JOIN with INNER JOIN—INNER JOIN would exclude users without orders.",
-      "ru": "### LEFT JOIN для сохранения всех записей\n\nLEFT JOIN сохраняет все строки из левой таблицы (users) и сопоставляет их с правой таблицей (orders). Если совпадающего заказа нет, в столбцах заказов появляются NULL значения.\n\n```typescript\nSELECT u.id, u.name, o.order_id, o.total\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nORDER BY u.id;\n```\n\n**Типичная ошибка:** Путаница между LEFT JOIN и INNER JOIN—INNER JOIN исключит пользователей без заказов."
-    },
-    "tags": [
-      "joins",
-      "left-join",
-      "data-retrieval"
-    ]
-  },
-  {
-    "id": "postgresql-q-42",
-    "topicId": "postgresql",
-    "difficulty": "junior",
-    "question": {
-      "en": "Write a query to find the total number of orders per user, excluding users with fewer than 3 orders. What clauses do you need and in what order?",
-      "ru": "Напишите запрос для подсчета общего количества заказов по пользователям, исключая пользователей менее чем с 3 заказами. Какие предложения вам нужны и в каком порядке?"
-    },
-    "answer": {
-      "en": "### GROUP BY with HAVING Clause\n\nUse GROUP BY to aggregate orders per user, then HAVING (not WHERE) to filter groups after aggregation. HAVING filters grouped results, while WHERE filters individual rows before grouping.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) >= 3\nORDER BY order_count DESC;\n```\n\n**Common interview trap:** Using WHERE instead of HAVING—WHERE cannot filter aggregated results like COUNT().",
-      "ru": "### GROUP BY с предложением HAVING\n\nИспользуйте GROUP BY для агрегирования заказов по пользователям, затем HAVING (не WHERE) для фильтрации групп после агрегации. HAVING фильтрует сгруппированные результаты, а WHERE фильтрует отдельные строки до группировки.\n\n```typescript\nSELECT user_id, COUNT(*) as order_count\nFROM orders\nGROUP BY user_id\nHAVING COUNT(*) >= 3\nORDER BY order_count DESC;\n```\n\n**Типичная ошибка:** Использование WHERE вместо HAVING—WHERE не может фильтровать агрегированные результаты, такие как COUNT()."
-    },
-    "tags": [
-      "group-by",
-      "having-clause",
-      "aggregation"
-    ]
-  },
-  {
     "id": "postgresql-q-8",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write an UPDATE query to change a user's email address where the user ID matches a specific value.",
+      "ru": "Напиши UPDATE-запрос, который меняет email пользователя там, где ID пользователя совпадает с конкретным значением."
+    },
+    "answer": {
+      "en": "UPDATE modifies existing rows: SET lists the columns to change and their new values, and WHERE decides which rows get touched. Every row that matches WHERE gets updated, so a missing or too-broad WHERE clause updates far more rows than intended.\n\n```sql\nUPDATE users\nSET email = 'new.email@example.com'\nWHERE id = 42;\n```\n\nTo confirm exactly what changed without a follow-up SELECT, RETURNING gives you the updated row back:\n\n```sql\nUPDATE users\nSET email = 'new.email@example.com'\nWHERE id = 42\nRETURNING id, email;\n```\n\n**Common pitfall:** Running UPDATE without WHERE, or with a WHERE that doesn't uniquely identify the intended row. `UPDATE users SET email = '...'` with no WHERE at all sets that email for every single row in the table — a classic, very expensive mistake, which is why many teams get in the habit of running the equivalent SELECT with the same WHERE first to check exactly which rows will be affected.",
+      "ru": "UPDATE изменяет существующие строки: SET перечисляет колонки для изменения и их новые значения, а WHERE определяет, какие строки будут затронуты. Обновляется каждая строка, подходящая под WHERE, поэтому отсутствующее или слишком широкое условие WHERE изменит гораздо больше строк, чем задумывалось.\n\n```sql\nUPDATE users\nSET email = 'new.email@example.com'\nWHERE id = 42;\n```\n\nЧтобы сразу увидеть, что именно изменилось, без отдельного SELECT после, можно использовать RETURNING — он вернёт обновлённую строку:\n\n```sql\nUPDATE users\nSET email = 'new.email@example.com'\nWHERE id = 42\nRETURNING id, email;\n```\n\n**Частая ловушка:** Запустить UPDATE без WHERE или с условием, которое не однозначно определяет нужную строку. `UPDATE users SET email = '...'` вообще без WHERE проставит этот email каждой строке в таблице — классическая и очень дорогая ошибка, из-за которой многие команды берут за привычку сначала прогонять эквивалентный SELECT с тем же WHERE, чтобы точно увидеть, какие строки будут затронуты."
+    },
+    "tags": [
+      "update-statement",
+      "where-clause",
+      "returning-clause",
+      "basic-dml"
+    ]
+  },
+  {
+    "id": "postgresql-q-9",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Explain what indexes are and write a CREATE INDEX statement for a users table on the email column.",
+      "ru": "Объясни, что такое индексы, и напиши CREATE INDEX для таблицы users по колонке email."
+    },
+    "answer": {
+      "en": "An index is a separate data structure PostgreSQL maintains alongside a table so it can find matching rows without scanning every row (a sequential scan). Without an index, `WHERE email = '...'` has to check every row in the table one by one; with an index, PostgreSQL can jump almost straight to the matching rows, similar to using the index at the back of a book instead of reading every page.\n\n```sql\nCREATE INDEX idx_users_email ON users (email);\n```\n\nIf email values must also be unique, UNIQUE combines the constraint and the index in one statement:\n\n```sql\nCREATE UNIQUE INDEX idx_users_email ON users (email);\n```\n\n**Common pitfall:** Assuming indexes are free performance and adding them to every column \"just in case.\" Every index has to be updated on every INSERT, UPDATE, and DELETE that touches the table, so indexes speed up reads but slow down writes and take up disk space — the real skill is indexing the columns that actually show up in WHERE, JOIN, and ORDER BY clauses of frequent queries, not every column that exists.",
+      "ru": "Индекс — это отдельная структура данных, которую PostgreSQL поддерживает рядом с таблицей, чтобы находить нужные строки без последовательного перебора всех строк (sequential scan). Без индекса `WHERE email = '...'` проверяет каждую строку таблицы одну за другой; с индексом PostgreSQL может почти сразу перейти к нужным строкам — похоже на использование алфавитного указателя в конце книги вместо чтения всех страниц подряд.\n\n```sql\nCREATE INDEX idx_users_email ON users (email);\n```\n\nЕсли значения email ещё и должны быть уникальными, UNIQUE объединяет ограничение и индекс в одном выражении:\n\n```sql\nCREATE UNIQUE INDEX idx_users_email ON users (email);\n```\n\n**Частая ловушка:** Считать, что индексы — это бесплатная производительность, и вешать их на все колонки \"на всякий случай\". Каждый индекс приходится обновлять при каждом INSERT, UPDATE и DELETE, затрагивающем таблицу, так что индексы ускоряют чтение, но замедляют запись и занимают место на диске — настоящее мастерство в том, чтобы индексировать именно те колонки, что реально встречаются в WHERE, JOIN и ORDER BY частых запросов, а не все колонки подряд."
+    },
+    "tags": [
+      "indexes",
+      "performance",
+      "create-index",
+      "unique"
+    ]
+  },
+  {
+    "id": "postgresql-q-10",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a DELETE query to remove all orders for a specific user, and explain what happens if you forget the WHERE clause.",
+      "ru": "Напиши DELETE-запрос, который удаляет все заказы конкретного пользователя, и объясни, что произойдёт, если забыть WHERE."
+    },
+    "answer": {
+      "en": "DELETE removes whole rows, not individual column values — there's no equivalent of SET, since you're not modifying a row, you're removing it entirely. Like UPDATE, the WHERE clause decides exactly which rows are affected.\n\n```sql\nDELETE FROM orders\nWHERE user_id = 42;\n```\n\nAdding RETURNING lets you see (or log) exactly what got deleted, which is useful for debugging or building an audit trail:\n\n```sql\nDELETE FROM orders\nWHERE user_id = 42\nRETURNING id, total;\n```\n\n**Common pitfall:** Running `DELETE FROM orders;` with no WHERE clause at all. PostgreSQL won't warn you — it deletes every single row in the table, and unless you're inside a transaction you haven't committed yet, that data is gone. This is exactly why many teams wrap risky DELETEs in `BEGIN; ... ROLLBACK;` while testing, and only replace ROLLBACK with COMMIT once the WHERE clause has been verified against a SELECT with the same condition.",
+      "ru": "DELETE удаляет целые строки, а не отдельные значения колонок — у него нет аналога SET, потому что строка не изменяется, а удаляется целиком. Как и у UPDATE, именно WHERE определяет, какие строки будут затронуты.\n\n```sql\nDELETE FROM orders\nWHERE user_id = 42;\n```\n\nДобавив RETURNING, можно сразу увидеть (или залогировать), что именно было удалено — полезно для отладки или построения аудита изменений:\n\n```sql\nDELETE FROM orders\nWHERE user_id = 42\nRETURNING id, total;\n```\n\n**Частая ловушка:** Запустить `DELETE FROM orders;` вообще без WHERE. PostgreSQL никак не предупредит — удалятся вообще все строки таблицы, и если это не внутри незакоммиченной транзакции, данные потеряны безвозвратно. Именно поэтому многие команды на время тестирования оборачивают рискованные DELETE в `BEGIN; ... ROLLBACK;` и заменяют ROLLBACK на COMMIT только после того, как проверили условие WHERE эквивалентным SELECT."
+    },
+    "tags": [
+      "delete-statement",
+      "where-clause",
+      "returning-clause",
+      "basic-dml"
+    ]
+  },
+  {
+    "id": "postgresql-q-11",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a CREATE TABLE statement for a products table with an auto-incrementing id, a required name, a price, and a default 'active' status.",
+      "ru": "Напиши CREATE TABLE для таблицы products с автоинкрементным id, обязательным name, ценой и статусом 'active' по умолчанию."
+    },
+    "answer": {
+      "en": "CREATE TABLE defines the table's columns, their data types, and any column-level constraints in one statement. SERIAL is PostgreSQL's shorthand for an auto-incrementing integer — under the hood it creates an integer column plus a sequence and sets the column's default to pull the next sequence value.\n\n```sql\nCREATE TABLE products (\n    id SERIAL PRIMARY KEY,\n    name TEXT NOT NULL,\n    price NUMERIC(10, 2) NOT NULL,\n    status TEXT NOT NULL DEFAULT 'active'\n);\n```\n\nNOT NULL rejects missing values outright, and DEFAULT supplies a value automatically when a column is omitted from an INSERT — `INSERT INTO products (name, price) VALUES ('Mouse', 19.99)` works fine and status ends up as 'active' without being mentioned.\n\n**Common pitfall:** Using FLOAT or REAL for a price column instead of NUMERIC. Floating-point types store an approximation, so values like 19.99 can accumulate tiny rounding errors after repeated arithmetic — fine for scientific data, but a real problem for money, where NUMERIC (exact, arbitrary-precision) is the standard choice.",
+      "ru": "CREATE TABLE описывает колонки таблицы, их типы данных и ограничения на уровне колонок одним выражением. SERIAL — это сокращённая запись PostgreSQL для автоинкрементного целого числа: под капотом создаётся integer-колонка плюс sequence, и колонке выставляется default, который берёт следующее значение из этой последовательности.\n\n```sql\nCREATE TABLE products (\n    id SERIAL PRIMARY KEY,\n    name TEXT NOT NULL,\n    price NUMERIC(10, 2) NOT NULL,\n    status TEXT NOT NULL DEFAULT 'active'\n);\n```\n\nNOT NULL просто отклоняет отсутствующие значения, а DEFAULT автоматически подставляет значение, если колонка пропущена в INSERT — `INSERT INTO products (name, price) VALUES ('Mouse', 19.99)` отработает нормально, и status станет 'active', хотя явно не указывался.\n\n**Частая ловушка:** Использовать FLOAT или REAL для колонки с ценой вместо NUMERIC. Числа с плавающей точкой хранят приближённое значение, поэтому такие значения как 19.99 могут накапливать мелкие ошибки округления после повторной арифметики — это нормально для научных данных, но реальная проблема для денег, где стандартный выбор — NUMERIC (точный тип с произвольной точностью)."
+    },
+    "tags": [
+      "create-table",
+      "data-types",
+      "serial",
+      "default-value",
+      "ddl"
+    ]
+  },
+  {
+    "id": "postgresql-q-12",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you check for and handle NULL values in a query? Write an example using IS NULL and COALESCE.",
+      "ru": "Как проверять и обрабатывать NULL-значения в запросе? Приведи пример с IS NULL и COALESCE."
+    },
+    "answer": {
+      "en": "NULL means \"unknown\" or \"absent,\" not zero or an empty string, and that changes how comparisons behave: `= NULL` never returns true, even for a NULL column, because you can't say two unknown things are equal. That's why you use `IS NULL` / `IS NOT NULL` instead of `=` to test for it.\n\n```sql\nSELECT id, name, phone\nFROM users\nWHERE phone IS NULL;\n```\n\nCOALESCE returns the first non-NULL value from a list of arguments, which is the standard way to substitute a fallback:\n\n```sql\nSELECT id, name, COALESCE(phone, 'not provided') AS phone\nFROM users;\n```\n\n**Common pitfall:** Writing `WHERE phone != NULL` or `WHERE phone = NULL` expecting it to catch or exclude NULL rows. Both comparisons evaluate to NULL (not true or false) for every row, so the WHERE clause silently filters those rows out entirely instead of matching or excluding them the way `!= 'something'` normally would — the fix is always IS NULL / IS NOT NULL for this specific check.",
+      "ru": "NULL означает \"неизвестно\" или \"отсутствует\", а не ноль или пустую строку, и это меняет поведение сравнений: `= NULL` никогда не вернёт true, даже для NULL-колонки, потому что нельзя сказать, что два неизвестных значения равны. Именно поэтому для проверки на NULL используют `IS NULL` / `IS NOT NULL`, а не `=`.\n\n```sql\nSELECT id, name, phone\nFROM users\nWHERE phone IS NULL;\n```\n\nCOALESCE возвращает первое не-NULL значение из списка аргументов — стандартный способ подставить значение по умолчанию:\n\n```sql\nSELECT id, name, COALESCE(phone, 'not provided') AS phone\nFROM users;\n```\n\n**Частая ловушка:** Написать `WHERE phone != NULL` или `WHERE phone = NULL`, ожидая, что это поймает или исключит NULL-строки. Оба сравнения дают NULL (не true и не false) для каждой строки, поэтому WHERE молча отфильтровывает такие строки целиком, вместо того чтобы включить или исключить их так, как обычно работает `!= 'что-то'` — для этой проверки всегда нужны именно IS NULL / IS NOT NULL."
+    },
+    "tags": [
+      "null-handling",
+      "is-null",
+      "coalesce",
+      "where-clause"
+    ]
+  },
+  {
+    "id": "postgresql-q-13",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using DISTINCT to get a list of unique product categories from an orders table.",
+      "ru": "Напиши запрос с DISTINCT, который получает список уникальных категорий товаров из таблицы orders."
+    },
+    "answer": {
+      "en": "DISTINCT removes duplicate rows from the result set by comparing every selected column together — two rows are only considered duplicates if all selected columns match, not just one of them.\n\n```sql\nSELECT DISTINCT category\nFROM orders;\n```\n\nIf you select more than one column, DISTINCT applies to the whole row combination, not each column separately:\n\n```sql\nSELECT DISTINCT category, status\nFROM orders;\n```\n\nThis returns each unique (category, status) pair, not the unique categories and unique statuses independently.\n\n**Common pitfall:** Reaching for `SELECT DISTINCT *` on a wide table (or one with a timestamp/id column) expecting it to collapse \"logical\" duplicates, when in practice almost every row differs by at least one column like `created_at` or `id`, so DISTINCT effectively does nothing and just adds an expensive sort/hash step to the query without removing anything.",
+      "ru": "DISTINCT убирает дублирующиеся строки из результата, сравнивая все выбранные колонки вместе — строки считаются дублями, только если совпадают все выбранные колонки, а не какая-то одна из них.\n\n```sql\nSELECT DISTINCT category\nFROM orders;\n```\n\nЕсли выбрано несколько колонок, DISTINCT работает по всей комбинации строки целиком, а не по каждой колонке отдельно:\n\n```sql\nSELECT DISTINCT category, status\nFROM orders;\n```\n\nЭто вернёт каждую уникальную пару (category, status), а не уникальные категории и уникальные статусы по отдельности.\n\n**Частая ловушка:** Взять `SELECT DISTINCT *` на широкой таблице (или таблице с колонкой timestamp/id), ожидая, что это схлопнет \"логические\" дубли, хотя на практике почти каждая строка отличается хотя бы одной колонкой вроде `created_at` или `id` — в итоге DISTINCT фактически ничего не убирает, а просто добавляет запросу дорогую операцию сортировки/хеширования без результата."
+    },
+    "tags": [
+      "distinct",
+      "unique-values",
+      "select-statement"
+    ]
+  },
+  {
+    "id": "postgresql-q-14",
+    "topicId": "postgresql",
+    "difficulty": "junior",
+    "question": {
+      "en": "Write a query using LIMIT and OFFSET to get the second page of results, 10 items per page, from a products table ordered by id.",
+      "ru": "Напиши запрос с LIMIT и OFFSET, который получает вторую страницу результатов по 10 элементов из таблицы products, отсортированной по id."
+    },
+    "answer": {
+      "en": "LIMIT caps how many rows are returned, and OFFSET skips a number of rows before starting to return them — together they're the classic way to paginate a result set. Page size 10, page 2 means skip the first 10 rows (page 1) and return the next 10.\n\n```sql\nSELECT id, name, price\nFROM products\nORDER BY id\nLIMIT 10 OFFSET 10;\n```\n\nGenerally: `OFFSET (page_number - 1) * page_size`, so page 3 with a page size of 10 would be `LIMIT 10 OFFSET 20`.\n\n**Common pitfall:** Using LIMIT/OFFSET without an ORDER BY, or with an ORDER BY on a non-unique column. Without a deterministic sort order, PostgreSQL doesn't guarantee the same row order across repeated queries, so two consecutive paginated requests can return overlapping or skipped rows if rows were inserted, updated, or the query planner simply chose a different scan — always order by something unique (like id) to get stable pagination.",
+      "ru": "LIMIT ограничивает количество возвращаемых строк, а OFFSET пропускает заданное число строк перед началом выдачи — вместе это классический способ пагинации. Размер страницы 10, страница 2 означает: пропустить первые 10 строк (страница 1) и вернуть следующие 10.\n\n```sql\nSELECT id, name, price\nFROM products\nORDER BY id\nLIMIT 10 OFFSET 10;\n```\n\nВ общем виде: `OFFSET (номер_страницы - 1) * размер_страницы`, поэтому страница 3 при размере страницы 10 будет `LIMIT 10 OFFSET 20`.\n\n**Частая ловушка:** Использовать LIMIT/OFFSET без ORDER BY или с ORDER BY по неуникальной колонке. Без детерминированного порядка сортировки PostgreSQL не гарантирует одинаковый порядок строк между повторными запросами, поэтому два последовательных пагинированных запроса могут вернуть пересекающиеся или пропущенные строки, если данные менялись или планировщик просто выбрал другой способ сканирования — для стабильной пагинации всегда сортируй по уникальной колонке (например, id)."
+    },
+    "tags": [
+      "limit",
+      "offset",
+      "pagination",
+      "order-by"
+    ]
+  },
+  {
+    "id": "postgresql-q-15",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -275,7 +281,7 @@
     ]
   },
   {
-    "id": "postgresql-q-9",
+    "id": "postgresql-q-16",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -293,7 +299,7 @@
     ]
   },
   {
-    "id": "postgresql-q-10",
+    "id": "postgresql-q-17",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -311,7 +317,7 @@
     ]
   },
   {
-    "id": "postgresql-q-11",
+    "id": "postgresql-q-18",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -329,7 +335,7 @@
     ]
   },
   {
-    "id": "postgresql-q-12",
+    "id": "postgresql-q-19",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -347,7 +353,7 @@
     ]
   },
   {
-    "id": "postgresql-q-13",
+    "id": "postgresql-q-20",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -365,7 +371,7 @@
     ]
   },
   {
-    "id": "postgresql-q-14",
+    "id": "postgresql-q-21",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -383,7 +389,7 @@
     ]
   },
   {
-    "id": "postgresql-q-15",
+    "id": "postgresql-q-22",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -402,7 +408,7 @@
     ]
   },
   {
-    "id": "postgresql-q-16",
+    "id": "postgresql-q-23",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -420,7 +426,7 @@
     ]
   },
   {
-    "id": "postgresql-q-17",
+    "id": "postgresql-q-24",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -438,7 +444,7 @@
     ]
   },
   {
-    "id": "postgresql-q-71",
+    "id": "postgresql-q-25",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -456,7 +462,7 @@
     ]
   },
   {
-    "id": "postgresql-q-72",
+    "id": "postgresql-q-26",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -474,7 +480,7 @@
     ]
   },
   {
-    "id": "postgresql-q-73",
+    "id": "postgresql-q-27",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -492,7 +498,7 @@
     ]
   },
   {
-    "id": "postgresql-q-74",
+    "id": "postgresql-q-28",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -511,7 +517,7 @@
     ]
   },
   {
-    "id": "postgresql-q-75",
+    "id": "postgresql-q-29",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -529,7 +535,7 @@
     ]
   },
   {
-    "id": "postgresql-q-76",
+    "id": "postgresql-q-30",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -547,7 +553,7 @@
     ]
   },
   {
-    "id": "postgresql-q-77",
+    "id": "postgresql-q-31",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -565,7 +571,7 @@
     ]
   },
   {
-    "id": "postgresql-q-78",
+    "id": "postgresql-q-32",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -583,7 +589,7 @@
     ]
   },
   {
-    "id": "postgresql-q-79",
+    "id": "postgresql-q-33",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -601,7 +607,7 @@
     ]
   },
   {
-    "id": "postgresql-q-80",
+    "id": "postgresql-q-34",
     "topicId": "postgresql",
     "difficulty": "middle",
     "question": {
@@ -619,7 +625,7 @@
     ]
   },
   {
-    "id": "postgresql-q-43",
+    "id": "postgresql-q-35",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -637,7 +643,7 @@
     ]
   },
   {
-    "id": "postgresql-q-44",
+    "id": "postgresql-q-36",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -656,7 +662,7 @@
     ]
   },
   {
-    "id": "postgresql-q-45",
+    "id": "postgresql-q-37",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -675,7 +681,7 @@
     ]
   },
   {
-    "id": "postgresql-q-46",
+    "id": "postgresql-q-38",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -695,7 +701,7 @@
     ]
   },
   {
-    "id": "postgresql-q-47",
+    "id": "postgresql-q-39",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -714,7 +720,7 @@
     ]
   },
   {
-    "id": "postgresql-q-48",
+    "id": "postgresql-q-40",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -734,7 +740,7 @@
     ]
   },
   {
-    "id": "postgresql-q-49",
+    "id": "postgresql-q-41",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -753,7 +759,7 @@
     ]
   },
   {
-    "id": "postgresql-q-50",
+    "id": "postgresql-q-42",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -772,7 +778,7 @@
     ]
   },
   {
-    "id": "postgresql-q-51",
+    "id": "postgresql-q-43",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -791,7 +797,7 @@
     ]
   },
   {
-    "id": "postgresql-q-52",
+    "id": "postgresql-q-44",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -810,7 +816,7 @@
     ]
   },
   {
-    "id": "postgresql-q-53",
+    "id": "postgresql-q-45",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -829,7 +835,7 @@
     ]
   },
   {
-    "id": "postgresql-q-54",
+    "id": "postgresql-q-46",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -848,7 +854,7 @@
     ]
   },
   {
-    "id": "postgresql-q-55",
+    "id": "postgresql-q-47",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -868,7 +874,7 @@
     ]
   },
   {
-    "id": "postgresql-q-56",
+    "id": "postgresql-q-48",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -888,7 +894,7 @@
     ]
   },
   {
-    "id": "postgresql-q-57",
+    "id": "postgresql-q-49",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -908,7 +914,7 @@
     ]
   },
   {
-    "id": "postgresql-q-58",
+    "id": "postgresql-q-50",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -926,7 +932,7 @@
     ]
   },
   {
-    "id": "postgresql-q-59",
+    "id": "postgresql-q-51",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -944,7 +950,7 @@
     ]
   },
   {
-    "id": "postgresql-q-60",
+    "id": "postgresql-q-52",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -963,7 +969,7 @@
     ]
   },
   {
-    "id": "postgresql-q-61",
+    "id": "postgresql-q-53",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -981,7 +987,7 @@
     ]
   },
   {
-    "id": "postgresql-q-62",
+    "id": "postgresql-q-54",
     "topicId": "postgresql",
     "difficulty": "senior",
     "question": {
@@ -999,7 +1005,7 @@
     ]
   },
   {
-    "id": "postgresql-q-28",
+    "id": "postgresql-q-55",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1017,7 +1023,7 @@
     ]
   },
   {
-    "id": "postgresql-q-29",
+    "id": "postgresql-q-56",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1035,7 +1041,7 @@
     ]
   },
   {
-    "id": "postgresql-q-30",
+    "id": "postgresql-q-57",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1053,7 +1059,7 @@
     ]
   },
   {
-    "id": "postgresql-q-31",
+    "id": "postgresql-q-58",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1071,7 +1077,7 @@
     ]
   },
   {
-    "id": "postgresql-q-32",
+    "id": "postgresql-q-59",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1089,7 +1095,7 @@
     ]
   },
   {
-    "id": "postgresql-q-33",
+    "id": "postgresql-q-60",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1108,7 +1114,7 @@
     ]
   },
   {
-    "id": "postgresql-q-34",
+    "id": "postgresql-q-61",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
@@ -1127,7 +1133,7 @@
     ]
   },
   {
-    "id": "postgresql-q-35",
+    "id": "postgresql-q-62",
     "topicId": "postgresql",
     "difficulty": "advanced",
     "question": {
