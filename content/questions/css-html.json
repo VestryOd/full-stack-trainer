@@ -8,8 +8,8 @@
       "ru": "Объясните модель CSS box model и разницу между content-box и border-box. Как padding влияет на размер элемента?"
     },
     "answer": {
-      "en": "### CSS Box Model Explained\n\nThe box model consists of content, padding, border, and margin (from inside out). By default, `box-sizing: content-box` means width/height apply only to content—padding and border are added on top, increasing total size. With `box-sizing: border-box`, width/height include padding and border, making sizing predictable and easier to manage.\n\nPadding creates internal spacing inside the element. With content-box, padding increases the element's rendered size. With border-box, padding reduces available content space while keeping total size constant.\n\nhtml\n<style>\n  .content-box {\n    box-sizing: content-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Total width: 244px (200 + 40 + 4) */\n  }\n  \n  .border-box {\n    box-sizing: border-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Total width: 200px (constant) */\n  }\n</style>```\n\n\n**Common interview trap:** Candidates often forget that margin is outside the box and doesn't affect `box-sizing`. Always use `border-box` for modern layouts—it's more intuitive.",
-      "ru": "### Модель CSS Box Model\n\nМодель состоит из content, padding, border и margin (от центра наружу). По умолчанию `box-sizing: content-box` означает, что width/height применяются только к содержимому—padding и border добавляются сверху, увеличивая общий размер. С `box-sizing: border-box` width/height включают padding и border, делая размер предсказуемым.\n\nPadding создаёт внутренний отступ. С content-box он увеличивает размер элемента. С border-box он уменьшает доступное место для контента, но общий размер остаётся постоянным.\n\nhtml\n<style>\n  .content-box {\n    box-sizing: content-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Общая ширина: 244px (200 + 40 + 4) */\n  }\n  \n  .border-box {\n    box-sizing: border-box;\n    width: 200px;\n    padding: 20px;\n    border: 2px solid black;\n    /* Общая ширина: 200px (постоянна) */\n  }\n</style>```\n\n\n**Типичная ошибка на интервью:** Забывают, что margin находится вне box и не влияет на `box-sizing`. Используйте `border-box` для современных макетов."
+      "en": "### CSS Box Model\n\nEvery element is a box made of four layers, from the inside out: **content**, **padding**, **border**, and **margin**. `box-sizing` controls what `width`/`height` actually measure.\n\n- `box-sizing: content-box` (default): `width`/`height` set only the content area. Padding and border are added on top, so the element's rendered size grows.\n- `box-sizing: border-box`: `width`/`height` include padding and border. The content area shrinks to fit, but the total box size stays fixed — much easier to reason about in real layouts.\n\n```css\n.content-box {\n  box-sizing: content-box;\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  /* rendered width: 200 + 20*2 + 2*2 = 244px */\n}\n\n.border-box {\n  box-sizing: border-box;\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  /* rendered width: stays 200px, content area shrinks instead */\n}\n```\n\nMargin sits outside the border and is never part of either calculation — it only affects spacing between elements, not the element's own size.\n\n**Common pitfall:** Forgetting that `box-sizing` doesn't affect `margin` at all — candidates often say \"border-box includes margin,\" which is wrong. Also, many teams set `* { box-sizing: border-box; }` globally so nested elements with padding don't unexpectedly overflow their parent's width.",
+      "ru": "### Box Model в CSS\n\nЛюбой элемент — это коробка из четырёх слоёв, изнутри наружу: **content**, **padding**, **border** и **margin**. Свойство `box-sizing` определяет, что именно измеряют `width`/`height`.\n\n- `box-sizing: content-box` (по умолчанию): `width`/`height` задают только область контента. Padding и border добавляются сверху, поэтому итоговый размер элемента увеличивается.\n- `box-sizing: border-box`: `width`/`height` уже включают padding и border. Область контента сжимается, но общий размер коробки остаётся фиксированным — с этим гораздо проще работать в реальной вёрстке.\n\n```css\n.content-box {\n  box-sizing: content-box;\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  /* итоговая ширина: 200 + 20*2 + 2*2 = 244px */\n}\n\n.border-box {\n  box-sizing: border-box;\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  /* итоговая ширина остаётся 200px, сжимается content-область */\n}\n```\n\nMargin находится снаружи border и никогда не участвует ни в одном из этих расчётов — он влияет только на отступы между элементами, а не на размер самого элемента.\n\n**Частая ловушка:** забыть, что `box-sizing` вообще не касается `margin` — часто говорят \"border-box включает margin\", это неверно. Ещё частая практика: ставить `* { box-sizing: border-box; }` глобально, чтобы вложенные элементы с padding не вылезали за ширину родителя."
     },
     "tags": [
       "box-model",
@@ -23,11 +23,11 @@
     "difficulty": "junior",
     "question": {
       "en": "What is CSS specificity? How do selectors like ID, class, and element affect specificity? Give an example where higher specificity wins.",
-      "ru": "Что такое CSS specificity? Как селекторы ID, класс и элемент влияют на specificity? Приведите пример, где более высокая specificity побеждает."
+      "ru": "Что такое CSS specificity? Как ID, классы и элементы влияют на specificity? Приведите пример, где выигрывает более высокая specificity."
     },
     "answer": {
-      "en": "### CSS Specificity Hierarchy\n\nSpecificity determines which CSS rule applies when multiple rules target the same element. It's calculated as: IDs (100) > classes/attributes/pseudo-classes (10) > elements/pseudo-elements (1). Inline styles (1000) and !important override everything.\n\nExample: `#header .nav a` has specificity 101 (1 ID + 1 class + 1 element), while `.nav a` has 11 (1 class + 1 element). The first rule wins even if it appears first in the stylesheet.\n\ncss\n/* Specificity: 1 (element) */\na { color: blue; }\n\n/* Specificity: 11 (1 class + 1 element) */\n.nav a { color: green; }\n\n/* Specificity: 101 (1 ID + 1 class + 1 element) - WINS */\n#header .nav a { color: red; }\n\n/* This link will be red */```\n\n\n**Common interview trap:** Candidates miscalculate specificity by not counting all selectors. Remember: specificity is NOT a single number but three values (ID, class, element).",
-      "ru": "### Специфичность CSS\n\nСпецифичность определяет, какое правило CSS применяется при наличии нескольких правил для одного элемента. Она рассчитывается так: ID (100) > классы/атрибуты/псевдо-классы (10) > элементы/псевдо-элементы (1). Inline стили (1000) и !important переопределяют всё.\n\nПример: `#header .nav a` имеет specificity 101 (1 ID + 1 класс + 1 элемент), а `.nav a` имеет 11 (1 класс + 1 элемент). Первое правило победит, даже если оно появится позже в таблице стилей.\n\ncss\n/* Specificity: 1 (элемент) */\na { color: blue; }\n\n/* Specificity: 11 (1 класс + 1 элемент) */\n.nav a { color: green; }\n\n/* Specificity: 101 (1 ID + 1 класс + 1 элемент) - ПОБЕДИТ */\n#header .nav a { color: red; }\n\n/* Этот link будет красным */```\n\n\n**Типичная ошибка на интервью:** Неправильно считают specificity, не учитывая все селекторы. Помните: specificity—это не одно число, а три значения."
+      "en": "### CSS Specificity\n\nWhen multiple rules target the same element, the browser picks a winner using specificity — a weight calculated from the selector's parts, not a single number but a tuple compared column by column:\n\n1. Inline styles (`style=\"...\"`) — highest\n2. ID selectors (`#id`) — worth 100 each\n3. Classes, attribute selectors, pseudo-classes (`.class`, `[type=text]`, `:hover`) — worth 10 each\n4. Elements and pseudo-elements (`div`, `::before`) — worth 1 each\n\n`!important` overrides normal specificity entirely (and should be avoided outside of quick fixes/utility overrides).\n\n```css\na { color: blue; }                 /* specificity: 0-0-1 */\n.nav a { color: green; }           /* specificity: 0-1-1 */\n#header .nav a { color: red; }     /* specificity: 1-1-1 — wins */\n```\n\nThe last rule wins regardless of source order, because one ID beats any number of classes and elements.\n\n**Common pitfall:** Comparing specificity as a single decimal number (like \"11 vs 101\") instead of comparing tuples left to right — this breaks down once you have selectors with 10+ classes. Also, people forget that source order is only the tiebreaker when specificity is *equal*.",
+      "ru": "### CSS Specificity\n\nКогда несколько правил применяются к одному элементу, браузер выбирает победителя по specificity — весу, который считается по составу селектора. Это не одно число, а набор значений, которые сравниваются по разрядам:\n\n1. Инлайн-стили (`style=\"...\"`) — самый высокий приоритет\n2. ID-селекторы (`#id`) — по 100 за каждый\n3. Классы, атрибутные селекторы, псевдоклассы (`.class`, `[type=text]`, `:hover`) — по 10 за каждый\n4. Элементы и псевдоэлементы (`div`, `::before`) — по 1 за каждый\n\n`!important` полностью переопределяет обычную specificity (использовать стоит только для быстрых фиксов или явных utility-переопределений).\n\n```css\na { color: blue; }                 /* specificity: 0-0-1 */\n.nav a { color: green; }           /* specificity: 0-1-1 */\n#header .nav a { color: red; }     /* specificity: 1-1-1 — побеждает */\n```\n\nПоследнее правило побеждает независимо от порядка в файле, потому что один ID перевешивает любое количество классов и элементов.\n\n**Частая ловушка:** сравнивать specificity как одно десятичное число (типа \"11 против 101\") вместо посегментного сравнения — на селекторах с 10+ классами это ломается. Ещё забывают, что порядок в файле решает только при *равной* specificity."
     },
     "tags": [
       "specificity",
@@ -44,8 +44,8 @@
       "ru": "Как работает CSS Flexbox? Объясните justify-content, align-items и разницу между flex-direction row и column."
     },
     "answer": {
-      "en": "### Flexbox Layout System\n\nFlexbox is a 1D layout model for distributing space and aligning items in a container. The container becomes a flex context with `display: flex`. Properties like `justify-content` (main axis) and `align-items` (cross axis) control alignment. `flex-direction` determines the main axis: `row` (horizontal, left-to-right) or `column` (vertical, top-to-bottom).\n\nWith `flex-direction: row`, justify-content aligns horizontally and align-items vertically. With `column`, it's reversed. `flex-grow`, `flex-shrink`, and `flex-basis` control item sizing and growth behavior.\n\ncss\n.flex-container {\n  display: flex;\n  flex-direction: row; /* or column */\n  justify-content: center; /* main axis alignment */\n  align-items: center; /* cross axis alignment */\n  gap: 10px; /* space between items */\n}\n\n.flex-item {\n  flex: 1; /* shorthand: grow, shrink, basis */\n}```\n\n\n**Common interview trap:** Confusing which axis `justify-content` and `align-items` control. Remember: justify is always main axis, align is cross axis. Direction determines what \"main\" means.",
-      "ru": "### Система Flexbox\n\nFlexbox—это 1D модель макета для распределения пространства и выравнивания элементов в контейнере. Контейнер становится flex-контекстом с `display: flex`. Свойства `justify-content` (основная ось) и `align-items` (поперечная ось) управляют выравниванием. `flex-direction` определяет основную ось: `row` (горизонтально) или `column` (вертикально).\n\nС `flex-direction: row` justify-content выравнивает горизонтально, align-items вертикально. С `column` наоборот. `flex-grow`, `flex-shrink` и `flex-basis` управляют размером и поведением роста элемента.\n\ncss\n.flex-container {\n  display: flex;\n  flex-direction: row; /* или column */\n  justify-content: center; /* выравнивание основной оси */\n  align-items: center; /* выравнивание поперечной оси */\n  gap: 10px; /* пространство между элементами */\n}\n\n.flex-item {\n  flex: 1; /* сокращение: grow, shrink, basis */\n}```\n\n\n**Типичная ошибка на интервью:** Путают, какую ось контролирует justify-content и align-items. Помните: justify всегда основная ось, align поперечная ось."
+      "en": "### CSS Flexbox\n\nFlexbox is a one-dimensional layout model: `display: flex` turns a container into a flex context with a **main axis** and a **cross axis**. `flex-direction` decides which is which:\n\n- `row` (default): main axis is horizontal, cross axis is vertical.\n- `column`: main axis is vertical, cross axis is horizontal.\n\n`justify-content` always aligns items along the **main** axis. `align-items` always aligns items along the **cross** axis — regardless of direction.\n\n```css\n.flex-row {\n  display: flex;\n  flex-direction: row;\n  justify-content: center; /* horizontal centering */\n  align-items: center;     /* vertical centering */\n}\n\n.flex-column {\n  display: flex;\n  flex-direction: column;\n  justify-content: center; /* vertical centering now */\n  align-items: center;     /* horizontal centering now */\n}\n```\n\nIndividual items can also grow/shrink with `flex-grow`, `flex-shrink`, and `flex-basis` (usually written as the `flex` shorthand), which controls how leftover space is distributed.\n\n**Common pitfall:** Assuming `justify-content` is always \"horizontal\" — it isn't, it follows `flex-direction`. This trips people up the moment they switch to `column` and their centering breaks.",
+      "ru": "### CSS Flexbox\n\nFlexbox — одномерная модель раскладки: `display: flex` превращает контейнер во flex-контекст с **главной осью** (main axis) и **поперечной осью** (cross axis). `flex-direction` определяет, какая ось какая:\n\n- `row` (по умолчанию): главная ось горизонтальная, поперечная — вертикальная.\n- `column`: главная ось вертикальная, поперечная — горизонтальная.\n\n`justify-content` всегда выравнивает элементы вдоль **главной** оси. `align-items` всегда выравнивает элементы вдоль **поперечной** оси — независимо от direction.\n\n```css\n.flex-row {\n  display: flex;\n  flex-direction: row;\n  justify-content: center; /* центрирование по горизонтали */\n  align-items: center;     /* центрирование по вертикали */\n}\n\n.flex-column {\n  display: flex;\n  flex-direction: column;\n  justify-content: center; /* теперь по вертикали */\n  align-items: center;     /* теперь по горизонтали */\n}\n```\n\nОтдельные элементы также можно растягивать/сжимать через `flex-grow`, `flex-shrink` и `flex-basis` (обычно пишут одним шорткатом `flex`), это управляет распределением свободного места.\n\n**Частая ловушка:** считать, что `justify-content` — это всегда \"горизонталь\". Это не так, она следует за `flex-direction`. Это ломает вёрстку сразу, как только меняют direction на `column`, а центрирование \"не работает\"."
     },
     "tags": [
       "flexbox",
@@ -62,8 +62,8 @@
       "ru": "Объясните основы CSS Grid: grid-template-columns, grid-template-rows и grid-gap. Чем Grid отличается от Flexbox?"
     },
     "answer": {
-      "en": "### CSS Grid Fundamentals\n\nCSS Grid is a 2D layout system that divides a container into rows and columns. `grid-template-columns` defines column widths, `grid-template-rows` defines row heights, and `grid-gap` (or `gap`) adds space between cells. Unlike Flexbox (1D, distributes items along one axis), Grid controls positioning in both dimensions simultaneously.\n\nGrid excels at creating structured layouts like dashboards, galleries, and forms. Items can span multiple rows/columns with `grid-column` and `grid-row`. Flexbox is better for components and flexible item distribution.\n\ncss\n.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr; /* 3 columns */\n  grid-template-rows: 100px auto; /* 2 rows */\n  gap: 15px;\n}\n\n.grid-item {\n  grid-column: span 2; /* spans 2 columns */\n}```\n\n\n**Common interview trap:** Candidates think Grid replaces Flexbox. They're complementary—use Grid for page layouts and Flexbox for component-level alignment. Grid has steeper learning curve but more control.",
-      "ru": "### Основы CSS Grid\n\nCSS Grid—это 2D система макета, которая делит контейнер на строки и столбцы. `grid-template-columns` определяет ширину столбцов, `grid-template-rows` определяет высоту строк, `grid-gap` (или `gap`) добавляет пространство между ячейками. В отличие от Flexbox (1D, распределяет элементы по одной оси), Grid управляет позиционированием в обоих измерениях одновременно.\n\nGrid отлично подходит для структурированных макетов как дашборды, галереи и формы. Элементы могут охватывать несколько строк/столбцов с `grid-column` и `grid-row`.\n\ncss\n.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr; /* 3 столбца */\n  grid-template-rows: 100px auto; /* 2 строки */\n  gap: 15px;\n}\n\n.grid-item {\n  grid-column: span 2; /* охватывает 2 столбца */\n}```\n\n\n**Типичная ошибка на интервью:** Думают, что Grid заменяет Flexbox. Они дополняют друг друга—используйте Grid для макетов страниц, Flexbox для компонентов."
+      "en": "### CSS Grid Basics\n\nGrid is a **two-dimensional** layout system — it controls rows and columns at the same time, unlike Flexbox, which is one-dimensional (it only distributes items along a single axis, wrapping is a side effect, not real 2D control).\n\n```css\n.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr; /* 3 columns: 1:2:1 ratio */\n  grid-template-rows: 100px auto;     /* fixed then flexible row */\n  gap: 15px;                          /* replaces grid-gap */\n}\n\n.grid-item {\n  grid-column: span 2; /* occupies 2 columns */\n}\n```\n\n`grid-template-columns`/`rows` define the track sizes (fixed px, flexible `fr` units, or `auto`). `gap` adds consistent spacing between tracks without needing margins on children (which avoids margin-collapsing headaches).\n\nUse Grid for page-level structure (header/sidebar/main/footer, card galleries, dashboards). Use Flexbox for one-directional component layout (a toolbar, a nav list, centering content in a box). They're commonly combined — Grid for the page skeleton, Flexbox inside individual grid cells.\n\n**Common pitfall:** Trying to do 2D layouts (align items in both rows and columns precisely) with Flexbox via nested wrappers — it works but gets fragile fast. If you're aligning on two axes at once, that's Grid's job.",
+      "ru": "### Основы CSS Grid\n\nGrid — **двумерная** система раскладки: она управляет строками и столбцами одновременно, в отличие от Flexbox, который одномерный (распределяет элементы вдоль одной оси, а перенос строк — побочный эффект, а не полноценный контроль 2D).\n\n```css\n.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr; /* 3 колонки в пропорции 1:2:1 */\n  grid-template-rows: 100px auto;     /* фиксированная строка, потом гибкая */\n  gap: 15px;                          /* заменяет устаревший grid-gap */\n}\n\n.grid-item {\n  grid-column: span 2; /* занимает 2 колонки */\n}\n```\n\n`grid-template-columns`/`rows` задают размеры треков (фиксированные px, гибкие единицы `fr` или `auto`). `gap` добавляет одинаковые отступы между треками без margin на дочерних элементах (и без головной боли от схлопывания margin).\n\nGrid используют для структуры страницы (header/sidebar/main/footer, галереи карточек, дашборды). Flexbox — для одномерной раскладки внутри компонента (тулбар, список навигации, центрирование контента в блоке). Их часто комбинируют: Grid для скелета страницы, Flexbox внутри отдельных ячеек грида.\n\n**Частая ловушка:** пытаться делать 2D-раскладку (точное выравнивание и по строкам, и по колонкам) на Flexbox через вложенные обёртки — работает, но быстро становится хрупким. Если выравнивание нужно сразу по двум осям — это задача для Grid."
     },
     "tags": [
       "grid",
@@ -77,11 +77,11 @@
     "difficulty": "junior",
     "question": {
       "en": "What are CSS positioning properties (static, relative, absolute, fixed)? When would you use absolute positioning? What's the difference with fixed?",
-      "ru": "Что такое CSS свойства позиционирования (static, relative, absolute, fixed)? Когда вы бы использовали absolute? Чем fixed отличается?"
+      "ru": "Какие есть значения position в CSS (static, relative, absolute, fixed)? Когда использовать absolute? Чем это отличается от fixed?"
     },
     "answer": {
-      "en": "### CSS Positioning Methods\n\n`static` (default) respects document flow. `relative` offsets element from its normal position but maintains space. `absolute` removes element from flow and positions relative to nearest positioned ancestor (non-static). `fixed` removes from flow and positions relative to viewport—stays in place during scrolling.\n\nUse `absolute` for overlays, modals, or tooltips when you have a positioned parent. Use `fixed` for sticky headers, floating buttons, or notifications. Always set a positioning context (parent with `position: relative`) to control `absolute` child positioning.\n\ncss\n.parent {\n  position: relative; /* creates positioning context */\n}\n\n.absolute-child {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  /* positioned relative to .parent */\n}\n\n.fixed-element {\n  position: fixed;\n  top: 0;\n  right: 0;\n  /* stays at viewport top-right during scroll */\n}```\n\n\n**Common interview trap:** Forgetting to set `position: relative` on the parent. Without it, `absolute` positions relative to the next positioned ancestor, often causing unpredictable placement.",
-      "ru": "### Методы CSS позиционирования\n\n`static` (по умолчанию) уважает flow документа. `relative` смещает элемент от нормальной позиции, но сохраняет пространство. `absolute` удаляет элемент из flow и позиционирует его относительно ближайшего позиционированного предка (non-static). `fixed` удаляет из flow и позиционирует относительно viewport и остаётся на месте при прокрутке.\n\nИспользуйте `absolute` для оверлеев, модалей или tooltips с позиционированным родителем. Используйте `fixed` для sticky хедеров, плавающих кнопок или уведомлений. Всегда устанавливайте контекст позиционирования (родитель с `position: relative`).\n\ncss\n.parent {\n  position: relative; /* создаёт контекст позиционирования */\n}\n\n.absolute-child {\n  position: absolute;\n  top: 10px;\n  left: 10px;\n  /* позиционируется относительно .parent */\n}\n\n.fixed-element {\n  position: fixed;\n  top: 0;\n  right: 0;\n  /* остаётся в top-right viewport при прокрутке */\n}```\n\n\n**Типичная ошибка на интервью:** Забывают установить `position: relative` на родитель. Без этого `absolute` позиционируется относительно следующего предка."
+      "en": "### CSS Positioning\n\n- `static` (default): element follows normal document flow; `top`/`left`/etc. have no effect.\n- `relative`: element stays in normal flow (its original space is preserved) but can be visually offset with `top`/`left`/etc. It also becomes a **positioning context** for absolutely positioned children.\n- `absolute`: removed from normal flow entirely; positioned relative to the nearest ancestor with a non-static `position` (or the viewport, if none exists).\n- `fixed`: removed from normal flow; positioned relative to the **viewport**, and stays in place during scrolling.\n\n```css\n.parent {\n  position: relative; /* creates a positioning context for children */\n}\n\n.tooltip {\n  position: absolute;\n  top: 100%;\n  left: 0;\n  /* positioned relative to .parent's box */\n}\n\n.floating-button {\n  position: fixed;\n  bottom: 20px;\n  right: 20px;\n  /* stays in the same viewport spot while the page scrolls */\n}\n```\n\nUse `absolute` for things anchored to a specific UI element — tooltips, dropdown menus, badges. Use `fixed` for things anchored to the screen itself — sticky headers, \"scroll to top\" buttons, chat widgets.\n\n**Common pitfall:** Forgetting to set `position: relative` (or any non-static value) on the intended parent. Without it, the `absolute` child positions itself relative to the next positioned ancestor up the tree — or the whole page — which produces layout that looks \"randomly\" wrong.",
+      "ru": "### Позиционирование в CSS\n\n- `static` (по умолчанию): элемент идёт в обычном потоке документа; `top`/`left` и т.д. не действуют.\n- `relative`: элемент остаётся в потоке (его исходное место сохраняется), но может быть визуально смещён через `top`/`left` и т.д. Также он становится **контекстом позиционирования** для абсолютно позиционированных детей.\n- `absolute`: полностью выпадает из потока; позиционируется относительно ближайшего предка с non-static `position` (или относительно viewport, если такого предка нет).\n- `fixed`: выпадает из потока; позиционируется относительно **viewport** и остаётся на месте при скролле.\n\n```css\n.parent {\n  position: relative; /* создаёт контекст позиционирования для детей */\n}\n\n.tooltip {\n  position: absolute;\n  top: 100%;\n  left: 0;\n  /* позиционируется относительно блока .parent */\n}\n\n.floating-button {\n  position: fixed;\n  bottom: 20px;\n  right: 20px;\n  /* остаётся на том же месте экрана при скролле страницы */\n}\n```\n\n`absolute` используют для элементов, привязанных к конкретному UI-элементу — тултипы, выпадающие меню, бейджи. `fixed` — для элементов, привязанных к самому экрану — липкие хедеры, кнопка \"наверх\", виджеты чата.\n\n**Частая ловушка:** забыть поставить `position: relative` (или любое non-static значение) на нужном родителе. Без этого `absolute`-ребёнок позиционируется относительно следующего позиционированного предка выше по дереву — или вообще относительно всей страницы, — и вёрстка \"случайно\" ломается."
     },
     "tags": [
       "positioning",
@@ -95,11 +95,11 @@
     "difficulty": "junior",
     "question": {
       "en": "Create a simple CSS animation using @keyframes and animation properties. What's the difference between animation and transition? When would you use each?",
-      "ru": "Создайте простую CSS анимацию, используя @keyframes и animation свойства. В чём разница между animation и transition? Когда вы бы использовали каждую?"
+      "ru": "Создайте простую CSS-анимацию через @keyframes. В чём разница между animation и transition? Когда что использовать?"
     },
     "answer": {
-      "en": "### CSS Animations vs Transitions\n\nTransitions smoothly change property values over time, triggered by state change (hover, focus, class toggle). Animations use @keyframes to define multi-step sequences and run automatically or loop. Transitions are implicit (start and end states), animations are explicit (full timeline).\n\nUse transitions for simple property changes (color on hover, width on click). Use animations for complex sequences, continuous loops (loading spinners), or effects independent of user action.\n\ncss\n@keyframes slide {\n  0% { transform: translateX(0); }\n  50% { transform: translateX(100px); }\n  100% { transform: translateX(0); }\n}\n\n.animated-box {\n  animation: slide 2s ease-in-out infinite;\n  /* name, duration, timing, iteration */\n}\n\n.transition-box {\n  transition: background-color 0.3s ease;\n}\n\n.transition-box:hover {\n  background-color: red;\n}```\n\n\n**Common interview trap:** Overusing animations for simple interactions. Transitions are usually better for responsiveness. Animations have overhead—use sparingly to avoid performance issues.",
-      "ru": "### CSS Анимации vs Переходы\n\nПереходы плавно изменяют значения свойств во времени, триггер срабатывает при изменении состояния (hover, focus, toggle класса). Анимации используют @keyframes для определения многошаговых последовательностей и запускаются автоматически или циклятся. Переходы неявные (начало и конец), анимации явные (полная временная шкала).\n\nИспользуйте переходы для простых изменений свойств (цвет при hover, ширина при click). Используйте анимации для сложных последовательностей, непрерывных циклов (спиннеры загрузки) или эффектов независимо от действий пользователя.\n\ncss\n@keyframes slide {\n  0% { transform: translateX(0); }\n  50% { transform: translateX(100px); }\n  100% { transform: translateX(0); }\n}\n\n.animated-box {\n  animation: slide 2s ease-in-out infinite;\n  /* имя, длительность, timing, итерация */\n}\n\n.transition-box {\n  transition: background-color 0.3s ease;\n}\n\n.transition-box:hover {\n  background-color: red;\n}```\n\n\n**Типичная ошибка на интервью:** Используют анимации для простых взаимодействий. Переходы обычно лучше для responsiveness. Анимации требуют ресурсы—используйте экономно."
+      "en": "### Animations vs Transitions\n\nA **transition** interpolates a property between two states (start and end) when something triggers a change — `:hover`, a class toggle, a focus event. It's implicit: you only describe the two endpoints.\n\nAn **animation** uses `@keyframes` to define an explicit multi-step timeline, and can run automatically, repeat, or loop — independent of user interaction.\n\n```css\n@keyframes slide {\n  0%   { transform: translateX(0); }\n  50%  { transform: translateX(100px); }\n  100% { transform: translateX(0); }\n}\n\n.animated-box {\n  animation: slide 2s ease-in-out infinite; /* name duration timing iteration */\n}\n\n.transition-box {\n  background-color: steelblue;\n  transition: background-color 0.3s ease;\n}\n\n.transition-box:hover {\n  background-color: crimson;\n}\n```\n\nUse a transition for simple state-driven changes (hover color, expanding a menu). Use an animation for multi-step sequences or things that need to loop on their own (loading spinners, attention-grabbing pulses).\n\nFor performance, prefer animating `transform` and `opacity` — they can run on the GPU compositor without triggering layout/paint on every frame. Animating `width`, `top`, or `margin` forces the browser to recalculate layout each frame, which is much more expensive.\n\n**Common pitfall:** Animating layout-triggering properties (`width`, `left`, `margin-top`) for something that could be done with `transform: translate()`/`scale()` instead — this causes janky, low-FPS animations on slower devices.",
+      "ru": "### Animation vs Transition\n\n**Transition** плавно переводит свойство между двумя состояниями (начальным и конечным), когда что-то вызывает изменение — `:hover`, переключение класса, фокус. Это неявный механизм: вы описываете только две конечные точки.\n\n**Animation** через `@keyframes` задаёт явный многошаговый таймлайн и может запускаться автоматически, повторяться или зацикливаться — независимо от действий пользователя.\n\n```css\n@keyframes slide {\n  0%   { transform: translateX(0); }\n  50%  { transform: translateX(100px); }\n  100% { transform: translateX(0); }\n}\n\n.animated-box {\n  animation: slide 2s ease-in-out infinite; /* имя, длительность, тайминг, повтор */\n}\n\n.transition-box {\n  background-color: steelblue;\n  transition: background-color 0.3s ease;\n}\n\n.transition-box:hover {\n  background-color: crimson;\n}\n```\n\nTransition используют для простых изменений, привязанных к состоянию (цвет на hover, раскрытие меню). Animation — для многошаговых последовательностей или того, что должно крутиться само по себе (спиннеры загрузки, привлекающие внимание пульсации).\n\nДля производительности лучше анимировать `transform` и `opacity` — они могут выполняться на GPU-композиторе без пересчёта layout/paint на каждом кадре. Анимация `width`, `top` или `margin` заставляет браузер каждый кадр пересчитывать layout, что гораздо дороже.\n\n**Частая ловушка:** анимировать свойства, вызывающие layout (`width`, `left`, `margin-top`), там, где можно было использовать `transform: translate()`/`scale()` — это даёт дёрганую анимацию с низким FPS на слабых устройствах."
     },
     "tags": [
       "animations",
@@ -114,11 +114,11 @@
     "difficulty": "junior",
     "question": {
       "en": "What is semantic HTML? Give examples of semantic elements like <article>, <header>, <nav>, <section>. Why should you use semantic HTML in forms?",
-      "ru": "Что такое semantic HTML? Приведите примеры семантических элементов вроде <article>, <header>, <nav>, <section>. Почему вы должны использовать semantic HTML в формах?"
+      "ru": "Что такое семантический HTML? Приведите примеры семантических элементов: <article>, <header>, <nav>, <section>. Зачем нужна семантика в формах?"
     },
     "answer": {
-      "en": "### Semantic HTML Importance\n\nSemantic HTML uses meaningful elements that describe content purpose—`<article>`, `<header>`, `<nav>`, `<section>`, `<main>`, `<footer>`. Non-semantic alternatives like nested `<div>` lack meaning. Semantic elements improve accessibility (screen readers), SEO, code readability, and maintainability.\n\nFor forms, use `<form>`, `<fieldset>`, `<legend>`, `<label>` (with `for` attribute), and `<input type=\"...\">`. Proper structure ensures keyboard navigation and assistive technology support. `<label>` increases click area for inputs and helps users understand field purpose.\n\nhtml\n<form>\n  <fieldset>\n    <legend>Contact Information</legend>\n    <label for=\"email\">Email:</label>\n    <input id=\"email\" type=\"email\" required>\n    \n    <label for=\"message\">Message:</label>\n    <textarea id=\"message\"></textarea>\n  </fieldset>\n  <button type=\"submit\">Send</button>\n</form>```\n\n\n**Common interview trap:** Using `<div>` everywhere instead of semantic elements. Semantic HTML isn't just for SEO—it's essential for accessibility and code quality. Always use the most specific element available.",
-      "ru": "### Важность Semantic HTML\n\nSemantic HTML использует значащие элементы, описывающие назначение контента—`<article>`, `<header>`, `<nav>`, `<section>`, `<main>`, `<footer>`. Несемантические вложенные `<div>` лишены смысла. Семантические элементы улучшают доступность (screen readers), SEO, читаемость кода и поддерживаемость.\n\nДля форм используйте `<form>`, `<fieldset>`, `<legend>`, `<label>` (с атрибутом `for`) и `<input type=\"...\">`. Правильная структура обеспечивает навигацию клавиатурой и поддержку вспомогательных технологий. `<label>` увеличивает область клика для inputs и помогает пользователям понять назначение поля.\n\nhtml\n<form>\n  <fieldset>\n    <legend>Контактная информация</legend>\n    <label for=\"email\">Email:</label>\n    <input id=\"email\" type=\"email\" required>\n    \n    <label for=\"message\">Сообщение:</label>\n    <textarea id=\"message\"></textarea>\n  </fieldset>\n  <button type=\"submit\">Отправить</button>\n</form>```\n\n\n**Типичная ошибка на интервью:** Везде используют `<div>` вместо семантических элементов. Semantic HTML нужен не только для SEO—это критично для доступности и качества кода."
+      "en": "### Semantic HTML\n\nSemantic elements describe the *meaning* of their content, not just how it looks — `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<footer>` — as opposed to a generic `<div>`, which carries no meaning at all.\n\nThis matters for three reasons: screen readers use these landmarks to let users jump directly to navigation/main content, search engines weight semantic structure when parsing pages, and other developers can understand page structure at a glance without decoding class names.\n\nIn forms specifically, semantics drive both accessibility and usability:\n\n```html\n<form>\n  <fieldset>\n    <legend>Contact Information</legend>\n\n    <label for=\"email\">Email:</label>\n    <input id=\"email\" type=\"email\" required>\n\n    <label for=\"message\">Message:</label>\n    <textarea id=\"message\"></textarea>\n  </fieldset>\n\n  <button type=\"submit\">Send</button>\n</form>\n```\n\n`<label for=\"...\">` linked to an input's `id` does two things: it increases the clickable area (tapping the label focuses the input — important on mobile), and it lets screen readers announce the field's purpose when it receives focus. `<fieldset>`/`<legend>` group related fields and give assistive technology a spoken group name.\n\n**Common pitfall:** Using a `<div>` + `onClick` styled to look like a button instead of an actual `<button>`. A real `<button>` gets keyboard focus, `Enter`/`Space` activation, and correct screen-reader semantics for free — a styled `<div>` needs all of that reimplemented manually (`tabindex`, `role`, keyboard handlers), and it's easy to forget one.",
+      "ru": "### Семантический HTML\n\nСемантические элементы описывают *смысл* содержимого, а не только его внешний вид — `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<footer>` — в отличие от обычного `<div>`, который вообще не несёт смысла.\n\nЭто важно по трём причинам: скринридеры используют эти landmark-элементы, чтобы пользователи могли сразу перепрыгнуть к навигации или основному контенту; поисковики учитывают семантическую структуру при разборе страницы; другие разработчики понимают структуру страницы с одного взгляда, не расшифровывая названия классов.\n\nВ формах семантика напрямую влияет и на доступность, и на удобство использования:\n\n```html\n<form>\n  <fieldset>\n    <legend>Контактная информация</legend>\n\n    <label for=\"email\">Email:</label>\n    <input id=\"email\" type=\"email\" required>\n\n    <label for=\"message\">Сообщение:</label>\n    <textarea id=\"message\"></textarea>\n  </fieldset>\n\n  <button type=\"submit\">Отправить</button>\n</form>\n```\n\n`<label for=\"...\">`, связанный с `id` инпута, делает две вещи: увеличивает кликабельную область (тап по label ставит фокус на инпут — важно на мобильных), и позволяет скринридеру озвучить назначение поля при получении фокуса. `<fieldset>`/`<legend>` группируют связанные поля и дают вспомогательным технологиям озвучиваемое название группы.\n\n**Частая ловушка:** использовать `<div>` с `onClick`, стилизованный под кнопку, вместо настоящего `<button>`. Настоящий `<button>` бесплатно получает фокус с клавиатуры, активацию по `Enter`/`Space` и правильную семантику для скринридера — стилизованный `<div>` требует всё это реализовывать вручную (`tabindex`, `role`, обработчики клавиатуры), и легко что-то забыть."
     },
     "tags": [
       "semantic-html",
@@ -132,17 +132,17 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "Explain the CSS box model and how margin, padding, and border interact. What happens when you set box-sizing to border-box?",
-      "ru": "Объясните модель коробки CSS и как взаимодействуют margin, padding и border. Что происходит, когда вы устанавливаете box-sizing на border-box?"
+      "en": "What's the difference between absolute and relative CSS units (px, %, em, rem, vw/vh)? When would you choose each?",
+      "ru": "В чём разница между абсолютными и относительными единицами в CSS (px, %, em, rem, vw/vh)? Когда какую использовать?"
     },
     "answer": {
-      "en": "### CSS Box Model\n\nThe box model consists of content, padding, border, and margin layers. By default (content-box), width only includes content. With border-box, width includes padding and border, making sizing more predictable.\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 5px solid black;\n  margin: 10px;\n  box-sizing: border-box; /* Total width stays 200px */\n}\n```\n\n**Common interview trap:** Forgetting that margin is outside the border and doesn't affect element width.",
-      "ru": "### Модель коробки CSS\n\nМодель коробки состоит из слоёв content, padding, border и margin. По умолчанию (content-box) ширина включает только содержимое. С border-box ширина включает padding и border, что делает размеры более предсказуемыми.\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 5px solid black;\n  margin: 10px;\n  box-sizing: border-box; /* Общая ширина остаётся 200px */\n}\n```\n\n**Типичная ошибка:** Забыть, что margin находится за пределами border и не влияет на ширину элемента."
+      "en": "### CSS Units: Absolute vs Relative\n\n`px` is absolute — it always means the same physical size regardless of context, which makes it predictable but rigid (it won't scale with the user's font-size preferences).\n\nThe relative units all scale based on something else:\n\n- `%` — relative to the parent element's corresponding dimension.\n- `em` — relative to the **current element's** `font-size` (and compounds: if a parent has `font-size: 1.5em` and a child also has `1.5em`, the child ends up 2.25x the root size).\n- `rem` — relative to the **root** (`html`) `font-size` only, so it never compounds — much more predictable for spacing/typography systems.\n- `vw`/`vh` — 1% of the viewport's width/height, good for full-bleed sections or fluid typography.\n\n```css\nhtml { font-size: 16px; }\n\n.card {\n  padding: 1rem;      /* always 16px, regardless of nesting */\n  font-size: 1.125rem; /* 18px */\n}\n\n.hero {\n  height: 100vh; /* fills the viewport height */\n}\n```\n\nA common practical pattern: use `rem` for spacing and typography (predictable, respects user zoom/font settings), `%` for fluid widths inside a container, and `vw`/`vh` sparingly for full-viewport sections.\n\n**Common pitfall:** Using `em` for padding/margin on deeply nested components — because `em` compounds with each nested `font-size`, the same CSS value produces different pixel results depending on nesting depth, which is very hard to debug.",
+      "ru": "### Единицы CSS: абсолютные и относительные\n\n`px` — абсолютная единица: всегда означает одинаковый физический размер вне зависимости от контекста, это предсказуемо, но негибко (не масштабируется вместе с пользовательскими настройками размера шрифта).\n\nОтносительные единицы масштабируются от чего-то другого:\n\n- `%` — относительно соответствующего размера родителя.\n- `em` — относительно `font-size` **текущего элемента** (и накапливается: если у родителя `font-size: 1.5em` и у ребёнка тоже `1.5em`, у ребёнка в итоге получится 2.25x от корневого размера).\n- `rem` — относительно `font-size` **корневого** элемента (`html`), и не накапливается — гораздо предсказуемее для систем отступов/типографики.\n- `vw`/`vh` — 1% от ширины/высоты viewport, удобно для full-bleed секций или гибкой типографики.\n\n```css\nhtml { font-size: 16px; }\n\n.card {\n  padding: 1rem;       /* всегда 16px, независимо от вложенности */\n  font-size: 1.125rem; /* 18px */\n}\n\n.hero {\n  height: 100vh; /* заполняет высоту viewport */\n}\n```\n\nЧастый практический паттерн: `rem` для отступов и типографики (предсказуемо, учитывает зум/настройки шрифта пользователя), `%` для гибкой ширины внутри контейнера, `vw`/`vh` — точечно, для секций на весь экран.\n\n**Частая ловушка:** использовать `em` для padding/margin в глубоко вложенных компонентах — поскольку `em` накапливается с каждым вложенным `font-size`, одно и то же CSS-значение даёт разный результат в пикселях в зависимости от глубины вложенности, и это очень трудно отлаживать."
     },
     "tags": [
-      "box-model",
-      "padding-margin-border",
-      "box-sizing"
+      "units",
+      "css-fundamentals",
+      "responsive-units"
     ]
   },
   {
@@ -150,17 +150,17 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "Write a flexbox layout with a header, sidebar, and main content area. How would you make the main content flexible?",
-      "ru": "Напишите макет flexbox с заголовком, боковой панелью и основным контентом. Как вы сделаете основной контент гибким?"
+      "en": "Explain the difference between display: block, inline, inline-block, and none. How does each affect an element's layout behavior?",
+      "ru": "Объясните разницу между display: block, inline, inline-block и none. Как каждое значение влияет на поведение элемента в раскладке?"
     },
     "answer": {
-      "en": "### Flexbox Layout\n\nUse flex-direction: column for the container and flex: 1 on the main content to make it grow. The sidebar stays fixed width while main expands to fill remaining space.\n\n```css\n.container { display: flex; flex-direction: column; height: 100vh; }\n.header { height: 60px; background: #333; }\n.content { display: flex; flex: 1; }\n.sidebar { width: 200px; background: #eee; }\n.main { flex: 1; overflow: auto; }\n```\n\n**Common interview trap:** Not setting height/flex: 1 on parent containers, so children can't expand.",
-      "ru": "### Макет Flexbox\n\nИспользуйте flex-direction: column для контейнера и flex: 1 для основного контента, чтобы он растягивался. Боковая панель остаётся фиксированной, а основное содержимое расширяется.\n\n```css\n.container { display: flex; flex-direction: column; height: 100vh; }\n.header { height: 60px; background: #333; }\n.content { display: flex; flex: 1; }\n.sidebar { width: 200px; background: #eee; }\n.main { flex: 1; overflow: auto; }\n```\n\n**Типичная ошибка:** Не установить height/flex: 1 на родительские контейнеры, поэтому дети не могут расширяться."
+      "en": "### The display Property\n\n- `block`: takes up the full available width, starts on a new line, and respects `width`/`height`/vertical `margin`. Examples: `<div>`, `<p>`, `<section>`.\n- `inline`: flows within the surrounding text, only takes as much width as its content needs, and **ignores** `width`/`height` and vertical `margin`/`padding` (horizontal padding still visually applies but can overlap surrounding lines). Examples: `<span>`, `<a>`, `<strong>`.\n- `inline-block`: flows inline like `inline` (no forced line break), but **does** respect `width`/`height` and vertical margin/padding like `block`. Useful for things like nav items that sit side by side but need explicit sizing.\n- `none`: removes the element from the layout entirely — it takes up no space, as if it weren't in the DOM (different from `visibility: hidden`, which hides it but keeps its space reserved).\n\n```css\n.block-el     { display: block; }        /* new line, full width */\n.inline-el    { display: inline; }       /* flows with text, width/height ignored */\n.inline-block { display: inline-block; } /* flows with text, width/height respected */\n.hidden       { display: none; }         /* gone from layout completely */\n```\n\n**Common pitfall:** Setting `width`/`height` on an `inline` element and being confused when it has no effect — the fix is either `inline-block` or `block`, depending on whether it should still flow with surrounding text.",
+      "ru": "### Свойство display\n\n- `block`: занимает всю доступную ширину, начинается с новой строки, учитывает `width`/`height`/вертикальный `margin`. Примеры: `<div>`, `<p>`, `<section>`.\n- `inline`: течёт вместе с окружающим текстом, занимает только столько ширины, сколько нужно контенту, и **игнорирует** `width`/`height` и вертикальные `margin`/`padding` (горизонтальный padding визуально применяется, но может накладываться на соседние строки). Примеры: `<span>`, `<a>`, `<strong>`.\n- `inline-block`: течёт инлайново, как `inline` (без принудительного переноса строки), но **учитывает** `width`/`height` и вертикальные margin/padding, как `block`. Полезно для пунктов навигации, которые стоят в ряд, но нуждаются в явных размерах.\n- `none`: полностью убирает элемент из раскладки — он не занимает места, как будто его нет в DOM (в отличие от `visibility: hidden`, который скрывает элемент, но сохраняет за ним место).\n\n```css\n.block-el     { display: block; }        /* новая строка, вся ширина */\n.inline-el    { display: inline; }       /* течёт с текстом, width/height игнорируются */\n.inline-block { display: inline-block; } /* течёт с текстом, width/height учитываются */\n.hidden       { display: none; }         /* полностью пропадает из раскладки */\n```\n\n**Частая ловушка:** поставить `width`/`height` на `inline`-элемент и не понимать, почему это не работает — решение: `inline-block` или `block`, в зависимости от того, должен ли элемент продолжать течь вместе с текстом вокруг."
     },
     "tags": [
-      "flexbox",
+      "display",
       "layout",
-      "flex-grow"
+      "css-fundamentals"
     ]
   },
   {
@@ -168,17 +168,17 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "Explain CSS selector specificity. Which selector wins: class, ID, or element? Show an example where specificity causes unexpected behavior.",
-      "ru": "Объясните специфичность селектора CSS. Какой селектор побеждает: класс, ID или элемент? Покажите пример, где специфичность вызывает неожиданное поведение."
+      "en": "What are CSS combinators? Explain the difference between descendant (space), child (>), adjacent sibling (+), and general sibling (~) selectors.",
+      "ru": "Что такое CSS-комбинаторы? Объясните разницу между потомком (пробел), дочерним (>), соседним (+) и общим соседним (~) селекторами."
     },
     "answer": {
-      "en": "### CSS Specificity\n\nSpecificity determines which rule applies: ID (100) > class (10) > element (1). Higher specificity wins. Even a general ID selector beats multiple class selectors.\n\n```css\n#header { color: red; } /* Specificity: 100 */\n.nav { color: blue; } /* Specificity: 10 */\np { color: green; } /* Specificity: 1 */\n/* #header wins - element becomes red */\n```\n\n**Common interview trap:** Thinking !important should always be used to fix styling issues instead of understanding specificity.",
-      "ru": "### Специфичность CSS\n\nСпецифичность определяет, какое правило применяется: ID (100) > класс (10) > элемент (1). Выше специфичность побеждает. Даже один общий селектор ID побивает несколько селекторов класса.\n\n```css\n#header { color: red; } /* Specificity: 100 */\n.nav { color: blue; } /* Specificity: 10 */\np { color: green; } /* Specificity: 1 */\n/* #header побеждает - элемент становится красным */\n```\n\n**Типичная ошибка:** Думать, что !important всегда следует использовать для исправления стилей вместо понимания специфичности."
+      "en": "### CSS Combinators\n\nCombinators describe the *relationship* between two selectors, not their weight (that's specificity — a separate concept).\n\n- **Descendant** (`A B`, a space): selects `B` anywhere inside `A`, at any nesting depth.\n- **Child** (`A > B`): selects `B` only when it's a **direct** child of `A`.\n- **Adjacent sibling** (`A + B`): selects `B` only when it comes immediately after `A`, sharing the same parent.\n- **General sibling** (`A ~ B`): selects any `B` that comes after `A` and shares the same parent (not necessarily immediately after).\n\n```css\n.card p       { color: gray; }   /* any <p> nested anywhere inside .card */\n.card > p     { color: blue; }   /* only <p> that is a direct child of .card */\nh2 + p        { margin-top: 0; } /* the <p> immediately following an <h2> */\nh2 ~ p        { font-size: 14px; } /* every <p> sibling that comes after an <h2> */\n```\n\nThe child combinator is especially useful for avoiding accidental style leakage into deeply nested components (e.g., styling only direct list items, not items inside a nested sub-list).\n\n**Common pitfall:** Using a descendant selector (`A B`) when a child selector (`A > B`) was intended — this accidentally styles nested/unrelated elements several levels deep, which is a common source of \"why is this styled when I didn't touch it\" bugs.",
+      "ru": "### CSS-комбинаторы\n\nКомбинаторы описывают *отношение* между двумя селекторами, а не их вес (это уже specificity — отдельное понятие).\n\n- **Потомок** (`A B`, пробел): выбирает `B` где угодно внутри `A`, на любой глубине вложенности.\n- **Дочерний** (`A > B`): выбирает `B`, только если он **непосредственный** ребёнок `A`.\n- **Соседний** (`A + B`): выбирает `B`, только если он идёт сразу после `A` и у них общий родитель.\n- **Общий соседний** (`A ~ B`): выбирает любой `B`, идущий после `A` с тем же родителем (необязательно сразу следом).\n\n```css\n.card p       { color: gray; }   /* любой <p> внутри .card на любой глубине */\n.card > p     { color: blue; }   /* только <p>, который прямой ребёнок .card */\nh2 + p        { margin-top: 0; } /* <p>, идущий сразу после <h2> */\nh2 ~ p        { font-size: 14px; } /* каждый <p>-сосед, идущий после <h2> */\n```\n\nДочерний комбинатор особенно полезен, чтобы избежать случайной утечки стилей во вложенные компоненты (например, стилизовать только прямые элементы списка, не трогая элементы вложенного подсписка).\n\n**Частая ловушка:** использовать селектор потомка (`A B`) там, где имелся в виду дочерний (`A > B`) — это случайно стилизует вложенные/несвязанные элементы на несколько уровней глубже, частый источник багов вида \"почему это стилизовалось, я же не трогал\"."
     },
     "tags": [
-      "specificity",
       "selectors",
-      "cascade"
+      "combinators",
+      "css-fundamentals"
     ]
   },
   {
@@ -186,17 +186,17 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "Write a semantic HTML form with proper labels, input types, and validation attributes. Why is semantic HTML important?",
-      "ru": "Напишите семантическую HTML форму с правильными метками, типами ввода и атрибутами валидации. Почему семантический HTML важен?"
+      "en": "What does the CSS float property do, and what problem does the 'clearfix' technique solve?",
+      "ru": "Что делает CSS-свойство float, и какую проблему решает техника 'clearfix'?"
     },
     "answer": {
-      "en": "### Semantic HTML Form\n\nSemantic HTML improves accessibility, SEO, and code readability. Use proper input types, labels with for attribute, and validation attributes like required, type, and pattern.\n\n```html\n<form>\n  <label for=\"email\">Email:</label>\n  <input type=\"email\" id=\"email\" required />\n  \n  <label for=\"password\">Password:</label>\n  <input type=\"password\" id=\"password\" minlength=\"8\" />\n  \n  <button type=\"submit\">Login</button>\n</form>\n```\n\n**Common interview trap:** Using div instead of form, or input without label element.",
-      "ru": "### Семантическая HTML форма\n\nСемантический HTML улучшает доступность, SEO и читаемость кода. Используйте правильные типы input, метки с атрибутом for и атрибуты валидации как required, type и pattern.\n\n```html\n<form>\n  <label for=\"email\">Email:</label>\n  <input type=\"email\" id=\"email\" required />\n  \n  <label for=\"password\">Пароль:</label>\n  <input type=\"password\" id=\"password\" minlength=\"8\" />\n  \n  <button type=\"submit\">Вход</button>\n</form>\n```\n\n**Типичная ошибка:** Использование div вместо form или input без элемента label."
+      "en": "### Float and Clearfix\n\n`float: left`/`right` takes an element out of normal flow just enough to let text and inline content wrap around it — originally designed for wrapping text around images, and later (mis)used for full page layouts before Flexbox/Grid existed.\n\nThe core problem: a floated element is partially removed from flow, so its **parent no longer sees its height**. If every child of a container is floated, the container collapses to zero height, breaking backgrounds, borders, and any layout that assumed the container would size to its content.\n\n```css\n.gallery img {\n  float: left;\n  margin-right: 10px;\n}\n\n/* .gallery itself collapses to 0 height without a fix */\n```\n\nThe **clearfix** technique fixes this by forcing the parent to account for floated children, typically via a pseudo-element:\n\n```css\n.clearfix::after {\n  content: \"\";\n  display: table;\n  clear: both;\n}\n```\n\nModern layouts rarely need float or clearfix for structure — Flexbox and Grid handle these cases natively — but float is still legitimately used for wrapping text around an image or a pull-quote, and understanding clearfix is useful for reading/maintaining older codebases.\n\n**Common pitfall:** Forgetting to clear a floated container and being confused why a background color or border \"disappears\" — it's not gone, the container just has zero height because it isn't accounting for its floated children.",
+      "ru": "### Float и clearfix\n\n`float: left`/`right` частично выводит элемент из обычного потока — ровно настолько, чтобы текст и инлайн-контент могли обтекать его. Изначально это придумывалось для обтекания текстом изображений, а позже (не по назначению) использовалось для целых макетов страниц — до появления Flexbox/Grid.\n\nКлючевая проблема: floated-элемент частично выпадает из потока, поэтому **родитель перестаёт видеть его высоту**. Если все дети контейнера — float, контейнер схлопывается до нулевой высоты, что ломает фоны, бордеры и любую раскладку, рассчитывающую, что контейнер подстроится под контент.\n\n```css\n.gallery img {\n  float: left;\n  margin-right: 10px;\n}\n\n/* .gallery без фикса схлопывается до высоты 0 */\n```\n\nТехника **clearfix** решает это, заставляя родителя учитывать floated-детей, обычно через псевдоэлемент:\n\n```css\n.clearfix::after {\n  content: \"\";\n  display: table;\n  clear: both;\n}\n```\n\nВ современной вёрстке float и clearfix почти не нужны для структуры — Flexbox и Grid решают эти задачи нативно, — но float по-прежнему законно используется для обтекания текстом картинки или врезки-цитаты, а понимание clearfix полезно при чтении/поддержке старого кода.\n\n**Частая ловушка:** забыть \"очистить\" (clear) контейнер с float-детьми и не понимать, почему пропал фон или бордер — на самом деле контейнер просто схлопнулся до нулевой высоты, потому что не учитывает своих floated-детей."
     },
     "tags": [
-      "semantic-html",
-      "forms",
-      "accessibility"
+      "float",
+      "clearfix",
+      "layout-history"
     ]
   },
   {
@@ -204,18 +204,17 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "Explain the difference between position: relative, absolute, and fixed. When would you use each?",
-      "ru": "Объясните разницу между position: relative, absolute и fixed. Когда вы бы использовали каждый?"
+      "en": "What's the difference between a pseudo-class (like :hover, :focus, :nth-child) and a pseudo-element (like ::before, ::after)?",
+      "ru": "В чём разница между псевдоклассом (:hover, :focus, :nth-child) и псевдоэлементом (::before, ::after)?"
     },
     "answer": {
-      "en": "### CSS Positioning\n\nRelative positions element relative to its normal flow (doesn't remove it). Absolute removes element from flow, positioned relative to nearest positioned parent. Fixed removes from flow, positioned relative to viewport.\n\n```css\n.relative { position: relative; top: 10px; } /* Stays in flow, shifts down */\n.absolute { position: absolute; top: 10px; } /* Removed from flow, positioned */\n.fixed { position: fixed; top: 10px; } /* Sticky to viewport, always visible */\n```\n\n**Common interview trap:** Thinking absolute and fixed behave the same way; fixed stays on screen during scroll, absolute doesn't.",
-      "ru": "### CSS Позиционирование\n\nRelative позиционирует элемент относительно нормального потока (не удаляет его). Absolute удаляет элемент из потока, позиционируется относительно ближайшего позиционированного родителя. Fixed удаляет из потока, позиционируется относительно viewport.\n\n```css\n.relative { position: relative; top: 10px; } /* Остаётся в потоке, смещается */\n.absolute { position: absolute; top: 10px; } /* Удалено из потока, позиционировано */\n.fixed { position: fixed; top: 10px; } /* Прилипает к viewport, всегда видимо */\n```\n\n**Типичная ошибка:** Думать, что absolute и fixed ведут себя одинаково; fixed остаётся на экране при прокрутке, absolute нет."
+      "en": "### Pseudo-classes vs Pseudo-elements\n\nA **pseudo-class** selects an existing element based on its *state* or *position*, without adding anything to the DOM. Written with a single colon: `:hover`, `:focus`, `:nth-child(2)`, `:first-child`, `:disabled`.\n\nA **pseudo-element** creates/targets a sub-part of an element that isn't a real DOM node — it lets you style (or in the case of `::before`/`::after`, generate) a piece of content. Written with a double colon: `::before`, `::after`, `::first-line`, `::placeholder`.\n\n```css\nbutton:hover {\n  background: darkblue; /* state: mouse is over the element */\n}\n\nli:first-child {\n  font-weight: bold; /* position: first item in its parent */\n}\n\n.tooltip::before {\n  content: \"ℹ️ \"; /* generates new content, not a real DOM node */\n  color: gray;\n}\n\ninput::placeholder {\n  color: #999; /* styles the placeholder \"sub-part\" of the input */\n}\n```\n\nBrowsers historically accepted a single colon for both (`:before` still works for legacy reasons), but the double-colon syntax was introduced specifically to distinguish \"state/position selector\" from \"generated content/sub-part target.\"\n\n**Common pitfall:** Using `content: \"\"` on `::before`/`::after` and forgetting that without a `content` property (even an empty string), the pseudo-element won't render at all — it's easy to add all the styling and wonder why nothing shows up.",
+      "ru": "### Псевдоклассы vs псевдоэлементы\n\n**Псевдокласс** выбирает уже существующий элемент по его *состоянию* или *позиции*, ничего не добавляя в DOM. Пишется с одним двоеточием: `:hover`, `:focus`, `:nth-child(2)`, `:first-child`, `:disabled`.\n\n**Псевдоэлемент** создаёт/таргетирует часть элемента, которая не является реальным DOM-узлом — позволяет стилизовать (а в случае `::before`/`::after` — сгенерировать) кусочек контента. Пишется с двойным двоеточием: `::before`, `::after`, `::first-line`, `::placeholder`.\n\n```css\nbutton:hover {\n  background: darkblue; /* состояние: курсор над элементом */\n}\n\nli:first-child {\n  font-weight: bold; /* позиция: первый элемент у родителя */\n}\n\n.tooltip::before {\n  content: \"ℹ️ \"; /* генерирует новый контент, не реальный DOM-узел */\n  color: gray;\n}\n\ninput::placeholder {\n  color: #999; /* стилизует \"подчасть\" инпута — плейсхолдер */\n}\n```\n\nИсторически браузеры принимали одинарное двоеточие для обоих случаев (`:before` до сих пор работает по историческим причинам), но синтаксис с двойным двоеточием ввели специально, чтобы отличать \"селектор состояния/позиции\" от \"таргет на сгенерированный контент/подчасть\".\n\n**Частая ловушка:** использовать `::before`/`::after` и забыть, что без свойства `content` (даже пустой строки) псевдоэлемент вообще не отрендерится — легко навесить все стили и не понять, почему ничего не появляется."
     },
     "tags": [
-      "positioning",
-      "relative",
-      "absolute",
-      "fixed"
+      "pseudo-classes",
+      "pseudo-elements",
+      "css-fundamentals"
     ]
   },
   {
@@ -223,17 +222,17 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "Explain the CSS box model and how padding, margin, and border affect element sizing. How does box-sizing property change this behavior?",
-      "ru": "Объясните CSS box model и как padding, margin и border влияют на размер элемента. Как свойство box-sizing меняет это поведение?"
+      "en": "Explain the CSS overflow property: visible, hidden, scroll, and auto. What happens when content is larger than its container?",
+      "ru": "Объясните свойство overflow в CSS: visible, hidden, scroll и auto. Что происходит, когда контент больше своего контейнера?"
     },
     "answer": {
-      "en": "### Box Model Components\n\nThe box model consists of content, padding (inside spacing), border, and margin (outside spacing). By default, width/height only apply to content, and padding/border add to the total size. The `box-sizing: border-box` includes padding and border in the width/height calculation.\n\n```typescript\n/* Default: width = 100px + 20px padding + 2px border */\n.box {\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n\n/* With border-box: width = 100px total */\n.box-sized {\n  box-sizing: border-box;\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n```\n\n**Common interview trap:** Forgetting that margin doesn't affect box-sizing in either mode—it's always outside.",
-      "ru": "### Компоненты Box Model\n\nBox model состоит из контента, padding (внутренний отступ), border и margin (внешний отступ). По умолчанию width/height применяются только к контенту, а padding/border добавляются к общему размеру. Свойство `box-sizing: border-box` включает padding и border в расчет width/height.\n\n```typescript\n/* По умолчанию: width = 100px + 20px padding + 2px border */\n.box {\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n\n/* С border-box: width = 100px итого */\n.box-sized {\n  box-sizing: border-box;\n  width: 100px;\n  padding: 20px;\n  border: 2px solid black;\n}\n```\n\n**Типичная ошибка:** Забывают, что margin не влияет на box-sizing в обоих режимах—он всегда снаружи."
+      "en": "### The overflow Property\n\nWhen content is larger than its container, `overflow` decides what happens to the part that doesn't fit:\n\n- `visible` (default): content spills outside the container's box, uncontained — often visually broken.\n- `hidden`: anything outside the container's box is clipped and simply not shown (and not scrollable).\n- `scroll`: always shows scrollbars, even if content actually fits — reserves the scrollbar space permanently.\n- `auto`: shows scrollbars **only when needed** — content that fits shows no scrollbar at all. This is almost always the right default choice.\n\n```css\n.card {\n  height: 150px;\n  overflow: auto; /* scrolls only if content exceeds 150px */\n}\n\n.clipped-avatar {\n  width: 48px;\n  height: 48px;\n  border-radius: 50%;\n  overflow: hidden; /* clips a larger image into a circle */\n}\n```\n\n`overflow-x` and `overflow-y` let you control each axis independently — a common pattern is `overflow-x: hidden` combined with `overflow-y: auto` to allow vertical scrolling while preventing horizontal scroll from an accidentally wide child.\n\n**Common pitfall:** Using `overflow: hidden` to \"fix\" a layout bug without understanding *why* content is overflowing (often a floated child or a fixed-width element) — this silently clips content instead of fixing the real cause, and can hide things like focus outlines or dropdown menus that need to escape the container.",
+      "ru": "### Свойство overflow\n\nКогда контент больше своего контейнера, `overflow` решает, что делать с частью, которая не помещается:\n\n- `visible` (по умолчанию): контент вылезает за пределы блока контейнера, никак не сдерживается — часто выглядит визуально сломанным.\n- `hidden`: всё, что выходит за пределы блока контейнера, обрезается и просто не показывается (и не скроллится).\n- `scroll`: скроллбары показываются всегда, даже если контент на самом деле помещается — место под скроллбар резервируется постоянно.\n- `auto`: скроллбары показываются **только когда нужно** — если контент помещается, скроллбара вообще нет. Это почти всегда правильный выбор по умолчанию.\n\n```css\n.card {\n  height: 150px;\n  overflow: auto; /* скролл появится, только если контент больше 150px */\n}\n\n.clipped-avatar {\n  width: 48px;\n  height: 48px;\n  border-radius: 50%;\n  overflow: hidden; /* обрезает большую картинку в круг */\n}\n```\n\n`overflow-x` и `overflow-y` управляют каждой осью отдельно — частый паттерн: `overflow-x: hidden` вместе с `overflow-y: auto`, чтобы разрешить вертикальный скролл, но не давать случайно широкому ребёнку вызвать горизонтальный.\n\n**Частая ловушка:** использовать `overflow: hidden`, чтобы \"починить\" баг вёрстки, не понимая, *почему* контент вылезает (часто это floated-ребёнок или элемент с фиксированной шириной) — это молча обрезает контент вместо исправления реальной причины и может скрыть, например, focus-обводку или выпадающее меню, которым нужно выходить за пределы контейнера."
     },
     "tags": [
-      "box-model",
-      "padding-margin-border",
-      "box-sizing"
+      "overflow",
+      "scrolling",
+      "layout"
     ]
   },
   {
@@ -241,21 +240,129 @@
     "topicId": "css-html",
     "difficulty": "junior",
     "question": {
-      "en": "What is CSS specificity and how does it determine which styles are applied? Give examples of selector specificity calculation.",
-      "ru": "Что такое CSS specificity и как она определяет, какие стили применяются? Приведите примеры расчета specificity селекторов."
+      "en": "What are the different ways to center an element horizontally and vertically in CSS? Compare margin auto, flexbox, and absolute positioning.",
+      "ru": "Какими способами можно центрировать элемент по горизонтали и вертикали в CSS? Сравните margin auto, flexbox и absolute-позиционирование."
     },
     "answer": {
-      "en": "### Specificity Calculation\n\nSpecificity is calculated as (inline styles, IDs, classes/attributes/pseudo-classes, elements). Higher specificity wins in cascade conflicts. Inline styles (1,0,0,0) beat IDs (0,1,0,0), which beat classes (0,0,1,0), which beat elements (0,0,0,1).\n\n```typescript\np { color: blue; }              /* (0,0,0,1) */\n.class { color: green; }       /* (0,0,1,0) wins */\n#id { color: red; }            /* (0,1,0,0) wins all */\nstyle=\"color: yellow;\"         /* (1,0,0,0) wins all */\np.class#id { color: purple; }  /* (0,1,1,1) */\n```\n\n**Common interview trap:** !important overrides specificity but should be avoided—focus on proper selector structure instead.",
-      "ru": "### Расчет Specificity\n\nSpecificity рассчитывается как (inline стили, IDs, классы/атрибуты/псевдо-классы, элементы). Более высокая specificity побеждает в конфликтах каскада. Inline стили (1,0,0,0) бьют IDs (0,1,0,0), которые бьют классы (0,0,1,0), которые бьют элементы (0,0,0,1).\n\n```typescript\np { color: blue; }              /* (0,0,0,1) */\n.class { color: green; }       /* (0,0,1,0) побеждает */\n#id { color: red; }            /* (0,1,0,0) побеждает все */\nstyle=\"color: yellow;\"         /* (1,0,0,0) побеждает все */\np.class#id { color: purple; }  /* (0,1,1,1) */\n```\n\n**Типичная ошибка:** !important переопределяет specificity, но его следует избегать—лучше сосредоточиться на правильной структуре селекторов."
+      "en": "### Centering Techniques\n\nThere is no single correct way to center an element - the right technique depends on what you know about the element size and its parent.\n\n**1. `margin: 0 auto`** - horizontal-only, needs a fixed `width` on the element:\n```css\n.box { width: 300px; margin: 0 auto; }\n```\n\n**2. Flexbox** - the most common modern approach, centers both axes and does not need to know the element size in advance:\n```css\n.parent {\n  display: flex;\n  justify-content: center; /* horizontal */\n  align-items: center;     /* vertical */\n}\n```\n\n**3. Grid**, even shorter for a single centered child:\n```css\n.parent { display: grid; place-items: center; }\n```\n\n**4. Absolute positioning + transform** - useful when the element must be centered relative to a positioned ancestor regardless of document flow (e.g. a modal overlay), and its size is not known ahead of time:\n```css\n.parent { position: relative; }\n.centered {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%);\n}\n```\n\nFlexbox/Grid are the default choice today because they do not require knowing the element dimensions. Absolute+transform is reserved for cases where the element must break out of normal flow (overlays, modals).\n\n**Common pitfall:** Using `top: 50%; left: 50%;` without the `translate(-50%, -50%)` - that only aligns the element top-left corner to the center point, not the element itself, so it looks off-center by roughly half its own width/height.",
+      "ru": "### Способы центрирования\n\nЕдинственно правильного способа центрирования нет — выбор техники зависит от того, что известно о размере элемента и его родителя.\n\n**1. `margin: 0 auto`** — только горизонтальное центрирование, нужен фиксированный `width` у элемента:\n```css\n.box { width: 300px; margin: 0 auto; }\n```\n\n**2. Flexbox** — самый частый современный подход, центрирует по обеим осям и не требует заранее знать размер элемента:\n```css\n.parent {\n  display: flex;\n  justify-content: center; /* по горизонтали */\n  align-items: center;     /* по вертикали */\n}\n```\n\n**3. Grid**, ещё короче для одного центрируемого ребёнка:\n```css\n.parent { display: grid; place-items: center; }\n```\n\n**4. Absolute-позиционирование + transform** — полезно, когда элемент нужно центрировать относительно позиционированного предка вне обычного потока (например, оверлей модалки), а размер заранее неизвестен:\n```css\n.parent { position: relative; }\n.centered {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%);\n}\n```\n\nFlexbox/Grid сегодня выбор по умолчанию, потому что не требуют знания размеров элемента. Absolute+transform оставляют для случаев, когда элемент должен выйти из обычного потока (оверлеи, модалки).\n\n**Частая ловушка:** использовать `top: 50%; left: 50%;` без `transform: translate(-50%, -50%)` — это выравнивает только верхний левый угол элемента по центральной точке, а не сам элемент целиком, из-за чего центрирование выглядит смещённым примерно на половину ширины/высоты элемента."
     },
     "tags": [
-      "specificity",
-      "cascade",
-      "selectors"
+      "centering",
+      "flexbox",
+      "layout"
     ]
   },
   {
     "id": "css-html-q-15",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is margin collapsing in CSS? When do vertical margins between elements collapse, and how can you prevent it?",
+      "ru": "Что такое схлопывание margin (margin collapsing) в CSS? Когда схлопываются вертикальные margin между элементами и как это предотвратить?"
+    },
+    "answer": {
+      "en": "### Margin Collapsing\n\nWhen two vertical margins meet, they do not add up - they collapse into a single margin equal to the larger of the two (not their sum). This only happens for vertical (top/bottom) margins in normal flow; horizontal margins never collapse.\n\nThree common cases:\n\n```html\n<!-- 1. Adjacent siblings -->\n<p style=\"margin-bottom: 20px;\">First</p>\n<p style=\"margin-top: 30px;\">Second</p>\n<!-- gap between them is 30px, not 50px -->\n\n<!-- 2. Parent and first/last child, if no border/padding/content separates them -->\n<div class=\"parent\" style=\"margin-top: 40px;\">\n  <p style=\"margin-top: 20px;\">Child</p>\n  <!-- the parent margin-top \"collapses through\" to become 40px total,\n       the child 20px is absorbed, not added -->\n</div>\n\n<!-- 3. Empty elements with only margin -->\n<div style=\"margin-top: 10px; margin-bottom: 15px;\"></div>\n<!-- these two margins collapse into one 15px gap -->\n```\n\nMargin collapsing between a parent and its first/last child can be prevented by giving the parent a border, padding, or an `overflow` value other than `visible` - any of these creates a separation that stops the margins from touching. Flex and Grid containers also do not collapse margins between their children at all.\n\n**Common pitfall:** Expecting `margin-bottom: 20px` on one element plus `margin-top: 30px` on the next to produce a 50px gap. It actually produces 30px (the max of the two), which surprises people coming from a box model that just adds numbers.",
+      "ru": "### Схлопывание margin\n\nКогда встречаются два вертикальных margin, они не складываются — они схлопываются в один margin, равный большему из двух (а не их сумме). Это происходит только с вертикальными (top/bottom) margin в обычном потоке; горизонтальные margin никогда не схлопываются.\n\nТри частых случая:\n\n```html\n<!-- 1. Соседние элементы -->\n<p style=\"margin-bottom: 20px;\">Первый</p>\n<p style=\"margin-top: 30px;\">Второй</p>\n<!-- отступ между ними — 30px, а не 50px -->\n\n<!-- 2. Родитель и первый/последний ребёнок, если между ними нет border/padding/контента -->\n<div class=\"parent\" style=\"margin-top: 40px;\">\n  <p style=\"margin-top: 20px;\">Ребёнок</p>\n  <!-- margin-top родителя \"просачивается\" наружу и становится 40px итого,\n       20px ребёнка поглощаются, а не складываются -->\n</div>\n\n<!-- 3. Пустые элементы с одним только margin -->\n<div style=\"margin-top: 10px; margin-bottom: 15px;\"></div>\n<!-- эти два margin схлопываются в один отступ 15px -->\n```\n\nСхлопывание между родителем и первым/последним ребёнком можно предотвратить, дав родителю border, padding или любое значение `overflow`, кроме `visible` — любое из этого создаёт разделение, которое не даёт margin соприкоснуться. Flex- и Grid-контейнеры вообще не схлопывают margin между своими детьми.\n\n**Частая ловушка:** ожидать, что `margin-bottom: 20px` на одном элементе плюс `margin-top: 30px` на следующем дадут отступ 50px. На самом деле получится 30px (максимум из двух), и это удивляет тех, кто ожидает от box model простого сложения чисел."
+    },
+    "tags": [
+      "margin-collapsing",
+      "box-model",
+      "layout-quirks"
+    ]
+  },
+  {
+    "id": "css-html-q-16",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What CSS color formats are available (hex, rgb, rgba, hsl, hsla)? What's the difference between using rgba/hsla and the separate opacity property?",
+      "ru": "Какие есть форматы цвета в CSS (hex, rgb, rgba, hsl, hsla)? В чём разница между rgba/hsla и отдельным свойством opacity?"
+    },
+    "answer": {
+      "en": "### CSS Color Formats\n\n- **Hex** (`#rrggbb` or shorthand `#rgb`): compact, common in design handoffs, but not intuitive for adjusting lightness/saturation by hand.\n- **RGB/RGBA** (`rgb(255, 0, 0)` / `rgba(255, 0, 0, 0.5)`): red/green/blue channels plus an optional alpha (transparency) channel from 0 to 1.\n- **HSL/HSLA** (`hsl(0, 100%, 50%)` / `hsla(0, 100%, 50%, 0.5)`): hue (0-360°), saturation, lightness, plus optional alpha. Much easier to reason about — \"same hue, darker\" is just lowering the lightness percentage, no color-theory math needed.\n\n```css\n.box-hex  { background: #3366ff; }\n.box-rgba { background: rgba(51, 102, 255, 0.6); }\n.box-hsla { background: hsla(220, 100%, 60%, 0.6); }\n```\n\nThe key distinction from `opacity`: `rgba()`/`hsla()` make only that specific color semi-transparent, while `opacity` makes the **entire element and everything inside it** semi-transparent — including text and child elements, which often isn't the intended effect.\n\n```css\n.card-a { background: rgba(0, 0, 0, 0.5); }  /* only the background is translucent */\n.card-b { background: black; opacity: 0.5; } /* text inside .card-b also becomes translucent */\n```\n\n**Common pitfall:** Using `opacity` to add a translucent background to a card, then wondering why the text inside also looks faded and low-contrast — the fix is `rgba()`/`hsla()` on `background-color` specifically, leaving text at full opacity.",
+      "ru": "### Форматы цвета в CSS\n\n- **Hex** (`#rrggbb` или короткая форма `#rgb`): компактный, часто встречается в макетах от дизайнеров, но неудобен для ручной корректировки светлоты/насыщенности.\n- **RGB/RGBA** (`rgb(255, 0, 0)` / `rgba(255, 0, 0, 0.5)`): каналы красный/зелёный/синий плюс опциональный альфа-канал (прозрачность) от 0 до 1.\n- **HSL/HSLA** (`hsl(0, 100%, 50%)` / `hsla(0, 100%, 50%, 0.5)`): оттенок (0-360°), насыщенность, светлота, плюс опциональная альфа. Гораздо проще рассуждать — \"тот же оттенок, но темнее\" — это просто уменьшить процент светлоты, без математики цветовой теории.\n\n```css\n.box-hex  { background: #3366ff; }\n.box-rgba { background: rgba(51, 102, 255, 0.6); }\n.box-hsla { background: hsla(220, 100%, 60%, 0.6); }\n```\n\nКлючевое отличие от `opacity`: `rgba()`/`hsla()` делают полупрозрачным только конкретный цвет, а `opacity` делает полупрозрачным **весь элемент и всё внутри него** — включая текст и дочерние элементы, что часто не является желаемым эффектом.\n\n```css\n.card-a { background: rgba(0, 0, 0, 0.5); }  /* полупрозрачен только фон */\n.card-b { background: black; opacity: 0.5; } /* текст внутри .card-b тоже станет полупрозрачным */\n```\n\n**Частая ловушка:** использовать `opacity`, чтобы сделать фон карточки полупрозрачным, а потом удивляться, почему текст внутри тоже выглядит блёклым и низкоконтрастным — решение: `rgba()`/`hsla()` конкретно на `background-color`, оставляя текст полностью непрозрачным."
+    },
+    "tags": [
+      "color",
+      "css-fundamentals",
+      "opacity"
+    ]
+  },
+  {
+    "id": "css-html-q-17",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What HTML5 form validation attributes are available (required, pattern, min, max, type)? How does native browser validation work?",
+      "ru": "Какие атрибуты HTML5-валидации форм существуют (required, pattern, min, max, type)? Как работает нативная валидация браузера?"
+    },
+    "answer": {
+      "en": "### HTML5 Form Validation\n\nModern browsers can validate form input natively, without JavaScript, using attributes on `<input>`:\n\n- `required` — the field must be filled before the form can submit.\n- `type=\"email\"` / `type=\"url\"` / `type=\"number\"` — the browser checks the value matches the expected format and often shows a specialized keyboard on mobile.\n- `min` / `max` — bounds for numeric or date inputs.\n- `minlength` / `maxlength` — bounds for text length.\n- `pattern` — a regular expression the value must match.\n\n```html\n<form>\n  <input type=\"email\" required placeholder=\"you@example.com\">\n\n  <input type=\"number\" min=\"18\" max=\"99\" required>\n\n  <input type=\"text\" pattern=\"[A-Za-z]{3,}\" title=\"At least 3 letters\">\n\n  <button type=\"submit\">Submit</button>\n</form>\n```\n\nWhen the form is submitted, the browser blocks submission and shows a built-in error bubble next to the first invalid field, using the `title` attribute (if present) as a hint. This gives baseline validation with zero JavaScript.\n\nThe `:valid` and `:invalid` CSS pseudo-classes let you style fields based on their current validation state, which is useful for real-time visual feedback:\n\n```css\ninput:invalid { border-color: crimson; }\ninput:valid   { border-color: green; }\n```\n\n**Common pitfall:** Relying on HTML5 validation alone for anything security- or business-logic-sensitive — it's easily bypassed (disabling JS isn't even needed; a raw `fetch`/`curl` request skips the browser UI entirely), so server-side validation is always required in addition, not instead of it.",
+      "ru": "### HTML5-валидация форм\n\nСовременные браузеры умеют валидировать поля формы нативно, без JavaScript, с помощью атрибутов на `<input>`:\n\n- `required` — поле обязательно должно быть заполнено перед отправкой формы.\n- `type=\"email\"` / `type=\"url\"` / `type=\"number\"` — браузер проверяет, что значение соответствует ожидаемому формату, а на мобильных часто показывает специализированную клавиатуру.\n- `min` / `max` — границы для числовых или date-инпутов.\n- `minlength` / `maxlength` — границы длины текста.\n- `pattern` — регулярное выражение, которому должно соответствовать значение.\n\n```html\n<form>\n  <input type=\"email\" required placeholder=\"you@example.com\">\n\n  <input type=\"number\" min=\"18\" max=\"99\" required>\n\n  <input type=\"text\" pattern=\"[A-Za-z]{3,}\" title=\"Минимум 3 буквы\">\n\n  <button type=\"submit\">Отправить</button>\n</form>\n```\n\nПри отправке формы браузер блокирует сабмит и показывает встроенное сообщение об ошибке рядом с первым невалидным полем, используя атрибут `title` (если он указан) как подсказку. Это даёт базовую валидацию без единой строчки JavaScript.\n\nПсевдоклассы `:valid` и `:invalid` позволяют стилизовать поля по текущему состоянию валидации — полезно для визуальной обратной связи в реальном времени:\n\n```css\ninput:invalid { border-color: crimson; }\ninput:valid   { border-color: green; }\n```\n\n**Частая ловушка:** полагаться только на HTML5-валидацию для чего-то важного с точки зрения безопасности или бизнес-логики — она легко обходится (даже отключать JS не нужно, обычный `fetch`/`curl`-запрос полностью пропускает браузерный UI), поэтому серверная валидация всегда обязательна дополнительно, а не вместо неё."
+    },
+    "tags": [
+      "forms",
+      "html5-validation",
+      "accessibility"
+    ]
+  },
+  {
+    "id": "css-html-q-18",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are CSS custom properties (CSS variables)? Show basic syntax for declaring and using one, and how they differ from Sass/Less variables.",
+      "ru": "Что такое CSS custom properties (CSS-переменные)? Покажите базовый синтаксис объявления и использования, и чем они отличаются от переменных Sass/Less."
+    },
+    "answer": {
+      "en": "### CSS Custom Properties\n\nCustom properties (informally \"CSS variables\") let you store a value once and reuse it, declared with a `--` prefix and read with `var()`:\n\n```css\n:root {\n  --primary-color: #3366ff;\n  --spacing-unit: 8px;\n}\n\n.button {\n  background: var(--primary-color);\n  padding: calc(var(--spacing-unit) * 2);\n}\n\n.button:hover {\n  /* fallback value if --primary-color-dark isn't defined */\n  background: var(--primary-color-dark, #1a4dd6);\n}\n```\n\nDeclaring them on `:root` makes them available globally (any element can read them), but they can also be scoped to a specific selector, in which case only that element and its descendants see that value — useful for component-level theming.\n\nThe key difference from a Sass/Less variable: a preprocessor variable is resolved at **build time** — it's replaced with a literal value before the CSS ever reaches the browser, and can't change afterward. A CSS custom property is resolved at **runtime** in the browser — it can be read and updated dynamically with JavaScript (`element.style.setProperty('--primary-color', 'red')`), and it responds live to media queries or class toggles, which makes it the right tool for things like runtime dark-mode theming.\n\n**Common pitfall:** Forgetting that custom properties inherit down the DOM tree like `color` does, not up — setting `--theme-color` on a deeply nested element has no effect on its ancestors or siblings, only on that element and anything nested inside it.",
+      "ru": "### CSS Custom Properties\n\nCustom properties (неформально \"CSS-переменные\") позволяют один раз сохранить значение и переиспользовать его — объявляются с префиксом `--`, читаются через `var()`:\n\n```css\n:root {\n  --primary-color: #3366ff;\n  --spacing-unit: 8px;\n}\n\n.button {\n  background: var(--primary-color);\n  padding: calc(var(--spacing-unit) * 2);\n}\n\n.button:hover {\n  /* значение по умолчанию, если --primary-color-dark не определён */\n  background: var(--primary-color-dark, #1a4dd6);\n}\n```\n\nОбъявление на `:root` делает переменную глобально доступной (её может прочитать любой элемент), но можно также ограничить область видимости конкретным селектором — тогда значение увидят только этот элемент и его потомки, что удобно для тематизации на уровне компонента.\n\nКлючевое отличие от переменной Sass/Less: переменная препроцессора резолвится на **этапе сборки** — заменяется буквальным значением ещё до того, как CSS попадёт в браузер, и после этого не может измениться. CSS custom property резолвится **в рантайме**, прямо в браузере — её можно читать и обновлять динамически через JavaScript (`element.style.setProperty('--primary-color', 'red')`), и она живо реагирует на медиа-запросы или переключение классов — поэтому это правильный инструмент для рантайм-тематизации, например тёмной темы.\n\n**Частая ловушка:** забыть, что custom properties наследуются вниз по DOM-дереву, как `color`, а не вверх — установка `--theme-color` на глубоко вложенном элементе никак не влияет на его предков или соседей, только на сам этот элемент и всё, что вложено внутри него."
+    },
+    "tags": [
+      "custom-properties",
+      "css-variables",
+      "css-fundamentals"
+    ]
+  },
+  {
+    "id": "css-html-q-19",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do you serve responsive images in HTML using srcset and the <picture> element? What problem do they solve compared to a single <img src>?",
+      "ru": "Как отдавать адаптивные изображения в HTML через srcset и элемент <picture>? Какую проблему они решают по сравнению с обычным <img src>?"
+    },
+    "answer": {
+      "en": "### Responsive Images\n\nA single `<img src=\"photo.jpg\">` forces every device — a small phone and a large desktop monitor — to download the exact same file, wasting bandwidth on small screens and looking soft on high-density displays.\n\n**`srcset` + `sizes`** let the browser pick the best-fitting file from a list, based on screen size and pixel density:\n\n```html\n<img\n  src=\"photo-800.jpg\"\n  srcset=\"photo-400.jpg 400w, photo-800.jpg 800w, photo-1600.jpg 1600w\"\n  sizes=\"(max-width: 600px) 100vw, 50vw\"\n  alt=\"Product photo\"\n>\n```\nHere, `400w`/`800w`/`1600w` describe each file's actual width, and `sizes` tells the browser how much viewport space the image will occupy at different breakpoints — combined, the browser calculates which file is the best fit and downloads only that one.\n\n**`<picture>`** goes further: it lets you serve **entirely different image files or formats** based on conditions, not just different resolutions of the same image — for example, a modern format with a fallback, or a differently cropped image for mobile vs desktop:\n\n```html\n<picture>\n  <source srcset=\"photo.avif\" type=\"image/avif\">\n  <source srcset=\"photo.webp\" type=\"image/webp\">\n  <img src=\"photo.jpg\" alt=\"Product photo\">\n</picture>\n```\n\nThe browser picks the first `<source>` it supports, falling back to the plain `<img>` if none match — this is the standard pattern for serving modern formats (AVIF/WebP) with a JPEG/PNG fallback for older browsers.\n\n**Common pitfall:** Forgetting the fallback `<img>` inside `<picture>`, or forgetting `alt` on it — without a fallback `<img>`, browsers that support none of the listed formats show nothing at all, and `alt` is still what screen readers rely on regardless of which `<source>` was chosen.",
+      "ru": "### Адаптивные изображения\n\nОбычный `<img src=\"photo.jpg\">` заставляет любое устройство — и маленький телефон, и большой десктопный монитор — скачивать один и тот же файл, что тратит трафик на маленьких экранах и выглядит нечётко на дисплеях высокой плотности.\n\n**`srcset` + `sizes`** позволяют браузеру самому выбрать наиболее подходящий файл из списка, исходя из размера экрана и плотности пикселей:\n\n```html\n<img\n  src=\"photo-800.jpg\"\n  srcset=\"photo-400.jpg 400w, photo-800.jpg 800w, photo-1600.jpg 1600w\"\n  sizes=\"(max-width: 600px) 100vw, 50vw\"\n  alt=\"Фото товара\"\n>\n```\nЗдесь `400w`/`800w`/`1600w` описывают реальную ширину каждого файла, а `sizes` сообщает браузеру, сколько места на экране займёт изображение при разных брейкпоинтах — вместе браузер вычисляет наиболее подходящий файл и скачивает только его.\n\n**`<picture>`** идёт дальше: позволяет отдавать **совершенно разные файлы или форматы** в зависимости от условий, а не просто разные разрешения одной картинки — например, современный формат с фолбэком, или по-разному обрезанное изображение для мобильных и десктопа:\n\n```html\n<picture>\n  <source srcset=\"photo.avif\" type=\"image/avif\">\n  <source srcset=\"photo.webp\" type=\"image/webp\">\n  <img src=\"photo.jpg\" alt=\"Фото товара\">\n</picture>\n```\n\nБраузер выбирает первый поддерживаемый `<source>`, а если ни один не подходит — падает обратно на обычный `<img>`. Это стандартный паттерн для отдачи современных форматов (AVIF/WebP) с фолбэком на JPEG/PNG для старых браузеров.\n\n**Частая ловушка:** забыть фолбэк `<img>` внутри `<picture>` или забыть на нём `alt` — без fallback `<img>` браузеры, не поддерживающие ни один из перечисленных форматов, вообще ничего не покажут, а `alt` всё равно остаётся тем, на что опирается скринридер, независимо от того, какой `<source>` выбран."
+    },
+    "tags": [
+      "responsive-images",
+      "srcset",
+      "html5"
+    ]
+  },
+  {
+    "id": "css-html-q-20",
+    "topicId": "css-html",
+    "difficulty": "junior",
+    "question": {
+      "en": "What's the purpose of the DOCTYPE declaration and essential <head> tags like charset and viewport meta? What happens if they're missing?",
+      "ru": "Зачем нужен DOCTYPE и основные теги в <head>, такие как charset и viewport meta? Что произойдёт, если их не указать?"
+    },
+    "answer": {
+      "en": "### Document Structure Essentials\n\n```html\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Page Title</title>\n</head>\n<body>\n  ...\n</body>\n</html>\n```\n\n- `<!DOCTYPE html>` tells the browser to render the page in **standards mode**, using the modern CSS/HTML spec. Without it (or with an old/malformed doctype), browsers fall back to **quirks mode**, which emulates old, inconsistent rendering behavior from the 1990s — box model calculations, table layout, and even some CSS selector behavior can differ subtly, causing hard-to-diagnose bugs.\n- `<meta charset=\"UTF-8\">` tells the browser how to decode the byte stream into text. Without it, the browser guesses the encoding, and any non-ASCII characters (accented letters, Cyrillic, emoji, curly quotes) can render as garbled symbols (mojibake).\n- `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">` tells mobile browsers to render the page at the device's actual CSS pixel width instead of a default desktop-width virtual viewport (typically 980px) zoomed out to fit. Without it, mobile visitors see a tiny, zoomed-out desktop layout instead of a proper mobile-responsive one — this single tag is often why a page \"isn't responsive\" even though the CSS media queries are correct.\n- `lang=\"en\"` on `<html>` tells screen readers which pronunciation rules to use and helps translation tools and search engines.\n\n**Common pitfall:** Writing correct responsive CSS with media queries but forgetting the viewport meta tag — the media queries technically work, but they trigger based on the fake 980px desktop viewport instead of the real device width, so the responsive layout never actually activates on mobile.",
+      "ru": "### Основы структуры HTML-документа\n\n```html\n<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Заголовок страницы</title>\n</head>\n<body>\n  ...\n</body>\n</html>\n```\n\n- `<!DOCTYPE html>` говорит браузеру рендерить страницу в **standards mode**, по современной CSS/HTML спецификации. Без него (или со старым/некорректным doctype) браузеры откатываются в **quirks mode**, эмулирующий старое, непоследовательное поведение рендеринга из 90-х — расчёты box model, табличная раскладка и даже поведение некоторых CSS-селекторов могут незаметно отличаться, вызывая трудноуловимые баги.\n- `<meta charset=\"UTF-8\">` сообщает браузеру, как декодировать поток байтов в текст. Без него браузер угадывает кодировку, и любые не-ASCII символы (буквы с диакритикой, кириллица, эмодзи, \"красивые\" кавычки) могут отобразиться нечитаемой кашей (mojibake).\n- `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">` говорит мобильным браузерам рендерить страницу по реальной ширине CSS-пикселей устройства, а не по дефолтному \"десктопному\" виртуальному viewport (обычно 980px), уменьшенному до размера экрана. Без него мобильные посетители видят крошечную уменьшенную десктопную вёрстку вместо нормальной мобильной — часто именно из-за отсутствия этого тега страница \"не адаптивная\", хотя медиа-запросы в CSS написаны правильно.\n- `lang=\"ru\"` на `<html>` подсказывает скринридеру, какие правила произношения использовать, и помогает инструментам перевода и поисковикам.\n\n**Частая ловушка:** написать корректный адаптивный CSS с медиа-запросами, но забыть viewport meta tag — медиа-запросы технически работают, но срабатывают исходя из фейкового 980px десктопного viewport, а не реальной ширины устройства, поэтому адаптивная раскладка на мобильном фактически никогда не активируется."
+    },
+    "tags": [
+      "html-document-structure",
+      "meta-tags",
+      "html-fundamentals"
+    ]
+  },
+  {
+    "id": "css-html-q-21",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -273,7 +380,7 @@
     ]
   },
   {
-    "id": "css-html-q-16",
+    "id": "css-html-q-22",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -291,7 +398,7 @@
     ]
   },
   {
-    "id": "css-html-q-17",
+    "id": "css-html-q-23",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -309,7 +416,7 @@
     ]
   },
   {
-    "id": "css-html-q-18",
+    "id": "css-html-q-24",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -327,7 +434,7 @@
     ]
   },
   {
-    "id": "css-html-q-19",
+    "id": "css-html-q-25",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -345,7 +452,7 @@
     ]
   },
   {
-    "id": "css-html-q-20",
+    "id": "css-html-q-26",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -363,7 +470,7 @@
     ]
   },
   {
-    "id": "css-html-q-21",
+    "id": "css-html-q-27",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -381,7 +488,7 @@
     ]
   },
   {
-    "id": "css-html-q-22",
+    "id": "css-html-q-28",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -399,7 +506,7 @@
     ]
   },
   {
-    "id": "css-html-q-23",
+    "id": "css-html-q-29",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -417,7 +524,7 @@
     ]
   },
   {
-    "id": "css-html-q-24",
+    "id": "css-html-q-30",
     "topicId": "css-html",
     "difficulty": "middle",
     "question": {
@@ -436,7 +543,7 @@
     ]
   },
   {
-    "id": "css-html-q-25",
+    "id": "css-html-q-31",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -454,7 +561,7 @@
     ]
   },
   {
-    "id": "css-html-q-26",
+    "id": "css-html-q-32",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -472,7 +579,7 @@
     ]
   },
   {
-    "id": "css-html-q-27",
+    "id": "css-html-q-33",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -490,7 +597,7 @@
     ]
   },
   {
-    "id": "css-html-q-28",
+    "id": "css-html-q-34",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -508,7 +615,7 @@
     ]
   },
   {
-    "id": "css-html-q-29",
+    "id": "css-html-q-35",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -526,7 +633,7 @@
     ]
   },
   {
-    "id": "css-html-q-30",
+    "id": "css-html-q-36",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -544,7 +651,7 @@
     ]
   },
   {
-    "id": "css-html-q-31",
+    "id": "css-html-q-37",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -562,7 +669,7 @@
     ]
   },
   {
-    "id": "css-html-q-32",
+    "id": "css-html-q-38",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -580,7 +687,7 @@
     ]
   },
   {
-    "id": "css-html-q-33",
+    "id": "css-html-q-39",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -598,7 +705,7 @@
     ]
   },
   {
-    "id": "css-html-q-34",
+    "id": "css-html-q-40",
     "topicId": "css-html",
     "difficulty": "senior",
     "question": {
@@ -616,7 +723,7 @@
     ]
   },
   {
-    "id": "css-html-q-35",
+    "id": "css-html-q-41",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -635,7 +742,7 @@
     ]
   },
   {
-    "id": "css-html-q-36",
+    "id": "css-html-q-42",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -654,7 +761,7 @@
     ]
   },
   {
-    "id": "css-html-q-37",
+    "id": "css-html-q-43",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -673,7 +780,7 @@
     ]
   },
   {
-    "id": "css-html-q-38",
+    "id": "css-html-q-44",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -692,7 +799,7 @@
     ]
   },
   {
-    "id": "css-html-q-39",
+    "id": "css-html-q-45",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -711,7 +818,7 @@
     ]
   },
   {
-    "id": "css-html-q-40",
+    "id": "css-html-q-46",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -730,7 +837,7 @@
     ]
   },
   {
-    "id": "css-html-q-41",
+    "id": "css-html-q-47",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
@@ -749,7 +856,7 @@
     ]
   },
   {
-    "id": "css-html-q-42",
+    "id": "css-html-q-48",
     "topicId": "css-html",
     "difficulty": "advanced",
     "question": {
