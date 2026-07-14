@@ -3,6 +3,7 @@ import type { Topic } from '@/types';
 export const TOPICS: readonly Topic[] = [
   { id: 'javascript',      label: 'JavaScript',             level: 'deep' },
   { id: 'typescript',      label: 'TypeScript Advanced',    level: 'deep' },
+  { id: 'python',          label: 'Python',                 level: 'deep' },
   { id: 'react',            label: 'React',                  level: 'deep' },
   { id: 'state-management', label: 'State Management',      level: 'medium' },
   { id: 'nextjs',           label: 'Next.js',               level: 'deep' },
