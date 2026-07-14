@@ -10,6 +10,9 @@ const LANGS = [
   'html',
   'graphql',
   'dockerfile',
+  'python',
+  'toml',
+  'yaml',
 ] as const;
 
 export async function highlight(code: string, lang: string): Promise<string> {

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { TOPICS } from '@/constants/topics';
+import { COURSES } from '@/constants/courses';
 import { useLocale } from '@/context/LocaleContext';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ const SECTIONS = [
   { href: '/quiz',      titleKey: 'nav.quiz',      descKey: 'home.quizDesc',      icon: '🧠' },
   { href: '/tasks',     titleKey: 'nav.tasks',     descKey: 'home.tasksDesc',     icon: '💻' },
   { href: '/interview', titleKey: 'nav.interview', descKey: 'home.interviewDesc', icon: '🎯' },
+  { href: '/courses',   titleKey: 'nav.courses',   descKey: 'home.coursesDesc',   icon: '🎓' },
 ] as const;
 
 const LEVEL_COLORS = {
@@ -68,6 +70,22 @@ export default function HomePage() {
                 className={`cursor-pointer hover:opacity-80 ${LEVEL_COLORS[topic.level]}`}
               >
                 {topic.label}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-6">{t2('home.courses')} ({COURSES.length})</h2>
+        <div className="flex flex-wrap gap-2">
+          {COURSES.map((course) => (
+            <Link key={course.id} href={`/courses/${course.id}`}>
+              <Badge
+                variant="outline"
+                className={`cursor-pointer hover:opacity-80 ${LEVEL_COLORS[course.level]}`}
+              >
+                {course.label}
               </Badge>
             </Link>
           ))}

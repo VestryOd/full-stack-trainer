@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { href: '/quiz',       key: 'nav.quiz' },
   { href: '/tasks',      key: 'nav.tasks' },
   { href: '/interview',  key: 'nav.interview' },
+  { href: '/courses',    key: 'nav.courses' },
 ] as const;
 
 export function Navbar() {

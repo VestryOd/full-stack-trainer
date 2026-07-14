@@ -5,6 +5,7 @@ export const translations = {
     quiz:      { en: 'Quiz',           ru: 'Квиз' },
     tasks:     { en: 'Tasks',          ru: 'Задачи' },
     interview: { en: 'Interview',      ru: 'Интервью' },
+    courses:   { en: 'Courses',        ru: 'Курсы' },
   },
   home: {
     subtitle: {
@@ -13,6 +14,7 @@ export const translations = {
     },
     sections:       { en: 'Sections',       ru: 'Разделы' },
     topics:         { en: 'Topics',         ru: 'Темы' },
+    courses:        { en: 'Courses',        ru: 'Курсы' },
     coverageLevels: { en: 'Coverage Levels', ru: 'Уровни покрытия' },
     btnQuiz:        { en: 'Take a Quiz',    ru: 'Пройти квиз' },
     btnTheory:      { en: 'Start with Theory', ru: 'Начать с теории' },
@@ -35,6 +37,10 @@ export const translations = {
     interviewDesc: {
       en: 'Simulate a real interview — timed session with questions and coding tasks.',
       ru: 'Симулируй настоящее интервью — сессия с таймером, вопросами и задачами.',
+    },
+    coursesDesc: {
+      en: 'Multi-chapter courses that build one project step by step, chapter by chapter.',
+      ru: 'Многоглавые курсы, где один проект растёт шаг за шагом, от главы к главе.',
     },
     deepDesc: {
       en: '5 topics — comprehensive coverage with advanced questions',
@@ -63,6 +69,15 @@ export const translations = {
     minRead:      { en: 'min',           ru: 'мин' },
     noArticlesYet: { en: 'No articles yet', ru: 'Пока нет статей' },
     comingSoonTopic: { en: 'Content for this topic is coming soon.', ru: 'Материалы по этой теме появятся позже.' },
+  },
+  courses: {
+    title:        { en: 'Courses',       ru: 'Курсы' },
+    available:    { en: 'courses available', ru: 'курсов доступно' },
+    chapters:     { en: 'chapters',      ru: 'глав' },
+    comingSoon:   { en: 'Coming soon',   ru: 'Скоро' },
+    minRead:      { en: 'min',           ru: 'мин' },
+    noChaptersYet: { en: 'No chapters yet', ru: 'Пока нет глав' },
+    comingSoonCourse: { en: 'Content for this course is coming soon.', ru: 'Материалы этого курса появятся позже.' },
   },
   questions: {
     title:       { en: 'Questions',          ru: 'Вопросы' },

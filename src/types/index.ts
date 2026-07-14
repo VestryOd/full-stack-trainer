@@ -16,6 +16,20 @@ export interface TheoryArticle {
   locale: Locale;
 }
 
+export interface Course {
+  id: string;
+  label: string;
+  level: TopicLevel;
+}
+
+export interface CourseChapter {
+  courseId: string;
+  slug: string;
+  title: string;
+  content: string;
+  locale: Locale;
+}
+
 export type QuestionDifficulty = 'junior' | 'middle' | 'senior' | 'advanced';
 
 export interface Question {

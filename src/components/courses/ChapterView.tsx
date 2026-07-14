@@ -1,0 +1,118 @@
+'use client';
+
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useLocale } from '@/context/LocaleContext';
+import { ArticleContent } from '@/components/theory/ArticleContent';
+import { cn } from '@/lib/utils';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
+
+interface ChapterViewProps {
+  courseId: string;
+  courseLabel: string;
+  slug: string;
+  htmlEn: string | null;
+  htmlRu: string | null;
+  prevSlug: string | null;
+  nextSlug: string | null;
+}
+
+function slugToLabel(slug: string): string {
+  return slug.replace(/^\d+-/, '').replace(/-/g, ' ');
+}
+
+function extractTitleFromHtml(html: string): string {
+  const match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+  if (!match) return '';
+  // Strip any HTML tags from the title
+  return match[1].replace(/<[^>]+>/g, '').trim();
+}
+
+export function ChapterView({
+  courseId,
+  courseLabel,
+  slug,
+  htmlEn,
+  htmlRu,
+  prevSlug,
+  nextSlug,
+}: ChapterViewProps) {
+  const { locale: globalLocale, t2 } = useLocale();
+  const [locale, setLocale] = useState<'en' | 'ru'>(globalLocale);
+
+  useEffect(() => { setLocale(globalLocale); }, [globalLocale]);
+
+  const hasEn = !!htmlEn;
+  const hasRu = !!htmlRu;
+
+  const effectiveLocale = locale === 'ru' && hasRu ? 'ru' : locale === 'en' && hasEn ? 'en' : hasRu ? 'ru' : 'en';
+  const html = effectiveLocale === 'ru' ? htmlRu! : htmlEn!;
+  const title = extractTitleFromHtml(html);
+
+  return (
+    <div className="container py-8 max-w-4xl">
+      {/* Breadcrumb + locale toggle */}
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <nav className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono min-w-0">
+          <Link href="/courses" className="hover:text-foreground transition-colors whitespace-nowrap">{t2('courses.title')}</Link>
+          <ChevronRight className="h-3 w-3 flex-shrink-0" />
+          <Link href={`/courses/${courseId}`} className="hover:text-foreground transition-colors whitespace-nowrap">{courseLabel}</Link>
+          <ChevronRight className="h-3 w-3 flex-shrink-0" />
+          <span className="text-foreground truncate">{title || slugToLabel(slug)}</span>
+        </nav>
+
+        {/* Language toggle */}
+        <div className="flex rounded border border-border overflow-hidden text-xs font-mono flex-shrink-0">
+          {(['en', 'ru'] as const).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLocale(l)}
+              disabled={l === 'en' ? !hasEn : !hasRu}
+              className={cn(
+                'px-2 py-0.5 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed',
+                effectiveLocale === l
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chapter content */}
+      <article className="animate-fade-in" key={effectiveLocale}>
+        <ArticleContent html={html} />
+      </article>
+
+      {/* Prev / Next navigation */}
+      {(prevSlug || nextSlug) && (
+        <nav className="mt-12 pt-6 border-t border-border flex items-center justify-between gap-4">
+          {prevSlug ? (
+            <Link
+              href={`/courses/${courseId}/${prevSlug}`}
+              className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-w-0 flex-1"
+            >
+              <ChevronLeft className="h-4 w-4 flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="truncate">{slugToLabel(prevSlug)}</span>
+            </Link>
+          ) : (
+            <div className="flex-1" />
+          )}
+          {nextSlug ? (
+            <Link
+              href={`/courses/${courseId}/${nextSlug}`}
+              className="group flex items-center justify-end gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-w-0 flex-1"
+            >
+              <span className="truncate text-right">{slugToLabel(nextSlug)}</span>
+              <ChevronRight className="h-4 w-4 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          ) : (
+            <div className="flex-1" />
+          )}
+        </nav>
+      )}
+    </div>
+  );
+}
