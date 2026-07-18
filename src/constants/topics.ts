@@ -19,6 +19,7 @@ export const TOPICS: readonly Topic[] = [
   { id: 'graphql',         label: 'GraphQL',                level: 'medium' },
   { id: 'css-html',        label: 'CSS + HTML Advanced',    level: 'medium' },
   { id: 'browser-animation', label: 'Browser Animation',    level: 'deep' },
+  { id: 'canvas-graphics', label: 'Canvas & Graphics',      level: 'deep' },
   { id: 'web-performance', label: 'Web Performance',        level: 'medium' },
   { id: 'browser-runtime', label: 'Browser / JS Runtime',  level: 'medium' },
   { id: 'http-rest',       label: 'HTTP / REST',            level: 'medium' },
