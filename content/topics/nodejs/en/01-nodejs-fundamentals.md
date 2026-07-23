@@ -16,21 +16,21 @@ Express/Nest/Fastify — frameworks built ON TOP of Node.js
 The "Node = V8" confusion is common but worth correcting: V8 executes JS code and manages memory (heap, GC — see [Memory and Garbage Collection]), but it **has no idea** what a file or a TCP socket is. Those capabilities are provided by Node itself, via C++ bindings to libuv and other libraries. When you call `fs.readFile(...)`, the JS code running in V8 calls a C++ function that delegates the operation to libuv (see [libuv and the Thread Pool]).
 
 ```txt
-┌─────────────────────────────────────────┐
-│              Node.js Process              │
-│                                            │
-│  ┌──────────┐   ┌──────────────────────┐ │
-│  │    V8    │   │    Node.js APIs       │ │
-│  │ (runs JS,│←──│  (fs, net, http,      │ │
-│  │  heap,   │   │   crypto, Buffer...)  │ │
-│  │   GC)    │   └──────────┬───────────┘ │
-│  └──────────┘              │              │
-│                      ┌──────▼──────┐      │
-│                      │    libuv    │      │
-│                      │ (Event Loop,│      │
-│                      │ Thread Pool)│      │
-│                      └─────────────┘      │
-└─────────────────────────────────────────┘
+┌────────────────────────────────────────┐
+│            Node.js Process             │
+│                                        │
+│ ┌───────────┐   ┌────────────────────┐ │
+│ │ V8        │←──│ Node.js APIs       │ │
+│ │ (runs JS, │   │ (fs, net, http,    │ │
+│ │ heap,     │   │ crypto, Buffer...) │ │
+│ │ GC)       │   └─────────┬──────────┘ │
+│ └───────────┘             ▼            │
+│                    ┌──────────────┐    │
+│                    │ libuv        │    │
+│                    │ (Event Loop, │    │
+│                    │ Thread Pool) │    │
+│                    └──────────────┘    │
+└────────────────────────────────────────┘
 ```
 
 This diagram is the skeleton for every other topic in this section: V8 is covered in [V8 and the Runtime] and [Memory and Garbage Collection], the Event Loop in [The Event Loop] and [Microtasks, Macrotasks, and process.nextTick], the Thread Pool in [libuv and the Thread Pool], and multi-process/multi-thread strategies in [Worker Threads and Cluster].

@@ -9,23 +9,20 @@
 Пользователь размещает заказ. Этот факт интересен четырём независимым системам:
 
 ```txt
-                        ┌─────────────────────────────────────────┐
-                        │         Kafka Cluster                    │
-                        │                                          │
-[Order Service] ───────►│  Topic: "order-events"                  │
-  (Producer)            │  Partitions: 12 (key = orderId)         │
-                        │  Retention: 30 days                      │
-                        └──────────────┬──────────────────────────┘
-                                       │
-              ┌────────────────────────┼────────────────────────┐
-              │                        │                        │
-              ▼                        ▼                        ▼                  ▼
-  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
-  │ Inventory Group  │  │ Notification     │  │ Analytics Group  │  │ Fraud Detection  │
-  │                  │  │ Group            │  │                  │  │ Group            │
-  │ Резервирует      │  │ Отправляет email │  │ Обновляет        │  │ Проверяет паттерн│
-  │ товар на складе  │  │ и push-уведомл.  │  │ дашборды продаж  │  │ покупки          │
-  └──────────────────┘  └──────────────────┘  └──────────────────┘  └──────────────────┘
+                            ┌────────────────────────────────┐
+[Order Service] ───────────►│         Kafka Cluster          │
+  (Producer)                │ Topic: "order-events"          │
+                            │ Partitions: 12 (key = orderId) │
+                            │ Retention: 30 days             │
+                            └────────────────┬───────────────┘
+          ┌───────────────────────┬──────────┼───────────┬───────────────────────┐
+          ▼                       ▼                      ▼                       ▼
+┌───────────────────┐  ┌────────────────────┐  ┌───────────────────┐  ┌─────────────────────┐
+│  Inventory Group  │  │    Notification    │  │  Analytics Group  │  │   Fraud Detection   │
+│                   │  │       Group        │  │                   │  │        Group        │
+│    Резервирует    │  │  Отправляет email  │  │     Обновляет     │  │  Проверяет паттерн  │
+│  товар на складе  │  │  и push-уведомл.   │  │  дашборды продаж  │  │       покупки       │
+└───────────────────┘  └────────────────────┘  └───────────────────┘  └─────────────────────┘
 ```
 
 **Почему это лучше, чем очередь:**
@@ -146,31 +143,30 @@ async function rebuildOrderState(orderId: string): Promise<Order> {
 ```txt
 Классический ELK-стек с Kafka:
 
-  ┌────────────┐    ┌────────────┐    ┌────────────┐
-  │ Service A  │    │ Service B  │    │ Service C  │
-  │ (logs →    │    │ (logs →    │    │ (logs →    │
-  │  stdout)   │    │  stdout)   │    │  stdout)   │
-  └─────┬──────┘    └─────┬──────┘    └─────┬──────┘
-        │                 │                 │
-        ▼                 ▼                 ▼
-  ┌─────────────────────────────────────────────────┐
-  │          Filebeat / Fluentd (log shipper)        │
-  │  Читает логи из файлов/stdout, пишет в Kafka     │
-  └──────────────────────┬──────────────────────────┘
+  ┌───────────┐    ┌───────────┐    ┌───────────┐
+  │ Service A │    │ Service B │    │ Service C │
+  │ (logs →   │    │ (logs →   │    │ (logs →   │
+  │ stdout)   │    │ stdout)   │    │ stdout)   │
+  └─────┬─────┘    └─────┬─────┘    └─────┬─────┘
+        │                │                │
+        ▼                ▼                ▼
+  ┌─────────────────────────────────────────────┐
+  │       Filebeat / Fluentd (log shipper)      │
+  │ Читает логи из файлов/stdout, пишет в Kafka │
+  └──────────────────────┬──────────────────────┘
                          │
                          ▼
-               Topic: "application-logs"
-               Retention: 3 days
-               Partitions: 24 (key = serviceId)
+         Topic: "application-logs"
+         Retention: 3 days
+         Partitions: 24 (key = serviceId)
                          │
-         ┌───────────────┼───────────────┐
-         │               │               │
-         ▼               ▼               ▼
-  ┌──────────┐   ┌──────────┐   ┌──────────────┐
-  │Logstash  │   │Monitoring│   │ S3 Archiver  │
-  │→ Elastic │   │(alerts   │   │ (долгосрочное│
-  │  search  │   │ на errors│   │  хранение)   │
-  └──────────┘   └──────────┘   └──────────────┘
+        ┌────────────────┬─────────────────┐
+        ▼                ▼                 ▼
+  ┌───────────┐   ┌────────────┐   ┌───────────────┐
+  │ Logstash  │   │ Monitoring │   │ S3 Archiver   │
+  │ → Elastic │   │ (alerts    │   │ (долгосрочное │
+  │ search    │   │ на errors  │   │ хранение)     │
+  └───────────┘   └────────────┘   └───────────────┘
 ```
 
 **Зачем Kafka в этой цепочке, а не напрямую в Elasticsearch?**
@@ -187,27 +183,24 @@ async function rebuildOrderState(orderId: string): Promise<Order> {
 **Change Data Capture (CDC)** — это механизм захвата изменений в базе данных и публикации их как потока событий. Вместо того чтобы опрашивать БД ("что изменилось за последнюю минуту?"), CDC подписывается на бинарный лог репликации самой БД.
 
 ```txt
-Как CDC работает с PostgreSQL:
+PostgreSQL имеет Write-Ahead Log (WAL) — бинарный журнал всех изменений.
+WAL используется для репликации standby-серверов.
 
-  PostgreSQL имеет Write-Ahead Log (WAL) — бинарный журнал всех изменений.
-  WAL используется для репликации standby-серверов.
-  
-  Debezium (популярный CDC-коннектор) читает WAL как обычный replica:
-  
-  ┌──────────────┐         ┌───────────┐         ┌─────────────────────────┐
-  │  PostgreSQL  │──WAL───►│  Debezium │────────►│  Kafka Topic            │
-  │              │         │ (Kafka    │         │  "postgres.public.orders"│
-  │  INSERT order│         │  Connect) │         │                          │
-  │  UPDATE order│         └───────────┘         │  [insert-event]          │
-  │  DELETE order│                               │  [update-event]          │
-  └──────────────┘                               │  [delete-event]          │
-                                                 └─────────────────────────┘
-                                                           │
-                                   ┌───────────────────────┼───────────────┐
-                                   │                       │               │
-                                   ▼                       ▼               ▼
-                             [Search Index]         [Analytics]      [Audit Log]
-                             (Elasticsearch)        (ClickHouse)     (S3)
+Debezium (популярный CDC-коннектор) читает WAL как обычный replica:
+
+  ┌──────────────┐        ┌──────────┐         ┌──────────────────────────┐
+  │ PostgreSQL   │─WAL───►│ Debezium │────────►│ Kafka Topic              │
+  │              │        │ (Kafka   │         │ "postgres.public.orders" │
+  │ INSERT order │        │ Connect) │         │                          │
+  │ UPDATE order │        └──────────┘         │ [insert-event]           │
+  │ DELETE order │                             │ [update-event]           │
+  └──────────────┘                             │ [delete-event]           │
+                                               └──────────────────────────┘
+                                                            │
+                                        ┌─────────────────────┼──────────────────┐
+                                        ▼                     ▼                  ▼
+                                 [Search Index]          [Analytics]        [Audit Log]
+                                 (Elasticsearch)        (ClickHouse)           (S3)
 ```
 
 **Структура CDC-события** (формат Debezium):
@@ -260,31 +253,31 @@ CDC особенно ценен, когда нужно синхронизиро�
 E-commerce аналитика в реальном времени:
 
   Источники данных:
-  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-  │ Order Service│  │ User Service │  │ Product Svc  │  │ Web Frontend │
-  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
-         │                 │                 │                 │
-         ▼                 ▼                 ▼                 ▼
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │                     Kafka Topics                                      │
-  │  "order-events"  "user-events"  "product-views"  "click-stream"      │
-  └──────────────────────────────────────────────────────────────────────┘
-                                    │
-              ┌─────────────────────┼─────────────────────┐
-              │                     │                     │
-              ▼                     ▼                     ▼
-  ┌────────────────────┐  ┌───────────────────┐  ┌────────────────────┐
-  │   Kafka Streams /  │  │   ClickHouse /     │  │    Elasticsearch   │
-  │   Apache Flink     │  │   Apache Druid     │  │    (поиск,         │
-  │   (real-time       │  │   (OLAP-хранилище  │  │     аналитика)     │
-  │    агрегация)      │  │    для дашбордов)  │  │                    │
-  └────────────────────┘  └───────────────────┘  └────────────────────┘
-         │
-         │ Агрегированные метрики в реальном времени:
-         ├── revenue per minute
-         ├── conversion rate (views → purchases)
-         ├── top products last 5 minutes
-         └── active users right now
+  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+  │ Order Service │  │ User Service  │  │ Product Svc   │  │ Web Frontend  │
+  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘
+          │                  │                  │                  │
+          ▼                  ▼                  ▼                  ▼
+  ┌────────────────────────────────────────────────────────────────┐
+  │                          Kafka Topics                          │
+  │ "order-events"  "user-events"  "product-views"  "click-stream" │
+  └───────────────────────────────┬────────────────────────────────┘
+                                  │
+                                  ▼
+              ┌────────────────────┼───────────────────┐
+              ▼                    ▼                   ▼
+     ┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐
+     │ Kafka Streams / │  │ ClickHouse /    │  │ Elasticsearch │
+     │ Apache Flink    │  │ Apache Druid    │  │ (поиск,       │
+     │ (real-time      │  │ (OLAP-хранилище │  │ аналитика)    │
+     │ агрегация)      │  │ для дашбордов)  │  │               │
+     └─────────────────┘  └─────────────────┘  └───────────────┘
+              │
+              │ Агрегированные метрики в реальном времени:
+              ├── revenue per minute
+              ├── conversion rate (views → purchases)
+              ├── top products last 5 minutes
+              └── active users right now
 ```
 
 **Пример простой агрегации с kafkajs:**
@@ -321,34 +314,34 @@ await consumer.run({
 Соберём вместе все сценарии в одну реальную архитектуру.
 
 ```txt
-                                     KAFKA CLUSTER
-                    ┌─────────────────────────────────────────────────────┐
-                    │                                                       │
-[Order Service] ──►│  "order-events"     (12 partitions, 30d retention)  │
-[Payment Svc]   ──►│  "payment-events"   (6 partitions, 30d retention)   │
-[User Service]  ──►│  "user-events"      (6 partitions, 7d retention)    │
-[CDC/Debezium]  ──►│  "db.public.orders" (12 partitions, 7d retention)   │
-[Filebeat]      ──►│  "app-logs"         (24 partitions, 3d retention)   │
-                    │                                                       │
-                    └──────────────────────┬──────────────────────────────┘
-                                           │
-        ┌──────────────────────────────────┼──────────────────────────────────┐
-        │                                  │                                  │
-        ▼                                  ▼                                  ▼
-┌─────────────────┐            ┌─────────────────────┐            ┌─────────────────┐
-│  Операционные   │            │     Аналитика        │            │  Инфраструктура │
-│  Consumer Groups│            │   Consumer Groups    │            │                 │
-│                 │            │                      │            │                 │
-│ inventory-svc   │            │ clickhouse-sink      │            │ elasticsearch   │
-│ notification-svc│            │ (OLAP для дашбордов) │            │ (логи + поиск)  │
-│ fraud-detection │            │                      │            │                 │
-│ recommendation  │            │ real-time-metrics    │            │ s3-archiver     │
-│   -engine       │            │ (kafka streams)      │            │ (cold storage)  │
-└─────────────────┘            └─────────────────────┘            └─────────────────┘
-        │                                  │
-        │ at-least-once +                  │ at-most-once OK
-        │ idempotent consumer              │ (потеря метрики некритична)
-        │ (потеря заказа недопустима)      │
+                                       KAFKA CLUSTER
+                    ┌───────────────────────────────────────────────────┐
+                    │                                                   │
+[Order Service] ───►│ "order-events"     (12 partitions, 30d retention) │
+[Payment Svc] ─────►│ "payment-events"   (6 partitions, 30d retention)  │
+[User Service] ────►│ "user-events"      (6 partitions, 7d retention)   │
+[CDC/Debezium] ────►│ "db.public.orders" (12 partitions, 7d retention)  │
+[Filebeat] ────────►│ "app-logs"         (24 partitions, 3d retention)  │
+                    │                                                   │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                                              ▼
+                      ┌────────────────────────┼───────────────────────┐
+                      ▼                        ▼                       ▼
+            ┌──────────────────┐   ┌──────────────────────┐   ┌────────────────┐
+            │ Операционные     │   │ Аналитика            │   │ Инфраструктура │
+            │ Consumer Groups  │   │ Consumer Groups      │   │                │
+            │                  │   │                      │   │                │
+            │ inventory-svc    │   │ clickhouse-sink      │   │ elasticsearch  │
+            │ notification-svc │   │ (OLAP для дашбордов) │   │ (логи + поиск) │
+            │ fraud-detection  │   │                      │   │                │
+            │ recommendation   │   │ real-time-metrics    │   │ s3-archiver    │
+            │   -engine        │   │ (kafka streams)      │   │ (cold storage) │
+            └──────────────────┘   └──────────────────────┘   └────────────────┘
+                     │                        │
+                     │ at-least-once +        │ at-most-once OK
+                     │ idempotent consumer    │ (потеря метрики некритична)
+                     │ (потеря заказа недопустима)
 ```
 
 **Что делает эту архитектуру масштабируемой:**

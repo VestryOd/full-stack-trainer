@@ -142,13 +142,13 @@ This is a key difference from GitHub Actions: in GitLab CI, every job runs in a 
 A **GitLab Runner** is a separate open-source application (written in Go) that registers with a GitLab instance and executes the jobs from your pipelines. The relationship:
 
 ```txt
-GitLab server                     GitLab Runner (separate process/machine)
-  ┌───────────────────┐             ┌───────────────────────────────────┐
-  │  Reads            │             │                                    │
-  │  .gitlab-ci.yml   │ ─── job ──→ │  Picks up the job                 │
-  │  when a push      │             │  Runs it in a Docker container     │
-  │  happens          │ ←─ result ─ │  (or shell, VM, K8s pod...)        │
-  └───────────────────┘             └───────────────────────────────────┘
+  GitLab server                  GitLab Runner (separate process/machine)
+  ┌────────────────┐             ┌───────────────────────────────┐
+  │ Reads          │             │                               │
+  │ .gitlab-ci.yml │──job───────→│ Picks up the job              │
+  │ when a push    │             │ Runs it in a Docker container │
+  │ happens        │←─result─────│ (or shell, VM, K8s pod...)    │
+  └────────────────┘             └───────────────────────────────┘
 ```
 
 ### Runner executors

@@ -139,18 +139,19 @@ A **runner** (GitHub Actions terminology) or **agent** (used by Jenkins and some
 When you push code and a pipeline triggers, something has to actually run the shell commands `npm test`, `docker build`, etc. That "something" is the runner.
 
 ```txt
-CI Provider servers           Your code repository
-  ┌──────────────────┐        ┌──────────────────────────┐
-  │  Pipeline        │  reads │  .github/workflows/       │
-  │  Scheduler       │ ──────→│  ci.yml                   │
-  └────────┬─────────┘        └──────────────────────────┘
-           │ assigns job to
-           ↓
-  ┌──────────────────┐
-  │     Runner       │  ← a virtual machine that executes
-  │  (ubuntu-latest) │    the steps from the YAML file:
-  │                  │    npm ci, npm test, docker build...
-  └──────────────────┘
+  CI Provider servers Your code repository
+               reads
+  ┌───────────┐       ┌────────────────────┐
+  │ Pipeline  │──────→│ .github/workflows/ │
+  │ Scheduler │       │ ci.yml             │
+  └─────┬─────┘       └────────────────────┘
+        │ assigns job to
+        ↓
+  ┌─────────────────┐
+  │ Runner          │  ← a virtual machine that executes
+  │ (ubuntu-latest) │  the steps from the YAML file:
+  │                 │  npm ci, npm test, docker build...
+  └─────────────────┘
 ```
 
 **GitHub-hosted (managed) runners** — VMs managed entirely by the CI provider. You get a fresh, clean VM for each pipeline run with common tools pre-installed. Convenient, requires zero maintenance on your side, but: you pay per minute of compute, the hardware is shared with other users, and the runners have no access to your private network.
@@ -165,20 +166,20 @@ CI Provider servers           Your code repository
 A real-world pipeline for a Node.js + TypeScript project typically looks like this:
 
 ```txt
-┌────────────────────────────────────────────────────────────────┐
-│                         CI Pipeline                             │
-│                                                                  │
-│  [lint] ──┐                                                      │
-│            ├──→ [test] ──→ [type-check] ──→ [build] ──→ [push] │
-│  [format]─┘                                    ↓                │
-│                                      (on merge to main only)    │
-│                                     [deploy to staging]         │
-│                                            ↓                    │
-│                                   [smoke tests on staging]      │
-│                                            ↓                    │
-│                              (manual gate OR automatic)         │
-│                                   [deploy to production]        │
-└────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                              CI Pipeline                               │
+│                                                                        │
+│ [lint] ──┐                                                             │
+│          ├──→ [test] ──→ [type-check] ──→ [build] ──→ [push]           │
+│ [format]─┘                                               ↓             │
+│                                               (on merge to main only)  │
+│                                                 [deploy to staging]    │
+│                                                          ↓             │
+│                                              [smoke tests on staging]  │
+│                                                          ↓             │
+│                                             (manual gate OR automatic) │
+│                                               [deploy to production]   │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 **lint** — run ESLint (and/or Stylelint for CSS) to catch syntax errors, unused variables, style violations. Takes 5–30 seconds. Fails fast and cheap.

@@ -11,13 +11,13 @@ The key insight about AMQP that separates RabbitMQ from simpler systems: **produ
 ## The four building blocks
 
 ```txt
-┌──────────────────────────────────────────────────────────────────┐
-│                         RabbitMQ Broker                          │
-│                                                                  │
-│  Producer ──► Exchange ──(binding)──► Queue ──► Consumer        │
-│                  │                                               │
-│                  └──(binding)──► Queue ──► Consumer             │
-└──────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                      RabbitMQ Broker                      │
+│                                                           │
+│  Producer ──► Exchange ──(binding)──► Queue ──► Consumer  │
+│                   │                                       │
+│                   └──(binding)──► Queue ──► Consumer      │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ### Exchange

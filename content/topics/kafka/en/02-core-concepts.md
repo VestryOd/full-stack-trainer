@@ -215,15 +215,15 @@ A **cluster** is a group of brokers working together. Historically (with ZooKeep
 ```txt
 Minimal production cluster (3 brokers):
 
-  ┌──────────┐    ┌──────────┐    ┌──────────┐
-  │ Broker 1 │◄──►│ Broker 2 │◄──►│ Broker 3 │
-  │          │    │(Controller│    │          │
-  └──────────┘    └──────────┘    └──────────┘
-        │              │               │
-        └──────────────┴───────────────┘
-                    Replication
+  ┌──────────┐    ┌─────────────┐    ┌──────────┐
+  │ Broker 1 │◄──►│ Broker 2    │◄──►│ Broker 3 │
+  │          │    │ (Controller │    │          │
+  └──────────┘    └─────────────┘    └──────────┘
+       │                 │                │
+       └─────────────────┴────────────────┘
+                   Replication
 
-  3 brokers → cluster survives the failure of 1 broker (with replication factor = 3)
+3 brokers → cluster survives the failure of 1 broker (with replication factor = 3)
 ```
 
 Why at least 3? The quorum principle: a majority (2 of 3) is needed for agreement. With 2 brokers, the cluster can't survive the loss of one — there's no quorum.
@@ -254,19 +254,19 @@ Kafka with ZooKeeper (pre-Kafka 3.x):
 ```txt
 Kafka with KRaft (Kafka 3.3+, default since Kafka 4.0):
 
-  ┌──────────────────────────────────────────────┐
-  │           Kafka Cluster                       │
+  ┌───────────────────────────────────────────────┐
+  │                 Kafka Cluster                 │
   │                                               │
-  │  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-  │  │ Broker 1 │  │ Broker 2 │  │ Broker 3 │   │
-  │  │(Controller│  │          │  │          │   │
-  │  │  mode)   │  │          │  │          │   │
-  │  └──────────┘  └──────────┘  └──────────┘   │
+  │  ┌─────────────┐  ┌──────────┐  ┌──────────┐  │
+  │  │ Broker 1    │  │ Broker 2 │  │ Broker 3 │  │
+  │  │ (Controller │  │          │  │          │  │
+  │  │ mode)       │  │          │  │          │  │
+  │  └─────────────┘  └──────────┘  └──────────┘  │
   │                                               │
   │  Metadata stored inside the cluster           │
   │  in a dedicated internal topic                │
-  └──────────────────────────────────────────────┘
-  
+  └───────────────────────────────────────────────┘
+
   → One cluster instead of two
   → Faster controller failover (milliseconds vs. seconds)
   → Support for millions of partitions (ZooKeeper scaled poorly)
@@ -277,33 +277,33 @@ Kafka with KRaft (Kafka 3.3+, default since Kafka 4.0):
 ## All Concepts Together
 
 ```txt
-                         KAFKA CLUSTER
-┌──────────────────────────────────────────────────────────────────┐
-│                                                                    │
-│   Topic "order-placed"                                             │
-│   ┌──────────────────────────────────────────────────────────┐    │
-│   │  Partition 0 (Broker 1):  [off:0][off:1][off:2][off:3]  │    │
-│   │  Partition 1 (Broker 2):  [off:0][off:1][off:2]         │    │
-│   │  Partition 2 (Broker 3):  [off:0][off:1][off:2][off:3]  │    │
-│   └──────────────────────────────────────────────────────────┘    │
-│                                                                    │
-└──────────────────────────────────────────────────────────────────┘
-         ▲                              │
-         │ write                        │ read (poll)
-         │                              ▼
-   ┌──────────┐         Consumer Group "analytics" (separate offset)
-   │ Producer │         ┌──────────────────────────────────────────┐
-   │          │         │ Consumer A ◄── Partition 0 (offset: 2)  │
-   └──────────┘         │ Consumer B ◄── Partition 1 (offset: 1)  │
-                        │ Consumer C ◄── Partition 2 (offset: 3)  │
-                        └──────────────────────────────────────────┘
+                        KAFKA CLUSTER
+┌───────────────────────────────────────────────────────────┐
+│                                                           │
+│ Topic "order-placed"                                      │
+│ ┌───────────────────────────────────────────────────────┐ │
+│ │ Partition 0 (Broker 1):  [off:0][off:1][off:2][off:3] │ │
+│ │ Partition 1 (Broker 2):  [off:0][off:1][off:2]        │ │
+│ │ Partition 2 (Broker 3):  [off:0][off:1][off:2][off:3] │ │
+│ └───────────────────────────────────────────────────────┘ │
+│                                                           │
+└────────▲─────────────────────│────────────────────────────┘
+         │ write               │ read (poll)
+         │                     ▼
+     ┌──────────┐      Consumer Group "analytics" (separate offset)
+     │ Producer │      ┌────────────────────────────────────────┐
+     │          │      │ Consumer A ◄── Partition 0 (offset: 2) │
+     └──────────┘      │ Consumer B ◄── Partition 1 (offset: 1) │
+                       │ Consumer C ◄── Partition 2 (offset: 3) │
+                       └────────────────────────────────────────┘
 
-                        Consumer Group "search" (separate offset)
-                        ┌──────────────────────────────────────────┐
-                        │ Consumer X ◄── Partition 0 (offset: 3)  │
-                        │ Consumer Y ◄── Partition 1 (offset: 2)  │
-                        │ Consumer Z ◄── Partition 2 (offset: 3)  │
-                        └──────────────────────────────────────────┘
+
+                       Consumer Group "search" (separate offset)
+                       ┌────────────────────────────────────────┐
+                       │ Consumer X ◄── Partition 0 (offset: 3) │
+                       │ Consumer Y ◄── Partition 1 (offset: 2) │
+                       │ Consumer Z ◄── Partition 2 (offset: 3) │
+                       └────────────────────────────────────────┘
 ```
 
 ## Common Interview Traps

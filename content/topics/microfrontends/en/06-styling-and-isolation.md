@@ -92,24 +92,24 @@ This is the CSS-domain equivalent of the "two React copies" bug from article 03 
 ## Summary table of approaches
 
 ```txt
-┌───────────────────┬───────────────────────┬───────────────┬────────────────────┬──────────────────┐
-│ Approach            │ Isolation mechanism    │ Runtime cost   │ Third-party lib     │ Enforcement       │
-│                    │                        │                │ compatibility       │                  │
-├───────────────────┼───────────────────────┼───────────────┼────────────────────┼──────────────────┤
-│ CSS Modules        │ Build-time name hash   │ None           │ Fine               │ Build convention  │
-│                    │                        │                │                    │ only              │
-├───────────────────┼───────────────────────┼───────────────┼────────────────────┼──────────────────┤
-│ Shadow DOM         │ Real DOM boundary      │ Small          │ Poor (many libs    │ Enforced by the   │
-│                    │                        │ (shadow root   │ expect a global    │ browser           │
-│                    │                        │ parsing)       │ document)          │                  │
-├───────────────────┼───────────────────────┼───────────────┼────────────────────┼──────────────────┤
-│ CSS-in-JS          │ Runtime hash +         │ Some           │ Fine, but tag order│ Build/runtime     │
-│                    │ injected <style>       │ (style compute)│ across remotes is  │ convention        │
-│                    │                        │                │ undefined          │                  │
-├───────────────────┼───────────────────────┼───────────────┼────────────────────┼──────────────────┤
-│ BEM prefixing      │ Naming convention      │ None           │ Fine               │ None — pure       │
-│                    │                        │                │                    │ discipline        │
-└───────────────────┴───────────────────────┴───────────────┴────────────────────┴──────────────────┘
+┌───────────────┬──────────────────────┬─────────────────┬─────────────────────┬──────────────────┐
+│ Approach      │ Isolation mechanism  │ Runtime cost    │ Third-party lib     │ Enforcement      │
+│               │                      │                 │ compatibility       │                  │
+├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
+│ CSS Modules   │ Build-time name hash │ None            │ Fine                │ Build convention │
+│               │                      │                 │                     │ only             │
+├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
+│ Shadow DOM    │ Real DOM boundary    │ Small           │ Poor (many libs     │ Enforced by the  │
+│               │                      │ (shadow root    │ expect a global     │ browser          │
+│               │                      │ parsing)        │ document)           │                  │
+├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
+│ CSS-in-JS     │ Runtime hash +       │ Some            │ Fine, but tag order │ Build/runtime    │
+│               │ injected <style>     │ (style compute) │ across remotes is   │ convention       │
+│               │                      │                 │ undefined           │                  │
+├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
+│ BEM prefixing │ Naming convention    │ None            │ Fine                │ None — pure      │
+│               │                      │                 │                     │ discipline       │
+└───────────────┴──────────────────────┴─────────────────┴─────────────────────┴──────────────────┘
 ```
 
 ## Common interview traps

@@ -104,22 +104,22 @@ Why this is dangerous specifically because it's hidden: a change to `cartStore`'
 ## Summary table of channels
 
 ```txt
-┌──────────────────────┬────────────────┬───────────────┬─────────────────┬───────────────────────┐
-│ Channel               │ Coupling       │ Type safety     │ Survives reload │ When to use            │
-├──────────────────────┼────────────────┼───────────────┼─────────────────┼───────────────────────┤
-│ Event bus             │ Loose           │ Weak (needs a  │ No              │ Pub/sub notifications  │
-│                       │                 │ contract       │                 │ (cart updated, user    │
-│                       │                 │ package)        │                 │ logged out)             │
-├──────────────────────┼────────────────┼───────────────┼─────────────────┼───────────────────────┤
-│ Shared store instance │ Tight           │ Strong          │ No              │ Only when MFEs deploy  │
-│                       │                 │ (shared code)   │                 │ in lockstep             │
-├──────────────────────┼────────────────┼───────────────┼─────────────────┼───────────────────────┤
-│ Host props/callbacks  │ Medium (via     │ Strong          │ No              │ Host-orchestrated      │
-│                       │ the host)       │                 │                 │ navigation/actions      │
-├──────────────────────┼────────────────┼───────────────┼─────────────────┼───────────────────────┤
-│ URL/query params      │ None/loose      │ None (strings)  │ Yes             │ State handoff during   │
-│                       │                 │                 │                 │ navigation, deep-linking│
-└──────────────────────┴────────────────┴───────────────┴─────────────────┴───────────────────────┘
+┌───────────────────────┬─────────────┬────────────────┬─────────────────┬──────────────────────────┐
+│ Channel               │ Coupling    │ Type safety    │ Survives reload │ When to use              │
+├───────────────────────┼─────────────┼────────────────┼─────────────────┼──────────────────────────┤
+│ Event bus             │ Loose       │ Weak (needs a  │ No              │ Pub/sub notifications    │
+│                       │             │ contract       │                 │ (cart updated, user      │
+│                       │             │ package)       │                 │ logged out)              │
+├───────────────────────┼─────────────┼────────────────┼─────────────────┼──────────────────────────┤
+│ Shared store instance │ Tight       │ Strong         │ No              │ Only when MFEs deploy    │
+│                       │             │ (shared code)  │                 │ in lockstep              │
+├───────────────────────┼─────────────┼────────────────┼─────────────────┼──────────────────────────┤
+│ Host props/callbacks  │ Medium (via │ Strong         │ No              │ Host-orchestrated        │
+│                       │ the host)   │                │                 │ navigation/actions       │
+├───────────────────────┼─────────────┼────────────────┼─────────────────┼──────────────────────────┤
+│ URL/query params      │ None/loose  │ None (strings) │ Yes             │ State handoff during     │
+│                       │             │                │                 │ navigation, deep-linking │
+└───────────────────────┴─────────────┴────────────────┴─────────────────┴──────────────────────────┘
 ```
 
 ## Common interview traps

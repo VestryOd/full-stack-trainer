@@ -39,15 +39,15 @@ This is the exact problem Kafka was built to solve.
 Kafka doesn't store messages in a queue that empties as it's consumed. It stores them in a **log** — a sequential, append-only, immutable file of records. A message stays in the log after being read. It remains there until a configured retention period expires (default: 7 days, configurable up to "keep forever").
 
 ```txt
-Queue (RabbitMQ, SQS):             Log (Kafka):
-┌─────────────────────────┐        ┌─────────────────────────────────┐
-│ [msg1][msg2][msg3][msg4]│        │ [msg1][msg2][msg3][msg4][msg5] │
-└─────────────────────────┘        └─────────────────────────────────┘
-Consumer reads msg1 →                Consumer A reads msg1 (offset=0)
-                                     Consumer B reads msg1 (offset=0)
-┌──────────────────────┐             Consumer A then reads msg3 (offset=2)
-│ [msg2][msg3][msg4]   │             msg1 is STILL IN THE LOG
-└──────────────────────┘
+Queue (RabbitMQ, SQS):                Log (Kafka):
+┌──────────────────────────┐          ┌────────────────────────────────┐
+│ [msg1][msg2][msg3][msg4] │          │ [msg1][msg2][msg3][msg4][msg5] │
+└──────────────────────────┘          └────────────────────────────────┘
+Consumer reads msg1 →                 Consumer A reads msg1 (offset=0)
+                                      Consumer B reads msg1 (offset=0)
+┌────────────────────┐                Consumer A then reads msg3 (offset=2)
+│ [msg2][msg3][msg4] │                msg1 is STILL IN THE LOG
+└────────────────────┘
 msg1 is DELETED from the queue
 ```
 

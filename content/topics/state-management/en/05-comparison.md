@@ -459,61 +459,61 @@ Choose none of the three if:
 ## The big comparison table
 
 ```txt
-┌─────────────────────────┬─────────────────┬─────────────────┬─────────────────┐
-│ Criterion               │ MobX            │ Redux/RTK       │ Zustand         │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Paradigm                │ Reactive OOP    │ Functional      │ Minimalist      │
-│                         │                 │ (event-driven)  │ (explicit subs) │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Mutability              │ Mutable         │ Immutable       │ Immutable       │
-│                         │ (inside action) │ (Immer in RTK)  │ (set returns    │
-│                         │                 │                 │ new object)     │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Re-renders              │ Automatic       │ Explicit via    │ Explicit via    │
-│                         │ (reactive graph)│ selector        │ selector        │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Derived data            │ computed (lazy, │ createSelector  │ Functions in    │
-│                         │ cached, auto)   │ (manual, memo)  │ store (no cache)│
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Async                   │ flow / action + │ createAsync-    │ async functions │
-│                         │ runInAction     │ Thunk           │ (native)        │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Provider required       │ Optional        │ Yes             │ No              │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Boilerplate             │ Medium          │ High (RTK       │ Minimal         │
-│                         │                 │ reduces it)     │                 │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Bundle (min+gz)         │ ~18 KB          │ ~17 KB          │ ~1 KB           │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ TypeScript              │ Good            │ Good            │ Excellent        │
-│                         │ (flow — worse)  │                 │                 │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ DevTools                │ MobX DevTools   │ Redux DevTools  │ Redux DevTools  │
-│                         │ (limited)       │ (time-travel,   │ (devtools       │
-│                         │                 │ export/import)  │ middleware)     │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Testing                 │ Classes without │ Reducer = pure  │ getState /      │
-│                         │ React (need     │ fn (perfect);   │ setState without│
-│                         │ dispose)        │ thunks harder   │ React           │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Learning curve          │ 1-2 days        │ 2-4 days (RTK)  │ 30 minutes      │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Server state            │ Custom impl.    │ RTK Query       │ React Query /   │
-│                         │ (no built-in)   │ (built-in)      │ SWR (external)  │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Inter-store             │ Via RootStore   │ getState() in   │ get() in store  │
-│ communication           │ (DI via root)   │ thunk           │ methods         │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ SSR support             │ Yes (with       │ Yes             │ Yes (out of     │
-│                         │ caveats)        │                 │ the box)        │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Enforcement             │ enforceActions  │ Enforced by     │ No built-in     │
-│                         │ (optional)      │ reducer pattern │ enforcement     │
-├─────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
-│ Best fit for            │ Complex reactive │ Large teams,    │ New projects,   │
-│                         │ computations,   │ audit trail,    │ fast start,     │
-│                         │ OOP teams       │ legacy projects │ small teams     │
-└─────────────────────────┴─────────────────┴─────────────────┴─────────────────┘
+┌───────────────────┬──────────────────┬─────────────────┬──────────────────┐
+│ Criterion         │ MobX             │ Redux/RTK       │ Zustand          │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Paradigm          │ Reactive OOP     │ Functional      │ Minimalist       │
+│                   │                  │ (event-driven)  │ (explicit subs)  │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Mutability        │ Mutable          │ Immutable       │ Immutable        │
+│                   │ (inside action)  │ (Immer in RTK)  │ (set returns     │
+│                   │                  │                 │ new object)      │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Re-renders        │ Automatic        │ Explicit via    │ Explicit via     │
+│                   │ (reactive graph) │ selector        │ selector         │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Derived data      │ computed (lazy,  │ createSelector  │ Functions in     │
+│                   │ cached, auto)    │ (manual, memo)  │ store (no cache) │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Async             │ flow / action +  │ createAsync-    │ async functions  │
+│                   │ runInAction      │ Thunk           │ (native)         │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Provider required │ Optional         │ Yes             │ No               │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Boilerplate       │ Medium           │ High (RTK       │ Minimal          │
+│                   │                  │ reduces it)     │                  │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Bundle (min+gz)   │ ~18 KB           │ ~17 KB          │ ~1 KB            │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ TypeScript        │ Good             │ Good            │ Excellent        │
+│                   │ (flow — worse)   │                 │                  │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ DevTools          │ MobX DevTools    │ Redux DevTools  │ Redux DevTools   │
+│                   │ (limited)        │ (time-travel,   │ (devtools        │
+│                   │                  │ export/import)  │ middleware)      │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Testing           │ Classes without  │ Reducer = pure  │ getState /       │
+│                   │ React (need      │ fn (perfect);   │ setState without │
+│                   │ dispose)         │ thunks harder   │ React            │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Learning curve    │ 1-2 days         │ 2-4 days (RTK)  │ 30 minutes       │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Server state      │ Custom impl.     │ RTK Query       │ React Query /    │
+│                   │ (no built-in)    │ (built-in)      │ SWR (external)   │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Inter-store       │ Via RootStore    │ getState() in   │ get() in store   │
+│ communication     │ (DI via root)    │ thunk           │ methods          │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ SSR support       │ Yes (with        │ Yes             │ Yes (out of      │
+│                   │ caveats)         │                 │ the box)         │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Enforcement       │ enforceActions   │ Enforced by     │ No built-in      │
+│                   │ (optional)       │ reducer pattern │ enforcement      │
+├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
+│ Best fit for      │ Complex reactive │ Large teams,    │ New projects,    │
+│                   │ computations,    │ audit trail,    │ fast start,      │
+│                   │ OOP teams        │ legacy projects │ small teams      │
+└───────────────────┴──────────────────┴─────────────────┴──────────────────┘
 ```
 
 ---

@@ -325,15 +325,19 @@ GET /users/42?v=2
 ### Comparison and Recommendation
 
 ```txt
-┌──────────────────┬──────────┬──────────┬──────────┐
-│                  │ URL /v1  │ Header   │ Query ?v │
-├──────────────────┼──────────┼──────────┼──────────┤
-│ Visibility       │ ✅ Immediate│ ❌ Hidden │ ✅ Visible │
-│ Caching          │ ✅ Simple │ ❌ Complex│ ⚠️ Risky │
-│ REST-correct     │ ❌ No    │ ✅ Yes    │ ❌ No    │
-│ DX (ease of use) │ ✅ Simple │ ⚠️ Complex│ ✅ Simple│
-│ Industry adoption│ ✅✅✅    │ ✅        │ ⚠️       │
-└──────────────────┴──────────┴──────────┴──────────┘
+┌───────────────────┬─────────────┬────────────┬───────────┐
+│                   │ URL /v1     │ Header     │ Query ?v  │
+├───────────────────┼─────────────┼────────────┼───────────┤
+│ Visibility        │ ✅ Immediate │ ❌ Hidden   │ ✅ Visible │
+├───────────────────┼─────────────┼────────────┼───────────┤
+│ Caching           │ ✅ Simple    │ ❌ Complex  │ ⚠️ Risky  │
+├───────────────────┼─────────────┼────────────┼───────────┤
+│ REST-correct      │ ❌ No        │ ✅ Yes      │ ❌ No      │
+├───────────────────┼─────────────┼────────────┼───────────┤
+│ DX (ease of use)  │ ✅ Simple    │ ⚠️ Complex │ ✅ Simple  │
+├───────────────────┼─────────────┼────────────┼───────────┤
+│ Industry adoption │ ✅✅✅         │ ✅          │ ⚠️        │
+└───────────────────┴─────────────┴────────────┴───────────┘
 
 Recommendation for most projects: /v1 in the URL.
 Simpler, more robust, clearer for the team and consumers.

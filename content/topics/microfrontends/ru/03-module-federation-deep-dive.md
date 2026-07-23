@@ -7,24 +7,24 @@
 **Host** — приложение, которое во время выполнения загружает и монтирует код, которым не владеет. **Remote** — приложение, которое публикует часть своего кода для загрузки другими. Это не архитектурная иерархия, а роль в конкретном отношении: одно и то же приложение может быть host'ом для одних модулей и remote'ом для других.
 
 ```txt
-                    ┌─────────────────────────┐
-                    │   Host (shell)          │
-                    │  webpack.config.js:      │
-                    │  remotes: {              │
-                    │    checkout: 'checkout@  │
-                    │    http://.../remoteEntry.js' │
-                    │  }                       │
-                    └───────────┬─────────────┘
-                                │ рантайм fetch
-                                ▼
-                    ┌─────────────────────────┐
-                    │  Remote (checkout)      │
-                    │  webpack.config.js:      │
-                    │  exposes: {              │
-                    │    './CheckoutApp': ...  │
-                    │  }                       │
-                    │  filename: 'remoteEntry.js'│
-                    └─────────────────────────┘
+                    ┌──────────────────────────────┐
+                    │ Host (shell)                 │
+                    │ webpack.config.js:           │
+                    │ remotes: {                   │
+                    │   checkout: 'checkout@       │
+                    │   http://.../remoteEntry.js' │
+                    │ }                            │
+                    └──────────────┬───────────────┘
+                                   │ рантайм fetch
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │ Remote (checkout)            │
+                    │ webpack.config.js:           │
+                    │ exposes: {                   │
+                    │   './CheckoutApp': ...       │
+                    │ }                            │
+                    │ filename: 'remoteEntry.js'   │
+                    └──────────────────────────────┘
 ```
 
 ## remoteEntry.js — что внутри

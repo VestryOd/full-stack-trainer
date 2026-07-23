@@ -11,10 +11,10 @@ Every other article in this topic is about *which tool to pick* (CSS transitions
 The browser doesn't "redraw the page" as one atomic action. Every change goes through a pipeline of stages, and **which stage that pipeline starts from** determines how expensive the frame is.
 
 ```txt
-┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐
-│   Style   │──>│  Layout  │──>│  Paint   │──>│ Composite │──> pixels on screen
-│(recalc)   │   │(reflow)  │   │(rasterize)│  │  (layers) │
-└──────────┘   └──────────┘   └──────────┘   └───────────┘
+┌──────────┐   ┌──────────┐   ┌─────────────┐   ┌───────────┐
+│ Style    │──>│ Layout   │──>│ Paint       │──>│ Composite │──> pixels on screen
+│ (recalc) │   │ (reflow) │   │ (rasterize) │   │ (layers)  │
+└──────────┘   └──────────┘   └─────────────┘   └───────────┘
 ```
 
 **1. Style (recalculation)** — the browser figures out which CSS rules apply to each DOM node and resolves final computed values (cascade, inheritance, specificity). The output is a computed style per element. This runs almost any time something that affects a selector match or a property changes.
@@ -40,19 +40,19 @@ Cheap path (changing transform):
 The browser (Chromium is the easiest case to reason about, and the most common one) has at least two threads that matter for animation:
 
 ```txt
-┌─────────────────────────────────────────────────────────┐
-│                      Main Thread                         │
-│  JS execution · Style · Layout · Paint (produces the     │
-│  display list) · event handlers · rAF callbacks          │
-└───────────────────────┬───────────────────────────────────┘
-                         │  hands off layers + display list
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Compositor Thread                       │
-│  Tile rasterization (often on GPU via separate raster     │
-│  threads) · layer assembly · transform/opacity            │
-│  animations · scrolling · submitting the frame to the GPU │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│                      Main Thread                      │
+│   JS execution · Style · Layout · Paint (produces the │
+│   display list) · event handlers · rAF callbacks      │
+└───────────────────────────┬───────────────────────────┘
+                            │ hands off layers + display list
+                            ▼
+┌────────────────────────────────────────────────────────────┐
+│                     Compositor Thread                      │
+│   Tile rasterization (often on GPU via separate raster     │
+│   threads) · layer assembly · transform/opacity            │
+│   animations · scrolling · submitting the frame to the GPU │
+└────────────────────────────────────────────────────────────┘
 ```
 
 The main thread is the same thread that runs all your JavaScript, where React does reconciliation, where event handlers fire. There is exactly **one** of it, and it's sequential: while the main thread is busy with a long synchronous JS task, it can't compute Style/Layout/Paint for the next frame — and it can't respond to a user click either.

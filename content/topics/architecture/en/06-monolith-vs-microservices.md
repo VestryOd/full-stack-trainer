@@ -168,31 +168,31 @@ export class OrderPlacedHandler {
 ## The trade-offs — honest comparison
 
 ```txt
-┌───────────────────────┬──────────────────────────────┬────────────────────────────────────┐
-│                       │      Monolith                │       Microservices                │
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Development speed     │ Fast — direct imports,       │ Slow — separate repos, contracts,  │
-│                       │ one repo, one test suite     │ versioned APIs, integration tests  │
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Deployment            │ One pipeline, one artifact   │ N pipelines, N artifacts,          │
-│                       │                              │ container orchestration (K8s)       │
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Operational           │ One log stream, one          │ Distributed tracing, centralized   │
-│ complexity            │ metrics dashboard            │ logging, service mesh, N dashboards │
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Scaling               │ Scale the whole app          │ Scale only the bottleneck service  │
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Transactions          │ ACID — same DB, same process │ No ACID across services;           │
-│                       │                              │ Saga pattern or eventual consistency│
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Fault isolation       │ One failure can crash all    │ Failures contained to one service  │
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Technology choice     │ One language, one runtime    │ Each service can use different     │
-│                       │                              │ language/database (rarely worth it)│
-├───────────────────────┼──────────────────────────────┼────────────────────────────────────┤
-│ Team autonomy         │ Everyone works in same repo; │ Teams deploy independently;        │
-│                       │ coordination needed          │ less cross-team coordination       │
-└───────────────────────┴──────────────────────────────┴────────────────────────────────────┘
+┌───────────────────┬──────────────────────────────┬──────────────────────────────────────┐
+│                   │ Monolith                     │ Microservices                        │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Development speed │ Fast — direct imports,       │ Slow — separate repos, contracts,    │
+│                   │ one repo, one test suite     │ versioned APIs, integration tests    │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Deployment        │ One pipeline, one artifact   │ N pipelines, N artifacts,            │
+│                   │                              │ container orchestration (K8s)        │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Operational       │ One log stream, one          │ Distributed tracing, centralized     │
+│ complexity        │ metrics dashboard            │ logging, service mesh, N dashboards  │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Scaling           │ Scale the whole app          │ Scale only the bottleneck service    │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Transactions      │ ACID — same DB, same process │ No ACID across services;             │
+│                   │                              │ Saga pattern or eventual consistency │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Fault isolation   │ One failure can crash all    │ Failures contained to one service    │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Technology choice │ One language, one runtime    │ Each service can use different       │
+│                   │                              │ language/database (rarely worth it)  │
+├───────────────────┼──────────────────────────────┼──────────────────────────────────────┤
+│ Team autonomy     │ Everyone works in same repo; │ Teams deploy independently;          │
+│                   │ coordination needed          │ less cross-team coordination         │
+└───────────────────┴──────────────────────────────┴──────────────────────────────────────┘
 ```
 
 The technology-choice freedom ("each service can use a different language") is frequently cited as a microservices benefit. In practice, heterogeneous tech stacks multiply operational burden with little return. Most companies standardize on 1–2 languages regardless.

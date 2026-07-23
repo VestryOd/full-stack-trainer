@@ -176,22 +176,23 @@ Expiration:
 ## Final architecture
 
 ```txt
-                    ┌─────────────┐
-Client ──────────→ │ Load Balancer│
-                    └──────┬──────┘
+                   ┌───────────────┐
+          Client ─►│ Load Balancer │
+                   └───────┬───────┘
                            │
-                    ┌──────▼──────┐
-                    │  API Servers │ (stateless)
-                    └──────┬──────┘
-              ┌────────────┼────────────────┐
-              ▼            ▼                ▼
-           Redis      PostgreSQL        Queue (clicks)
-        (hot codes)  (source of truth)       │
-                                              ▼
+                    ┌──────▼──────┐ (stateless)
+                    │ API Servers │
+                    └─────┬───────┘
+     ┌───────────────────┼─────────────────────┐
+     ▼                   ▼                     ▼
+   Redis            PostgreSQL          Queue (clicks)
+(hot codes)      (source of truth)
+                                               │
+                                               ▼
                                        Analytics Worker
-                                              │
-                                              ▼
-                                       Analytics DB
+                                               │
+                                               ▼
+                                         Analytics DB
 ```
 
 Read replicas for PostgreSQL get added if redirect traffic after the Redis cache is still significant — but in most realistic scenarios, the Redis hit ratio for popular links (a Zipf distribution: a small share of links gets most of the traffic) makes this a lower priority.

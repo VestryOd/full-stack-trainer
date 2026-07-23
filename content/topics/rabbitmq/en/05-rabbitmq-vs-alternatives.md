@@ -230,34 +230,34 @@ FIFO SQS:
 ## Decision guide
 
 ```txt
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         MESSAGE BROKER DECISION GUIDE                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ Do you need to replay messages or let new consumers read history?           │
-│   YES → Kafka (or Redis Streams for lower volume)                           │
-│   NO  → continue                                                            │
-│                                                                             │
-│ Do you need extremely high throughput (millions/sec)?                       │
-│   YES → Kafka                                                               │
-│   NO  → continue                                                            │
-│                                                                             │
-│ Is real-time broadcast to connected clients the primary use case,           │
-│ and is message loss acceptable?                                             │
-│   YES → Redis Pub/Sub                                                       │
-│   NO  → continue                                                            │
-│                                                                             │
-│ Are you on AWS and want zero infrastructure management?                     │
-│   YES → SQS (Standard or FIFO), optionally with SNS for fan-out            │
-│   NO  → continue                                                            │
-│                                                                             │
-│ Do you need complex routing, per-message TTL, priority queues,              │
-│ or fine-grained retry control?                                              │
-│   YES → RabbitMQ                                                            │
-│                                                                             │
-│ Do you need simple background job queuing with moderate throughput          │
-│ and don't want to manage a broker?                                          │
-│   → SQS (if AWS) or RabbitMQ with CloudAMQP (if multi-cloud)               │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│                   MESSAGE BROKER DECISION GUIDE                    │
+├────────────────────────────────────────────────────────────────────┤
+│ Do you need to replay messages or let new consumers read history?  │
+│   YES → Kafka (or Redis Streams for lower volume)                  │
+│   NO  → continue                                                   │
+│                                                                    │
+│ Do you need extremely high throughput (millions/sec)?              │
+│   YES → Kafka                                                      │
+│   NO  → continue                                                   │
+│                                                                    │
+│ Is real-time broadcast to connected clients the primary use case,  │
+│ and is message loss acceptable?                                    │
+│   YES → Redis Pub/Sub                                              │
+│   NO  → continue                                                   │
+│                                                                    │
+│ Are you on AWS and want zero infrastructure management?            │
+│   YES → SQS (Standard or FIFO), optionally with SNS for fan-out    │
+│   NO  → continue                                                   │
+│                                                                    │
+│ Do you need complex routing, per-message TTL, priority queues,     │
+│ or fine-grained retry control?                                     │
+│   YES → RabbitMQ                                                   │
+│                                                                    │
+│ Do you need simple background job queuing with moderate throughput │
+│ and don't want to manage a broker?                                 │
+│   → SQS (if AWS) or RabbitMQ with CloudAMQP (if multi-cloud)       │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Common interview traps

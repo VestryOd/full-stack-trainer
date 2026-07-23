@@ -37,16 +37,16 @@ User-Agent: Mozilla/5.0
 ```txt
 Request structure:
 ┌─────────────────────────────────────────┐
-│  Method  Path           Protocol version │  ← request line
-│  GET     /api/users/42  HTTP/1.1         │
+│ Method  Path           Protocol version │  ← request line
+│ GET     /api/users/42  HTTP/1.1         │
 ├─────────────────────────────────────────┤
-│  Host: api.example.com                  │
-│  Accept: application/json               │  ← headers
-│  Authorization: Bearer ...              │
+│ Host: api.example.com                   │  ← headers
+│ Accept: application/json                │
+│ Authorization: Bearer ...               │
 ├─────────────────────────────────────────┤
-│  (empty line)                           │  ← separator
+│ (empty line)                            │  ← separator
 ├─────────────────────────────────────────┤
-│  { "name": "Alice" }                    │  ← body (for POST/PUT/PATCH)
+│ { "name": "Alice" }                     │  ← body (for POST/PUT/PATCH)
 └─────────────────────────────────────────┘
 ```
 

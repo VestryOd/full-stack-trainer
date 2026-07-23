@@ -7,24 +7,24 @@ This is the most technical article in the section. Where the previous two answer
 A **host** is an application that, at runtime, loads and mounts code it doesn't own. A **remote** is an application that publishes part of its code for others to load. This isn't an architectural hierarchy — it's a role in a specific relationship. The same application can be a host for some modules and a remote for others.
 
 ```txt
-                    ┌─────────────────────────┐
-                    │   Host (shell)          │
-                    │  webpack.config.js:      │
-                    │  remotes: {              │
-                    │    checkout: 'checkout@  │
-                    │    http://.../remoteEntry.js' │
-                    │  }                       │
-                    └───────────┬─────────────┘
-                                │ runtime fetch
-                                ▼
-                    ┌─────────────────────────┐
-                    │  Remote (checkout)      │
-                    │  webpack.config.js:      │
-                    │  exposes: {              │
-                    │    './CheckoutApp': ...  │
-                    │  }                       │
-                    │  filename: 'remoteEntry.js'│
-                    └─────────────────────────┘
+                    ┌──────────────────────────────┐
+                    │ Host (shell)                 │
+                    │ webpack.config.js:           │
+                    │ remotes: {                   │
+                    │   checkout: 'checkout@       │
+                    │   http://.../remoteEntry.js' │
+                    │ }                            │
+                    └──────────────┬───────────────┘
+                                   │ runtime fetch
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │ Remote (checkout)            │
+                    │ webpack.config.js:           │
+                    │ exposes: {                   │
+                    │   './CheckoutApp': ...       │
+                    │ }                            │
+                    │ filename: 'remoteEntry.js'   │
+                    └──────────────────────────────┘
 ```
 
 ## remoteEntry.js — what's actually inside it

@@ -8,32 +8,32 @@ Docker is **not** a virtual machine (VM). This distinction matters:
 
 ```txt
 Virtual Machine (VM):
-  ┌──────────────────────────────────────────────┐
-  │              Host OS (Linux/Windows)          │
-  │  ┌──────────────────────────────────────────┐│
-  │  │        Hypervisor (VMware, VirtualBox)    ││
-  │  │  ┌──────────────┐  ┌──────────────┐      ││
-  │  │  │  Guest OS    │  │  Guest OS    │      ││
-  │  │  │  (full Linux)│  │  (full Linux)│      ││
-  │  │  │  App + libs  │  │  App + libs  │      ││
-  │  │  └──────────────┘  └──────────────┘      ││
-  │  └──────────────────────────────────────────┘│
-  └──────────────────────────────────────────────┘
+  ┌────────────────────────────────────────┐
+  │        Host OS (Linux/Windows)         │
+  │ ┌────────────────────────────────────┐ │
+  │ │  Hypervisor (VMware, VirtualBox)   │ │
+  │ │ ┌──────────────┐  ┌──────────────┐ │ │
+  │ │ │ Guest OS     │  │ Guest OS     │ │ │
+  │ │ │ (full Linux) │  │ (full Linux) │ │ │
+  │ │ │ App + libs   │  │ App + libs   │ │ │
+  │ │ └──────────────┘  └──────────────┘ │ │
+  │ └────────────────────────────────────┘ │
+  └────────────────────────────────────────┘
   Each VM has its own full OS kernel — heavy, slow to start (minutes)
 
 Docker Container:
-  ┌──────────────────────────────────────────────┐
-  │              Host OS (Linux kernel)           │
-  │  ┌───────────────────────────────────────┐   │
-  │  │     Docker Engine (runtime daemon)     │   │
-  │  │  ┌──────────────┐ ┌──────────────┐   │   │
-  │  │  │  Container A  │ │  Container B  │   │   │
-  │  │  │  app + libs   │ │  app + libs   │   │   │
-  │  │  │  (no OS kernel│ │  (no OS kernel│   │   │
-  │  │  │  of its own)  │ │  of its own)  │   │   │
-  │  │  └──────────────┘ └──────────────┘   │   │
-  │  └───────────────────────────────────────┘   │
-  └──────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────┐
+  │          Host OS (Linux kernel)          │
+  │ ┌──────────────────────────────────────┐ │
+  │ │    Docker Engine (runtime daemon)    │ │
+  │ │ ┌───────────────┐  ┌───────────────┐ │ │
+  │ │ │ Container A   │  │ Container B   │ │ │
+  │ │ │ app + libs    │  │ app + libs    │ │ │
+  │ │ │ (no OS kernel │  │ (no OS kernel │ │ │
+  │ │ │ of its own)   │  │ of its own)   │ │ │
+  │ │ └───────────────┘  └───────────────┘ │ │
+  │ └──────────────────────────────────────┘ │
+  └──────────────────────────────────────────┘
   Containers share the host OS kernel — lightweight, start in milliseconds
 ```
 

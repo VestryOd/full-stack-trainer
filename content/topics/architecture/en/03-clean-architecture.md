@@ -38,29 +38,29 @@ Robert C. Martin (known as "Uncle Bob") described Clean Architecture as concentr
 > **Source code dependencies must point inward only. Nothing in an inner ring can know about anything in an outer ring.**
 
 ```txt
-┌─────────────────────────────────────────────────────────┐
-│                   4. Frameworks & Drivers                │
-│         (Express, NestJS, Prisma, HTTP, CLI,            │
-│          databases, external services, UI)              │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │              3. Interface Adapters                │   │
-│  │     (Controllers, Presenters, Gateways,          │   │
-│  │      Repository implementations, DTO mappers)    │   │
-│  │  ┌───────────────────────────────────────────┐   │   │
-│  │  │           2. Use Cases                     │   │   │
-│  │  │   (Application business rules,             │   │   │
-│  │  │    orchestration logic)                    │   │   │
-│  │  │  ┌──────────────────────────────────────┐  │   │   │
-│  │  │  │          1. Entities                  │  │   │   │
-│  │  │  │   (Enterprise business rules,         │  │   │   │
-│  │  │  │    domain objects, core types)        │  │   │   │
-│  │  │  └──────────────────────────────────────┘  │   │   │
-│  │  └───────────────────────────────────────────┘   │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│           4. Frameworks & Drivers            │
+│ (Express, NestJS, Prisma, HTTP, CLI,         │
+│ databases, external services, UI)            │
+│ ┌──────────────────────────────────────────┐ │
+│ │          3. Interface Adapters           │ │
+│ │ (Controllers, Presenters, Gateways,      │ │
+│ │ Repository implementations, DTO mappers) │ │
+│ │ ┌─────────────────────────────────┐      │ │
+│ │ │           2. Use Cases          │      │ │
+│ │ │ (Application business rules,    │      │ │
+│ │ │ orchestration logic)            │      │ │
+│ │ │ ┌─────────────────────────────┐ │      │ │
+│ │ │ │         1. Entities         │ │      │ │
+│ │ │ │ (Enterprise business rules, │ │      │ │
+│ │ │ │ domain objects, core types) │ │      │ │
+│ │ │ └─────────────────────────────┘ │      │ │
+│ │ └─────────────────────────────────┘      │ │
+│ └──────────────────────────────────────────┘ │
+└──────────────────────────────────────────────┘
 
 Dependencies: always point ──► inward
-              NEVER point outward
+NEVER point outward
 ```
 
 ### Ring 1: Entities

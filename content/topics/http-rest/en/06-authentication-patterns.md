@@ -469,17 +469,23 @@ headers["X-Signature"] = signature;
 ## Comparison
 
 ```txt
-┌──────────────────┬──────────────┬────────────┬─────────────┬──────────┐
-│                  │ Session      │ JWT        │ OAuth 2.0   │ API Key  │
-├──────────────────┼──────────────┼────────────┼─────────────┼──────────┤
-│ Invalidation     │ ✅ Instant   │ ❌ At exp  │ ✅ Refresh  │ ✅ Instant│
-│ Stateless        │ ❌ No        │ ✅ Yes     │ ✅ Yes      │ ❌ No    │
-│ Scaling          │ ⚠️ Needs Redis│ ✅ Easy   │ ✅ Easy     │ ⚠️ Redis │
-│ Cross-domain     │ ❌ Complex   │ ✅ Easy    │ ✅ Native   │ ✅ Easy  │
-│ 3rd-party auth   │ ❌ No        │ ❌ No      │ ✅ Built for│ ❌ No    │
-│ Mobile           │ ⚠️ Awkward   │ ✅ Easy   │ ✅ Easy     │ ✅ Easy  │
-│ Complexity       │ Low          │ Medium     │ High        │ Low      │
-└──────────────────┴──────────────┴────────────┴─────────────┴──────────┘
+┌────────────────┬────────────────┬──────────┬─────────────┬───────────┐
+│                │ Session        │ JWT      │ OAuth 2.0   │ API Key   │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ Invalidation   │ ✅ Instant      │ ❌ At exp │ ✅ Refresh   │ ✅ Instant │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ Stateless      │ ❌ No           │ ✅ Yes    │ ✅ Yes       │ ❌ No      │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ Scaling        │ ⚠️ Needs Redis │ ✅ Easy   │ ✅ Easy      │ ⚠️ Redis  │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ Cross-domain   │ ❌ Complex      │ ✅ Easy   │ ✅ Native    │ ✅ Easy    │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ 3rd-party auth │ ❌ No           │ ❌ No     │ ✅ Built for │ ❌ No      │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ Mobile         │ ⚠️ Awkward     │ ✅ Easy   │ ✅ Easy      │ ✅ Easy    │
+├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
+│ Complexity     │ Low            │ Medium   │ High        │ Low       │
+└────────────────┴────────────────┴──────────┴─────────────┴───────────┘
 
 When to use what:
   Session    — traditional web where frontend and API share a domain

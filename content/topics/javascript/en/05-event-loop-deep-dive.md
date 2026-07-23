@@ -45,21 +45,21 @@ A separate queue with higher priority. Sources:
 ### Browser Event Loop (HTML spec)
 
 ```txt
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│   1. Pick ONE task from the Task Queue (if any)            │
-│      ↓                                                      │
-│   2. Execute the task (run-to-completion)                   │
-│      ↓                                                      │
-│   3. Drain ALL microtasks from the Microtask Queue         │
-│      (including ones added during processing)               │
-│      ↓                                                      │
-│   4. [Rendering opportunity] — if needed:                   │
-│      requestAnimationFrame → style → layout → paint         │
-│      ↓                                                      │
-│   5. → go back to step 1                                   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│  1. Pick ONE task from the Task Queue (if any)      │
+│     ↓                                               │
+│  2. Execute the task (run-to-completion)            │
+│     ↓                                               │
+│  3. Drain ALL microtasks from the Microtask Queue   │
+│     (including ones added during processing)        │
+│     ↓                                               │
+│  4. [Rendering opportunity] — if needed:            │
+│     requestAnimationFrame → style → layout → paint  │
+│     ↓                                               │
+│  5. → go back to step 1                             │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
 **The critical point of step 3**: The Microtask Queue is drained **completely** — not just one microtask, but every last one. If a microtask adds a new microtask, that one also runs before the next task. An infinite loop of microtasks will block the Event Loop forever.

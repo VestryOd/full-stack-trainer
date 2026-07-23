@@ -10,11 +10,11 @@ Recording (Record → replay the problematic interaction → Stop) gives you a m
 
 ```txt
 How to read the flame chart:
-┌─────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────────┐
 │ Main                                                      │
-│ ▓▓▓▓░░░▓▓▓▓▓▓▓▓▓▓▓▓░░░▓▓▓░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░      │  ← time axis
-│  JS   Style Layout  Paint    JS (rAF callback)  Composite│
-└─────────────────────────────────────────────────────────┘
+│ ▓▓▓▓░░░▓▓▓▓▓▓▓▓▓▓▓▓░░░▓▓▓░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░       │ ← time axis
+│  JS   Style Layout  Paint    JS (rAF callback)  Composite │
+└───────────────────────────────────────────────────────────┘
   Block color = category of work:
   yellow  = Scripting (your JS)
   purple  = Rendering (Style/Layout)

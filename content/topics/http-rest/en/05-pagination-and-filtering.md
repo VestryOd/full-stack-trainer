@@ -208,17 +208,23 @@ GraphQL (Relay spec) uses exactly this model:
 ## Comparison
 
 ```txt
-┌─────────────────────┬──────────────────┬──────────────────────┐
-│                     │ Offset/Page      │ Cursor               │
-├─────────────────────┼──────────────────┼──────────────────────┤
-│ Jump to page N      │ ✅ Easy           │ ❌ Not possible      │
-│ Total count         │ ✅ Available      │ ❌ Expensive         │
-│ Infinite scroll     │ ⚠️ Drift issues   │ ✅ Ideal             │
-│ Performance         │ ❌ O(n) at >100K  │ ✅ O(log n) always   │
-│ Stability           │ ❌ Drift on DML   │ ✅ Stable            │
-│ Implementation      │ ✅ Simple         │ ⚠️ More complex      │
-│ Real-time feed      │ ❌ Not suitable   │ ✅ Ideal             │
-└─────────────────────┴──────────────────┴──────────────────────┘
+┌─────────────────┬─────────────────┬───────────────────┐
+│                 │ Offset/Page     │ Cursor            │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Jump to page N  │ ✅ Easy          │ ❌ Not possible    │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Total count     │ ✅ Available     │ ❌ Expensive       │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Infinite scroll │ ⚠️ Drift issues │ ✅ Ideal           │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Performance     │ ❌ O(n) at >100K │ ✅ O(log n) always │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Stability       │ ❌ Drift on DML  │ ✅ Stable          │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Implementation  │ ✅ Simple        │ ⚠️ More complex   │
+├─────────────────┼─────────────────┼───────────────────┤
+│ Real-time feed  │ ❌ Not suitable  │ ✅ Ideal           │
+└─────────────────┴─────────────────┴───────────────────┘
 
 Decision rule:
   Classic table with page numbers → offset

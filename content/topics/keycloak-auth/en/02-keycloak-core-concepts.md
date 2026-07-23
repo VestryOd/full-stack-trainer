@@ -34,26 +34,26 @@ A separate realm always exists — `master`, created by default on install. **`m
 A **Client** in Keycloak terms is the registration of a specific application (the OAuth2 "Client" role from [OAuth2/OIDC Fundamentals]) inside a realm. A client's config includes: allowed grant types, `redirect_uri`, per-client token TTLs, and, most important architecturally — the **client type**:
 
 ```txt
-┌────────────────┬──────────────────────┬────────────────────────────────┐
-│                  │ Can hold a secret?    │ Typical example                │
-├────────────────┼──────────────────────┼────────────────────────────────┤
-│ Public           │ No                     │ React SPA, mobile app —         │
-│                  │                        │ all the code runs on the        │
-│                  │                        │ user's device, a secret can't   │
-│                  │                        │ be protected there               │
-├────────────────┼──────────────────────┼────────────────────────────────┤
-│ Confidential     │ Yes                    │ NestJS backend, a BFF service —│
-│                  │                        │ code runs on a server your       │
-│                  │                        │ team controls, the secret can    │
-│                  │                        │ be safely kept in env/a secret   │
-│                  │                        │ manager                          │
-├────────────────┼──────────────────────┼────────────────────────────────┤
-│ Bearer-only      │ Doesn't do login at    │ A pure Resource Server — an API │
-│                  │ all                    │ that only VALIDATES tokens       │
-│                  │                        │ issued for another client, and   │
-│                  │                        │ never initiates an OAuth2 flow   │
-│                  │                        │ itself                           │
-└────────────────┴──────────────────────┴────────────────────────────────┘
+┌──────────────┬─────────────────────┬─────────────────────────────────┐
+│              │ Can hold a secret?  │ Typical example                 │
+├──────────────┼─────────────────────┼─────────────────────────────────┤
+│ Public       │ No                  │ React SPA, mobile app —         │
+│              │                     │ all the code runs on the        │
+│              │                     │ user's device, a secret can't   │
+│              │                     │ be protected there              │
+├──────────────┼─────────────────────┼─────────────────────────────────┤
+│ Confidential │ Yes                 │ NestJS backend, a BFF service — │
+│              │                     │ code runs on a server your      │
+│              │                     │ team controls, the secret can   │
+│              │                     │ be safely kept in env/a secret  │
+│              │                     │ manager                         │
+├──────────────┼─────────────────────┼─────────────────────────────────┤
+│ Bearer-only  │ Doesn't do login at │ A pure Resource Server — an API │
+│              │ all                 │ that only VALIDATES tokens      │
+│              │                     │ issued for another client, and  │
+│              │                     │ never initiates an OAuth2 flow  │
+│              │                     │ itself                          │
+└──────────────┴─────────────────────┴─────────────────────────────────┘
 ```
 
 `public` in Keycloak literally means "this client's `client_secret` is empty, and Keycloak won't require it on the code→token exchange" — which is exactly why PKCE isn't optional for public clients, it's a mandatory defense (without a secret and without PKCE, anyone who intercepts the code could complete the exchange).

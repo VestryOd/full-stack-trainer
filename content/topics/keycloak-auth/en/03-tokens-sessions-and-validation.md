@@ -174,30 +174,30 @@ Refresh Token TTL (Keycloak: SSO Session Idle / SSO Session Max):
 This is a common source of confusion: "if the JWT is validated locally, with no call to the server — what do sessions on Keycloak even have to do with anything?" The answer: because these are **two different entities**, responsible for two different things.
 
 ```txt
-┌─────────────────────────────────────────────────────────────────┐
-│                     Keycloak (Authorization Server)                │
-│                                                                      │
-│  Server-side SSO Session:                                          │
-│    Stored IN Keycloak's DB/memory. Lives until the user logs out    │
-│    or SSO Session Max/Idle expires.                                 │
-│    This session is exactly what gives you SSO: if the user is       │
-│    already authenticated in this session, redirecting to            │
-│    /authorize from ANOTHER client won't show the login form again.  │
-│    THIS session is the source of truth for who's actually logged in.│
-└──────────────────────────────┬──────────────────────────────────┘
-                                 │ issues access/id/refresh tokens
-                                 │ based on the Keycloak session
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  NestJS Resource Server (API)                      │
-│                                                                      │
-│  Stores nothing about the session at all. Every request is          │
-│  checked independently: is the signature valid? has exp expired?    │
-│  is the aud correct? This is the classic stateless model — the      │
-│  Resource Server has NO WAY of knowing whether the Keycloak          │
-│  session this token came from is still alive, until the token's     │
-│  exp passes (see the local-validation trade-off above).             │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                    Keycloak (Authorization Server)                    │
+│                                                                       │
+│   Server-side SSO Session:                                            │
+│     Stored IN Keycloak's DB/memory. Lives until the user logs out     │
+│     or SSO Session Max/Idle expires.                                  │
+│     This session is exactly what gives you SSO: if the user is        │
+│     already authenticated in this session, redirecting to             │
+│     /authorize from ANOTHER client won't show the login form again.   │
+│     THIS session is the source of truth for who's actually logged in. │
+└───────────────────────────────────┬───────────────────────────────────┘
+                                    │ issues access/id/refresh tokens
+                                    │ based on the Keycloak session
+                                    ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                    NestJS Resource Server (API)                   │
+│                                                                   │
+│   Stores nothing about the session at all. Every request is       │
+│   checked independently: is the signature valid? has exp expired? │
+│   is the aud correct? This is the classic stateless model — the   │
+│   Resource Server has NO WAY of knowing whether the Keycloak      │
+│   session this token came from is still alive, until the token's  │
+│   exp passes (see the local-validation trade-off above).          │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 Practical consequence: **revoking a Keycloak session (logout, an admin block) doesn't instantly revoke already-issued access tokens** — they keep passing local validation on the Resource Server until exp, because the Resource Server has no way of knowing the state of the server-side session. This isn't a bug, it's a direct consequence of choosing a stateless model for the API — and that's exactly why a short access token TTL isn't an overcautious extra, it's the only practical way to bound the window where "the token is valid but the session is already dead."
@@ -235,26 +235,26 @@ Back-channel logout (OIDC Back-Channel Logout, recommended):
 ```txt
 Single Logout — propagating across multiple clients:
 
-  React SPA         NestJS BFF        Mobile App
-      │                  │                 │
-      │   all three got tokens               │
-      │   within ONE SSO session              │
-      └────────┬─────────┴────────┬────────┘
-                │                  │
-                ▼                  ▼
-         ┌──────────────────────────────┐
-         │   Keycloak SSO Session ID     │
-         └──────────────┬───────────────┘
-                          │ logout initiated by ANY of the clients
-                          ▼
-         Keycloak kills the session → dispatches back-channel logout
-         POST requests to all three clients' backchannel_logout_uri
-                          │
-        ┌─────────────────┼─────────────────┐
-        ▼                  ▼                  ▼
-  React SPA clears     NestJS BFF tears     Mobile App learns
-  its local copy of     down its server-      via push/on the
-  the token             side session/cookie   next API call
+    React SPA            NestJS BFF            Mobile App
+        │                     │                     │
+        │  all three got tokens                     │
+        │  within ONE SSO session                   │
+        └─────────────────────┴─────────────────────┘
+                              │
+                              ▼
+                  ┌─────────────────────────┐
+                  │ Keycloak SSO Session ID │
+                  └───────────┬─────────────┘
+                              │ logout initiated by ANY of the clients
+                              ▼
+                  Keycloak kills the session → dispatches back-channel logout
+                  POST requests to all three clients' backchannel_logout_uri
+                              │
+        ┌─────────────────────┬─────────────────────┐
+        ▼                     ▼                     ▼
+React SPA clears     NestJS BFF tears       Mobile App learns
+its local copy of    down its server-       via push/on the
+the token            side session/cookie    next API call
 ```
 
 ```typescript

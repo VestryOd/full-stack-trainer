@@ -18,19 +18,19 @@ The difference between the three patterns is entirely in how this third piece wo
 ## MVC — Model-View-Controller
 
 ```txt
-         User input
-              │
-              ▼
-┌─────────────────────┐
-│      Controller      │  ← handles input, orchestrates
-└──────┬──────────────┘
+            User input
+                 │
+                 ▼
+    ┌──────────────────────────┐
+    │        Controller        │  ← handles input, orchestrates
+    └──┬──────────────────┬────┘
        │ updates          │ selects view
        ▼                  ▼
-┌──────────────┐   ┌─────────────┐
-│    Model     │──►│    View     │
-│ (data/logic) │   │ (renders)   │
-└──────────────┘   └─────────────┘
-       Model notifies View directly (in original MVC)
+┌──────────────┐     ┌───────────┐
+│ Model        │────►│ View      │
+│ (data/logic) │     │ (renders) │
+└──────────────┘     └───────────┘
+      Model notifies View directly (in original MVC)
 ```
 
 **Controller** — receives user input (HTTP requests, button clicks, form submissions), decides what to do, updates the Model, and selects which View to render. It knows about both the Model and the View.
@@ -95,23 +95,23 @@ Here the separation is more tangible: the controller selects the template; the t
 MVP emerged from the problems of applying MVC to desktop GUI frameworks (Windows Forms, Android pre-Jetpack). The key difference: the **View is passive** — it has no logic, it just renders what the Presenter tells it to render.
 
 ```txt
-         User input
-              │
-              ▼
-┌─────────────────────┐
-│        View          │  ← passive: only renders, delegates all events
-└──────┬──────────────┘
-       │ events (user clicked "Submit")
-       ▼
-┌─────────────────────┐
-│      Presenter       │  ← all logic lives here, knows the View interface
-└──────┬──────────────┘
-       │ queries/updates       │ updates View explicitly
-       ▼                       ▼
-┌──────────────┐     ┌─────────────────┐
-│    Model     │     │  View (via      │
-│              │     │  interface)     │
-└──────────────┘     └─────────────────┘
+                 User input
+                      │
+                      ▼
+┌─────────────────────────────────────────────┐
+│                     View                    │  ← passive: only renders, delegates all events
+└─────────────────────┬───────────────────────┘
+                      │ events (user clicked "Submit")
+                      ▼
+┌─────────────────────────────────────────────┐
+│                  Presenter                  │  ← all logic lives here, knows the View interface
+└──┬─────────────────────────────────────┬────┘
+   │ queries/updates                     │ updates View explicitly
+   ▼                                     ▼
+┌───────┐                          ┌────────────┐
+│ Model │                          │ View (via  │
+│       │                          │ interface) │
+└───────┘                          └────────────┘
 ```
 
 The critical difference from MVC: the **Presenter communicates with the View through an interface**. The Presenter doesn't know about HTML, Android layouts, or any specific UI framework. It calls `view.showOrder(order)`, `view.showError(message)`, `view.setSubmitEnabled(false)` — abstract methods defined by a `IOrderView` interface that the real View implements.
@@ -159,17 +159,17 @@ class ExpressOrderView implements IOrderView {
 MVVM (Model-View-ViewModel) was introduced by Microsoft for WPF (Windows Presentation Foundation) and later became the dominant pattern in modern frontend frameworks. The key innovation: **data binding** — the ViewModel exposes observable state, and the View automatically re-renders when that state changes.
 
 ```txt
-┌──────────────┐    two-way     ┌─────────────────┐
-│     View     │◄──data binding─►│   ViewModel     │
-│ (template/   │                │ (observable     │
-│  component)  │                │  state + logic) │
-└──────────────┘                └────────┬────────┘
-                                         │ calls
-                                         ▼
-                                ┌────────────────┐
-                                │     Model      │
-                                │ (data/service) │
-                                └────────────────┘
+┌────────────┐                       ┌────────────────┐
+│ View       │ two-way data binding  │ ViewModel      │
+│ (template/ │◄─────────────────────►│ (observable    │
+│ component) │                       │ state + logic) │
+└────────────┘                       └───────┬────────┘
+                                             │ calls
+                                             ▼
+                                     ┌────────────────┐
+                                     │ Model          │
+                                     │ (data/service) │
+                                     └────────────────┘
 ```
 
 **ViewModel** — holds the UI state (is the form submitting? is there an error? what's the current list of items?) as observable properties. When a ViewModel property changes, the View automatically updates — the ViewModel never needs to call `view.showError()` explicitly. The View is a "dumb" projection of the ViewModel's state.

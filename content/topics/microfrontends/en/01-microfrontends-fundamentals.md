@@ -49,24 +49,24 @@ Sometimes MFEs let one team stay on Angular while the rest of the org moves to R
 ## The core trade-off — stated explicitly
 
 ```txt
-┌────────────────────────────────┬──────────────────────────────────┐
-│  What you gain                 │  What you pay                    │
-├────────────────────────────────┼──────────────────────────────────┤
-│ Team autonomy:                 │ Runtime complexity:              │
-│ deploy without coordination    │ versions, dependencies, and      │
-│                                 │ composition must be reconciled   │
-│                                 │ in the browser or at request time│
-├────────────────────────────────┼──────────────────────────────────┤
-│ Deploy-level fault isolation:  │ Shared-dependency overhead:      │
-│ one team's broken release      │ React, the design system, the    │
-│ doesn't block the others       │ router — versions must be        │
-│                                 │ explicitly reconciled            │
-├────────────────────────────────┼──────────────────────────────────┤
-│ Ability to be tech-heterogeneous│ Consistency cost:                │
-│ (less often needed in practice)│ UX, styling, and behavior must   │
-│                                 │ read as ONE product even though  │
-│                                 │ different teams write them       │
-└────────────────────────────────┴──────────────────────────────────┘
+┌──────────────────────────────────┬───────────────────────────────────┐
+│ What you gain                    │ What you pay                      │
+├──────────────────────────────────┼───────────────────────────────────┤
+│ Team autonomy:                   │ Runtime complexity:               │
+│ deploy without coordination      │ versions, dependencies, and       │
+│                                  │ composition must be reconciled    │
+│                                  │ in the browser or at request time │
+├──────────────────────────────────┼───────────────────────────────────┤
+│ Deploy-level fault isolation:    │ Shared-dependency overhead:       │
+│ one team's broken release        │ React, the design system, the     │
+│ doesn't block the others         │ router — versions must be         │
+│                                  │ explicitly reconciled             │
+├──────────────────────────────────┼───────────────────────────────────┤
+│ Ability to be tech-heterogeneous │ Consistency cost:                 │
+│ (less often needed in practice)  │ UX, styling, and behavior must    │
+│                                  │ read as ONE product even though   │
+│                                  │ different teams write them        │
+└──────────────────────────────────┴───────────────────────────────────┘
 ```
 
 This is the exact same "monolith vs microservices" trade-off, carried into the browser — with one difference: on the backend, service boundaries are invisible to the user. In the frontend, a poorly drawn boundary between micro-frontends is something the user sees directly — mismatched fonts, duplicate modals, a flash of blank screen between transitions.

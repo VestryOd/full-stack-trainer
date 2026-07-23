@@ -77,14 +77,13 @@ Kafka — pull model:
 
 ```txt
 RabbitMQ — smart routing in the broker:
-  ┌─────────────────────────────────────────────┐
-  │              RabbitMQ Broker                 │
-  │                                              │
-  │  Producer ──► Exchange ──► Bindings ──►      │
-  │              (direct/fanout/               Queue A ──► Consumer A
-  │               topic/headers)              Queue B ──► Consumer B
-  │                                            Queue C ──► Consumer C
-  └─────────────────────────────────────────────┘
+  ┌────────────────────────────────────────┐
+  │            RabbitMQ Broker             │
+  │                                        │
+  │ Producer ──► Exchange ──► Bindings ──► │            Queue A ──► Consumer A
+  │ (direct/fanout/                        │            Queue B ──► Consumer B
+  │  topic/headers)                        │            Queue C ──► Consumer C
+  └────────────────────────────────────────┘
 
   Exchange types:
   - direct:  exact routing key match

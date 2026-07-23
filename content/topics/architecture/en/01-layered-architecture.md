@@ -33,20 +33,20 @@ Layered architecture is the answer to all four problems at once.
 ## The three layers — and what belongs where
 
 ```txt
-┌─────────────────────────────────────────────┐
-│           Presentation Layer                 │  HTTP, WebSocket, CLI
-│    (controllers, route handlers, DTOs)       │  Knows about req/res
-└─────────────────────────┬───────────────────┘
-                          │ calls
-┌─────────────────────────▼───────────────────┐
-│             Business Logic Layer             │  Pure logic, no HTTP
-│    (services, domain objects, validators)    │  No framework imports
-└─────────────────────────┬───────────────────┘
-                          │ calls
-┌─────────────────────────▼───────────────────┐
-│           Data Access Layer (DAL)            │  DB, cache, external APIs
-│    (repositories, ORM models, DB clients)    │  No business rules
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────┐
+│           Presentation Layer           │  HTTP, WebSocket, CLI
+│  (controllers, route handlers, DTOs)   │  Knows about req/res
+└───────────────────┬────────────────────┘
+                    │ calls
+┌───────────────────▼────────────────────┐
+│          Business Logic Layer          │  Pure logic, no HTTP
+│ (services, domain objects, validators) │  No framework imports
+└───────────────────┬────────────────────┘
+                    │ calls
+┌───────────────────▼────────────────────┐
+│        Data Access Layer (DAL)         │  DB, cache, external APIs
+│ (repositories, ORM models, DB clients) │  No business rules
+└────────────────────────────────────────┘
 ```
 
 **Presentation Layer** — translates between the outside world (HTTP requests, WebSocket messages, CLI arguments) and the application. It knows about `req`, `res`, HTTP status codes, headers. It does NOT contain business rules. Its job: validate input shape, call a service, format output.

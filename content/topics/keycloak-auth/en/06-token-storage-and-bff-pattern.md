@@ -7,38 +7,38 @@ Everything covered in article 05 (silent-check-sso, refresh, logout) happens ON 
 ## Three storage options — and what each one bets on
 
 ```txt
-┌──────────────────┬───────────────────┬───────────────────┬──────────────────┐
-│                    │ In-memory (JS var) │ localStorage/       │ httpOnly Cookie    │
-│                    │                    │ sessionStorage      │                    │
-├──────────────────┼───────────────────┼───────────────────┼──────────────────┤
-│ Reachable by an    │ No — the token         │ YES — any JS,       │ No — JS physically │
-│ XSS script?        │ only exists in a       │ including code       │ cannot read it     │
-│                    │ closure/memory, no     │ injected via XSS,    │ (that's the whole  │
-│                    │ API lets one JS        │ reads it directly    │ point of httpOnly) │
-│                    │ script access another  │ via localStorage.    │                    │
-│                    │ script's memory        │ getItem              │                    │
-├──────────────────┼───────────────────┼───────────────────┼──────────────────┤
-│ Survives a page    │ No — lost on a full     │ Yes — survives      │ Yes — the browser  │
-│ refresh?           │ page reload (needs      │ both a refresh and  │ resends the cookie │
-│                    │ silent-check-sso        │ closing the tab      │ on every request,  │
-│                    │ again, article 05)      │                     │ including after a  │
-│                    │                         │                     │ refresh            │
-├──────────────────┼───────────────────┼───────────────────┼──────────────────┤
-│ Vulnerable to      │ No — the token isn't     │ No — not sent        │ YES — the browser  │
-│ CSRF?              │ sent automatically       │ automatically,       │ sends the cookie    │
-│                    │ anywhere                 │ sending requires     │ AUTOMATICALLY on   │
-│                    │                         │ explicit JS code     │ every request to    │
-│                    │                         │                     │ the domain —         │
-│                    │                         │                     │ including a request  │
-│                    │                         │                     │ initiated by a       │
-│                    │                         │                     │ malicious site       │
-├──────────────────┼───────────────────┼───────────────────┼──────────────────┤
-│ Practical           │ Requires silent-check-  │ Never use this for   │ Requires explicit    │
-│ downside            │ sso/refresh on every    │ an access token —     │ SameSite/CSRF        │
-│                    │ load — the very          │ the only option in    │ protection + careful │
-│                    │ fragility from article   │ this table WITHOUT     │ CORS config (below)  │
-│                    │ 05                       │ a real justification  │                     │
-└──────────────────┴───────────────────┴───────────────────┴──────────────────┘
+┌─────────────────┬────────────────────────┬──────────────────────┬──────────────────────┐
+│                 │ In-memory (JS var)     │ localStorage/        │ httpOnly Cookie      │
+│                 │                        │ sessionStorage       │                      │
+├─────────────────┼────────────────────────┼──────────────────────┼──────────────────────┤
+│ Reachable by an │ No — the token         │ YES — any JS,        │ No — JS physically   │
+│ XSS script?     │ only exists in a       │ including code       │ cannot read it       │
+│                 │ closure/memory, no     │ injected via XSS,    │ (that's the whole    │
+│                 │ API lets one JS        │ reads it directly    │ point of httpOnly)   │
+│                 │ script access another  │ via localStorage.    │                      │
+│                 │ script's memory        │ getItem              │                      │
+├─────────────────┼────────────────────────┼──────────────────────┼──────────────────────┤
+│ Survives a page │ No — lost on a full    │ Yes — survives       │ Yes — the browser    │
+│ refresh?        │ page reload (needs     │ both a refresh and   │ resends the cookie   │
+│                 │ silent-check-sso       │ closing the tab      │ on every request,    │
+│                 │ again, article 05)     │                      │ including after a    │
+│                 │                        │                      │ refresh              │
+├─────────────────┼────────────────────────┼──────────────────────┼──────────────────────┤
+│ Vulnerable to   │ No — the token isn't   │ No — not sent        │ YES — the browser    │
+│ CSRF?           │ sent automatically     │ automatically,       │ sends the cookie     │
+│                 │ anywhere               │ sending requires     │ AUTOMATICALLY on     │
+│                 │                        │ explicit JS code     │ every request to     │
+│                 │                        │                      │ the domain —         │
+│                 │                        │                      │ including a request  │
+│                 │                        │                      │ initiated by a       │
+│                 │                        │                      │ malicious site       │
+├─────────────────┼────────────────────────┼──────────────────────┼──────────────────────┤
+│ Practical       │ Requires silent-check- │ Never use this for   │ Requires explicit    │
+│ downside        │ sso/refresh on every   │ an access token —    │ SameSite/CSRF        │
+│                 │ load — the very        │ the only option in   │ protection + careful │
+│                 │ fragility from article │ this table WITHOUT   │ CORS config (below)  │
+│                 │ 05                     │ a real justification │                      │
+└─────────────────┴────────────────────────┴──────────────────────┴──────────────────────┘
 ```
 
 The key takeaway from this table, and one that's easy to miss: **this isn't a "secure vs insecure" choice — it's a choice of WHICH attack vector you're accepting as a risk**. In-memory and httpOnly cookie both close off XSS-based token reading, but each opens a different secondary problem (losing state on refresh vs needing CSRF protection). localStorage is the only option in the table that doesn't solve any of these problems better than the others, which is why the industry consensus ("never store a token in localStorage") isn't dogma — it's that this option is strictly dominated by either of the other two on the XSS axis, with no compensating advantage.

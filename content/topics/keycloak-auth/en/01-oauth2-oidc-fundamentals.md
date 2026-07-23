@@ -11,21 +11,20 @@ Everything in the rest of this topic — a specific Keycloak configuration, a sp
 OAuth2 (RFC 6749) doesn't describe "how to log in to a site" — it describes a more general problem: how a **Client** gets limited access to a resource owned by a **Resource Owner**, without ever seeing the owner's password. The spec fixes four roles:
 
 ```txt
-┌───────────────────┐        ┌──────────────────────┐
-│   Resource Owner    │        │  Authorization Server │
-│  (the user, owner    │◄──────►│  (Keycloak: issues    │
-│   of the data)       │  login │   and signs tokens)   │
-└───────────────────┘  +       └──────────┬────────────┘
-                        consent            │ issues a token
-┌───────────────────┐                      ▼
-│       Client         │◄─────────────────────┐
-│ (React SPA, mobile    │   presents the token  │
-│  app, backend service) │──────────────────────┼──►┌──────────────────┐
-└───────────────────┘                        │  │  Resource Server   │
-                                               └─►│ (NestJS API,       │
-                                                  │  owns the protected │
-                                                  │  resource)          │
-                                                  └──────────────────┘
+┌──────────────────┐                  ┌──────────────────────┐
+│ Resource Owner   │ login + consent  │ Authorization Server │
+│ (the user, owner │◄────────────────►│ (Keycloak: issues    │
+│ of the data)     │                  │ and signs tokens)    │
+└──────────────────┘                  └──────────────────────┘
+                                        │ issues a token
+                                        │
+                                        │
+┌───────────────────────┐                     ┌────────────────────┐
+│ Client                │◄──────────────┘     │ Resource Server    │
+│ (React SPA, mobile    │ presents the token  │ (NestJS API,       │
+│ app, backend service) │────────────────────►│ owns the protected │
+└───────────────────────┘                     │ resource)          │
+                                              └────────────────────┘
 ```
 
 - **Resource Owner** — the user who owns the data (or, in a service-to-service scenario with no human involved, the resource itself).
@@ -106,32 +105,32 @@ Why it matters: **anything that needs to stay secret (a client secret, the token
 This is the #1 source of confusion for developers new to this space: all three are "some kind of token" issued in the same response, and it's tempting to start treating them interchangeably. That's a mistake with real consequences.
 
 ```txt
-┌────────────────┬─────────────────────┬──────────────────┬───────────────────────┐
-│                  │ Access Token         │ ID Token           │ Refresh Token          │
-├────────────────┼─────────────────────┼──────────────────┼───────────────────────┤
-│ Intended for     │ Resource Server      │ Client (only!)     │ Authorization Server   │
-│                  │ (the API)            │ never send it to   │ (only it accepts it —  │
-│                  │                      │ another API         │ only at /token)         │
-├────────────────┼─────────────────────┼──────────────────┼───────────────────────┤
-│ Format           │ Opaque by OAuth2     │ Always a JWT       │ Opaque by spec (in     │
-│                  │ spec; Keycloak makes │ (an OIDC           │ practice Keycloak also │
-│                  │ it a JWT in practice │ requirement)        │ makes it a JWT, but     │
-│                  │                      │                    │ that's an implementation│
-│                  │                      │                    │ detail)                │
-├────────────────┼─────────────────────┼──────────────────┼───────────────────────┤
-│ Contains         │ scope, roles,        │ Identity claims:   │ Usually the minimum    │
-│                  │ permissions —        │ sub, email, name,  │ data the Authorization │
-│                  │ "what's allowed"     │ auth_time —        │ Server needs to find   │
-│                  │                      │ "who this is"      │ the session            │
-├────────────────┼─────────────────────┼──────────────────┼───────────────────────┤
-│ TTL              │ Short (minutes)      │ Same as access     │ Long (hours/days) or   │
-│                  │                      │ token              │ until logout            │
-├────────────────┼─────────────────────┼──────────────────┼───────────────────────┤
-│ Used by          │ Resource server, on  │ Client app — to    │ Client — ONLY to get a │
-│                  │ every API call       │ show "Hi, Name" in │ new token pair from the│
-│                  │ (Authorization:      │ the UI              │ /token endpoint         │
-│                  │ Bearer <token>)      │                    │                        │
-└────────────────┴─────────────────────┴──────────────────┴───────────────────────┘
+┌──────────────┬──────────────────────┬────────────────────┬──────────────────────────┐
+│              │ Access Token         │ ID Token           │ Refresh Token            │
+├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
+│ Intended for │ Resource Server      │ Client (only!)     │ Authorization Server     │
+│              │ (the API)            │ never send it to   │ (only it accepts it —    │
+│              │                      │ another API        │ only at /token)          │
+├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
+│ Format       │ Opaque by OAuth2     │ Always a JWT       │ Opaque by spec (in       │
+│              │ spec; Keycloak makes │ (an OIDC           │ practice Keycloak also   │
+│              │ it a JWT in practice │ requirement)       │ makes it a JWT, but      │
+│              │                      │                    │ that's an implementation │
+│              │                      │                    │ detail)                  │
+├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
+│ Contains     │ scope, roles,        │ Identity claims:   │ Usually the minimum      │
+│              │ permissions —        │ sub, email, name,  │ data the Authorization   │
+│              │ "what's allowed"     │ auth_time —        │ Server needs to find     │
+│              │                      │ "who this is"      │ the session              │
+├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
+│ TTL          │ Short (minutes)      │ Same as access     │ Long (hours/days) or     │
+│              │                      │ token              │ until logout             │
+├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
+│ Used by      │ Resource server, on  │ Client app — to    │ Client — ONLY to get a   │
+│              │ every API call       │ show "Hi, Name" in │ new token pair from the  │
+│              │ (Authorization:      │ the UI             │ /token endpoint          │
+│              │ Bearer <token>)      │                    │                          │
+└──────────────┴──────────────────────┴────────────────────┴──────────────────────────┘
 ```
 
 The physical format of the access token and validation details (JWKS, `kid`, local validation vs introspection) are covered separately in [Tokens, Sessions, and Validation] — the point here is the semantic boundary between the three artifacts, not the wire format. JWT's general structure (header.payload.signature) is already covered in [JWT, Access Token and Refresh Token] — we don't repeat that here; the focus of this article is each token's protocol role, not its physical shape.

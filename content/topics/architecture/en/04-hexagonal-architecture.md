@@ -12,21 +12,21 @@ The central idea: the application has a **core** (its business logic) and a **bo
 - An **Adapter** — a concrete implementation of that interface that connects to a specific external system
 
 ```txt
-                     ┌────────────────────────────────┐
-    HTTP Client ──── │ Adapter (Express Controller)   │
-                     │              ↓                  │
-    REST API ──────  │ ──────────►  PORT               │
-                     │         (IOrderService)         │
-                     │              ↓                  │
-                     │        APPLICATION               │
-                     │           CORE                  │
-                     │              ↓                  │
-                     │         PORT                    │
-                     │   (IOrderRepository)  ◄──────── │ ── Adapter (Prisma Repository)
-                     │              ↓                  │
-                     │   PORT                          │
-                     │   (INotificationService) ◄───── │ ── Adapter (Sendgrid)
-                     └────────────────────────────────┘
+                 ┌───────────────────────────────┐
+ HTTP Client ────│ Adapter (Express Controller)  │
+                 │               ↓               │
+  REST API ──────│ ──────────►  PORT             │
+                 │ (IOrderService)               │
+                 │               ↓               │
+                 │          APPLICATION          │
+                 │              CORE             │
+                 │               ↓               │
+                 │              PORT             │
+                 │ (IOrderRepository)  ◄──────── │ ── Adapter (Prisma Repository)
+                 │               ↓               │
+                 │              PORT             │
+                 │ (INotificationService) ◄───── │ ── Adapter (Sendgrid)
+                 └───────────────────────────────┘
 ```
 
 The core knows nothing about Express, Prisma, or Sendgrid. It only knows about the ports it defined. Swapping Sendgrid for Mailgun is a matter of writing a new adapter — the core is untouched.

@@ -205,32 +205,32 @@ ETag: "v3"
 ## Cache Layers: Browser vs CDN vs Proxy
 
 ```txt
-┌──────────────────────────────────────────────────────────────┐
-│                         Browser                              │
-│  Stores: GET responses for the current user                 │
-│  Capacity: a few hundred MB (user-configurable)             │
-│  Key: URL + Vary                                            │
-│  Controlled by: Cache-Control: private or public            │
-└──────────────────────────────────────────────────────────────┘
-           ↕ requests pass through (on cache miss)
-┌──────────────────────────────────────────────────────────────┐
-│                 CDN (Cloudflare, CloudFront, Fastly)         │
-│  Stores: public responses for all users                     │
-│  Capacity: practically unlimited                            │
-│  Key: URL + Vary + often custom cache keys                  │
-│  Controlled by: Cache-Control: public, s-maxage=N           │
-│  Bonus: edge nodes close to the user (worldwide)           │
-└──────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│                      Browser                       │
+│   Stores: GET responses for the current user       │
+│   Capacity: a few hundred MB (user-configurable)   │
+│   Key: URL + Vary                                  │
+│   Controlled by: Cache-Control: private or public  │
+└────────────────────────────────────────────────────┘
+       ↕ requests pass through (on cache miss)
+┌────────────────────────────────────────────────────┐
+│        CDN (Cloudflare, CloudFront, Fastly)        │
+│   Stores: public responses for all users           │
+│   Capacity: practically unlimited                  │
+│   Key: URL + Vary + often custom cache keys        │
+│   Controlled by: Cache-Control: public, s-maxage=N │
+│   Bonus: edge nodes close to the user (worldwide)  │
+└────────────────────────────────────────────────────┘
            ↕ on cache miss, goes to origin
-┌──────────────────────────────────────────────────────────────┐
-│            Reverse Proxy / Load Balancer (nginx, Varnish)   │
-│  Stores: shared cache inside infrastructure                 │
-│  Offloads origin from repeated requests                     │
-└──────────────────────────────────────────────────────────────┘
-           ↕ on cache miss
-┌──────────────────────────────────────────────────────────────┐
-│                      Origin Server                           │
-└──────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│   Reverse Proxy / Load Balancer (nginx, Varnish)   │
+│   Stores: shared cache inside infrastructure       │
+│   Offloads origin from repeated requests           │
+└────────────────────────────────────────────────────┘
+                   ↕ on cache miss
+┌────────────────────────────────────────────────────┐
+│                   Origin Server                    │
+└────────────────────────────────────────────────────┘
 ```
 
 **Key distinction:**

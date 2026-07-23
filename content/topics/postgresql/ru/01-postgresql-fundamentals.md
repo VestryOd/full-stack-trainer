@@ -22,29 +22,28 @@ PostgreSQL, схожа с MIT), активно развивается сообщ
 
 ```txt
 Приложение (psql / Prisma / pg)
-        │  SQL-текст по TCP (протокол PostgreSQL wire protocol)
-        ▼
-  ┌─────────────────────────────────────┐
-  │  Parser      — строит AST из SQL   │
-  │  Analyzer    — разрешает имена     │
-  │               (таблицы, столбцы,   │
-  │               типы) → Query Tree   │
-  │  Rewriter    — применяет правила   │
-  │               (VIEW expansion,     │
-  │               RLS-политики)        │
-  │  Planner/    — строит несколько    │
-  │  Optimizer     планов, выбирает    │
-  │               план с минимальной   │
-  │               оценочной стоимостью │
-  │  Executor    — выполняет план,     │
-  │               возвращает строки    │
-  └─────────────────────────────────────┘
-        │
-        ▼
-  Buffer Manager (shared_buffers — кэш страниц в RAM)
-        │  промах кэша
-        ▼
-  Storage (heap files, index files на диске)
+│  SQL-текст по TCP (протокол PostgreSQL wire protocol)
+▼
+  ┌─────────────────────────────────────────────────┐
+  │ Parser            — строит AST из SQL           │
+  │ Analyzer          — разрешает имена             │
+  │                     (таблицы, столбцы,          │
+  │                     типы) → Query Tree          │
+  │ Rewriter          — применяет правила           │
+  │                     (VIEW expansion,            │
+  │                     RLS-политики)               │
+  │ Planner/Optimizer — строит несколько планов,    │
+  │                     выбирает план с минимальной │
+  │                     оценочной стоимостью        │
+  │ Executor          — выполняет план,             │
+  │                     возвращает строки           │
+  └─────────────────────────────────────────────────┘
+│
+▼
+Buffer Manager (shared_buffers — кэш страниц в RAM)
+│  промах кэша
+▼
+Storage (heap files, index files на диске)
 ```
 
 ```txt

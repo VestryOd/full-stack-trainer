@@ -171,20 +171,20 @@ The risk: a generic `IRepository<T>` often leads to `findAll()` methods with com
 A **Service** (or **Service Layer**) is the place where business operations live. It orchestrates repositories and other dependencies to carry out a use case — without knowing about HTTP, WebSockets, or CLI.
 
 ```txt
-Controller (HTTP)  CLI Command  Background Job
-       │               │              │
-       └───────────────┴──────────────┘
-                       │ calls (business language: placeOrder, cancelOrder)
-                       ▼
-              ┌─────────────────┐
-              │  OrdersService  │  ← contains business logic and orchestration
-              └────────┬────────┘
-                       │ uses
-              ┌────────┴────────────────┐
-              │                         │
-    ┌─────────────────┐      ┌─────────────────────┐
-    │ IOrderRepository│      │ INotificationService │
-    └─────────────────┘      └─────────────────────┘
+Controller (HTTP)   CLI Command   Background Job
+        │                │               │
+        └────────────────┴───────────────┘
+                         │ calls (business language: placeOrder, cancelOrder)
+                         ▼
+                  ┌───────────────┐
+                  │ OrdersService │  ← contains business logic and orchestration
+                  └──────┬────────┘
+                         │ uses
+             ┌──────────────────────────┐
+             │                          │
+    ┌──────────────────┐     ┌──────────────────────┐
+    │ IOrderRepository │     │ INotificationService │
+    └──────────────────┘     └──────────────────────┘
 ```
 
 ```ts

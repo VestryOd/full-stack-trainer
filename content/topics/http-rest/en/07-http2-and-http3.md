@@ -336,20 +336,29 @@ This is critical for mobile users and IoT devices.
 ## HTTP Version Comparison
 
 ```txt
-┌───────────────────┬──────────────┬──────────────┬──────────────┐
-│                   │ HTTP/1.1     │ HTTP/2       │ HTTP/3       │
-├───────────────────┼──────────────┼──────────────┼──────────────┤
-│ Transport         │ TCP          │ TCP          │ UDP (QUIC)   │
-│ TLS               │ Optional     │ De facto req │ Required     │
-│ Multiplexing      │ ❌ 6 conn.   │ ✅ 1 conn.   │ ✅ 1 conn.   │
-│ HoL (HTTP layer)  │ ❌ Yes       │ ✅ No        │ ✅ No        │
-│ HoL (TCP layer)   │ ❌ Yes       │ ❌ Yes       │ ✅ No (QUIC) │
-│ Header compression│ ❌ No        │ ✅ HPACK     │ ✅ QPACK     │
-│ 0-RTT             │ ❌ 3+ RTT    │ ❌ 2+ RTT    │ ✅ 0–1 RTT   │
-│ Connection migr.  │ ❌ No        │ ❌ No        │ ✅ Yes       │
-│ Server Push       │ ❌ No        │ ✅ Yes*      │ ❌ Removed   │
-│ Browser support   │ 100%         │ ~98%         │ ~85%         │
-└───────────────────┴──────────────┴──────────────┴──────────────┘
+┌────────────────────┬───────────┬──────────────┬─────────────┐
+│                    │ HTTP/1.1  │ HTTP/2       │ HTTP/3      │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ Transport          │ TCP       │ TCP          │ UDP (QUIC)  │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ TLS                │ Optional  │ De facto req │ Required    │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ Multiplexing       │ ❌ 6 conn. │ ✅ 1 conn.    │ ✅ 1 conn.   │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ HoL (HTTP layer)   │ ❌ Yes     │ ✅ No         │ ✅ No        │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ HoL (TCP layer)    │ ❌ Yes     │ ❌ Yes        │ ✅ No (QUIC) │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ Header compression │ ❌ No      │ ✅ HPACK      │ ✅ QPACK     │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ 0-RTT              │ ❌ 3+ RTT  │ ❌ 2+ RTT     │ ✅ 0–1 RTT   │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ Connection migr.   │ ❌ No      │ ❌ No         │ ✅ Yes       │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ Server Push        │ ❌ No      │ ✅ Yes*       │ ❌ Removed   │
+├────────────────────┼───────────┼──────────────┼─────────────┤
+│ Browser support    │ 100%      │ ~98%         │ ~85%        │
+└────────────────────┴───────────┴──────────────┴─────────────┘
 * Server Push removed from Chrome; poorly implemented almost everywhere
 ```
 

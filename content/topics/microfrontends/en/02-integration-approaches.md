@@ -52,21 +52,22 @@ export function App() {
 Composition happens **on the server or at the edge, on every incoming request**. A composition layer (a reverse proxy, an edge function, or a dedicated "compositor" service such as Tailor.js in the Node ecosystem) requests an HTML fragment from each micro-frontend's own server and stitches them into a single page before it reaches the browser.
 
 ```txt
-                    ┌──────────────────────────────┐
-Browser request ──► │  Compositor (edge/reverse      │
-                    │  proxy, e.g. Tailor.js)         │
-                    └──────────────────────────────┘
-                            │           │           │
-                            ▼           ▼           ▼
-                     Header MFE   Checkout MFE   Footer MFE
-                     (own server) (own server)    (own server)
-                     returns       returns          returns
-                     an HTML       an HTML          an HTML
-                     fragment      fragment         fragment
-                            │           │           │
-                            ▼           ▼           ▼
-                     The compositor stitches the fragments into one
-                     HTML document and returns ONE page to the browser
+                    ┌──────────────────────────┐
+Browser request ──► │ Compositor (edge/reverse │
+                    │ proxy, e.g. Tailor.js)   │
+                    └──────────────────────────┘
+                            │               │               │
+                            ▼               ▼               ▼
+                       Header MFE     Checkout MFE     Footer MFE
+                      (own server)    (own server)    (own server)
+                        returns         returns         returns
+                        an HTML         an HTML         an HTML
+                        fragment        fragment        fragment
+
+                            │               │               │
+                            ▼               ▼               ▼
+                    The compositor stitches the fragments into one
+                    HTML document and returns ONE page to the browser
 ```
 
 ```nginx
@@ -170,28 +171,28 @@ No bundler-specific runtime at all: the browser natively resolves the import gra
 ## Summary table
 
 ```txt
-┌───────────────────┬─────────────────┬──────────────────┬───────────────────┬──────────────────┐
-│                    │ Build-time      │ Server-side      │ Iframe             │ Client runtime    │
-│                    │ (npm package)   │ (SSI/compositor) │                    │ (MF/single-spa/ESM)│
-├───────────────────┼─────────────────┼──────────────────┼───────────────────┼──────────────────┤
-│ When resolved      │ Host's build    │ Every HTTP request│ Iframe load        │ Browser runtime   │
-├───────────────────┼─────────────────┼──────────────────┼───────────────────┼──────────────────┤
-│ Isolation          │ None (shared    │ None on the client │ Full (separate    │ Partial (shared   │
-│                    │ bundle)         │ (shared DOM)      │ browsing context)  │ DOM, JS realm)     │
-├───────────────────┼─────────────────┼──────────────────┼───────────────────┼──────────────────┤
-│ Real deploy        │ Development     │ Yes, per-request  │ Yes, fully         │ Yes, per-load      │
-│ independence       │ only            │                   │                    │                    │
-├───────────────────┼─────────────────┼──────────────────┼───────────────────┼──────────────────┤
-│ Shared CSS/fonts   │ Trivial         │ Needs discipline  │ Practically        │ Needs discipline   │
-│                    │                 │                   │ impossible without │ (article 06)       │
-│                    │                 │                   │ duplication        │                    │
-├───────────────────┼─────────────────┼──────────────────┼───────────────────┼──────────────────┤
-│ SEO / no-JS        │ Same as host    │ Excellent         │ Poor               │ Poor without SSR   │
-├───────────────────┼─────────────────┼──────────────────┼───────────────────┼──────────────────┤
-│ Typical use case   │ Internal team   │ Content-heavy     │ Untrusted          │ Many teams, SPA,   │
-│                    │ library         │ pages (media,     │ third-party widget │ mixed frameworks   │
-│                    │                 │ e-commerce landing)│                   │                    │
-└───────────────────┴─────────────────┴──────────────────┴───────────────────┴──────────────────┘
+┌──────────────────┬───────────────┬─────────────────────┬────────────────────┬─────────────────────┐
+│                  │ Build-time    │ Server-side         │ Iframe             │ Client runtime      │
+│                  │ (npm package) │ (SSI/compositor)    │                    │ (MF/single-spa/ESM) │
+├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
+│ When resolved    │ Host's build  │ Every HTTP request  │ Iframe load        │ Browser runtime     │
+├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
+│ Isolation        │ None (shared  │ None on the client  │ Full (separate     │ Partial (shared     │
+│                  │ bundle)       │ (shared DOM)        │ browsing context)  │ DOM, JS realm)      │
+├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
+│ Real deploy      │ Development   │ Yes, per-request    │ Yes, fully         │ Yes, per-load       │
+│ independence     │ only          │                     │                    │                     │
+├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
+│ Shared CSS/fonts │ Trivial       │ Needs discipline    │ Practically        │ Needs discipline    │
+│                  │               │                     │ impossible without │ (article 06)        │
+│                  │               │                     │ duplication        │                     │
+├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
+│ SEO / no-JS      │ Same as host  │ Excellent           │ Poor               │ Poor without SSR    │
+├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
+│ Typical use case │ Internal team │ Content-heavy       │ Untrusted          │ Many teams, SPA,    │
+│                  │ library       │ pages (media,       │ third-party widget │ mixed frameworks    │
+│                  │               │ e-commerce landing) │                    │                     │
+└──────────────────┴───────────────┴─────────────────────┴────────────────────┴─────────────────────┘
 ```
 
 ## Common interview traps

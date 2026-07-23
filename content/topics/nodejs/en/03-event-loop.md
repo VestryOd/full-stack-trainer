@@ -24,27 +24,27 @@ This isn't "Node is smart and figures it out" — it's an explicit contract: you
 ## The full phase diagram — and what ACTUALLY happens in each phase
 
 ```txt
-   ┌───────────────────────────┐
-┌─>│           timers           │  setTimeout / setInterval
-│  └─────────────┬─────────────┘  callbacks whose time is up
-│  ┌─────────────┴─────────────┐
-│  │     pending callbacks      │  callbacks for some system
-│  │     (pending I/O)          │  operations (e.g., TCP errors)
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐
-│  │       idle, prepare        │  internal libuv bookkeeping
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐
-│  │            poll            │  ← THE CENTRAL PHASE:
-│  │                             │    I/O callbacks (fs, network),
-│  │                             │    and WAITING for new I/O events
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐
-│  │            check            │  setImmediate
-│  └─────────────┬─────────────┘
-│  ┌─────────────┴─────────────┐
-└──┤      close callbacks       │  socket.on('close'), etc.
-   └───────────────────────────┘
+   ┌───────────────────┐
+┌─>│       timers      │  setTimeout / setInterval,
+│  └───────────────────┘  ready by time
+│  ┌───────────────────┐
+│  │ pending callbacks │  callbacks for some system
+│  │   (pending I/O)   │  operations (e.g. TCP errors)
+│  └───────────────────┘
+│  ┌───────────────────┐
+│  │   idle, prepare   │  internal libuv housekeeping
+│  └───────────────────┘
+│  ┌───────────────────┐
+│  │        poll       │  ← THE CENTRAL PHASE:
+│  │                   │  I/O callbacks (fs, network),
+│  │                   │  and WAITING for new I/O events
+│  └───────────────────┘
+│  ┌───────────────────┐
+│  │       check       │  setImmediate
+│  └───────────────────┘
+│  ┌───────────────────┐
+└──┤  close callbacks  │  socket.on('close'), etc.
+   └───────────────────┘
 ```
 
 Between EVERY pair of phases (and often within a phase, after each callback), the Event Loop fully drains the **microtask queue** (Promise callbacks, `queueMicrotask`) and the `process.nextTick` queue — a critical detail covered separately in [Microtasks, Macrotasks, and process.nextTick], because it explains most "unexpected" execution orderings.

@@ -36,24 +36,24 @@ Kanban is useful where the incoming flow is **unpredictable by nature**, and for
 ## Comparison by team profile
 
 ```txt
-┌────────────────────────────┬───────────────────────────┬───────────────────────────┐
-│                             │          Scrum            │          Kanban           │
-├────────────────────────────┼───────────────────────────┼───────────────────────────┤
-│ Nature of incoming work     │ Batchable, predictable     │ Continuous,                │
-│                             │ 1–2 weeks ahead            │ unpredictable              │
-├────────────────────────────┼───────────────────────────┼───────────────────────────┤
-│ Sync point with             │ Built in (Sprint Review    │ Not built in by default,   │
-│ stakeholders                │ every N weeks)             │ set up separately          │
-├────────────────────────────┼───────────────────────────┼───────────────────────────┤
-│ Reaction to an urgent,      │ Breaks the Sprint Goal,    │ Instant —                  │
-│ unplanned priority          │ needs a sprint re-plan     │ just changes queue order   │
-├────────────────────────────┼───────────────────────────┼───────────────────────────┤
-│ Forecasting                 │ Velocity via story points  │ Probability-based, from    │
-│                             │ (a subjective estimate)    │ real flow metrics          │
-├────────────────────────────┼───────────────────────────┼───────────────────────────┤
-│ Typical team profile        │ Product development with   │ Support, ops,              │
-│                             │ distinct features           │ maintenance-heavy teams    │
-└────────────────────────────┴───────────────────────────┴───────────────────────────┘
+┌─────────────────────────┬───────────────────────────┬──────────────────────────┐
+│                         │ Scrum                     │ Kanban                   │
+├─────────────────────────┼───────────────────────────┼──────────────────────────┤
+│ Nature of incoming work │ Batchable, predictable    │ Continuous,              │
+│                         │ 1–2 weeks ahead           │ unpredictable            │
+├─────────────────────────┼───────────────────────────┼──────────────────────────┤
+│ Sync point with         │ Built in (Sprint Review   │ Not built in by default, │
+│ stakeholders            │ every N weeks)            │ set up separately        │
+├─────────────────────────┼───────────────────────────┼──────────────────────────┤
+│ Reaction to an urgent,  │ Breaks the Sprint Goal,   │ Instant —                │
+│ unplanned priority      │ needs a sprint re-plan    │ just changes queue order │
+├─────────────────────────┼───────────────────────────┼──────────────────────────┤
+│ Forecasting             │ Velocity via story points │ Probability-based, from  │
+│                         │ (a subjective estimate)   │ real flow metrics        │
+├─────────────────────────┼───────────────────────────┼──────────────────────────┤
+│ Typical team profile    │ Product development with  │ Support, ops,            │
+│                         │ distinct features         │ maintenance-heavy teams  │
+└─────────────────────────┴───────────────────────────┴──────────────────────────┘
 ```
 
 ## Scrumban — the pragmatic hybrid

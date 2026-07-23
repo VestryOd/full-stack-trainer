@@ -21,29 +21,28 @@ For interviews: "PostgreSQL is the most advanced open-source relational database
 
 ```txt
 Application (psql / Prisma / pg)
-        │  SQL text via TCP (PostgreSQL wire protocol)
-        ▼
-  ┌─────────────────────────────────────┐
-  │  Parser      — builds AST from SQL │
-  │  Analyzer    — resolves names       │
-  │               (tables, columns,     │
-  │               types) → Query Tree  │
-  │  Rewriter    — applies rules        │
-  │               (VIEW expansion,      │
-  │               RLS policies)         │
-  │  Planner/    — builds multiple      │
-  │  Optimizer     plans, picks the one │
-  │               with the lowest       │
-  │               estimated cost        │
-  │  Executor    — executes the plan,   │
-  │               returns rows          │
-  └─────────────────────────────────────┘
-        │
-        ▼
-  Buffer Manager (shared_buffers — page cache in RAM)
-        │  cache miss
-        ▼
-  Storage (heap files, index files on disk)
+│  SQL text via TCP (PostgreSQL wire protocol)
+▼
+  ┌────────────────────────────────────────────┐
+  │ Parser            — builds AST from SQL    │
+  │ Analyzer          — resolves names         │
+  │                     (tables, columns,      │
+  │                     types) → Query Tree    │
+  │ Rewriter          — applies rules          │
+  │                     (VIEW expansion,       │
+  │                     RLS policies)          │
+  │ Planner/Optimizer — builds multiple plans, │
+  │                     picks the one with the │
+  │                     lowest estimated cost  │
+  │ Executor          — executes the plan,     │
+  │                     returns rows           │
+  └────────────────────────────────────────────┘
+│
+▼
+Buffer Manager (shared_buffers — page cache in RAM)
+│  cache miss
+▼
+Storage (heap files, index files on disk)
 ```
 
 ```txt

@@ -171,20 +171,20 @@ export interface IOrderRepository extends IRepository<Order> {
 **Сервис (Service)** или **Сервисный слой (Service Layer)** — место, где живут бизнес-операции. Он оркестрирует репозитории и другие зависимости для выполнения use case — без знания об HTTP, WebSocket или CLI.
 
 ```txt
-Controller (HTTP)  CLI Command  Background Job
-       │               │              │
-       └───────────────┴──────────────┘
-                       │ вызывает (бизнес-язык: placeOrder, cancelOrder)
-                       ▼
-              ┌─────────────────┐
-              │  OrdersService  │  ← содержит бизнес-логику и оркестрацию
-              └────────┬────────┘
-                       │ использует
-              ┌────────┴────────────────┐
-              │                         │
-    ┌─────────────────┐      ┌─────────────────────┐
-    │ IOrderRepository│      │ INotificationService │
-    └─────────────────┘      └─────────────────────┘
+Controller (HTTP)   CLI Command   Background Job
+        │                │               │
+        └────────────────┴───────────────┘
+                         │ вызывает (бизнес-язык: placeOrder, cancelOrder)
+                         ▼
+                  ┌───────────────┐
+                  │ OrdersService │  ← содержит бизнес-логику и оркестрацию
+                  └──────┬────────┘
+                         │ использует
+             ┌──────────────────────────┐
+             │                          │
+    ┌──────────────────┐     ┌──────────────────────┐
+    │ IOrderRepository │     │ INotificationService │
+    └──────────────────┘     └──────────────────────┘
 ```
 
 ```ts
