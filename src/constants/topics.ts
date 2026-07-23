@@ -25,6 +25,7 @@ export const TOPICS: readonly Topic[] = [
   { id: 'http-rest',       label: 'HTTP / REST',            level: 'medium' },
   { id: 'testing',         label: 'Testing',                level: 'medium' },
   { id: 'security',        label: 'Security',               level: 'medium' },
+  { id: 'keycloak-auth',   label: 'Keycloak / OAuth2 Auth', level: 'deep' },
   { id: 'oop-patterns',    label: 'OOP Patterns (GoF)',     level: 'medium' },
   { id: 'algorithms',      label: 'Algorithms & DS',        level: 'medium' },
   { id: 'system-design',   label: 'System Design',         level: 'medium' },
