@@ -63,7 +63,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
 
         {/* Question + controls row */}
         <div className="flex items-start gap-3">
-          <p className="flex-1 text-sm leading-relaxed font-medium">{questionText}</p>
+          <p className="flex-1 min-w-0 [overflow-wrap:anywhere] text-sm leading-relaxed font-medium">{questionText}</p>
 
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Per-card locale toggle */}
