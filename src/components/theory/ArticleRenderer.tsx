@@ -33,7 +33,10 @@ async function renderMarkdownWithShiki(source: string): Promise<string> {
     /```(\w+)?\n?([\s\S]*?)```/g,
     (_, lang: string | undefined, code: string) => {
       const idx = blocks.push({ lang: lang ?? 'text', code: code.trim() }) - 1;
-      return `CODEBLOCK_PLACEHOLDER_${idx}`;
+      // Trailing `_END` delimiter keeps placeholders unambiguous: without it
+      // `..._1` is a substring of `..._10`, so replacing block 1 would corrupt
+      // block 10 (duplicated code + a stray leftover digit).
+      return `CODEBLOCK_PLACEHOLDER_${idx}_END`;
     },
   );
 
@@ -59,9 +62,13 @@ async function renderMarkdownWithShiki(source: string): Promise<string> {
   );
 
   blocks.forEach((_, idx) => {
+    const token = `CODEBLOCK_PLACEHOLDER_${idx}_END`;
+    // Function replacers so `$` sequences in highlighted code (e.g. `${...}`
+    // template literals) are inserted verbatim, not treated as replacement
+    // patterns by String.prototype.replace.
     html = html
-      .replace(`<p>CODEBLOCK_PLACEHOLDER_${idx}</p>`, highlighted[idx])
-      .replace(`CODEBLOCK_PLACEHOLDER_${idx}`, highlighted[idx]);
+      .replace(`<p>${token}</p>`, () => highlighted[idx])
+      .replace(token, () => highlighted[idx]);
   });
 
   return html;
