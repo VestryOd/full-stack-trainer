@@ -201,10 +201,13 @@ function Tooltip({ anchor }: { anchor: HTMLElement }) {
 
   useLayoutEffect(() => {
     // Запускается ДО того, как браузер показал тултип в его начальной позиции.
-    // Измеряем и перепозиционируем в одном цикле отрисовки.
+    // Измеряем и тултип, и якорь, затем перепозиционируем в одном цикле отрисовки.
     const rect = tooltipRef.current!.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
-    setPosition({ top: anchorRect.bottom, left: anchorRect.left });
+    // Если тултип вылезет за нижний край вьюпорта — разворачиваем его над якорем.
+    const overflowsBottom = anchorRect.bottom + rect.height > window.innerHeight;
+    const top = overflowsBottom ? anchorRect.top - rect.height : anchorRect.bottom;
+    setPosition({ top, left: anchorRect.left });
   }, [anchor]);
 
   return <div ref={tooltipRef} style={position}>...</div>;

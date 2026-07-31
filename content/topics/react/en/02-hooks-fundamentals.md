@@ -200,10 +200,13 @@ function Tooltip({ anchor }: { anchor: HTMLElement }) {
 
   useLayoutEffect(() => {
     // This runs BEFORE the browser shows the tooltip at its initial position.
-    // We measure and reposition in the same paint cycle.
+    // We measure both the tooltip and the anchor, then reposition in the same paint cycle.
     const rect = tooltipRef.current!.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
-    setPosition({ top: anchorRect.bottom, left: anchorRect.left });
+    // If the tooltip would overflow the bottom of the viewport, flip it above the anchor.
+    const overflowsBottom = anchorRect.bottom + rect.height > window.innerHeight;
+    const top = overflowsBottom ? anchorRect.top - rect.height : anchorRect.bottom;
+    setPosition({ top, left: anchorRect.left });
   }, [anchor]);
 
   return <div ref={tooltipRef} style={position}>...</div>;
