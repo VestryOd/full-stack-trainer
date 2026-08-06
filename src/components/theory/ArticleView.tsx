@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocale } from '@/context/LocaleContext';
+import { useContentHighlight } from '@/lib/search/useContentHighlight';
 import { ArticleContent } from './ArticleContent';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
@@ -49,6 +50,9 @@ export function ArticleView({
   const html = effectiveLocale === 'ru' ? htmlRu! : htmlEn!;
   const title = extractTitleFromHtml(html);
 
+  const contentRef = useRef<HTMLElement>(null);
+  useContentHighlight(contentRef, [effectiveLocale]);
+
   return (
     <div className="container py-8 max-w-4xl">
       {/* Breadcrumb + locale toggle */}
@@ -82,7 +86,7 @@ export function ArticleView({
       </div>
 
       {/* Article content */}
-      <article className="animate-fade-in" key={effectiveLocale}>
+      <article ref={contentRef} className="animate-fade-in" key={effectiveLocale}>
         <ArticleContent html={html} />
       </article>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { QuestionDifficulty } from '@/types';
 import { QuestionCard, type QuestionWithAnswerHtml } from './QuestionCard';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,24 @@ export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps)
   const [activeDifficulties, setActiveDifficulties] = useState<Set<QuestionDifficulty>>(new Set());
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [tagsOpen, setTagsOpen] = useState(false);
+
+  // Deep-link from global search: /questions/<topic>/?q=q-<id>&hl=<query>
+  const [spotlightId, setSpotlightId] = useState<string | null>(null);
+  const [highlightQuery, setHighlightQuery] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (!q) return;
+    const id = q.replace(/^q-/, '');
+    setSpotlightId(id);
+    setHighlightQuery(params.get('hl') ?? '');
+    // Wait one tick for the target card to render, then bring it into view.
+    const timer = setTimeout(() => {
+      document.getElementById(`q-${id}`)?.scrollIntoView({ block: 'start' });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Collect all tags from the question set
   const allTags = useMemo(() => {
@@ -174,7 +192,12 @@ export function QuestionFilters({ questions, topicLabel }: QuestionFiltersProps)
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((q) => (
-            <QuestionCard key={q.id} question={q} />
+            <QuestionCard
+              key={q.id}
+              question={q}
+              spotlight={q.id === spotlightId}
+              highlightQuery={q.id === spotlightId ? highlightQuery : undefined}
+            />
           ))}
         </div>
       )}

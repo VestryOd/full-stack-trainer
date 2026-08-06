@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useLocale } from '@/context/LocaleContext';
 import { useSearchIndex, type SearchOutcome } from '@/lib/search/useSearchIndex';
 import { SEARCH_TYPE_LABEL_KEY, type SearchDisplayDoc, type SearchType } from '@/lib/search/config';
+import { highlightText } from '@/lib/search/highlight';
 
 const EMPTY: SearchOutcome = { groups: [], flat: [], total: 0, truncated: false };
 
@@ -27,10 +28,6 @@ const DIFFICULTY_CLASS: Record<string, string> = {
   hard: 'text-red-500',
   advanced: 'text-red-500',
 };
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 interface SearchDialogProps {
   open: boolean;
@@ -68,34 +65,20 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     listRef.current?.querySelector<HTMLElement>(`[data-idx="${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
-  const highlight = useMemo(() => {
-    const terms = query
-      .trim()
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((t) => t.length >= 2)
-      .map(escapeRegExp);
-    if (!terms.length) return (text: string) => text as React.ReactNode;
-    const re = new RegExp(`(${terms.join('|')})`, 'ig');
-    return (text: string): React.ReactNode =>
-      text.split(re).map((part, i) =>
-        i % 2 === 1 ? (
-          <mark key={i} className="bg-primary/20 text-foreground rounded-[2px]">
-            {part}
-          </mark>
-        ) : (
-          part
-        ),
-      );
-  }, [query]);
+  const highlight = useCallback((text: string) => highlightText(text, query), [query]);
 
   const select = useCallback(
     (doc: SearchDisplayDoc | undefined) => {
       if (!doc) return;
       onOpenChange(false);
-      router.push(doc.url);
+      // Carry the query as `hl` so the target page can highlight + scroll to matches.
+      const q = query.trim();
+      const url = q
+        ? `${doc.url}${doc.url.includes('?') ? '&' : '?'}hl=${encodeURIComponent(q)}`
+        : doc.url;
+      router.push(url);
     },
-    [onOpenChange, router],
+    [onOpenChange, router, query],
   );
 
   const onKeyDown = useCallback(

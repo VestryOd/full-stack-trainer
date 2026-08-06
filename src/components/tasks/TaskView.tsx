@@ -1,8 +1,9 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useLocale } from '@/context/LocaleContext';
+import { useContentHighlight } from '@/lib/search/useContentHighlight';
 import { SolutionSpoiler } from './SolutionSpoiler';
 import { Badge } from '@/components/ui/badge';
 import type { Task, Topic } from '@/types';
@@ -31,10 +32,12 @@ export function TaskView({
   starterCodeBlock,
   solutionCodeBlock,
 }: TaskViewProps) {
-  const { t, t2 } = useLocale();
+  const { t, t2, locale } = useLocale();
+  const contentRef = useRef<HTMLDivElement>(null);
+  useContentHighlight(contentRef, [locale]);
 
   return (
-    <div className="container py-8 max-w-4xl space-y-6">
+    <div ref={contentRef} className="container py-8 max-w-4xl space-y-6">
       <div>
         <div className="flex gap-2 text-sm text-muted-foreground">
           <Link href="/tasks" className="hover:underline">{t2('tasks.title')}</Link>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Question } from '@/types';
 import type { Locale } from '@/types';
 import { useLocale } from '@/context/LocaleContext';
@@ -8,6 +8,8 @@ import { DifficultyBadge } from './DifficultyBadge';
 import { useQuestionReviewed } from '@/lib/progress';
 import { ChevronDown, CheckCircle2, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { highlightText } from '@/lib/search/highlight';
+import { useContentHighlight } from '@/lib/search/useContentHighlight';
 
 /** Question with its answer markdown pre-rendered to HTML (shiki github-dark) on the server. */
 export interface QuestionWithAnswerHtml extends Question {
@@ -16,18 +18,39 @@ export interface QuestionWithAnswerHtml extends Question {
 
 interface QuestionCardProps {
   question: QuestionWithAnswerHtml;
+  /** Deep-link target from search: open by default and briefly flash a ring. */
+  spotlight?: boolean;
+  /** Query terms to highlight in the question text (from `?hl=`). */
+  highlightQuery?: string;
 }
 
-export function QuestionCard({ question }: QuestionCardProps) {
+export function QuestionCard({ question, spotlight = false, highlightQuery }: QuestionCardProps) {
   const { locale: globalLocale, t2 } = useLocale();
   const [locale, setLocale] = useState<Locale>(globalLocale);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(spotlight);
+  const [flash, setFlash] = useState(spotlight);
   const [reviewed, toggleReviewed] = useQuestionReviewed(question.id);
 
   // Stay in sync with global locale changes
   useEffect(() => {
     setLocale(globalLocale);
   }, [globalLocale]);
+
+  // Arriving from search: open the answer and briefly flash a ring.
+  useEffect(() => {
+    if (!spotlight) return;
+    setOpen(true);
+    setFlash(true);
+    const id = setTimeout(() => setFlash(false), 2600);
+    return () => clearTimeout(id);
+  }, [spotlight]);
+
+  // Highlight the query inside the opened answer, but only for the deep-link target.
+  const answerRef = useRef<HTMLDivElement>(null);
+  useContentHighlight(answerRef, [open, locale, spotlight], {
+    enabled: spotlight && open,
+    scroll: false, // QuestionFilters already scrolls the card into view
+  });
 
   const questionText = question.question[locale];
   const answerHtml = question.answerHtml[locale];
@@ -41,9 +64,11 @@ export function QuestionCard({ question }: QuestionCardProps) {
 
   return (
     <div
+      id={`q-${question.id}`}
       className={cn(
-        'border rounded-md transition-colors',
+        'border rounded-md transition-all scroll-mt-24',
         reviewed ? 'border-green-500/30 bg-green-500/[0.03]' : 'border-border bg-card',
+        flash && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
       )}
     >
       {/* Card header */}
@@ -63,7 +88,9 @@ export function QuestionCard({ question }: QuestionCardProps) {
 
         {/* Question + controls row */}
         <div className="flex items-start gap-3">
-          <p className="flex-1 min-w-0 [overflow-wrap:anywhere] text-sm leading-relaxed font-medium">{questionText}</p>
+          <p className="flex-1 min-w-0 [overflow-wrap:anywhere] text-sm leading-relaxed font-medium">
+            {highlightQuery ? highlightText(questionText, highlightQuery) : questionText}
+          </p>
 
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Per-card locale toggle */}
@@ -114,7 +141,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
       {/* Accordion answer */}
       {open && (
         <div id={`answer-${question.id}`} className="question-answer border-t border-border px-4 py-3 animate-fade-in">
-          <div className="article-body text-sm" dangerouslySetInnerHTML={{ __html: answerHtml }} />
+          <div ref={answerRef} className="article-body text-sm" dangerouslySetInnerHTML={{ __html: answerHtml }} />
 
           {/* Mark as reviewed */}
           <div className="mt-3 pt-3 border-t border-border flex justify-end">
