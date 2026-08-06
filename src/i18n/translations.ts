@@ -201,6 +201,9 @@ export const translations = {
     refine:      { en: 'Refine your query to see more',     ru: 'Уточните запрос, чтобы увидеть больше' },
     hintEnter:   { en: 'to open',                           ru: 'открыть' },
     hintNav:     { en: 'navigate',                          ru: 'навигация' },
+    all:         { en: 'All',                               ru: 'Все' },
+    recent:      { en: 'Recent',                            ru: 'Недавние' },
+    clearRecent: { en: 'Clear',                             ru: 'Очистить' },
     type: {
       theory:   { en: 'Theory',    ru: 'Теория' },
       question: { en: 'Questions', ru: 'Вопросы' },

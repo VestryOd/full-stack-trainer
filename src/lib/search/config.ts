@@ -38,6 +38,13 @@ export interface SearchDisplayDoc {
   url: string;
 }
 
+/** Route-derived scope used to pre-filter the palette when opened on a section page. */
+export interface SearchScope {
+  type: SearchType | null;
+  topicId: string | null;
+  topicLabel: string | null;
+}
+
 /** Result-group order and their i18n label keys (resolved via `t2`). */
 export const SEARCH_TYPE_ORDER: SearchType[] = ['theory', 'question', 'task', 'course'];
 export const SEARCH_TYPE_LABEL_KEY: Record<SearchType, string> = {

@@ -30,6 +30,12 @@ export interface SearchOutcome {
   truncated: boolean;
 }
 
+/** Facet filter applied to results (type and/or topic). */
+export interface SearchFilter {
+  type?: SearchType | null;
+  topicId?: string | null;
+}
+
 // Module-level cache so the index is fetched/parsed at most once per locale for
 // the whole session, shared across every mount of the palette.
 const cache = new Map<Locale, LoadedIndex>();
@@ -130,7 +136,7 @@ export function useSearchIndex(locale: Locale, enabled: boolean) {
     };
   }, [locale, enabled]);
 
-  const search = useCallback((query: string): SearchOutcome => {
+  const search = useCallback((query: string, filter?: SearchFilter): SearchOutcome => {
     const idx = indexRef.current;
     const q = query.trim();
     if (!idx || q.length < 2) return { groups: [], flat: [], total: 0, truncated: false };
@@ -138,7 +144,10 @@ export function useSearchIndex(locale: Locale, enabled: boolean) {
     const docs: SearchDisplayDoc[] = [];
     for (const r of raw) {
       const doc = idx.docs.get(r.id as string);
-      if (doc) docs.push(doc);
+      if (!doc) continue;
+      if (filter?.type && doc.type !== filter.type) continue;
+      if (filter?.topicId && doc.topicId !== filter.topicId) continue;
+      docs.push(doc);
     }
     return group(docs);
   }, []);
