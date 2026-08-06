@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
 import type { Locale } from '@/types';
 import { translations } from '@/i18n/translations';
 
@@ -33,6 +34,10 @@ const LocaleContext = createContext<LocaleContextValue>({
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
+  // `false` on both the server and the first client render → no hydration mismatch.
+  // We cover the app with a loader until the stored locale is applied, so the
+  // initial `en` → stored-locale swap never flashes on screen.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
@@ -43,6 +48,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     } catch {
       // localStorage unavailable (e.g. private browsing) — keep default locale
     }
+    setHydrated(true);
   }, []);
 
   function setLocale(l: Locale) {
@@ -65,6 +71,17 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   return (
     <LocaleContext.Provider value={{ locale, setLocale, t, t2 }}>
       {children}
+      {!hydrated && (
+        <div
+          aria-hidden
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-2xl font-bold text-primary">FST</span>
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      )}
     </LocaleContext.Provider>
   );
 }
