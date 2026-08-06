@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useLocale } from '@/context/LocaleContext';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
+import { SearchTrigger } from '@/components/search/SearchTrigger';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -57,6 +58,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2">
+          <SearchTrigger />
           <LocaleSwitcher />
           <ThemeToggle />
 

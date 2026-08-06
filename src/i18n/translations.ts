@@ -192,6 +192,22 @@ export const translations = {
     retry:    { en: 'Try again',                           ru: 'Попробовать снова' },
     backHome: { en: '← Back to home',                      ru: '← На главную' },
   },
+  search: {
+    title:       { en: 'Search',                            ru: 'Поиск' },
+    placeholder: { en: 'Search theory, questions, tasks…',  ru: 'Поиск по теории, вопросам, задачам…' },
+    hintType:    { en: 'Type at least 2 characters to search', ru: 'Введите минимум 2 символа для поиска' },
+    empty:       { en: 'No results for',                    ru: 'Ничего не найдено по' },
+    error:       { en: 'Could not load the search index.',  ru: 'Не удалось загрузить поисковый индекс.' },
+    refine:      { en: 'Refine your query to see more',     ru: 'Уточните запрос, чтобы увидеть больше' },
+    hintEnter:   { en: 'to open',                           ru: 'открыть' },
+    hintNav:     { en: 'navigate',                          ru: 'навигация' },
+    type: {
+      theory:   { en: 'Theory',    ru: 'Теория' },
+      question: { en: 'Questions', ru: 'Вопросы' },
+      task:     { en: 'Tasks',     ru: 'Задачи' },
+      course:   { en: 'Courses',   ru: 'Курсы' },
+    },
+  },
 } as const;
 
 export type TranslationKey = typeof translations;
