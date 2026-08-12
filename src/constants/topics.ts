@@ -13,6 +13,7 @@ export const TOPICS: readonly Topic[] = [
   { id: 'strapi',           label: 'Strapi CMS',            level: 'medium' },
   { id: 'postgresql',       label: 'PostgreSQL',            level: 'medium' },
   { id: 'prisma',           label: 'Prisma ORM',            level: 'medium' },
+  { id: 'mongodb-mongoose', label: 'MongoDB + Mongoose',    level: 'medium' },
   { id: 'redis',            label: 'Redis',                  level: 'medium' },
   { id: 'rabbitmq',         label: 'RabbitMQ',               level: 'medium' },
   { id: 'kafka',            label: 'Kafka',                 level: 'medium' },

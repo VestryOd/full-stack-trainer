@@ -219,6 +219,149 @@ def audit_map(L):
     return table(L['rows'])
 
 
+def objectid_layout(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def mongo_fit_matrix(L):
+    return table(L['rows'])
+
+
+def populate_mechanics(L):
+    return with_title_and_notes(
+        layered([L['step1'], L['step2'], L['step3']]),
+        L['title'],
+        L['notes'],
+    )
+
+
+def populate_vs_lookup(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def error_mapping(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def mongoose_layers(L):
+    block = layered([L['layer1'], L['layer2'], L['layer3'], L['layer4']])
+    return with_title_and_notes(block, L['title'], L['notes'])
+
+
+def hook_coverage(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def replica_set(L):
+    top = box(L['primary'])
+    bottom = hstack([box(L['secondary1']), box(L['secondary2'])], gap=4)
+    width = max(len(l) for l in bottom)
+    col = width // 2
+
+    def edge(label):
+        return [' ' * col + '│' + '  ' + label, ' ' * col + '▼']
+
+    out = [centered(L['title'], width), '']
+    out += [centered(l, width) for l in box(L['client'])]
+    out += edge(L['write_edge'])
+    out += [centered(l, width) for l in top]
+    out += edge(L['oplog_edge'])
+    out.extend(bottom)
+    out.append('')
+    out += [centered(n, width) for n in L['notes']]
+    return out
+
+
+def write_concern_matrix(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def shard_routing(L):
+    left = with_title_and_notes(box(L['targeted']), L['targeted_title'], L['targeted_notes'])
+    right = with_title_and_notes(box(L['scatter']), L['scatter_title'], L['scatter_notes'])
+    return hstack([left, right], gap=4)
+
+
+def pipeline_flow(L):
+    return with_title_and_notes(
+        vchain([L[f'stage{i}'] for i in range(1, 6)], L['edges']),
+        L['title'],
+        L['notes'],
+    )
+
+
+def stage_order(L):
+    left = with_title_and_notes(box(L['bad_lines']), L['bad_title'], L['bad_notes'])
+    right = with_title_and_notes(box(L['good_lines']), L['good_title'], L['good_notes'])
+    return hstack([left, right], gap=4)
+
+
+def lookup_cost(L):
+    return with_title_and_notes(
+        layered([L['input'], L['work'], L['result']]),
+        L['title'],
+        L['notes'],
+    )
+
+
+def esr_rule(L):
+    block = layered([L['query'], L['split'], L['index']])
+    return with_title_and_notes(block, L['title'], L['notes'])
+
+
+def explain_checklist(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def plan_shapes(L):
+    blocks = [
+        with_title_and_notes(box(L[f'plan{i}']), L[f'title{i}'], L[f'notes{i}'])
+        for i in (1, 2, 3)
+    ]
+    return hstack(blocks, gap=3)
+
+
+def embed_vs_ref(L):
+    left = with_title_and_notes(box(L['embed_lines']), L['embed_title'], L['embed_notes'])
+    right = with_title_and_notes(
+        vstack([box(L['ref_parent']), box(L['ref_child'])], gap=1),
+        L['ref_title'],
+        L['ref_notes'],
+    )
+    return hstack([left, right], gap=4)
+
+
+def cardinality_rule(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def pattern_catalog(L):
+    return table(L['rows'])
+
+
+def bucket_shape(L):
+    return with_title_and_notes(
+        layered([L['naive'], L['bucket']]),
+        L['title'],
+        L['notes'],
+    )
+
+
+def elemmatch_matrix(L):
+    block = layered([L['doc'], L['case1'], L['case2'], L['case3']])
+    return with_title_and_notes(block, L['title'], L['notes'])
+
+
+def lost_update_timeline(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def schema_location(L):
+    left = with_title_and_notes(box(L['mongo_lines']), L['mongo_title'], L['mongo_notes'])
+    right = with_title_and_notes(box(L['sql_lines']), L['sql_title'], L['sql_notes'])
+    return hstack([left, right], gap=4)
+
+
 DIAGRAMS = {
     'polyrepo-vs-monorepo': polyrepo_vs_monorepo,
     'nx-stack': nx_stack,
@@ -238,6 +381,29 @@ DIAGRAMS = {
     'contract-hub': serve_topology,
     'ci-flow': ci_flow,
     'audit-map': audit_map,
+    'objectid-layout': objectid_layout,
+    'mongo-fit-matrix': mongo_fit_matrix,
+    'schema-location': schema_location,
+    'elemmatch-matrix': elemmatch_matrix,
+    'lost-update-timeline': lost_update_timeline,
+    'embed-vs-ref': embed_vs_ref,
+    'cardinality-rule': cardinality_rule,
+    'pattern-catalog': pattern_catalog,
+    'bucket-shape': bucket_shape,
+    'esr-rule': esr_rule,
+    'explain-checklist': explain_checklist,
+    'plan-shapes': plan_shapes,
+    'pipeline-flow': pipeline_flow,
+    'stage-order': stage_order,
+    'lookup-cost': lookup_cost,
+    'replica-set': replica_set,
+    'write-concern-matrix': write_concern_matrix,
+    'shard-routing': shard_routing,
+    'mongoose-layers': mongoose_layers,
+    'hook-coverage': hook_coverage,
+    'populate-mechanics': populate_mechanics,
+    'populate-vs-lookup': populate_vs_lookup,
+    'error-mapping': error_mapping,
 }
 
 LABELS = {
@@ -626,6 +792,952 @@ LABELS = {
                 ('boundaries', 'the root eslint config', 'real depConstraints or a placeholder (06)'),
                 ('federation', 'module-federation.config.*', 'host/remotes, shared, types (09–11)'),
                 ('CI', '.github/workflows etc.', 'affected? base? remote cache? (05, 13)'),
+            ],
+        },
+    },
+    'objectid-layout': {
+        'ru': {
+            'title': 'ObjectId — 12 байт, а не случайный UUID',
+            'rows': [
+                ('байты', 'что внутри', 'практическое следствие'),
+                ('0-3', 'unix-время в секундах, UTC', 'сортировка по _id ≈ по времени создания'),
+                ('4-8', 'случайное значение процесса', 'два процесса не сгенерируют одинаковый id'),
+                ('9-11', 'счётчик внутри процесса', 'порядок внутри одной секунды сохраняется'),
+            ],
+            'notes': [
+                'гранулярность времени — 1 секунда: внутри секунды порядок',
+                'между разными процессами не определён',
+            ],
+        },
+        'en': {
+            'title': 'ObjectId is 12 bytes, not a random UUID',
+            'rows': [
+                ('bytes', 'what is inside', 'practical consequence'),
+                ('0-3', 'unix time in seconds, UTC', 'sorting by _id ~ sorting by creation time'),
+                ('4-8', 'random per-process value', 'two processes never generate the same id'),
+                ('9-11', 'per-process counter', 'order within the same second is preserved'),
+            ],
+            'notes': [
+                'time granularity is 1 second: within one second the order',
+                'across different processes is undefined',
+            ],
+        },
+    },
+    'mongo-fit-matrix': {
+        'ru': {
+            'rows': [
+                ('сигнал в требованиях', 'скорее MongoDB', 'скорее PostgreSQL'),
+                ('форма данных', 'агрегат читается целиком', 'связи и запросы по любой оси'),
+                ('схема', 'поля различаются от записи к записи', 'поля известны и стабильны'),
+                ('запись', 'очень много вставок, шардинг впереди', 'умеренная, важнее целостность'),
+                ('транзакции', 'меняется один документ', 'меняются 3-5 таблиц сразу'),
+                ('аналитика', 'заранее известные отчёты', 'произвольные JOIN и BI-запросы'),
+                ('целостность', 'контролирует приложение', 'нужны FK и ON DELETE'),
+            ],
+        },
+        'en': {
+            'rows': [
+                ('signal in the requirements', 'leans MongoDB', 'leans PostgreSQL'),
+                ('data shape', 'one aggregate read as a whole', 'relations, queries along any axis'),
+                ('schema', 'fields differ across records', 'fields are known and stable'),
+                ('writes', 'very high insert rate, sharding ahead', 'moderate, integrity matters more'),
+                ('transactions', 'one document changes', '3-5 tables change at once'),
+                ('analytics', 'reports known upfront', 'ad-hoc JOINs and BI queries'),
+                ('integrity', 'enforced by the application', 'FK and ON DELETE required'),
+            ],
+        },
+    },
+    'schema-location': {
+        'ru': {
+            'mongo_title': 'MongoDB: схема живёт в коде',
+            'mongo_lines': [
+                'коллекция posts',
+                '',
+                '{ title, authorId, tags }',
+                '{ title, authorId }          ← нет tags',
+                '{ title, author: {...} }     ← другая форма',
+            ],
+            'mongo_notes': [
+                'БД примет всё; проверять форму обязан код',
+                '(Mongoose-схема или $jsonSchema-валидатор)',
+            ],
+            'sql_title': 'PostgreSQL: схема живёт в БД',
+            'sql_lines': [
+                'таблица posts',
+                '',
+                'title      text   NOT NULL',
+                'author_id  bigint REFERENCES users',
+                'tags       text[] DEFAULT ARRAY[]',
+            ],
+            'sql_notes': [
+                'БД отвергнет неверную форму,',
+                'но изменение формы = миграция',
+            ],
+        },
+        'en': {
+            'mongo_title': 'MongoDB: the schema lives in the code',
+            'mongo_lines': [
+                'collection posts',
+                '',
+                '{ title, authorId, tags }',
+                '{ title, authorId }          ← no tags',
+                '{ title, author: {...} }     ← different shape',
+            ],
+            'mongo_notes': [
+                'the DB accepts anything; the code must check',
+                '(a Mongoose schema or a $jsonSchema validator)',
+            ],
+            'sql_title': 'PostgreSQL: the schema lives in the DB',
+            'sql_lines': [
+                'table posts',
+                '',
+                'title      text   NOT NULL',
+                'author_id  bigint REFERENCES users',
+                'tags       text[] DEFAULT ARRAY[]',
+            ],
+            'sql_notes': [
+                'the DB rejects a wrong shape,',
+                'but changing the shape means a migration',
+            ],
+        },
+    },
+    'elemmatch-matrix': {
+        'ru': {
+            'title': 'Точечная нотация по массиву проверяет условия НЕЗАВИСИМО',
+            'doc': [
+                'документ в коллекции posts:',
+                '{ _id: 1, ratings: [ { userId: "a", score: 5 },',
+                '                     { userId: "b", score: 2 } ] }',
+            ],
+            'case1': [
+                '{ "ratings.score": { $gte: 4 } }',
+                '  → МАТЧ: хотя бы один элемент имеет score >= 4',
+            ],
+            'case2': [
+                '{ "ratings.userId": "b", "ratings.score": { $gte: 4 } }',
+                '  → МАТЧ, и это ловушка: условия выполнены РАЗНЫМИ',
+                '    элементами — userId вторым, score первым',
+            ],
+            'case3': [
+                '{ ratings: { $elemMatch: { userId: "b", score: { $gte: 4 } } } }',
+                '  → НЕ МАТЧ: нужен ОДИН элемент, проходящий оба условия',
+                '    (именно это обычно и имеют в виду)',
+            ],
+            'notes': [
+                'правило: два и более условия на один элемент массива — всегда $elemMatch',
+            ],
+        },
+        'en': {
+            'title': 'Dot notation on an array checks conditions INDEPENDENTLY',
+            'doc': [
+                'a document in the posts collection:',
+                '{ _id: 1, ratings: [ { userId: "a", score: 5 },',
+                '                     { userId: "b", score: 2 } ] }',
+            ],
+            'case1': [
+                '{ "ratings.score": { $gte: 4 } }',
+                '  → MATCH: at least one element has score >= 4',
+            ],
+            'case2': [
+                '{ "ratings.userId": "b", "ratings.score": { $gte: 4 } }',
+                '  → MATCH, and this is the trap: the conditions are met by',
+                '    DIFFERENT elements — userId by the second, score by the first',
+            ],
+            'case3': [
+                '{ ratings: { $elemMatch: { userId: "b", score: { $gte: 4 } } } }',
+                '  → NO MATCH: ONE element must satisfy both conditions',
+                '    (which is what people usually mean)',
+            ],
+            'notes': [
+                'rule: two or more conditions on the same array element always need $elemMatch',
+            ],
+        },
+    },
+    'lost-update-timeline': {
+        'ru': {
+            'title': 'Lost update: read-modify-write в коде приложения',
+            'rows': [
+                ('шаг', 'процесс A', 'процесс B'),
+                ('1', 'find: views = 100', ''),
+                ('2', '', 'find: views = 100'),
+                ('3', 'update: views = 101', ''),
+                ('4', '', 'update: views = 101'),
+            ],
+            'notes': [
+                'два инкремента, результат 101 вместо 102 — один потерян',
+                'findOneAndUpdate({ _id }, { $inc: { views: 1 } }) — один атомарный шаг: 102',
+            ],
+        },
+        'en': {
+            'title': 'Lost update: read-modify-write in application code',
+            'rows': [
+                ('step', 'process A', 'process B'),
+                ('1', 'find: views = 100', ''),
+                ('2', '', 'find: views = 100'),
+                ('3', 'update: views = 101', ''),
+                ('4', '', 'update: views = 101'),
+            ],
+            'notes': [
+                'two increments, result is 101 instead of 102 — one is lost',
+                'findOneAndUpdate({ _id }, { $inc: { views: 1 } }) — one atomic step: 102',
+            ],
+        },
+    },
+    'embed-vs-ref': {
+        'ru': {
+            'embed_title': 'EMBEDDING: комментарии внутри поста',
+            'embed_lines': [
+                'коллекция posts',
+                '',
+                '{ _id: 1,',
+                '  title: "Индексы",',
+                '  comments: [',
+                '    { _id: 11, body: "..." },',
+                '    { _id: 12, body: "..." } ] }',
+            ],
+            'embed_notes': [
+                'одно чтение отдаёт всю страницу;',
+                'одна запись меняет пост и комментарий',
+                'атомарно; но массив растёт без границы',
+            ],
+            'ref_title': 'REFERENCING: две коллекции',
+            'ref_parent': [
+                'коллекция posts',
+                '',
+                '{ _id: 1, title: "Индексы" }',
+            ],
+            'ref_child': [
+                'коллекция comments',
+                '',
+                '{ _id: 11, postId: 1, body: "..." }',
+                '{ _id: 12, postId: 1, body: "..." }',
+            ],
+            'ref_notes': [
+                'рост не ограничен документом,',
+                'комментарии живут своей жизнью;',
+                'но два запроса и нет атомарности',
+            ],
+        },
+        'en': {
+            'embed_title': 'EMBEDDING: comments inside the post',
+            'embed_lines': [
+                'collection posts',
+                '',
+                '{ _id: 1,',
+                '  title: "Indexes",',
+                '  comments: [',
+                '    { _id: 11, body: "..." },',
+                '    { _id: 12, body: "..." } ] }',
+            ],
+            'embed_notes': [
+                'one read returns the whole page;',
+                'one write changes post and comment',
+                'atomically; but the array grows unbounded',
+            ],
+            'ref_title': 'REFERENCING: two collections',
+            'ref_parent': [
+                'collection posts',
+                '',
+                '{ _id: 1, title: "Indexes" }',
+            ],
+            'ref_child': [
+                'collection comments',
+                '',
+                '{ _id: 11, postId: 1, body: "..." }',
+                '{ _id: 12, postId: 1, body: "..." }',
+            ],
+            'ref_notes': [
+                'growth is not bound by the document,',
+                'comments have their own lifecycle;',
+                'but two queries and no atomicity',
+            ],
+        },
+    },
+    'cardinality-rule': {
+        'ru': {
+            'title': 'Кардинальность — первый фильтр решения',
+            'rows': [
+                ('связь', 'пример в блоге', 'решение'),
+                ('one-to-few', 'у поста 3-10 тегов', 'вкладывать массивом'),
+                ('one-to-few', 'у пользователя 2 адреса', 'вкладывать массивом'),
+                ('one-to-many', 'у поста 50-500 комментариев', 'ссылка + Subset в посте'),
+                ('one-to-squillions', 'у поста миллионы просмотров', 'ссылка из дочернего, Bucket'),
+                ('many-to-many', 'посты и теги как сущности', 'массив id на «главной» стороне'),
+            ],
+            'notes': [
+                'граница few/many — не число, а ответ на вопрос:',
+                'может ли пользователь наращивать это без предела?',
+            ],
+        },
+        'en': {
+            'title': 'Cardinality is the first filter on the decision',
+            'rows': [
+                ('relationship', 'example in a blog', 'decision'),
+                ('one-to-few', 'a post has 3-10 tags', 'embed as an array'),
+                ('one-to-few', 'a user has 2 addresses', 'embed as an array'),
+                ('one-to-many', 'a post has 50-500 comments', 'reference + Subset in post'),
+                ('one-to-squillions', 'a post has millions of views', 'reference from child, Bucket'),
+                ('many-to-many', 'posts and tags as entities', 'array of ids on the "main" side'),
+            ],
+            'notes': [
+                'the few/many boundary is not a number but an answer to:',
+                'can a user grow this without any limit?',
+            ],
+        },
+    },
+    'pattern-catalog': {
+        'ru': {
+            'rows': [
+                ('паттерн', 'какую боль лечит', 'цена'),
+                ('Extended Reference', 'лишний запрос за именем автора', 'дубли надо обновлять'),
+                ('Subset', 'документ раздут, а нужно 3 записи', 'две записи вместо одной'),
+                ('Bucket', 'миллионы крошечных документов', 'сложнее точечные правки'),
+                ('Computed', 'агрегат считается на каждом чтении', 'значение может разъехаться'),
+            ],
+        },
+        'en': {
+            'rows': [
+                ('pattern', 'the pain it treats', 'the cost'),
+                ('Extended Reference', 'an extra query for the author name', 'duplicates need updating'),
+                ('Subset', 'a bloated document when 3 rows suffice', 'two writes instead of one'),
+                ('Bucket', 'millions of tiny documents', 'point edits get harder'),
+                ('Computed', 'an aggregate recomputed on every read', 'the value can drift'),
+            ],
+        },
+    },
+    'bucket-shape': {
+        'ru': {
+            'title': 'Bucket: документ на корзину, а не на событие',
+            'naive': [
+                'наивно — документ на каждый просмотр:',
+                '{ postId: 1, at: ISODate("...T10:00:03Z") }',
+                '{ postId: 1, at: ISODate("...T10:00:07Z") }',
+                '  → 10M документов в сутки, 10M записей в индексе',
+            ],
+            'bucket': [
+                'Bucket — документ на (postId, час):',
+                '{ postId: 1, hour: ISODate("...T10:00Z"),',
+                '  count: 8421, uniqueUsers: 3190 }',
+                '  → 24 документа в сутки на пост, upsert + $inc',
+            ],
+            'notes': [
+                'отчёт за неделю: 168 документов вместо 70 миллионов',
+            ],
+        },
+        'en': {
+            'title': 'Bucket: one document per bucket, not per event',
+            'naive': [
+                'naive — one document per view:',
+                '{ postId: 1, at: ISODate("...T10:00:03Z") }',
+                '{ postId: 1, at: ISODate("...T10:00:07Z") }',
+                '  → 10M documents a day, 10M index entries',
+            ],
+            'bucket': [
+                'Bucket — one document per (postId, hour):',
+                '{ postId: 1, hour: ISODate("...T10:00Z"),',
+                '  count: 8421, uniqueUsers: 3190 }',
+                '  → 24 documents a day per post, upsert + $inc',
+            ],
+            'notes': [
+                'a weekly report reads 168 documents instead of 70 million',
+            ],
+        },
+    },
+    'esr-rule': {
+        'ru': {
+            'title': 'ESR: как разложить запрос в порядок полей индекса',
+            'query': [
+                'запрос:',
+                'db.posts.find({ status: "published",',
+                '                "author._id": authorId,',
+                '                publishedAt: { $gte: monthAgo } })',
+                '        .sort({ views: -1 })',
+            ],
+            'split': [
+                'E (equality)  status, author._id   — точные значения',
+                'S (sort)      views: -1            — порядок выдачи',
+                'R (range)     publishedAt: $gte    — диапазон',
+            ],
+            'index': [
+                'индекс:',
+                '{ status: 1, "author._id": 1, views: -1, publishedAt: 1 }',
+                '  → IXSCAN без стадии SORT и без лишних FETCH',
+            ],
+            'notes': [
+                'поменять S и R местами — и появится SORT в памяти на всей выборке',
+            ],
+        },
+        'en': {
+            'title': 'ESR: how to turn a query into index field order',
+            'query': [
+                'query:',
+                'db.posts.find({ status: "published",',
+                '                "author._id": authorId,',
+                '                publishedAt: { $gte: monthAgo } })',
+                '        .sort({ views: -1 })',
+            ],
+            'split': [
+                'E (equality)  status, author._id   — exact values',
+                'S (sort)      views: -1            — output order',
+                'R (range)     publishedAt: $gte    — a range',
+            ],
+            'index': [
+                'index:',
+                '{ status: 1, "author._id": 1, views: -1, publishedAt: 1 }',
+                '  → IXSCAN with no SORT stage and no extra FETCH',
+            ],
+            'notes': [
+                'swap S and R and you get an in-memory SORT over the whole result',
+            ],
+        },
+    },
+    'explain-checklist': {
+        'ru': {
+            'title': 'Чтение executionStats: признак → диагноз → что делать',
+            'rows': [
+                ('что видно', 'что это значит', 'что делать'),
+                ('stage: COLLSCAN', 'индекс не используется', 'создать индекс по ESR'),
+                ('stage: SORT', 'сортировка в памяти', 'добавить sort-поле в индекс'),
+                ('docsExamined >> nReturned', 'индекс плохо селективен', 'уточнить порядок полей'),
+                ('keysExamined >> nReturned', 'скан широкого диапазона', 'вынести equality вперёд'),
+                ('docsExamined = 0', 'covered query', 'ничего, это цель'),
+                ('rejectedPlans пусто', 'план один', 'проверить, что он ожидаемый'),
+            ],
+            'notes': [
+                'ориентир здорового запроса: nReturned ≈ docsExamined ≈ keysExamined',
+            ],
+        },
+        'en': {
+            'title': 'Reading executionStats: symptom → diagnosis → action',
+            'rows': [
+                ('what you see', 'what it means', 'what to do'),
+                ('stage: COLLSCAN', 'no index is used', 'create an index per ESR'),
+                ('stage: SORT', 'sorting in memory', 'add the sort field to the index'),
+                ('docsExamined >> nReturned', 'index is not selective', 'revisit the field order'),
+                ('keysExamined >> nReturned', 'a wide range is scanned', 'move equality fields first'),
+                ('docsExamined = 0', 'a covered query', 'nothing — this is the goal'),
+                ('rejectedPlans is empty', 'only one plan existed', 'check it is the expected one'),
+            ],
+            'notes': [
+                'a healthy query looks like: nReturned ≈ docsExamined ≈ keysExamined',
+            ],
+        },
+    },
+    'plan-shapes': {
+        'ru': {
+            'title1': 'без индекса',
+            'plan1': [
+                'COLLSCAN',
+                '  ↓',
+                'SORT',
+                '  ↓',
+                'LIMIT',
+            ],
+            'notes1': [
+                'читает все документы,',
+                'сортирует в памяти',
+            ],
+            'title2': 'индекс + документы',
+            'plan2': [
+                'IXSCAN',
+                '  ↓',
+                'FETCH',
+                '  ↓',
+                'LIMIT',
+            ],
+            'notes2': [
+                'по индексу находит ключи,',
+                'потом читает документы',
+            ],
+            'title3': 'covered query',
+            'plan3': [
+                'IXSCAN',
+                '  ↓',
+                'PROJECTION_COVERED',
+                '  ↓',
+                'LIMIT',
+            ],
+            'notes3': [
+                'документы не читаются',
+                'вообще: docsExamined = 0',
+            ],
+        },
+        'en': {
+            'title1': 'no index',
+            'plan1': [
+                'COLLSCAN',
+                '  ↓',
+                'SORT',
+                '  ↓',
+                'LIMIT',
+            ],
+            'notes1': [
+                'reads every document,',
+                'sorts in memory',
+            ],
+            'title2': 'index + documents',
+            'plan2': [
+                'IXSCAN',
+                '  ↓',
+                'FETCH',
+                '  ↓',
+                'LIMIT',
+            ],
+            'notes2': [
+                'finds keys in the index,',
+                'then reads the documents',
+            ],
+            'title3': 'covered query',
+            'plan3': [
+                'IXSCAN',
+                '  ↓',
+                'PROJECTION_COVERED',
+                '  ↓',
+                'LIMIT',
+            ],
+            'notes3': [
+                'documents are never read:',
+                'docsExamined = 0',
+            ],
+        },
+    },
+    'pipeline-flow': {
+        'ru': {
+            'title': 'Пайплайн: каждая стадия получает поток и отдаёт поток',
+            'stage1': ['коллекция comments', '2 000 000 документов'],
+            'stage2': ['$match: { createdAt: { $gte: monthAgo } }', 'использует индекс — стадия первая'],
+            'stage3': ['$group: по author._id', 'сумма и количество на автора'],
+            'stage4': ['$sort: { total: -1 }  +  $limit: 10', 'top-k: сортируются только группы'],
+            'stage5': ['курсор с результатом', '10 документов'],
+            'edges': ['180 000', '4 200', '4 200', '10'],
+            'notes': [
+                'числа на стрелках — сколько документов уходит в следующую стадию',
+            ],
+        },
+        'en': {
+            'title': 'A pipeline: every stage takes a stream and emits a stream',
+            'stage1': ['collection comments', '2,000,000 documents'],
+            'stage2': ['$match: { createdAt: { $gte: monthAgo } }', 'uses an index — it is the first stage'],
+            'stage3': ['$group: by author._id', 'sum and count per author'],
+            'stage4': ['$sort: { total: -1 }  +  $limit: 10', 'top-k: only the groups are sorted'],
+            'stage5': ['a cursor with the result', '10 documents'],
+            'edges': ['180,000', '4,200', '4,200', '10'],
+            'notes': [
+                'the numbers on the arrows are documents passed to the next stage',
+            ],
+        },
+    },
+    'stage-order': {
+        'ru': {
+            'bad_title': 'ПЛОХО: фильтр после разворота',
+            'bad_lines': [
+                '$unwind: "$tags"',
+                '$lookup: from: "users"',
+                '$match: { status: "published" }',
+                '$sort:  { publishedAt: -1 }',
+            ],
+            'bad_notes': [
+                'индекс не используется: перед $match',
+                'уже прошли стадии, меняющие форму;',
+                '$lookup выполнен для черновиков тоже',
+            ],
+            'good_title': 'ХОРОШО: фильтр и сортировка первыми',
+            'good_lines': [
+                '$match: { status: "published" }',
+                '$sort:  { publishedAt: -1 }',
+                '$limit: 20',
+                '$lookup: from: "users"',
+                '$unwind: "$tags"',
+            ],
+            'good_notes': [
+                '$match + $sort берут индекс',
+                '{ status: 1, publishedAt: -1 };',
+                '$lookup работает по 20 документам',
+            ],
+        },
+        'en': {
+            'bad_title': 'BAD: filtering after unwinding',
+            'bad_lines': [
+                '$unwind: "$tags"',
+                '$lookup: from: "users"',
+                '$match: { status: "published" }',
+                '$sort:  { publishedAt: -1 }',
+            ],
+            'bad_notes': [
+                'no index is used: stages that reshape',
+                'documents already ran before $match;',
+                '$lookup also ran for the drafts',
+            ],
+            'good_title': 'GOOD: filter and sort first',
+            'good_lines': [
+                '$match: { status: "published" }',
+                '$sort:  { publishedAt: -1 }',
+                '$limit: 20',
+                '$lookup: from: "users"',
+                '$unwind: "$tags"',
+            ],
+            'good_notes': [
+                '$match + $sort use the index',
+                '{ status: 1, publishedAt: -1 };',
+                '$lookup runs over 20 documents',
+            ],
+        },
+    },
+    'lookup-cost': {
+        'ru': {
+            'title': '$lookup — вложенный цикл, а не hash join',
+            'input': [
+                'на входе стадии: 500 постов',
+            ],
+            'work': [
+                'для КАЖДОГО поста выполняется поиск в users:',
+                '  { _id: <authorId поста> }',
+                '  → 500 отдельных обращений к коллекции users',
+                '  → с индексом по _id это 500 быстрых IXSCAN',
+                '  → без индекса по foreignField — 500 COLLSCAN',
+            ],
+            'result': [
+                'на выходе: те же 500 постов + поле author: [ ... ]',
+            ],
+            'notes': [
+                'планировщик не выбирает порядок соединения и не строит хеш-таблицу',
+                'Extended Reference в схеме убирает эту стадию целиком',
+            ],
+        },
+        'en': {
+            'title': '$lookup is a nested loop, not a hash join',
+            'input': [
+                'stage input: 500 posts',
+            ],
+            'work': [
+                'for EVERY post a lookup runs against users:',
+                '  { _id: <the post authorId> }',
+                '  → 500 separate accesses to the users collection',
+                '  → with an index on _id these are 500 fast IXSCANs',
+                '  → without an index on foreignField — 500 COLLSCANs',
+            ],
+            'result': [
+                'stage output: the same 500 posts + author: [ ... ]',
+            ],
+            'notes': [
+                'the planner picks no join order and builds no hash table',
+                'an Extended Reference in the schema removes this stage entirely',
+            ],
+        },
+    },
+    'replica-set': {
+        'ru': {
+            'title': 'Реплика-сет: одна точка записи, несколько копий данных',
+            'client': ['приложение (драйвер знает всех членов сета)'],
+            'write_edge': 'все записи — только на primary',
+            'primary': [
+                'PRIMARY',
+                'применяет запись и пишет её в oplog',
+                '(local.oplog.rs — capped-коллекция)',
+            ],
+            'oplog_edge': 'secondaries тянут oplog и применяют операции',
+            'secondary1': [
+                'SECONDARY',
+                'копия данных,',
+                'может отставать',
+            ],
+            'secondary2': [
+                'SECONDARY',
+                'кандидат в primary',
+                'при выборах',
+            ],
+            'notes': [
+                'primary недоступен → выборы (несколько секунд) → новый primary из большинства',
+                'размер oplog задаёт окно, за которое отставший узел ещё может догнать',
+            ],
+        },
+        'en': {
+            'title': 'A replica set: one write point, several copies of the data',
+            'client': ['the application (the driver knows every member)'],
+            'write_edge': 'every write goes to the primary only',
+            'primary': [
+                'PRIMARY',
+                'applies the write and records it in the oplog',
+                '(local.oplog.rs — a capped collection)',
+            ],
+            'oplog_edge': 'secondaries tail the oplog and apply the operations',
+            'secondary1': [
+                'SECONDARY',
+                'a copy of the data,',
+                'may lag behind',
+            ],
+            'secondary2': [
+                'SECONDARY',
+                'a candidate for primary',
+                'during an election',
+            ],
+            'notes': [
+                'primary unavailable → an election (a few seconds) → a new primary from the majority',
+                'the oplog size sets the window in which a lagging member can still catch up',
+            ],
+        },
+    },
+    'write-concern-matrix': {
+        'ru': {
+            'title': 'Что на самом деле значит «запись подтверждена»',
+            'rows': [
+                ('настройка', 'подтверждение получено, когда', 'чем рискуете'),
+                ('w: 0', 'драйвер отправил пакет', 'запись могла не примениться'),
+                ('w: 1', 'применил primary', 'откат при failover'),
+                ('w: 1, j: true', 'primary записал в журнал', 'откат при failover'),
+                ('w: "majority"', 'применило большинство узлов', 'выше задержка'),
+                ('w: "majority", j: true', 'большинство записало в журнал', 'самая высокая задержка'),
+            ],
+            'notes': [
+                'начиная с MongoDB 5.0 значение по умолчанию — w: "majority"',
+                'wtimeout ограничивает ожидание, но НЕ отменяет уже применённую запись',
+            ],
+        },
+        'en': {
+            'title': 'What "the write was acknowledged" actually means',
+            'rows': [
+                ('setting', 'acknowledged once', 'the risk you take'),
+                ('w: 0', 'the driver sent the packet', 'the write may never apply'),
+                ('w: 1', 'the primary applied it', 'rollback on failover'),
+                ('w: 1, j: true', 'the primary journaled it', 'rollback on failover'),
+                ('w: "majority"', 'a majority of members applied it', 'higher latency'),
+                ('w: "majority", j: true', 'a majority journaled it', 'the highest latency'),
+            ],
+            'notes': [
+                'since MongoDB 5.0 the default is w: "majority"',
+                'wtimeout bounds the wait but does NOT undo an already applied write',
+            ],
+        },
+    },
+    'shard-routing': {
+        'ru': {
+            'targeted_title': 'TARGETED: фильтр содержит shard key',
+            'targeted': [
+                'find({ tenantId: "acme", _id: x })',
+                '',
+                'mongos → шард 2',
+                '',
+                'шард 1  ·  [шард 2]  ·  шард 3',
+            ],
+            'targeted_notes': [
+                'запрос уходит на ОДИН шард;',
+                'масштабируется линейно с их числом',
+            ],
+            'scatter_title': 'SCATTER-GATHER: shard key отсутствует',
+            'scatter': [
+                'find({ status: "published" })',
+                '',
+                'mongos → все шарды → слияние',
+                '',
+                '[шард 1] · [шард 2] · [шард 3]',
+            ],
+            'scatter_notes': [
+                'каждый шард выполняет запрос,',
+                'mongos сливает; сортировка — тоже на нём',
+            ],
+        },
+        'en': {
+            'targeted_title': 'TARGETED: the filter contains the shard key',
+            'targeted': [
+                'find({ tenantId: "acme", _id: x })',
+                '',
+                'mongos → shard 2',
+                '',
+                'shard 1  ·  [shard 2]  ·  shard 3',
+            ],
+            'targeted_notes': [
+                'the query goes to ONE shard;',
+                'scales linearly with their number',
+            ],
+            'scatter_title': 'SCATTER-GATHER: no shard key in the filter',
+            'scatter': [
+                'find({ status: "published" })',
+                '',
+                'mongos → every shard → merge',
+                '',
+                '[shard 1] · [shard 2] · [shard 3]',
+            ],
+            'scatter_notes': [
+                'every shard runs the query and',
+                'mongos merges; the sort happens there too',
+            ],
+        },
+    },
+    'mongoose-layers': {
+        'ru': {
+            'title': 'Что именно добавляет Mongoose между кодом и сервером',
+            'layer1': [
+                'код приложения: сервисы, контроллеры',
+            ],
+            'layer2': [
+                'Mongoose: Schema · каст типов · валидация · хуки',
+                'virtuals · methods/statics · populate · query builder',
+                'гидрация результата в Document-обёртки',
+            ],
+            'layer3': [
+                'официальный Node.js driver: BSON, пул соединений,',
+                'мониторинг топологии, retryable writes, сессии',
+            ],
+            'layer4': [
+                'mongod / mongos: индексы, план запроса, репликация',
+            ],
+            'notes': [
+                'каждая строка слоя Mongoose — это удобство, у которого есть цена в поведении',
+            ],
+        },
+        'en': {
+            'title': 'What exactly Mongoose adds between your code and the server',
+            'layer1': [
+                'application code: services, controllers',
+            ],
+            'layer2': [
+                'Mongoose: Schema · type casting · validation · hooks',
+                'virtuals · methods/statics · populate · query builder',
+                'hydration of results into Document wrappers',
+            ],
+            'layer3': [
+                'the official Node.js driver: BSON, connection pool,',
+                'topology monitoring, retryable writes, sessions',
+            ],
+            'layer4': [
+                'mongod / mongos: indexes, query plan, replication',
+            ],
+            'notes': [
+                'every line of the Mongoose layer is a convenience with a behavioural cost',
+            ],
+        },
+    },
+    'hook-coverage': {
+        'ru': {
+            'title': 'Какие операции проходят через валидацию и хуки',
+            'rows': [
+                ('операция', 'валидация', 'pre/post save', 'query-хуки'),
+                ('doc.save()', 'да', 'да', 'нет'),
+                ('Model.create()', 'да', 'да', 'нет'),
+                ('Model.insertMany()', 'да', 'нет', 'нет'),
+                ('findOneAndUpdate()', 'только с runValidators', 'НЕТ', 'да'),
+                ('updateOne() / updateMany()', 'только с runValidators', 'НЕТ', 'да'),
+                ('bulkWrite()', 'нет', 'нет', 'нет'),
+            ],
+            'notes': [
+                'отсюда баг с хешированием пароля: pre(\'save\') не увидит findOneAndUpdate',
+            ],
+        },
+        'en': {
+            'title': 'Which operations go through validation and hooks',
+            'rows': [
+                ('operation', 'validation', 'pre/post save', 'query hooks'),
+                ('doc.save()', 'yes', 'yes', 'no'),
+                ('Model.create()', 'yes', 'yes', 'no'),
+                ('Model.insertMany()', 'yes', 'no', 'no'),
+                ('findOneAndUpdate()', 'only with runValidators', 'NO', 'yes'),
+                ('updateOne() / updateMany()', 'only with runValidators', 'NO', 'yes'),
+                ('bulkWrite()', 'no', 'no', 'no'),
+            ],
+            'notes': [
+                'hence the password hashing bug: pre(\'save\') never sees findOneAndUpdate',
+            ],
+        },
+    },
+    'populate-mechanics': {
+        'ru': {
+            'title': 'populate — это отдельные запросы, а не $lookup на сервере',
+            'step1': [
+                'PostModel.find().limit(20).populate("author._id")',
+                '  запрос 1: db.posts.find(...).limit(20)',
+            ],
+            'step2': [
+                'Mongoose собирает все authorId из 20 документов',
+                '  запрос 2: db.users.find({ _id: { $in: [ ...20 id... ] } })',
+            ],
+            'step3': [
+                'склейка в памяти процесса Node:',
+                '  post.author._id = соответствующий документ user',
+            ],
+            'notes': [
+                '20 постов = 2 запроса, а не 21 — но это всё равно два round-trip',
+                'вложенный populate добавляет ещё один запрос на КАЖДЫЙ уровень',
+            ],
+        },
+        'en': {
+            'title': 'populate is separate queries, not a server-side $lookup',
+            'step1': [
+                'PostModel.find().limit(20).populate("author._id")',
+                '  query 1: db.posts.find(...).limit(20)',
+            ],
+            'step2': [
+                'Mongoose collects every authorId from the 20 documents',
+                '  query 2: db.users.find({ _id: { $in: [ ...20 ids... ] } })',
+            ],
+            'step3': [
+                'stitching in the Node process memory:',
+                '  post.author._id = the matching user document',
+            ],
+            'notes': [
+                '20 posts = 2 queries, not 21 — but still two round-trips',
+                'a nested populate adds one more query per LEVEL',
+            ],
+        },
+    },
+    'populate-vs-lookup': {
+        'ru': {
+            'title': 'Три способа получить связанные данные',
+            'rows': [
+                ('', 'populate', '$lookup', 'пересмотр схемы'),
+                ('где выполняется', 'Node + N запросов', 'на сервере', 'нигде: данные уже в документе'),
+                ('round-trips', '2 и больше', '1', '1'),
+                ('фильтр по связанным', 'match, но родитель остаётся', 'полноценно в пайплайне', 'обычный find'),
+                ('цена', 'сеть и память Node', 'вложенный цикл', 'дубли надо синхронизировать'),
+                ('когда уместно', 'админки, редкие экраны', 'отчёты и агрегации', 'горячий путь чтения'),
+            ],
+            'notes': [
+                'если populate стоит в самом частом запросе — вопрос не к populate, а к схеме',
+            ],
+        },
+        'en': {
+            'title': 'Three ways to get related data',
+            'rows': [
+                ('', 'populate', '$lookup', 'redesign the schema'),
+                ('where it runs', 'Node + N queries', 'on the server', 'nowhere: already in the document'),
+                ('round-trips', '2 or more', '1', '1'),
+                ('filter on related', 'match, parent still returned', 'fully, inside the pipeline', 'a plain find'),
+                ('cost', 'network and Node memory', 'a nested loop', 'duplicates need syncing'),
+                ('when it fits', 'admin panels, rare screens', 'reports and aggregations', 'the hot read path'),
+            ],
+            'notes': [
+                'if populate sits in your most frequent query, the problem is the schema, not populate',
+            ],
+        },
+    },
+    'error-mapping': {
+        'ru': {
+            'title': 'Ошибки Mongoose/драйвера → ответ API',
+            'rows': [
+                ('ошибка', 'причина', 'ответ'),
+                ('ValidationError', 'схема отвергла значения', '400 + список полей'),
+                ('CastError', 'невалидный вход: битый ObjectId', '400'),
+                ('E11000 (code 11000)', 'нарушен уникальный индекс', '409 + имя поля'),
+                ('VersionError', 'документ изменён параллельно', '409, предложить перечитать'),
+                ('buffering timed out', 'нет соединения с базой', '503'),
+                ('MongoServerSelectionError', 'кластер недоступен', '503'),
+            ],
+            'notes': [
+                'без такого маппинга всё это превращается в 500 и в бесполезный алерт',
+            ],
+        },
+        'en': {
+            'title': 'Mongoose/driver errors → the API response',
+            'rows': [
+                ('error', 'cause', 'response'),
+                ('ValidationError', 'the schema rejected the values', '400 + field list'),
+                ('CastError', 'invalid input: a malformed ObjectId', '400'),
+                ('E11000 (code 11000)', 'a unique index was violated', '409 + field name'),
+                ('VersionError', 'the document changed concurrently', '409, ask for a refetch'),
+                ('buffering timed out', 'no connection to the database', '503'),
+                ('MongoServerSelectionError', 'the cluster is unreachable', '503'),
+            ],
+            'notes': [
+                'without this mapping all of it becomes a 500 and a useless alert',
             ],
         },
     },
