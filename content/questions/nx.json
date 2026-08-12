@@ -1,0 +1,219 @@
+[
+  {
+    "id": "nx-q-1",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is a monorepo, and which problems does it solve — and which new ones does it create — compared to a polyrepo?",
+      "ru": "Что такое монорепозиторий и какие проблемы он решает — а какие создаёт — по сравнению с полирепо?"
+    },
+    "answer": {
+      "en": "### Monorepo vs polyrepo\n\nA monorepo is a single repository that hosts many related projects — apps and libraries — developed and versioned together. A polyrepo keeps every project in its own repository.\n\nWhat a monorepo solves:\n\n- **Atomic changes.** A change that touches a shared contract and everything that uses it lands in one PR. In a polyrepo the same change means publishing a new package version and opening coordinated PRs in every consumer repo, in the right order.\n- **Trivial code sharing.** Internal libraries are imported directly from source — no publish → bump version → install cycle.\n- **One toolchain.** Lint, tests, build and dependency policies are set up once for everyone.\n- **Refactoring with full visibility.** All usages of a symbol live in one place, so renames and API changes are easy to verify.\n\nWhat it creates:\n\n- **A CI scale problem.** A naive pipeline rebuilds and retests everything on every commit, so pipeline time grows with the number of projects.\n- **A boundary problem.** Nothing physically prevents any project from importing any other, so without rules the codebase drifts toward a tangled ball of mud.\n- **Tooling requirements.** You now need a task orchestrator that understands what depends on what — this is exactly the niche NX fills (affected, caching, module boundaries).\n\n**Common pitfall:** Equating \"monorepo\" with \"monolith\". Co-locating code says nothing about deployment: apps inside a monorepo still build into separate artifacts and deploy independently. The reverse mistake is just as common — adopting a monorepo with plain npm scripts and no orchestration, then wondering why CI takes an hour on a one-line change.",
+      "ru": "### Монорепа vs полирепо\n\nМонорепозиторий — это один репозиторий, в котором живёт много связанных проектов: приложения и либы разрабатываются и версионируются вместе. Полирепо — противоположный подход: у каждого проекта свой репозиторий.\n\nЧто монорепа решает:\n\n- **Атомарные изменения.** Правка общего контракта и всех его потребителей уезжает одним PR. В полирепо то же изменение — это публикация новой версии пакета и скоординированные PR в каждый репозиторий-потребитель, причём в правильном порядке.\n- **Шаринг кода без церемоний.** Внутренние либы импортируются напрямую из исходников — без цикла publish → поднять версию → install.\n- **Единый тулчейн.** Линт, тесты, сборка и политика зависимостей настраиваются один раз на всех.\n- **Рефакторинг с полной видимостью.** Все использования символа в одном месте — переименования и изменения API легко проверить.\n\nЧто монорепа создаёт:\n\n- **Проблему масштаба CI.** Наивный пайплайн пересобирает и перегоняет все тесты на каждый коммит — время растёт вместе с количеством проектов.\n- **Проблему границ.** Физически ничто не мешает любому проекту импортировать любой другой, и без правил кодовая база сползает в запутанный клубок.\n- **Требования к тулингу.** Нужен оркестратор задач, который понимает, что от чего зависит, — ровно эту нишу и закрывает NX (affected, кеш, границы модулей).\n\n**Частая ловушка:** ставить знак равенства между «монорепа» и «монолит». Совместное хранение кода ничего не говорит о деплое: приложения внутри монорепы собираются в отдельные артефакты и деплоятся независимо. Обратная ошибка встречается не реже — завести монорепу на голых npm-скриптах без оркестрации и удивляться, почему CI едет час из-за однострочной правки."
+    },
+    "tags": [
+      "monorepo-vs-polyrepo",
+      "repo-strategy",
+      "atomic-changes"
+    ]
+  },
+  {
+    "id": "nx-q-2",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "Your repo already uses npm or pnpm workspaces. What does NX add on top of them?",
+      "ru": "В репозитории уже настроены npm или pnpm workspaces. Что NX добавляет поверх них?"
+    },
+    "answer": {
+      "en": "### Workspaces manage packages, NX manages tasks\n\nnpm/pnpm/yarn workspaces solve one problem: installing dependencies for many packages in one repo and symlinking local packages into each other. They say nothing about *running* things: what depends on what at the task level, what can be skipped, in which order to build, what to re-run after a change.\n\nNX is a layer on top that adds exactly that:\n\n- **Project graph**, built by analyzing your code, so NX knows that `shop` depends on `shared-ui`;\n- **Computation caching** — a task with the same inputs is never executed twice;\n- **`nx affected`** — run tasks only for projects actually touched by a change;\n- **Task orchestration** — `dependsOn` (\"build my dependencies first\"), parallel execution;\n- **Generators and module boundary rules** for keeping structure consistent at scale.\n\nSide by side:\n\n```bash\npnpm -r run build      # runs every package's build, every time\nnx run-many -t build   # same set, but cached and ordered by the graph\nnx affected -t build   # only what the current change actually affected\n```\n\npnpm does run builds in topological order, but it can't skip unaffected projects or restore results from cache.\n\n**Common pitfall:** Thinking NX *replaces* the package manager. They are different layers: pnpm still installs and links packages, NX schedules and caches tasks on top of them. That also means adoption is incremental — `nx init` in an existing workspace adds caching without rewriting anything.",
+      "ru": "### Workspaces управляют пакетами, NX управляет задачами\n\nnpm/pnpm/yarn workspaces решают одну задачу: установить зависимости для многих пакетов в одном репозитории и слинковать локальные пакеты друг с другом. Они ничего не говорят про *запуск*: что от чего зависит на уровне задач, что можно пропустить, в каком порядке собирать, что перезапускать после изменения.\n\nNX — это слой сверху, который добавляет ровно это:\n\n- **Граф проектов**, построенный по анализу кода: NX знает, что `shop` зависит от `shared-ui`;\n- **Кеширование вычислений** — задача с теми же входами никогда не выполняется дважды;\n- **`nx affected`** — задачи гоняются только для проектов, которых реально коснулось изменение;\n- **Оркестрация задач** — `dependsOn` («сначала собери мои зависимости»), параллельный запуск;\n- **Генераторы и правила границ модулей**, чтобы структура не расползалась с ростом репы.\n\nБок о бок:\n\n```bash\npnpm -r run build      # гоняет build каждого пакета, каждый раз\nnx run-many -t build   # тот же набор, но с кешем и порядком по графу\nnx affected -t build   # только то, чего реально коснулось изменение\n```\n\npnpm умеет запускать сборки в топологическом порядке, но не умеет пропускать незатронутые проекты и доставать результаты из кеша.\n\n**Частая ловушка:** думать, что NX *заменяет* пакетный менеджер. Это разные слои: pnpm по-прежнему ставит и линкует пакеты, а NX поверх них планирует и кеширует задачи. Отсюда же следует, что внедрение инкрементально — `nx init` в существующем workspace добавляет кеш, ничего не переписывая."
+    },
+    "tags": [
+      "nx-vs-workspaces",
+      "package-managers",
+      "task-running"
+    ]
+  },
+  {
+    "id": "nx-q-3",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "Why does NX recommend keeping apps/ thin and putting most of the code into libs/?",
+      "ru": "Почему NX рекомендует держать apps/ тонкими, а основной код класть в libs/?"
+    },
+    "answer": {
+      "en": "### Apps are composition roots, libs are the code\n\nThe convention: an app in `apps/` is a thin deployable shell — routing, providers, configuration, wiring. Actual functionality lives in `libs/`, and the app just composes libraries. A common rule of thumb is ~80% of the code in libs.\n\nWhy it pays off:\n\n- **Granularity for the graph.** Projects, not files, are NX's unit of caching and `affected`. Ten libs mean a change invalidates one small piece; one fat app means any change invalidates everything at once.\n- **Enforceable boundaries.** Tags and lint rules work *between* projects. Inside a single app project, layering is just a folder convention that nobody enforces.\n- **Reuse and testability.** A lib has an explicit public API and can be consumed by the next app (or an e2e suite) without surgery.\n\n```text\napps/\n  shop/                  # routes, DI wiring, env config\n  api/\nlibs/\n  shop/feature-cart/     # a user-facing flow\n  shared/ui/             # presentational components\n  shared/util-format/    # pure helpers\n```\n\n**Common pitfall:** \"We only have one app, so libs are overkill.\" Libs are not primarily about sharing between apps — even with a single app they buy you cache/affected granularity and real boundary enforcement. A monorepo where all code sits in `apps/shop/src` gets none of NX's benefits beyond a basic task runner.",
+      "ru": "### App — это composition root, код живёт в либах\n\nКонвенция такая: приложение в `apps/` — тонкая деплоящаяся оболочка: роутинг, провайдеры, конфигурация, связывание частей. Сама функциональность лежит в `libs/`, а приложение просто композирует либы. Расхожее правило — ~80% кода в либах.\n\nПочему это окупается:\n\n- **Гранулярность для графа.** Единица кеша и `affected` у NX — проект, а не файл. Десять либ — изменение инвалидирует один маленький кусок; одно жирное приложение — любая правка инвалидирует всё сразу.\n- **Границы, которые можно принуждать.** Теги и линт-правила работают *между* проектами. Внутри одного проекта-приложения слои — это просто конвенция папок, которую никто не проверяет.\n- **Переиспользование и тестируемость.** У либы есть явный публичный API, её можно подключить к следующему приложению (или e2e-сьюту) без хирургии.\n\n```text\napps/\n  shop/                  # роуты, DI-обвязка, env-конфиг\n  api/\nlibs/\n  shop/feature-cart/     # пользовательский флоу\n  shared/ui/             # презентационные компоненты\n  shared/util-format/    # чистые хелперы\n```\n\n**Частая ловушка:** «у нас одно приложение, либы — оверкилл». Либы нужны не в первую очередь для шаринга между приложениями: даже с одним приложением они дают гранулярность кеша/affected и реальное принуждение границ. Монорепа, где весь код лежит в `apps/shop/src`, не получает от NX ничего, кроме обычного таск-раннера."
+    },
+    "tags": [
+      "apps-vs-libs",
+      "workspace-structure",
+      "code-organization"
+    ]
+  },
+  {
+    "id": "nx-q-4",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are targets and executors in NX, and what happens under the hood when you run `nx build shop`?",
+      "ru": "Что такое target и executor в NX и что происходит под капотом при запуске `nx build shop`?"
+    },
+    "answer": {
+      "en": "### Target = what to run, executor = how to run it\n\nA **target** is a named task defined on a project: `build`, `test`, `serve`, `lint`. An **executor** is the implementation that actually runs it — `@nx/webpack:webpack`, `@nx/jest:jest`, or the generic `nx:run-commands` for arbitrary shell commands.\n\n```jsonc\n// apps/shop/project.json\n{\n  \"targets\": {\n    \"build\": {\n      \"executor\": \"@nx/webpack:webpack\",\n      \"options\": { \"outputPath\": \"dist/apps/shop\" },\n      \"configurations\": { \"production\": { \"optimization\": true } }\n    }\n  }\n}\n```\n\nWhen you run `nx build shop` (shorthand for `nx run shop:build`):\n\n1. NX locates the project in the project graph.\n2. Resolves the final target config by merging layers: plugin-inferred targets → `targetDefaults` from `nx.json` → the project's own `project.json` (most specific wins).\n3. Runs whatever `dependsOn` requires first — typically `^build`, i.e. build the dependencies before the app.\n4. Hashes the task inputs and checks the cache; on a hit it restores outputs instead of executing.\n5. On a miss, invokes the executor with the resolved options and stores the outputs in the cache.\n\nVersion note: in older workspaces every target is written out in `project.json`; since Project Crystal, plugins can *infer* targets from tool configs (`vite.config.ts`, `jest.config.ts`), so `project.json` may be nearly empty.\n\n**Common pitfall:** Concluding that a target \"doesn't exist\" because it's not in `project.json`. With inferred targets the real, merged configuration is only visible via `nx show project shop --web` — that's the first place to look when options seem to come from nowhere.",
+      "ru": "### Target — что запускать, executor — как запускать\n\n**Target** — это именованная задача на проекте: `build`, `test`, `serve`, `lint`. **Executor** — реализация, которая её выполняет: `@nx/webpack:webpack`, `@nx/jest:jest` или универсальный `nx:run-commands` для произвольных shell-команд.\n\n```jsonc\n// apps/shop/project.json\n{\n  \"targets\": {\n    \"build\": {\n      \"executor\": \"@nx/webpack:webpack\",\n      \"options\": { \"outputPath\": \"dist/apps/shop\" },\n      \"configurations\": { \"production\": { \"optimization\": true } }\n    }\n  }\n}\n```\n\nПри запуске `nx build shop` (сокращение от `nx run shop:build`):\n\n1. NX находит проект в графе проектов.\n2. Собирает итоговую конфигурацию таргета, сливая слои: таргеты, выведенные плагинами → `targetDefaults` из `nx.json` → собственный `project.json` проекта (побеждает самый специфичный слой).\n3. Сначала выполняет то, что требует `dependsOn`, — обычно `^build`, то есть «собери зависимости раньше самого приложения».\n4. Хеширует входы задачи и проверяет кеш; при попадании восстанавливает результаты вместо запуска.\n5. При промахе вызывает executor с итоговыми опциями и складывает результаты в кеш.\n\nПро версии: в старых воркспейсах каждый таргет прописан в `project.json`; начиная с Project Crystal плагины умеют *выводить* таргеты из конфигов инструментов (`vite.config.ts`, `jest.config.ts`), поэтому `project.json` может быть почти пустым.\n\n**Частая ловушка:** решить, что таргета «не существует», потому что его нет в `project.json`. С inferred targets реальную итоговую конфигурацию видно только через `nx show project shop --web` — туда и нужно смотреть в первую очередь, когда опции «берутся из ниоткуда»."
+    },
+    "tags": [
+      "targets",
+      "executors",
+      "task-execution"
+    ]
+  },
+  {
+    "id": "nx-q-5",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the NX project graph, and what do you use the `nx graph` command for?",
+      "ru": "Что такое граф проектов в NX и зачем нужна команда `nx graph`?"
+    },
+    "answer": {
+      "en": "### The graph is NX's model of your workspace\n\nThe project graph is a directed graph where nodes are projects (apps and libs) and edges are dependencies between them. NX builds it **automatically by analyzing source code** — mostly import statements — plus `package.json` dependencies; you don't declare \"shop depends on shared-ui\" anywhere by hand.\n\nThe graph is not a visualization gimmick; it's the input for almost everything NX does:\n\n- `nx affected` walks it to find which projects a change reaches;\n- task orchestration orders `^build` by it;\n- cache hashes include your dependencies' inputs through it;\n- module boundary rules validate its edges.\n\nUseful commands:\n\n```bash\nnx graph                     # interactive view in the browser\nnx graph --focus=shop        # only shop and its neighborhood\nnx graph --affected          # what does the current change touch\n```\n\n**Common pitfall:** Forgetting that the graph follows code, not intentions. One new `import` — even of a single type — creates a real dependency edge, widening what is affected and what boundary rules see. When `nx affected` suddenly rebuilds \"unrelated\" projects, `nx graph --focus` on the surprising project usually reveals an import someone added without noticing.",
+      "ru": "### Граф — это модель воркспейса внутри NX\n\nГраф проектов — направленный граф, где узлы — проекты (приложения и либы), а рёбра — зависимости между ними. NX строит его **автоматически по анализу исходников** — в первую очередь import-выражений — плюс зависимостей из `package.json`; «shop зависит от shared-ui» нигде руками не декларируется.\n\nГраф — не игрушка для визуализации, а вход почти для всего, что делает NX:\n\n- `nx affected` обходит его, чтобы понять, до каких проектов дотянулось изменение;\n- оркестрация задач упорядочивает `^build` именно по нему;\n- хеш кеша через граф включает входы зависимостей;\n- правила границ модулей валидируют его рёбра.\n\nПолезные команды:\n\n```bash\nnx graph                     # интерактивный просмотр в браузере\nnx graph --focus=shop        # только shop и его окружение\nnx graph --affected          # чего касается текущее изменение\n```\n\n**Частая ловушка:** забыть, что граф следует за кодом, а не за намерениями. Один новый `import` — даже одного типа — создаёт настоящее ребро зависимости, расширяя affected и то, что видят правила границ. Когда `nx affected` внезапно пересобирает «непричастные» проекты, `nx graph --focus` по подозрительному проекту обычно показывает импорт, который кто-то добавил не глядя."
+    },
+    "tags": [
+      "project-graph",
+      "nx-graph",
+      "dependency-analysis"
+    ]
+  },
+  {
+    "id": "nx-q-6",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What are generators in NX, and why is running them with `--dry-run` first a good habit?",
+      "ru": "Что такое генераторы в NX и почему запускать их сначала с `--dry-run` — хорошая привычка?"
+    },
+    "answer": {
+      "en": "### Generators scaffold and wire\n\nA generator is a scripted code change: it creates files from templates *and* updates workspace configuration so the result is fully wired in. Plugins ship them (`@nx/react:library`, `@nx/nest:app`), and teams write custom ones for their own conventions.\n\n```bash\nnx g @nx/react:library ui --directory=libs/shared/ui\n```\n\nThis doesn't just create a folder: it registers the project, adds the `@acme/shared-ui` alias to `tsconfig.base.json`, sets up jest/eslint configs and applies tags — everything consistent with the rest of the workspace.\n\n`--dry-run` prints the planned file operations (CREATE / UPDATE) without touching the disk:\n\n```bash\nnx g @nx/react:library ui --directory=libs/shared/ui --dry-run\n```\n\nSince a generator may touch files across the whole repo, previewing is the cheap way to verify the target directory, naming and which configs it is about to edit — before it actually does.\n\n**Common pitfall:** Creating a new lib by copy-pasting an existing folder. The copy carries stale config and misses the wiring a generator would do (tsconfig path, project registration, tags) — then the graph and lint rules break at some later, unrelated moment, which makes the cause hard to trace.",
+      "ru": "### Генератор скаффолдит и подключает\n\nГенератор — это скриптованное изменение кода: он создаёт файлы из шаблонов *и* обновляет конфигурацию воркспейса, чтобы результат был полностью подключён. Генераторы поставляются плагинами (`@nx/react:library`, `@nx/nest:app`), а команды пишут свои под собственные конвенции.\n\n```bash\nnx g @nx/react:library ui --directory=libs/shared/ui\n```\n\nЭто не просто «создать папку»: генератор регистрирует проект, добавляет алиас `@acme/shared-ui` в `tsconfig.base.json`, настраивает конфиги jest/eslint и проставляет теги — всё консистентно с остальным воркспейсом.\n\n`--dry-run` печатает запланированные операции с файлами (CREATE / UPDATE), не трогая диск:\n\n```bash\nnx g @nx/react:library ui --directory=libs/shared/ui --dry-run\n```\n\nПоскольку генератор может затронуть файлы по всей репе, превью — дешёвый способ проверить целевую директорию, нейминг и какие конфиги он собирается править — до того, как он это сделает.\n\n**Частая ловушка:** создавать новую либу копипастой существующей папки. Копия тащит устаревший конфиг и не получает обвязку, которую сделал бы генератор (путь в tsconfig, регистрация проекта, теги) — потом граф и линт ломаются в какой-то поздний, никак не связанный момент, и причину трудно отследить."
+    },
+    "tags": [
+      "generators",
+      "scaffolding",
+      "dry-run"
+    ]
+  },
+  {
+    "id": "nx-q-7",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is configured in nx.json versus project.json, and how do the two relate?",
+      "ru": "Что настраивается в nx.json, а что в project.json, и как они связаны между собой?"
+    },
+    "answer": {
+      "en": "### Workspace level vs project level\n\n`nx.json` is the workspace-wide configuration:\n\n- `targetDefaults` — shared settings for targets by name or executor (`cache`, `inputs`, `dependsOn`);\n- `namedInputs` — reusable input sets for hashing;\n- `plugins` — what infers targets in Crystal-style workspaces;\n- `defaultBase` for affected, release settings, cache directory, etc.\n\n`project.json` describes one project: its `name`, `tags` (for boundary rules), `targets` with options specific to that project, `implicitDependencies`.\n\nThey relate through merging: for each target NX layers plugin-inferred config → `targetDefaults` → the project's own `project.json`, and the most specific layer wins. So the idiomatic setup is: define the common shape once in `targetDefaults` and keep `project.json` files nearly empty, adding only real per-project deviations.\n\n```jsonc\n// nx.json\n{\n  \"targetDefaults\": {\n    \"build\": {\n      \"cache\": true,\n      \"dependsOn\": [\"^build\"],\n      \"inputs\": [\"production\", \"^production\"]\n    }\n  }\n}\n```\n\n**Common pitfall:** Copy-pasting identical options into dozens of `project.json` files. It works — until you need to change one flag workspace-wide and discover three projects that silently drifted from the rest. Per-project config should be the reviewed exception, not the default.",
+      "ru": "### Уровень воркспейса vs уровень проекта\n\n`nx.json` — конфигурация всего воркспейса:\n\n- `targetDefaults` — общие настройки таргетов по имени или executor'у (`cache`, `inputs`, `dependsOn`);\n- `namedInputs` — переиспользуемые наборы входов для хеширования;\n- `plugins` — то, что выводит таргеты в crystal-воркспейсах;\n- `defaultBase` для affected, настройки релизов, директория кеша и т.д.\n\n`project.json` описывает один проект: его `name`, `tags` (для правил границ), `targets` с опциями конкретно этого проекта, `implicitDependencies`.\n\nСвязаны они через слияние: для каждого таргета NX накладывает слои — конфиг, выведенный плагинами → `targetDefaults` → собственный `project.json` проекта, и побеждает самый специфичный слой. Поэтому идиоматичная настройка такая: общую форму задать один раз в `targetDefaults`, а `project.json` держать почти пустыми, добавляя только реальные отклонения конкретного проекта.\n\n```jsonc\n// nx.json\n{\n  \"targetDefaults\": {\n    \"build\": {\n      \"cache\": true,\n      \"dependsOn\": [\"^build\"],\n      \"inputs\": [\"production\", \"^production\"]\n    }\n  }\n}\n```\n\n**Частая ловушка:** копипастить одинаковые опции в десятки `project.json`. Это работает — ровно до момента, когда нужно поменять один флаг на весь воркспейс, и выясняется, что три проекта незаметно «уехали» от остальных. Пер-проектный конфиг должен быть осознанным исключением, а не дефолтом."
+    },
+    "tags": [
+      "nx-json",
+      "project-json",
+      "configuration-layers"
+    ]
+  },
+  {
+    "id": "nx-q-8",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "Why is the second `nx build` almost instant? How does computation caching work at a basic level?",
+      "ru": "Почему второй запуск `nx build` почти мгновенный? Как на базовом уровне работает computation caching?"
+    },
+    "answer": {
+      "en": "### Same inputs → replayed result\n\nBefore executing a task, NX computes a hash of everything that could influence its result: the source files of the project **and of its dependencies**, the target's options, relevant config files, tracked environment variables, plus the command itself. Then:\n\n- **cache miss** — the task runs, and its results (build artifacts, terminal output) are saved under that hash;\n- **cache hit** — nothing is executed: NX restores the artifacts and replays the terminal output, usually in milliseconds.\n\n```text\n> nx build shop\nNx read the output from the cache instead of running the command for 1 out of 1 tasks.\n```\n\nThat's why the second identical build is instant: none of the inputs changed, so NX can prove the result would be the same and skips the work. This applies to any cacheable target — `test` and `lint` are cached exactly the same way, which is where most of the CI time savings actually come from.\n\n**Common pitfall:** Distrusting the cache and habitually adding `--skip-nx-cache` \"just to be safe\". If a cached result is ever wrong, that's a symptom of misdeclared `inputs`/`outputs` — fix the declaration instead of turning the feature off, otherwise you permanently pay full build time to work around one config bug.",
+      "ru": "### Те же входы → воспроизведённый результат\n\nПеред выполнением задачи NX считает хеш от всего, что может повлиять на её результат: исходники проекта **и его зависимостей**, опции таргета, релевантные конфиги, отслеживаемые переменные окружения, плюс сама команда. Дальше:\n\n- **промах кеша** — задача выполняется, а её результаты (артефакты сборки, вывод в терминал) сохраняются под этим хешем;\n- **попадание** — не выполняется ничего: NX восстанавливает артефакты и воспроизводит вывод терминала, обычно за миллисекунды.\n\n```text\n> nx build shop\nNx read the output from the cache instead of running the command for 1 out of 1 tasks.\n```\n\nПоэтому второй идентичный билд мгновенный: ни один вход не изменился, NX может доказать, что результат был бы тем же, и пропускает работу. Это касается любого кешируемого таргета — `test` и `lint` кешируются точно так же, и именно на них приходится основная экономия времени в CI.\n\n**Частая ловушка:** не доверять кешу и на автомате добавлять `--skip-nx-cache` «на всякий случай». Если закешированный результат хоть раз оказался неверным — это симптом неправильно задекларированных `inputs`/`outputs`. Чинить нужно декларацию, а не выключать фичу, иначе вы навсегда платите полное время сборки, обходя один баг конфигурации."
+    },
+    "tags": [
+      "computation-caching",
+      "cache-basics",
+      "task-hashing"
+    ]
+  },
+  {
+    "id": "nx-q-9",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What is the difference between a package-based and an integrated NX workspace, and how do you choose between them?",
+      "ru": "Чем package-based воркспейс отличается от integrated в NX и как выбирать между ними?"
+    },
+    "answer": {
+      "en": "### Two adoption styles, one spectrum\n\n**Package-based**: every project is a normal npm package with its own `package.json`, dependencies and scripts; projects link via npm/pnpm workspaces. NX acts as a smart task runner on top — graph, cache, `affected` — but doesn't manage your build tooling. Minimal buy-in, easy to add to an existing repo.\n\n**Integrated**: projects share a single version policy (one root `package.json`), import each other through `tsconfig` path aliases, and NX plugins own the build/test configuration — with generators and automated migrations included. Maximum consistency and automation, more convention to accept.\n\nHow to choose:\n\n- migrating an existing multi-package repo, teams want autonomy over their own tooling → package-based;\n- starting fresh, want uniform tooling, generators and `nx migrate` doing upgrades for you → integrated.\n\nIn modern NX the distinction has blurred — inferred targets and plugins work in both styles — so treat it as a spectrum, not a binary switch.\n\n**Common pitfall:** Treating the choice as permanent and all-or-nothing. The normal path is exactly the opposite: `nx init` on an existing workspace gives you caching in an afternoon, and then plugins and generators are adopted project by project where they pay off.",
+      "ru": "### Два стиля внедрения, один спектр\n\n**Package-based**: каждый проект — обычный npm-пакет со своим `package.json`, зависимостями и скриптами; проекты линкуются через npm/pnpm workspaces. NX выступает умным таск-раннером сверху — граф, кеш, `affected`, — но не управляет сборочным тулингом. Минимальный buy-in, легко добавить в существующую репу.\n\n**Integrated**: у проектов единая политика версий (один корневой `package.json`), импорты друг друга через алиасы `tsconfig`, а конфигурацией сборки и тестов владеют плагины NX — вместе с генераторами и автоматическими миграциями. Максимум консистентности и автоматизации, но и больше конвенций, которые придётся принять.\n\nКак выбирать:\n\n- мигрируете существующую мультипакетную репу, команды хотят автономии над своим тулингом → package-based;\n- начинаете с нуля, хотите единый тулинг, генераторы и `nx migrate`, который обновляет всё за вас → integrated.\n\nВ современном NX граница размылась — inferred targets и плагины работают в обоих стилях, — так что это спектр, а не бинарный переключатель.\n\n**Частая ловушка:** считать выбор окончательным и «всё или ничего». Нормальный путь ровно обратный: `nx init` на существующем воркспейсе даёт кеш за один вечер, а плагины и генераторы внедряются проект за проектом там, где они окупаются."
+    },
+    "tags": [
+      "integrated-workspace",
+      "package-based-workspace",
+      "adoption-strategy"
+    ]
+  },
+  {
+    "id": "nx-q-10",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "Which ways does NX give you to run a target across projects, and what does it handle that plain npm scripts don't?",
+      "ru": "Какие способы запуска таргета по нескольким проектам даёт NX и что он берёт на себя по сравнению с голыми npm-скриптами?"
+    },
+    "answer": {
+      "en": "### One entry point for all tasks\n\n```bash\nnx build shop                          # one project (short for nx run shop:build)\nnx run-many -t build                   # a target across all projects that have it\nnx run-many -t lint test -p shop api   # explicit project list\nnx affected -t test                    # only projects reached by the current change\n```\n\nWhatever the form, going through `nx` means:\n\n- **dependency order** — `dependsOn: [\"^build\"]` builds libs before the apps that use them;\n- **parallelism** — independent tasks run concurrently (`--parallel` controls how many);\n- **caching** — anything already computed is restored, not re-run;\n- **a uniform interface** — the same commands regardless of which tool each project uses inside.\n\nRunning `cd apps/shop && npm run build` bypasses all of it: no cache read or write, no dependencies built first, no graph awareness.\n\n**Common pitfall:** Mixed invocation styles in CI — some steps call `nx`, others call package scripts directly. The direct ones neither populate nor read the cache, so the pipeline is only partially cached and its timing is erratic. Standardize on `nx …` as the single entry point; keep package scripts as thin aliases if you need them at all.",
+      "ru": "### Одна точка входа для всех задач\n\n```bash\nnx build shop                          # один проект (сокращение от nx run shop:build)\nnx run-many -t build                   # таргет по всем проектам, у которых он есть\nnx run-many -t lint test -p shop api   # явный список проектов\nnx affected -t test                    # только проекты, до которых дотянулось изменение\n```\n\nКакой бы ни была форма, запуск через `nx` означает:\n\n- **порядок зависимостей** — `dependsOn: [\"^build\"]` собирает либы раньше приложений, которые их используют;\n- **параллелизм** — независимые задачи идут одновременно (`--parallel` управляет количеством);\n- **кеш** — всё уже посчитанное восстанавливается, а не выполняется заново;\n- **единый интерфейс** — одни и те же команды независимо от того, какой инструмент у проекта внутри.\n\nЗапуск `cd apps/shop && npm run build` обходит всё это: ни чтения, ни записи кеша, зависимости заранее не собираются, граф не учитывается.\n\n**Частая ловушка:** смешанные стили запуска в CI — часть шагов вызывает `nx`, часть дёргает пакетные скрипты напрямую. Прямые вызовы не читают и не наполняют кеш, поэтому пайплайн закеширован лишь частично, а его время скачет. Стандартизируйте `nx …` как единственную точку входа; пакетные скрипты, если вообще нужны, оставьте тонкими алиасами."
+    },
+    "tags": [
+      "run-many",
+      "task-commands",
+      "cli-basics"
+    ]
+  },
+  {
+    "id": "nx-q-11",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "How do imports of a library work in an integrated NX workspace, and what role does the lib's index.ts play?",
+      "ru": "Как устроены импорты либы в integrated-воркспейсе NX и какую роль играет её index.ts?"
+    },
+    "answer": {
+      "en": "### Path alias + barrel = public API\n\nIn an integrated workspace, libraries are imported via TypeScript path aliases defined once in `tsconfig.base.json` (the generator adds them automatically):\n\n```jsonc\n// tsconfig.base.json\n{\n  \"compilerOptions\": {\n    \"paths\": {\n      \"@acme/shared-ui\": [\"libs/shared/ui/src/index.ts\"]\n    }\n  }\n}\n```\n\n```ts\nimport { Button } from '@acme/shared-ui';\n```\n\nThe alias points at a single file — `index.ts`, the barrel. That makes it the **public API of the library**: only what is re-exported there is reachable from outside. Everything else is internal, so the lib can freely rename files and restructure folders without breaking consumers. Module boundary lint rules build on top of this — deep imports into lib internals can be flagged as violations.\n\n**Common pitfall:** Deep-importing something the barrel doesn't export (`@acme/shared-ui/src/lib/button/helpers`) because \"it's right there\". That silently couples you to the lib's file layout and dodges the boundary rules. If a symbol is genuinely needed outside, export it from `index.ts` — consciously making it part of the API — or reconsider whether it belongs in a different lib.",
+      "ru": "### Алиас пути + barrel = публичный API\n\nВ integrated-воркспейсе либы импортируются через алиасы путей TypeScript, заданные один раз в `tsconfig.base.json` (генератор добавляет их автоматически):\n\n```jsonc\n// tsconfig.base.json\n{\n  \"compilerOptions\": {\n    \"paths\": {\n      \"@acme/shared-ui\": [\"libs/shared/ui/src/index.ts\"]\n    }\n  }\n}\n```\n\n```ts\nimport { Button } from '@acme/shared-ui';\n```\n\nАлиас указывает на один файл — `index.ts`, он же barrel. Это делает его **публичным API либы**: снаружи доступно только то, что реэкспортировано оттуда. Всё остальное — внутренности, поэтому либа может свободно переименовывать файлы и перестраивать папки, не ломая потребителей. Линт-правила границ модулей строятся поверх этого — глубокие импорты во внутренности либы можно помечать как нарушения.\n\n**Частая ловушка:** глубокий импорт того, чего нет в barrel (`@acme/shared-ui/src/lib/button/helpers`), потому что «оно же вот, рядом». Так вы незаметно привязываетесь к раскладке файлов либы и обходите правила границ. Если символ действительно нужен снаружи — экспортируйте его из `index.ts`, осознанно делая частью API, или подумайте, не место ли ему в другой либе."
+    },
+    "tags": [
+      "tsconfig-paths",
+      "barrel-file",
+      "public-api",
+      "imports"
+    ]
+  },
+  {
+    "id": "nx-q-12",
+    "topicId": "nx",
+    "difficulty": "junior",
+    "question": {
+      "en": "What exactly does the NX cache store for a task, and where does it live on disk?",
+      "ru": "Что именно кеш NX сохраняет для задачи и где он лежит на диске?"
+    },
+    "answer": {
+      "en": "### Anatomy of a cache entry\n\nFor every cacheable task NX stores, keyed by the task's hash:\n\n- **file outputs** — the paths the target declares in `outputs` (e.g. `dist/apps/shop`, coverage reports);\n- **the terminal output** — a cache hit replays exactly what the original run printed;\n- the run status — only successful runs are cached.\n\n```jsonc\n// project.json (or inferred)\n{\n  \"targets\": {\n    \"build\": {\n      \"outputs\": [\"{workspaceRoot}/dist/apps/shop\"]\n    }\n  }\n}\n```\n\nThe local cache lives in `.nx/cache` inside the workspace (older NX versions used `node_modules/.cache/nx`); the location is configurable. A cache hit copies the stored files back to their original paths and replays the log. Remote caching (Nx Cloud or self-hosted) extends the same mechanism across machines — same keys, shared storage.\n\n**Common pitfall:** A target that writes artifacts to a path not listed in its `outputs`. The first run works fine — files are produced normally — but on a later cache hit those files are *not restored*. The classic symptom: \"builds work locally, artifacts randomly missing in CI\". Any path a task writes that others rely on must be declared in `outputs`.",
+      "ru": "### Анатомия записи в кеше\n\nДля каждой кешируемой задачи NX сохраняет — под ключом-хешем задачи:\n\n- **файловые артефакты** — пути, задекларированные таргетом в `outputs` (например `dist/apps/shop`, отчёты покрытия);\n- **вывод терминала** — при попадании в кеш воспроизводится ровно то, что напечатал оригинальный запуск;\n- статус запуска — кешируются только успешные.\n\n```jsonc\n// project.json (или inferred)\n{\n  \"targets\": {\n    \"build\": {\n      \"outputs\": [\"{workspaceRoot}/dist/apps/shop\"]\n    }\n  }\n}\n```\n\nЛокальный кеш лежит в `.nx/cache` внутри воркспейса (в старых версиях NX — `node_modules/.cache/nx`); расположение настраивается. Попадание в кеш копирует сохранённые файлы обратно по их путям и воспроизводит лог. Remote caching (Nx Cloud или self-hosted) расширяет тот же механизм на несколько машин — те же ключи, общее хранилище.\n\n**Частая ловушка:** таргет пишет артефакты по пути, не указанному в `outputs`. Первый запуск проходит нормально — файлы создаются как обычно, — но при последующем попадании в кеш эти файлы *не восстанавливаются*. Классический симптом: «локально собирается, а в CI артефакты случайным образом пропадают». Любой путь, куда пишет задача и на который кто-то полагается, должен быть задекларирован в `outputs`."
+    },
+    "tags": [
+      "cache-outputs",
+      "cache-directory",
+      "terminal-output"
+    ]
+  }
+]

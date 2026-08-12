@@ -37,6 +37,7 @@ export const TOPICS: readonly Topic[] = [
   { id: 'cicd-devops',    label: 'CI/CD & DevOps',         level: 'deep' },
   { id: 'docker',          label: 'Docker',                 level: 'medium' },
   { id: 'bundlers',        label: 'Webpack / Vite',         level: 'light' },
+  { id: 'nx',              label: 'NX Monorepo',            level: 'medium' },
   { id: 'ddd',             label: 'DDD (Basics)',           level: 'light' },
   { id: 'tdd',             label: 'TDD',                    level: 'light' },
   { id: 'event-driven',    label: 'Event-Driven / CQRS',   level: 'light' },
