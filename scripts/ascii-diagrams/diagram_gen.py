@@ -520,6 +520,39 @@ def test_pyramid(L):
     return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
 
 
+def render_marble(L):
+    """Marble diagram for RxJS articles.
+
+    Row kinds (all offsets are computed here, never hand-padded):
+      ['stream', label, timeline]  — a timeline line
+      ['op', text]                 — an operator/annotation under the label gutter
+      ['note', column, text]       — a '^' pointing at timeline[column], plus text
+      ['cont', column, text]       — a continuation line aligned with that note
+    """
+    rows = L['rows']
+    pad = max((len(r[1]) for r in rows if r[0] == 'stream'), default=0)
+    gutter = pad + 2
+    body = []
+    for row in rows:
+        kind = row[0]
+        if kind == 'stream':
+            body.append(f'{row[1].ljust(pad)}  {row[2]}'.rstrip())
+        elif kind == 'note':
+            body.append(' ' * (gutter + row[1]) + '^ ' + row[2])
+        elif kind == 'cont':
+            body.append(' ' * (gutter + row[1] + 2) + row[2])
+        else:
+            body.append((' ' * gutter + row[1]).rstrip())
+
+    if not L.get('title') and not L.get('notes'):
+        return body
+
+    width = max(len(l) for l in body)
+    head = [centered(L['title'], width)] if L.get('title') else []
+    tail = [centered(n, width) for n in L.get('notes', [])]
+    return [*head, *body, *tail]
+
+
 def render_modes(L):
     return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
 
@@ -674,6 +707,25 @@ DIAGRAMS = {
     'render-modes': render_modes,
     'security-layers': security_layers,
     'senior-polish': senior_polish,
+    'rx-observable-vs-promise': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-contract-marble': render_marble,
+    'rx-creation-map': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-subject-late-subscriber': render_marble,
+    'rx-marble-legend': render_marble,
+    'rx-time-operators': render_marble,
+    'rx-filter-map': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-higher-order': render_marble,
+    'rx-flattening-compare': render_marble,
+    'rx-flattening-choice': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-combine-vs-withlatest': render_marble,
+    'rx-forkjoin-zip': render_marble,
+    'rx-combination-choice': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-catcherror-placement': render_marble,
+    'rx-retry-backoff': render_marble,
+    'rx-error-toolbox': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-cold-vs-hot': render_marble,
+    'rx-share-config': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'rx-teardown-patterns': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
     'polyrepo-vs-monorepo': polyrepo_vs_monorepo,
     'nx-stack': nx_stack,
     'target-merge': target_merge,
@@ -4099,6 +4151,756 @@ LABELS = {
             'notes': [
                 'interviews value not the size of the project but your ability to explain',
                 'every decision and name the alternative you rejected',
+            ],
+        },
+    },
+    'rx-observable-vs-promise': {
+        'ru': {
+            'title': 'Observable и Promise: четыре оси различий',
+            'rows': [
+                ('ось', 'Promise', 'Observable'),
+                ('запуск работы', 'сразу при создании (eager)', 'при подписке (lazy)'),
+                ('сколько значений', 'ровно одно', 'ноль, одно, много, бесконечно'),
+                ('отмена', 'нет: then просто не позовут', 'unsubscribe прерывает работу'),
+                ('синхронность', 'колбэк всегда в микротаске', 'может отдать значение синхронно'),
+            ],
+            'notes': [
+                'следствие ленивости: пока нет подписки — нет запроса, нет таймера,',
+                'нет слушателя события; поток описывает работу, а не выполняет её',
+            ],
+        },
+        'en': {
+            'title': 'Observable versus Promise: four axes',
+            'rows': [
+                ('axis', 'Promise', 'Observable'),
+                ('when work starts', 'immediately on creation (eager)', 'on subscribe (lazy)'),
+                ('how many values', 'exactly one', 'zero, one, many, infinite'),
+                ('cancellation', 'none: then is simply not called', 'unsubscribe aborts the work'),
+                ('synchronicity', 'the callback always lands in a microtask', 'may deliver a value synchronously'),
+            ],
+            'notes': [
+                'the consequence of laziness: with no subscriber there is no request, no timer,',
+                'no event listener — a stream describes work rather than performing it',
+            ],
+        },
+    },
+    'rx-contract-marble': {
+        'ru': {
+            'title': 'Контракт подписки: next* (error | complete)?',
+            'rows': [
+                ['stream', 'успех', '--1--2--3--|'],
+                ['note', 11, 'complete: значений больше не будет,'],
+                ['cont', 11, 'teardown выполнен'],
+                ['stream', 'ошибка', '--1--2--X'],
+                ['note', 8, 'error: поток ТЕРМИНИРОВАН,'],
+                ['cont', 8, 'next и complete уже не придут'],
+                ['stream', 'отписка', '--1--2--!'],
+                ['note', 8, 'unsubscribe: работа прервана,'],
+                ['cont', 8, 'но это не error и не complete'],
+            ],
+            'notes': [
+                'легенда:  1 2 3 — значения,  | — complete,  X — error,  ! — unsubscribe',
+            ],
+        },
+        'en': {
+            'title': 'The subscription contract: next* (error | complete)?',
+            'rows': [
+                ['stream', 'success', '--1--2--3--|'],
+                ['note', 11, 'complete: no more values ever,'],
+                ['cont', 11, 'teardown has run'],
+                ['stream', 'error', '--1--2--X'],
+                ['note', 8, 'error: the stream is TERMINATED,'],
+                ['cont', 8, 'neither next nor complete will follow'],
+                ['stream', 'unsubscribe', '--1--2--!'],
+                ['note', 8, 'unsubscribe: work aborted,'],
+                ['cont', 8, 'and this is neither error nor complete'],
+            ],
+            'notes': [
+                'legend:  1 2 3 — values,  | — complete,  X — error,  ! — unsubscribe',
+            ],
+        },
+    },
+    'rx-creation-map': {
+        'ru': {
+            'title': 'Чем создать поток',
+            'rows': [
+                ('функция', 'что отдаёт', 'когда брать'),
+                ('of(a, b, c)', 'значения как есть, синхронно, затем complete', 'константы, тесты, значение по умолчанию'),
+                ('from(источник)', 'массив, промис, итератор, async-итератор', 'мост из существующих структур'),
+                ('fromEvent(target, name)', 'значения на каждое событие, без complete', 'DOM-события, EventEmitter'),
+                ('timer(delay, period?)', 'одно значение через delay или дальше по period', 'отложенный старт, поллинг'),
+                ('interval(period)', 'счётчик каждые period, без complete', 'таймеры, тики'),
+                ('defer(() => поток)', 'создаёт источник заново на каждую подписку', 'ленивость поверх eager-кода'),
+                ('EMPTY / NEVER', 'сразу complete / никогда ничего', 'нейтральный элемент, заглушка'),
+                ('throwError(() => err)', 'сразу error', 'ветка ошибки в catchError/switchMap'),
+                ('new Observable(fn)', 'что угодно + teardown', 'обёртка над чужим API'),
+            ],
+            'notes': [
+                'throwError принимает ФАБРИКУ: throwError(() => new Error(...)) —',
+                'передача готового значения помечена deprecated в RxJS 7',
+            ],
+        },
+        'en': {
+            'title': 'How to create a stream',
+            'rows': [
+                ('function', 'what it emits', 'when to use it'),
+                ('of(a, b, c)', 'the values as-is, synchronously, then complete', 'constants, tests, a default value'),
+                ('from(source)', 'an array, promise, iterable or async iterable', 'a bridge from existing structures'),
+                ('fromEvent(target, name)', 'a value per event, never completes', 'DOM events, an EventEmitter'),
+                ('timer(delay, period?)', 'one value after delay, then every period', 'a delayed start, polling'),
+                ('interval(period)', 'a counter every period, never completes', 'timers, ticks'),
+                ('defer(() => stream)', 'rebuilds the source on every subscribe', 'laziness on top of eager code'),
+                ('EMPTY / NEVER', 'completes at once / never emits', 'a neutral element, a stub'),
+                ('throwError(() => err)', 'errors immediately', 'the error branch in catchError/switchMap'),
+                ('new Observable(fn)', 'anything, plus teardown', 'wrapping a foreign API'),
+            ],
+            'notes': [
+                'throwError takes a FACTORY: throwError(() => new Error(...)) —',
+                'passing a ready value is deprecated in RxJS 7',
+            ],
+        },
+    },
+    'rx-subject-late-subscriber': {
+        'ru': {
+            'title': 'Что увидит подписчик, пришедший поздно',
+            'rows': [
+                ['op', 'источник эмитит 1, 2, 3; подписчик B приходит между 2 и 3'],
+                ['op', ''],
+                ['stream', 'Subject', '--1--2--3--'],
+                ['stream', '  A с начала', '--1--2--3--'],
+                ['stream', '  B поздно', '-------3--'],
+                ['note', 7, 'значения 1 и 2 потеряны навсегда'],
+                ['op', ''],
+                ['stream', 'BehaviorSubject(0)', '0-1--2--3--'],
+                ['stream', '  A с начала', '0-1--2--3--'],
+                ['stream', '  B поздно', '------2-3--'],
+                ['note', 6, 'сразу получил ТЕКУЩЕЕ значение (2), затем поток'],
+                ['op', ''],
+                ['stream', 'ReplaySubject(2)', '--1--2--3--'],
+                ['stream', '  B поздно', '------12-3--'],
+                ['note', 6, 'догнал буфер из двух последних значений'],
+                ['op', ''],
+                ['stream', 'AsyncSubject', '--1--2--3--|'],
+                ['stream', '  любой подписчик', '-----------3|'],
+                ['note', 11, 'только последнее значение, и только при complete'],
+            ],
+        },
+        'en': {
+            'title': 'What a late subscriber sees',
+            'rows': [
+                ['op', 'the source emits 1, 2, 3; subscriber B arrives between 2 and 3'],
+                ['op', ''],
+                ['stream', 'Subject', '--1--2--3--'],
+                ['stream', '  A from the start', '--1--2--3--'],
+                ['stream', '  B late', '-------3--'],
+                ['note', 7, 'values 1 and 2 are lost forever'],
+                ['op', ''],
+                ['stream', 'BehaviorSubject(0)', '0-1--2--3--'],
+                ['stream', '  A from the start', '0-1--2--3--'],
+                ['stream', '  B late', '------2-3--'],
+                ['note', 6, 'received the CURRENT value (2) at once, then the stream'],
+                ['op', ''],
+                ['stream', 'ReplaySubject(2)', '--1--2--3--'],
+                ['stream', '  B late', '------12-3--'],
+                ['note', 6, 'caught up on a buffer of the last two values'],
+                ['op', ''],
+                ['stream', 'AsyncSubject', '--1--2--3--|'],
+                ['stream', '  any subscriber', '-----------3|'],
+                ['note', 11, 'only the last value, and only on complete'],
+            ],
+        },
+    },
+    'rx-marble-legend': {
+        'ru': {
+            'title': 'Как читать marble-диаграмму',
+            'rows': [
+                ['stream', 'источник', '--a---b-----c--|'],
+                ['note', 2, 'значение a пришло рано'],
+                ['note', 6, 'значение b — позже'],
+                ['note', 12, 'значение c — ещё позже'],
+                ['note', 15, 'complete: поток завершён'],
+                ['op', ''],
+                ['op', 'дефис = течение времени (условная единица, не миллисекунды)'],
+                ['op', ''],
+                ['stream', 'источник', '--a---b-----c--|'],
+                ['op', 'map(x => x.toUpperCase())'],
+                ['stream', 'результат', '--A---B-----C--|'],
+                ['op', 'map не меняет тайминги: одно значение на входе — одно на выходе'],
+                ['op', ''],
+                ['stream', 'источник', '--a---b-----c--|'],
+                ['op', 'filter(x => x !== "b")'],
+                ['stream', 'результат', '--a---------c--|'],
+                ['op', 'filter не сдвигает значения во времени, а только выбрасывает их'],
+            ],
+        },
+        'en': {
+            'title': 'How to read a marble diagram',
+            'rows': [
+                ['stream', 'source', '--a---b-----c--|'],
+                ['note', 2, 'value a arrived early'],
+                ['note', 6, 'value b — later'],
+                ['note', 12, 'value c — later still'],
+                ['note', 15, 'complete: the stream is done'],
+                ['op', ''],
+                ['op', 'a dash = the passage of time (an abstract unit, not milliseconds)'],
+                ['op', ''],
+                ['stream', 'source', '--a---b-----c--|'],
+                ['op', 'map(x => x.toUpperCase())'],
+                ['stream', 'result', '--A---B-----C--|'],
+                ['op', 'map keeps the timing: one value in, one value out'],
+                ['op', ''],
+                ['stream', 'source', '--a---b-----c--|'],
+                ['op', 'filter(x => x !== "b")'],
+                ['stream', 'result', '--a---------c--|'],
+                ['op', 'filter never shifts values in time, it only drops them'],
+            ],
+        },
+    },
+    'rx-time-operators': {
+        'ru': {
+            'title': 'debounceTime, throttleTime, auditTime на одном всплеске',
+            'rows': [
+                ['stream', 'источник', '-a-b-c---------d-e-------|'],
+                ['op', ''],
+                ['stream', 'debounceTime(4)', '---------c---------e-----|'],
+                ['note', 9, 'ждёт ПАУЗУ, отдаёт последнее значение всплеска'],
+                ['op', ''],
+                ['stream', 'throttleTime(4)', '-a-------------d---------|'],
+                ['note', 1, 'отдаёт ПЕРВОЕ, затем молчит окно'],
+                ['op', ''],
+                ['stream', 'auditTime(4)', '-----c-------------e-----|'],
+                ['note', 5, 'ждёт окно после первого, отдаёт ПОСЛЕДНЕЕ за окно'],
+            ],
+            'notes': [
+                'поиск по вводу — debounceTime; кнопка и скролл — throttleTime;',
+                '"не чаще, но всегда самое свежее" — auditTime',
+            ],
+        },
+        'en': {
+            'title': 'debounceTime, throttleTime and auditTime on one burst',
+            'rows': [
+                ['stream', 'source', '-a-b-c---------d-e-------|'],
+                ['op', ''],
+                ['stream', 'debounceTime(4)', '---------c---------e-----|'],
+                ['note', 9, 'waits for a PAUSE, emits the burst\'s last value'],
+                ['op', ''],
+                ['stream', 'throttleTime(4)', '-a-------------d---------|'],
+                ['note', 1, 'emits the FIRST one, then stays silent for the window'],
+                ['op', ''],
+                ['stream', 'auditTime(4)', '-----c-------------e-----|'],
+                ['note', 5, 'waits out the window, emits the LAST value of it'],
+            ],
+            'notes': [
+                'search-as-you-type wants debounceTime; buttons and scroll want throttleTime;',
+                '"no more often, but always the freshest" wants auditTime',
+            ],
+        },
+    },
+    'rx-filter-map': {
+        'ru': {
+            'title': 'Фильтрация и ограничение потока',
+            'rows': [
+                ('оператор', 'что делает', 'нюанс, который спрашивают'),
+                ('filter(pred)', 'пропускает подходящие значения', 'поток продолжается, complete не наступает'),
+                ('take(n)', 'первые n значений, затем complete', 'сам завершает поток и снимает подписку'),
+                ('takeWhile(pred)', 'пока условие истинно', 'inclusive: true отдаёт и значение-стоп'),
+                ('takeUntil(notifier$)', 'пока notifier$ не эмитнет', 'основной приём отписки'),
+                ('first(pred?)', 'первое подходящее и complete', 'бросает EmptyError, если ничего не было'),
+                ('last(pred?)', 'последнее подходящее при complete', 'ждёт complete — не для бесконечных'),
+                ('skip(n) / skipWhile', 'пропускает начало потока', 'значения теряются, не буферизуются'),
+                ('distinctUntilChanged()', 'отбрасывает повтор подряд', 'сравнение по ссылке, нужен компаратор'),
+            ],
+            'notes': [
+                'take(1) и first() отличаются на пустом потоке: take(1) просто завершится,',
+                'first() выбросит EmptyError — иногда это именно то, что нужно',
+            ],
+        },
+        'en': {
+            'title': 'Filtering and bounding a stream',
+            'rows': [
+                ('operator', 'what it does', 'the nuance people ask about'),
+                ('filter(pred)', 'lets matching values through', 'the stream goes on, no complete'),
+                ('take(n)', 'the first n values, then complete', 'it completes and tears down for you'),
+                ('takeWhile(pred)', 'while the predicate holds', 'inclusive: true also emits the stopper'),
+                ('takeUntil(notifier$)', 'until notifier$ emits', 'the main teardown technique'),
+                ('first(pred?)', 'the first match, then complete', 'throws EmptyError when nothing came'),
+                ('last(pred?)', 'the last match on complete', 'waits for complete — not for infinite streams'),
+                ('skip(n) / skipWhile', 'drops the start of the stream', 'values are lost, not buffered'),
+                ('distinctUntilChanged()', 'drops consecutive duplicates', 'compares by reference; pass a comparator'),
+            ],
+            'notes': [
+                'take(1) and first() differ on an empty stream: take(1) simply completes,',
+                'first() throws EmptyError — which is sometimes exactly what you want',
+            ],
+        },
+    },
+    'rx-higher-order': {
+        'ru': {
+            'title': 'Откуда берётся поток потоков',
+            'rows': [
+                ['stream', 'ввод', '--a-------b-------|'],
+                ['op', 'map(q => api.search(q))     ← вернули Observable, а не значение'],
+                ['stream', 'результат', '--O-------O-------|'],
+                ['note', 2, 'O — это объект Observable, ещё не подписанный'],
+                ['op', ''],
+                ['op', 'подписчик получит два Observable вместо данных:'],
+                ['op', 'Observable { … }  Observable { … }'],
+                ['op', ''],
+                ['op', 'switchMap(q => api.search(q))  ← оператор подписывается сам'],
+                ['stream', 'результат', '------A-------B---|'],
+                ['note', 6, 'A — уже РЕЗУЛЬТАТ запроса, задержка = время ответа'],
+            ],
+        },
+        'en': {
+            'title': 'Where a stream of streams comes from',
+            'rows': [
+                ['stream', 'input', '--a-------b-------|'],
+                ['op', 'map(q => api.search(q))     ← returned an Observable, not a value'],
+                ['stream', 'result', '--O-------O-------|'],
+                ['note', 2, 'O is an Observable object, not yet subscribed'],
+                ['op', ''],
+                ['op', 'the subscriber receives two Observables instead of data:'],
+                ['op', 'Observable { … }  Observable { … }'],
+                ['op', ''],
+                ['op', 'switchMap(q => api.search(q))  ← the operator subscribes for you'],
+                ['stream', 'result', '------A-------B---|'],
+                ['note', 6, 'A is the request RESULT; the offset is the response time'],
+            ],
+        },
+    },
+    'rx-flattening-compare': {
+        'ru': {
+            'title': 'Четыре стратегии на одном источнике',
+            'rows': [
+                ['op', 'запрос по каждому значению отвечает через 4 такта: a→A, b→B, c→C'],
+                ['op', ''],
+                ['stream', 'источник', '--a--b--------c-----|'],
+                ['op', ''],
+                ['stream', 'switchMap', '---------B--------C-|'],
+                ['note', 9, 'запрос по a ОТМЕНЁН приходом b: A не пришёл никогда'],
+                ['op', ''],
+                ['stream', 'mergeMap', '------A--B--------C-|'],
+                ['note', 6, 'оба запроса выполнены параллельно, порядок — по времени ответа'],
+                ['op', ''],
+                ['stream', 'concatMap', '------A---B-------C-|'],
+                ['note', 10, 'b ЖДАЛ завершения a: порядок гарантирован, но позже'],
+                ['op', ''],
+                ['stream', 'exhaustMap', '------A-----------C-|'],
+                ['note', 6, 'b ПРОИГНОРИРОВАН: во время a новые значения отбрасываются'],
+            ],
+            'notes': [
+                'легенда: a b c — входные значения, A B C — результаты запросов,',
+                '| — complete. Отменённый или отброшенный запрос результата не даёт',
+            ],
+        },
+        'en': {
+            'title': 'Four strategies on one source',
+            'rows': [
+                ['op', 'the request for each value answers after 4 ticks: a→A, b→B, c→C'],
+                ['op', ''],
+                ['stream', 'source', '--a--b--------c-----|'],
+                ['op', ''],
+                ['stream', 'switchMap', '---------B--------C-|'],
+                ['note', 9, "a's request was CANCELLED when b arrived: A never came"],
+                ['op', ''],
+                ['stream', 'mergeMap', '------A--B--------C-|'],
+                ['note', 6, 'both ran in parallel, order follows response time'],
+                ['op', ''],
+                ['stream', 'concatMap', '------A---B-------C-|'],
+                ['note', 10, 'b WAITED for a to finish: order guaranteed, but later'],
+                ['op', ''],
+                ['stream', 'exhaustMap', '------A-----------C-|'],
+                ['note', 6, 'b was IGNORED: new values are dropped while a is in flight'],
+            ],
+            'notes': [
+                'legend: a b c — input values, A B C — request results,',
+                '| — complete. A cancelled or dropped request yields no result',
+            ],
+        },
+    },
+    'rx-flattening-choice': {
+        'ru': {
+            'title': 'Таблица выбора и цена ошибки',
+            'rows': [
+                ('оператор', 'что делает с предыдущим', 'сценарий', 'если выбрать неверно'),
+                ('switchMap', 'отменяет', 'поиск, автокомплит, смена фильтра, :id', 'потерянные записи при POST'),
+                ('mergeMap', 'выполняет параллельно', 'независимые загрузки, аналитика', 'гонка: ответы вперемешку'),
+                ('concatMap', 'ставит в очередь', 'последовательные записи, порядок важен', 'очередь растёт, лаг копится'),
+                ('exhaustMap', 'игнорирует новые', 'двойной клик, повторный submit', 'потерянные действия пользователя'),
+            ],
+            'notes': [
+                'по умолчанию для ЧТЕНИЯ — switchMap; для ЗАПИСИ — concatMap или exhaustMap:',
+                'отменённый POST мог уже выполниться на сервере',
+            ],
+        },
+        'en': {
+            'title': 'The choice table and the cost of getting it wrong',
+            'rows': [
+                ('operator', 'what it does to the previous', 'scenario', 'if you pick wrong'),
+                ('switchMap', 'cancels it', 'search, autocomplete, filter change, :id', 'lost writes on POST'),
+                ('mergeMap', 'runs in parallel', 'independent loads, analytics', 'a race: interleaved responses'),
+                ('concatMap', 'queues it', 'sequential writes where order matters', 'the queue grows, lag accumulates'),
+                ('exhaustMap', 'ignores new ones', 'double clicks, repeated submits', "the user's actions are dropped"),
+            ],
+            'notes': [
+                'default for READS is switchMap; for WRITES it is concatMap or exhaustMap:',
+                'a cancelled POST may already have been executed on the server',
+            ],
+        },
+    },
+    'rx-combine-vs-withlatest': {
+        'ru': {
+            'title': 'combineLatest и withLatestFrom на одних источниках',
+            'rows': [
+                ['stream', 'status$', '--1-----2--------3--|'],
+                ['stream', 'query$', '------x-----y-------|'],
+                ['op', ''],
+                ['stream', 'combineLatest', '------A-B---C----D--|'],
+                ['note', 6, 'A=(1,x) — первый эмит ТОЛЬКО когда query$ дал значение'],
+                ['cont', 6, 'B=(2,x)  C=(2,y)  D=(3,y): реагирует на любой источник'],
+                ['op', ''],
+                ['stream', 'withLatestFrom', '--------A--------B--|'],
+                ['note', 8, 'A=(2,x): значение 1 ПОТЕРЯНО — у query$ ещё'],
+                ['cont', 8, 'не было значения; эмитит только по ВЕДУЩЕМУ status$'],
+            ],
+            'notes': [
+                'combineLatest — 4 значения (любое изменение), withLatestFrom — 2:',
+                'ведущий поток задаёт момент, ведомый лишь добавляет снимок',
+            ],
+        },
+        'en': {
+            'title': 'combineLatest and withLatestFrom on the same sources',
+            'rows': [
+                ['stream', 'status$', '--1-----2--------3--|'],
+                ['stream', 'query$', '------x-----y-------|'],
+                ['op', ''],
+                ['stream', 'combineLatest', '------A-B---C----D--|'],
+                ['note', 6, 'A=(1,x) — the first emit happens ONLY once query$ has a value'],
+                ['cont', 6, 'B=(2,x)  C=(2,y)  D=(3,y): reacts to either source'],
+                ['op', ''],
+                ['stream', 'withLatestFrom', '--------A--------B--|'],
+                ['note', 8, 'A=(2,x): value 1 is LOST — query$ had no value yet;'],
+                ['cont', 8, 'emits only on the LEADING status$'],
+            ],
+            'notes': [
+                'combineLatest gives 4 values (any change), withLatestFrom gives 2:',
+                'the leading stream picks the moment, the follower only adds a snapshot',
+            ],
+        },
+    },
+    'rx-forkjoin-zip': {
+        'ru': {
+            'title': 'forkJoin и zip: чем отличаются от combineLatest',
+            'rows': [
+                ['stream', 'a$', '--1-----2-----|'],
+                ['stream', 'b$', '----x---------y----|'],
+                ['op', ''],
+                ['stream', 'forkJoin', '-------------------(2,y)|'],
+                ['note', 19, 'ОДНО значение — последние из каждого, и только'],
+                ['cont', 19, 'после complete ВСЕХ источников'],
+                ['op', ''],
+                ['stream', 'zip', '----A---------B----|'],
+                ['note', 4, 'A=(1,x): пары по ИНДЕКСУ — первое с первым'],
+                ['cont', 4, 'B=(2,y): второе со вторым; лишние значения буферизуются'],
+            ],
+            'notes': [
+                'forkJoin на бесконечном источнике не даст ничего никогда;',
+                'zip при разной скорости источников копит буфер — риск по памяти',
+            ],
+        },
+        'en': {
+            'title': 'forkJoin and zip: how they differ from combineLatest',
+            'rows': [
+                ['stream', 'a$', '--1-----2-----|'],
+                ['stream', 'b$', '----x---------y----|'],
+                ['op', ''],
+                ['stream', 'forkJoin', '-------------------(2,y)|'],
+                ['note', 19, 'ONE value — the last of each, and only after'],
+                ['cont', 19, 'EVERY source has completed'],
+                ['op', ''],
+                ['stream', 'zip', '----A---------B----|'],
+                ['note', 4, 'A=(1,x): pairs by INDEX — first with first,'],
+                ['cont', 4, 'B=(2,y): second with second; extra values are buffered'],
+            ],
+            'notes': [
+                'forkJoin over an infinite source never emits anything;',
+                'zip buffers when sources run at different speeds — a memory risk',
+            ],
+        },
+    },
+    'rx-combination-choice': {
+        'ru': {
+            'title': 'Чем комбинировать потоки',
+            'rows': [
+                ('оператор', 'когда эмитит', 'сценарий'),
+                ('combineLatest', 'на любое изменение любого источника', 'связанные фильтры формы'),
+                ('forkJoin', 'один раз, после complete всех', 'параллельная загрузка независимых ресурсов'),
+                ('zip', 'парами по индексу', 'строгое соответствие значений (редко)'),
+                ('withLatestFrom', 'только на значение ведущего', 'действие + текущее состояние'),
+                ('merge', 'на любое значение любого источника', 'несколько источников одного события'),
+                ('concat', 'по очереди, после complete предыдущего', 'этапы: сначала кеш, потом сеть'),
+                ('race', 'только у первого, кто эмитнул', 'таймаут через гонку, выбор быстрейшего'),
+                ('startWith', 'значение перед потоком', 'начальное состояние, скелетон'),
+            ],
+            'notes': [
+                'операторные формы combineLatest/merge/zip внутри pipe() помечены deprecated:',
+                'внутри pipe используют combineLatestWith / mergeWith / zipWith',
+            ],
+        },
+        'en': {
+            'title': 'How to combine streams',
+            'rows': [
+                ('operator', 'when it emits', 'scenario'),
+                ('combineLatest', 'on any change of any source', 'linked form filters'),
+                ('forkJoin', 'once, after every source completes', 'parallel load of independent resources'),
+                ('zip', 'in pairs, by index', 'strict value correspondence (rare)'),
+                ('withLatestFrom', 'only on the leading stream', 'an action plus current state'),
+                ('merge', 'on any value from any source', 'several sources of one event'),
+                ('concat', 'in turn, after the previous completes', 'stages: cache first, then network'),
+                ('race', 'only from the first to emit', 'a timeout race, picking the fastest'),
+                ('startWith', 'a value ahead of the stream', 'initial state, a skeleton'),
+            ],
+            'notes': [
+                'the operator forms of combineLatest/merge/zip inside pipe() are deprecated:',
+                'inside a pipe use combineLatestWith / mergeWith / zipWith',
+            ],
+        },
+    },
+    'rx-catcherror-placement': {
+        'ru': {
+            'title': 'Где стоит catchError — от этого зависит, жив ли поток',
+            'rows': [
+                ['op', 'клики: 1-й и 3-й запросы успешны, 2-й падает'],
+                ['op', ''],
+                ['stream', 'clicks$', '--c--c-------c--|'],
+                ['op', ''],
+                ['op', 'switchMap(req), catchError СНАРУЖИ:'],
+                ['stream', 'результат', '----A--X'],
+                ['note', 7, 'поток ТЕРМИНИРОВАН: третий клик уже не обработается,'],
+                ['cont', 7, 'кнопка визуально работает, но обработчик мёртв'],
+                ['op', ''],
+                ['op', 'switchMap(req.pipe(catchError)), catchError ВНУТРИ:'],
+                ['stream', 'результат', '----A--E-------A|'],
+                ['note', 7, 'E — значение по умолчанию вместо ошибки;'],
+                ['cont', 7, 'внешний поток кликов жив, третий клик обработан'],
+            ],
+            'notes': [
+                'ошибка терминирует ТОТ поток, в котором возникла:',
+                'внутри flattening — только внутренний, снаружи — весь конвейер',
+            ],
+        },
+        'en': {
+            'title': 'Where catchError sits decides whether the stream survives',
+            'rows': [
+                ['op', 'clicks: the 1st and 3rd requests succeed, the 2nd fails'],
+                ['op', ''],
+                ['stream', 'clicks$', '--c--c-------c--|'],
+                ['op', ''],
+                ['op', 'switchMap(req) with catchError OUTSIDE:'],
+                ['stream', 'result', '----A--X'],
+                ['note', 7, 'the stream is TERMINATED: the third click is never handled,'],
+                ['cont', 7, 'the button still looks alive but the handler is dead'],
+                ['op', ''],
+                ['op', 'switchMap(req.pipe(catchError)) with catchError INSIDE:'],
+                ['stream', 'result', '----A--E-------A|'],
+                ['note', 7, 'E is a fallback value instead of the error;'],
+                ['cont', 7, 'the outer click stream lives, the third click is handled'],
+            ],
+            'notes': [
+                'an error terminates THE stream it occurred in:',
+                'inside a flattening operator only the inner one, outside the whole pipeline',
+            ],
+        },
+    },
+    'rx-retry-backoff': {
+        'ru': {
+            'title': 'retry с экспоненциальной задержкой',
+            'rows': [
+                ['stream', 'источник', '--X'],
+                ['note', 2, 'первая попытка упала'],
+                ['op', ''],
+                ['op', 'retry({ count: 3, delay: (_, n) => timer(500 * 2 ** (n - 1)) })'],
+                ['op', ''],
+                ['stream', 'попытка 1', '--X'],
+                ['stream', 'попытка 2', '-----X'],
+                ['note', 5, 'через 500 мс'],
+                ['stream', 'попытка 3', '----------X'],
+                ['note', 10, 'через 1000 мс'],
+                ['stream', 'попытка 4', '--------------------V--|'],
+                ['note', 20, 'через 2000 мс — успех, значение доехало'],
+            ],
+            'notes': [
+                'без delay retry повторяет мгновенно и добивает падающий сервер;',
+                'resetOnSuccess: true обнуляет счётчик после удачного значения',
+            ],
+        },
+        'en': {
+            'title': 'retry with exponential backoff',
+            'rows': [
+                ['stream', 'source', '--X'],
+                ['note', 2, 'the first attempt failed'],
+                ['op', ''],
+                ['op', 'retry({ count: 3, delay: (_, n) => timer(500 * 2 ** (n - 1)) })'],
+                ['op', ''],
+                ['stream', 'attempt 1', '--X'],
+                ['stream', 'attempt 2', '-----X'],
+                ['note', 5, 'after 500 ms'],
+                ['stream', 'attempt 3', '----------X'],
+                ['note', 10, 'after 1000 ms'],
+                ['stream', 'attempt 4', '--------------------V--|'],
+                ['note', 20, 'after 2000 ms — success, the value arrives'],
+            ],
+            'notes': [
+                'without delay, retry repeats instantly and finishes off a failing server;',
+                'resetOnSuccess: true clears the counter after a successful value',
+            ],
+        },
+    },
+    'rx-error-toolbox': {
+        'ru': {
+            'title': 'Инструменты обработки ошибок',
+            'rows': [
+                ('оператор', 'что делает', 'типичное применение'),
+                ('catchError(() => of(x))', 'подставляет значение вместо ошибки', 'пустой список, значение по умолчанию'),
+                ('catchError(() => other$)', 'переключает на запасной поток', 'кеш вместо сети, зеркало API'),
+                ('catchError(e => throwError(…))', 'преобразует ошибку и пробрасывает', 'HttpErrorResponse → домен-ошибка'),
+                ('catchError((e, caught) => caught)', 'повторно подписывается на источник', 'бесконечный повтор (осторожно!)'),
+                ('retry({ count, delay })', 'повторяет подписку после ошибки', 'нестабильная сеть, 5xx'),
+                ('timeout({ each, first })', 'бросает TimeoutError по тишине', 'зависший запрос, медленный сокет'),
+                ('finalize(fn)', 'выполняется при любом финале', 'скрыть спиннер, закрыть ресурс'),
+                ('EMPTY в catchError', 'завершает поток без значений', '«молча ничего», без ветки ошибки'),
+            ],
+            'notes': [
+                'finalize срабатывает и при complete, и при error, и при unsubscribe —',
+                'это единственное место, куда можно положить гарантированную очистку',
+            ],
+        },
+        'en': {
+            'title': 'The error-handling toolbox',
+            'rows': [
+                ('operator', 'what it does', 'typical use'),
+                ('catchError(() => of(x))', 'substitutes a value for the error', 'an empty list, a default value'),
+                ('catchError(() => other$)', 'switches to a fallback stream', 'cache instead of network, an API mirror'),
+                ('catchError(e => throwError(…))', 'maps the error and rethrows', 'HttpErrorResponse → a domain error'),
+                ('catchError((e, caught) => caught)', 'resubscribes to the source', 'infinite retry (careful!)'),
+                ('retry({ count, delay })', 'resubscribes after an error', 'flaky network, 5xx'),
+                ('timeout({ each, first })', 'throws TimeoutError on silence', 'a hung request, a slow socket'),
+                ('finalize(fn)', 'runs on any ending', 'hide a spinner, release a resource'),
+                ('EMPTY in catchError', 'completes without values', '"silently nothing", no error branch'),
+            ],
+            'notes': [
+                'finalize fires on complete, on error and on unsubscribe alike —',
+                'it is the only place to put cleanup that is guaranteed to run',
+            ],
+        },
+    },
+    'rx-cold-vs-hot': {
+        'ru': {
+            'title': 'Cold и hot: сколько раз выполнится работа',
+            'rows': [
+                ['op', 'один и тот же users$ = http.get(...), две подписки'],
+                ['op', ''],
+                ['op', 'БЕЗ share (cold):'],
+                ['stream', 'подписка A', '--R-----D--|'],
+                ['stream', 'подписка B', '-----R-----D--|'],
+                ['note', 5, 'ВТОРОЙ запрос: работа началась заново'],
+                ['op', ''],
+                ['op', 'С share() (hot после первой подписки):'],
+                ['stream', 'подписка A', '--R-----D--|'],
+                ['stream', 'подписка B', '--------D--|'],
+                ['note', 8, 'запроса нет: подписалась на общий результат'],
+            ],
+            'notes': [
+                'легенда: R — запрос ушёл в сеть, D — данные пришли подписчику.',
+                'Каждая подписка на cold-поток запускает работу с нуля',
+            ],
+        },
+        'en': {
+            'title': 'Cold and hot: how many times the work runs',
+            'rows': [
+                ['op', 'the same users$ = http.get(...), two subscriptions'],
+                ['op', ''],
+                ['op', 'WITHOUT share (cold):'],
+                ['stream', 'subscriber A', '--R-----D--|'],
+                ['stream', 'subscriber B', '-----R-----D--|'],
+                ['note', 5, 'a SECOND request: the work started from scratch'],
+                ['op', ''],
+                ['op', 'WITH share() (hot after the first subscription):'],
+                ['stream', 'subscriber A', '--R-----D--|'],
+                ['stream', 'subscriber B', '--------D--|'],
+                ['note', 8, 'no request: it joined the shared result'],
+            ],
+            'notes': [
+                'legend: R — a request went to the network, D — data reached the subscriber.',
+                'Every subscription to a cold stream starts the work anew',
+            ],
+        },
+    },
+    'rx-share-config': {
+        'ru': {
+            'title': 'share и shareReplay: что выбрать',
+            'rows': [
+                ('вызов', 'что делает', 'риск'),
+                ('share()', 'один источник на всех активных подписчиков', 'поздний подписчик не увидит прошлое'),
+                ('shareReplay(1)', 'то же + отдаёт последнее значение', 'refCount по умолчанию FALSE → утечка'),
+                ('shareReplay({ bufferSize: 1,', 'источник отписывается, когда', 'при новом подписчике работа'),
+                ('  refCount: true })', 'подписчиков не осталось', 'начнётся заново'),
+                ('share({ resetOnRefCountZero:', 'полный контроль: сброс по', 'нужно понимать все четыре флага'),
+                ('  false, resetOnError: true })', 'нулю подписчиков, ошибке, complete', ''),
+            ],
+            'notes': [
+                'документация RxJS прямо предупреждает: при refCount: false источник',
+                'НЕ отписывается при нуле подписчиков и «potentially run for ever»',
+            ],
+        },
+        'en': {
+            'title': 'share and shareReplay: which to pick',
+            'rows': [
+                ('call', 'what it does', 'the risk'),
+                ('share()', 'one source for all active subscribers', 'a late subscriber misses the past'),
+                ('shareReplay(1)', 'the same plus replaying the last value', 'refCount defaults to FALSE → a leak'),
+                ('shareReplay({ bufferSize: 1,', 'the source unsubscribes once no', 'a new subscriber restarts'),
+                ('  refCount: true })', 'subscribers remain', 'the work from scratch'),
+                ('share({ resetOnRefCountZero:', 'full control: reset on zero', 'you must understand all four flags'),
+                ('  false, resetOnError: true })', 'subscribers, on error, on complete', ''),
+            ],
+            'notes': [
+                'the RxJS docs warn explicitly: with refCount: false the source is NOT',
+                'unsubscribed when the count drops to zero and may "run for ever"',
+            ],
+        },
+    },
+    'rx-teardown-patterns': {
+        'ru': {
+            'title': 'Как закрывать подписки',
+            'rows': [
+                ('приём', 'когда подходит', 'замечание'),
+                ('оператор завершения', 'take(1), first(), takeWhile', 'поток закрывается сам — лучший вариант'),
+                ('takeUntil(destroy$)', 'долгоживущий поток в компоненте', 'ставить ПОСЛЕДНИМ в pipe'),
+                ('takeUntilDestroyed()', 'Angular: привязка к жизни контекста', 'см. курс Angular, глава про RxJS'),
+                ('sub.unsubscribe()', 'императивный код, тесты', 'легко забыть при раннем return'),
+                ('sub.add(other)', 'дерево подписок из одной точки', 'исторический приём, сегодня редкость'),
+                ('async-пайп / toSignal', 'значение нужно только шаблону', 'отписка полностью на фреймворке'),
+            ],
+            'notes': [
+                'правило: подписывайся как можно ближе к краю приложения —',
+                'в сервисах возвращай поток, а не подписывайся внутри',
+            ],
+        },
+        'en': {
+            'title': 'How to close subscriptions',
+            'rows': [
+                ('technique', 'when it fits', 'note'),
+                ('a completing operator', 'take(1), first(), takeWhile', 'the stream closes itself — the best option'),
+                ('takeUntil(destroy$)', 'a long-lived stream in a component', 'must be LAST in the pipe'),
+                ('takeUntilDestroyed()', 'Angular: tied to the context lifetime', 'see the Angular course, RxJS chapter'),
+                ('sub.unsubscribe()', 'imperative code, tests', 'easy to forget on an early return'),
+                ('sub.add(other)', 'a subscription tree from one point', 'a historical trick, rare today'),
+                ('async pipe / toSignal', 'the value is only needed by a template', 'teardown is entirely the framework\'s job'),
+            ],
+            'notes': [
+                'the rule: subscribe as close to the edge of the application as possible —',
+                'services should return streams rather than subscribe internally',
             ],
         },
     },
