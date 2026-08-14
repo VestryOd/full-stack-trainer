@@ -6,6 +6,8 @@ export const TOPICS: readonly Topic[] = [
   { id: 'python',          label: 'Python',                 level: 'deep' },
   { id: 'react',            label: 'React',                  level: 'deep' },
   { id: 'state-management', label: 'State Management',      level: 'medium' },
+  { id: 'rxjs',             label: 'RxJS',                   level: 'medium' },
+  { id: 'angular',          label: 'Angular',                level: 'deep' },
   { id: 'nextjs',           label: 'Next.js',               level: 'deep' },
   { id: 'nodejs',           label: 'Node.js',               level: 'deep' },
   { id: 'aws',              label: 'AWS',                    level: 'deep' },
