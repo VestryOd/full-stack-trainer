@@ -30,7 +30,7 @@ function topicFolderName(topicId: string): string {
     git:             'git',
     'ci-cd':         'ci-cd',
     docker:          'docker',
-    bundlers:        'bundlers',
+    bundlers:        'build-tools',
     ddd:             'ddd',
     tdd:             'tdd',
     'event-driven':  'event-driven',
