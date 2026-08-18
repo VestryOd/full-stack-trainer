@@ -1,0 +1,103 @@
+{
+  "zone": "bundlers",
+  "kinds": ["question-bank"],
+  "verdict": "targeted-fixes",
+  "files": [
+    {
+      "file": "content/questions/bundlers.json#en",
+      "locale": "en",
+      "scores": { "A": 3, "B": 2, "C": 4, "D": 3, "E": 4, "F": 3, "G": null }
+    },
+    {
+      "file": "content/questions/bundlers.json#ru",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 3, "C": 4, "D": 3, "E": 4, "F": null, "G": 4 }
+    }
+  ],
+  "averages": { "A": 3.0, "B": 2.5, "C": 4.0, "D": 3.0, "E": 4.0, "F": 3.0, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/bundlers.json#en",
+      "rubric": "B",
+      "quote": "A full reload happens whenever Webpack can't find a safe accept boundary for the change — for example, if the change bubbles all the way up to your entry module with no `accept` handler along the way, or if the changed code runs important logic at the top level of the module (outside any function), which would need to re-execute correctly for the update to be safe.",
+      "problem": "bundlers-q-8. 67 words in one sentence, carrying a rule plus two independent exceptions plus a justification for the second exception, joined by an em-dash, an 'or', and a trailing 'which'. By the time the reader reaches 'which would need to re-execute correctly' they have lost the antecedent — it refers to the top-level logic, not to the module or the update. This is the single longest sentence a *middle*-level reader hits in the bank.",
+      "before": "A full reload happens whenever Webpack can't find a safe accept boundary for the change — for example, if the change bubbles all the way up to your entry module with no `accept` handler along the way, or if the changed code runs important logic at the top level of the module (outside any function), which would need to re-execute correctly for the update to be safe.",
+      "after": "A full reload happens whenever Webpack can't find a safe accept boundary for the change. Two cases cover most of it. First: the change bubbles all the way up to your entry module and finds no `accept` handler anywhere along the path. Second: the changed code runs important logic at the top level of the module, outside any function. That top-level code would have to re-execute correctly for the update to be safe, and Webpack can't guarantee that — so it reloads instead."
+    },
+    {
+      "file": "content/questions/bundlers.json#en",
+      "rubric": "B",
+      "quote": "Add or remove *any* module anywhere in the app, and those numeric IDs can shift for modules that didn't actually change — which changes the *content* of the chunks that reference those IDs, which changes their contenthash, invalidating the cache for chunks that have nothing to do with your actual change (most painfully, your vendor chunk).",
+      "problem": "bundlers-q-10. A 54-word causal chain expressed as two stacked 'which' clauses plus a participle plus a parenthesis. The chain itself (IDs shift → chunk content changes → contenthash changes → cache invalidates) is exactly the insight the question asks about, and it is the part hardest to hold in working memory on a phone. A numbered or arrowed chain would carry the same four facts with no re-reading.",
+      "before": "Add or remove *any* module anywhere in the app, and those numeric IDs can shift for modules that didn't actually change — which changes the *content* of the chunks that reference those IDs, which changes their contenthash, invalidating the cache for chunks that have nothing to do with your actual change (most painfully, your vendor chunk).",
+      "after": "Add or remove *any* module anywhere in the app, and those numeric IDs can shift — even for modules that didn't change. The chain from there is short and mechanical: shifted IDs change the *content* of every chunk that references them; changed content changes that chunk's contenthash; a new contenthash means the browser re-downloads it. So a chunk with nothing to do with your change loses its cache. Your vendor chunk is where this hurts most."
+    },
+    {
+      "file": "content/questions/bundlers.json#en",
+      "rubric": "A",
+      "quote": "To support both consumers, you typically run the bundler twice with different `output.library.type` settings (`commonjs2` and `module`), producing separate CJS and ESM files, then point to both from `package.json` using the `exports` field with conditions so Node and bundlers pick the right one automatically.",
+      "problem": "bundlers-q-20. The question says 'CommonJS and ESM'; the answer silently switches to 'CJS and ESM' and never states that CJS = CommonJS. Across the bank ESM appears 18 times and CJS twice, and neither is ever written out as 'ES modules (ESM)' / 'CommonJS (CJS)' at a first use. This is the same systemic defect found in the build-tools articles (ESM 118×, CJS 92×, never expanded) — the bank inherits it, in milder form: q9, q13 and q17 at least have 'ES modules' in the same answer, while q16 and q20 do not. One expansion per answer fixes it.",
+      "before": "To support both consumers, you typically run the bundler twice with different `output.library.type` settings (`commonjs2` and `module`), producing separate CJS and ESM files, then point to both from `package.json` using the `exports` field with conditions so Node and bundlers pick the right one automatically.",
+      "after": "To support both consumers, you run the bundler twice with different `output.library.type` settings: `commonjs2` and `module`. That produces two files — one CommonJS (CJS), one ES modules (ESM). Then point to both from `package.json` through the `exports` field, using conditions so that Node and bundlers pick the right one automatically."
+    },
+    {
+      "file": "content/questions/bundlers.json#en",
+      "rubric": "B",
+      "quote": "For every module, a module factory resolves the request to a file, runs it through the matching loaders, then hands the transformed source to a parser that walks the AST looking for `import`/`require` calls — each one becomes a dependency, and the module factory recurses into it.",
+      "problem": "bundlers-q-13. 47 words, four pipeline stages plus a recursion rule in one breath, and it introduces AST with no expansion (AST is used twice in the bank, in q13 and q14, and is never spelled out in either). The reader must simultaneously parse a long sentence and guess an acronym. Note the whole opening paragraph of this answer is ~140 words of unbroken pipeline description before any example — the ideal place for the arrow diagram used elsewhere in the zone.",
+      "before": "For every module, a module factory resolves the request to a file, runs it through the matching loaders, then hands the transformed source to a parser that walks the AST looking for `import`/`require` calls — each one becomes a dependency, and the module factory recurses into it.",
+      "after": "For every module the pipeline is the same: the module factory resolves the request to a real file, runs that file through the matching loaders, and hands the transformed source to a parser. The parser walks the AST (abstract syntax tree — the parsed, tree-shaped form of the code) looking for `import`/`require` calls. Each call it finds becomes a dependency, and the module factory recurses into that dependency."
+    },
+    {
+      "file": "content/questions/bundlers.json#en",
+      "rubric": "B",
+      "quote": "`usedExports: true` marks exports as unused, but a package with side effects (declared or default-assumed) or written in CommonJS can't be safely tree-shaken regardless of that setting — the analyzer will point you at the actual offending dependency, which is usually more productive than tweaking optimization flags that don't apply to it.",
+      "problem": "bundlers-q-16. A 52-word 'Common pitfall' sentence that packs a mechanism, two disqualifying conditions, a nested parenthesis and a piece of advice into one unit. Across the bank 51% of sentences inside the `**Common pitfall:**` block are over the limit (EN) and 6 of 20 pitfall blocks are a single sentence — the closing block is consistently the densest text in the answer, which is the worst possible place for it: it is what the reader reads last and remembers.",
+      "before": "`usedExports: true` marks exports as unused, but a package with side effects (declared or default-assumed) or written in CommonJS can't be safely tree-shaken regardless of that setting — the analyzer will point you at the actual offending dependency, which is usually more productive than tweaking optimization flags that don't apply to it.",
+      "after": "`usedExports: true` only marks exports as unused. Two kinds of package can't be safely tree-shaken no matter what that setting says: one with side effects (declared, or assumed by default), and one written in CommonJS. So tweaking optimization flags that don't apply to the package won't help. The analyzer will point you at the actual offending dependency, which is usually the more productive place to start."
+    },
+    {
+      "file": "content/questions/bundlers.json#en",
+      "rubric": "C",
+      "quote": "Before Webpack 5, importing an image or font required installing and configuring `file-loader` (emit the file, return a URL) or `url-loader` (optionally inline small files as a data URL). Webpack 5 replaced both with built-in **Asset Modules**, configured via `type` instead of a separate package:",
+      "problem": "bundlers-q-12. The question asks what Asset Modules do; the answer opens with the pre-Webpack-5 history and only answers in sentence two. On a phone the first screenful is about two loader packages the reader may never touch. This is the clearest C violation in the bank (the other is q7, which opens with what minification does to your code before saying what a source map is). Answer first, then contrast with the old way.",
+      "before": "Before Webpack 5, importing an image or font required installing and configuring `file-loader` (emit the file, return a URL) or `url-loader` (optionally inline small files as a data URL). Webpack 5 replaced both with built-in **Asset Modules**, configured via `type` instead of a separate package:",
+      "after": "**Asset Modules** are Webpack 5's built-in way to import images and fonts: you set a `type` on the rule instead of installing a loader package. `asset/resource` emits a separate file and returns its URL, `asset/inline` inlines the file as a base64 data URL, `asset/source` returns the raw source as a string, and plain `asset` picks between resource and inline based on file size. Before Webpack 5 the same job needed `file-loader` (emit the file, return a URL) or `url-loader` (optionally inline small files as a data URL)."
+    },
+    {
+      "file": "content/questions/bundlers.json#ru",
+      "rubric": "G",
+      "quote": "Код продолжает писать обычные `import`, просто в итоговом выводе вместо реального кода библиотеки остаётся ссылка на глобальную переменную.",
+      "problem": "bundlers-q-11. Word-for-word calque of 'Your code keeps writing normal import statements'. In Russian «код продолжает писать» means the code is doing the writing, which is nonsense — the subject should be the developer, or the sentence should be turned around. This is the sharpest calque in an otherwise genuinely fluent RU file.",
+      "before": "Код продолжает писать обычные `import`, просто в итоговом выводе вместо реального кода библиотеки остаётся ссылка на глобальную переменную.",
+      "after": "В коде вы по-прежнему пишете обычные `import`. Просто в итоговом выводе вместо реального кода библиотеки остаётся ссылка на глобальную переменную."
+    },
+    {
+      "file": "content/questions/bundlers.json#ru",
+      "rubric": "G",
+      "quote": "быстрый небандлованный dev-опыт и бандлованная production-сборка это два разных пайплайна (esbuild для pre-bundling в dev, Rollup для production-сборки), и именно поэтому баг иногда всплывает только после production-сборки, а не во время разработки.",
+      "problem": "bundlers-q-4. «небандлованный» / «бандлованная» are invented participles from an English verb, and they appear in a *junior* answer — the first place a beginner meets the concept. «Небандлованных запросов» recurs in the same answer. The rest of the RU file shows the author can do this well («схлопывает», «недоумевать», «крутить флаги»), so this is a slip, not a register.",
+      "before": "быстрый небандлованный dev-опыт и бандлованная production-сборка это два разных пайплайна (esbuild для pre-bundling в dev, Rollup для production-сборки), и именно поэтому баг иногда всплывает только после production-сборки, а не во время разработки.",
+      "after": "в dev-режиме код не бандлится, а в production-сборке бандлится — это два разных пайплайна (esbuild для pre-bundling в dev, Rollup для production-сборки). Именно поэтому баг иногда всплывает только после production-сборки, а не во время разработки."
+    },
+    {
+      "file": "content/questions/bundlers.json#ru",
+      "rubric": "G",
+      "quote": "Компиляция стартует с каждой entry point.",
+      "problem": "bundlers-q-13. An English noun phrase inflected as if it were feminine Russian («с каждой entry point»), and «стартует с» in the sense of 'starts from'. Two lines later the same file writes «на основе entry point» and q1 uses «entry-файла» — three different treatments of one term. Pick the hyphenated Russian form used elsewhere in the zone.",
+      "before": "Компиляция стартует с каждой entry point.",
+      "after": "Компиляция начинается с каждой entry-точки."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/bundlers.json#en": ["AST", "ESM", "CJS", "CDN", "CI", "JSX", "DOM"],
+    "content/questions/bundlers.json#ru": ["AST", "ESM", "CJS", "CDN", "CI", "JSX", "DOM"]
+  },
+  "patterns": [
+    "The answer opens well and then the second paragraph absorbs everything. Leads are direct almost everywhere (indirect_leads = 0, C = 4), but the paragraph right after the lead routinely carries 3-5 facts in one 45-70 word sentence held together by an em-dash plus a stacked 'which'/'or' chain (q8, q10, q13, q15, q17). The fix is mechanical and does not touch content: split at the em-dash, and turn causal chains ('X changes Y, which changes Z') into an explicit list.",
+    "The `**Common pitfall:**` / `**Частая ловушка:**` closing block is the densest text in the answer, not the lightest. 51% of its sentences are over the limit in EN and 42% in RU — at or above the body rate — and 6 of 20 blocks are one single sentence (q10 63w, q16 67w, q18 67w). It is the last thing the reader reads and the thing most likely to be re-read, so it should be the shortest prose in the card, not the longest.",
+    "Difficulty seam: present but as a gradient, not a cliff. Over-limit sentence rate rises junior 32% → middle 51% → senior 60% (EN) and 21% → 35% → 47% (RU), and average answer length doubles from 147 to 292 words. Unlike `typescript`, there is no abrupt break at one boundary — every level is written in the same voice, the senior answers simply have longer sentences. The junior tier is already at 32% EN, so a sentence-length pass is worth doing on all three tiers, heaviest on senior.",
+    "Abbreviations are introduced by proximity rather than by expansion. ESM, CJS and AST are never written out anywhere in the bank; where they read as fine (q9, q13, q17) it is only because 'ES modules' / 'CommonJS' happens to appear elsewhere in the same answer. In q16 and q20 that safety net is missing. Since cards are read out of order, each answer needs its own first-use expansion."
+  ],
+  "notes": "Best-scoring of my three banks and the one where verdict `targeted-fixes` really means a handful of places: ~12 long sentences in the senior tier, 3 RU calques, one history-first lead (q12), and one expansion pass for ESM/CJS/AST. Code examples are the strongest part — short, commented at the non-obvious line, self-contained, and paired (q11 ships the JS config plus the HTML script tags that make it work). EN is measurably harder than RU (53.9% vs 41.1% over-limit) and adds phrasal/idiomatic load ('shake everything', 'bleeding into', 'earns its place', 'dynamic-import-happy'); the RU file is the better of the two to read. The bank does inherit the build-tools articles' ESM/CJS defect, but at 1/6 the volume and with partial mitigation, so it is a fix, not a refactor."
+}

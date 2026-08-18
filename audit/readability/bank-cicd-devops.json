@@ -1,0 +1,112 @@
+{
+  "zone": "cicd-devops",
+  "kinds": ["question-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 4, "D": 3, "E": 3, "F": 2, "G": null }
+    },
+    {
+      "file": "content/questions/cicd-devops.json#ru",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 3, "C": 4, "D": 3, "E": 3, "F": null, "G": 3 }
+    }
+  ],
+  "averages": { "A": 2.0, "B": 2.5, "C": 4.0, "D": 3.0, "E": 3.0, "F": 2.0, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "B",
+      "quote": "**Common pitfall:** Relying only on manual, human-triggered rollback for production incidents — by the time someone notices a dashboard, confirms it's a real problem, and manually runs the rollback command, minutes have passed at full error rate; automate the detection-to-rollback path for the failure modes you can define numerically, and reserve manual judgment for ambiguous cases the automation can't classify.",
+      "problem": "ci-cd-q-18. The entire pitfall block is one 59-word sentence containing a wrong practice, a three-step timeline, a consequence, and two pieces of advice, joined by an em-dash and a semicolon. This is not an outlier: 19 of 20 pitfall blocks in this bank are a single sentence, and 95% of the sentences inside them are over the word limit in EN (86% in RU) versus 54% in the answer bodies. The closing block is systematically the hardest text in every card.",
+      "before": "**Common pitfall:** Relying only on manual, human-triggered rollback for production incidents — by the time someone notices a dashboard, confirms it's a real problem, and manually runs the rollback command, minutes have passed at full error rate; automate the detection-to-rollback path for the failure modes you can define numerically, and reserve manual judgment for ambiguous cases the automation can't classify.",
+      "after": "**Common pitfall:** Relying only on manual, human-triggered rollback for production incidents. Count the steps: someone notices a dashboard, confirms it's a real problem, then runs the rollback command by hand. That is minutes at full error rate. Automate the detection-to-rollback path for every failure mode you can define numerically. Keep manual judgment for the ambiguous cases the automation can't classify."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "A",
+      "quote": "```yaml\nname: CI/CD Pipeline\non: [push, pull_request]  # Trigger event",
+      "problem": "ci-cd-q-1 and the whole bank. 'CI/CD' is in the bank's name, in the very first code sample, and in 20 questions — and 'Continuous Integration' / 'Continuous Delivery' appear nowhere in either locale (I grepped: zero occurrences; RU has one unrelated «непрерывно»). The zone's own subject is the one abbreviation never explained. The junior tier is exactly the audience that needs it, and q1 is where it belongs.",
+      "before": "A workflow consists of three main parts: **trigger events** (when the workflow runs), **jobs** (sets of steps executed in parallel or sequence), and **steps** (individual tasks within a job).",
+      "after": "CI/CD stands for Continuous Integration (every commit is built and tested automatically) and Continuous Delivery (every green build is automatically ready to deploy). In GitHub Actions you describe both in a workflow, and a workflow has three main parts: **trigger events** (when the workflow runs), **jobs** (sets of steps executed in parallel or sequence), and **steps** (individual tasks within a job)."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "B",
+      "quote": "For the deployment side (especially on Kubernetes), the same principle applies further downstream: build a layered Docker image (base image → dependencies → app code, in that order) so unchanged layers are pulled from cache instead of rebuilt; use a local registry mirror or pull-through cache so image pulls don't cross a slow network path; and replace polling-based rollout checks (repeatedly asking \"is it ready yet?\") with event-driven readiness signals, instead of polling on a fixed interval.",
+      "problem": "ci-cd-q-14. 75 words, three independent techniques each with its own parenthesis and its own justification, in one semicolon-separated sentence. The tail is also redundant: 'replace polling-based rollout checks ... with event-driven readiness signals, instead of polling on a fixed interval' says the same thing twice. Three techniques deserve three sentences or three bullets — the answer already uses bullets elsewhere.",
+      "before": "For the deployment side (especially on Kubernetes), the same principle applies further downstream: build a layered Docker image (base image → dependencies → app code, in that order) so unchanged layers are pulled from cache instead of rebuilt; use a local registry mirror or pull-through cache so image pulls don't cross a slow network path; and replace polling-based rollout checks (repeatedly asking \"is it ready yet?\") with event-driven readiness signals, instead of polling on a fixed interval.",
+      "after": "On the deployment side (especially on Kubernetes) the same principle applies further downstream. Three things to fix:\n\n- **Layer the Docker image** in the order base image → dependencies → app code. Unchanged layers are then pulled from cache instead of rebuilt.\n- **Use a local registry mirror or pull-through cache**, so image pulls don't cross a slow network path.\n- **Replace polling-based rollout checks** — repeatedly asking \"is it ready yet?\" on a fixed interval — with event-driven readiness signals."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "C",
+      "quote": "A common middle-level mistake is rebuilding the application separately for each environment (staging, production) — different builds can pick up different dependency versions or environment-baked config, so what passed staging isn't provably the same artifact running in production.",
+      "problem": "ci-cd-q-12. The question asks what 'build once, promote everywhere' means; the answer opens with the mistake and only defines the principle in sentence two ('The fix is to build a single immutable artifact...'). It also leaks the site's own difficulty metadata into the prose — «Частая ошибка на middle-уровне» in RU — which reads as the site grading its reader mid-answer. Neither locale should reference the card's own difficulty tier.",
+      "before": "A common middle-level mistake is rebuilding the application separately for each environment (staging, production) — different builds can pick up different dependency versions or environment-baked config, so what passed staging isn't provably the same artifact running in production.",
+      "after": "'Build once, promote everywhere' means you build a single immutable artifact — a Docker image tagged by commit SHA, or a versioned package — exactly once, then move that same artifact through staging and production, changing only runtime configuration. Rebuilding per environment is the common mistake it prevents: two builds can pick up different dependency versions or different environment-baked config, so what passed staging is not provably the artifact running in production."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "E",
+      "quote": "```yaml\nstages:\n  - test-unit         # sharded, parallel: 4 — ~2 min instead of 8\n  - test-integration  # separate stage, cached deps\n  - build             # layered Docker image, cached base layer\n  - deploy            # event-driven readiness, local registry mirror\n```",
+      "problem": "ci-cd-q-14. The one code block in the bank's longest senior answer is not code — it is the prose restated as four comments, in GitLab-CI `stages:` syntax inside a bank where all 19 other examples are GitHub Actions. It demonstrates none of the seven techniques the answer describes (sharding, unit/integration split, dependency cache, layered image, registry mirror, event-driven readiness). The reader gets ~330 words of technique with nothing concrete to anchor on. Related: q3's YAML omits `runs-on` from the `test` and `deploy` jobs, so it would not run, and q10's `kubectl set canary` is not a real kubectl subcommand.",
+      "before": "```yaml\nstages:\n  - test-unit         # sharded, parallel: 4 — ~2 min instead of 8\n  - test-integration  # separate stage, cached deps\n  - build             # layered Docker image, cached base layer\n  - deploy            # event-driven readiness, local registry mirror\n```",
+      "after": "```yaml\n# The sharding half, in the bank's own GitHub Actions dialect\njobs:\n  test-unit:\n    strategy:\n      matrix:\n        shard: [1, 2, 3, 4]   # 4 parallel jobs — ~2 min instead of 8\n    steps:\n      - uses: actions/setup-node@v3\n      - uses: actions/cache@v3\n        with:\n          path: node_modules\n          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}\n      - run: npm ci\n      - run: npx jest --shard=${{ matrix.shard }}/4\n\n  test-integration:       # separate job: slow tests don't block fast feedback\n    needs: test-unit\n    steps:\n      - run: npm run test:integration\n```"
+    },
+    {
+      "file": "content/questions/cicd-devops.json#ru",
+      "rubric": "G",
+      "quote": "**Частая ловушка:** Держать персистентный (неэфемерный) пул self-hosted runner'ов, общий на несколько репозиториев, чтобы сэкономить на времени холодного старта — это возвращает ровно тот риск межjob-заражения и латерального перемещения, ради предотвращения которого эфемерные runner'ы и существуют, а сэкономленное время редко оправдывает эту экспозицию, если у runner'а вообще есть доступ к внутренним сетевым ресурсам или долгоживущим credentials.",
+      "problem": "ci-cd-q-20. «межjob-заражения» glues a Cyrillic prefix to a Latin word with no separator — the reader has to stop and re-parse the token itself before parsing the sentence. «эту экспозицию» is a false friend (exposure → «риск», not «экспозиция», which in Russian means a photographic exposure or a museum display). All of it sits inside a 54-word single-sentence pitfall block. Same family elsewhere in the file: «assume'ить» (q19), «скоупленные» (q19), «ключуется» (q9), «метрика-based» (q18), «митигировали» (q20 question).",
+      "before": "**Частая ловушка:** Держать персистентный (неэфемерный) пул self-hosted runner'ов, общий на несколько репозиториев, чтобы сэкономить на времени холодного старта — это возвращает ровно тот риск межjob-заражения и латерального перемещения, ради предотвращения которого эфемерные runner'ы и существуют, а сэкономленное время редко оправдывает эту экспозицию, если у runner'а вообще есть доступ к внутренним сетевым ресурсам или долгоживущим credentials.",
+      "after": "**Частая ловушка:** Держать постоянный (неэфемерный) пул self-hosted runner'ов, общий на несколько репозиториев, чтобы сэкономить на времени холодного старта. Это возвращает ровно те два риска, ради которых эфемерные runner'ы и придумали: заражение одной job от другой и латеральное перемещение внутри сети. Сэкономленные секунды редко стоят этого — особенно если у runner'а есть доступ к внутренним сетевым ресурсам или к долгоживущим credentials."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#ru",
+      "rubric": "G",
+      "quote": "Начни с профилирования каждого этапа отдельно — build, test, push, deploy — потому что \"тесты идут 20 минут\" это симптом, а не диагноз; нужно понять, эти 20 минут упираются в CPU (медленное выполнение тестов), в I/O (установка зависимостей, pull образов) или в лишнюю последовательность там, где можно распараллелить.",
+      "problem": "ci-cd-q-14 and ~8 other answers. The question addresses the reader as «вы» («Как бы вы оптимизировали…»), the answer answers as «ты» («Начни», «разбей», «Кэшируй», «профилируй»). The same card switches pronoun between question and answer, and the bank switches between cards: q10-q13 use «вы»-neutral phrasing, q14/q18/q20 use «ты»-imperatives, q5 uses «Храни»/«не зашивай». On a site read in short bursts this reads as two different authors. Also straight ASCII quotes (\"тесты идут 20 минут\") where the rest of the RU file uses «…».",
+      "before": "Начни с профилирования каждого этапа отдельно — build, test, push, deploy — потому что \"тесты идут 20 минут\" это симптом, а не диагноз; нужно понять, эти 20 минут упираются в CPU (медленное выполнение тестов), в I/O (установка зависимостей, pull образов) или в лишнюю последовательность там, где можно распараллелить.",
+      "after": "Первым делом профилируем каждый этап отдельно: build, test, push, deploy. «Тесты идут 20 минут» — это симптом, а не диагноз. Нужно понять, во что упираются эти 20 минут: в CPU (медленное выполнение самих тестов), в I/O (установка зависимостей, pull образов) или в лишнюю последовательность там, где можно было распараллелить."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "D",
+      "quote": "The cost is running double the infrastructure while both environments exist, and the \"all traffic at once\" switch is exactly what separates it from canary, which shifts a percentage of traffic gradually — canary is the better choice when you want to limit blast radius and don't want to pay for two full environments, blue-green is better when you want the simplest possible instant rollback.",
+      "problem": "ci-cd-q-8. This is the tail of a 111-word opening paragraph that has already covered the blue-green mechanism and rollback; it then introduces canary as a second concept and delivers a two-way choice rule, all before any example. Canary is named here for the first time in the bank (its own answer is q10, two cards later) with no definition beyond a relative clause. 'Blast radius' is used as if it were plain English. A middle reader now holds two strategies, a cost model and a decision rule with nothing concrete to anchor on.",
+      "before": "The cost is running double the infrastructure while both environments exist, and the \"all traffic at once\" switch is exactly what separates it from canary, which shifts a percentage of traffic gradually — canary is the better choice when you want to limit blast radius and don't want to pay for two full environments, blue-green is better when you want the simplest possible instant rollback.",
+      "after": "The cost is running double the infrastructure for as long as both environments exist.\n\nThat \"all traffic at once\" switch is what separates blue-green from canary. A canary deploy sends only a small percentage of traffic to the new version and grows that share gradually, so a bad release reaches fewer users — a smaller blast radius. Pick canary when limiting that radius matters more than instant rollback, and when you don't want to pay for two full environments. Pick blue-green when you want the simplest possible instant rollback."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#en",
+      "rubric": "B",
+      "quote": "Self-hosted runners solve that, but introduce a design problem GitHub's own runners don't have: a runner is a machine that executes arbitrary code from whatever workflow triggers it, so if it's long-lived and shared across repositories, a compromised or malicious job (say, from a fork's pull request) can persist on it, read leftover files from a previous job, or pivot into your private network.",
+      "problem": "ci-cd-q-20. 64 words: a claim, a definition, a condition, and three attack outcomes. 'Pivot into your private network' is security jargon as a phrasal verb — B1-B2 readers know 'pivot' as a dance move or a spreadsheet feature. The senior tier of this bank runs at 73% over-limit sentences in EN, and this is the representative sentence.",
+      "before": "Self-hosted runners solve that, but introduce a design problem GitHub's own runners don't have: a runner is a machine that executes arbitrary code from whatever workflow triggers it, so if it's long-lived and shared across repositories, a compromised or malicious job (say, from a fork's pull request) can persist on it, read leftover files from a previous job, or pivot into your private network.",
+      "after": "Self-hosted runners solve that, but they introduce a design problem GitHub's own runners don't have. A runner is a machine that executes arbitrary code from whatever workflow triggers it. If that machine is long-lived and shared across repositories, one compromised or malicious job — say, from a fork's pull request — can do three things: stay installed on the machine, read files left behind by a previous job, and use the machine as a way into your private network."
+    },
+    {
+      "file": "content/questions/cicd-devops.json#ru",
+      "rubric": "G",
+      "quote": "На стороне AWS trust policy IAM-роли ограничивает, какому GitHub-репозиторию, ветке или окружению разрешено её assume'ить (через условие на claim `sub` токена), так что даже если сам workflow скомпрометируют, зона поражения ограничена ровно этим репозиторием и ролью — а не всеми кредами, которые организация когда-либо создавала.",
+      "problem": "ci-cd-q-19. «assume'ить» is an English verb given a Russian ending and an apostrophe — the reader must know the AWS term `sts:AssumeRole` to decode it, and IAM is never expanded anywhere in the bank in either locale. Three untranslated noun phrases («trust policy», «claim `sub`») stack in one 46-word sentence. Note the answer does expand OIDC properly («OpenID Connect (OIDC)»), which shows the habit exists — it just isn't applied to IAM.",
+      "before": "На стороне AWS trust policy IAM-роли ограничивает, какому GitHub-репозиторию, ветке или окружению разрешено её assume'ить (через условие на claim `sub` токена), так что даже если сам workflow скомпрометируют, зона поражения ограничена ровно этим репозиторием и ролью — а не всеми кредами, которые организация когда-либо создавала.",
+      "after": "На стороне AWS у роли IAM (Identity and Access Management — система прав доступа в AWS) есть trust policy: она задаёт, кто вообще имеет право принять эту роль. В ней указывают, какому GitHub-репозиторию, ветке или окружению это разрешено — через условие на поле `sub` внутри токена. Поэтому даже если сам workflow скомпрометируют, зона поражения ограничена ровно этим репозиторием и этой ролью, а не всеми кредами организации."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/cicd-devops.json#en": ["CI", "CD", "CI/CD", "IAM", "DB", "SHA", "VM", "RAM", "CPU", "GCP", "YAML", "e2e", "UI", "SIGTERM/SIGKILL"],
+    "content/questions/cicd-devops.json#ru": ["CI", "CD", "CI/CD", "IAM", "БД", "SHA", "VM", "RAM", "CPU", "GCP", "YAML", "e2e", "UI", "SIGTERM/SIGKILL"]
+  },
+  "patterns": [
+    "The `**Common pitfall:**` / `**Частая ловушка:**` block is one sentence in 19 of 20 answers, and 95% of the sentences in it are over the word limit in EN (86% in RU) against 54%/33% in the answer bodies. The shape is always the same: 'Doing X — [why it's wrong], [what happens], [what to do instead]' welded together with an em-dash and a semicolon. It is the last thing the reader sees in every single card, and it is the hardest sentence in every single card. Splitting these 20 blocks into 3-4 sentences each is the highest-value single edit available in this zone.",
+    "Difficulty seam: yes, and it sits at junior→middle, not at middle→senior. Over-limit sentence rate jumps 35% → 64% → 73% in EN and 13% → 49% → 53% in RU; average answer length goes 80 → 153 → 230 words. The five junior answers are genuinely good (short, one idea per sentence, code immediately after the lead) and read like a different, better-edited document than q6-q20. Whatever editing pass produced the junior tier was not applied to the other fifteen.",
+    "Russian addresses the reader in two incompatible registers. Questions are «вы» («Как бы вы оптимизировали…», «Объясните…»), while roughly half the answers reply in «ты»-imperatives («Начни», «разбей», «Кэшируй», «профилируй», «держи», «не давай», «ставь», «Храни») and the other half stay neutral. The switch happens inside single cards. Pick one — the neutral «мы»/infinitive form used in q10-q13 works with both.",
+    "English technical terms are conjugated as Russian verbs instead of being translated or glossed: «assume'ить», «скоупленные», «ключуется», «митигировали», «матчить», «метрика-based», «межjob-заражения». This is a milder form of the transliteration layer flagged in the cicd-devops *articles* («аутаджи», «дрейнирует») — the bank has none of those specific words, but the same instinct, applied to verbs. Each instance costs the reader a decode step on top of an already long sentence.",
+    "Code blocks are the weakest part of a bank whose subject is configuration. q14's block is prose-as-comments in GitLab-CI syntax inside an otherwise GitHub-Actions bank; q3's YAML omits `runs-on` from two of three jobs; q10 invents `kubectl set canary`. Where the examples are real (q7, q13, q15, q19, q20) they are excellent — the problem is concentrated in the answers that most need a concrete anchor."
+  ],
+  "notes": "Verdict is `systemic-refactor` on the strength of three averages at or near 2 (A, B, F) affecting 15 of 20 cards in both locales, not on the C axis — C = 4 here, and leads are the bank's best feature (indirect_leads = 0; q14's «Начни с профилирования» and q18's three-part opener answer before explaining). So the refactor needed is narrow but wide: split long sentences, expand a glossary's worth of abbreviations, unify RU pronoun register. The zone's own subject, CI/CD, is never expanded in either locale — that one line is the cheapest fix on the site. The RU file is easier to read than the EN one on every measure (45% vs 62% over-limit), so EN needs the heavier pass. I did not verify the articles' claim of «Старший нюанс»-style headings here: the bank has none of it, its headings are clean."
+}

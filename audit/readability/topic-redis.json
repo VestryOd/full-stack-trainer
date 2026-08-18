@@ -1,0 +1,156 @@
+{
+  "zone": "redis",
+  "kinds": ["topic-article"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/topics/redis/ru/01-redis-fundamentals.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 4, "F": null, "G": 2 } },
+    { "file": "content/topics/redis/en/01-redis-fundamentals.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/redis/ru/02-data-structures.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 3, "F": null, "G": 2 } },
+    { "file": "content/topics/redis/en/02-data-structures.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/redis/ru/03-caching-patterns.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 3, "E": 4, "F": null, "G": 2 } },
+    { "file": "content/topics/redis/en/03-caching-patterns.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 3, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/redis/ru/04-pubsub-and-streams.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/redis/en/04-pubsub-and-streams.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/redis/ru/05-distributed-locks.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 3, "F": null, "G": 2 } },
+    { "file": "content/topics/redis/en/05-distributed-locks.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 3, "D": 3, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/redis/ru/06-redis-persistence.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 4, "D": 3, "E": 3, "F": null, "G": 2 } },
+    { "file": "content/topics/redis/en/06-redis-persistence.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 4, "D": 3, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/redis/ru/07-redis-interview-questions.md",
+      "locale": "ru",
+      "scores": { "A": 1, "B": 3, "C": 4, "D": 2, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/redis/en/07-redis-interview-questions.md",
+      "locale": "en",
+      "scores": { "A": 1, "B": 2, "C": 4, "D": 2, "E": 4, "F": 3, "G": null } }
+  ],
+  "averages": { "A": 1.9, "B": 3.8, "C": 3.0, "D": 2.9, "E": 3.4, "F": 3.9, "G": 2.3 },
+  "worst_places": [
+    {
+      "file": "content/topics/redis/ru/03-caching-patterns.md",
+      "rubric": "C",
+      "quote": "# Redis Caching Patterns\n\n## Cache-Aside (Lazy Loading) — самый распространённый паттерн\n\n```typescript",
+      "problem": "This article contains zero explanatory sentences. Every one of its seven sections is a heading followed immediately by a code fence; the only prose in the whole file is the closing 'Типичные ошибки' bullet list. The reader is given ~40 lines of TypeScript before the first sentence, and never told in words what Cache-Aside is, what 'Lazy Loading' refers to, or when to pick it. The EN file is identical. Since this topic has no questions and no quiz, the article is the reader's only prep surface for this material.",
+      "before": "# Redis Caching Patterns\n\n## Cache-Aside (Lazy Loading) — самый распространённый паттерн\n\n```typescript\nimport { createClient } from 'redis';",
+      "after": "# Паттерны кэширования в Redis\n\n## Cache-Aside (Lazy Loading) — самый распространённый паттерн\n\nПри Cache-Aside кэшем управляет само приложение. На чтение: сначала смотрим в Redis; если там пусто (cache miss), читаем из базы, кладём результат в Redis с TTL (сроком жизни) и возвращаем. Отсюда и второе название — lazy loading: в кэш попадает только то, что кто-то реально запросил. На запись кэш не обновляют, а удаляют — следующее чтение положит туда свежие данные.\n\n```typescript\nimport { createClient } from 'redis';"
+    },
+    {
+      "file": "content/topics/redis/ru/01-redis-fundamentals.md",
+      "rubric": "A",
+      "quote": "## Основные операции и TTL",
+      "problem": "TTL is introduced in a section heading and used 30+ times across all seven articles of the topic — and is never expanded anywhere, in either locale. The topic has no glossary and no question bank entry defining it. The same holds for HA (used in 01 and 06, spelled out only in a heading of 07, which per the per-file rule does not count) and SPOF (05). RDB and AOF are expanded properly in 06 — but 07 uses them 18 times without expanding either, and 07 is the file people revise from.",
+      "before": "## Основные операции и TTL",
+      "after": "## Основные операции и TTL — срок жизни ключа\n\nTTL (time to live) — время, через которое Redis сам удалит ключ. Это основной способ не дать кэшу расти бесконечно."
+    },
+    {
+      "file": "content/topics/redis/en/07-redis-interview-questions.md",
+      "rubric": "B",
+      "quote": "Three reasons: (1) data in RAM — reading from memory ~100 ns vs ~10 ms from disk; (2) single-threaded Event Loop — no mutex/lock on data, no context-switch overhead; (3) optimized data structures — Hash Table for String/Hash, Skip List for Sorted Set, Linked List for List — O(1)–O(log N) operations without a complex query planner.",
+      "problem": "The very first answer in the file is a single 57-word sentence carrying three independent reasons and six sub-facts, with four unexpanded abbreviations inside it (RAM, ns/ms as units are fine, but mutex and context-switch are unexplained jargon). The RU twin is 59 words with the same shape. The numbered structure is already present — it just needs full stops.",
+      "before": "Three reasons: (1) data in RAM — reading from memory ~100 ns vs ~10 ms from disk; (2) single-threaded Event Loop — no mutex/lock on data, no context-switch overhead; (3) optimized data structures — Hash Table for String/Hash, Skip List for Sorted Set, Linked List for List — O(1)–O(log N) operations without a complex query planner.",
+      "after": "Three reasons.\n\n1. **Data lives in RAM.** A read from memory takes ~100 ns; a read from disk takes ~10 ms — five orders of magnitude apart.\n2. **One thread runs all commands.** Nothing needs a lock to protect the data, and the CPU never pays for switching between threads.\n3. **Purpose-built data structures.** Hash Table for String and Hash, Skip List for Sorted Set, Linked List for List. Every operation is O(1) or O(log N), and there is no query planner deciding how to run it."
+    },
+    {
+      "file": "content/topics/redis/ru/01-redis-fundamentals.md",
+      "rubric": "G",
+      "quote": "Redis (Remote Dictionary Server) — in-memory data store: все данные в RAM, операции выполняются за микросекунды.",
+      "problem": "The first sentence of the whole topic contains an untranslated English term ('in-memory data store') immediately followed by the Russian explanation of that same term ('все данные в RAM'), so the English half is pure noise for a B1-B2 reader — and RAM itself is not expanded. This is the zone-wide habit: five of seven RU files carry a pure English H1 ('Redis Fundamentals', 'Redis Data Structures', 'Redis Caching Patterns', 'Distributed Locks', 'Redis Persistence'), and RU section headings mix scripts mid-phrase ('Проблема Race Condition в distributed системах', 'Session Storage паттерн', 'Persistence выключена — когда это правильно').",
+      "before": "# Redis Fundamentals\n\n## Что такое Redis и почему он быстрый\n\nRedis (Remote Dictionary Server) — in-memory data store: все данные в RAM, операции выполняются за микросекунды.",
+      "after": "# Основы Redis\n\n## Что такое Redis и почему он быстрый\n\nRedis (Remote Dictionary Server) — хранилище данных в оперативной памяти. Все данные лежат в RAM (оперативной памяти), а не на диске, поэтому операции занимают микросекунды."
+    },
+    {
+      "file": "content/topics/redis/en/07-redis-interview-questions.md",
+      "rubric": "D",
+      "quote": "Redlock is needed under strict reliability requirements: a single Redis instance is a Single Point of Failure.",
+      "problem": "From this paragraph to the end of the file there are ~690 words with no code, no diagram and no table — six dense answers in a row (Redlock, FOR UPDATE, RDB vs AOF, AOF rewrite, Sentinel vs Cluster, replica lag), each 80-100 words, each stacking three or four unfamiliar concepts. The whole 2054-word file has only two code blocks. The material to break this up already exists in the topic: articles 05 and 06 contain a 5-step Redlock diagram and a Sentinel/Cluster block that would slot straight in. Three more walls of this kind in the same file (309w, 499w, 524w).",
+      "before": "Redlock is needed under strict reliability requirements: a single Redis instance is a Single Point of Failure. If Redis crashes immediately after granting a lock, the new Master (post-Sentinel failover) has no knowledge of that lock → two processes simultaneously believe they hold the lock.",
+      "after": "Redlock is for cases where losing a lock is unacceptable. A single Redis instance is a single point of failure (SPOF): if it crashes right after granting a lock, the replacement Master elected by Sentinel knows nothing about that lock. Two processes then both believe they hold it.\n\n```txt\nRedlock, step by step:\n1. startTime = now\n2. SET NX PX on all N nodes (short timeout, so one dead node can't hang you)\n3. Lock granted only if >N/2 nodes said OK AND elapsed < ttl * 0.1\n4. Effective TTL = TTL - elapsed - clock drift\n5. Quorum not reached → DEL on every node, then retry\n```\n\n(the block above is reused verbatim from article 05, so the reader recognises it)"
+    },
+    {
+      "file": "content/topics/redis/ru/02-data-structures.md",
+      "rubric": "A",
+      "quote": "HyperLogLog → O(1) PFADD/PFCOUNT, ~0.81% error, 12KB памяти",
+      "problem": "Two problems. First, contradiction: article 02 states ~0.81% error, article 07 states '~1.5% погрешностью' for the same structure — the reader preparing an answer cannot tell which number to give (Redis docs say standard error 0.81%). Second, the overview block introduces eight structures with big-O notation as bare fragments; 'O(1)', 'O(N)', 'O(log N)' are used throughout the topic with no sentence anywhere saying what they mean for the reader's latency. A similar drift: Streams throughput is '~100k-500k/сек' in article 04 and '~100k/sec' in 07.",
+      "before": "HyperLogLog → O(1) PFADD/PFCOUNT, ~0.81% error, 12KB памяти",
+      "after": "HyperLogLog → O(1) PFADD/PFCOUNT, ~0.81% стандартная ошибка, до 12KB памяти\n\n(и то же число — 0.81% — в файле вопросов 07, сейчас там 1.5%)"
+    },
+    {
+      "file": "content/topics/redis/ru/05-distributed-locks.md",
+      "rubric": "E",
+      "quote": "  await using lock = await redlock.acquire([`lock:order:${orderId}`], 30_000);",
+      "problem": "`await using` is TypeScript 5.2 explicit resource management — a syntax most middle developers have never seen, and it is the single line the entire Redlock example hinges on. The comment above it ('lock автоматически освобождается в конце using block') explains the consequence by naming the same unfamiliar feature, so a reader who does not already know `using` learns nothing. The rest of the topic uses plain try/finally, so this one line also breaks the zone's own convention.",
+      "before": "async function processWithRedlock(orderId: string) {\n  // lock автоматически освобождается в конце using block (или в finally)\n  await using lock = await redlock.acquire([`lock:order:${orderId}`], 30_000);\n\n  // Если 2/3 инстансов подтвердили lock → безопасно работать\n  await processPaymentLogic(orderId);\n  // lock.release() вызывается автоматически\n}",
+      "after": "async function processWithRedlock(orderId: string) {\n  // Если 2/3 инстансов подтвердили lock → безопасно работать\n  const lock = await redlock.acquire([`lock:order:${orderId}`], 30_000);\n  try {\n    await processPaymentLogic(orderId);\n  } finally {\n    await lock.release(); // освобождаем даже при исключении\n  }\n}\n\n// В TypeScript 5.2+ то же самое короче — `await using` сам вызовет\n// lock.release() при выходе из блока (explicit resource management):\n// await using lock = await redlock.acquire([...], 30_000);"
+    },
+    {
+      "file": "content/topics/redis/en/03-caching-patterns.md",
+      "rubric": "B",
+      "quote": "\"Cache Invalidation = just delete the key\" — in a distributed system (multiple instances) there's a race condition: Instance A updated DB, deleted cache → Instance B read from DB (stale data due to replica lag) → wrote to cache → stale data served.",
+      "problem": "39 words in one sentence, of which the last 24 are a four-step arrow chain describing an interleaving between two processes. Arrow chains work in the topic's `txt` diagram blocks, where each step is on its own line; inline in a running sentence the reader has to re-parse to work out which instance does what and where the stale value comes from. This is the file's single most important caveat and it is the hardest sentence in it.",
+      "before": "\"Cache Invalidation = just delete the key\" — in a distributed system (multiple instances) there's a race condition: Instance A updated DB, deleted cache → Instance B read from DB (stale data due to replica lag) → wrote to cache → stale data served.",
+      "after": "\"Cache Invalidation = just delete the key\" — not in a distributed system. With several application instances, deleting the key opens a race:\n\n```txt\n1. Instance A updates the DB, then deletes the cache key\n2. Instance B reads the same row — but from a read replica that\n   has not caught up yet, so it gets the OLD value (replica lag)\n3. Instance B writes that old value into the cache\n4. Everyone now reads stale data until the TTL expires\n```\n\nFixes: a short TTL on top of explicit invalidation, or event-driven invalidation."
+    },
+    {
+      "file": "content/topics/redis/ru/06-redis-persistence.md",
+      "rubric": "E",
+      "quote": "```typescript\n// redis.conf для Replica:\n// replicaof <master-ip> <master-port>\n// masterauth <password>",
+      "problem": "The block is labelled `typescript` but its first ten lines are commented-out redis.conf directives and a commented-out description of the ROLE command's return shape; the actual TypeScript starts halfway down. Syntax highlighting colours config keywords as code, and the reader cannot tell which lines they are supposed to run and which they are supposed to put in a file. The same mislabelling makes the block unnecessarily tall on a phone.",
+      "before": "```typescript\n// redis.conf для Replica:\n// replicaof <master-ip> <master-port>\n// masterauth <password>\n\n// Программно можно проверить роль:\n// ROLE → ['master', offset, [[replica-ip, replica-port, offset], ...]]\n//     или ['slave', master-ip, master-port, state, offset]\n\n// В Node.js с ioredis — отдельные clients:\nconst masterClient = new Redis({ host: 'redis-master', port: 6379 });",
+      "after": "Настройка реплики — в конфиге, не в коде:\n\n```conf\n# redis.conf на реплике\nreplicaof <master-ip> <master-port>\nmasterauth <password>\n```\n\nПроверить роль узла можно командой `ROLE`: на мастере она вернёт `['master', offset, [список реплик]]`, на реплике — `['slave', master-ip, master-port, state, offset]`.\n\nВ Node.js с ioredis держим два отдельных клиента:\n\n```typescript\nconst masterClient = new Redis({ host: 'redis-master', port: 6379 });"
+    },
+    {
+      "file": "content/topics/redis/ru/02-data-structures.md",
+      "rubric": "E",
+      "quote": "await redis.sAdd(`visitors:${hourKey}`, clientIp);",
+      "problem": "`hourKey` and `clientIp` are used without ever being declared or described, at the end of a long code block whose earlier examples were fully self-contained. The same file does it again in the rate-limiting snippet (`userId` appears from nowhere), and 04-pubsub does it with `handleOrderEvent`, `socketManager` and `event`. Each is a small thing, but on a phone the reader scrolls back up looking for the definition and does not find it.",
+      "before": "// Rate limiting с Set (уникальные IP за последний час)\nawait redis.sAdd(`visitors:${hourKey}`, clientIp);\nconst uniqueVisitors = await redis.sCard(`visitors:${hourKey}`);",
+      "after": "// Rate limiting с Set (уникальные IP-адреса за последний час)\nconst hourKey = new Date().toISOString().slice(0, 13); // '2024-01-01T14'\nconst clientIp = req.ip;\n\nawait redis.sAdd(`visitors:${hourKey}`, clientIp);\nconst uniqueVisitors = await redis.sCard(`visitors:${hourKey}`);"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/redis/ru/01-redis-fundamentals.md": ["RAM", "CPU", "TTL", "HA", "LRU", "LFU", "OOM", "I/O", "CRC16"],
+    "content/topics/redis/en/01-redis-fundamentals.md": ["RAM", "CPU", "TTL", "HA", "LRU", "LFU", "OOM", "I/O", "CRC16"],
+    "content/topics/redis/ru/02-data-structures.md": ["TTL", "DB", "SQS", "IP"],
+    "content/topics/redis/en/02-data-structures.md": ["TTL", "DB", "SQS"],
+    "content/topics/redis/ru/03-caching-patterns.md": ["TTL", "DB", "ORM", "PK", "RPS"],
+    "content/topics/redis/en/03-caching-patterns.md": ["TTL", "DB", "ORM", "PK", "RPS"],
+    "content/topics/redis/ru/04-pubsub-and-streams.md": ["ACK", "XACK", "SQS"],
+    "content/topics/redis/en/04-pubsub-and-streams.md": ["ACK", "XACK", "SQS", "RAM"],
+    "content/topics/redis/ru/05-distributed-locks.md": ["TTL", "NX", "EX", "PX", "GC", "SPOF", "UUID"],
+    "content/topics/redis/en/05-distributed-locks.md": ["TTL", "NX", "EX", "PX", "GC", "SPOF", "UUID"],
+    "content/topics/redis/ru/06-redis-persistence.md": ["I/O", "HA", "DNS", "TTL", "LRU"],
+    "content/topics/redis/en/06-redis-persistence.md": ["I/O", "HA", "DNS", "TTL", "LRU"],
+    "content/topics/redis/ru/07-redis-interview-questions.md": ["AOF", "RDB", "MVCC", "ACID", "DAU", "HA", "LRU", "LFU", "CPU", "I/O", "TTL", "RAM", "SPOF", "UUID", "БД"],
+    "content/topics/redis/en/07-redis-interview-questions.md": ["AOF", "RDB", "MVCC", "ACID", "DAU", "HA", "LRU", "LFU", "CPU", "I/O", "TTL", "RAM", "SPOF", "UUID", "KB", "MB"]
+  },
+  "patterns": [
+    "Six of the seven articles are heading → code fence with nothing in between. Across articles 01-06 the total prose is ~250 words per file, and most of it is the closing 'Типичные ошибки' bullets; the explanation of what a thing is and when to reach for it lives inside code comments. 03-caching-patterns has no explanatory sentence at all. The fix is not more content — it is one lead sentence per H2, answering 'what is this and when do I use it' before the fence opens.",
+    "Article 07 then fails in the exact opposite direction: 1834 (RU) / 2054 (EN) words of dense prose with two code blocks and four theory walls of 280-700 words. The zone has no single file with a normal prose/code rhythm — the reader swings from all-code to all-prose. The diagrams that would break 07 up already exist in articles 04-06 and could be reused verbatim.",
+    "Abbreviations are introduced in headings and never expanded anywhere in the topic. TTL is used 30+ times in both locales and never once spelled out; the same for HA and SPOF. RDB and AOF are expanded in 06 but used 18 times in 07 without expansion, and 07 is the revision file. Zone-wide A average is 1.9 — the lowest score in this report by a wide margin.",
+    "The RU files read as English scaffolding with Russian connective tissue. Five of seven RU H1 titles are pure English ('Redis Fundamentals', 'Redis Data Structures', 'Redis Caching Patterns', 'Distributed Locks', 'Redis Persistence'); section headings switch script mid-phrase ('Проблема Race Condition в distributed системах', 'Session Storage паттерн'); and the topic's opening definition puts 'in-memory data store' next to its own Russian translation.",
+    "Numbers drift between files with no cross-reference: HyperLogLog error is ~0.81% in 02 and ~1.5% in 07; Streams throughput is ~100k-500k/sec in 04 and ~100k/sec in 07; 01 gives Redis latency as ~100μs while 07 gives memory read as ~100ns with no note that these measure different things. A reader revising from 07 will state numbers the articles contradict."
+  ],
+  "notes": "Caching overlap: http-rest/03 and web-performance/07 cover the HTTP layer (Cache-Control, ETag, CDN, Service Worker) — a different layer, no conflict with this topic. system-design/03-caching covers exactly the same server-side ground as redis/03 (Cache-Aside, Write-Through/Behind, eviction, stampede, invalidation) and I found no factual contradiction between them — the stampede fixes are complementary, not competing. But system-design/03 opens each idea with prose ('Зачем нужен кеш — снятие нагрузки, а не \"ускорение\"') and redis/03 is the same content with the explanation removed, so redis/03 does not stand alone: it reads as an appendix. Borrowing system-design/03's framing sentences would fix the worst C score in this zone at no cost to depth."
+}

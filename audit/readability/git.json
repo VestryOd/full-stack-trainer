@@ -1,0 +1,123 @@
+{
+  "zone": "git",
+  "kinds": ["question-bank", "quiz-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/git.json",
+      "locale": "en",
+      "scores": { "A": 4, "B": 3, "C": 4, "D": 4, "E": 3, "F": 3, "G": null }
+    },
+    {
+      "file": "content/questions/git.json",
+      "locale": "ru",
+      "scores": { "A": 4, "B": 4, "C": 4, "D": 4, "E": 3, "F": null, "G": 4 }
+    },
+    {
+      "file": "content/quiz/git.json",
+      "locale": "en",
+      "scores": { "A": 4, "B": 4, "C": 1, "D": 2, "E": 2, "F": 4, "G": null }
+    },
+    {
+      "file": "content/quiz/git.json",
+      "locale": "ru",
+      "scores": { "A": 4, "B": 4, "C": 1, "D": 2, "E": 2, "F": null, "G": 1 }
+    }
+  ],
+  "averages": { "A": 4.0, "B": 3.75, "C": 2.5, "D": 3.0, "E": 2.5, "F": 3.5, "G": 2.5 },
+  "worst_places": [
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "C",
+      "quote": "Rebase переигрывает коммиты поверх другой ветки для создания линейной истории без коммитов слияния. Merge сохраняет структуру ветвей, создавая явный коммит слияния. Вариант 1 корректно описывает эту фундаментальную разницу. Варианты 2, 3 и 4 — это заблуждения: rebase не удаляет ветки автоматически, merge не создает линейную историю, и результаты структурно отличаются.",
+      "problem": "git-quiz-6 (ru; the EN twin says \"Option 1 correctly describes this fundamental difference. Options 2, 3, and 4 are misconceptions\"). `src/lib/quiz-utils.ts` exports `shuffleOptions`, and both `src/lib/quiz.ts` and `src/app/quiz/random/RandomQuizClient.tsx` apply it to every question before render, remapping `correctIndex` through the permutation. So by the time the reader sees this explanation, «Вариант 1» points at a randomly chosen option — the explanation is broken by construction, not by accident. Six of twenty items do this in both locales: git-quiz-2 («Остальные варианты»), 6, 7, 8, 9, 10. There is also a second decoding step: the text numbers options 1-4 while the data indexes them 0-3, so even with shuffling disabled the reader has to translate \"Option 1\" into the first option.",
+      "before": "Вариант 1 корректно описывает эту фундаментальную разницу. Варианты 2, 3 и 4 — это заблуждения: rebase не удаляет ветки автоматически, merge не создает линейную историю, и результаты структурно отличаются.",
+      "after": "Остальные три ответа — распространённые заблуждения: rebase не удаляет исходную ветку автоматически, merge не делает историю линейной, а результаты этих двух команд структурно разные, а не одинаковые с разной производительностью."
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "C",
+      "quote": "Use git rebase to replay commits on top of main, creating a linear history without merge commits",
+      "problem": "git-quiz-1, option 0 — and the pattern holds across the whole bank. Two mechanical facts, both computed over all 20 items: (a) `correctIndex` is 0 for every single item, 20/20 — no distribution across 1, 2 or 3 at all; (b) the correct option is the longest option in 17/20 EN items and 15/20 RU items (mean length: correct 109 chars vs distractors 80 in EN, 118 vs 86 in RU). Shuffling fixes (a) at runtime but not (b): a reader who knows no Git at all and always picks the longest answer scores 85% on this quiz. That is a defect in the bank, not a shortcut by the reader — the correct answer is longer because it is the only one written to be *explanatory*, while the distractors are one-clause throwaways.",
+      "before": "0 Use git rebase to replay commits on top of main, creating a linear history without merge commits\n1 Use git merge with the --no-ff flag to create an explicit merge commit documenting the integration\n2 Use git cherry-pick to select only the most important commits from the feature branch\n3 Use git reflog to recover previous commits and manually reconstruct the history",
+      "after": "Level the options so length carries no signal — every option one clause, the reasoning moved to the explanation:\n\n0 git rebase — replay the commits on top of main\n1 git merge --no-ff — record the integration as a merge commit\n2 git cherry-pick — copy over the important commits only\n3 git reflog — reconstruct the history from HEAD movements\n\n(and vary correctIndex in the source data so the file is reviewable by a human without running the shuffler)"
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "C",
+      "quote": "When in detached HEAD state, commits created are not referenced by any branch. If you switch away without creating a branch pointing to your new commit, Git's garbage collector will eventually delete it as unreachable, losing your work. You must create a branch (git branch <name>) to preserve the commit.",
+      "problem": "git-quiz-15 (en). Four items later, git-quiz-19 asks the same question about the same situation and gives the opposite answer: \"Commits in detached HEAD state are still valid Git objects. When you switch away, they become unreachable from any branch (orphaned), but reflog will remember them. Git's garbage collector keeps them for about 30 days before cleaning up. You can recover them with reflog if you act quickly.\" A reader who takes the quiz twice gets told once that the work is lost and once that it is recoverable. The question bank sides with quiz-19 — git-q-16 spells out the reflog recovery path in detail — so quiz-15 is the wrong one, and it also contradicts its own bank-mate git-quiz-10 (\"commits exist as objects until gc runs\").",
+      "before": "If you switch away without creating a branch pointing to your new commit, Git's garbage collector will eventually delete it as unreachable, losing your work.",
+      "after": "If you switch away without creating a branch pointing to your new commit, nothing references it any more. It survives in the reflog for a while (about 30 days by default) and can be recovered from there, but once garbage collection runs, it is gone for good — so creating a branch is the only way to keep it reliably."
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "G",
+      "quote": "Вы работаете над веткой функции, когда ваш менеджер просит вас срочно исправить ошибку в продакшене. Вы внесли несколько неспециализированных изменений.",
+      "problem": "git-quiz-5 (ru). «неспециализированных изменений» is a machine translation of \"uncommitted changes\" that inverted the meaning into \"non-specialized changes\", which means nothing at all — and it is repeated in the explanation («он сохраняет ваши неспециализированные изменения во временном месте»). The reader is asked to reason about a state the text has not described. The same mistranslation family: git-quiz-7 option 2 «У вас есть неизменённые изменения» (\"unchanged changes\"), git-quiz-8 «подтреесы» (invented word for subtrees), git-quiz-11 «результируя в чистую линейную прогрессию», git-quiz-15 «созданные коммиты не на что ссылаются ветки» (ungrammatical), git-quiz-16 «переприменяйте их». «ветка функции» for \"feature branch\" is also a literal rendering nobody uses — the question bank correctly writes «feature-ветка» throughout.",
+      "before": "Вы работаете над веткой функции, когда ваш менеджер просит вас срочно исправить ошибку в продакшене. Вы внесли несколько неспециализированных изменений.",
+      "after": "Вы работаете над feature-веткой, и тут менеджер просит срочно починить баг на продакшене. У вас есть незакоммиченные изменения."
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "E",
+      "quote": "Вы случайно закоммитили чувствительные данные 3 коммита назад. Со временем вы сделали ещё 2 коммита. Чем вам помогает git reflog?",
+      "problem": "git-quiz-17 (ru). The EN version of this question ships a reflog listing the reader is meant to read the answer off — `HEAD@{0}: commit: Feature X` / `HEAD@{1}: commit: Feature Y` / `HEAD@{2}: commit: Sensitive data (BAD)` / `HEAD@{3}: commit: Initial setup`. The RU version drops it entirely, so the Russian reader answers a question about a listing they never see. Same silent loss in git-quiz-16 (EN has the `feature: C1 -> C2 -> ... / main: M1 -> M2` graph, RU has nothing) and git-quiz-19 (EN has the four-command detached-HEAD sequence, RU has nothing). Three of the eight items that carry a visual lose it in RU. «Со временем вы сделали ещё 2 коммита» is also a mistranslation of \"You've since made 2 more commits\" — «со временем» means \"gradually, over time\", not \"since then\".",
+      "before": "Вы случайно закоммитили чувствительные данные 3 коммита назад. Со временем вы сделали ещё 2 коммита. Чем вам помогает git reflog?",
+      "after": "Вы случайно закоммитили чувствительные данные 3 коммита назад. После этого сделали ещё 2 коммита. Чем здесь помогает git reflog?\n\n```\nHEAD@{0}: commit: Feature X\nHEAD@{1}: commit: Feature Y\nHEAD@{2}: commit: Sensitive data (BAD)\nHEAD@{3}: commit: Initial setup\n```"
+    },
+    {
+      "file": "content/questions/git.json",
+      "rubric": "E",
+      "quote": "`git rebase` replays your branch's commits one by one on top of a new base, producing a straight line with no merge commits — cleaner to read, but every replayed commit gets a new hash.",
+      "problem": "git-q-7 (en; ru identical in shape). The entire question is \"what does the resulting history look like\", and the answer describes the shape in words — \"a new commit with two parents\", \"a straight line\" — without ever drawing it. The code block that follows shows the commands to type and stops there. For Git specifically this is the wrong half: a reader can memorise `git rebase main` without ever forming the picture of what moved. Three of twenty entries in this bank print anything Git would actually display (q-8's rebase todo list, q-9's conflict markers, q-16's one reflog line); not one shows a before/after commit graph, including the three entries whose whole subject is history shape (q-7 rebase vs merge, q-4 Git Flow, q-10 Git Flow vs trunk-based).",
+      "before": "`git rebase` replays your branch's commits one by one on top of a new base, producing a straight line with no merge commits — cleaner to read, but every replayed commit gets a new hash.",
+      "after": "`git rebase` replays your branch's commits one by one on top of a new base, producing a straight line with no merge commits. Cleaner to read, but every replayed commit gets a new hash:\n\n```\nbefore:                       after merge:              after rebase:\nmain     A---B---C            A---B---C---M             A---B---C---D'--E'\n              \\                    \\     /\n feature       D---E                D---E\n```\n\n(D' and E' are new commits with new hashes — same changes, different objects.)"
+    },
+    {
+      "file": "content/questions/git.json",
+      "rubric": "E",
+      "quote": "git cat-file -t a1b2c3d          # what type of object is this?\ngit cat-file -p a1b2c3d          # print its raw content\ngit rev-parse HEAD^{tree}        # the tree hash for the current commit\ngit ls-tree -r HEAD              # walk the tree recursively, listing every blob",
+      "problem": "git-q-15 (en and ru). This is the one entry in the bank where seeing the output *is* the lesson — the question literally asks \"How would you manually inspect them?\" and the answer's payoff is that a tree entry contains a mode, a name and a hash. Four commands are listed, each annotated with what it would print, and none of them prints. The reader is told what `git ls-tree` shows instead of being shown it, which is exactly the gap the answer is trying to close. Same shape in q-20 (`git count-objects -v` with no output, in an answer about how many loose objects accumulate) and q-13 (`git blame` with no output, in an answer about reading blame results).",
+      "before": "git cat-file -t a1b2c3d          # what type of object is this?\ngit cat-file -p a1b2c3d          # print its raw content\ngit rev-parse HEAD^{tree}        # the tree hash for the current commit\ngit ls-tree -r HEAD              # walk the tree recursively, listing every blob",
+      "after": "$ git cat-file -t a1b2c3d        # what type of object is this?\ncommit\n\n$ git rev-parse HEAD^{tree}      # the tree hash for the current commit\n9f2a1c4e8b3d7f0a5c6e2b8d4f1a3c7e9b0d5f2a\n\n$ git cat-file -p HEAD^{tree}    # the top-level tree entries: mode, type, hash, name\n100644 blob 8b1e7a2...    package.json\n040000 tree 3c9f4d1...    src\n\n$ git ls-tree -r HEAD            # walk it recursively — every blob in the snapshot\n100644 blob 8b1e7a2...    package.json\n100644 blob 5d2c9f8...    src/app.ts"
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "E",
+      "quote": "What happens when you execute these commands?\n```bash\ngit stash\ngit stash pop\ngit stash pop\n```",
+      "problem": "git-quiz-12 (en; ru identical). The correct answer — \"The first pop applies the stashed changes and deletes the stash entry. The second pop fails because the stash is empty.\" — is only correct if the working directory had uncommitted changes when the sequence started, and the question never says it did. On a clean tree, `git stash` prints \"No local changes to save\" and creates nothing, so *both* pops fail and option 0 is wrong. The reader who reasons carefully is punished; the reader who assumes the unstated setup is rewarded. Every other scenario item in this bank (quiz-4, quiz-7, quiz-19) states its setup explicitly, so this is a one-line omission, not a house style.",
+      "before": "What happens when you execute these commands?\n```bash\ngit stash\ngit stash pop\ngit stash pop\n```",
+      "after": "You have uncommitted changes in one tracked file. What happens when you execute these commands?\n```bash\ngit stash\ngit stash pop\ngit stash pop\n```"
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "D",
+      "quote": "You have a feature branch with 5 commits ahead of main. You want to integrate these changes while keeping a linear history. Which approach is best and why?",
+      "problem": "git-quiz-11 (en). This is the third appearance of one scenario: git-quiz-1 (\"You have a feature branch with 5 commits ahead of main. You need to integrate these changes back into main while keeping a clean, linear history\"), git-quiz-11, and git-quiz-16 (\"You have a feature branch with 5 commits ahead of main. You want to integrate it into main while keeping a clean, linear history\") — token overlap 0.70, 0.70 and 0.80 pairwise, same four options in the same order, same correct answer. The duplication is bank-wide: reflog gets three items (10, 13, 17), detached HEAD three (7, 15, 19), stash three (5, 12, 20), the blob/tree/commit object model two (8, 18). Twenty items cover roughly seven distinct concepts, so a reader who understands rebase-vs-merge answers 15% of the quiz from one piece of knowledge, and never gets asked about bisect, tags, submodules, .gitignore, blame, amend, fetch-vs-pull or interactive rebase — all of which the question bank covers.",
+      "before": "git-quiz-1, git-quiz-11 and git-quiz-16 all ask \"feature branch, 5 commits ahead of main, keep linear history — which approach?\" with the same option set.",
+      "after": "Keep one of the three (git-quiz-16 has the clearest diagram) and re-target the other two at concepts the question bank covers but the quiz never tests: `git bisect` limitations (git-q-17), annotated vs lightweight tags (git-q-12), and submodule vs subtree (git-q-18)."
+    },
+    {
+      "file": "content/quiz/git.json",
+      "rubric": "E",
+      "quote": "main:     A -- B -- C\nfeature:           D -- E -- F -- G -- H",
+      "problem": "git-quiz-11 (en; the RU version drops the diagram entirely). This is meant to show a feature branch diverging from main, but the two rows are just indented text: there is no branch point, no connecting line, and the alignment puts D under C so it reads as if D follows C on the same line of history. The question asks about integrating five commits, and the diagram shows five on the feature row — so the reader who tries to use it can't tell whether feature branched from B or from C, which is exactly the fact the rebase answer turns on. git-quiz-16's version of the same diagram (`feature: C1 -> C2 -> C3 -> C4 -> C5` / `main: M1 -> M2`) has the opposite problem: it shows no relationship between the two branches at all.",
+      "before": "main:     A -- B -- C\nfeature:           D -- E -- F -- G -- H",
+      "after": "main     A---B---C\n              \\\n feature       D---E---F---G---H"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/git.json#en": ["PR", "CI", "CD", "GPG", "IDE", "OS", "SHA", "DAG", "QA"],
+    "content/questions/git.json#ru": ["PR", "CI", "CD", "GPG", "IDE", "ОС", "SHA", "DAG", "QA"],
+    "content/quiz/git.json#en": ["SHA"],
+    "content/quiz/git.json#ru": ["SHA"]
+  },
+  "patterns": [
+    "The quiz bank reads as unverified generated output that was never opened after generation. Four independent signals, all measured over the full 20 items: `correctIndex` is 0 for all twenty; the correct option is the longest in 17/20 EN and 15/20 RU (mean 109 vs 80 chars EN, 118 vs 86 RU), so pick-the-longest scores 85% with zero Git knowledge; six items cite option positions («Вариант 1», \"Options 2, 3, and 4\") that `shuffleOptions` in src/lib/quiz-utils.ts destroys at render time; and two items give opposite answers to the same question (git-quiz-15 says detached-HEAD work is lost, git-quiz-19 says reflog recovers it). No literal \"Wait, let me recalculate\" artifacts were found here, but the option-position references are the same class of defect.",
+    "Zone-specific (rubric E): Git answers are taught by describing history in prose and then listing the commands you would type, with the output cut off. Only 3 of 20 question-bank entries print anything Git would actually display (q-8's rebase todo list, q-9's conflict markers, q-16's one reflog line), and not a single entry in either file shows a before/after commit graph — including q-7 (rebase vs merge), q-4 and q-10 (branching models), and quiz items 1/11/16, whose entire subject is what the history looks like afterwards. The two ASCII attempts that do exist (quiz-11, quiz-16) are misaligned rows with no branch point.",
+    "Russian quality is bimodal inside one zone. The question bank is hand-written, idiomatic Russian — «сплющивается внутрь develop», «кто и почему нарезал релиз», «шторм конфликтов» — and scores 4 on G. The quiz is literal machine translation with invented words («подтреесы», «переприменяйте»), inverted meanings («неизменённые изменения» and «неспециализированных изменений» both for \"uncommitted changes\"), calqued idioms («Со временем вы сделали ещё 2 коммита» for \"You've since made\"), and em-dashes glued to words («сценария—он сохраняет»). It also silently drops the EN scenario diagram in 3 of the 8 items that have one.",
+    "Where the question bank is strong, it is strong for one reusable reason: every answer opens with a `###` heading that states the essence in plain words before the first sentence begins («Разовая настройка vs регулярная синхронизация», \"Fixing the very last commit, nothing more\", \"Downloading vs downloading-and-merging\"), then gives a lead sentence that answers directly, then code, then a **Common pitfall**. That four-part skeleton is why C scores 4 here against 3.0 in comparable banks, and it is the thing to copy into zones that lack it."
+  ],
+  "notes": "The verdict splits by file: content/questions/git.json is close to `ok` (targeted E fixes — add real command output and two or three commit graphs — plus a handful of long senior sentences in q-17/q-19/q-20), while content/quiz/git.json needs a full rewrite, which is what drives the zone verdict to systemic-refactor. Neither `git` nor `event-driven` has an article, but Git suffers less: the question bank's per-entry `###` heading + lead + code + pitfall skeleton makes each card self-contained, which is exactly what a bank without an article needs. One factual inconsistency worth flagging to a subject reviewer, not a language pass: git-q-16 says reflog entries expire at ~90 days and dangling objects at ~30, while git-quiz-10 and git-quiz-19 both say 30 days for the same thing (Git's actual defaults are 90 / 30 / 14 for reflogExpire, reflogExpireUnreachable and pruneExpire)."
+}

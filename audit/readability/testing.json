@@ -1,0 +1,205 @@
+{
+  "zone": "testing",
+  "kinds": [
+    "question-bank",
+    "quiz-bank"
+  ],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/testing.json#ru",
+      "locale": "ru",
+      "scores": {
+        "A": 3,
+        "B": 3,
+        "C": 4,
+        "D": 3,
+        "E": 4,
+        "F": null,
+        "G": 4
+      }
+    },
+    {
+      "file": "content/questions/testing.json#en",
+      "locale": "en",
+      "scores": {
+        "A": 3,
+        "B": 2,
+        "C": 4,
+        "D": 3,
+        "E": 4,
+        "F": 2,
+        "G": null
+      }
+    },
+    {
+      "file": "content/quiz/testing.json#ru",
+      "locale": "ru",
+      "scores": {
+        "A": 3,
+        "B": 4,
+        "C": 3,
+        "D": 3,
+        "E": 2,
+        "F": null,
+        "G": 2
+      }
+    },
+    {
+      "file": "content/quiz/testing.json#en",
+      "locale": "en",
+      "scores": {
+        "A": 3,
+        "B": 4,
+        "C": 3,
+        "D": 3,
+        "E": 2,
+        "F": 4,
+        "G": null
+      }
+    }
+  ],
+  "averages": {
+    "A": 3.0,
+    "B": 3.25,
+    "C": 3.5,
+    "D": 3.0,
+    "E": 3.0,
+    "F": 3.0,
+    "G": 3.0
+  },
+  "worst_places": [
+    {
+      "file": "content/quiz/testing.json#en",
+      "rubric": "C",
+      "quote": "A unit test with mocked API is ideal here because it's fast, reliable, and lets you test the component's lifecycle in isolation. E2E tests are too slow and brittle for basic component logic, while skipping tests entirely defeats the purpose of testing.",
+      "problem": "testing-quiz-11 asks for \"the most appropriate testing level for verifying this component works end-to-end\" and the explanation calls a render-plus-mocked-API test a *unit test*. content/questions/testing.json#en q-1 defines exactly that shape as an integration test (\"Integration tests let several real pieces work together\"), and content/questions/tdd.json labels the identical example \"Integration test: component + real API call layer (mocked network)\". The site therefore teaches two incompatible names for the same test, and the definitional core of the topic is the thing that disagrees. The final clause also argues against \"skipping tests entirely\", which is not what any of the four options says.",
+      "before": "A unit test with mocked API is ideal here because it's fast, reliable, and lets you test the component's lifecycle in isolation. E2E tests are too slow and brittle for basic component logic, while skipping tests entirely defeats the purpose of testing.",
+      "after": "This is an integration test: the component and its data-fetching layer run together, and only the network is mocked. That is the right level here. It is fast and reliable, and it still checks the thing that can break — that the component shows a loading state first and the user's name after the data arrives. A real E2E test through a browser is far slower and more fragile than this logic needs, and mocking only the database would leave the network call unmocked with nothing gained."
+    },
+    {
+      "file": "content/quiz/testing.json#ru",
+      "rubric": "G",
+      "quote": "Переделка асинхронного кода на основе callback в возврат Promise - это наиболее современный и читаемый подход. Это позволяет использовать синтаксис async/await и чище, чем управление поддельными таймерами или done callbacks. Хотя поддельные таймеры могут работать, переделка production кода для использования Promise предпочтительнее, когда это возможно, делая тесты более maintainable и соответствующие современным практикам JavaScript.",
+      "problem": "«более maintainable» — an untranslated English adjective inside a Russian sentence, and the participle after it («соответствующие») does not agree with anything. The whole RU quiz reads as unedited machine translation: the same file has «Полностью mockировать функцию setTimeout» (Latin stem + Russian ending), «fakes не используются в целях утверждения» (a calque of \"for assertion purposes\" that means nothing in Russian), and «предотвращая нестабильные тесты и ложные прохождения». A reader on a phone has to translate the sentence back into English to parse it.",
+      "before": "Переделка асинхронного кода на основе callback в возврат Promise - это наиболее современный и читаемый подход. Это позволяет использовать синтаксис async/await и чище, чем управление поддельными таймерами или done callbacks. Хотя поддельные таймеры могут работать, переделка production кода для использования Promise предпочтительнее, когда это возможно, делая тесты более maintainable и соответствующие современным практикам JavaScript.",
+      "after": "Самый современный и читаемый вариант — переписать callback-код так, чтобы он возвращал Promise. Тогда в тесте можно писать async/await — это чище, чем возиться с фейковыми таймерами или с параметром done. Фейковые таймеры тоже работают, но если продакшен-код можно перевести на промисы, это стоит сделать: такие тесты проще поддерживать, и они ближе к современному стилю JavaScript."
+    },
+    {
+      "file": "content/questions/testing.json#en",
+      "rubric": "B",
+      "quote": "The practical mitigation strategy layers three things: contract tests (or generated TypeScript types published from the shared library) on the interface between host and remote, so a breaking prop change is caught by the *provider's* CI, not discovered by the consumer in production; integration smoke tests that actually load the real deployed remote (against a staging/canary URL) rather than a local mock, to catch real runtime resolution issues; and strict `shared` version ranges in the Module Federation config, with CI alerts on drift.",
+      "problem": "84 words, three semicolon-separated items, each carrying its own parenthetical and its own purpose clause, and the sentence never returns to a main verb after \"layers three things\". This is the single most actionable paragraph in testing-q-21 and it is unreadable in one pass on a phone. MFE (used five times in this entry) and CI are both unexpanded in the same entry, so the reader is decoding acronyms while holding three nested clauses open.",
+      "before": "The practical mitigation strategy layers three things: contract tests (or generated TypeScript types published from the shared library) on the interface between host and remote, so a breaking prop change is caught by the *provider's* CI, not discovered by the consumer in production; integration smoke tests that actually load the real deployed remote (against a staging/canary URL) rather than a local mock, to catch real runtime resolution issues; and strict `shared` version ranges in the Module Federation config, with CI alerts on drift.",
+      "after": "The practical mitigation strategy has three layers.\n\n- **Contract tests on the host/remote interface.** Alternatively, publish generated TypeScript types from the shared library. Either way, a breaking prop change fails the *provider's* CI pipeline, instead of being discovered by the consumer in production.\n- **Integration smoke tests that load the real deployed remote.** Point them at a staging or canary URL, not a local mock. Only these catch real version-resolution problems at runtime.\n- **Strict `shared` version ranges in the Module Federation config**, with a CI alert when versions drift apart."
+    },
+    {
+      "file": "content/quiz/testing.json#en",
+      "rubric": "E",
+      "quote": "In React Testing Library, which query should you use to find an input by its associated label?\njsx\n<label htmlFor=\"email\">Email</label>\n<input id=\"email\" type=\"text\" />",
+      "problem": "The opening ``` fence is missing, so the word \"jsx\" renders as a stray line of prose and the markup below it is handed to the markdown renderer as inline HTML — the reader either sees a bare word \"Email\" and an empty text box, or nothing at all. The code the question is asking about is invisible. The same defect is in testing-quiz-11 (an eight-line UserProfile component, the entire subject of the question) and testing-quiz-14. testing-quiz-1's ASCII pyramid is also unfenced, so proportional font collapses it. Four of fifteen quiz items lose their visual.",
+      "before": "In React Testing Library, which query should you use to find an input by its associated label?\njsx\n<label htmlFor=\"email\">Email</label>\n<input id=\"email\" type=\"text\" />",
+      "after": "In React Testing Library, which query should you use to find an input by its associated label?\n```jsx\n<label htmlFor=\"email\">Email</label>\n<input id=\"email\" type=\"text\" />\n```"
+    },
+    {
+      "file": "content/quiz/testing.json#ru",
+      "rubric": "G",
+      "quote": "Макет устанавливает ожидания о том, как функция должна быть вызвана (например, `.expects('fetch').once()`), и не пройдет тест, если эти ожидания не будут выполнены. Заглушка просто заменяет функцию предопределенным возвращаемым значением без проверки того, сколько раз она была вызвана.",
+      "problem": "«Макет» in Russian means a mockup or a page layout, not a test double; nobody in a Russian-speaking team calls a Jest mock «макет». Worse, testing-quiz-2 asks the *identical* question («В чем ключевое различие между stub и mock при модульном тестировании?\") and answers it with the Latin terms, so two of fifteen items are the same question with two different vocabularies. Across the zone there are three: Latin stub/mock/spy in content/questions/testing.json#ru, стаб/мок/шпион/фейк in content/questions/tdd.json#ru, заглушка/макет here. A reader cannot tell they are the same four things.",
+      "before": "Макет устанавливает ожидания о том, как функция должна быть вызвана (например, `.expects('fetch').once()`), и не пройдет тест, если эти ожидания не будут выполнены. Заглушка просто заменяет функцию предопределенным возвращаемым значением без проверки того, сколько раз она была вызвана.",
+      "after": "Mock задаёт ожидания о том, как его должны вызвать — например, `.expects('fetch').once()`. Если ожидания не выполнились, тест падает. Stub только подменяет функцию заранее заданным значением и не следит, сколько раз её вызвали. В примере mock проверит, что вызов был ровно один."
+    },
+    {
+      "file": "content/quiz/testing.json#en",
+      "rubric": "C",
+      "quote": "A spy is perfect here because you need to track that the method was called AND verify its arguments. Mocks are overkill if you want to preserve behavior, stubs don't track calls, and fakes aren't used for assertion purposes.",
+      "problem": "The snippet the explanation is about is `const logger = ???('info');` — a double created out of nothing. content/questions/testing.json#en q-6 defines a spy as something that \"wraps a *real* function\", which this cannot be, and q-5 says `jest.fn()` \"creates a brand-new mock function out of nothing\" — so by the site's own definitions the answer is jest.fn(), not a spy. The snippet is also internally broken: it constructs with `('info')` and then asserts `toHaveBeenCalledWith('error', 'Something failed')`. Nothing in the explanation can be checked against the code. The RU version adds «fakes не используются в целях утверждения», which is not Russian.",
+      "before": "A spy is perfect here because you need to track that the method was called AND verify its arguments. Mocks are overkill if you want to preserve behavior, stubs don't track calls, and fakes aren't used for assertion purposes.",
+      "after": "A spy is the right answer when the real implementation must keep running — `jest.spyOn(logger, 'info')` wraps the existing method, lets it do its normal work, and records every call so you can assert on the arguments afterwards. A stub would replace the method with a fixed return value and record nothing, so you could not check the arguments. A fake is a simplified working implementation (an in-memory store, for example), which is more than this test needs."
+    },
+    {
+      "file": "content/questions/testing.json#en",
+      "rubric": "E",
+      "quote": "test('client correctly parses any valid user id shape', () => {\n  fc.assert(\n    fc.property(fc.integer({ min: 1 }), (id) => {\n      server.use(\n        http.get('/api/user', () => HttpResponse.json({ id, name: 'User' }))\n      );\n      return parseUserResponse({ id, name: 'User' }).id === id;\n    })\n  );\n});",
+      "problem": "The paragraph above this example promises to show property-based generation feeding MSW: \"you generate a wide range of randomized-but-valid response shapes and assert your API client parses all of them correctly\". The code registers an MSW handler and then never goes through it — `parseUserResponse` is handed the object directly, so the `server.use(...)` block is dead code. The example demonstrates the opposite of the claim it illustrates, and a reader trying to learn what MSW contributes here gets no answer. It is also the only example in testing-q-18 that a reader could copy, so it teaches a pattern that does not work.",
+      "before": "test('client correctly parses any valid user id shape', () => {\n  fc.assert(\n    fc.property(fc.integer({ min: 1 }), (id) => {\n      server.use(\n        http.get('/api/user', () => HttpResponse.json({ id, name: 'User' }))\n      );\n      return parseUserResponse({ id, name: 'User' }).id === id;\n    })\n  );\n});",
+      "after": "test('client correctly parses any valid user id shape', async () => {\n  await fc.assert(\n    fc.asyncProperty(fc.integer({ min: 1 }), async (id) => {\n      // MSW answers the real fetch with the generated shape\n      server.use(\n        http.get('/api/user', () => HttpResponse.json({ id, name: 'User' }))\n      );\n\n      // fetchUser() does a real fetch, which MSW intercepts\n      const user = await fetchUser();\n      return user.id === id;\n    })\n  );\n});"
+    },
+    {
+      "file": "content/questions/testing.json#en",
+      "rubric": "B",
+      "quote": "This is a fundamentally different mechanism from snapshot testing: a Jest snapshot serializes a DOM tree or a JSON structure as text, so it catches structural changes (a new prop, a different class name) but is blind to anything purely visual — a snapshot test won't notice that a CSS change made a button's padding wrong, or that a font failed to load, because the underlying markup can be identical while the rendered pixels are completely broken.",
+      "problem": "76 words carrying four separate facts (what a snapshot serializes; what it therefore catches; what it therefore misses; why). The reader has to hold the first clause open across three dash-and-comma turns. DOM appears here unexpanded, and its first use anywhere in the file (testing-q-8) is unexpanded too, so a reader arriving at q-24 from search has met the abbreviation twice with no explanation.",
+      "before": "This is a fundamentally different mechanism from snapshot testing: a Jest snapshot serializes a DOM tree or a JSON structure as text, so it catches structural changes (a new prop, a different class name) but is blind to anything purely visual — a snapshot test won't notice that a CSS change made a button's padding wrong, or that a font failed to load, because the underlying markup can be identical while the rendered pixels are completely broken.",
+      "after": "The mechanism is fundamentally different from snapshot testing. A Jest snapshot writes out the DOM (Document Object Model — the tree of elements the browser builds from your markup) or a JSON structure as text. So it catches structural changes: a new prop, a different class name. It is blind to anything purely visual. A snapshot test will not notice that a CSS change broke a button's padding, or that a font failed to load, because the markup can be byte-identical while the rendered pixels are completely wrong."
+    },
+    {
+      "file": "content/questions/testing.json#en",
+      "rubric": "D",
+      "quote": "**Frontend**: Core Web Vitals — LCP (Largest Contentful Paint, how fast the main content appears), INP (Interaction to Next Paint, responsiveness to user input, which replaced FID), and CLS (Cumulative Layout Shift, visual stability) — are the standard metrics because they're what Google's ranking and real-user-monitoring tools measure, and they correlate reasonably well with actual perceived quality.",
+      "problem": "Five abbreviations in one sentence. Three are expanded inline, FID is dropped in with no expansion at all, and RUM arrives one sentence later. The subject (\"Core Web Vitals\") is separated from its verb (\"are\") by 40 words of nested dash construction, so on a narrow screen the sentence has no visible skeleton. Three brand-new metrics land before any example, and the next sentence immediately opens a fourth idea (lab data versus field data) — the only code example in the entry covers LCP alone.",
+      "before": "**Frontend**: Core Web Vitals — LCP (Largest Contentful Paint, how fast the main content appears), INP (Interaction to Next Paint, responsiveness to user input, which replaced FID), and CLS (Cumulative Layout Shift, visual stability) — are the standard metrics because they're what Google's ranking and real-user-monitoring tools measure, and they correlate reasonably well with actual perceived quality.",
+      "after": "**Frontend.** The standard metrics are Google's Core Web Vitals — three numbers:\n\n- **LCP** (Largest Contentful Paint): how fast the main content appears.\n- **INP** (Interaction to Next Paint): how quickly the page reacts to a user action. It replaced the older FID (First Input Delay) metric in 2024.\n- **CLS** (Cumulative Layout Shift): visual stability — how much the layout jumps around while loading.\n\nThey are the standard for two reasons: Google's own ranking and monitoring tools measure exactly these, and they correlate reasonably well with how fast the page actually feels."
+    },
+    {
+      "file": "content/questions/testing.json#ru",
+      "rubric": "E",
+      "quote": "it('Zustand: addItem обновляет стор', () => {\n  useCartStore.getState().addItem({ id: 1 });\n  expect(useCartStore.getState().items).toHaveLength(1);\n});",
+      "problem": "Two paragraphs below this example, testing-q-13's own «Частая ловушка» is exactly «Тестировать глобальный стор (Redux store, Zustand store) без сброса между тестами». The recommended example is a module-level singleton mutated with no reset, i.e. the pitfall itself. A reader who copies the pattern shown as correct walks straight into the failure the same entry warns about, and cannot tell which of the two to trust. Identical in #en.",
+      "before": "// Zustand store — тестируем экшены стора напрямую, провайдер не нужен\nconst useCartStore = create((set) => ({\n  items: [],\n  addItem: (item) => set((s) => ({ items: [...s.items, item] })),\n}));\n\nit('Zustand: addItem обновляет стор', () => {\n  useCartStore.getState().addItem({ id: 1 });\n  expect(useCartStore.getState().items).toHaveLength(1);\n});",
+      "after": "// Zustand store — тестируем экшены стора напрямую, провайдер не нужен\nconst useCartStore = create((set) => ({\n  items: [],\n  addItem: (item) => set((s) => ({ items: [...s.items, item] })),\n}));\n\n// стор — синглтон на уровне модуля, поэтому сбрасываем его перед каждым тестом\nbeforeEach(() => {\n  useCartStore.setState({ items: [] });\n});\n\nit('Zustand: addItem обновляет стор', () => {\n  useCartStore.getState().addItem({ id: 1 });\n  expect(useCartStore.getState().items).toHaveLength(1);\n});"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/testing.json#ru": [
+      "CI",
+      "MFE",
+      "DOM",
+      "APM",
+      "KPI",
+      "PR",
+      "MSW (bare in q-18; expanded only later, in q-19)",
+      "FID",
+      "e2e",
+      "БД",
+      "SQL",
+      "ОС",
+      "p50/p95/p99 (notation never explained)"
+    ],
+    "content/questions/testing.json#en": [
+      "CI",
+      "MFE",
+      "DOM",
+      "APM",
+      "KPI",
+      "PR",
+      "MSW (bare in q-18; expanded only later, in q-19)",
+      "FID",
+      "e2e",
+      "DB",
+      "SQL",
+      "OS",
+      "p50/p95/p99 (notation never explained)"
+    ],
+    "content/quiz/testing.json#ru": [
+      "CI",
+      "CD",
+      "DOM",
+      "E2E"
+    ],
+    "content/quiz/testing.json#en": [
+      "CI",
+      "CD",
+      "DOM",
+      "E2E",
+      "e2e"
+    ]
+  },
+  "patterns": [
+    "Every answer in content/questions/testing.json ends with a 'practical trade-off' paragraph, and in ~20 of 25 entries that paragraph is a single 55-85-word sentence chaining three facts with em-dashes and semicolons (q-8, q-11, q-12, q-13, q-14, q-16, q-21, q-22, q-24). The structure is exactly what makes the bank senior-level and must stay; delivering each of them as one sentence is what pushes the EN long-sentence rate to 56%. Splitting each into three short sentences (or a short lead plus bullets) would halve that rate without dropping a single claim.",
+    "The quiz bank was written independently of the question bank and shares neither its vocabulary nor its classifications. Three of fifteen items ask the same pyramid question (quiz-1, quiz-6, quiz-13), two ask the same stub-versus-mock question (quiz-2, quiz-7) with two different Russian vocabularies, and its positions on unit-versus-integration (quiz-11), spy semantics (quiz-12) and fake timers (quiz-9, quiz-15) all contradict content/questions/testing.json. It reads like a bank generated before the question bank existed and never reconciled with it.",
+    "Tool-specific abbreviations are reliably expanded on first use (RTL, MSW, RUM, CDC, LCP, INP, CLS) while cross-cutting process abbreviations are never expanded at all (CI 8×, PR, KPI, APM, FID, MFE, DOM, БД/DB). The author expanded whatever felt like 'a tool name' and assumed everything from the daily workflow was common knowledge — but the target reader arriving from search has no theory article to fall back on.",
+    "Not one diagram in the whole zone, across 40 entries. The only visual in the entire testing material is the ASCII pyramid in testing-quiz-1, and it is not inside a code fence, so it collapses in a proportional font. testing-q-16 (pyramid versus trophy) argues about two *shapes* for eight paragraphs and never draws either one."
+  ],
+  "notes": "Overlap verdict: keep two banks, but split them by intent, not re-teach. 7 of 25 testing entries duplicate tdd entries almost fully — mutation testing (testing-q-22 / tdd-q-19), property-based (q-18 / q-21), contract testing (q-17 / tdd-q-20), micro-frontends (q-21 / tdd-q-26), snapshot (q-9 / tdd-q-13), pyramid (q-1, q-16 / tdd-q-5), test doubles (q-6 / tdd-q-9). The two *question* banks never contradict each other; they only repeat, and tdd's versions are usually the deeper ones. All real contradictions sit in the quiz bank, which disagrees with both question banks on the unit-vs-integration label (quiz-11), on what a spy is (quiz-12), and on whether fake timers are recommended (quiz-9, quiz-15 dismiss them; testing-q-12 and tdd-q-17 teach them).\nRecommendation: testing.json = techniques and tooling, tdd.json = process and design pressure; cross-reference the four senior duplicates instead of explaining each twice; rewrite the quiz bank against the question banks' definitions and vocabulary.\nScoped verdict: content/questions/testing.json#ru needs targeted fixes only (it is the best file in the zone); #en needs a full sentence-splitting pass; content/quiz/testing.json needs a rewrite in both locales. The zone verdict is systemic-refactor because the last two are the majority of the zone's words.\nOne RU-only slip worth listing: q-16 and q-24 keep fully English headings («Testing Pyramid vs Testing Trophy», «Visual regression testing») while 21 of 25 headings are translated."
+}

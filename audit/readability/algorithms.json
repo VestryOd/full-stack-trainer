@@ -1,0 +1,122 @@
+{
+  "zone": "algorithms",
+  "kinds": ["question-bank", "quiz-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/algorithms.json",
+      "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 4, "D": 3, "E": 2, "F": 2, "G": null }
+    },
+    {
+      "file": "content/questions/algorithms.json",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 3, "C": 4, "D": 3, "E": 2, "F": null, "G": 4 }
+    },
+    {
+      "file": "content/quiz/algorithms.json",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 2, "D": 2, "E": 3, "F": 3, "G": null }
+    },
+    {
+      "file": "content/quiz/algorithms.json",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 2, "D": 2, "E": 3, "F": null, "G": 2 }
+    }
+  ],
+  "averages": { "A": 2.0, "B": 3.25, "C": 3.0, "D": 2.5, "E": 2.5, "F": 2.5, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/quiz/algorithms.json",
+      "rubric": "C",
+      "quote": "The Fibonacci sequence starting from index 0 is: 0, 1, 1, 2, 3, 5, 8... So fib(5) = 5 (at index 5: 0→1→1→2→3→5→8). Wait, let me recalculate: fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3, fib(5)=5+3=8.",
+      "problem": "algorithms-quiz-14. The explanation contains a live editorial artifact (\"Wait, let me recalculate\") — the reader watches the text change its mind mid-sentence and has no way to know which of the two answers is meant. Worse, the second attempt is arithmetically wrong: fib(5) = fib(4) + fib(3) = 3 + 2 = 5, not \"5+3=8\". The answer key is correctIndex=1 (\"8\"), so the marked-correct option is also wrong — the code in the question prints 5. A reader with no theory article to fall back on has literally nothing to correct this against. Same defect in ru (the \"Wait\" is dropped but \"fib(5)=5+3=8\" and the wrong key survive).",
+      "before": "The Fibonacci sequence starting from index 0 is: 0, 1, 1, 2, 3, 5, 8... So fib(5) = 5 (at index 5: 0→1→1→2→3→5→8). Wait, let me recalculate: fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3, fib(5)=5+3=8. The memoization optimization reduces redundant recursive calls from exponential to linear time complexity.",
+      "after": "The code prints 5. Counting from index 0, the sequence is fib(0)=0, fib(1)=1, fib(2)=1, fib(3)=2, fib(4)=3, fib(5)=5. Each value is the sum of the two before it, so fib(5) = fib(4) + fib(3) = 3 + 2 = 5. The `memo` dictionary stores each fib(k) the first time it is computed, so every value is computed once instead of being recomputed down two recursive branches. That turns the running time from exponential O(2^n) into linear O(n). (correctIndex must be changed to 0.)"
+    },
+    {
+      "file": "content/quiz/algorithms.json",
+      "rubric": "C",
+      "quote": "The function processes n elements in the first call, then n/2 in the second, then n/4, etc., giving n + n/2 + n/4 + ... = O(n). However, the recursion depth is O(log n), and at each level we do O(n) work on progressively smaller arrays. This creates O(n log n) total complexity.",
+      "problem": "algorithms-quiz-16. The first sentence derives the right answer, O(n), and the second sentence then overturns it with a self-contradicting claim (\"O(n) work on progressively smaller arrays\" — it cannot be both O(n) per level and progressively smaller). The marked answer, correctIndex=0 = \"O(n log n)\", is wrong: the total work really is n + n/2 + n/4 + ... = 2n = O(n). The reader is taught a false rule about summing a geometric series — the exact skill this bank exists to teach. Identical in ru.",
+      "before": "The function processes n elements in the first call, then n/2 in the second, then n/4, etc., giving n + n/2 + n/4 + ... = O(n). However, the recursion depth is O(log n), and at each level we do O(n) work on progressively smaller arrays. This creates O(n log n) total complexity. Option B (O(n)) underestimates because it ignores the logarithmic depth of recursion.",
+      "after": "The answer is O(n). Each call loops once over its own array, then recurses on only the second half. So the work per call is n, then n/2, then n/4, and so on. Add them up: n + n/2 + n/4 + ... < 2n, which is O(n). Recursion depth is indeed O(log n), but that only counts the *number* of calls — it does not multiply the work, because each level is half the size of the one above. O(n log n) would be right only if every level did n work, as in merge sort. (correctIndex must be changed to 1.)"
+    },
+    {
+      "file": "content/questions/algorithms.json",
+      "rubric": "B",
+      "quote": "So even though a single deletion can trigger O(log n) rotations, the *total* number of rotations across n operations is bounded by (total potential increase) which is O(n log n) worst case, but amortized per-operation the O(log n) height-fixing pass already dominates, giving O(log n) amortized (not O(log n²)) per operation — total O(n log n) for n operations, matching the O(log n) amortized per-op bound.",
+      "problem": "algorithms-q-38 (en; ru identical at 70 words). 72 words, four subordinate clauses, and the sentence states the same bound three times in a loop (\"total O(n log n)\" → \"O(log n) amortized\" → \"total O(n log n)\" → \"matching the O(log n) amortized per-op bound\"). The parenthetical \"(not O(log n²))\" is also malformed notation — O(log² n) is meant, and O(log n²) is actually equal to O(log n), so the disclaimer says nothing. A B1-B2 reader cannot hold this open long enough to parse it and has no theory article to check it against.",
+      "before": "So even though a single deletion can trigger O(log n) rotations, the *total* number of rotations across n operations is bounded by (total potential increase) which is O(n log n) worst case, but amortized per-operation the O(log n) height-fixing pass already dominates, giving O(log n) amortized (not O(log n²)) per operation — total O(n log n) for n operations, matching the O(log n) amortized per-op bound.",
+      "after": "Put the two halves together. Each operation adds at most O(log n) to the potential, so over n operations the potential rises by at most O(n log n) in total. Every rotation costs O(1) and consumes some of that potential, so all rotations together also cost at most O(n log n). Divide by n operations: O(log n) rotation cost per operation on average. That is the same order as the height-update pass each operation already pays, so nothing gets worse — the per-operation amortized cost stays O(log n), not O(log² n. A single deletion can still fire O(log n) rotations; the average over the whole sequence is what is bounded."
+    },
+    {
+      "file": "content/quiz/algorithms.json",
+      "rubric": "C",
+      "quote": "Option B is imprecise about queue being the space requirement; option C correctly identifies BFS's guarantee.",
+      "problem": "algorithms-quiz-9. Options B (\"BFS guarantees shortest path with O(V) space\") and C (\"BFS guarantees shortest path with O(V) queue space\") are both true statements; the item asks for \"most accurate\" and then resolves the tie with a hand-wave the reader cannot verify. Compounding it: the explanation refers to \"Option B\" / \"option C\", but the four options are rendered as a plain list with no A/B/C/D labels, so the reader has to guess the mapping. This referencing habit appears in 12 of the 30 items, and the label style is not even consistent (algorithms-quiz-27 says \"Option 1 ... Option 2 ... option 3\", ru says «Вариант 1»; algorithms-quiz-10 says \"Option A ... Option B\", ru «Вариант A»).",
+      "before": "BFS explores level by level and guarantees the shortest path in unweighted graphs because it visits nodes in order of distance. The queue space is O(V) in worst case. DFS does not guarantee shortest path as it explores deeply first, potentially finding longer paths. Option B is imprecise about queue being the space requirement; option C correctly identifies BFS's guarantee.",
+      "after": "BFS guarantees the shortest path in an unweighted graph, and the memory it needs is the queue, which holds O(V) nodes in the worst case. BFS works because it visits nodes in order of distance from the source: everything one step away, then everything two steps away, and so on. So the first time it reaches the target, it cannot have taken a longer route. DFS goes as deep as it can before backing up, so the first route it finds to the target is often not the shortest. The other answers either name DFS as the one with the guarantee, or claim both traversals have it. (Options B and C should be rewritten so only one of them is true — as written both are correct statements.)"
+    },
+    {
+      "file": "content/questions/algorithms.json",
+      "rubric": "E",
+      "quote": "```typescript\nfunction buildVEBLayout(tree: BSTNode, n: number): number[] {\n  if (n <= 1) return [tree.value];\n  const topHeight = Math.floor(Math.log2(n) / 2);\n  const topSize = Math.pow(2, topHeight) - 1;\n  const bottomSize = Math.floor((n - topSize) / Math.pow(2, topHeight));\n```",
+      "problem": "algorithms-q-37 (en and ru). The example calls `extractTop` and `extractBottoms`, which are never defined or described, and uses a `BSTNode` type that appears nowhere. The reader is asked to accept three non-obvious arithmetic lines (`log2(n)/2`, `2^topHeight - 1`, the `bottomSize` division) with one comment between them and no worked case — running it in the head for, say, n = 15 is the only way to see what the layout looks like, and the answer never does it. This is the zone-wide E defect in its sharpest form: across all 40 answers there is not a single input → intermediate state → output trace, and only one answer (algorithms-q-19) contains a concrete data literal in its prose at all.",
+      "before": "```typescript\n// Conceptual vEB layout construction (recursive block layout)\nfunction buildVEBLayout(tree: BSTNode, n: number): number[] {\n  if (n <= 1) return [tree.value];\n  const topHeight = Math.floor(Math.log2(n) / 2);\n  const topSize = Math.pow(2, topHeight) - 1;\n  ...\n```",
+      "after": "Keep the code exactly as it is, but add a worked case under it: \"For n = 15 (a full tree of height 4): topHeight = floor(log2(15)/2) = 1, so the top block is a single node — the root — of size 2^1 - 1 = 1. The remaining 14 nodes split into 2^1 = 2 bottom subtrees of 7 nodes each. Laid out in memory the array becomes [root][left subtree of 7][right subtree of 7], and each 7-node block is then split the same way. That is why any short path from the root stays inside one contiguous run: the run is a whole recursive block.\" Also declare `BSTNode` and state in one line what `extractTop`/`extractBottoms` return, so the snippet stands on its own."
+    },
+    {
+      "file": "content/questions/algorithms.json",
+      "rubric": "B",
+      "quote": "The shifting is the elegant part: shifting `diag1` left and `diag2` right each row automatically re-aligns which bit positions correspond to which diagonal as the board descends, which is exactly what `row - col` and `row + col` were doing arithmetically — the bitmask version encodes the same geometry, just packed into machine words instead of hash-set entries.",
+      "problem": "algorithms-q-25 (en), 60 words in one sentence carrying four separate facts (what the shift does, why it re-aligns, the equivalence to row±col, the storage difference). The reader must hold the bit layout, the arithmetic form and the memory argument open at once, and the sentence opens with a value judgement (\"the elegant part\") instead of the mechanism. This is the single longest sentence in the file at 88 words when the preceding clause is counted; en is markedly worse than ru here (195 over-long sentences, 57% of all sentences in en, versus 152 / 44% in ru).",
+      "before": "The shifting is the elegant part: shifting `diag1` left and `diag2` right each row automatically re-aligns which bit positions correspond to which diagonal as the board descends, which is exactly what `row - col` and `row + col` were doing arithmetically — the bitmask version encodes the same geometry, just packed into machine words instead of hash-set entries.",
+      "after": "The shifting is the clever part. When you go down one row, you shift `diag1` left by one and `diag2` right by one. That shift moves every occupied diagonal to the bit position it now blocks on the new row. It does exactly what `row - col` and `row + col` did with arithmetic. Same geometry, just packed into machine words instead of hash-set entries."
+    },
+    {
+      "file": "content/quiz/algorithms.json",
+      "rubric": "G",
+      "quote": "При объединении операций мы оставляем доминирующий термин. O(n²) из вложенных циклов доминирует над O(n log n) из цикла бинарного поиска, поэтому общая сложность составляет O(n²).",
+      "problem": "algorithms-quiz-21 (ru). «Термин» is a false-friend translation of \"term\" — in Russian a summand in an expression is «слагаемое» or «член», never «термин» (which means \"a term of art\"). A junior reader is left to work out that «доминирующий термин» is not a piece of vocabulary. This is the sharpest instance of a calqued layer that runs through the whole quiz ru file but is absent from the question-bank ru: «пространство» is used 23 times where Russian says «память» (\"O(log n) вспомогательным пространством\", \"компромисс пространство-время\" 9×), plus «коллидируют» (quiz-2), «приоритизируется над памятью» (quiz-24), «bucket» in quiz-2 versus «бакет» in quiz-15, and quiz-9 renders \"unweighted graph\" as «неориентированном графе без весов», adding an undirectedness claim the en does not make.",
+      "before": "При объединении операций мы оставляем доминирующий термин. O(n²) из вложенных циклов доминирует над O(n log n) из цикла бинарного поиска, поэтому общая сложность составляет O(n²). Постоянные множители и члены более низкого порядка отбрасываются в нотации Big O.",
+      "after": "Когда операции идут одна за другой, оставляем самое быстрорастущее слагаемое. Вложенные циклы дают O(n²), цикл с бинарным поиском — O(n log n). При больших n первое растёт быстрее, поэтому оно и определяет ответ: O(n²). В нотации Big O постоянные множители и слагаемые меньшего порядка отбрасываются."
+    },
+    {
+      "file": "content/questions/algorithms.json",
+      "rubric": "D",
+      "quote": "2. Find odd-degree vertices in the MST (always an even count, by handshake lemma) and compute a minimum-weight perfect matching among them — cost ≤ half the optimal tour (proven via triangle inequality applied to the optimal tour split into two matchings).\n3. Combine MST + matching into a multigraph — every vertex now has even degree, guaranteeing an Eulerian circuit exists.",
+      "problem": "algorithms-q-36 (en and ru). Two list items introduce six unexplained concepts in a row: odd-degree vertex, handshake lemma, minimum-weight perfect matching, multigraph, even degree, Eulerian circuit — plus a proof sketch compressed into a parenthesis. Nothing is grounded in an example and the final line then uses `OPT` as a symbol that is never introduced (\"Total cost ≤ MST + matching ≤ OPT + OPT/2 = 1.5 * OPT\"). MST is expanded on first use one line earlier, which makes the omission of OPT more jarring. With no theory article behind this bank, every one of those six terms is a stop-and-google.",
+      "before": "2. Find odd-degree vertices in the MST (always an even count, by handshake lemma) and compute a minimum-weight perfect matching among them — cost ≤ half the optimal tour (proven via triangle inequality applied to the optimal tour split into two matchings).\n3. Combine MST + matching into a multigraph — every vertex now has even degree, guaranteeing an Eulerian circuit exists.",
+      "after": "2. Look at the vertices of the MST that have an odd number of edges. There is always an even number of them (every edge adds 1 to two vertices, so the degrees sum to an even number — the handshake lemma). Pair those odd vertices up so that every one of them gets exactly one partner and the total weight of the pairs is as small as possible; this is called a minimum-weight perfect matching. Its cost is at most half the optimal tour: the optimal tour visits these vertices in some cyclic order, and splitting that cycle into alternating edges gives two matchings, so the cheaper one costs at most half.\n3. Add those matching edges on top of the MST. Because each odd vertex just gained one more edge, every vertex now has an even number of edges. A connected graph where every vertex has even degree has an Eulerian circuit — a closed walk that uses every edge exactly once. (Write `OPT` out on first use: \"call the total weight of the optimal tour OPT\".)"
+    },
+    {
+      "file": "content/quiz/algorithms.json",
+      "rubric": "C",
+      "quote": "Option [1, 2, 4, 5, 3] represents DFS in-order traversal, and the reversed options represent other traversal orders, not BFS.",
+      "problem": "algorithms-quiz-8. [1, 2, 4, 5, 3] is pre-order DFS, not in-order — in-order on that tree is [4, 2, 5, 1, 3], which is the option the explanation ignores. This directly contradicts algorithms-quiz-23, which shows the same node-then-left-then-right shape and correctly labels it \"a pre-order DFS traversal\". A reader who does both items in one session gets two incompatible definitions of in-order with no article to arbitrate. Same in ru («представляет DFS обход в порядке In-Order»), where the traversal name is also left in untranslated English inside a Russian sentence.",
+      "before": "Option [1, 2, 4, 5, 3] represents DFS in-order traversal, and the reversed options represent other traversal orders, not BFS.",
+      "after": "The option [1, 2, 4, 5, 3] is a pre-order DFS: visit the node, then its whole left subtree, then its right subtree. The option [4, 2, 5, 1, 3] is an in-order DFS: left subtree, then the node, then right subtree. Neither is BFS, because BFS never goes deep before finishing a level."
+    },
+    {
+      "file": "content/questions/algorithms.json",
+      "rubric": "A",
+      "quote": "A queue is the natural fit because a stack or recursion would mix nodes from different levels in the same iteration. Recursion (DFS) naturally goes deep before wide, so replicating level-order with recursion means passing the depth down explicitly",
+      "problem": "algorithms-q-11 (en; ru identical). This is the first appearance of both BFS and DFS in the whole question bank, and neither is ever spelled out — not here and not in any of the 40 answers. \"Recursion (DFS)\" is the closest the text comes, and it reads as if DFS were a synonym for recursion. DFS occurs 5 times across 5 questions and BFS 4 times across 4, always bare. The quiz bank has the same gap in reverse order: DFS and BFS are used from item 3 onwards but only spelled out in item 17, which most readers reach after items 3, 8, 9, 12 and 13. For a reader who has never taken a CS course, and with zero theory articles in this topic, these two acronyms are the entry point to half the material.",
+      "before": "A queue is the natural fit because a stack or recursion would mix nodes from different levels in the same iteration. Recursion (DFS) naturally goes deep before wide",
+      "after": "A queue is the natural fit because a stack or recursion would mix nodes from different levels in the same iteration. Recursion gives you depth-first search (DFS) — it goes deep before wide"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/algorithms.json#en": ["DFS", "BFS", "DP", "DAG", "TSP", "NP", "AVL", "OPT", "L1", "L2", "L3", "XOR"],
+    "content/questions/algorithms.json#ru": ["DFS", "BFS", "DP", "DAG", "TSP", "NP", "AVL", "OPT", "L1", "L2", "L3", "XOR"],
+    "content/quiz/algorithms.json#en": ["DFS", "BFS", "DP"],
+    "content/quiz/algorithms.json#ru": ["DFS", "BFS", "DP"]
+  },
+  "patterns": [
+    "No answer in the question bank ever traces its own code. Across all 40 answers there are zero worked examples — no `console.log`, no \"for input [3,1,4] the state after step 2 is …\", no input → intermediate state → output walk-through; only one answer (algorithms-q-19) contains a concrete data literal in its prose at all. Every code block is a finished implementation dropped in whole, and 19 of the 40 have no inline comments either (algorithms-q-3, q-5, q-7, q-9 through q-20). The prose then asserts the invariant the code maintains (\"the path from head to the meeting point is equal in length to the path from the meeting point back around to the cycle's start\" — algorithms-q-12) and moves on. A reader who cannot already run the algorithm mentally has no way in. This is the highest-leverage fix in the zone: 3-5 lines of trace per answer, using the existing code unchanged.",
+    "Big-O is explained where it is easy and asserted where it is hard — the explanation quality falls off exactly as difficulty rises. The junior tier is genuinely good: algorithms-q-3 says \"each step cuts the search space in half … for an array of a million elements, you need at most ~20 comparisons instead of up to a million\", which is precisely what the rubric asks for. From the senior tier on, the plain-words reason disappears and the notation carries the argument alone: algorithms-q-38 restates its own bound three times without ever saying what the potential function buys, algorithms-q-36 hands over `OPT + OPT/2 = 1.5 * OPT` with `OPT` undefined, algorithms-q-37 gives `O(log_B n)` cache lines with no sense of scale. The honourable exception proves it can be done at any level — algorithms-q-24 explains α(n) as \"under 5 for any n you could ever represent in memory\". That register needs to be pushed up into the senior and advanced tiers.",
+    "The quiz bank was written to a different standard than the question bank and needs its own pass. Its explanations reference options by labels the reader never sees (\"Option B\", \"option C\" in 12 of 30 items, and inconsistently — \"Option 1/2/3\" in algorithms-quiz-27, «Вариант A/B» in quiz-10, «Вариант 1/2» in quiz-27). Its ru is a calque layer the question-bank ru does not have (\"пространство\" 23× for memory, «доминирующий термин», «коллидируют», «приоритизируется»). And it carries three correctness defects the reader cannot detect without theory: two wrong answer keys (quiz-14, quiz-16), a self-contradicting derivation (quiz-16), an unresolvable duplicate-option pair (quiz-9), and a pre-order traversal labelled in-order (quiz-8) contradicting quiz-23."
+  ],
+  "notes": "Rubric C, quiz, computed exactly. correctIndex distribution: 0 → 17 items, 1 → 12, 2 → 1 (algorithms-quiz-9 only), 3 → 0. Index 3 is never the answer and index 2 once, so guessing 0 or 1 scores 29/30. Correct option is the strictly longest of the four in 15/30 items (en; 16/30 ru) and longest-or-tied in 18/30 — the length cue and the position cue point the same way in most items. Cross-bank contradictions: quiz-8 calls a pre-order DFS \"in-order\" against quiz-23 and against algorithms-q-20; quiz-16's key contradicts the bank's own geometric-series reasoning in algorithms-q-3; quiz-14's key contradicts the code printed in its own question. Rubric E, bank: 0/40 answers contain a worked trace. Rubric D, big-O: reasons are given at junior level and dropped at senior/advanced level (detail in patterns 1-2). Per-item scoping caveat: FIFO/LIFO, BST, LCA, LIS, LRU, KMP, SCC and MST are expanded somewhere in the bank, so the script flags them, but each is expanded only in the item that introduces it and reused bare in later items (FIFO expanded in algorithms-q-7, reused bare in q-11) — since bank items are read one at a time, these should be treated as unexpanded on reuse; I left them out of unexpanded_abbrevs to keep that list to genuine file-wide gaps."
+}

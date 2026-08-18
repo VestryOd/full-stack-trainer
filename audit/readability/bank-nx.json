@@ -1,0 +1,95 @@
+{
+  "zone": "nx",
+  "kinds": ["question-bank"],
+  "verdict": "ok",
+  "files": [
+    {
+      "file": "content/questions/nx.json#en",
+      "locale": "en",
+      "scores": { "A": 4, "B": 4, "C": 5, "D": 4, "E": 5, "F": 4, "G": null }
+    },
+    {
+      "file": "content/questions/nx.json#ru",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 5, "C": 5, "D": 4, "E": 5, "F": null, "G": 4 }
+    }
+  ],
+  "averages": { "A": 3.5, "B": 4.5, "C": 5.0, "D": 4.0, "E": 5.0, "F": 4.0, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/nx.json#ru",
+      "rubric": "A",
+      "quote": "### App — это composition root, код живёт в либах",
+      "problem": "nx-q-3. An untranslated, unexplained English term of art in the heading — the one line the reader sees before deciding whether to read the card. «Composition root» is a DI-container concept the target reader (strong junior) has most likely never met, and the answer never explains it; it explains the *consequence* («тонкая деплоящаяся оболочка: роутинг, провайдеры, конфигурация, связывание частей»). The EN heading is fine because it says the same thing in plain words: 'Apps are composition roots, libs are the code' — but even there the term carries the weight. The same answer's code comment says «DI-обвязка», with DI never expanded anywhere in the bank.",
+      "before": "### App — это composition root, код живёт в либах",
+      "after": "### Приложение только собирает части, код живёт в либах"
+    },
+    {
+      "file": "content/questions/nx.json#ru",
+      "rubric": "G",
+      "quote": "**Границы, которые можно принуждать.** Теги и линт-правила работают *между* проектами.",
+      "problem": "nx-q-3. «Принуждать границы» is a calque of 'enforce boundaries'. In Russian «принуждать» takes a person as its object — you compel someone to do something; you cannot compel a boundary. The same calque recurs three lines later («реальное принуждение границ») and again in q3's pitfall. Elsewhere the same file finds the right word («которую никто не проверяет»), so the vocabulary is available.",
+      "before": "**Границы, которые можно принуждать.** Теги и линт-правила работают *между* проектами.",
+      "after": "**Границы, которые реально проверяются.** Теги и линт-правила работают *между* проектами."
+    },
+    {
+      "file": "content/questions/nx.json#en",
+      "rubric": "D",
+      "quote": "**Package-based**: every project is a normal npm package with its own `package.json`, dependencies and scripts; projects link via npm/pnpm workspaces. NX acts as a smart task runner on top — graph, cache, `affected` — but doesn't manage your build tooling. Minimal buy-in, easy to add to an existing repo.",
+      "problem": "nx-q-9. The only theory wall in the bank: five paragraphs, ~159 words (EN) / ~137 (RU), with no code block, no tree, no table — in the one card that is a two-way comparison, i.e. the card that most wants a side-by-side. Every other answer in this bank puts something concrete within three paragraphs; this one asks the reader to hold two multi-attribute definitions plus a choice rule plus a 'it's actually a spectrum' caveat in prose only.",
+      "before": "**Package-based**: every project is a normal npm package with its own `package.json`, dependencies and scripts; projects link via npm/pnpm workspaces. NX acts as a smart task runner on top — graph, cache, `affected` — but doesn't manage your build tooling. Minimal buy-in, easy to add to an existing repo.",
+      "after": "|                     | Package-based                          | Integrated                              |\n| ------------------- | -------------------------------------- | --------------------------------------- |\n| `package.json`      | one per project, own dependencies      | one at the root, single version policy  |\n| how projects link   | npm/pnpm workspaces                    | `tsconfig` path aliases                 |\n| who owns build/test | the project                            | NX plugins                              |\n| generators, `nx migrate` | not really                        | yes                                     |\n| NX's role           | smart task runner: graph, cache, `affected` | that, plus the build tooling       |\n| cost of entry       | minimal, drops into an existing repo   | more convention to accept               |\n\nPackage-based keeps every project a normal npm package and adds NX on top. Integrated hands the build and test configuration to NX plugins in exchange for generators and automated migrations."
+    },
+    {
+      "file": "content/questions/nx.json#en",
+      "rubric": "A",
+      "quote": "**Atomic changes.** A change that touches a shared contract and everything that uses it lands in one PR. In a polyrepo the same change means publishing a new package version and opening coordinated PRs in every consumer repo, in the right order.",
+      "problem": "nx-q-1, first card of the bank. PR is used twice (never as 'pull request') and CI three cards' worth without expansion — including in «Проблему масштаба CI», a bullet whose whole point is a CI concept. Both are trivially fixable and both sit in the bank's opening card, which is where a reader new to monorepos starts. (I dropped the script's 'NX' flag as a false positive: it is a product name, not an acronym.)",
+      "before": "**Atomic changes.** A change that touches a shared contract and everything that uses it lands in one PR. In a polyrepo the same change means publishing a new package version and opening coordinated PRs in every consumer repo, in the right order.",
+      "after": "**Atomic changes.** A change that touches a shared contract and everything that uses it lands in one pull request (PR). In a polyrepo the same change means publishing a new package version and opening coordinated PRs in every consumer repo, in the right order."
+    },
+    {
+      "file": "content/questions/nx.json#en",
+      "rubric": "B",
+      "quote": "The copy carries stale config and misses the wiring a generator would do (tsconfig path, project registration, tags) — then the graph and lint rules break at some later, unrelated moment, which makes the cause hard to trace.",
+      "problem": "nx-q-6. At 37 words this is the longest sentence in the EN file, and — as in the other two banks I audited — it is inside the `**Common pitfall:**` block. The pattern is much milder here (19% of pitfall sentences over the limit versus 6% in the bodies, and 0 of 12 pitfall blocks are a single sentence), but the same gradient exists: the closing block is written denser than the answer it closes.",
+      "before": "The copy carries stale config and misses the wiring a generator would do (tsconfig path, project registration, tags) — then the graph and lint rules break at some later, unrelated moment, which makes the cause hard to trace.",
+      "after": "The copy carries stale config, and it misses the wiring a generator would have done: the tsconfig path, the project registration, the tags. The graph and the lint rules then break at some later, unrelated moment — which is what makes the cause hard to trace."
+    },
+    {
+      "file": "content/questions/nx.json#ru",
+      "rubric": "G",
+      "quote": "### Генератор скаффолдит и подключает",
+      "problem": "nx-q-6. «Скаффолдит» is an English verb with a Russian ending, used in a heading, where the reader has no surrounding context to guess from. The answer's own first sentence already contains the plain-Russian version («создаёт файлы из шаблонов *и* обновляет конфигурацию воркспейса»), so the heading is strictly harder than the text it introduces. Same family in the same file: «композирует либы» (q3), «Минимальный buy-in» (q9), «мультипакетную репу» (q9), «e2e-сьюту» (q3).",
+      "before": "### Генератор скаффолдит и подключает",
+      "after": "### Генератор создаёт файлы и сразу их подключает"
+    },
+    {
+      "file": "content/questions/nx.json#en",
+      "rubric": "A",
+      "quote": "Version note: in older workspaces every target is written out in `project.json`; since Project Crystal, plugins can *infer* targets from tool configs (`vite.config.ts`, `jest.config.ts`), so `project.json` may be nearly empty.",
+      "problem": "nx-q-4. 'Project Crystal' is used as a point in time with no gloss — a reader who doesn't follow NX release announcements cannot tell whether it is a version, a plugin, a product or a rewrite. q7 then refers to the same thing in lower case and in a different form («crystal-воркспейсах» / 'Crystal-style workspaces'), so the reader meets an unexplained proper noun twice, spelled two ways. One clause fixes it.",
+      "before": "Version note: in older workspaces every target is written out in `project.json`; since Project Crystal, plugins can *infer* targets from tool configs (`vite.config.ts`, `jest.config.ts`), so `project.json` may be nearly empty.",
+      "after": "Version note: in older workspaces every target is written out in `project.json`. Since Project Crystal (the NX 18 change that let plugins read your existing tool configs), plugins can *infer* targets from `vite.config.ts`, `jest.config.ts` and friends — so `project.json` may now be nearly empty."
+    },
+    {
+      "file": "content/questions/nx.json#en",
+      "rubric": "F",
+      "quote": "**A boundary problem.** Nothing physically prevents any project from importing any other, so without rules the codebase drifts toward a tangled ball of mud.",
+      "problem": "nx-q-1. 'A tangled ball of mud' is an architecture in-joke (Foote & Yoder's 'big ball of mud') presented as if it were ordinary English; a B1-B2 reader gets an image of mud and no concept. Same card: 'without surgery' (q3), 'a visualization gimmick' (q5), 'they buy you cache/affected granularity' (q3), 'gives you caching in an afternoon' (q9). Individually charming, collectively the only real EN load in an otherwise very clean file.",
+      "before": "**A boundary problem.** Nothing physically prevents any project from importing any other, so without rules the codebase drifts toward a tangled ball of mud.",
+      "after": "**A boundary problem.** Nothing physically prevents any project from importing any other, so without rules everything ends up importing everything — a structure nobody can reason about."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/nx.json#en": ["CI", "PR", "e2e", "DI"],
+    "content/questions/nx.json#ru": ["CI", "PR", "e2e", "DI", "composition root", "buy-in"]
+  },
+  "patterns": [
+    "This bank is the site's best answer-shape template and should be the model in the style guide. Every card is: a heading that is itself the one-line answer ('Target = what to run, executor = how to run it', 'Workspaces manage packages, NX manages tasks', 'Same inputs → replayed result'), then a first sentence that answers directly, then bullets or a numbered pipeline, then a small commented code block, then a pitfall split across 2-3 sentences. Result: 10% of EN sentences over the limit and 2.7% of RU — against 54%/33% in cicd-devops and 52%/36% in bundlers — with no loss of depth (cache hashing, target-config layering, inferred targets and barrel-as-public-API are all covered properly).",
+    "The `**Common pitfall:**` block is still the densest text in the card, even here. 19% of its EN sentences are over the limit versus 6% in the bodies, and the longest sentence in each locale (37w EN / 34w RU, q6) sits inside it. But 0 of 12 blocks are a single sentence, which is exactly what the other two banks get wrong (6/20 in bundlers, 19/20 in cicd-devops). Whatever discipline was applied to pitfalls here is the discipline the other banks need.",
+    "Difficulty seam: not observable — all 12 questions are `junior`, so there is no boundary to break at. Worth noting the inverse: this bank proves the seam is not caused by difficulty. Its junior answers average 169 words (EN) and cover Project Crystal, target-config merge order and cache-hash inputs, i.e. genuinely middle/senior material, at 10% over-limit sentences. Depth and short sentences are not in tension; the other banks' senior tiers just weren't edited.",
+    "The residual RU defect is a thin layer of untranslated or transliterated English on top of otherwise lively Russian, and it concentrates in headings and bullet labels — the highest-visibility, lowest-word-count positions. «composition root» and «скаффолдит» are in `###` headings; «Границы, которые можно принуждать» and «Минимальный buy-in» are in bold bullet labels. The body prose around them is genuinely good («уезжает одним PR», «сползает в запутанный клубок», «CI едет час из-за однострочной правки», «не глядя»)."
+  ],
+  "notes": "Coverage judgement, as asked. 12 questions for a 15-chapter course is not a usable practice surface, and the gap is not uniform: the bank covers chapters 00-04, 07 and parts of 01/08, and covers them well. It has zero questions for chapter 05 (affected — mentioned in six answers, never the subject of one), 06 (libs architecture, tags, module-boundary rules — the enforcement mechanism is named four times and never explained), 09/10/11 (microfrontends, Module Federation in NX, shared-deps pitfalls — three consecutive chapters, nothing), 12 (fullstack Node API), 13 (CI and Nx Cloud — remote caching gets one sentence in q12), 14 (reading an existing workspace). Second, all 12 are `junior`, so a learner who finishes the course has no way to rehearse the material the second half of the course exists to teach; the hardest thing the bank asks is 'what does the cache store'. Concretely: the bank needs ~10-14 more questions, weighted middle/senior, and Module Federation + boundary tags + `affected` in CI are the three highest-value additions. That is a content gap, not a readability one — the 12 questions that exist are the best-written cards I audited, and the verdict `ok` refers to them."
+}

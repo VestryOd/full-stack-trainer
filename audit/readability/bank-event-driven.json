@@ -1,0 +1,117 @@
+{
+  "zone": "event-driven",
+  "kinds": ["question-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/event-driven.json",
+      "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 2, "E": 3, "F": 2, "G": null }
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 2, "E": 3, "F": null, "G": 3 }
+    }
+  ],
+  "averages": { "A": 2.0, "B": 2.0, "C": 3.0, "D": 2.0, "E": 3.0, "F": 2.0, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "B",
+      "quote": "The challenges that actually show up at scale, beyond \"you need to version events\" (already a given): (1) **replay performance** — an aggregate with millions of events takes too long to rebuild on every load, so you need periodic snapshots (store the derived state every N events, replay only events since the last snapshot) and a strategy for snapshot invalidation when your aggregate logic changes;",
+      "problem": "event-driven-q-12 (en). This is the opening of a single 174-word sentence that continues through four numbered challenges before it ends. On a phone this is roughly two full screens with no full stop. The four items are already independent ideas — the inline `(1)…(2)…(3)…(4)` markers do the work a bulleted list should do, and the same file already uses real markdown bullets correctly in q-1 and q-15. The RU twin (158 words) has the identical shape. This is the single worst instance of a habit that repeats in q-10 (121w), q-16 (120w) and q-21 (117w).",
+      "before": "The challenges that actually show up at scale, beyond \"you need to version events\" (already a given): (1) **replay performance** — an aggregate with millions of events takes too long to rebuild on every load, so you need periodic snapshots (store the derived state every N events, replay only events since the last snapshot) and a strategy for snapshot invalidation when your aggregate logic changes;",
+      "after": "Four challenges show up at scale, beyond the obvious \"you need to version events\".\n\n- **Replay performance.** An aggregate with millions of events takes too long to rebuild on every load. The fix is periodic snapshots: store the derived state every N events, then replay only the events since the last snapshot. You also need a plan for invalidating snapshots when your aggregate logic changes."
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "C",
+      "quote": "Kafka's exactly-once guarantee is built from two separate mechanisms working together, and understanding what each one actually does (and doesn't) is the difference between using it correctly and assuming more than it delivers.",
+      "problem": "event-driven-q-22 (en, and identically in ru). The question asks how exactly-once is achieved. The first sentence of the answer announces that there are two mechanisms and then spends the rest of its 34 words on why understanding them matters — it never names them. The reader has to reach the second paragraph to learn the first mechanism is the idempotent producer. The pyramid is inverted: motivation first, answer second. Same shape in q-15 (\"The choice isn't 'which one is best,' it's which model of delivery and retention matches your actual workload.\") and q-1 (\"These three message types differ by intent and tense, and that difference drives how you name them, route them, and handle failures.\").",
+      "before": "Kafka's exactly-once guarantee is built from two separate mechanisms working together, and understanding what each one actually does (and doesn't) is the difference between using it correctly and assuming more than it delivers.",
+      "after": "Kafka gets exactly-once from two separate mechanisms: an idempotent producer (which kills duplicates caused by producer retries) and transactions (which make a write and a consumer offset commit atomic together). Each solves a different problem, and knowing which is which is the difference between using them correctly and assuming more than they deliver."
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "G",
+      "quote": "не храните каждый event ID вечно — ключуйте проверку дедупликации по (event ID, и окну хранения, соответствующему окну повторной доставки вашего брокера или бизнес-SLA, например 24-72 часа), и истекайте более старые записи",
+      "problem": "event-driven-q-20 (ru). Three separate breakages in one clause. «ключуйте» is not a Russian verb — it is a transliteration of English \"key by\". «истекайте более старые записи» is a word-for-word calque of \"expire older entries\"; «истекать» in Russian is intransitive, you cannot «истекать» something. And the parenthesis «по (event ID, и окну хранения…)» is a broken list — the reader parses it as a two-element composite key when the second element is actually a retention policy, not a key component. SLA is also unexpanded here.",
+      "before": "не храните каждый event ID вечно — ключуйте проверку дедупликации по (event ID, и окну хранения, соответствующему окну повторной доставки вашего брокера или бизнес-SLA, например 24-72 часа), и истекайте более старые записи",
+      "after": "не храните каждый event ID вечно. Ключом дедупликации оставьте сам event ID, но задайте записям срок жизни: он должен покрывать окно повторной доставки вашего брокера или требование SLA (соглашения об уровне сервиса) — обычно 24-72 часа. Всё, что старше, удаляйте."
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "E",
+      "quote": "  const alreadyProcessed = await redis.set(dedupKey, '1', { NX: true, EX: 259200 }); // 72h TTL, atomic check-and-set\n  if (!alreadyProcessed) return; // duplicate within the retention window",
+      "problem": "event-driven-q-20 (en and ru). The variable name says the opposite of what it holds: `redis.set(..., { NX: true })` returns a truthy value when the key did *not* exist, i.e. when the event was **not** already processed. So `alreadyProcessed` is truthy exactly when it hasn't been processed, and `if (!alreadyProcessed) return` returns on a duplicate — correct behaviour, backwards name. A reader who trusts the name reads the guard as inverted and concludes the example is broken. Worse, the comment three lines below admits the whole snippet is the anti-pattern the answer's pitfall section warns against (\"real systems set the dedup key AFTER successful processing\"), so the one code example in the entry demonstrates the wrong approach.",
+      "before": "  const alreadyProcessed = await redis.set(dedupKey, '1', { NX: true, EX: 259200 }); // 72h TTL, atomic check-and-set\n  if (!alreadyProcessed) return; // duplicate within the retention window",
+      "after": "  // SET NX returns a value only if the key did NOT exist yet — so a truthy result means \"first time we see this event\"\n  const claimedFirst = await redis.set(dedupKey, '1', { NX: true, EX: 259200 }); // 72h TTL, atomic check-and-set\n  if (!claimedFirst) return; // key already there => duplicate within the retention window"
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "A",
+      "quote": "CRUD uses one model and usually one schema for both reading and writing — simple to reason about, but it forces every read to go through the same normalized shape that writes need for integrity, which means joins, indexes tuned as a compromise, and a single point of scaling for both traffic patterns.",
+      "problem": "event-driven-q-9 (en). This is the first sentence of the entry and it carries two unexpanded acronyms in the question title (CQRS, CRUD) plus CRUD again here. CQRS is spelled out exactly once in the whole bank — in q-5's question text — and then used bare in q-9, q-10, q-12 and q-18. A question bank is read one card at a time in random order, so \"it's expanded in another entry\" is worth nothing. CRUD is never expanded anywhere in either locale.",
+      "before": "CRUD uses one model and usually one schema for both reading and writing — simple to reason about, but it forces every read to go through the same normalized shape that writes need for integrity, which means joins, indexes tuned as a compromise, and a single point of scaling for both traffic patterns.",
+      "after": "CRUD (create, read, update, delete — the plain \"one table, one model\" style) uses a single model and usually a single schema for both reading and writing. That is simple to reason about, but it has a cost: every read has to go through the same normalized shape that writes need for integrity. So you get joins, indexes tuned as a compromise between the two, and one single point of scaling for both traffic patterns."
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "D",
+      "quote": "What concretely breaks each mode, in Avro/Protobuf terms: adding a field is backward-compatible only if it has a default value (old-schema readers simply don't know about it, but new-schema readers processing old data will use the default); removing a field is forward-compatible only if it had a default (so new-schema readers don't choke on its absence) — removing a field with no default breaks anyone still expecting it; renaming a field is effectively \"remove old name + add new name\" and breaks compatibility unless the format supports field aliases;",
+      "problem": "event-driven-q-21 (en). Four unfamiliar compatibility modes (BACKWARD, FORWARD, FULL, NONE) are defined in paragraph 1, then this 117-word sentence lists four *different* breaking changes crossed against those modes — eight concepts stacked with no example between any of them. The code block that finally arrives shows only the single easiest case (adding a field with a default). Nothing anchors the hard part: the reader never sees what a FORWARD violation actually looks like at read time. This is the zone's dominant D failure: the example always lands after the wall, and illustrates the part that didn't need illustrating.",
+      "before": "What concretely breaks each mode, in Avro/Protobuf terms: adding a field is backward-compatible only if it has a default value (old-schema readers simply don't know about it, but new-schema readers processing old data will use the default); removing a field is forward-compatible only if it had a default (so new-schema readers don't choke on its absence) — removing a field with no default breaks anyone still expecting it; renaming a field is effectively \"remove old name + add new name\" and breaks compatibility unless the format supports field aliases;",
+      "after": "Here is what concretely breaks each mode, in Avro/Protobuf terms.\n\n- **Adding a field** is backward-compatible only if the field has a default value. Old-schema readers simply don't know about it; new-schema readers processing old data fall back to the default.\n- **Removing a field** is forward-compatible only if that field had a default, so new-schema readers don't choke on its absence. Remove a field with no default and you break everyone still expecting it.\n- **Renaming a field** is really \"remove the old name, add the new one\". It breaks compatibility unless the format supports field aliases."
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "G",
+      "quote": "CRUD использует одну модель и обычно одну схему для чтения и записи — просто в осмыслении, но заставляет каждое чтение идти через ту же нормализованную форму, которая нужна записи для целостности",
+      "problem": "event-driven-q-9 (ru). «просто в осмыслении» is a literal rendering of \"simple to reason about\" and is not Russian — «осмысление» is the act of comprehending something, so the phrase reads as \"simple in the act of comprehending\". A reader stops here. This is the entry's opening sentence, so the stumble happens before any content lands. Same calque family elsewhere in the file: «переретраенное сообщение» (q-13), «переразмеренный агрегат» / «недоразмеренный» (q-18).",
+      "before": "CRUD использует одну модель и обычно одну схему для чтения и записи — просто в осмыслении, но заставляет каждое чтение идти через ту же нормализованную форму, которая нужна записи для целостности",
+      "after": "CRUD (create, read, update, delete — привычный подход «одна модель на всё») использует одну модель и обычно одну схему и для чтения, и для записи. Такую систему легко держать в голове, но каждое чтение вынуждено идти через ту же нормализованную форму, которая нужна записи для целостности"
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "G",
+      "quote": "это молча ломает любого consumer'а (или процесс replay/бэкфилла), который всё ещё читает события по старым предположениям, часто спустя долгое время после того, как исходная команда уже переключилась на другое",
+      "problem": "event-driven-q-4 (ru). The English is \"long after the original team has moved on\". «команда» here means *team*, but this is a bank entry whose entire subject is the Command/Event/Query distinction, where «команда» means *Command* on every other line. «исходная команда уже переключилась на другое» parses first as \"the original Command switched to something else\", which is nonsense but plausible enough to derail the reader. «переключилась на другое» is also a calque of \"moved on\" — the Russian idiom is «занялась другим проектом» / «разошлась».",
+      "before": "это молча ломает любого consumer'а (или процесс replay/бэкфилла), который всё ещё читает события по старым предположениям, часто спустя долгое время после того, как исходная команда уже переключилась на другое",
+      "after": "это молча ломает любого consumer'а (или процесс replay/бэкфилла), который всё ещё читает события по старым предположениям. Часто это всплывает спустя месяцы — когда написавшая их команда разработчиков уже занимается другим проектом"
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "E",
+      "quote": "// Avro-style: adding a field with a default is backward-compatible\n{\n  \"type\": \"record\",\n  \"name\": \"OrderCreated\",\n  \"fields\": [\n    { \"name\": \"orderId\", \"type\": \"string\" },\n    { \"name\": \"totalAmount\", \"type\": \"double\", \"default\": 0.0 } // new field, default makes old data readable\n  ]\n}",
+      "problem": "event-driven-q-21 (en and ru). This block is fenced as ```typescript but contains an Avro schema (JSON with `//` comments, which is not valid JSON either) immediately followed by a Protobuf `message` definition. Three languages in one fence: the syntax highlighter will colour it as broken TypeScript, and a reader who copies it gets something that parses as none of the three. Every other code block in the bank is real TypeScript, so this one silently violates the reader's expectation of what a fenced block in this file is.",
+      "before": "```typescript\n// Avro-style: adding a field with a default is backward-compatible\n{ ...avro json... }\n\n// Protobuf: reserving a deleted field number prevents silent collisions with old messages\nmessage OrderCreated { ... }\n```",
+      "after": "Split into two correctly-tagged blocks, same content:\n\n```json\n// Avro schema — adding a field with a default is backward-compatible\n{\n  \"type\": \"record\",\n  \"name\": \"OrderCreated\",\n  \"fields\": [\n    { \"name\": \"orderId\", \"type\": \"string\" },\n    { \"name\": \"totalAmount\", \"type\": \"double\", \"default\": 0.0 }\n  ]\n}\n```\n\n```protobuf\n// Reserving a deleted field number prevents silent collisions with old messages\nmessage OrderCreated {\n  reserved 4; // was \"legacyDiscountCode\", removed — never reuse this number\n  string order_id = 1;\n  double total_amount = 2;\n}\n```"
+    },
+    {
+      "file": "content/questions/event-driven.json",
+      "rubric": "D",
+      "quote": "**Managed cloud pub/sub** (SNS/SQS, Google Pub/Sub, Azure Service Bus) trades some of that flexibility for near-zero operational burden — no cluster to run, and you pay per message/throughput instead of provisioning capacity.",
+      "problem": "event-driven-q-15 (en and ru). Three dense comparison paragraphs (Kafka, RabbitMQ, managed) introduce consumer groups, offsets, partitions, exchanges, routing keys, priority queues, per-message TTL, dead-lettering, SNS, SQS and RPC — eleven terms, five of them unexpanded acronyms — and then the code block illustrates one thing only: seeking an offset. The reader is given nothing concrete for the RabbitMQ routing features or the managed-service trade-off, which are the two parts they are least likely to already know. A comparison question is the natural home for a small table or three tiny snippets, one per option.",
+      "before": "**Managed cloud pub/sub** (SNS/SQS, Google Pub/Sub, Azure Service Bus) trades some of that flexibility for near-zero operational burden — no cluster to run, and you pay per message/throughput instead of provisioning capacity.",
+      "after": "**Managed cloud pub/sub** — Amazon SNS/SQS (Simple Notification Service and Simple Queue Service), Google Pub/Sub, Azure Service Bus — trades some of that flexibility for near-zero operational burden. There is no cluster to run, and you pay per message or per throughput instead of provisioning capacity up front.\n\n(and add a third snippet next to the existing Kafka/RabbitMQ ones, e.g. an SQS receive-and-delete call, so each of the three options the question asks about has one concrete line of code attached to it)"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/event-driven.json#en": [
+      "CQRS", "CRUD", "DDD", "ACID", "WAL", "SLA", "RPC", "SNS", "SQS", "TTL",
+      "NoSQL", "NTP", "CDC", "DB", "SQL", "UI", "UX", "PID"
+    ],
+    "content/questions/event-driven.json#ru": [
+      "CQRS", "CRUD", "DDD", "ACID", "WAL", "SLA", "RPC", "SNS", "SQS", "TTL",
+      "NoSQL", "NTP", "CDC", "БД", "SQL", "UI", "UX", "PID"
+    ]
+  },
+  "patterns": [
+    "Every senior/advanced entry packs an enumerated list of 3-4 independent ideas into ONE sentence using inline `(1)…(2)…(3)…` markers, producing 90-174-word sentences: q-12 (174w en / 158w ru), q-10 (121w), q-16 (120w), q-21 (117w), q-24 (91w). 73.8% of EN sentences and 62.6% of RU sentences are over the length threshold. The items are already separate thoughts — the same file uses real markdown bullets correctly in q-1 and q-15, so this is a habit, not a constraint.",
+    "The single code example always sits at the very end, after all the theory, and in the hardest entries it illustrates the easiest part of the answer rather than the part that needed anchoring: q-15 gives three broker-comparison paragraphs then a snippet about seeking an offset; q-21 defines four compatibility modes and four breaking changes then shows only the safe additive case; q-12 lists four scaling challenges then shows snapshot loading, which was challenge (1). The dense middle of each answer has nothing to hold on to.",
+    "Acronyms are spelled out in the one entry that happens to introduce them and used bare everywhere else — CQRS is expanded once, in q-5's question text, then used unexplained in q-9, q-10, q-12 and q-18; CRUD is never expanded in either locale. A question bank is read one card at a time in random order, so per-entry expansion is the only expansion that counts.",
+    "The RU text is broadly living Russian, but breaks into transliteration exactly where the English term is a verb: «ключуйте» (key by), «истекайте записи» (expire entries), «переретраенное сообщение» (retried), «переразмеренный/недоразмеренный агрегат» (oversized/undersized), «просто в осмыслении» (simple to reason about). Nouns get borrowed cleanly; verbs get mangled."
+  ],
+  "notes": "The bank has no theory article behind it: the closest material (nestjs/08-cqrs-pattern, architecture/05, system-design/05) is invisible from this page, so every acronym has to be carried by the entry itself — this raises the weight of criterion A above its usual level here. EN is measurably harder than RU (6896 vs 6190 words, 73.8% vs 62.6% long sentences), which is the reverse of what the ~19% expansion rule would predict as merely borderline; the EN register also leans idiomatic (\"papers the wall\", \"poison message\", \"buys you nothing\", \"a tax you pay on every deploy\"). Content depth is genuinely senior throughout and should not be touched — every finding above is language-level. One non-readability note: q-16's `streamHead` is declared and never used."
+}

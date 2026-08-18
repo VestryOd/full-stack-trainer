@@ -1,0 +1,118 @@
+{
+  "zone": "nx-monorepo (ch 08-14)",
+  "kinds": ["course-chapter"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/courses/nx-monorepo/ru/08-executors-and-run-commands.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/08-executors-and-run-commands.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/ru/09-microfrontends-why-and-how.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 5, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/09-microfrontends-why-and-how.md", "locale": "en", "scores": { "A": 2, "B": 3, "C": 5, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/ru/10-module-federation-in-nx.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/10-module-federation-in-nx.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 5, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/ru/11-mf-shared-deps-and-pitfalls.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 3, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/11-mf-shared-deps-and-pitfalls.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 3, "E": 4, "F": 2, "G": null } },
+    { "file": "content/courses/nx-monorepo/ru/12-fullstack-node-api.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 5, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/12-fullstack-node-api.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 5, "D": 3, "E": 5, "F": 2, "G": null } },
+    { "file": "content/courses/nx-monorepo/ru/13-ci-and-nx-cloud.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 4, "D": 3, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/13-ci-and-nx-cloud.md", "locale": "en", "scores": { "A": 2, "B": 2, "C": 4, "D": 3, "E": 4, "F": 2, "G": null } },
+    { "file": "content/courses/nx-monorepo/ru/14-reading-an-existing-workspace.md", "locale": "ru", "scores": { "A": 2, "B": 3, "C": 4, "D": 3, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/14-reading-an-existing-workspace.md", "locale": "en", "scores": { "A": 2, "B": 3, "C": 4, "D": 3, "E": 4, "F": 3, "G": null } }
+  ],
+  "averages": { "A": 2.6, "B": 3.4, "C": 4.3, "D": 3.5, "E": 4.3, "F": 2.6, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/courses/nx-monorepo/en/14-reading-an-existing-workspace.md",
+      "rubric": "F",
+      "quote": "By ROI and dependencies: (1) CI on affected with a correct base — changes the pipeline-time asymptotics and requires nothing; (2) the production set in namedInputs — amplifies both the local cache and the freshly enabled affected CI; (3) boundaries warn→error — stops the *growth* of architectural debt (cheap to start, long to burn down — hence early); (4) the Nx upgrade one major per PR — unlocks modern mechanisms and de-risks every following step; (5) the buildable forest — the most labour-intensive with the least effect, dismantled as touched.",
+      "problem": "85 words in one sentence carrying five ranked items, each with its own em-dash justification, plus three unexpanded abbreviations (ROI, CI, PR) and two rare words ('asymptotics', 'labour-intensive'). The RU original is already an over-limit 74 words; the EN expansion pushes it past any phone screen. This is the answer to the highest-value question of the capstone chapter, so it is exactly the sentence a reader will re-read.",
+      "before": "By ROI and dependencies: (1) CI on affected with a correct base — changes the pipeline-time asymptotics and requires nothing; (2) the production set in namedInputs — amplifies both the local cache and the freshly enabled affected CI; (3) boundaries warn→error — stops the *growth* of architectural debt (cheap to start, long to burn down — hence early); (4) the Nx upgrade one major per PR — unlocks modern mechanisms and de-risks every following step; (5) the buildable forest — the most labour-intensive with the least effect, dismantled as touched.",
+      "after": "Order them by payoff and by what depends on what.\n\n1. Move CI (continuous integration) to `affected` with a correct base. It changes how pipeline time grows with the repo, and it needs no other fix first.\n2. Add the `production` set to namedInputs. It makes both the local cache and the affected CI you just enabled hit far more often.\n3. Switch boundaries from warn to error. It stops architectural debt from *growing* — cheap to start, slow to pay off, so start early.\n4. Upgrade Nx one major per PR (pull request). Each step unlocks modern mechanisms and makes the next step safer.\n5. Dismantle the buildable-lib forest last. It costs the most work for the least effect; convert libs as you touch them.\n\nThe principle: first what is cheap and changes the slope of the curve, then what is expensive and removes a whole level."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/11-mf-shared-deps-and-pitfalls.md",
+      "rubric": "F",
+      "quote": "The host renders CatalogPage with its react, but her code calls `useState` from the catalog's copy — a foreign dispatcher:",
+      "problem": "A word-for-word calque of the Russian «но её код зовёт useState», where «её» agrees with the feminine «страница/CatalogPage». English has no such agreement, so 'her code' reads as if a person is being discussed. The reader stops on a pronoun in the single most important explanatory sentence of the chapter's core experiment.",
+      "before": "The host renders CatalogPage with its react, but her code calls `useState` from the catalog's copy — a foreign dispatcher:",
+      "after": "The host renders CatalogPage with the host's react. But the component's own code was compiled against the catalog's copy of react, so its `useState` reads the dispatcher of that second copy — the wrong one:"
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/13-ci-and-nx-cloud.md",
+      "rubric": "B",
+      "quote": "**DTE** (Nx Cloud) does it dynamically: the main job publishes the task graph, N agents pick tasks off it honouring `dependsOn` and balancing on historical timings, the cache is shared by all, and the logs are stitched into one stream as if everything ran on a single machine.",
+      "problem": "48 words with four coordinated clauses, and the abbreviation DTE is bolded as if defined although only the section heading ('Distributed task execution') carries the expansion — a reader arriving from the table of contents or scrolling on a phone sees a bare three-letter acronym. 'honouring', 'stitched into one stream' are also above B1-B2. This file is the zone's worst: 32.2% of its sentences are over the length limit versus 10.3% in the Russian original.",
+      "before": "**DTE** (Nx Cloud) does it dynamically: the main job publishes the task graph, N agents pick tasks off it honouring `dependsOn` and balancing on historical timings, the cache is shared by all, and the logs are stitched into one stream as if everything ran on a single machine.",
+      "after": "**DTE (distributed task execution)** in Nx Cloud does the same thing dynamically. The main job publishes the task graph. N agents then take tasks from it one by one, respecting `dependsOn` and balancing the load using how long each task took in past runs. All agents share one cache. The logs come back merged into a single stream, so the output looks as if everything ran on one machine."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/09-microfrontends-why-and-how.md",
+      "rubric": "A",
+      "quote": "Признаки, что MF действительно нужен: несколько команд с собственным релизным циклом упираются в общий \"релизный поезд\"; нужно катить канарейку на часть UI, не трогая остальное; продукт собирается из частей, у которых разные владельцы и разная скорость изменений.",
+      "problem": "Three separate stumbling blocks in one sentence. (1) `MF` is used here for the first time in the course and is never expanded anywhere in any of the 15 chapters — and it is overloaded: here and in chapters 09/14 it means «микрофронтенды», in the same file's Versions note («MF родился в webpack 5») and in chapters 10-11 («MF 2.0», «MF-типы») it means Module Federation. (2) «катить канарейку» is an unglossed deployment metaphor that a middle developer who has never run a canary release will read literally. (3) «релизный поезд» is a second unglossed metaphor in the same clause. UI is also bare (minor).",
+      "before": "Признаки, что MF действительно нужен: несколько команд с собственным релизным циклом упираются в общий \"релизный поезд\"; нужно катить канарейку на часть UI, не трогая остальное; продукт собирается из частей, у которых разные владельцы и разная скорость изменений.",
+      "after": "Дальше сокращаем «микрофронтенды» до **МФ**; Module Federation в этом курсе всегда пишется полностью, чтобы два разных понятия не сливались в одну аббревиатуру.\n\nПризнаки, что МФ действительно нужны:\n\n- несколько команд со своим релизным циклом упираются в общий «релизный поезд» — то есть все ждут одной общей даты выката;\n- нужно выкатить канареечный релиз (canary): показать новую версию части интерфейса небольшой доле пользователей, не трогая остальное приложение;\n- продукт собирается из частей, у которых разные владельцы и разная скорость изменений."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/14-reading-an-existing-workspace.md",
+      "rubric": "G",
+      "quote": "Команда платит полную цену MF (рантайм-риски, shared-негошиэйшн, сложность) и не получает единственной выгоды — независимого деплоя.",
+      "problem": "«shared-негошиэйшн» is a Cyrillic transliteration of a term the course itself writes in Latin everywhere else («shared negotiation» in chapters 09, 10, 11 and in this same file's edge-case answer, line 114, where the same word appears again in the same transliterated form). A reader who learned «shared negotiation» in chapter 09 has to decode a phonetic respelling to recognise it. The same file also contains «перформанс-вин» in chapter 13's twin sentence. This is the zone's one genuine Russian-language defect.",
+      "before": "Команда платит полную цену MF (рантайм-риски, shared-негошиэйшн, сложность) и не получает единственной выгоды — независимого деплоя.",
+      "after": "Команда платит полную цену микрофронтендов — рантайм-риски, согласование shared-зависимостей (shared negotiation, глава 09), общая сложность — и не получает единственной выгоды: независимого деплоя."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/14-reading-an-existing-workspace.md",
+      "rubric": "A",
+      "quote": "Until you know the version, you don't know if it's crystal or fat configs; until you've seen the graph, the boundary rules won't make sense; until you've read the targets, there's nothing to look for in CI.",
+      "problem": "This is the first appearance of CI in the chapter, and CI then appears 26 more times in this one file. The abbreviation is never expanded in this chapter, and a repo-wide grep confirms it is never expanded in any of the 15 chapters of the course — so the course-format allowance ('explained once, in the chapter that introduces it') does not rescue it. The rubric names CI explicitly as requiring expansion. The same file leaves ROI, MF, PR and README bare.",
+      "before": "Until you know the version, you don't know if it's crystal or fat configs; until you've seen the graph, the boundary rules won't make sense; until you've read the targets, there's nothing to look for in CI.",
+      "after": "Each step needs the one before it. Until you know the version, you can't tell crystal from fat configs. Until you've seen the graph, the boundary rules won't make sense. And until you've read the targets, you don't know what to look for in CI — the continuous integration pipeline that builds and tests the repo on every push."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/09-microfrontends-why-and-how.md",
+      "rubric": "F",
+      "quote": "For every package an instance satisfying the requirements is chosen (typically the highest compatible one offered). `singleton` forces a single instance even on conflict (warning + the already-loaded one wins); `strictVersion` upgrades the conflict from a warning to an error; `eager` puts the dependency into the initial bundle, removing the async load (and creating the async-boundary requirement for consumers — chapter 11).",
+      "problem": "60 words, opening with a passive construction ('an instance satisfying the requirements is chosen') where the RU is active, then three semicolon-joined flag definitions and a nested parenthetical that introduces a new obligation ('creating the async-boundary requirement for consumers'). Three flags, each with a consequence, arrive with nothing between them. This is the answer to the chapter's central 'Check yourself' question, so it is the paragraph a reader returns to a week later.",
+      "before": "For every package an instance satisfying the requirements is chosen (typically the highest compatible one offered). `singleton` forces a single instance even on conflict (warning + the already-loaded one wins); `strictVersion` upgrades the conflict from a warning to an error; `eager` puts the dependency into the initial bundle, removing the async load (and creating the async-boundary requirement for consumers — chapter 11).",
+      "after": "For each package the runtime picks one instance that satisfies every declared range — usually the highest compatible version on offer. The three flags change that outcome:\n\n- `singleton` forces one instance even when the versions conflict. You get a warning, and the copy that loaded first wins.\n- `strictVersion` turns that conflict from a warning into an error.\n- `eager` puts the dependency into the initial bundle, so it is not loaded asynchronously. In exchange, every consumer now needs an async boundary — see chapter 11."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/12-fullstack-node-api.md",
+      "rubric": "B",
+      "quote": "The `Product` re-export in the last line is a deliberate decision (edge case 1): data-access consumers keep importing `Product` from it (the data-access layer stays their single API door, chapter 06 boundaries don't blur), but the **definition** lives only in api-types — a re-export is not a copy, there's nothing to drift.",
+      "problem": "51 words, two nested parentheticals, and the pronoun 'it' in 'importing Product from it' points back across a parenthetical to 'data-access' rather than to the nearest noun. 'boundaries don't blur' and 'there's nothing to drift' are compressed metaphors that carry the actual technical claim. 27.6% of this file's sentences are over the EN limit versus 10.4% of the Russian original — the largest gap in the zone after chapter 13.",
+      "before": "The `Product` re-export in the last line is a deliberate decision (edge case 1): data-access consumers keep importing `Product` from it (the data-access layer stays their single API door, chapter 06 boundaries don't blur), but the **definition** lives only in api-types — a re-export is not a copy, there's nothing to drift.",
+      "after": "The `Product` re-export on the last line is deliberate — this is edge case 1. Consumers of data-access keep importing `Product` from data-access, so that layer stays their single door to the API and the chapter 06 boundaries stay sharp. The **definition** still lives in exactly one place: api-types. A re-export is a reference, not a copy, so the two cannot drift apart."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/08-executors-and-run-commands.md",
+      "rubric": "E",
+      "quote": "rm -rf dist && npx nx run shell:deploy --exclude-task-dependencies 2>/dev/null \\\n  || npx nx run shell:deploy   # с dependsOn build подтянется сам; без dist вручную:",
+      "problem": "The chapter's whole point is 'a bash rope with && and || is a program, put it in a file' — and the very next code block demonstrating the exercise is a bash rope with `&&`, `||` and `2>/dev/null`, whose intent (show the failure branch when dist is missing) is buried in the fallback. The trailing comment ends in a colon and refers to a line that isn't there. The EN version of this same block (lines 205-208) was already rewritten into three clear lines with an explanatory comment, so the two locales are out of sync: a RU reader gets a worse example than an EN one.",
+      "before": "rm -rf dist && npx nx run shell:deploy --exclude-task-dependencies 2>/dev/null \\\n  || npx nx run shell:deploy   # с dependsOn build подтянется сам; без dist вручную:",
+      "after": "rm -rf dist\nnpx nx run shell:deploy   # с dependsOn build подтянется сам\n# чтобы увидеть ветку отказа, запустите executor на проекте, у которого нет dist:\n# >  NX   Артефакт не найден: dist/apps/shell — Сначала соберите проект: nx build shell"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/courses/nx-monorepo/ru/08-executors-and-run-commands.md": ["CDN", "CLI", "БД"],
+    "content/courses/nx-monorepo/en/08-executors-and-run-commands.md": ["CDN", "CLI", "DB"],
+    "content/courses/nx-monorepo/ru/09-microfrontends-why-and-how.md": ["MF", "CDN", "CI", "SSR", "SEO", "SaaS", "UI", "e2e"],
+    "content/courses/nx-monorepo/en/09-microfrontends-why-and-how.md": ["MF", "CDN", "CI", "SSR", "SEO", "SaaS", "UI", "e2e"],
+    "content/courses/nx-monorepo/ru/10-module-federation-in-nx.md": ["MF", "CDN", "HMR", "README", "e2e"],
+    "content/courses/nx-monorepo/en/10-module-federation-in-nx.md": ["MF", "CDN", "HMR", "RAM", "README", "e2e"],
+    "content/courses/nx-monorepo/ru/11-mf-shared-deps-and-pitfalls.md": ["MF", "CI", "IDE", "JSX", "CORS", "UI", "e2e"],
+    "content/courses/nx-monorepo/en/11-mf-shared-deps-and-pitfalls.md": ["MF", "CI", "IDE", "JSX", "CORS", "UI", "e2e"],
+    "content/courses/nx-monorepo/ru/12-fullstack-node-api.md": ["DOM", "PR", "UI", "CORS"],
+    "content/courses/nx-monorepo/en/12-fullstack-node-api.md": ["DOM", "PR", "UI", "CORS"],
+    "content/courses/nx-monorepo/ru/13-ci-and-nx-cloud.md": ["CI", "PR", "SHA", "S3", "GCS", "YAML", "SaaS", "MF", "README"],
+    "content/courses/nx-monorepo/en/13-ci-and-nx-cloud.md": ["CI", "PR", "SHA", "S3", "GCS", "YAML", "SaaS", "MF", "README"],
+    "content/courses/nx-monorepo/ru/14-reading-an-existing-workspace.md": ["CI", "MF", "PR", "ROI", "README"],
+    "content/courses/nx-monorepo/en/14-reading-an-existing-workspace.md": ["CI", "MF", "PR", "ROI", "README"]
+  },
+  "patterns": [
+    "THE dominant pattern: the English version is systematically harder than the Russian one, in every single file of the zone. Over-limit sentences, ru → en: ch08 10.4% → 23.6%; ch09 6.1% → 21.8%; ch10 8.5% → 19.3%; ch11 6.6% → 23.2%; ch12 10.4% → 27.6%; ch13 10.3% → 32.2%; ch14 5.3% → 15.1%. The cause is mechanical and repeatable: Russian joins facts with a dash or a colon and drops the copula, and the translation keeps that single-sentence shape while adding ~19% more words plus English's obligatory articles, auxiliaries and 'that'-clauses. A borderline 28-word RU sentence lands at 40-50 words in EN. Nothing about the technical content needs to change — the fix is a per-file pass that splits every dash-joined RU clause chain into separate EN sentences. Chapter 13 is the worst case (a third of all sentences over limit) and chapters 12 and 11 are close behind.",
+    "Second pattern: acronyms are treated as ambient vocabulary rather than as terms that need a first use. `CI` is used 8-26 times per chapter and is never expanded once in any of the 15 chapters of the course, so the 'explained in the chapter that introduces it' allowance does not apply — it is never introduced at all. The same holds for `MF`, `PR`, `CDN`, `README`, `HMR`, `CORS`, `SSR`, `SEO`, `e2e`. `MF` is worse than merely bare: it is overloaded, meaning «микрофронтенды» in chapters 09 and 14 and 'Module Federation' in chapters 10 and 11 — and in chapter 09 it carries both meanings within a single file. A one-time pass that expands each acronym at its earliest occurrence in the course, plus a decision to write 'Module Federation' in full and reserve MF for microfrontends, fixes all 14 files.",
+    "Third pattern (structural, and mostly a strength worth codifying): every chapter uses the same reliable skeleton — Theory → 'В рабочем монорепо' (five runnable grep/nx commands for someone else's repo) → 'Что добавляем в проект' → exercise with explicit **Вход:** prerequisite → worked solution → Check yourself → Common mistake framed as 'a developer from the single-app world'. Rubric C and E scores are high (4.3 each) precisely because of this skeleton: the **Вход:** line means a reader returning after a week always knows what state the workspace is in, and the 'Common mistake' section reliably names the wrong mental model before correcting it. The one place the skeleton leaks is theory density: the 'Ответы на edge cases' and 'Разбор решения' blocks routinely run 5-16 consecutive paragraphs with no diagram or code between them (ch09 en: 16 paragraphs / 532 words; ch13 en: 8 paragraphs / 495 words; ch12 en: 12 paragraphs / 535 words), which is where the D score of 3.5 comes from."
+  ],
+  "notes": "Microfrontends overlap: chapters 09-11 COMPLEMENT the `microfrontends` topic rather than duplicate it, with one contradiction to resolve. The topic teaches MF generically and polyrepo-flavoured (hand-written ModuleFederationPlugin configs, iframes, web components, single-spa, style isolation, cross-MFE state, interview answers); the course teaches the same negotiation mechanics strictly through Nx generators and adds material the topic does not have at all — Nx auto-sharing every workspace lib as an unversioned singleton, and the resulting first-wins skew across independently deployed remotes. Overlap is confined to remoteEntry/container, the bootstrap async boundary, singleton/strictVersion/eager, and the two-reacts dispatcher story. Send a reader who wants concepts or interview answers to the topic; send anyone building or auditing a real Nx federation to the course, which is markedly better written (the topic came out systemic-refactor with 40-90-word fact sandwiches). Two things to fix at the seam: the topic frames `strictVersion: true` as a staging/CI-only diagnostic, while course ch11 prescribes it permanently in production for react/router/state libs — pick one; and the two use different abbreviations for the same idea (topic: MFE, expanded once; course: MF, never expanded), with no cross-link in either direction.\nChapter 14 delivers as the practical payoff. It is a real procedure, not a summary: a layer → source-of-truth → what-to-look-for table, seven numbered steps each with a copy-pasteable command, a catalogue of eight archaeological finds with diagnosis and treatment, a 10-question deliverable, a worked reference run against mini-shop, 🔴/🟡/🟢 triage, and an explicit one-fix-per-PR discipline plus a 'don't open the epic cleanup PR' warning. A middle developer could execute it on a real repo in the promised hour or two. Its problems are purely linguistic: CI appears 26 times unexpanded, and the ROI-ordering answer — the single most valuable paragraph in the chapter — is one 74-word (RU) / 85-word (EN) sentence."
+}

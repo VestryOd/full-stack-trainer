@@ -1,0 +1,257 @@
+{
+  "zone": "http-rest + postgresql(mislabelled)",
+  "kinds": [
+    "question-bank"
+  ],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/http-rest.json#ru",
+      "locale": "ru",
+      "scores": {
+        "A": 2,
+        "B": 4,
+        "C": 4,
+        "D": 2,
+        "E": 3,
+        "F": null,
+        "G": 2
+      }
+    },
+    {
+      "file": "content/questions/http-rest.json#en",
+      "locale": "en",
+      "scores": {
+        "A": 2,
+        "B": 4,
+        "C": 4,
+        "D": 2,
+        "E": 3,
+        "F": 4,
+        "G": null
+      }
+    },
+    {
+      "file": "content/questions/postgresql.json#ru",
+      "locale": "ru",
+      "scores": {
+        "A": 2,
+        "B": 2,
+        "C": 3,
+        "D": 4,
+        "E": 4,
+        "F": null,
+        "G": 3
+      }
+    },
+    {
+      "file": "content/questions/postgresql.json#en",
+      "locale": "en",
+      "scores": {
+        "A": 2,
+        "B": 2,
+        "C": 3,
+        "D": 4,
+        "E": 4,
+        "F": 3,
+        "G": null
+      }
+    }
+  ],
+  "averages": {
+    "A": 2.0,
+    "B": 3.0,
+    "C": 3.5,
+    "D": 3.0,
+    "E": 3.5,
+    "F": 3.5,
+    "G": 2.5
+  },
+  "worst_places": [
+    {
+      "file": "content/questions/http-rest.json#ru",
+      "rubric": "G",
+      "quote": "WebSockets имеют большие накладные расходы и сложность со статеф сервера.",
+      "problem": "«статеф» is not a Russian word and not a recognisable transliteration — it is the English 'stateful' half-transliterated mid-sentence (http-rest-q-18). The reader cannot even guess what property of the server is meant, and the whole trade-off that closes the answer therefore lands as noise.",
+      "before": "WebSockets имеют большие накладные расходы и сложность со статеф сервера.",
+      "after": "У WebSockets выше накладные расходы. И сервер обязан хранить состояние каждого открытого соединения (stateful) — держать сокет живым, помнить, кто к нему подключён. Это усложняет и деплой, и масштабирование."
+    },
+    {
+      "file": "content/questions/postgresql.json#en",
+      "rubric": "B",
+      "quote": "If client A is connected to instance 1 and client B (who needs to receive A's message) is connected to instance 2, instance 1 has no way to reach client B directly — you need a shared broker (Redis pub/sub, Kafka, NATS) that every instance subscribes to, so a message published on instance 1 gets fanned out and re-delivered by instance 2 to its own local sockets.",
+      "problem": "67 words in one sentence (http-rest-q-19) — a conditional, a parenthetical aside that interrupts the subject, an em-dash pivot, a parenthetical list of three products, and a two-step consequence clause. This is the single longest sentence in the zone and it carries the answer's most important operational fact, so a phone reader who loses the thread loses the point.",
+      "before": "If client A is connected to instance 1 and client B (who needs to receive A's message) is connected to instance 2, instance 1 has no way to reach client B directly — you need a shared broker (Redis pub/sub, Kafka, NATS) that every instance subscribes to, so a message published on instance 1 gets fanned out and re-delivered by instance 2 to its own local sockets.",
+      "after": "Say client A is connected to instance 1, and client B is connected to instance 2. B needs to receive A's message. But instance 1 holds no socket to B, so it cannot reach B at all. The fix is a shared broker (Redis pub/sub, Kafka, NATS) that every instance subscribes to. Instance 1 publishes the message to the broker; instance 2 receives it and pushes it to its own local sockets."
+    },
+    {
+      "file": "content/questions/postgresql.json#ru",
+      "rubric": "G",
+      "quote": "Клиент нужно писать так, чтобы он динамически шёл по ссылкам вместо обращения к известным путям — это сложнее в размышлении, сложнее типизировать, а большинство фронтенд/мобильных команд и так деплоят клиент и сервер тесно связанными релизами, так что рантайм-обнаруживаемость решает проблему, которой у них нет (клиент передеплоивается вместе с API, так что захардкоженный путь — это нормально).",
+      "problem": "55 words, and «сложнее в размышлении» is a word-for-word calque of 'harder to reason about' that means nothing in Russian (http-rest-q-22). «рантайм-обнаруживаемость» and «передеплоивается» are invented compounds in the same sentence. Three separate reasons are welded into one period, so the reader cannot count them.",
+      "before": "Клиент нужно писать так, чтобы он динамически шёл по ссылкам вместо обращения к известным путям — это сложнее в размышлении, сложнее типизировать, а большинство фронтенд/мобильных команд и так деплоят клиент и сервер тесно связанными релизами, так что рантайм-обнаруживаемость решает проблему, которой у них нет (клиент передеплоивается вместе с API, так что захардкоженный путь — это нормально).",
+      "after": "Причина первая: клиента приходится писать так, чтобы он ходил по ссылкам из ответа, а не по заранее известным путям. В такой логике труднее разобраться, и её труднее описать типами. Причина вторая: фронтенд и мобильные команды обычно выпускают клиент и сервер одним релизом. Клиент переезжает на новую версию вместе с API, поэтому захардкоженный путь их не ломает — и обнаружение ссылок в рантайме решает проблему, которой у них нет."
+    },
+    {
+      "file": "content/questions/postgresql.json#ru",
+      "rubric": "A",
+      "quote": "Exactly-once недостижимо по ненадёжной сети по той же фундаментальной причине, что и problem двух генералов; практический ответ — переложить бремя идемпотентности на получателя: каждое событие несёт уникальный `event_id`, и получатель хранит ID уже обработанных событий (тот же паттерн idempotency-ключа, что и для обычных запросов), чтобы повторно доставленное событие распозналось и было пропущено, а не обработано заново.",
+      "problem": "The English word «problem» is left untranslated inside the Russian sentence («что и problem двух генералов») — a straight editing bug (http-rest-q-25). Worse, the two generals' problem is used as the load-bearing justification and is never explained in this file; a B1-B2 reader must go and google it to know why exactly-once is impossible. 55 words in one sentence on top of that.",
+      "before": "Exactly-once недостижимо по ненадёжной сети по той же фундаментальной причине, что и problem двух генералов; практический ответ — переложить бремя идемпотентности на получателя: каждое событие несёт уникальный `event_id`, и получатель хранит ID уже обработанных событий (тот же паттерн idempotency-ключа, что и для обычных запросов), чтобы повторно доставленное событие распозналось и было пропущено, а не обработано заново.",
+      "after": "Ровно один раз (exactly-once) по ненадёжной сети недостижимо. Причина та же, что в «задаче двух генералов»: отправитель не может отличить «сообщение не дошло» от «сообщение дошло, но подтверждение потерялось», сколько бы подтверждений они друг другу ни посылали. Практический ответ — переложить идемпотентность на получателя. Каждое событие несёт уникальный `event_id`. Получатель хранит ID уже обработанных событий и при повторной доставке просто пропускает событие вместо повторной обработки. Это тот же паттерн, что и idempotency-ключ для обычных запросов."
+    },
+    {
+      "file": "content/questions/http-rest.json#ru",
+      "rubric": "D",
+      "quote": "Однако оно не дает выгоды, когда узким местом является окно перегрузки TCP или когда сервер имеет ограниченную CPU.",
+      "problem": "This 20-word sentence is the entire treatment of 'when does HTTP/2 not help' — the second half of the question in http-rest-q-21. Two mechanisms (TCP congestion window, CPU-bound server) are named and neither is explained, illustrated, or connected to the multiplexing model just described. The code block that follows shows only the happy path, so nothing in the answer backs the caveat. For comparison, the rewritten senior tier spends ~150 words plus an ASCII diagram on the same claim.",
+      "before": "HTTP/2 позволяет отправлять несколько запросов и ответов одновременно через одно TCP-соединение с использованием двоичного фреймирования, устраняя блокировку head-of-line. Однако оно не дает выгоды, когда узким местом является окно перегрузки TCP или когда сервер имеет ограниченную CPU.",
+      "after": "HTTP/2 разбивает каждый запрос и ответ на фреймы и отправляет фреймы разных запросов вперемешку по одному TCP-соединению. Медленный ответ на один запрос больше не задерживает остальные — это и есть снятие блокировки head-of-line (когда первый в очереди ответ держит все остальные).\n\nВыигрыш пропадает в двух случаях. Первый: узкое место — окно перегрузки TCP (congestion window), то есть сколько байт TCP разрешает держать в пути одновременно. Мультиплексирование не расширяет это окно: те же байты просто едут по одному соединению вместо шести. Второй: сервер упирается в процессор. Тогда запросы стоят в очереди на обработку, а не на передачу, и параллелизм на транспорте ничего не ускоряет."
+    },
+    {
+      "file": "content/questions/postgresql.json#en",
+      "rubric": "C",
+      "quote": "A full TLS 1.2 handshake costs an extra round trip on top of the TCP handshake: ClientHello (supported ciphers, TLS version) -> ServerHello + certificate + key exchange params -> client verifies the certificate chain, computes the shared secret, sends its own key exchange material -> both sides send Finished messages once they've derived the same session keys.",
+      "problem": "57-word opening sentence of http-rest-q-17 — it is a four-stage protocol trace dumped before the reader is told what the answer actually is (a handshake is expensive; resumption is how you skip it). The pyramid is inverted: the cost figure that motivates the whole answer arrives only in sentence two.",
+      "before": "A full TLS 1.2 handshake costs an extra round trip on top of the TCP handshake: ClientHello (supported ciphers, TLS version) -> ServerHello + certificate + key exchange params -> client verifies the certificate chain, computes the shared secret, sends its own key exchange material -> both sides send Finished messages once they've derived the same session keys.",
+      "after": "A full TLS 1.2 handshake costs about 2 round trips (RTT) before you can send the first byte of application data, on top of the 1 RTT the TCP handshake already cost. TLS 1.3 cut this to 1 RTT by folding the key exchange into the first flight of packets. Here is where those round trips go in TLS 1.2:\n\n1. ClientHello: the client lists the ciphers it supports and its TLS version.\n2. ServerHello: the server picks a cipher and sends its certificate plus key exchange parameters.\n3. The client verifies the certificate chain, computes the shared secret, and sends its own key exchange material.\n4. Both sides send Finished once they have derived the same session keys."
+    },
+    {
+      "file": "content/questions/postgresql.json#en",
+      "rubric": "B",
+      "quote": "It has three states: **closed** (normal — requests pass through), **open** (the dependency has failed too often recently, so the breaker immediately rejects calls locally without even attempting the network call, for a cooldown period), and **half-open** (after the cooldown, it lets a small number of trial requests through to check if the dependency has recovered — success closes the circuit again, failure re-opens it).",
+      "problem": "63 words, three nested parentheticals, and an em-dash sub-clause inside the third one (http-rest-q-24). This is a three-item state machine — exactly the content that should be a list, not a period. It also opens a 397-word run of pure prose with no code, table, or diagram anywhere in it (the longest theory wall in the zone).",
+      "before": "It has three states: **closed** (normal — requests pass through), **open** (the dependency has failed too often recently, so the breaker immediately rejects calls locally without even attempting the network call, for a cooldown period), and **half-open** (after the cooldown, it lets a small number of trial requests through to check if the dependency has recovered — success closes the circuit again, failure re-opens it).",
+      "after": "It has three states:\n\n- **closed** — normal operation. Requests pass through to the dependency.\n- **open** — the dependency has failed too often recently. The breaker rejects calls locally, without even attempting the network call, for a cooldown period.\n- **half-open** — the cooldown is over. The breaker lets a small number of trial requests through to see if the dependency has recovered. Success closes the circuit again; failure re-opens it."
+    },
+    {
+      "file": "content/questions/http-rest.json#ru",
+      "rubric": "G",
+      "quote": "HTTP/2 использует бинарное фрейминирование для мультиплексирования нескольких запросов по одному TCP-соединению одновременно, позволяя ответам приходить в произвольном порядке.",
+      "problem": "«фрейминирование» is a malformed coinage (the same file writes «фреймирование» in http-rest-q-21, so the bank is inconsistent with itself), and the reader hits three untranslated nouns — фрейминирование, мультиплексирование, TCP — in the answer's opening 12 words with no gloss for any of them. TCP is never expanded anywhere in this file.",
+      "before": "HTTP/2 использует бинарное фрейминирование для мультиплексирования нескольких запросов по одному TCP-соединению одновременно, позволяя ответам приходить в произвольном порядке.",
+      "after": "HTTP/2 разбивает каждый запрос и ответ на бинарные фреймы — небольшие блоки с пометкой, к какому запросу они относятся. Фреймы разных запросов идут вперемешку по одному TCP-соединению (TCP — транспортный протокол, поверх которого работает HTTP). Это и называется мультиплексированием: несколько запросов едут одновременно, и ответы могут прийти в любом порядке."
+    },
+    {
+      "file": "content/questions/http-rest.json#ru",
+      "rubric": "G",
+      "quote": "Используйте курсор-базированную пагинацию с параметрами `limit` и `cursor` вместо offset, который медленнеет на больших наборах.",
+      "problem": "«медленнеет» does not exist in Russian, and «курсор-базированную» is an English compound bolted onto a Russian ending (http-rest-q-7). The same file writes the correct «Курсор-пагинация» in http-rest-q-14, so this is a machine-translation residue rather than a house style. The reason offset is slow is also asserted, not stated.",
+      "before": "Используйте курсор-базированную пагинацию с параметрами `limit` и `cursor` вместо offset, который медленнеет на больших наборах.",
+      "after": "Используйте пагинацию по курсору: параметры `limit` и `cursor` вместо `offset`. Запрос с большим `offset` замедляется, потому что база всё равно проходит и отбрасывает все строки до нужной позиции."
+    },
+    {
+      "file": "content/questions/http-rest.json#en",
+      "rubric": "B",
+      "quote": "WebSockets provide full-duplex communication but require stateful connections; SSE enables server-push over HTTP with simpler browser fallbacks but is unidirectional; Long Polling works everywhere but has high latency and CPU overhead.",
+      "problem": "Three technologies, six claims, one 31-word sentence held together by semicolons (http-rest-q-23) — the answer to a three-way comparison question is delivered as a run-on the reader has to parse into a table in their head. 'full-duplex' and 'server-push' are stacked modifiers used before either is explained, and CPU is never expanded in this file.",
+      "before": "WebSockets provide full-duplex communication but require stateful connections; SSE enables server-push over HTTP with simpler browser fallbacks but is unidirectional; Long Polling works everywhere but has high latency and CPU overhead.",
+      "after": "WebSockets are full-duplex: both sides can send at any time. The cost is a stateful connection — the server has to keep each socket alive and remember who is on it. SSE pushes data from server to client over ordinary HTTP, and the browser reconnects for you, but it only goes one way. Long Polling works in any environment, but it pays for a full HTTP request per message, so it has the highest latency and the highest CPU cost of the three."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/http-rest.json#ru": [
+      "REST",
+      "TCP",
+      "TLS",
+      "HTTPS",
+      "RPC",
+      "CDN",
+      "CPU",
+      "IP",
+      "UDP",
+      "QUIC",
+      "TTL",
+      "RTT",
+      "W3C",
+      "MD5"
+    ],
+    "content/questions/http-rest.json#en": [
+      "REST",
+      "TCP",
+      "TLS",
+      "HTTPS",
+      "RPC",
+      "CDN",
+      "CPU",
+      "IP",
+      "UDP",
+      "QUIC",
+      "TTL",
+      "RTT",
+      "URI",
+      "W3C",
+      "MD5"
+    ],
+    "content/questions/postgresql.json#ru": [
+      "REST",
+      "TCP",
+      "TLS",
+      "HTTPS",
+      "RPC",
+      "CDN",
+      "CPU",
+      "IP",
+      "UDP",
+      "QUIC",
+      "TTL",
+      "RTT",
+      "RFC",
+      "URI",
+      "W3C",
+      "HPACK",
+      "SYN",
+      "ACK",
+      "SQS",
+      "NATS",
+      "WS",
+      "GC",
+      "HMAC",
+      "SHA256",
+      "SDK",
+      "SOAP",
+      "MD5",
+      "БД",
+      "ОС"
+    ],
+    "content/questions/postgresql.json#en": [
+      "REST",
+      "TCP",
+      "TLS",
+      "HTTPS",
+      "RPC",
+      "CDN",
+      "CPU",
+      "IP",
+      "UDP",
+      "QUIC",
+      "TTL",
+      "RTT",
+      "RFC",
+      "URI",
+      "W3C",
+      "HPACK",
+      "SYN",
+      "ACK",
+      "SQS",
+      "NATS",
+      "WS",
+      "LB",
+      "GC",
+      "HMAC",
+      "SHA256",
+      "SDK",
+      "SOAP",
+      "DB",
+      "MD5"
+    ]
+  },
+  "patterns": [
+    "Both files share one fixed answer shape in q-1..q-15: `### Heading` -> a single paragraph that fires every fact at once -> one code block at the very end -> a one-line pitfall. The example therefore always arrives AFTER all the theory and never between two concepts, so the reader has to hold three or four new terms (ETag + Last-Modified + Cache-Control + 304; token bucket + sliding window + fixed window + three X-RateLimit headers) with nothing to hold on to until the code appears. Density, not length, is what makes this tier hard: the answers are only ~57 prose words, but nothing in them is illustrated in place.",
+    "Untranslated English is left inline in the Russian at three escalating severities, in both files. (1) Accepted loanwords used bare: fallback, retry, pipelining, push. (2) Unglossed jargon phrases treated as if Russian: head-of-line blocking, domain sharding, flow control, connection migration, early data, retry amplification, thundering herd, bulkhead, fingerprint, flight, span, trace, propagation. (3) Outright breakage: «статеф» (stateful), «problem двух генералов», «фрейминирование», «медленнеет», «сложнее в размышлении», «весь пользователя». Severity 3 is a copy-editing pass; severity 2 is the real readability tax, because the answer's key mechanism is named in a language the reader was not told they needed.",
+    "The rewritten senior tier (postgresql.json q-16..q-25) fixed concept density by adding LENGTH but never by shortening sentences. It packs three or four facts per sentence, joined by em-dashes and nested parentheticals: 40.8% of EN sentences and 26.0% of RU sentences exceed the limit, up to 67 words. So the zone fails the rubric in two opposite directions at once — the thin tier is too dense per word, the rich tier is too long per sentence — and a single 'shorten it' or 'expand it' instruction will not fix both.",
+    "EN is harder than RU in the rich tier, contrary to the usual +19% expectation being the only difference: 40.8% vs 26.0% of sentences over limit, and the EN adds idioms and phrasal verbs a B1-B2 reader will stall on that the RU does not have — 'hammer a downstream service', 'fire off dozens of requests', 'transient blips', 'which hop actually ate the latency', 'taking down checkout', 'doesn't scale horizontally for free', 'shipping a feature', 'trimmed this to 1 RTT', 'bakes the cryptographic handshake into', 'for the same fundamental reason two-generals-problem-style' (which is also ungrammatical).",
+    "In both files the first sentence of an answer does answer the question, but frequently by compressing the ENTIRE answer into it, after which the following paragraphs re-say it in detail. The pyramid degenerates into 'abstract, then repeat' — e.g. http-rest-q-18 RU packs bidirectional/persistent-TCP/SSE-unidirectional/auto-reconnect/when-to-choose/overhead into five sentences that the code block then only partially illustrates. A lead should land one claim, not summarise six."
+  ],
+  "notes": "DUPLICATION VERDICT: postgresql.json is neither a PostgreSQL bank nor a copy of http-rest.json. q-1..q-15 (junior+middle) are byte-identical in both files; all ten senior entries q-16..q-25 are a full rewrite with different question text, different topic coverage, and 3-4x longer answers (RU 80-140w -> 366-486w). So postgresql.json = http-rest.json's junior/middle tier + a rebuilt senior tier, and it is unambiguously the LATER draft: it switches to «ты» («Объясни» vs «Объясните»), uses the current site marker «Частая ловушка» / «Common pitfall» where http-rest.json still uses the older «Типичная ошибка» / «Common interview trap», and adds ASCII diagrams, nginx config and JSON payloads that http-rest.json's senior tier has none of.\nDecisive content finding: http-rest.json's senior tier covers only FIVE distinct topics across its ten slots — q16≈q21 (HTTP/2 multiplexing), q18≈q23 (WebSockets/SSE), q19≈q24 (idempotency keys), q20≈q25 (OpenTelemetry tracing), q22 (HTTP/3) alone. The shared middle tier has the same defect in both files: q6≈q11 (ETag vs Last-Modified), q7≈q14 (pagination), q8≈q12 (API versioning), q9≈q13 (CORS), q10≈q15 (rate limiting). postgresql.json's rewrite fixes this for senior: ten distinct topics, adding TLS session resumption, Richardson Maturity Model / HATEOAS, RFC 7807, circuit breaker / bulkhead, and webhook HMAC signing.\nWHICH FILE SHOULD SURVIVE: postgresql.json's CONTENT, re-labelled to http-rest.json. http-rest.json's q-16..q-25 should be dropped, not merged — every topic they cover is covered better in the rewrite, and merging would reimport the five duplicate pairs. Whichever file survives still needs the five middle-tier duplicate pairs collapsed, and a genuine PostgreSQL bank must be written from scratch: content/topics/postgresql exists, so that questions page is live and today serves HTTP/REST answers (src/lib/questions.ts:8 resolves `${topicId}.json` by filename and ignores the topicId field inside).\nFLAG CORRECTION: the 'pitfall marker absent from 100% of answers' flag for http-rest.json is a FALSE NEGATIVE. All 25 answers do carry a pitfall block; it is just worded «Типичная ошибка:» / «Common interview trap:» instead of the site-standard «Частая ловушка:» / «Common pitfall:». The 57-prose-words-per-answer figure is real, however, and confirms the 'older, thinner template' hypothesis.\nARE THE THIN ANSWERS TOO THIN (rubric D)? For junior questions they work — PUT vs PATCH genuinely fits in 75 words plus code. For senior they do not: q21's whole treatment of when HTTP/2 stops helping is one 20-word sentence naming two unexplained mechanisms, and q22's QUIC example invents an `X-QUIC-Session` HTTP header that does not exist, so the code actively misteaches. Read side by side, http-rest.json's senior answers read as the SUMMARY of an answer the reader was never given. This is a D=2 for that file and the strongest argument for keeping the rewrite."
+}

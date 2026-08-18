@@ -1,0 +1,139 @@
+{
+  "zone": "web-performance",
+  "kinds": ["topic-article", "question-bank", "quiz-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/topics/web-performance/ru/01-core-web-vitals.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/topics/web-performance/ru/02-performance-metrics.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/topics/web-performance/ru/03-resource-loading.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 3, "D": 5, "E": 5, "F": null, "G": 3 } },
+    { "file": "content/topics/web-performance/ru/04-javascript-performance.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 4, "E": 3, "F": null, "G": 4 } },
+    { "file": "content/topics/web-performance/ru/05-image-optimization.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/web-performance/ru/06-rendering-performance.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 3, "D": 5, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/web-performance/ru/07-caching-strategies.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/web-performance/ru/08-web-performance-interview-questions.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 3, "D": 2, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/web-performance/en/01-core-web-vitals.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 5, "F": 4, "G": null } },
+    { "file": "content/topics/web-performance/en/02-performance-metrics.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 5, "F": 4, "G": null } },
+    { "file": "content/topics/web-performance/en/03-resource-loading.md", "locale": "en", "scores": { "A": 2, "B": 3, "C": 3, "D": 5, "E": 5, "F": 3, "G": null } },
+    { "file": "content/topics/web-performance/en/04-javascript-performance.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/web-performance/en/05-image-optimization.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/web-performance/en/06-rendering-performance.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 3, "D": 5, "E": 3, "F": 3, "G": null } },
+    { "file": "content/topics/web-performance/en/07-caching-strategies.md", "locale": "en", "scores": { "A": 2, "B": 3, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/web-performance/en/08-web-performance-interview-questions.md", "locale": "en", "scores": { "A": 2, "B": 3, "C": 3, "D": 2, "E": 4, "F": 3, "G": null } },
+    { "file": "content/questions/web-performance.json#ru", "locale": "ru", "scores": { "A": 2, "B": 2, "C": 2, "D": 3, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/questions/web-performance.json#en", "locale": "en", "scores": { "A": 2, "B": 1, "C": 2, "D": 3, "E": 4, "F": 2, "G": null } },
+    { "file": "content/quiz/web-performance.json#ru", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 2, "D": 3, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/quiz/web-performance.json#en", "locale": "en", "scores": { "A": 2, "B": 4, "C": 2, "D": 3, "E": 3, "F": 4, "G": null } }
+  ],
+  "averages": { "A": 2.4, "B": 3.6, "C": 3.3, "D": 4.1, "E": 4.0, "F": 3.3, "G": 3.5 },
+  "worst_places": [
+    {
+      "file": "content/quiz/web-performance.json",
+      "rubric": "C",
+      "quote": "JavaScript is render-blocking by default and should be deferred to the end of the body or use async/defer attributes. CSS must load before render, images are loaded asynchronously, and fonts can use font-display to avoid blocking.",
+      "problem": "quiz-19 (id web-performance-quiz-14). The question asks which resource is 'most commonly render-blocking'; the key is JavaScript. The explanation's own second sentence ('CSS must load before render') says the opposite of its own key, and both contradict the articles: en/02-performance-metrics.md says 'The browser paints nothing until all CSS ... have loaded', and en/08 states 'CSS blocks rendering (CSSOM must be built before Render Tree); JS blocks DOM construction'. It also teaches the obsolete 'move scripts before </body>' advice that bank q-16 and article 03 replace with defer/async. A reader who learns this item will answer the interview question wrongly.",
+      "before": "JavaScript is render-blocking by default and should be deferred to the end of the body or use async/defer attributes. CSS must load before render, images are loaded asynchronously, and fonts can use font-display to avoid blocking.",
+      "after": "A synchronous <script> in <head> is parser-blocking: the browser stops building the DOM until the script has downloaded and run, so the first paint is delayed too. CSS is the truly render-blocking resource — the browser paints nothing until the CSSOM is built. The modern fix for scripts is defer (run after HTML is parsed, in document order) or async (run as soon as it arrives, order not guaranteed); moving the tag before </body> is the old workaround for the same problem. Images load asynchronously and never block the first paint; fonts use font-display to avoid blocking text."
+    },
+    {
+      "file": "content/quiz/web-performance.json",
+      "rubric": "C",
+      "quote": "Варианты 2 и 3 путают CLS с другими метриками (LCP измеряет время рендеринга), а вариант 4 неправильно утверждает, что CLS зависит от взаимодействия, когда он фактически включает смещения до взаимодействия.",
+      "problem": "quiz-16, and the same pattern in quiz-17/18/19/20 in both locales (10 explanation strings total). The UI shuffles options at runtime, so «Вариант 2»/'Option 2' points at a random answer by the time the reader sees it — the explanation is broken by construction. On top of that the mapping is already wrong here: option 2 ('CLS измеряет только самое большое одиночное смещение') does not confuse CLS with another metric at all, only option 3 does.",
+      "before": "Варианты 2 и 3 путают CLS с другими метриками (LCP измеряет время рендеринга), а вариант 4 неправильно утверждает, что CLS зависит от взаимодействия, когда он фактически включает смещения до взаимодействия.",
+      "after": "Вариант про «только самое большое одиночное смещение» неверен: CLS суммирует все неожиданные сдвиги за жизнь страницы, а не берёт максимум. Вариант про «время отрисовки самого большого элемента» описывает LCP, а не CLS. Вариант про «рассчитывается только после начала взаимодействия» тоже неверен: наоборот, сдвиги в пределах 500 мс после действия пользователя из CLS исключаются, а всё до взаимодействия — учитывается."
+    },
+    {
+      "file": "content/questions/web-performance.json",
+      "rubric": "B",
+      "quote": "`preconnect` opens the DNS lookup, TCP handshake, and TLS negotiation for a third-party origin ahead of time, so the actual request that follows is faster - use it for domains you know you'll hit soon (a font CDN, an analytics endpoint) but sparingly, since each preconnect opens a real connection and holds it; more than 4-6 wastes bandwidth.",
+      "problem": "q-2, the answer's opening sentence: 137 words in one sentence (the whole first paragraph is one period), carrying four unrelated facts and three unexpanded acronyms (DNS, TCP, TLS, CDN) before the reader has been told what a resource hint is. On a phone this is a 12-line block with no place to pause. 100 of the 165 sentences in the EN bank (60.6%) are over the 25-word threshold; this is the worst of them.",
+      "before": "`preconnect` opens the DNS lookup, TCP handshake, and TLS negotiation for a third-party origin ahead of time, so the actual request that follows is faster - use it for domains you know you'll hit soon (a font CDN, an analytics endpoint) but sparingly, since each preconnect opens a real connection and holds it; more than 4-6 wastes bandwidth.",
+      "after": "`preconnect` warms up a connection to another domain before you actually need it. It does the three slow steps up front: DNS lookup (turning the domain name into an IP address), the TCP handshake, and the TLS handshake for HTTPS. When the real request finally goes out, the connection is already open, so it is much faster. Use it for domains you know you will hit soon — a font CDN, an analytics endpoint. Use it sparingly: each `preconnect` opens a real connection and holds it open, so more than 4-6 of them just wastes bandwidth."
+    },
+    {
+      "file": "content/questions/web-performance.json",
+      "rubric": "D",
+      "quote": "The browser must complete Parse → Compile → Render → Paint → Composite within 16ms. Use `requestAnimationFrame` for animations, batch DOM changes, avoid layout thrashing by reading then writing DOM properties, and leverage GPU acceleration with `transform` and `opacity`.",
+      "problem": "q-21, and the same shape in q-22 to q-25 (all five 'advanced' entries). These are a completely different tier from q-1 to q-20: a 2-sentence checklist of imperatives with nothing explained, versus 400-word answers with worked examples. Five techniques are named in one sentence with no example between them, and terms are dumped raw (q-24: HOL, HPACK, QUIC, 0-RTT, UDP, RTT; q-25: RUM, p50/p75/p95). The pipeline it names also does not match article 06, which teaches Style → Layout → Paint → Composite.",
+      "before": "The browser must complete Parse → Compile → Render → Paint → Composite within 16ms. Use `requestAnimationFrame` for animations, batch DOM changes, avoid layout thrashing by reading then writing DOM properties, and leverage GPU acceleration with `transform` and `opacity`.",
+      "after": "At 60 frames per second the browser has 16ms to produce each frame, and it has to fit the whole pipeline into that window: Style (which CSS rules apply) → Layout (sizes and positions) → Paint (fill in pixels) → Composite (glue the layers together). Miss the budget and the frame is dropped, which the user sees as stutter.\n\nFour things keep you inside it. Schedule visual work with `requestAnimationFrame`, so it runs once at the start of a frame instead of at a random moment. Batch DOM writes together instead of interleaving them with reads. Avoid layout thrashing: read all the layout properties you need first, then do all the writes — alternating read/write forces the browser to recompute layout on every single read. And animate only `transform` and `opacity`, because those two skip Layout and Paint entirely and run on the GPU."
+    },
+    {
+      "file": "content/quiz/web-performance.json",
+      "rubric": "A",
+      "quote": "WebP, потому что он обеспечивает превосходное сжатие и поддерживается всеми современными браузерами, что идеально для фотографий",
+      "problem": "quiz-9's key says WebP gives the best compression for photographs. quiz-5 in the same file has the key 'AVIF обеспечивает лучшее сжатие', quiz-15's explanation says 'AVIF еще лучше', and article 08 gives the numbers: 'WebP экономит ~30%, AVIF ~50% против JPEG'. Three items in one 20-item quiz teach a reader mutually exclusive answers to the same question. Separately: not one of the 20 quiz items states a good value for any metric — no 2.5s, no 200ms, no 0.1 appears anywhere in the file, even though 12 items are about LCP/INP/CLS/FID.",
+      "before": "WebP, потому что он обеспечивает превосходное сжатие и поддерживается всеми современными браузерами, что идеально для фотографий",
+      "after": "WebP: примерно на 30% меньше JPEG при том же качестве и поддерживается всеми современными браузерами. AVIF сжимает ещё сильнее (~50%), но требует фолбэка, поэтому WebP — безопасный дефолт для фотографий"
+    },
+    {
+      "file": "content/topics/web-performance/ru/08-web-performance-interview-questions.md",
+      "rubric": "A",
+      "quote": "**INP (Interaction to Next Paint):** 75-й перцентиль задержек всех взаимодействий (клик, тап, нажатие клавиши) за время посещения страницы — от ввода пользователя до отрисовки следующего кадра.",
+      "problem": "Line 17, and the identical claim in en/08 line 17 and in the answer to question 2. Article 01 (both locales) says «INP = 98-й перцентиль всех взаимодействий», which is the correct within-page aggregation; the 75th percentile is what CrUX reports across users, and article 01 says that too, in a different place. A reader who opens the two files in either order gets two different definitions of the same number and no way to tell which is which.",
+      "before": "**INP (Interaction to Next Paint):** 75-й перцентиль задержек всех взаимодействий (клик, тап, нажатие клавиши) за время посещения страницы — от ввода пользователя до отрисовки следующего кадра.",
+      "after": "**INP (Interaction to Next Paint):** задержка от действия пользователя (клик, тап, нажатие клавиши) до отрисовки следующего кадра. Внутри одного визита берётся почти худшее взаимодействие — 98-й перцентиль. Затем по всем пользователям сайта берётся 75-й перцентиль этих значений — именно это число показывает CrUX и Search Console."
+    },
+    {
+      "file": "content/topics/web-performance/ru/02-performance-metrics.md",
+      "rubric": "A",
+      "quote": "Core Web Vitals (LCP, CLS, INP) отвечают на вопрос \"как ощущает страницу пользователь\".",
+      "problem": "The very first sentence of the article uses three acronyms that are never expanded anywhere in this file. Same in en/02. This is the zone-wide pattern: only 2 of the 16 articles (01 and 08) expand every metric acronym they use. Articles 03-07 use LCP, CLS, INP, TTFB, FCP, TTI or TBT with no expansion at all, and none of them ever tells the reader what a good value is — thresholds exist only in 01, 02 and 08. Someone landing on 05-image-optimization.md from search reads «влияют на три метрики: LCP, CLS, трафик» and has to leave the site to find out what those letters mean and whether their number is good.",
+      "before": "Core Web Vitals (LCP, CLS, INP) отвечают на вопрос \"как ощущает страницу пользователь\".",
+      "after": "Core Web Vitals — это три метрики, которыми Google измеряет ощущения пользователя от страницы: LCP (Largest Contentful Paint, «когда появился главный контент», хорошо — до 2.5 с), CLS (Cumulative Layout Shift, «насколько прыгает вёрстка», хорошо — до 0.1) и INP (Interaction to Next Paint, «как быстро страница отвечает на клик», хорошо — до 200 мс)."
+    },
+    {
+      "file": "content/questions/web-performance.json",
+      "rubric": "F",
+      "quote": "A full strategy has three independent layers, and skipping any one of them leaves easy wins on the table.",
+      "problem": "q-4's opening sentence. 'Leaves easy wins on the table' is a poker idiom a B1-B2 reader will not parse, and it is the lead sentence, so the reader stalls before the answer starts. The EN bank is systematically harder than the RU one in exactly this way: 60.6% of EN sentences are over-limit vs 53.3% of RU, and the idioms are EN-only — 'it's not free insurance, it's a priority override that needs to be earned' (q-2), 'these aren't hard physics' (q-15), 'a vendor can ship a regression that tanks your INP' (q-17), 'chatty, CPU-heavy third-party code' (q-17), 'spottier encoder tooling' (q-4), 'one of the two hard problems in CS' (article 07).",
+      "before": "A full strategy has three independent layers, and skipping any one of them leaves easy wins on the table.",
+      "after": "A full strategy has three independent layers. Skip any one of them and you lose a large, cheap improvement for no reason."
+    },
+    {
+      "file": "content/topics/web-performance/en/03-resource-loading.md",
+      "rubric": "B",
+      "quote": "- **\"fetchpriority=\"high\" is the same as preload\"** — they're different things. `preload` says \"download this resource now, regardless of whether you'll encounter it in the document.\" `fetchpriority` says \"when you download this already-known resource, do it at this priority.\" `preload` changes when discovery happens; `fetchpriority` changes the priority of a resource the browser already knows about.",
+      "problem": "Line 439. 55 words in one bullet, built as quote-inside-quote-inside-bullet with three nested levels of punctuation, and it ends by restating the same contrast a second time. The RU version of the same bullet is 46 words with the same structure. Every article ends with a «Типичные ошибки на интервью» list built this way, and these bullets are consistently the longest sentences in each file — the one place where the otherwise short-sentence style of the articles breaks down.",
+      "before": "`preload` says \"download this resource now, regardless of whether you'll encounter it in the document.\" `fetchpriority` says \"when you download this already-known resource, do it at this priority.\" `preload` changes when discovery happens; `fetchpriority` changes the priority of a resource the browser already knows about.",
+      "after": "They answer different questions. `preload` answers *when*: start downloading this file now, even if the browser has not met it in the document yet. `fetchpriority` answers *how urgently*: the browser already knows about this file, so put it higher or lower in the queue."
+    },
+    {
+      "file": "content/topics/web-performance/ru/06-rendering-performance.md",
+      "rubric": "G",
+      "quote": "  ✅ \"Layout Shift Regions\" — синие прямоугольники при CLS\n     → видно WHERE происходят сдвиги",
+      "problem": "Line 511-512. An untranslated English word left inside a Russian sentence — the reader hits it mid-line and stops. Part of a small cluster of RU-only slips that a proofreader would catch: ru/01 line 77 «нет CDK» (should be CDN, EN says 'no CDN'), ru/03 line 20 «браузер ЕЩЁНЕ знает» (missing space), ru/07 line 531 «кэш-буcтинга» (Latin c inside a Cyrillic word), ru/08 line 43 «перерасчитывается»/«перерасчитывает» (should be «пересчитывается»). Separately, 7 of the 8 RU articles keep an English H1 («# Rendering Performance», «# Caching Strategies», «# Image Optimization», …) while all their section headings are Russian.",
+      "before": "     → видно WHERE происходят сдвиги",
+      "after": "     → видно, ГДЕ именно происходят сдвиги"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/web-performance/ru/01-core-web-vitals.md": ["SEO", "UX", "CDN", "TTFB", "TTI", "CrUX"],
+    "content/topics/web-performance/en/01-core-web-vitals.md": ["SEO", "UX", "CDN", "TTFB", "TTI", "CrUX"],
+    "content/topics/web-performance/ru/02-performance-metrics.md": ["LCP", "CLS", "INP", "CPU", "SVG", "RTT", "TTL", "SSG"],
+    "content/topics/web-performance/en/02-performance-metrics.md": ["LCP", "CLS", "INP", "CPU", "SVG", "RTT", "TTL", "SSG"],
+    "content/topics/web-performance/ru/03-resource-loading.md": ["LCP", "CLS", "TTFB", "FCP", "TCP", "TLS", "RTT", "CDN", "ES", "CSSOM", "CORS"],
+    "content/topics/web-performance/en/03-resource-loading.md": ["LCP", "CLS", "TTFB", "FCP", "TCP", "TLS", "RTT", "CDN", "ES", "CSSOM", "CORS"],
+    "content/topics/web-performance/ru/04-javascript-performance.md": ["LCP", "INP", "TTI", "TBT", "CPU", "ES", "V8", "CJS", "SPA"],
+    "content/topics/web-performance/en/04-javascript-performance.md": ["LCP", "INP", "TTI", "TBT", "CPU", "ES", "V8", "CJS", "OS", "SPA"],
+    "content/topics/web-performance/ru/05-image-optimization.md": ["CLS", "TTFB", "CDN", "CMS", "DPR", "JPEG", "PNG", "AVIF", "WebP"],
+    "content/topics/web-performance/en/05-image-optimization.md": ["CLS", "TTFB", "CDN", "CMS", "DPR", "JPEG", "PNG", "AVIF", "WebP"],
+    "content/topics/web-performance/ru/06-rendering-performance.md": ["INP", "CLS", "TBT", "CPU", "GPU", "DOM", "FPS"],
+    "content/topics/web-performance/en/06-rendering-performance.md": ["INP", "CLS", "TBT", "CPU", "GPU", "DOM", "FPS"],
+    "content/topics/web-performance/ru/07-caching-strategies.md": ["LCP", "TTFB", "FCP", "CDN", "CS", "SW", "TTL", "PWA"],
+    "content/topics/web-performance/en/07-caching-strategies.md": ["LCP", "TTFB", "FCP", "CDN", "CS", "SW", "TTL", "PWA"],
+    "content/topics/web-performance/ru/08-web-performance-interview-questions.md": ["BFF", "CSSOM", "CrUX", "CWV", "DNS", "DOM", "ES", "ESM", "FOUT", "FOIT", "HOL", "QUIC", "SSG", "SSR", "SVG", "TCP", "TLS", "UDP", "XHR", "AVIF", "JPEG", "WebP", "CDN", "CPU", "GPU"],
+    "content/topics/web-performance/en/08-web-performance-interview-questions.md": ["BFF", "CSSOM", "CrUX", "CWV", "DNS", "DOM", "ES", "ESM", "FOUT", "FOIT", "HOL", "QUIC", "SSG", "SSR", "SVG", "TCP", "TLS", "UDP", "XHR", "AVIF", "JPEG", "WebP", "CDN", "CPU", "GPU"],
+    "content/questions/web-performance.json#ru": ["DOM", "INP", "LCP", "CLS", "FCP", "FID", "CDN", "CPU", "UI", "UX", "TCP", "TLS", "DNS", "RTT", "UDP", "HOL", "HPACK", "XHR", "SSR", "SSG", "GPU", "CI", "ОС", "AVIF", "JPEG", "PNG", "WebP", "RUM", "WASM", "LoAF", "SWR"],
+    "content/questions/web-performance.json#en": ["DOM", "INP", "LCP", "CLS", "FCP", "FID", "CDN", "CPU", "UI", "TCP", "TLS", "DNS", "RTT", "UDP", "HOL", "HPACK", "XHR", "SSR", "SSG", "GPU", "CI", "OS", "RAM", "AVIF", "JPEG", "PNG", "WebP", "RUM", "WASM", "LoAF", "SWR"],
+    "content/quiz/web-performance.json#ru": ["LCP", "INP", "CLS", "FID", "JPEG", "PNG", "WebP", "AVIF", "SVG", "GIF", "DOM"],
+    "content/quiz/web-performance.json#en": ["LCP", "INP", "CLS", "FID", "JPEG", "PNG", "WebP", "AVIF", "DOM"]
+  },
+  "patterns": [
+    "Metric acronyms are treated as if the reader already knows them, and almost never come with a number. Only 2 of the 16 articles (01-core-web-vitals and 08-interview-questions) expand every metric acronym they use; articles 02-07 use LCP/CLS/INP/TTFB/FCP/TTI/TBT with no expansion anywhere in the file, and only 01, 02 and 08 ever state a good value. In the question bank only 1 of the 4 entries that use LCP expands it, 1 of 5 for INP, 1 of 3 for CLS, 0 of 1 for FCP and FID. In the quiz bank, all 20 items go by without a single threshold: the strings 2.5s, 200ms and 0.1 do not appear in the file at all, even though 12 items are about LCP/INP/CLS/FID. Entries are read standalone, so 'it is expanded in article 01' does not help anyone.",
+    "The question bank writes one mega-sentence per idea instead of one sentence per fact. Every answer in q-1..q-20 is exactly three prose paragraphs, and each paragraph is one or two sentences of 70-160 words that chain a definition, two or three sub-cases, a caveat and a recommendation with dashes and semicolons (q-12: 158 words, q-2: 137, q-13: 116, q-19: 95). 60.6% of EN sentences and 53.3% of RU sentences are over the length threshold. The content is right and the depth should stay — the fix is purely mechanical: split at the dashes and semicolons that are already there.",
+    "The quiz bank was generated, never edited, and its explanations are structurally unusable. correctIndex is 0 in 18 of 20 items; the correct option is the longest option in 17 of 20 (EN) and 17 of 20 (RU), 15 of 20 in both locales at once — a reader can score well on this quiz without knowing any web performance. 10 explanation strings (5 items x 2 locales) refer to «Вариант 2»/'Option 2', which the runtime shuffle makes meaningless. 4 topics account for 14 of the 20 items (CLS x4, preload/prefetch x4, image formats x4, code splitting x2), and quiz-1 and quiz-11 are the same question with the same four options.",
+    "Articles open by warming up instead of answering, then recover. 03-resource-loading and 06-rendering-performance both start with «Прежде чем говорить о… нужно понять…», and each article's final «Типичные ошибки на интервью» section is where all the over-long sentences in that file live (the 55-word fetchpriority bullet in en/03, 50-word content-visibility bullet in en/06, 54-word cache-invalidation bullet in en/07). Everything between those two ends — the body of every article — is the strongest writing in the zone: short sentences, an ASCII diagram or a ✅/❌ code pair after every single new idea."
+  ],
+  "notes": "Quiz numbers requested: (a) longest option is correct in 17/20 EN and 17/20 RU, 15/20 in both locales simultaneously; (b) correctIndex distribution 0:18, 1:2, 2:0, 3:0; (c) 5 explanations contradict their own key, the articles or the bank — quiz-14 (JS vs CSS render-blocking, contradicts articles 02 and 08), quiz-9 (WebP as best compression, contradicts quiz-5, quiz-15 and article 08's ~30%/~50% figures), quiz-11 (FID described in present tense as a live metric, contradicts quiz-1, quiz-4 and article 01), quiz-16 (says options 2 and 3 both confuse CLS with another metric; only one does), quiz-2 ('ensures critical resources load first without blocking other assets', contradicts article 03 and bank q-2, which stress that preload competes for bandwidth and displaces other resources); (d) no unedited generation artifacts — no 'Wait, let me recalculate' or 'I apologize' strings in either locale — but 10 explanation strings do carry «Вариант N»/'Option N' references that the runtime shuffle breaks. Non-readability bugs worth a separate ticket: bank q-25 lists FID as a current Core Web Vital, which article 01 explicitly calls «признак несвежих знаний»; articles 01 and 08 disagree on whether INP is the 98th or 75th percentile; ru/01 line 77 «нет CDK» should be CDN; ru/03 line 20 «ЕЩЁНЕ»; ru/06 line 512 «видно WHERE происходят сдвиги»; ru/06 line 374 observes 'layout-shift' entries while the code checks entry.name === 'layout'; ru/04 line 191-200 declares const api twice and wraps a default export the worker snippet never creates."
+}

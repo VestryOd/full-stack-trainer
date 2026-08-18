@@ -1,0 +1,105 @@
+{
+  "zone": "ddd",
+  "kinds": ["question-bank"],
+  "verdict": "targeted-fixes",
+  "files": [
+    { "file": "content/questions/ddd.json", "locale": "en",
+      "scores": { "A": 3, "B": 2, "C": 4, "D": 3, "E": 3, "F": 3, "G": null } },
+    { "file": "content/questions/ddd.json", "locale": "ru",
+      "scores": { "A": 3, "B": 3, "C": 4, "D": 3, "E": 3, "F": null, "G": 4 } }
+  ],
+  "averages": { "A": 3.0, "B": 2.5, "C": 4.0, "D": 3.0, "E": 3.0, "F": 3.0, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "B",
+      "quote": "In a microservices architecture, this maps roughly to: Partnership for services owned by tightly collaborating squads working toward a shared feature; Customer-Supplier for a platform/infra service versus the teams consuming it; Conformist when consuming a widely-used internal service you have no influence over (e.g. a company-wide auth service used as-is); ACL specifically at the edges where you integrate external or legacy systems you don't control and don't want polluting your model; Separate Ways when two services could technically share a small utility but the coordination cost of a shared library outweighs the duplication cost.",
+      "problem": "96 words in one sentence — the longest in either of my zones — packing five distinct mappings behind a single colon and four semicolons. The reader has to hold the whole list open in working memory to the end. It is also the moment the reader most wants to scan, since it is the practical payoff of the five patterns defined above it. `ACL` is used here as a bare acronym even though the surrounding bullets spell out 'Anticorruption Layer'. The ru version is the same shape at 87 words.",
+      "before": "In a microservices architecture, this maps roughly to: Partnership for services owned by tightly collaborating squads working toward a shared feature; Customer-Supplier for a platform/infra service versus the teams consuming it; Conformist when consuming a widely-used internal service you have no influence over (e.g. a company-wide auth service used as-is); ACL specifically at the edges where you integrate external or legacy systems you don't control and don't want polluting your model; Separate Ways when two services could technically share a small utility but the coordination cost of a shared library outweighs the duplication cost.",
+      "after": "In a microservices architecture these map roughly as follows.\n\n- **Partnership** — services owned by tightly collaborating squads working on one shared feature.\n- **Customer-Supplier** — a platform or infrastructure service versus the teams consuming it.\n- **Conformist** — a widely used internal service you have no influence over, such as a company-wide auth service you take as-is.\n- **Anticorruption Layer** — the edges where you integrate external or legacy systems you don't control and don't want polluting your model.\n- **Separate Ways** — two services could share a small utility, but coordinating a shared library costs more than duplicating it."
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "D",
+      "quote": "The commonly cited trade-off — \"DDD adds ceremony, skip it for simple CRUD\" — is true but shallow. The costs that actually bite a team are less obvious and show up well after the initial modeling:",
+      "problem": "ddd-q-13 then runs five paragraphs / 308 words (ru: 274) of pure prose — Team throughput cost, Aggregate boundary lock-in, Translation overhead compounds, plus a four-item bullet list of where DDD is a poor fit — before any code appears. It is the only theory wall in the file, and it is the one entry where the reader has nothing concrete to hold on to: three abstract cost categories stack up in a row, each introduced by a bolded label and immediately followed by another. The code that finally arrives (`applyPayment` / `saveAuditLogEntry`) illustrates only the last bullet.",
+      "before": "Five consecutive prose paragraphs (Team throughput cost / Aggregate boundary lock-in / Translation overhead compounds / 'Where DDD is a poor fit' list) with no code, diagram or table.",
+      "after": "Keep all three cost categories and every claim, but break the wall: move the existing `applyPayment` vs `saveAuditLogEntry` pair up to sit directly under 'Team throughput cost' (it shows exactly the friction being described — an invariant worth the ceremony next to a record insert that isn't), and give 'Aggregate boundary lock-in' a two-line snippet of the boundary another service depends on. The 'poor fit' bullet list then closes the section instead of extending the wall."
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "A",
+      "quote": "Instead of letting any part of the codebase reach in and modify individual pieces independently, DDD says you treat the whole cluster as one transactional boundary.",
+      "problem": "ddd-q-3's question is 'What is an Aggregate and what role does the Aggregate Root play in it?' — it never says Domain-Driven Design, and neither does the answer. `DDD` appears cold in the second sentence. Because entries are read one at a time out of order, a reader landing here first has no way to know what the letters mean, and this bank has no articles behind it to look them up in. The same cold use recurs in q-5, q-6, q-11, q-12, q-13, q-14. Other bare acronyms in the file: `ORM` (q-4, q-8), `SQL` (q-4, q-11), `DRY` (q-2), `DAO` (expanded in q-4's question only), `DTO` (q-7), `ACL` (expanded in q-7, bare in q-9 and q-13), `I/O` (q-10), and in ru `БД` in five entries.",
+      "before": "Instead of letting any part of the codebase reach in and modify individual pieces independently, DDD says you treat the whole cluster as one transactional boundary.",
+      "after": "Instead of letting any part of the codebase reach in and modify individual pieces independently, Domain-Driven Design (DDD) says you treat the whole cluster as one transactional boundary."
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "E",
+      "quote": "class OrderSummaryProjector {\n  async onOrderPlaced(event: OrderPlaced): Promise<void> {\n    const customer = await this.customers.findById(event.customerId);\n    await this.readDb.upsert(\"order_summaries\", {",
+      "problem": "The class has no constructor, so `this.customers` and `this.readDb` come from nowhere — a reader trying to follow where the projector gets its read database and its customer repository finds no answer in the snippet. Every other service class in this same file (`PostgresOrderRepository`, `TransferMoneyUseCase`, `PlaceOrderUseCase`, `LegacyPaymentGateway`) does declare its dependencies via `constructor(private ...)`, so this one entry breaks the file's own convention exactly where the rubric asks for self-containment. Same class of slip in q-5, where `Order.place()` assigns `this.status` on a class that declares only `events`.",
+      "before": "class OrderSummaryProjector {\n  async onOrderPlaced(event: OrderPlaced): Promise<void> {\n    const customer = await this.customers.findById(event.customerId);",
+      "after": "class OrderSummaryProjector {\n  constructor(\n    private customers: CustomerRepository,\n    private readDb: ReadDatabase,\n  ) {}\n\n  async onOrderPlaced(event: OrderPlaced): Promise<void> {\n    const customer = await this.customers.findById(event.customerId);"
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "B",
+      "quote": "Enforcing a rich model at the project level takes more than writing classes with methods — you generally need to make the anemic shortcut structurally hard to reach: keep fields `private`, expose only intention-revealing methods, and if you use an ORM, use a mapping layer (or something like TypeORM's embeddables, or a manual `toPersistence`/`fromPersistence` pair) so persistence concerns never force you to expose public setters just to satisfy the ORM's needs.",
+      "problem": "71 words, one sentence, carrying an em-dash contrast, a colon-list of three tactics, a nested parenthetical with two alternatives inside it, and a trailing purpose clause. `ORM` is never expanded. This is the practical how-to of the whole entry — the sentence a reader is most likely to want to act on — and it is the hardest one in the entry to parse. ddd-q-8 has three sentences over 50 words; 49.4% of all en sentences in the file exceed 25 words, against 30.1% in ru, so the English is noticeably harder than the Russian for identical content.",
+      "before": "Enforcing a rich model at the project level takes more than writing classes with methods — you generally need to make the anemic shortcut structurally hard to reach: keep fields `private`, expose only intention-revealing methods, and if you use an ORM, use a mapping layer (or something like TypeORM's embeddables, or a manual `toPersistence`/`fromPersistence` pair) so persistence concerns never force you to expose public setters just to satisfy the ORM's needs.",
+      "after": "Enforcing a rich model across a project takes more than writing classes with methods. You have to make the anemic shortcut structurally hard to reach. Three tactics do most of the work: keep fields `private`; expose only intention-revealing methods; and put a mapping layer between the domain and your object-relational mapper (ORM). For the mapping layer, use something like TypeORM's embeddables, or a manual `toPersistence`/`fromPersistence` pair. Without it, the ORM's needs push you into public setters — the exact hole the design was meant to close."
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "C",
+      "quote": "At senior level, the interesting part isn't just \"what's an aggregate\" — it's how you lay out the module so the boundaries actually enforce the rules instead of just being a folder convention.",
+      "problem": "The reader asked 'How would you structure a bounded context for an Order domain?'. The first sentence does not structure anything — it spends its words on meta-commentary about what is interesting at senior level and what the question is NOT about. The actual answer (domain / application / infrastructure, with the domain layer importable with zero I/O) starts in sentence two. ddd-q-13 opens the same way ('The commonly cited trade-off ... is true but shallow'), and ddd-q-15 nearly so. Everywhere else in this file the lead is genuinely pyramid-shaped — ddd-q-1's 'The split comes down to how you compare two objects and whether you need to track one of them over time' is a model of it — which makes these three the odd ones out.",
+      "before": "At senior level, the interesting part isn't just \"what's an aggregate\" — it's how you lay out the module so the boundaries actually enforce the rules instead of just being a folder convention.",
+      "after": "Split the context into three layers — domain, application, infrastructure — and make the domain layer importable with zero I/O and zero framework dependencies. That constraint is what turns the folder names into a real boundary instead of a convention: if you can `import` a database driver inside `Order.ts`, the boundary has already failed."
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "E",
+      "quote": "  get total(): Money {\n    return this.lines.reduce((sum, line) => sum.add(line.subtotal), Money.zero());\n  }",
+      "problem": "`Money.zero()` is called with no currency in ddd-q-3 and ddd-q-8, but ddd-q-10 stops to make a point of the opposite: 'Note `Money` is a Value Object created with an explicit currency (`Money.zero(\"USD\")`) rather than a bare number, specifically so arithmetic across mismatched currencies fails loudly.' A reader who does q-10 after q-3 sees the entry contradict the earlier code samples' own invariant. Entries are read out of order, so neither one can rely on the other to fix it.",
+      "before": "return this.lines.reduce((sum, line) => sum.add(line.subtotal), Money.zero());",
+      "after": "return this.lines.reduce((sum, line) => sum.add(line.subtotal), Money.zero(this.currency)); // a Money always carries its currency, so a mismatched add() throws instead of silently summing"
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "F",
+      "quote": "The anemic style looks appealing at first because it maps cleanly onto database tables and feels easy to reason about procedurally, but it quietly defeats the purpose of object-oriented domain modeling: nothing stops two different services from mutating the same object in conflicting, invariant-breaking ways, because the object never protected its own consistency in the first place.",
+      "problem": "57 words with three subordinate clauses and two stacked modifiers ('conflicting, invariant-breaking ways'). The register is the file's general problem for a B1-B2 reader: 'quietly defeats', 'costs that actually bite a team' (q-13), 'the sharp edges' (q-14 heading), 'calcifies a wrong model' (q-13), 'power dynamics' (q-9), 'happy path' (q-15, unexplained). None of these are technical terms the reader can look up — they are idiomatic English that has to be guessed from context. The ru rendering of the same passage is both shorter and plainer.",
+      "before": "The anemic style looks appealing at first because it maps cleanly onto database tables and feels easy to reason about procedurally, but it quietly defeats the purpose of object-oriented domain modeling: nothing stops two different services from mutating the same object in conflicting, invariant-breaking ways, because the object never protected its own consistency in the first place.",
+      "after": "The anemic style looks appealing at first: it maps cleanly onto database tables, and step-by-step procedural code is easy to follow. But it quietly removes the point of object-oriented domain modeling. Nothing stops two different services from changing the same object in ways that conflict and break its invariants — the object never protected its own consistency to begin with."
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "E",
+      "quote": "  async execute(fromId: string, toId: string, amount: Money): Promise<void> {\n    const from = await this.accounts.findById(fromId);\n    const to = await this.accounts.findById(toId);",
+      "problem": "ddd-q-4 establishes the repository contract as `findById(id: string): Promise<Order | null>` — nullable by design, and its Common pitfall is specifically about repositories leaking the wrong shape. ddd-q-6 then uses `findById` results directly with no null check, and passes them into `transferService.transfer(from, to, amount)` which is typed to take non-null `Account`. Under `strict` TypeScript this would not compile. Since the two entries are read independently, the reader has no way to reconcile which contract is the intended one.",
+      "before": "const from = await this.accounts.findById(fromId);\nconst to = await this.accounts.findById(toId);\nthis.transferService.transfer(from, to, amount);",
+      "after": "const from = await this.accounts.findById(fromId);\nconst to = await this.accounts.findById(toId);\nif (!from || !to) throw new AccountNotFoundError(); // findById returns null when missing\nthis.transferService.transfer(from, to, amount);"
+    },
+    {
+      "file": "content/questions/ddd.json",
+      "rubric": "G",
+      "quote": "### Trade-offs DDD — глубже очевидного",
+      "problem": "Mixed-language heading: an English plural noun in Latin script, an acronym, then a Russian phrase. The ru file does this in several headings — «Entity vs Value Object» (q-1), «Anemic vs Rich Domain Model» (q-8), «Bounded context платежей — обработка сбоев в деталях» (q-15) — where the English `vs` and the untranslated `Trade-offs` are the parts that are NOT terms of art and could simply be Russian. The DDD term names themselves (Entity, Value Object, Bounded Context) are correctly left untranslated and should stay that way; the connective tissue around them should not be English. This is the only real G defect in an otherwise genuinely alive Russian text.",
+      "before": "### Trade-offs DDD — глубже очевидного",
+      "after": "### Компромиссы DDD — глубже очевидного"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/ddd.json#en": ["DDD", "ORM", "SQL", "DRY", "DTO", "ACL", "I/O", "UI", "CRUD"],
+    "content/questions/ddd.json#ru": ["DDD", "БД", "ORM", "SQL", "DRY", "DAO", "DTO", "I/O", "UI", "CRUD"]
+  },
+  "patterns": [
+    "This is the best-written bank of the two zones I audited and the fixes are genuinely local — but it inherits one habit from the whole site: the load-bearing practical sentence of an entry is always the longest one in it. ddd-q-9's five-way pattern mapping is 96 words, ddd-q-8's 'how to actually enforce a rich model' is 71 words, ddd-q-12's Common pitfall is 53. The definitional sentences are short and clear; the sentence a reader would act on is the one they cannot parse. 49.4% of en sentences exceed 25 words against 30.1% ru, so this hits the English reader roughly 1.6x as hard. Nearly every one of these long sentences is a list wearing prose clothing — splitting at the semicolons into a bullet list preserves every claim and costs nothing.",
+    "The Russian is markedly better than the English here, and much better than the Russian in the solid-grasp bank. It reads as written rather than translated («издержки, которые реально бьют по команде», «размазан по обработчикам», «списание прошло, а резервирование склада упало»). The only recurring G defect is mixed-language headings, where the connective words rather than the DDD terms are left in English — «Trade-offs DDD — глубже очевидного», «Anemic vs Rich Domain Model», «Entity vs Value Object». The term names should stay untranslated; the `vs` and the `Trade-offs` should not.",
+    "Code samples drift out of sync with each other because entries are written standalone but share a running domain (Order / Money / OrderRepository). `Money.zero()` in q-3 and q-8 contradicts the invariant q-10 explicitly stops to teach (`Money.zero(\"USD\")`); `findById` is nullable in q-4 and treated as non-null in q-6; `OrderSummaryProjector` (q-12) and `Order` (q-5) reference `this.` fields that no constructor declares, breaking a `constructor(private ...)` convention every other class in the file follows. Since the reader meets these entries in arbitrary order, each snippet has to hold the shared contract on its own.",
+    "Only one entry in fifteen warms up before answering — but it is a consistent tell of the 'senior' framing. ddd-q-10 opens 'At senior level, the interesting part isn't just \"what's an aggregate\"...', ddd-q-13 opens by relaying a trade-off in order to call it shallow, ddd-q-14's heading is 'the Sharp Edges'. Elsewhere the leads are exemplary pyramid — ddd-q-1's 'The split comes down to how you compare two objects and whether you need to track one of them over time' answers before it defines anything. The fix is to delete the meta-clause and promote sentence two."
+  ],
+  "notes": "The ddd bank has no articles and, unlike solid-grasp, no theory anywhere else on the site either — grep finds no ddd topic or course. That makes the cold `DDD` in q-3/q-5/q-6/q-11..q-15 and the bare `ACL` in q-9/q-13 unrecoverable for the reader: there is nothing to click through to. If article coverage is not planned, first-use expansion inside each entry is not a nicety here, it is the only mechanism available. Content quality itself is high and needs no depth changes: the 15 questions are well-sequenced (6 middle / 6 senior / 3 advanced), internally consistent on doctrine, and go past the usual tutorial level on Event Sourcing versioning/snapshotting/replay determinism (q-14) and saga idempotency (q-15)."
+}

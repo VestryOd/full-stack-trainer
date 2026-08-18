@@ -1,0 +1,143 @@
+{
+  "zone": "python",
+  "kinds": ["question-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/python.json#ru",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 2, "C": 2, "D": 4, "E": 5, "F": null, "G": 4 }
+    },
+    {
+      "file": "content/questions/python.json#en",
+      "locale": "en",
+      "scores": { "A": 3, "B": 2, "C": 2, "D": 4, "E": 4, "F": 2, "G": null }
+    }
+  ],
+  "averages": { "A": 3.0, "B": 2.0, "C": 2.0, "D": 4.0, "E": 4.5, "F": 2.0, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/python.json#en",
+      "rubric": "B",
+      "quote": "**Common pitfall:** Using `is` to compare integers or strings for equality (`if x is 1000:` or `if name is \"admin\":`) based on manual testing that happened to \"pass\" because the tested values fell inside the small-int cache or were interned literals — this is exactly the kind of bug that only shows up once a value crosses outside the cached range (or is constructed dynamically instead of as a literal) in production, since `is` checks object identity, and `==` (which correctly checks value equality via `__eq__`) is what should be used for value comparisons in essentially all cases except the singletons `None`, `True`, and `False`.",
+      "problem": "python-q-98. The longest sentence in the bank: 103 words in ONE sentence, carrying five separate facts joined by a colon-parenthesis-em-dash-comma chain. This is not an outlier but the extreme of a template: 89 of 98 EN answers close with a single-sentence 'Common pitfall' paragraph (median 60 words). A phone reader has to hold four clauses in memory before the sentence resolves, and the actual advice ('use `==`') is the last thing on screen.",
+      "before": "**Common pitfall:** Using `is` to compare integers or strings for equality (`if x is 1000:` or `if name is \"admin\":`) based on manual testing that happened to \"pass\" because the tested values fell inside the small-int cache or were interned literals — this is exactly the kind of bug that only shows up once a value crosses outside the cached range (or is constructed dynamically instead of as a literal) in production, since `is` checks object identity, and `==` (which correctly checks value equality via `__eq__`) is what should be used for value comparisons in essentially all cases except the singletons `None`, `True`, and `False`.",
+      "after": "**Common pitfall:** Using `is` instead of `==` to compare integers or strings — `if x is 1000:`, `if name is \"admin\":`. Such code often passes manual testing, because the tested values happened to fall inside the small-int cache or to be interned literals. In production it breaks as soon as a value crosses outside the cached range, or is built dynamically instead of written as a literal. `is` checks object identity; `==` checks value equality via `__eq__`. Use `==` for every value comparison. The only exceptions are the singletons `None`, `True` and `False`."
+    },
+    {
+      "file": "content/questions/python.json#ru",
+      "rubric": "C",
+      "quote": "По умолчанию каждый экземпляр несёт собственный `__dict__` — словарь на экземпляр, хранящий его атрибуты, что даёт гибкость (добавить любой атрибут в любой момент) ценой накладных расходов по памяти (у словаря значительные фиксированные накладные расходы на экземпляр, помимо самих значений атрибутов).",
+      "problem": "python-q-55. The question is «Что делает `__slots__`?». The first sentence — 63 words, two nested parentheticals — is about the *default* `__dict__` behaviour and never mentions `__slots__`. The reader must finish a long background sentence before the answer starts. This is the bank's most common C failure: the lead describes the problem or the 'before' state, and the thing the question asked about arrives in sentence two or paragraph two.",
+      "before": "По умолчанию каждый экземпляр несёт собственный `__dict__` — словарь на экземпляр, хранящий его атрибуты, что даёт гибкость (добавить любой атрибут в любой момент) ценой накладных расходов по памяти (у словаря значительные фиксированные накладные расходы на экземпляр, помимо самих значений атрибутов). `__slots__` говорит Python не создавать `__dict__` для экземпляров класса, а вместо этого выделить фиксированный, быстрый слот для каждого именованного атрибута, реализованный внутренне через дескрипторы.",
+      "after": "`__slots__` говорит Python не создавать `__dict__` для экземпляров класса. Вместо словаря он выделяет фиксированный быстрый слот под каждый перечисленный атрибут; внутри это реализовано через дескрипторы.\n\nПо умолчанию каждый экземпляр несёт собственный `__dict__` — словарь, хранящий его атрибуты. Это даёт гибкость: любой атрибут можно добавить в любой момент. Цена — память: у словаря есть значительные фиксированные накладные расходы на каждый экземпляр, помимо самих значений атрибутов."
+    },
+    {
+      "file": "content/questions/python.json#en",
+      "rubric": "C",
+      "quote": "A single bytecode instruction like `BINARY_ADD` has to handle every possible combination of operand types — two ints, two floats, a string and an int (error), two custom objects with `__add__` — and the generic implementation has to check for all of these possibilities on every single execution, even though in real code, a given call site (a specific line of bytecode) usually sees the **same types over and over again**.",
+      "problem": "python-q-97. The question asks what the specializing adaptive interpreter *is*. This 72-word opening paragraph explains only why one would want it; the answer ('the interpreter observes each instruction and rewrites it to a specialized variant') does not appear until paragraph two. On a phone that is a full screen of setup before any answer. Same shape in the `#ru` version.",
+      "before": "A single bytecode instruction like `BINARY_ADD` has to handle every possible combination of operand types — two ints, two floats, a string and an int (error), two custom objects with `__add__` — and the generic implementation has to check for all of these possibilities on every single execution, even though in real code, a given call site (a specific line of bytecode) usually sees the **same types over and over again**.\n\nStarting in Python 3.11, the interpreter observes each bytecode instruction as it runs, and after it's been executed a few times with the same operand types, it **quietly rewrites that specific instruction** in memory to a specialized, faster variant tailored to those observed types — skipping the generic type-dispatch logic entirely on subsequent runs, as long as the types keep matching.",
+      "after": "Since Python 3.11, the interpreter watches each bytecode instruction as it runs. Once an instruction has executed a few times with the same operand types, the interpreter **quietly rewrites that specific instruction** in memory to a faster variant tailored to those types. On later runs the specialized variant skips the generic type-dispatch logic entirely, as long as the types keep matching.\n\nThis pays off because a generic instruction is expensive. `BINARY_ADD` has to handle every possible combination of operand types — two ints, two floats, a string and an int (error), two custom objects with `__add__` — and it re-checks all of them on every single execution. In real code, a given call site (one specific line of bytecode) usually sees the **same types over and over again**."
+    },
+    {
+      "file": "content/questions/python.json#en",
+      "rubric": "C",
+      "quote": "`abc.ABC` (with `@abstractmethod`) lets you define a class that specifies a required interface without providing a full implementation, and — crucially — **enforces** it: Python refuses to instantiate any subclass that hasn't overridden every abstract method, raising a `TypeError` at instantiation time rather than an `AttributeError` later when the missing method is finally called.",
+      "problem": "python-q-28. The lead does land the answer, but it folds four separate facts (what ABC declares, that it enforces, when the error fires, which error class replaces which) into one 53-word sentence with an interrupting em-dash aside. The rubric's pyramid asks for the essence first and the caveats *after*; here the caveats are inside the essence sentence. This is the bank's second C failure mode and it affects roughly 25 more answers.",
+      "before": "`abc.ABC` (with `@abstractmethod`) lets you define a class that specifies a required interface without providing a full implementation, and — crucially — **enforces** it: Python refuses to instantiate any subclass that hasn't overridden every abstract method, raising a `TypeError` at instantiation time rather than an `AttributeError` later when the missing method is finally called.",
+      "after": "`abc.ABC` with `@abstractmethod` lets you declare a required interface without implementing it — and, unlike a plain class, it **enforces** that interface. Python refuses to create an instance of any subclass that hasn't overridden every abstract method. You get a `TypeError` at instantiation time, instead of an `AttributeError` much later, when the missing method is finally called."
+    },
+    {
+      "file": "content/questions/python.json#ru",
+      "rubric": "B",
+      "quote": "**Частая ловушка:** Считать, что каждая строка внутри `async def`-вызова SQLAlchemy \"по-настоящему асинхронна до самого низа\" и потому свободна от какой-либо стоимости, близкой к блокирующей — само переключение greenlet имеет реальные (обычно небольшие) накладные расходы, и любой ваш собственный синхронный код, подключённый к точкам расширения SQLAlchemy (кастомные типы, слушатели событий), всё ещё выполняется как обычный блокирующий Python внутри этого greenlet, поэтому медленный кастомный хук там всё ещё может добавить задержку, не видимую при простом поиске `await` в вашем собственном коде.",
+      "problem": "python-q-96. 78 words in one sentence, three facts chained with «— и … поэтому …». 94 of 98 RU answers end with exactly this shape (median 53 words, max 96). The reader reaches the consequence only after holding two premises in memory, at the end of an already long answer, on the tier where sentences are longest (advanced: 79% of RU sentences over 28 words, 43 words per sentence).",
+      "before": "**Частая ловушка:** Считать, что каждая строка внутри `async def`-вызова SQLAlchemy \"по-настоящему асинхронна до самого низа\" и потому свободна от какой-либо стоимости, близкой к блокирующей — само переключение greenlet имеет реальные (обычно небольшие) накладные расходы, и любой ваш собственный синхронный код, подключённый к точкам расширения SQLAlchemy (кастомные типы, слушатели событий), всё ещё выполняется как обычный блокирующий Python внутри этого greenlet, поэтому медленный кастомный хук там всё ещё может добавить задержку, не видимую при простом поиске `await` в вашем собственном коде.",
+      "after": "**Частая ловушка:** Считать, что внутри `async def`-вызова SQLAlchemy всё «асинхронно до самого низа» и потому ничего не блокирует. Само переключение greenlet стоит времени — обычно немного, но реально. А ваш синхронный код в точках расширения SQLAlchemy (кастомные типы, слушатели событий) выполняется как обычный блокирующий Python внутри этого greenlet. Медленный кастомный хук добавит задержку, которую не найти, просто поискав `await` в своём коде."
+    },
+    {
+      "file": "content/questions/python.json#en",
+      "rubric": "C",
+      "quote": "Plain `pip` with `requirements.txt` has a well-known gap: `requirements.txt` typically lists only *direct* dependencies (often without exact pinned versions), so two installs on different machines or at different times can silently resolve to different versions of transitive dependencies — there's no single file that locks the *entire* dependency tree to exact versions.",
+      "problem": "python-q-42. The question is 'How do Poetry or uv improve on pip + requirements.txt?'. The 49-word lead answers a different question — what is wrong with pip — and the word 'Poetry' first appears in paragraph two. A reader skimming the first line learns nothing about the tools being asked about.",
+      "before": "Plain `pip` with `requirements.txt` has a well-known gap: `requirements.txt` typically lists only *direct* dependencies (often without exact pinned versions), so two installs on different machines or at different times can silently resolve to different versions of transitive dependencies — there's no single file that locks the *entire* dependency tree to exact versions.",
+      "after": "Poetry and uv add a **lock file** that pins the entire dependency tree — direct and transitive — to exact versions, so the same install is reproducible anywhere.\n\nPlain `pip` with `requirements.txt` has no such file. `requirements.txt` usually lists only *direct* dependencies, often without exact pinned versions. Two installs on different machines, or at different times, can therefore resolve silently to different versions of transitive dependencies."
+    },
+    {
+      "file": "content/questions/python.json#en",
+      "rubric": "A",
+      "quote": "- For **CPU-bound work**, use `loop.run_in_executor` with a `ProcessPoolExecutor` instead, since a thread wouldn't help against the GIL for pure computation.\n- Prefer a properly async library (`aiohttp` instead of `requests`, an async DB driver) when one exists, since it lets the operation actually suspend at the OS level instead of just running on a separate thread.",
+      "problem": "python-q-35 uses five unexplained abbreviations (CPU, OS, DB, ORM, GIL) and never expands any of them. GIL is the load-bearing one: the whole bullet depends on knowing what it is, and the bank *does* expand it — but in python-q-13 and python-q-65, which a shuffled question bank may never show first. 'ORM' is never expanded in any of the 98 answers, in either locale.",
+      "before": "- For **CPU-bound work**, use `loop.run_in_executor` with a `ProcessPoolExecutor` instead, since a thread wouldn't help against the GIL for pure computation.\n- Prefer a properly async library (`aiohttp` instead of `requests`, an async DB driver) when one exists, since it lets the operation actually suspend at the OS level instead of just running on a separate thread.",
+      "after": "- For **CPU-bound work**, use `loop.run_in_executor` with a `ProcessPoolExecutor` instead. A thread would not help here: the GIL (Global Interpreter Lock, the single lock that lets only one thread run Python bytecode at a time) blocks pure computation from running in parallel.\n- Prefer a properly async library when one exists — `aiohttp` instead of `requests`, an async database driver instead of a blocking one. Such a library lets the operation genuinely suspend at the operating-system level, rather than just run on a separate thread."
+    },
+    {
+      "file": "content/questions/python.json#ru",
+      "rubric": "A",
+      "quote": "это обрабатывается отдельным поколенческим сборщиком мусора (модуль `gc`), разбираемым в связанном вопросе.",
+      "problem": "python-q-60. A question bank is read in shuffled order and the cards carry no links, so «разбираемым в связанном вопросе» is a dead pointer: the reader cannot act on it and does not know whether something was withheld. There are 17 such references in RU («в связанном вопросе» ×11, «разбиралось/разбирался/разбиралась» ×14, «в отдельном вопросе» ×2, «в другом вопросе» ×1) and 17 in EN ('covered in a related question' ×11, 'covered in a separate question' ×2, 'as covered' ×4).",
+      "before": "Одного подсчёта ссылок недостаточно, чтобы освободить два объекта, ссылающихся друг на друга (цикл), поскольку счётчик ни у одного из них сам по себе никогда не достигнет нуля; это обрабатывается отдельным поколенческим сборщиком мусора (модуль `gc`), разбираемым в связанном вопросе.",
+      "after": "Одного подсчёта ссылок недостаточно, чтобы освободить два объекта, ссылающихся друг на друга (цикл): счётчик ни у одного из них сам по себе никогда не достигнет нуля. Такие циклы разбирает отдельный механизм — поколенческий сборщик мусора из модуля `gc`, который периодически обходит объекты-контейнеры и находит группы, недостижимые извне."
+    },
+    {
+      "file": "content/questions/python.json#en",
+      "rubric": "E",
+      "quote": "`finalize` can also be called manually and early via `.finalize_obj()` (well, `f = weakref.finalize(...); f()`), and it guarantees the callback runs **at most once**, even if triggered both manually and by garbage collection.",
+      "problem": "python-q-88. `.finalize_obj()` is not a real API, and the '(well, …)' aside is a visible editorial self-correction left in shipped text — the reader is shown a wrong name and then told to ignore it, in the middle of a sentence. The `#ru` version of the same paragraph is clean and simply gives the correct form, so this is EN-only.",
+      "before": "`finalize` can also be called manually and early via `.finalize_obj()` (well, `f = weakref.finalize(...); f()`), and it guarantees the callback runs **at most once**, even if triggered both manually and by garbage collection.",
+      "after": "You can also fire the callback early, by hand: keep the object returned by `finalize` and call it — `f = weakref.finalize(obj, cb); f()`. The callback is guaranteed to run **at most once**, even if it is triggered both manually and by garbage collection."
+    },
+    {
+      "file": "content/questions/python.json#ru",
+      "rubric": "B",
+      "quote": "`nonlocal` (в отличие от обычного чтения переменной объемлющей области) — это то, что говорит компилятору, что внутренней функции нужен доступ **на запись** к cell, а не только на чтение — без `nonlocal` `count += 1` внутри `increment` рассматривалось бы как создание совершенно новой *локальной* переменной `count` в самой `increment`, и чтение её до присваивания бросило бы `UnboundLocalError`, поскольку Python решает на этапе компиляции, является ли имя локальным, основываясь на том, присваивается ли оно где-либо в теле этой функции вообще.",
+      "problem": "python-q-81. 76 words, mid-body (not a pitfall closer) — proof that the long-sentence habit is not confined to the template. Two em-dashes create a double interruption before the main clause finishes, and the reader must carry «доступ на запись к cell» across a parenthetical, an em-dash aside and a subordinate «поскольку» clause. The advanced tier averages 43 words per RU sentence, versus 24.7 for junior.",
+      "before": "`nonlocal` (в отличие от обычного чтения переменной объемлющей области) — это то, что говорит компилятору, что внутренней функции нужен доступ **на запись** к cell, а не только на чтение — без `nonlocal` `count += 1` внутри `increment` рассматривалось бы как создание совершенно новой *локальной* переменной `count` в самой `increment`, и чтение её до присваивания бросило бы `UnboundLocalError`, поскольку Python решает на этапе компиляции, является ли имя локальным, основываясь на том, присваивается ли оно где-либо в теле этой функции вообще.",
+      "after": "Просто прочитать переменную из объемлющей области можно и без `nonlocal`. `nonlocal` нужен, чтобы получить к cell доступ **на запись**. Без него `count += 1` внутри `increment` считался бы созданием новой *локальной* переменной `count` — уже в самой `increment`. Чтение такой переменной до присваивания бросит `UnboundLocalError`: Python решает на этапе компиляции, локально ли имя, и решает это по одному признаку — присваивается ли оно где-нибудь в теле функции."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/python.json#ru": [
+      "БД (9 answers: q16, q19, q35, q43, q47, q48, q73, q74, q76)",
+      "ОС (6: q13, q32, q35, q63, q65, q91)",
+      "ORM (5: q35, q48, q75, q82, q96 — never expanded anywhere in the file)",
+      "MRO (q50, q54, q80, q83 — expanded only in q53)",
+      "GIL (q34, q35, q91 — expanded only in q13)",
+      "ABC (q83, q84 — expanded only in the q28 question text)",
+      "PEP (q89, q91, q94, q97 — never expanded)",
+      "IPC (q91)",
+      "JIT (q97)",
+      "ООП (q82)",
+      "REPL (q6)",
+      "i18n (q5)",
+      "SQL (q30)",
+      "GUI (q52)",
+      "GC (q61, in «GC не работает»; the rest of the answer says «сборщик мусора»)"
+    ],
+    "content/questions/python.json#en": [
+      "DB (6 answers: q35, q43, q47, q48, q76, q96)",
+      "OS (6: q13, q32, q35, q63, q65, q91)",
+      "ORM (5: q35, q48, q75, q85, q96 — never expanded anywhere in the file)",
+      "MRO (q50, q54, q80, q83 — expanded only in the q53 question text)",
+      "GIL (q34, q35, q91 — expanded only in q13 and the q65 question text)",
+      "ABC (q83, q84 — expanded only in the q28 question text)",
+      "PEP (q89, q91, q94, q97 — never expanded)",
+      "IPC (q91)",
+      "JIT (q97)",
+      "OOP (q82)",
+      "REPL (q6)",
+      "i18n (q5)",
+      "SQL (q30)",
+      "GUI (q52)",
+      "GC (q61, in 'the GC isn't running')"
+    ]
+  },
+  "patterns": [
+    "THE dominant defect: every one of the 98 answers ends with a **Common pitfall / Частая ловушка** paragraph, and that paragraph is a single sentence in 89/98 EN and 88/98 RU answers. Median length 60 words (EN) / 53 words (RU), max 103 / 96. The template is always the same: a gerund naming the mistake, an em-dash, then two or three consequences chained with 'since / so that / because', plus one or two parentheticals. 96/98 EN and 94/98 RU of these opening sentences exceed the word limit, and 98/98 answers contain at least one over-limit sentence — so the bank's over-limit count is not driven by scattered long sentences but by one writing habit applied 98 times. Fix: keep every claim, split into 3-4 sentences, and put the actionable advice first rather than last.",
+    "Rubric C fails in two distinct ways, both structural. (a) **Problem-first leads** (~14 answers: q5, q13, q35, q38, q42, q44, q48, q55, q78, q90, q92, q93, q94, q97): the opening sentence describes the pain, the 'before' state, or the thing that was *not* asked about, and the subject of the question arrives in sentence two or paragraph two. q55 is the clearest — the question is about `__slots__` and the 63-word lead is about `__dict__`. (b) **Overloaded leads** (~25 more answers, e.g. q28, q32, q37, q39, q40, q50, q52, q54, q57): the lead does land the answer, but it also swallows the mechanism, the contrast and the error class into one 35-60 word sentence, so the caveats sit *inside* the essence instead of after it. The pyramid is intact in intent and broken in punctuation.",
+    "17 dead cross-references per locale ('covered in a related question' ×11, 'covered in a separate question' ×2, 'as covered' ×4; RU «в связанном вопросе» ×11 plus «разбиралось/разбирался» ×14). Question-bank cards are read in shuffled order and carry no links, so these are unfollowable pointers that also imply something was withheld. Either inline the one clause the reader needs (as in the q60 rewrite above) or drop the reference.",
+    "The densest paragraph of every answer is the last one and has no example, diagram or code under it — the pitfall closer always comes after the final code block. This is why theory_walls is 0 while long_paragraphs is 124 (RU) / 99 (EN): the walls are single paragraphs, not runs. Breaking the closer into short sentences fixes both the B and D symptom at once."
+  ],
+  "notes": "Difficulty seam: YES, and it starts one tier earlier than in `typescript`. Over-limit sentence rate RU 31%(junior) -> 54%(middle) -> 62%(senior) -> 79%(advanced); EN 48% -> 74% -> 74% -> 88%. Words per sentence RU 24.7 -> 33.2 -> 34.6 -> 43.2. Indirect leads RU 6% -> 40% -> 67% -> 45%, EN 11% -> 50% -> 70% -> 55%. So it is a monotonic gradient with the sharpest single step at junior->middle (over-limit rate roughly doubles, indirect leads jump 6x), peaking in `advanced` for syntax and in `senior` for leads. The 18 junior answers are genuinely clean and can be used as the style reference for fixing the rest.\nEN is harder than RU here, unusually so: EN uses 10% MORE words (20725 vs 18764) for the same content and blows a TIGHTER limit (25 vs 28) at 71% vs 56%. Above-B2 vocabulary and idiom: 'closure gymnastics', 'sharp edges', 'trips people up', 'slip past casual code review', 'earns its place', 'hoisted out', 'funneling all bytecode execution', 'de-optimizes', 'orthogonal concerns', 'conflating', 'referent', 'arity', 'biased/deferred reference counting'. Stacked modifiers are pervasive ('a lightweight, cooperatively-scheduled pseudo-thread', 'an opt-in, experimental build'). 'Reaching for X' is used as a stock opener 9 times.\nWhat is genuinely good and must not be touched: senior-level depth (metaclass conflicts, greenlet bridge, PEP 659/703/554, variance, cell objects) with zero dumbing down; code examples are the best of any bank measured — self-contained, output shown inline as comments, narrow-screen-friendly, commented exactly at the non-obvious line; JS/TS bridges (jest.fn, beforeEach/beforeAll, V8, NumPy views) are placed well for the target audience; RU is living language, not calque (osushchestvlyaetsya 0, «в случае если» 0, «данный» only 2 real hits, no genitive noun-stacking).\nTwo non-readability defects found while reading, reported for completeness: python-q-88 EN cites `.finalize_obj()`, which does not exist (see worst_places); python-q-69 EN has an unbalanced parenthesis — '(\"does it explicitly declare itself as this type?\", which is how ordinary class inheritance and `isinstance` checks normally work.' — the RU version closes it correctly.\nVerdict rationale: the content needs no rewrite, but 98/98 answers carry an over-limit sentence and 96/98 carry an over-limit pitfall opener, so the language pass covers the whole zone — that is `systemic-refactor` by the rubric's definition, even though the fix is narrow and mechanical (split the closer, unpack the lead)."
+}

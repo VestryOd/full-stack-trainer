@@ -1,0 +1,127 @@
+{
+  "zone": "rabbitmq",
+  "kinds": ["topic-article"],
+  "verdict": "targeted-fixes",
+  "files": [
+    { "file": "content/topics/rabbitmq/ru/01-message-queues-fundamentals.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/ru/02-rabbitmq-core-concepts.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/ru/03-rabbitmq-in-nodejs.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/ru/04-reliability-patterns.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/ru/05-rabbitmq-vs-alternatives.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/ru/06-real-world-use-cases.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 4, "E": 3, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/ru/07-rabbitmq-interview-questions.md", "locale": "ru", "scores": { "A": 2, "B": 3, "C": 3, "D": 2, "E": 2, "F": null, "G": 4 } },
+    { "file": "content/topics/rabbitmq/en/01-message-queues-fundamentals.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/rabbitmq/en/02-rabbitmq-core-concepts.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 5, "F": 4, "G": null } },
+    { "file": "content/topics/rabbitmq/en/03-rabbitmq-in-nodejs.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 3, "F": 3, "G": null } },
+    { "file": "content/topics/rabbitmq/en/04-reliability-patterns.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/rabbitmq/en/05-rabbitmq-vs-alternatives.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/rabbitmq/en/06-real-world-use-cases.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 3, "E": 3, "F": 3, "G": null } },
+    { "file": "content/topics/rabbitmq/en/07-rabbitmq-interview-questions.md", "locale": "en", "scores": { "A": 2, "B": 2, "C": 3, "D": 2, "E": 2, "F": 3, "G": null } }
+  ],
+  "averages": { "A": 2.4, "B": 4.1, "C": 3.9, "D": 3.9, "E": 3.8, "F": 3.1, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/topics/rabbitmq/en/07-rabbitmq-interview-questions.md",
+      "rubric": "B",
+      "quote": "Must be called before `consume` because it configures the channel's QoS before any messages start flowing. Value selection: prefetch=1 for strict fairness and ordering (low throughput); prefetch=10–50 for typical background jobs (balanced); prefetch=100+ for fast, I/O-light consumers (high throughput, more memory used).",
+      "problem": "A three-branch decision table is crushed into one semicolon-chained sentence, and QoS is never expanded anywhere in this file. On a phone this is a solid grey block: the reader cannot scan for their case, and has to stop and google an acronym that costs three words to explain. This is the same shape as the whole file — the entire answer this sits in is a 64-word run.",
+      "before": "Must be called before `consume` because it configures the channel's QoS before any messages start flowing. Value selection: prefetch=1 for strict fairness and ordering (low throughput); prefetch=10–50 for typical background jobs (balanced); prefetch=100+ for fast, I/O-light consumers (high throughput, more memory used).",
+      "after": "Call it before `consume`: it sets the channel's QoS (Quality of Service — how many messages the broker may keep in flight) before any messages start flowing. How to pick the value:\n\n- `prefetch(1)` — strict fairness and ordering, but low throughput.\n- `prefetch(10–50)` — the balanced choice for typical background jobs.\n- `prefetch(100+)` — high throughput for fast, I/O-light consumers, at the cost of more memory."
+    },
+    {
+      "file": "content/topics/rabbitmq/ru/07-rabbitmq-interview-questions.md",
+      "rubric": "B",
+      "quote": "Стандартный паттерн — TTL + Dead Letter Exchange: (1) основная очередь имеет `x-dead-letter-exchange`, указывающий на retry exchange; (2) при ошибке `nack` с `requeue: false` — сообщение уходит на retry exchange; (3) retry-очередь имеет `x-message-ttl` (например, 30 секунд) и `x-dead-letter-exchange`, указывающий обратно на основной exchange — после истечения TTL сообщение возвращается в основную очередь.",
+      "problem": "A three-hop topology described as one 49-word sentence. The (1)(2)(3) markers vanish inside running text on a narrow screen, so the reader has to re-parse to see where step 2 ends. TTL is used three times and never expanded in this file. Twenty of the file's twenty answers use this same inline-enumeration shape.",
+      "before": "Стандартный паттерн — TTL + Dead Letter Exchange: (1) основная очередь имеет `x-dead-letter-exchange`, указывающий на retry exchange; (2) при ошибке `nack` с `requeue: false` — сообщение уходит на retry exchange; (3) retry-очередь имеет `x-message-ttl` (например, 30 секунд) и `x-dead-letter-exchange`, указывающий обратно на основной exchange — после истечения TTL сообщение возвращается в основную очередь.",
+      "after": "Стандартный паттерн — TTL (time-to-live, срок жизни сообщения) плюс Dead Letter Exchange. Три шага:\n\n1. У основной очереди есть `x-dead-letter-exchange`, указывающий на retry exchange.\n2. При ошибке делаем `nack` с `requeue: false` — сообщение уходит на retry exchange.\n3. У retry-очереди есть `x-message-ttl` (например, 30 секунд) и свой `x-dead-letter-exchange`, указывающий обратно на основной exchange. Когда TTL истекает, сообщение возвращается в основную очередь."
+    },
+    {
+      "file": "content/topics/rabbitmq/en/06-real-world-use-cases.md",
+      "rubric": "E",
+      "quote": "    // If reservation fails (out of stock), publish a compensating event\n    channel.publish('order-events', 'order.inventory-reserved',",
+      "problem": "The comment contradicts the code directly underneath it. This publish sits inside the `try` block and emits the SUCCESS event `order.inventory-reserved`; the actual compensating event (`order.inventory-failed`) is published in the `catch` block below. A reader learning the saga pattern from this example will take away the wrong rule. The same mismatch exists in the ru file («Публикуем компенсирующее событие при нехватке товара»).",
+      "before": "    // If reservation fails (out of stock), publish a compensating event\n    channel.publish('order-events', 'order.inventory-reserved',",
+      "after": "    // Reservation succeeded — announce it so Payment Service can continue\n    // (the compensating event for the failure case is in the catch block below)\n    channel.publish('order-events', 'order.inventory-reserved',"
+    },
+    {
+      "file": "content/topics/rabbitmq/ru/04-reliability-patterns.md",
+      "rubric": "A",
+      "quote": "В RabbitMQ нет встроенной задержки повторов, но это реализуется через паттерн **delayed queue** с TTL + DLQ:",
+      "problem": "TTL and DLQ are both expanded only in article 03 and are used bare here — DLQ even earlier, in a code comment on line 71. This is the article whose entire subject is dead-lettering, so a reader who opens 04 first (they are read out of order) hits the two load-bearing abbreviations of the article with no explanation at all.",
+      "before": "В RabbitMQ нет встроенной задержки повторов, но это реализуется через паттерн **delayed queue** с TTL + DLQ:",
+      "after": "В RabbitMQ нет встроенной задержки повторов, но её можно собрать из двух готовых механизмов: TTL (time-to-live — срок, после которого сообщение считается протухшим) и DLQ (dead letter queue — очередь, куда брокер складывает сообщения, которые не удалось обработать). Вместе они дают паттерн **delayed queue**:"
+    },
+    {
+      "file": "content/topics/rabbitmq/en/03-rabbitmq-in-nodejs.md",
+      "rubric": "F",
+      "quote": "- **\"I can use one channel for publishing in multiple goroutines/async operations simultaneously\"** — channels in amqplib are not concurrency-safe.",
+      "problem": "\"goroutines\" is a Go concept in a TypeScript/Node.js article. The reader stops to work out whether they missed a Go section, or whether amqplib has something called a goroutine. The ru version of the same bullet has no such word — this is a leftover from a Go-language source.",
+      "before": "- **\"I can use one channel for publishing in multiple goroutines/async operations simultaneously\"** — channels in amqplib are not concurrency-safe.",
+      "after": "- **\"I can publish on one channel from several async operations at the same time\"** — channels in amqplib are not concurrency-safe."
+    },
+    {
+      "file": "content/topics/rabbitmq/en/06-real-world-use-cases.md",
+      "rubric": "D",
+      "quote": "│                   order.inventory  order.inven  order.confirmed    order.     │\n│                   -reserved        tory-failed                     failed     │",
+      "problem": "The one diagram that carries the whole choreography saga is broken: event names are split mid-word across two lines (`order.inven` / `tory-failed`), and the columns no longer line up with the arrows above them. The reader has to reassemble the names before they can read the flow. The ru version of the same diagram keeps every name on one line. The box on the line above also ends with a hyphen inside the border: `└─────────────────-┘`.",
+      "before": "│                   order.inventory  order.inven  order.confirmed    order.     │\n│                   -reserved        tory-failed                     failed     │",
+      "after": "│                    inventory-       inventory-      order.          order.    │\n│                    reserved          failed         confirmed       failed    │\n(and fix the box border on the line above: `└──────────────────┘`)"
+    },
+    {
+      "file": "content/topics/rabbitmq/en/07-rabbitmq-interview-questions.md",
+      "rubric": "D",
+      "quote": "A message queue breaks this coupling in three ways: (1) **temporal decoupling** — producer and consumer don't need to be available simultaneously; (2) **load decoupling** — a traffic spike fills the queue rather than overwhelming the consumer; (3) **failure isolation** — a consumer crash doesn't affect the producer; it reconnects and processes from where it left off.",
+      "problem": "Three new named concepts arrive in one 54-word sentence with nothing to hold on to — no diagram, no example, no line break. The whole file is 2601 words with zero code blocks and zero diagrams, while articles 01-06 back every concept with one. This is the first answer in the file, so it sets the reader's expectation for the remaining nineteen.",
+      "before": "A message queue breaks this coupling in three ways: (1) **temporal decoupling** — producer and consumer don't need to be available simultaneously; (2) **load decoupling** — a traffic spike fills the queue rather than overwhelming the consumer; (3) **failure isolation** — a consumer crash doesn't affect the producer; it reconnects and processes from where it left off.",
+      "after": "A message queue breaks this coupling in three ways:\n\n- **Temporal decoupling** — producer and consumer don't have to be available at the same time.\n- **Load decoupling** — a traffic spike fills the queue instead of overwhelming the consumer.\n- **Failure isolation** — a consumer crash doesn't affect the producer. The consumer reconnects and continues from where it left off."
+    },
+    {
+      "file": "content/topics/rabbitmq/ru/05-rabbitmq-vs-alternatives.md",
+      "rubric": "A",
+      "quote": "  - Пропускная способность: 300 TPS (или 3 000 с batching)",
+      "problem": "TPS is never expanded in this file (nor anywhere in the zone), and the number contradicts the summary block 40 lines earlier in the same file, which says «FIFO queues: exactly-once обработка + порядок (меньшая пропускная способность: ~3k TPS)». The reader cannot tell whether FIFO does 300/sec or 3000/sec. The en file has the identical pair.",
+      "before": "  - Пропускная способность: 300 TPS (или 3 000 с batching)",
+      "after": "  - Пропускная способность: 300 сообщений/сек (TPS, transactions per second — операций в секунду); до 3 000/сек, если отправлять сообщения пачками (batching)\n(и в блоке выше: «FIFO queues: ... меньшая пропускная способность — 300 сообщений/сек, до 3 000/сек с батчингом»)"
+    },
+    {
+      "file": "content/topics/rabbitmq/en/01-message-queues-fundamentals.md",
+      "rubric": "B",
+      "quote": "However, RabbitMQ gives consumers a way to control the flow through **prefetch count** (covered in article 03): a consumer can tell the broker \"don't give me more than N unacknowledged messages at a time\", which effectively implements backpressure within the push model.",
+      "problem": "42 words, a mid-sentence cross-reference in brackets, a quotation, and a trailing which-clause carrying the actual conclusion. The ru version splits the same content better. \"backpressure\" is only glossed inside a code block ten lines earlier, so the payoff word of the sentence is the least explained one.",
+      "before": "However, RabbitMQ gives consumers a way to control the flow through **prefetch count** (covered in article 03): a consumer can tell the broker \"don't give me more than N unacknowledged messages at a time\", which effectively implements backpressure within the push model.",
+      "after": "But the consumer is not helpless. It sets a **prefetch count** (covered in article 03) and tells the broker: \"don't give me more than N unacknowledged messages at a time\". That is backpressure — the consumer takes only what it can handle — working inside a push model."
+    },
+    {
+      "file": "content/topics/rabbitmq/en/03-rabbitmq-in-nodejs.md",
+      "rubric": "B",
+      "quote": "- **`noAck: true` for everything because acks add overhead\"** — this loses messages permanently when the consumer crashes mid-processing.",
+      "problem": "Broken markdown: the opening quote mark is missing and the bold marker swallows the closing one, so the rendered bullet reads as if the author is asserting the trap rather than quoting a candidate saying it. Every other bullet in this section is `**\"...\"**`. A reader skimming the traps list gets the opposite advice for one line.",
+      "before": "- **`noAck: true` for everything because acks add overhead\"** — this loses messages permanently when the consumer crashes mid-processing.",
+      "after": "- **\"Use `noAck: true` everywhere, because acks add overhead\"** — this loses messages permanently when the consumer crashes mid-processing."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/rabbitmq/ru/01-message-queues-fundamentals.md": ["AWS", "SQS", "HA", "БД", "СУБД", "gRPC", "eventual consistency", "event sourcing"],
+    "content/topics/rabbitmq/ru/02-rabbitmq-core-concepts.md": ["TCP", "Pub/Sub", "round-robin", "middleware", "vendor lock-in", "dead-letter (в комментарии кода до определения)"],
+    "content/topics/rabbitmq/ru/03-rabbitmq-in-nodejs.md": ["AMQP", "TTL (использован в коде до расшифровки)", "I/O", "backpressure", "идемпотентны"],
+    "content/topics/rabbitmq/ru/04-reliability-patterns.md": ["DLQ", "TTL", "БД", "NX", "upsert", "backoff", "payload"],
+    "content/topics/rabbitmq/ru/05-rabbitmq-vs-alternatives.md": ["TPS", "SNS", "FIFO", "TTL", "DLQ", "SQS (первое употребление)", "AWS", "B2B", "SaaS", "БД", "log compaction", "retention", "replay", "event sourcing", "KRaft"],
+    "content/topics/rabbitmq/ru/06-real-world-use-cases.md": ["CPU", "RAM", "PDF", "SMS", "SMTP", "DDoS", "CRUD", "DLQ", "S3", "saga/сага", "компенсирующее событие", "rate limit"],
+    "content/topics/rabbitmq/ru/07-rabbitmq-interview-questions.md": ["QoS", "TTL", "HA", "SLA", "CPU", "SMTP", "БД", "AWS", "I/O", "FIFO", "backpressure", "visibility timeout", "redrive policy", "eventual consistency", "middleware", "payload", "heap"],
+    "content/topics/rabbitmq/en/01-message-queues-fundamentals.md": ["AWS", "SQS", "DB", "HA", "gRPC", "eventual consistency", "event sourcing", "microservice choreography"],
+    "content/topics/rabbitmq/en/02-rabbitmq-core-concepts.md": ["TCP", "Pub/Sub", "round-robin", "middleware", "vendor lock-in", "dead-letter (in code comment before definition)"],
+    "content/topics/rabbitmq/en/03-rabbitmq-in-nodejs.md": ["AMQP", "TTL (used in code before expansion)", "I/O", "backpressure", "idempotent", "goroutines (wrong language entirely)"],
+    "content/topics/rabbitmq/en/04-reliability-patterns.md": ["DLQ", "TTL", "DB", "NX", "upsert", "backoff", "poison pill"],
+    "content/topics/rabbitmq/en/05-rabbitmq-vs-alternatives.md": ["TPS", "SNS", "FIFO", "TTL", "DLQ", "SQS (first use)", "AWS", "B2B", "SaaS", "log compaction", "retention", "replay", "event sourcing", "KRaft"],
+    "content/topics/rabbitmq/en/06-real-world-use-cases.md": ["CPU", "PDF", "SMS", "SMTP", "DDoS", "CRUD", "DLQ", "S3", "saga", "compensating event", "202 Accepted"],
+    "content/topics/rabbitmq/en/07-rabbitmq-interview-questions.md": ["QoS", "TTL", "HA", "SLA", "CPU", "SMTP", "DB", "AWS", "I/O", "FIFO", "backpressure", "visibility timeout", "redrive policy", "eventual consistency", "middleware"]
+  },
+  "patterns": [
+    "Abbreviations are expanded once per ZONE, not once per FILE, and the expansion always lives in the earliest article that mentions the term. AMQP is spelled out in 01 and 02 but bare in 03; TTL and DLQ are spelled out in 03 and then used bare in 04, 05, 06 and 07 — including in 04, whose whole subject is dead-lettering. 'Visibility timeout' and 'redrive policy' are explained only in 05 and used bare in 07. QoS, TPS, SNS, HA, SLA and FIFO are never expanded anywhere in the zone. Since files are read out of order, the deepest articles are the least self-contained.",
+    "Article 07 abandons the format that makes 01-06 work. Articles 01-06 back every new concept with a code block, an ASCII diagram or a bullet list within a paragraph or two. Article 07 is 2.2-2.6k words with zero diagrams and zero code blocks, and every enumeration that would be a bullet list in 01-06 is inlined as '(1) … (2) … (3) …' inside a single 45-64 word sentence. This is the zone's only self-test surface (no question bank, no quiz), so the format costs the most exactly where the reader is meant to be recalling rather than reading.",
+    "The English version is consistently harder than the Russian for the same content. Russian files have 0-1 sentences over the length threshold each; English files have 3-26 (07: 15.1% of all sentences). English also adds idiom the Russian renders plainly: 'this works fine until it doesn't', 'it falls over entirely', 'gets hammered with', 'the most important tuning knob', 'pays for itself', 'poison pill', 'the scaling story', 'blind-retry'. Three EN-only defects have no ru counterpart at all: the 'goroutines' leak (03), the broken quote markup (03), and the garbled saga diagram (06).",
+    "Russian keeps English terms as bare loanwords with no gloss on first use in the file: downstream, replay, retention, payload, backoff, upsert, rate limit, fan-out, eventual consistency, best practice, батчинг. Most are genuinely untranslatable in this domain, but the first occurrence in each file needs three words of Russian in brackets — the articles already do this well for offset, wire-level, wildcards and quorum queues, so the habit exists and is just applied unevenly."
+  ],
+  "notes": "01 stands on its own and does not contradict kafka/01 or system-design/05 — it is RabbitMQ-flavoured (durable vs persistent, DB-as-queue, push/pull, publisher confirms) where sd/05 is broker-agnostic (queue/pubsub/streaming table, Prisma idempotency) and kafka/01 motivates the log. It genuinely repeats delivery guarantees, DLQ and idempotency, told a third time with different examples.\n05 and kafka/06 agree on every substantive claim (log vs queue, push vs pull, replay, routing, native DLX, no Kafka priority, 'Kafka is not automatically better'). Two frictions: 05 says '~50k–150k msg/sec per node', kafka/06 says 'hundreds of thousands per second'; and kafka/06 says a RabbitMQ consumer 'has no direct control over receive rate' while rabbitmq/01 and 03 present prefetch as exactly that control.\nA real cross-zone contradiction: kafka/01 and kafka/06 both claim that adding a consumer on RabbitMQ 'requires changes to Order Service', while rabbitmq/02 and 06 state (correctly) that a new queue bound to a fanout/topic exchange needs zero producer changes. Kafka's framing should be fixed, not RabbitMQ's.\nInternal contradiction inside this zone: 04 argues exactly-once is not achievable at broker level, while 05 lists SQS FIFO as 'Delivery: exactly-once (deduplication ID prevents duplicates)' with no caveat.\nOne technical inconsistency inside 05 (both locales): SQS FIFO throughput is '~3k TPS' in the summary block and '300 TPS (or 3,000 with batching)' 40 lines later."
+}

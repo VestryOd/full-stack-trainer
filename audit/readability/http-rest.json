@@ -1,0 +1,138 @@
+{
+  "zone": "http-rest",
+  "kinds": ["topic-article", "quiz-bank"],
+  "verdict": "targeted-fixes",
+  "files": [
+    { "file": "content/topics/http-rest/ru/01-http-fundamentals.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 5, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/http-rest/ru/02-rest-principles.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/03-caching-and-headers.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 3, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/04-cors-deep-dive.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/05-pagination-and-filtering.md", "locale": "ru", "scores": { "A": 4, "B": 4, "C": 3, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/06-authentication-patterns.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/07-http2-and-http3.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 3, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/08-realtime-communication.md", "locale": "ru", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/ru/09-http-rest-interview-questions.md", "locale": "ru", "scores": { "A": 2, "B": 5, "C": 4, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/http-rest/en/01-http-fundamentals.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 5, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/http-rest/en/02-rest-principles.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/http-rest/en/03-caching-and-headers.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/http-rest/en/04-cors-deep-dive.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 5, "E": 2, "F": 3, "G": null } },
+    { "file": "content/topics/http-rest/en/05-pagination-and-filtering.md", "locale": "en", "scores": { "A": 4, "B": 3, "C": 3, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/http-rest/en/06-authentication-patterns.md", "locale": "en", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/http-rest/en/07-http2-and-http3.md", "locale": "en", "scores": { "A": 2, "B": 5, "C": 4, "D": 3, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/http-rest/en/08-realtime-communication.md", "locale": "en", "scores": { "A": 3, "B": 5, "C": 4, "D": 5, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/http-rest/en/09-http-rest-interview-questions.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/quiz/http-rest.json#ru", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 2, "D": 3, "E": 2, "F": null, "G": 2 } },
+    { "file": "content/quiz/http-rest.json#en", "locale": "en", "scores": { "A": 3, "B": 4, "C": 2, "D": 3, "E": 2, "F": 3, "G": null } }
+  ],
+  "averages": { "A": 2.8, "B": 4.35, "C": 3.7, "D": 4.5, "E": 3.65, "F": 3.4, "G": 3.7 },
+  "worst_places": [
+    {
+      "file": "content/quiz/http-rest.json",
+      "rubric": "correctness",
+      "quote": "\"The If-Match ETag does not match the current resource ETag, indicating the resource was modified by another client since the request was prepared\"",
+      "problem": "http-rest-quiz-5 keys 409 Conflict as the correct status for a failed If-Match precondition. Both articles in this same zone teach 412: 03-caching-and-headers.md shows `# Если кто-то уже изменил документ:` / `HTTP/1.1 412 Precondition Failed`, and 09-http-rest-interview-questions.md Q10 says `При несовпадении → 412 Precondition Failed`. RFC 9110 §13.1.1 agrees with the articles, not the quiz. A reader who studies article 03, then answers this quiz item correctly, has been taught two contradictory rules and the wrong one is the one that scores a point. The explanation doubles down: `409 Conflict ... commonly caused by ETag mismatch in optimistic locking`.",
+      "before": "Q: A REST API returns HTTP 409 Conflict for a PUT request to update a resource. Which scenario best explains why this status code was chosen?\n[correct] The If-Match ETag does not match the current resource ETag, indicating the resource was modified by another client since the request was prepared\nExplanation: 409 Conflict indicates a request conflict with the current state, commonly caused by ETag mismatch in optimistic locking—the resource was modified elsewhere since the client's last read.",
+      "after": "Q: A REST API returns HTTP 412 Precondition Failed for a PUT request that carried `If-Match: \"abc123\"`. Why this status code?\n[correct] The If-Match ETag does not match the current resource ETag. Someone else changed the resource after this client read it, so the precondition failed.\nExplanation: `If-Match` is a precondition. When it does not match, the correct code is 412 Precondition Failed — this is optimistic locking. 409 Conflict is for a conflict with the resource state that has no precondition header behind it, such as a duplicate email on registration. 404 means the resource does not exist, 503 means the server is overloaded, 403 means no permission."
+    },
+    {
+      "file": "content/quiz/http-rest.json",
+      "rubric": "correctness",
+      "quote": "\"correctIndex\": 0",
+      "problem": "The answer key is guessable without reading the question. 22 of 28 items have correctIndex 0 and the remaining 6 have correctIndex 1; indices 2 and 3 are never correct. Independently, the correct option is the single longest option text in 14 of 28 items (EN) and 15 of 28 (RU) — including every long-form item (quiz-5 at 145 chars vs 71/72/59, quiz-20 at 121 vs 70/90/78, quiz-15 at 117 vs 72/66/77). A reader who picks the first, longest option scores roughly 79% without any HTTP knowledge, which makes the whole quiz worthless as self-assessment.",
+      "before": "correctIndex distribution: 0 → 22 items, 1 → 6 items, 2 → 0 items, 3 → 0 items.\nCorrect option is the strictly longest option in 14/28 (en), 15/28 (ru).",
+      "after": "Shuffle option order so the key lands roughly evenly on 0/1/2/3 (target ~7 items each). Then pad the distractors to the correct option's length: e.g. in quiz-5 rewrite `The resource does not exist on the server and needs to be created first` as `The resource with id 42 does not exist on the server, so the client must create it before it can be replaced` so length carries no signal."
+    },
+    {
+      "file": "content/quiz/http-rest.json",
+      "rubric": "correctness",
+      "quote": "ETag and Last-Modified are response headers (not request headers) that the server sends to the client for future validation.",
+      "problem": "http-rest-quiz-22's explanation flatly contradicts its own question stem. The stem prints a block labelled `Request headers:` that contains `ETag: \"abc123\"` and `Last-Modified: Wed, 21 Oct 2024 07:28:00 GMT`, then the explanation tells the reader those two are response headers and not request headers. A target reader who trusts the stem learns a wrong fact; one who trusts the explanation concludes the question is broken. The RU version repeats the same contradiction verbatim (`Заголовки запроса:` ... `ETag и Last-Modified являются заголовками ответа (а не запроса)`).",
+      "before": "Request headers:\nETag: \"abc123\"\nLast-Modified: Wed, 21 Oct 2024 07:28:00 GMT\nIf-None-Match: \"abc123\"\nIf-Modified-Since: Wed, 21 Oct 2024 07:28:00 GMT",
+      "after": "Request headers:\nIf-None-Match: \"abc123\"\nIf-Modified-Since: Wed, 21 Oct 2024 07:28:00 GMT\n\n(The server had earlier sent ETag: \"abc123\" and Last-Modified: Wed, 21 Oct 2024 07:28:00 GMT in its response. The client echoes them back as the two If-* headers above.)"
+    },
+    {
+      "file": "content/quiz/http-rest.json",
+      "rubric": "correctness",
+      "quote": "Reduces round-trip time by eliminating the request-response cycle for predictable dependencies",
+      "problem": "http-rest-quiz-25 asks for a 'primary advantage' of HTTP/2 Server Push and presents it as a live technique with no caveat. Article 07-http2-and-http3.md spends a whole section titled `### Server Push (и почему он не взлетел)` explaining the opposite: `4. Chrome удалил поддержку Server Push в 2022 году. / HTTP/3 исключил его из спецификации.` and its interview-traps list says `\"Server Push — крутая фича HTTP/2\" — на практике провалилась`. The quiz rewards exactly the belief the article calls a common interview mistake.",
+      "before": "Q: HTTP/2 introduces server push, allowing the server to send resources to the client without waiting for explicit requests. Which of the following is a primary advantage of server push over HTTP/1.1's approach?\n[correct] Reduces round-trip time by eliminating the request-response cycle for predictable dependencies",
+      "after": "Q: HTTP/2 server push let the server send style.css before the client asked for it. It saved a round trip — yet Chrome removed it in 2022 and HTTP/3 dropped it from the spec. What replaced it?\n[correct] 103 Early Hints: the server sends `Link: </style.css>; rel=preload` early, and the browser decides whether it already has the file cached\n(Distractors: HPACK header compression / stream prioritization / domain sharding.)\nExplanation: Server push saved one round trip for predictable dependencies, but the server could not know what was already in the client's cache, so it wasted bandwidth on files the browser already had. 103 Early Hints gives the same head start and lets the browser make the caching decision."
+    },
+    {
+      "file": "content/quiz/http-rest.json",
+      "rubric": "correctness",
+      "quote": "Basic auth is stateless but transmits credentials in every request (insecure without HTTPS).",
+      "problem": "http-rest-quiz-4 asks 'which method is stateless and does not require the server to store session information'. Its own explanation then concedes that the rejected option 2 (`Basic authentication with plaintext credentials in every request`) is also stateless. Two options satisfy the stated question, so the item has no single right answer by its own reasoning. The paired duplicate http-rest-quiz-10 has the same defect with two stateless distractors (Basic and Digest) dismissed only as methods that 'don't scale well'.",
+      "before": "Q: When implementing REST API authentication, which method is stateless and does not require the server to store session information?\n[correct] JWT (JSON Web Tokens) with client-side validation\nExplanation: ... Basic auth is stateless but transmits credentials in every request (insecure without HTTPS).",
+      "after": "Q: You need REST API authentication that is stateless (no session store on the server) AND does not resend the user's password on every request. Which one fits?\n[correct] JWT (JSON Web Tokens): the server checks the signature, stores nothing, and the password is sent only once at login\nExplanation: JWT is stateless — the server verifies the signature without storing session data. Session cookies need a server-side store, which is stateful. Basic auth is also stateless, but it resends the login and password on every single request, so it fails the second condition. OAuth 2.0 authorization code flow needs server-side state for the authorization code."
+    },
+    {
+      "file": "content/quiz/http-rest.json",
+      "rubric": "D",
+      "quote": "\"Which HTTP method is both safe and idempotent, meaning it should not change server state and multiple identical requests produce the same result?\"",
+      "problem": "10 of 28 items are near-duplicates of an earlier item, so the 28-item bank tests about 18 distinct ideas while leaving three whole articles untested. quiz-1 and quiz-6 are the same question with the same four options (GET/POST/PUT/DELETE) and the same key; quiz-11 and quiz-16 ask it a third and fourth time. quiz-3 and quiz-12 both ask what `max-age=3600, public` means. quiz-7, quiz-18 and quiz-28 all run on the same `max-age=3600, must-revalidate` header block. quiz-13, quiz-19 and quiz-23 all use the same app.example.com → api.example.com + `Access-Control-Allow-Credentials: true` scenario. Meanwhile 02-rest-principles.md, 05-pagination-and-filtering.md and 08-realtime-communication.md (about 5,000 words: REST constraints, HATEOAS, versioning, offset vs cursor, SSE, WebSockets) get zero quiz items, and 07's HTTP/3 and QUIC content gets zero items.",
+      "before": "quiz-1: Which HTTP method is both safe and idempotent, meaning it should not change server state and multiple identical requests produce the same result? → GET / POST / PUT / DELETE, key 0\nquiz-6: Which HTTP method is both safe and idempotent, meaning multiple identical requests produce the same result as a single request without side effects? → GET / POST / PUT / DELETE, key 0",
+      "after": "Keep one safety/idempotency item. Spend the four freed slots on articles that currently have no coverage, e.g.:\n- 'A client is on page 2 of an infinite feed when someone inserts a new row at the top. Which pagination scheme shows a duplicate?' → offset (article 05)\n- 'You need to stream an LLM answer token by token to the browser and the client never sends anything back. Which mechanism?' → SSE (article 08)\n- 'Your API answers GET /users/42 with a _links block the client follows. Which Richardson maturity level is that?' → Level 3 / HATEOAS (article 02)\n- 'A mobile client switches from Wi-Fi to 4G mid-download. Which HTTP version keeps the connection alive and why?' → HTTP/3, connection migration by Connection ID (article 07)"
+    },
+    {
+      "file": "content/topics/http-rest/ru/01-http-fundamentals.md",
+      "rubric": "G",
+      "quote": "- **\"HEAD — это просто GET без тела, нафиксировано зачем\"** — HEAD важен для проверки существования ресурса, получения Content-Length перед загрузкой, проверки актуальности кэша без передачи данных.",
+      "problem": "«нафиксировано зачем» is not a Russian phrase — it is a garbled string that stops the reader dead in the middle of the article's closing checklist. The target reader will re-read the line twice looking for a meaning that is not there. The EN twin reads correctly (`what's the point?`), so this is a RU-only corruption.",
+      "before": "- **\"HEAD — это просто GET без тела, нафиксировано зачем\"** — HEAD важен для проверки существования ресурса, получения Content-Length перед загрузкой, проверки актуальности кэша без передачи данных. Используется CDN и download-менеджерами.",
+      "after": "- **\"HEAD — это просто GET без тела, непонятно зачем он нужен\"** — HEAD важен для проверки существования ресурса, получения Content-Length перед загрузкой, проверки актуальности кэша без передачи данных. Используется CDN (сетями доставки контента) и менеджерами загрузок."
+    },
+    {
+      "file": "content/topics/http-rest/en/04-cors-deep-dive.md",
+      "rubric": "E",
+      "quote": "  methods: [\"GET\", \"POST\", \"PUT\", PATCH\", \"DELETE\"],",
+      "problem": "The flagship copy-paste example of the CORS article does not parse: `PATCH\"` is missing its opening quote, which makes the whole `app.use(cors({...}))` block a syntax error. A reader who copies this into an editor gets a red squiggle and no working CORS config, on the one page of the site that exists to make CORS work. The RU twin at 04-cors-deep-dive.md line 305 is correct, so this is an EN-only typo.",
+      "before": "app.use(cors({\n  origin: (origin, callback) => { ... },\n  credentials: true,\n  methods: [\"GET\", \"POST\", \"PUT\", PATCH\", \"DELETE\"],\n  allowedHeaders: [\"Authorization\", \"Content-Type\", \"X-Request-ID\"],",
+      "after": "app.use(cors({\n  origin: (origin, callback) => { ... },\n  credentials: true,\n  methods: [\"GET\", \"POST\", \"PUT\", \"PATCH\", \"DELETE\"],\n  allowedHeaders: [\"Authorization\", \"Content-Type\", \"X-Request-ID\"],"
+    },
+    {
+      "file": "content/topics/http-rest/ru/03-caching-and-headers.md",
+      "rubric": "E",
+      "quote": "app.get(\"/api/articles\", async (_req, res) => {",
+      "problem": "The handler declares its first parameter as `_req` (the underscore convention for 'unused'), then four lines later reads `req.headers[\"if-none-match\"]` — an identifier that does not exist in that scope. The example crashes with ReferenceError on the exact line that demonstrates the conditional-request trick the section is teaching. The EN twin declares `(req, res)` and works, so this is a RU-only regression.",
+      "before": "app.get(\"/api/articles\", async (_req, res) => {\n  const articles = await db.articles.findAll({ where: { published: true } });\n  ...\n  // Conditional request: если клиент прислал тот же ETag — 304\n  if (req.headers[\"if-none-match\"] === `\"${etag}\"`) {\n    return res.sendStatus(304);\n  }",
+      "after": "app.get(\"/api/articles\", async (req, res) => {\n  const articles = await db.articles.findAll({ where: { published: true } });\n  ...\n  // Conditional request: если клиент прислал тот же ETag — 304\n  if (req.headers[\"if-none-match\"] === `\"${etag}\"`) {\n    return res.sendStatus(304);\n  }"
+    },
+    {
+      "file": "content/topics/http-rest/en/04-cors-deep-dive.md",
+      "rubric": "B",
+      "quote": "- **\"Why is `Vary: Origin` needed?\"** — without it, a cache (CDN, proxy) might return a response with `Access-Control-Allow-Origin: https://a.com` to a client with origin `https://b.com`. `Vary: Origin` tells the cache to store separate versions of the response for each origin.",
+      "problem": "37 words in one sentence, carrying two hostnames, one header name with a value, plus an abbreviation (CDN) that is never expanded anywhere in this file. On a phone this wraps to six or seven lines, and the reader has to hold `https://a.com` and `https://b.com` in working memory across the whole span to see where the mismatch is. The RU twin (33 words) has the same shape. This is the longest sentence in the zone's article set.",
+      "before": "- **\"Why is `Vary: Origin` needed?\"** — without it, a cache (CDN, proxy) might return a response with `Access-Control-Allow-Origin: https://a.com` to a client with origin `https://b.com`. `Vary: Origin` tells the cache to store separate versions of the response for each origin.",
+      "after": "- **\"Why is `Vary: Origin` needed?\"** — because the same URL can return a different `Access-Control-Allow-Origin` per caller. Say a cache (a CDN or proxy) stores your response for `https://a.com`. It then hands that same stored copy to a client whose origin is `https://b.com`. The header still says `a.com`, so the browser blocks it. `Vary: Origin` tells the cache to keep one copy per origin instead of one copy total."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/http-rest/ru/01-http-fundamentals.md": ["TCP", "IP", "TLS", "HTTPS", "MIME", "RFC", "SEO", "CDN"],
+    "content/topics/http-rest/ru/02-rest-principles.md": ["CRUD", "CDN", "FTP", "URI", "CLI", "SOAP", "HAL", "DX"],
+    "content/topics/http-rest/ru/03-caching-and-headers.md": ["CDN", "TTL", "БД", "MD5"],
+    "content/topics/http-rest/ru/04-cors-deep-dive.md": ["TLS", "CDN", "IoT"],
+    "content/topics/http-rest/ru/05-pagination-and-filtering.md": ["SQL", "DML"],
+    "content/topics/http-rest/ru/06-authentication-patterns.md": ["ACL", "HMAC", "SHA-256", "RFC", "AWS", "SDK", "SPA", "XSS", "RTT", "TTL"],
+    "content/topics/http-rest/ru/07-http2-and-http3.md": ["RTT", "TLS", "TCP", "UDP", "DNS", "CDN", "IoT", "RFC", "HTTPS", "ОС", "QPACK", "QUIC"],
+    "content/topics/http-rest/ru/08-realtime-communication.md": ["SSE", "WS", "W3C", "IETF", "RFC", "TCP", "CRDT", "OT", "WebRTC", "XMPP"],
+    "content/topics/http-rest/ru/09-http-rest-interview-questions.md": ["ACAO", "CDN", "CORS", "DML", "БД", "HAL", "HMAC", "IP", "LLM", "QUIC", "RSA", "RTT", "SDK", "SHA256", "SPA", "TCP", "TLS", "UDP", "URI", "XSS"],
+    "content/topics/http-rest/en/01-http-fundamentals.md": ["TCP", "IP", "TLS", "HTTPS", "MIME", "RFC", "SEO", "CDN", "CORS", "JWT"],
+    "content/topics/http-rest/en/02-rest-principles.md": ["CRUD", "CDN", "FTP", "URI", "CLI", "SOAP", "HAL", "UI"],
+    "content/topics/http-rest/en/03-caching-and-headers.md": ["CDN", "TTL", "DB", "MD5"],
+    "content/topics/http-rest/en/04-cors-deep-dive.md": ["TLS", "CDN", "IoT"],
+    "content/topics/http-rest/en/05-pagination-and-filtering.md": ["SQL", "UI", "DML"],
+    "content/topics/http-rest/en/06-authentication-patterns.md": ["ACL", "HMAC", "SHA-256", "RFC", "AWS", "SDK", "SPA", "XSS", "RTT", "TTL"],
+    "content/topics/http-rest/en/07-http2-and-http3.md": ["RTT", "TLS", "TCP", "UDP", "DNS", "CDN", "IoT", "RFC", "HTTPS", "OS", "QPACK", "QUIC"],
+    "content/topics/http-rest/en/08-realtime-communication.md": ["SSE", "WS", "W3C", "IETF", "RFC", "TCP", "CRDT", "OT", "WebRTC", "XMPP"],
+    "content/topics/http-rest/en/09-http-rest-interview-questions.md": ["ACAO", "CDN", "CORS", "DB", "DML", "HAL", "HMAC", "IP", "LLM", "QUIC", "RSA", "RTT", "SDK", "SHA256", "SPA", "TCP", "TLS", "UDP", "URI", "XSS"],
+    "content/quiz/http-rest.json#ru": ["CORS", "TCP", "HPACK", "CDN"],
+    "content/quiz/http-rest.json#en": ["CORS", "TCP", "HPACK", "CDN"]
+  },
+  "patterns": [
+    "The articles are among the cleanest on the site on sentence length, lead sentences and concept density (B 4.35, C 3.7, D 4.5 — every new idea lands next to a diagram, table or code block), and the single repeating defect is abbreviations. An acronym is expanded in the one article whose title is about it and nowhere else: CORS is spelled out in 04 but bare in 01 and 09; SSE is spelled out by the heading in 08 but used bare four lines earlier in that same file's intro; HoL is expanded in 07 only. Meanwhile the transport-layer set (TCP, TLS, UDP, RTT, QUIC, CDN, DNS) is never expanded anywhere in the zone — RTT is used 11 times in 07 and 9 times in 09 without ever being written as 'round-trip time'. Fixing A is mechanical: one parenthetical at the first use per file, no restructuring.",
+    "The quiz layer is built to a different (much lower) standard than everything around it and its defects are structural, not linguistic. Three independent tells let a reader score without knowing HTTP: the key is index 0 in 22/28 items and never 2 or 3; the correct option is the longest option in 14/28; and 10/28 items are near-verbatim repeats of an earlier item. On top of that the bank contradicts the articles it is supposed to test (409 vs 412 for If-Match, Server Push framed as a live advantage the article calls a failed feature) and skips three whole articles (REST principles, pagination, real-time) entirely. Article-level fixes are cosmetic; the quiz needs a rebuild against the article outline.",
+    "Both localisations drift from each other in small, load-bearing ways rather than in register. The register is fine — RU is living language, EN is roughly B1-B2 — but each locale carries its own broken code example that the other has correct: RU 03 declares `(_req, res)` then reads `req.headers`, EN 04 has `\"PUT\", PATCH\"` with a missing quote. RU 01 has a garbled phrase (`нафиксировано зачем`) where EN reads fine. In the quiz, the EN explanation for quiz-13 ends with `making option 1 the only correct behavior here` and the RU explanation silently drops that clause. Whatever pass produced these files did not diff the two locales against each other."
+  ],
+  "notes": "Zone-specific finding requested: content/questions/postgresql.json is confirmed a later rewrite of content/questions/http-rest.json — q-1..q-15 are byte-identical, q-16..q-25 are rewritten 2.4x-3.4x longer and re-scoped (Richardson/HATEOAS, RFC 7807, circuit breaker, webhook signature verification replace the originals). The quiz aligns with NEITHER: it is shallower than the thin original (no pagination, no versioning, no rate limiting, no TLS handshake) and shares zero topics with the rewrite's senior half. Of the quiz's 28 items, 9 map to article 01, 6 to 03, 6 to 04, 4 to 07 (HTTP/2 only), 2 to 06, and 0 to articles 02, 05 and 08. It tests two things no article teaches: `Transfer-Encoding: chunked` being invalid in HTTP/2 (quiz-29 — Transfer-Encoding appears nowhere in 07), and 422 vs 409 for business-rule failures (quiz-24 — 422 gets one table row in 01 and is never contrasted with 409). No literal generation artifacts of the 'Wait, let me recalculate' kind exist in this bank; the artifacts here are structural — quiz-16 and quiz-29 print all four options verbatim inside the question stem, quiz-11 and quiz-22 carry stray code blocks unrelated to their options, explanations reference options 1-based while correctIndex is 0-based, and ids 21 and 26 are missing (28 items numbered 1-30)."
+}

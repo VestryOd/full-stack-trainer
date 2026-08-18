@@ -1,0 +1,160 @@
+{
+  "zone": "javascript",
+  "kinds": ["question-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/javascript.json#ru",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 3, "C": 4, "D": 3, "E": 3, "F": null, "G": 3 }
+    },
+    {
+      "file": "content/questions/javascript.json#en",
+      "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 4, "E": 3, "F": 2, "G": null }
+    }
+  ],
+  "averages": { "A": 2.0, "B": 2.5, "C": 3.5, "D": 3.5, "E": 3.0, "F": 2.0, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/javascript.json#en",
+      "rubric": "B",
+      "quote": "Private fields are deliberately stricter: since `#secret` is tied to a specific brand from a specific class definition, accessing it on an object that was never constructed by (or doesn't carry the brand of) that class is a genuine type error, not merely \"the value happens to be missing\" — the engine can tell the difference between \"this object doesn't have this private field because it's not even an instance of the relevant class\" and would rather surface that as an explicit error than silently return `undefined`, which could mask a real bug (e.g. passing the wrong kind of object to a method expecting a specific class's instance).",
+      "problem": "javascript-q-11 is not the record holder — this is: one 135-word sentence in javascript-q-92, carrying five separate claims across two nested quoted phrases, a parenthetical inside a parenthetical, and an 'and would rather' clause whose subject ('the engine') is 40 words back. A B1-B2 reader on a phone loses the subject before reaching the verb and has to restart the sentence.",
+      "before": "With a regular (non-private) property, `other.balance` for a property that doesn't exist simply returns `undefined` — property access is inherently permissive about \"this property doesn't exist here.\" Private fields are deliberately stricter: since `#secret` is tied to a specific brand from a specific class definition, accessing it on an object that was never constructed by (or doesn't carry the brand of) that class is a genuine type error, not merely \"the value happens to be missing\" — the engine can tell the difference between \"this object doesn't have this private field because it's not even an instance of the relevant class\" and would rather surface that as an explicit error than silently return `undefined`, which could mask a real bug (e.g. passing the wrong kind of object to a method expecting a specific class's instance).",
+      "after": "With a regular (non-private) property, `other.balance` just returns `undefined` when the property is missing. Property access is permissive by design: \"not here\" is a normal answer, not an error.\n\nPrivate fields are deliberately stricter. `#secret` is tied to the brand of one specific class definition. Reading it on an object that class never constructed is a genuine type error, not a missing value.\n\nThe engine knows the difference between the two cases. \"This object has no such private field because it is not an instance of that class\" is a real mistake — for example, passing the wrong kind of object to a method that expects one class's instance. So the engine throws instead of returning `undefined`, because a silent `undefined` would hide that bug."
+    },
+    {
+      "file": "content/questions/javascript.json#en",
+      "rubric": "F",
+      "quote": "**Why Temporal is immutable:** the bug above (a shared `Date` object getting silently mutated by one piece of code, affecting every other piece of code holding a reference to the same object) is a direct consequence of mutability combined with reference semantics — Temporal sidesteps this entire class of bug by making every operation return a *new* object rather than modifying the existing one, the same general principle behind preferring immutable updates for state in modern app architecture generally (and the same reasoning, applied to dates specifically, behind avoiding direct mutation of arrays/objects elsewhere in JS).",
+      "problem": "96 words, one sentence, in javascript-q-95. The whole subject-verb pair is separated by a 21-word parenthetical, then two trailing 'the same ... principle / the same reasoning' appendices restate one idea twice. Vocabulary is also above B1-B2 ('sidesteps', 'this entire class of bug', 'reference semantics'). This is the shape almost every senior/advanced EN paragraph takes.",
+      "before": "**Why Temporal is immutable:** the bug above (a shared `Date` object getting silently mutated by one piece of code, affecting every other piece of code holding a reference to the same object) is a direct consequence of mutability combined with reference semantics — Temporal sidesteps this entire class of bug by making every operation return a *new* object rather than modifying the existing one, the same general principle behind preferring immutable updates for state in modern app architecture generally (and the same reasoning, applied to dates specifically, behind avoiding direct mutation of arrays/objects elsewhere in JS).",
+      "after": "**Why Temporal is immutable:** the bug above comes from two things together — `Date` is mutable, and objects are passed by reference. One piece of code changes the shared `Date`, and every other piece of code holding that same object sees the change.\n\nTemporal removes this whole group of bugs: every operation returns a *new* object instead of changing the existing one. It is the same rule people already follow for state updates in modern apps, and the same reason you avoid mutating arrays and objects directly elsewhere in JS."
+    },
+    {
+      "file": "content/questions/javascript.json#ru",
+      "rubric": "B",
+      "quote": "Реальная разница проявляется между **синхронным потреблением, которое естественно останавливается** (случаи выше) и **частичным потреблением, которое вы делаете вручную, не проходя через одну из этих специфицированных конструкций** — вызов `.next()` напрямую самостоятельно в цикле, и простая остановка (например, выход из `while`, вручную вызывающего `iterator.next()`) **не** запускает закрытие, потому что вы не идёте через `for-of`/деструктуризацию/`yield*` — вы напрямую владеете объектом итератора, и у спека нет способа узнать, что вы «закончили» с ним, если вы не вызовете `.return()` сами:",
+      "problem": "76 слов в одном предложении (javascript-q-121) с двумя тире-вставками, двумя жирными оборотами-определениями внутри перечисления «между … и …», и двойным отрицанием («не проходя через … **не** запускает»). К концу предложения читатель уже не помнит, что было первым членом противопоставления.",
+      "before": "Реальная разница проявляется между **синхронным потреблением, которое естественно останавливается** (случаи выше) и **частичным потреблением, которое вы делаете вручную, не проходя через одну из этих специфицированных конструкций** — вызов `.next()` напрямую самостоятельно в цикле, и простая остановка (например, выход из `while`, вручную вызывающего `iterator.next()`) **не** запускает закрытие, потому что вы не идёте через `for-of`/деструктуризацию/`yield*` — вы напрямую владеете объектом итератора, и у спека нет способа узнать, что вы «закончили» с ним, если вы не вызовете `.return()` сами:",
+      "after": "Реальная разница — не между полным и частичным потреблением, а между двумя способами потреблять.\n\n**Через языковую конструкцию** (`for-of`, деструктуризация, `yield*`) — закрытие срабатывает всегда, даже если вы взяли одно значение из трёх. Это случаи выше.\n\n**Вручную** — вы сами вызываете `.next()` в своём цикле и сами его прерываете. Здесь закрытие **не** срабатывает: итератором владеете вы, и спецификация никак не может узнать, что вы с ним закончили. Вызвать `.return()` придётся самому:"
+    },
+    {
+      "file": "content/questions/javascript.json#ru",
+      "rubric": "D",
+      "quote": "**Partial application (частичное применение)** связано, но отличается: фиксирует *некоторые* аргументы заранее, возвращая новую функцию, принимающую *оставшиеся* — не обязательно по одному.",
+      "problem": "Вопрос javascript-q-56 спрашивает «чем currying отличается от partial application». В EN-версии сразу после кода стоит предложение, которое прямо отвечает на это противопоставление: «Currying always breaks a function down into a strict chain of single-argument calls; partial application can fix any number of arguments and leave any number remaining, in one step.» В RU этого предложения нет вообще. Это не сокращение формулировки — вырезан сам ответ на заданный вопрос, и читателю предлагается вывести противопоставление самостоятельно из двух определений и двух кодовых блоков. Тот же пропуск систематичен: RU-версии q-40, q-67, q-68, q-73, q-101, q-104, q-109 теряют абзац, который после кода объясняет, что именно только что произошло.",
+      "before": "**Partial application (частичное применение)** связано, но отличается: фиксирует *некоторые* аргументы заранее, возвращая новую функцию, принимающую *оставшиеся* — не обязательно по одному.\n```javascript\nfunction partial(fn, ...presetArgs) {\n  return (...laterArgs) => fn(...presetArgs, ...laterArgs);\n}\nconst addFive = partial(add, 5); // фиксирует только первый аргумент\nconsole.log(addFive(2, 3)); // 10 — оставшиеся ДВА аргумента переданы вместе, не по одному\n```\n\n**Обобщённый `curry()` для любой функции:**",
+      "after": "**Partial application (частичное применение)** связано, но отличается: фиксирует *некоторые* аргументы заранее, возвращая новую функцию, принимающую *оставшиеся* — не обязательно по одному.\n```javascript\nfunction partial(fn, ...presetArgs) {\n  return (...laterArgs) => fn(...presetArgs, ...laterArgs);\n}\nconst addFive = partial(add, 5); // фиксирует только первый аргумент\nconsole.log(addFive(2, 3)); // 10 — оставшиеся ДВА аргумента переданы вместе, не по одному\n```\nРазница в одну строку: карринг всегда разбивает функцию на строгую цепочку вызовов по одному аргументу. Частичное применение фиксирует любое число аргументов за один шаг и оставляет любое число на потом.\n\n**Обобщённый `curry()` для любой функции:**"
+    },
+    {
+      "file": "content/questions/javascript.json#en",
+      "rubric": "C",
+      "quote": "**The default sort behavior — and why it breaks for numbers:**",
+      "problem": "javascript-q-34's answer opens with a bolded section label, not with an answer. The reader asked 'how does sort() work by default and why does it break for numbers' and the first thing on screen is the question restated as a heading, followed immediately by a code block. The one-sentence answer ('sort() converts every element to a string and compares them alphabetically') is buried below the code. The same shape occurs at q-1, q-13, q-28, q-54, q-71, q-100 (both locales), and q-44, q-62, q-89, q-90 open with a raw code fence and no lead sentence at all — 11-12 of 129 answers never state their answer in prose first.",
+      "before": "**The default sort behavior — and why it breaks for numbers:**\n```javascript\nconst numbers = [10, 1, 21, 2];\nconsole.log(numbers.sort()); // [1, 10, 2, 21] — NOT sorted numerically!\n```\nWithout a comparator function, `sort()` converts each element to a **string** and compares them lexicographically",
+      "after": "By default `sort()` converts every element to a string and sorts those strings alphabetically — so numbers come out in the wrong order. It also sorts the array in place, changing the original.\n\n```javascript\nconst numbers = [10, 1, 21, 2];\nconsole.log(numbers.sort()); // [1, 10, 2, 21] — NOT sorted numerically!\n```\nCompared character by character, like in a dictionary, `'10'` sorts before `'2'` because `'1'` comes before `'2'`. The actual numeric value is ignored completely."
+    },
+    {
+      "file": "content/questions/javascript.json#en",
+      "rubric": "B",
+      "quote": "Common pitfall: implementing an async iterator's `.next()` as a regular (non-`async`) function that manually constructs and returns a Promise wrapping `{ value, done }` — this works correctly (an `async function` automatically wraps its return value in a Promise, but a plain function returning a Promise explicitly achieves the same contract), but it's an easy place to accidentally forget the Promise wrapper entirely and return the plain object directly, which silently breaks `for await...of`'s expectation that every `.next()` call yields something awaitable.",
+      "problem": "82 words, one sentence, and it is the last thing the reader sees in javascript-q-107. This is the single most repeated defect in the bank: 128 of 129 answers end with a 'Common pitfall' paragraph, 113 of them are exactly one sentence, and 117 of 126 EN pitfall closers exceed the 25-word limit (average 58 words, worst 111). The most memorable slot in every answer is systematically the hardest sentence in it.",
+      "before": "Common pitfall: implementing an async iterator's `.next()` as a regular (non-`async`) function that manually constructs and returns a Promise wrapping `{ value, done }` — this works correctly (an `async function` automatically wraps its return value in a Promise, but a plain function returning a Promise explicitly achieves the same contract), but it's an easy place to accidentally forget the Promise wrapper entirely and return the plain object directly, which silently breaks `for await...of`'s expectation that every `.next()` call yields something awaitable.",
+      "after": "Common pitfall: writing `.next()` as a plain (non-`async`) function that builds and returns the Promise by hand. This is correct in itself — an `async function` wraps its return value in a Promise automatically, and a plain function returning a Promise explicitly meets the same contract. The risk is forgetting the wrapper and returning the plain `{ value, done }` object instead. `for await...of` expects every `.next()` call to return something awaitable, so it breaks silently."
+    },
+    {
+      "file": "content/questions/javascript.json#ru",
+      "rubric": "G",
+      "quote": "Promise — это просто *механизм уведомления* о том, когда эта работа settle-ится, а не хэндл на саму работу.",
+      "problem": "Латинский глагол с русским окончанием («settle-ится») в основном предложении ответа. Это не единичный случай, а слой жаргона, сконцентрированный в senior/advanced-части: «резолвится» (12×, q-55/112/114/123/129), «settle-ится»/«settle» (7×, q-112/114), «коэрсит/коэрсятся/коэрсии» (6×, q-113/128), «крашит/крашнуть» (7×, q-82/83), «вычищает очередь» как калька drain the queue (16×, q-45/75/76/77/82/91/116), «yield-нуть» (q-84), «чиста для написания» — калька с clean to write (q-98), «не подлежащий сборке мусора namespace» (q-129). Для B1-B2-читателя, который ещё не знает англоязычного термина, такое слово не переводится и не гуглится.",
+      "before": "У `Promise` по дизайну нет метода `.cancel()` — как только executor запустился, реальная работа уже идёт, а Promise — это просто *механизм уведомления* о том, когда эта работа settle-ится, а не хэндл на саму работу.",
+      "after": "У `Promise` по замыслу нет метода `.cancel()`. Как только запустилась функция-исполнитель (executor), работа уже идёт. Promise — это лишь *способ узнать*, когда работа завершится (успехом или ошибкой), а не рычаг управления самой работой."
+    },
+    {
+      "file": "content/questions/javascript.json#ru",
+      "rubric": "E",
+      "quote": "// Старый способ: требует явных \n\nconst old = 'Строка один\nСтрока два\nСтрока три';",
+      "problem": "В javascript-q-17 (обе локали) в JSON попал неэкранированный `\\n`: перевод строки вместо двух символов. В результате комментарий обрывается на «требует явных », а сам пример превращается в синтаксически невалидный код — незакрытая строка в одинарных кавычках, разорванная на три строки. Пример, который должен показать «до template literals нужны были escape-последовательности», теперь показывает обратное: будто многострочная строка в одинарных кавычках работает. Тот же дефект в javascript-q-124 (`.join('` + перевод строки) и javascript-q-127 (`// \"a` + перевод строки).",
+      "before": "// Старый способ: требует явных \n\nconst old = 'Строка один\nСтрока два\nСтрока три';",
+      "after": "// Старый способ: нужны явные символы \\n и склейка строк\nconst old = 'Строка один\\nСтрока два\\nСтрока три';"
+    },
+    {
+      "file": "content/questions/javascript.json#ru",
+      "rubric": "A",
+      "quote": "Web Worker выполняет JavaScript на реально отдельном ОС-потоке, со своей изолированной глобальной областью и памятью — не может напрямую обращаться к DOM, `window` или переменным главного потока.",
+      "problem": "В первом же предложении javascript-q-93 два сокращения без расшифровки: «ОС» (рубрика прямо требует раскрывать) и «DOM». DOM расшифрован ровно в одном ответе из десяти, где встречается (только q-41), а вопросы читаются вразбивку, поэтому «объяснено в другом вопросе» не считается. Тот же класс проблемы: CPU («CPU-затратных», 4 ответа), UI («рендер UI», 4), БД («запроса к БД», 4), TDZ (расшифрован только в q-1, использован в q-7 и q-111), FIFO (q-75), JIT (q-110), DI (q-125), i18n и SQL (q-127), XSS (q-13).",
+      "before": "Web Worker выполняет JavaScript на реально отдельном ОС-потоке, со своей изолированной глобальной областью и памятью — не может напрямую обращаться к DOM, `window` или переменным главного потока.",
+      "after": "Web Worker выполняет JavaScript в отдельном потоке операционной системы, со своей изолированной глобальной областью и своей памятью. Он не может напрямую обращаться к DOM (Document Object Model — дерево элементов страницы), к `window` или к переменным главного потока."
+    },
+    {
+      "file": "content/questions/javascript.json#en",
+      "rubric": "E",
+      "quote": "console.log(deepEqual([1, 2], { 0: 1, 1: 2 }));                         // false — array vs object, even with same-looking content",
+      "problem": "130 characters on one line. The bank has 293 EN and 272 RU code lines over 92 characters, 128 of them over 110 — almost always because a long explanatory comment is padded out to the right with spaces to align with the lines above. On a phone the alignment padding is what wraps first, so the comment lands in the middle of nowhere and the column layout the author built is lost anyway.",
+      "before": "console.log(deepEqual({ a: 1, b: { c: 2 } }, { a: 1, b: { c: 2 } })); // true\nconsole.log(deepEqual([1, 2, 3], [1, 2, 3]));                          // true\nconsole.log(deepEqual({ a: 1 }, { a: 1, b: 2 }));                       // false — different key counts\nconsole.log(deepEqual([1, 2], { 0: 1, 1: 2 }));                         // false — array vs object, even with same-looking content",
+      "after": "console.log(deepEqual({ a: 1, b: { c: 2 } }, { a: 1, b: { c: 2 } })); // true\nconsole.log(deepEqual([1, 2, 3], [1, 2, 3])); // true\n\n// false — different key counts\nconsole.log(deepEqual({ a: 1 }, { a: 1, b: 2 }));\n\n// false — array vs object, even though the contents look the same\nconsole.log(deepEqual([1, 2], { 0: 1, 1: 2 }));"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/javascript.json#ru": [
+      "DOM",
+      "CPU",
+      "UI",
+      "БД",
+      "ОС",
+      "V8",
+      "TDZ",
+      "ESM",
+      "CJS",
+      "ES",
+      "IEEE",
+      "ISO",
+      "GC",
+      "FIFO",
+      "JIT",
+      "DI",
+      "i18n",
+      "SQL",
+      "XSS",
+      "CSV",
+      "JSX",
+      "VM",
+      "МБ"
+    ],
+    "content/questions/javascript.json#en": [
+      "DOM",
+      "CPU",
+      "UI",
+      "V8",
+      "TDZ",
+      "ESM",
+      "CJS",
+      "ES",
+      "OS",
+      "DB",
+      "GC",
+      "IEEE",
+      "ISO",
+      "FIFO",
+      "SIMD",
+      "JIT",
+      "DI",
+      "i18n",
+      "SQL",
+      "XSS",
+      "CSV",
+      "JSX",
+      "VM",
+      "MB"
+    ]
+  },
+  "patterns": [
+    "The 'Common pitfall / Частая ловушка' closer is a fixed structural habit and a fixed defect: 128 of 129 answers end with one, 113 of those are a single sentence, and in EN 117 of 126 exceed the sentence limit (average 58 words, worst 111; RU average 34, worst 78). Because it is the last thing on screen it is the most-remembered slot in every answer, and it is reliably the hardest sentence in the answer. Fix pattern: state the mistake in one short sentence, then the consequence in a second, then the correct alternative in a third — the technical content already decomposes into exactly those three.",
+    "Answers are built as 'label → code → explanation', and 11-12 of 129 never write the answer as prose at all: q-44, q-62, q-89, q-90 open with a raw code fence, and q-1, q-13, q-28, q-34, q-54 (en), q-71, q-100 open with a bolded section label that restates the question. A further group leads with the wrong thing on purpose: q-92 opens with the pre-ES2022 WeakMap workaround, q-98 with the recursive version that the question asks to replace, q-100 and q-114 with the problem rather than the answer. Rubric C would go from 3-4 to 5 by prepending one plain-words sentence — no other change needed.",
+    "RU and EN are not the same text at two lengths — they are two different drafts. For q-1..q-109 the EN prose is 1.8× the RU (up to 3.9× at q-109), and the difference is almost entirely the consolidating paragraph that follows a code block and explains what just happened; RU deletes it. For q-110..q-129 the ratio is 1.05, i.e. a faithful translation. The result is that EN and RU fail different rubrics: EN carries the explanation but in 60-135-word sentences (B/F), while RU is crisp but has had the explanation removed (D) — including, at q-56, the one sentence that actually answers the question asked. Any fix pass has to decide 'restore into RU, then shorten in both', not treat one locale as the source of truth.",
+    "RU quality splits sharply by difficulty tier. The junior/middle answers are clean, living Russian; the senior/advanced tier accumulates a layer of transliterated jargon that has no gloss and cannot be looked up — 'резолвится' (12×), 'вычищает очередь' as a calque of 'drain the queue' (16×), 'settle-ится' (7×), 'коэрсит' (6×), 'крашит/крашнуть' (7×), 'yield-нуть', plus calques like 'чиста для написания' and 'не подлежащий сборке мусора namespace'. Notably the classic bureaucratic markers are absent (2× «является», zero «осуществляется»/«данный»), so this is a jargon problem, not a register problem."
+  ],
+  "notes": "Three code examples are genuinely broken in both locales, not just hard to read: an unescaped \\n in the JSON turned into a real newline at q-17 (the multi-line-string example now shows an unterminated single-quoted string spanning three lines, demonstrating the opposite of its point), q-124 (`.join('` split across lines) and q-127 (`// \"a` split across lines). Worth fixing before any language pass. Separately, q-81 explains stale closures using useState/useEffect without saying it is React or what a dependency array is — the only place in the bank where an answer depends on a framework the reader may not know. 293 EN / 272 RU code lines exceed 92 characters, nearly all because of right-aligned trailing comments that will wrap on a phone anyway."
+}

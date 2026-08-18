@@ -1,0 +1,169 @@
+{
+  "zone": "tdd",
+  "kinds": [
+    "question-bank"
+  ],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/tdd.json#ru",
+      "locale": "ru",
+      "scores": {
+        "A": 2,
+        "B": 2,
+        "C": 4,
+        "D": 2,
+        "E": 4,
+        "F": null,
+        "G": 3
+      }
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "locale": "en",
+      "scores": {
+        "A": 2,
+        "B": 2,
+        "C": 4,
+        "D": 2,
+        "E": 4,
+        "F": 2,
+        "G": null
+      }
+    }
+  ],
+  "averages": {
+    "A": 2.0,
+    "B": 2.0,
+    "C": 4.0,
+    "D": 2.0,
+    "E": 4.0,
+    "F": 2.0,
+    "G": 3.0
+  },
+  "worst_places": [
+    {
+      "file": "content/questions/tdd.json#ru",
+      "rubric": "A",
+      "quote": "TDD работает через три коротких повторяющихся фазы. **Red**: пишем тест на ещё не существующее поведение и запускаем его - он обязан упасть, потому что реализации нет.",
+      "problem": "This is the first sentence of the first answer in the bank, and «TDD» is never once written out as Test-Driven Development anywhere in the file — 14 bare uses across 6 entries, plus almost every question stem. There is no theory article for `tdd` and none for `testing`, so this bank is the only place a reader can learn it, and it never says. A junior who lands on tdd-q-1 from search has to leave the site to find out what the three letters stand for before the answer means anything. Identical in #en.",
+      "before": "TDD работает через три коротких повторяющихся фазы. **Red**: пишем тест на ещё не существующее поведение и запускаем его - он обязан упасть, потому что реализации нет.",
+      "after": "TDD (Test-Driven Development, разработка через тестирование) — это практика, в которой тест пишется раньше кода. Цикл состоит из трёх коротких фаз, которые повторяются снова и снова.\n\n**Red (красный).** Пишем тест на ещё не существующее поведение и запускаем его. Он обязан упасть, потому что реализации пока нет."
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "B",
+      "quote": "A few concrete, recognizable smells show up repeatedly in large suites. **Assertion Roulette**: a test with many unlabeled assertions, so when it fails you can't tell which one broke without adding print statements or stepping through a debugger - the fix is splitting into focused, single-purpose tests, or giving each assertion a descriptive failure message.",
+      "problem": "This is the opening of a single ~280-word paragraph that packs four named test smells into one block, each with an English name, a definition, a consequence and a fix, with no line break anywhere and the code example only after all four. The last item alone runs 74 words. On a phone this is roughly a full screen of unbroken text introducing four unfamiliar named concepts before the reader gets a single example to hold on to. content/questions/testing.json solves this exact shape with a bulleted list; tdd.json never does.",
+      "before": "A few concrete, recognizable smells show up repeatedly in large suites. **Assertion Roulette**: a test with many unlabeled assertions, so when it fails you can't tell which one broke without adding print statements or stepping through a debugger - the fix is splitting into focused, single-purpose tests, or giving each assertion a descriptive failure message. **Mystery Guest**: a test that depends on external state defined far away from the test itself - a shared fixture file, a seeded database row - so a reader can't tell what's actually being set up just by reading the test; the fix is making the relevant setup explicit and local to the test, even at the cost of a bit more verbosity.",
+      "after": "A few concrete, recognizable smells show up again and again in large suites.\n\n- **Assertion Roulette** — a test with many unlabelled assertions. When it fails, you cannot tell which assertion broke without adding print statements or stepping through a debugger. *Fix:* split it into focused, single-purpose tests, or give every assertion a descriptive failure message.\n- **Mystery Guest** — a test that depends on state defined far away from the test itself: a shared fixture file, a seeded database row. A reader cannot tell what is being set up just by reading the test. *Fix:* make the setup explicit and local to the test, even if that means repeating a few lines."
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "D",
+      "quote": "TDD works in three short repeating phases. **Red**: you write a test for behavior that doesn't exist yet, and run it - it must fail, because there's no implementation. This forces you to think about the API and the expected result before writing any code. **Green**: you write the smallest amount of code that makes the test pass, even if it's not elegant. The goal here is just correctness, not design.",
+      "problem": "108 words, ~10 rendered lines on a phone, delivering the single most fundamental concept in the bank as a run-in block instead of three steps. The concept is inherently a loop and there is no diagram anywhere in the file — nor in content/questions/testing.json, so nothing on the site draws the red-green-refactor cycle. The code example below does label RED / GREEN / REFACTOR in comments, but it shows the *finished* passing code, so the reader never sees what a Red-phase failure actually looks like, which is the phase the answer says is the whole point.",
+      "before": "TDD works in three short repeating phases. **Red**: you write a test for behavior that doesn't exist yet, and run it - it must fail, because there's no implementation. This forces you to think about the API and the expected result before writing any code. **Green**: you write the smallest amount of code that makes the test pass, even if it's not elegant. The goal here is just correctness, not design. **Refactor**: with a passing test as a safety net, you clean up the implementation - better names, removed duplication, simpler logic - without changing what it does. The test suite tells you immediately if you broke something.",
+      "after": "TDD (Test-Driven Development) works in three short phases that repeat.\n\n**Red.** You write a test for behaviour that doesn't exist yet, and you run it. It must fail, because there is no implementation. This forces you to decide the API and the expected result before writing any code.\n\n**Green.** You write the smallest amount of code that makes the test pass, even if it is ugly. The goal is correctness only, not design.\n\n**Refactor.** Now you have a passing test as a safety net, so you clean the implementation up: better names, no duplication, simpler logic. The behaviour stays the same. If you break something, the test suite says so immediately.\n\n```\nRed  ──►  Green  ──►  Refactor\n ▲                        │\n └────────────────────────┘\n```"
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "B",
+      "quote": "The choice depends on what the test actually needs to prove: use a stub when you just need the dependency to return something so the rest of the logic can run; use a mock when the *fact that a call happened* is the behavior you're testing (e.g., \"an email was sent\"); use a spy when you want the real logic to execute but still need to confirm a specific call happened; use a fake when a stub would be too simplistic and a full real dependency is too slow or unavailable in tests.",
+      "problem": "94 words — a four-row decision table rendered as one sentence with semicolons. And it arrives immediately after another paragraph that has just defined the same four terms as run-in bold labels, so the reader gets two dense walls back to back before the first line of code. This entry is the answer to the most common interview question in the whole topic and there is nothing scannable in it.",
+      "before": "The choice depends on what the test actually needs to prove: use a stub when you just need the dependency to return something so the rest of the logic can run; use a mock when the *fact that a call happened* is the behavior you're testing (e.g., \"an email was sent\"); use a spy when you want the real logic to execute but still need to confirm a specific call happened; use a fake when a stub would be too simplistic and a full real dependency is too slow or unavailable in tests.",
+      "after": "Pick the one that matches what the test needs to prove:\n\n- **Stub** — you just need the dependency to return something, so the rest of the logic can run.\n- **Mock** — the *fact that a call happened* is the behaviour under test (\"an email was sent\").\n- **Spy** — you want the real logic to run, but you also need to confirm a specific call happened.\n- **Fake** — a stub would be too simplistic, and the real dependency is too slow or not available in tests."
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "A",
+      "quote": "Uncle Bob's counter is that the abstraction TDD pushes toward - decoupling business logic from infrastructure details - is exactly the separation you'd want anyway for long-term maintainability, and the \"damage\" DHH describes comes from applying that pressure indiscriminately, not from TDD itself: introducing a seam around something that will never realistically need substituting is the actual mistake, not the practice of testing first.",
+      "problem": "64 words, and the entry argues from two people it never identifies: \"DHH\" is nowhere expanded to David Heinemeier Hansson (the creator of Ruby on Rails), and \"Uncle Bob\" is nowhere given as Robert C. Martin. The reader has to google two names to know whose authority is being weighed against whose, which is the entire content of the question. \"indiscriminately\", \"counter\" as a noun, and \"seam\" all land in one sentence, and the entry's own pitfall paragraph adds a bare \"DI-seam\". tdd-q-15 has the same problem with \"Michael Feathers' definitions\" — presented as authority with no clue who he is.",
+      "before": "Uncle Bob's counter is that the abstraction TDD pushes toward - decoupling business logic from infrastructure details - is exactly the separation you'd want anyway for long-term maintainability, and the \"damage\" DHH describes comes from applying that pressure indiscriminately, not from TDD itself: introducing a seam around something that will never realistically need substituting is the actual mistake, not the practice of testing first.",
+      "after": "Robert C. Martin (\"Uncle Bob\") answers that the abstraction TDD pushes you toward — keeping business logic separate from infrastructure details — is the separation you want anyway, for long-term maintainability. In his view the \"damage\" DHH (David Heinemeier Hansson, the creator of Ruby on Rails) describes comes from applying that pressure to everything without thinking, not from TDD itself. The real mistake is adding a seam around a dependency you will never actually need to substitute — not the practice of writing tests first."
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "F",
+      "quote": "Real timers make this kind of test slow and flaky by nature: a retry-with-backoff test using actual `setTimeout` delays adds up real seconds per test run, and CI machines are frequently slower or under more contention than a local dev machine, so a delay tuned to \"just barely enough\" locally intermittently times out in CI.",
+      "problem": "The flagged sentence runs to 96 words in full (it continues into the jest.useFakeTimers clause). \"under more contention\", \"tuned to just barely enough\", \"intermittently\", \"by nature\", \"adds up real seconds\" are all above B1-B2, and they are stacked in the opening sentence of a senior entry where the reader is already carrying \"retry\", \"backoff\" and \"overall timeout\". CI appears here unexpanded — it is unexpanded on its first use in the file too. Compare the RU version, which is 82 words for the same content: the EN is consistently ~14% longer (6187 vs 5441 words file-wide), so borderline RU sentences become over-limit EN ones throughout.",
+      "before": "Real timers make this kind of test slow and flaky by nature: a retry-with-backoff test using actual `setTimeout` delays adds up real seconds per test run, and CI machines are frequently slower or under more contention than a local dev machine, so a delay tuned to \"just barely enough\" locally intermittently times out in CI.",
+      "after": "Real timers make this kind of test both slow and flaky. A retry-with-backoff test that uses real `setTimeout` delays burns real seconds on every run. And CI machines (the shared build servers that run your tests) are usually slower and busier than your laptop. So a delay that is only just long enough locally will sometimes run out of time on CI, and the test fails for no real reason."
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "E",
+      "quote": "// Test forces the interleaving deterministically instead of hoping it happens\ntest('two concurrent increments do not lose an update (with a lock)', async () => {\n  const counter = new LockingCounter();",
+      "problem": "The example above defines the buggy `Counter` class, and then the test instantiates `LockingCounter`, which appears nowhere in this entry or anywhere else in the file. The comment on the assertion says \"fails on the unlocked version, passes once a lock is added\" — so the one thing the reader wants to see, what the lock actually looks like, is the one thing missing. The example is not self-contained and cannot be run or reasoned about; the reader has to invent the fix that the answer is claiming to demonstrate.",
+      "before": "// Test forces the interleaving deterministically instead of hoping it happens\ntest('two concurrent increments do not lose an update (with a lock)', async () => {\n  const counter = new LockingCounter();\n\n  // fire both without awaiting between them - forces overlapping execution\n  const first = counter.increment();\n  const second = counter.increment();\n\n  await Promise.all([first, second]);\n\n  expect(counter.value).toBe(2); // fails on the unlocked version, passes once a lock is added\n});",
+      "after": "// The fix: serialise the read-modify-write behind a promise chain\nclass LockingCounter {\n  value = 0;\n  private lock: Promise<void> = Promise.resolve();\n\n  increment() {\n    // each call waits for the previous one to finish\n    this.lock = this.lock.then(async () => {\n      const current = this.value;\n      await Promise.resolve();\n      this.value = current + 1;\n    });\n    return this.lock;\n  }\n}\n\n// Test forces the interleaving deterministically instead of hoping it happens\ntest('two concurrent increments do not lose an update (with a lock)', async () => {\n  const counter = new LockingCounter();\n\n  // fire both without awaiting between them - forces overlapping execution\n  const first = counter.increment();\n  const second = counter.increment();\n\n  await Promise.all([first, second]);\n\n  expect(counter.value).toBe(2); // fails on the unlocked Counter above, passes here\n});"
+    },
+    {
+      "file": "content/questions/tdd.json#ru",
+      "rubric": "G",
+      "quote": "Только после того, как этот узкий seam стал тестируемым, применяется полноценный TDD к логике *новой* фичи, держа её отделённой от нетестированных внутренностей legacy через только что созданный seam.",
+      "problem": "Passive «применяется» with no agent, then a dangling gerund («держа») that grammatically attaches to «TDD» rather than to the reader, then three untranslated English words (seam, TDD, legacy) in 26 words of Russian — «seam» twice. The rest of tdd-q-15 is lively Russian, which makes this sentence stand out as translated rather than written. The file-wide version of this problem is typographic: content/questions/tdd.json uses 162 spaced hyphens as clause separators in RU and zero em-dashes, while content/questions/testing.json uses 150 em-dashes. In Russian a spaced hyphen does not read as a clause break, so the reader re-parses every one of them.",
+      "before": "Только после того, как этот узкий seam стал тестируемым, применяется полноценный TDD к логике *новой* фичи, держа её отделённой от нетестированных внутренностей legacy через только что созданный seam.",
+      "after": "И только когда этот узкий шов (seam) стал тестируемым, начинайте вести новую фичу по полному циклу TDD. Логику новой фичи держите отдельно от непокрытых тестами внутренностей legacy-кода — как раз через этот шов."
+    },
+    {
+      "file": "content/questions/tdd.json#en",
+      "rubric": "A",
+      "quote": "Mechanically, the tool parses your code into an AST and applies small, targeted mutations one at a time - flipping a comparison operator (`>=` becomes `>`), negating a boolean condition, changing a returned constant, deleting a statement - producing a \"mutant\" version of the file.",
+      "problem": "The question asks for mutation testing \"at a mechanical level\", so this is the sentence the whole entry exists to deliver — and it stops the reader on its ninth word. AST is never expanded to Abstract Syntax Tree anywhere in the file, and it is not the kind of term a strong junior can guess from context. The sentence is also 44 words with a four-item list inside a dash aside, so the reader who does push past AST then has to hold the subject open to the end.",
+      "before": "Mechanically, the tool parses your code into an AST and applies small, targeted mutations one at a time - flipping a comparison operator (`>=` becomes `>`), negating a boolean condition, changing a returned constant, deleting a statement - producing a \"mutant\" version of the file.",
+      "after": "Mechanically, the tool first parses your code into an AST (Abstract Syntax Tree — a structured representation of the code, the same thing a compiler builds). Then it applies one small, targeted change at a time: flip a comparison operator (`>=` becomes `>`), negate a boolean condition, change a returned constant, delete a statement. Each change produces a \"mutant\": a copy of the file with exactly one deliberate bug in it."
+    },
+    {
+      "file": "content/questions/tdd.json#ru",
+      "rubric": "G",
+      "quote": "### Property-based testing vs example-based TDD",
+      "problem": "The heading is the first thing on screen and the only navigation anchor in a long answer, and four of them in the RU file are fully English: q-4 «Arrange-Act-Assert (AAA)», q-8 «Outside-in (London School) vs Inside-out (Detroit School)», q-20 «Consumer-driven contract testing», q-21 here. The bodies underneath are translated, and 22 of 26 headings *are* translated, so this is inconsistency, not a deliberate policy. A Russian reader scanning the bank on a phone hits four entries with no Russian entry point. (content/questions/testing.json#ru has the same slip in q-16 and q-24.)",
+      "before": "### Property-based testing vs example-based TDD",
+      "after": "### Property-based тестирование против example-based TDD"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/tdd.json#ru": [
+      "TDD (14× in 6 entries, never expanded anywhere in the file)",
+      "BDD",
+      "DHH (name, never identified)",
+      "Uncle Bob (name, never identified)",
+      "Michael Feathers (name, never identified)",
+      "AST",
+      "DI",
+      "CI",
+      "UI",
+      "DOM",
+      "JSX",
+      "SQL",
+      "PR",
+      "E2E",
+      "CRUD"
+    ],
+    "content/questions/tdd.json#en": [
+      "TDD (14× in 6 entries, never expanded anywhere in the file)",
+      "BDD",
+      "DHH (name, never identified)",
+      "Uncle Bob (name, never identified)",
+      "Michael Feathers (name, never identified)",
+      "AST",
+      "DI",
+      "CI",
+      "UI",
+      "DOM",
+      "JSX",
+      "SQL",
+      "PR",
+      "E2E",
+      "CRUD"
+    ]
+  },
+  "patterns": [
+    "The dominant structural habit: where content/questions/testing.json introduces N parallel concepts as a bulleted list, tdd.json runs them together inside one paragraph with bolded run-in labels. Red / Green / Refactor (q-1), the four qualities of a good unit test (q-2), the three AAA steps (q-4), the three pyramid levels (q-5), the four test doubles (q-9), the three layers of an API endpoint (q-14), the four test smells (q-23), the three parts of the flaky-test strategy (q-25). This one habit produces nearly all 40+ over-long paragraphs the script flags and every wall of theory in the file. Converting these to lists — no wording changes at all — would fix most of B and D at once.",
+    "Every mid-level and senior answer contains one 'decision rule' sentence delivered as a single 60-96-word chain of semicolon-separated branches: q-7 ('the decision comes down to three questions...'), q-9 ('the choice depends on what the test actually needs to prove...'), q-18 (the two-axis risk framework), q-19 (the incremental-CI approach), q-22 ('the practical, senior-level resolution...'). These are the most valuable sentences in the bank and the least readable ones; each is a table pretending to be prose.",
+    "The bank argues from named authorities and named patterns without ever introducing them: TDD itself, BDD, DHH, Uncle Bob, Michael Feathers, London/Detroit/Chicago schools, AST, DI. Well-known-inside-the-community names are treated as public knowledge, while genuinely obscure pattern names that the author chose to teach (seam, characterization test, Assertion Roulette, Mystery Guest, equivalent mutants) are all carefully defined. The file knows how to explain a term; it just does not notice which ones need it.",
+    "Typographically the file is a straight import of an English source: 162 spaced hyphens and zero em-dashes in the RU locale, against 150 em-dashes in content/questions/testing.json#ru. In Russian a spaced hyphen does not signal a clause break, so on a phone every parenthetical aside has to be re-parsed. Four RU headings are also left fully in English."
+  ],
+  "notes": "Overlap verdict: keep two banks, but stop re-teaching. 8 of 26 tdd entries cover the same ground as testing.json: pyramid (tdd-q-5 vs testing-q-1/q-16), test doubles (tdd-q-9 vs testing-q-6), snapshot (tdd-q-13 vs testing-q-9), mutation testing (tdd-q-19 vs testing-q-22), contract testing (tdd-q-20 vs testing-q-17), property-based (tdd-q-21 vs testing-q-18), micro-frontends (tdd-q-26 vs testing-q-21), shared-state/order dependence (tdd-q-23 vs testing-q-14). The two question banks never contradict each other — they agree everywhere and simply repeat, and tdd's versions of mutation testing and property-based testing are the deeper ones while testing's version of contract testing is. All actual contradictions in the topic live in content/quiz/testing.json (see the sibling report).\nRecommendation: split by intent — tdd.json = process, design pressure, legacy adoption, pragmatism; testing.json = tools and techniques. For the four senior duplicates, keep whichever version is deeper and have the other cross-reference it. tdd-q-5 in particular is a near-verbatim second telling of testing-q-1, including the same three-example code shape, and is the clearest candidate for removal or reduction to a pointer.\nBecause neither `testing` nor `tdd` has a theory article, this bank is the site's only explanation of red-green-refactor, AAA and the test-double taxonomy — which is why the missing TDD expansion, the run-in walls in the junior entries (q-1 to q-5) and the total absence of any diagram are scored harder than they would be in a bank that sits behind an article."
+}
