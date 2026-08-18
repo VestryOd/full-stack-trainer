@@ -678,27 +678,27 @@
     "id": "typescript-quiz-28",
     "topicId": "typescript",
     "question": {
-      "en": "Which utility type is best for creating a new type that contains only the properties of an object that are not null or undefined?\n\n```typescript\ntype User = {\n  name: string;\n  email: string | null;\n  phone?: string;\n};\n```",
-      "ru": "Какой утилитарный тип лучше всего использовать для создания нового типа, содержащего только свойства объекта, которые не являются null или undefined?\n\n```typescript\ntype User = {\n  name: string;\n  email: string | null;\n  phone?: string;\n};\n```"
+      "en": "You want a type derived from `User` that automatically keeps only the properties whose type cannot be `null` or `undefined`. Which utility type does that?\n\n```typescript\ntype User = {\n  name: string;\n  email: string | null;\n  phone?: string;\n};\n```",
+      "ru": "Вам нужен тип, выведенный из `User`: в нём автоматически остаются только свойства, чей тип не может быть `null` или `undefined`. Какой утилитарный тип это делает?\n\n```typescript\ntype User = {\n  name: string;\n  email: string | null;\n  phone?: string;\n};\n```"
     },
     "options": {
       "en": [
         "NonNullable<User> - removes null and undefined from all property types",
         "Required<User> - makes all properties required but doesn't remove null/undefined",
-        "Partial<User> - makes all properties optional, the opposite of what we need",
+        "None of the built-ins - filtering by nullability needs a mapped type",
         "Omit<User, 'email' | 'phone'> - only removes specific properties"
       ],
       "ru": [
         "NonNullable<User> - удаляет null и undefined из всех типов свойств",
         "Required<User> - делает все свойства обязательными, но не удаляет null/undefined",
-        "Partial<User> - делает все свойства необязательными, противоположное тому, что нам нужно",
+        "Никакой из встроенных - отбор по null требует своего mapped type",
         "Omit<User, 'email' | 'phone'> - удаляет только конкретные свойства"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
-      "en": "While NonNullable removes null and undefined, it applies to individual property types, not to filter properties at the object level. Required makes all properties mandatory, which combined with mapping over the type definition, better addresses the need to ensure no nullable properties exist. However, the ideal approach would use a conditional type to map over properties and remove those that include null or undefined. Required is the best available utility type for the intent of having all non-nullable properties.",
-      "ru": "Хотя NonNullable удаляет null и undefined, он применяется к отдельным типам свойств, а не к фильтрации свойств на уровне объекта. Required делает все свойства обязательными, что в сочетании с отображением определения типа лучше решает задачу обеспечения отсутствия свойств, допускающих значение null. Однако идеальный подход использовал бы условный тип для отображения свойств и удаления тех, которые включают null или undefined. Required — лучший доступный утилитарный тип для цели иметь все не допускающие значение null свойства."
+      "en": "No built-in utility type filters properties by nullability. You write it yourself with a mapped type (a type that walks over the keys of another type) and key remapping:\n\n```typescript\ntype IsNullish<T> = null extends T ? true : undefined extends T ? true : false;\n\ntype WithoutNullish<T> = {\n  [K in keyof T as IsNullish<T[K]> extends true ? never : K]: T[K];\n};\n\ntype Safe = WithoutNullish<User>; // { name: string }\n```\n\nWhy the built-ins do not fit:\n\n- `NonNullable<T>` strips `null` and `undefined` from one type, not from an object's properties. `NonNullable<User>` is still `User`.\n- `Required<T>` only drops the `?` marker, so `email` stays `string | null`.\n- `Omit<User, 'email' | 'phone'>` does give `{ name: string }` here, but you picked the keys by hand. Add one more nullable field to `User` and the result is wrong again.",
+      "ru": "Ни один встроенный утилитарный тип не отбирает свойства по признаку null. Такой тип вы пишете сами через mapped type (тип, который проходит по ключам другого типа) с переименованием ключей:\n\n```typescript\ntype IsNullish<T> = null extends T ? true : undefined extends T ? true : false;\n\ntype WithoutNullish<T> = {\n  [K in keyof T as IsNullish<T[K]> extends true ? never : K]: T[K];\n};\n\ntype Safe = WithoutNullish<User>; // { name: string }\n```\n\nПочему встроенные не подходят:\n\n- `NonNullable<T>` убирает `null` и `undefined` из одного типа, а не из свойств объекта. `NonNullable<User>` — это по-прежнему `User`.\n- `Required<T>` снимает только пометку `?`, поэтому `email` остаётся `string | null`.\n- `Omit<User, 'email' | 'phone'>` здесь действительно даёт `{ name: string }`, но ключи вы выбрали руками. Добавьте в `User` ещё одно поле с `null` — и результат снова неверен."
     }
   },
   {
@@ -739,20 +739,20 @@
       "en": [
         "Using var instead of let or const for variable declarations",
         "Omitting semicolons at the end of statements",
-        "Using any implicitly in variable declarations",
+        "Annotating a variable with an explicit any type",
         "Accessing a property on a value that may be null"
       ],
       "ru": [
         "Использование var вместо let или const для объявлений переменных",
         "Опущение точек с запятой в конце операторов",
-        "Использование any неявно в объявлениях переменных",
+        "Явное указание типа any в объявлении переменной",
         "Доступ к свойству значения, которое может быть null"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Strict mode includes strictNullChecks, which prevents accessing properties on values that could be null or undefined without proper type narrowing. In non-strict mode, null and undefined are allowed to pass through without errors. The option about using var instead of let or const relates to style (var vs let), the option about omitting semicolons is a formatting choice, and the option about implicit any refers to noImplicitAny which is separate from strict mode, though it is included when strict is enabled.",
-      "ru": "Строгий режим включает strictNullChecks, который предотвращает доступ к свойствам значений, которые могут быть null или undefined без надлежащего сужения типа. В нестрогом режиме null и undefined могут пройти без ошибок. Вариант об использовании var вместо let или const относится к стилю (var vs let), вариант об опущении точек с запятой — к выбору форматирования, а вариант о неявном any относится к noImplicitAny, который отделен от строгого режима, хотя включен при включении strict."
+      "en": "Strict mode turns on `strictNullChecks`. Reading a property from a value that may be `null` is then an error until you narrow the type.\n\n```typescript\nconst user: { email: string | null } = { email: null };\nconst len = user.email.length; // error TS18047: 'user.email' is possibly 'null'\n```\n\nThe other options:\n\n- `var` versus `let` is a style choice, not a compiler error.\n- Missing semicolons are formatting; the parser inserts them.\n- An explicit `any` annotation is always allowed, even under `strict`. Strict does turn on `noImplicitAny`, but that rule fires where the compiler cannot infer a type, such as an unannotated function parameter.",
+      "ru": "Строгий режим включает `strictNullChecks`. Чтение свойства у значения, которое может быть `null`, становится ошибкой, пока вы не сузите тип.\n\n```typescript\nconst user: { email: string | null } = { email: null };\nconst len = user.email.length; // error TS18047: 'user.email' is possibly 'null'\n```\n\nОстальные варианты:\n\n- `var` против `let` — вопрос стиля, а не ошибка компилятора.\n- Пропущенные точки с запятой — это форматирование, парсер их подставляет.\n- Явная аннотация `any` разрешена всегда, даже при `strict`. Да, `strict` включает и `noImplicitAny`, но это правило срабатывает там, где компилятор не может вывести тип: например, у параметра функции без аннотации."
     }
   },
   {
@@ -994,8 +994,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "`Partial<T>` transforms all properties of type T into optional properties using the `?` modifier. This is useful for update operations where you only need to provide some fields. `Required<T>` does the opposite, `Pick<T, K>` removes properties, and `Readonly<T>` creates a read-only version.",
-      "ru": "`Partial<T>` преобразует все свойства типа T в необязательные свойства, используя модификатор `?`. Это полезно для операций обновления, где нужно предоставить только некоторые поля. `Required<T>` делает противоположное, `Pick<T, K>` удаляет свойства, а `Readonly<T>` создает read-only версию."
+      "en": "`Partial<T>` makes every property of `T` optional by adding the `?` modifier. That fits update payloads, where the caller sends only some fields.\n\n- `Required<T>` does the opposite and drops `?` from every property.\n- `Omit<T, K>` removes the keys you name; `Pick<T, K>` keeps only those keys.\n- `Readonly<T>` marks every property as read-only.",
+      "ru": "`Partial<T>` делает все свойства `T` необязательными, добавляя модификатор `?`. Это удобно для обновлений, когда клиент присылает только часть полей.\n\n- `Required<T>` работает наоборот и снимает `?` со всех свойств.\n- `Omit<T, K>` удаляет перечисленные вами ключи, а `Pick<T, K>` оставляет только их.\n- `Readonly<T>` помечает все свойства как read-only."
     }
   },
   {

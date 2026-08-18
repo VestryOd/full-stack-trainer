@@ -85,7 +85,7 @@
     "topicId": "oop-patterns",
     "question": {
       "en": "Analyze this code and predict the output:\n```js\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.execute(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n```\nWhat pattern is demonstrated and why is it fundamentally different from State?",
-      "ru": "Проанализируйте этот код и предскажите вывод:\n```js\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.pay(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n```\nКакой паттерн демонстрируется и чем он принципиально отличается от State?"
+      "ru": "Проанализируйте этот код и предскажите вывод:\n```js\nclass PaymentContext {\n  constructor(strategy) { this.strategy = strategy; }\n  setStrategy(strategy) { this.strategy = strategy; }\n  pay(amount) { return this.strategy.execute(amount); }\n}\n\nclass CreditCardStrategy { execute(amount) { return `Pay ${amount} via CC`; } }\nclass BitcoinStrategy { execute(amount) { return `Pay ${amount} via BTC`; } }\n\nconst context = new PaymentContext(new CreditCardStrategy());\nconsole.log(context.pay(100));\ncontext.setStrategy(new BitcoinStrategy());\nconsole.log(context.pay(100));\n```\nКакой паттерн демонстрируется и чем он принципиально отличается от State?"
     },
     "options": {
       "en": [
@@ -292,8 +292,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The double-checked locking issue in this code allows race conditions where two threads both see instance == null, both create instances, and overwrite each other. This defeats the Singleton guarantee. The three remaining options are either false or not primary pitfalls of Singletons in concurrent code.",
-      "ru": "Проблема удвоенной проверки блокировки в этом коде позволяет состояния гонки, где два потока видят instance == null, оба создают экземпляры и перезаписывают друг друга. Это нарушает гарантию Singleton. Три остальных варианта либо ложны, либо не являются основными проблемами Singleton в параллельном коде."
+      "en": "This code is plain lazy initialization: one null check and no lock. Two threads can both see `instance == null`, both run the constructor, and one result overwrites the other. That breaks the Singleton guarantee. Double-checked locking is the cure, not the disease. It means check, take the lock, check again inside the lock, and declare the field `volatile`. The three remaining options are either false or not primary pitfalls of Singletons in concurrent code.",
+      "ru": "Здесь обычная ленивая инициализация: одна проверка на null и никакой блокировки. Два потока могут оба увидеть `instance == null`, оба вызвать конструктор, и один результат перезапишет другой. Гарантия Singleton сломана. Двойная проверка с блокировкой (double-checked locking) — это лечение, а не болезнь. Она означает: проверка, захват блокировки, повторная проверка внутри блокировки и поле `volatile`. Три остальных варианта либо ложны, либо описывают не главную проблему Singleton в параллельном коде."
     }
   },
   {
@@ -427,8 +427,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "In multi-threaded environments, the double-checked locking pattern is vulnerable: two threads can simultaneously pass the null check and create separate instances. The static field assignment itself is thread-safe, but the check-then-act sequence is not. The other options misunderstand either Singleton's applicability or Java's threading model.",
-      "ru": "В многопоточной среде двойная проверка уязвима: два потока могут одновременно пройти проверку на null и создать отдельные экземпляры. Само присваивание статического поля потокобезопасно, но последовательность проверки-действия — нет. Остальные варианты неправильно понимают применимость Singleton или модель потокости Java."
+      "en": "There is a single null check here and no lock, so two threads can pass that check at the same time and create separate instances. Assigning the static field is itself atomic, but the check-then-act sequence around it is not. The repair has a name: double-checked locking, meaning check, lock, check again, plus a `volatile` field. The other options misunderstand either Singleton's applicability or Java's threading model.",
+      "ru": "Здесь одна проверка на null и никакой блокировки, поэтому два потока могут пройти её одновременно и создать отдельные экземпляры. Само присваивание статического поля атомарно, а вот последовательность «проверил — создал» вокруг него — нет. У починки есть имя: двойная проверка с блокировкой (double-checked locking) — проверка, блокировка, повторная проверка и поле `volatile`. Остальные варианты неправильно понимают применимость Singleton или модель потоков Java."
     }
   },
   {
@@ -543,8 +543,8 @@
     "id": "oop-patterns-quiz-21",
     "topicId": "oop-patterns",
     "question": {
-      "en": "You're reviewing code that implements a thread-safe Singleton pattern. What is the primary pitfall you should watch out for?\n\n```java\npublic class Singleton {\n  private static Singleton instance;\n  \n  public static Singleton getInstance() {\n    if (instance == null) {\n      instance = new Singleton();\n    }\n    return instance;\n  }\n}\n```",
-      "ru": "Вы проверяете код, реализующий потокобезопасный Singleton паттерн. На какую основную ошибку вам следует обратить внимание?\n\n```java\npublic class Singleton {\n  private static Singleton instance;\n  \n  public static Singleton getInstance() {\n    if (instance == null) {\n      instance = new Singleton();\n    }\n    return instance;\n  }\n}\n```"
+      "en": "You're reviewing code that is meant to be a thread-safe Singleton. What is the primary pitfall you should watch out for?\n\n```java\npublic class Singleton {\n  private static Singleton instance;\n  \n  public static Singleton getInstance() {\n    if (instance == null) {\n      instance = new Singleton();\n    }\n    return instance;\n  }\n}\n```",
+      "ru": "Вы проверяете код, который задуман как потокобезопасный Singleton. На какую основную ошибку вам следует обратить внимание?\n\n```java\npublic class Singleton {\n  private static Singleton instance;\n  \n  public static Singleton getInstance() {\n    if (instance == null) {\n      instance = new Singleton();\n    }\n    return instance;\n  }\n}\n```"
     },
     "options": {
       "en": [
@@ -562,8 +562,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The double-checked locking pattern shown is vulnerable to race conditions because multiple threads can pass the null check simultaneously before any instance is created. The fix requires proper synchronization (synchronized keyword or volatile modifier). Serialization and garbage collection are separate concerns, and getInstance() will not return null after class loading.",
-      "ru": "Показанный паттерн с двойной проверкой уязвим для состояния гонки, поскольку несколько потоков могут одновременно пройти проверку null до создания экземпляра. Исправление требует правильной синхронизации (ключевое слово synchronized или модификатор volatile). Сериализация и сборка мусора — это отдельные проблемы, и getInstance() не вернет null после загрузки класса."
+      "en": "The code is not thread-safe at all: one null check, no lock. Several threads can pass that check before any instance exists, so each of them creates its own. The real fix is called double-checked locking: check, enter a `synchronized` block, check again there, and declare the field `volatile`. Serialization and garbage collection are separate concerns, and `getInstance()` will not return null after class loading.",
+      "ru": "Код вообще не потокобезопасен: одна проверка на null, никакой блокировки. Несколько потоков успевают пройти эту проверку до того, как экземпляр создан, и каждый создаёт свой. Настоящее решение называется двойной проверкой с блокировкой (double-checked locking): проверка, вход в `synchronized`-блок, повторная проверка там же и поле `volatile`. Сериализация и сборка мусора — отдельные темы, а `getInstance()` не вернёт null после загрузки класса."
     }
   },
   {
@@ -665,13 +665,13 @@
         "Они добавляют и переиспользуют поведение без изменения исходного класса",
         "Они быстрее выполняются, потому что избегают накладных расходов поиска методов",
         "Они исключают необходимость в функциях-конструкторах",
-        "Они гарантируют энергоэффективность путем уменьшения создания экземпляров объектов"
+        "Они гарантируют экономию памяти за счёт уменьшения создания объектов"
       ]
     },
     "correctIndex": 0,
     "explanation": {
       "en": "Decorators and HOCs add behavior through composition rather than inheritance, allowing you to wrap objects/components without modifying their source code. This enables reusing and combining multiple decorators flexibly. Direct inheritance creates rigid hierarchies and makes reusing code across unrelated classes difficult. Performance and memory efficiency are not primary advantages of this pattern—composition is about design flexibility.",
-      "ru": "Decorators и HOCs добавляют поведение через композицию, а не наследование, позволяя оборачивать объекты/компоненты без изменения их исходного кода. Это обеспечивает гибкое переиспользование и комбинирование нескольких decorators. Прямое наследование создает жесткие иерархии и затрудняет переиспользование кода между несвязанными классами. Производительность и эффективность памяти не являются основными преимуществами этого паттерна — композиция касается гибкости дизайна."
+      "ru": "Decorators и HOCs добавляют поведение через композицию, а не наследование, позволяя оборачивать объекты/компоненты без изменения их исходного кода. Это обеспечивает гибкое переиспользование и комбинирование нескольких decorators. Прямое наследование создает жесткие иерархии и затрудняет переиспользование кода между несвязанными классами. Производительность и экономия памяти — не главные преимущества этого паттерна — композиция касается гибкости дизайна."
     }
   }
 ]

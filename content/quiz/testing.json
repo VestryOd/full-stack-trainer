@@ -165,27 +165,27 @@
     "id": "testing-quiz-7",
     "topicId": "testing",
     "question": {
-      "en": "What is the key difference between a stub and a mock in unit testing?\n```js\nconst stub = sinon.stub(api, 'fetch').returns(Promise.resolve({id: 1}));\nconst mock = sinon.mock(api).expects('fetch').once().returns(Promise.resolve({id: 1}));\n```\nWhich statement is true?",
-      "ru": "В чем ключевое отличие заглушки от макета в модульном тестировании?\n```js\nconst stub = sinon.stub(api, 'fetch').returns(Promise.resolve({id: 1}));\nconst mock = sinon.mock(api).expects('fetch').once().returns(Promise.resolve({id: 1}));\n```\nКакое утверждение верно?"
+      "en": "Each test below passes on its own, but `starts empty` fails when the whole file runs. Where should the `cart` be created?\n```js\nconst cart = createCart();\n\ntest('adds an item', () => {\n  cart.add('book');\n  expect(cart.count).toBe(1);\n});\n\ntest('starts empty', () => {\n  expect(cart.count).toBe(0);\n});\n```",
+      "ru": "Каждый тест ниже проходит по отдельности, но `starts empty` падает, когда файл запускают целиком. Где нужно создавать `cart`?\n```js\nconst cart = createCart();\n\ntest('adds an item', () => {\n  cart.add('book');\n  expect(cart.count).toBe(1);\n});\n\ntest('starts empty', () => {\n  expect(cart.count).toBe(0);\n});\n```"
     },
     "options": {
       "en": [
-        "A stub verifies behavior while a mock provides a canned response",
-        "Stubs and mocks are identical and the terms are interchangeable",
-        "A mock verifies behavior while a stub provides a canned response",
-        "A mock is only used for async code while a stub is for sync code"
+        "In `beforeAll`, so the object is built once per file",
+        "At the end of each test, by resetting the count by hand",
+        "In `beforeEach`, so each test gets its own fresh cart",
+        "Inside the failing test only, since it is the broken one"
       ],
       "ru": [
-        "Заглушка проверяет поведение, а макет предоставляет готовый ответ",
-        "Заглушки и макеты идентичны и термины взаимозаменяемы",
-        "Макет проверяет поведение, а заглушка предоставляет готовый ответ",
-        "Макет используется только для асинхронного кода, а заглушка - для синхронного"
+        "В `beforeAll`, чтобы объект создавался один раз на файл",
+        "В конце каждого теста, сбрасывая счётчик вручную",
+        "В `beforeEach`, чтобы каждый тест получал свою свежую корзину",
+        "Только внутри падающего теста, ведь ломается именно он"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "A mock sets up expectations about how a function should be called (like `.expects('fetch').once()`) and fails the test if those expectations aren't met. A stub simply replaces a function with a predetermined return value without verifying how many times it was called. In the example, the mock will verify the call was made exactly once.",
-      "ru": "Макет устанавливает ожидания о том, как функция должна быть вызвана (например, `.expects('fetch').once()`), и не пройдет тест, если эти ожидания не будут выполнены. Заглушка просто заменяет функцию предопределенным возвращаемым значением без проверки того, сколько раз она была вызвана. В примере макет проверит, что вызов был выполнен ровно один раз."
+      "en": "Create the cart in `beforeEach`. Every test then starts from the same clean state, in any order the runner picks.\n\n- `beforeEach` holds setup that must be fresh: new objects, a cleared store, reset call counters.\n- The test body holds what is unique to that test: its input, the action, the assertions.\n- `beforeAll` is for expensive setup that stays read-only, such as reading a file of prepared test data once.\n\n**Common pitfall:** Cleaning up at the end of the test body. A failed assertion throws first, so the cleanup never runs. The next test inherits dirty state.",
+      "ru": "Создавайте корзину в `beforeEach`. Тогда каждый тест начинается с одинакового чистого состояния, в любом порядке запуска.\n\n- В `beforeEach` — подготовка, которая должна быть свежей: новые объекты, очищенное хранилище, сброшенные счётчики вызовов.\n- В теле теста — то, что уникально для него: свои данные, действие и проверки.\n- `beforeAll` нужен для дорогой подготовки только для чтения: например, один раз прочитать файл с готовыми тестовыми данными.\n\n**Частая ловушка:** уборка в конце тела теста. Упавшая проверка бросает исключение раньше, поэтому уборка не выполняется. Следующий тест получает грязное состояние."
     }
   },
   {
@@ -233,13 +233,13 @@
         "Переделать на возврат Promise и использовать async/await в тестах",
         "Использовать поддельные таймеры (jest.useFakeTimers) и продвигать время вручную",
         "Использовать параметр done callback в функции теста",
-        "Полностью mockировать функцию setTimeout, чтобы она работала синхронно"
+        "Полностью подменить функцию setTimeout, чтобы она работала синхронно"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Refactoring callback-based async code to return Promises is the most modern and readable approach. It allows using async/await syntax and is cleaner than managing fake timers or done callbacks. While fake timers can work, refactoring the production code to use Promises is preferred when possible, making tests more maintainable and aligned with modern JavaScript practices.",
-      "ru": "Переделка асинхронного кода на основе callback в возврат Promise - это наиболее современный и читаемый подход. Это позволяет использовать синтаксис async/await и чище, чем управление поддельными таймерами или done callbacks. Хотя поддельные таймеры могут работать, переделка production кода для использования Promise предпочтительнее, когда это возможно, делая тесты более maintainable и соответствующие современным практикам JavaScript."
+      "en": "Refactor `fetchUserData` to return a Promise, then `await` it in the test. The test gets one value to assert on, with no callback plumbing.\n\n```js\nfunction fetchUserData(userId) {\n  return new Promise((resolve) => {\n    setTimeout(() => resolve({ id: userId, name: 'John' }), 100);\n  });\n}\n\ntest('returns the user', async () => {\n  const user = await fetchUserData(1);\n  expect(user).toEqual({ id: 1, name: 'John' }); // passes\n});\n```\n\nFake timers are not a workaround to avoid. They are the right tool for skipping a real delay, and they work with the Promise version above. What they do not change is the callback shape. With a callback the assertion sits inside it, so a callback that never fires leaves the test passing with nothing checked.\n\n**Common pitfall:** Turning fake timers on and never off. Call `jest.useRealTimers()` in `afterEach`, or later tests in the file run against a frozen clock.",
+      "ru": "Переделайте `fetchUserData` на возврат Promise и дождитесь его через `await` в тесте. Тест получает одно значение для проверки, без обвязки из функций обратного вызова (callback).\n\n```js\nfunction fetchUserData(userId) {\n  return new Promise((resolve) => {\n    setTimeout(() => resolve({ id: userId, name: 'John' }), 100);\n  });\n}\n\ntest('returns the user', async () => {\n  const user = await fetchUserData(1);\n  expect(user).toEqual({ id: 1, name: 'John' }); // passes\n});\n```\n\nПоддельные таймеры (fake timers) — не костыль, которого надо избегать. Это правильный инструмент, чтобы пропустить реальную задержку, и он сочетается с версией на Promise. Чего они не меняют — это форму с callback. При callback проверка стоит внутри него: если он не вызовется, тест пройдёт, ничего не проверив.\n\n**Частая ловушка:** включить поддельные таймеры и не выключить. Вызовите `jest.useRealTimers()` в `afterEach`, иначе следующие тесты файла пойдут с замороженными часами."
     }
   },
   {
@@ -273,18 +273,18 @@
     "id": "testing-quiz-11",
     "topicId": "testing",
     "question": {
-      "en": "You are testing a React component that fetches user data from an API and displays it. Which testing approach would you choose and why?\n\n```jsx\nfunction UserProfile({ userId }) {\n  const [user, setUser] = useState(null);\n  useEffect(() => {\n    fetchUser(userId).then(setUser);\n  }, [userId]);\n  return user ? <div>{user.name}</div> : <div>Loading...</div>;\n}\n```\n\nWhat is the most appropriate testing level for verifying this component works end-to-end?",
-      "ru": "Вы тестируете React компонент, который загружает данные пользователя из API и отображает их. Какой подход тестирования вы выберете и почему?\n\n```jsx\nfunction UserProfile({ userId }) {\n  const [user, setUser] = useState(null);\n  useEffect(() => {\n    fetchUser(userId).then(setUser);\n  }, [userId]);\n  return user ? <div>{user.name}</div> : <div>Loading...</div>;\n}\n```\n\nКакой уровень тестирования наиболее подходит для проверки работы этого компонента от начала до конца?"
+      "en": "You are testing a React component that loads user data from an API and displays it.\n\n```jsx\nfunction UserProfile({ userId }) {\n  const [user, setUser] = useState(null);\n  useEffect(() => {\n    fetchUser(userId).then(setUser);\n  }, [userId]);\n  return user ? <div>{user.name}</div> : <div>Loading...</div>;\n}\n```\n\nWhich testing level should be your default for this component's own logic?",
+      "ru": "Вы тестируете React-компонент, который загружает данные пользователя из API и отображает их.\n\n```jsx\nfunction UserProfile({ userId }) {\n  const [user, setUser] = useState(null);\n  useEffect(() => {\n    fetchUser(userId).then(setUser);\n  }, [userId]);\n  return user ? <div>{user.name}</div> : <div>Loading...</div>;\n}\n```\n\nКакой уровень тестирования должен быть основным для собственной логики этого компонента?"
     },
     "options": {
       "en": [
-        "E2E test hitting real API in production environment",
+        "End-to-end test against the real API in production",
         "Integration test that mocks only the database layer",
         "Unit test with mocked API, checking both render states",
         "Only code coverage metrics without actual test execution"
       ],
       "ru": [
-        "E2E тест с реальным API в production окружении",
+        "Сквозной тест с реальным API в рабочем окружении",
         "Интеграционный тест, мокирующий только слой базы данных",
         "Юнит-тест с замокированным API и проверкой обоих состояний",
         "Только метрики покрытия кода без выполнения тестов"
@@ -292,8 +292,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "A unit test with mocked API is ideal here because it's fast, reliable, and lets you test the component's lifecycle in isolation. The test asserts the loading state first, then the user name that renders after the fetch resolves. E2E tests are too slow and brittle for basic component logic, while skipping tests entirely defeats the purpose of testing.",
-      "ru": "Юнит-тест с замокированным API идеален здесь, так как он быстрый, надежный и позволяет тестировать жизненный цикл компонента в изоляции. Тест сначала проверяет состояние загрузки, а потом имя пользователя, которое появляется после ответа. E2E тесты слишком медленные и хрупкие для базовой логики компонента, а пропуск тестов противоречит цели тестирования."
+      "en": "The unit test with a mocked API is the right default. It is fast, deterministic, and covers both render states: the loading text first, then the name.\n\nWhy not the others:\n\n- An end-to-end (E2E) test against the real API is slow and can fail for reasons outside this component. Keep a few of those for whole user flows.\n- There is no database layer to mock here. The component only knows about the network call.\n- Coverage numbers tell you which lines ran. They do not tell you whether the loading state ever rendered.",
+      "ru": "Основной выбор — модульный тест с подменённым API. Он быстрый, предсказуемый и покрывает оба состояния: сначала текст загрузки, потом имя.\n\nПочему не остальные:\n\n- Сквозной (end-to-end) тест с реальным API медленный и может упасть по причинам вне этого компонента. Такие тесты держат для целых пользовательских сценариев.\n- Подменять слой базы данных здесь нечего: компонент знает только про сетевой вызов.\n- Проценты покрытия говорят, какие строки выполнились. Они не говорят, отрисовалось ли состояние загрузки."
     }
   },
   {
@@ -387,21 +387,21 @@
     "options": {
       "en": [
         "Add setTimeout(done, 3000) to wait for the function to complete",
-        "Use fake timers with jest.useFakeTimers() to skip the actual delay",
+        "Call jest.runAllTimers(), then assert on the next line",
         "Use async/await in the test and waitFor() for DOM updates",
         "Remove the async code entirely and replace with synchronous mocks"
       ],
       "ru": [
         "Добавьте setTimeout(done, 3000) для ожидания завершения функции",
-        "Используйте fake timers с jest.useFakeTimers() чтобы пропустить реальную задержку",
+        "Вызвать jest.runAllTimers() и сразу проверить результат",
         "Используйте async/await в тесте и waitFor() для обновлений DOM",
         "Удалите асинхронный код полностью и замените синхронными mocks"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Using async/await with waitFor() is best because it waits intelligently for conditions rather than arbitrary timeouts, preventing flaky tests and false passes. Arbitrary setTimeout is unreliable, fake timers add complexity, and removing async code defeats the purpose of testing real behavior.",
-      "ru": "Использование async/await с waitFor() лучше всего, потому что оно разумно ожидает условий, а не произвольных таймаутов, предотвращая нестабильные тесты и ложные прохождения. Произвольный setTimeout ненадежен, fake timers добавляют сложность, а удаление асинхронного кода противоречит цели тестирования реального поведения."
+      "en": "Await the promise the test starts, and use `waitFor()` when you wait for the DOM (document object model) to update. Both wait for a condition, not for a fixed number of seconds.\n\nWhat is wrong with the rest:\n\n- A fixed `setTimeout(done, 3000)` is a race. On a loaded CI (continuous integration) machine three seconds may not be enough.\n- Fake timers are fine, and they are the tool for skipping the real 2-second wait. What breaks that option is the missing `await`. `jest.runAllTimers()` fires the timer, but the promise chain resolves in a later microtask, after the assertion has already run.\n- Deleting the async code removes the behaviour you wanted to check.\n\n**Common pitfall:** Leaving fake timers on. Restore the real ones with `jest.useRealTimers()` in `afterEach`.",
+      "ru": "Дождитесь промиса, который запускает тест, и используйте `waitFor()`, когда ждёте обновления DOM (объектной модели документа). Оба варианта ждут условие, а не фиксированные секунды.\n\nЧто не так с остальными:\n\n- Фиксированный `setTimeout(done, 3000)` — это гонка. На загруженной машине CI (непрерывной интеграции) трёх секунд может не хватить.\n- Поддельные таймеры (fake timers) — нормальный инструмент, именно они пропускают реальное ожидание в 2 секунды. Ломает этот вариант отсутствие `await`. `jest.runAllTimers()` запускает таймер, но цепочка промисов разрешается в следующей микрозадаче, когда проверка уже выполнилась.\n- Удаление асинхронного кода убирает то поведение, которое вы и хотели проверить.\n\n**Частая ловушка:** оставить поддельные таймеры включёнными. Возвращайте настоящие через `jest.useRealTimers()` в `afterEach`."
     }
   }
 ]

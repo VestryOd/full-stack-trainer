@@ -867,18 +867,18 @@
     "id": "nodejs-quiz-35",
     "topicId": "nodejs",
     "question": {
-      "en": "In CommonJS, if module A requires module B, and module B requires module A, what happens?",
-      "ru": "В CommonJS, если модуль A требует модуль B, и модуль B требует модуль A, что происходит?"
+      "en": "In CommonJS, module A is loaded first and requires module B, which requires module A back. What happens?",
+      "ru": "В CommonJS модуль A загружается первым и подключает модуль B, а модуль B в ответ подключает модуль A. Что происходит?"
     },
     "options": {
       "en": [
-        "Module A receives an incomplete or empty object from module B",
+        "Module B receives an incomplete or empty object from module A",
         "A circular dependency error is thrown immediately",
         "Node.js automatically resolves the circular dependency by cloning modules",
         "The require statement is ignored when a circular dependency is detected"
       ],
       "ru": [
-        "Модуль A получает неполный или пустой объект от модуля B",
+        "Модуль B получает неполный или пустой объект от модуля A",
         "Немедленно выбрасывается ошибка циклической зависимости",
         "Node.js автоматически разрешает циклическую зависимость путём клонирования модулей",
         "Оператор require игнорируется при обнаружении циклической зависимости"
@@ -886,8 +886,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Node.js handles circular requires by caching partially-loaded modules. When B requires A while A is still loading, B receives the current state of module.exports (which may be an empty object or partially populated). This is by design and can lead to unexpected behavior if not handled carefully.",
-      "ru": "Node.js обрабатывает циклические require, кэшируя частично загруженные модули. Когда B требует A, пока A всё ещё загружается, B получает текущее состояние module.exports (которое может быть пустым объектом или частично заполненным). Это сделано намеренно и может привести к неожиданному поведению, если не обработать осторожно."
+      "en": "Node.js returns an unfinished copy of the exports object instead of throwing. Module A starts first and pauses on its `require` line. Module B then requires A back and sees only what A assigned before that line: an empty object or half the properties. Module B finishes normally, so A gets a complete copy of B. The partial view hits whoever closes the cycle.",
+      "ru": "Node.js не бросает ошибку, а отдаёт незаконченную копию объекта exports. Первым стартует модуль A и замирает на строке с `require`. Затем модуль B подключает A обратно и видит только то, что A успел присвоить до этой строки: пустой объект или половину свойств. Модуль B дорабатывает нормально, поэтому у A копия B полная. Неполный объект достаётся тому, кто замыкает цикл."
     }
   },
   {
@@ -948,8 +948,8 @@
     "id": "nodejs-quiz-40",
     "topicId": "nodejs",
     "question": {
-      "en": "In ESM, what is the correct way to replicate the CommonJS `__dirname` and `__filename` globals?",
-      "ru": "В ESM какой правильный способ воспроизвести глобальные переменные CommonJS `__dirname` и `__filename`?"
+      "en": "Your service still runs on Node.js 18, so APIs added in 20.11 are not available. In ESM (ECMAScript modules — the `import`/`export` system), how do you get `__dirname` and `__filename` there?",
+      "ru": "Ваш сервис всё ещё работает на Node.js 18, поэтому API, добавленные в 20.11, недоступны. Как в ESM (ECMAScript modules — система модулей с `import`/`export`) получить там `__dirname` и `__filename`?"
     },
     "options": {
       "en": [
@@ -967,8 +967,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "ESM doesn't provide __dirname and __filename directly. You must use import.meta.url with fileURLToPath from the 'url' module to get the filename, then derive __dirname using path.dirname(). The other options use non-existent APIs or environment variables.",
-      "ru": "ESM не предоставляет __dirname и __filename напрямую. Вы должны использовать import.meta.url с fileURLToPath из модуля 'url' для получения имени файла, затем вывести __dirname с помощью path.dirname(). Остальные варианты используют несуществующие API или переменные окружения."
+      "en": "`fileURLToPath(import.meta.url)` is the only choice that runs on Node.js 18. It turns the `file:` URL of the module into a path, and `path.dirname()` gives the directory. As of writing, Node.js 20.11 and 21.2 added the shorter `import.meta.dirname` and `import.meta.filename`. Those are `undefined` outside `file:` modules. The other options read unset environment variables or import names that do not exist.",
+      "ru": "`fileURLToPath(import.meta.url)` — единственный рабочий вариант на Node.js 18. Он превращает `file:`-URL модуля в путь, а `path.dirname()` даёт каталог. На момент написания в Node.js 20.11 и 21.2 появились короткие `import.meta.dirname` и `import.meta.filename`. Вне модулей по протоколу `file:` они дают `undefined`. Остальные варианты читают незаданные переменные окружения или импортируют несуществующие имена."
     }
   },
   {

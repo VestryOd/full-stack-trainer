@@ -50,7 +50,7 @@
     "correctIndex": 1,
     "explanation": {
       "en": "The revalidate export implements Incremental Static Regeneration (ISR), causing the page to be pre-rendered at build time and then revalidated in the background every 3600 seconds. This combines the benefits of static generation with fresh data updates, making it ideal for content that changes infrequently.",
-      "ru": "Экспорт revalidate реализует Incremental Static Regeneration (ISR), что заставляет страницу быть предварительно отрендерированной во время сборки, а затем проходит ревалидацию в фоне каждые 3600 секунд. Это объединяет преимущества статической генерации со свежими обновлениями данных, что идеально подходит для контента, который меняется редко."
+      "ru": "Экспорт revalidate реализует Incremental Static Regeneration (ISR), что заставляет страницу быть предварительно отрисованной во время сборки, а затем проходит ревалидацию в фоне каждые 3600 секунд. Это объединяет преимущества статической генерации со свежими обновлениями данных, что идеально подходит для контента, который меняется редко."
     }
   },
   {
@@ -145,20 +145,20 @@
       "en": [
         "When the component needs React hooks like useState or useEffect for local state",
         "When you need to reach databases, APIs, or secrets directly from the server",
-        "When you want to reduce the JavaScript bundle size sent to the client",
+        "When you want the browser to download and re-render the whole page as JavaScript",
         "When you need to handle user interactions and real-time updates"
       ],
       "ru": [
         "Когда компоненту нужны React-хуки вроде useState или useEffect для локального состояния",
         "Когда нужно обращаться к базам данных, API или секретам прямо на сервере",
-        "Когда вы хотите уменьшить размер JavaScript пакета, отправляемого клиенту",
+        "Когда вы хотите, чтобы браузер скачал и заново отрисовал всю страницу как JavaScript",
         "Когда вам нужно обрабатывать взаимодействие пользователя и обновления в реальном времени"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Server Components have direct access to sensitive resources like databases and API keys without exposing them to the browser, making them ideal for secure operations. While reducing bundle size and improving performance are benefits, the primary use case is accessing secure backend resources. Client Components are still needed for interactivity and hooks.",
-      "ru": "Server Components имеют прямой доступ к конфиденциальным ресурсам, таким как базы данных и ключи API, без их раскрытия браузеру, что делает их идеальными для безопасных операций. Хотя сокращение размера пакета и повышение производительности — это преимущества, основной вариант использования — это доступ к безопасным ресурсам бэкенда. Client Components по-прежнему необходимы для интерактивности и hooks."
+      "en": "Server Components run only on the server, so they can read a database or a secret API key directly. A Client Component would ship that key to the browser. Server Components also cut the JavaScript sent to the client, which is why the App Router makes them the default. Client Components stay necessary for state, event handlers and browser APIs.",
+      "ru": "Server Components выполняются только на сервере, поэтому читают базу данных или секретный ключ API напрямую. Client Component отправил бы такой ключ в браузер. Server Components ещё и уменьшают объём JavaScript для клиента, поэтому App Router делает их вариантом по умолчанию. Client Components нужны для состояния, обработчиков событий и браузерных API."
     }
   },
   {
@@ -185,7 +185,7 @@
     "correctIndex": 2,
     "explanation": {
       "en": "Static Generation pre-renders pages at build time, making them extremely fast but requiring redeployment for updates. Dynamic Rendering generates pages per request, enabling real-time data but with higher latency. Next.js automatically optimizes between them based on whether dynamic functions are used.",
-      "ru": "Статическая генерация предварительно отображает страницы во время сборки, делая их чрезвычайно быстрыми, но требуя переразвертывания для обновлений. Динамический рендеринг генерирует страницы при каждом запросе, обеспечивая данные в реальном времени, но с большей задержкой. Next.js автоматически оптимизирует между ними на основе того, используются ли динамические функции."
+      "ru": "Статическая генерация предварительно отображает страницы во время сборки, делая их чрезвычайно быстрыми, но требуя повторного развертывания для обновлений. Динамический рендеринг генерирует страницы при каждом запросе, обеспечивая данные в реальном времени, но с большей задержкой. Next.js автоматически оптимизирует между ними на основе того, используются ли динамические функции."
     }
   },
   {
@@ -339,7 +339,7 @@
       ],
       "ru": [
         "Обернуть fetchUser() в функцию cache() и поставить revalidate: 600 в конфигурации сегмента маршрута",
-        "Использовать unstable_cache() с TTL в 10 минут и всегда переполучать данные при навигации клиента",
+        "Использовать unstable_cache() с TTL в 10 минут и всегда запрашивать данные заново при навигации клиента",
         "Добавить слой Redis вне Next.js и запрашивать его вместо исходного API",
         "Настроить SWR в хук useEffect для кеширования данных с интервалом в 10 минут"
       ]
@@ -347,7 +347,7 @@
     "correctIndex": 0,
     "explanation": {
       "en": "The `cache()` function deduplicates identical requests during a single render pass, while the route segment config `revalidate: 600` sets ISR to revalidate cached data every 10 minutes (600 seconds). This is the recommended Next.js approach for server-side caching. External Redis or client-side SWR are overkill for this use case and bypass Next.js's built-in caching mechanism.",
-      "ru": "Функция `cache()` дедублирует идентичные запросы во время одного прохода рендера, а конфигурация сегмента маршрута `revalidate: 600` устанавливает ISR для ревалидации кешированных данных каждые 10 минут (600 секунд). Это рекомендуемый подход Next.js для кеширования на стороне сервера. Внешний Redis или клиентский SWR чрезмерны для этого случая и обходят встроенный механизм кеширования Next.js."
+      "ru": "Функция `cache()` убирает дубли одинаковых запросов во время одного прохода рендера, а конфигурация сегмента маршрута `revalidate: 600` устанавливает ISR для ревалидации кешированных данных каждые 10 минут (600 секунд). Это рекомендуемый подход Next.js для кеширования на стороне сервера. Внешний Redis или клиентский SWR чрезмерны для этого случая и обходят встроенный механизм кеширования Next.js."
     }
   },
   {
@@ -368,7 +368,7 @@
         "Компонент Image оптимизирует только во время сборки; вы должны вручную обрабатывать адаптивные размеры с srcSet",
         "Компонент Image сам генерирует несколько размеров, конвертирует в WebP и отдаёт нужный вариант под устройство",
         "Компонент Image требует конфигурации внешней CDN для работы; без неё оптимизация не происходит",
-        "Компонент Image работает идентично нативному теку <img>, но с автоматическими заголовками кеширования"
+        "Компонент Image работает идентично нативному тегу <img>, но с автоматическими заголовками кеширования"
       ]
     },
     "correctIndex": 1,
@@ -482,7 +482,7 @@
     "correctIndex": 1,
     "explanation": {
       "en": "Next.js App Router defaults to caching fetch requests indefinitely via the Data Cache layer. These cached requests persist across deployments and rebuilds until explicitly revalidated using revalidateTag() or revalidatePath(). The indefinite Data Cache option is correct. The fetch is not revalidated on every request by default, it's not just a build-time cache, and while HTTP headers are respected, Next.js applies its own aggressive Data Cache strategy that overrides standard browser caching for server-side fetches.",
-      "ru": "Next.js App Router по умолчанию кэширует запросы fetch на неопределенный срок через слой Data Cache. Эти кэшированные запросы сохраняются во время развертываний и пересборок до явной переоценки с помощью revalidateTag() или revalidatePath(). Вариант с бессрочным Data Cache правильный. Fetch не переоценивается при каждом запросе по умолчанию, это не просто кэш времени сборки, и хотя HTTP заголовки учитываются, Next.js применяет свою собственную агрессивную стратегию Data Cache, которая переопределяет стандартное кэширование браузера для выборок на стороне сервера."
+      "ru": "Next.js App Router по умолчанию кэширует запросы fetch на неопределенный срок через слой Data Cache. Эти кэшированные запросы сохраняются во время развертываний и пересборок до явной ревалидации с помощью revalidateTag() или revalidatePath(). Вариант с бессрочным Data Cache правильный. Fetch не ревалидируется при каждом запросе по умолчанию, это не просто кэш времени сборки, и хотя HTTP заголовки учитываются, Next.js применяет свою собственную агрессивную стратегию Data Cache, которая переопределяет стандартное кэширование браузера для выборок на стороне сервера."
     }
   },
   {
@@ -617,7 +617,7 @@
     "correctIndex": 2,
     "explanation": {
       "en": "Next.js middleware executes at the Edge (before reaching your server) for authentication, redirects, and request modification. It works with both App and Pages Router. It's not a post-render optimization and doesn't run on the client side—it's server-side middleware that intercepts all incoming requests.",
-      "ru": "Next.js middleware выполняется на Edge (перед достижением вашего сервера) для аутентификации, перенаправлений и модификации запросов. Он работает с App и Pages Router. Это не постобработочная оптимизация и не выполняется на клиенте — это серверное middleware, которое перехватывает все входящие запросы."
+      "ru": "Next.js middleware выполняется на Edge (перед достижением вашего сервера) для аутентификации, перенаправлений и модификации запросов. Он работает с App и Pages Router. Это не оптимизация после сборки и не выполняется на клиенте — это серверное middleware, которое перехватывает все входящие запросы."
     }
   },
   {
@@ -644,7 +644,7 @@
     "correctIndex": 3,
     "explanation": {
       "en": "ISR is ideal for this use case—pages are pre-rendered at build time for performance, then revalidated on-demand after 1 week. This balances speed and freshness. Full static generation requires rebuilding everything. SSR would waste resources checking every request. Client-side rendering defeats the purpose of static generation benefits.",
-      "ru": "ISR идеален для этого случая — страницы предварительно отрисовываются во время сборки для производительности, затем переваиливаются по требованию через 1 неделю. Это баланс между скоростью и свежестью. Полная статическая генерация требует перестройки всего. SSR тратил бы ресурсы на проверку каждого запроса. Клиентский рендеринг нарушает преимущества статической генерации."
+      "ru": "ISR идеален для этого случая — страницы предварительно отрисовываются во время сборки для производительности, затем ревалидируются по требованию через 1 неделю. Это баланс между скоростью и свежестью. Полная статическая генерация требует перестройки всего. SSR тратил бы ресурсы на проверку каждого запроса. Клиентский рендеринг нарушает преимущества статической генерации."
     }
   },
   {
@@ -724,8 +724,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "ISR allows static pages to be regenerated on-demand when they're requested, using the revalidate option in getStaticProps. This provides the performance benefits of static generation with the flexibility of updating content without full rebuilds. SSR generates content on every request, defeating the purpose of static optimization.",
-      "ru": "ISR позволяет статическим страницам регенерироваться по требованию при их запросе, используя опцию revalidate в getStaticProps. Это обеспечивает преимущества статической генерации с гибкостью обновления контента без полных перестроек. SSR генерирует контент при каждом запросе, что противоречит статической оптимизации."
+      "en": "ISR serves the cached static page and rebuilds it in the background once it goes stale. In the App Router you set `export const revalidate = 3600` in `page.tsx`, or pass `fetch(url, { next: { revalidate: 3600 } })`. `revalidatePath()` and `revalidateTag()` do it on demand. The Pages Router used `revalidate` from `getStaticProps`. SSR renders on every request, so nothing static is kept.",
+      "ru": "ISR отдаёт статическую страницу из кеша и пересобирает её в фоне, когда она устарела. В App Router вы пишете `export const revalidate = 3600` в `page.tsx` или передаёте `fetch(url, { next: { revalidate: 3600 } })`. По требованию то же делают `revalidatePath()` и `revalidateTag()`. В Pages Router писали `revalidate` в `getStaticProps`. SSR отрисовывает страницу на каждый запрос, статики не остаётся."
     }
   },
   {
@@ -744,9 +744,9 @@
       ],
       "ru": [
         "Показывается ошибка 404, так как маршрут не определён явно",
-        "Страница отрендеривается динамически при каждом запросе",
+        "Страница рендерится динамически при каждом запросе",
         "Параметр slug не определён и выбрасывается ошибка",
-        "Страница отрендеривается с <h1>first-post</h1> как статическая страница"
+        "Страница рендерится с <h1>first-post</h1> как статическая страница"
       ]
     },
     "correctIndex": 3,

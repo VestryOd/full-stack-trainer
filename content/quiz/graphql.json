@@ -112,7 +112,7 @@
     "topicId": "graphql",
     "question": {
       "en": "What is GraphQL introspection, and why is it important for developer experience?",
-      "ru": "Что такое GraphQL introspection и почему это важно для опыта разработчика?"
+      "ru": "Что такое интроспекция (introspection) в GraphQL и почему это важно для опыта разработчика?"
     },
     "options": {
       "en": [
@@ -122,16 +122,16 @@
         "Introspection is a performance optimization technique that pre-compiles GraphQL queries into machine code for faster execution"
       ],
       "ru": [
-        "Introspection — это функция GraphQL, которая позволяет клиентам запрашивать саму схему, на этом и строятся инструменты IDE",
-        "Introspection — это механизм безопасности, который проверяет все запросы GraphQL на сервере перед выполнением, чтобы предотвратить вредоносный код",
-        "Introspection — это стратегия кэширования, которая хранит ранее выполненные запросы и их результаты, чтобы избежать ненужных сетевых запросов",
-        "Introspection — это метод оптимизации производительности, который предварительно компилирует запросы GraphQL в машинный код для более быстрого выполнения"
+        "Интроспекция — это функция GraphQL, которая позволяет клиентам запрашивать саму схему, на этом и строятся инструменты IDE",
+        "Интроспекция — это механизм безопасности, который проверяет все запросы GraphQL на сервере перед выполнением, чтобы предотвратить вредоносный код",
+        "Интроспекция — это стратегия кэширования, которая хранит ранее выполненные запросы и их результаты, чтобы избежать ненужных сетевых запросов",
+        "Интроспекция — это метод оптимизации производительности, который предварительно компилирует запросы GraphQL в машинный код для более быстрого выполнения"
       ]
     },
     "correctIndex": 0,
     "explanation": {
       "en": "GraphQL introspection allows clients to query the __schema meta-field to discover available types, fields, arguments, and their descriptions. This enables tools like GraphQL IDE (GraphiQL), Apollo Studio, and IDE extensions to provide intelligent code completion, validation, and automatically generated documentation. Disabling introspection in production is sometimes recommended for security hardening, but the feature itself is crucial for development experience.",
-      "ru": "GraphQL introspection позволяет клиентам запрашивать мета-поле __schema для обнаружения доступных типов, полей, аргументов и их описаний. Это позволяет инструментам, таким как GraphQL IDE (GraphiQL), Apollo Studio и расширения IDE, предоставлять интеллектуальное автодополнение кода, проверку и автоматически сгенерированную документацию. Отключение introspection в production иногда рекомендуется для укрепления безопасности, но сама функция имеет решающее значение для опыта разработки."
+      "ru": "Интроспекция (introspection) в GraphQL позволяет клиентам запрашивать мета-поле __schema для обнаружения доступных типов, полей, аргументов и их описаний. Это позволяет инструментам, таким как GraphQL IDE (GraphiQL), Apollo Studio и расширения IDE, предоставлять интеллектуальное автодополнение кода, проверку и автоматически сгенерированную документацию. Отключение интроспекции в production иногда рекомендуется для укрепления безопасности, но сама функция имеет решающее значение для опыта разработки."
     }
   },
   {
@@ -490,7 +490,7 @@
     "topicId": "graphql",
     "question": {
       "en": "GraphQL introspection allows a client to query the schema itself. What is a key security consideration when enabling introspection in production?\n\n```graphql\nquery {\n  __schema { types { name fields { name type } } }\n}\n```",
-      "ru": "Внутреннее обследование GraphQL позволяет клиенту запрашивать сам схему. Какое ключевое соображение безопасности следует учитывать при включении внутреннего обследования в production?\n\n```graphql\nquery {\n  __schema { types { name fields { name type } } }\n}\n```"
+      "ru": "Интроспекция (introspection) в GraphQL позволяет клиенту запрашивать саму схему. Какое ключевое соображение безопасности возникает при её включении в production?\n\n```graphql\nquery {\n  __schema { types { name fields { name type } } }\n}\n```"
     },
     "options": {
       "en": [
@@ -500,16 +500,16 @@
         "Introspection is only a security risk if you use REST endpoints alongside GraphQL"
       ],
       "ru": [
-        "Запросы внутреннего обследования кэшируются отдельно и могут вызвать утечки памяти, если они не управляются должным образом",
-        "Включение внутреннего обследования позволяет запросам работать быстрее, пропуская проверку типов",
-        "Внутреннее обследование может раскрыть всю поверхность вашего API, включая имена полей и типы",
-        "Внутреннее обследование является угрозой безопасности только в том случае, если вы используете REST конечные точки вместе с GraphQL"
+        "Запросы интроспекции кэшируются отдельно и могут вызвать утечки памяти, если ими не управлять",
+        "Включение интроспекции позволяет запросам работать быстрее, пропуская проверку типов",
+        "Интроспекция может раскрыть всю поверхность вашего API, включая имена полей и типы",
+        "Интроспекция опасна только в том случае, если рядом с GraphQL вы используете REST-эндпоинты"
       ]
     },
     "correctIndex": 2,
     "explanation": {
       "en": "Introspection exposes the entire API schema, including all types, fields, arguments, and their descriptions—this gives attackers a complete map of your API surface for reconnaissance and exploitation. It's best practice to disable introspection in production unless specifically needed, or restrict it to authenticated users. The other options misrepresent technical facts about introspection.",
-      "ru": "Внутреннее обследование раскрывает всю схему API, включая все типы, поля, аргументы и их описания — это дает злоумышленникам полную карту вашей поверхности API для разведки и эксплуатации. Лучшей практикой является отключение внутреннего обследования в production, если оно не требуется, или ограничение доступа аутентифицированными пользователями. Остальные варианты неправильно представляют технические факты о внутреннем обследовании."
+      "ru": "Интроспекция (introspection) раскрывает всю схему API: все типы, поля, аргументы и их описания. Это даёт злоумышленнику готовую карту вашего API для разведки и атаки. Хорошая практика — выключать интроспекцию в production, если она там не нужна, или оставлять её только аутентифицированным пользователям. Остальные варианты искажают технические факты об интроспекции."
     }
   },
   {
@@ -598,7 +598,7 @@
     "topicId": "graphql",
     "question": {
       "en": "GraphQL introspection allows you to query the schema itself. Which of the following is a primary use case for introspection in production systems?",
-      "ru": "GraphQL introspection позволяет вам запрашивать саму схему. Какой из следующих вариантов является основным случаем использования introspection в производственных системах?"
+      "ru": "Интроспекция (introspection) в GraphQL позволяет вам запрашивать саму схему. Какой из вариантов — основной случай её использования в production-системах?"
     },
     "options": {
       "en": [
@@ -617,7 +617,7 @@
     "correctIndex": 2,
     "explanation": {
       "en": "Introspection is essential for building developer tools—IDEs like GraphQL Playground use it to provide real-time schema validation and autocomplete. The option about compressing schema information to shrink requests is incorrect because introspection adds overhead, not reduces it. The option about replacing API versioning is wrong because introspection doesn't replace versioning strategies. The option about automatically generating SQL queries is incorrect because introspection reveals schema structure but doesn't generate SQL; that's the resolver's responsibility.",
-      "ru": "Introspection необходим для создания инструментов разработчика—IDE, такие как GraphQL Playground, используют его для предоставления валидации схемы в реальном времени и автодополнения. Вариант про сжатие информации схемы для уменьшения запросов неверен, потому что introspection добавляет нагрузку, а не уменьшает ее. Вариант про замену управления версиями API неверен, потому что introspection не заменяет стратегии управления версиями. Вариант про автоматическое создание SQL запросов неверен, потому что introspection раскрывает структуру схемы, но не генерирует SQL; это ответственность резолвера."
+      "ru": "Интроспекция нужна для инструментов разработчика — IDE, такие как GraphQL Playground, используют её для валидации схемы в реальном времени и автодополнения. Вариант про сжатие информации схемы для уменьшения запросов неверен, потому что интроспекция добавляет нагрузку, а не уменьшает ее. Вариант про замену управления версиями API неверен, потому что интроспекция не заменяет стратегии управления версиями. Вариант про автоматическое создание SQL запросов неверен, потому что интроспекция раскрывает структуру схемы, но не генерирует SQL; это ответственность резолвера."
     }
   },
   {
@@ -629,13 +629,13 @@
     },
     "options": {
       "en": [
-        "GraphQL eliminates over-fetching but requires more complex caching strategies on the client",
+        "GraphQL eliminates over-fetching, so a GraphQL client needs no caching layer at all",
         "REST requires multiple requests while GraphQL uses only one, making GraphQL always faster",
         "REST APIs are impossible to secure while GraphQL APIs have built-in security features",
         "GraphQL queries are harder to cache at the HTTP/CDN level because they use POST"
       ],
       "ru": [
-        "GraphQL устраняет избыточное получение данных, но требует более сложных стратегий кэширования на клиенте",
+        "GraphQL устраняет избыточное получение данных, поэтому клиенту GraphQL вообще не нужен слой кэширования",
         "REST требует нескольких запросов, а GraphQL использует только один, что делает GraphQL всегда быстрее",
         "REST API невозможно защитить, а GraphQL API имеют встроенные функции безопасности",
         "Запросы GraphQL сложнее кэшировать на уровне HTTP/CDN, потому что они идут через POST"
@@ -643,8 +643,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "The option about GraphQL queries being harder to cache at the HTTP/CDN level represents a real tradeoff: GraphQL's flexibility with dynamic queries makes HTTP caching harder because most tools cache based on URL, while GraphQL typically uses a single endpoint. REST is more cacheable at infrastructure level. The option claiming GraphQL needs more complex client-side caching strategies is false (GraphQL caching is simpler with Apollo). The option that makes GraphQL always faster overstates GraphQL's speed advantage (depends on implementation). The option calling REST APIs impossible to secure is incorrect—both architectures require proper security practices.",
-      "ru": "Вариант про сложность кэширования GraphQL на уровне HTTP/CDN представляет реальный компромисс: гибкость GraphQL с динамическими запросами затрудняет HTTP кэширование, потому что большинство инструментов кэшируют на основе URL, в то время как GraphQL обычно использует один конечный пункт. REST лучше кэшируется на уровне инфраструктуры. Вариант про более сложные стратегии кэширования на клиенте неверен (кэширование GraphQL проще с Apollo). Вариант про то, что GraphQL всегда быстрее, переоценивает преимущество скорости GraphQL (зависит от реализации). Вариант про невозможность защитить REST API неверен—обе архитектуры требуют надлежащих мер безопасности."
+      "en": "GraphQL sends queries as POST bodies to one endpoint, so caches that key on the URL cannot help. That is a real trade-off: flexible queries cost you the free caching that REST gets from HTTP and any CDN (content delivery network). The option saying a GraphQL client needs no cache at all is false, because normalized client caches are exactly how GraphQL apps avoid refetching. The option that makes GraphQL always faster overstates the speed advantage, since that depends on the implementation. The option calling REST APIs impossible to secure is wrong: both styles need the same security work.",
+      "ru": "GraphQL отправляет запросы телом POST на один эндпоинт, поэтому кэши, которые опираются на URL, тут бесполезны. Это настоящий компромисс: за гибкость запросов вы платите тем самым бесплатным кэшированием, которое REST получает от HTTP и любого CDN (content delivery network — сеть доставки контента). Вариант про то, что клиенту GraphQL кэш вообще не нужен, неверен: нормализованный кэш на клиенте — как раз то, чем такие приложения избегают повторных запросов. Вариант про то, что GraphQL всегда быстрее, переоценивает выигрыш в скорости: это зависит от реализации. Вариант про невозможность защитить REST API тоже неверен — обе архитектуры требуют одинаковой работы по безопасности."
     }
   }
 ]

@@ -144,6 +144,14 @@ PostgreSQL specificity: thanks to MVCC (not range locks like Oracle),
 REPEATABLE READ also prevents Phantom Read — rows inserted by another
 transaction after the snapshot was taken are not visible.
 
+Writes can still fail here. If your transaction updates or deletes a
+row that another transaction changed and committed after your
+snapshot, PostgreSQL rolls your transaction back with:
+ERROR:  could not serialize access due to concurrent update
+
+That message belongs to REPEATABLE READ, not to SERIALIZABLE.
+Its SQLSTATE is 40001, so the retry logic is the same.
+
 When to use: financial analytics, reports, aggregations where a
 consistent view at query start time matters.
 ```
@@ -163,9 +171,17 @@ concurrency), but by tracking dependencies between transactions
 If PostgreSQL detects that the result of concurrent execution of two
 transactions isn't equivalent to any sequential order of their
 execution — one transaction fails with:
-ERROR: could not serialize access due to concurrent update
+ERROR:  could not serialize access due to read/write dependencies
+        among transactions
+HINT:   The transaction might succeed if retried.
 
-The application MUST catch SQLSTATE 40001 and retry the transaction.
+This is the SSI check reporting itself, and only SERIALIZABLE can
+produce it. A SERIALIZABLE transaction can also get the plain
+"concurrent update" error shown above, because the first-updater-wins
+rule of REPEATABLE READ still applies here.
+
+Both messages carry SQLSTATE 40001. The application MUST catch that
+code and retry the transaction.
 
 When to use: banking operations with balances/limits, billing,
 situations where write-skew anomaly could violate business invariants.

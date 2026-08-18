@@ -443,19 +443,19 @@
         "To help React identify which items have changed, been added, or been removed",
         "To improve styling and CSS class matching for list items",
         "To automatically sort the list items in alphabetical order",
-        "To ensure component state persists across re-renders without re-initialization"
+        "To keep the state of an item alive after React removes it from the rendered list"
       ],
       "ru": [
         "Помочь React определить, какие элементы изменились, были добавлены или удалены",
         "Улучшить стилизацию и соответствие CSS-классов для элементов списка",
         "Автоматически сортировать элементы списка в алфавитном порядке",
-        "Обеспечить сохранение состояния компонента во время повторных рендеров без переинициализации"
+        "Сохранить состояние элемента после того, как React убрал его из отрисованного списка"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The key prop helps React match old elements with new ones during reconciliation, enabling correct state and DOM updates. Without stable keys (like using array indices), React may reuse component instances incorrectly, causing state bugs and performance issues. Keys are not for styling, sorting, or persistence across renders—those are misconceptions.",
-      "ru": "Пропс key помогает React сопоставить старые элементы с новыми во время согласования, обеспечивая правильное обновление состояния и DOM. Без стабильных ключей (таких как индексы массива) React может неправильно переиспользовать экземпляры компонентов, вызывая ошибки состояния и проблемы производительности. Ключи не предназначены для стилизации, сортировки или сохранения состояния во время рендеров."
+      "en": "The key prop helps React match old elements with new ones during reconciliation. That match is exactly what keeps each item's state and DOM node with the right item. Array indices break the match, so React reuses a component instance for the wrong item. Keys do not style or sort anything, and they cannot keep the state of an item that already left the list.",
+      "ru": "Пропс key помогает React сопоставить старые элементы с новыми во время согласования. Именно это сопоставление оставляет состояние и узел DOM за нужным элементом. Индексы массива ломают сопоставление, и React переиспользует экземпляр компонента для чужого элемента. Ключи не стилизуют и не сортируют, а состояние элемента, который уже ушёл из списка, они сохранить не могут."
     }
   },
   {
@@ -934,7 +934,7 @@
       "ru": [
         "Не обновляться, потому что обратный вызов не имеет name в массиве зависимостей",
         "Вызвать бесконечные повторные рендеры из-за пустого массива зависимостей",
-        "Работать правильно, позволяя пользователям вводить текст в поле и обновлять состояние",
+        "Работать правильно: пользователь вводит текст, состояние обновляется",
         "Обновить входное поле визуально, но не обновить основное состояние"
       ]
     },
@@ -1008,13 +1008,13 @@
     "options": {
       "en": [
         "The component infinitely increments count because useEffect runs on every render",
-        "The component renders 1 once and then stops updating",
+        "The component renders 0 on the first pass, then 1 after the effect runs once",
         "The component renders 0 because the effect captures the initial count value",
         "The component throws an error because setCount cannot be called inside useEffect"
       ],
       "ru": [
         "Компонент бесконечно увеличивает count, потому что useEffect запускается при каждом рендере",
-        "Компонент рендерит 1 один раз, а затем перестает обновляться",
+        "Компонент сначала рендерит 0, затем 1 после того, как эффект отработал один раз",
         "Компонент рендерит 0, потому что эффект захватывает начальное значение count",
         "Компонент выбрасывает ошибку, потому что setCount не может быть вызван внутри useEffect"
       ]
@@ -1090,20 +1090,20 @@
       "en": [
         "Keys tell React which items changed, so component state stays with the right item",
         "Keys should be unique across the entire application to ensure proper reconciliation",
-        "Using array index as a key is always safe if the list is not filtered or reordered",
+        "Using array index as a key is safe even when a new item is inserted at the start",
         "Keys are optional for list items if you're not using hooks in child components"
       ],
       "ru": [
         "Ключи говорят React, какие элементы изменились, чтобы состояние осталось у нужного элемента",
         "Ключи должны быть уникальны во всем приложении для обеспечения правильной reconciliation",
-        "Использование индекса массива в качестве ключа всегда безопасно, если список не фильтруется или не переупорядочивается",
+        "Индекс массива в качестве ключа безопасен даже при вставке нового элемента в начало списка",
         "Ключи не обязательны для элементов списка, если вы не используете hooks в дочерних компонентах"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Keys help React match elements between renders, preserving component state and DOM nodes correctly. Keys only need to be unique within the list, not globally. Array indices fail when lists are reordered because the index-to-element mapping changes. Hooks don't affect the need for proper keys.",
-      "ru": "Ключи помогают React сопоставить элементы между рендерами, правильно сохраняя состояние компонента и узлы DOM. Ключи должны быть уникальны только в пределах списка, а не глобально. Индексы массива дают сбой при переупорядочении списков, потому что отображение индекса на элемент изменяется. Hooks не влияют на необходимость правильных ключей."
+      "en": "Keys help React match elements between renders, so component state and DOM nodes stay with the right item. Keys only need to be unique within the list, not globally. Array indices fail as soon as an item is inserted at the start. Every later index shifts by one, so React keeps the old state at each position. Index keys are safe only for a list that never reorders and only grows at the end. Hooks don't change the need for proper keys.",
+      "ru": "Ключи помогают React сопоставить элементы между рендерами, поэтому состояние компонента и узлы DOM остаются у нужного элемента. Ключи должны быть уникальны только в пределах списка, а не глобально. Индексы массива подводят сразу же, как только элемент вставили в начало. Каждый следующий индекс сдвигается на один, и React оставляет старое состояние на прежней позиции. Индексные ключи безопасны только для списка, который не переупорядочивают и который растёт лишь с конца. Hooks не влияют на необходимость правильных ключей."
     }
   },
   {
