@@ -36,13 +36,13 @@
     "options": {
       "en": [
         "Always 100 (the value from the first read, due to snapshot isolation)",
-        "150 (the updated value, because READ COMMITTED sees committed changes)",
+        "150 (the updated value from Transaction B)",
         "A phantom read error because the row was modified",
         "It depends on how long Transaction B took to commit"
       ],
       "ru": [
         "Всегда 100 (значение из первого чтения, из-за снимка изоляции)",
-        "150 (обновленное значение, потому что READ COMMITTED видит зафиксированные изменения)",
+        "150 (обновлённое значение из Транзакции B)",
         "Ошибка фантомного чтения, потому что строка была изменена",
         "Это зависит от того, как долго Транзакция B фиксировалась"
       ]
@@ -64,13 +64,13 @@
       "en": [
         "Hash index (fastest for equality checks)",
         "GiST index (generalized search tree for complex types)",
-        "B-tree index (ordered, supports range and sort operations)",
+        "B-tree index (the default type in PostgreSQL)",
         "BRIN index (block range index for very large tables)"
       ],
       "ru": [
         "Хеш-индекс (самый быстрый для проверок равенства)",
         "GiST индекс (обобщенное дерево поиска для сложных типов)",
-        "B-tree индекс (упорядоченный, поддерживает диапазон и операции сортировки)",
+        "B-tree индекс (тип индекса по умолчанию в PostgreSQL)",
         "BRIN индекс (индекс диапазона блоков для очень больших таблиц)"
       ]
     },
@@ -92,13 +92,13 @@
         "VACUUM encrypts old row versions; MVCC ensures only the latest version is visible",
         "VACUUM deletes entire tables; MVCC is unrelated to VACUUM operations",
         "VACUUM moves data to archive storage; MVCC prevents all writes until VACUUM completes",
-        "VACUUM removes rows marked for deletion by transactions and reclaims disk space; MVCC creates multiple row versions so old transactions can still see committed data"
+        "VACUUM removes dead row versions; MVCC is what creates those versions"
       ],
       "ru": [
         "VACUUM шифрует старые версии строк; MVCC гарантирует видимость только последней версии",
         "VACUUM удаляет целые таблицы; MVCC не связана с операциями VACUUM",
         "VACUUM перемещает данные в архивное хранилище; MVCC предотвращает все записи до завершения VACUUM",
-        "VACUUM удаляет строки, помеченные для удаления транзакциями, и восстанавливает дисковое пространство; MVCC создает несколько версий строк, чтобы старые транзакции могли видеть зафиксированные данные"
+        "VACUUM удаляет мёртвые версии строк; именно MVCC их создаёт"
       ]
     },
     "correctIndex": 3,
@@ -116,13 +116,13 @@
     },
     "options": {
       "en": [
-        "INNER JOIN matches both tables; NULL in ON excludes non-matching rows during join, WHERE filters after",
+        "INNER JOIN matches both tables; ON filters during the join, WHERE filters after it",
         "LEFT JOIN matches both tables; NULL in ON and WHERE behave identically",
         "FULL OUTER JOIN matches both tables; ON clause ignores NULLs while WHERE treats them as true",
         "CROSS JOIN matches both tables; both ON and WHERE use three-valued logic identically"
       ],
       "ru": [
-        "INNER JOIN совпадает с обеими таблицами; NULL в ON исключает не совпадающие строки во время соединения, WHERE фильтрует после",
+        "INNER JOIN совпадает с обеими таблицами; ON фильтрует во время соединения, WHERE — после него",
         "LEFT JOIN совпадает с обеими таблицами; NULL в ON и WHERE ведут себя одинаково",
         "FULL OUTER JOIN совпадает с обеими таблицами; предложение ON игнорирует NULLs, а WHERE рассматривает их как истину",
         "CROSS JOIN совпадает с обеими таблицами; и ON, и WHERE используют трёхзначную логику одинаково"
@@ -144,13 +144,13 @@
     "options": {
       "en": [
         "PostgreSQL is using an index on the join condition, which is very efficient",
-        "PostgreSQL is loading the entire smaller table into memory to build a hash table for fast lookups",
+        "PostgreSQL is building an in-memory hash table from the smaller table",
         "PostgreSQL is performing a nested loop iteration, which is slower than merge join",
         "PostgreSQL found no suitable index and is performing a sequential scan on both tables"
       ],
       "ru": [
         "PostgreSQL использует индекс на условии JOIN, что очень эффективно",
-        "PostgreSQL загружает всю меньшую таблицу в память для создания хеш-таблицы для быстрого поиска",
+        "PostgreSQL строит в памяти хеш-таблицу из меньшей таблицы",
         "PostgreSQL выполняет итерацию вложенного цикла, что медленнее, чем merge join",
         "PostgreSQL не нашёл подходящий индекс и выполняет последовательное сканирование обеих таблиц"
       ]
@@ -172,13 +172,13 @@
       "en": [
         "Hash index, because it distributes values uniformly",
         "GiST index, because it's optimized for geometric data types",
-        "B-tree index, because it maintains sorted order and supports range scans",
+        "B-tree index, because it keeps keys in sorted order",
         "BRIN index, because it uses block range indexing for large tables"
       ],
       "ru": [
         "Hash индекс, потому что он равномерно распределяет значения",
         "GiST индекс, потому что он оптимизирован для геометрических типов данных",
-        "B-tree индекс, потому что он поддерживает отсортированный порядок и поддерживает сканирование диапазонов",
+        "B-tree индекс, потому что он хранит ключи в отсортированном порядке",
         "BRIN индекс, потому что он использует индексирование блочного диапазона для больших таблиц"
       ]
     },
@@ -200,13 +200,13 @@
         "It locks the table exclusively to prevent concurrent access during cleanup",
         "It encrypts the table data and removes unused columns from the schema",
         "It defragments the disk and reorganizes all indexes into a single file",
-        "It reclaims storage space from deleted rows and updates table statistics for the query planner"
+        "It reclaims storage space from deleted rows and updates table statistics"
       ],
       "ru": [
         "Он исключительно блокирует таблицу, чтобы предотвратить одновременный доступ во время очистки",
         "Он шифрует данные таблицы и удаляет неиспользуемые столбцы из схемы",
         "Он дефрагментирует диск и переорганизует все индексы в один файл",
-        "Он освобождает место хранения из удалённых строк и обновляет статистику таблицы для планировщика запросов"
+        "Он освобождает место от удалённых строк и обновляет статистику таблицы"
       ]
     },
     "correctIndex": 3,
@@ -224,13 +224,13 @@
     },
     "options": {
       "en": [
-        "LAG will return NULL for the first row and the previous row's salary for subsequent rows, and ROW_NUMBER will assign unique sequential numbers 1-4",
+        "LAG will return NULL for the first row, and ROW_NUMBER will assign numbers 1-4",
         "LAG will return NULL for all rows because it cannot look back, and ROW_NUMBER will assign ranks based on salary value",
         "LAG will ignore NULL values and ROW_NUMBER will assign the same rank to rows with identical salaries",
         "Both LAG and ROW_NUMBER will return NULL when encountering duplicate salary values"
       ],
       "ru": [
-        "LAG вернёт NULL для первой строки и зарплату предыдущей строки для последующих строк, а ROW_NUMBER присвоит уникальные последовательные номера 1-4",
+        "LAG вернёт NULL для первой строки, а ROW_NUMBER присвоит номера с 1 по 4",
         "LAG вернёт NULL для всех строк, потому что не может смотреть назад, а ROW_NUMBER присвоит ранги на основе значения зарплаты",
         "LAG будет игнорировать значения NULL и ROW_NUMBER присвоит одинаковый ранг строкам с одинаковой зарплатой",
         "Как LAG, так и ROW_NUMBER вернут NULL при встрече с дублирующимися значениями зарплаты"
@@ -252,13 +252,13 @@
     "options": {
       "en": [
         "All writes will be completed faster because no locks are acquired",
-        "The transaction will see a consistent snapshot of the database and conflicts will be automatically detected and rolled back if necessary",
+        "The transaction will see a consistent snapshot, and conflicts cause a rollback",
         "Dirty reads will be prevented, but phantom reads can still occur within the transaction",
         "The entire database will be locked exclusively for the duration of the transaction"
       ],
       "ru": [
         "Все записи будут выполнены быстрее, потому что блокировки не захватываются",
-        "Транзакция увидит согласованный снимок базы данных, и конфликты будут автоматически обнаружены и откачены при необходимости",
+        "Транзакция увидит согласованный снимок, а конфликты приведут к откату",
         "Грязное чтение будет предотвращено, но фантомное чтение может всё ещё произойти в пределах транзакции",
         "Вся база данных будет исключительно заблокирована на время выполнения транзакции"
       ]
@@ -280,13 +280,13 @@
       "en": [
         "PostgreSQL always underestimates sequential scans by design",
         "The table has too many columns and EXPLAIN cannot estimate correctly",
-        "The statistics on the status column are outdated and need ANALYZE to be run",
+        "The statistics on the status column no longer match the real data",
         "The query planner is broken and needs PostgreSQL to be restarted"
       ],
       "ru": [
         "PostgreSQL всегда недооценивает последовательные сканирования по замыслу",
         "Таблица имеет слишком много столбцов и EXPLAIN не может правильно оценить",
-        "Статистика по столбцу status устарела и требует запуска ANALYZE",
+        "Статистика по столбцу status больше не совпадает с реальными данными",
         "Планировщик запросов сломан и требует перезагрузки PostgreSQL"
       ]
     },
@@ -308,13 +308,13 @@
         "The new value, because updates are immediately visible to all transactions",
         "NULL, because the row is locked by A's update",
         "A mix of old and new values depending on which one is cached",
-        "The old value (before A's update), because B uses a snapshot from before A's change"
+        "The old value, because B reads its own snapshot"
       ],
       "ru": [
         "Новое значение, потому что обновления немедленно видны всем транзакциям",
         "NULL, потому что строка заблокирована обновлением A",
         "Смесь старого и нового значений в зависимости от того, какое кэшировано",
-        "Старое значение (до обновления A), потому что B использует снимок до изменения A"
+        "Старое значение, потому что B читает свой снимок"
       ]
     },
     "correctIndex": 3,
@@ -332,13 +332,13 @@
     },
     "options": {
       "en": [
-        "B-tree index, because it maintains sorted order and efficiently handles range queries",
+        "B-tree index, because it stores keys in sorted order",
         "Hash index, because it groups similar values together",
         "GiST index, because it supports all comparison operators",
         "BRIN index, because it compresses numeric data"
       ],
       "ru": [
-        "Индекс B-tree, потому что он сохраняет отсортированный порядок и эффективно обрабатывает запросы диапазона",
+        "Индекс B-tree, потому что он хранит ключи в отсортированном порядке",
         "Хеш-индекс, потому что он группирует похожие значения вместе",
         "Индекс GiST, потому что он поддерживает все операторы сравнения",
         "Индекс BRIN, потому что он сжимает числовые данные"
@@ -360,13 +360,13 @@
     "options": {
       "en": [
         "It deletes all rows marked as NULL and compresses the database file",
-        "It removes dead tuples created by MVCC and reclaims disk space, preventing table bloat and transaction ID wraparound",
+        "It removes dead tuples left by MVCC and reclaims their disk space",
         "It rebuilds all indexes to make them faster, similar to REINDEX",
         "It flushes the buffer cache to free up RAM and improve memory efficiency"
       ],
       "ru": [
         "Он удаляет все строки, отмеченные как NULL, и сжимает файл базы данных",
-        "Он удаляет мертвые кортежи, созданные MVCC, и восстанавливает дисковое пространство, предотвращая раздувание таблицы и переполнение ID транзакции",
+        "Он удаляет мёртвые кортежи, оставленные MVCC, и освобождает занятое ими место",
         "Он перестраивает все индексы, чтобы сделать их быстрее, аналогично REINDEX",
         "Он очищает кэш буфера, чтобы освободить ОЗУ и улучшить эффективность памяти"
       ]
@@ -388,13 +388,13 @@
       "en": [
         "100 rows, because window functions ignore the WHERE clause",
         "All rows including NULLs, but they're sorted to the bottom",
-        "Fewer than 100 rows, because the WHERE clause filters out NULL salaries before the window function is applied",
+        "Fewer than 100 rows, because WHERE filters rows before ranking",
         "Zero rows, because ROW_NUMBER() cannot be used with IS NOT NULL"
       ],
       "ru": [
         "100 строк, потому что оконные функции игнорируют предложение WHERE",
         "Все строки включая NULLs, но они отсортированы внизу",
-        "Менее 100 строк, потому что предложение WHERE фильтрует NULL зарплаты перед применением оконной функции",
+        "Менее 100 строк, потому что WHERE фильтрует строки до нумерации",
         "Нулевые строки, потому что ROW_NUMBER() не может использоваться с IS NOT NULL"
       ]
     },
@@ -416,13 +416,13 @@
         "PostgreSQL does not support composite indexes on multiple columns",
         "The indexes are B-tree indexes and cannot be used with OR conditions",
         "The statistics are outdated and need to be refreshed with ANALYZE",
-        "The table is very small and the query planner estimates that a sequential scan is more efficient than index lookups"
+        "The table is small enough that a sequential scan is cheaper"
       ],
       "ru": [
         "PostgreSQL не поддерживает составные индексы на несколько столбцов",
         "Индексы являются B-tree индексами и не могут использоваться с условиями OR",
         "Статистика устарела и её нужно обновить с помощью ANALYZE",
-        "Таблица очень маленькая и планировщик запросов считает, что последовательное сканирование более эффективно, чем использование индексов"
+        "Таблица достаточно маленькая, и последовательное сканирование дешевле"
       ]
     },
     "correctIndex": 3,
@@ -440,13 +440,13 @@
     },
     "options": {
       "en": [
-        "SERIALIZABLE detects conflicts between concurrent transactions and aborts when anomalies are detected, while REPEATABLE READ may allow phantom reads",
+        "SERIALIZABLE aborts a transaction when it detects a serialization anomaly",
         "REPEATABLE READ uses row-level locking while SERIALIZABLE uses table-level locking",
         "SERIALIZABLE prevents all reads of uncommitted data while REPEATABLE READ allows dirty reads",
         "REPEATABLE READ requires explicit locks while SERIALIZABLE uses implicit locking automatically"
       ],
       "ru": [
-        "SERIALIZABLE обнаруживает конфликты между одновременными транзакциями и прерывает их при обнаружении аномалий, в то время как REPEATABLE READ может допустить фантомные чтения",
+        "SERIALIZABLE прерывает транзакцию, когда обнаруживает аномалию сериализации",
         "REPEATABLE READ использует блокировку на уровне строк, а SERIALIZABLE использует блокировку на уровне таблицы",
         "SERIALIZABLE предотвращает все чтения незафиксированных данных, а REPEATABLE READ допускает грязные чтения",
         "REPEATABLE READ требует явных блокировок, а SERIALIZABLE использует неявные блокировки автоматически"
@@ -454,8 +454,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "SERIALIZABLE uses serialization conflict detection via Serializable Snapshot Isolation (SSI) to detect anomalies like phantom reads and aborts conflicting transactions, while REPEATABLE READ can still experience phantom reads (new rows appearing in range queries). Both use MVCC, not traditional locking, and both allow dirty reads prevention at the READ COMMITTED level.",
-      "ru": "SERIALIZABLE использует обнаружение конфликтов сериализации через Serializable Snapshot Isolation (SSI) для обнаружения аномалий, таких как фантомные чтения, и прерывает конфликтующие транзакции, в то время как REPEATABLE READ может всё ещё испытывать фантомные чтения. Оба используют MVCC, а не традиционные блокировки."
+      "en": "SERIALIZABLE adds conflict detection through Serializable Snapshot Isolation (SSI): it tracks dependencies between concurrent transactions and aborts one of them with a serialization failure. REPEATABLE READ keeps one stable snapshot for the whole transaction, but it allows write skew, where two transactions each read a valid snapshot and together break an invariant. Both levels work on MVCC snapshots, not on row or table locks, and dirty reads are already impossible at READ COMMITTED.",
+      "ru": "SERIALIZABLE добавляет обнаружение конфликтов через Serializable Snapshot Isolation (SSI): он отслеживает зависимости между одновременными транзакциями и прерывает одну из них с ошибкой сериализации. REPEATABLE READ держит один стабильный снимок на всю транзакцию, но допускает write skew: обе транзакции читают корректный снимок и вместе нарушают инвариант. Оба уровня работают на снимках MVCC, а не на блокировках строк или таблиц, а грязные чтения невозможны уже на READ COMMITTED."
     }
   },
   {
@@ -468,13 +468,13 @@
     "options": {
       "en": [
         "Both will receive rank 1 because they have equal salaries",
-        "They will receive rank 1 and rank 2 in arbitrary order determined by insertion order or internal row order",
+        "They will receive rank 1 and rank 2 in an arbitrary order",
         "They will receive rank 1 and rank 1.5 (fractional rank for ties)",
         "One will receive rank 1 and the other rank 2, with the difference based on their ID"
       ],
       "ru": [
         "Оба получат ранг 1, так как у них одинаковая зарплата",
-        "Они получат ранг 1 и 2 в произвольном порядке, определяемом порядком вставки или внутренним порядком строк",
+        "Они получат ранг 1 и ранг 2 в произвольном порядке",
         "Они получат ранг 1 и 1,5 (дробный ранг для одинаковых значений)",
         "Один получит ранг 1, а другой ранг 2, с разницей, основанной на их ID"
       ]
@@ -496,13 +496,13 @@
       "en": [
         "To rebuild all indexes to improve query performance",
         "To compress table data and reduce memory usage",
-        "To reclaim disk space from deleted rows and prevent transaction ID wraparound by updating row visibility information",
+        "To reclaim disk space taken by deleted and updated rows",
         "To remove all NULL values from columns to optimize storage"
       ],
       "ru": [
         "Перестроить все индексы для повышения производительности запросов",
         "Сжать данные таблицы и снизить использование памяти",
-        "Освободить дисковое пространство из удалённых строк и предотвратить переполнение ID транзакций путём обновления информации о видимости строк",
+        "Освободить дисковое пространство, занятое удалёнными и обновлёнными строками",
         "Удалить все значения NULL из столбцов для оптимизации хранилища"
       ]
     },
@@ -548,13 +548,13 @@
     },
     "options": {
       "en": [
-        "Hash index — it only supports equality comparisons, not range queries",
+        "Hash index — it supports only equality comparisons",
         "B-tree index — it is too slow for large datasets",
         "GiST index — it cannot be used with numeric data types",
         "BRIN index — it requires sequential access patterns"
       ],
       "ru": [
-        "Hash индекс — он поддерживает только сравнение на равенство, а не диапазонные запросы",
+        "Hash индекс — он поддерживает только сравнение на равенство",
         "B-tree индекс — он слишком медленный для больших наборов данных",
         "GiST индекс — он не может использоваться с числовыми типами данных",
         "BRIN индекс — он требует последовательного доступа к данным"
@@ -632,13 +632,13 @@
         "The query returned 50 times more rows than the planner estimated",
         "The query optimizer made 50 execution attempts before succeeding",
         "The table has 50 physical partitions that were scanned separately",
-        "The scan operation was executed 50 times, likely as part of a nested loop join"
+        "The scan node was executed 50 times inside a nested loop join"
       ],
       "ru": [
         "Запрос вернул в 50 раз больше строк, чем предсказал планировщик",
         "Оптимизатор запросов сделал 50 попыток выполнения перед успехом",
         "Таблица имеет 50 физических разделов, которые были отсканированы отдельно",
-        "Операция сканирования была выполнена 50 раз, вероятно, как часть вложенного соединения"
+        "Узел сканирования был выполнен 50 раз внутри вложенного соединения"
       ]
     },
     "correctIndex": 3,
@@ -684,13 +684,13 @@
     "options": {
       "en": [
         "It eliminates the need for indexes on frequently queried columns",
-        "It allows readers to see a consistent snapshot of data without blocking writers, and writers to proceed without blocking readers",
+        "It lets readers and writers work without blocking each other",
         "It automatically compresses table data to reduce storage requirements",
         "It prevents NULL values from being inserted into any column"
       ],
       "ru": [
         "Оно исключает необходимость в индексах на часто запрашиваемых столбцах",
-        "Оно позволяет читателям видеть согласованный снимок данных без блокировки писателей, а писателям продолжать работу без блокировки читателей",
+        "Оно позволяет читателям и писателям работать, не блокируя друг друга",
         "Оно автоматически сжимает данные таблицы, чтобы снизить требования к хранению",
         "Оно предотвращает вставку значений NULL в любой столбец"
       ]
@@ -712,13 +712,13 @@
       "en": [
         "The query is inefficient and should use an index to reduce buffer reads",
         "The table has 9999 rows that were scanned",
-        "Most of the data was read from PostgreSQL's shared buffer cache in memory, not from disk",
+        "Most blocks came from the shared buffer cache, not from disk",
         "PostgreSQL allocated 9999 buffers to execute the query"
       ],
       "ru": [
         "Запрос неэффективен и должен использовать индекс для уменьшения операций чтения буфера",
         "Таблица содержит 9999 строк, которые были отсканированы",
-        "Большая часть данных была прочитана из кэша общих буферов PostgreSQL в памяти, а не с диска",
+        "Большинство блоков пришло из кэша общих буферов, а не с диска",
         "PostgreSQL выделил 9999 буферов для выполнения запроса"
       ]
     },
@@ -740,13 +740,13 @@
         "Returns 3 rows with all employees earning exactly 5000 because LEAD fetches the same value",
         "Returns 2 rows because the two duplicate salaries (5000) are treated as a single rank",
         "Returns 4 rows because LIMIT is applied before the window function",
-        "Returns 3 rows with ranks 1, 2, 3 and next_salary values showing the next salary in the DESC order"
+        "Returns 3 rows with ranks 1, 2, 3 and next_salary from the following row"
       ],
       "ru": [
         "Возвращает 3 строки со всеми сотрудниками, получающими ровно 5000, потому что LEAD получает то же значение",
         "Возвращает 2 строки, потому что две одинаковые зарплаты (5000) рассматриваются как один ранг",
         "Возвращает 4 строки, потому что LIMIT применяется перед функцией окна",
-        "Возвращает 3 строки с рангами 1, 2, 3 и значениями next_salary, показывающими следующую зарплату в порядке DESC"
+        "Возвращает 3 строки с рангами 1, 2, 3 и next_salary из следующей строки"
       ]
     },
     "correctIndex": 3,
@@ -764,13 +764,13 @@
     },
     "options": {
       "en": [
-        "When you have very large tables with data that is naturally ordered or loosely ordered, to save space and improve sequential scan performance",
+        "When the table is very large and its data is naturally ordered",
         "When you need to enforce unique constraints across multiple columns",
         "When you need faster lookups for equality and range queries on small tables under 10MB",
         "When you want to replace VACUUM operations and reduce table bloat"
       ],
       "ru": [
-        "Когда у вас есть очень большие таблицы с данными, которые естественным образом упорядочены или слабо упорядочены, чтобы сэкономить место и улучшить производительность последовательного сканирования",
+        "Когда таблица очень большая и её данные естественным образом упорядочены",
         "Когда вам нужно обеспечить уникальные ограничения на нескольких столбцах",
         "Когда вам нужны более быстрые поиски для запросов равенства и диапазона в малых таблицах размером менее 10 МБ",
         "Когда вы хотите заменить операции VACUUM и снизить раздутие таблицы"

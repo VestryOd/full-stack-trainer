@@ -8,13 +8,13 @@
     },
     "options": {
       "en": [
-        "Stored XSS persists in the database and affects all users, while Reflected XSS requires the user to click a malicious link",
+        "Stored XSS persists in the database and affects all users; Reflected XSS needs a crafted link",
         "Reflected XSS uses DOM manipulation while Stored XSS uses server-side template injection",
         "Stored XSS only affects authenticated users, while Reflected XSS affects anonymous users",
         "Reflected XSS is more dangerous because it doesn't leave traces in server logs"
       ],
       "ru": [
-        "Stored XSS сохраняется в базе данных и влияет на всех пользователей, тогда как Reflected XSS требует, чтобы пользователь нажал на вредоносную ссылку",
+        "Stored XSS сохраняется в базе данных и влияет на всех пользователей; Reflected XSS требует подготовленной ссылки",
         "Reflected XSS использует манипуляцию DOM, а Stored XSS использует инъекцию шаблонов на сервере",
         "Stored XSS влияет только на аутентифицированных пользователей, тогда как Reflected XSS влияет на анонимных пользователей",
         "Reflected XSS более опасен, потому что не оставляет следов в логах сервера"
@@ -36,13 +36,13 @@
     "options": {
       "en": [
         "It encrypts the cookie value so that attackers cannot read or modify it",
-        "It prevents the browser from sending the cookie in cross-site requests, blocking attackers from forging requests with valid session tokens",
+        "It prevents the browser from sending the cookie in cross-site requests",
         "It restricts the cookie to only be accessible from the same subdomain, preventing cross-domain attacks",
         "It forces the browser to validate the origin header before sending any cookies to the server"
       ],
       "ru": [
         "Он шифрует значение cookie так, чтобы злоумышленники не могли его прочитать или изменить",
-        "Это предотвращает отправку браузером файла cookie в межсайтовые запросы, блокируя атакующих от создания поддельных запросов с действительными маркерами сеанса",
+        "Он не даёт браузеру отправлять cookie в кросс-сайтовых запросах",
         "Он ограничивает cookie только доступом с одного и того же поддомена, предотвращая атаки между доменами",
         "Он заставляет браузер проверить заголовок происхождения перед отправкой каких-либо cookie на сервер"
       ]
@@ -64,13 +64,13 @@
       "en": [
         "The algorithm field in the header is encrypted, so attackers cannot determine which algorithm to use for signing",
         "The payload is base64-encoded and salted, making it impossible to decode and modify without breaking the encoding",
-        "The server uses a secret key known only to itself to verify the signature; without this key, the attacker cannot generate a valid signature",
+        "The server verifies the signature with a secret key known only to itself",
         "The signature is stored separately on the server, so any local modifications to the token are immediately detected"
       ],
       "ru": [
         "Поле алгоритма в заголовке зашифровано, поэтому атакующие не могут определить, какой алгоритм использовать для подписания",
         "Payload кодируется base64 и добавляется соль, что делает невозможным его декодирование и изменение без нарушения кодировки",
-        "Сервер использует секретный ключ, известный только ему, для проверки подписи; без этого ключа злоумышленник не может создать действительную подпись",
+        "Сервер проверяет подпись секретным ключом, который известен только ему",
         "Подпись хранится отдельно на сервере, поэтому любые локальные изменения маркера немедленно обнаруживаются"
       ]
     },
@@ -92,13 +92,13 @@
         "The authorization code adds an extra layer of encryption that makes the access token unreadable to malicious users",
         "The authorization code is shorter than the access token, reducing bandwidth and improving performance",
         "The authorization code allows the resource owner to revoke access before the token is fully issued",
-        "The authorization code is exchanged for an access token through a secure backend channel, preventing the token from being exposed in browser history or logs"
+        "The authorization code is exchanged for an access token through a secure backend channel"
       ],
       "ru": [
         "Код авторизации добавляет дополнительный уровень шифрования, который делает маркер доступа нечитаемым для злоумышленников",
         "Код авторизации короче, чем маркер доступа, что снижает пропускную способность и повышает производительность",
         "Код авторизации позволяет владельцу ресурса отозвать доступ перед полной выдачей маркера",
-        "Код авторизации обменивается на маркер доступа через безопасный канал бэкенда, предотвращая раскрытие маркера в истории браузера или логах"
+        "Код авторизации обменивается на маркер доступа через безопасный канал бэкенда"
       ]
     },
     "correctIndex": 3,
@@ -116,13 +116,13 @@
     },
     "options": {
       "en": [
-        "Use parameterized queries or prepared statements: db.execute('SELECT * FROM users WHERE id = ?', [userId])",
+        "Use parameterized queries: db.execute('SELECT * FROM users WHERE id = ?', [userId])",
         "Escape special SQL characters in userId using a custom sanitization function before interpolation",
         "Use an ORM like Sequelize or TypeORM which automatically handles query construction",
         "Validate that userId is numeric and restrict input length to prevent malicious payloads"
       ],
       "ru": [
-        "Используйте параметризованные запросы или подготовленные операторы: db.execute('SELECT * FROM users WHERE id = ?', [userId])",
+        "Используйте параметризованные запросы: db.execute('SELECT * FROM users WHERE id = ?', [userId])",
         "Экранируйте специальные символы SQL в userId с помощью пользовательской функции санитизации перед интерполяцией",
         "Используйте ORM, такой как Sequelize или TypeORM, который автоматически обрабатывает конструирование запросов",
         "Проверьте, что userId является числовым, и ограничьте длину ввода, чтобы предотвратить вредоносные нагрузки"
@@ -172,13 +172,13 @@
       "en": [
         "The verification will succeed and the modified payload will be accepted as valid",
         "The server will accept the token but log a warning about the modification",
-        "The verification will fail because the signature will not match the modified payload",
+        "The verification will fail because the signature no longer matches the modified payload",
         "The verification will fail only if the payload contains sensitive information"
       ],
       "ru": [
         "Проверка пройдет успешно и измененный payload будет принят как действительный",
         "Сервер примет токен, но выведет предупреждение об изменении",
-        "Проверка не пройдет, потому что подпись не будет соответствовать измененному payload",
+        "Проверка не пройдет, потому что подпись больше не соответствует измененному payload",
         "Проверка не пройдет только если payload содержит чувствительную информацию"
       ]
     },
@@ -224,13 +224,13 @@
     },
     "options": {
       "en": [
-        "The client secret must be kept confidential on the backend; only the authorization server can verify it with the backend, not the frontend",
+        "The client secret must stay confidential on the backend",
         "Authorization codes are larger than access tokens and must be compressed on the backend",
         "The frontend lacks the computational power to perform token exchange cryptography",
         "OAuth 2.0 specification requires all token exchanges to happen asynchronously"
       ],
       "ru": [
-        "Секрет клиента должен сохраняться в тайне на серверной части; только сервер авторизации может проверить его с серверной частью, а не с фронтендом",
+        "Секрет клиента должен оставаться в тайне на серверной части",
         "Коды авторизации больше токенов доступа и должны быть сжаты на серверной части",
         "Фронтенд не обладает вычислительной мощностью для выполнения криптографии обмена токенов",
         "Спецификация OAuth 2.0 требует, чтобы все обмены токенами происходили асинхронно"
@@ -252,15 +252,15 @@
     "options": {
       "en": [
         "The inline script will execute normally because it originates from 'self'",
-        "The inline script will be blocked by CSP; only scripts from the same origin in separate files will execute",
+        "The inline script will be blocked by CSP; only separate files from the same origin run",
         "The inline script will execute with a warning in the console but no blocking",
-        "The CSP header only applies to external scripts, not inline scripts"
+        "The CSP header only applies to scripts loaded from other origins, not to inline scripts in the page"
       ],
       "ru": [
         "Встроенный скрипт будет нормально выполняться, потому что он происходит из 'self'",
-        "Встроенный скрипт будет заблокирован CSP; выполняться будут только скрипты с того же источника в отдельных файлах",
+        "Встроенный скрипт будет заблокирован CSP; выполнятся только отдельные файлы с того же источника",
         "Встроенный скрипт будет выполняться с предупреждением в консоли, но без блокировки",
-        "Заголовок CSP применяется только к внешним скриптам, а не к встроенным скриптам"
+        "Заголовок CSP применяется только к скриптам с других источников, а не к встроенным скриптам на странице"
       ]
     },
     "correctIndex": 1,
@@ -308,13 +308,13 @@
         "The JWT token becomes too large and causes performance issues",
         "The token cannot be decoded by the server, making authentication impossible",
         "The signature automatically expires after 24 hours regardless of expiration claims",
-        "An attacker can forge valid tokens by knowing the secret, allowing unauthorized impersonation"
+        "An attacker who knows the secret can forge valid tokens and impersonate any user"
       ],
       "ru": [
         "JWT-токен становится слишком большим и вызывает проблемы производительности",
         "Токен не может быть декодирован сервером, что делает аутентификацию невозможной",
         "Подпись автоматически истекает через 24 часа независимо от заявлений об истечении",
-        "Злоумышленник может создать поддельные токены, зная секрет, позволяя несанкционированный спуф"
+        "Злоумышленник, зная секрет, может создать поддельные токены и выдать себя за любого пользователя"
       ]
     },
     "correctIndex": 3,
@@ -332,14 +332,14 @@
     },
     "options": {
       "en": [
-        "SameSite=Strict prevents cross-site cookie transmission; Secure ensures HTTPS only; HttpOnly blocks JavaScript access",
-        "SameSite=Lax is sufficient alone and other flags are optional for CSRF protection",
+        "SameSite=Strict blocks cross-site cookies; Secure requires HTTPS; HttpOnly blocks JavaScript",
+        "SameSite=Lax alone already blocks every cross-site request, so Secure and HttpOnly add nothing here",
         "HttpOnly flag alone is enough to prevent CSRF attacks completely",
         "Secure flag is the only flag needed; SameSite and HttpOnly are redundant"
       ],
       "ru": [
-        "SameSite=Strict предотвращает передачу cookie между сайтами; Secure обеспечивает только HTTPS; HttpOnly блокирует доступ JavaScript",
-        "SameSite=Lax достаточно само по себе и другие флаги опциональны для защиты от CSRF",
+        "SameSite=Strict блокирует кросс-сайтовые cookie; Secure требует HTTPS; HttpOnly закрывает доступ из JavaScript",
+        "SameSite=Lax сам по себе блокирует любой кросс-сайтовый запрос, поэтому Secure и HttpOnly ничего не добавляют",
         "Флага HttpOnly достаточно для полной защиты от CSRF-атак",
         "Флаг Secure — единственный необходимый флаг; SameSite и HttpOnly избыточны"
       ]
@@ -360,13 +360,13 @@
     "options": {
       "en": [
         "To encrypt all scripts transmitted over the network using TLS",
-        "To restrict script execution to files from the same origin, so an injected script cannot run — a defence-in-depth layer, not a substitute for output encoding",
+        "To restrict script execution to files from the same origin",
         "To automatically patch vulnerabilities in third-party JavaScript libraries",
         "To block all network requests from the website to improve performance"
       ],
       "ru": [
         "Зашифровать все скрипты, передаваемые по сети, используя TLS",
-        "Ограничить выполнение скриптов файлами с того же источника, чтобы внедрённый скрипт не смог запуститься — это дополнительный слой защиты, а не замена экранированию вывода",
+        "Ограничить выполнение скриптов файлами с того же источника",
         "Автоматически исправлять уязвимости в библиотеках JavaScript третьих сторон",
         "Блокировать все сетевые запросы с веб-сайта для улучшения производительности"
       ]
@@ -388,13 +388,13 @@
       "en": [
         "Implicit flow is more secure because it reduces the number of HTTP requests required",
         "Authorization Code flow stores tokens in localStorage while Implicit stores them in cookies, making Implicit more secure",
-        "Authorization Code uses a backend channel to exchange a code for tokens, keeping tokens off the browser URL; Implicit returns tokens directly in the URL fragment, exposing them to browser history and scripts",
+        "Authorization Code exchanges a code for tokens over a backend channel; Implicit returns tokens in the URL fragment",
         "Both flows have identical security properties; the difference is only in the number of steps required"
       ],
       "ru": [
         "Поток Implicit безопаснее, потому что снижает количество необходимых HTTP-запросов",
         "Поток Authorization Code хранит токены в localStorage, а Implicit в cookies, делая Implicit более безопасным",
-        "Authorization Code использует канал бэкенда для обмена кода на токены, удерживая токены вне URL браузера; Implicit возвращает токены прямо в фрагменте URL, открывая их истории браузера и скриптам",
+        "Authorization Code обменивает код на токены через канал бэкенда; Implicit возвращает токены в фрагменте URL",
         "Оба потока имеют идентичные свойства безопасности; разница только в количестве необходимых шагов"
       ]
     },
@@ -441,15 +441,15 @@
     "options": {
       "en": [
         "Content-Security-Policy header with strict script-src directives",
-        "Set-Cookie header with HttpOnly flag",
-        "Access-Control-Allow-Origin header",
-        "X-Frame-Options header set to DENY"
+        "Set-Cookie header with the HttpOnly flag on the session cookie",
+        "Access-Control-Allow-Origin header limited to trusted origins",
+        "X-Frame-Options header set to DENY on every response"
       ],
       "ru": [
         "Заголовок Content-Security-Policy со строгими директивами script-src",
-        "Заголовок Set-Cookie с флагом HttpOnly",
-        "Заголовок Access-Control-Allow-Origin",
-        "Заголовок X-Frame-Options установленный на DENY"
+        "Заголовок Set-Cookie с флагом HttpOnly на cookie сеанса",
+        "Заголовок Access-Control-Allow-Origin, ограниченный доверенными источниками",
+        "Заголовок X-Frame-Options со значением DENY для каждого ответа"
       ]
     },
     "correctIndex": 0,
@@ -468,13 +468,13 @@
     "options": {
       "en": [
         "XSS attack - the hidden input values are reflected back without encoding",
-        "CSRF attack - Referer header can be spoofed or removed by browsers in certain conditions",
+        "CSRF attack - the Referer header can be spoofed or missing",
         "SQL Injection - the recipient parameter is not sanitized",
         "Session Hijacking - the form uses POST instead of GET method"
       ],
       "ru": [
         "XSS атака - скрытые значения входных данных отражаются обратно без кодирования",
-        "CSRF атака - заголовок Referer может быть подделан или удален браузером в определённых условиях",
+        "CSRF атака - заголовок Referer может быть подделан или отсутствовать",
         "SQL Injection - параметр recipient не санитизирован",
         "Session Hijacking - форма использует POST вместо GET метода"
       ]
@@ -496,13 +496,13 @@
       "en": [
         "Step 2 - client_id can be exposed in the URL query parameters",
         "Step 3 - user may not understand what permissions they are granting",
-        "Step 4 - redirect_uri validation; an attacker can use an unvalidated redirect to steal the authorization code",
+        "Step 4 - weak redirect_uri validation lets an attacker steal the authorization code",
         "Step 5 - the client secret may be transmitted insecurely to the backend"
       ],
       "ru": [
         "Шаг 2 - client_id может быть раскрыт в параметрах URL запроса",
         "Шаг 3 - пользователь может не понять, какие разрешения он даёт",
-        "Шаг 4 - валидация redirect_uri; злоумышленник может использовать незащищённый редирект для кража кода авторизации",
+        "Шаг 4 - слабая проверка redirect_uri позволяет злоумышленнику украсть код авторизации",
         "Шаг 5 - client secret может быть передан небезопасно на backend"
       ]
     },
@@ -524,13 +524,13 @@
         "XSS vulnerability - the tableName is reflected in the query string without encoding",
         "The code is secure - prepared statements protect against all forms of SQL injection",
         "CSRF vulnerability - the query is executed server-side without token validation",
-        "SQL Injection - table names cannot be parameterized, so user input must be validated against a whitelist"
+        "SQL Injection - table names cannot be parameterized by prepared statements"
       ],
       "ru": [
         "XSS уязвимость - tableName отражается в строке запроса без кодирования",
         "Код безопасен - подготовленные утверждения защищают от всех форм SQL Injection",
         "CSRF уязвимость - запрос выполняется на сервере без валидации токена",
-        "SQL Injection - имена таблиц не могут быть параметризованы, поэтому пользовательский ввод должен быть проверен против whitelist"
+        "SQL Injection - имена таблиц не могут быть параметризованы подготовленными утверждениями"
       ]
     },
     "correctIndex": 3,
@@ -548,22 +548,22 @@
     },
     "options": {
       "en": [
-        "Stored XSS saves the payload in the database and affects all users; Reflected XSS only affects users who click a malicious link",
-        "Reflected XSS saves the payload in the database; Stored XSS is temporary and only affects the current user",
+        "Stored XSS saves the payload in the database; Reflected XSS lives only in a malicious link",
+        "Reflected XSS saves the payload in the database; Stored XSS only affects the current user",
         "Both types save data permanently but Stored XSS requires user authentication",
         "Stored XSS and Reflected XSS are the same vulnerability with different naming conventions"
       ],
       "ru": [
-        "Stored XSS сохраняет полезную нагрузку в базе данных и влияет на всех пользователей; Reflected XSS влияет только на пользователей, нажимающих на вредоносную ссылку",
-        "Reflected XSS сохраняет полезную нагрузку в базе данных; Stored XSS является временной и влияет только на текущего пользователя",
+        "Stored XSS сохраняет полезную нагрузку в базе данных; Reflected XSS существует только во вредоносной ссылке",
+        "Reflected XSS сохраняет полезную нагрузку в базе данных; Stored XSS влияет только на текущего пользователя",
         "Оба типа сохраняют данные постоянно, но Stored XSS требует аутентификации пользователя",
         "Stored XSS и Reflected XSS - это одна и та же уязвимость с разными названиями"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Stored XSS persists in the database and is served to every user viewing that content, making it more dangerous. Reflected XSS exists only in the malicious URL and affects only users who click it. The option pairing database persistence with impact on all users correctly distinguishes the persistence and scope of impact.",
-      "ru": "Stored XSS сохраняется в базе данных и отправляется всем пользователям, просматривающим это содержимое, что делает её более опасной. Reflected XSS существует только в вредоносном URL и влияет только на пользователей, нажимающих на него. Вариант, связывающий сохранение в базе данных с воздействием на всех пользователей, правильно различает персистентность и область воздействия."
+      "en": "Stored XSS persists in the database and is served to every user viewing that content, making it more dangerous. Reflected XSS exists only in the malicious URL and affects only users who click it. The other options swap the two types, claim that both store data, or treat them as one and the same bug.",
+      "ru": "Stored XSS сохраняется в базе данных и отправляется всем пользователям, просматривающим это содержимое, что делает её более опасной. Reflected XSS существует только в вредоносном URL и влияет только на пользователей, нажимающих на него. Остальные варианты меняют типы местами, утверждают, что оба сохраняют данные, или считают их одной и той же уязвимостью."
     }
   },
   {
@@ -575,13 +575,13 @@
     },
     "options": {
       "en": [
-        "Header (claims), Payload (algorithm info), Signature (verification); only the Payload should be trusted",
+        "Header (claims), Payload (algorithm info), Signature (verification); only the Payload should be trusted because it holds the user data",
         "Header (algorithm info), Payload (claims), Signature (verification); only the Signature should be trusted",
         "Header (encryption key), Payload (claims), Signature (verification); only the Header should be trusted",
         "All three parts are equally important and should all be trusted without verification"
       ],
       "ru": [
-        "Заголовок (утверждения), Полезная нагрузка (информация об алгоритме), Подпись (проверка); следует доверять только Полезной нагрузке",
+        "Заголовок (утверждения), Полезная нагрузка (информация об алгоритме), Подпись (проверка); следует доверять только Полезной нагрузке, так как в ней данные пользователя",
         "Заголовок (информация об алгоритме), Полезная нагрузка (утверждения), Подпись (проверка); следует доверять только Подписи",
         "Заголовок (ключ шифрования), Полезная нагрузка (утверждения), Подпись (проверка); следует доверять только Заголовку",
         "Все три части одинаково важны и должны приниматься без проверки"
@@ -604,13 +604,13 @@
       "en": [
         "CSP encrypts all traffic between server and client; 'default-src 'self'' requires HTTPS on all resources",
         "CSP prevents CSRF attacks by validating token origins; 'default-src 'self'' allows inline scripts from the current domain",
-        "CSP limits what an injected script can do by controlling which sources may load resources; `default-src 'self'` allows only same-origin resources",
+        "CSP controls which sources may load resources; `default-src 'self'` allows only same-origin resources",
         "CSP is a performance optimization that caches external resources; 'default-src 'self'' speeds up page load times"
       ],
       "ru": [
         "CSP шифрует весь трафик между сервером и клиентом; 'default-src 'self'' требует HTTPS для всех ресурсов",
         "CSP предотвращает CSRF-атаки путём проверки источников токенов; 'default-src 'self'' разрешает встроенные скрипты из текущего домена",
-        "CSP ограничивает то, что может сделать внедрённый скрипт, контролируя, какие источники могут загружать ресурсы; `default-src 'self'` разрешает только ресурсы того же источника",
+        "CSP контролирует, какие источники могут загружать ресурсы; `default-src 'self'` разрешает только ресурсы того же источника",
         "CSP - это оптимизация производительности, которая кэширует внешние ресурсы; 'default-src 'self'' ускоряет загрузку страницы"
       ]
     },
@@ -632,13 +632,13 @@
         "The Authorization Code flow stores the access token directly in localStorage, which is visible to all JavaScript and protected by CSP",
         "The Authorization Code flow is used only for mobile apps and doesn't apply to web applications",
         "The Authorization Code flow requires the user to manually enter the access token on each request for security reasons",
-        "The Authorization Code flow exchanges a short-lived code for an access token via a backend channel, preventing the token from being exposed to browser XSS attacks"
+        "The Authorization Code flow exchanges a short-lived code for an access token over a backend channel"
       ],
       "ru": [
         "Поток Authorization Code хранит токен доступа непосредственно в localStorage, который виден всему JavaScript и защищён CSP",
         "Поток Authorization Code используется только для мобильных приложений и не применяется к веб-приложениям",
         "Поток Authorization Code требует, чтобы пользователь вручную вводил токен доступа при каждом запросе по причинам безопасности",
-        "Поток Authorization Code обменивает короткоживущий код на токен доступа через канал бэкенда, предотвращая попадание токена в XSS-атаки браузера"
+        "Поток Authorization Code обменивает короткоживущий код на токен доступа через канал бэкенда"
       ]
     },
     "correctIndex": 3,
@@ -656,13 +656,13 @@
     },
     "options": {
       "en": [
-        "Secure (HTTPS only), HttpOnly (JavaScript cannot read the cookie, so an XSS bug cannot steal the token) and SameSite=Strict (the cookie is not sent on cross-site requests, which blocks CSRF)",
+        "Secure (HTTPS only), HttpOnly (JavaScript cannot read the cookie) and SameSite=Strict (not sent on cross-site requests)",
         "Secure (encrypt password), HttpOnly (visible to HTML), SameSite=Lax (allows same-domain requests) together enable flexibility while maintaining some protection",
         "Secure (requires authentication), HttpOnly (requires HTTPS), SameSite=None (allows all cross-site) provides maximum compatibility for third-party integrations",
         "Only HttpOnly is necessary; Secure and SameSite are legacy flags that don't impact modern security"
       ],
       "ru": [
-        "Secure (только HTTPS), HttpOnly (JavaScript не может прочитать cookie, поэтому XSS-уязвимость не украдёт токен) и SameSite=Strict (cookie не отправляется в кросс-сайтовых запросах, что блокирует CSRF)",
+        "Secure (только HTTPS), HttpOnly (JavaScript не может прочитать cookie) и SameSite=Strict (не отправляется в кросс-сайтовых запросах)",
         "Secure (шифрует пароль), HttpOnly (видна в HTML), SameSite=Lax (разрешает запросы внутри домена) вместе обеспечивают гибкость и некоторую защиту",
         "Secure (требует аутентификации), HttpOnly (требует HTTPS), SameSite=None (разрешает все кросс-сайт) обеспечивает максимальную совместимость для сторонних интеграций",
         "Только HttpOnly необходимо; Secure и SameSite - это устаревшие флаги, которые не влияют на современную безопасность"

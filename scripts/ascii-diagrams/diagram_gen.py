@@ -659,6 +659,18 @@ def update_models(L):
     return hstack([left, right], gap=4)
 
 
+def cqrs_levels(L):
+    return with_title_and_notes(layered(L['sections']), L['title'], L['notes'])
+
+
+def es_write_path(L):
+    return with_title_and_notes(vchain(L['steps'], L['edges']), L['title'], L['notes'])
+
+
+def cqrs_es_matrix(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
 DIAGRAMS = {
     'stack-compare': stack_compare,
     'update-models': update_models,
@@ -803,6 +815,9 @@ DIAGRAMS = {
     'bt-module-federation': lambda L: with_title_and_notes(flow_box(L['steps']), L['title'], L['notes']),
     'bt-migration-breaks': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
     'bt-slow-build': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'arch-cqrs-levels': cqrs_levels,
+    'arch-es-write-path': es_write_path,
+    'arch-cqrs-es-matrix': cqrs_es_matrix,
 }
 
 LABELS = {
@@ -6377,6 +6392,126 @@ LABELS = {
             'notes': [
                 'the rule: measure first, swap tools second. Changing the bundler on a',
                 'project with a bloated graph speeds up building junk, not building',
+            ],
+        },
+    },
+    'arch-cqrs-levels': {
+        'ru': {
+            'title': 'Три уровня разделения записи и чтения',
+            'sections': [
+                [
+                    'Уровень 1. Два набора методов в одном сервисе',
+                    '  общее: модель, схема, база данных',
+                    '  даёт: читаемость. Не даёт: масштабирования',
+                ],
+                [
+                    'Уровень 2. Две модели поверх одной базы данных',
+                    '  общее: база данных и транзакция',
+                    '  даёт: запрос под конкретный экран',
+                ],
+                [
+                    'Уровень 3. Два хранилища, связанные событиями',
+                    '  общее: только поток событий',
+                    '  даёт: независимое масштабирование. Цена: задержка',
+                ],
+            ],
+            'notes': [
+                'CQRS начинается на уровне 1 — второе хранилище необязательно',
+            ],
+        },
+        'en': {
+            'title': 'Three levels of splitting writes from reads',
+            'sections': [
+                [
+                    'Level 1. Two sets of methods in one service',
+                    '  shared: the model, the schema, the database',
+                    '  gives: clarity. Does not give: scaling',
+                ],
+                [
+                    'Level 2. Two models over one database',
+                    '  shared: the database and the transaction',
+                    '  gives: a query shaped for one screen',
+                ],
+                [
+                    'Level 3. Two stores joined by events',
+                    '  shared: only the event stream',
+                    '  gives: independent scaling. Cost: a lag',
+                ],
+            ],
+            'notes': [
+                'CQRS starts at level 1 — a second store is optional',
+            ],
+        },
+    },
+    'arch-es-write-path': {
+        'ru': {
+            'title': 'Путь записи: журнал вместо UPDATE',
+            'steps': [
+                ['Команда ShipOrder(orderId=42)'],
+                ['Читаем события заказа 42 из журнала'],
+                ['Восстанавливаем состояние и проверяем правила'],
+                ['Дописываем событие OrderShipped(42)'],
+                ['Проектор обновляет строку модели чтения'],
+            ],
+            'edges': [
+                'SELECT по streamId',
+                'свёртка событий',
+                'INSERT, без UPDATE',
+                'подписка на журнал',
+            ],
+            'notes': [
+                'текущего состояния в журнале нет:',
+                'оно каждый раз выводится из событий',
+            ],
+        },
+        'en': {
+            'title': 'The write path: a log instead of UPDATE',
+            'steps': [
+                ['Command ShipOrder(orderId=42)'],
+                ['Read the events of order 42 from the log'],
+                ['Rebuild the state and check the rules'],
+                ['Append the event OrderShipped(42)'],
+                ['A projector updates the read-model row'],
+            ],
+            'edges': [
+                'SELECT by streamId',
+                'fold the events',
+                'INSERT, never UPDATE',
+                'subscribes to the log',
+            ],
+            'notes': [
+                'the log holds no current state:',
+                'it is derived from the events every time',
+            ],
+        },
+    },
+    'arch-cqrs-es-matrix': {
+        'ru': {
+            'title': 'Что даёт каждый паттерн по отдельности',
+            'rows': [
+                ('признак', 'только CQRS', 'только Event Sourcing'),
+                ('источник правды', 'текущее состояние', 'журнал событий'),
+                ('чтение', 'отдельная модель', 'свёртка или проекция'),
+                ('удалить запись', 'обычный DELETE', 'обратное событие'),
+                ('смена схемы', 'ALTER TABLE', 'преобразователь версии'),
+                ('нужен ли второй', 'работает сам', 'почти всегда с CQRS'),
+            ],
+            'notes': [
+                'колонки независимы: пары «CQRS = Event Sourcing» не существует',
+            ],
+        },
+        'en': {
+            'title': 'What each pattern gives you on its own',
+            'rows': [
+                ('trait', 'CQRS alone', 'Event Sourcing alone'),
+                ('source of truth', 'the current state', 'the event log'),
+                ('reads', 'a separate model', 'a fold or a projection'),
+                ('delete a record', 'a normal DELETE', 'a reversing event'),
+                ('schema change', 'ALTER TABLE', 'an event upcaster'),
+                ('needs the other', 'works on its own', 'almost always with CQRS'),
+            ],
+            'notes': [
+                'the columns are independent: CQRS is not a synonym for the other',
             ],
         },
     },

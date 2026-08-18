@@ -36,13 +36,13 @@
     "options": {
       "en": [
         "Prefetch has high priority and loads immediately; preload has low priority and loads later",
-        "Preload has high priority and loads immediately for current navigation; prefetch has low priority and loads for future navigations",
+        "Preload is high priority for the current page; prefetch is low priority for future pages",
         "Both have the same priority and timing; they are interchangeable directives",
         "Preload is only for images; prefetch is only for scripts"
       ],
       "ru": [
         "Prefetch имеет высокий приоритет и загружается немедленно; preload имеет низкий приоритет и загружается позже",
-        "Preload имеет высокий приоритет и загружается немедленно для текущей навигации; prefetch имеет низкий приоритет и загружается для будущих навигаций",
+        "Preload — высокий приоритет для текущей страницы; prefetch — низкий приоритет для будущих",
         "Оба имеют одинаковый приоритет и время; это взаимозаменяемые директивы",
         "Preload только для изображений; prefetch только для скриптов"
       ]
@@ -65,19 +65,19 @@
         "<link rel=\"stylesheet\" href=\"theme.css\" defer>",
         "<link rel=\"stylesheet\" href=\"theme.css\" async>",
         "<link rel=\"stylesheet\" href=\"theme.css\" media=\"print\" onload=\"this.media='all'\">",
-        "<link rel=\"stylesheet\" href=\"theme.css\" loading=\"lazy\">"
+        "<link rel=\"stylesheet\" href=\"theme.css\" media=\"screen\" onload=\"this.media='print'\">"
       ],
       "ru": [
         "<link rel=\"stylesheet\" href=\"theme.css\" defer>",
         "<link rel=\"stylesheet\" href=\"theme.css\" async>",
         "<link rel=\"stylesheet\" href=\"theme.css\" media=\"print\" onload=\"this.media='all'\">",
-        "<link rel=\"stylesheet\" href=\"theme.css\" loading=\"lazy\">"
+        "<link rel=\"stylesheet\" href=\"theme.css\" media=\"screen\" onload=\"this.media='print'\">"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Using media=\"print\" initially makes the browser deprioritize the stylesheet, then the onload handler switches it to media='all' once loaded. This pattern allows the non-critical CSS to load without blocking rendering. defer, async, and loading attributes don't apply to stylesheets—they're for scripts or images respectively.",
-      "ru": "Использование media=\"print\" изначально заставляет браузер снизить приоритет таблицы стилей, а затем обработчик onload переключает его на media='all' после загрузки. Этот паттерн позволяет некритическому CSS загружаться без блокировки рендеринга. defer, async и loading атрибуты не применяются к таблицам стилей — они предназначены для скриптов или изображений соответственно."
+      "en": "Using media=\"print\" initially makes the browser deprioritize the stylesheet, then the onload handler switches it to media='all' once loaded. This pattern allows the non-critical CSS to load without blocking rendering. The defer and async attributes don't apply to stylesheets, they're for scripts. Swapping media the other way round (screen first, then print) blocks rendering and then hides the styles.",
+      "ru": "Использование media=\"print\" изначально заставляет браузер снизить приоритет таблицы стилей, а затем обработчик onload переключает его на media='all' после загрузки. Этот паттерн позволяет некритическому CSS загружаться без блокировки рендеринга. Атрибуты defer и async к таблицам стилей не применяются, они для скриптов. Обратный порядок (сначала screen, потом print) сначала заблокирует рендеринг, а потом отключит стили."
     }
   },
   {
@@ -92,13 +92,13 @@
         "INP and FID are identical metrics with different names used in different browsers",
         "INP measures paint time only; FID measured processing time",
         "INP only applies to keyboard events; FID applied to all input types",
-        "INP measures the total latency of an interaction from input to visual feedback; FID only measured the delay before processing started"
+        "INP covers the whole interaction; FID measured only the delay before processing"
       ],
       "ru": [
         "INP и FID — это идентичные метрики с разными названиями, используемыми в разных браузерах",
         "INP измеряет только время рисования; FID измерял время обработки",
         "INP применяется только к событиям клавиатуры; FID применялся ко всем типам ввода",
-        "INP измеряет полную задержку взаимодействия от ввода до визуальной обратной связи; FID измерял только задержку перед началом обработки"
+        "INP охватывает всё взаимодействие; FID измерял только задержку до начала обработки"
       ]
     },
     "correctIndex": 3,
@@ -116,13 +116,13 @@
     },
     "options": {
       "en": [
-        "AVIF offers the best compression but has limited browser support; use WebP as fallback with JPEG as final fallback",
+        "AVIF compresses best but has limited browser support; fall back to WebP, then JPEG",
         "JPEG is always smaller than PNG and should be used for all photos regardless of transparency needs",
         "WebP is universally supported and should always be used instead of JPEG and PNG",
         "PNG files should never be used in production because they are larger than JPEG"
       ],
       "ru": [
-        "AVIF обеспечивает лучшее сжатие, но имеет ограниченную поддержку браузером; используйте WebP как резервный вариант с JPEG как финальный резервный вариант",
+        "AVIF сжимает лучше всех, но поддерживается не везде; резервные варианты — WebP, затем JPEG",
         "JPEG всегда меньше PNG и должен использоваться для всех фотографий независимо от потребностей прозрачности",
         "WebP универсально поддерживается и всегда должен использоваться вместо JPEG и PNG",
         "PNG файлы никогда не должны использоваться в производстве, потому что они больше, чем JPEG"
@@ -144,13 +144,13 @@
     "options": {
       "en": [
         "The time it takes for the largest contentful element to become visible on screen",
-        "A measure of how much the visual content shifts unexpectedly during the page lifecycle",
+        "A measure of how much visual content shifts unexpectedly on the page",
         "The delay between user input and the browser's response to that input",
         "The amount of time before the first paint occurs on the webpage"
       ],
       "ru": [
         "Время, необходимое для отображения наибольшего элемента контента на экране",
-        "Мера того, насколько неожиданно смещается визуальный контент в течение жизненного цикла страницы",
+        "Мера того, насколько неожиданно смещается визуальный контент на странице",
         "Задержка между вводом пользователя и ответом браузера на этот ввод",
         "Количество времени до первой отрисовки на веб-странице"
       ]
@@ -172,13 +172,13 @@
       "en": [
         "Prefetch is only used for stylesheets, while preload can be used for any resource type",
         "Preload requires the browser to execute the resource immediately, while prefetch defers execution",
-        "Preload loads resources with high priority for the current navigation, while prefetch loads resources with low priority for potential future navigations",
+        "Preload has high priority for the current navigation; prefetch has low priority for later ones",
         "Prefetch has better browser support across older versions compared to preload"
       ],
       "ru": [
         "Prefetch используется только для таблиц стилей, а preload можно использовать для любого типа ресурсов",
         "Preload требует немедленного выполнения ресурса браузером, а prefetch откладывает выполнение",
-        "Preload загружает ресурсы с высоким приоритетом для текущей навигации, в то время как prefetch загружает ресурсы с низким приоритетом для потенциальных будущих навигаций",
+        "Preload имеет высокий приоритет для текущей навигации; prefetch — низкий для будущих",
         "Prefetch имеет лучшую поддержку браузером в сравнении с более старыми версиями, чем preload"
       ]
     },
@@ -200,13 +200,13 @@
         "The analytics script will conflict with the app script and cause runtime errors",
         "Moving scripts to the body would have no performance benefit since they load in parallel",
         "The scripts are too early in the document and should be placed in a separate file",
-        "The scripts block HTML parsing in the head, delaying DOM construction and initial page render"
+        "The scripts block HTML parsing in the head, delaying DOM construction and first render"
       ],
       "ru": [
         "Скрипт аналитики будет конфликтовать со скриптом приложения и вызовет ошибки во время выполнения",
         "Перемещение скриптов в body не принесет никаких преимуществ производительности, так как они загружаются параллельно",
         "Скрипты расположены слишком рано в документе и должны быть помещены в отдельный файл",
-        "Скрипты блокируют анализ HTML в заголовке, задерживая конструкцию DOM и первоначальную отрисовку страницы"
+        "Скрипты блокируют разбор HTML в head, задерживая построение DOM и первую отрисовку"
       ]
     },
     "correctIndex": 3,
@@ -224,13 +224,13 @@
     },
     "options": {
       "en": [
-        "WebP, because it offers superior compression ratios and is supported in all modern browsers, making it ideal for photographs",
+        "WebP, because it compresses photographs better than PNG and works in all modern browsers",
         "PNG, because it provides lossless compression which is essential for maintaining photograph quality",
         "SVG, because it scales infinitely without quality loss and has the smallest file size",
         "GIF, because it supports animation and uses efficient palette-based compression"
       ],
       "ru": [
-        "WebP, потому что он обеспечивает превосходное сжатие и поддерживается всеми современными браузерами, что идеально для фотографий",
+        "WebP, потому что он сжимает фотографии лучше PNG и работает во всех современных браузерах",
         "PNG, потому что он обеспечивает сжатие без потерь, которое необходимо для сохранения качества фотографий",
         "SVG, потому что он бесконечно масштабируется без потери качества и имеет наименьший размер файла",
         "GIF, потому что он поддерживает анимацию и использует эффективное сжатие на основе палитры"
@@ -252,13 +252,13 @@
     "options": {
       "en": [
         "To separate JavaScript from CSS to ensure they can be cached independently by the browser",
-        "To break the application into smaller chunks that are loaded on-demand, reducing the initial bundle size and improving page load times",
+        "To break the application into chunks that load on demand, shrinking the initial bundle",
         "To split code across multiple servers for load balancing and distributed processing",
         "To organize code into different files for better developer readability and team collaboration"
       ],
       "ru": [
         "Отделить JavaScript от CSS, чтобы они могли кэшироваться независимо браузером",
-        "Разбить приложение на меньшие части, которые загружаются по требованию, уменьшая размер начального пакета и улучшая время загрузки страницы",
+        "Разбить приложение на части, которые загружаются по требованию, уменьшив начальный пакет",
         "Разделить код на несколько серверов для балансировки нагрузки и распределенной обработки",
         "Организовать код в разные файлы для лучшей читаемости кода разработчиком и сотрудничества команды"
       ]
@@ -332,13 +332,13 @@
     },
     "options": {
       "en": [
-        "It implements lazy loading but loads all images immediately, defeating the purpose",
+        "It sets every img src at once, so nothing loads lazily",
         "It correctly implements intersection observer-based lazy loading",
         "It prefetches images for future page navigation",
         "It applies responsive image loading using srcset attributes"
       ],
       "ru": [
-        "Он реализует ленивую загрузку, но загружает все изображения сразу, что противоречит цели",
+        "Он сразу задаёт src всем изображениям, ленивой загрузки не выходит",
         "Он правильно реализует ленивую загрузку на основе Intersection Observer",
         "Он предварительно загружает изображения для будущей навигации по страницам",
         "Он применяет адаптивную загрузку изображений с использованием атрибутов srcset"
@@ -359,13 +359,13 @@
     },
     "options": {
       "en": [
-        "CSS stylesheets",
+        "CSS stylesheet files",
         "JavaScript files",
         "Image files",
         "Web font files"
       ],
       "ru": [
-        "Таблицы стилей CSS",
+        "Файлы таблиц стилей CSS",
         "Файлы JavaScript",
         "Файлы изображений",
         "Файлы веб-шрифтов"
@@ -388,13 +388,13 @@
       "en": [
         "JPEG for all users since it has universal support and no need for optimization",
         "AVIF format exclusively since it compresses better than all other formats",
-        "WebP for modern browsers with JPEG fallback, which reduces file size while maintaining compatibility",
+        "WebP for modern browsers with a JPEG fallback for the older ones",
         "PNG with srcset for pixel density since it preserves quality better than lossy formats"
       ],
       "ru": [
         "JPEG для всех пользователей, поскольку он универсально поддерживается и не требует оптимизации",
         "Исключительно формат AVIF, поскольку он сжимается лучше, чем все другие форматы",
-        "WebP для современных браузеров с резервным вариантом JPEG, что снижает размер файла при сохранении совместимости",
+        "WebP для современных браузеров и резервный JPEG для старых",
         "PNG с srcset для плотности пикселей, поскольку он лучше сохраняет качество, чем форматы с потерями"
       ]
     },
@@ -416,13 +416,13 @@
         "CLS measures only the largest single layout shift and is irrelevant for pages with static content",
         "CLS measures the time it takes for the largest contentful element to render on the page",
         "CLS is calculated only after user interaction begins and doesn't affect initial page load perception",
-        "CLS measures the total unexpected layout shifts during the entire page lifespan, affecting perceived stability and reducing accidental clicks"
+        "CLS measures the total unexpected layout shifts during the entire page lifespan"
       ],
       "ru": [
         "CLS измеряет только самое большое одиночное смещение макета и не имеет значения для страниц со статическим содержимым",
         "CLS измеряет время, необходимое для отображения самого большого элемента контента на странице",
         "CLS рассчитывается только после начала взаимодействия пользователя и не влияет на восприятие начальной загрузки страницы",
-        "CLS измеряет общее неожиданное смещение макета в течение всей жизни страницы, влияя на восприятие стабильности и уменьшая случайные клики"
+        "CLS измеряет все неожиданные смещения макета за время жизни страницы"
       ]
     },
     "correctIndex": 3,
@@ -440,13 +440,13 @@
     },
     "options": {
       "en": [
-        "Use srcset with WebP format in a <picture> element, combined with lazy loading and appropriate sizes attribute",
+        "Use a <picture> element with WebP sources, srcset and sizes, plus lazy loading",
         "Remove the lazy loading attribute since modern browsers automatically optimize image delivery",
         "Replace jpg with svg format for all images to eliminate the need for lazy loading",
         "Add multiple img tags with different formats and let the browser choose the smallest file automatically"
       ],
       "ru": [
-        "Используйте srcset с форматом WebP в элементе <picture>, в сочетании с ленивой загрузкой и соответствующим атрибутом sizes",
+        "Используйте элемент <picture> с источниками WebP, srcset и sizes плюс ленивую загрузку",
         "Удалите атрибут ленивой загрузки, так как современные браузеры автоматически оптимизируют доставку изображений",
         "Замените jpg на формат svg для всех изображений, чтобы исключить необходимость в ленивой загрузке",
         "Добавьте несколько тегов img с разными форматами и позвольте браузеру выбрать самый маленький файл автоматически"
@@ -468,13 +468,13 @@
     "options": {
       "en": [
         "Minimizing the total number of DOM nodes on the page regardless of visibility",
-        "Ensuring the largest visible element loads and renders quickly, often by optimizing server response time, CSS delivery, and image loading",
+        "Making the largest visible element load and render quickly, starting with server response time",
         "Reducing the CSS file size by removing unused classes, which automatically improves LCP",
         "Deferring all JavaScript execution until after the page becomes interactive to speed up rendering"
       ],
       "ru": [
         "Минимизация общего количества узлов DOM на странице независимо от видимости",
-        "Обеспечение быстрой загрузки и рендеринга самого большого видимого элемента, часто путем оптимизации времени ответа сервера, доставки CSS и загрузки изображений",
+        "Быстрая загрузка и отрисовка самого большого видимого элемента, начиная со времени ответа сервера",
         "Уменьшение размера CSS-файла путем удаления неиспользуемых классов, что автоматически улучшает LCP",
         "Отложение всего выполнения JavaScript до тех пор, пока страница не станет интерактивной, чтобы ускорить рендеринг"
       ]
@@ -496,13 +496,13 @@
       "en": [
         "Prefetch loads resources with higher priority than preload and should be used for all resources to maximize performance",
         "Both preload and prefetch have identical browser behavior and choosing between them depends only on personal preference",
-        "Preload is for critical resources needed immediately on current page with high priority; prefetch is for lower-priority resources likely needed on future navigations",
+        "Preload is for critical resources on the current page; prefetch is for likely future navigations",
         "Preload should only be used for fonts, while prefetch works for any resource type on the current page"
       ],
       "ru": [
         "Prefetch загружает ресурсы с более высоким приоритетом, чем preload, и должен использоваться для всех ресурсов для максимизации производительности",
         "Preload и prefetch имеют идентичное поведение в браузере, и выбор между ними зависит только от личных предпочтений",
-        "Preload предназначен для критических ресурсов, необходимых немедленно на текущей странице с высоким приоритетом; prefetch предназначен для низкоприоритетных ресурсов, которые могут понадобиться при будущей навигации",
+        "Preload — для критических ресурсов текущей страницы; prefetch — для вероятной будущей навигации",
         "Preload должен использоваться только для шрифтов, а prefetch работает для любого типа ресурса на текущей странице"
       ]
     },
@@ -524,13 +524,13 @@
         "It eliminates the need for minification since the code is split into smaller files that parse faster",
         "It guarantees that all JavaScript executes asynchronously, which automatically prevents layout shifts and improves CLS",
         "It allows the browser to cache individual chunks permanently, so repeat visits load instantly regardless of network conditions",
-        "It reduces initial bundle size, allowing faster initial page load and better LCP/INP by deferring non-critical code until needed"
+        "It reduces the initial bundle size by deferring non-critical code until it is needed"
       ],
       "ru": [
         "Это исключает необходимость в минификации, так как код разделен на меньшие файлы, которые быстрее парсятся",
         "Это гарантирует, что весь JavaScript выполняется асинхронно, что автоматически предотвращает смещение макета и улучшает CLS",
         "Это позволяет браузеру постоянно кэшировать отдельные блоки, поэтому повторные посещения загружаются мгновенно независимо от условий сети",
-        "Это уменьшает размер исходного пакета, обеспечивая более быструю начальную загрузку страницы и лучше LCP/INP, откладывая некритичный код до необходимости"
+        "Это уменьшает размер исходного пакета, откладывая некритичный код до момента, когда он нужен"
       ]
     },
     "correctIndex": 3,

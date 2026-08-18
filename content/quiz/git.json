@@ -36,13 +36,13 @@
     "options": {
       "en": [
         "A fast-forward merge creates a merge commit automatically, while a regular merge requires manual conflict resolution",
-        "A fast-forward merge moves the branch pointer forward without creating a new commit, while a regular merge always creates a merge commit",
+        "A fast-forward merge moves the branch pointer forward; a regular merge always creates a merge commit",
         "A fast-forward merge is only possible on remote branches, while a regular merge works on local branches",
         "A fast-forward merge rewrites history, while a regular merge preserves the original commit hashes"
       ],
       "ru": [
         "Fast-forward merge автоматически создает merge коммит, в то время как обычный merge требует ручного разрешения конфликтов",
-        "Fast-forward merge просто перемещает указатель ветки вперед без создания нового коммита, в то время как обычный merge всегда создает merge коммит",
+        "Fast-forward merge перемещает указатель ветки вперед; обычный merge всегда создает merge коммит",
         "Fast-forward merge возможен только на удаленных ветках, в то время как обычный merge работает на локальных ветках",
         "Fast-forward merge переписывает историю, в то время как обычный merge сохраняет исходные хеши коммитов"
       ]
@@ -64,13 +64,13 @@
       "en": [
         "Use git reset --hard HEAD~3 to completely remove the commits and all associated changes",
         "Use git revert to create inverse commits for the last 3 commits",
-        "Use git reset --soft HEAD~3 to undo commits while preserving changes in the staging area",
+        "Use git reset --soft HEAD~3 to undo the commits and keep the changes staged",
         "Use git stash to save changes, then git reset --hard, then restore with git stash pop"
       ],
       "ru": [
         "Используйте git reset --hard HEAD~3 для полного удаления коммитов и всех связанных изменений",
         "Используйте git revert для создания обратных коммитов для последних 3 коммитов",
-        "Используйте git reset --soft HEAD~3 для отмены коммитов, сохраняя изменения в staging area",
+        "Используйте git reset --soft HEAD~3: коммиты отменятся, изменения останутся в staging area",
         "Используйте git stash для сохранения изменений, затем git reset --hard, затем восстановите с помощью git stash pop"
       ]
     },
@@ -92,13 +92,13 @@
         "A merge conflict occurs because both branches have modifications to file.txt",
         "The rebase fails because feature and main have diverged irreversibly",
         "The main branch is fast-forwarded to include the feature branch changes, and HEAD points to main",
-        "The feature branch is on top of main with 'feature work' commit replayed, and HEAD points to the feature branch"
+        "The 'feature work' commit is replayed on top of main, and HEAD stays on feature"
       ],
       "ru": [
         "Возникает конфликт слияния, потому что обе ветки имеют модификации в file.txt",
         "Rebase не удается, потому что feature и main необратимо расходились",
         "Ветка main быстро перемещается вперед, чтобы включить изменения из feature, и HEAD указывает на main",
-        "Ветка feature находится поверх main с переигранным коммитом 'feature work', и HEAD указывает на ветку feature"
+        "Коммит 'feature work' переигран поверх main, и HEAD остаётся на feature"
       ]
     },
     "correctIndex": 3,
@@ -144,13 +144,13 @@
     "options": {
       "en": [
         "Rebase is faster because it deletes the source branch automatically",
-        "Rebase creates a linear history by replaying commits, while merge creates a merge commit that preserves both branches",
+        "Rebase replays commits into a linear history; merge creates a merge commit",
         "Merge creates a linear history, while rebase creates multiple branches in the history",
         "Rebase and merge produce identical commit histories; the difference is only in performance"
       ],
       "ru": [
         "Rebase быстрее, потому что автоматически удаляет исходную ветку",
-        "Rebase создает линейную историю путем переигрывания коммитов, в то время как merge создает коммит слияния, который сохраняет обе ветки",
+        "Rebase переигрывает коммиты в линейную историю; merge создает коммит слияния",
         "Merge создает линейную историю, а rebase создает несколько ветвей в истории",
         "Rebase и merge создают идентичные истории коммитов; разница только в производительности"
       ]
@@ -172,13 +172,13 @@
       "en": [
         "The repository is corrupted and you must run git fsck to repair it",
         "You have uncommitted changes that prevent branch switching; you must stash or commit before proceeding",
-        "You are on a specific commit instead of a branch; useful for inspecting old commits or testing specific code versions without affecting branches",
+        "You are on a specific commit instead of a branch; useful for inspecting or testing an old version",
         "HEAD is pointing to a deleted branch and all commits in that branch are lost forever"
       ],
       "ru": [
         "Репозиторий повреждён и вы должны запустить git fsck для восстановления",
         "У вас есть неизменённые изменения, которые препятствуют переключению ветки; вы должны выполнить stash или commit перед продолжением",
-        "Вы находитесь на конкретном коммите вместо ветки; полезно для проверки старых коммитов или тестирования конкретных версий кода без влияния на ветки",
+        "Вы находитесь на конкретном коммите вместо ветки; удобно посмотреть или протестировать старую версию",
         "HEAD указывает на удалённую ветку и все коммиты в этой ветке потеряны навсегда"
       ]
     },
@@ -199,14 +199,14 @@
       "en": [
         "A commit object directly contains all file contents as blobs; trees are only used during merges",
         "Blobs are stored inside commit objects; trees are optional metadata used for visualization only",
-        "Trees and blobs are the same thing; commit objects reference them interchangeably",
-        "A tree contains blob objects (files) and other trees (directories). A commit points to a tree and parent commit(s), forming the commit graph"
+        "Trees and blobs are the same kind of object, so a commit can reference either one directly",
+        "A tree contains blobs (files) and other trees (directories); a commit points to one root tree"
       ],
       "ru": [
         "Объект commit напрямую содержит всё содержимое файла как blobs; trees используются только во время слияний",
         "Blobs хранятся внутри объектов commit; trees — это необязательные метаданные, используемые только для визуализации",
-        "Trees и blobs — это одно и то же; объекты commit ссылаются на них взаимозаменяемо",
-        "Tree содержит объекты blob (файлы) и другие trees (директории). Commit указывает на tree и родительский коммит(ы), формируя граф коммитов"
+        "Trees и blobs — объекты одного вида, поэтому commit может ссылаться напрямую на любой из них",
+        "Tree содержит blobs (файлы) и другие trees (директории); commit указывает на один корневой tree"
       ]
     },
     "correctIndex": 3,
@@ -224,13 +224,13 @@
     },
     "options": {
       "en": [
-        "Cherry-pick applies a single commit to your current branch; rebase replays multiple commits. Use cherry-pick when you need specific commits without the entire branch history",
+        "Cherry-pick applies a single commit to your current branch; rebase replays a whole range of commits",
         "Cherry-pick copies all commits from a branch; rebase copies only one. Use cherry-pick for full integration of feature branches",
         "Cherry-pick and rebase do the same thing; cherry-pick is just older syntax",
         "Rebase is used for single commits; cherry-pick integrates entire branches. Use rebase when you need only specific changes"
       ],
       "ru": [
-        "Cherry-pick применяет один коммит к вашей текущей ветке; rebase переигрывает несколько коммитов. Используйте cherry-pick, когда вам нужны конкретные коммиты без всей истории ветки",
+        "Cherry-pick применяет один коммит к вашей текущей ветке; rebase переигрывает целый диапазон коммитов",
         "Cherry-pick копирует все коммиты из ветки; rebase копирует только один. Используйте cherry-pick для полной интеграции веток функций",
         "Cherry-pick и rebase делают одно и то же; cherry-pick — это просто более старый синтаксис",
         "Rebase используется для одного коммита; cherry-pick интегрирует целые ветки. Используйте rebase, когда вам нужны только конкретные изменения"
@@ -252,13 +252,13 @@
     "options": {
       "en": [
         "Reflog is a backup system that automatically prevents branch deletion; deleted branches are permanently lost immediately",
-        "Reflog tracks HEAD movements and lets you recover commits even after branch deletion, since commits exist as objects until gc runs",
+        "Reflog tracks HEAD movements and lets you recover commits even after a branch is deleted",
         "Reflog records all git commands executed; it has no connection to commit recovery or branch restoration",
         "Reflog shows commit authorship history; it cannot recover deleted branches because git immediately purges their commits"
       ],
       "ru": [
         "Reflog — это система резервного копирования, которая автоматически предотвращает удаление ветки; удалённые ветки теряются навсегда немедленно",
-        "Reflog отслеживает перемещения HEAD и позволяет восстанавливать коммиты даже после удаления ветки, так как коммиты существуют как объекты до запуска gc",
+        "Reflog отслеживает перемещения HEAD и позволяет восстановить коммиты даже после удаления ветки",
         "Reflog записывает все выполняемые команды git; он не имеет отношения к восстановлению коммитов или восстановлению ветки",
         "Reflog показывает историю авторства коммитов; он не может восстанавливать удалённые ветки, потому что git немедленно удаляет их коммиты"
       ]
@@ -280,13 +280,13 @@
       "en": [
         "Use git merge --no-ff to preserve the branch history with a merge commit",
         "Use git cherry-pick for each commit individually to have better control",
-        "Use git rebase feature onto main to replay commits linearly, then merge with --ff-only",
+        "Rebase feature onto main, then merge main with --ff-only",
         "Use git reset --hard on feature and merge into main without rebasing"
       ],
       "ru": [
         "Используйте git merge --no-ff для сохранения истории ветки с коммитом слияния",
         "Используйте git cherry-pick для каждого коммита отдельно для лучшего контроля",
-        "Используйте git rebase feature onto main для линейного воспроизведения коммитов, затем слейте с --ff-only",
+        "Сделайте rebase feature на main, затем слейте main с --ff-only",
         "Используйте git reset --hard на feature и слейте в main без rebase"
       ]
     },
@@ -308,13 +308,13 @@
         "Both pops apply the same changes twice to your working directory without errors",
         "The first pop applies changes but keeps the stash entry. The second pop applies it again.",
         "The stash is applied once, and the second pop creates a new stash entry",
-        "The first pop applies the stashed changes and deletes the stash entry. The second pop fails because the stash is empty."
+        "The first pop applies the changes and deletes the stash entry. The second pop fails."
       ],
       "ru": [
         "Оба pop применяют одни и те же изменения дважды к вашему рабочему каталогу без ошибок",
         "Первый pop применяет изменения, но сохраняет запись в stash. Второй pop применяет это снова.",
         "Stash применяется один раз, и второй pop создает новую запись в stash",
-        "Первый pop применяет сохраненные изменения и удаляет запись из stash. Второй pop завершится ошибкой, так как stash пуст."
+        "Первый pop применяет изменения и удаляет запись из stash. Второй pop завершится ошибкой."
       ]
     },
     "correctIndex": 3,
@@ -332,13 +332,13 @@
     },
     "options": {
       "en": [
-        "To show the history of HEAD movements so you can identify and recover to a previous state before the mistake",
+        "To show the history of HEAD movements so you can return to the state before the mistake",
         "To display the commit history of the current branch with detailed author information",
         "To list all branches and their commit messages to find where the commit should have been made",
         "To permanently delete commits and their associated changes from the repository"
       ],
       "ru": [
-        "Показать историю движений HEAD, чтобы вы могли определить и восстановить состояние перед ошибкой",
+        "Показать историю движений HEAD, чтобы вернуться к состоянию перед ошибкой",
         "Отобразить историю коммитов текущей ветки с подробной информацией об авторе",
         "Список всех веток и их сообщений коммитов, чтобы найти, где должен был быть сделан коммит",
         "Постоянно удалить коммиты и связанные с ними изменения из репозитория"
@@ -388,13 +388,13 @@
       "en": [
         "The commit is automatically saved as a temporary branch that persists indefinitely",
         "Git automatically prevents you from switching branches, forcing you to merge changes first",
-        "The new commit becomes unreachable and will be garbage-collected, effectively losing the work",
+        "The new commit becomes unreachable and will be garbage-collected",
         "The changes are safely stored in the stash and can be recovered at any time"
       ],
       "ru": [
         "Коммит автоматически сохраняется как временная ветка, которая сохраняется неопределенно долго",
         "Git автоматически препятствует переключению веток, заставляя вас сначала объединить изменения",
-        "Новый коммит становится недоступным и будет удален сборщиком мусора, фактически теряя работу",
+        "Новый коммит становится недостижимым и будет удален сборщиком мусора",
         "Изменения безопасно сохраняются в stash и могут быть восстановлены в любой момент"
       ]
     },
@@ -413,13 +413,13 @@
     },
     "options": {
       "en": [
-        "Use git merge --no-ff to preserve all commits",
+        "Use git merge --no-ff so every feature commit is preserved",
         "Use git cherry-pick on each commit individually",
         "Use git stash to save changes, then reapply them",
         "Use git rebase feature onto main, then fast-forward merge"
       ],
       "ru": [
-        "Используйте git merge --no-ff для сохранения всех коммитов",
+        "Используйте git merge --no-ff, чтобы сохранить каждый коммит ветки",
         "Используйте git cherry-pick для каждого коммита отдельно",
         "Используйте git stash для сохранения изменений, затем переприменяйте их",
         "Используйте git rebase feature на main, затем fast-forward merge"
@@ -440,13 +440,13 @@
     },
     "options": {
       "en": [
-        "It tracks HEAD movements and allows you to recover to previous states, even after commits are lost",
+        "It tracks HEAD movements, so you can return to an earlier state",
         "It automatically removes sensitive data from all commits",
         "It prevents accidental commits by logging all command history",
         "It creates a backup copy of your repository in a separate location"
       ],
       "ru": [
-        "Он отслеживает движения HEAD и позволяет восстановиться к предыдущим состояниям, даже после потери коммитов",
+        "Он отслеживает движения HEAD, поэтому вы можете вернуться к прежнему состоянию",
         "Он автоматически удаляет чувствительные данные из всех коммитов",
         "Он предотвращает случайные коммиты, логируя всю историю команд",
         "Он создаёт резервную копию вашего репозитория в отдельном месте"
@@ -468,13 +468,13 @@
     "options": {
       "en": [
         "A blob points to a tree, which points to commits; this creates a snapshot of the entire project",
-        "A commit points to a tree, which points to blobs; blobs store file content, trees store directory structure",
+        "A commit points to a tree, which points to blobs and other trees",
         "A tree is a collection of commits, and each commit contains multiple blobs",
         "Blobs, trees, and commits are independent objects with no hierarchical relationship"
       ],
       "ru": [
         "Blob указывает на tree, который указывает на коммиты; это создаёт снимок всего проекта",
-        "Коммит указывает на tree, который указывает на blob; blob хранит содержимое файла, tree хранит структуру директории",
+        "Коммит указывает на tree, а tree указывает на blob и другие tree",
         "Tree — это коллекция коммитов, и каждый коммит содержит несколько blob",
         "Blob, tree и коммиты — независимые объекты без иерархических отношений"
       ]
@@ -496,13 +496,13 @@
       "en": [
         "The commits are automatically merged into main",
         "The commits are permanently lost and cannot be recovered",
-        "The commits are still reachable via reflog but unreachable from any branch; they may be garbage collected after 30 days",
+        "The commits are reachable via reflog but not from any branch",
         "Git prevents you from switching branches and requires a merge or rebase first"
       ],
       "ru": [
         "Коммиты автоматически объединяются в main",
         "Коммиты окончательно потеряны и не могут быть восстановлены",
-        "Коммиты всё ещё доступны через reflog, но недоступны из любой ветки; они могут быть удалены сборщиком мусора через 30 дней",
+        "Коммиты доступны через reflog, но недостижимы из любой ветки",
         "Git предотвращает переключение веток и требует сначала merge или rebase"
       ]
     },
@@ -524,13 +524,13 @@
         "The stashed changes are discarded permanently because you switched branches",
         "Git automatically merges stashed changes with the current branch state without conflicts",
         "The stash is only accessible on the branch where you originally ran git stash",
-        "The stashed changes are reapplied to your current branch; if there are conflicts with recent changes, you must resolve them manually"
+        "The stashed changes are reapplied to the current branch; conflicts are possible"
       ],
       "ru": [
         "Отложенные изменения окончательно удаляются, потому что вы переключили ветки",
         "Git автоматически объединяет отложенные изменения с текущим состоянием ветки без конфликтов",
         "Stash доступен только на ветке, где вы изначально запустили git stash",
-        "Отложенные изменения переприменяются к вашей текущей ветке; если есть конфликты с недавними изменениями, вы должны разрешить их вручную"
+        "Отложенные изменения переприменяются к текущей ветке; конфликты возможны"
       ]
     },
     "correctIndex": 3,

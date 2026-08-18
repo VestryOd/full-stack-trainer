@@ -62,13 +62,13 @@
     },
     "options": {
       "en": [
-        "Cache this response for 3600 milliseconds privately on the client only",
+        "Cache this response for 3600 milliseconds, privately on the client and nowhere else",
         "Cache this response permanently but invalidate after 3600 requests",
         "Cache this response for 3600 seconds and allow intermediate proxies to cache it",
         "Cache this response only if the client has public internet access"
       ],
       "ru": [
-        "Кэшировать этот ответ 3600 миллисекунд приватно только на клиенте",
+        "Кэшировать этот ответ 3600 миллисекунд, приватно на клиенте и больше нигде",
         "Кэшировать этот ответ постоянно, но инвалидировать после 3600 запросов",
         "Кэшировать этот ответ 3600 секунд и разрешить промежуточным прокси его кэшировать",
         "Кэшировать этот ответ только если клиент имеет публичный доступ в интернет"
@@ -116,13 +116,13 @@
     },
     "options": {
       "en": [
-        "The If-Match ETag does not match the current resource ETag, indicating the resource was modified by another client since the request was prepared",
+        "The If-Match ETag does not match the current ETag of the resource",
         "The resource does not exist on the server and needs to be created first",
         "The server is temporarily unable to process the request due to high load",
         "The client does not have permission to update this resource"
       ],
       "ru": [
-        "ETag в If-Match не совпадает с текущим ETag ресурса, указывая что ресурс был изменен другим клиентом с момента подготовки запроса",
+        "ETag в заголовке If-Match не совпадает с текущим ETag ресурса",
         "Ресурс не существует на сервере и должен быть сначала создан",
         "Сервер временно не может обработать запрос из-за высокой нагрузки",
         "Клиент не имеет прав для обновления этого ресурса"
@@ -172,14 +172,14 @@
       "en": [
         "Cache the response indefinitely without revalidation",
         "Never cache the response and always fetch fresh data",
-        "Cache the response for 1 hour, then revalidate with the server before using expired cache",
+        "Cache the response for 1 hour, then revalidate with the server before reuse",
         "Cache the response for 1 hour and discard it after expiration without revalidation"
       ],
       "ru": [
-        "Кэшировать ответ бесконечно без переvalidации",
+        "Кэшировать ответ бесконечно без повторной проверки",
         "Никогда не кэшировать ответ и всегда получать свежие данные",
-        "Кэшировать ответ в течение 1 часа, затем переvalidировать на сервере перед использованием истекшего кэша",
-        "Кэшировать ответ в течение 1 часа и отбросить его после истечения без переvalidации"
+        "Кэшировать ответ 1 час, затем проверить его на сервере перед повторным использованием",
+        "Кэшировать ответ 1 час и выбросить его после истечения срока без проверки"
       ]
     },
     "correctIndex": 2,
@@ -197,13 +197,13 @@
     },
     "options": {
       "en": [
-        "GET; should include the resource data in the response body",
+        "GET; should include the resource data and an ETag in the response body",
         "PUT; should include a Cache-Control header for caching",
         "PATCH; should include metadata about the partial update",
         "POST; should include a Location header with the new resource URI"
       ],
       "ru": [
-        "GET; должен включать данные ресурса в теле ответа",
+        "GET; должен включать данные ресурса и заголовок ETag в теле ответа",
         "PUT; должен включать заголовок Cache-Control для кэширования",
         "PATCH; должен включать метаданные о частичном обновлении",
         "POST; должен включать заголовок Location с URI нового ресурса"
@@ -224,13 +224,13 @@
     },
     "options": {
       "en": [
-        "The browser will block the response due to CORS policy violation, even though the request was successful",
+        "The browser will block the response because of a CORS policy violation",
         "The request will be allowed because both URLs use HTTPS",
         "The request will be blocked at the network level before reaching the server",
         "The browser will allow the response but warn the user in the console"
       ],
       "ru": [
-        "Браузер заблокирует ответ из-за нарушения политики CORS, несмотря на успешный запрос",
+        "Браузер заблокирует ответ из-за нарушения политики CORS",
         "Запрос будет разрешен, потому что оба URL используют HTTPS",
         "Запрос будет заблокирован на уровне сети перед достижением сервера",
         "Браузер разрешит ответ, но предупредит пользователя в консоли"
@@ -332,13 +332,13 @@
     },
     "options": {
       "en": [
-        "The browser allows the response to be read by JavaScript, including cookies and auth headers",
+        "The browser lets JavaScript read the response, including cookies and auth headers",
         "The browser blocks the response due to wildcard origin not being allowed with credentials",
         "The response is cached indefinitely by default CORS rules",
         "The request is automatically retried with a preflight OPTIONS call"
       ],
       "ru": [
-        "Браузер позволяет JavaScript прочитать ответ, включая cookies и заголовки аутентификации",
+        "Браузер даёт JavaScript прочитать ответ, включая cookies и заголовки авторизации",
         "Браузер блокирует ответ, так как подстановочный origin не разрешен с credentials",
         "Ответ кэшируется бесконечно согласно правилам CORS по умолчанию",
         "Запрос автоматически повторяется с предварительным вызовом OPTIONS"
@@ -388,14 +388,14 @@
       "en": [
         "HTTP/2 automatically compresses all responses, reducing bandwidth by 90%",
         "Request 2 and 3 are cached automatically while Request 1 downloads",
-        "All three requests share a single TCP connection without blocking, so smaller requests don't wait for large downloads",
-        "HTTP/2 splits large files into smaller chunks, prioritizing critical requests"
+        "All three requests share one TCP connection, so the small ones don't wait",
+        "HTTP/2 splits large files into smaller chunks, so critical requests finish first"
       ],
       "ru": [
         "HTTP/2 автоматически сжимает все ответы, уменьшая пропускную способность на 90%",
         "Request 2 и 3 автоматически кэшируются во время загрузки Request 1",
-        "Все три запроса используют одно TCP соединение без блокировки, поэтому меньшие запросы не ждут больших загрузок",
-        "HTTP/2 разбивает большие файлы на меньшие куски, приоритизируя критичные запросы"
+        "Все три запроса идут по одному TCP-соединению, поэтому мелкие не ждут",
+        "HTTP/2 разбивает большие файлы на куски, поэтому критичные запросы завершаются первыми"
       ]
     },
     "correctIndex": 2,
@@ -496,13 +496,13 @@
       "en": [
         "All origins are allowed because the header allows credentials",
         "The origin is allowed but credentials are forbidden due to the Allow-Methods restriction",
-        "The specific origin is allowed, and credentials (cookies, auth headers) can be included in requests",
+        "The specific origin is allowed, and credentials (cookies) can be sent",
         "Preflight requests are not needed because explicit methods are specified"
       ],
       "ru": [
         "Все оригины разрешены, потому что заголовок позволяет учётные данные",
         "Оригин разрешён, но учётные данные запрещены из-за ограничения Allow-Methods",
-        "Специфичный оригин разрешён, и учётные данные (cookies, заголовки auth) могут быть включены в запросы",
+        "Конкретный оригин разрешён, и учётные данные (cookies) можно отправлять",
         "Preflight запросы не нужны, потому что явно указаны методы"
       ]
     },
@@ -524,13 +524,13 @@
         "HTTP/2 removes the requirement for HTTPS, allowing unencrypted traffic",
         "HTTP/2 automatically compresses response bodies without requiring Content-Encoding headers",
         "HTTP/2 eliminates caching entirely, requiring all requests to fetch fresh data",
-        "HTTP/2 eliminates the need for domain sharding and enables multiplexing of multiple requests over a single TCP connection"
+        "HTTP/2 multiplexes requests over one TCP connection, so domain sharding is unnecessary"
       ],
       "ru": [
         "HTTP/2 удаляет требование HTTPS, позволяя незашифрованный трафик",
         "HTTP/2 автоматически сжимает телаответов без требования заголовков Content-Encoding",
         "HTTP/2 полностью устраняет кэширование, требуя все запросы получать свежие данные",
-        "HTTP/2 устраняет необходимость в domain sharding и включает мультиплексирование нескольких запросов через одно TCP соединение"
+        "HTTP/2 мультиплексирует запросы в одном TCP-соединении, и domain sharding не нужен"
       ]
     },
     "correctIndex": 3,
@@ -549,15 +549,15 @@
     "options": {
       "en": [
         "If-None-Match or If-Modified-Since (both are valid for 304)",
-        "Last-Modified header from the request",
-        "ETag header from the request",
-        "Cache-Control header"
+        "The Last-Modified header that the client sent in its request",
+        "The ETag header the client copied into its request",
+        "The Cache-Control header with its max-age directive"
       ],
       "ru": [
         "If-None-Match или If-Modified-Since (оба действительны для 304)",
-        "Заголовок Last-Modified из запроса",
-        "Заголовок ETag из запроса",
-        "Заголовок Cache-Control"
+        "Заголовок Last-Modified, который клиент отправил в своём запросе",
+        "Заголовок ETag, который клиент скопировал в запрос",
+        "Заголовок Cache-Control с директивой max-age"
       ]
     },
     "correctIndex": 0,
@@ -632,13 +632,13 @@
         "Allows multiple requests to be processed in parallel on the same TCP connection",
         "Compresses HTTP headers using HPACK algorithm",
         "Enables browsers to cache resources more efficiently",
-        "Reduces round-trip time by eliminating the request-response cycle for predictable dependencies"
+        "Saves a round trip by removing the request for predictable dependencies"
       ],
       "ru": [
         "Позволяет параллельно обрабатывать несколько запросов по одному TCP соединению",
         "Сжимает HTTP заголовки, используя алгоритм HPACK",
         "Позволяет браузерам более эффективно кэшировать ресурсы",
-        "Снижает время туда-обратно, исключая цикл запрос-ответ для предсказуемых зависимостей"
+        "Экономит один цикл туда-обратно, убирая запрос предсказуемых зависимостей"
       ]
     },
     "correctIndex": 3,
@@ -656,13 +656,13 @@
     },
     "options": {
       "en": [
-        "The browser will block the request because the Origin does not match the allowed origin",
+        "The browser will block the request because the Origin does not match",
         "The browser will allow the request since the server explicitly set a CORS header",
         "The request will proceed but without credentials",
         "The browser will retry the request with the allowed origin"
       ],
       "ru": [
-        "Браузер заблокирует запрос, так как Origin не соответствует разрешенному источнику",
+        "Браузер заблокирует запрос, так как Origin не совпадает",
         "Браузер разрешит запрос, так как сервер явно установил CORS-заголовок",
         "Запрос продолжится, но без учетных данных",
         "Браузер повторит запрос с разрешенным источником"
@@ -684,13 +684,13 @@
     "options": {
       "en": [
         "It forces the browser to discard the cache after 3600 seconds regardless of freshness",
-        "It requires the cache to revalidate with the server once the response becomes stale, rather than serving a stale copy",
+        "It requires the cache to revalidate with the server once the response is stale",
         "It prevents any caching in intermediate proxies",
         "It tells the browser to always make a new request without checking the cache"
       ],
       "ru": [
         "Это заставляет браузер отбросить кэш через 3600 секунд независимо от свежести",
-        "Это требует от кэша проверить подлинность на сервере после истечения срока действия, вместо того чтобы отправить старую копию",
+        "Требует, чтобы кэш проверил ответ на сервере, как только тот устарел",
         "Это предотвращает кэширование на промежуточных прокси",
         "Это говорит браузеру всегда делать новый запрос без проверки кэша"
       ]
