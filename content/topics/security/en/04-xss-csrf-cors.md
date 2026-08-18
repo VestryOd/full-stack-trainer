@@ -228,7 +228,7 @@ XSS and CSRF interact:
   With XSS, the attacker can make requests FROM YOUR ORIGIN
   → Same-origin policy and CORS don't help (request comes from your domain)
   → CSRF Token doesn't help either (JS can read it from the DOM)
-  → The only defenses: HttpOnly cookie (JS can't read it), CSP (prevents XSS)
+  → The only defenses: HttpOnly cookie (JS can't read it), CSP (limits what an injected script can do)
 
 CORS does not protect against CSRF:
   Browsers check CORS for fetch/XHR

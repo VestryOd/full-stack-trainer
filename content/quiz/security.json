@@ -359,13 +359,13 @@
     },
     "options": {
       "en": [
-        "To restrict script execution to only files from the same origin, preventing inline scripts and XSS attacks",
+        "To restrict script execution to files from the same origin, so an injected script cannot run — a defence-in-depth layer, not a substitute for output encoding",
         "To encrypt all scripts transmitted over the network using TLS",
         "To automatically patch vulnerabilities in third-party JavaScript libraries",
         "To block all network requests from the website to improve performance"
       ],
       "ru": [
-        "Ограничить выполнение скриптов только файлами с того же источника, предотвращая встроенные скрипты и XSS-атаки",
+        "Ограничить выполнение скриптов файлами с того же источника, чтобы внедрённый скрипт не смог запуститься — это дополнительный слой защиты, а не замена экранированию вывода",
         "Зашифровать все скрипты, передаваемые по сети, используя TLS",
         "Автоматически исправлять уязвимости в библиотеках JavaScript третьих сторон",
         "Блокировать все сетевые запросы с веб-сайта для улучшения производительности"
@@ -373,8 +373,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "CSP with `script-src 'self'` creates a whitelist of allowed script sources, preventing execution of any scripts not from the same origin—this blocks injected malicious scripts and inline XSS payloads. TLS encryption is already standard for HTTPS but separate from CSP. CSP doesn't patch vulnerabilities or block all requests; it specifically controls which scripts can execute.",
-      "ru": "CSP с `script-src 'self'` создаёт белый список разрешённых источников скриптов, предотвращая выполнение любых скриптов не с того же источника — это блокирует внедрённые вредоносные скрипты и встроенные XSS-полезные нагрузки. TLS-шифрование уже стандартно для HTTPS, но отделено от CSP. CSP не исправляет уязвимости и не блокирует все запросы; он специфически контролирует, какие скрипты могут выполняться."
+      "en": "`script-src 'self'` tells the browser to run scripts only from the page's own origin. An injected `<script>` from anywhere else, and inline script text, are refused.\n\nThat makes CSP a strong second layer, not the first one. It does not stop the injection itself: the input is still being reflected into the page, and the primary fix is contextual output encoding. CSP limits the damage when that fix is missing or imperfect.\n\nNote that `'self'` alone is coarse. If any script reachable on your origin can be abused — an old JSONP endpoint, an open redirect — the allowlist lets it through. Hashes or nonces are stricter.",
+      "ru": "`script-src 'self'` говорит браузеру выполнять скрипты только с собственного источника страницы. Внедрённый `<script>` с чужого адреса и инлайновый код будут отклонены.\n\nЭто делает CSP сильным вторым слоем, но не первым. Саму инъекцию он не предотвращает: ввод по-прежнему попадает в страницу, и основное исправление — контекстное экранирование вывода. CSP ограничивает ущерб, когда этого исправления нет или оно неполное.\n\nУчтите, что одного `'self'` мало. Если на вашем же источнике есть скрипт, которым можно воспользоваться — старый JSONP-эндпоинт, открытый редирект, — список разрешённого его пропустит. Хеши или nonce строже."
     }
   },
   {
@@ -481,7 +481,7 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Relying on Referer header for CSRF protection is weak because the header can be omitted by browsers (especially on HTTPS to HTTP transitions) or stripped by proxies. The proper CSRF defense is using anti-CSRF tokens (like SameSite cookies or synchronizer tokens). Hidden input values don't indicate XSS, SQL injection, or session hijacking vulnerability in this context.",
+      "en": "Relying on Referer header for CSRF protection is weak because the header can be omitted by browsers (especially on HTTPS to HTTP transitions) or stripped by proxies. The proper CSRF defence is a synchronizer token — a per-session value the server issues and checks on every state-changing request. `SameSite` cookies are a separate mechanism that works well alongside it, but they are a cookie attribute, not a token. Hidden input values don't indicate XSS, SQL injection, or session hijacking vulnerability in this context.",
       "ru": "Полагаться на заголовок Referer для защиты от CSRF является слабой защитой, так как браузер может опустить этот заголовок (особенно при переходе с HTTPS на HTTP) или прокси может его удалить. Правильная защита от CSRF - использование anti-CSRF токенов (например, SameSite cookies или synchronizer tokens). Скрытые значения входных данных не указывают на уязвимость XSS, SQL Injection или Session Hijacking в этом контексте."
     }
   },
@@ -602,13 +602,13 @@
     },
     "options": {
       "en": [
-        "CSP prevents XSS attacks by controlling which sources can load resources; 'default-src 'self'' allows only resources from the same origin",
+        "CSP limits what an injected script can do by controlling which sources may load resources; `default-src 'self'` allows only same-origin resources",
         "CSP encrypts all traffic between server and client; 'default-src 'self'' requires HTTPS on all resources",
         "CSP prevents CSRF attacks by validating token origins; 'default-src 'self'' allows inline scripts from the current domain",
         "CSP is a performance optimization that caches external resources; 'default-src 'self'' speeds up page load times"
       ],
       "ru": [
-        "CSP предотвращает XSS-атаки, контролируя, какие источники могут загружать ресурсы; 'default-src 'self'' разрешает только ресурсы с того же источника",
+        "CSP ограничивает то, что может сделать внедрённый скрипт, контролируя, какие источники могут загружать ресурсы; `default-src 'self'` разрешает только ресурсы того же источника",
         "CSP шифрует весь трафик между сервером и клиентом; 'default-src 'self'' требует HTTPS для всех ресурсов",
         "CSP предотвращает CSRF-атаки путём проверки источников токенов; 'default-src 'self'' разрешает встроенные скрипты из текущего домена",
         "CSP - это оптимизация производительности, которая кэширует внешние ресурсы; 'default-src 'self'' ускоряет загрузку страницы"
@@ -656,13 +656,13 @@
     },
     "options": {
       "en": [
-        "Secure (HTTPS only), HttpOnly (no JS access), SameSite=Strict (no cross-site requests) together block XSS via JS, CSRF via cross-origin isolation, and ensure encryption",
+        "Secure (HTTPS only), HttpOnly (JavaScript cannot read the cookie, so an XSS bug cannot steal the token) and SameSite=Strict (the cookie is not sent on cross-site requests, which blocks CSRF)",
         "Secure (encrypt password), HttpOnly (visible to HTML), SameSite=Lax (allows same-domain requests) together enable flexibility while maintaining some protection",
         "Secure (requires authentication), HttpOnly (requires HTTPS), SameSite=None (allows all cross-site) provides maximum compatibility for third-party integrations",
         "Only HttpOnly is necessary; Secure and SameSite are legacy flags that don't impact modern security"
       ],
       "ru": [
-        "Secure (только HTTPS), HttpOnly (без доступа JS), SameSite=Strict (запрет кросс-сайт запросов) вместе блокируют XSS через JS, CSRF через кросс-ориджин изоляцию и гарантируют шифрование",
+        "Secure (только HTTPS), HttpOnly (JavaScript не может прочитать cookie, поэтому XSS-уязвимость не украдёт токен) и SameSite=Strict (cookie не отправляется в кросс-сайтовых запросах, что блокирует CSRF)",
         "Secure (шифрует пароль), HttpOnly (видна в HTML), SameSite=Lax (разрешает запросы внутри домена) вместе обеспечивают гибкость и некоторую защиту",
         "Secure (требует аутентификации), HttpOnly (требует HTTPS), SameSite=None (разрешает все кросс-сайт) обеспечивает максимальную совместимость для сторонних интеграций",
         "Только HttpOnly необходимо; Secure и SameSite - это устаревшие флаги, которые не влияют на современную безопасность"
@@ -670,8 +670,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Secure forces transmission over HTTPS only, HttpOnly prevents JavaScript from accessing the cookie (stopping XSS-based token theft), and SameSite=Strict prevents the browser from sending the cookie in cross-site requests (blocking CSRF). Together, these flags create defense-in-depth against the most common web vulnerabilities.",
-      "ru": "Secure принудительно передаёт только через HTTPS, HttpOnly предотвращает доступ JavaScript к cookies (останавливая кража токенов через XSS), и SameSite=Strict предотвращает отправку cookies в кросс-сайт запросах (блокируя CSRF). Вместе эти флаги создают глубокую защиту от наиболее распространённых веб-уязвимостей."
+      "en": "The three flags cover three different things, and none of them stops XSS itself.\n\n- `Secure` — the cookie is only sent over HTTPS, so it cannot be read off a plain HTTP request\n- `HttpOnly` — JavaScript cannot read the cookie, so an XSS bug cannot steal the session token. The injected script still runs; it just cannot exfiltrate the cookie\n- `SameSite=Strict` — the browser does not attach the cookie to requests coming from another site, which is what blocks CSRF\n\nPreventing XSS is a separate job: encode output for its context and validate input.",
+      "ru": "Три флага закрывают три разные задачи, и ни один из них не останавливает сам XSS.\n\n- `Secure` — cookie отправляется только по HTTPS, поэтому его не перехватить из обычного HTTP-запроса\n- `HttpOnly` — JavaScript не может прочитать cookie, поэтому XSS-уязвимость не украдёт токен сессии. Внедрённый скрипт всё равно выполнится, но вынести cookie не сможет\n- `SameSite=Strict` — браузер не прикрепляет cookie к запросам, пришедшим с другого сайта, и именно это блокирует CSRF\n\nПредотвращение XSS — отдельная задача: экранировать вывод под его контекст и валидировать ввод."
     }
   }
 ]

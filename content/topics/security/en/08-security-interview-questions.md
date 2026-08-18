@@ -133,7 +133,7 @@ A: Partially. HttpOnly makes the cookie unreadable by JS.
    But XSS can still send requests from your origin (fetch,
    XMLHttpRequest) → cookie is attached automatically.
    XSS + session authentication → action hijacking.
-   Full protection: HttpOnly + CSP (prevents XSS).
+   Full protection: HttpOnly + CSP (limits what an injected script can do).
 
 Q: "What is CORS and does it protect the server?"
 A: CORS is a browser policy controlling cross-origin fetch/XHR requests.

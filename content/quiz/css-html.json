@@ -22,8 +22,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The first selector has specificity (1,3,1) due to one ID, three classes/pseudo-classes, and one element, making it the highest specificity. The second has (0,1,1) and the third has (0,0,1). Specificity always trumps source order unless !important is used. CSS is calculated by counting IDs, classes, and elements in a weighted manner.",
-      "ru": "Первый селектор имеет специфичность (1,3,1) благодаря одному ID, трём классам и одному элементу, что делает его самым специфичным. Второй имеет (0,1,1), третий — (0,0,1). Специфичность всегда перекрывает порядок исходного кода, если не используется !important. CSS вычисляет специфичность путём подсчёта ID, классов и элементов взвешенным способом."
+      "en": "The link is blue, because `#header .nav ul li a` has the highest specificity.\n\nCount each selector in three buckets — IDs, then classes and pseudo-classes, then type selectors:\n\n- `#header .nav ul li a` — one ID, one class, three type selectors: **1-1-3**\n- `.nav a` — one class, one type selector: **0-1-1**\n- `a` — one type selector: **0-0-1**\n\nThe buckets are compared left to right, so a single ID beats any number of classes. Source order only decides between rules of equal specificity, and `!important` is the only thing that overrides this comparison.",
+      "ru": "Ссылка будет синей, потому что у `#header .nav ul li a` самая высокая специфичность.\n\nКаждый селектор считается в трёх группах — ID, затем классы и псевдоклассы, затем селекторы тегов:\n\n- `#header .nav ul li a` — один ID, один класс, три тега: **1-1-3**\n- `.nav a` — один класс, один тег: **0-1-1**\n- `a` — один тег: **0-0-1**\n\nГруппы сравниваются слева направо, поэтому один ID перевешивает любое количество классов. Порядок в файле решает только при равной специфичности, а переопределить это сравнение может лишь `!important`."
     }
   },
   {
@@ -116,13 +116,13 @@
     },
     "options": {
       "en": [
-        "position: relative with z-index creates a new stacking context",
+        "position: relative on its own, with z-index left at auto",
         "opacity less than 1 creates a new stacking context",
         "transform creates a new stacking context",
         "All of the above create new stacking contexts"
       ],
       "ru": [
-        "position: relative с z-index создаёт новый контекст наложения",
+        "position: relative сам по себе, когда z-index оставлен как auto",
         "opacity менее 1 создаёт новый контекст наложения",
         "transform создаёт новый контекст наложения",
         "Все вышеперечисленные создают новые контексты наложения"
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "A stacking context is created by properties like opacity (< 1), transform, filter, will-change, and position with z-index. However, `position: relative` alone does NOT create a new stacking context—z-index must be a value other than 'auto'. The `opacity` and `transform` properties both create stacking contexts regardless of z-index.",
-      "ru": "Контекст наложения создаётся такими свойствами, как opacity (< 1), transform, filter, will-change и position с z-index. Однако `position: relative` сам по себе НЕ создаёт новый контекст наложения — z-index должен быть значением, отличным от 'auto'. Свойства `opacity` и `transform` оба создают контексты наложения независимо от z-index."
+      "en": "`position: relative` on its own does not create a stacking context — it needs a `z-index` other than `auto`.\n\nThe other three do create one unconditionally: `opacity` below 1, any `transform` other than `none`, and `filter` other than `none`. So does `position: fixed` or `sticky`, regardless of z-index.\n\nThis is why the bug is so common: adding `transform: translateX(0)` as a GPU hint silently traps every child's z-index inside that element.",
+      "ru": "`position: relative` сам по себе контекст наложения не создаёт — для этого нужен `z-index`, отличный от `auto`.\n\nОстальные три создают его безусловно: `opacity` меньше 1, любой `transform` кроме `none` и `filter` кроме `none`. Так же ведут себя `position: fixed` и `sticky` — независимо от z-index.\n\nИменно поэтому ошибка так распространена: добавили `transform: translateX(0)` как подсказку для GPU — и z-index всех потомков молча оказался запертым внутри этого элемента."
     }
   },
   {
@@ -209,10 +209,10 @@
         "280px"
       ]
     },
-    "correctIndex": 3,
+    "correctIndex": 1,
     "explanation": {
-      "en": "With box-sizing: content-box, the width property only applies to the content area. The total width is: 200px (content) + 20px (left padding) + 20px (right padding) + 5px (left border) + 5px (right border) = 250px. Margin is not included in width calculation, so the total space taken is 250px + 10px + 10px = 270px, but the rendered box width is 250px. Wait—recalculating: 200 + 40 + 10 = 250px. The answer is actually 250px.",
-      "ru": "При box-sizing: content-box свойство width применяется только к области контента. Общая ширина: 200px (контент) + 20px (левый отступ) + 20px (правый отступ) + 5px (левая граница) + 5px (правая граница) = 250px. Внешний отступ не включается в расчёт ширины. Итого: 200 + 40 + 10 = 250px."
+      "en": "The rendered box is 250px wide.\n\n`box-sizing: content-box` means `width` sizes the content only, and padding and border are added around it: 200 + 20 + 20 + 5 + 5 = 250px.\n\n`margin: 10px` is not part of the box width. It adds 10px of space outside each edge, so the element occupies 270px of horizontal space in the layout while still being 250px wide.",
+      "ru": "Отрисованный блок имеет ширину 250px.\n\nПри `box-sizing: content-box` свойство `width` задаёт только контентную область, а padding и рамка добавляются вокруг: 200 + 20 + 20 + 5 + 5 = 250px.\n\n`margin: 10px` в ширину блока не входит. Он добавляет по 10px пространства снаружи каждой стороны, поэтому в раскладке элемент занимает 270px, оставаясь при этом шириной 250px."
     }
   },
   {
@@ -290,10 +290,10 @@
         "0-2-1"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "The specificity is calculated as (IDs, classes, pseudo-classes/elements). This selector has 2 classes (.container, .active), 2 pseudo-classes (:hover is a pseudo-class, not pseudo-element), and 0 IDs, giving 0-2-2. The child combinator (>) does not affect specificity.",
-      "ru": "Специфичность рассчитывается как (ID, классы, псевдоклассы/элементы). Этот селектор имеет 2 класса (.container, .active), 2 псевдокласса (:hover — это псевдокласс, не псевдоэлемент), и 0 ID, что дает 0-2-2. Комбинатор потомков (>) не влияет на специфичность."
+      "en": "The specificity is 0-3-1.\n\n- IDs: none, so 0\n- classes, attribute selectors and pseudo-classes: `.container`, `.active` and `:hover` — a pseudo-class counts in this bucket, so 3\n- type selectors and pseudo-elements: `div`, so 1\n\nThe child combinator `>` contributes nothing. The usual mistake is forgetting `div`, which gives 0-3-0, or putting `:hover` in the wrong bucket.",
+      "ru": "Специфичность — 0-3-1.\n\n- ID: нет, значит 0\n- классы, селекторы атрибутов и псевдоклассы: `.container`, `.active` и `:hover` — псевдоклассы считаются в этой же группе, значит 3\n- селекторы тегов и псевдоэлементы: `div`, значит 1\n\nКомбинатор `>` не добавляет ничего. Обычные ошибки — забыть `div` (тогда получается 0-3-0) или отнести `:hover` не в ту группу."
     }
   },
   {
@@ -386,13 +386,13 @@
     },
     "options": {
       "en": [
-        "Because `.modal` has `position: relative` which creates a new stacking context, and z-index values are compared within their own stacking context, not globally",
+        "Because `.modal` combines `position: relative` with a `z-index`, which creates a stacking context, and the child z-index is compared only inside it",
         "Because 1000 is a higher number than 999, and z-index always follows numerical ordering regardless of context",
         "Because `.modal` has a higher specificity, which affects how z-index is rendered on the page",
         "Because absolute positioning automatically creates a new stacking context that overrides z-index values"
       ],
       "ru": [
-        "Потому что `.modal` имеет `position: relative`, что создает новый контекст наложения, и значения z-index сравниваются в рамках своего собственного контекста наложения, а не глобально",
+        "Потому что `.modal` сочетает `position: relative` с `z-index`, а это создаёт контекст наложения, и z-index потомка сравнивается только внутри него",
         "Потому что 1000 больше, чем 999, и z-index всегда следует численному порядку независимо от контекста",
         "Потому что `.modal` имеет более высокую специфичность, которая влияет на то, как z-index отображается на странице",
         "Потому что абсолютное позиционирование автоматически создает новый контекст наложения, который переопределяет значения z-index"
@@ -400,8 +400,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "A stacking context is an isolated rendering layer where z-index values are compared locally, not globally. `position: relative` (along with many other properties like `opacity < 1`, `transform`, or `display: flex`) creates a new stacking context. The parent `.modal`'s stacking context takes precedence over its descendants, so `.dropdown` (a child or sibling within a different stacking context) will be behind `.modal` even with a higher z-index number.",
-      "ru": "Контекст наложения — это изолированный слой рендеринга, где значения z-index сравниваются локально, а не глобально. `position: relative` (наряду со многими другими свойствами, такими как `opacity < 1`, `transform` или `display: flex`) создает новый контекст наложения. Контекст наложения родителя `.modal` имеет приоритет над его потомками, поэтому `.dropdown` (дочерний элемент или соседний элемент в другом контексте наложения) будет позади `.modal`, даже если у него более высокое значение z-index."
+      "en": "`.modal` creates a stacking context because it combines `position: relative` with `z-index: 1000` — position alone would not be enough.\n\nA stacking context is an isolated layer: z-index values inside it are compared with each other, not with anything outside. So `.dropdown`'s `z-index: 999` competes only with its siblings inside `.modal`, and the whole `.modal` block is placed relative to its own siblings using its 1000.\n\nOther properties create a stacking context on their own, without any z-index: `opacity` below 1, `transform`, `filter`, `will-change` for those properties, `isolation: isolate`, and `position: fixed` or `sticky`. `display: flex` does **not**.",
+      "ru": "`.modal` создаёт контекст наложения, потому что сочетает `position: relative` с `z-index: 1000` — одного позиционирования было бы недостаточно.\n\nКонтекст наложения — это изолированный слой: значения z-index внутри него сравниваются между собой, а не с чем-либо снаружи. Поэтому `z-index: 999` у `.dropdown` конкурирует только с соседями внутри `.modal`, а сам блок `.modal` размещается относительно своих соседей по значению 1000.\n\nЕсть свойства, которые создают контекст сами, без z-index: `opacity` меньше 1, `transform`, `filter`, `will-change` для этих свойств, `isolation: isolate`, а также `position: fixed` и `sticky`. `display: flex` — **нет**."
     }
   },
   {
@@ -548,13 +548,13 @@
     },
     "options": {
       "en": [
-        "Rule 3 wins because ID selectors (100) have higher specificity than class selectors (10) and element selectors (1)",
+        "Rule 3 wins: an ID puts it in a higher specificity bucket than a class, and a class ranks above a type selector",
         "Rule 2 wins because class selectors always override element selectors due to the cascade",
         "Rule 1 wins because it is a more semantic choice",
         "All three rules have equal specificity so the browser chooses randomly"
       ],
       "ru": [
-        "Правило 3 побеждает, потому что селекторы ID (100) имеют более высокую специфичность, чем селекторы класса (10) и селекторы элементов (1)",
+        "Побеждает правило 3: ID попадает в более весомую группу специфичности, чем класс, а класс — выше селектора тега",
         "Правило 2 побеждает, потому что селекторы класса всегда переопределяют селекторы элементов из-за каскада",
         "Правило 1 побеждает, потому что это более семантичный выбор",
         "Все три правила имеют одинаковую специфичность, поэтому браузер выбирает случайно"
@@ -562,8 +562,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "CSS specificity is calculated as: element selectors (1 point), class selectors (10 points), and ID selectors (100 points). Rule 3 with ID selector has the highest specificity (100) and therefore takes precedence over rules 2 (10) and 1 (1). The cascade alone doesn't override specificity.",
-      "ru": "Специфичность CSS рассчитывается так: селекторы элементов (1 балл), селекторы класса (10 баллов) и селекторы ID (100 баллов). Правило 3 с селектором ID имеет наивысшую специфичность (100) и поэтому имеет приоритет над правилами 2 (10) и 1 (1). Каскад сам по себе не переопределяет специфичность."
+      "en": "Rule 3 wins, because `#main-link` has an ID and the other two do not.\n\nSpecificity is three separate counters compared left to right — IDs, then classes and pseudo-classes, then type selectors:\n\n- `#main-link` — **1-0-0**\n- `.link` — **0-1-0**\n- `a` — **0-0-1**\n\nIt is not a single number. Thinking of it as 100 / 10 / 1 points happens to give the right answer here, but it breaks as soon as you have eleven classes: eleven classes are still 0-11-0 and still lose to one ID, whereas 11 × 10 = 110 would wrongly suggest they win.",
+      "ru": "Побеждает правило 3, потому что у `#main-link` есть ID, а у двух остальных — нет.\n\nСпецифичность — это три отдельных счётчика, которые сравниваются слева направо: ID, затем классы и псевдоклассы, затем селекторы тегов:\n\n- `#main-link` — **1-0-0**\n- `.link` — **0-1-0**\n- `a` — **0-0-1**\n\nЭто не одно число. Модель «100 / 10 / 1 очко» здесь случайно даёт верный ответ, но ломается на одиннадцати классах: одиннадцать классов — это по-прежнему 0-11-0, и они всё равно проигрывают одному ID, тогда как 11 × 10 = 110 ошибочно подсказало бы обратное."
     }
   },
   {
@@ -710,13 +710,13 @@
     },
     "options": {
       "en": [
-        "A: 40px, B: 150px, C: 100px",
+        "A: 30px, B: 150px, C: 100px",
         "A: 50px, B: 100px, C: 100px",
         "A: 60px, B: 120px, C: 100px",
         "A: 45px, B: 145px, C: 100px"
       ],
       "ru": [
-        "A: 40px, B: 150px, C: 100px",
+        "A: 30px, B: 150px, C: 100px",
         "A: 50px, B: 100px, C: 100px",
         "A: 60px, B: 120px, C: 100px",
         "A: 45px, B: 145px, C: 100px"
@@ -724,8 +724,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "With a 300px container and 20px gap (2 gaps × 10px), available space is 280px. Item C takes 100px (fixed width). Item B's min-width: 150px forces it to 150px. Item A gets flex: 1 of remaining space: (280 - 150 - 100) = 30px, but flex ratio is 1:2, so A gets 30px / 3 = 10px of base flex unit, making A 40px (10 × 1 + base).",
-      "ru": "При ширине контейнера 300px и зазоре 20px (2 зазора × 10px) доступное пространство составляет 280px. Элемент C занимает 100px (фиксированная ширина). min-width элемента B: 150px заставляет его быть 150px. Элемент A получает flex: 1 из оставшегося пространства: (280 - 150 - 100) = 30px, но коэффициент flex 1:2, поэтому A получает 40px."
+      "en": "A is 30px, B is 150px, C is 100px.\n\nThe container is 300px and two 10px gaps take 20px, leaving 280px for the items.\n\nC has `width: 100px` and no `flex-grow`, so it stays at 100px. A and B both have `flex-basis: 0` (that is what the `flex: 1` and `flex: 2` shorthands set), so they start at zero and share the free space.\n\nFirst pass: free space is 280 − 100 = 180px, split 1:2, which would give A 60px and B 120px. But B has `min-width: 150px`, so 120px is not allowed. B is clamped to 150px and frozen.\n\nSecond pass: the remaining free space is 280 − 150 − 100 = 30px, and A is the only flexible item left, so A takes all 30px. This two-pass behaviour — clamp, freeze, redistribute — is why the final sizes rarely match the raw flex ratio.",
+      "ru": "A — 30px, B — 150px, C — 100px.\n\nКонтейнер шириной 300px, два зазора по 10px забирают 20px, на элементы остаётся 280px.\n\nУ C задан `width: 100px` и нет `flex-grow`, поэтому он остаётся 100px. У A и B `flex-basis: 0` (именно это задают сокращения `flex: 1` и `flex: 2`), поэтому они стартуют с нуля и делят между собой свободное место.\n\nПервый проход: свободного места 280 − 100 = 180px, делим в отношении 1:2 — вышло бы 60px у A и 120px у B. Но у B есть `min-width: 150px`, и 120px недопустимы. B фиксируется на 150px.\n\nВторой проход: свободного места остаётся 280 − 150 − 100 = 30px, и A — единственный гибкий элемент, поэтому все 30px уходят ему. Из-за этого двухпроходного поведения — ограничить, зафиксировать, перераспределить — итоговые размеры редко совпадают с исходной пропорцией flex."
     }
   },
   {
@@ -759,27 +759,27 @@
     "id": "css-html-quiz-29",
     "topicId": "css-html",
     "question": {
-      "en": "What is the stacking context property that creates a new stacking context WITHOUT affecting the z-index behavior of child elements?",
-      "ru": "Какое свойство stacking context создает новый контекст наложения БЕЗ влияния на поведение z-index дочерних элементов?"
+      "en": "Which property creates a new stacking context and has no other visual effect on the element, so it can be added purely to contain the z-index of its children?",
+      "ru": "Какое свойство создаёт новый контекст наложения и не имеет никаких других визуальных эффектов, то есть его можно добавить только чтобы ограничить z-index потомков?"
     },
     "options": {
       "en": [
         "isolation: isolate",
         "will-change: transform",
         "opacity: 0.99",
-        "All of the above create new stacking contexts"
+        "contain: paint"
       ],
       "ru": [
         "isolation: isolate",
         "will-change: transform",
         "opacity: 0.99",
-        "Все перечисленные создают новые контексты наложения"
+        "contain: paint"
       ]
     },
-    "correctIndex": 3,
+    "correctIndex": 0,
     "explanation": {
-      "en": "All three properties (isolation, will-change, and opacity values < 1) create new stacking contexts. Each establishes a new stacking order for descendants while constraining their z-index behavior relative to siblings outside that context. This is important for preventing z-index escalation issues in complex layouts.",
-      "ru": "Все три свойства (isolation, will-change и opacity < 1) создают новые контексты наложения. Каждое из них устанавливает новый порядок наложения для потомков, ограничивая поведение их z-index относительно братских элементов вне этого контекста. Это важно для предотвращения проблем с эскалацией z-index в сложных макетах."
+      "en": "`isolation: isolate` is the one to use: it creates a stacking context and changes nothing else about how the element looks.\n\nThe other three also create a stacking context, but each brings a side effect you did not ask for. `will-change: transform` promotes the element to its own compositing layer and consumes memory. `opacity: 0.99` makes the element very slightly transparent and forces compositing. `contain: paint` also clips anything that overflows the element's box, which can silently cut off a dropdown.\n\nThat is why `isolation: isolate` is the intention-revealing choice: a reader can see the z-index containment was deliberate rather than a side effect of an optimisation.",
+      "ru": "Нужен `isolation: isolate`: он создаёт контекст наложения и больше ничего во внешнем виде элемента не меняет.\n\nОстальные три тоже создают контекст, но каждый приносит побочный эффект, о котором не просили. `will-change: transform` выносит элемент в отдельный слой композитинга и расходует память. `opacity: 0.99` делает элемент слегка прозрачным и тоже включает композитинг. `contain: paint` вдобавок обрезает всё, что выходит за границы элемента, — так можно молча отрезать дропдаун.\n\nПоэтому `isolation: isolate` — вариант, выражающий намерение: читатель кода видит, что ограничение z-index сделано осознанно, а не как побочный эффект оптимизации."
     }
   },
   {
