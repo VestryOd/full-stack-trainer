@@ -114,7 +114,7 @@ A: Lock contention — высокая конкуренция за одну бл�
 
 **REPEATABLE READ**: снапшот создаётся ОДИН РАЗ на транзакцию. Все SELECT видят одни и те же данные. PostgreSQL (через MVCC) дополнительно защищает от Phantom Read (стандарт этого не требует). Возможна Write-Skew Anomaly.
 
-**SERIALIZABLE** (SSI): PostgreSQL отслеживает зависимости read/write между транзакциями. Если их конкурентный результат не эквивалентен никакому последовательному порядку — откатывает одну с `ERROR: could not serialize access` (SQLSTATE 40001). Приложение обязано обрабатывать retry.
+**SERIALIZABLE** (SSI): PostgreSQL отслеживает зависимости read/write между транзакциями. Если их конкурентный результат не эквивалентен никакому последовательному порядку — откатывает одну с `ERROR: could not serialize access due to read/write dependencies among transactions` (SQLSTATE 40001). Конфликт обновления на REPEATABLE READ даёт другое сообщение — `could not serialize access due to concurrent update`. Приложение обязано обрабатывать retry.
 
 ```txt
 Типичные follow-up:

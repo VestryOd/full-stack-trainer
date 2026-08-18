@@ -25,7 +25,7 @@ SELECT balance FROM accounts WHERE id = 1; -- вернёт 0
 ```txt
 PostgreSQL: НЕ поддерживает Dirty Read ни на каком уровне изоляции
 (включая READ UNCOMMITTED). Реализовано через MVCC (см.
-[MVCC, Locks, and Vacuum]) — читатель видит только версии строк,
+[MVCC, блокировки и VACUUM](./05-mvcc-locks-vacuum.md)) — читатель видит только версии строк,
 помеченные как committed.
 ```
 
@@ -252,12 +252,12 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 ## Связь с другими темами
 
 ```txt
-[ACID and Transactions]         — I (Isolation) как один из четырёх
+ACID и транзакции (статья 02)   — I (Isolation) как один из четырёх
                                    принципов ACID
-[MVCC, Locks, and Vacuum]       — механизм MVCC, за счёт которого
+MVCC и VACUUM (статья 05)       — механизм MVCC, за счёт которого
                                    PostgreSQL реализует снапшоты без
                                    блокировок чтения
-[Query Planner and EXPLAIN]     — уровень изоляции влияет на
+Планировщик и EXPLAIN (ст. 06)  — уровень изоляции влияет на
                                    выбор планировщика в edge cases
 ```
 

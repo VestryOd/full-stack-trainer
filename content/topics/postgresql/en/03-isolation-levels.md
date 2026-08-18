@@ -24,7 +24,7 @@ SELECT balance FROM accounts WHERE id = 1; -- returns 0
 ```txt
 PostgreSQL: does NOT support Dirty Read at any isolation level
 (including READ UNCOMMITTED). Implemented via MVCC (see
-[MVCC, Locks, and Vacuum]) — readers only see row versions
+[MVCC, Locks, and Vacuum](./05-mvcc-locks-vacuum.md)) — readers only see row versions
 marked as committed.
 ```
 
@@ -249,12 +249,12 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 ## Connection to other topics
 
 ```txt
-[ACID and Transactions]         — I (Isolation) as one of the four
+ACID and Transactions (art. 02) — I (Isolation) as one of the four
                                    ACID principles
-[MVCC, Locks, and Vacuum]       — the MVCC mechanism that lets
+MVCC and Vacuum (article 05)    — the MVCC mechanism that lets
                                    PostgreSQL implement snapshots
                                    without read locks
-[Query Planner and EXPLAIN]     — isolation level affects the
+Query Planner and EXPLAIN (06)  — isolation level affects the
                                    planner's choices in edge cases
 ```
 

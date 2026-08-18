@@ -110,7 +110,7 @@ A: Lock contention — high competition for one lock (one waits for the
 
 **REPEATABLE READ**: snapshot is created ONCE per transaction. All SELECTs see the same data. PostgreSQL (via MVCC) additionally prevents Phantom Reads (the standard doesn't require this). Write-Skew Anomaly is possible.
 
-**SERIALIZABLE** (SSI): PostgreSQL tracks read/write dependencies between transactions. If their concurrent result isn't equivalent to any sequential order — rolls one back with `ERROR: could not serialize access` (SQLSTATE 40001). Application must handle retries.
+**SERIALIZABLE** (SSI): PostgreSQL tracks read/write dependencies between transactions. If their concurrent result isn't equivalent to any sequential order — rolls one back with `ERROR: could not serialize access due to read/write dependencies among transactions` (SQLSTATE 40001). A REPEATABLE READ update conflict reports the shorter `could not serialize access due to concurrent update` instead. Application must handle retries.
 
 ```txt
 Typical follow-ups:
