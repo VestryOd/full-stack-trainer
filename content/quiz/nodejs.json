@@ -30,8 +30,8 @@
     "id": "nodejs-quiz-2",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be logged?\n```js\nsetTimeout(() => console.log('setTimeout'), 0);\nsetImmediate(() => console.log('setImmediate'));\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nsetTimeout(() => console.log('setTimeout'), 0);\nsetImmediate(() => console.log('setImmediate'));\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n```"
+      "en": "What will be logged? All four calls are made inside an I/O callback.\n```js\nfs.readFile('file.txt', () => {\n  setTimeout(() => console.log('setTimeout'), 0);\n  setImmediate(() => console.log('setImmediate'));\n  Promise.resolve().then(() => console.log('Promise'));\n  process.nextTick(() => console.log('nextTick'));\n});\n```",
+      "ru": "Что будет выведено? Все четыре вызова сделаны внутри I/O-колбэка.\n```js\nfs.readFile('file.txt', () => {\n  setTimeout(() => console.log('setTimeout'), 0);\n  setImmediate(() => console.log('setImmediate'));\n  Promise.resolve().then(() => console.log('Promise'));\n  process.nextTick(() => console.log('nextTick'));\n});\n```"
     },
     "options": {
       "en": [
@@ -49,8 +49,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "process.nextTick has highest priority and runs first, followed by Promise microtasks. setImmediate runs in the check phase (before timers in the next iteration), while setTimeout runs in the timers phase. In the poll phase with no pending I/O, setImmediate actually executes before setTimeout despite being registered after.",
-      "ru": "process.nextTick имеет наивысший приоритет и выполняется первым, за ним следуют microtasks Promise. setImmediate выполняется на фазе check (перед timers в следующей итерации), а setTimeout выполняется на фазе timers. На фазе poll без ожидающих операций I/O setImmediate выполняется раньше setTimeout, несмотря на позднюю регистрацию."
+      "en": "Inside an I/O callback the order is fully determined: nextTick, Promise, setImmediate, setTimeout.\n\n`process.nextTick` runs first — its queue is drained before anything else. Then promise microtasks. Both happen before the event loop moves on at all.\n\n`setImmediate` runs in the **check** phase, which comes right after the poll phase the I/O callback belongs to, so it fires later in the same loop iteration. `setTimeout(..., 0)` waits for the **timers** phase, which is only reached on the next iteration.\n\nThis guarantee holds only because the code sits inside an I/O callback. At the top level of a module, `setTimeout(..., 0)` and `setImmediate` fire in an order that depends on how long the process took to start, and Node does not promise either one.",
+      "ru": "Внутри I/O-колбэка порядок полностью определён: nextTick, Promise, setImmediate, setTimeout.\n\n`process.nextTick` выполняется первым — его очередь опустошается раньше всего остального. Затем микрозадачи промисов. И то, и другое происходит до того, как цикл событий вообще двинется дальше.\n\n`setImmediate` выполняется в фазе **check**, которая идёт сразу за фазой poll, где и находится I/O-колбэк, — то есть в той же итерации цикла. А `setTimeout(..., 0)` ждёт фазу **timers**, до которой дело дойдёт только на следующей итерации.\n\nЭта гарантия работает именно потому, что код находится внутри I/O-колбэка. На верхнем уровне модуля порядок `setTimeout(..., 0)` и `setImmediate` зависит от того, сколько времени запускался процесс, и Node не обещает ни один из вариантов."
     }
   },
   {
@@ -308,19 +308,19 @@
         "1",
         "6",
         "100",
-        "The program will hang indefinitely"
+        "Nothing is logged — the 'end' event never fires"
       ],
       "ru": [
         "1",
         "6",
         "100",
-        "Программа будет зависать бесконечно"
+        "Ничего не выводится — событие 'end' не наступает"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "When readable.pause() is called in the 'data' event handler, the stream pauses and no more 'data' events are emitted. Since the stream is never resumed via readable.resume(), only the first chunk (16 bytes due to highWaterMark) triggers the 'data' event once, and the 'end' event never fires. The program hangs. However, if 'end' were to be logged, chunks would be 1.",
-      "ru": "Когда readable.pause() вызывается в обработчике события 'data', поток приостанавливается и больше никакие события 'data' не излучаются. Поскольку поток никогда не возобновляется через readable.resume(), только первый блок (16 байт из-за highWaterMark) вызывает событие 'data' один раз, и событие 'end' никогда не срабатывает. Программа зависает, однако chunks будет равно 1."
+      "en": "Nothing is logged, because the `'end'` event never fires.\n\nThe first `'data'` event delivers one chunk and immediately calls `readable.pause()`. A paused stream stops emitting `'data'`, and since nothing ever calls `readable.resume()`, the remaining bytes are never read. `'end'` is emitted only after the stream has been read to completion, so the `console.log(chunks)` line never runs.\n\n`1` is what `chunks` holds in memory, but it is never printed. `6` assumes the whole 100-byte file was read in 16-byte chunks — that would be 7 chunks, and it did not happen anyway. The process does not hang either: with no pending read, the event loop simply runs out of work and Node exits silently, which is exactly what makes this class of bug hard to spot.",
+      "ru": "Ничего не выводится, потому что событие `'end'` не наступает.\n\nПервое событие `'data'` отдаёт один чанк и сразу вызывает `readable.pause()`. Приостановленный поток перестаёт эмитить `'data'`, а `readable.resume()` никто не вызывает — значит, остальные байты так и не будут прочитаны. Событие `'end'` наступает только после того, как поток дочитан до конца, поэтому строка `console.log(chunks)` не выполняется никогда.\n\n`1` — это значение, которое лежит в `chunks`, но его не печатают. `6` предполагает, что все 100 байт прочитаны по 16 — это дало бы 7 чанков, и всё равно этого не произошло. Программа при этом и не зависает: незавершённых чтений нет, работа у цикла событий кончается, и Node молча завершается. Именно поэтому такой класс ошибок трудно заметить."
     }
   },
   {
@@ -440,22 +440,22 @@
     },
     "options": {
       "en": [
-        "sync → nextTick → setTimeout → setImmediate",
-        "sync → setTimeout → nextTick → setImmediate",
+        "sync → nextTick → then setTimeout and setImmediate, in an order that is not guaranteed",
+        "sync → then nextTick, setTimeout and setImmediate, all three in an order that is not guaranteed",
         "sync → nextTick → setImmediate → setTimeout",
         "setTimeout → setImmediate → nextTick → sync"
       ],
       "ru": [
-        "sync → nextTick → setTimeout → setImmediate",
-        "sync → setTimeout → nextTick → setImmediate",
+        "sync → nextTick → затем setTimeout и setImmediate в порядке, который не гарантирован",
+        "sync → затем nextTick, setTimeout и setImmediate — все три в негарантированном порядке",
         "sync → nextTick → setImmediate → setTimeout",
         "setTimeout → setImmediate → nextTick → sync"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code executes first (sync). process.nextTick callbacks execute before any I/O or timers phase (nextTick). setTimeout with 0ms delay enters the timers phase but executes after nextTick. setImmediate executes in the check phase after the poll phase, making it last. The microtask queue (nextTick) always has priority over macrotask phases.",
-      "ru": "Синхронный код выполняется первым (sync). Обратные вызовы process.nextTick выполняются до любой фазы I/O или timers (nextTick). setTimeout с задержкой 0мс входит в фазу timers, но выполняется после nextTick. setImmediate выполняется на фазе check после фазы poll, делая его последним. Очередь микротасков (nextTick) всегда имеет приоритет над фазами макротасков."
+      "en": "`sync` prints first, then `nextTick` — and after that the order is genuinely not guaranteed.\n\nSynchronous code finishes before the event loop starts. `process.nextTick` callbacks are drained next, always before any loop phase, so those two positions are fixed.\n\nThe last two are not. `setTimeout(..., 0)` is clamped to 1 ms, so whether its timer has already expired when the loop first reaches the timers phase depends on how long the process took to start. If it has, `setTimeout` wins; if not, the loop moves on and `setImmediate` runs in the check phase first. The Node documentation states this order is non-deterministic.\n\nMove the same four calls inside an I/O callback and the order becomes fixed: `setImmediate` then runs in the check phase of the current iteration, always before the next timers phase.",
+      "ru": "Сначала печатается `sync`, затем `nextTick` — а дальше порядок действительно не гарантирован.\n\nСинхронный код успевает завершиться до старта цикла событий. Следом опустошается очередь `process.nextTick`, всегда раньше любой фазы цикла, поэтому эти две позиции зафиксированы.\n\nПоследние две — нет. `setTimeout(..., 0)` подтягивается до 1 мс, и успел ли таймер истечь к моменту, когда цикл впервые дойдёт до фазы timers, зависит от того, сколько времени запускался процесс. Если успел — первым выполнится `setTimeout`; если нет — цикл идёт дальше и раньше срабатывает `setImmediate` в фазе check. Документация Node прямо называет этот порядок недетерминированным.\n\nПеренесите те же четыре вызова внутрь I/O-колбэка — и порядок станет определённым: `setImmediate` выполнится в фазе check текущей итерации, всегда раньше следующей фазы timers."
     }
   },
   {

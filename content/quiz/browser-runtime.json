@@ -253,20 +253,20 @@
       "en": [
         "localStorage, because it persists across sessions and can be manually cleared by JavaScript when the user logs out",
         "sessionStorage, because it automatically clears when the browser tab is closed",
-        "Cookies with HttpOnly flag, because they are automatically sent with requests and secure from XSS attacks",
+        "Cookies with the HttpOnly, Secure and SameSite flags, because JavaScript cannot read them, so an XSS bug cannot steal the token",
         "IndexedDB, because it provides the largest storage capacity and best performance for all data types"
       ],
       "ru": [
         "localStorage, потому что он сохраняется между сеансами и может быть вручную очищен JavaScript при выходе пользователя",
         "sessionStorage, потому что он автоматически очищается при закрытии вкладки браузера",
-        "Cookies с флагом HttpOnly, потому что они автоматически отправляются с запросами и защищены от XSS-атак",
+        "Cookie с флагами HttpOnly, Secure и SameSite, потому что JavaScript не может их прочитать — и XSS-уязвимость не украдёт токен",
         "IndexedDB, потому что обеспечивает наибольший объем хранилища и лучшую производительность для всех типов данных"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "localStorage persists across browser sessions until explicitly cleared, making it ideal for tokens that should remain available across multiple visits. The developer can clear it on logout via removeItem(). sessionStorage clears on tab close, making it unsuitable for persistent storage. HttpOnly cookies are secure but less flexible for logout scenarios. IndexedDB is overkill for token storage. localStorage provides the best balance of persistence, accessibility, and manual control.",
-      "ru": "localStorage сохраняется между сеансами браузера до явного удаления, что делает его идеальным для токенов, которые должны оставаться доступными при нескольких посещениях. Разработчик может очистить его при выходе через removeItem(). sessionStorage очищается при закрытии вкладки, что делает его непригодным для постоянного хранилища. HttpOnly cookies безопасны, но менее гибки для сценариев выхода. IndexedDB — это избыточно для хранения токенов. localStorage обеспечивает лучший баланс между постоянством, доступностью и ручным управлением."
+      "en": "HttpOnly cookies are the right choice, because JavaScript cannot read them.\n\nAny XSS bug on the page can read everything in `localStorage`, so a token kept there can be stolen and replayed from somewhere else. HttpOnly closes that path; `Secure` keeps the cookie off plain HTTP and `SameSite` limits when the browser sends it to other sites.\n\nLogout still works: the server answers with a `Set-Cookie` that expires the cookie. That is more reliable than clearing storage in the browser, which never runs if the tab was closed.\n\n`localStorage` does persist across sessions and is easy to clear from JavaScript — but that convenience is exactly what an attacker inherits. `sessionStorage` disappears when the tab closes, so it fails the requirement. IndexedDB is just as exposed to XSS as localStorage, with far more complexity.",
+      "ru": "Правильный выбор — cookie с флагом HttpOnly, потому что JavaScript не может их прочитать.\n\nЛюбая XSS-уязвимость на странице читает всё содержимое `localStorage`, поэтому лежащий там токен можно украсть и использовать откуда угодно. HttpOnly закрывает этот путь; `Secure` не даёт отправить cookie по обычному HTTP, а `SameSite` ограничивает отправку на другие сайты.\n\nВыход из аккаунта при этом работает: сервер отвечает `Set-Cookie` с истёкшим сроком. Это надёжнее очистки хранилища в браузере, которая просто не выполнится, если вкладку закрыли.\n\n`localStorage` действительно живёт между сеансами и легко чистится из JavaScript — но именно это удобство достаётся и атакующему. `sessionStorage` исчезает при закрытии вкладки, то есть не выполняет условие задачи. IndexedDB открыт для XSS так же, как localStorage, только устроен куда сложнее."
     }
   },
   {

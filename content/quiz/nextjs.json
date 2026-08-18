@@ -16,7 +16,7 @@
       "ru": [
         "Server Components могут напрямую запрашивать базы данных и получать доступ к секретам, в то время как Client Components должны использовать API маршруты",
         "Client Components быстрее, потому что они получают данные в браузере с помощью JavaScript",
-        "Server Components требуют ручного аннулирования кэша, в то время как Client Components используют автоматическую переvalidation",
+        "Server Components требуют ручного аннулирования кэша, в то время как Client Components используют автоматическую ревалидацию",
         "Оба могут получать данные одинаково, но Server Components отображаются на сервере, а Client Components отображаются в браузере"
       ]
     },
@@ -41,7 +41,7 @@
         "The entire page is cached in the browser for 3600 seconds without any server-side generation"
       ],
       "ru": [
-        "Страница статически генерируется во время сборки и переvalidates каждые 3600 секунд (Incremental Static Regeneration)",
+        "Страница статически генерируется во время сборки и проходит ревалидацию каждые 3600 секунд (Incremental Static Regeneration)",
         "Страница динамически отображается при каждом запросе с заголовком кэша браузера на 3600 секунд",
         "Запрос fetch кэшируется в течение 3600 секунд, но сама страница всегда отображается динамически",
         "Вся страница кэшируется в браузере на 3600 секунд без какой-либо генерации на сервере"
@@ -50,7 +50,7 @@
     "correctIndex": 0,
     "explanation": {
       "en": "The revalidate export implements Incremental Static Regeneration (ISR), causing the page to be pre-rendered at build time and then revalidated in the background every 3600 seconds. This combines the benefits of static generation with fresh data updates, making it ideal for content that changes infrequently.",
-      "ru": "Экспорт revalidate реализует Incremental Static Regeneration (ISR), что заставляет страницу быть предварительно отрендерированной во время сборки, а затем переvalidates в фоне каждые 3600 секунд. Это объединяет преимущества статической генерации со свежими обновлениями данных, что идеально подходит для контента, который меняется редко."
+      "ru": "Экспорт revalidate реализует Incremental Static Regeneration (ISR), что заставляет страницу быть предварительно отрендерированной во время сборки, а затем проходит ревалидацию в фоне каждые 3600 секунд. Это объединяет преимущества статической генерации со свежими обновлениями данных, что идеально подходит для контента, который меняется редко."
     }
   },
   {
@@ -192,8 +192,8 @@
     "id": "nextjs-quiz-8",
     "topicId": "nextjs",
     "question": {
-      "en": "Analyze this App Router code snippet. What caching strategy is applied?\ntsx\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/data');\n  return <div>{data}</div>;\n}\n",
-      "ru": "Проанализируйте этот фрагмент кода App Router. Какая стратегия кеширования применяется?\ntsx\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/data');\n  return <div>{data}</div>;\n}\n"
+      "en": "Analyze this App Router code snippet. What caching strategy is applied?\n\n```tsx\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/data');\n  return <div>{data}</div>;\n}\n```",
+      "ru": "Проанализируйте этот фрагмент кода App Router. Какая стратегия кеширования применяется?\n\n```tsx\nexport default async function Page() {\n  const data = await fetch('https://api.example.com/data');\n  return <div>{data}</div>;\n}\n```"
     },
     "options": {
       "en": [
@@ -203,9 +203,9 @@
         "Cache only on client-side, not server-side"
       ],
       "ru": [
-        "Полное кеширование без переvalidation (поведение fetch по умолчанию)",
+        "Полное кеширование без ревалидации (поведение fetch по умолчанию)",
         "Без кеширования; fetch запрос выполняется при каждом запросе страницы",
-        "Кеш с интервалом переvalidation 60 секунд",
+        "Кеш с интервалом ревалидации 60 секунд",
         "Кеширование только на клиенте, не на сервере"
       ]
     },
@@ -347,7 +347,7 @@
     "correctIndex": 0,
     "explanation": {
       "en": "The `cache()` function deduplicates identical requests during a single render pass, while the route segment config `revalidate: 600` sets ISR to revalidate cached data every 10 minutes (600 seconds). This is the recommended Next.js approach for server-side caching. External Redis or client-side SWR are overkill for this use case and bypass Next.js's built-in caching mechanism.",
-      "ru": "Функция `cache()` дедублирует идентичные запросы во время одного прохода рендера, а конфигурация сегмента маршрута `revalidate: 600` устанавливает ISR для переvalidation кешированных данных каждые 10 минут (600 секунд). Это рекомендуемый подход Next.js для кеширования на стороне сервера. Внешний Redis или клиентский SWR чрезмерны для этого случая и обходят встроенный механизм кеширования Next.js."
+      "ru": "Функция `cache()` дедублирует идентичные запросы во время одного прохода рендера, а конфигурация сегмента маршрута `revalidate: 600` устанавливает ISR для ревалидации кешированных данных каждые 10 минут (600 секунд). Это рекомендуемый подход Next.js для кеширования на стороне сервера. Внешний Redis или клиентский SWR чрезмерны для этого случая и обходят встроенный механизм кеширования Next.js."
     }
   },
   {
@@ -543,8 +543,8 @@
     "id": "nextjs-quiz-21",
     "topicId": "nextjs",
     "question": {
-      "en": "When migrating from Pages Router to App Router, which statement about Server Components is most accurate?\njsx\n// app/page.js\nexport default function Page() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}\n\nWhat will happen when you try to run this code?",
-      "ru": "При миграции с Pages Router на App Router, какое утверждение о Server Components наиболее точно?\njsx\n// app/page.js\nexport default function Page() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}\n\nЧто произойдет при попытке запустить этот код?"
+      "en": "When migrating from Pages Router to App Router, which statement about Server Components is most accurate?\n\n```jsx\n// app/page.js\nexport default function Page() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}\n```\n\nWhat will happen when you try to run this code?",
+      "ru": "При миграции с Pages Router на App Router, какое утверждение о Server Components наиболее точно?\n\n```jsx\n// app/page.js\nexport default function Page() {\n  const [count, setCount] = useState(0);\n  return <div>{count}</div>;\n}\n```\n\nЧто произойдет при попытке запустить этот код?"
     },
     "options": {
       "en": [
@@ -678,8 +678,8 @@
     "id": "nextjs-quiz-26",
     "topicId": "nextjs",
     "question": {
-      "en": "In Next.js 13+ App Router, when you create a component file with 'use client' directive, what happens to data fetching within that component?\njsx\n'use client';\n\nexport default function UserProfile() {\n  const data = await fetch('/api/user');\n  return <div>{data.name}</div>;\n}\n",
-      "ru": "В Next.js 13+ App Router, когда вы создаёте файл компонента с директивой 'use client', что происходит с получением данных внутри этого компонента?\njsx\n'use client';\n\nexport default function UserProfile() {\n  const data = await fetch('/api/user');\n  return <div>{data.name}</div>;\n}\n"
+      "en": "In Next.js 13+ App Router, when you create a component file with 'use client' directive, what happens to data fetching within that component?\n\n```jsx\n'use client';\n\nexport default function UserProfile() {\n  const data = await fetch('/api/user');\n  return <div>{data.name}</div>;\n}\n```",
+      "ru": "В Next.js 13+ App Router, когда вы создаёте файл компонента с директивой 'use client', что происходит с получением данных внутри этого компонента?\n\n```jsx\n'use client';\n\nexport default function UserProfile() {\n  const data = await fetch('/api/user');\n  return <div>{data.name}</div>;\n}\n```"
     },
     "options": {
       "en": [
@@ -706,7 +706,7 @@
     "topicId": "nextjs",
     "question": {
       "en": "Which caching strategy in Next.js allows revalidation of static content at request time without rebuilding the entire site?",
-      "ru": "Какая стратегия кеширования в Next.js позволяет переvalidate статического контента во время запроса без перестройки всего сайта?"
+      "ru": "Какая стратегия кеширования в Next.js позволяет ревалидировать статический контент во время запроса без перестройки всего сайта?"
     },
     "options": {
       "en": [

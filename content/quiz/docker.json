@@ -30,27 +30,27 @@
     "id": "docker-quiz-2",
     "topicId": "docker",
     "question": {
-      "en": "Consider the following Dockerfile:\ndockerfile\nFROM python:3.9\nRUN pip install flask\nCOPY app.py /app.py\nCMD [\"python\", \"app.py\"]\nENTRYPOINT [\"sh\", \"-c\"]\n\n\nWhat will happen when you run `docker run myimage arg1 arg2`?",
-      "ru": "Рассмотрите следующий Dockerfile:\ndockerfile\nFROM python:3.9\nRUN pip install flask\nCOPY app.py /app.py\nCMD [\"python\", \"app.py\"]\nENTRYPOINT [\"sh\", \"-c\"]\n\n\nЧто произойдет при запуске `docker run myimage arg1 arg2`?"
+      "en": "Consider the following Dockerfile:\n\n```dockerfile\nFROM python:3.9\nRUN pip install flask\nCOPY app.py /app.py\nCMD [\"python\", \"app.py\"]\nENTRYPOINT [\"sh\", \"-c\"]\n```\n\nWhat will happen when you run `docker run myimage arg1 arg2`?",
+      "ru": "Рассмотрите следующий Dockerfile:\n\n```dockerfile\nFROM python:3.9\nRUN pip install flask\nCOPY app.py /app.py\nCMD [\"python\", \"app.py\"]\nENTRYPOINT [\"sh\", \"-c\"]\n```\n\nЧто произойдёт при запуске `docker run myimage arg1 arg2`?"
     },
     "options": {
       "en": [
-        "The ENTRYPOINT will execute sh -c, and CMD will be ignored because ENTRYPOINT is defined",
+        "CMD is ignored because ENTRYPOINT is defined, so the container runs `sh -c` with no command at all",
         "The CMD will execute and the arguments arg1 arg2 will be passed to python app.py",
-        "The ENTRYPOINT will execute sh -c python app.py arg1 arg2 as a shell command",
+        "The arguments replace CMD entirely, so the container runs `sh -c arg1 arg2` and `python app.py` never executes",
         "An error will occur because both CMD and ENTRYPOINT cannot be defined together"
       ],
       "ru": [
-        "ENTRYPOINT выполнит sh -c, а CMD будет игнорирован, так как ENTRYPOINT определен",
+        "CMD игнорируется, потому что определён ENTRYPOINT, и контейнер запускает `sh -c` вообще без команды",
         "CMD выполнится и аргументы arg1 arg2 будут переданы в python app.py",
-        "ENTRYPOINT выполнит sh -c python app.py arg1 arg2 как команду оболочки",
+        "Аргументы полностью заменяют CMD, поэтому контейнер выполнит `sh -c arg1 arg2`, а `python app.py` не запустится вовсе",
         "Произойдет ошибка, так как CMD и ENTRYPOINT не могут быть определены вместе"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "When both ENTRYPOINT and CMD are defined in exec form, CMD becomes the default arguments to ENTRYPOINT. The container will execute: sh -c python app.py arg1 arg2. The ENTRYPOINT defines the main executable, and CMD provides default arguments that can be overridden by command-line arguments passed to docker run.",
-      "ru": "Когда определены оба ENTRYPOINT и CMD в исполняемой форме, CMD становится аргументами по умолчанию для ENTRYPOINT. Контейнер выполнит: sh -c python app.py arg1 arg2. ENTRYPOINT определяет основной исполняемый файл, а CMD предоставляет аргументы по умолчанию, которые могут быть переопределены аргументами командной строки, переданными в docker run."
+      "en": "Arguments passed to `docker run` **replace** CMD, they are not appended to it. So `CMD [\"python\", \"app.py\"]` is discarded and the final command is ENTRYPOINT plus the new arguments: `sh -c arg1 arg2`.\n\nWith `sh -c`, the first argument is the command string and the second becomes `$0`, so `arg1` runs as a shell command and `arg2` is its argument-zero. `python app.py` never executes.\n\nCMD is only used as default arguments to ENTRYPOINT when `docker run` is given **no** command. Run the image with no arguments and you do get `sh -c python app.py`.",
+      "ru": "Аргументы, переданные в `docker run`, **заменяют** CMD, а не добавляются к нему. Поэтому `CMD [\"python\", \"app.py\"]` отбрасывается, и итоговая команда — это ENTRYPOINT плюс новые аргументы: `sh -c arg1 arg2`.\n\nВ `sh -c` первый аргумент — это строка команды, а второй становится `$0`. Значит, `arg1` выполнится как команда оболочки, а `arg2` окажется её нулевым аргументом. `python app.py` не запустится вообще.\n\nCMD работает как аргументы по умолчанию для ENTRYPOINT только тогда, когда команда в `docker run` **не указана**. Запустите образ без аргументов — и получите `sh -c python app.py`."
     }
   },
   {
@@ -138,8 +138,8 @@
     "id": "docker-quiz-7",
     "topicId": "docker",
     "question": {
-      "en": "Consider this Dockerfile snippet:\ndockerfile\nFROM python:3.9\nRUN pip install requests\nRUN pip install flask\nCOPY app.py /app/\n\nHow many layers will this image have (excluding the base image)?",
-      "ru": "Рассмотрите этот фрагмент Dockerfile:\ndockerfile\nFROM python:3.9\nRUN pip install requests\nRUN pip install flask\nCOPY app.py /app/\n\nСколько слоёв будет у этого образа (не считая базового образа)?"
+      "en": "Consider this Dockerfile snippet:\n\n```dockerfile\nFROM python:3.9\nRUN pip install requests\nRUN pip install flask\nCOPY app.py /app/\n```\n\nHow many layers will this image have (excluding the base image)?",
+      "ru": "Рассмотрите этот фрагмент Dockerfile:\n\n```dockerfile\nFROM python:3.9\nRUN pip install requests\nRUN pip install flask\nCOPY app.py /app/\n```\n\nСколько слоёв будет у этого образа (не считая базового образа)?"
     },
     "options": {
       "en": [
@@ -219,8 +219,8 @@
     "id": "docker-quiz-12",
     "topicId": "docker",
     "question": {
-      "en": "Consider a Dockerfile with multiple RUN, COPY, and FROM commands. How are layers created and what is their purpose in multi-stage builds?\ndockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n\nWhy would a developer use this pattern?",
-      "ru": "Рассмотрим Dockerfile с несколькими командами RUN, COPY и FROM. Как создаются слои и какова их цель в многоступенчатых сборках?\ndockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n\nПочему разработчик использует этот паттерн?"
+      "en": "Consider a Dockerfile with multiple RUN, COPY, and FROM commands. How are layers created and what is their purpose in multi-stage builds?\n\n```dockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n```\n\nWhy would a developer use this pattern?",
+      "ru": "Рассмотрим Dockerfile с несколькими командами RUN, COPY и FROM. Как создаются слои и какова их цель в многоступенчатых сборках?\n\n```dockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n```\n\nПочему разработчик использует этот паттерн?"
     },
     "options": {
       "en": [
@@ -273,8 +273,8 @@
     "id": "docker-quiz-14",
     "topicId": "docker",
     "question": {
-      "en": "What are the three main volume types in Docker and which one should you use for persistent database data?\ndockerfile\nFROM postgres:15\nVOLUME /var/lib/postgresql/data\n",
-      "ru": "Какие три основных типа томов в Docker и какой использовать для постоянного хранения данных базы данных?\ndockerfile\nFROM postgres:15\nVOLUME /var/lib/postgresql/data\n"
+      "en": "What are the three main volume types in Docker and which one should you use for persistent database data?\n\n```dockerfile\nFROM postgres:15\nVOLUME /var/lib/postgresql/data\n```",
+      "ru": "Какие три основных типа томов в Docker и какой использовать для постоянного хранения данных базы данных?\n\n```dockerfile\nFROM postgres:15\nVOLUME /var/lib/postgresql/data\n```"
     },
     "options": {
       "en": [
@@ -300,8 +300,8 @@
     "id": "docker-quiz-15",
     "topicId": "docker",
     "question": {
-      "en": "In a docker-compose.yml file, you define multiple services with different network requirements. What does specifying networks in docker-compose achieve, and which network mode is used by default?\nyaml\nservices:\n  app:\n    image: myapp:latest\n    networks:\n      - backend\n  db:\n    image: postgres:15\n    networks:\n      - backend\nnetworks:\n  backend:\n    driver: bridge\n",
-      "ru": "В файле docker-compose.yml вы определяете несколько сервисов с разными требованиями к сетям. Что достигается при указании networks в docker-compose и какой режим сети используется по умолчанию?\nyaml\nservices:\n  app:\n    image: myapp:latest\n    networks:\n      - backend\n  db:\n    image: postgres:15\n    networks:\n      - backend\nnetworks:\n  backend:\n    driver: bridge\n"
+      "en": "In a docker-compose.yml file, you define multiple services with different network requirements. What does specifying networks in docker-compose achieve, and which network mode is used by default?\n\n```yaml\nservices:\n  app:\n    image: myapp:latest\n    networks:\n      - backend\n  db:\n    image: postgres:15\n    networks:\n      - backend\nnetworks:\n  backend:\n    driver: bridge\n```",
+      "ru": "В файле docker-compose.yml вы определяете несколько сервисов с разными требованиями к сетям. Что достигается при указании networks в docker-compose и какой режим сети используется по умолчанию?\n\n```yaml\nservices:\n  app:\n    image: myapp:latest\n    networks:\n      - backend\n  db:\n    image: postgres:15\n    networks:\n      - backend\nnetworks:\n  backend:\n    driver: bridge\n```"
     },
     "options": {
       "en": [
