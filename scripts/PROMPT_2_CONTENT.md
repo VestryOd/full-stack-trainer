@@ -22,6 +22,7 @@ Generate content that is accurate, technically precise, and genuinely useful for
 4. **Answers must be complete** — a question without a thorough answer is useless. Every answer: concept explanation + why it matters + code example where applicable + common interview follow-up trap.
 5. **Bilingual** — every `question`, `answer`, `title`, `description`, `explanation` field has both `en` and `ru` keys.
 6. **IDs** — format: `{topicId}-q-{number}` for questions, `{topicId}-t-{number}` for tasks, `{topicId}-quiz-{number}` for quiz.
+7. **Readability** — read `content/STYLE.md` and follow it. It is the readability contract for this project, derived from an audit of all existing content, and section 13 is a ready-to-paste block of its most-violated rules. The short version: the reader is a strong junior / middle developer with B1-B2 English reading on a phone, so simplify the LANGUAGE while keeping senior depth. Expand every abbreviation at its first use **in each file or answer**; keep sentences under 28 words in Russian and 25 in English; render enumerations as bullet lists rather than semicolon chains; make the first sentence of every answer the direct answer; keep the closing "Common pitfall" the shortest prose in the answer, not the longest; tag each code fence with the language it actually contains.
 
 ---
 
@@ -52,6 +53,20 @@ For every `.md` file in `content/topics/*/ru/`:
 - Code blocks stay as-is (language-agnostic)
 - Technical terms stay in English (they already are)
 - Translation tone: professional, precise, no fluff
+- **Target level is B1-B2, not B2-C1.** An audit found the English version harder to read than the
+  Russian one in 52 of 62 content zones, for two reasons that both belong to this task:
+  - **Re-break the sentences.** English needs roughly 19% more words for the same content, so a
+    comfortable 28-word Russian sentence lands as a 42-word English one. Do not preserve the
+    Russian punctuation architecture (colon plus em-dash plus parenthetical). Split it, and count
+    words against the 25-word English limit rather than against the Russian original.
+  - **Do not reach for idiom.** Where the Russian is neutral, keep the English neutral. Words the
+    audit found and that must not appear: `bespoke`, `hand-rolled`, `culprits`, `palliative`,
+    `blast radius`, `the nuclear option`, `grinds to a halt`, `at face value`, `the tell`.
+- Nothing may be dropped in either direction. The audit found the Russian pass silently deleting
+  glosses (`TTI`, `CLS`, "assistive technologies") and, in one case, an entire section of the only
+  accessibility article on the site.
+- No traces of your own working process in the output: no "wait, actually", no "let me
+  recalculate", no self-correcting or self-retracting blocks. Several reached production.
 
 ---
 
