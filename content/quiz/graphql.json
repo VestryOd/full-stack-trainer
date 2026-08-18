@@ -273,27 +273,27 @@
     "id": "graphql-quiz-11",
     "topicId": "graphql",
     "question": {
-      "en": "In GraphQL, what is the primary difference between a Query and a Mutation?\n\n```graphql\nquery GetUser {\n  user(id: 1) {\n    name\n  }\n}\n\nmutation CreateUser {\n  createUser(name: \"John\") {\n    id\n    name\n  }\n}\n```\n\nWhich statement best describes the distinction?",
-      "ru": "В GraphQL, в чем основное различие между Query и Mutation?\n\n```graphql\nquery GetUser {\n  user(id: 1) {\n    name\n  }\n}\n\nmutation CreateUser {\n  createUser(name: \"John\") {\n    id\n    name\n  }\n}\n```\n\nКакое утверждение лучше всего описывает различие?"
+      "en": "The resolver for `User.email` throws; every other resolver succeeds. What does the server send back?\n```graphql\ntype Query {\n  user(id: ID!): User\n}\n\ntype User {\n  id: ID!\n  email: String!\n}\n```\n```graphql\nquery {\n  user(id: \"1\") { id email }\n}\n```",
+      "ru": "Резолвер поля `User.email` выбрасывает ошибку, остальные резолверы отрабатывают нормально. Что вернёт сервер?\n```graphql\ntype Query {\n  user(id: ID!): User\n}\n\ntype User {\n  id: ID!\n  email: String!\n}\n```\n```graphql\nquery {\n  user(id: \"1\") { id email }\n}\n```"
     },
     "options": {
       "en": [
-        "Queries can modify data while Mutations can only read data from the server",
-        "Queries and Mutations are functionally identical; the distinction is only for documentation purposes",
-        "Queries fetch data without changing it, while Mutations modify server state",
-        "Mutations are deprecated in favor of using Queries with variables for all operations"
+        "`data` itself is `null`, because one failed field invalidates the whole response",
+        "`data.user.email` is `null` and the rest of the user object comes back as usual",
+        "`data.user` becomes `null`, and the error is listed in the `errors` array",
+        "The request fails with status 500 and the response carries no `data` key"
       ],
       "ru": [
-        "Запросы могут изменять данные, а Mutations могут только читать данные с сервера",
-        "Запросы и Mutations функционально идентичны; различие только в целях документации",
-        "Запросы получают данные, не изменяя их, а Mutations изменяют состояние сервера",
-        "Mutations устарели в пользу использования Queries с переменными для всех операций"
+        "Само поле `data` станет `null`: одно упавшее поле обнуляет весь ответ",
+        "`data.user.email` станет `null`, а остальные поля пользователя вернутся как обычно",
+        "Поле `data.user` станет `null`, а сведения об ошибке попадут в массив `errors`",
+        "Запрос упадёт со статусом 500, и в ответе вообще не будет ключа `data`"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Queries fetch data without side effects, while Mutations are designed for operations that modify data and are guaranteed to execute serially, preventing race conditions. The semantic distinction helps developers understand intent and allows GraphQL servers to optimize execution. The three remaining options represent common misconceptions about the relationship between these operation types.",
-      "ru": "Запросы получают данные без побочных эффектов, а Mutations предназначены для операций, которые изменяют данные и гарантированно выполняются последовательно, предотвращая условия гонки. Семантическое различие помогает разработчикам понять намерение и позволяет серверам GraphQL оптимизировать выполнение. Три остальных варианта представляют распространенные неправильные представления о взаимосвязи между этими типами операций."
+      "en": "`email` is declared `String!`, so null is not allowed there. When its resolver throws, the executor cannot leave a null in place, so it nulls the closest parent field that may be null. `user` returns `User`, not `User!`, so `data.user` becomes `null` and the error is added to `errors`. This walk upwards is called null bubbling.\n\nLeaving `email: null` inside the user object would break the schema's own promise. `data` turns into `null` only when the bubbling reaches the root, which would happen if the field were declared `user: User!`. And the status code stays 200: a field error travels in `errors`, not in the HTTP status.",
+      "ru": "Поле `email` объявлено как `String!`, то есть null там запрещён. Когда его резолвер падает, оставить null на месте нельзя, поэтому исполнитель обнуляет ближайшее родительское поле, которому null разрешён. Поле `user` возвращает `User`, а не `User!`, поэтому `data.user` станет `null`, а ошибка уедет в `errors`. Этот подъём вверх называют всплытием null.\n\nОставить `email: null` внутри объекта нельзя: это нарушило бы обещание самой схемы. Всё поле `data` станет `null` только если всплытие дойдёт до корня — так было бы при объявлении `user: User!`. Статус ответа при этом остаётся 200: ошибка поля живёт в `errors`, а не в статусе HTTP."
     }
   },
   {
@@ -408,27 +408,27 @@
     "id": "graphql-quiz-16",
     "topicId": "graphql",
     "question": {
-      "en": "What is the primary difference between a GraphQL Query and a Mutation in terms of side effects?\n\n```graphql\nquery GetUser {\n  user(id: 1) { name email }\n}\n\nmutation UpdateUser {\n  updateUser(id: 1, name: \"John\") { name email }\n}\n```",
-      "ru": "В чем основное различие между GraphQL Query и Mutation в отношении побочных эффектов?\n\n```graphql\nquery GetUser {\n  user(id: 1) { name email }\n}\n\nmutation UpdateUser {\n  updateUser(id: 1, name: \"John\") { name email }\n}\n```"
+      "en": "What is `__resolveType` for, and what happens if you delete it?\n```graphql\nunion SearchResult = Book | Author\n\ntype Query {\n  search(term: String!): [SearchResult!]!\n}\n```\n```js\nconst resolvers = {\n  SearchResult: {\n    __resolveType: (value) => (value.isbn ? 'Book' : 'Author'),\n  },\n};\n```",
+      "ru": "Зачем нужен `__resolveType` и что будет, если его убрать?\n```graphql\nunion SearchResult = Book | Author\n\ntype Query {\n  search(term: String!): [SearchResult!]!\n}\n```\n```js\nconst resolvers = {\n  SearchResult: {\n    __resolveType: (value) => (value.isbn ? 'Book' : 'Author'),\n  },\n};\n```"
     },
     "options": {
       "en": [
-        "Queries execute in parallel, while Mutations always execute sequentially",
-        "Queries cannot return nested data, while Mutations can return complex objects",
-        "Queries require authentication, while Mutations are always public",
-        "Queries are read-only, while Mutations show intent to modify server state"
+        "It filters the list so that only books reach the client and authors are dropped",
+        "It is a hint for the client cache only, and the server never calls it at all",
+        "It adds `__typename` to every object, and nothing breaks without it",
+        "It names the concrete type of each value, so the right inline fragment runs"
       ],
       "ru": [
-        "Queries выполняются параллельно, а Mutations всегда выполняются последовательно",
-        "Queries не могут возвращать вложенные данные, а Mutations могут возвращать сложные объекты",
-        "Queries требуют аутентификацию, а Mutations всегда открыты",
-        "Queries доступны только для чтения, а Mutations указывают намерение изменить состояние сервера"
+        "Он фильтрует список: до клиента доходят только книги, а все авторы отбрасываются",
+        "Это подсказка только для клиентского кэша, сам сервер её никогда не вызывает",
+        "Он добавляет `__typename` каждому объекту, и без него ничего не сломается",
+        "Он называет конкретный тип каждого значения, и тогда сработает нужный фрагмент"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Queries are designed for read-only operations with no side effects, while Mutations are the mechanism for operations that modify data. This distinction helps clients understand intent and allows servers to optimize caching and execution strategies. Sequential execution of Mutations is common but not required, and both can return complex nested data.",
-      "ru": "Queries предназначены для операций только чтения без побочных эффектов, а Mutations — это механизм для операций, которые изменяют данные. Это различие помогает клиентам понять намерение и позволяет серверам оптимизировать кэширование и стратегии выполнения. Последовательное выполнение Mutations обычно, но не требуется, и оба могут возвращать сложные вложенные данные."
+      "en": "A union has no fields of its own, so at run time the executor must learn which member type each value is. `__resolveType` answers that by returning a type name as a string, here `Book` or `Author`. Only then can the executor apply the matching inline fragment such as `... on Book { title }`.\n\nDelete it and the graphql-js default takes over: it reads `__typename` off the value, otherwise tries `isTypeOf` on each member type. If neither answers, execution fails with an error saying the abstract type could not be resolved at run time.\n\nIt does not filter anything, and it runs on the server, so no client cache is involved. `__typename` is filled in by the executor once the type is known, so asking for that field in the query does not replace `__resolveType`.",
+      "ru": "У объединения нет собственных полей, поэтому во время выполнения исполнителю надо узнать, какой из типов-участников пришёл. Это и говорит `__resolveType`: он возвращает имя типа строкой, здесь `Book` или `Author`. Только после этого исполнитель применит нужный встроенный фрагмент вида `... on Book { title }`.\n\nЕсли его убрать, включится поведение по умолчанию из graphql-js: библиотека прочитает `__typename` у значения, а иначе вызовет `isTypeOf` у каждого типа. Если не ответит ни то, ни другое, запрос упадёт с ошибкой о том, что абстрактный тип не удалось определить.\n\nНичего он не фильтрует, и работает на сервере, так что клиентский кэш тут не при чём. Поле `__typename` подставляет сам исполнитель, когда тип уже известен, поэтому запросить его вместо `__resolveType` не получится."
     }
   },
   {

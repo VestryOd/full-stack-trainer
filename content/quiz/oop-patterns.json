@@ -570,27 +570,27 @@
     "id": "oop-patterns-quiz-22",
     "topicId": "oop-patterns",
     "question": {
-      "en": "When should you prefer Abstract Factory over Factory Method?",
-      "ru": "Когда следует предпочесть Abstract Factory вместо Factory Method?"
+      "en": "What does the Command pattern give you that passing a plain callback does not?\n```ts\ninterface Command {\n  execute(): void;\n  undo(): void;\n}\n\nclass AddLine implements Command {\n  constructor(private doc: string[], private line: string) {}\n  execute() { this.doc.push(this.line); }\n  undo() { this.doc.pop(); }\n}\n\nconst history: Command[] = [];\n\nfunction run(command: Command) {\n  command.execute();\n  history.push(command);\n}\n```",
+      "ru": "Что даёт паттерн Command по сравнению с обычной переданной функцией?\n```ts\ninterface Command {\n  execute(): void;\n  undo(): void;\n}\n\nclass AddLine implements Command {\n  constructor(private doc: string[], private line: string) {}\n  execute() { this.doc.push(this.line); }\n  undo() { this.doc.pop(); }\n}\n\nconst history: Command[] = [];\n\nfunction run(command: Command) {\n  command.execute();\n  history.push(command);\n}\n```"
     },
     "options": {
       "en": [
-        "When you need to create a single object type with different implementations",
-        "When you need families of related objects that work together",
-        "When you want to reduce code coupling in a small, single-responsibility module",
-        "When working with primitive types that require type conversion"
+        "Type safety: a callback cannot be typed, while a command class can be",
+        "A request stored as an object, so it can be queued, logged and reversed",
+        "A guarantee that the request runs exactly once, even when threads compete",
+        "The freedom to swap the algorithm at run time without touching the caller"
       ],
       "ru": [
-        "Когда вам нужно создать один тип объекта с различными реализациями",
-        "Когда вам нужны семейства связанных объектов, работающих вместе",
-        "Когда вы хотите уменьшить связанность кода в небольшом модуле с единственной ответственностью",
-        "При работе с примитивными типами, которые требуют преобразования типов"
+        "Типизацию: функцию типом не описать, а класс команды — можно",
+        "Запрос в виде объекта: его можно поставить в очередь, записать и отменить",
+        "Гарантию, что запрос выполнится ровно один раз даже при конкуренции потоков",
+        "Возможность менять алгоритм на ходу, не трогая вызывающий код"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Abstract Factory creates families of related objects (e.g., UI components for different OS themes) ensuring they work together consistently. Factory Method creates a single type with different implementations. Abstract Factory is needed when you have multiple interdependent object types that must be created as a cohesive unit.",
-      "ru": "Abstract Factory создает семейства связанных объектов (например, компоненты UI для разных тем ОС), обеспечивая согласованную работу. Factory Method создает один тип с различными реализациями. Abstract Factory нужна, когда у вас есть несколько взаимозависимых типов объектов, которые должны быть созданы как единое целое."
+      "en": "Command turns \"do this\" into an object, and an object can be kept. Here `history` holds every executed command, so undo is one line: `history.pop()?.undo()`. A bare callback has nowhere to keep the reverse step or the data it needs. The same property makes commands easy to queue, retry or write into a log.\n\nCallbacks are typed perfectly well in TypeScript, so type safety is not the difference. Nothing in the pattern is about threads or about running once. And swapping an algorithm behind a stable interface is Strategy: Strategy answers \"how is this done\", while Command carries \"what should be done, and how to take it back\".",
+      "ru": "Command превращает «сделай это» в объект, а объект можно сохранить. Здесь `history` держит все выполненные команды, поэтому отмена — это одна строка: `history.pop()?.undo()`. Обычной функции некуда положить ни обратный шаг, ни нужные ему данные. То же свойство позволяет ставить команды в очередь, повторять их и писать в журнал.\n\nФункции в TypeScript типизируются прекрасно, так что дело не в типах. К потокам и к однократному выполнению паттерн отношения не имеет. А подмена алгоритма за стабильным интерфейсом — это Strategy: Strategy отвечает на вопрос «как это делается», а Command несёт «что надо сделать и как это отменить»."
     }
   },
   {

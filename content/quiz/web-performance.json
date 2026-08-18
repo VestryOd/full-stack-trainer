@@ -273,27 +273,27 @@
     "id": "web-performance-quiz-11",
     "topicId": "web-performance",
     "question": {
-      "en": "Which Core Web Vital metric measures the visual stability of a page and penalizes unexpected layout shifts?\n```js\n// Example: A button appears suddenly pushing content down\n```",
-      "ru": "Какая метрика Core Web Vitals измеряет визуальную стабильность страницы и штрафует неожиданные сдвиги макета?\n```js\n// Пример: кнопка внезапно появляется, сдвигая контент вниз\n```"
+      "en": "The click freezes the page for about 400 ms, and Interaction to Next Paint (INP), the metric for responsiveness, reports a poor score. Which change actually helps?\n```js\nbutton.addEventListener('click', () => {\n  for (const row of rows) {          // 5000 rows\n    container.append(renderRow(row));\n  }\n});\n```",
+      "ru": "Клик подвешивает страницу примерно на 400 мс, и метрика отзывчивости Interaction to Next Paint (INP) показывает плохую оценку. Что действительно поможет?\n```js\nbutton.addEventListener('click', () => {\n  for (const row of rows) {          // 5000 строк\n    container.append(renderRow(row));\n  }\n});\n```"
     },
     "options": {
       "en": [
-        "Largest Contentful Paint (LCP)",
-        "Interaction to Next Paint (INP)",
-        "Cumulative Layout Shift (CLS)",
-        "First Input Delay (FID)"
+        "Wrap the loop in `requestAnimationFrame`, which hands the work to the browser",
+        "Build the rows inside a Web Worker, which keeps the main thread free",
+        "Append the rows in small batches, yielding to the main thread between them",
+        "Add `will-change: transform` to the container so the browser can prepare it"
       ],
       "ru": [
-        "Largest Contentful Paint (LCP)",
-        "Interaction to Next Paint (INP)",
-        "Cumulative Layout Shift (CLS)",
-        "First Input Delay (FID)"
+        "Обернуть цикл в `requestAnimationFrame` — работу возьмёт на себя браузер",
+        "Собирать строки в Web Worker — тогда главный поток останется свободным",
+        "Добавлять строки небольшими порциями, уступая главный поток между порциями",
+        "Добавить контейнеру `will-change: transform`, чтобы браузер подготовился заранее"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "CLS specifically measures cumulative layout shift caused by elements moving unexpectedly on the page. LCP measures when the largest element loads, INP measures responsiveness to interactions, and FID measures initial interaction delay. CLS directly addresses visual stability issues.",
-      "ru": "CLS специально измеряет кумулятивный сдвиг макета, вызванный неожиданным перемещением элементов на странице. LCP измеряет загрузку наибольшего элемента, INP измеряет отзывчивость взаимодействий, а FID измеряет задержку начального взаимодействия. CLS напрямую решает проблемы визуальной стабильности."
+      "en": "The browser can only paint between tasks, and this handler is one task longer than 400 ms. Anything over 50 ms counts as a long task. Split the loop into chunks and yield between them, and the browser gets a chance to paint the response and to notice the next click. `scheduler.yield()` does exactly that where it is available, and `await new Promise((r) => setTimeout(r, 0))` works everywhere.\n\n`requestAnimationFrame` still runs on the main thread, so the same block simply moves into the next frame. A Web Worker has no access to the DOM (document object model, the live tree of page elements), so it cannot append rows and can only prepare data. `will-change` hints at a future animation and does nothing for a blocked main thread.",
+      "ru": "Браузер рисует только между задачами, а этот обработчик — одна задача длиной больше 400 мс. Длинной задачей считают всё, что дольше 50 мс. Разбейте цикл на порции и уступайте поток между ними: тогда браузер успеет отрисовать отклик и заметить следующий клик. Ровно это делает `scheduler.yield()`, где он доступен, а `await new Promise((r) => setTimeout(r, 0))` работает везде.\n\n`requestAnimationFrame` выполняется в том же главном потоке, поэтому та же блокировка просто переедет в следующий кадр. У Web Worker нет доступа к DOM (document object model — живое дерево элементов страницы), поэтому строки он добавить не может и годится только для подготовки данных. `will-change` намекает на будущую анимацию и заблокированному потоку не помогает."
     }
   },
   {

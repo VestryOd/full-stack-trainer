@@ -975,27 +975,27 @@
     "id": "react-quiz-41",
     "topicId": "react",
     "question": {
-      "en": "Which of the following violates the Rules of Hooks in React?\n```js\nfunction MyComponent({ id }) {\n  if (id > 0) {\n    const [count, setCount] = useState(0);\n  }\n  const [name, setName] = useState('');\n  return <div>{name}</div>;\n}\n```",
-      "ru": "Какой из следующих вариантов нарушает Rules of Hooks в React?\n```js\nfunction MyComponent({ id }) {\n  if (id > 0) {\n    const [count, setCount] = useState(0);\n  }\n  const [name, setName] = useState('');\n  return <div>{name}</div>;\n}\n```"
+      "en": "The `Broken` component throws inside a click handler. What does the user see after the click?\n```jsx\nclass Boundary extends React.Component {\n  state = { failed: false };\n  static getDerivedStateFromError() {\n    return { failed: true };\n  }\n  render() {\n    return this.state.failed ? <p>Something broke</p> : this.props.children;\n  }\n}\n\nfunction Broken() {\n  return <button onClick={() => { throw new Error('boom'); }}>Pay</button>;\n}\n\nfunction App() {\n  return <Boundary><Broken /></Boundary>;\n}\n```",
+      "ru": "Компонент `Broken` выбрасывает ошибку внутри обработчика клика. Что увидит пользователь после клика?\n```jsx\nclass Boundary extends React.Component {\n  state = { failed: false };\n  static getDerivedStateFromError() {\n    return { failed: true };\n  }\n  render() {\n    return this.state.failed ? <p>Что-то сломалось</p> : this.props.children;\n  }\n}\n\nfunction Broken() {\n  return <button onClick={() => { throw new Error('boom'); }}>Оплатить</button>;\n}\n\nfunction App() {\n  return <Boundary><Broken /></Boundary>;\n}\n```"
     },
     "options": {
       "en": [
-        "Calling useState conditionally inside the if block rather than at the top level",
-        "The component calls useState twice, which is not allowed in a single component",
-        "The destructuring of count and name is incorrect and will cause a runtime error",
-        "There is no violation; hooks can be called anywhere within a functional component"
+        "The button stays in place, the error reaches the console, and no fallback shows",
+        "The fallback text, because the boundary covers everything the child does",
+        "The fallback, but only after `componentDidCatch` is added to the boundary as well",
+        "Nothing at all, because React quietly swallows throws from event handlers"
       ],
       "ru": [
-        "Условный вызов useState внутри блока if, а не на верхнем уровне компонента",
-        "Компонент вызывает useState дважды, что не допускается в одном компоненте",
-        "Деструктуризация count и name неправильна и вызовет ошибку во время выполнения",
-        "Нарушения нет; хуки можно вызывать в любом месте функционального компонента"
+        "Кнопка остаётся на месте, ошибка уходит в консоль, запасной текст не появится",
+        "Запасной текст: граница отвечает за всё, что делает дочерний компонент",
+        "Запасной текст, но только если добавить в границу ещё и `componentDidCatch`",
+        "Совсем ничего: React молча проглатывает ошибки, выброшенные из обработчиков событий"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "React's Rules of Hooks require that hooks be called at the top level of a functional component, not conditionally. The if statement causes useState to be called unpredictably based on the id prop, breaking the hook ordering that React relies on. Multiple useState calls are allowed and normal; the issue is the conditional execution.",
-      "ru": "Правила хуков React требуют, чтобы хуки вызывались на верхнем уровне функционального компонента, а не условно. Оператор if заставляет useState вызываться непредсказуемо в зависимости от реквизита id, нарушая порядок хуков, на который полагается React. Несколько вызовов useState допускаются и нормальны; проблема в условном выполнении."
+      "en": "An error boundary catches only errors thrown while React renders the tree below it, or inside a child's lifecycle method or constructor. A click handler runs outside rendering, so the throw travels up as an ordinary JavaScript error. React never learns about it, the boundary keeps rendering its children, and the browser logs an uncaught error.\n\nAdding `componentDidCatch` changes nothing here, because it is fed by the same mechanism as `getDerivedStateFromError`. React does not swallow the error either: it is visible in the console. To show a fallback for a failed action, catch the error in the handler and put the failure into state yourself.",
+      "ru": "Граница ошибок ловит только те ошибки, которые случились во время рендера дерева под ней, в методе жизненного цикла или в конструкторе дочернего компонента. Обработчик клика выполняется вне рендера, поэтому ошибка уходит вверх как обычная ошибка JavaScript. React о ней не узнаёт, граница продолжает рисовать детей, а браузер пишет в консоль необработанную ошибку.\n\nДобавить `componentDidCatch` тут ничего не изменит: он питается тем же механизмом, что и `getDerivedStateFromError`. И React ошибку не проглатывает — она видна в консоли. Чтобы показать запасной текст после неудачного действия, поймайте ошибку в самом обработчике и положите признак сбоя в состояние."
     }
   },
   {
@@ -1029,27 +1029,27 @@
     "id": "react-quiz-45",
     "topicId": "react",
     "question": {
-      "en": "When should you use useMemo vs useCallback in a React component?",
-      "ru": "Когда следует использовать useMemo в сравнении с useCallback в компоненте React?"
+      "en": "What is logged when the user clicks the word `Hi` inside the modal?\n```jsx\nimport { createPortal } from 'react-dom';\n\nfunction Modal({ children }) {\n  return createPortal(\n    <div className=\"overlay\">{children}</div>,\n    document.body,\n  );\n}\n\nfunction Page() {\n  return (\n    <div onClick={() => console.log('page clicked')}>\n      <Modal>Hi</Modal>\n    </div>\n  );\n}\n```",
+      "ru": "Что попадёт в консоль, когда пользователь щёлкнет по слову `Hi` внутри модального окна?\n```jsx\nimport { createPortal } from 'react-dom';\n\nfunction Modal({ children }) {\n  return createPortal(\n    <div className=\"overlay\">{children}</div>,\n    document.body,\n  );\n}\n\nfunction Page() {\n  return (\n    <div onClick={() => console.log('page clicked')}>\n      <Modal>Hi</Modal>\n    </div>\n  );\n}\n```"
     },
     "options": {
       "en": [
-        "useMemo is for optimizing array and object creation; useCallback is only for optimizing event handler functions",
-        "useCallback is more performant than useMemo because it caches at the function level rather than value level",
-        "useMemo memoizes computed values; useCallback memoizes function references passed to children",
-        "Both hooks serve identical purposes and can be used interchangeably in all cases"
+        "Nothing, because the overlay sits in `document.body`, outside that `div` in the page",
+        "`page clicked`, but only because React moves the overlay back inside the `div`",
+        "`page clicked`, because the click bubbles along the React tree, not the page tree",
+        "Nothing, until a listener is attached to `document.body` by hand"
       ],
       "ru": [
-        "useMemo используется для оптимизации создания массивов и объектов; useCallback используется только для оптимизации функций обработчиков событий",
-        "useCallback более производителен, чем useMemo, потому что он кэширует на уровне функции, а не на уровне значения",
-        "useMemo мемоизирует вычисленные значения; useCallback мемоизирует ссылки на функции, передаваемые потомкам",
-        "Оба хука служат идентичным целям и могут использоваться взаимозаменяемо во всех случаях"
+        "Ничего: слой лежит в `document.body`, то есть вне этого `div` в дереве страницы",
+        "`page clicked`, но лишь потому, что React переносит слой обратно внутрь `div`",
+        "`page clicked`: клик всплывает по дереву React, а не по дереву страницы",
+        "Ничего, пока обработчик не повесят на `document.body` вручную"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "useMemo caches computed values and prevents recalculation on every render, useful for expensive computations. useCallback caches function references to pass stable functions to memoized children via React.memo, preventing those children from re-rendering when the function identity changes. Both optimize performance but target different optimization patterns.",
-      "ru": "useMemo кэширует вычисленные значения и предотвращает пересчет при каждом рендере, полезно для дорогостоящих вычислений. useCallback кэширует ссылки на функции для передачи стабильных функций мемоизированным дочерним элементам через React.memo, предотвращая их повторный рендер при изменении идентичности функции. Оба оптимизируют производительность, но нацелены на разные паттерны оптимизации."
+      "en": "A portal changes only where the node is placed in the DOM (document object model, the live tree of page elements). In the React tree the overlay is still a child of the `div`, and React dispatches events along the React tree, so the parent's `onClick` runs and logs `page clicked`. That is what lets a modal rendered into `document.body` be closed by a handler on its React parent.\n\nReact does not move the node back: it stays in `document.body`, which is the whole point of a portal. No manual listener on `document.body` is needed either, because React delivers the event itself.",
+      "ru": "Портал меняет только место узла в DOM (document object model — живое дерево элементов страницы). В дереве React слой по-прежнему дочерний для того `div`, а события React рассылает по своему дереву. Поэтому срабатывает `onClick` родителя и в консоль уходит `page clicked`. Именно на этом держится модальное окно в `document.body`, которое закрывает обработчик родителя.\n\nОбратно узел React не переносит: он остаётся в `document.body`, в этом и смысл портала. Отдельный обработчик на `document.body` тоже не нужен — событие доставляет сам React."
     }
   },
   {

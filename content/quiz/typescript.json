@@ -3,27 +3,27 @@
     "id": "typescript-quiz-1",
     "topicId": "typescript",
     "question": {
-      "en": "What is the key difference between a TypeScript `interface` and a `type` alias when used with object shapes?\n\n```typescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n```",
-      "ru": "В чем ключевое различие между TypeScript `interface` и `type` alias при использовании с объектными формами?\n\n```typescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n```"
+      "en": "Which line does the compiler reject?\n\n```typescript\ntype Routes = Record<string, string>;\n\nconst annotated: Routes = { home: '/', help: '/help' };\nconst checked = { home: '/', help: '/help' } satisfies Routes;\n\nconsole.log(annotated.about);\nconsole.log(checked.about);\n```",
+      "ru": "Какую строку отвергнет компилятор?\n\n```typescript\ntype Routes = Record<string, string>;\n\nconst annotated: Routes = { home: '/', help: '/help' };\nconst checked = { home: '/', help: '/help' } satisfies Routes;\n\nconsole.log(annotated.about);\nconsole.log(checked.about);\n```"
     },
     "options": {
       "en": [
-        "Interfaces support declaration merging, while type aliases do not",
-        "Type aliases are faster at runtime than interfaces",
-        "Interfaces can only describe objects, while type aliases can describe any type",
-        "Type aliases support generics, while interfaces do not"
+        "Only `checked.about`, because `satisfies` keeps the literal keys",
+        "Only `annotated.about`, because an index signature rejects new keys",
+        "Both lines, because `Record<string, string>` allows only the two keys",
+        "Neither line: both constants end up with the type `Routes`"
       ],
       "ru": [
-        "Интерфейсы поддерживают объединение объявлений, в то время как type alias не поддерживают",
-        "Type alias работают быстрее во время выполнения, чем интерфейсы",
-        "Интерфейсы могут описывать только объекты, в то время как type alias могут описывать любой тип",
-        "Type alias поддерживают обобщения, в то время как интерфейсы не поддерживают"
+        "Только `checked.about`: `satisfies` сохраняет литеральные ключи",
+        "Только `annotated.about`: индексная подпись запрещает новые ключи",
+        "Обе строки, ведь `Record<string, string>` допускает только два ключа",
+        "Ни одну: у обеих констант в итоге тип `Routes`"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Interfaces support declaration merging, allowing multiple declarations with the same name to be combined into a single interface. Type aliases cannot be merged and will cause an error if redeclared. Both support generics and can describe objects, and there is no runtime performance difference between them.",
-      "ru": "Интерфейсы поддерживают объединение объявлений, позволяя объединять несколько объявлений с одним именем в один интерфейс. Type alias не могут быть объединены и вызовут ошибку при повторном объявлении. Оба поддерживают обобщения и могут описывать объекты, и между ними нет различий в производительности во время выполнения."
+      "en": "`satisfies` checks the value against the type but leaves the value its own, narrower type. So `checked` has the type `{ home: string; help: string }`, and an unknown key on it is an error:\n\n```typescript\nconsole.log(checked.about);\n// error TS2339: Property 'about' does not exist on type '{ home: string; help: string; }'.\n```\n\nThe annotation does the opposite. `annotated` becomes `Routes`, and the index signature of `Routes` accepts any string key. So `annotated.about` compiles and is typed `string`, even though no such route exists.\n\nWhy the other answers are wrong:\n\n- The answer blaming `annotated.about` has it backwards. The index signature is what makes that line legal.\n- The answer that rejects both lines misreads `Record<string, string>`. It allows any string key, not only the two written down.\n- `satisfies` never widens the value, so the answer that leaves both lines legal cannot hold.\n\nUse an annotation when you want the wider type. Use `satisfies` when you want the value checked and still precise.",
+      "ru": "`satisfies` сверяет значение с типом, но оставляет значению его собственный, более узкий тип. Поэтому у `checked` тип `{ home: string; help: string }`, и незнакомый ключ у него — ошибка:\n\n```typescript\nconsole.log(checked.about);\n// error TS2339: Property 'about' does not exist on type '{ home: string; help: string; }'.\n```\n\nАннотация делает обратное. `annotated` получает тип `Routes`, а индексная подпись `Routes` принимает любой строковый ключ. Поэтому `annotated.about` компилируется и имеет тип `string`, хотя такого маршрута нет.\n\nПочему остальные ответы неверны:\n\n- Ответ про `annotated.about` меняет картину местами. Именно индексная подпись делает эту строку допустимой.\n- Ответ, который отвергает обе строки, неверно читает `Record<string, string>`. Этот тип допускает любой строковый ключ, а не только два записанных.\n- `satisfies` не расширяет тип значения, поэтому ответ, где обе строки законны, не проходит.\n\nАннотация нужна, когда вам нужен более широкий тип. `satisfies` — когда значение надо проверить и сохранить точным."
     }
   },
   {
@@ -624,27 +624,27 @@
     "id": "typescript-quiz-26",
     "topicId": "typescript",
     "question": {
-      "en": "What is the key difference between a TypeScript `interface` and a `type` alias when dealing with declaration merging?\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n}\n```",
-      "ru": "В чем ключевое отличие TypeScript `interface` от `type` alias при работе с объединением объявлений?\n\n```typescript\ninterface User {\n  name: string;\n}\ninterface User {\n  age: number;\n}\n```"
+      "en": "What does the compiler report for this file?\n\n```typescript\ninterface Query {\n  limit: number;\n}\n\nconst direct: Query = { limit: 20, sort: 'asc' };\n\nconst raw = { limit: 20, sort: 'asc' };\nconst indirect: Query = raw;\n```",
+      "ru": "Что компилятор сообщит про этот файл?\n\n```typescript\ninterface Query {\n  limit: number;\n}\n\nconst direct: Query = { limit: 20, sort: 'asc' };\n\nconst raw = { limit: 20, sort: 'asc' };\nconst indirect: Query = raw;\n```"
     },
     "options": {
       "en": [
-        "Type aliases also support declaration merging in the same way",
-        "Neither interfaces nor type aliases support declaration merging",
-        "Declaration merging only works with class declarations, not interfaces",
-        "Interfaces support declaration merging and will combine properties"
+        "Both assignments fail, because `Query` has no `sort`",
+        "Only the assignment of `raw`, because a variable no longer counts as a literal",
+        "Nothing: both objects do have the required `limit`",
+        "Only the first assignment, because literals get an excess property check"
       ],
       "ru": [
-        "Type aliases также поддерживают объединение объявлений таким же образом",
-        "Ни интерфейсы, ни type aliases не поддерживают объединение объявлений",
-        "Объединение объявлений работает только с объявлениями класса, но не с интерфейсами",
-        "Интерфейсы поддерживают объединение объявлений и объединят свойства"
+        "Обе строки не пройдут: в `Query` нет поля `sort`",
+        "Только присваивание `raw`, ведь переменная уже не считается литералом",
+        "Ничего: в обоих объектах есть нужное поле `limit`",
+        "Только первое присваивание: у литералов проверяют лишние свойства"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Interfaces in TypeScript support declaration merging, meaning multiple declarations with the same name are automatically combined into a single interface. Here `User` ends up with both `name` and `age`. Type aliases do not support this feature and would result in a duplicate identifier error. This is a fundamental difference that allows interfaces to be extended across multiple definitions.",
-      "ru": "Интерфейсы в TypeScript поддерживают объединение объявлений, что означает, что несколько объявлений с одинаковым именем автоматически объединяются в один интерфейс. Здесь `User` получает и `name`, и `age`. Type aliases не поддерживают эту функцию и приведут к ошибке дублирования идентификатора. Это фундаментальное отличие, которое позволяет интерфейсам расширяться на нескольких определениях."
+      "en": "An object literal assigned straight to a typed target gets one extra check. Properties the target does not declare become errors, so the first line fails:\n\n```typescript\nconst direct: Query = { limit: 20, sort: 'asc' };\n// error TS2353: Object literal may only specify known properties,\n// and 'sort' does not exist in type 'Query'.\n```\n\nThe second assignment passes. `raw` is a variable of type `{ limit: number; sort: string }`, and assignability only asks whether the source has everything the target needs. It does. The extra check exists to catch typos in literals, so it fires only where a literal is written in place.\n\nWhy the other answers are wrong:\n\n- The answer that fails both lines forgets that a variable may carry extra properties through.\n- The answer that reports nothing forgets the extra check on literals.\n- The answer blaming only `raw` has the two cases swapped.\n\nTo catch the extra key in both places, annotate the literal where it is created: `const raw: Query = { limit: 20, sort: 'asc' }` fails for the same reason.",
+      "ru": "Объектный литерал, который присваивают прямо в типизированную цель, получает дополнительную проверку. Свойства, которых цель не объявляла, становятся ошибкой, поэтому первая строка падает:\n\n```typescript\nconst direct: Query = { limit: 20, sort: 'asc' };\n// error TS2353: Object literal may only specify known properties,\n// and 'sort' does not exist in type 'Query'.\n```\n\nВторое присваивание проходит. `raw` — переменная с типом `{ limit: number; sort: string }`, а совместимость спрашивает только одно: есть ли у источника всё, что нужно цели. Есть. Дополнительная проверка нужна, чтобы ловить опечатки в литералах, поэтому она срабатывает лишь там, где литерал написан прямо на месте.\n\nПочему остальные ответы неверны:\n\n- Ответ, где падают обе строки, забывает: через переменную лишние свойства проходят.\n- Ответ, где ошибок нет, забывает про дополнительную проверку литералов.\n- Ответ про одно присваивание `raw` меняет два случая местами.\n\nЧтобы лишний ключ ловился в обоих местах, аннотируйте литерал там, где он создан: `const raw: Query = { limit: 20, sort: 'asc' }` упадёт по той же причине."
     }
   },
   {
@@ -894,27 +894,27 @@
     "id": "typescript-quiz-36",
     "topicId": "typescript",
     "question": {
-      "en": "What is the key difference between a TypeScript `interface` and a `type` alias?\n\n```typescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n```",
-      "ru": "В чем ключевое различие между TypeScript `interface` и `type` alias?\n\n```typescript\ninterface User {\n  name: string;\n}\n\ntype Admin = {\n  name: string;\n};\n```"
+      "en": "What error does this file produce?\n\n```typescript\ntype Shape =\n  | { kind: 'circle'; radius: number }\n  | { kind: 'square'; side: number };\n\nfunction area(shape: Shape): number {\n  switch (shape.kind) {\n    case 'circle':\n      return Math.PI * shape.radius ** 2;\n    default: {\n      const other: never = shape;\n      return other;\n    }\n  }\n}\n```",
+      "ru": "Какую ошибку даст этот файл?\n\n```typescript\ntype Shape =\n  | { kind: 'circle'; radius: number }\n  | { kind: 'square'; side: number };\n\nfunction area(shape: Shape): number {\n  switch (shape.kind) {\n    case 'circle':\n      return Math.PI * shape.radius ** 2;\n    default: {\n      const other: never = shape;\n      return other;\n    }\n  }\n}\n```"
     },
     "options": {
       "en": [
-        "Types can use union and intersection operators, while interfaces cannot",
-        "Interfaces can be merged (declaration merging), while types cannot",
-        "Interfaces have better performance at runtime",
-        "Types are only used for primitive values, interfaces for objects"
+        "None: the default branch already returns a number",
+        "An error on `const other: never = shape`, since square is unhandled",
+        "An error on `shape.radius`, because a switch does not narrow the union",
+        "None, because `never` accepts any value that is not null"
       ],
       "ru": [
-        "Типы могут использовать операторы объединения и пересечения, интерфейсы не могут",
-        "Интерфейсы можно объединять (declaration merging), а типы нельзя",
-        "Интерфейсы имеют лучшую производительность во время выполнения",
-        "Типы используются только для примитивных значений, интерфейсы для объектов"
+        "Никакой: ветка default и так возвращает число",
+        "Ошибку на `const other: never = shape`, ведь случай square не разобран",
+        "Ошибку на `shape.radius`: switch не сужает объединение",
+        "Никакой, ведь `never` принимает любое значение, кроме null"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Interfaces support declaration merging where multiple declarations with the same name are automatically combined, while type aliases do not. Both can use union/intersection operators (types more naturally), but interfaces excel at extensibility through merging. Performance and primitive type restrictions are not differentiators.",
-      "ru": "Интерфейсы поддерживают declaration merging, где несколько объявлений с одинаковым именем автоматически объединяются, в то время как типы этого не делают. Оба могут использовать операторы объединения и пересечения, но интерфейсы лучше для расширяемости через объединение. Производительность и ограничения примитивных типов не являются отличиями."
+      "en": "A `switch` on `shape.kind` narrows the union case by case. The circle case is handled, so the only shape that can reach `default` is the square one. Assigning it to a variable of type `never` fails:\n\n```typescript\nconst other: never = shape;\n// error TS2322: Type '{ kind: \"square\"; side: number; }'\n// is not assignable to type 'never'.\n```\n\nThat error is the point of the pattern. The type `never` holds no values at all, so the assignment compiles only once the compiler has narrowed `shape` down to nothing. Add `case 'square'` and the file compiles again — and it will break the next time someone adds a shape.\n\nWhy the other answers are wrong:\n\n- The two answers that report no error rely on `default` covering the missing case at runtime. This check happens while compiling, before any shape exists.\n- `never` does not accept non-null values. It accepts none.\n- Inside `case 'circle'` the type is narrowed to the circle branch, so `shape.radius` is fine.",
+      "ru": "`switch` по `shape.kind` сужает объединение случай за случаем. Случай с окружностью разобран, поэтому до `default` может дойти только квадрат. Присваивание его в переменную типа `never` падает:\n\n```typescript\nconst other: never = shape;\n// error TS2322: Type '{ kind: \"square\"; side: number; }'\n// is not assignable to type 'never'.\n```\n\nЭта ошибка и есть смысл приёма. Тип `never` не содержит ни одного значения, поэтому присваивание компилируется только тогда, когда компилятор сузил `shape` до пустоты. Добавьте `case 'square'` — файл снова соберётся, и снова сломается, когда кто-нибудь добавит новую фигуру.\n\nПочему остальные ответы неверны:\n\n- Два ответа без ошибки надеются, что `default` подхватит пропущенный случай во время работы программы. Но проверка идёт при компиляции, когда никаких фигур ещё нет.\n- `never` не принимает значения, отличные от null. Он не принимает никаких.\n- Внутри `case 'circle'` тип сужен до ветки с окружностью, поэтому `shape.radius` здесь законен."
     }
   },
   {

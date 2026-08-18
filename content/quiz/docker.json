@@ -246,27 +246,27 @@
     "id": "docker-quiz-13",
     "topicId": "docker",
     "question": {
-      "en": "What is the key difference between CMD and ENTRYPOINT in a Dockerfile, and when should you use each?",
-      "ru": "В чём ключевое различие между CMD и ENTRYPOINT в Dockerfile и когда использовать каждый?"
+      "en": "The container runs a Node.js server. `docker stop` takes ten seconds every time, and the shutdown message is never logged. Why?\n```dockerfile\nFROM node:22-alpine\nWORKDIR /app\nCOPY . .\nCMD node server.js\n```",
+      "ru": "В контейнере работает сервер на Node.js. Команда `docker stop` каждый раз занимает десять секунд, а сообщение о завершении так и не появляется в логах. Почему?\n```dockerfile\nFROM node:22-alpine\nWORKDIR /app\nCOPY . .\nCMD node server.js\n```"
     },
     "options": {
       "en": [
-        "CMD runs before ENTRYPOINT during container startup",
-        "ENTRYPOINT is the main executable and CMD its default arguments",
-        "ENTRYPOINT is ignored if CMD is specified in the same Dockerfile",
-        "CMD is required in every Dockerfile, while ENTRYPOINT is optional"
+        "`docker stop` starts with SIGKILL, so no process can shut down politely",
+        "The shell form makes `/bin/sh` process 1, and it does not pass SIGTERM to node",
+        "Alpine images ship without signal support, so SIGTERM never enters the container",
+        "`WORKDIR` placed before `COPY` detaches the process from the container's signals"
       ],
       "ru": [
-        "CMD запускается перед ENTRYPOINT при запуске контейнера",
-        "ENTRYPOINT — основной исполняемый файл, CMD — аргументы по умолчанию",
-        "ENTRYPOINT игнорируется, если CMD указан в том же Dockerfile",
-        "CMD обязателен в каждом Dockerfile, а ENTRYPOINT можно не указывать"
+        "`docker stop` сразу начинает с SIGKILL, поэтому корректно завершиться никто не успевает",
+        "Из-за shell-формы процессом 1 становится `/bin/sh`, а он не передаёт SIGTERM в node",
+        "В образах Alpine нет поддержки сигналов, поэтому SIGTERM в контейнер не доходит",
+        "`WORKDIR` перед `COPY` отвязывает процесс от обработки сигналов контейнера"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "ENTRYPOINT specifies the main command that always runs. CMD provides default arguments to ENTRYPOINT or a default command if no ENTRYPOINT is set. When you run a container with arguments, they override CMD but are appended to ENTRYPOINT, making ENTRYPOINT better for fixed executables and CMD better for configurable defaults.",
-      "ru": "ENTRYPOINT указывает основную команду, которая всегда запускается. CMD предоставляет аргументы по умолчанию для ENTRYPOINT или команду по умолчанию, если ENTRYPOINT не установлен. Когда вы запускаете контейнер с аргументами, они переопределяют CMD, но добавляются к ENTRYPOINT, что делает ENTRYPOINT лучше для фиксированных исполняемых файлов, а CMD — для настраиваемых значений по умолчанию."
+      "en": "`CMD node server.js` is the shell form, so Docker actually runs `/bin/sh -c \"node server.js\"`. The shell becomes process 1 inside the container and node is only its child. `docker stop` sends SIGTERM, the polite \"please exit\" signal, to process 1 alone, and that shell does not forward it. After the grace period, ten seconds by default, Docker sends SIGKILL and node dies without running its handler.\n\nThe fix is the exec form `CMD [\"node\", \"server.js\"]`, which makes node itself process 1.\n\n`docker stop` does not begin with SIGKILL, Alpine handles signals like any other image, and the order of `WORKDIR` and `COPY` affects only the filesystem and the build cache.",
+      "ru": "Запись `CMD node server.js` — это shell-форма, поэтому Docker выполняет `/bin/sh -c \"node server.js\"`. Процессом 1 внутри контейнера становится оболочка, а node — лишь её дочерний процесс. Команда `docker stop` отправляет SIGTERM, вежливый сигнал «пожалуйста, завершись», только процессу 1, а оболочка его не пересылает. По истечении отсрочки, по умолчанию это десять секунд, Docker присылает SIGKILL, и node умирает, не выполнив свой обработчик.\n\nЛечится exec-формой `CMD [\"node\", \"server.js\"]`: тогда процессом 1 становится сам node.\n\nС SIGKILL команда `docker stop` не начинает, Alpine работает с сигналами как любой другой образ, а порядок `WORKDIR` и `COPY` влияет только на файлы и на кэш сборки."
     }
   },
   {

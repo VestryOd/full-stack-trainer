@@ -678,27 +678,27 @@
     "id": "css-html-quiz-26",
     "topicId": "css-html",
     "question": {
-      "en": "What is the CSS specificity value of the selector `.container > div.active[data-state=\"open\"]`?",
-      "ru": "Какое значение специфичности CSS у селектора `.container > div.active[data-state=\"open\"]`?"
+      "en": "The same card is used twice: inside a 300px-wide sidebar and inside a 700px-wide main area. The window is 1200px wide. What does this CSS produce?\n```css\n.card {\n  container-type: inline-size;\n}\n\n@container (min-width: 400px) {\n  .card__body {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n  }\n}\n```",
+      "ru": "Одна и та же карточка вставлена дважды: в боковую колонку шириной 300px и в основную область шириной 700px. Ширина окна — 1200px. Что даст этот CSS?\n```css\n.card {\n  container-type: inline-size;\n}\n\n@container (min-width: 400px) {\n  .card__body {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n  }\n}\n```"
     },
     "options": {
       "en": [
-        "0-3-1",
-        "0-2-3",
-        "1-1-2",
-        "0-3-0"
+        "Both cards get two columns, because the query reads the 1200px window",
+        "Neither card changes, because `@container` matches only a named container",
+        "Only the card in the main area gets two columns: each card asks its own width",
+        "Neither card changes: a query container can never be styled by its own query rule"
       ],
       "ru": [
-        "0-3-1",
-        "0-2-3",
-        "1-1-2",
-        "0-3-0"
+        "Обе карточки получат две колонки: запрос смотрит на ширину окна 1200px",
+        "Ничего не изменится: `@container` срабатывает только с заданным именем контейнера",
+        "Две колонки получит только карточка в основной области: каждая мерит свою ширину",
+        "Ничего не изменится: сам контейнер запроса нельзя оформить этим же запросом"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The specificity is 0-3-1.\n\nThe three buckets are counted separately: IDs, then classes plus attribute selectors plus pseudo-classes, then type (element) selectors plus pseudo-elements.\n\n- IDs: none, so 0\n- class-level: `.container`, `.active` and `[data-state=\"open\"]` — an attribute selector counts in this bucket, so 3\n- type-level: `div`, so 1\n\nThe child combinator `>` adds nothing; combinators only describe relationships. The common mistake is 0-3-0 — forgetting that `div` is itself a selector.",
-      "ru": "Специфичность — 0-3-1.\n\nТри группы считаются отдельно: ID, затем классы вместе с селекторами атрибутов и псевдоклассами, затем селекторы тегов и псевдоэлементы.\n\n- ID: нет, значит 0\n- уровень классов: `.container`, `.active` и `[data-state=\"open\"]` — селектор атрибута считается в этой же группе, значит 3\n- уровень тегов: `div`, значит 1\n\nКомбинатор `>` не добавляет ничего: комбинаторы лишь описывают отношения между элементами. Типичная ошибка — ответ 0-3-0, когда забывают, что `div` сам по себе тоже селектор."
+      "en": "Each card is its own query container, so the answer is computed per card. `container-type: inline-size` asks the browser to track the element's inline size, which is its width in horizontal writing. `@container (min-width: 400px)` then asks the nearest such ancestor: the 700px card passes, the 300px card does not. Only one card body becomes a two-column grid.\n\nThe window width plays no part. Reading the window is what a media query `@media (min-width: 400px)` does, and that is exactly the difference. A `container-name` is optional and only needed to address one specific container. It is true that a container cannot be styled by its own query, but `.card__body` is a descendant, so the rule reaches it.",
+      "ru": "Каждая карточка — свой контейнер запроса, поэтому ответ считается для каждой отдельно. Свойство `container-type: inline-size` просит браузер следить за размером элемента по оси строки: при горизонтальном письме это ширина. Запрос `@container (min-width: 400px)` спрашивает ближайшего такого предка. Карточка на 700px проходит, карточка на 300px — нет, поэтому две колонки появятся только в одной.\n\nШирина окна тут ни при чём: окно читает медиазапрос `@media (min-width: 400px)`, и в этом вся разница. Имя контейнера задавать необязательно, оно нужно, только чтобы адресовать конкретный контейнер. А правило «сам контейнер своим запросом не оформить» верное, но `.card__body` — потомок, до него правило доходит."
     }
   },
   {
@@ -786,27 +786,27 @@
     "id": "css-html-quiz-30",
     "topicId": "css-html",
     "question": {
-      "en": "What will be the computed width of the middle box in this code?\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 10px solid black;\n  box-sizing: border-box;\n}\n```",
-      "ru": "Какой будет вычисленная ширина среднего прямоугольника в этом коде?\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 10px solid black;\n  box-sizing: border-box;\n}\n```"
+      "en": "Which elements get the red outline?\n```css\nli:has(> input:checked) {\n  outline: 2px solid red;\n}\n```\n```html\n<ul>\n  <li><input type=\"checkbox\" checked> Milk</li>\n  <li><input type=\"checkbox\"> Bread</li>\n  <li><label><input type=\"checkbox\" checked> Eggs</label></li>\n</ul>\n```",
+      "ru": "Какие элементы получат красную обводку?\n```css\nli:has(> input:checked) {\n  outline: 2px solid red;\n}\n```\n```html\n<ul>\n  <li><input type=\"checkbox\" checked> Молоко</li>\n  <li><input type=\"checkbox\"> Хлеб</li>\n  <li><label><input type=\"checkbox\" checked> Яйца</label></li>\n</ul>\n```"
     },
     "options": {
       "en": [
-        "200px (border-box includes padding and border)",
-        "240px (width + padding)",
-        "260px (width + padding + border)",
-        "160px (width - padding)"
+        "The checked checkboxes themselves, because the outline lands on the argument",
+        "The first and the third `<li>`, because `:has()` accepts any descendant",
+        "No element at all: CSS cannot select a parent by what it contains",
+        "Only the first `<li>`, because its checked checkbox is a direct child"
       ],
       "ru": [
-        "200px (border-box включает padding и border)",
-        "240px (width + padding)",
-        "260px (width + padding + border)",
-        "160px (width - padding)"
+        "Сами отмеченные чекбоксы, потому что обводка достаётся аргументу селектора",
+        "Первый и третий `<li>`, потому что `:has()` берёт любого потомка",
+        "Ни один: CSS не умеет выбрать родителя по его содержимому",
+        "Только первый `<li>`, потому что его отмеченный чекбокс — прямой потомок"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "With box-sizing: border-box, the total computed width including content, padding, and border equals the declared width of 200px. Without this property, the box would be 260px (200 + 40 padding + 20 border), but border-box makes the padding and border eat into the content area instead of expanding it.",
-      "ru": "При box-sizing: border-box, общая вычисленная ширина, включая содержимое, padding и border, равна объявленной ширине 200px. Без этого свойства ящик был бы 260px (200 + 40 padding + 20 border), но border-box заставляет padding и border входить в область содержимого вместо расширения её."
+      "en": "`:has()` styles the element it is attached to, and `> input:checked` demands that the checked checkbox be a direct child of that `<li>`. The first list item holds such a checkbox, so it gets the outline. The third item's checkbox is checked too, but it sits inside a `<label>`, and the child combinator `>` rules it out. The second item is not checked.\n\nThe checkbox itself is not styled: the argument of `:has()` is a condition, not the target. Without `>` the third item would indeed match, but the selector as written keeps it out. And the claim that CSS cannot look at content is out of date: `:has()` is that selector, and current Chrome, Safari, Firefox and Edge all support it.",
+      "ru": "`:has()` оформляет тот элемент, к которому приписан, а `> input:checked` требует, чтобы отмеченный чекбокс был прямым потомком этого `<li>`. У первого пункта он такой и есть, поэтому обводку получает пункт. У третьего чекбокс тоже отмечен, но лежит внутри `<label>`, и комбинатор `>` его отсекает. Второй пункт не отмечен.\n\nСам чекбокс не оформляется: аргумент `:has()` — это условие, а не цель. Без `>` третий пункт действительно подошёл бы, но в записанном селекторе он не подходит. А утверждение, что CSS не смотрит на содержимое, устарело: `:has()` именно это и делает, и его поддерживают актуальные Chrome, Safari, Firefox и Edge."
     }
   }
 ]

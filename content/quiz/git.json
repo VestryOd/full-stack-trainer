@@ -408,27 +408,27 @@
     "id": "git-quiz-16",
     "topicId": "git",
     "question": {
-      "en": "You have a feature branch with 5 commits ahead of main. You want to integrate it into main while keeping a clean, linear history. Which approach is best?\n\nfeature: C1 -> C2 -> C3 -> C4 -> C5\nmain:    M1 -> M2\n",
-      "ru": "У вас есть ветка feature с 5 коммитами впереди main. Вы хотите интегрировать её в main, сохраняя чистую линейную историю. Какой подход лучше?"
+      "en": "There are 1023 commits between the last good release and the broken `HEAD`, and `npm test` tells a good commit from a bad one. About how many test runs does this take?\n```bash\ngit bisect start\ngit bisect bad HEAD\ngit bisect good v1.4.0\ngit bisect run npm test\n```",
+      "ru": "Между последним хорошим релизом и сломанным `HEAD` лежат 1023 коммита, а `npm test` отличает рабочий коммит от сломанного. Сколько примерно прогонов тестов это займёт?\n```bash\ngit bisect start\ngit bisect bad HEAD\ngit bisect good v1.4.0\ngit bisect run npm test\n```"
     },
     "options": {
       "en": [
-        "Use git merge --no-ff so every feature commit is preserved",
-        "Use git cherry-pick on each commit individually",
-        "Use git stash to save changes, then reapply them",
-        "Use git rebase feature onto main, then fast-forward merge"
+        "About 1023: bisect walks the range one commit at a time",
+        "About 512: bisect halves the range once, then checks the rest one by one",
+        "Exactly two: only the good commit and the bad commit are ever tested",
+        "About 10: bisect halves what is left of the range at every step"
       ],
       "ru": [
-        "Используйте git merge --no-ff, чтобы сохранить каждый коммит ветки",
-        "Используйте git cherry-pick для каждого коммита отдельно",
-        "Используйте git stash для сохранения изменений, затем переприменяйте их",
-        "Используйте git rebase feature на main, затем fast-forward merge"
+        "Около 1023: bisect идёт по диапазону коммит за коммитом",
+        "Около 512: bisect делит диапазон пополам один раз, а дальше идёт подряд",
+        "Ровно два: проверяются только хороший и сломанный коммиты",
+        "Около 10: bisect на каждом шаге делит остаток диапазона пополам"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Rebasing rewrites the feature branch commits on top of main's latest commit, creating a linear history. Then fast-forward merge moves main pointer to the last rebased commit without creating a merge commit. Cherry-pick is for selective commits, stash is for temporary work, and --no-ff creates unnecessary merge commits.",
-      "ru": "Rebase переписывает коммиты ветки feature поверх последнего коммита main, создавая линейную историю. Затем fast-forward merge перемещает указатель main на последний переписанный коммит без создания merge commit. Cherry-pick используется для выборочных коммитов, stash для временной работы, а --no-ff создаёт ненужные merge commit."
+      "en": "`git bisect` is a binary search over history: every test halves the range that can still contain the first bad commit. 1023 commits therefore need about ten steps, because two to the tenth power is 1024. `git bisect run npm test` drives that loop by itself and reads the exit code of the command: zero means good, 125 means skip this commit, and other codes up to 127 mean bad.\n\nBisect never walks commits one by one, and it does not stop halving after the first split. Testing only the two ends says nothing about which commit in between broke the build. When the search finishes, `git bisect reset` returns you to the branch you started from.",
+      "ru": "`git bisect` — это двоичный поиск по истории: каждый прогон вдвое сокращает диапазон, в котором ещё может быть первый сломанный коммит. Поэтому 1023 коммита разбираются примерно за десять шагов: два в десятой степени — это 1024. Команда `git bisect run npm test` крутит этот цикл сама и смотрит на код выхода: ноль — коммит хороший, 125 — коммит пропустить, остальные коды до 127 — коммит сломанный.\n\nПодряд bisect коммиты не перебирает и после первого деления не останавливается. Проверка одних только концов диапазона ничего не говорит о том, какой коммит внутри всё сломал. Когда поиск закончен, `git bisect reset` возвращает вас на исходную ветку."
     }
   },
   {

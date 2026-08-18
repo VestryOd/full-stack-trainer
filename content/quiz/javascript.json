@@ -381,54 +381,54 @@
     "id": "javascript-quiz-16",
     "topicId": "javascript",
     "question": {
-      "en": "What is logged to the console?\n```js\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  };\n}\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  };\n}\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());\n```"
+      "en": "What will be logged to the console?\n```js\nconst config = Object.freeze({ retries: 2, db: { host: 'localhost' } });\nconfig.db.host = '10.0.0.1';\nconsole.log(config.db.host);\nconsole.log(Object.isFrozen(config));\nconsole.log(Object.isFrozen(config.db));\n```",
+      "ru": "Что будет выведено в консоль?\n```js\nconst config = Object.freeze({ retries: 2, db: { host: 'localhost' } });\nconfig.db.host = '10.0.0.1';\nconsole.log(config.db.host);\nconsole.log(Object.isFrozen(config));\nconsole.log(Object.isFrozen(config.db));\n```"
     },
     "options": {
       "en": [
-        "0, 0, 0",
-        "1, 1, 1",
-        "1, 2, 3",
-        "undefined, undefined, undefined"
+        "localhost, then true, then true",
+        "10.0.0.1, then true, then true",
+        "10.0.0.1, then true, then false",
+        "A TypeError, because config is frozen"
       ],
       "ru": [
-        "0, 0, 0",
-        "1, 1, 1",
-        "1, 2, 3",
-        "undefined, undefined, undefined"
+        "localhost, затем true, затем true",
+        "10.0.0.1, затем true, затем true",
+        "10.0.0.1, затем true, затем false",
+        "Выбрасывается TypeError, ведь config заморожен"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "This demonstrates closures. The inner function maintains a reference to the count variable in outer's scope. Each call increments count, so the sequence is 1, 2, 3. The closure persists the lexical environment across multiple invocations.",
-      "ru": "Это демонстрирует замыкания. Внутренняя функция сохраняет ссылку на переменную count из области видимости outer. Каждый вызов увеличивает count, поэтому последовательность 1, 2, 3. Замыкание сохраняет лексическое окружение между вызовами."
+      "en": "`Object.freeze` works one level deep. It locks the own properties of the object you pass and nothing below them. `config.db` points to a separate object that was never frozen, so the write to `config.db.host` goes through and prints 10.0.0.1. `Object.isFrozen(config)` is true, while `Object.isFrozen(config.db)` is false.\n\nWhy the other answers are wrong:\n\n- The answer that keeps `localhost` assumes the freeze walks the whole object tree. It does not.\n- The answer where both checks are true repeats that mistake. `isFrozen` reports only on the object it is given.\n- No `TypeError` appears, because the code never writes to a frozen property. Such a write throws only in strict mode. In non-strict code it fails silently.\n\nTo lock a whole tree, walk it yourself and freeze every nested object.",
+      "ru": "`Object.freeze` работает на один уровень. Он запирает собственные свойства того объекта, который вы передали, и ничего глубже. `config.db` — отдельный объект, его никто не замораживал, поэтому запись в `config.db.host` проходит и печатается 10.0.0.1. `Object.isFrozen(config)` даёт true, а `Object.isFrozen(config.db)` — false.\n\nПочему остальные ответы неверны:\n\n- Ответ, где остаётся `localhost`, предполагает, что заморозка идёт по всему дереву объектов. Это не так.\n- Ответ, где обе проверки дают true, повторяет ту же ошибку. `isFrozen` отвечает только про тот объект, который ему передали.\n- `TypeError` не появится: код ни разу не пишет в замороженное свойство. Такая запись бросает ошибку только в строгом режиме, а в нестрогом молча ничего не делает.\n\nЧтобы запереть всё дерево, обойдите его сами и заморозьте каждый вложенный объект."
     }
   },
   {
     "id": "javascript-quiz-17",
     "topicId": "javascript",
     "question": {
-      "en": "What is the value of result?\n```js\nconst obj = {\n  value: 42,\n  getValue: function() {\n    return this.value;\n  }\n};\nconst getValue = obj.getValue;\nconst result = getValue();\n```",
-      "ru": "Какое значение будет у переменной result?\n```js\nconst obj = {\n  value: 42,\n  getValue: function() {\n    return this.value;\n  }\n};\nconst getValue = obj.getValue;\nconst result = getValue();\n```"
+      "en": "What will be logged to the console?\n```js\nfunction tag(strings, ...values) {\n  return strings.length + ':' + values.join('-');\n}\nconst user = 'Ada';\nconst role = 'admin';\nconsole.log(tag`${user} is an ${role}`);\n```",
+      "ru": "Что будет выведено в консоль?\n```js\nfunction tag(strings, ...values) {\n  return strings.length + ':' + values.join('-');\n}\nconst user = 'Ada';\nconst role = 'admin';\nconsole.log(tag`${user} is an ${role}`);\n```"
     },
     "options": {
       "en": [
-        "42",
-        "null",
-        "ReferenceError is thrown",
-        "undefined"
+        "2:Ada-admin",
+        "15:, because the tag receives the finished string",
+        "1:Ada-admin, because empty pieces at the edges are not passed",
+        "3:Ada-admin, because strings keeps the empty edge pieces"
       ],
       "ru": [
-        "42",
-        "null",
-        "Выбрасывается ReferenceError",
-        "undefined"
+        "2:Ada-admin",
+        "15:, ведь в тег приходит уже готовая строка",
+        "1:Ada-admin, ведь пустые куски по краям не передаются",
+        "3:Ada-admin, ведь strings хранит и пустые куски по краям"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "When getValue is assigned without obj context, it loses its this binding. In non-strict mode, this becomes the global object which has no value property, so this.value returns undefined. This is a common 'this binding' pitfall when methods are extracted from objects.",
-      "ru": "Когда getValue присваивается без контекста obj, он теряет привязку this. В нестрогом режиме this становится глобальным объектом, у которого нет свойства value, поэтому this.value возвращает undefined. Это типичная ошибка при извлечении методов из объектов."
+      "en": "A tag function receives the literal cut around its placeholders as the first argument, and the placeholder values after it. The literal here is `${user} is an ${role}`, so `strings` is ['', ' is an ', '']. The empty piece before the first placeholder is kept, and so is the one after the last. That makes `strings.length` 3 while `values` holds 2 entries. `strings` always has exactly one element more than `values`.\n\nWhy the other answers are wrong:\n\n- The answer 2:Ada-admin counts the placeholders instead of the string pieces.\n- The answer 1:Ada-admin drops the empty edge pieces, which the language keeps.\n- The answer 15: assumes the tag gets the finished text 'Ada is an admin' as one string, and 15 is its length. A tag exists precisely to see the parts separately: `strings.raw` even shows the text with escape sequences left alone.",
+      "ru": "Тег-функция получает первым аргументом литерал, разрезанный вокруг подстановок, а дальше — сами значения подстановок. Здесь литерал `${user} is an ${role}`, поэтому `strings` — это ['', ' is an ', '']: пустой кусок перед первой подстановкой и пустой после последней сохраняются. Отсюда `strings.length` равно 3, а в `values` два элемента. В `strings` всегда ровно на один элемент больше, чем в `values`.\n\nПочему остальные ответы неверны:\n\n- Ответ 2:Ada-admin считает подстановки вместо кусков строки.\n- Ответ 1:Ada-admin выбрасывает пустые куски по краям, а язык их сохраняет.\n- Ответ 15: считает, что в тег приходит готовый текст 'Ada is an admin' одной строкой, и 15 — его длина. Но тег и нужен, чтобы видеть части отдельно: `strings.raw` даже покажет текст с необработанными управляющими последовательностями."
     }
   },
   {
@@ -651,27 +651,27 @@
     "id": "javascript-quiz-27",
     "topicId": "javascript",
     "question": {
-      "en": "What does the following code output?\n```js\nconst obj = { a: 1 };\nconst handler = { get: () => 42 };\nconst proxy = new Proxy(obj, handler);\nconsole.log(proxy.a);\n```",
-      "ru": "Что выведет следующий код?\n```js\nconst obj = { a: 1 };\nconst handler = { get: () => 42 };\nconst proxy = new Proxy(obj, handler);\nconsole.log(proxy.a);\n```"
+      "en": "What will be logged to the console?\n```js\nconst rows = [[1, 2], [3, 4], [5, 6]];\nlet seen = 0;\nouter:\nfor (const row of rows) {\n  for (const value of row) {\n    if (value === 4) break outer;\n    seen++;\n  }\n}\nconsole.log(seen);\n```",
+      "ru": "Что будет выведено в консоль?\n```js\nconst rows = [[1, 2], [3, 4], [5, 6]];\nlet seen = 0;\nouter:\nfor (const row of rows) {\n  for (const value of row) {\n    if (value === 4) break outer;\n    seen++;\n  }\n}\nconsole.log(seen);\n```"
     },
     "options": {
       "en": [
-        "42",
-        "1",
-        "undefined",
-        "Error is thrown"
+        "3, because break outer leaves both loops at once",
+        "5, because break outer ends only the inner loop",
+        "4, because seen++ runs before the check",
+        "A SyntaxError, because a label may not stand before a loop"
       ],
       "ru": [
-        "42",
-        "1",
-        "undefined",
-        "Выбрасывается ошибка"
+        "3, ведь break outer выходит сразу из двух циклов",
+        "5, ведь break outer завершает только внутренний цикл",
+        "4, ведь seen++ выполняется до проверки",
+        "Синтаксическая ошибка: метка не может стоять перед циклом"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The Proxy's get trap intercepts all property access and returns 42 regardless of the property name or the target object's value. Arrow functions in trap handlers ignore the target context, so proxy.a returns 42, not the original value 1.",
-      "ru": "Ловушка get прокси перехватывает весь доступ к свойствам и возвращает 42 независимо от имени свойства или значения в целевом объекте. Стрелочные функции в обработчиках ловушек игнорируют контекст цели, поэтому proxy.a возвращает 42, а не исходное значение 1."
+      "en": "A labelled `break` leaves the loop that carries the label, not just the loop it sits in. `outer:` labels the outer `for...of`, so `break outer` stops both loops as soon as `value` is 4. The first row counts two values, the second row counts one more and then breaks, so `seen` is 3.\n\nWhy the other answers are wrong:\n\n- The answer 5 treats `break outer` as a plain `break`. Then the inner loop would end, the outer one would move on to [5, 6] and add two more.\n- The answer 4 puts `seen++` before the check, but the `if` is the first statement in the body.\n- There is no syntax error. A label in front of a loop is valid JavaScript, and `continue outer` is allowed too: it jumps to the next iteration of the labelled loop.",
+      "ru": "`break` с меткой выходит из того цикла, на котором стоит метка, а не только из того, внутри которого он написан. Метка `outer:` относится к внешнему `for...of`, поэтому `break outer` останавливает оба цикла, как только `value` равно 4. В первой строке посчитаны два значения, во второй — ещё одно, дальше выход. Значит, `seen` равно 3.\n\nПочему остальные ответы неверны:\n\n- Ответ 5 считает `break outer` обычным `break`: тогда внутренний цикл закончится, внешний перейдёт к [5, 6] и добавит ещё два.\n- Ответ 4 ставит `seen++` перед проверкой, но первым в теле идёт `if`.\n- Синтаксической ошибки нет. Метка перед циклом — обычный JavaScript, и `continue outer` тоже разрешён: он переходит к следующей итерации помеченного цикла."
     }
   },
   {
@@ -1029,27 +1029,27 @@
     "id": "javascript-quiz-42",
     "topicId": "javascript",
     "question": {
-      "en": "What will be the output of this code?\n```js\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  };\n}\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());\n```",
-      "ru": "Каков будет результат этого кода?\n```js\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  };\n}\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());\n```"
+      "en": "What will this code print?\n```js\nconst nums = [10, 9, 100, 1];\nconsole.log(nums.sort().join(','));\nconsole.log([...nums].sort((a, b) => a - b).join(','));\n```",
+      "ru": "Что напечатает этот код?\n```js\nconst nums = [10, 9, 100, 1];\nconsole.log(nums.sort().join(','));\nconsole.log([...nums].sort((a, b) => a - b).join(','));\n```"
     },
     "options": {
       "en": [
-        "0, 1, 2",
-        "1, 1, 1",
-        "1, 2, 3",
-        "undefined, undefined, undefined"
+        "1,9,10,100 both times",
+        "1,10,100,9 both times, because the copy is sorted already",
+        "A TypeError, because sort() needs a comparator",
+        "1,10,100,9 and then 1,9,10,100"
       ],
       "ru": [
-        "0, 1, 2",
-        "1, 1, 1",
-        "1, 2, 3",
-        "undefined, undefined, undefined"
+        "1,9,10,100 в оба раза",
+        "1,10,100,9 в оба раза, ведь копия уже отсортирована",
+        "Выбрасывается TypeError: sort() требует компаратор",
+        "1,10,100,9, а затем 1,9,10,100"
       ]
     },
-    "correctIndex": 2,
+    "correctIndex": 3,
     "explanation": {
-      "en": "The inner function creates a closure over the count variable. Each time counter() is called, it accesses and increments the same count variable from outer's scope, so it outputs 1, 2, 3. This showcases how closures retain references to their lexical environment across multiple invocations.",
-      "ru": "Функция inner создаёт замыкание над переменной count. При каждом вызове counter() она обращается и увеличивает одну и ту же переменную count из области видимости outer, поэтому выводятся 1, 2, 3. Это демонстрирует, как замыкания сохраняют ссылки на свою лексическую среду через несколько вызовов."
+      "en": "`sort()` without a comparator turns every element into a string and compares those strings. The string '10' is smaller than '9', because the comparison starts at the first character. So the first line prints 1,10,100,9. The comparator `(a, b) => a - b` compares the numbers themselves, so the copy prints 1,9,10,100.\n\nTwo details worth keeping in mind:\n\n- `sort()` sorts in place and returns the same array, so `nums` is already in string order by the time the copy is made.\n- Since ECMAScript 2019 `sort` has to be stable: elements that compare equal keep their original order.\n\nThe answer with 1,9,10,100 twice assumes the default sort understands numbers. The answer with 1,10,100,9 twice ignores the comparator passed on the second call. Nothing is thrown, because the comparator is optional.",
+      "ru": "`sort()` без компаратора превращает каждый элемент в строку и сравнивает строки. Строка '10' меньше строки '9', потому что сравнение начинается с первого символа. Поэтому первая строка печатает 1,10,100,9. Компаратор `(a, b) => a - b` сравнивает сами числа, и копия печатает 1,9,10,100.\n\nДве детали, о которых стоит помнить:\n\n- `sort()` сортирует на месте и возвращает тот же массив, поэтому к моменту копирования `nums` уже стоит в строковом порядке.\n- Начиная с ECMAScript 2019 `sort` обязан быть устойчивым: равные при сравнении элементы сохраняют исходный порядок.\n\nОтвет с 1,9,10,100 дважды считает, что сортировка по умолчанию понимает числа. Ответ с 1,10,100,9 дважды не замечает компаратор во втором вызове. Ошибки не будет: компаратор необязателен."
     }
   },
   {
@@ -1164,27 +1164,27 @@
     "id": "javascript-quiz-47",
     "topicId": "javascript",
     "question": {
-      "en": "What does the following code output?\n```js\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  };\n}\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());\n```",
-      "ru": "Что выведет следующий код?\n```js\nfunction outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  };\n}\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());\n```"
+      "en": "What will be logged to the console?\n```js\nfunction pick() {\n  try {\n    return 'try';\n  } finally {\n    return 'finally';\n  }\n}\nfunction clean() {\n  try {\n    throw new Error('boom');\n  } finally {\n    return 'cleanup';\n  }\n}\nconsole.log(pick(), clean());\n```",
+      "ru": "Что будет выведено в консоль?\n```js\nfunction pick() {\n  try {\n    return 'try';\n  } finally {\n    return 'finally';\n  }\n}\nfunction clean() {\n  try {\n    throw new Error('boom');\n  } finally {\n    return 'cleanup';\n  }\n}\nconsole.log(pick(), clean());\n```"
     },
     "options": {
       "en": [
-        "1, 1, 1",
-        "0, 1, 2",
-        "3, 2, 1",
-        "1, 2, 3"
+        "try cleanup",
+        "finally, then the Error from clean() escapes",
+        "finally cleanup",
+        "try, then the Error from clean() escapes"
       ],
       "ru": [
-        "1, 1, 1",
-        "0, 1, 2",
-        "3, 2, 1",
-        "1, 2, 3"
+        "try cleanup",
+        "finally, затем ошибка из clean() вылетает наружу",
+        "finally cleanup",
+        "try, затем ошибка из clean() вылетает наружу"
       ]
     },
-    "correctIndex": 3,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The `inner` function forms a closure over the `count` variable. Each time `counter()` is called, it increments the same `count` variable and returns it. The closure persists the state of `count` across multiple function calls, resulting in 1, 2, 3.",
-      "ru": "Функция `inner` создает замыкание над переменной `count`. Каждый раз при вызове `counter()` она увеличивает одну и ту же переменную `count` и возвращает её. Замыкание сохраняет состояние `count` между вызовами, что дает результат 1, 2, 3."
+      "en": "A `return` inside `finally` replaces whatever the `try` block was about to do. In `pick` the `try` block prepares the value 'try', then `finally` runs and returns 'finally' instead. In `clean` the `try` block throws, but the `return` in `finally` drops the exception as well, so the call quietly returns 'cleanup'.\n\nWhy the other answers are wrong:\n\n- The answers that start with try assume the first `return` wins. `finally` always runs before the function really returns, and its own `return` overrides the pending one.\n- The answers where the Error escapes miss that a `return` in `finally` swallows an exception, not only a return value.\n\nThat is why linters warn about returning from `finally`: the error disappears without a trace.",
+      "ru": "`return` внутри `finally` отменяет то, что собирался сделать блок `try`. В `pick` блок `try` готовит значение 'try', затем срабатывает `finally` и возвращает вместо него 'finally'. В `clean` блок `try` бросает ошибку, но `return` в `finally` выбрасывает и её, поэтому вызов тихо возвращает 'cleanup'.\n\nПочему остальные ответы неверны:\n\n- Ответы, которые начинаются с try, считают, что побеждает первый `return`. Но `finally` всегда выполняется до того, как функция действительно вернёт значение, и его собственный `return` перебивает готовое.\n- Ответы, где ошибка вылетает наружу, не учитывают: `return` в `finally` съедает исключение, а не только возвращаемое значение.\n\nПоэтому линтеры и ругаются на `return` из `finally`: ошибка исчезает без следа."
     }
   },
   {

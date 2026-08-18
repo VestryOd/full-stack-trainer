@@ -138,27 +138,27 @@
     "id": "security-quiz-6",
     "topicId": "security",
     "question": {
-      "en": "What is the primary difference between Stored XSS and Reflected XSS attacks?",
-      "ru": "В чем основное различие между атаками Stored XSS и Reflected XSS?"
+      "en": "Any logged-in user can read someone else's invoice by editing the number in the URL. Which flaw is this?\n```js\n// Express route; requireLogin only checks that a session exists\napp.get('/api/invoices/:id', requireLogin, async (req, res) => {\n  const invoice = await db.invoice.findUnique({\n    where: { id: Number(req.params.id) },\n  });\n  res.json(invoice);\n});\n```",
+      "ru": "Любой вошедший пользователь читает чужой счёт, просто поправив номер в URL. Что это за уязвимость?\n```js\n// Маршрут Express; requireLogin проверяет только наличие сессии\napp.get('/api/invoices/:id', requireLogin, async (req, res) => {\n  const invoice = await db.invoice.findUnique({\n    where: { id: Number(req.params.id) },\n  });\n  res.json(invoice);\n});\n```"
     },
     "options": {
       "en": [
-        "Reflected XSS persists in the database and affects all users, while Stored XSS only affects the user who clicks a malicious link",
-        "Stored XSS persists in the database and affects all users, while Reflected XSS only affects the user who clicks a malicious link",
-        "Stored XSS requires JavaScript to be enabled, while Reflected XSS works without JavaScript",
-        "Both attack types are identical in impact; the terms are just different naming conventions"
+        "SQL injection, because the id taken from the URL reaches the database query",
+        "An insecure direct object reference: nothing checks who owns that invoice row",
+        "Cross-site request forgery, because the browser sends the session cookie along",
+        "Broken authentication, because a session cookie is not proof of identity"
       ],
       "ru": [
-        "Reflected XSS сохраняется в базе данных и влияет на всех пользователей, а Stored XSS влияет только на пользователя, нажимающего на вредоносную ссылку",
-        "Stored XSS сохраняется в базе данных и влияет на всех пользователей, а Reflected XSS влияет только на пользователя, нажимающего на вредоносную ссылку",
-        "Stored XSS требует включения JavaScript, а Reflected XSS работает без JavaScript",
-        "Оба типа атак идентичны по воздействию; термины - это просто разные соглашения об именовании"
+        "Внедрение SQL: id из URL попадает прямо в запрос к базе данных",
+        "Небезопасная прямая ссылка на объект: никто не проверяет владельца счёта",
+        "Подделка межсайтового запроса: браузер сам прикладывает cookie сессии",
+        "Сломанная аутентификация: cookie сессии не доказывает, кто именно её прислал"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Stored XSS saves malicious code in a database, affecting every user who retrieves that data, making it more dangerous. Reflected XSS is only sent back to the user who triggered it, typically through a crafted URL. The persistence in storage is the key differentiator.",
-      "ru": "Stored XSS сохраняет вредоносный код в базе данных, влияя на каждого пользователя, который получает эти данные, что делает его более опасным. Reflected XSS отправляется только пользователю, который его вызвал, обычно через специально созданный URL. Сохранение в хранилище - это ключевое различие."
+      "en": "The route checks that somebody is logged in and never checks that the invoice belongs to that person. This is an insecure direct object reference, usually shortened to IDOR: the id in the URL points straight at a stored row, and the ownership check is missing. Scope the query instead, for example `where: { id, ownerId: req.session.userId }`, and answer 404 when nothing matches.\n\nThis is not SQL injection, where SQL is the structured query language of the database: the id is passed as a value, and `Number()` leaves nothing to inject. It is not cross-site request forgery either, because the attacker is a real logged-in user sending a normal request from the site itself. Authentication works here; what fails is authorization, the step that decides which rows this user may see. Random ids only make guessing harder, so they are no substitute for that check.",
+      "ru": "Маршрут проверяет, что кто-то вошёл, и совсем не проверяет, что счёт принадлежит именно ему. Это небезопасная прямая ссылка на объект, по-английски insecure direct object reference (IDOR): id из URL указывает прямо на строку в базе, а проверки владельца нет. Правильно сузить запрос, например `where: { id, ownerId: req.session.userId }`, и отвечать 404, когда ничего не нашлось.\n\nВнедрения SQL (язык запросов к базе данных) тут нет: id передан значением, а `Number()` не оставляет места для вставки. Подделки межсайтового запроса тоже нет: атакующий — настоящий вошедший пользователь, и запрос он делает с самого сайта. Аутентификация работает, ломается авторизация — шаг, который решает, какие строки этому пользователю можно видеть. Случайные id лишь усложняют подбор и такую проверку не заменяют."
     }
   },
   {

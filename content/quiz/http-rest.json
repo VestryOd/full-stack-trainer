@@ -138,27 +138,27 @@
     "id": "http-rest-quiz-6",
     "topicId": "http-rest",
     "question": {
-      "en": "Which HTTP method is both safe and idempotent, meaning multiple identical requests produce the same result as a single request without side effects?",
-      "ru": "Какой HTTP метод является одновременно безопасным и идемпотентным, то есть несколько идентичных запросов дают такой же результат, как один запрос, без побочных эффектов?"
+      "en": "One URL returns either JSON or CSV (comma-separated values, a plain-text table), depending on `Accept`. A shared proxy cached the JSON answer, and the next client asked for CSV but received that JSON body. Which response header was missing?\n```http\nGET /api/report/42 HTTP/1.1\nAccept: text/csv\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nCache-Control: max-age=3600\n```",
+      "ru": "Один URL отдаёт то JSON, то CSV (comma-separated values — текстовая таблица), в зависимости от заголовка `Accept`. Общий прокси-кэш сохранил ответ в JSON, а следующий клиент попросил CSV и получил то же тело в JSON. Какого заголовка не хватило в ответе?\n```http\nGET /api/report/42 HTTP/1.1\nAccept: text/csv\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nCache-Control: max-age=3600\n```"
     },
     "options": {
       "en": [
-        "POST",
-        "GET",
-        "PUT",
-        "DELETE"
+        "`Content-Type: text/csv`, which tells the cache which body it is holding",
+        "`Vary: Accept`, so the cache keys the entry by the request's `Accept` header",
+        "`Accept: text/csv` repeated in the response, so the cache can compare the two",
+        "`Cache-Control: private`, the only correct way to serve negotiated content"
       ],
       "ru": [
-        "POST",
-        "GET",
-        "PUT",
-        "DELETE"
+        "`Content-Type: text/csv` — так кэш узнает, какое тело он у себя держит",
+        "`Vary: Accept` — тогда кэш добавит в ключ записи заголовок `Accept` из запроса",
+        "`Accept: text/csv`, повторённый в ответе, чтобы кэш мог сравнить два заголовка",
+        "`Cache-Control: private` — единственный верный способ отдавать разные представления"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "GET is safe (no side effects) and idempotent (multiple identical requests return the same data). POST is not idempotent (each call creates new resources), PUT is idempotent but not safe (it modifies state), and DELETE is idempotent but not safe (it modifies state).",
-      "ru": "GET является безопасным (без побочных эффектов) и идемпотентным (несколько одинаковых запросов возвращают одинаковые данные). POST не идемпотентен (каждый вызов создает новые ресурсы), PUT идемпотентен, но не безопасен (он изменяет состояние), и DELETE идемпотентен, но не безопасен (он изменяет состояние)."
+      "en": "`Vary: Accept` tells every cache that the response depends on the request's `Accept` header. A stored entry may then be reused only for a request whose `Accept` matches. Without it the cache uses the URL alone as its key, so the first stored representation goes to everyone. That is the contract of content negotiation: the client says what it can read, the server picks one representation and states what it varied on.\n\n`Content-Type` describes the body but is not part of the cache key. `Accept` is a request header, and repeating it in a response means nothing to a cache. `Cache-Control: private` does hide the problem by keeping the shared proxy out, but it also throws away shared caching.",
+      "ru": "Заголовок `Vary: Accept` сообщает всем кэшам, что ответ зависит от заголовка `Accept` в запросе. После этого сохранённую запись можно переиспользовать только для запроса с тем же `Accept`. Без него ключом записи остаётся один URL, и первое сохранённое представление достаётся всем. В этом и договор согласования содержимого: клиент говорит, что умеет читать, сервер выбирает представление и объявляет, от чего оно зависело.\n\n`Content-Type` описывает тело, но в ключ кэша не входит. `Accept` — заголовок запроса, и в ответе он кэшу ни о чём не говорит. А `Cache-Control: private` действительно убирает симптом, выгоняя общий прокси, но вместе с ним теряется и общее кэширование."
     }
   },
   {

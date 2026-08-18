@@ -381,27 +381,27 @@
     "id": "nestjs-quiz-16",
     "topicId": "nestjs",
     "question": {
-      "en": "What is the primary difference between Guards and Interceptors in NestJS?\n\n```typescript\n@UseGuards(AuthGuard)\n@UseInterceptors(LoggingInterceptor)\nexport class UserController {}\n```",
-      "ru": "В чем заключается основное различие между Guards и Interceptors в NestJS?\n\n```typescript\n@UseGuards(AuthGuard)\n@UseInterceptors(LoggingInterceptor)\nexport class UserController {}\n```"
+      "en": "Two providers need each other, and Nest.js refuses to start: it cannot resolve the first constructor argument of `UsersService`. What is the documented fix?\n```typescript\n@Injectable()\nexport class UsersService {\n  constructor(private auth: AuthService) {}\n}\n\n@Injectable()\nexport class AuthService {\n  constructor(private users: UsersService) {}\n}\n```",
+      "ru": "Два провайдера нужны друг другу, и Nest.js не запускается: он не может разрешить первый аргумент конструктора `UsersService`. Какое решение описано в документации?\n```typescript\n@Injectable()\nexport class UsersService {\n  constructor(private auth: AuthService) {}\n}\n\n@Injectable()\nexport class AuthService {\n  constructor(private users: UsersService) {}\n}\n```"
     },
     "options": {
       "en": [
-        "Interceptors prevent unauthorized access, while Guards transform request data",
-        "Guards and Interceptors are interchangeable: both can block a request and rewrite the response",
-        "Guards decide whether a request is processed; Interceptors transform requests and responses",
-        "Interceptors execute before Guards in the request lifecycle"
+        "Mark both classes `@Global()` so the injector can reach them from anywhere",
+        "List each provider twice in `providers`, ordered so the dependency comes first",
+        "Wrap the type on both sides: `@Inject(forwardRef(() => AuthService))` and back",
+        "Give both providers `scope: Scope.REQUEST`, which delays building them per request"
       ],
       "ru": [
-        "Interceptors предотвращают несанкционированный доступ, а Guards трансформируют данные запроса",
-        "Guards и Interceptors взаимозаменяемы: оба могут заблокировать запрос и переписать ответ",
-        "Guards решают, обрабатывать ли запрос; Interceptors преобразуют запросы и ответы",
-        "Interceptors выполняются до Guards в жизненном цикле запроса"
+        "Пометить оба класса декоратором `@Global()`, чтобы инжектор доставал их откуда угодно",
+        "Указать каждый провайдер в `providers` дважды, поставив зависимость первой",
+        "Обернуть тип с обеих сторон: `@Inject(forwardRef(() => AuthService))` и наоборот",
+        "Задать обоим провайдерам `scope: Scope.REQUEST`: тогда они создаются на запрос"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Guards are responsible for authorization—they decide whether a request proceeds based on conditions. Interceptors wrap request/response handling and are used for logging, transformation, and other cross-cutting concerns. This is a fundamental architectural difference in NestJS request processing.",
-      "ru": "Guards отвечают за авторизацию—они решают, должен ли запрос продолжаться на основе условий. Interceptors оборачивают обработку запроса/ответа и используются для логирования, трансформации и других cross-cutting concerns. Это фундаментальное архитектурное различие в обработке запросов NestJS."
+      "en": "Nest.js builds providers in dependency order, and two providers that name each other leave no order to build in. `forwardRef` breaks that deadlock: it delays reading the type until the injector is ready, and it must be applied on both sides. `UsersService` gets `@Inject(forwardRef(() => AuthService))`, `AuthService` gets the mirror image. Modules use the same tool: `imports: [forwardRef(() => AuthModule)]`.\n\n`@Global()` only changes where a module's exports are visible, not the build order. Listing a provider twice changes nothing, because providers are keyed by token. A request scope does not help either, because the cycle is in the construction graph, not in the lifetime.\n\nA cycle is also a design signal. Moving the shared code into a third provider that both depend on removes the need for `forwardRef`.",
+      "ru": "Nest.js создаёт провайдеров в порядке зависимостей, а два провайдера, которые называют друг друга, такого порядка не оставляют. `forwardRef` разрывает этот клинч: он откладывает чтение типа до момента, когда инжектор готов. Применять его надо с обеих сторон: в `UsersService` пишем `@Inject(forwardRef(() => AuthService))`, в `AuthService` — зеркальное. Для модулей инструмент тот же: `imports: [forwardRef(() => AuthModule)]`.\n\n`@Global()` меняет только видимость экспортов модуля, а не порядок создания. Указать провайдер дважды бесполезно: провайдеры различаются по токену. Область запроса тоже не спасёт, потому что цикл в графе создания, а не во времени жизни.\n\nЦикл — ещё и сигнал о дизайне. Если вынести общий код в третий провайдер, от которого зависят оба, `forwardRef` не понадобится."
     }
   },
   {

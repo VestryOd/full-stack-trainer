@@ -408,27 +408,27 @@
     "id": "nodejs-quiz-16",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of Node.js event loop phases?\n```js\n// Which phase executes first after the call stack is empty?\n```",
-      "ru": "Какой правильный порядок фаз event loop в Node.js?\n```js\n// Какая фаза выполняется первой после очистки call stack?\n```"
+      "en": "What will be logged?\n```js\nconst fields = ['heapTotal', 'heapUsed', 'external', 'arrayBuffers'];\nconst before = process.memoryUsage();\n\nconst big = Buffer.alloc(50 * 1024 * 1024);\nconst after = process.memoryUsage();\n\nconst grown = fields.filter((f) => after[f] - before[f] > 40 * 1024 * 1024);\nconsole.log(grown.join(', '), big.length);\n```",
+      "ru": "Что будет выведено?\n```js\nconst fields = ['heapTotal', 'heapUsed', 'external', 'arrayBuffers'];\nconst before = process.memoryUsage();\n\nconst big = Buffer.alloc(50 * 1024 * 1024);\nconst after = process.memoryUsage();\n\nconst grown = fields.filter((f) => after[f] - before[f] > 40 * 1024 * 1024);\nconsole.log(grown.join(', '), big.length);\n```"
     },
     "options": {
       "en": [
-        "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
-        "pending callbacks → timers → poll → idle/prepare → check → close callbacks",
-        "idle/prepare → poll → timers → pending callbacks → check → close callbacks",
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
+        "heapTotal, heapUsed 52428800 — the bytes sit on the V8 heap",
+        "heapUsed, external 52428800 — the bytes are counted in two fields",
+        "external, arrayBuffers 52428800 — the V8 heap barely changes",
+        "heapTotal, heapUsed, external, arrayBuffers 52428800 — all four grow"
       ],
       "ru": [
-        "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
-        "pending callbacks → timers → poll → idle/prepare → check → close callbacks",
-        "idle/prepare → poll → timers → pending callbacks → check → close callbacks",
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
+        "heapTotal, heapUsed 52428800 — байты лежат в куче V8",
+        "heapUsed, external 52428800 — байты посчитаны сразу в двух полях",
+        "external, arrayBuffers 52428800 — куча V8 почти не меняется",
+        "heapTotal, heapUsed, external, arrayBuffers 52428800 — растут все четыре"
       ]
     },
-    "correctIndex": 3,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The event loop always starts with the timers phase to check if any setTimeout/setInterval callbacks are ready, followed by pending callbacks for deferred I/O operations. The poll phase is where most I/O occurs, check phase handles setImmediate callbacks, and close callbacks execute last. Understanding this sequence is critical for predicting callback execution order.",
-      "ru": "Event loop всегда начинает с фазы timers для проверки готовых setTimeout/setInterval обратных вызовов, затем идёт фаза pending callbacks для отложенных I/O операций. Фаза poll — это где происходит большинство I/O операций, фаза check обрабатывает setImmediate обратные вызовы, а close callbacks выполняются в последнюю очередь. Понимание этой последовательности критично для предсказания порядка выполнения обратных вызовов."
+      "en": "A `Buffer` is allocated outside the V8 JavaScript heap, so its 50 MB show up in `external` and in `arrayBuffers`. `arrayBuffers` is the part of `external` that belongs to `ArrayBuffer` objects, and every `Buffer` is backed by one, so the two move together. On the heap only a small wrapper object appears, far below the 40 MB threshold in the filter.\n\nThe other counters answer different questions. `heapTotal` is how much memory V8 has reserved for JavaScript objects, and `heapUsed` is how much of that is occupied right now. `rss` (resident set size) is the total amount the operating system currently keeps in physical memory for this process. It covers the heap, the buffers, the code and the stacks at once. That makes `rss` the number to compare against a container limit, and the wrong number for finding which allocation grew.\n\nThe variant naming `heapTotal, heapUsed` puts the payload on the V8 heap. The variant with `heapUsed, external` splits the same bytes between the heap and the outside. The variant naming all four counts one buffer in every field at once.",
+      "ru": "`Buffer` выделяется вне JavaScript-кучи V8, поэтому его 50 МБ видны в `external` и в `arrayBuffers`. `arrayBuffers` — это та часть `external`, которая принадлежит объектам `ArrayBuffer`, а под каждым `Buffer` лежит именно такой объект, поэтому оба поля растут вместе. В куче появляется только небольшая обёртка, далеко ниже порога 40 МБ из фильтра.\n\nОстальные счётчики отвечают на другие вопросы. `heapTotal` — сколько памяти V8 зарезервировал под объекты JavaScript, а `heapUsed` — сколько из этого занято сейчас. `rss` (resident set size — размер резидентного набора) — весь объём, который операционная система держит для процесса в физической памяти. Он покрывает и кучу, и буферы, и код, и стеки сразу. Поэтому `rss` сравнивают с лимитом контейнера, но по нему нельзя понять, какое именно выделение выросло.\n\nВариант с `heapTotal, heapUsed` помещает полезные данные в кучу V8. Вариант с `heapUsed, external` делит те же байты между кучей и внешней памятью. Вариант со всеми четырьмя полями считает один буфер сразу везде."
     }
   },
   {
@@ -678,27 +678,27 @@
     "id": "nodejs-quiz-27",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be logged to the console?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nPromise.resolve().then(() => console.log('3'));\nsetImmediate(() => console.log('4'));\nconsole.log('5');\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nPromise.resolve().then(() => console.log('3'));\nsetImmediate(() => console.log('4'));\nconsole.log('5');\n```"
+      "en": "Two requests are handled at the same time. What will be logged?\n```js\nconst { AsyncLocalStorage } = require('node:async_hooks');\nconst store = new AsyncLocalStorage();\nlet currentId = null;\n\nasync function handle(id) {\n  currentId = id;\n  await new Promise((resolve) => setTimeout(resolve, id === 'a' ? 30 : 5));\n  console.log('module var:', currentId, '| store:', store.getStore());\n}\n\nstore.run('a', () => handle('a'));\nstore.run('b', () => handle('b'));\n```",
+      "ru": "Два запроса обрабатываются одновременно. Что будет выведено?\n```js\nconst { AsyncLocalStorage } = require('node:async_hooks');\nconst store = new AsyncLocalStorage();\nlet currentId = null;\n\nasync function handle(id) {\n  currentId = id;\n  await new Promise((resolve) => setTimeout(resolve, id === 'a' ? 30 : 5));\n  console.log('module var:', currentId, '| store:', store.getStore());\n}\n\nstore.run('a', () => handle('a'));\nstore.run('b', () => handle('b'));\n```"
     },
     "options": {
       "en": [
-        "1, 2, 3, 4, 5",
-        "1, 5, 2, 3, 4",
-        "1, 5, 3, 2, 4",
-        "1, 5, 2, 4, 3"
+        "module var: a | store: a, then module var: b | store: b — both lines correct",
+        "module var: b | store: b, then module var: b | store: a — only the store survives",
+        "module var: b | store: b, then module var: b | store: b — the store copies the variable",
+        "module var: b | store: a, then module var: b | store: b — the store is one step behind"
       ],
       "ru": [
-        "1, 2, 3, 4, 5",
-        "1, 5, 2, 3, 4",
-        "1, 5, 3, 2, 4",
-        "1, 5, 2, 4, 3"
+        "module var: a | store: a, затем module var: b | store: b — обе строки верны",
+        "module var: b | store: b, затем module var: b | store: a — уцелело только хранилище",
+        "module var: b | store: b, затем module var: b | store: b — хранилище копирует переменную",
+        "module var: b | store: a, затем module var: b | store: b — хранилище отстаёт на шаг"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Synchronous code executes first (1, 5), then the microtask queue (process.nextTick → 2, Promises → 3), and finally macrotasks (setImmediate → 4). process.nextTick has higher priority than Promises in the microtask queue, so it runs before Promise.then(). This demonstrates the critical distinction between microtasks and macrotasks.",
-      "ru": "Синхронный код выполняется первым (1, 5), затем очередь микротасков (process.nextTick → 2, Promises → 3), и наконец макротаски (setImmediate → 4). process.nextTick имеет более высокий приоритет, чем Promises в микротаск очереди, поэтому он выполняется перед Promise.then(). Это демонстрирует критическое различие между микротасками и макротасками."
+      "en": "A variable at module level is shared by every request, so the last assignment wins. AsyncLocalStorage keeps a separate value for each chain of asynchronous calls. It comes from the built-in `node:async_hooks` module.\n\n`handle('b')` waits 5 ms and prints first. By then `currentId` already holds `'b'`: the second call overwrote it while the first one was waiting. `handle('a')` wakes up 30 ms later and reads the same `'b'`, so its own request id is gone. `store.getStore()` still answers `'a'` there, because that call chain started inside `store.run('a', ...)`.\n\nThe variant where each line prints its own letter treats a module variable as safe under concurrency. The variant with `store: b` in both lines makes the store just another global. The variant that shows `store: a` first would need the slow request to print before the fast one.",
+      "ru": "Переменная уровня модуля одна на все запросы, поэтому в ней остаётся последнее присвоенное значение. AsyncLocalStorage хранит отдельное значение для каждой цепочки асинхронных вызовов. Класс лежит во встроенном модуле `node:async_hooks`.\n\n`handle('b')` ждёт 5 мс и печатает первым. К этому моменту в `currentId` уже лежит `'b'`: второй вызов перезаписал переменную, пока первый ждал. `handle('a')` просыпается через 30 мс и читает то же `'b'` — свой идентификатор запроса потерян. А `store.getStore()` там по-прежнему отдаёт `'a'`, потому что эта цепочка вызовов началась внутри `store.run('a', ...)`.\n\nВариант, где в каждой строке своя буква, считает переменную модуля безопасной при параллельных запросах. Вариант с `store: b` в обеих строках превращает хранилище в ещё одну глобальную переменную. Вариант, где сначала показано `store: a`, потребовал бы, чтобы медленный запрос напечатался раньше быстрого."
     }
   },
   {
@@ -759,27 +759,27 @@
     "id": "nodejs-quiz-31",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of execution for the following code?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```",
-      "ru": "Какой порядок выполнения для следующего кода?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```"
+      "en": "What will be logged?\n```js\nconst { Writable } = require('node:stream');\n\nconst slow = new Writable({\n  highWaterMark: 8,\n  write(chunk, encoding, callback) { setTimeout(callback, 10); },\n});\n\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.writableLength);\n```",
+      "ru": "Что будет выведено?\n```js\nconst { Writable } = require('node:stream');\n\nconst slow = new Writable({\n  highWaterMark: 8,\n  write(chunk, encoding, callback) { setTimeout(callback, 10); },\n});\n\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.writableLength);\n```"
     },
     "options": {
       "en": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 4, 3"
+        "true, false, 12 — the second chunk is buffered in memory anyway",
+        "true, false, 6 — the second chunk waits outside until 'drain' fires",
+        "true, true, 12 — write() answers false only when a write fails",
+        "true, false, 0 — writableLength counts only chunks still unwritten"
       ],
       "ru": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 4, 3"
+        "true, false, 12 — второй чанк всё равно ложится в буфер в памяти",
+        "true, false, 6 — второй чанк ждёт снаружи до события 'drain'",
+        "true, true, 12 — write() отвечает false только при ошибке записи",
+        "true, false, 0 — writableLength считает только незаписанные чанки"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code executes first (1, 4), then process.nextTick callbacks (2) execute in the nextTick phase before the check phase, and finally setImmediate (3) executes in the check phase. process.nextTick has higher priority than setImmediate within the event loop.",
-      "ru": "Синхронный код выполняется первым (1, 4), затем обратные вызовы process.nextTick (2) выполняются на фазе nextTick перед фазой check, и наконец setImmediate (3) выполняется на фазе check. process.nextTick имеет более высокий приоритет, чем setImmediate в цикле событий."
+      "en": "`false` from `write()` means the queue has grown past `highWaterMark`, not that a chunk was refused. Both chunks are accepted, so the last line prints 12. `writableLength` counts every byte the stream has not confirmed yet, including the one currently inside `write`.\n\nThe first call returns `true`, because 6 bytes are still below the mark of 8. The second call brings the total to 12 and returns `false`. That is a request: stop writing and wait for the `'drain'` event.\n\nIgnoring `false` costs memory, not data. Nothing is lost, but the queue keeps growing, and a fast producer against a slow socket can drive the process into an out-of-memory crash. The variant with 6 assumes the extra chunk stayed outside the stream. The variant with two `true` values expects `false` on failure — failures arrive through the `'error'` event. The variant with 0 assumes the counter drops before the write callback runs.",
+      "ru": "`false` из `write()` значит, что очередь переросла `highWaterMark`, а не что чанк отвергнут. Оба чанка приняты, поэтому последняя строка печатает 12. `writableLength` считает все байты, которые поток ещё не подтвердил, включая тот, что прямо сейчас находится в `write`.\n\nПервый вызов возвращает `true`: 6 байт всё ещё ниже порога 8. Второй доводит сумму до 12 и возвращает `false`. Это просьба: перестать писать и дождаться события `'drain'`.\n\nИгнорировать `false` стоит памяти, а не данных. Ничего не теряется, но очередь растёт, и быстрый источник на медленном сокете способен довести процесс до падения из-за нехватки памяти. Вариант с 6 предполагает, что лишний чанк остался снаружи потока. Вариант с двумя `true` ждёт `false` при ошибке — ошибки приходят событием `'error'`. Вариант с 0 считает, что счётчик обнуляется раньше, чем сработает колбэк записи."
     }
   },
   {
@@ -813,27 +813,27 @@
     "id": "nodejs-quiz-33",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the key difference between the cluster module and worker_threads in Node.js?",
-      "ru": "В чём ключевое различие между модулем cluster и worker_threads в Node.js?"
+      "en": "The project holds two copies of `token-lib` at the same version: one in the root `node_modules`, one in `sub/node_modules`. What will be logged?\n```js\n// token-lib/index.js, identical in both copies:\n//   module.exports = { Token: class Token {} };\n// sub/user.js:\n//   const { Token } = require('token-lib');\n//   module.exports = { make: () => new Token() };\nconst { Token } = require('token-lib');\nconst { make } = require('./sub/user.js');\n\nconsole.log(make() instanceof Token);\nconsole.log(Object.keys(require.cache).filter((p) => p.includes('token-lib')).length);\n```",
+      "ru": "В проекте лежат две копии `token-lib` одной и той же версии: одна в корневом `node_modules`, вторая в `sub/node_modules`. Что будет выведено?\n```js\n// token-lib/index.js, identical in both copies:\n//   module.exports = { Token: class Token {} };\n// sub/user.js:\n//   const { Token } = require('token-lib');\n//   module.exports = { make: () => new Token() };\nconst { Token } = require('token-lib');\nconst { make } = require('./sub/user.js');\n\nconsole.log(make() instanceof Token);\nconsole.log(Object.keys(require.cache).filter((p) => p.includes('token-lib')).length);\n```"
     },
     "options": {
       "en": [
-        "Worker_threads are only for CPU-intensive tasks, while cluster is for I/O operations",
-        "Cluster is deprecated and should not be used in new projects",
-        "Cluster uses separate processes; worker_threads share one V8 instance and memory",
-        "Worker_threads automatically distribute load across CPU cores, while cluster requires manual distribution"
+        "true, 1 — one copy is reused, because the two versions are equal",
+        "true, 2 — two cache entries, but they share a single Token class",
+        "false, 1 — the second require() replaces the first entry",
+        "false, 2 — each resolved file path is its own module instance"
       ],
       "ru": [
-        "Worker_threads предназначены только для CPU-интенсивных задач, а cluster для операций ввода-вывода",
-        "Cluster устарел и не должен использоваться в новых проектах",
-        "Cluster использует отдельные процессы; worker_threads делят один V8 и память",
-        "Worker_threads автоматически распределяют нагрузку между ядрами CPU, а cluster требует ручного распределения"
+        "true, 1 — используется одна копия, ведь версии полностью совпадают",
+        "true, 2 — записей в кэше две, но класс Token у них общий",
+        "false, 1 — второй require() заменяет запись первого",
+        "false, 2 — каждый разрешённый путь даёт свой экземпляр модуля"
       ]
     },
-    "correctIndex": 2,
+    "correctIndex": 3,
     "explanation": {
-      "en": "Cluster creates separate Node.js processes, each with its own V8 instance and memory, communicating via IPC. Worker_threads run within the same process and share memory through SharedArrayBuffer, making them lighter but requiring careful synchronization. Both are useful but for different scenarios.",
-      "ru": "Cluster создаёт отдельные процессы Node.js, каждый с собственным экземпляром V8 и памятью, общающиеся через IPC. Worker_threads запускаются в одном процессе и делят память через SharedArrayBuffer, что делает их легче, но требует тщательной синхронизации. Оба полезны, но для разных сценариев."
+      "en": "`require.cache` is keyed by the resolved absolute file path, and the two copies sit at two different paths. So the module body runs twice, there are two distinct `Token` classes, and an object built by one is not an `instanceof` the other.\n\n`sub/user.js` resolves `token-lib` starting from its own folder, finds `sub/node_modules` and never looks at the root copy. Both entries then stay in `require.cache` for the whole life of the process. That doubles whatever the module keeps inside: its configuration, its connection pool, its counters. The same trap breaks `instanceof` checks on custom error classes and quietly turns one singleton into two.\n\nBoth variants with `1` expect the resolver to merge equal versions. It compares paths, not versions. Removing a duplicate is the package manager's job, and it can only hoist a copy when the dependency tree allows it. The variant with `true, 2` assumes two entries can share one class object, but each entry has its own.",
+      "ru": "Ключ в `require.cache` — это разрешённый абсолютный путь к файлу, а две копии лежат по двум разным путям. Поэтому тело модуля выполняется дважды, классов `Token` получается два, и объект, созданный одним из них, не проходит проверку `instanceof` для другого.\n\n`sub/user.js` ищет `token-lib`, начиная со своей папки, находит `sub/node_modules` и до корневой копии не доходит. Обе записи потом живут в `require.cache` до конца работы процесса, а значит удваивается всё, что модуль держит внутри: настройки, пул соединений, счётчики. Та же ловушка ломает проверки `instanceof` для своих классов ошибок и тихо превращает один синглтон в два.\n\nОба варианта с `1` ждут, что загрузчик сольёт одинаковые версии. Он сравнивает пути, а не версии: убирать дубликат — работа менеджера пакетов, и поднять копию наверх он может только там, где это позволяет дерево зависимостей. Вариант с `true, 2` считает, что две записи делят один класс, но у каждой записи он свой."
     }
   },
   {
@@ -894,27 +894,27 @@
     "id": "nodejs-quiz-36",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of Node.js event loop phases?\n```js\n// Which phase executes setTimeout callbacks?\n```",
-      "ru": "Какой правильный порядок фаз цикла событий Node.js?\n```js\n// В какой фазе выполняются callbacks setTimeout?\n```"
+      "en": "A request has been running for one second when the orchestrator sends SIGTERM, the signal that asks a process to shut down. What happens?\n```js\nconst http = require('node:http');\n\nconst server = http.createServer((req, res) => {\n  setTimeout(() => res.end('slow answer'), 5000);\n});\nserver.listen(3100);\n\nprocess.on('SIGTERM', () => {\n  server.close(() => console.log('closed'));\n});\n```",
+      "ru": "Запрос обрабатывается уже секунду, и в этот момент оркестратор присылает SIGTERM — сигнал с просьбой завершиться. Что произойдёт?\n```js\nconst http = require('node:http');\n\nconst server = http.createServer((req, res) => {\n  setTimeout(() => res.end('slow answer'), 5000);\n});\nserver.listen(3100);\n\nprocess.on('SIGTERM', () => {\n  server.close(() => console.log('closed'));\n});\n```"
     },
     "options": {
       "en": [
-        "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
-        "check → timers → pending callbacks → poll → idle/prepare → close callbacks"
+        "The open socket is cut at once and closed is printed right away",
+        "The client still receives slow answer, then closed prints and Node exits",
+        "Fresh requests keep arriving on the sockets that are already open",
+        "Node first waits out the keep-alive timeout of every idle socket, then closes"
       ],
       "ru": [
-        "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
-        "check → timers → pending callbacks → poll → idle/prepare → close callbacks"
+        "Открытый сокет обрывается сразу, и closed печатается тут же",
+        "Клиент всё же получит slow answer, затем печатается closed и Node выйдет",
+        "Новые запросы продолжают приходить по уже открытым сокетам",
+        "Node сначала выждет таймаут keep-alive у каждого простаивающего сокета, потом закроется"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "The event loop processes phases in this exact order: timers (setTimeout/setInterval) → pending callbacks → idle/prepare → poll → check (setImmediate) → close callbacks. setTimeout callbacks are executed in the timers phase, which comes first.",
-      "ru": "Цикл событий обрабатывает фазы в точном порядке: timers (setTimeout/setInterval) → pending callbacks → idle/prepare → poll → check (setImmediate) → close callbacks. Callbacks setTimeout выполняются в фазе timers, которая идёт первой."
+      "en": "`server.close()` stops the listener and does not touch the request in flight. That socket keeps its response, so the client gets `slow answer` about four seconds later. The callback given to `close()` runs when the last connection is gone. After that nothing holds the event loop open and the process exits on its own.\n\nIdle keep-alive connections are closed by `close()` as well: those that are neither sending a request nor waiting for a response. When you need to be harsher, Node.js has `server.closeIdleConnections()` and `server.closeAllConnections()`, both added in version 18.2. The second one does cut requests in flight.\n\nThe variant with an immediate cut describes `closeAllConnections()`. The variant with fresh requests forgets that the listening socket closes first, so new connections are refused. The variant about waiting out keep-alive timeouts was true before Node.js 19. Until then `close()` left idle sockets alone, and shutdown could stall for the whole `server.keepAliveTimeout`.",
+      "ru": "`server.close()` закрывает слушающий сокет и не трогает запрос, который уже обрабатывается. Этот сокет доживёт до ответа, поэтому клиент получит `slow answer` примерно через четыре секунды. Колбэк, переданный в `close()`, вызывается, когда закрылось последнее соединение. Дальше цикл событий держать нечем, и процесс завершается сам.\n\nПростаивающие соединения keep-alive `close()` тоже закрывает: те, которые не передают запрос и не ждут ответа. Если нужно жёстче, у Node.js есть `server.closeIdleConnections()` и `server.closeAllConnections()`, оба появились в версии 18.2. Второй как раз обрывает запросы в работе.\n\nВариант с мгновенным обрывом описывает `closeAllConnections()`. Вариант с новыми запросами забывает, что слушающий сокет закрывается первым и новые соединения не принимаются. Вариант про ожидание таймаутов keep-alive был верен до Node.js 19: до этой версии `close()` не трогал простаивающие сокеты, и завершение могло встать на весь `server.keepAliveTimeout`."
     }
   },
   {
@@ -975,27 +975,27 @@
     "id": "nodejs-quiz-42",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be the output of this code?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```",
-      "ru": "Каков будет результат выполнения этого кода?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```"
+      "en": "What does this program do on Node.js 24?\n```js\nconst failing = Promise.reject(new Error('boom'));\n\nsetTimeout(() => {\n  failing.catch(() => console.log('caught later'));\n}, 10);\n\nconsole.log('scheduled');\n```",
+      "ru": "Что сделает эта программа на Node.js 24?\n```js\nconst failing = Promise.reject(new Error('boom'));\n\nsetTimeout(() => {\n  failing.catch(() => console.log('caught later'));\n}, 10);\n\nconsole.log('scheduled');\n```"
     },
     "options": {
       "en": [
-        "1 4 2 3",
-        "1 2 3 4",
-        "1 3 2 4",
-        "2 1 4 3"
+        "Prints scheduled, then dies on the rejection with exit code 1",
+        "Prints scheduled, warns about the rejection, then prints caught later",
+        "Prints scheduled and caught later: the late catch works",
+        "Prints scheduled, ignores the rejection and keeps running to the end"
       ],
       "ru": [
-        "1 4 2 3",
-        "1 2 3 4",
-        "1 3 2 4",
-        "2 1 4 3"
+        "Печатает scheduled, затем падает из-за отказа с кодом выхода 1",
+        "Печатает scheduled, предупреждает об отказе, затем печатает caught later",
+        "Печатает scheduled и caught later: поздний catch работает",
+        "Печатает scheduled, не замечает отказ и спокойно доходит до конца"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code (1, 4) executes first. Then process.nextTick (2) runs because it executes before any I/O or timers in the next phase. Finally, setImmediate (3) runs during the check phase of the event loop. process.nextTick has higher priority than setImmediate.",
-      "ru": "Синхронный код (1, 4) выполняется первым. Затем process.nextTick (2) выполняется, потому что он запускается перед любым I/O или таймерами на следующей фазе. Наконец, setImmediate (3) запускается на фазе check цикла событий. process.nextTick имеет более высокий приоритет, чем setImmediate."
+      "en": "Since Node.js 15 an unhandled rejection is fatal by default. The `--unhandled-rejections` flag defaults to `throw`. A promise still rejected with no handler at the end of the current turn is raised as an uncaught exception. Node prints the stack and exits with code 1, so the timer never fires.\n\nThe `.catch()` scheduled 10 ms later is too late. The verdict is passed at the end of the turn in which the rejection happened. To keep the process alive, register `process.on('unhandledRejection', handler)` — with a listener in place Node calls it instead of crashing. In production that handler usually logs the reason and starts a deliberate shutdown.\n\nThe variant with a warning describes Node.js 14 and earlier, where this code printed a rejection warning and carried on. The variant where `caught later` appears assumes Node waits for a handler to show up. The variant that keeps running to the end would need the flag set to `none`.",
+      "ru": "Начиная с Node.js 15 необработанный отказ промиса по умолчанию смертелен. Флаг `--unhandled-rejections` по умолчанию стоит в значении `throw`: промис, который к концу текущего прохода так и остался отклонённым без обработчика, поднимается как неперехваченное исключение. Node печатает стек и выходит с кодом 1, поэтому таймер уже не срабатывает.\n\n`.catch()`, назначенный через 10 мс, опаздывает. Приговор выносится в конце того прохода, в котором случился отказ. Чтобы процесс выжил, подпишитесь на `process.on('unhandledRejection', handler)`: при наличии слушателя Node вызывает его вместо падения. В продакшене такой обработчик обычно пишет причину в лог и начинает управляемое завершение.\n\nВариант с предупреждением описывает Node.js 14 и раньше: там этот код печатал предупреждение об отказе и продолжал работу. Вариант, где появляется `caught later`, предполагает, что Node дождётся обработчика. Вариант, где программа спокойно доходит до конца, потребовал бы флага со значением `none`."
     }
   },
   {
@@ -1056,54 +1056,54 @@
     "id": "nodejs-quiz-46",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of Node.js event loop phases?\n```js\n// Phases execution order\n```",
-      "ru": "Какой правильный порядок фаз цикла событий Node.js?"
+      "en": "What will be logged?\n```js\nprocess.env.PORT = 8080;\nprocess.env.ENABLE_CACHE = false;\n\nconsole.log(typeof process.env.PORT, process.env.PORT === 8080);\nconsole.log(process.env.ENABLE_CACHE ? 'cache on' : 'cache off');\nconsole.log(process.env.MISSING_KEY);\n```",
+      "ru": "Что будет выведено?\n```js\nprocess.env.PORT = 8080;\nprocess.env.ENABLE_CACHE = false;\n\nconsole.log(typeof process.env.PORT, process.env.PORT === 8080);\nconsole.log(process.env.ENABLE_CACHE ? 'cache on' : 'cache off');\nconsole.log(process.env.MISSING_KEY);\n```"
     },
     "options": {
       "en": [
-        "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
-        "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "timers → poll → pending callbacks → check → idle/prepare → close callbacks",
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
+        "number true, cache off, undefined — Node keeps the type you assign",
+        "string true, cache off, undefined — the check against 8080 holds",
+        "string false, cache off, null — a missing key reads as null",
+        "string false, cache on, undefined — every value is stored as text"
       ],
       "ru": [
-        "опрос → таймеры → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие",
-        "отложенные обратные вызовы → таймеры → опрос → проверка → холостой/подготовка → закрытие",
-        "таймеры → опрос → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие",
-        "таймеры → отложенные обратные вызовы → холостой/подготовка → опрос → проверка → закрытие"
+        "number true, cache off, undefined — Node хранит тип, который вы присвоили",
+        "string true, cache off, undefined — сравнение с 8080 всё равно проходит",
+        "string false, cache off, null — незаданный ключ читается как null",
+        "string false, cache on, undefined — любое значение хранится текстом"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "The event loop executes phases in order: timers (setTimeout/setInterval), pending callbacks (system operations), idle/prepare (internal use), poll (I/O events), check (setImmediate), and close callbacks. This sequence repeats until the event loop is empty.",
-      "ru": "Цикл событий выполняет фазы по порядку: таймеры (setTimeout/setInterval), отложенные обратные вызовы (системные операции), холостой/подготовка (внутреннее использование), опрос (события ввода-вывода), проверка (setImmediate) и закрытие. Эта последовательность повторяется до тех пор, пока цикл событий не будет пуст."
+      "en": "Everything assigned to `process.env` is converted to a string. `PORT` becomes `'8080'`, so the strict comparison with the number 8080 fails, and `ENABLE_CACHE` becomes `'false'`. That string is not empty, so it is truthy: the flag meant to switch the cache off prints `cache on`. A key that was never set reads as `undefined`.\n\nThis is why configuration needs an explicit conversion step. Use `Number(process.env.PORT)` with a check for `NaN` (not a number), and compare flags as `process.env.ENABLE_CACHE === 'true'`. Schema libraries do the same job in one place and fail at startup instead of at the first request.\n\nThe variant with `number` expects `process.env` to keep the type you assigned. Both variants with `cache off` treat `'false'` as falsy, but among strings only the empty one is falsy. The variant with `null` would need `process.env` to store keys that were never set.",
+      "ru": "Всё, что присвоено в `process.env`, превращается в строку. `PORT` становится `'8080'`, поэтому строгое сравнение с числом 8080 не проходит, а `ENABLE_CACHE` становится `'false'`. Эта строка не пустая, значит она истинна: флаг, который должен был выключить кэш, печатает `cache on`. Ключ, который никто не задавал, читается как `undefined`.\n\nПоэтому конфигурации нужен отдельный шаг преобразования. Берите `Number(process.env.PORT)` с проверкой на `NaN` (not a number — не число), а флаги сравнивайте так: `process.env.ENABLE_CACHE === 'true'`. Библиотеки схем делают то же самое в одном месте и падают при старте, а не на первом запросе.\n\nВариант с `number` ждёт, что `process.env` сохранит присвоенный тип. Оба варианта с `cache off` считают `'false'` ложным значением, но из строк ложной бывает только пустая. Вариант с `null` потребовал бы, чтобы `process.env` хранил ключи, которых никто не задавал."
     }
   },
   {
     "id": "nodejs-quiz-47",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be logged?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```"
+      "en": "The target directory does not exist. What will be logged?\n```js\nconst { createReadStream, createWriteStream } = require('node:fs');\n\nconst source = createReadStream('big.bin');\nconst target = createWriteStream('/no/such/dir/out.bin');\n\nsource.pipe(target);\n\ntarget.on('error', (err) => {\n  console.log(err.code, source.destroyed);\n});\n```",
+      "ru": "Каталога назначения не существует. Что будет выведено?\n```js\nconst { createReadStream, createWriteStream } = require('node:fs');\n\nconst source = createReadStream('big.bin');\nconst target = createWriteStream('/no/such/dir/out.bin');\n\nsource.pipe(target);\n\ntarget.on('error', (err) => {\n  console.log(err.code, source.destroyed);\n});\n```"
     },
     "options": {
       "en": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 3, 4"
+        "ENOENT false — pipe() unpipes the target, the source stays open",
+        "ENOENT true — pipe() destroys the whole chain when one stream fails",
+        "ENOENT undefined — a readable stream has no destroyed property",
+        "Nothing: the write error kills the process before the listener runs"
       ],
       "ru": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 3, 4"
+        "ENOENT false — pipe() отсоединяет назначение, но источник не закрыт",
+        "ENOENT true — pipe() уничтожает всю цепочку, если падает один поток",
+        "ENOENT undefined — у потока для чтения нет свойства destroyed",
+        "Ничего: ошибка записи убивает процесс раньше, чем сработает слушатель"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code (1, 4) executes first. Then process.nextTick callbacks execute before any event loop phases (2). Finally, setImmediate runs in the check phase (3). process.nextTick has higher priority than setImmediate because it executes between event loop phases, not within a phase.",
-      "ru": "Синхронный код (1, 4) выполняется первым. Затем обратные вызовы process.nextTick выполняются перед какими-либо фазами цикла событий (2). В конце концов, setImmediate запускается на фазе проверки (3). process.nextTick имеет более высокий приоритет, чем setImmediate, потому что он выполняется между фазами, а не внутри фазы."
+      "en": "`pipe()` answers a failing destination by unpiping it, and does nothing else. The code is `ENOENT` (no such file or directory), and `source.destroyed` is still `false`. The file stays open, its descriptor is held, and the data already read has nowhere to go. In a server that repeats on every request until the process runs out of descriptors.\n\n`pipeline` from `node:stream/promises` is the fix. Replace `source.pipe(target)` with `await pipeline(source, target)` and the same check prints `ENOENT true`. `pipeline()` destroys every stream in the chain and reports the failure once, through a rejected promise.\n\nThe variant with `true` credits `pipe()` with that cleanup. The variant with `undefined` overlooks `destroyed`, a property every stream has had since Node.js 8. The variant about a killed process describes the same code without the `'error'` listener: an `'error'` event with no listener is thrown.",
+      "ru": "`pipe()` реагирует на упавшее назначение только тем, что отсоединяет его. Код ошибки — `ENOENT` (нет такого файла или каталога), а `source.destroyed` всё ещё `false`. Файл открыт, его дескриптор занят, а прочитанным данным некуда деваться. На сервере это повторяется на каждом запросе, пока в процессе не кончатся дескрипторы.\n\nЛечится это `pipeline` из `node:stream/promises`. Замените `source.pipe(target)` на `await pipeline(source, target)` — и та же проверка напечатает `ENOENT true`: `pipeline()` уничтожает все потоки цепочки и сообщает об ошибке один раз, отклонённым промисом.\n\nВариант с `true` приписывает такую уборку самому `pipe()`. Вариант с `undefined` забывает про свойство `destroyed`, которое есть у любого потока начиная с Node.js 8. Вариант про убитый процесс описывает тот же код без слушателя `'error'`: событие `'error'` без слушателя выбрасывается как исключение."
     }
   },
   {
