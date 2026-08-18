@@ -8,19 +8,19 @@
     },
     "options": {
       "en": [
-        "The query planner made a wrong choice; the index should always be used",
         "Statistics are outdated and the planner's cost estimates are inaccurate",
+        "The query planner made a wrong choice; the index should always be used",
         "The index exists but is not being used because it violates MVCC rules",
         "Sequential scans are always faster in PostgreSQL regardless of index availability"
       ],
       "ru": [
-        "Планировщик запросов сделал неправильный выбор; индекс всегда должен использоваться",
         "Статистика устарела и оценки стоимости планировщика неточны",
+        "Планировщик запросов сделал неправильный выбор; индекс всегда должен использоваться",
         "Индекс существует, но не используется, так как он нарушает правила MVCC",
         "Последовательные сканирования всегда быстрее в PostgreSQL независимо от наличия индекса"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
       "en": "When actual execution times differ significantly from estimates, it usually means the planner's statistics (from ANALYZE) are stale. Running ANALYZE updates table statistics, allowing the planner to make better cost-based decisions. Neither MVCC nor sequential scan speed rules explain this mismatch.",
       "ru": "Когда фактическое время выполнения значительно отличается от оценок, это обычно означает, что статистика планировщика (из ANALYZE) устарела. Запуск ANALYZE обновляет статистику таблицы, позволяя планировщику принимать более обоснованные решения о стоимости. Ни правила MVCC, ни скорость последовательного сканирования не объясняют это несоответствие."
@@ -63,18 +63,18 @@
     "options": {
       "en": [
         "Hash index (fastest for equality checks)",
-        "B-tree index (ordered, supports range and sort operations)",
         "GiST index (generalized search tree for complex types)",
+        "B-tree index (ordered, supports range and sort operations)",
         "BRIN index (block range index for very large tables)"
       ],
       "ru": [
         "Хеш-индекс (самый быстрый для проверок равенства)",
-        "B-tree индекс (упорядоченный, поддерживает диапазон и операции сортировки)",
         "GiST индекс (обобщенное дерево поиска для сложных типов)",
+        "B-tree индекс (упорядоченный, поддерживает диапазон и операции сортировки)",
         "BRIN индекс (индекс диапазона блоков для очень больших таблиц)"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
       "en": "B-tree is PostgreSQL's default index type and the only one that naturally maintains sort order, making it ideal for range queries (BETWEEN, <, >) and ORDER BY clauses. Hash indexes only support equality checks. GiST and BRIN are specialized for geometric/full-text data and compression respectively, not general range queries.",
       "ru": "B-tree — это индекс по умолчанию в PostgreSQL и единственный, который естественным образом сохраняет порядок сортировки, что делает его идеальным для диапазонных запросов (BETWEEN, <, >) и предложений ORDER BY. Хеш-индексы поддерживают только проверки равенства. GiST и BRIN специализированы для геометрических/полнотекстовых данных и сжатия соответственно, а не для общих диапазонных запросов."
@@ -89,19 +89,19 @@
     },
     "options": {
       "en": [
-        "VACUUM removes rows marked for deletion by transactions and reclaims disk space; MVCC creates multiple row versions so old transactions can still see committed data",
         "VACUUM encrypts old row versions; MVCC ensures only the latest version is visible",
         "VACUUM deletes entire tables; MVCC is unrelated to VACUUM operations",
-        "VACUUM moves data to archive storage; MVCC prevents all writes until VACUUM completes"
+        "VACUUM moves data to archive storage; MVCC prevents all writes until VACUUM completes",
+        "VACUUM removes rows marked for deletion by transactions and reclaims disk space; MVCC creates multiple row versions so old transactions can still see committed data"
       ],
       "ru": [
-        "VACUUM удаляет строки, помеченные для удаления транзакциями, и восстанавливает дисковое пространство; MVCC создает несколько версий строк, чтобы старые транзакции могли видеть зафиксированные данные",
         "VACUUM шифрует старые версии строк; MVCC гарантирует видимость только последней версии",
         "VACUUM удаляет целые таблицы; MVCC не связана с операциями VACUUM",
-        "VACUUM перемещает данные в архивное хранилище; MVCC предотвращает все записи до завершения VACUUM"
+        "VACUUM перемещает данные в архивное хранилище; MVCC предотвращает все записи до завершения VACUUM",
+        "VACUUM удаляет строки, помеченные для удаления транзакциями, и восстанавливает дисковое пространство; MVCC создает несколько версий строк, чтобы старые транзакции могли видеть зафиксированные данные"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "MVCC (Multi-Version Concurrency Control) allows multiple versions of rows to exist; when a row is updated or deleted, the old version is marked as dead but not immediately removed. VACUUM reclaims this space by removing dead tuples that are no longer visible to any active transaction. This is essential for preventing bloat. The other options describe non-existent or incorrect behaviors.",
       "ru": "MVCC (многоверсионное управление параллелизмом) позволяет существовать нескольким версиям строк; когда строка обновляется или удаляется, старая версия помечается как мертвая, но не удаляется немедленно. VACUUM восстанавливает это пространство, удаляя мертвые кортежи, которые больше не видны активным транзакциям. Это необходимо для предотвращения разбухания таблицы. Остальные варианты описывают несуществующее или неправильное поведение."
@@ -116,19 +116,19 @@
     },
     "options": {
       "en": [
-        "LEFT JOIN matches both tables; NULL in ON and WHERE behave identically",
         "INNER JOIN matches both tables; NULL in ON excludes non-matching rows during join, WHERE filters after",
+        "LEFT JOIN matches both tables; NULL in ON and WHERE behave identically",
         "FULL OUTER JOIN matches both tables; ON clause ignores NULLs while WHERE treats them as true",
         "CROSS JOIN matches both tables; both ON and WHERE use three-valued logic identically"
       ],
       "ru": [
-        "LEFT JOIN совпадает с обеими таблицами; NULL в ON и WHERE ведут себя одинаково",
         "INNER JOIN совпадает с обеими таблицами; NULL в ON исключает не совпадающие строки во время соединения, WHERE фильтрует после",
+        "LEFT JOIN совпадает с обеими таблицами; NULL в ON и WHERE ведут себя одинаково",
         "FULL OUTER JOIN совпадает с обеими таблицами; предложение ON игнорирует NULLs, а WHERE рассматривает их как истину",
         "CROSS JOIN совпадает с обеими таблицами; и ON, и WHERE используют трёхзначную логику одинаково"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
       "en": "INNER JOIN returns only matching rows from both tables. The ON clause is part of the join operation itself—rows where the condition is NULL or false are excluded from the join result. The WHERE clause is applied after the join and filters the already-joined result set. This distinction matters significantly for LEFT/RIGHT JOINs but is less visible with INNER JOIN.",
       "ru": "INNER JOIN возвращает только совпадающие строки из обеих таблиц. Предложение ON является частью самой операции соединения — строки, где условие равно NULL или ложь, исключаются из результата соединения. Предложение WHERE применяется после соединения и фильтрует уже объединенный результат. Это различие существенно для LEFT/RIGHT JOINs, но менее заметно при INNER JOIN."
@@ -143,19 +143,19 @@
     },
     "options": {
       "en": [
-        "PostgreSQL is loading the entire smaller table into memory to build a hash table for fast lookups",
         "PostgreSQL is using an index on the join condition, which is very efficient",
+        "PostgreSQL is loading the entire smaller table into memory to build a hash table for fast lookups",
         "PostgreSQL is performing a nested loop iteration, which is slower than merge join",
         "PostgreSQL found no suitable index and is performing a sequential scan on both tables"
       ],
       "ru": [
-        "PostgreSQL загружает всю меньшую таблицу в память для создания хеш-таблицы для быстрого поиска",
         "PostgreSQL использует индекс на условии JOIN, что очень эффективно",
+        "PostgreSQL загружает всю меньшую таблицу в память для создания хеш-таблицы для быстрого поиска",
         "PostgreSQL выполняет итерацию вложенного цикла, что медленнее, чем merge join",
         "PostgreSQL не нашёл подходящий индекс и выполняет последовательное сканирование обеих таблиц"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Hash Join loads the smaller table into a hash table in memory for efficient lookups on the join key. The high buffer size in EXPLAIN indicates the hash table construction and memory usage. This is a legitimate and often efficient join strategy when indexes aren't available or when the join condition doesn't match indexed columns.",
       "ru": "Hash Join загружает меньшую таблицу в хеш-таблицу в памяти для эффективного поиска по ключу объединения. Большой размер буфера в EXPLAIN указывает на построение хеш-таблицы и использование памяти. Это законная и часто эффективная стратегия объединения, когда индексы недоступны или когда условие объединения не совпадает с индексированными столбцами."
@@ -171,18 +171,18 @@
     "options": {
       "en": [
         "Hash index, because it distributes values uniformly",
-        "B-tree index, because it maintains sorted order and supports range scans",
         "GiST index, because it's optimized for geometric data types",
+        "B-tree index, because it maintains sorted order and supports range scans",
         "BRIN index, because it uses block range indexing for large tables"
       ],
       "ru": [
         "Hash индекс, потому что он равномерно распределяет значения",
-        "B-tree индекс, потому что он поддерживает отсортированный порядок и поддерживает сканирование диапазонов",
         "GiST индекс, потому что он оптимизирован для геометрических типов данных",
+        "B-tree индекс, потому что он поддерживает отсортированный порядок и поддерживает сканирование диапазонов",
         "BRIN индекс, потому что он использует индексирование блочного диапазона для больших таблиц"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
       "en": "B-tree indexes maintain keys in sorted order, which makes them ideal for range queries and comparison operations like BETWEEN, <, >, <=, >=. Hash indexes only support equality checks, GiST is for specialized types, and BRIN is better for very large tables with natural ordering but less efficient for precise range queries.",
       "ru": "B-tree индексы поддерживают ключи в отсортированном порядке, что делает их идеальными для диапазонных запросов и операций сравнения типа BETWEEN, <, >, <=, >=. Hash индексы поддерживают только проверки равенства, GiST предназначена для специализированных типов, а BRIN лучше для очень больших таблиц с естественным порядком, но менее эффективна для точных диапазонных запросов."
@@ -198,18 +198,18 @@
     "options": {
       "en": [
         "It locks the table exclusively to prevent concurrent access during cleanup",
-        "It reclaims storage space from deleted rows and updates table statistics for the query planner",
         "It encrypts the table data and removes unused columns from the schema",
-        "It defragments the disk and reorganizes all indexes into a single file"
+        "It defragments the disk and reorganizes all indexes into a single file",
+        "It reclaims storage space from deleted rows and updates table statistics for the query planner"
       ],
       "ru": [
         "Он исключительно блокирует таблицу, чтобы предотвратить одновременный доступ во время очистки",
-        "Он освобождает место хранения из удалённых строк и обновляет статистику таблицы для планировщика запросов",
         "Он шифрует данные таблицы и удаляет неиспользуемые столбцы из схемы",
-        "Он дефрагментирует диск и переорганизует все индексы в один файл"
+        "Он дефрагментирует диск и переорганизует все индексы в один файл",
+        "Он освобождает место хранения из удалённых строк и обновляет статистику таблицы для планировщика запросов"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 3,
     "explanation": {
       "en": "VACUUM removes dead tuples created by MVCC and reclaims disk space. ANALYZE updates optimizer statistics. Together they improve query performance and storage efficiency. Regular VACUUM doesn't require exclusive locks (unless using VACUUM FULL), and it doesn't encrypt, remove columns, or defragment the filesystem.",
       "ru": "VACUUM удаляет мёртвые кортежи, созданные MVCC, и освобождает дисковое пространство. ANALYZE обновляет статистику оптимизатора. Вместе они улучшают производительность запросов и эффективность хранения. Обычный VACUUM не требует исключительных блокировок (кроме VACUUM FULL) и не шифрует, не удаляет столбцы и не дефрагментирует файловую систему."
@@ -278,19 +278,19 @@
     },
     "options": {
       "en": [
-        "The statistics on the status column are outdated and need ANALYZE to be run",
         "PostgreSQL always underestimates sequential scans by design",
         "The table has too many columns and EXPLAIN cannot estimate correctly",
+        "The statistics on the status column are outdated and need ANALYZE to be run",
         "The query planner is broken and needs PostgreSQL to be restarted"
       ],
       "ru": [
-        "Статистика по столбцу status устарела и требует запуска ANALYZE",
         "PostgreSQL всегда недооценивает последовательные сканирования по замыслу",
         "Таблица имеет слишком много столбцов и EXPLAIN не может правильно оценить",
+        "Статистика по столбцу status устарела и требует запуска ANALYZE",
         "Планировщик запросов сломан и требует перезагрузки PostgreSQL"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Stale statistics are the primary reason for row estimate mismatches. Running ANALYZE updates table statistics and improves planner decisions. The other options are misconceptions—PostgreSQL's estimates are generally reliable, the number of columns doesn't prevent accurate estimation, and the planner is highly optimized.",
       "ru": "Устаревшая статистика—основная причина несовпадения оценок строк. Запуск ANALYZE обновляет статистику таблицы и улучшает решения планировщика. Остальные варианты—неправильные представления: оценки PostgreSQL обычно надежны, количество столбцов не препятствует точной оценке, а планировщик высоко оптимизирован."
@@ -305,19 +305,19 @@
     },
     "options": {
       "en": [
-        "The old value (before A's update), because B uses a snapshot from before A's change",
         "The new value, because updates are immediately visible to all transactions",
         "NULL, because the row is locked by A's update",
-        "A mix of old and new values depending on which one is cached"
+        "A mix of old and new values depending on which one is cached",
+        "The old value (before A's update), because B uses a snapshot from before A's change"
       ],
       "ru": [
-        "Старое значение (до обновления A), потому что B использует снимок до изменения A",
         "Новое значение, потому что обновления немедленно видны всем транзакциям",
         "NULL, потому что строка заблокирована обновлением A",
-        "Смесь старого и нового значений в зависимости от того, какое кэшировано"
+        "Смесь старого и нового значений в зависимости от того, какое кэшировано",
+        "Старое значение (до обновления A), потому что B использует снимок до изменения A"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "MVCC ensures B sees a consistent snapshot as of the moment it started, showing the old value. A's changes are invisible until A commits. This prevents dirty reads and is PostgreSQL's default behavior. Rows are not locked during updates, and caching doesn't affect snapshot consistency.",
       "ru": "MVCC гарантирует, что B видит согласованный снимок с момента его начала, показывающий старое значение. Изменения A невидимы до фиксации A. Это предотвращает грязное чтение и является поведением PostgreSQL по умолчанию. Строки не блокируются во время обновлений, и кэширование не влияет на согласованность снимка."
@@ -359,19 +359,19 @@
     },
     "options": {
       "en": [
-        "It removes dead tuples created by MVCC and reclaims disk space, preventing table bloat and transaction ID wraparound",
         "It deletes all rows marked as NULL and compresses the database file",
+        "It removes dead tuples created by MVCC and reclaims disk space, preventing table bloat and transaction ID wraparound",
         "It rebuilds all indexes to make them faster, similar to REINDEX",
         "It flushes the buffer cache to free up RAM and improve memory efficiency"
       ],
       "ru": [
-        "Он удаляет мертвые кортежи, созданные MVCC, и восстанавливает дисковое пространство, предотвращая раздувание таблицы и переполнение ID транзакции",
         "Он удаляет все строки, отмеченные как NULL, и сжимает файл базы данных",
+        "Он удаляет мертвые кортежи, созданные MVCC, и восстанавливает дисковое пространство, предотвращая раздувание таблицы и переполнение ID транзакции",
         "Он перестраивает все индексы, чтобы сделать их быстрее, аналогично REINDEX",
         "Он очищает кэш буфера, чтобы освободить ОЗУ и улучшить эффективность памяти"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "VACUUM reclaims space from dead tuples and is critical to prevent transaction ID wraparound (a catastrophic event). AUTOVACUUM runs automatically in modern PostgreSQL. The other options confuse VACUUM with other operations: NULL rows are not specially deleted, REINDEX is separate, and VACUUM doesn't directly manage the buffer cache.",
       "ru": "VACUUM восстанавливает пространство из мертвых кортежей и критичен для предотвращения переполнения ID транзакции (катастрофическое событие). AUTOVACUUM работает автоматически в современном PostgreSQL. Другие варианты путают VACUUM с другими операциями: строки NULL не удаляются специально, REINDEX отдельный, и VACUUM не управляет буфер-кэшем напрямую."
@@ -386,19 +386,19 @@
     },
     "options": {
       "en": [
-        "Fewer than 100 rows, because the WHERE clause filters out NULL salaries before the window function is applied",
         "100 rows, because window functions ignore the WHERE clause",
         "All rows including NULLs, but they're sorted to the bottom",
+        "Fewer than 100 rows, because the WHERE clause filters out NULL salaries before the window function is applied",
         "Zero rows, because ROW_NUMBER() cannot be used with IS NOT NULL"
       ],
       "ru": [
-        "Менее 100 строк, потому что предложение WHERE фильтрует NULL зарплаты перед применением оконной функции",
         "100 строк, потому что оконные функции игнорируют предложение WHERE",
         "Все строки включая NULLs, но они отсортированы внизу",
+        "Менее 100 строк, потому что предложение WHERE фильтрует NULL зарплаты перед применением оконной функции",
         "Нулевые строки, потому что ROW_NUMBER() не может использоваться с IS NOT NULL"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The WHERE clause is applied before window functions execute, so NULL rows are excluded first. Window functions then operate only on the filtered rows. This is different from SQL aggregates, which can be affected by HAVING. Window functions are not immune to filtering, and ROW_NUMBER() works fine with WHERE clauses.",
       "ru": "Предложение WHERE применяется перед выполнением оконных функций, поэтому строки с NULL исключаются в первую очередь. Затем оконные функции работают только с отфильтрованными строками. Это отличается от SQL-агрегатов, на которые может влиять HAVING. Оконные функции не защищены от фильтрации, и ROW_NUMBER() хорошо работает с предложениями WHERE."
@@ -413,19 +413,19 @@
     },
     "options": {
       "en": [
-        "The table is very small and the query planner estimates that a sequential scan is more efficient than index lookups",
         "PostgreSQL does not support composite indexes on multiple columns",
         "The indexes are B-tree indexes and cannot be used with OR conditions",
-        "The statistics are outdated and need to be refreshed with ANALYZE"
+        "The statistics are outdated and need to be refreshed with ANALYZE",
+        "The table is very small and the query planner estimates that a sequential scan is more efficient than index lookups"
       ],
       "ru": [
-        "Таблица очень маленькая и планировщик запросов считает, что последовательное сканирование более эффективно, чем использование индексов",
         "PostgreSQL не поддерживает составные индексы на несколько столбцов",
         "Индексы являются B-tree индексами и не могут использоваться с условиями OR",
-        "Статистика устарела и её нужно обновить с помощью ANALYZE"
+        "Статистика устарела и её нужно обновить с помощью ANALYZE",
+        "Таблица очень маленькая и планировщик запросов считает, что последовательное сканирование более эффективно, чем использование индексов"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "PostgreSQL's query planner performs cost analysis and may choose sequential scan if the table is small enough that reading all rows is cheaper than index lookups plus random I/O. The AND condition doesn't prevent index use, statistics are typically current for normal workloads, and PostgreSQL fully supports composite indexes. The planner evaluates actual row estimates from EXPLAIN output.",
       "ru": "Планировщик запросов PostgreSQL выполняет анализ стоимости и может выбрать последовательное сканирование, если таблица достаточно маленькая, чтобы чтение всех строк было дешевле, чем использование индексов плюс случайный ввод-вывод. Условие AND не препятствует использованию индексов, статистика обычно актуальна для нормальных рабочих нагрузок, и PostgreSQL полностью поддерживает составные индексы."
@@ -494,19 +494,19 @@
     },
     "options": {
       "en": [
-        "To reclaim disk space from deleted rows and prevent transaction ID wraparound by updating row visibility information",
         "To rebuild all indexes to improve query performance",
         "To compress table data and reduce memory usage",
+        "To reclaim disk space from deleted rows and prevent transaction ID wraparound by updating row visibility information",
         "To remove all NULL values from columns to optimize storage"
       ],
       "ru": [
-        "Освободить дисковое пространство из удалённых строк и предотвратить переполнение ID транзакций путём обновления информации о видимости строк",
         "Перестроить все индексы для повышения производительности запросов",
         "Сжать данные таблицы и снизить использование памяти",
+        "Освободить дисковое пространство из удалённых строк и предотвратить переполнение ID транзакций путём обновления информации о видимости строк",
         "Удалить все значения NULL из столбцов для оптимизации хранилища"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "VACUUM removes dead tuples (from deleted/updated rows) due to MVCC's append-only nature and updates visibility maps. Critical for preventing transaction ID wraparound, a catastrophic event if xmin/xmax reach max int32 value. VACUUM does not rebuild indexes (REINDEX does), compress data significantly, or remove NULLs—those are misconceptions. VACUUM FULL is more aggressive but locks the table.",
       "ru": "VACUUM удаляет мертвые кортежи (из удалённых/обновлённых строк) из-за природы MVCC только для добавления и обновляет карты видимости. Критично для предотвращения переполнения ID транзакций, катастрофического события, если xmin/xmax достигнут максимального значения int32. VACUUM не перестраивает индексы (это делает REINDEX) и не компрессирует данные значительно."
@@ -521,19 +521,19 @@
     },
     "options": {
       "en": [
-        "NULL, because there is no matching row in the right table",
         "An empty string or 0, depending on the data type of the column",
         "The row will be excluded from the result set entirely",
-        "The default value defined in the table_b schema"
+        "The default value defined in the table_b schema",
+        "NULL, because there is no matching row in the right table"
       ],
       "ru": [
-        "NULL, потому что в правой таблице нет совпадающей строки",
         "Пустую строку или 0 в зависимости от типа данных столбца",
         "Строка будет полностью исключена из результата запроса",
-        "Значение по умолчанию, определённое в схеме table_b"
+        "Значение по умолчанию, определённое в схеме table_b",
+        "NULL, потому что в правой таблице нет совпадающей строки"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "LEFT JOIN preserves all rows from the left table and fills unmatched columns from the right table with NULL. This is the defining behavior of LEFT JOIN—unmatched right-side columns are NULL, not 0, empty strings, or schema defaults. The row is always included in results; only the right-table columns are NULL-filled.",
       "ru": "LEFT JOIN сохраняет все строки из левой таблицы и заполняет несопоставленные столбцы из правой таблицы значением NULL. Это определяющее поведение LEFT JOIN—несопоставленные столбцы правой таблицы становятся NULL, а не 0, пустыми строками или значениями по умолчанию. Строка всегда включается в результаты; только столбцы правой таблицы заполняются NULL."
@@ -602,19 +602,19 @@
     },
     "options": {
       "en": [
-        "The WHERE clause will be applied before window functions are calculated",
         "The ORDER BY in the OVER clause must match the final ORDER BY exactly",
         "LAG will return the next salary value because it looks forward in the window frame",
+        "The WHERE clause will be applied before window functions are calculated",
         "Window functions will process all rows from the table before the WHERE filter is applied"
       ],
       "ru": [
-        "Предложение WHERE будет применено до расчёта оконных функций",
         "ORDER BY в предложении OVER должна точно совпадать с финальным ORDER BY",
         "LAG вернёт следующее значение зарплаты, потому что он смотрит вперёд в окне",
+        "Предложение WHERE будет применено до расчёта оконных функций",
         "Оконные функции обработают все строки из таблицы до применения фильтра WHERE"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Window functions are applied after WHERE filtering, not before. The ORDER BY in OVER defines the window frame order, which is independent of the final result ORDER BY. LAG looks backward (previous row), not forward. The WHERE clause always filters rows before window functions process the result set.",
       "ru": "Оконные функции применяются после фильтрации WHERE, а не до неё. ORDER BY в OVER определяет порядок окна, что не зависит от финального ORDER BY. LAG смотрит назад (предыдущую строку), а не вперёд. Предложение WHERE всегда фильтрует строки перед обработкой результирующего набора оконными функциями."
@@ -630,18 +630,18 @@
     "options": {
       "en": [
         "The query returned 50 times more rows than the planner estimated",
-        "The scan operation was executed 50 times, likely as part of a nested loop join",
         "The query optimizer made 50 execution attempts before succeeding",
-        "The table has 50 physical partitions that were scanned separately"
+        "The table has 50 physical partitions that were scanned separately",
+        "The scan operation was executed 50 times, likely as part of a nested loop join"
       ],
       "ru": [
         "Запрос вернул в 50 раз больше строк, чем предсказал планировщик",
-        "Операция сканирования была выполнена 50 раз, вероятно, как часть вложенного соединения",
         "Оптимизатор запросов сделал 50 попыток выполнения перед успехом",
-        "Таблица имеет 50 физических разделов, которые были отсканированы отдельно"
+        "Таблица имеет 50 физических разделов, которые были отсканированы отдельно",
+        "Операция сканирования была выполнена 50 раз, вероятно, как часть вложенного соединения"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 3,
     "explanation": {
       "en": "Actual Loops shows how many times this node was executed. A high loop count typically indicates the scan is part of a nested loop join where the outer relation drives the execution multiple times. The Actual Rows field (20000) is the total across all loops, not per loop. This is a performance red flag for nested loop joins on large outer relations.",
       "ru": "Actual Loops показывает, сколько раз был выполнен этот узел. Высокое количество циклов обычно указывает, что сканирование является частью вложенного соединения, где внешнее отношение управляет выполнением многократно. Поле Actual Rows (20000) — это общее значение для всех циклов, а не на цикл. Это красный флаг производительности для вложенных соединений на больших внешних отношениях."
@@ -656,19 +656,19 @@
     },
     "options": {
       "en": [
+        "Both levels handle NULL values identically in comparisons (NULL is neither equal nor not equal)",
         "REPEATABLE READ prevents NULL from being inserted by concurrent transactions",
         "NULL comparisons behave differently based on isolation level",
-        "Both levels handle NULL values identically in comparisons (NULL is neither equal nor not equal)",
         "READ COMMITTED converts NULL to an empty string for consistency"
       ],
       "ru": [
+        "Оба уровня обрабатывают значения NULL одинаково в сравнениях (NULL ни равно, ни не равно)",
         "REPEATABLE READ предотвращает вставку NULL параллельными транзакциями",
         "Сравнения NULL ведут себя по-разному в зависимости от уровня изоляции",
-        "Оба уровня обрабатывают значения NULL одинаково в сравнениях (NULL ни равно, ни не равно)",
         "READ COMMITTED преобразует NULL в пустую строку для согласованности"
       ]
     },
-    "correctIndex": 2,
+    "correctIndex": 0,
     "explanation": {
       "en": "NULL semantics in SQL are independent of isolation levels. In both READ COMMITTED and REPEATABLE READ (and all isolation levels), NULL remains neither equal to nor not equal to anything, including itself. The WHERE clause x = NULL always returns false, and x IS NULL must be used instead. Isolation levels affect row visibility and phantom reads, not NULL behavior.",
       "ru": "Семантика NULL в SQL не зависит от уровней изоляции. И в READ COMMITTED, и в REPEATABLE READ (и во всех уровнях изоляции) NULL остаётся ни равным, ни не равным чему-либо, включая самого себя. Предложение WHERE x = NULL всегда возвращает false, и вместо этого должно использоваться x IS NULL. Уровни изоляции влияют на видимость строк и фантомные чтения, а не на поведение NULL."
@@ -683,22 +683,22 @@
     },
     "options": {
       "en": [
-        "It allows readers to see a consistent snapshot of data without blocking writers, and writers to proceed without blocking readers",
         "It eliminates the need for indexes on frequently queried columns",
+        "It allows readers to see a consistent snapshot of data without blocking writers, and writers to proceed without blocking readers",
         "It automatically compresses table data to reduce storage requirements",
         "It prevents NULL values from being inserted into any column"
       ],
       "ru": [
-        "Оно позволяет читателям видеть согласованный снимок данных без блокировки писателей, а писателям продолжать работу без блокировки читателей",
         "Оно исключает необходимость в индексах на часто запрашиваемых столбцах",
+        "Оно позволяет читателям видеть согласованный снимок данных без блокировки писателей, а писателям продолжать работу без блокировки читателей",
         "Оно автоматически сжимает данные таблицы, чтобы снизить требования к хранению",
         "Оно предотвращает вставку значений NULL в любой столбец"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "MVCC maintains multiple versions of rows, allowing concurrent reads and writes without mutual blocking. This is PostgreSQL's core concurrency mechanism. Options B, C, and D describe unrelated features or are false statements about MVCC functionality.",
-      "ru": "MVCC поддерживает несколько версий строк, позволяя одновременно читать и писать без взаимной блокировки. Это основной механизм параллелизма PostgreSQL. Варианты B, C и D описывают несвязанные функции или являются неверными утверждениями о функциональности MVCC."
+      "en": "MVCC maintains multiple versions of rows, allowing concurrent reads and writes without mutual blocking. This is PostgreSQL's core concurrency mechanism. The options about eliminating indexes, compressing table data, and preventing NULL values describe unrelated features or are false statements about MVCC functionality.",
+      "ru": "MVCC поддерживает несколько версий строк, позволяя одновременно читать и писать без взаимной блокировки. Это основной механизм параллелизма PostgreSQL. Варианты про исключение индексов, сжатие данных таблицы и предотвращение значений NULL описывают несвязанные функции или являются неверными утверждениями о функциональности MVCC."
     }
   },
   {
@@ -710,22 +710,22 @@
     },
     "options": {
       "en": [
-        "Most of the data was read from PostgreSQL's shared buffer cache in memory, not from disk",
         "The query is inefficient and should use an index to reduce buffer reads",
         "The table has 9999 rows that were scanned",
+        "Most of the data was read from PostgreSQL's shared buffer cache in memory, not from disk",
         "PostgreSQL allocated 9999 buffers to execute the query"
       ],
       "ru": [
-        "Большая часть данных была прочитана из кэша общих буферов PostgreSQL в памяти, а не с диска",
         "Запрос неэффективен и должен использовать индекс для уменьшения операций чтения буфера",
         "Таблица содержит 9999 строк, которые были отсканированы",
+        "Большая часть данных была прочитана из кэша общих буферов PostgreSQL в памяти, а не с диска",
         "PostgreSQL выделил 9999 буферов для выполнения запроса"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "Buffers: shared hit counts block accesses satisfied from the shared buffer cache (memory), while 'read' counts blocks fetched from disk. A high hit ratio indicates good cache performance and efficient memory usage. Options B, C, and D misinterpret what the metrics represent.",
-      "ru": "Buffers: shared hit подсчитывает доступы к блокам из кэша общих буферов (памяти), а 'read' подсчитывает блоки, загруженные с диска. Высокий коэффициент попаданий указывает на хорошую производительность кэша и эффективное использование памяти. Варианты B, C и D неправильно интерпретируют, что представляют эти метрики."
+      "en": "Buffers: shared hit counts block accesses satisfied from the shared buffer cache (memory), while 'read' counts blocks fetched from disk. A high hit ratio indicates good cache performance and efficient memory usage. The options about needing an index, about 9999 scanned rows, and about 9999 allocated buffers misinterpret what the metrics represent.",
+      "ru": "Buffers: shared hit подсчитывает доступы к блокам из кэша общих буферов (памяти), а 'read' подсчитывает блоки, загруженные с диска. Высокий коэффициент попаданий указывает на хорошую производительность кэша и эффективное использование памяти. Варианты про необходимость индекса, про 9999 отсканированных строк и про 9999 выделенных буферов неправильно интерпретируют, что представляют эти метрики."
     }
   },
   {
@@ -737,22 +737,22 @@
     },
     "options": {
       "en": [
-        "Returns 3 rows with ranks 1, 2, 3 and next_salary values showing the next salary in the DESC order",
         "Returns 3 rows with all employees earning exactly 5000 because LEAD fetches the same value",
         "Returns 2 rows because the two duplicate salaries (5000) are treated as a single rank",
-        "Returns 4 rows because LIMIT is applied before the window function"
+        "Returns 4 rows because LIMIT is applied before the window function",
+        "Returns 3 rows with ranks 1, 2, 3 and next_salary values showing the next salary in the DESC order"
       ],
       "ru": [
-        "Возвращает 3 строки с рангами 1, 2, 3 и значениями next_salary, показывающими следующую зарплату в порядке DESC",
         "Возвращает 3 строки со всеми сотрудниками, получающими ровно 5000, потому что LEAD получает то же значение",
         "Возвращает 2 строки, потому что две одинаковые зарплаты (5000) рассматриваются как один ранг",
-        "Возвращает 4 строки, потому что LIMIT применяется перед функцией окна"
+        "Возвращает 4 строки, потому что LIMIT применяется перед функцией окна",
+        "Возвращает 3 строки с рангами 1, 2, 3 и значениями next_salary, показывающими следующую зарплату в порядке DESC"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "ROW_NUMBER assigns unique numbers to each row (1, 2, 3 for the top 3 salaries), and LEAD correctly returns the next row's salary in the ordering (5000, 4000, 3000). LIMIT is applied after window functions are computed. Option B misunderstands LEAD behavior, Option C confuses ROW_NUMBER with RANK, and Option D misses that LIMIT occurs after window computation.",
-      "ru": "ROW_NUMBER назначает уникальные номера каждой строке (1, 2, 3 для трех наибольших зарплат), а LEAD правильно возвращает зарплату следующей строки в порядке (5000, 4000, 3000). LIMIT применяется после вычисления функций окна. Вариант B неправильно понимает поведение LEAD, вариант C путает ROW_NUMBER с RANK, а вариант D упускает, что LIMIT происходит после вычисления окна."
+      "en": "ROW_NUMBER assigns unique numbers to each row (1, 2, 3 for the top 3 salaries), and LEAD correctly returns the next row's salary in the ordering (5000, 4000, 3000). LIMIT is applied after window functions are computed. The option where every row shows 5000 misunderstands LEAD behavior, the option returning 2 rows confuses ROW_NUMBER with RANK, and the option returning 4 rows misses that LIMIT occurs after window computation.",
+      "ru": "ROW_NUMBER назначает уникальные номера каждой строке (1, 2, 3 для трех наибольших зарплат), а LEAD правильно возвращает зарплату следующей строки в порядке (5000, 4000, 3000). LIMIT применяется после вычисления функций окна. Вариант, где каждая строка показывает 5000, неправильно понимает поведение LEAD, вариант с 2 строками путает ROW_NUMBER с RANK, а вариант с 4 строками упускает, что LIMIT происходит после вычисления окна."
     }
   },
   {
@@ -778,8 +778,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "BRIN (Block Range INdex) is designed for very large tables with ordered data. It maintains minimal metadata per block range, consuming far less space than B-tree while still providing good performance. Option B describes unique indexes, Option C contradicts BRIN's use case (it's for large tables), and Option D misunderstands that BRIN doesn't eliminate the need for VACUUM.",
-      "ru": "BRIN (индекс диапазона блоков) предназначен для очень больших таблиц с упорядоченными данными. Он поддерживает минимальные метаданные для каждого диапазона блоков, потребляя намного меньше места, чем B-tree, при этом обеспечивая хорошую производительность. Вариант B описывает уникальные индексы, вариант C противоречит сценарию использования BRIN (это для больших таблиц), а вариант D неправильно понимает, что BRIN не исключает необходимость VACUUM."
+      "en": "BRIN (Block Range INdex) is designed for very large tables with ordered data. It maintains minimal metadata per block range, consuming far less space than B-tree while still providing good performance. The option about unique constraints describes unique indexes, the option about small tables contradicts BRIN's use case (it's for large tables), and the option about replacing VACUUM misunderstands that BRIN doesn't eliminate the need for VACUUM.",
+      "ru": "BRIN (индекс диапазона блоков) предназначен для очень больших таблиц с упорядоченными данными. Он поддерживает минимальные метаданные для каждого диапазона блоков, потребляя намного меньше места, чем B-tree, при этом обеспечивая хорошую производительность. Вариант про уникальные ограничения описывает уникальные индексы, вариант про малые таблицы противоречит сценарию использования BRIN (это для больших таблиц), а вариант про замену VACUUM неправильно понимает, что BRIN не исключает необходимость VACUUM."
     }
   }
 ]

@@ -62,22 +62,22 @@
     },
     "options": {
       "en": [
-        "For CPU-intensive tasks that need to run in parallel, sharing the same memory space efficiently",
         "To spawn separate Node.js processes with their own V8 instances and full isolation for multi-core utilization",
         "When you need to distribute incoming HTTP connections across multiple processes",
+        "For CPU-intensive tasks that need to run in parallel, sharing the same memory space efficiently",
         "To handle blocking I/O operations without blocking the event loop"
       ],
       "ru": [
-        "Для CPU-интенсивных задач, которые должны работать параллельно, эффективно используя одно пространство памяти",
         "Чтобы запустить отдельные процессы Node.js со своими V8 экземплярами и полной изоляцией для многоядерного использования",
         "Когда нужно распределить входящие HTTP-соединения между несколькими процессами",
+        "Для CPU-интенсивных задач, которые должны работать параллельно, эффективно используя одно пространство памяти",
         "Для обработки блокирующих операций I/O без блокировки цикла событий"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "Worker Threads are ideal for CPU-intensive tasks since they share the same V8 heap and memory space, allowing efficient data sharing. Cluster is better for distributing HTTP load across processes (option C). I/O operations don't need either—just use async/await (option D). Option B describes Cluster, which creates separate processes, not Worker Threads.",
-      "ru": "Worker Threads идеальны для CPU-интенсивных задач, так как они используют одну V8 heap и пространство памяти, позволяя эффективно обмениваться данными. Cluster лучше подходит для распределения HTTP-нагрузки на процессы (вариант C). Для операций I/O не нужно ни то, ни другое—просто используйте async/await (вариант D). Вариант B описывает Cluster, который создает отдельные процессы, а не Worker Threads."
+      "en": "Worker Threads are ideal for CPU-intensive tasks since they share the same V8 heap and memory space, allowing efficient data sharing. Cluster is better for distributing HTTP load across processes (the option about distributing incoming HTTP connections). I/O operations don't need either—just use async/await (the option about blocking I/O operations). The option about spawning separate Node.js processes with their own V8 instances describes Cluster, which creates separate processes, not Worker Threads.",
+      "ru": "Worker Threads идеальны для CPU-интенсивных задач, так как они используют одну V8 heap и пространство памяти, позволяя эффективно обмениваться данными. Cluster лучше подходит для распределения HTTP-нагрузки на процессы (вариант о распределении входящих HTTP-соединений). Для операций I/O не нужно ни то, ни другое—просто используйте async/await (вариант о блокирующих операциях I/O). Вариант об отдельных процессах Node.js со своими экземплярами V8 описывает Cluster, который создает отдельные процессы, а не Worker Threads."
     }
   },
   {
@@ -89,22 +89,22 @@
     },
     "options": {
       "en": [
-        "ESM bindings are live and reflect updates, while CommonJS exports are static snapshots taken at require time",
         "CommonJS allows circular dependencies without issues, while ESM completely forbids them",
         "Both systems handle circular dependencies identically through module caching",
-        "ESM creates new instances for each import, while CommonJS uses a single cached instance"
+        "ESM creates new instances for each import, while CommonJS uses a single cached instance",
+        "ESM bindings are live and reflect updates, while CommonJS exports are static snapshots taken at require time"
       ],
       "ru": [
-        "ESM binding — это живые ссылки, отражающие обновления, а exports CommonJS — это статические снимки, сделанные во время require",
         "CommonJS позволяет циклические зависимости без проблем, в то время как ESM их полностью запрещает",
         "Обе системы обрабатывают циклические зависимости одинаково через кэширование модулей",
-        "ESM создает новые экземпляры для каждого импорта, а CommonJS использует один кэшированный экземпляр"
+        "ESM создает новые экземпляры для каждого импорта, а CommonJS использует один кэшированный экземпляр",
+        "ESM binding — это живые ссылки, отражающие обновления, а exports CommonJS — это статические снимки, сделанные во время require"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "ESM uses live bindings—if a module updates an exported value, importers see the updated value. CommonJS exports a snapshot at require time, so circular dependencies can result in incomplete objects. Both systems do cache modules (option C is partially true but misses the live binding difference). Option B is incorrect—both allow circular dependencies, but handle them differently.",
-      "ru": "ESM использует live bindings—если модуль обновляет экспортированное значение, импортеры видят обновленное значение. CommonJS экспортирует снимок во время require, поэтому циклические зависимости могут привести к неполным объектам. Обе системы действительно кэшируют модули (вариант C частично верен, но упускает разницу в live bindings). Вариант B неверен—обе системы позволяют циклические зависимости, но обрабатывают их по-разному."
+      "en": "ESM uses live bindings—if a module updates an exported value, importers see the updated value. CommonJS exports a snapshot at require time, so circular dependencies can result in incomplete objects. Both systems do cache modules (the option about identical handling through module caching is partially true but misses the live binding difference). The option saying ESM completely forbids circular dependencies is incorrect—both allow circular dependencies, but handle them differently.",
+      "ru": "ESM использует live bindings—если модуль обновляет экспортированное значение, импортеры видят обновленное значение. CommonJS экспортирует снимок во время require, поэтому циклические зависимости могут привести к неполным объектам. Обе системы действительно кэшируют модули (вариант об одинаковой обработке через кэширование модулей частично верен, но упускает разницу в live bindings). Вариант о том, что ESM полностью запрещает циклические зависимости, неверен—обе системы позволяют циклические зависимости, но обрабатывают их по-разному."
     }
   },
   {
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The code demonstrates proper stream backpressure handling. pause() stops emitting 'data' events, and resume() resumes them. Each chunk arrives, gets logged, pauses, waits 100ms via setTimeout, then resumes for the next chunk. This is a safe pattern for controlled stream consumption. Options B and C misunderstand pause/resume behavior, and option D is incorrect—they work together safely.",
-      "ru": "Код демонстрирует правильную обработку backpressure потока. pause() останавливает emission событий 'data', а resume() их возобновляет. Каждый chunk поступает, логируется, pauses, ожидает 100 мс через setTimeout, затем resumes для следующего chunk. Это безопасный паттерн для контролируемого потребления потока. Варианты B и C неправильно понимают поведение pause/resume, а вариант D неверен—они безопасно работают вместе."
+      "en": "The code demonstrates proper stream backpressure handling. pause() stops emitting 'data' events, and resume() resumes them. Each chunk arrives, gets logged, pauses, waits 100ms via setTimeout, then resumes for the next chunk. This is a safe pattern for controlled stream consumption. The option claiming pause() stops the stream permanently and the option claiming all chunks are logged immediately misunderstand pause/resume behavior, and the option predicting an error is incorrect—they work together safely.",
+      "ru": "Код демонстрирует правильную обработку backpressure потока. pause() останавливает emission событий 'data', а resume() их возобновляет. Каждый chunk поступает, логируется, pauses, ожидает 100 мс через setTimeout, затем resumes для следующего chunk. Это безопасный паттерн для контролируемого потребления потока. Вариант о том, что pause() останавливает stream навсегда, и вариант о том, что все chunks логируются сразу, неправильно понимают поведение pause/resume, а вариант с ошибкой неверен—они безопасно работают вместе."
     }
   },
   {
@@ -143,19 +143,19 @@
     },
     "options": {
       "en": [
-        "sync, nextTick, promise, immediate",
         "sync, immediate, nextTick, promise",
+        "sync, nextTick, promise, immediate",
         "sync, promise, nextTick, immediate",
         "nextTick, sync, promise, immediate"
       ],
       "ru": [
-        "sync, nextTick, promise, immediate",
         "sync, immediate, nextTick, promise",
+        "sync, nextTick, promise, immediate",
         "sync, promise, nextTick, immediate",
         "nextTick, sync, promise, immediate"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Synchronous code executes first. Then process.nextTick and Promises (microtasks) execute before the next event loop phase. Finally, setImmediate executes in the check phase. process.nextTick has higher priority than Promises, and both are higher than setImmediate.",
       "ru": "Синхронный код выполняется первым. Затем process.nextTick и Promises (микротаски) выполняются перед следующей фазой event loop. И наконец, setImmediate выполняется на фазе check. process.nextTick имеет более высокий приоритет, чем Promises, и оба выше, чем setImmediate."
@@ -171,18 +171,18 @@
     "options": {
       "en": [
         "ESM uses synchronous module resolution while CommonJS uses asynchronous resolution",
-        "CommonJS uses require() and module.exports, while ESM uses import/export statements and supports top-level await",
         "ESM is deprecated and should not be used in modern Node.js applications",
+        "CommonJS uses require() and module.exports, while ESM uses import/export statements and supports top-level await",
         "CommonJS and ESM are identical in functionality but differ only in syntax"
       ],
       "ru": [
         "ESM использует синхронное разрешение модулей, а CommonJS использует асинхронное разрешение",
-        "CommonJS использует require() и module.exports, а ESM использует import/export и поддерживает top-level await",
         "ESM устарел и не должен использоваться в современных приложениях Node.js",
+        "CommonJS использует require() и module.exports, а ESM использует import/export и поддерживает top-level await",
         "CommonJS и ESM идентичны по функциональности, но отличаются только синтаксисом"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM (ECMAScript modules) supports top-level await, static imports, and asynchronous module loading, while CommonJS uses synchronous require() and module.exports. Both are supported in modern Node.js, with ESM being the standard going forward. They differ significantly in behavior, not just syntax.",
       "ru": "ESM (ECMAScript modules) поддерживает top-level await, статические импорты и асинхронную загрузку модулей, в то время как CommonJS использует синхронный require() и module.exports. Оба поддерживаются в современном Node.js, причем ESM является стандартом в будущем. Они существенно отличаются по поведению, а не только по синтаксису."
@@ -198,18 +198,18 @@
     "options": {
       "en": [
         "Streams allow processing of data faster than traditional methods",
-        "Streams enable processing of large files with constant memory usage through backpressure handling and chunked processing",
         "Streams automatically compress data as it is being read",
-        "Streams provide built-in error recovery and retry mechanisms"
+        "Streams provide built-in error recovery and retry mechanisms",
+        "Streams enable processing of large files with constant memory usage through backpressure handling and chunked processing"
       ],
       "ru": [
         "Streams позволяют обрабатывать данные быстрее, чем традиционные методы",
-        "Streams позволяют обрабатывать большие файлы с постоянным использованием памяти через управление обратным давлением и обработку по частям",
         "Streams автоматически сжимает данные при их чтении",
-        "Streams предоставляют встроенные механизмы восстановления ошибок и повторных попыток"
+        "Streams предоставляют встроенные механизмы восстановления ошибок и повторных попыток",
+        "Streams позволяют обрабатывать большие файлы с постоянным использованием памяти через управление обратным давлением и обработку по частям"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 3,
     "explanation": {
       "en": "Streams process data in chunks with backpressure handling, meaning memory usage stays constant regardless of file size. This prevents loading entire files into memory, enabling processing of gigabyte-sized files efficiently. Backpressure ensures that the producer doesn't overwhelm the consumer.",
       "ru": "Streams обрабатывают данные по частям с управлением обратным давлением, означая что использование памяти остается постоянным независимо от размера файла. Это предотвращает загрузку целых файлов в память, позволяя эффективно обрабатывать файлы размером в гигабайты. Обратное давление гарантирует, что производитель не перегружает потребителя."
@@ -224,19 +224,19 @@
     },
     "options": {
       "en": [
-        "Cluster should always be used because it provides process-level isolation",
         "Worker threads should be used for CPU-bound tasks requiring shared memory access, while cluster is better for load balancing multiple server instances",
+        "Cluster should always be used because it provides process-level isolation",
         "Worker threads are only for I/O operations and cannot handle CPU-bound work",
         "There is no practical difference; choose based on personal preference"
       ],
       "ru": [
-        "Cluster всегда должен использоваться, потому что он обеспечивает изоляцию на уровне процесса",
         "Worker threads следует использовать для задач, привязанных к CPU, требующих доступа к общей памяти, в то время как cluster лучше для балансировки нагрузки нескольких экземпляров сервера",
+        "Cluster всегда должен использоваться, потому что он обеспечивает изоляцию на уровне процесса",
         "Worker threads предназначены только для операций ввода-вывода и не могут обрабатывать работу, привязанную к CPU",
         "Практического различия нет; выбирайте в зависимости от личных предпочтений"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
       "en": "Worker threads are ideal for CPU-intensive work within a single process with shared memory via SharedArrayBuffer, while cluster creates separate Node.js processes for load balancing HTTP servers. Worker threads have lower overhead and better data sharing; cluster provides isolation and multi-core server scaling.",
       "ru": "Worker threads идеальны для работы, интенсивной по CPU, в одном процессе с общей памятью через SharedArrayBuffer, в то время как cluster создает отдельные процессы Node.js для балансировки нагрузки HTTP серверов. Worker threads имеют меньше накладных расходов и лучший обмен данными; cluster обеспечивает изоляцию и масштабирование сервера на несколько ядер."
@@ -251,19 +251,19 @@
     },
     "options": {
       "en": [
-        "Caught, After, then an uncaught exception",
         "Test error is caught and execution stops",
+        "Caught, After, then an uncaught exception",
         "After, Caught, then an uncaught exception",
         "Uncaught exception is thrown immediately, preventing other code from running"
       ],
       "ru": [
-        "Caught, After, затем необработанное исключение",
         "Error Test перехватывается и выполнение останавливается",
+        "Caught, After, затем необработанное исключение",
         "After, Caught, затем необработанное исключение",
         "Необработанное исключение выбрасывается немедленно, предотвращая выполнение другого кода"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "The try-catch block catches the first error, and 'Caught' is logged. Then 'After' logs synchronously. The process.nextTick callback executes in the next phase, throwing an uncaught error since it's outside the try-catch scope. Errors thrown in asynchronous callbacks cannot be caught by surrounding try-catch blocks.",
       "ru": "Блок try-catch перехватывает первую ошибку, и выводится 'Caught'. Затем 'After' логируется синхронно. Callback process.nextTick выполняется на следующей фазе, выбрасывая необработанную ошибку, так как она вне области видимости try-catch. Ошибки, выброшенные в асинхронных callback-ах, не могут быть перехвачены окружающими блоками try-catch."
@@ -278,19 +278,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "check → timers → pending callbacks → poll → idle/prepare → close callbacks",
         "poll → timers → check → pending callbacks → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "timers → check → pending callbacks → poll → idle/prepare → close callbacks"
       ],
       "ru": [
-        "таймеры → отложенные обратные вызовы → простой/подготовка → опрос → проверка → обратные вызовы закрытия",
         "проверка → таймеры → отложенные обратные вызовы → опрос → простой/подготовка → обратные вызовы закрытия",
         "опрос → таймеры → проверка → отложенные обратные вызовы → простой/подготовка → обратные вызовы закрытия",
+        "таймеры → отложенные обратные вызовы → простой/подготовка → опрос → проверка → обратные вызовы закрытия",
         "таймеры → проверка → отложенные обратные вызовы → опрос → простой/подготовка → обратные вызовы закрытия"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The event loop phases in order are: timers, pending callbacks, idle/prepare, poll, check, and close callbacks. The timers phase executes callbacks scheduled by setTimeout/setInterval, followed by the check phase where setImmediate callbacks run. Within the timers phase itself, setTimeout executes before setImmediate reaches its check phase.",
       "ru": "Фазы цикла событий в порядке: таймеры, отложенные обратные вызовы, простой/подготовка, опрос, проверка и обратные вызовы закрытия. Фаза таймеров выполняет обратные вызовы, запланированные setTimeout/setInterval, за которой следует фаза проверки, где запускаются обратные вызовы setImmediate."
@@ -359,22 +359,22 @@
     },
     "options": {
       "en": [
-        "When you need CPU-intensive tasks on a multi-core system without spawning separate Node.js processes",
         "When you need to distribute incoming network connections across multiple instances",
+        "When you need CPU-intensive tasks on a multi-core system without spawning separate Node.js processes",
         "When you want automatic load balancing of HTTP requests across cores",
         "When you need better memory isolation and independent event loops per core"
       ],
       "ru": [
-        "Когда вам нужны CPU-интенсивные задачи на многоядерной системе без создания отдельных процессов Node.js",
         "Когда вам нужно распределить входящие сетевые соединения на несколько экземпляров",
+        "Когда вам нужны CPU-интенсивные задачи на многоядерной системе без создания отдельных процессов Node.js",
         "Когда вы хотите автоматической балансировки нагрузки HTTP-запросов по ядрам",
         "Когда вам нужна лучшая изоляция памяти и независимые циклы событий на ядро"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Worker Threads are ideal for CPU-intensive tasks because they run JavaScript on separate threads within the same process, sharing memory efficiently without the overhead of spawning full Node.js processes. Cluster is better for I/O-bound applications and distributing network connections. Options 2 and 3 describe Cluster benefits, and option 4 is actually a feature of Cluster (separate processes), not Worker Threads (shared memory).",
-      "ru": "Worker Threads идеальны для CPU-интенсивных задач, потому что они запускают JavaScript на отдельных потоках в одном процессе, эффективно делясь памятью без дополнительных расходов на создание полных процессов Node.js. Cluster лучше подходит для I/O-связанных приложений и распределения сетевых соединений. Варианты 2 и 3 описывают преимущества Cluster, а вариант 4 — это особенность Cluster (отдельные процессы), а не Worker Threads (общая память)."
+      "en": "Worker Threads are ideal for CPU-intensive tasks because they run JavaScript on separate threads within the same process, sharing memory efficiently without the overhead of spawning full Node.js processes. Cluster is better for I/O-bound applications and distributing network connections. The option about distributing incoming network connections and the option about automatic HTTP load balancing describe Cluster benefits, and the option about better memory isolation and independent event loops is actually a feature of Cluster (separate processes), not Worker Threads (shared memory).",
+      "ru": "Worker Threads идеальны для CPU-интенсивных задач, потому что они запускают JavaScript на отдельных потоках в одном процессе, эффективно делясь памятью без дополнительных расходов на создание полных процессов Node.js. Cluster лучше подходит для I/O-связанных приложений и распределения сетевых соединений. Вариант о распределении входящих сетевых соединений и вариант об автоматической балансировке нагрузки HTTP описывают преимущества Cluster, а вариант о лучшей изоляции памяти и независимых циклах событий — это особенность Cluster (отдельные процессы), а не Worker Threads (общая память)."
     }
   },
   {
@@ -386,19 +386,19 @@
     },
     "options": {
       "en": [
-        "ESM uses static analysis to detect circular dependencies at parse time, while CommonJS resolves them at runtime and may return incomplete exports",
         "CommonJS prevents circular dependencies entirely, while ESM allows them unconditionally",
         "Both handle circular dependencies identically because they use the same caching mechanism",
+        "ESM uses static analysis to detect circular dependencies at parse time, while CommonJS resolves them at runtime and may return incomplete exports",
         "ESM caches modules more aggressively than CommonJS, leading to stale exports in circular scenarios"
       ],
       "ru": [
-        "ESM использует статический анализ для обнаружения циклических зависимостей во время парсинга, в то время как CommonJS разрешает их во время выполнения и может вернуть неполные экспорты",
         "CommonJS полностью предотвращает циклические зависимости, в то время как ESM разрешает их безусловно",
         "Оба обрабатывают циклические зависимости идентично, потому что они используют один и тот же механизм кеширования",
+        "ESM использует статический анализ для обнаружения циклических зависимостей во время парсинга, в то время как CommonJS разрешает их во время выполнения и может вернуть неполные экспорты",
         "ESM кеширует модули более агрессивно, чем CommonJS, что приводит к устаревшим экспортам в циклических сценариях"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM's static module structure allows it to analyze dependencies at parse time and handle circular imports more reliably through binding. CommonJS dynamically loads modules at runtime, so circular dependencies can result in incomplete exports if a module is required before it finishes initializing. Both cache modules, but ESM's approach is more predictable.",
       "ru": "Статическая структура модулей ESM позволяет ей анализировать зависимости во время парсинга и более надежно обрабатывать циклические импорты через привязку. CommonJS динамически загружает модули во время выполнения, поэтому циклические зависимости могут привести к неполным экспортам, если модуль требуется до завершения инициализации. Оба кешируют модули, но подход ESM более предсказуем."
@@ -413,19 +413,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
         "pending callbacks → timers → poll → idle/prepare → check → close callbacks",
-        "idle/prepare → poll → timers → pending callbacks → check → close callbacks"
+        "idle/prepare → poll → timers → pending callbacks → check → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
       ],
       "ru": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
         "pending callbacks → timers → poll → idle/prepare → check → close callbacks",
-        "idle/prepare → poll → timers → pending callbacks → check → close callbacks"
+        "idle/prepare → poll → timers → pending callbacks → check → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "The event loop always starts with the timers phase to check if any setTimeout/setInterval callbacks are ready, followed by pending callbacks for deferred I/O operations. The poll phase is where most I/O occurs, check phase handles setImmediate callbacks, and close callbacks execute last. Understanding this sequence is critical for predicting callback execution order.",
       "ru": "Event loop всегда начинает с фазы timers для проверки готовых setTimeout/setInterval обратных вызовов, затем идёт фаза pending callbacks для отложенных I/O операций. Фаза poll — это где происходит большинство I/O операций, фаза check обрабатывает setImmediate обратные вызовы, а close callbacks выполняются в последнюю очередь. Понимание этой последовательности критично для предсказания порядка выполнения обратных вызовов."
@@ -494,19 +494,19 @@
     },
     "options": {
       "en": [
-        "Multiple 'chunk size' logs with sizes ≤ 16 bytes, then 'end' after all data is paused and resumed",
         "A single 'chunk size' log with the entire file size, then 'end' immediately",
         "'chunk size' logs with sizes increasing progressively, then 'end'",
+        "Multiple 'chunk size' logs with sizes ≤ 16 bytes, then 'end' after all data is paused and resumed",
         "An error because pause() is called while data event is being handled"
       ],
       "ru": [
-        "Несколько логов 'chunk size' с размерами ≤ 16 байт, затем 'end' после того, как все данные были приостановлены и возобновлены",
         "Один лог 'chunk size' с размером всего файла, затем 'end' сразу",
         "Логи 'chunk size' с размерами, прогрессивно увеличивающимися, затем 'end'",
+        "Несколько логов 'chunk size' с размерами ≤ 16 байт, затем 'end' после того, как все данные были приостановлены и возобновлены",
         "Ошибка, потому что pause() вызывается во время обработки события data"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The highWaterMark of 16 bytes controls the internal buffer size, causing the stream to emit data chunks of approximately 16 bytes or less. Each chunk event calls pause(), which stops the stream from emitting more data until resume() is called. The setTimeout ensures each chunk is processed with a 100ms delay before the next chunk is emitted. The 'end' event fires after all data has been read and processed.",
       "ru": "highWaterMark из 16 байт контролирует размер внутреннего буфера, вызывая испускание потоком чанков данных примерно по 16 байт или меньше. Каждое событие chunk вызывает pause(), что останавливает поток от испускания новых данных до вызова resume(). setTimeout обеспечивает обработку каждого чанка с задержкой в 100мс перед испусканием следующего чанка. Событие 'end' запускается после того, как все данные были прочитаны и обработаны."
@@ -521,19 +521,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks, with microtasks running after each phase",
         "microtasks → timers → poll → pending callbacks → check → close callbacks",
         "poll → timers → pending callbacks → check → close callbacks → microtasks",
-        "timers → check → pending callbacks → poll → idle/prepare → close callbacks"
+        "timers → check → pending callbacks → poll → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks, with microtasks running after each phase"
       ],
       "ru": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks, с выполнением microtasks после каждой фазы",
         "microtasks → timers → poll → pending callbacks → check → close callbacks",
         "poll → timers → pending callbacks → check → close callbacks → microtasks",
-        "timers → check → pending callbacks → poll → idle/prepare → close callbacks"
+        "timers → check → pending callbacks → poll → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks, с выполнением microtasks после каждой фазы"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "The event loop executes in the order: timers, pending callbacks, idle/prepare, poll, check (setImmediate), and close callbacks. Microtasks (Promises, process.nextTick) run after each phase completes, not as a separate phase. The other options confuse the phase order or misplace microtask execution.",
       "ru": "Event loop выполняется в порядке: timers, pending callbacks, idle/prepare, poll, check (setImmediate) и close callbacks. Microtasks (Promises, process.nextTick) выполняются после завершения каждой фазы, а не как отдельная фаза. Остальные варианты путают порядок фаз или неправильно размещают выполнение microtasks."
@@ -575,19 +575,19 @@
     },
     "options": {
       "en": [
-        "It automatically handles backpressure and prevents memory overflow when the destination is slower than the source",
         "It makes the code run faster by using native C++ implementations",
+        "It automatically handles backpressure and prevents memory overflow when the destination is slower than the source",
         "It allows reading and writing from multiple files simultaneously without additional setup",
         "It converts data types automatically, allowing you to pipe text streams into binary streams"
       ],
       "ru": [
-        "Он автоматически обрабатывает backpressure и предотвращает переполнение памяти, когда назначение медленнее источника",
         "Он ускоряет выполнение кода, используя встроенные реализации на C++",
+        "Он автоматически обрабатывает backpressure и предотвращает переполнение памяти, когда назначение медленнее источника",
         "Позволяет одновременно читать и писать из нескольких файлов без дополнительной настройки",
         "Автоматически преобразует типы данных, позволяя передавать текстовые потоки в двоичные потоки"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "pipe() implements automatic backpressure handling: when the destination cannot keep up, it pauses the source stream to prevent buffering excessive data in memory. Manual reading/writing requires explicit backpressure management. While C++ is used, speed is not the primary advantage; backpressure management is. pipe() doesn't handle multiple files or automatic type conversion.",
       "ru": "pipe() реализует автоматическую обработку backpressure: когда назначение не может справиться, он приостанавливает исходный поток, чтобы предотвратить буферизацию избыточных данных в памяти. Ручное чтение/запись требует явного управления backpressure. Хотя C++ используется, скорость — не основное преимущество; управление backpressure — это. pipe() не обрабатывает несколько файлов и не выполняет автоматическое преобразование типов."
@@ -602,19 +602,19 @@
     },
     "options": {
       "en": [
-        "Cluster spawns separate Node.js processes with independent V8 instances and is ideal for CPU-intensive tasks across multiple cores; worker_threads share the same V8 instance and memory space, better for CPU-bound work within a single process",
         "Worker_threads spawn separate processes while cluster runs in the same process; cluster is preferred for all scenarios",
         "Cluster uses less memory because it shares the main event loop; worker_threads each require their own event loop",
+        "Cluster spawns separate Node.js processes with independent V8 instances and is ideal for CPU-intensive tasks across multiple cores; worker_threads share the same V8 instance and memory space, better for CPU-bound work within a single process",
         "Worker_threads are only for I/O operations; cluster is only for CPU-intensive work"
       ],
       "ru": [
-        "Cluster порождает отдельные процессы Node.js с независимыми V8 и идеален для CPU-интенсивных задач на нескольких ядрах; worker_threads делят один V8 и память, лучше для CPU-bound работы в одном процессе",
         "Worker_threads порождают отдельные процессы, а cluster работает в одном процессе; cluster предпочтителен во всех сценариях",
         "Cluster использует меньше памяти, потому что делит основной event loop; каждый worker_threads требует своего event loop",
+        "Cluster порождает отдельные процессы Node.js с независимыми V8 и идеален для CPU-интенсивных задач на нескольких ядрах; worker_threads делят один V8 и память, лучше для CPU-bound работы в одном процессе",
         "Worker_threads только для I/O операций; cluster только для CPU-интенсивной работы"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Cluster creates separate Node.js processes, each with its own V8 instance, useful for distributing load across CPU cores. Worker_threads share memory and the same V8 instance within one process, lighter-weight for CPU tasks. Cluster uses more memory overall but better isolates processes; worker_threads are more efficient for shared-memory scenarios. Both can handle various tasks, but cluster is better for process isolation and worker_threads for shared-state parallelism.",
       "ru": "Cluster создает отдельные процессы Node.js, каждый с собственным V8, полезен для распределения нагрузки на ядра CPU. Worker_threads делят память и один V8 в процессе, более легкие для CPU задач. Cluster использует больше памяти в целом, но лучше изолирует процессы; worker_threads эффективнее для сценариев с общей памятью. Оба могут обрабатывать различные задачи, но cluster лучше для изоляции процессов, а worker_threads для параллелизма с общим состоянием."
@@ -629,19 +629,19 @@
     },
     "options": {
       "en": [
-        "exports is a reference to module.exports; reassigning exports breaks the link, so exports = {...} won't export the object. You must use module.exports = {...} or exports.property = ...",
         "exports and module.exports are identical; both can be reassigned and will export correctly",
         "exports is the correct way to export; module.exports is only for ES modules compatibility",
-        "There is no difference; Node.js treats both reassignments the same way internally"
+        "There is no difference; Node.js treats both reassignments the same way internally",
+        "exports is a reference to module.exports; reassigning exports breaks the link, so exports = {...} won't export the object. You must use module.exports = {...} or exports.property = ..."
       ],
       "ru": [
-        "exports — это ссылка на module.exports; переприсваивание exports нарушает связь, поэтому exports = {...} не экспортирует объект. Используйте module.exports = {...} или exports.property = ...",
         "exports и module.exports идентичны; оба можно переприсвоить и они будут правильно экспортироваться",
         "exports — правильный способ экспорта; module.exports только для совместимости с ES модулями",
-        "Разницы нет; Node.js внутри обрабатывает оба переприсваивания одинаково"
+        "Разницы нет; Node.js внутри обрабатывает оба переприсваивания одинаково",
+        "exports — это ссылка на module.exports; переприсваивание exports нарушает связь, поэтому exports = {...} не экспортирует объект. Используйте module.exports = {...} или exports.property = ..."
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Initially, exports points to module.exports (they reference the same object). If you reassign exports, it no longer points to module.exports, so the new value is ignored on export. To export a new object, use module.exports = {...}. To add properties, use exports.prop = ... or module.exports.prop = .... This is a frequent source of bugs when developers confuse the two.",
       "ru": "Изначально exports указывает на module.exports (они ссылаются на один объект). Если вы переприсвоите exports, он больше не указывает на module.exports, поэтому новое значение игнорируется при экспорте. Для экспорта нового объекта используйте module.exports = {...}. Для добавления свойств используйте exports.prop = ... или module.exports.prop = .... Это частый источник ошибок, когда разработчики путают эти два."
@@ -683,19 +683,19 @@
     },
     "options": {
       "en": [
-        "1, 5, 2, 3, 4",
         "1, 2, 3, 4, 5",
+        "1, 5, 2, 3, 4",
         "1, 5, 3, 2, 4",
         "1, 5, 2, 4, 3"
       ],
       "ru": [
-        "1, 5, 2, 3, 4",
         "1, 2, 3, 4, 5",
+        "1, 5, 2, 3, 4",
         "1, 5, 3, 2, 4",
         "1, 5, 2, 4, 3"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Synchronous code executes first (1, 5), then the microtask queue (process.nextTick → 2, Promises → 3), and finally macrotasks (setImmediate → 4). process.nextTick has higher priority than Promises in the microtask queue, so it runs before Promise.then(). This demonstrates the critical distinction between microtasks and macrotasks.",
       "ru": "Синхронный код выполняется первым (1, 5), затем очередь микротасков (process.nextTick → 2, Promises → 3), и наконец макротаски (setImmediate → 4). process.nextTick имеет более высокий приоритет, чем Promises в микротаск очереди, поэтому он выполняется перед Promise.then(). Это демонстрирует критическое различие между микротасками и макротасками."
@@ -711,18 +711,18 @@
     "options": {
       "en": [
         "ESM uses synchronous loading while CommonJS uses asynchronous loading",
-        "ESM is asynchronous and performs static analysis at parse time, while CommonJS is synchronous and dynamic",
         "CommonJS supports top-level await while ESM does not",
+        "ESM is asynchronous and performs static analysis at parse time, while CommonJS is synchronous and dynamic",
         "ESM requires a bundler while CommonJS works natively in Node.js"
       ],
       "ru": [
         "ESM использует синхронную загрузку, а CommonJS использует асинхронную загрузку",
-        "ESM асинхронна и выполняет статический анализ во время парсинга, а CommonJS синхронна и динамична",
         "CommonJS поддерживает top-level await, а ESM не поддерживает",
+        "ESM асинхронна и выполняет статический анализ во время парсинга, а CommonJS синхронна и динамична",
         "ESM требует bundler, а CommonJS работает нативно в Node.js"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM performs static analysis at parse time (before execution) and loads modules asynchronously, while CommonJS loads modules synchronously at runtime using require(). This is why ESM can perform tree-shaking and has stricter scoping, while CommonJS allows dynamic require() calls. ESM's async nature makes it better for browsers and modern tooling.",
       "ru": "ESM выполняет статический анализ во время парсинга (перед выполнением) и загружает модули асинхронно, тогда как CommonJS загружает модули синхронно во время выполнения с помощью require(). Поэтому ESM может выполнять tree-shaking и имеет более строгую область видимости, в то время как CommonJS позволяет динамические вызовы require(). Асинхронная природа ESM делает её лучше для браузеров и современных инструментов."
@@ -737,19 +737,19 @@
     },
     "options": {
       "en": [
-        "It logs 'caught: ENOENT' because error events can be caught with on('error')",
         "It throws an uncaught error because streams don't emit errors",
         "It logs 'caught: undefined' because the error event doesn't receive error details",
-        "It logs nothing because the stream silently fails without emitting events"
+        "It logs nothing because the stream silently fails without emitting events",
+        "It logs 'caught: ENOENT' because error events can be caught with on('error')"
       ],
       "ru": [
-        "Выводит 'caught: ENOENT' потому что error события могут быть обработаны с on('error')",
         "Выбрасывает необработанное исключение потому что streams не эмитят ошибки",
         "Выводит 'caught: undefined' потому что error событие не получает детали ошибки",
-        "Ничего не выводит потому что stream молча падает без эмиттинга событий"
+        "Ничего не выводит потому что stream молча падает без эмиттинга событий",
+        "Выводит 'caught: ENOENT' потому что error события могут быть обработаны с on('error')"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Streams emit 'error' events when something goes wrong, and attaching an 'error' listener prevents the error from crashing the application. The ENOENT code indicates 'Error NO ENTry' (file not found). Without the error listener, the stream would throw an unhandled error and crash the process. This shows why proper error handling on streams is critical.",
       "ru": "Streams эмитят события 'error' когда что-то идет не так, и присоединение слушателя 'error' предотвращает сбой приложения. Код ENOENT означает 'Error NO ENTry' (файл не найден). Без слушателя error, stream выбросит необработанную ошибку и сломает процесс. Это показывает, почему правильная обработка ошибок на streams критична."
@@ -818,19 +818,19 @@
     },
     "options": {
       "en": [
-        "Cluster uses multiple processes with separate V8 instances, while worker_threads share the same V8 instance and memory space",
         "Worker_threads are only for CPU-intensive tasks, while cluster is for I/O operations",
         "Cluster is deprecated and should not be used in new projects",
+        "Cluster uses multiple processes with separate V8 instances, while worker_threads share the same V8 instance and memory space",
         "Worker_threads automatically distribute load across CPU cores, while cluster requires manual distribution"
       ],
       "ru": [
-        "Cluster использует несколько процессов с отдельными экземплярами V8, а worker_threads делят один и тот же экземпляр V8 и пространство памяти",
         "Worker_threads предназначены только для CPU-интенсивных задач, а cluster для операций ввода-вывода",
         "Cluster устарел и не должен использоваться в новых проектах",
+        "Cluster использует несколько процессов с отдельными экземплярами V8, а worker_threads делят один и тот же экземпляр V8 и пространство памяти",
         "Worker_threads автоматически распределяют нагрузку между ядрами CPU, а cluster требует ручного распределения"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Cluster creates separate Node.js processes, each with its own V8 instance and memory, communicating via IPC. Worker_threads run within the same process and share memory through SharedArrayBuffer, making them lighter but requiring careful synchronization. Both are useful but for different scenarios.",
       "ru": "Cluster создаёт отдельные процессы Node.js, каждый с собственным экземпляром V8 и памятью, общающиеся через IPC. Worker_threads запускаются в одном процессе и делят память через SharedArrayBuffer, что делает их легче, но требует тщательной синхронизации. Оба полезны, но для разных сценариев."
@@ -845,19 +845,19 @@
     },
     "options": {
       "en": [
-        "5, 'hello', 104",
         "5, 'hello', 'h'",
         "hello, hello, h",
-        "5, 104, hello"
+        "5, 104, hello",
+        "5, 'hello', 104"
       ],
       "ru": [
-        "5, 'hello', 104",
         "5, 'hello', 'h'",
         "hello, hello, h",
-        "5, 104, hello"
+        "5, 104, hello",
+        "5, 'hello', 104"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Buffer.from('hello') creates a buffer with 5 bytes (length = 5). toString('utf8') converts it back to the string 'hello'. buffer[0] accesses the first byte as a number (ASCII value of 'h' is 104). Buffers store raw bytes, and accessing by index returns numeric values.",
       "ru": "Buffer.from('hello') создаёт буфер из 5 байт (length = 5). toString('utf8') преобразует его обратно в строку 'hello'. buffer[0] обращается к первому байту как к числу (ASCII значение 'h' равно 104). Буферы хранят сырые байты, и обращение по индексу возвращает числовые значения."
@@ -872,19 +872,19 @@
     },
     "options": {
       "en": [
-        "A circular dependency error is thrown immediately",
         "Module A receives an incomplete or empty object from module B at the point of the circular require",
+        "A circular dependency error is thrown immediately",
         "Node.js automatically resolves the circular dependency by cloning modules",
         "The require statement is ignored when a circular dependency is detected"
       ],
       "ru": [
-        "Немедленно выбрасывается ошибка циклической зависимости",
         "Модуль A получает неполный или пустой объект от модуля B в момент циклического require",
+        "Немедленно выбрасывается ошибка циклической зависимости",
         "Node.js автоматически разрешает циклическую зависимость путём клонирования модулей",
         "Оператор require игнорируется при обнаружении циклической зависимости"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
       "en": "Node.js handles circular requires by caching partially-loaded modules. When B requires A while A is still loading, B receives the current state of module.exports (which may be an empty object or partially populated). This is by design and can lead to unexpected behavior if not handled carefully.",
       "ru": "Node.js обрабатывает циклические require, кэшируя частично загруженные модули. Когда B требует A, пока A всё ещё загружается, B получает текущее состояние module.exports (которое может быть пустым объектом или частично заполненным). Это сделано намеренно и может привести к неожиданному поведению, если не обработать осторожно."
@@ -899,19 +899,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
         "check → timers → pending callbacks → poll → idle/prepare → close callbacks"
       ],
       "ru": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
         "check → timers → pending callbacks → poll → idle/prepare → close callbacks"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "The event loop processes phases in this exact order: timers (setTimeout/setInterval) → pending callbacks → idle/prepare → poll → check (setImmediate) → close callbacks. setTimeout callbacks are executed in the timers phase, which comes first.",
       "ru": "Цикл событий обрабатывает фазы в точном порядке: timers (setTimeout/setInterval) → pending callbacks → idle/prepare → poll → check (setImmediate) → close callbacks. Callbacks setTimeout выполняются в фазе timers, которая идёт первой."
@@ -926,19 +926,19 @@
     },
     "options": {
       "en": [
-        "start, end, nextTick, promise, immediate",
         "start, nextTick, promise, end, immediate",
         "start, end, immediate, nextTick, promise",
+        "start, end, nextTick, promise, immediate",
         "start, end, promise, nextTick, immediate"
       ],
       "ru": [
-        "start, end, nextTick, promise, immediate",
         "start, nextTick, promise, end, immediate",
         "start, end, immediate, nextTick, promise",
+        "start, end, nextTick, promise, immediate",
         "start, end, promise, nextTick, immediate"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Synchronous code runs first (start, end), then microtasks in order: process.nextTick and Promise (nextTick, promise), then macrotasks (immediate). process.nextTick has higher priority than Promise.then, both execute before setImmediate.",
       "ru": "Синхронный код выполняется первым (start, end), затем микротаски по порядку: process.nextTick и Promise (nextTick, promise), затем макротаски (immediate). process.nextTick имеет приоритет выше, чем Promise.then, оба выполняются до setImmediate."
@@ -953,19 +953,19 @@
     },
     "options": {
       "en": [
-        "import { fileURLToPath } from 'url'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);",
         "const __filename = process.env.FILE_PATH; const __dirname = process.env.DIR_PATH;",
         "import __filename from '__filename'; import __dirname from '__dirname';",
-        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;"
+        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;",
+        "import { fileURLToPath } from 'url'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);"
       ],
       "ru": [
-        "import { fileURLToPath } from 'url'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);",
         "const __filename = process.env.FILE_PATH; const __dirname = process.env.DIR_PATH;",
         "import __filename from '__filename'; import __dirname from '__dirname';",
-        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;"
+        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;",
+        "import { fileURLToPath } from 'url'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "ESM doesn't provide __dirname and __filename directly. You must use import.meta.url with fileURLToPath from the 'url' module to get the filename, then derive __dirname using path.dirname(). The other options use non-existent APIs or environment variables.",
       "ru": "ESM не предоставляет __dirname и __filename напрямую. Вы должны использовать import.meta.url с fileURLToPath из модуля 'url' для получения имени файла, затем вывести __dirname с помощью path.dirname(). Остальные варианты используют несуществующие API или переменные окружения."
@@ -1007,19 +1007,19 @@
     },
     "options": {
       "en": [
-        "Streams process data in chunks and use backpressure handling, while readFile loads the entire file into memory at once",
         "Streams are always faster regardless of file size",
+        "Streams process data in chunks and use backpressure handling, while readFile loads the entire file into memory at once",
         "readFile is asynchronous while streams are synchronous",
         "Streams are only useful for text files, not binary data"
       ],
       "ru": [
-        "Потоки обрабатывают данные порциями и используют управление обратным давлением, а readFile загружает весь файл в память сразу",
         "Потоки всегда быстрее независимо от размера файла",
+        "Потоки обрабатывают данные порциями и используют управление обратным давлением, а readFile загружает весь файл в память сразу",
         "readFile является асинхронным, а потоки синхронными",
         "Потоки полезны только для текстовых файлов, не для бинарных данных"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Streams read data in chunks (default 64KB), preventing excessive memory consumption for large files. They also implement backpressure handling to pause reading when the consumer can't keep up. readFile loads the entire file into memory, which is inefficient and dangerous for large files. Streams are essential for handling large files, downloads, and real-time data processing.",
       "ru": "Потоки читают данные порциями (по умолчанию 64KB), предотвращая чрезмерное потребление памяти для больших файлов. Они также реализуют управление обратным давлением, чтобы приостановить чтение, когда потребитель не может угнаться. readFile загружает весь файл в память, что неэффективно и опасно для больших файлов. Потоки необходимы для обработки больших файлов, загрузок и обработки данных в реальном времени."
@@ -1034,19 +1034,19 @@
     },
     "options": {
       "en": [
-        "ESM supports top-level await and static imports, while CommonJS uses require() which is dynamic and synchronous",
         "CommonJS is faster than ESM in all cases",
         "ESM and CommonJS can be freely mixed in the same file without any compatibility issues",
+        "ESM supports top-level await and static imports, while CommonJS uses require() which is dynamic and synchronous",
         "Node.js automatically converts CommonJS require() to ESM imports at runtime"
       ],
       "ru": [
-        "ESM поддерживает top-level await и статические импорты, в то время как CommonJS использует require(), который является динамичным и синхронным",
         "CommonJS всегда быстрее, чем ESM",
         "ESM и CommonJS могут свободно смешиваться в одном файле без каких-либо проблем совместимости",
+        "ESM поддерживает top-level await и статические импорты, в то время как CommonJS использует require(), который является динамичным и синхронным",
         "Node.js автоматически преобразует CommonJS require() в ESM импорты во время выполнения"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM is the standard module system with static structure enabling optimizations and top-level await support. CommonJS require() is dynamic and synchronous, evaluated at runtime. While Node.js supports both, mixing them requires careful handling—ESM can import CommonJS modules, but CommonJS cannot import ESM modules. Each has different performance characteristics and use cases.",
       "ru": "ESM — это стандартная система модулей со статической структурой, что позволяет оптимизировать и поддерживать top-level await. CommonJS require() является динамичным и синхронным, вычисляемым во время выполнения. Хотя Node.js поддерживает оба, их смешивание требует тщательной обработки — ESM может импортировать модули CommonJS, но CommonJS не может импортировать модули ESM. Каждый имеет разные характеристики производительности и варианты использования."
@@ -1061,19 +1061,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
         "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "timers → poll → pending callbacks → check → idle/prepare → close callbacks"
+        "timers → poll → pending callbacks → check → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
       ],
       "ru": [
-        "таймеры → отложенные обратные вызовы → холостой/подготовка → опрос → проверка → закрытие",
         "опрос → таймеры → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие",
         "отложенные обратные вызовы → таймеры → опрос → проверка → холостой/подготовка → закрытие",
-        "таймеры → опрос → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие"
+        "таймеры → опрос → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие",
+        "таймеры → отложенные обратные вызовы → холостой/подготовка → опрос → проверка → закрытие"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "The event loop executes phases in order: timers (setTimeout/setInterval), pending callbacks (system operations), idle/prepare (internal use), poll (I/O events), check (setImmediate), and close callbacks. This sequence repeats until the event loop is empty.",
       "ru": "Цикл событий выполняет фазы по порядку: таймеры (setTimeout/setInterval), отложенные обратные вызовы (системные операции), холостой/подготовка (внутреннее использование), опрос (события ввода-вывода), проверка (setImmediate) и закрытие. Эта последовательность повторяется до тех пор, пока цикл событий не будет пуст."
@@ -1115,19 +1115,19 @@
     },
     "options": {
       "en": [
-        "5 5 true object",
         "5 5 true string",
+        "5 5 true object",
         "0 5 true object",
         "5 undefined true object"
       ],
       "ru": [
-        "5 5 true object",
         "5 5 true string",
+        "5 5 true object",
         "0 5 true object",
         "5 undefined true object"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Buffer.alloc(5) creates a buffer of 5 bytes, and Buffer.from('hello') creates a buffer from the string with length 5. Buffer.isBuffer() returns true for buffers, and typeof returns 'object' since Buffer is an object type in JavaScript, not a string.",
       "ru": "Buffer.alloc(5) создает буфер из 5 байт, а Buffer.from('hello') создает буфер из строки длиной 5. Buffer.isBuffer() возвращает true для буферов, а typeof возвращает 'object', потому что Buffer - это объектный тип в JavaScript, а не строка."

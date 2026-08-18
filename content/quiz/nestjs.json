@@ -35,19 +35,19 @@
     },
     "options": {
       "en": [
-        "Each request gets a new instance of TransientService, so both requests will receive different IDs",
         "Both requests share the same instance, so they will receive the same ID",
+        "Each request gets a new instance of TransientService, so both requests will receive different IDs",
         "The first request gets an instance, but the second request reuses it only if the first request is completed",
         "A new instance is created once per module, and both requests share it within that module"
       ],
       "ru": [
-        "Каждый запрос получает новый экземпляр TransientService, поэтому оба запроса получат разные ID",
         "Оба запроса используют один и тот же экземпляр, поэтому они получат одинаковый ID",
+        "Каждый запрос получает новый экземпляр TransientService, поэтому оба запроса получат разные ID",
         "Первый запрос получает экземпляр, но второй запрос повторно использует его только если первый запрос завершен",
         "Новый экземпляр создается один раз для модуля, и оба запроса используют его в этом модуле"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "TRANSIENT scope creates a new instance for each consumer (each injection point). So each request that injects TransientService gets its own unique instance with a different random ID. DEFAULT scope is singleton (shared across all), and REQUEST scope is per-request. This makes TRANSIENT the most expensive in terms of memory but useful for stateful services that must not be shared.",
       "ru": "Scope TRANSIENT создает новый экземпляр для каждого потребителя (каждой точки внедрения). Поэтому каждый запрос, который внедряет TransientService, получает свой уникальный экземпляр с разным случайным ID. Scope DEFAULT является синглтоном (общий для всех), а REQUEST — один раз в запрос. Это делает TRANSIENT наиболее затратным по памяти, но полезным для stateful-сервисов, которые не должны быть общими."
@@ -62,19 +62,19 @@
     },
     "options": {
       "en": [
-        "Middleware → Guards → Interceptors (pre) → Pipes → Route Handler → Interceptors (post)",
         "Guards → Middleware → Pipes → Interceptors (pre) → Route Handler → Interceptors (post)",
         "Interceptors (pre) → Middleware → Guards → Pipes → Route Handler → Interceptors (post)",
+        "Middleware → Guards → Interceptors (pre) → Pipes → Route Handler → Interceptors (post)",
         "Pipes → Guards → Middleware → Interceptors (pre) → Route Handler → Interceptors (post)"
       ],
       "ru": [
-        "Middleware → Guards → Interceptors (pre) → Pipes → Route Handler → Interceptors (post)",
         "Guards → Middleware → Pipes → Interceptors (pre) → Route Handler → Interceptors (post)",
         "Interceptors (pre) → Middleware → Guards → Pipes → Route Handler → Interceptors (post)",
+        "Middleware → Guards → Interceptors (pre) → Pipes → Route Handler → Interceptors (post)",
         "Pipes → Guards → Middleware → Interceptors (pre) → Route Handler → Interceptors (post)"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The execution pipeline in Nest.js follows: Middleware (Express-like) → Guards (authorization) → Interceptors pre-handler (transform request) → Pipes (validate/transform data) → Route Handler → Interceptors post-handler (transform response). This order ensures middleware runs first at the Express level, then framework-level features progressively narrow down to the handler.",
       "ru": "Pipeline выполнения в Nest.js следует: Middleware (как в Express) → Guards (авторизация) → Interceptors pre-handler (трансформация запроса) → Pipes (валидация/трансформация данных) → Route Handler → Interceptors post-handler (трансформация ответа). Этот порядок гарантирует, что middleware выполняется первым на уровне Express, затем функции фреймворка прогрессивно сужаются к обработчику."
@@ -89,19 +89,19 @@
     },
     "options": {
       "en": [
-        "OrderModule can only inject UserService because it is exported; EmailService is not accessible",
         "OrderModule can inject both UserService and EmailService because they are both defined in UserModule",
         "OrderModule cannot inject any services from UserModule unless they are also declared in OrderModule",
-        "OrderModule can inject UserService and EmailService only if UserModule re-exports EmailService"
+        "OrderModule can inject UserService and EmailService only if UserModule re-exports EmailService",
+        "OrderModule can only inject UserService because it is exported; EmailService is not accessible"
       ],
       "ru": [
-        "OrderModule может внедрить только UserService, потому что оно экспортируется; EmailService недоступен",
         "OrderModule может внедрить как UserService, так и EmailService, потому что оба определены в UserModule",
         "OrderModule не может внедрить никакие сервисы из UserModule, если они не объявлены в OrderModule",
-        "OrderModule может внедрить UserService и EmailService только если UserModule переэкспортирует EmailService"
+        "OrderModule может внедрить UserService и EmailService только если UserModule переэкспортирует EmailService",
+        "OrderModule может внедрить только UserService, потому что оно экспортируется; EmailService недоступен"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "The `exports` array controls what providers from a module are available to other modules that import it. Only exported providers can be injected elsewhere. EmailService is defined but not exported, so it remains private to UserModule. This encapsulation is crucial for maintaining clear module boundaries and preventing unwanted dependencies.",
       "ru": "Массив `exports` контролирует, какие провайдеры из модуля доступны другим модулям, которые его импортируют. Только экспортированные провайдеры могут быть внедрены в других местах. EmailService определен, но не экспортирован, поэтому остается приватным для UserModule. Эта инкапсуляция критична для поддержания четких границ модулей и предотвращения нежелательных зависимостей."
@@ -143,19 +143,19 @@
     },
     "options": {
       "en": [
-        "Guards control access and execution flow, while Interceptors transform request/response data and handle cross-cutting concerns",
         "Interceptors control access and execution flow, while Guards transform request/response data",
+        "Guards control access and execution flow, while Interceptors transform request/response data and handle cross-cutting concerns",
         "Both serve the same purpose but Guards are for classes and Interceptors are for methods only",
         "Guards are for authentication only, Interceptors are for logging only"
       ],
       "ru": [
-        "Guard контролируют доступ и поток выполнения, а Interceptor трансформируют данные запроса/ответа и обрабатывают сквозные задачи",
         "Interceptor контролируют доступ и поток выполнения, а Guard трансформируют данные запроса/ответа",
+        "Guard контролируют доступ и поток выполнения, а Interceptor трансформируют данные запроса/ответа и обрабатывают сквозные задачи",
         "Оба служат одной и той же цели, но Guard для классов, а Interceptor только для методов",
         "Guard предназначены только для аутентификации, Interceptor только для логирования"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Guards are responsible for authorization and controlling whether a request should proceed (canActivate method returns boolean). Interceptors wrap the request-response cycle and can transform data, handle timing, or execute logic before and after handler execution. They serve different purposes in the middleware chain.",
       "ru": "Guard отвечают за авторизацию и контроль того, должен ли запрос продолжаться (метод canActivate возвращает boolean). Interceptor оборачивают цикл запрос-ответ и могут трансформировать данные, обрабатывать время или выполнять логику до и после выполнения обработчика. Они служат разным целям в цепи middleware."
@@ -170,19 +170,19 @@
     },
     "options": {
       "en": [
-        "'RequestService created' will be logged twice because TRANSIENT scope creates a new instance for each injection point",
         "'RequestService created' will be logged once because NestJS caches instances within the same class",
         "'RequestService created' will be logged once because both svc1 and svc2 are the same request",
+        "'RequestService created' will be logged twice because TRANSIENT scope creates a new instance for each injection point",
         "'RequestService created' will not be logged at all because TRANSIENT scope is lazy-loaded"
       ],
       "ru": [
-        "'RequestService created' будет залогировано два раза, потому что TRANSIENT создает новый экземпляр для каждой точки инъекции",
         "'RequestService created' будет залогировано один раз, потому что NestJS кэширует экземпляры в одном классе",
         "'RequestService created' будет залогировано один раз, потому что svc1 и svc2 это один запрос",
+        "'RequestService created' будет залогировано два раза, потому что TRANSIENT создает новый экземпляр для каждой точки инъекции",
         "'RequestService created' не будет залогировано вообще, потому что TRANSIENT использует ленивую загрузку"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The TRANSIENT scope creates a new instance of RequestService for every injection. Since AppController requests RequestService twice (svc1 and svc2), two separate instances are created, resulting in the constructor log appearing twice. This is the defining characteristic of TRANSIENT scope—no sharing between injections.",
       "ru": "Область TRANSIENT создает новый экземпляр RequestService для каждой инъекции. Поскольку AppController запрашивает RequestService дважды (svc1 и svc2), создаются два отдельных экземпляра, в результате конструктор логируется дважды. Это отличительная черта TRANSIENT—отсутствие совместного использования между инъекциями."
@@ -198,18 +198,18 @@
     "options": {
       "en": [
         "onModuleInit",
-        "onApplicationBootstrap",
         "afterInit",
-        "onApplicationReady"
+        "onApplicationReady",
+        "onApplicationBootstrap"
       ],
       "ru": [
         "onModuleInit",
-        "onApplicationBootstrap",
         "afterInit",
-        "onApplicationReady"
+        "onApplicationReady",
+        "onApplicationBootstrap"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 3,
     "explanation": {
       "en": "onApplicationBootstrap is called after all modules have been initialized and the application is ready to accept connections. onModuleInit is called earlier (when a module is initialized), and afterInit/onApplicationReady are not standard NestJS lifecycle hooks. This hook is ideal for starting background tasks or listening to external services.",
       "ru": "onApplicationBootstrap вызывается после инициализации всех модулей и готовности приложения принимать соединения. onModuleInit вызывается раньше (при инициализации модуля), а afterInit/onApplicationReady не являются стандартными хуками жизненного цикла NestJS. Этот хук идеален для запуска фоновых задач или прослушивания внешних сервисов."
@@ -251,19 +251,19 @@
     },
     "options": {
       "en": [
-        "imports bring in external modules, providers define services/classes for this module, exports make providers available to other modules that import this module",
         "imports are services, providers are modules, exports are routes",
+        "imports bring in external modules, providers define services/classes for this module, exports make providers available to other modules that import this module",
         "all three are synonymous and can be used interchangeably for any component",
         "imports define what this module needs, providers define what it exports, exports define what it imports"
       ],
       "ru": [
-        "imports приносят внешние модули, providers определяют сервисы/классы для этого модуля, exports делают providers доступными для других модулей, которые импортируют этот модуль",
         "imports это сервисы, providers это модули, exports это маршруты",
+        "imports приносят внешние модули, providers определяют сервисы/классы для этого модуля, exports делают providers доступными для других модулей, которые импортируют этот модуль",
         "все три синонимичны и могут использоваться взаимозаменяемо для любого компонента",
         "imports определяют, что нужно этому модулю, providers определяют, что он экспортирует, exports определяют, что он импортирует"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "In NestJS module metadata: imports allow you to include other modules whose exported providers you need; providers are the services/classes created and maintained by this module; exports make specific providers available to other modules that import this module. This structure enforces modularity and encapsulation—a module doesn't automatically expose its providers unless explicitly exported.",
       "ru": "В метаданных модуля NestJS: imports позволяют включать другие модули, чьи экспортированные providers нужны; providers это сервисы/классы, создаваемые и поддерживаемые этим модулем; exports делают специфические providers доступными для других модулей, которые импортируют этот модуль. Эта структура обеспечивает модульность и инкапсуляцию—модуль не автоматически раскрывает своих providers, если только они явно не экспортированы."
@@ -278,19 +278,19 @@
     },
     "options": {
       "en": [
-        "'RequestService instantiated' will be logged twice (once per request)",
         "'RequestService instantiated' will be logged once (service is cached)",
         "'RequestService instantiated' will not be logged at all",
+        "'RequestService instantiated' will be logged twice (once per request)",
         "'RequestService instantiated' will be logged three times"
       ],
       "ru": [
-        "'RequestService instantiated' будет залогировано дважды (один раз на запрос)",
         "'RequestService instantiated' будет залогировано один раз (сервис кэшируется)",
         "'RequestService instantiated' вообще не будет залогировано",
+        "'RequestService instantiated' будет залогировано дважды (один раз на запрос)",
         "'RequestService instantiated' будет залогировано три раза"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "REQUEST scope means a new instance is created for each incoming request. Since scope is set to REQUEST, the RequestService constructor runs once per request, so two requests result in two instantiations. SINGLETON scope would log once, TRANSIENT scope would log multiple times per request.",
       "ru": "REQUEST scope означает создание нового экземпляра для каждого входящего запроса. Поскольку scope установлен в REQUEST, конструктор RequestService выполняется один раз за запрос, поэтому два запроса приводят к двум инстанциированиям. SINGLETON scope залогировал бы один раз, TRANSIENT scope залогировал бы несколько раз за запрос."
@@ -305,19 +305,19 @@
     },
     "options": {
       "en": [
-        "Pipes transform and validate data before reaching handlers; Filters handle exceptions after handlers execute",
         "Filters validate input while Pipes catch and transform errors",
         "Pipes are global while Filters can only be applied to specific routes",
-        "Filters run before Pipes and have access to the response object"
+        "Filters run before Pipes and have access to the response object",
+        "Pipes transform and validate data before reaching handlers; Filters handle exceptions after handlers execute"
       ],
       "ru": [
-        "Pipes трансформируют и валидируют данные до попадания в обработчики; Filters обрабатывают исключения после выполнения обработчиков",
         "Filters валидируют входные данные, а Pipes ловят и трансформируют ошибки",
         "Pipes глобальны, а Filters могут применяться только к определённым маршрутам",
-        "Filters выполняются перед Pipes и имеют доступ к объекту ответа"
+        "Filters выполняются перед Pipes и имеют доступ к объекту ответа",
+        "Pipes трансформируют и валидируют данные до попадания в обработчики; Filters обрабатывают исключения после выполнения обработчиков"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Pipes are used in the data transformation/validation phase before the handler receives data—they process input parameters. Filters are exception handlers that catch and handle exceptions thrown during request processing. Pipes work with data, Filters work with errors.",
       "ru": "Pipes используются на этапе трансформации/валидации данных до получения их обработчиком—они обрабатывают входные параметры. Filters—это обработчики исключений, которые ловят и обрабатывают исключения, выброшенные при обработке запроса. Pipes работают с данными, Filters работают с ошибками."
@@ -359,19 +359,19 @@
     },
     "options": {
       "en": [
-        "onModuleInit → onApplicationBootstrap → onModuleDestroy → onApplicationShutdown",
         "onApplicationBootstrap → onModuleInit → onApplicationShutdown → onModuleDestroy",
+        "onModuleInit → onApplicationBootstrap → onModuleDestroy → onApplicationShutdown",
         "onModuleInit → onModuleDestroy → onApplicationBootstrap → onApplicationShutdown",
         "onApplicationBootstrap → onApplicationShutdown → onModuleInit → onModuleDestroy"
       ],
       "ru": [
-        "onModuleInit → onApplicationBootstrap → onModuleDestroy → onApplicationShutdown",
         "onApplicationBootstrap → onModuleInit → onApplicationShutdown → onModuleDestroy",
+        "onModuleInit → onApplicationBootstrap → onModuleDestroy → onApplicationShutdown",
         "onModuleInit → onModuleDestroy → onApplicationBootstrap → onApplicationShutdown",
         "onApplicationBootstrap → onApplicationShutdown → onModuleInit → onModuleDestroy"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "onModuleInit is called after the module's dependencies are resolved, then onApplicationBootstrap runs after all modules are initialized and the app is ready. On shutdown, onModuleDestroy is called first, then onApplicationShutdown as the final cleanup hook.",
       "ru": "onModuleInit вызывается после разрешения зависимостей модуля, затем onApplicationBootstrap выполняется после инициализации всех модулей и готовности приложения. При завершении onModuleDestroy вызывается первым, затем onApplicationShutdown как финальный hook очистки."
@@ -386,19 +386,19 @@
     },
     "options": {
       "en": [
-        "Guards determine whether a request should be processed, while Interceptors can transform the request/response and handle cross-cutting concerns",
         "Interceptors prevent unauthorized access, while Guards transform request data",
         "Guards and Interceptors are identical and can be used interchangeably",
+        "Guards determine whether a request should be processed, while Interceptors can transform the request/response and handle cross-cutting concerns",
         "Interceptors execute before Guards in the request lifecycle"
       ],
       "ru": [
-        "Guards определяют, должен ли запрос быть обработан, в то время как Interceptors могут трансформировать запрос/ответ и обрабатывать cross-cutting concerns",
         "Interceptors предотвращают несанкционированный доступ, а Guards трансформируют данные запроса",
         "Guards и Interceptors идентичны и могут использоваться взаимозаменяемо",
+        "Guards определяют, должен ли запрос быть обработан, в то время как Interceptors могут трансформировать запрос/ответ и обрабатывать cross-cutting concerns",
         "Interceptors выполняются до Guards в жизненном цикле запроса"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Guards are responsible for authorization—they decide whether a request proceeds based on conditions. Interceptors wrap request/response handling and are used for logging, transformation, and other cross-cutting concerns. This is a fundamental architectural difference in NestJS request processing.",
       "ru": "Guards отвечают за авторизацию—они решают, должен ли запрос продолжаться на основе условий. Interceptors оборачивают обработку запроса/ответа и используются для логирования, трансформации и других cross-cutting concerns. Это фундаментальное архитектурное различие в обработке запросов NestJS."
@@ -413,19 +413,19 @@
     },
     "options": {
       "en": [
-        "Two identical random numbers (same instance is reused)",
         "Two different random numbers (new instance created each time)",
         "An error because TRANSIENT services cannot be injected into singletons",
-        "Two identical random numbers (one per request)"
+        "Two identical random numbers (one per request)",
+        "Two identical random numbers (same instance is reused)"
       ],
       "ru": [
-        "Два одинаковых случайных числа (один экземпляр переиспользуется)",
         "Два разных случайных числа (новый экземпляр создается каждый раз)",
         "Ошибка, потому что TRANSIENT services не могут быть injected в singletons",
-        "Два одинаковых случайных числа (одно на запрос)"
+        "Два одинаковых случайных числа (одно на запрос)",
+        "Два одинаковых случайных числа (один экземпляр переиспользуется)"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "The TransientService is injected once into SingletonService's constructor, creating one instance that is stored and reused. Even though the service has TRANSIENT scope, it's still injected once at constructor time, so calling getId() twice returns the same value. TRANSIENT scope means a new instance per injection site, not per method call.",
       "ru": "TransientService инъектируется один раз в конструктор SingletonService, создавая один экземпляр, который сохраняется и переиспользуется. Хотя сервис имеет TRANSIENT scope, он все равно инъектируется один раз во время конструктора, поэтому вызов getId() дважды возвращает одно значение. TRANSIENT scope означает новый экземпляр на место инъекции, а не на каждый вызов метода."
@@ -467,19 +467,19 @@
     },
     "options": {
       "en": [
-        "onModuleInit fires for all modules, then onApplicationBootstrap fires once for the app",
         "onApplicationBootstrap fires first, then onModuleInit fires for each module",
+        "onModuleInit fires for all modules, then onApplicationBootstrap fires once for the app",
         "Both fire simultaneously in parallel",
         "onModuleInit fires for each module independently, onApplicationBootstrap is never called"
       ],
       "ru": [
-        "onModuleInit срабатывает для всех модулей, затем onApplicationBootstrap срабатывает один раз для приложения",
         "onApplicationBootstrap срабатывает первым, затем onModuleInit срабатывает для каждого модуля",
+        "onModuleInit срабатывает для всех модулей, затем onApplicationBootstrap срабатывает один раз для приложения",
         "Оба срабатывают одновременно параллельно",
         "onModuleInit срабатывает для каждого модуля независимо, onApplicationBootstrap никогда не вызывается"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "NestJS follows a specific lifecycle: all modules are initialized with onModuleInit in dependency order, and only after all modules are ready, onApplicationBootstrap is called once globally. This ensures all dependencies are loaded before the application fully bootstraps.",
       "ru": "NestJS следует определенному жизненному циклу: все модули инициализируются с onModuleInit в порядке зависимостей, и только после того, как все модули готовы, onApplicationBootstrap вызывается один раз глобально. Это гарантирует, что все зависимости загружены перед полной загрузкой приложения."
@@ -494,19 +494,19 @@
     },
     "options": {
       "en": [
-        "Pipes transform and validate input data; Filters handle exceptions that occur during request processing",
         "Pipes handle exceptions; Filters transform and validate data",
         "Pipes are used for authentication; Filters are used for logging",
+        "Pipes transform and validate input data; Filters handle exceptions that occur during request processing",
         "Pipes and Filters are the same thing with different names"
       ],
       "ru": [
-        "Pipes трансформируют и валидируют входные данные; Filters обрабатывают исключения, которые происходят при обработке запроса",
         "Pipes обрабатывают исключения; Filters трансформируют и валидируют данные",
         "Pipes используются для аутентификации; Filters используются для логирования",
+        "Pipes трансформируют и валидируют входные данные; Filters обрабатывают исключения, которые происходят при обработке запроса",
         "Pipes и Filters—это одно и то же с разными названиями"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Pipes are part of the request processing pipeline and are used to validate and transform input data (e.g., ValidationPipe, ParseIntPipe). Filters are exception handlers that catch and respond to errors thrown during request handling. They operate at different stages: Pipes before business logic, Filters after exceptions occur.",
       "ru": "Pipes являются частью конвейера обработки запроса и используются для валидации и трансформации входных данных (например, ValidationPipe, ParseIntPipe). Filters—это обработчики исключений, которые перехватывают и обрабатывают ошибки, возникшие при обработке запроса. Они работают на разных этапах: Pipes перед бизнес-логикой, Filters после возникновения исключений."
@@ -522,18 +522,18 @@
     "options": {
       "en": [
         "Two log entries with the same random ID, because the service is injected twice into one controller",
-        "Two log entries with different random IDs, because TRANSIENT scope creates a new instance for each injection point",
         "One log entry with a random ID, because transient services are cached within a single request",
-        "No logs at all, because transient providers don't have constructors"
+        "No logs at all, because transient providers don't have constructors",
+        "Two log entries with different random IDs, because TRANSIENT scope creates a new instance for each injection point"
       ],
       "ru": [
         "Две записи логирования с одинаковым случайным ID, потому что сервис внедряется дважды в один контроллер",
-        "Две записи логирования с разными случайными ID, потому что область TRANSIENT создает новый экземпляр для каждой точки внедрения",
         "Одна запись логирования со случайным ID, потому что временные сервисы кешируются в рамках одного запроса",
-        "Никаких логов, потому что временные провайдеры не имеют конструкторов"
+        "Никаких логов, потому что временные провайдеры не имеют конструкторов",
+        "Две записи логирования с разными случайными ID, потому что область TRANSIENT создает новый экземпляр для каждой точки внедрения"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 3,
     "explanation": {
       "en": "TRANSIENT scope in NestJS creates a unique instance for every single injection point. Since AppController depends on TransientService twice (service1 and service2), two separate instances are created, each with its own random ID. DEFAULT and REQUEST scopes would produce different results.",
       "ru": "Область TRANSIENT в NestJS создает уникальный экземпляр для каждой точки внедрения. Поскольку AppController зависит от TransientService дважды (service1 и service2), создаются два отдельных экземпляра, каждый со своим случайным ID. Области DEFAULT и REQUEST дали бы другие результаты."
@@ -562,8 +562,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The correct lifecycle order is: onModuleInit (when module starts), onApplicationBootstrap (when app finishes starting), then onModuleDestroy (when app shuts down), and onApplicationShutdown (final cleanup). There is no onRequest/onResponse hook; Interceptors handle per-request logic. Option 2 invents hooks that don't exist.",
-      "ru": "Правильный порядок жизненного цикла: onModuleInit (когда модуль запускается), onApplicationBootstrap (когда приложение заканчивает запуск), затем onModuleDestroy (когда приложение завершает работу) и onApplicationShutdown (финальная очистка). Хуков onRequest/onResponse не существует; Interceptors обрабатывают логику для каждого запроса. Вариант 2 выдумывает несуществующие хуки."
+      "en": "The correct lifecycle order is: onModuleInit (when module starts), onApplicationBootstrap (when app finishes starting), then onModuleDestroy (when app shuts down), and onApplicationShutdown (final cleanup). There is no onRequest/onResponse hook; Interceptors handle per-request logic. The option with onRequest/onResponse invents hooks that don't exist.",
+      "ru": "Правильный порядок жизненного цикла: onModuleInit (когда модуль запускается), onApplicationBootstrap (когда приложение заканчивает запуск), затем onModuleDestroy (когда приложение завершает работу) и onApplicationShutdown (финальная очистка). Хуков onRequest/onResponse не существует; Interceptors обрабатывают логику для каждого запроса. Вариант с onRequest/onResponse выдумывает несуществующие хуки."
     }
   },
   {
@@ -575,19 +575,19 @@
     },
     "options": {
       "en": [
-        "Method decorators attach metadata to the entire route handler, while parameter decorators attach metadata to specific function parameters that can be extracted by Pipes or Guards",
         "Parameter decorators are faster than method decorators",
+        "Method decorators attach metadata to the entire route handler, while parameter decorators attach metadata to specific function parameters that can be extracted by Pipes or Guards",
         "Method decorators can only be used on GET endpoints, parameter decorators work on all HTTP methods",
         "They are functionally identical; the distinction is purely stylistic"
       ],
       "ru": [
-        "Декораторы методов присоединяют метаданные к целому обработчику маршрута, в то время как декораторы параметров присоединяют метаданные к определенным параметрам функции, которые могут быть извлечены Pipes или Guards",
         "Декораторы параметров работают быстрее, чем декораторы методов",
+        "Декораторы методов присоединяют метаданные к целому обработчику маршрута, в то время как декораторы параметров присоединяют метаданные к определенным параметрам функции, которые могут быть извлечены Pipes или Guards",
         "Декораторы методов можно использовать только на GET эндпоинтах, декораторы параметров работают на всех HTTP методах",
         "Они функционально идентичны; различие чисто стилистическое"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Method decorators apply to the entire route handler function and its metadata is accessible to Guards, Interceptors, and Pipes at the class/method level. Parameter decorators target specific parameters and their metadata helps Pipes transform or validate that specific parameter. This distinction enables granular control over which parameters get processed.",
       "ru": "Декораторы методов применяются ко всей функции обработчика маршрута, и их метаданные доступны для Guards, Interceptors и Pipes на уровне класса/метода. Декораторы параметров нацелены на определенные параметры, и их метаданные помогают Pipes преобразовывать или проверять этот конкретный параметр. Это различие обеспечивает детальный контроль над тем, какие параметры будут обработаны."
@@ -602,19 +602,19 @@
     },
     "options": {
       "en": [
-        "Providers are registered locally; only providers listed in 'exports' become available for injection in other modules that import this module",
         "All providers are automatically exported and available to any module in the application",
         "The 'exports' array is only used for re-exporting modules, not for providers",
+        "Providers are registered locally; only providers listed in 'exports' become available for injection in other modules that import this module",
         "Providers in the exports array are removed from the current module and only available to importers"
       ],
       "ru": [
-        "Providers регистрируются локально; только провайдеры, указанные в 'exports', становятся доступными для внедрения в других модулях, которые импортируют этот модуль",
         "Все провайдеры автоматически экспортируются и доступны для любого модуля в приложении",
         "Массив 'exports' используется только для переэкспорта модулей, а не для провайдеров",
+        "Providers регистрируются локально; только провайдеры, указанные в 'exports', становятся доступными для внедрения в других модулях, которые импортируют этот модуль",
         "Провайдеры в массиве exports удаляются из текущего модуля и доступны только импортирующим модулям"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Providers are scoped to the module where they're defined by default. To make a provider available to other modules, it must be explicitly listed in the 'exports' array. Other modules can then import the module and inject those exported providers. This enforces explicit API boundaries and prevents unintended coupling.",
       "ru": "Провайдеры по умолчанию ограничены областью модуля, в котором они определены. Чтобы сделать провайдер доступным для других модулей, он должен быть явно указан в массиве 'exports'. Другие модули затем могут импортировать модуль и внедрять эти экспортированные провайдеры. Это устанавливает явные границы API и предотвращает непреднамеренное связывание."
@@ -629,19 +629,19 @@
     },
     "options": {
       "en": [
-        "Guards determine if a request should be processed at all, while Interceptors can wrap and modify both requests and responses",
         "Interceptors prevent unauthorized access, while Guards only log request data",
         "Guards can only be applied at the method level, while Interceptors work globally",
-        "Both serve identical purposes and are interchangeable in all scenarios"
+        "Both serve identical purposes and are interchangeable in all scenarios",
+        "Guards determine if a request should be processed at all, while Interceptors can wrap and modify both requests and responses"
       ],
       "ru": [
-        "Guards определяют, должен ли запрос быть обработан вообще, в то время как Interceptors могут обернуть и модифицировать как запросы, так и ответы",
         "Interceptors предотвращают несанкционированный доступ, в то время как Guards только логируют данные запроса",
         "Guards могут применяться только на уровне методов, в то время как Interceptors работают глобально",
-        "Оба служат идентичным целям и взаимозаменяемы во всех сценариях"
+        "Оба служат идентичным целям и взаимозаменяемы во всех сценариях",
+        "Guards определяют, должен ли запрос быть обработан вообще, в то время как Interceptors могут обернуть и модифицировать как запросы, так и ответы"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Guards are authorization/authentication mechanisms that decide whether to allow request processing (boolean decision), while Interceptors wrap the entire request-response cycle and can modify data before and after handler execution. They solve different problems—Guards are gatekeepers, Interceptors are middleware-like wrappers.",
       "ru": "Guards — это механизмы авторизации/аутентификации, которые решают, разрешить ли обработку запроса (булево решение), в то время как Interceptors оборачивают весь цикл запрос-ответ и могут модифицировать данные до и после выполнения обработчика. Они решают разные проблемы — Guards — это охранники, Interceptors — это обертки, похожие на middleware."
@@ -683,19 +683,19 @@
     },
     "options": {
       "en": [
-        "providers declares what services exist in the module; exports makes them accessible to other modules that import this module",
         "providers defines global services; exports defines local services",
+        "providers declares what services exist in the module; exports makes them accessible to other modules that import this module",
         "exports declares what services exist; providers makes them accessible to other modules",
         "Both are identical and either can be used interchangeably"
       ],
       "ru": [
-        "providers объявляет, какие сервисы существуют в модуле; exports делает их доступными для других модулей, которые импортируют этот модуль",
         "providers определяет глобальные сервисы; exports определяет локальные сервисы",
+        "providers объявляет, какие сервисы существуют в модуле; exports делает их доступными для других модулей, которые импортируют этот модуль",
         "exports объявляет, какие сервисы существуют; providers делает их доступными для других модулей",
         "Оба идентичны и любой из них может быть использован взаимозаменяемо"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "The 'providers' array registers services/dependencies in the module's dependency injection container, making them available within that module. The 'exports' array selectively exposes certain providers to other modules that import this module. In the example, AuthService is private to UserModule, while UserService is shared with other modules.",
       "ru": "Массив 'providers' регистрирует сервисы/зависимости в контейнере внедрения зависимостей модуля, делая их доступными в этом модуле. Массив 'exports' выборочно раскрывает определенные поставщики другим модулям, которые импортируют этот модуль. В примере AuthService является приватным для UserModule, в то время как UserService предоставляется другим модулям."
@@ -710,19 +710,19 @@
     },
     "options": {
       "en": [
-        "onModuleInit executes first, then onApplicationBootstrap after all modules are initialized",
         "onApplicationBootstrap executes first, then onModuleInit",
         "Both execute simultaneously with no guaranteed order",
+        "onModuleInit executes first, then onApplicationBootstrap after all modules are initialized",
         "onModuleInit executes once per request, onApplicationBootstrap only once on startup"
       ],
       "ru": [
-        "onModuleInit выполняется первым, затем onApplicationBootstrap после инициализации всех модулей",
         "onApplicationBootstrap выполняется первым, затем onModuleInit",
         "Оба выполняются одновременно без гарантированного порядка",
+        "onModuleInit выполняется первым, затем onApplicationBootstrap после инициализации всех модулей",
         "onModuleInit выполняется один раз на запрос, onApplicationBootstrap только один раз при запуске"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "NestJS lifecycle follows a strict order: onModuleInit is called when a module and its dependencies are initialized, then onApplicationBootstrap is called after all modules have completed initialization. This ensures all dependencies are ready before the application fully boots. The example will log 'Module initialized' before 'App bootstrapped'.",
       "ru": "Жизненный цикл NestJS следует строгому порядку: onModuleInit вызывается при инициализации модуля и его зависимостей, затем onApplicationBootstrap вызывается после завершения инициализации всех модулей. Это гарантирует, что все зависимости готовы до полной загрузки приложения. Пример выведет 'Module initialized' перед 'App bootstrapped'."
@@ -737,19 +737,19 @@
     },
     "options": {
       "en": [
-        "Pipes transform and validate method parameters before handler execution; Filters handle exceptions after they occur",
         "Filters transform and validate data; Pipes handle exceptions",
         "Pipes and Filters are identical and serve the same purpose in different contexts",
-        "Pipes prevent unauthorized access; Filters log request metadata"
+        "Pipes prevent unauthorized access; Filters log request metadata",
+        "Pipes transform and validate method parameters before handler execution; Filters handle exceptions after they occur"
       ],
       "ru": [
-        "Pipes преобразуют и проверяют параметры метода перед выполнением обработчика; Filters обрабатывают исключения после их возникновения",
         "Filters преобразуют и проверяют данные; Pipes обрабатывают исключения",
         "Pipes и Filters идентичны и служат одной цели в разных контекстах",
-        "Pipes предотвращают несанкционированный доступ; Filters регистрируют метаданные запроса"
+        "Pipes предотвращают несанкционированный доступ; Filters регистрируют метаданные запроса",
+        "Pipes преобразуют и проверяют параметры метода перед выполнением обработчика; Filters обрабатывают исключения после их возникновения"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Pipes are transformation and validation mechanisms that operate on method parameters BEFORE the route handler executes, allowing you to validate input and transform it. Filters are exception handlers that catch and process errors that occur AFTER execution. They operate at different stages: Pipes are proactive (prevention), Filters are reactive (error handling).",
       "ru": "Pipes — это механизмы трансформации и валидации, которые работают с параметрами метода ДО выполнения обработчика маршрута, позволяя проверять входные данные и преобразовывать их. Filters — это обработчики исключений, которые ловят и обрабатывают ошибки, которые возникают ПОСЛЕ выполнения. Они работают на разных этапах: Pipes — это проактивные (предотвращение), Filters — реактивные (обработка ошибок)."
