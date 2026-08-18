@@ -183,8 +183,8 @@ await pipeline(
   new NdjsonParser(),
   new Transform({
     objectMode: true,
-    transform(record, enc, cb) {
-      saveToDatabase(record);
+    async transform(record, enc, cb) {
+      await saveToDatabase(record); // cb only after the write, or backpressure breaks
       cb();
     },
   }),

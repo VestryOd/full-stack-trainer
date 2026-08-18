@@ -22,10 +22,15 @@ OWASP (Open Worldwide Application Security Project) — некоммерческ
 
 // Защита:
 app.get('/api/orders/:id', authenticate, async (req, res) => {
-  const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-  if (!order || (order.userId !== req.user.id && req.user.role !== 'admin')) {
-    return res.status(403).json({ error: 'Forbidden' }); // не 404 — утечка info
-  }
+  // ownership встроен в сам запрос: чужой заказ просто не найдётся
+  const order = await prisma.order.findFirst({
+    where: req.user.role === 'admin'
+      ? { id: req.params.id }
+      : { id: req.params.id, userId: req.user.id },
+  });
+  // 404, а не 403: ответ 403 подтвердил бы, что заказ существует, но чужой,
+  // и помог бы атакующему собрать список валидных id
+  if (!order) return res.status(404).json({ error: 'Not found' });
   res.json(order);
 });
 

@@ -209,7 +209,7 @@ Strong answer breaks this down into specific mechanisms:
 
 - **Memorizing answers without understanding the mechanism** — any variation of the question ("what if you add another await/listener/process?") breaks a memorized answer.
 
-- **Ignoring follow-ups** — each of the 45 questions above is an ENTRY POINT into a deeper conversation; being unprepared for "why?" is the main sign of shallow prep.
+- **Ignoring follow-ups** — each of the 33 questions above is an ENTRY POINT into a deeper conversation; being unprepared for "why?" is the main sign of shallow prep.
 
 - **Confusing "what uses the Thread Pool" with "what's asynchronous"** — almost everything in Node is asynchronous, but the Thread Pool is used only for a narrow set of operations (fs/crypto/zlib/dns.lookup).
 
