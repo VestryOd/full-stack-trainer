@@ -320,6 +320,36 @@ def find_abbreviations(prose: str, locale: str, stats: dict | None = None) -> li
     return flags
 
 
+def initials_expansion(token: str, window: str) -> str | None:
+    """Detect a spelled-out expansion by matching initials, in order.
+
+    STYLE.md allows any gloss form, and three common ones carry no punctuation
+    marker this function can key on:
+
+        not to the ORM. That is the object-relational mapper, …
+        at the CDN. A content delivery network holds copies …
+        The key is a UUID, a universally unique identifier.
+
+    So match the letters of the abbreviation against the initials of consecutive
+    words instead. Hyphens count as word separators, since "object-relational
+    mapper" spells ORM. Acronyms that double a letter ("UUID" for "universally
+    unique identifier") are matched with the last letter dropped.
+    """
+    letters = [c for c in token if c.isalpha()]
+    if len(letters) < 2:
+        return None
+
+    def matches(seq: list[str]) -> bool:
+        pattern = r"[\w-]*\W+".join(re.escape(c) for c in seq)
+        return bool(re.search(rf"\b{pattern}[\w-]*\b", window, re.I))
+
+    if matches(letters):
+        return "initials"
+    if len(letters) >= 4 and matches(letters[:-1]):
+        return "initials-partial"
+    return None
+
+
 def detect_expansion(token: str, window: str) -> str | None:
     """Return the expansion form found near `token`, or None."""
     esc = re.escape(token)
@@ -330,10 +360,10 @@ def detect_expansion(token: str, window: str) -> str | None:
     if re.search(rf"\(\s*{esc}\s*\)", window):
         return "parenthetical-before"
     # ABBR — expansion / ABBR - expansion / ABBR: expansion
-    if re.search(rf"{esc}\s*(?:—|–|:|\bэто\b|\bis\b|\bstands\s+for\b|"
-                 rf"\bозначает\b|\bрасшифровывается\b)\s", window):
+    if re.search(rf"{esc}\s*(?:—|–|:|,\s+(?:a|an|the|это)\b|\bэто\b|\bis\b|"
+                 rf"\bstands\s+for\b|\bозначает\b|\bрасшифровывается\b)\s", window):
         return "gloss-dash"
-    return None
+    return initials_expansion(token, window)
 
 
 def find_long_sentences(text: str, locale: str) -> list[dict]:
