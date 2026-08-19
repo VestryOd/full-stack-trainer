@@ -110,7 +110,9 @@ WORD_RE = re.compile(r"[A-Za-zА-Яа-яЁё0-9_'’\-]+")
 BOX_CHARS = set("─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬▲▼◄►↑↓→←↔⟶")
 
 # 2-6 uppercase Latin letters/digits, e.g. GC, JWT, HTTP2, OWASP
-ABBR_UPPER_RE = re.compile(r"(?<![A-Za-z0-9_])([A-Z][A-Z0-9]{1,5})(?![A-Za-z0-9_])")
+# The leading `.` guard keeps dotted product names whole: Socket.IO must not
+# yield "IO", and Node.JS must not yield "JS".
+ABBR_UPPER_RE = re.compile(r"(?<![A-Za-z0-9_.])([A-Z][A-Z0-9]{1,5})(?![A-Za-z0-9_])")
 # mixed-case acronyms: IoC, IaC, PaaS, SaaS, GoF, TTFb-style
 ABBR_MIXED_RE = re.compile(r"(?<![A-Za-z0-9_])([A-Z][a-z]{1,2}[A-Z][A-Za-z]{0,3})(?![A-Za-z0-9_])")
 # numeronyms: a11y, i18n, l10n, k8s
@@ -300,7 +302,10 @@ def find_abbreviations(prose: str, locale: str, stats: dict | None = None) -> li
     flags = []
     for token, (idx, sentence, kind) in sorted(first_seen.items()):
         # window: the sentence itself plus the next one (glosses often follow)
-        window = " ".join(sentences[idx : idx + 2])
+        # §2.2: an acronym may live in a heading as long as the text below expands
+        # it. A heading is one short "sentence", so widen the window in that case.
+        span = 5 if len(sentences[idx].split()) <= 12 else 2
+        window = " ".join(sentences[idx : idx + span])
         expansion = detect_expansion(token, window)
         if stats is not None:
             stats["seen"] = stats.get("seen", 0) + 1
@@ -360,7 +365,7 @@ def detect_expansion(token: str, window: str) -> str | None:
     if re.search(rf"\(\s*{esc}\s*\)", window):
         return "parenthetical-before"
     # ABBR — expansion / ABBR - expansion / ABBR: expansion
-    if re.search(rf"{esc}\s*(?:—|–|:|,\s+(?:a|an|the|это)\b|\bэто\b|\bis\b|"
+    if re.search(rf"{esc}\s*(?:—|–|:|,\s+(?:a|an|the|это|то\s+есть)\b|\bэто\b|\bis\b|"
                  rf"\bstands\s+for\b|\bозначает\b|\bрасшифровывается\b)\s", window):
         return "gloss-dash"
     return initials_expansion(token, window)
