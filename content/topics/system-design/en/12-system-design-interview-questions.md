@@ -2,36 +2,45 @@
 
 ## How to use this overview
 
-This isn't 12 new topics — it's a catalog of the most common problem statements in Senior Fullstack interviews, each annotated with its **core fork** and a link back to topics covered earlier. Three problems (URL Shortener, Chat System, Notification System) already have full dedicated articles — here they get only a short pointer. The other 9 are covered compactly: problem → core fork → architecture → follow-up with a reasoned answer (applying the [Universal System Design Interview Framework]).
+This is a catalog, not 12 new topics. It collects the most common problem statements in Senior Fullstack interviews. Each one is annotated with its **core fork** and points back to a topic covered earlier. Three problems already have full articles of their own: URL Shortener, Chat System and Notification System. Here they get only a short pointer.
 
-The goal isn't to memorize 12 diagrams — it's to notice that **different problem statements often hide the same fork** (for example, "fan-out on write vs on read" shows up in Chat System, Instagram Feed, and News Feed alike).
+The goal isn't to memorize 12 diagrams. It is to notice that **different problem statements often hide the same fork**. For example, "fan-out on write vs on read" shows up in Chat System, Instagram Feed and News Feed alike.
+
+The other 9 problems are covered compactly, always in the same four parts, taken from the Universal System Design Interview Framework article:
+
+| Part | What it answers |
+|---|---|
+| Problem | what exactly is being built, once the scope is narrowed |
+| Core fork | the one decision that shapes everything else |
+| Architecture | which blocks are wired in, and why |
+| Follow-up | the probe the interviewer adds, with a reasoned answer |
 
 ## 1. Design URL Shortener (bit.ly, tinyurl)
 
-Fully covered in [URL Shortener]. The core fork is generating unique short codes in a distributed system (Base62 of an auto-increment ID + a Ticket Server for distributed generation, vs hash-based with collisions, vs random+retry), and a read-heavy architecture where the cache is a central component, not an optional optimization.
+Fully covered in the URL Shortener article. The core fork is generating unique short codes in a distributed system. There are three options: Base62 of an auto-increment ID plus a Ticket Server for distributed generation, a hash-based code with collisions, or random plus retry. The second point is a read-heavy architecture, where the cache is a central component and not an optional optimization.
 
 ## 2. Design Chat System (Telegram, Slack, WhatsApp)
 
-Fully covered in [Chat System] (plus the transport layer in [WebSockets]). The core fork is fan-out on write vs fan-out on read for group chats, and the persist → ack → deliver ordering for message durability.
+Fully covered in the Chat System article, with the transport layer in WebSockets and Realtime Systems. The core fork is fan-out on write vs fan-out on read for group chats. The second point is the persist → ACK → deliver ordering for message durability. ACK is the acknowledgement the server sends back to the sender.
 
 ## 3. Design Notification System
 
-Fully covered in [Notification System] (plus [Message Queues] for the event-driven foundation). The core fork is the Decision Layer (preferences, channel priority, rate limiting) as a separate layer between the event and delivery, and idempotency under at-least-once delivery.
+Fully covered in the Notification System article, with the event-driven foundation in Message Queues. The core fork is the Decision Layer — preferences, channel priority, rate limiting — as a separate layer between the event and delivery. The second point is idempotency under at-least-once delivery.
 
 ## 4. Design File Upload Service (photos/videos/documents)
 
 ### Problem and core fork
 
-A naive approach routes the file through your backend (`Client → Backend → S3`). The problem: the backend becomes a bottleneck for large binary traffic — memory and network bandwidth on the API server are spent proxying bytes it doesn't need for business logic.
+A naive approach routes the file through your backend (`Client → Backend → S3`). S3 is Amazon's object storage; any similar service behaves the same way here. The problem: the backend becomes a bottleneck for large binary traffic. Memory and network bandwidth on the API server go into proxying bytes it doesn't need for business logic.
 
 ```txt
 ✅ Client → Backend: request a pre-signed URL (metadata, permissions)
-   Backend → Client: a signed URL with a TTL (see [File Storage and CDN])
+   Backend → Client: a signed URL with a TTL (see File Storage and CDN)
    Client → S3: uploads the file directly, bypassing the backend
    S3 → Backend (via event/webhook): "file uploaded" → further processing
 ```
 
-The backend's role is limited to issuing permission and post-processing — the actual byte transfer happens over a direct Client↔S3 channel. This is a direct application of pre-signed URLs from [File Storage and CDN].
+The backend's role is limited to issuing permission and post-processing. The actual byte transfer happens over a direct Client↔S3 channel. The signed URL carries a TTL — a time to live, after which the URL stops working. This is a direct application of pre-signed URLs from the File Storage and CDN article. CDN means content delivery network: a global set of caches sitting close to users.
 
 ### Follow-up: how do you generate a thumbnail/preview?
 
@@ -41,7 +50,9 @@ S3 (event: ObjectCreated) → Queue → Image Processing Worker
   → update the metadata DB (thumbnailUrl)
 ```
 
-This is the same reasoning as for analytics in URL Shortener: image processing is a potentially slow operation that shouldn't block the response to the user about "file uploaded." Senior nuance: the worker needs **idempotency** — if the S3 event is delivered again (at-least-once for most event systems), regenerating the same thumbnail shouldn't create duplicates or fail.
+This is the same reasoning as for analytics in URL Shortener. Image processing is a potentially slow operation, and it shouldn't block the "file uploaded" response to the user.
+
+Senior nuance: the worker needs **idempotency**. Most event systems deliver at-least-once, so the same S3 event can arrive twice. Regenerating the same thumbnail must not create duplicates or fail.
 
 ### Follow-up: how do you secure the upload?
 
@@ -80,7 +91,7 @@ Approach 2: Fan-out on write
 
 ### Follow-up: what does real Instagram choose?
 
-**A hybrid** — and this is only a strong answer if you explain HOW the split actually works:
+**A hybrid** — and this is only a strong answer if you explain **how** the split actually works:
 
 ```txt
 Regular users (tens-hundreds of followers):
@@ -93,7 +104,7 @@ Regular users (tens-hundreds of followers):
     rather than pushed to every follower immediately
 ```
 
-This directly parallels the group-chat fan-out hybrid from [Chat System]: the deciding factor isn't the content type — it's the **write:read ratio for that specific author/chat**. A strong candidate states this general principle, not "Instagram does a hybrid because that's what Instagram does."
+This directly parallels the group-chat fan-out hybrid from the Chat System article. The deciding factor isn't the content type. It is the **write:read ratio for that specific author or chat**. A strong candidate states this general principle, not "Instagram does a hybrid because that's what Instagram does".
 
 ## 6. Design YouTube (video hosting)
 
@@ -106,7 +117,9 @@ Upload → S3 (raw video, can be several GB)
   → CDN (finished videos are served from here, not from origin S3)
 ```
 
-Transcoding is a textbook example of Heavy Computation from the [Universal System Design Interview Framework]: the operation takes minutes, shouldn't block the "video uploaded" response, and must be retry-able on worker failure (if a worker crashes 80% through transcoding 1080p, restarting from scratch is an acceptable price for simplicity, vs. trying to persist partial progress).
+Transcoding is a textbook example of Heavy Computation from the Universal System Design Interview Framework article. The operation takes minutes, so it must not block the "video uploaded" response. It must also be retry-able when a worker fails.
+
+Suppose a worker crashes 80% through transcoding 1080p. Restarting from scratch is an acceptable price for simplicity, compared with the cost of storing partial progress.
 
 ### Follow-up: why can't you serve video directly from origin?
 
@@ -122,13 +135,15 @@ Transcoding is a textbook example of Heavy Computation from the [Universal Syste
   "speed-up" — it's the only practical way to serve them
 ```
 
-This is the CDN pattern from [File Storage and CDN] applied to the content type with the largest traffic volume by far — video.
+HLS and DASH are the two standard formats for adaptive streaming — HTTP Live Streaming, and Dynamic Adaptive Streaming over HTTP.
+
+This is the CDN pattern from the File Storage and CDN article, applied to the content type with the largest traffic volume by far: video.
 
 ## 7. Design Dropbox / Google Drive (file sync)
 
 ### Problem and core fork
 
-Separating **metadata** (folder structure, versions, permissions — relational DB) from **file content** (object storage, S3-like):
+Separating **metadata** — folder structure, versions, permissions, all in a relational DB (database) — from **file content**, which lives in object storage of the S3 kind:
 
 ```txt
 Client
@@ -140,7 +155,7 @@ Metadata DB        Object Storage (S3)
  versions, owners)  addressed by content hash)
 ```
 
-The core idea that distinguishes "just file storage" from Dropbox — **synchronization across devices** — and that's almost always the follow-up.
+What distinguishes "just file storage" from Dropbox is **synchronization across devices**. That is almost always the follow-up.
 
 ### Follow-up: how do you sync changes across devices?
 
@@ -152,7 +167,7 @@ Better: Change Events + a long-lived connection
   - a file changes on device A → the API creates a
     "FileChanged" event with a version number
   - devices B, C are subscribed to these events (WebSocket/long
-    polling, see [WebSockets]) → get notified and download
+    polling, see WebSockets and Realtime Systems) → get notified and download
     the changed portion of the file
 ```
 
@@ -174,7 +189,7 @@ This is the "versioning" principle applied to data split into content-addressed 
 
 ### Problem and core fork
 
-The main technical difficulty isn't "store rides in a DB" — it's **continuously updated geolocation for thousands of drivers** and a fast "who's nearby" search:
+The main technical difficulty isn't "store rides in a DB". It is **continuously updated geolocation for thousands of drivers**, plus a fast "who's nearby" search:
 
 ```txt
 Driver app → periodically (every 3-5 sec) sends
@@ -200,7 +215,9 @@ Alternative: a spatial index (PostGIS GiST index, or
   sorted set keyed by geohash under the hood)
 ```
 
-A strong answer explains WHY a regular B-tree index on (lat, lng) doesn't work for "within 2 km": range queries on two independent dimensions at once don't reduce to a single range scan, whereas geohash/a spatial index turns 2D proximity into 1D proximity (a shared prefix / a sorted structure).
+GiST is a PostgreSQL index type for data that is not a simple sortable value. The name stands for generalized search tree.
+
+A strong answer explains **why** a regular B-tree index on (lat, lng) doesn't work for "within 2 km". Range queries on two independent dimensions at once don't reduce to a single range scan. A geohash or a spatial index turns 2D proximity into 1D proximity: a shared prefix, or a sorted structure.
 
 ### Follow-up: how does driver-rider matching work?
 
@@ -246,7 +263,14 @@ The main problem is **double booking**: two users simultaneously book the last a
   the guarantee comes from the DB itself, no extra infrastructure.
 ```
 
-`SELECT FOR UPDATE` is sufficient for booking with relatively low write throughput on a given resource (a single cinema seat is rarely targeted by thousands of requests per second). A Redis distributed lock becomes necessary when: (a) the booking operation spans multiple services/steps (e.g., "hold the seat → wait for payment → confirm" — you can't keep a DB transaction open while waiting for payment), or (b) the resource is so hot (a popular concert sale) that even a row-level DB lock becomes a bottleneck — then a short-TTL Redis lock "holds" the seat while checkout proceeds, and final confirmation still goes through an atomic DB operation.
+`SELECT FOR UPDATE` is sufficient for booking with relatively low write throughput on one resource. A single cinema seat is rarely targeted by thousands of requests per second.
+
+A Redis distributed lock becomes necessary in two cases.
+
+- **The booking operation spans several services or steps**: "hold the seat → wait for payment → confirm". You can't keep a DB transaction open for the whole wait for payment.
+- **The resource is extremely hot** — a popular concert sale, for instance. Then even a row-level DB lock becomes a bottleneck.
+
+In both cases the Redis lock has a short TTL (time to live) and only "holds" the seat while checkout proceeds. Final confirmation still goes through an atomic DB operation.
 
 ```txt
 A "hold" with a TTL — a common pattern:
@@ -258,7 +282,7 @@ A "hold" with a TTL — a common pattern:
 
 ## 10. Design News Feed (similar to Instagram Feed)
 
-The core fork is identical to Instagram Feed (see above) — fan-out on write vs read, a hybrid based on the write:read ratio for a given content source. News Feed's additional twist is **ranking**: the feed isn't purely chronological, it's sorted by relevance (engagement signals, recency, relationships between users).
+The core fork is identical to Instagram Feed above. It is fan-out on write vs read, with a hybrid chosen by the write:read ratio of a given content source. What News Feed adds is **ranking**. The feed isn't purely chronological — it is sorted by relevance: engagement signals, recency, and relationships between users.
 
 ### Follow-up: what becomes the bottleneck once you add ranking?
 
@@ -279,7 +303,7 @@ Practical solution: a two-stage approach —
      entire corpus of posts)
 ```
 
-This is again the general principle from the [Universal System Design Interview Framework]: an expensive operation (ranking across many signals) is run over a small, already-filtered set, not over all the data.
+This is again the general principle from the Universal System Design Interview Framework article. An expensive operation — ranking across many signals — runs over a small, already-filtered set, not over all the data.
 
 ## 11. Design Rate Limiter
 
@@ -337,9 +361,11 @@ outage shouldn't take down the whole API.
 PostgreSQL → CDC/Events → Elasticsearch (or OpenSearch)
   - PostgreSQL remains the source of truth for transactional data
   - Elasticsearch — a read-side index optimized for full-text
-    search (this is CQRS from [Database Scaling]: the write
+    search (this is CQRS from Database Scaling: the write
     model and read model are separated)
 ```
+
+CQRS in that block stands for command query responsibility segregation. CDC is change data capture: streaming the database's own log of changes to other systems.
 
 ### Follow-up: why not `WHERE name LIKE '%query%'` in PostgreSQL?
 
@@ -356,7 +382,11 @@ PostgreSQL → CDC/Events → Elasticsearch (or OpenSearch)
   default in Elasticsearch) independently of the transactional DB
 ```
 
-A senior nuance worth mentioning: syncing PostgreSQL → Elasticsearch is **eventually consistent** (via an event queue or CDC) — meaning a record may briefly not be searchable right after creation. If that's unacceptable for a specific use case (e.g., "I just created a listing and want to find it myself immediately") — you need an explicit fallback to a direct PostgreSQL query for "your own" records, or synchronous indexing for critical operations.
+GIN is the PostgreSQL index type for full-text search — a generalized inverted index.
+
+A senior nuance worth mentioning: syncing PostgreSQL → Elasticsearch is **eventually consistent**, whether it goes through an event queue or through CDC. So a record may briefly not be searchable right after creation.
+
+For some use cases that is unacceptable: "I just created a listing and want to find it myself immediately." Two ways out. Add an explicit fallback to a direct PostgreSQL query for the user's own records. Or index synchronously for the critical operations.
 
 ## Common patterns across all 12 problems
 
@@ -371,18 +401,18 @@ Load Balancer → API (stateless) → Redis (cache/lock/rate-limit)
                                  → Elasticsearch (search, optional)
 ```
 
-But **the set of blocks isn't the answer**. The answer is the sequence of decisions from the [Universal System Design Interview Framework]: requirements → scale → data/access patterns → which of these blocks are needed for THIS specific problem and why, with explicit trade-offs.
+But **the set of blocks isn't the answer**. The answer is the sequence of decisions from the Universal System Design Interview Framework article: requirements → scale → data and access patterns. Then: which of these blocks does **this** specific problem need, and why, with explicit trade-offs.
 
 ## Common interview mistakes
 
-- **Treating every problem as brand new** — most "new" problem statements (Instagram Feed, News Feed, Chat groups) reduce to the same fan-out on write vs read fork; a candidate who spots this connection demonstrates deeper understanding than one who solves each problem "from scratch."
+- **Treating every problem as brand new.** Most "new" problem statements — Instagram Feed, News Feed, chat groups — reduce to the same fan-out on write vs read fork. A candidate who spots that connection shows deeper understanding than one who solves each problem from scratch.
 
-- **Listing blocks with no connection to the specific problem** — "Load Balancer, Redis, PostgreSQL, Queue, S3, CDN" fits almost any system equally well, which is exactly why on its own it proves nothing.
+- **Listing blocks with no connection to the specific problem.** "Load Balancer, Redis, PostgreSQL, Queue, S3, CDN" fits almost any system equally well. That is exactly why, on its own, it proves nothing.
 
-- **Reaching for a Redis lock for any concurrency problem** — for most booking scenarios `SELECT FOR UPDATE` is sufficient and simpler; a distributed lock is needed in specific cases (the operation spans multiple services, or the resource is extremely hot).
+- **Using a Redis lock for every concurrency problem.** For most booking scenarios `SELECT FOR UPDATE` is enough and simpler. A distributed lock is needed in specific cases: the operation spans several services, or the resource is extremely hot.
 
-- **"Fail closed" by default for auxiliary systems** — a rate limiter, recommendation engine, or search index being unavailable shouldn't halt core functionality (you can ship an order without recommendations, you can't without payment).
+- **"Fail closed" by default for auxiliary systems.** A rate limiter, a recommendation engine or a search index being unavailable shouldn't halt core functionality. You can ship an order without recommendations; you can't ship it without payment.
 
-- **Ignoring eventual consistency between the write model and read model** (PostgreSQL → Elasticsearch, or a precomputed feed) — not mentioning that this data can be briefly out of sync, and not discussing whether that matters for the specific use case.
+- **Ignoring eventual consistency between the write model and the read model**, whether it is PostgreSQL → Elasticsearch or a precomputed feed. The defect is not mentioning that this data can be briefly out of sync, and not discussing whether that matters here.
 
-- **Not stating the general principle behind a solution** — e.g., explaining geohash as "Uber's magic string" rather than the general technique of "turning 2D proximity into 1D proximity via a shared prefix," which applies far more broadly.
+- **Not stating the general principle behind a solution.** For example, explaining geohash as "Uber's magic string" instead of the general technique: turning 2D proximity into 1D proximity through a shared prefix. The general form applies far more broadly.

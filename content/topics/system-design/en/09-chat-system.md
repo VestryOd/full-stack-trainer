@@ -27,7 +27,7 @@
   in a consistent order for all participants
 ```
 
-The transport layer (WebSocket, the connection-pinning problem, Pub/Sub for cross-server delivery, presence via TTL) was already covered in [WebSockets and Realtime Systems] — here those mechanisms are taken as given, and the focus is on chat specifics: message storage, ordering, delivery, groups.
+This article takes the transport layer as given and focuses on chat specifics: message storage, ordering, delivery, and groups. The transport parts are covered in the WebSockets and Realtime Systems article. That means WebSocket itself, the connection-pinning problem, Pub/Sub for cross-server delivery, and presence via a TTL. TTL means time to live — an expiry set on a key, after which the store deletes it.
 
 ## Send Message Flow — the order of steps matters
 
@@ -47,11 +47,13 @@ User A → WebSocket → Chat Service
                  4. If offline → a push notification via a queue
 ```
 
-Why **persist strictly before ACK**, not the other way around: if you ACK first and then fail to write to the DB, the sender thinks the message was delivered, but it's lost forever. This is a direct application of "WebSocket is the transport, the DB is the source of truth" from the WebSocket topic. Any "optimization" that changes this order for latency's sake turns durability into "usually works."
+Why **persist strictly before ACK**, and not the other way around? ACK is the acknowledgement the server sends back to the sender. If you ACK first and then fail to write to the DB (database), the sender thinks the message was delivered, but it is lost forever.
+
+This is a direct application of "WebSocket is the transport, the DB is the source of truth" from the WebSocket article. Any "optimization" that changes this order for latency turns durability into "usually works".
 
 ## Message Ordering — why "just use a timestamp" doesn't work
 
-The naive approach is to sort messages by `created_at`. The problem: under high load, multiple messages can get the **same timestamp** (especially if time is stored with millisecond precision and the DB ingests thousands of writes per second), and clocks across different servers drift slightly (clock skew).
+The naive approach is to sort messages by `created_at`. The problem: under high load, several messages can get the **same timestamp**. That is likely if time is stored with millisecond precision and the DB ingests thousands of writes per second. On top of that, clocks on different servers drift slightly — this is called clock skew.
 
 ```txt
 Solution: a composite ordering key —
@@ -64,7 +66,7 @@ Solution: a composite ordering key —
     and globally unique without cross-server coordination
 ```
 
-A Snowflake ID (Twitter/Discord's approach) is essentially the same principle as the Ticket Server from the URL Shortener topic: each server generates IDs locally from its own range/namespace, without a blocking round trip to a central DB per message, while the resulting IDs remain time-ordered.
+A Snowflake ID (the Twitter and Discord approach) uses the same principle as the Ticket Server from the URL Shortener article. Each server generates IDs locally, from its own range or namespace. There is no blocking round trip to a central DB per message, and the resulting IDs stay ordered by time.
 
 ## Storing messages: schema and partitioning
 
@@ -79,9 +81,9 @@ messages (
 )
 ```
 
-The main read pattern — "the last N messages of chat X" — is almost always a **range scan on the `(chat_id, id)` index**, which makes PostgreSQL/MySQL a perfectly reasonable choice even at large volumes, as long as the data is properly indexed.
+The main read pattern is "the last N messages of chat X". That is almost always a **range scan on the `(chat_id, id)` index**. So PostgreSQL or MySQL is a perfectly reasonable choice even at large volumes, as long as the data is properly indexed.
 
-**Partitioning by `chat_id`** (not by time) becomes necessary once message volume exceeds a single node's capacity — a direct application of hash-based sharding from [Database Scaling]: shard key = `chat_id` guarantees all messages of one chat (the main read pattern) stay in the same shard, avoiding cross-shard queries for the most common operation.
+**Partitioning by `chat_id`** (not by time) becomes necessary once message volume exceeds a single node's capacity. This is a direct application of hash-based sharding from the Database Scaling article. With shard key = `chat_id`, all messages of one chat stay in the same shard. That chat is the main read pattern, so the most common operation never needs a cross-shard query.
 
 ## Group chats: fan-out — the topic's central senior question
 
@@ -118,9 +120,12 @@ Cons: reads are more expensive (need to compute
       "what haven't I seen yet" per user, per request)
 ```
 
-**The practical solution used by large systems**: a hybrid — fan-out on write for small groups (most chats, up to a few hundred members — the write cost is acceptable), fan-out on read for huge channels/broadcast groups (Telegram channels with millions of subscribers — "push to everyone on every message" is unthinkable here, so readers pull new messages from the shared channel themselves).
+**The practical solution used by large systems** is a hybrid:
 
-This directly parallels Read-Heavy vs Write-Heavy from [System Design Fundamentals]: a small group is effectively read-heavy from each participant's perspective (they read their inbox more than they write), while a huge broadcast channel is structurally closer to "one writer, millions of readers," where the push model doesn't scale.
+- Fan-out on write for small groups — most chats, up to a few hundred members. The write cost is acceptable there.
+- Fan-out on read for huge channels and broadcast groups, such as Telegram channels with millions of subscribers. "Push to everyone on every message" is unthinkable at that size, so readers pull new messages from the shared channel themselves.
+
+This directly parallels read-heavy vs write-heavy from the System Design Fundamentals article. A small group is effectively read-heavy from each participant's point of view: they read their inbox more than they write. A huge broadcast channel is structurally closer to "one writer, millions of readers", and there the push model does not scale.
 
 ## Read Receipts and Typing Indicators — different durability needs
 
@@ -141,7 +146,7 @@ Typing Indicator ("typing..."):
   (the indicator just doesn't appear/disappear a second early).
 ```
 
-This illustrates a general principle: **not everything in a realtime system needs the same delivery guarantees**. Applying "message" durability (persist-then-ack-then-deliver) to a typing indicator is unnecessary complexity; applying "fire and forget" to the message itself is data loss.
+This illustrates a general principle: **not everything in a realtime system needs the same delivery guarantees**. Applying "message" durability (persist-then-ACK-then-deliver) to a typing indicator is unnecessary complexity; applying "fire and forget" to the message itself is data loss.
 
 ## Offline Delivery and Push Notifications
 
@@ -156,14 +161,14 @@ On User B's next connection:
   → catches up on what was missed, marks delivered/read
 ```
 
-The queue for push here is again an application of the [Message Queues] pattern: sending a push notification can be slow/unreliable (an external APNs/FCM service), and it shouldn't block the main message flow.
+The queue for push here is again the Message Queues pattern. The push goes through an external service: APNs (Apple Push Notification service) or FCM (Firebase Cloud Messaging). Such a call can be slow or unreliable, so it must not block the main message flow.
 
 ## Final architecture
 
 ```txt
 Clients
   ↓ (WebSocket)
-Load Balancer (L4, passes through Upgrade headers)
+Load Balancer (L4 — forwards the TCP connection as-is, so the upgrade survives)
   ↓
 WebSocket Gateway servers (stateless for HTTP, but hold
                             long-lived connections)
@@ -178,16 +183,16 @@ Notification Queue → Push Worker → APNs/FCM
 
 ## Common interview mistakes
 
-- **Not discussing the persist → ack → deliver order** — the most common "depth" follow-up, and skipping it looks like not understanding why messages aren't lost on failures.
+- **Not discussing the persist → ACK → deliver order.** This is the most common "depth" follow-up. Skipping it looks like not understanding why messages aren't lost on failures.
 
-- **Sorting by `created_at` without discussing timestamp collisions and clock skew** — not proposing a snowflake ID or composite `(chat_id, sequence)`.
+- **Sorting by `created_at` without discussing timestamp collisions and clock skew** — not proposing a snowflake ID or a composite `(chat_id, sequence)`.
 
-- **Not distinguishing fan-out on write from fan-out on read for groups** — this is the central question for "what if the group has 100,000 members," and "just push to everyone" doesn't scale.
+- **Not distinguishing fan-out on write from fan-out on read for groups.** This is the central question for "what if the group has 100,000 members". "Just push to everyone" does not scale.
 
-- **Storing typing indicators in the DB** — or, conversely, trying to make messages "fire and forget" like presence — confusing the durability requirements of different data types.
+- **Storing typing indicators in the DB** — or, the other way round, making messages "fire and forget" like presence. Both confuse the durability requirements of different data types.
 
-- **Partitioning messages by time instead of by `chat_id`** — this breaks the main read pattern, "history of a specific chat," requiring cross-shard queries for the most common operation.
+- **Partitioning messages by time instead of by `chat_id`.** This breaks the main read pattern, "history of a specific chat", and forces cross-shard queries for the most common operation.
 
-- **Ignoring cross-server delivery** — designing as if all WebSocket connections live on one server, without Redis Pub/Sub/Kafka (see [WebSockets and Realtime Systems]).
+- **Ignoring cross-server delivery** — designing as if all WebSocket connections live on one server, with no Redis Pub/Sub or Kafka behind them.
 
 - **Sending push notifications synchronously in the main flow** — blocking the response to the user on an external APNs/FCM API call.

@@ -7,7 +7,9 @@
    (synchronous calls)
 ```
 
-The problem isn't just "Order Service goes down if Email Service is unavailable" — that's only a symptom. The root problem is that **Order Service has to know about every delivery channel** and its API. Adding a new channel (e.g., Slack notifications for B2B customers) requires changing Order Service. This directly violates the principle from [Message Queues]: a business service should publish a fact ("OrderCreated"), not dictate what happens with that fact.
+The problem isn't just "Order Service goes down if Email Service is unavailable" — that's only a symptom. The root problem is that **Order Service has to know about every delivery channel** and its API. Adding a new channel means changing Order Service. An example is Slack notifications for B2B (business-to-business) customers — companies rather than consumers.
+
+This directly violates the principle from the Message Queues article: a business service should publish a fact ("OrderCreated"), not dictate what happens with that fact.
 
 ```txt
 ✅ Order Service → publishes "OrderCreated" → Event Bus
@@ -17,11 +19,11 @@ The problem isn't just "Order Service goes down if Email Service is unavailable"
                   Notification Service      Analytics Service    CRM Service
 ```
 
-This is the fan-out from [Message Queues], applied to a specific problem. The Notification Service is just one subscriber; adding a Slack channel is a new consumer that requires no changes to Order Service.
+This is the fan-out from the Message Queues article, applied to a specific problem. The Notification Service is just one subscriber. Adding a Slack channel means adding a new consumer, with no changes to Order Service.
 
 ## Inside the Notification Service: a Decision Layer, not just "send everything"
 
-A naive implementation is "got the event, sent email+push+sms to everyone at once." A real system has an intermediate **decision layer** that decides **what, to whom, through which channel, and when**:
+A naive implementation is "got the event, sent email, push and SMS (short message service, a text message) to everyone at once". A real system has an intermediate **decision layer**. It decides **what, to whom, through which channel, and when**:
 
 ```txt
 Event "OrderCreated" { userId, orderId, ... }
@@ -33,14 +35,15 @@ Decision Layer:
   3. Channel Priority — for critical notifications: push → if
      not delivered within N minutes → SMS as a fallback
   4. Rate Limiting / Batching — has the user already had 5
-     notifications in the last hour? → merge into a digest instead of a 6th separate one
+     notifications in the last hour? → merge them into a digest
+     instead of sending a 6th separate one
         ↓
 Per-channel Queue (Email Queue, Push Queue, SMS Queue, In-App Queue)
         ↓
 Channel-specific Workers
 ```
 
-This decision layer is what separates "just a queue with workers" (the old version of this article) from a system that's actually discussed in senior interviews.
+This decision layer is what separates "just a queue with workers" from a system that is actually discussed in senior interviews.
 
 ## User Preferences — more than just on/off
 
@@ -66,11 +69,13 @@ Marketing (promos, digests):
   - often require explicit consent (GDPR/CAN-SPAM)
 ```
 
-Mixing these categories in a single preferences table without separating by type is a common design mistake — in practice it leads either to critical notifications not being delivered, or to legal issues around spam.
+OTP means one-time password — the short code sent for login or confirmation. GDPR is the European data-protection law, and CAN-SPAM is the United States law on commercial email.
+
+Mixing these two categories in a single preferences table, with no separation by type, is a common design mistake. In practice it leads either to critical notifications not being delivered, or to legal problems around spam.
 
 ## Idempotency and deduplication — at-least-once in action
 
-The Event Bus (as discussed in [Message Queues]) typically provides at-least-once delivery — the same "OrderCreated" event can be processed **twice**.
+The Event Bus typically provides at-least-once delivery, as discussed in the Message Queues article. That means the same "OrderCreated" event can be processed **twice**.
 
 ```ts
 // ❌ On reprocessing, the user gets 2 identical emails
@@ -90,13 +95,18 @@ async function handleOrderCreatedIdempotent(event: OrderCreatedEvent) {
   });
 
   await sendEmail(event.userId, 'Order confirmed', ...);
-  await db.notifications.update({ where: { id: notificationId }, data: { status: 'sent' } });
+  await db.notifications.update({
+    where: { id: notificationId },
+    data: { status: 'sent' },
+  });
 }
 ```
 
-This is the same problem and solution as in [Message Queues] — the difference is that "a duplicate email" is far more visible to the user than "a duplicate analytics record," which is exactly why interviewers like to probe whether candidates connect the dots in a notifications context.
+This is the same problem, and the same solution, as in the Message Queues article. The difference is visibility: "a duplicate email" is far more obvious to the user than "a duplicate analytics record". That is exactly why interviewers like to check whether a candidate reaches this point in a notifications context.
 
 ## Retry, Backoff, and DLQ — applied to external providers
+
+DLQ stands for dead letter queue: where a message lands after every retry has failed.
 
 ```txt
 Email Worker → SES API → timeout/5xx
@@ -134,7 +144,9 @@ Abstraction:
   }
 ```
 
-This applies the "eliminating SPOF" pattern from [System Design Fundamentals] to external dependencies: if the entire Notification Service depends on a single email provider with no abstraction, an incident on that provider's side (and major email providers do have multi-hour degradations) halts delivery of all transactional emails — critical for OTP codes.
+This applies the "eliminating SPOF" pattern to external dependencies. SPOF means single point of failure, and the System Design Fundamentals article covers the pattern. Amazon SES above is Simple Email Service, the provider used here as the fallback.
+
+Suppose the whole Notification Service depends on one email provider, with no abstraction over it. An incident on that provider's side then halts delivery of every transactional email, which is critical for OTP codes. And major email providers do have degradations lasting hours.
 
 ## Delivery Tracking — webhooks from providers
 
@@ -150,12 +162,12 @@ the status in the notifications table → "complained" triggers
 automatic disabling of that channel for the user
 ```
 
-Without this feedback loop, "sent" means "we handed it to the provider," not "the user received it" — a difference that matters for compliance and for alerting ("why is our bounce rate 40% on new signups — maybe a bug in the signup form").
+Without this feedback loop, "sent" only means "we handed it to the provider". It does not mean "the user received it". That difference matters for compliance and for alerting: "why is our bounce rate 40% on new signups — maybe a bug in the signup form".
 
 ## Realtime (In-App) vs Push vs Email/SMS — choosing a channel based on user context
 
 ```txt
-User is online (an open WebSocket connection, see [WebSockets]):
+User is online (an open WebSocket connection):
   → delivery via WebSocket is instant, the In-App notification
     appears without a reload
 
@@ -166,42 +178,41 @@ User is offline:
   → IF very critical and push didn't land, SMS as a fallback
 ```
 
-This decision is made at the decision layer level and depends both on the user's presence status (Redis, see [WebSockets]) and on how important this particular notification is — not every notification deserves an SMS, even if a push fails.
+This decision is made in the decision layer. It depends on two things: the user's presence status, kept in Redis, and how important this particular notification is. Not every notification deserves an SMS, even if a push fails. The WebSockets and Realtime Systems article covers presence in Redis.
 
 ## Final architecture
 
-```txt
-Business Services (Order, Auth, ...) → Event Bus (SNS/Kafka)
-                                            ↓
-                                  Notification Service
-                                  (Decision Layer:
-                                   preferences, dedup,
-                                   rate limiting, priority)
-                                            ↓
-                ┌──────────────┬───────────┼──────────────┐
-                ▼              ▼            ▼              ▼
-          Email Queue    Push Queue    SMS Queue     In-App Queue
-                ↓              ↓            ↓              ↓
-          Email Worker   Push Worker   SMS Worker   WebSocket/DB
-          (SES/SendGrid) (FCM/APNs)    (Twilio)
-                ↓              ↓            ↓
-          ←──────────── Delivery webhooks ────────────→
-                                ↓
-                      notifications table (status tracking)
-```
+The path from a business event to a delivered notification has five steps:
+
+1. Business services (Order, Auth, and so on) publish an event to the Event Bus. That bus is Kafka, or Amazon SNS — Simple Notification Service.
+2. The Notification Service runs the decision layer: preferences, deduplication, rate limiting, priority.
+3. The result goes into a per-channel queue.
+4. A worker for that channel sends it through the channel's provider. For push that provider is FCM (Firebase Cloud Messaging, from Google) or APNs (Apple Push Notification service).
+5. Providers send delivery webhooks back, and the `notifications` table keeps the status.
+
+One row per channel, steps 3 and 4 side by side:
+
+| Channel | Queue | Worker | Sends through |
+|---|---|---|---|
+| Email | Email Queue | Email Worker | Amazon SES or SendGrid |
+| Push | Push Queue | Push Worker | FCM or APNs |
+| SMS | SMS Queue | SMS Worker | Twilio |
+| In-App | In-App Queue | WebSocket/database writer | WebSocket if online, a database row if offline |
+
+Delivery webhooks come back from the three external channels — email, push and SMS. The In-App channel needs none, because the system delivers that one itself.
 
 ## Common interview mistakes
 
-- **Stopping at "event → queue → workers"** — that's the baseline; the decision layer (preferences, deduplication, priorities, rate limiting/digest) is what separates a shallow answer from a deep one.
+- **Stopping at "event → queue → workers".** That is the baseline. The decision layer — preferences, deduplication, priorities, rate limiting and digests — is what separates a shallow answer from a deep one.
 
 - **Not distinguishing transactional from marketing notifications** — they have fundamentally different opt-out and compliance requirements.
 
-- **Not mentioning idempotency under at-least-once event delivery** — "the user got the same email twice" is a concrete, easy-to-picture bug the interviewer expects you to flag as a risk.
+- **Not mentioning idempotency under at-least-once event delivery.** "The user got the same email twice" is a concrete, easy-to-picture bug. The interviewer expects you to name it as a risk.
 
-- **Retrying without considering the error's nature** — endlessly retrying sends to an invalid email/number instead of immediately marking it as permanently failed.
+- **Retrying without considering the error's nature** — endlessly retrying sends to an invalid email or number, instead of marking it permanently failed right away.
 
-- **A single provider with no abstraction/fallback** — not mentioning that an incident at an external email/SMS provider would fully halt that channel.
+- **A single provider with no abstraction or fallback** — not mentioning that an incident at an external email or SMS provider would fully halt that channel.
 
-- **"Sent" = "delivered"** — not accounting for the fact that delivery confirmation arrives asynchronously via a provider webhook, and without it you can't distinguish "sent" from "received by the user."
+- **"Sent" = "delivered".** Delivery confirmation arrives asynchronously, via a provider webhook. Without it you cannot tell "sent" from "received by the user".
 
-- **Ignoring rate limiting/batching** — a user getting 20 push notifications in an hour due to activity in one thread will disable notifications entirely; digests are part of the architecture, not a "UI design feature."
+- **Ignoring rate limiting and batching.** A user who gets 20 push notifications in an hour from one thread will switch notifications off entirely. Digests are part of the architecture, not a design detail in the interface.
