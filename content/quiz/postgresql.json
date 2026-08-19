@@ -4,7 +4,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "You run EXPLAIN on a query and see 'Seq Scan' with a high actual time but 'Index Scan' shows estimated time is lower. What does this typically indicate?\n```sql\nEXPLAIN ANALYZE SELECT * FROM users WHERE age > 25;\n```",
-      "ru": "Вы запускаете EXPLAIN на запросе и видите 'Seq Scan' с высоким фактическим временем, но 'Index Scan' показывает более низкое предполагаемое время. Что это обычно указывает?"
+      "ru": "Вы запускаете EXPLAIN на запросе и видите 'Seq Scan' с высоким фактическим временем, но 'Index Scan' показывает более низкое предполагаемое время. Что это обычно указывает?\n```sql\nEXPLAIN ANALYZE SELECT * FROM users WHERE age > 25;\n```"
     },
     "options": {
       "en": [
@@ -22,8 +22,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "When actual execution times differ significantly from estimates, it usually means the planner's statistics (from ANALYZE) are stale. Running ANALYZE updates table statistics, allowing the planner to make better cost-based decisions. Neither MVCC nor sequential scan speed rules explain this mismatch.",
-      "ru": "Когда фактическое время выполнения значительно отличается от оценок, это обычно означает, что статистика планировщика (из ANALYZE) устарела. Запуск ANALYZE обновляет статистику таблицы, позволяя планировщику принимать более обоснованные решения о стоимости. Ни правила MVCC, ни скорость последовательного сканирования не объясняют это несоответствие."
+      "en": "A big gap between the estimate and the real execution time usually means one thing: the planner's statistics are stale. Those statistics come from ANALYZE. Running ANALYZE refreshes them, so the planner can compare costs on real numbers again. Neither MVCC (Multi-Version Concurrency Control) nor sequential scan speed explains the mismatch.",
+      "ru": "Большой разрыв между оценкой и реальным временем обычно значит одно: статистика планировщика устарела. Собирает её ANALYZE. Запустите ANALYZE, и она обновится, а планировщик снова будет сравнивать стоимости по настоящим числам. Ни MVCC (многоверсионность), ни скорость последовательного сканирования это расхождение не объясняют."
     }
   },
   {
@@ -31,7 +31,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "Consider the following scenario: Two transactions run concurrently. Transaction A reads a row, Transaction B updates that same row and commits. Then Transaction A reads the row again. Under READ COMMITTED isolation, what does Transaction A see on the second read?\n```sql\n-- Transaction A\nBEGIN ISOLATION LEVEL READ COMMITTED;\nSELECT value FROM account WHERE id = 1; -- sees 100\n-- ... Transaction B commits update: value = 150 ...\nSELECT value FROM account WHERE id = 1; -- sees ?\n```",
-      "ru": "Рассмотрим следующий сценарий: две транзакции выполняются одновременно. Транзакция A читает строку, Транзакция B обновляет эту же строку и фиксирует. Затем Транзакция A читает строку снова. При уровне изоляции READ COMMITTED, что видит Транзакция A при втором чтении?"
+      "ru": "Рассмотрим следующий сценарий: две транзакции выполняются одновременно. Транзакция A читает строку, Транзакция B обновляет эту же строку и фиксирует. Затем Транзакция A читает строку снова. При уровне изоляции READ COMMITTED, что видит Транзакция A при втором чтении?\n```sql\n-- Transaction A\nBEGIN ISOLATION LEVEL READ COMMITTED;\nSELECT value FROM account WHERE id = 1; -- sees 100\n-- ... Transaction B commits update: value = 150 ...\nSELECT value FROM account WHERE id = 1; -- sees ?\n```"
     },
     "options": {
       "en": [
@@ -58,7 +58,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "Which index type in PostgreSQL is best suited for supporting efficient range queries and naturally maintains sort order?\n```sql\nSELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';\n```",
-      "ru": "Какой тип индекса в PostgreSQL лучше всего подходит для поддержки эффективных диапазонных запросов и естественно сохраняет порядок сортировки?"
+      "ru": "Какой тип индекса в PostgreSQL лучше всего подходит для поддержки эффективных диапазонных запросов и естественно сохраняет порядок сортировки?\n```sql\nSELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';\n```"
     },
     "options": {
       "en": [
@@ -76,8 +76,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "B-tree is PostgreSQL's default index type and the only one that naturally maintains sort order, making it ideal for range queries (BETWEEN, <, >) and ORDER BY clauses. Hash indexes only support equality checks. GiST and BRIN are specialized for geometric/full-text data and compression respectively, not general range queries.",
-      "ru": "B-tree — это индекс по умолчанию в PostgreSQL и единственный, который естественным образом сохраняет порядок сортировки, что делает его идеальным для диапазонных запросов (BETWEEN, <, >) и предложений ORDER BY. Хеш-индексы поддерживают только проверки равенства. GiST и BRIN специализированы для геометрических/полнотекстовых данных и сжатия соответственно, а не для общих диапазонных запросов."
+      "en": "B-tree is PostgreSQL's default index type, and the only one that keeps its keys sorted. That is what makes it ideal for range queries (BETWEEN, <, >) and for ORDER BY. Hash indexes support equality checks only. GiST (generalized search tree) targets geometry and full-text search. BRIN (block range index) trades precision for size on huge tables. Neither suits a plain range query.",
+      "ru": "B-tree — индекс по умолчанию и единственный, который держит ключи отсортированными. Поэтому он идеален для диапазонных запросов (BETWEEN, <, >) и для ORDER BY. Хеш-индексы поддерживают только равенство. GiST (обобщённое дерево поиска) — для геометрии и полнотекстового поиска, BRIN (индекс диапазона блоков) — про экономию места на огромных таблицах. Обычному диапазонному запросу не подходит ни тот, ни другой."
     }
   },
   {
@@ -85,7 +85,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "What is the primary purpose of VACUUM in PostgreSQL and how does it relate to MVCC?\n```sql\nVACUUM ANALYZE table_name;\n```",
-      "ru": "Какова основная цель VACUUM в PostgreSQL и как это связано с MVCC?"
+      "ru": "Какова основная цель VACUUM в PostgreSQL и как это связано с MVCC?\n```sql\nVACUUM ANALYZE table_name;\n```"
     },
     "options": {
       "en": [
@@ -103,16 +103,16 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "MVCC (Multi-Version Concurrency Control) allows multiple versions of rows to exist; when a row is updated or deleted, the old version is marked as dead but not immediately removed. VACUUM reclaims this space by removing dead tuples that are no longer visible to any active transaction. This is essential for preventing bloat. The other options describe non-existent or incorrect behaviors.",
-      "ru": "MVCC (многоверсионное управление параллелизмом) позволяет существовать нескольким версиям строк; когда строка обновляется или удаляется, старая версия помечается как мертвая, но не удаляется немедленно. VACUUM восстанавливает это пространство, удаляя мертвые кортежи, которые больше не видны активным транзакциям. Это необходимо для предотвращения разбухания таблицы. Остальные варианты описывают несуществующее или неправильное поведение."
+      "en": "MVCC (Multi-Version Concurrency Control) lets several versions of one row exist at the same time. When a row is updated or deleted, the old version is only marked dead, not removed. VACUUM reclaims that space: it deletes the dead tuples no active transaction can see any more. Without it the table bloats. The other three options describe behaviour that does not exist.",
+      "ru": "MVCC (многоверсионность) позволяет нескольким версиям одной строки существовать одновременно. Когда строку обновляют или удаляют, старая версия лишь помечается мёртвой, но не удаляется. VACUUM освобождает это место: он удаляет мёртвые кортежи, которых уже не видит ни одна активная транзакция. Без него таблица раздувается. Остальные три варианта описывают несуществующее поведение."
     }
   },
   {
     "id": "postgresql-quiz-5",
     "topicId": "postgresql",
     "question": {
-      "en": "Which JOIN type will return rows only when there is a match in both tables, and how does NULL handling differ in the ON clause versus the WHERE clause?\n```sql\nSELECT * FROM users \nINNER JOIN orders ON users.id = orders.user_id\nWHERE orders.discount IS NOT NULL;\n```",
-      "ru": "Какой тип JOIN возвращает строки только при совпадении в обеих таблицах, и чем отличается обработка NULL в предложении ON от предложения WHERE?"
+      "en": "Which JOIN type returns rows only when there is a match in both tables? And how does NULL handling differ between the ON clause and the WHERE clause?\n```sql\nSELECT * FROM users \nINNER JOIN orders ON users.id = orders.user_id\nWHERE orders.discount IS NOT NULL;\n```",
+      "ru": "Какой тип JOIN возвращает строки только при совпадении в обеих таблицах? И чем отличается обработка NULL в предложении ON от предложения WHERE?\n```sql\nSELECT * FROM users \nINNER JOIN orders ON users.id = orders.user_id\nWHERE orders.discount IS NOT NULL;\n```"
     },
     "options": {
       "en": [
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "INNER JOIN returns only matching rows from both tables. The ON clause is part of the join operation itself—rows where the condition is NULL or false are excluded from the join result. The WHERE clause is applied after the join and filters the already-joined result set. This distinction matters significantly for LEFT/RIGHT JOINs but is less visible with INNER JOIN.",
-      "ru": "INNER JOIN возвращает только совпадающие строки из обеих таблиц. Предложение ON является частью самой операции соединения — строки, где условие равно NULL или ложь, исключаются из результата соединения. Предложение WHERE применяется после соединения и фильтрует уже объединенный результат. Это различие существенно для LEFT/RIGHT JOINs, но менее заметно при INNER JOIN."
+      "en": "INNER JOIN returns only the rows that match in both tables. The ON clause belongs to the JOIN itself: a row whose condition is NULL or false never reaches the result. WHERE runs afterwards and filters the rows the JOIN already produced. That difference is very visible with LEFT JOIN and RIGHT JOIN, and almost invisible with INNER JOIN.",
+      "ru": "INNER JOIN возвращает только те строки, которые совпали в обеих таблицах. Условие ON — часть самого соединения: строка, для которой оно даёт NULL или ложь, в результат не попадёт вовсе. WHERE применяется уже потом и фильтрует то, что соединение выдало. Для LEFT JOIN и RIGHT JOIN эта разница очень заметна, а для INNER JOIN почти незаметна."
     }
   },
   {
@@ -139,7 +139,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "You have a query that joins a users table with an orders table. The EXPLAIN output shows 'Hash Join' with a high buffer size. What does this indicate about the query execution?\n```sql\nSELECT u.id, COUNT(o.id)\nFROM users u\nJOIN orders o ON u.id = o.user_id\nGROUP BY u.id;\n```",
-      "ru": "У вас есть запрос, который объединяет таблицу users с таблицей orders. Выход EXPLAIN показывает 'Hash Join' с большим размером буфера. Что это указывает о выполнении запроса?"
+      "ru": "У вас есть запрос, который объединяет таблицу users с таблицей orders. Выход EXPLAIN показывает 'Hash Join' с большим размером буфера. Что это указывает о выполнении запроса?\n```sql\nSELECT u.id, COUNT(o.id)\nFROM users u\nJOIN orders o ON u.id = o.user_id\nGROUP BY u.id;\n```"
     },
     "options": {
       "en": [
@@ -184,8 +184,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "B-tree indexes maintain keys in sorted order, which makes them ideal for range queries and comparison operations like BETWEEN, <, >, <=, >=. Hash indexes only support equality checks, GiST is for specialized types, and BRIN is better for very large tables with natural ordering but less efficient for precise range queries.",
-      "ru": "B-tree индексы поддерживают ключи в отсортированном порядке, что делает их идеальными для диапазонных запросов и операций сравнения типа BETWEEN, <, >, <=, >=. Hash индексы поддерживают только проверки равенства, GiST предназначена для специализированных типов, а BRIN лучше для очень больших таблиц с естественным порядком, но менее эффективна для точных диапазонных запросов."
+      "en": "B-tree indexes keep their keys sorted, which is what makes them ideal for range queries and comparisons: BETWEEN, <, >, <=, >=. Hash indexes support equality checks only. GiST (generalized search tree) is built for specialized types such as geometry. BRIN (block range index) suits very large tables whose rows already lie in sequence, but it is less precise on ranges.",
+      "ru": "B-tree держит ключи отсортированными, и поэтому идеален для диапазонных запросов и сравнений: BETWEEN, <, >, <=, >=. Хеш-индексы поддерживают только равенство. GiST (обобщённое дерево поиска) сделан для специальных типов вроде геометрии. BRIN (индекс диапазона блоков) подходит очень большим таблицам, где строки уже лежат по порядку, но на диапазонах он менее точен."
     }
   },
   {
@@ -193,7 +193,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "What is the purpose of VACUUM in PostgreSQL, and why is it necessary?\n```sql\nVACUUM ANALYZE table_name;\n```",
-      "ru": "Какова цель VACUUM в PostgreSQL и почему он необходим?"
+      "ru": "Какова цель VACUUM в PostgreSQL и почему он необходим?\n```sql\nVACUUM ANALYZE table_name;\n```"
     },
     "options": {
       "en": [
@@ -211,8 +211,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "VACUUM removes dead tuples created by MVCC and reclaims disk space. ANALYZE updates optimizer statistics. Together they improve query performance and storage efficiency. Regular VACUUM doesn't require exclusive locks (unless using VACUUM FULL), and it doesn't encrypt, remove columns, or defragment the filesystem.",
-      "ru": "VACUUM удаляет мёртвые кортежи, созданные MVCC, и освобождает дисковое пространство. ANALYZE обновляет статистику оптимизатора. Вместе они улучшают производительность запросов и эффективность хранения. Обычный VACUUM не требует исключительных блокировок (кроме VACUUM FULL) и не шифрует, не удаляет столбцы и не дефрагментирует файловую систему."
+      "en": "VACUUM removes the dead tuples that MVCC (Multi-Version Concurrency Control) leaves behind and reclaims their disk space. ANALYZE updates the optimizer statistics. Together they improve query performance and storage efficiency. A plain VACUUM needs no exclusive lock, unlike VACUUM FULL, and it neither encrypts data, nor drops columns, nor defragments the file system.",
+      "ru": "VACUUM удаляет мёртвые кортежи, которые оставляет после себя MVCC (многоверсионность), и освобождает занятое ими место на диске. ANALYZE обновляет статистику оптимизатора. Вместе они улучшают производительность запросов и эффективность хранения. Обычному VACUUM исключительная блокировка не нужна, в отличие от VACUUM FULL, и он не шифрует данные, не удаляет столбцы и не дефрагментирует диск."
     }
   },
   {
@@ -220,7 +220,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "What will be the result of this query with the given data?\n```sql\nSELECT id, name, salary,\n  ROW_NUMBER() OVER (ORDER BY salary DESC) as rank,\n  LAG(salary) OVER (ORDER BY salary DESC) as prev_salary\nFROM employees;\n```\nAssuming employees with salaries: 50000, 60000, 60000, 70000",
-      "ru": "Каким будет результат этого запроса с данными?\nПредполагая сотрудников с зарплатой: 50000, 60000, 60000, 70000"
+      "ru": "Каким будет результат этого запроса с данными?\nПредполагая сотрудников с зарплатой: 50000, 60000, 60000, 70000\n```sql\nSELECT id, name, salary,\n  ROW_NUMBER() OVER (ORDER BY salary DESC) as rank,\n  LAG(salary) OVER (ORDER BY salary DESC) as prev_salary\nFROM employees;\n```\nAssuming employees with salaries: 50000, 60000, 60000, 70000"
     },
     "options": {
       "en": [
@@ -238,8 +238,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "ROW_NUMBER() assigns unique sequential numbers regardless of value ties (1,2,3,4). LAG() accesses the previous row's value—NULL for the first row, then 70000, 60000, 60000 for rows 2-4. Duplicate salary values don't prevent these functions from working; they behave correctly with ties.",
-      "ru": "ROW_NUMBER() присваивает уникальные последовательные номера независимо от связей значений (1,2,3,4). LAG() обращается к значению предыдущей строки—NULL для первой строки, затем 70000, 60000, 60000 для строк 2-4. Дублирующиеся значения зарплаты не препятствуют работе этих функций; они работают корректно с связями."
+      "en": "ROW_NUMBER numbers the rows one by one — 1, 2, 3, 4 — even when two of them hold the same salary. LAG (a window function that reads the previous row) has no previous row for the very first one, so it returns NULL. After that it gives 70000, 60000, 60000 for rows 2-4. Equal salaries disturb neither function: both handle repeated values correctly.",
+      "ru": "ROW_NUMBER нумерует строки подряд — 1, 2, 3, 4 — даже если у двух из них одинаковая зарплата. LAG (оконная функция, которая читает предыдущую строку) для самой первой строки вернёт NULL. Дальше пойдут 70000, 60000, 60000 для строк 2-4. Одинаковые зарплаты не мешают ни той, ни другой функции: обе корректно обрабатывают повторы."
     }
   },
   {
@@ -265,8 +265,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "SERIALIZABLE uses Serialization Anomaly Detection (SSI) in PostgreSQL to detect conflicts and rollback transactions when necessary, ensuring a consistent snapshot view. This prevents phantom reads and serialization anomalies. It doesn't lock the entire database, doesn't make writes faster, and doesn't ignore read anomalies like the other options claim.",
-      "ru": "SERIALIZABLE использует Serialization Anomaly Detection (SSI) в PostgreSQL для обнаружения конфликтов и отката транзакций при необходимости, обеспечивая последовательный вид снимка. Это предотвращает фантомное чтение и аномалии сериализации. Это не блокирует всю базу данных, не делает записи быстрее и не игнорирует аномалии чтения, как претендуют другие варианты."
+      "en": "SERIALIZABLE in PostgreSQL is built on SSI — Serializable Snapshot Isolation. The transaction gets one consistent snapshot, and PostgreSQL watches for conflicts between concurrent transactions. When their combined result is not serializable, one of them is rolled back. That prevents phantom reads and serialization anomalies. It does not lock the whole database, speed writes up, or ignore anomalies.",
+      "ru": "SERIALIZABLE в PostgreSQL построен на SSI — Serializable Snapshot Isolation. Транзакция получает один согласованный снимок, а PostgreSQL следит за конфликтами между одновременными транзакциями. Если их совместный результат не сериализуем, одну из них откатывают. Это и защищает от фантомных чтений и аномалий сериализации. Базу данных он не блокирует, записи не ускоряет, аномалии не игнорирует."
     }
   },
   {
@@ -292,8 +292,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Stale statistics are the primary reason for row estimate mismatches. Running ANALYZE updates table statistics and improves planner decisions. The other options are misconceptions—PostgreSQL's estimates are generally reliable, the number of columns doesn't prevent accurate estimation, and the planner is highly optimized.",
-      "ru": "Устаревшая статистика—основная причина несовпадения оценок строк. Запуск ANALYZE обновляет статистику таблицы и улучшает решения планировщика. Остальные варианты—неправильные представления: оценки PostgreSQL обычно надежны, количество столбцов не препятствует точной оценке, а планировщик высоко оптимизирован."
+      "en": "Stale statistics are the primary reason for row estimate mismatches. Running ANALYZE updates table statistics and improves planner decisions. The other options are misconceptions: PostgreSQL's estimates are generally reliable, the number of columns does not prevent accurate estimation, and the planner is highly optimized.",
+      "ru": "Устаревшая статистика — главная причина расхождения между оценкой и фактическим числом строк. Запуск ANALYZE обновляет статистику таблицы и улучшает решения планировщика. Остальные варианты — заблуждения: оценки PostgreSQL обычно надёжны, количество столбцов точной оценке не мешает, а планировщик хорошо оптимизирован."
     }
   },
   {
@@ -319,8 +319,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "MVCC ensures B sees a consistent snapshot as of the moment it started, showing the old value. A's changes are invisible until A commits. This prevents dirty reads and is PostgreSQL's default behavior. Rows are not locked during updates, and caching doesn't affect snapshot consistency.",
-      "ru": "MVCC гарантирует, что B видит согласованный снимок с момента его начала, показывающий старое значение. Изменения A невидимы до фиксации A. Это предотвращает грязное чтение и является поведением PostgreSQL по умолчанию. Строки не блокируются во время обновлений, и кэширование не влияет на согласованность снимка."
+      "en": "MVCC (Multi-Version Concurrency Control) gives B a consistent snapshot as of the moment B started, so B still sees the old value. The changes made by A stay invisible until A commits. That is what prevents dirty reads, and it is PostgreSQL's default behaviour. Rows are not locked for reading during an update, and caching does not affect snapshot consistency.",
+      "ru": "MVCC (Multi-Version Concurrency Control, многоверсионность) даёт B согласованный снимок на момент старта B, поэтому B всё ещё видит старое значение. Изменения A остаются невидимыми до фиксации A. Именно это защищает от грязного чтения и является поведением PostgreSQL по умолчанию. Строки при обновлении не блокируются для чтения, а кэширование на согласованность снимка не влияет."
     }
   },
   {
@@ -346,8 +346,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "B-tree is the default and most efficient for range queries because it orders keys, allowing range scans to skip irrelevant values. Hash indexes only support equality, GiST is for complex types, and BRIN is for very large sequential tables where it's not always better than B-tree for performance.",
-      "ru": "B-tree—индекс по умолчанию и наиболее эффективный для запросов диапазона, потому что он упорядочивает ключи, позволяя сканированиям диапазона пропускать нерелевантные значения. Хеш-индексы поддерживают только равенство, GiST предназначен для сложных типов, а BRIN предназначен для очень больших последовательных таблиц, где он не всегда лучше B-tree по производительности."
+      "en": "B-tree is the default index type and the most efficient one for ranges. It keeps keys sorted, so a range scan can skip the values that cannot match. Hash indexes support equality only. GiST (generalized search tree) is for complex types. BRIN (block range index) is for very large tables with sequential data. Even there it is not always faster than B-tree.",
+      "ru": "B-tree — индекс по умолчанию и самый эффективный для диапазонов. Он держит ключи отсортированными, поэтому сканирование диапазона пропускает значения, которые точно не подойдут. Хеш-индексы поддерживают только равенство. GiST (обобщённое дерево поиска) — для сложных типов. BRIN (индекс диапазона блоков) — для очень больших таблиц с последовательными данными. Даже там он не всегда быстрее B-tree."
     }
   },
   {
@@ -373,8 +373,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "VACUUM reclaims space from dead tuples and is critical to prevent transaction ID wraparound (a catastrophic event). AUTOVACUUM runs automatically in modern PostgreSQL. The other options confuse VACUUM with other operations: NULL rows are not specially deleted, REINDEX is separate, and VACUUM doesn't directly manage the buffer cache.",
-      "ru": "VACUUM восстанавливает пространство из мертвых кортежей и критичен для предотвращения переполнения ID транзакции (катастрофическое событие). AUTOVACUUM работает автоматически в современном PostgreSQL. Другие варианты путают VACUUM с другими операциями: строки NULL не удаляются специально, REINDEX отдельный, и VACUUM не управляет буфер-кэшем напрямую."
+      "en": "VACUUM reclaims the space of dead tuples, and it is critical against transaction id wraparound, a catastrophic event. In modern PostgreSQL the autovacuum daemon runs it for you. The other options confuse VACUUM with other operations. Rows holding NULL are not deleted in any special way. Rebuilding indexes is the job of REINDEX. And the buffer cache is not managed by VACUUM.",
+      "ru": "VACUUM освобождает место, занятое мёртвыми кортежами, и критически важен против переполнения счётчика транзакций — катастрофического события. В современном PostgreSQL за вас его запускает демон autovacuum. Остальные варианты путают VACUUM с другими операциями. Строки со значением NULL никак особенно не удаляются. Перестройка индексов — работа REINDEX. А буферным кэшем VACUUM не управляет."
     }
   },
   {
@@ -400,8 +400,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The WHERE clause is applied before window functions execute, so NULL rows are excluded first. Window functions then operate only on the filtered rows. This is different from SQL aggregates, which can be affected by HAVING. Window functions are not immune to filtering, and ROW_NUMBER() works fine with WHERE clauses.",
-      "ru": "Предложение WHERE применяется перед выполнением оконных функций, поэтому строки с NULL исключаются в первую очередь. Затем оконные функции работают только с отфильтрованными строками. Это отличается от SQL-агрегатов, на которые может влиять HAVING. Оконные функции не защищены от фильтрации, и ROW_NUMBER() хорошо работает с предложениями WHERE."
+      "en": "The WHERE clause is applied before the window functions run, so rows holding NULL are filtered out first. The window functions then work only on what is left. Aggregates behave differently: HAVING can filter them after grouping. Window functions are not immune to filtering, and ROW_NUMBER() works perfectly well together with a WHERE clause.",
+      "ru": "Условие WHERE применяется раньше, чем выполняются оконные функции, поэтому строки со значением NULL отфильтровываются первыми. Дальше оконные функции работают только с тем, что осталось. С агрегатами иначе: их результат HAVING может отфильтровать уже после группировки. Оконные функции от фильтрации не защищены, а ROW_NUMBER() прекрасно работает вместе с условием WHERE."
     }
   },
   {
@@ -427,8 +427,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "PostgreSQL's query planner performs cost analysis and may choose sequential scan if the table is small enough that reading all rows is cheaper than index lookups plus random I/O. The AND condition doesn't prevent index use, statistics are typically current for normal workloads, and PostgreSQL fully supports composite indexes. The planner evaluates actual row estimates from EXPLAIN output.",
-      "ru": "Планировщик запросов PostgreSQL выполняет анализ стоимости и может выбрать последовательное сканирование, если таблица достаточно маленькая, чтобы чтение всех строк было дешевле, чем использование индексов плюс случайный ввод-вывод. Условие AND не препятствует использованию индексов, статистика обычно актуальна для нормальных рабочих нагрузок, и PostgreSQL полностью поддерживает составные индексы."
+      "en": "The planner compares costs before it picks a plan. On a small table, reading every row is often cheaper than walking two indexes and paying for the random reads that follow. The other options are misconceptions. A condition on two columns does not prevent index use, statistics are usually current under a normal workload, and PostgreSQL fully supports composite indexes.",
+      "ru": "Планировщик сравнивает стоимости, прежде чем выбрать план. На маленькой таблице прочитать все строки часто дешевле, чем обойти два индекса и заплатить за следующие за ними случайные чтения. Остальные варианты — заблуждения. Условие по двум столбцам использованию индекса не мешает, статистика при обычной нагрузке обычно актуальна, а составные индексы PostgreSQL поддерживает полностью."
     }
   },
   {
@@ -454,8 +454,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "SERIALIZABLE adds conflict detection through Serializable Snapshot Isolation (SSI): it tracks dependencies between concurrent transactions and aborts one of them with a serialization failure. REPEATABLE READ keeps one stable snapshot for the whole transaction, but it allows write skew, where two transactions each read a valid snapshot and together break an invariant. Both levels work on MVCC snapshots, not on row or table locks, and dirty reads are already impossible at READ COMMITTED.",
-      "ru": "SERIALIZABLE добавляет обнаружение конфликтов через Serializable Snapshot Isolation (SSI): он отслеживает зависимости между одновременными транзакциями и прерывает одну из них с ошибкой сериализации. REPEATABLE READ держит один стабильный снимок на всю транзакцию, но допускает write skew: обе транзакции читают корректный снимок и вместе нарушают инвариант. Оба уровня работают на снимках MVCC, а не на блокировках строк или таблиц, а грязные чтения невозможны уже на READ COMMITTED."
+      "en": "SERIALIZABLE detects conflicts via SSI — Serializable Snapshot Isolation. It tracks how transactions depend on each other and aborts one with a serialization failure. REPEATABLE READ holds one snapshot per transaction, but allows write skew: both see a valid snapshot and together break an invariant. Both use MVCC (Multi-Version Concurrency Control) snapshots, not locks; dirty reads cannot happen at READ COMMITTED.",
+      "ru": "SERIALIZABLE ловит конфликты через SSI — Serializable Snapshot Isolation. Он следит за зависимостями между транзакциями и прерывает одну ошибкой сериализации. REPEATABLE READ держит один снимок на транзакцию, но допускает write skew: обе видят корректный снимок и вместе нарушают инвариант. Оба уровня опираются на снимки MVCC (многоверсионность), не на блокировки; грязное чтение невозможно уже на READ COMMITTED."
     }
   },
   {
@@ -481,8 +481,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "ROW_NUMBER() assigns unique sequential numbers to every row, even for tied values. It does not give the same rank to equal values—each row gets a distinct number. Two employees with the same salary will get consecutive row numbers (1 and 2) but the order between them is determined by the tiebreaker (internal row order), not by a tie-handling rule like RANK() would provide.",
-      "ru": "ROW_NUMBER() присваивает уникальные последовательные номера каждой строке, даже для одинаковых значений. Она не дает одинаковый ранг равным значениям—каждая строка получает отдельный номер. Два сотрудника с одинаковой зарплатой получат последовательные номера строк (1 и 2), но порядок между ними определяется внутренним порядком строк."
+      "en": "ROW_NUMBER gives every row a unique sequential number, even when values are tied. Equal values do not share a number: each row gets its own. So two employees on the same salary get consecutive numbers, 1 and 2. Which of them comes first is decided by the internal row sequence. There is no tie rule here, unlike in RANK (that function does give tied rows one shared number).",
+      "ru": "ROW_NUMBER присваивает каждой строке уникальный последовательный номер, даже при одинаковых значениях. Одинаковые значения номер не делят: у каждой строки свой. Поэтому два сотрудника с равной зарплатой получат подряд идущие номера, 1 и 2. Кто из них первый, решает внутренний порядок строк. Правила для повторов здесь нет, в отличие от RANK (эта функция как раз даёт повторам общий номер)."
     }
   },
   {
@@ -508,8 +508,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "VACUUM removes dead tuples (from deleted/updated rows) due to MVCC's append-only nature and updates visibility maps. Critical for preventing transaction ID wraparound, a catastrophic event if xmin/xmax reach max int32 value. VACUUM does not rebuild indexes (REINDEX does), compress data significantly, or remove NULLs—those are misconceptions. VACUUM FULL is more aggressive but locks the table.",
-      "ru": "VACUUM удаляет мертвые кортежи (из удалённых/обновлённых строк) из-за природы MVCC только для добавления и обновляет карты видимости. Критично для предотвращения переполнения ID транзакций, катастрофического события, если xmin/xmax достигнут максимального значения int32. VACUUM не перестраивает индексы (это делает REINDEX) и не компрессирует данные значительно."
+      "en": "VACUUM removes dead tuples: old row versions left by DELETE and UPDATE, because MVCC (Multi-Version Concurrency Control) never overwrites a row in place. It also updates the visibility maps. That matters against transaction id wraparound, a catastrophe if the 32-bit counter hits its maximum. VACUUM does not rebuild indexes (REINDEX does), compress data, or remove NULLs. VACUUM FULL is harsher, but it locks the table.",
+      "ru": "VACUUM удаляет мёртвые кортежи — старые версии строк после DELETE и UPDATE, ведь MVCC (многоверсионность) не перезаписывает строку на месте. Ещё он обновляет карты видимости. Это защита от переполнения счётчика транзакций: 32-битный счётчик дошёл до максимума — катастрофа. VACUUM не перестраивает индексы (это REINDEX), не сжимает данные и не удаляет NULL. VACUUM FULL жёстче, но блокирует таблицу."
     }
   },
   {
@@ -535,16 +535,16 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "LEFT JOIN preserves all rows from the left table and fills unmatched columns from the right table with NULL. This is the defining behavior of LEFT JOIN—unmatched right-side columns are NULL, not 0, empty strings, or schema defaults. The row is always included in results; only the right-table columns are NULL-filled.",
-      "ru": "LEFT JOIN сохраняет все строки из левой таблицы и заполняет несопоставленные столбцы из правой таблицы значением NULL. Это определяющее поведение LEFT JOIN—несопоставленные столбцы правой таблицы становятся NULL, а не 0, пустыми строками или значениями по умолчанию. Строка всегда включается в результаты; только столбцы правой таблицы заполняются NULL."
+      "en": "LEFT JOIN keeps every row of the first table and fills the unmatched columns of the second table with NULL. That is its defining behaviour: unmatched columns become NULL, not 0, not an empty string, and not the schema default. The row itself is always in the result; only the columns from the second table are filled with NULL.",
+      "ru": "LEFT JOIN сохраняет все строки первой таблицы, а несовпавшие столбцы второй таблицы заполняет значением NULL. Это его определяющее поведение: несовпавшие столбцы становятся NULL, а не нулём, не пустой строкой и не значением по умолчанию из схемы. Сама строка в результате остаётся всегда, заполняются значением NULL только столбцы второй таблицы."
     }
   },
   {
     "id": "postgresql-quiz-21",
     "topicId": "postgresql",
     "question": {
-      "en": "When PostgreSQL performs a full table scan on a table with millions of rows, which index type would be LEAST useful for filtering on a range of numeric values?\n\nConsider: B-tree, Hash, GiST, BRIN",
-      "ru": "Когда PostgreSQL выполняет полное сканирование таблицы с миллионами строк, какой тип индекса будет НАИМЕНЕЕ полезен для фильтрации по диапазону числовых значений?\n\nРассмотрите: B-tree, Hash, GiST, BRIN"
+      "en": "PostgreSQL is doing a full table scan on a table with millions of rows. Which index type would be **least** useful for filtering on a range of numeric values?\n\nConsider: B-tree, Hash, GiST, BRIN",
+      "ru": "PostgreSQL выполняет полное сканирование таблицы с миллионами строк. Какой тип индекса будет **наименее** полезен для фильтрации по диапазону числовых значений?\n\nРассмотрите: B-tree, Hash, GiST, BRIN"
     },
     "options": {
       "en": [
@@ -562,16 +562,16 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Hash indexes only support equality operators (=), making them unsuitable for range queries like < or BETWEEN. B-tree indexes are actually the gold standard for range queries on numeric columns. GiST and BRIN can both work with numeric data, though with different trade-offs.",
-      "ru": "Hash индексы поддерживают только оператор равенства (=), что делает их непригодными для диапазонных запросов, таких как < или BETWEEN. B-tree индексы на самом деле являются стандартом для диапазонных запросов на числовых столбцах. GiST и BRIN оба могут работать с числовыми данными, хотя с разными компромиссами."
+      "en": "Hash indexes support the equality operator (=) only, which makes them unsuitable for range queries such as < or BETWEEN. B-tree is in fact the standard choice for ranges over numeric columns. GiST (generalized search tree) and BRIN (block range index) can both work with numeric data, each with its own trade-offs.",
+      "ru": "Хеш-индексы поддерживают только оператор равенства (=), и поэтому не годятся для диапазонных запросов вроде < или BETWEEN. B-tree, наоборот, стандартный выбор для диапазонов по числовым столбцам. GiST (generalized search tree, обобщённое дерево поиска) и BRIN (block range index, индекс диапазона блоков) с числовыми данными работать умеют оба, каждый со своими компромиссами."
     }
   },
   {
     "id": "postgresql-quiz-22",
     "topicId": "postgresql",
     "question": {
-      "en": "What does the MVCC (Multi-Version Concurrency Control) mechanism in PostgreSQL primarily allow?\n\nA) Multiple transactions to hold locks on the same row simultaneously\nB) Each transaction to see a consistent snapshot of the database at the moment it started\nC) Automatic rollback of conflicting transactions without user intervention\nD) Elimination of the need for transaction isolation levels",
-      "ru": "Что в первую очередь позволяет делать механизм MVCC (многоверсионный контроль параллелизма) в PostgreSQL?\n\nA) Нескольким транзакциям одновременно удерживать блокировки на одной строке\nB) Каждой транзакции видеть согласованный снимок базы данных на момент её начала\nC) Автоматический откат конфликтующих транзакций без вмешательства пользователя\nD) Исключение необходимости в уровнях изоляции транзакций"
+      "en": "What does the MVCC (Multi-Version Concurrency Control) mechanism in PostgreSQL primarily allow?",
+      "ru": "Что в первую очередь позволяет делать механизм MVCC (многоверсионный контроль параллелизма) в PostgreSQL?"
     },
     "options": {
       "en": [
@@ -589,8 +589,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "MVCC allows each transaction to see its own consistent view of the database by maintaining multiple versions of rows. This enables non-blocking reads and better concurrency. Lock-free reading is the key benefit, not preventing locks or eliminating isolation levels (which still exist and matter).",
-      "ru": "MVCC позволяет каждой транзакции видеть свой согласованный вид базы данных, поддерживая несколько версий строк. Это обеспечивает неблокирующее чтение и лучший параллелизм. Чтение без блокировок — это ключевое преимущество, а не предотвращение блокировок или исключение уровней изоляции, которые всё ещё существуют и важны."
+      "en": "MVCC (Multi-Version Concurrency Control) lets every transaction see its own consistent view of the database, because the database keeps several versions of each row. That is what enables non-blocking reads and better concurrency. Lock-free reading is the key benefit here. MVCC does not prevent locks, and it does not remove the need for isolation levels, which still exist and still matter.",
+      "ru": "MVCC (Multi-Version Concurrency Control, многоверсионность) даёт каждой транзакции свой согласованный вид базы данных, потому что база хранит несколько версий каждой строки. Именно это обеспечивает неблокирующее чтение и лучший параллелизм. Ключевое преимущество здесь — чтение без блокировок. MVCC не предотвращает блокировки и не отменяет уровни изоляции: они по-прежнему существуют и важны."
     }
   },
   {
@@ -598,7 +598,7 @@
     "topicId": "postgresql",
     "question": {
       "en": "What will be the result of the following query?\n\n```sql\nSELECT \n  name,\n  salary,\n  ROW_NUMBER() OVER (ORDER BY salary DESC) as rank,\n  LAG(salary) OVER (ORDER BY salary DESC) as prev_salary\nFROM employees\nWHERE salary > 50000\nORDER BY salary DESC;\n\n```\nWhich statement is correct about window functions here?",
-      "ru": "Какой будет результат следующего запроса?\n\n```sql\nSELECT \n  name,\n  salary,\n  ROW_NUMBER() OVER (ORDER BY salary DESC) as rank,\n  LAG(salary) OVER (ORDER BY salary DESC) as prev_salary\nFROM employees\nWHERE salary > 50000\nORDER BY salary DESC;\n\n```\nКакое утверждение верно о window функциях здесь?"
+      "ru": "Какой будет результат следующего запроса?\n\n```sql\nSELECT \n  name,\n  salary,\n  ROW_NUMBER() OVER (ORDER BY salary DESC) as rank,\n  LAG(salary) OVER (ORDER BY salary DESC) as prev_salary\nFROM employees\nWHERE salary > 50000\nORDER BY salary DESC;\n\n```\nКакое утверждение об оконных функциях здесь верно?"
     },
     "options": {
       "en": [
@@ -616,16 +616,16 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Window functions are applied after WHERE filtering, not before. The ORDER BY in OVER defines the window frame order, which is independent of the final result ORDER BY. LAG looks backward (previous row), not forward. The WHERE clause always filters rows before window functions process the result set.",
-      "ru": "Оконные функции применяются после фильтрации WHERE, а не до неё. ORDER BY в OVER определяет порядок окна, что не зависит от финального ORDER BY. LAG смотрит назад (предыдущую строку), а не вперёд. Предложение WHERE всегда фильтрует строки перед обработкой результирующего набора оконными функциями."
+      "en": "Window functions run after WHERE has filtered, never before. The ORDER BY inside OVER defines the sequence of rows within the window, independently of the final ORDER BY of the query. LAG (a window function that reads the previous row) looks backwards, not forwards. WHERE always filters the rows before the window functions process the result.",
+      "ru": "Оконные функции выполняются после фильтрации по WHERE, а не до неё. Конструкция ORDER BY внутри OVER задаёт последовательность строк внутри окна, независимо от финального ORDER BY запроса. LAG (оконная функция, которая читает предыдущую строку) смотрит назад, а не вперёд. WHERE всегда отфильтровывает строки прежде, чем оконные функции обработают результат."
     }
   },
   {
     "id": "postgresql-quiz-24",
     "topicId": "postgresql",
     "question": {
-      "en": "Consider the EXPLAIN output below. What does a high value in the 'Actual Loops' field most likely indicate?\n\n\nSeq Scan on users (cost=0.00..35.50 rows=1000 width=100)\n  Filter: (status = 'active')\n  Actual Loops: 50\n  Actual Rows: 20000\n",
-      "ru": "Рассмотрите вывод EXPLAIN ниже. Что высокое значение в поле 'Actual Loops' скорее всего указывает?\n\n\nSeq Scan on users (cost=0.00..35.50 rows=1000 width=100)\n  Filter: (status = 'active')\n  Actual Loops: 50\n  Actual Rows: 20000\n"
+      "en": "Consider the EXPLAIN output below. What does a high value in the 'Actual Loops' field most likely indicate?\n```txt\nSeq Scan on users (cost=0.00..35.50 rows=1000 width=100)\n  Filter: (status = 'active')\n  Actual Loops: 50\n  Actual Rows: 20000\n```",
+      "ru": "Рассмотрите вывод EXPLAIN ниже. На что скорее всего указывает высокое значение в поле 'Actual Loops'?\n```txt\nSeq Scan on users (cost=0.00..35.50 rows=1000 width=100)\n  Filter: (status = 'active')\n  Actual Loops: 50\n  Actual Rows: 20000\n```"
     },
     "options": {
       "en": [
@@ -651,8 +651,8 @@
     "id": "postgresql-quiz-25",
     "topicId": "postgresql",
     "question": {
-      "en": "What is the difference between READ COMMITTED and REPEATABLE READ isolation levels in PostgreSQL regarding NULL values?\n\nA) REPEATABLE READ prevents NULL from being inserted by concurrent transactions\nB) NULL comparisons behave differently based on isolation level\nC) Both levels handle NULL values identically in comparisons (NULL is neither equal nor not equal)\nD) READ COMMITTED converts NULL to an empty string for consistency",
-      "ru": "В чём разница между уровнями изоляции READ COMMITTED и REPEATABLE READ в PostgreSQL в отношении значений NULL?\n\nA) REPEATABLE READ предотвращает вставку NULL параллельными транзакциями\nB) Сравнения NULL ведут себя по-разному в зависимости от уровня изоляции\nC) Оба уровня обрабатывают значения NULL одинаково в сравнениях (NULL ни равно, ни не равно)\nD) READ COMMITTED преобразует NULL в пустую строку для согласованности"
+      "en": "What is the difference between READ COMMITTED and REPEATABLE READ isolation levels in PostgreSQL regarding NULL values?",
+      "ru": "В чём разница между уровнями изоляции READ COMMITTED и REPEATABLE READ в PostgreSQL в отношении значений NULL?"
     },
     "options": {
       "en": [
@@ -670,8 +670,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "NULL semantics in SQL are independent of isolation levels. In both READ COMMITTED and REPEATABLE READ (and all isolation levels), NULL remains neither equal to nor not equal to anything, including itself. The WHERE clause x = NULL always returns false, and x IS NULL must be used instead. Isolation levels affect row visibility and phantom reads, not NULL behavior.",
-      "ru": "Семантика NULL в SQL не зависит от уровней изоляции. И в READ COMMITTED, и в REPEATABLE READ (и во всех уровнях изоляции) NULL остаётся ни равным, ни не равным чему-либо, включая самого себя. Предложение WHERE x = NULL всегда возвращает false, и вместо этого должно использоваться x IS NULL. Уровни изоляции влияют на видимость строк и фантомные чтения, а не на поведение NULL."
+      "en": "NULL semantics do not depend on the isolation level. Under READ COMMITTED, under REPEATABLE READ and under every other level, NULL stays neither equal nor unequal to anything, including itself. The condition x = NULL never holds true, so the test to use becomes x IS NULL. Isolation levels govern row visibility and phantom reads, not the behaviour of NULL.",
+      "ru": "Семантика NULL от уровня изоляции не зависит. И на READ COMMITTED, и на REPEATABLE READ, и на любом другом уровне NULL остаётся ни равным, ни не равным чему угодно, включая себя. Условие x = NULL не выполняется никогда, поэтому пишут x IS NULL. Уровни изоляции управляют видимостью строк и фантомными чтениями, а не поведением NULL."
     }
   },
   {
@@ -697,8 +697,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "MVCC maintains multiple versions of rows, allowing concurrent reads and writes without mutual blocking. This is PostgreSQL's core concurrency mechanism. The options about eliminating indexes, compressing table data, and preventing NULL values describe unrelated features or are false statements about MVCC functionality.",
-      "ru": "MVCC поддерживает несколько версий строк, позволяя одновременно читать и писать без взаимной блокировки. Это основной механизм параллелизма PostgreSQL. Варианты про исключение индексов, сжатие данных таблицы и предотвращение значений NULL описывают несвязанные функции или являются неверными утверждениями о функциональности MVCC."
+      "en": "MVCC (Multi-Version Concurrency Control) keeps several versions of each row, so reads and writes run at the same time without blocking each other. This is PostgreSQL's core concurrency mechanism. The other three options are wrong: MVCC does not replace indexes, does not compress table data, and has nothing to do with NULL values.",
+      "ru": "MVCC (Multi-Version Concurrency Control, многоверсионность) хранит несколько версий каждой строки, поэтому чтение и запись идут одновременно и не блокируют друг друга. Это основной механизм параллелизма в PostgreSQL. Остальные три варианта неверны: MVCC не заменяет индексы, не сжимает данные таблицы и никак не связан со значениями NULL."
     }
   },
   {
@@ -751,8 +751,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "ROW_NUMBER assigns unique numbers to each row (1, 2, 3 for the top 3 salaries), and LEAD correctly returns the next row's salary in the ordering (5000, 4000, 3000). LIMIT is applied after window functions are computed. The option where every row shows 5000 misunderstands LEAD behavior, the option returning 2 rows confuses ROW_NUMBER with RANK, and the option returning 4 rows misses that LIMIT occurs after window computation.",
-      "ru": "ROW_NUMBER назначает уникальные номера каждой строке (1, 2, 3 для трех наибольших зарплат), а LEAD правильно возвращает зарплату следующей строки в порядке (5000, 4000, 3000). LIMIT применяется после вычисления функций окна. Вариант, где каждая строка показывает 5000, неправильно понимает поведение LEAD, вариант с 2 строками путает ROW_NUMBER с RANK, а вариант с 4 строками упускает, что LIMIT происходит после вычисления окна."
+      "en": "ROW_NUMBER gives each row its own number, so the top three salaries get 1, 2 and 3. LEAD (a window function that reads the next row) returns that next salary: 5000, 4000, 3000. LIMIT is applied after the window functions are computed, which is why three rows come back and not four. The option with two rows confuses ROW_NUMBER with RANK (which gives tied rows one shared number).",
+      "ru": "ROW_NUMBER даёт каждой строке свой номер, поэтому три наибольшие зарплаты получают 1, 2 и 3. LEAD (оконная функция, которая читает следующую строку) возвращает эту следующую зарплату: 5000, 4000, 3000. LIMIT применяется после того, как оконные функции посчитаны, поэтому строк возвращается три, а не четыре. Вариант с двумя строками путает ROW_NUMBER с RANK (эта функция даёт повторам общий номер)."
     }
   },
   {
@@ -778,8 +778,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "BRIN (Block Range INdex) is designed for very large tables with ordered data. It maintains minimal metadata per block range, consuming far less space than B-tree while still providing good performance. The option about unique constraints describes unique indexes, the option about small tables contradicts BRIN's use case (it's for large tables), and the option about replacing VACUUM misunderstands that BRIN doesn't eliminate the need for VACUUM.",
-      "ru": "BRIN (индекс диапазона блоков) предназначен для очень больших таблиц с упорядоченными данными. Он поддерживает минимальные метаданные для каждого диапазона блоков, потребляя намного меньше места, чем B-tree, при этом обеспечивая хорошую производительность. Вариант про уникальные ограничения описывает уникальные индексы, вариант про малые таблицы противоречит сценарию использования BRIN (это для больших таблиц), а вариант про замену VACUUM неправильно понимает, что BRIN не исключает необходимость VACUUM."
+      "en": "BRIN (Block Range INdex) is designed for very large tables whose data is already ordered. It keeps only minimal metadata per range of blocks. So it takes far less space than a B-tree and still performs well. The other options miss the point. Unique constraints are the job of a unique index. BRIN is for large tables, not small ones. And VACUUM is still needed.",
+      "ru": "BRIN (индекс диапазона блоков) рассчитан на очень большие таблицы, данные в которых уже упорядочены. Он хранит лишь минимум метаданных на каждый диапазон блоков. Поэтому места он занимает намного меньше, чем B-tree, и всё равно работает хорошо. Остальные варианты мимо. Уникальные ограничения — дело уникального индекса. BRIN нужен большим таблицам, а не маленьким. А VACUUM всё равно необходим."
     }
   }
 ]
