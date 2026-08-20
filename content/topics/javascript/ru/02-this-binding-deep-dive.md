@@ -21,7 +21,7 @@ showThis(); // window (браузер, sloppy mode) / global (Node.js, sloppy mo
             // undefined (strict mode — и браузер, и Node.js)
 ```
 
-В **strict mode** `this` при default binding = `undefined`. Это одна из причин, почему `'use strict'` существует: в sloppy mode случайное `this.property = value` в глобальной функции тихо создавало свойство глобального объекта — классический источник багов.
+В **strict mode** `this` при default binding = `undefined`. Это одна из причин, почему `'use strict'` существует. В sloppy mode случайное `this.property = value` в глобальной функции тихо создавало свойство глобального объекта. Классический источник багов.
 
 ```js
 'use strict';
@@ -36,7 +36,7 @@ function sloppy() {
 
 ### Правило 2: Implicit binding (неявная привязка)
 
-Применяется, когда функция вызвана **через объект** (вызов метода). `this` = объект, стоящий **непосредственно слева от точки** в момент вызова.
+Применяется, когда функция вызвана **через объект** — то есть как метод. Тогда `this` = объект, стоящий **непосредственно слева от точки** в момент вызова.
 
 ```js
 const user = {
@@ -92,7 +92,7 @@ BoundFunction {
 }
 ```
 
-При вызове bound function движок берёт `[[BoundThis]]` как `this` и prepend-ит `[[BoundArguments]]` к переданным аргументам. `call`/`apply` на bound function **не могут переопределить** `[[BoundThis]]` — он зафиксирован навсегда (кроме случая `new`, см. ниже).
+При вызове bound function движок берёт `[[BoundThis]]` как `this` и подставляет `[[BoundArguments]]` перед переданными аргументами. Ни `call`, ни `apply` не могут переопределить `[[BoundThis]]` — он зафиксирован навсегда (обойти это умеет только `new`, см. ниже).
 
 **Частичное применение (partial application)**:
 
@@ -179,7 +179,7 @@ c.value; // 0, а не 999 — this при new = новый объект, не [
 Стрелочная функция не создаёт собственного `ThisBinding` в своём Function Environment Record. Это не "синтаксический сахар" над `bind` — это другая семантика создания окружения.
 
 Когда движок создаёт стрелочную функцию, он:
-1. **НЕ** создаёт поле `[[ThisValue]]` в Environment Record функции
+1. **не** создаёт поле `[[ThisValue]]` в Environment Record функции
 2. Любое обращение к `this` внутри стрелки разрешается по Scope Chain — то есть находит `this` в **лексически объемлющем** контексте
 
 ```js
@@ -368,10 +368,15 @@ obj.getValueDelayedArrow().then(console.log); // ?
 
 ```
 42          // obj.getValue() — implicit binding, this = obj
-undefined   // getValueArrow: стрелка, this = global (объектный литерал не создаёт this)
-undefined   // getValue() после деструктуризации — default binding, this = undefined (strict) / global
-undefined   // getValueDelayed — setTimeout с function(), this = global
-42          // getValueDelayedArrow — setTimeout со стрелкой, this захвачен из getValueDelayedArrow(), где this = obj (implicit binding при вызове obj.getValueDelayedArrow())
+undefined   // getValueArrow — стрелка, this = global; объектный
+            // литерал своего this не создаёт
+undefined   // getValue() после деструктуризации — default
+            // binding, this = undefined (strict) / global
+undefined   // getValueDelayed — setTimeout с function(),
+            // this = global
+42          // getValueDelayedArrow — setTimeout со стрелкой,
+            // this захвачен из getValueDelayedArrow(), где
+            // implicit binding дал this = obj
 ```
 
 </details>
@@ -399,15 +404,19 @@ new greetAlice();                 // '' — new игнорирует [[BoundThis
 ## Связь с другими темами
 
 ```txt
-[Контексты выполнения]  — ThisBinding — отдельное поле Execution Context,
-                           не связанное со Scope Chain
-[Замыкания]             — стрелочные функции используют this из замкнутого
-                           контекста — это пересечение механики замыканий и this
-[Прототипы]             — this внутри метода prototype-цепочки всегда указывает
-                           на объект, для которого был сделан вызов, а не на
-                           прототип, где метод определён
-[Классы]                — class method в strict mode, class field arrow function —
-                           разные трейдоффы для this-binding
+[Контексты выполнения]  — ThisBinding — отдельное поле
+                          Execution Context, со Scope Chain
+                          не связанное
+[Замыкания]             — стрелочные функции берут this из
+                          замкнутого контекста: здесь механика
+                          замыканий пересекается с this
+[Прототипы]             — this внутри метода prototype-цепочки
+                          всегда указывает на объект, для которого
+                          сделан вызов, а не на прототип, где
+                          метод определён
+[Классы]                — class method в strict mode против
+                          class field arrow function: разные
+                          трейдоффы для this-binding
 ```
 
 ## Типичные ошибки на интервью
@@ -420,6 +429,6 @@ new greetAlice();                 // '' — new игнорирует [[BoundThis
 
 - **"Метод стрелки в объектном литерале захватывает this объекта"** — нет. Объектный литерал `{}` не создаёт нового контекста выполнения. `this` стрелки в `{ arrow: () => ... }` — это `this` лексически объемлющего контекста (часто глобального).
 
-- **Не знать, что `bind` возвращает bound function exotic object** — важно для понимания, почему `bind(bind(fn, a), b)` не меняет `this` (внешний bind обёртывает bound function, но `[[BoundThis]]` уже зафиксирован во внутренней).
+- **Не знать, что `bind` возвращает bound function exotic object** — это объясняет, почему `bind(bind(fn, a), b)` не меняет `this`. Внешний `bind` обёртывает bound function, но `[[BoundThis]]` уже зафиксирован во внутренней.
 
 - **Забывать про strict mode при default binding** — `this = undefined` в strict mode vs `globalThis` в sloppy mode. В модульном коде (ESM) всегда strict mode — это меняет поведение по умолчанию.

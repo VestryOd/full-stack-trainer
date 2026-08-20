@@ -45,13 +45,14 @@ const obj = new Foo();
 Диаграмма для наглядности:
 
   Foo (Function)
-    .prototype ──────────────────────────────────────┐
-    [[Prototype]] → Function.prototype               │
-                                                     ▼
-  obj = new Foo()                            Foo.prototype
-    [[Prototype]] ──────────────────────────►  { constructor: Foo }
-                                               [[Prototype]] → Object.prototype
-                                                                [[Prototype]] → null
+    [[Prototype]] → Function.prototype
+    .prototype ───────────────────┐
+                                  │
+  obj = new Foo()                 ▼
+    [[Prototype]] ──────►   Foo.prototype
+                              { constructor: Foo }
+                              [[Prototype]] → Object.prototype
+                                              [[Prototype]] → null
 ```
 
 ## Алгоритм разрешения прототипной цепочки
@@ -116,7 +117,7 @@ bare.key = 'value';
 // Используется для "чистых" словарей без риска коллизий ключей
 ```
 
-### Конструкторная функция — ES5-стиль
+### Конструкторная функция — стиль ECMAScript 5 (ES5)
 
 ```js
 function Animal(name, sound) {
@@ -202,12 +203,12 @@ Animal.create = function(name, sound) { return new Animal(name, sound); };
    Методы на prototype вручную — enumerable по умолчанию
 
 2. class вызывает [[Construct]], а не [[Call]]:
-   Animal() без new → TypeError ("Class constructor cannot be invoked without 'new'")
+   Animal() без new → TypeError: конструктор класса требует new
    function Animal() {} без new → просто вызывается
 
 3. extends настраивает ДВЕ цепочки:
-   Dog.prototype[[Prototype]] = Animal.prototype  (цепочка экземпляров)
-   Dog[[Prototype]]           = Animal            (цепочка статических методов)
+   Dog.prototype[[Prototype]] = Animal.prototype  (экземпляры)
+   Dog[[Prototype]]           = Animal            (статика)
 
 4. super() в конструкторе подкласса обязателен до this:
    до super() у this нет значения (TDZ-подобное состояние)
@@ -230,11 +231,11 @@ Object.getPrototypeOf(B.prototype) === A.prototype; // true
 `obj instanceof Fn` выполняет следующий алгоритм:
 
 ```txt
-1. Если у Fn есть Symbol.hasInstance → вызвать его (кастомная логика)
+1. Если у Fn есть Symbol.hasInstance → вызвать его (своя логика)
 2. Иначе: взять target = Fn.prototype
 3. Пройти по [[Prototype]]-цепочке obj:
    - Если очередной [[Prototype]] === target → true
-   - Если [[Prototype]] === null → false (дошли до конца без совпадения)
+   - Если [[Prototype]] === null → false (конец цепочки)
 ```
 
 ```js
@@ -351,14 +352,16 @@ console.log(emp.constructor === Employee);      // ?
 <summary>Ответ</summary>
 
 ```
-'Alice'                          // Person.call установил this.name
-'Hi, I\'m Alice'                 // найдено в Person.prototype
-'Hi, I\'m Alice, I work as Engineer' // describe вызывает this.greet() через цепочку
-true                             // emp[[Prototype]] = Employee.prototype
-true                             // Employee.prototype[[Prototype]] = Person.prototype
-true                             // name — собственное свойство (Person.call(this, name))
-false                            // greet — в прототипе, не собственное
-true                             // мы вручную восстановили constructor
+'Alice'                              // Person.call задал this.name
+'Hi, I\'m Alice'                     // найдено в Person.prototype
+'Hi, I\'m Alice, I work as Engineer' // describe → this.greet()
+true                                 // emp → Employee.prototype
+true                                 // Employee.prototype →
+                                     //   Person.prototype
+true                                 // своё свойство, его задал
+                                     //   Person.call(this, name)
+false                                // greet лежит в прототипе
+true                                 // constructor вернули вручную
 ```
 
 Если бы строка `Employee.prototype.constructor = Employee` отсутствовала:
@@ -389,26 +392,29 @@ Object.hasOwn(dict, 'key'); // ES2022, не нужен Object.prototype
 ## Связь с другими темами
 
 ```txt
-[Контексты выполнения] — this внутри метода прототипа = объект, через
-                          который сделан вызов (implicit binding),
-                          а не объект, где метод определён
-[this-binding]         — тот же принцип: this при rex.speak() = rex,
-                          хотя speak определён в Animal.prototype
-[Proxy и Reflect]      — Reflect.get(target, prop, receiver) воспроизводит
-                          прототипный поиск явно; Proxy перехватывает его
-[Классы]               — class — синтаксический сахар, но с важными
-                          отличиями (non-enumerable методы, TDZ до super())
+[Контексты выполнения] — this внутри метода прототипа = объект,
+                         через который сделан вызов (implicit
+                         binding), а не объект, где метод определён
+[this-binding]         — тот же принцип: this при rex.speak() =
+                         rex, хотя speak определён в
+                         Animal.prototype
+[Proxy и Reflect]      — Reflect.get(target, prop, receiver)
+                         воспроизводит прототипный поиск явно;
+                         Proxy его перехватывает
+[Классы]               — class — синтаксический сахар, но с
+                         важными отличиями: non-enumerable методы,
+                         TDZ до super()
 ```
 
 ## Типичные ошибки на интервью
 
-- **Путать `__proto__` и `prototype`** — `__proto__` есть у каждого объекта и указывает на его `[[Prototype]]`; `prototype` — только у функций и указывает на `[[Prototype]]` будущих экземпляров. Разные вещи с похожими названиями.
+- **Путать `__proto__` и `prototype`** — `__proto__` есть у каждого объекта и указывает на его `[[Prototype]]`. Свойство `prototype` есть только у функций: оно задаёт `[[Prototype]]` будущих экземпляров. Разные вещи с похожими названиями.
 
 - **"class создаёт что-то принципиально новое"** — нет. Под капотом те же `[[Prototype]]`-цепочки. Отличия реальны, но касаются деталей: non-enumerable методы, обязательный `super()`, статическая цепочка через `extends`.
 
 - **"instanceof проверяет тип"** — нет, проверяет наличие `Fn.prototype` в `[[Prototype]]`-цепочке объекта. Сломается при замене `Fn.prototype` после создания объектов или при объектах из разных realm (например, `iframe`).
 
-- **Не знать, что методы класса non-enumerable** — следствие: `for...in` по экземпляру класса методы не показывает, а `for...in` по объекту с ручными присвоениями на `prototype` — показывает.
+- **Не знать, что методы класса non-enumerable** — `for...in` по экземпляру класса методы не показывает. А по объекту, где методы присвоены на `prototype` вручную, — показывает.
 
 - **"Setter в прототипе работает как присваивание собственного свойства"** — нет. Если в `[[Prototype]]`-цепочке есть setter для свойства, `obj.prop = val` вызовет setter, а не создаст собственное свойство `obj.prop`. Это частая ловушка при наследовании.
 

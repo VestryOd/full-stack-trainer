@@ -17,7 +17,7 @@ thirdPartyApi.fetchData(userId, function(err, data) {
 });
 ```
 
-Кроме IoC, есть структурные проблемы с компоновкой:
+Кроме инверсии управления (IoC) есть структурные проблемы с компоновкой:
 
 ```js
 // Задача: получить user, потом его orders, потом первый product из orders
@@ -94,13 +94,13 @@ resolve(value):
   3. Иначе:
        [[PromiseState]] = 'fulfilled'
        [[PromiseResult]] = value
-       → Добавить все [[PromiseFulfillReactions]] в Microtask Queue
+       → Все [[PromiseFulfillReactions]] → Microtask Queue
 
 reject(reason):
   1. Если [[PromiseState]] !== 'pending' → выход
   2. [[PromiseState]] = 'rejected'
      [[PromiseResult]] = reason
-     → Добавить все [[PromiseRejectReactions]] в Microtask Queue
+     → Все [[PromiseRejectReactions]] → Microtask Queue
 ```
 
 **Promise Resolution Procedure** — механизм, который позволяет чейнинг работать с любым thenable, а не только с Promise:
@@ -138,7 +138,7 @@ p2 = p1.then(onFulfilled, onRejected)
 Если p1 rejected:
   → если есть onRejected → вызвать onRejected(reason)
      (аналогичная логика для результата)
-  → если onRejected нет → p2 rejected(reason) (пробрасывается дальше)
+  → если onRejected нет → p2 rejected(reason) (пробрасывается)
 ```
 
 ```js
@@ -431,12 +431,13 @@ Promise.any([
 ### Сводная таблица
 
 ```txt
-Комбинатор        Resolves                 Rejects
+Комбинатор          Resolves               Rejects
 ──────────────────────────────────────────────────────────
-Promise.all       Все fulfilled            Первый rejected
-Promise.allSettled Всегда (никогда reject) —
-Promise.race      Первый settled           Первый settled
-Promise.any       Первый fulfilled         Все rejected → AggregateError
+Promise.all         Все fulfilled          Первый rejected
+Promise.allSettled  Всегда                 Никогда
+Promise.race        Первый settled         Первый settled
+Promise.any         Первый fulfilled       Все rejected →
+                                           AggregateError
 ```
 
 ## Predict the output — async/await + Promise combinators
@@ -482,8 +483,8 @@ main();
 
 ```
 start
-A B            // Promise.all ждёт оба (100ms), порядок = порядок входных
-true ['err1', 'err2']  // AggregateError, все rejection reasons в .errors
+A B            // Promise.all ждёт оба (100ms); порядок входных
+true ['err1', 'err2']  // AggregateError: обе причины в .errors
 fast           // Promise.race → быстрейший (10ms)
 end
 ```
@@ -530,24 +531,26 @@ try {
 
 ```txt
 [Event Loop]          — Promise.then всегда добавляет микрозадачу;
-                         порядок выполнения определяется Microtask Queue
-[Генераторы]          — async/await — это генераторы + автоматический runner;
-                         детально разобрано в следующей статье
-[Современный JS]      — AbortController для отмены промисов — в статье 12
-[Node.js потоки]      — async iteration над streams через for-await-of
+                        порядок задаёт Microtask Queue
+[Генераторы]          — async/await — это генераторы плюс
+                        автоматический runner; следующая статья
+[Современный JS]      — AbortController для отмены промисов:
+                        статья 12
+[Node.js потоки]      — async iteration над streams через
+                        for-await-of
 ```
 
 ## Типичные ошибки на интервью
 
-- **"Callback hell — это про вложенность"** — главная проблема не визуальная, а структурная: инверсия управления, невозможность возвращать значения, ручная обработка ошибок на каждом уровне.
+- **"Callback hell — это про вложенность"** — главная проблема структурная, а не визуальная. Инверсия управления, невозможность возвращать значения, ручная обработка ошибок на каждом уровне.
 
-- **"Promise.all падает, если один Promise медленный"** — нет. `Promise.all` ждёт ВСЕХ. Падает (`reject`) при первом rejected. Медленный, но не упавший Promise просто замедлит `Promise.all`.
+- **"Promise.all падает, если один Promise медленный"** — нет. `Promise.all` ждёт **все**. Падает (`reject`) при первом rejected. Медленный, но не упавший Promise просто замедлит `Promise.all`.
 
 - **"async/await не Promise"** — `async function` всегда возвращает Promise. `await` — это `.then()`. Они полностью интероперабельны.
 
-- **"Ошибки в async функции обработает внешний try/catch"** — нет, если функцию не `await`. `asyncFn()` без `await` — это промис в полёте; внешний `try/catch` его не поймает.
+- **"Ошибки в async функции обработает внешний try/catch"** — только если вызов сделан через `await`. Простой `asyncFn()` — это промис в полёте, и внешний `try/catch` его reject не увидит.
 
-- **Не знать разницу `Promise.race` vs `Promise.any`** — `race` завершается на ПЕРВОМ settled (включая rejection); `any` завершается на ПЕРВОМ fulfilled. `race` с одним rejecting промисом сразу реджектится; `any` — нет.
+- **Не знать разницу `Promise.race` vs `Promise.any`** — `race` завершается на **первом settled**, включая rejection. А `any` — на **первом fulfilled**. Поэтому один сразу реджектящийся промис заставит `race` упасть немедленно, а `any` продолжит ждать.
 
 - **"Promise.allSettled появился вместе с Promise"** — нет, ES2020. `Promise.any` — ES2021. На интервью важно знать что из этого может быть недоступно в старых окружениях.
 

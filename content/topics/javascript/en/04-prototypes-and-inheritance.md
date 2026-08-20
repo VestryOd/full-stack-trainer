@@ -45,13 +45,14 @@ const obj = new Foo();
 Visual diagram:
 
   Foo (Function)
-    .prototype ──────────────────────────────────────┐
-    [[Prototype]] → Function.prototype               │
-                                                     ▼
-  obj = new Foo()                            Foo.prototype
-    [[Prototype]] ──────────────────────────►  { constructor: Foo }
-                                               [[Prototype]] → Object.prototype
-                                                                [[Prototype]] → null
+    [[Prototype]] → Function.prototype
+    .prototype ───────────────────┐
+                                  │
+  obj = new Foo()                 ▼
+    [[Prototype]] ──────►   Foo.prototype
+                              { constructor: Foo }
+                              [[Prototype]] → Object.prototype
+                                              [[Prototype]] → null
 ```
 
 ## Prototype chain resolution algorithm
@@ -116,7 +117,7 @@ bare.key = 'value';
 // Used for "pure" dictionaries with no risk of key collisions
 ```
 
-### Constructor function — ES5 style
+### Constructor function — the ECMAScript 5 (ES5) style
 
 ```js
 function Animal(name, sound) {
@@ -203,12 +204,12 @@ Animal.create = function(name, sound) { return new Animal(name, sound); };
    Prototype methods assigned manually are enumerable by default
 
 2. class invokes [[Construct]], not [[Call]]:
-   Animal() without new → TypeError ("Class constructor cannot be invoked without 'new'")
+   Animal() without new → TypeError: a class constructor needs new
    function Animal() {} without new → just runs
 
 3. extends sets up TWO chains:
    Dog.prototype[[Prototype]] = Animal.prototype  (instance chain)
-   Dog[[Prototype]]           = Animal            (static method chain)
+   Dog[[Prototype]]           = Animal            (static chain)
 
 4. super() in a subclass constructor is required before this:
    before super(), this has no value (TDZ-like state)
@@ -235,7 +236,7 @@ Object.getPrototypeOf(B.prototype) === A.prototype; // true
 2. Otherwise: take target = Fn.prototype
 3. Walk the [[Prototype]] chain of obj:
    - If the current [[Prototype]] === target → true
-   - If [[Prototype]] === null → false (reached the end without a match)
+   - If [[Prototype]] === null → false (end of chain, no match)
 ```
 
 ```js
@@ -352,14 +353,16 @@ console.log(emp.constructor === Employee);      // ?
 <summary>Answer</summary>
 
 ```
-'Alice'                                       // Person.call set this.name
-'Hi, I\'m Alice'                              // found in Person.prototype
-'Hi, I\'m Alice, I work as Engineer'          // describe calls this.greet() via the chain
-true                                          // emp[[Prototype]] = Employee.prototype
-true                                          // Employee.prototype[[Prototype]] = Person.prototype
-true                                          // name is an own property (Person.call(this, name))
-false                                         // greet is in the prototype, not own
-true                                          // we manually restored constructor
+'Alice'                              // Person.call set this.name
+'Hi, I\'m Alice'                     // found in Person.prototype
+'Hi, I\'m Alice, I work as Engineer' // describe → this.greet()
+true                                 // emp → Employee.prototype
+true                                 // Employee.prototype →
+                                     //   Person.prototype
+true                                 // own property, set by
+                                     //   Person.call(this, name)
+false                                // greet is in the prototype
+true                                 // constructor restored by hand
 ```
 
 If the line `Employee.prototype.constructor = Employee` were missing:
@@ -390,26 +393,29 @@ Used in cache implementations, dictionaries, and data-record objects where compl
 ## Connection to other topics
 
 ```txt
-[Execution Contexts]    — this inside a prototype method = the object
-                           the call was made on (implicit binding),
-                           not the object where the method is defined
-[this binding]          — same principle: this for rex.speak() = rex,
-                           even though speak is defined on Animal.prototype
-[Proxy and Reflect]     — Reflect.get(target, prop, receiver) reproduces
-                           prototype lookup explicitly; Proxy intercepts it
-[Classes]               — class is syntactic sugar, but with real differences
-                           (non-enumerable methods, TDZ before super())
+[Execution Contexts]  — this inside a prototype method = the
+                        object the call was made on (implicit
+                        binding), not the object that defines it
+[this binding]        — same principle: this for rex.speak() =
+                        rex, even though speak is defined on
+                        Animal.prototype
+[Proxy and Reflect]   — Reflect.get(target, prop, receiver)
+                        reproduces prototype lookup explicitly;
+                        Proxy intercepts it
+[Classes]             — class is syntactic sugar, but with real
+                        differences: non-enumerable methods, TDZ
+                        before super()
 ```
 
 ## Common interview traps
 
-- **Confusing `__proto__` and `prototype`** — `__proto__` exists on every object and points to its `[[Prototype]]`; `prototype` only exists on functions and points to the `[[Prototype]]` of future instances. Different things with similar names.
+- **Confusing `__proto__` and `prototype`** — `__proto__` exists on every object and points to its `[[Prototype]]`. The `prototype` property exists only on functions: it holds the `[[Prototype]]` for future instances. Different things with similar names.
 
 - **"class creates something fundamentally new"** — no. Under the hood it's the same `[[Prototype]]` chains. The differences are real but in the details: non-enumerable methods, mandatory `super()`, static chain via `extends`.
 
 - **"instanceof checks the type"** — no, it checks whether `Fn.prototype` is present in the object's `[[Prototype]]` chain. It breaks if `Fn.prototype` is replaced after creating objects, or for objects from different realms (e.g., `iframe`).
 
-- **Not knowing that class methods are non-enumerable** — consequence: `for...in` over a class instance won't show methods, but `for...in` over an object with manual prototype assignments will.
+- **Not knowing that class methods are non-enumerable** — `for...in` over a class instance shows no methods. Over an object whose prototype methods were assigned by hand, it shows them.
 
 - **"A setter in the prototype works like assigning an own property"** — no. If a setter for a property exists in the `[[Prototype]]` chain, `obj.prop = val` invokes the setter rather than creating an own property `obj.prop`. A frequent trap in inheritance patterns.
 

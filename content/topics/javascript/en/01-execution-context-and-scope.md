@@ -6,12 +6,12 @@ When the JavaScript engine runs code, it creates an **Execution Context** — an
 
 ```txt
 Execution Context
-├── code evaluation state    — where execution "is" (relevant for generators/async)
-├── Function                 — reference to the Function Object, or null (for global)
-├── Realm                    — the set of built-ins (Array, Object, …)
-├── LexicalEnvironment       — where identifiers are looked up (let/const + catch)
-├── VariableEnvironment      — where var and function declarations live
-└── ThisBinding              — the value of this
+├── code evaluation state  — where execution "is" (generators/async)
+├── Function               — the Function Object, or null for global
+├── Realm                  — the set of built-ins (Array, Object, …)
+├── LexicalEnvironment     — where let/const/catch are looked up
+├── VariableEnvironment    — where var and function declarations go
+└── ThisBinding            — the value of this
 ```
 
 Many contexts can exist on the stack simultaneously. The one at the top is the **Running Execution Context**.
@@ -43,7 +43,7 @@ The engine scans the function body (or global code) and does the following **bef
 4. Processes declarations:
    - `var x` → creates a binding in VariableEnvironment, initializes to `undefined`
    - `function foo() {}` → creates a binding in VariableEnvironment, initializes to the **full function object**
-   - `let y` / `const z` → creates a binding in LexicalEnvironment, does NOT initialize (TDZ)
+   - `let y` / `const z` → creates a binding in LexicalEnvironment but leaves it uninitialized — the Temporal Dead Zone (TDZ)
 
 ### Execution Phase
 
@@ -70,7 +70,7 @@ function c() {}
 // console.log(c) → function c(){} ✅ (fully initialized)
 ```
 
-**Hoisting is not "code being moved to the top."** It's a consequence of the two-phase model: bindings are created during the creation phase, code runs during the execution phase. No magic — just the order of operations mandated by the spec.
+**Hoisting is not "code being moved to the top".** It's a consequence of the two-phase model: bindings are created during the creation phase, code runs during the execution phase. No magic — just the order of operations mandated by the spec.
 
 ## Environment Records — what they actually are
 
@@ -81,7 +81,7 @@ Environment Record (abstract)
 ├── Declarative ER          — let, const, function, class, import
 │   ├── Function ER         — same, + arguments object
 │   └── Module ER           — import bindings (always live bindings)
-├── Object ER               — var at global scope (properties of globalThis)
+├── Object ER               — var at global scope (on globalThis)
 └── Global ER               — composite: Declarative ER + Object ER
 ```
 
@@ -89,7 +89,7 @@ Environment Record (abstract)
 
 **Global Environment Record** — composite:
 - `ObjectEnvironmentRecord` (wraps `globalThis`) — stores `var` variables and function declarations as properties of the global object
-- `DeclarativeEnvironmentRecord` — stores top-level `let`/`const` (they do NOT become properties of `globalThis`)
+- `DeclarativeEnvironmentRecord` — stores top-level `let`/`const` (they do **not** become properties of `globalThis`)
 
 ```js
 var x = 1;
@@ -101,7 +101,7 @@ console.log(globalThis.y); // undefined — let did NOT become a property
 
 ## LexicalEnvironment vs VariableEnvironment — why there are two
 
-Before ES2015 they were the same. ES2015 introduced `let`/`const` with block scope, which needed to be separated from `var`.
+Before ES2015 — the 2015 edition of the standard — they were the same. ES2015 introduced `let`/`const` with block scope, and those needed to be kept apart from `var`.
 
 ```txt
 function outer() {
@@ -109,8 +109,8 @@ function outer() {
   let b = 2;   // → LexicalEnvironment (block-aware)
 
   if (true) {
-    var c = 3; // → VariableEnvironment of outer() (var ignores the block)
-    let d = 4; // → LexicalEnvironment of the new block (not visible outside if)
+    var c = 3; // → VariableEnvironment of outer(), not the block
+    let d = 4; // → LexicalEnvironment of the if block (local)
   }
 
   console.log(a); // 1
@@ -120,7 +120,7 @@ function outer() {
 }
 ```
 
-When the engine encounters `{` (a block), it creates a new Declarative Environment Record for the block's `let`/`const`, sets it as the new `LexicalEnvironment`, but `VariableEnvironment` stays the same (belonging to the function or global context).
+When the engine meets a block `{`, it creates a new Declarative Environment Record for that block's `let`/`const` and makes it the new `LexicalEnvironment`. `VariableEnvironment` stays the same — it belongs to the function or to the global context.
 
 ## Scope Chain — the identifier resolution mechanism
 
@@ -227,7 +227,7 @@ let x = 'outer';
 
 This is a trap. The intuition says: "the block started, `let x` hasn't been encountered yet — so we should see the outer `x = 'outer'`." That's wrong.
 
-During the creation phase of the block, the engine scans the entire block and creates a TDZ binding for the inner `let x`. This binding **shadows the outer `x` from the very start of the block**. So `console.log(x)` resolves to the inner (TDZ) `x`, not the outer one — and throws a ReferenceError.
+During the creation phase of the block, the engine scans it and creates a TDZ binding for the inner `let x` declaration. This binding **shadows the outer `x` from the very start of the block**. So `console.log(x)` resolves to the inner (TDZ) `x`, not the outer one — and throws a ReferenceError.
 
 </details>
 
@@ -268,27 +268,28 @@ Why does `let i` in a `for` loop create a new binding per iteration? The spec ex
 ## Connection to other topics
 
 ```txt
-[Closures]              — a closure = a function + a reference to an
-                           Environment Record (not a snapshot of variables —
-                           a live reference)
-[this binding]          — ThisBinding is a separate part of the Execution
-                           Context, unrelated to the Scope Chain
-[Generators]            — a generator stores execution state inside its
-                           Execution Context (the code evaluation state field)
-[ESM vs CJS modules]    — Module Environment Record: import bindings are live
-                           bindings in the LexicalEnvironment
+[Closures]            — a closure = a function + a reference to an
+                        Environment Record: a live reference, not a
+                        snapshot of variables
+[this binding]        — ThisBinding is a separate field of the
+                        Execution Context, unrelated to the scope
+                        chain
+[Generators]          — a generator keeps its execution state in the
+                        code evaluation state field of its context
+[ESM vs CJS modules]  — Module Environment Record: import bindings
+                        are live bindings in the LexicalEnvironment
 ```
 
 ## Common interview traps
 
 - **"Hoisting moves code to the top"** — code doesn't move. Bindings are created during the creation phase; code runs during the execution phase. Different steps, not relocation.
 
-- **"let and const aren't hoisted"** — they are hoisted, but land in the TDZ. The engine knows about them from the start of the block — otherwise a variable with the same name from an outer scope would be visible before the `let` declaration (see the TDZ example above).
+- **"let and const aren't hoisted"** — they are hoisted, but land in the TDZ. The engine knows about them from the start of the block. Otherwise a variable of the same name from an outer scope would stay visible until the `let` line — see the TDZ example above.
 
 - **"The scope chain is a dynamic lookup up the call stack"** — no. `[[OuterEnv]]` is fixed at the moment the function is created (lexically), not when it's called. This is exactly what makes closures work.
 
 - **"var in an if/for/while block is block-scoped"** — no. `var` is always function-scoped (or global-scoped). Blocks are transparent to `var`.
 
-- **"Top-level let/const are accessible via window"** — no. `var` at the top level → property of `globalThis`; `let`/`const` at the top level → only in the DeclarativeEnvironmentRecord of the global context, not accessible via `window`.
+- **"Top-level let/const are accessible via window"** — no. Only `var` at the top level becomes a property of `globalThis`. Top-level `let`/`const` live in the DeclarativeEnvironmentRecord of the global context, and `window` cannot reach them.
 
-- **Not knowing the difference between `LexicalEnvironment` and `VariableEnvironment`** — for a senior interview this matters: one context, two references to different Environment Records. `var`/`function` → VE; `let`/`const`/`catch` → LE. This is what allows `let` to be block-scoped while `var` is function-scoped — both coexisting in the same function context simultaneously.
+- **Not knowing the difference between `LexicalEnvironment` and `VariableEnvironment`** — for a senior interview this matters. One context holds two references to two different Environment Records. Declarations with `var` and `function` go to `VariableEnvironment`; `let`, `const` and `catch` go to `LexicalEnvironment`. That is what lets `let` be block-scoped while `var` stays function-scoped, both inside the same function context.

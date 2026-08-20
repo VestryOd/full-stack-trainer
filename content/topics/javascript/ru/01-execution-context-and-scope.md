@@ -6,12 +6,12 @@
 
 ```txt
 Execution Context
-├── code evaluation state    — где "находится" выполнение (для генераторов/async)
-├── Function                 — ссылка на Function Object или null (для глобального)
-├── Realm                    — набор встроенных объектов (Array, Object, …)
-├── LexicalEnvironment       — где ищутся идентификаторы (let/const + catch)
-├── VariableEnvironment      — где живут var и function-объявления
-└── ThisBinding              — значение this
+├── code evaluation state  — где "находится" выполнение
+├── Function               — ссылка на Function Object или null
+├── Realm                  — набор встроенных (Array, Object, …)
+├── LexicalEnvironment     — где ищутся let/const и catch
+├── VariableEnvironment    — где живут var и function-объявления
+└── ThisBinding            — значение this
 ```
 
 В стеке может быть много контекстов одновременно. Тот, что наверху стека — **Running Execution Context**.
@@ -43,7 +43,7 @@ Execution Context
 4. Обрабатывает объявления:
    - `var x` → создаёт привязку в VariableEnvironment, инициализирует `undefined`
    - `function foo() {}` → создаёт привязку в VariableEnvironment, инициализирует **полным function object**
-   - `let y` / `const z` → создаёт привязку в LexicalEnvironment, НЕ инициализирует (TDZ)
+   - `let y` / `const z` → создаёт привязку в LexicalEnvironment, но не инициализирует её — это Temporal Dead Zone (TDZ)
 
 ### Фаза выполнения (Execution Phase)
 
@@ -81,7 +81,7 @@ Environment Record (абстрактный)
 ├── Declarative ER          — let, const, function, class, import
 │   ├── Function ER         — то же, + arguments object
 │   └── Module ER           — import bindings (всегда live bindings)
-├── Object ER               — var в глобальном контексте (свойства globalThis)
+├── Object ER               — var в глобальном коде (на globalThis)
 └── Global ER               — составной: Declarative ER + Object ER
 ```
 
@@ -89,7 +89,7 @@ Environment Record (абстрактный)
 
 **Global Environment Record** — составной: 
 - `ObjectEnvironmentRecord` (обёртка над `globalThis`) — хранит `var`-переменные и function declarations как свойства глобального объекта
-- `DeclarativeEnvironmentRecord` — хранит `let`/`const` на верхнем уровне (они НЕ становятся свойствами `globalThis`)
+- `DeclarativeEnvironmentRecord` — хранит `let`/`const` на верхнем уровне (они **не** становятся свойствами `globalThis`)
 
 ```js
 var x = 1;
@@ -101,7 +101,7 @@ console.log(globalThis.y); // undefined — let НЕ стала свойство
 
 ## LexicalEnvironment vs VariableEnvironment — зачем их два
 
-До ES2015 они были одним и тем же. ES2015 ввёл `let`/`const` с блочной областью видимости, и их нужно было отделить от `var`.
+До ES2015 — редакции стандарта 2015 года — они были одним и тем же. ES2015 ввёл `let`/`const` с блочной областью видимости, и их нужно было отделить от `var`.
 
 ```txt
 function outer() {
@@ -109,8 +109,8 @@ function outer() {
   let b = 2;   // → LexicalEnvironment (зависит от блоков)
 
   if (true) {
-    var c = 3; // → VariableEnvironment of outer() (var игнорирует блоки)
-    let d = 4; // → LexicalEnvironment нового блока (не видна снаружи if)
+    var c = 3; // → VariableEnvironment функции outer(), не блока
+    let d = 4; // → LexicalEnvironment блока if (только внутри)
   }
 
   console.log(a); // 1
@@ -120,7 +120,7 @@ function outer() {
 }
 ```
 
-Когда движок встречает `{` (блок) — он создаёт новый Declarative Environment Record для `let`/`const` этого блока, устанавливает его как новое `LexicalEnvironment`, но `VariableEnvironment` остаётся прежним (принадлежащим функции или глобальному контексту).
+Когда движок встречает `{` (блок), он создаёт новый Declarative Environment Record для `let`/`const` этого блока и делает его новым `LexicalEnvironment`. `VariableEnvironment` при этом не меняется — оно принадлежит функции или глобальному контексту.
 
 ## Scope Chain — механизм разрешения идентификаторов
 
@@ -268,14 +268,15 @@ for (let i = 0; i < 3; i++) {
 ## Связь с другими темами
 
 ```txt
-[Замыкания]             — замыкание = функция + ссылка на Environment Record
-                           (не копия переменных, а живая ссылка)
-[this и привязка]       — ThisBinding — отдельная часть Execution Context,
-                           не связанная со Scope Chain
-[Генераторы]            — generator хранит состояние выполнения внутри
-                           Execution Context (поле code evaluation state)
-[Модули ESM vs CJS]     — Module Environment Record: import bindings — live
-                           bindings в LexicalEnvironment
+[Замыкания]           — замыкание = функция + ссылка на
+                        Environment Record: живая ссылка, не копия
+                        переменных
+[this и привязка]     — ThisBinding — отдельная часть Execution
+                        Context, со Scope Chain не связана
+[Генераторы]          — генератор хранит состояние выполнения в
+                        поле code evaluation state
+[Модули ESM vs CJS]   — Module Environment Record: import — это
+                        live bindings в LexicalEnvironment
 ```
 
 ## Типичные ошибки на интервью
@@ -290,4 +291,4 @@ for (let i = 0; i < 3; i++) {
 
 - **"let/const на верхнем уровне доступны через window"** — нет. `var` на верхнем уровне → свойство `globalThis`; `let`/`const` на верхнем уровне → только в DeclarativeEnvironmentRecord глобального контекста, через `window` недоступны.
 
-- **Не знать разницу между `LexicalEnvironment` и `VariableEnvironment`** — для senior-интервью это важно: один контекст, две ссылки на разные Environment Records. `var`/`function` → VE; `let`/`const`/`catch` → LE. Именно это позволяет `let` быть block-scoped при `var` = function-scoped в одной функции одновременно.
+- **Не знать разницу между `LexicalEnvironment` и `VariableEnvironment`** — для senior-интервью это важно. Один контекст держит две ссылки на два разных Environment Record. Объявления `var` и `function` уходят в `VariableEnvironment`; `let`, `const` и `catch` — в `LexicalEnvironment`. Именно это позволяет `let` быть block-scoped, пока `var` остаётся function-scoped, в одной и той же функции.

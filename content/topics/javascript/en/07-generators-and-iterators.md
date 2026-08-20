@@ -111,7 +111,7 @@ suspendedStart → executing → suspendedYield → completed
                                ↑___________↓  (yield loop)
 ```
 
-The key point: when `yield` is hit, the engine **saves the entire execution context** (local variables, position in code, scope chain) and returns control to the caller. The next `next()` call restores the context and continues from where it left off.
+The key point: on `yield` the engine **saves the entire execution context** — local variables, position in code, scope chain. Then it returns control to the caller. The next `next()` call restores the context and continues from where it left off.
 
 This is fundamentally different from a closure: a closure saves an Environment Record but not the execution position. A generator saves both.
 
@@ -135,7 +135,7 @@ counter.next();     // { value: 2, done: false }
 
 ### Two-way communication via `yield`
 
-`yield` is not just "send a value out." It's an **exchange point**: the generator sends a value out, and upon resumption receives a new value in.
+`yield` is not just "send a value out". It's an **exchange point**: the generator sends a value out, and upon resumption receives a new value in.
 
 ```js
 // Predict the output:
@@ -473,14 +473,18 @@ console.log([...expensiveSeq]); // no logs — all from cache, [0,1,4,9,16]
 ## Connection to other topics
 
 ```txt
-[Closures]              — a generator preserves both the Environment Record
-                           (closure) and the execution position (closures can't)
-[Async Patterns]        — async/await under the hood is a generator + an
-                           automatic Promise runner; for-await-of = async iterator protocol
-[Proxy and Symbols]     — Symbol.iterator, Symbol.asyncIterator are well-known
-                           symbols that make any object iterable
-[Modern JS]             — Array.from(), spread, destructuring all consume
-                           Symbol.iterator; Array.fromAsync — Symbol.asyncIterator
+[Closures]              — a generator keeps the Environment
+                          Record (a closure) and the execution
+                          position; a closure keeps only the first
+[Async Patterns]        — async/await is a generator plus an
+                          automatic Promise runner; for-await-of
+                          is the async iterator protocol
+[Proxy and Symbols]     — Symbol.iterator and Symbol.asyncIterator
+                          are well-known symbols that make any
+                          object iterable
+[Modern JS]             — Array.from(), spread and destructuring
+                          all consume Symbol.iterator;
+                          Array.fromAsync uses Symbol.asyncIterator
 ```
 
 ## Common interview traps
@@ -495,6 +499,6 @@ console.log([...expensiveSeq]); // no logs — all from cache, [0,1,4,9,16]
 
 - **"The return value in a generator is lost"** — with `for...of` or spread, yes, it's lost. But with manual `next()` — `{ value: returnValue, done: true }`. And with `yield*` — the return value becomes the value of the `yield*` expression in the outer generator. Three different behaviors.
 
-- **"`for-await-of` only works with async iterables"** — `for-await-of` also works with synchronous iterables (it wraps values in `Promise.resolve`). But `for...of` does **not** work with async iterables (`Symbol.asyncIterator`).
+- **"`for-await-of` only works with async iterables"** — no. `for-await-of` also works with synchronous iterables (it wraps values in `Promise.resolve`). But `for...of` does **not** work with async iterables (`Symbol.asyncIterator`).
 
 - **Not knowing about `return()` and resource cleanup** — `for...of` with `break` calls `gen.return()`, which triggers `finally` blocks inside the generator. Critical for generators holding resources (connections, file handles).
