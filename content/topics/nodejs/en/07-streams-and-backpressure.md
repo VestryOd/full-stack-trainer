@@ -3,7 +3,7 @@
 ## The Problem Streams Solve
 
 ```ts
-// ❌ Loads the ENTIRE file into memory in one shot
+// ❌ Loads the whole file into memory in one shot
 const data = await fs.promises.readFile('movie.mp4'); // 5 GB → 5 GB on the heap
 res.end(data);
 ```
@@ -12,8 +12,8 @@ res.end(data);
 Problems with this approach:
   - Out Of Memory for files larger than available memory
   - even if memory is sufficient — peak usage of 5 GB for
-    EVERY concurrent request (100 requests = 500 GB)
-  - the client gets NOTHING until the whole file has been
+    every concurrent request (100 requests = 500 GB)
+  - the client gets nothing until the whole file has been
     read from disk — time to first byte equals the time to
     read the entire file
 ```
@@ -23,12 +23,12 @@ Problems with this approach:
 fs.createReadStream('movie.mp4').pipe(res);
 ```
 
-The idea behind streams isn't just "read a file in pieces" (you could do that without the stream API too) — it's **connecting a producer and a consumer so the producer's speed automatically adapts to the consumer's speed**. That's backpressure, and it's what makes streams a non-trivial topic.
+Streams are not just "read a file in pieces" — you could do that without the stream API too. The real idea is **connecting a producer and a consumer so the producer's speed automatically adapts to the consumer's speed**. That is backpressure, and it is what makes streams a non-trivial topic.
 
 ## The internal buffer and highWaterMark — what determines everything else
 
 ```txt
-Every Readable and Writable stream has an INTERNAL buffer
+Every Readable and Writable stream has an internal buffer
 (a Buffer / array of objects in object mode).
 
 highWaterMark — the threshold size for this buffer:
@@ -50,9 +50,9 @@ const readStream = fs.createReadStream('movie.mp4', {
 });
 ```
 
-`highWaterMark` is not a "hard memory limit" — it's a THRESHOLD for backpressure signals. Actual memory usage can temporarily exceed it (the internal buffer can accept a whole chunk even if that pushes it past the threshold), but this threshold is what triggers the "slow down" signaling mechanism.
+`highWaterMark` is not a "hard memory limit". It is a **threshold** for backpressure signals. Actual memory usage can temporarily exceed it: the internal buffer accepts a whole chunk even if that pushes it past the threshold. But crossing this threshold is what starts the "slow down" signaling mechanism.
 
-## Backpressure mechanically: what REALLY happens on `.write()`
+## Backpressure mechanically: what really happens on `.write()`
 
 ```ts
 // Without backpressure — naive copying
@@ -66,13 +66,13 @@ If the source (disk, network) is faster than the destination
 (slow disk, slow network, slow client):
 
   writeStream.write(chunk) appends chunk to the Writable's
-  internal buffer AND RETURNS false once the buffer exceeds
-  highWaterMark — BUT THE DATA IS STILL WRITTEN TO THE BUFFER.
+  internal buffer and returns false once the buffer exceeds
+  highWaterMark — but the data is still written to the buffer.
 
   If you ignore the false and keep writing — the buffer grows
-  without bound → the classic "growing buffer" memory leak,
-  visible in production as a steady rise in process RSS
-  under load.
+  without bound → the classic "growing buffer" memory leak.
+  In production it shows up as a steady rise in the process's
+  resident set size (RSS) under load.
 ```
 
 ```ts
@@ -81,7 +81,7 @@ function copy(readStream: Readable, writeStream: Writable) {
   readStream.on('data', (chunk) => {
     const canContinue = writeStream.write(chunk);
     if (!canContinue) {
-      readStream.pause(); // stop READING from the source
+      readStream.pause(); // stop reading from the source
     }
   });
 
@@ -93,23 +93,23 @@ function copy(readStream: Readable, writeStream: Writable) {
 }
 ```
 
-`.pipe()` does EXACTLY this — `pause()`/`resume()` based on `write()`'s return value and the `'drain'` event. So "pipe implements backpressure automatically" isn't magic — it's an encapsulation of the code above.
+`.pipe()` does exactly this: `pause()`/`resume()` based on `write()`'s return value and the `'drain'` event. So "pipe implements backpressure automatically" isn't magic — it's an encapsulation of the code above.
 
 ## `.pipe()` vs `pipeline()` — why `.pipe()` is dangerous in production
 
 ```ts
-// ❌ pipe() does NOT stop downstream streams on an error in
+// ❌ pipe() does not stop downstream streams on an error in
 // one of them — a source of file descriptor leaks
 fs.createReadStream('source.txt')
   .pipe(zlib.createGzip())
   .pipe(fs.createWriteStream('out.gz'));
 // if createWriteStream throws (e.g., ENOSPC — disk full),
-// readStream and the gzip stream stay OPEN
+// readStream and the gzip stream stay open
 ```
 
 ```ts
-// ✅ pipeline() — properly cleans up ALL streams on an error
-// in ANY of them, and supports async/await
+// ✅ pipeline() — properly cleans up every stream on an error
+// in any of them, and supports async/await
 import { pipeline } from 'node:stream/promises';
 
 await pipeline(
@@ -117,14 +117,14 @@ await pipeline(
   zlib.createGzip(),
   fs.createWriteStream('out.gz'),
 ); // throws if anything goes wrong, and calls destroy()
-   // on EVERY stream in the chain
+   // on every stream in the chain
 ```
 
 ```txt
 This is a typical senior interview "trick question":
-"what's wrong with .pipe() in real code?" — the answer isn't
-about backpressure (that part is fine), it's about ERROR
-HANDLING and RESOURCE CLEANUP on a partial failure of the chain.
+"what's wrong with .pipe() in real code?" The answer isn't
+about backpressure — that part is fine. It is about error
+handling and resource cleanup when part of the chain fails.
 ```
 
 ## Async iteration — a modern alternative to `'data'`/`'end'` events
@@ -137,7 +137,7 @@ async function processLines(filePath: string) {
   for await (const chunk of stream) {
     process(chunk);
   }
-  // backpressure is handled AUTOMATICALLY: the loop doesn't
+  // backpressure is handled automatically: the loop doesn't
   // request the next chunk until it finishes processing the
   // current one — natural pull-based backpressure
 }
@@ -168,7 +168,7 @@ class NdjsonParser extends Transform {
     for (const line of lines) {
       if (line.trim()) this.push(JSON.parse(line)); // push → the readable side
     }
-    callback(); // signals "ready for the next chunk" — THIS is backpressure
+    callback(); // signals "ready for the next chunk" — this is backpressure
   }
 
   _flush(callback: TransformCallback) {
@@ -191,14 +191,16 @@ await pipeline(
 );
 ```
 
-Key point: `callback()` in `_transform` should only be called once processing of the current chunk is done. If `_transform` performs an async operation (a database write), `callback()` must be called AFTER it completes. Otherwise backpressure breaks: the Transform stream keeps accepting new chunks faster than the current ones are processed, and async operations pile up without bound.
+Key point: `callback()` in `_transform` should only be called once processing of the current chunk is done. If `_transform` performs an async operation, such as a database write, `callback()` must be called **after** it completes.
+
+Otherwise backpressure breaks. The Transform stream keeps accepting new chunks faster than the current ones are processed, and async operations pile up without bound.
 
 ```ts
 // ❌ callback() called immediately — backpressure is broken,
-// potentially thousands of pending DB writes accumulate in memory
+// potentially thousands of pending database writes accumulate
 _transform(record, enc, callback) {
-  saveToDatabase(record); // async, but NOT awaited
-  callback(); // called IMMEDIATELY — Transform thinks it's ready for more
+  saveToDatabase(record); // async, but not awaited
+  callback(); // called at once — Transform thinks it's ready for more
 }
 
 // ✅ callback() waits for the async operation to finish
@@ -211,8 +213,8 @@ async _transform(record, enc, callback) {
 ## A practical example: streaming an HTTP response without buffering everything in memory
 
 ```ts
-// Export a large table as CSV — without loading all rows
-// into memory at once
+// Export a large table as CSV (comma-separated values) —
+// without loading all rows into memory at once
 app.get('/export.csv', async (req, res) => {
   res.setHeader('Content-Type', 'text/csv');
 
@@ -231,7 +233,9 @@ app.get('/export.csv', async (req, res) => {
 });
 ```
 
-Senior nuance: if the client disconnects (`res` becomes `destroyed`), `pipeline()` automatically aborts the ENTIRE chain, including `dbStream` — i.e., it cancels the database query. Without `pipeline()` (using manual `.pipe()`), the database query would keep running and pulling data "into nowhere," holding onto a connection from the DB pool.
+Senior nuance: if the client disconnects, `res` becomes `destroyed`, and `pipeline()` automatically aborts the **entire** chain, including `dbStream`. That is, it cancels the database query.
+
+Without `pipeline()` — with a manual `.pipe()` — the database query would keep running and pulling data "into nowhere". It would also keep holding a connection from the database pool.
 
 ## When Streams aren't worth it
 
@@ -263,12 +267,12 @@ about, and doesn't risk a "forgotten callback()" or
 
 ## Common interview mistakes
 
-- **"Streams are just reading a file in chunks"** — missing that the core idea is AUTOMATICALLY synchronizing producer and consumer speed (backpressure), not just saving memory.
+- **"Streams are just reading a file in chunks"** — missing that the core idea is automatically synchronizing producer and consumer speed (backpressure), not just saving memory.
 
-- **Ignoring the return value of `.write()`** — not knowing that `write()` returns `false` once the Writable's internal buffer exceeds `highWaterMark`, and that ignoring this signal leads to unbounded buffer growth in memory.
+- **Ignoring the return value of `.write()`** — `write()` returns `false` once the Writable's internal buffer exceeds `highWaterMark`. Ignoring that signal leads to unbounded buffer growth in memory.
 
-- **Not knowing the difference between `.pipe()` and `pipeline()`** — not mentioning that `.pipe()` doesn't release resources (file descriptors, connections) when an error occurs mid-chain, while `pipeline()` properly calls `destroy()` on every stream.
+- **Not knowing the difference between `.pipe()` and `pipeline()`** — on an error in the middle of the chain, `.pipe()` doesn't release file descriptors or connections. The `pipeline()` helper properly calls `destroy()` on every stream.
 
-- **Calling `callback()` in `_transform` before an async operation completes** — this breaks backpressure, letting the Transform stream accept new chunks faster than current ones are processed, causing unbounded accumulation of pending operations (e.g., DB writes).
+- **Calling `callback()` in `_transform` before an async operation completes** — this breaks backpressure. The Transform stream then accepts new chunks faster than current ones are processed, so pending operations (database writes, for example) accumulate without bound.
 
-- **Using streams where they aren't needed** — adding the complexity of stream-based code for small data volumes, where `readFile`/`JSON.parse` is simpler and carries no leak risk from mishandled events.
+- **Using streams where they aren't needed** — taking on the complexity of stream-based code for small data volumes. There `readFile`/`JSON.parse` is simpler and carries no leak risk from mishandled events.
