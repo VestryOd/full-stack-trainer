@@ -10,10 +10,14 @@ Node.js — a runtime: a C++ program that embeds the V8 engine
   and adds APIs to it that aren't part of the language spec
   (fs, net, process, Buffer, ...)
 
-Express/Nest/Fastify — frameworks built ON TOP of Node.js
+Express/Nest/Fastify — frameworks built on top of Node.js
 ```
 
-The "Node = V8" confusion is common but worth correcting: V8 executes JS code and manages memory (heap, GC — see [Memory and Garbage Collection]), but it **has no idea** what a file or a TCP socket is. Those capabilities are provided by Node itself, via C++ bindings to libuv and other libraries. When you call `fs.readFile(...)`, the JS code running in V8 calls a C++ function that delegates the operation to libuv (see [libuv and the Thread Pool]).
+The "Node = V8" confusion is common, and it is worth correcting. V8 executes JS code and manages memory: the heap and the GC (garbage collector — the part of the engine that frees unused memory). Both are covered in [Memory and Garbage Collection].
+
+But V8 **has no idea** what a file or a TCP socket is. TCP (Transmission Control Protocol) is the connection-based protocol that carries most network traffic.
+
+Those capabilities come from Node itself, via C++ bindings to libuv and other libraries. When you call `fs.readFile(...)`, the JS code running in V8 calls a C++ function. That function delegates the operation to libuv (see [libuv and the Thread Pool]).
 
 ```txt
 ┌────────────────────────────────────────┐
@@ -33,18 +37,24 @@ The "Node = V8" confusion is common but worth correcting: V8 executes JS code an
 └────────────────────────────────────────┘
 ```
 
-This diagram is the skeleton for every other topic in this section: V8 is covered in [V8 and the Runtime] and [Memory and Garbage Collection], the Event Loop in [The Event Loop] and [Microtasks, Macrotasks, and process.nextTick], the Thread Pool in [libuv and the Thread Pool], and multi-process/multi-thread strategies in [Worker Threads and Cluster].
+This diagram is the skeleton for the whole section. Each box gets its own article:
+
+- V8 → [V8 and the Runtime], [Memory and Garbage Collection]
+- Event Loop → [The Event Loop], [Microtasks, Macrotasks, and process.nextTick]
+- Thread Pool → [libuv and the Thread Pool]
+- Multiple processes and threads → [Worker Threads and Cluster]
 
 ## Why "single-threaded" is a deliberate architectural choice, not a limitation
 
-When Node appeared in 2009, the dominant server model was "a thread (or process) per connection" (Apache prefork/threaded). The problem with that model: a thread is an expensive resource (stack memory, context-switch cost), and most of the time a thread serving a network request is **doing nothing** — it's just waiting on a response from a database, disk, or another service.
+When Node appeared in 2009, the dominant server model was "a thread (or process) per connection" (Apache prefork/threaded). The problem with that model is the price of a thread. A thread is an expensive resource: stack memory, plus the cost of switching context to it. And most of the time a thread serving a network request is **doing nothing**. It just waits for a response from a database, disk, or another service.
 
 ```txt
 Traditional model (1 thread = 1 request):
   10,000 concurrent connections → 10,000 threads,
   most of them sitting in "waiting on I/O"
   → memory and context-switching become the bottleneck
-  LONG BEFORE the CPU is actually busy
+  long before the CPU (central processing unit — the
+  processor) is actually busy
 
 Node model (1 thread runs JS, I/O is delegated):
   10,000 connections → 1 main thread processes events as
@@ -52,13 +62,21 @@ Node model (1 thread runs JS, I/O is delegated):
   → no memory spent on stacks, no context switches
 ```
 
-A key nuance that's often missed: "single-threaded" refers **only to the execution of your JS code**. The Node process itself is multi-threaded: internally it runs libuv's Thread Pool (4 threads by default — see [libuv and the Thread Pool]) for operations that have no async system API (parts of the filesystem, DNS, some crypto functions), plus V8's background threads for garbage collection. "Single-threaded" is about the programming model (no data races between two pieces of your JS code), not about the literal number of OS threads in the process.
+A key nuance that's often missed: "single-threaded" refers **only to the execution of your JS code**. The Node process itself is multi-threaded.
+
+Internally it runs libuv's Thread Pool — 4 threads by default, see [libuv and the Thread Pool]. The pool takes operations that have no async system API: parts of the filesystem, some crypto functions, and DNS. DNS is the Domain Name System, the service that turns a hostname into an IP (Internet Protocol) address. On top of the pool, V8 runs its own background threads for garbage collection.
+
+So "single-threaded" describes the programming model: no data races between two pieces of your JS code. It says nothing about the literal number of operating system (OS) threads in the process.
 
 ## I/O-bound vs CPU-bound — where the line actually falls
+
+The line falls on what the work spends its time on. I/O-bound work waits: on disk, on the network, on a database. CPU-bound work computes, and it keeps the CPU (central processing unit) busy.
 
 ```txt
 I/O-bound (Node is an excellent choice):
   - HTTP/REST APIs, GraphQL
+    (REST = resources addressed by URL, acted on with
+     HTTP methods)
   - WebSocket / realtime
   - Reverse proxy / API Gateway
   - Streaming (video, files — see [Streams and Backpressure])
@@ -72,11 +90,11 @@ CPU-bound (Node is weaker out of the box):
   - Machine learning inference
 ```
 
-But "Node is bad for CPU-bound work" is a simplification worth refining in an interview: the issue isn't that Node "can't" do computation — it's that **any synchronous CPU operation blocks the single thread running the event loop** — while it runs, Node can't process ANY other event, including incoming HTTP requests from other users.
+But "Node is bad for CPU-bound work" is a simplification worth refining in an interview. The issue isn't that Node "can't" do computation. It's that **any synchronous CPU operation blocks the single thread running the event loop**. While that operation runs, Node cannot process **any** other event — incoming HTTP requests from other users included.
 
 ```ts
 // ❌ Blocks the event loop for its entire duration —
-// ALL other requests to this server "hang" during that time
+// all other requests to this server "hang" during that time
 app.get('/hash', (req, res) => {
   const hash = crypto.pbkdf2Sync(req.query.password, 'salt', 100_000, 64, 'sha512');
   res.json({ hash: hash.toString('hex') });
@@ -91,7 +109,7 @@ app.get('/hash', async (req, res) => {
 });
 ```
 
-This is a central idea that many topics in this section will return to: "Node is bad for CPU-bound work" isn't an absolute truth — it's a consequence of the single-JS-thread architecture, and that consequence has concrete mitigations (Worker Threads, Cluster, offloading to separate services).
+Many topics in this section come back to this idea. "Node is bad for CPU-bound work" isn't an absolute truth. It is a consequence of the single-JS-thread architecture, and that consequence has concrete fixes: Worker Threads, Cluster, or offloading the work to a separate service.
 
 ## EventEmitter — the foundation Node is built on
 
@@ -112,21 +130,21 @@ emitter.emit('userCreated', { email: 'alice@example.com' });
 ### Senior nuance #1: the `'error'` event is a special case
 
 ```ts
-// ❌ If an EventEmitter (or Stream, Socket, ...) has NO
+// ❌ If an EventEmitter (or Stream, Socket, ...) has no
 // 'error' listener and an 'error' event is emitted — Node
-// throws and (by default) CRASHES THE PROCESS, even if the
+// throws and (by default) crashes the process, even if the
 // emitter is wrapped in try/catch
 const socket = net.connect(...);
 socket.emit('error', new Error('ECONNRESET')); // → process crash
 
-// ✅ ALWAYS subscribe to 'error' on EventEmitters that can
+// ✅ Always subscribe to 'error' on EventEmitters that can
 // emit it (sockets, streams, child processes)
 socket.on('error', (err) => {
   logger.error('Socket error', err);
 });
 ```
 
-This isn't an abstract "just in case" recommendation — this behavior is specific to `'error'` among all Node events, and it regularly catches even experienced developers working with network sockets or child processes.
+This isn't an abstract "just in case" recommendation. Among all Node events, this behavior belongs to `'error'` alone. It regularly catches even experienced developers working with network sockets or child processes.
 
 ### Senior nuance #2: memory leaks via accumulating listeners
 
@@ -148,29 +166,35 @@ app.get('/subscribe', (req, res) => {
 });
 ```
 
-`MaxListenersExceededWarning` is often dismissed as "just a warning, safe to ignore" — but in practice it's almost always a sign of a leak: either a missing unsubscribe, or an emitter created in the wrong place (e.g., a new `EventEmitter` per request instead of one shared instance).
+`MaxListenersExceededWarning` is often dismissed as "just a warning, safe to ignore". In practice it is almost always a sign of a leak, and there are two usual causes:
+
+- a missing unsubscribe;
+- an emitter created in the wrong place — a new `EventEmitter` per request instead of one shared instance.
 
 ## process — the interface to the environment your app runs in
 
 ```ts
 process.env.NODE_ENV     // environment variables — configuration (see 12-factor app)
 process.argv             // command-line arguments
-process.pid               // process PID — for logs/monitoring
-process.exitCode          // exit code (0 = success, !=0 = failure for CI/orchestrator)
+process.pid               // process id (PID) — for logs/monitoring
+process.exitCode          // exit code: 0 = success, != 0 = failure.
+                          // Read by CI (continuous integration — the
+                          // automated build and test pipeline) and by
+                          // container orchestrators.
 ```
 
 ### Senior nuance: graceful shutdown via signals
 
 ```ts
 // ❌ The process is killed instantly (docker stop, k8s rolling
-// update) — active requests and DB connections are cut off mid-flight
+// update) — active requests and database connections are cut off
 process.on('SIGTERM', () => process.exit(0));
 
 // ✅ Graceful shutdown: stop accepting new connections, let
-// in-flight requests finish, close the DB connection pool
+// in-flight requests finish, close the database connection pool
 process.on('SIGTERM', async () => {
   server.close(() => {           // stop accepting new connections
-    db.pool.end().then(() => {   // close DB connections
+    db.pool.end().then(() => {   // close database connections
       process.exit(0);
     });
   });
@@ -180,7 +204,9 @@ process.on('SIGTERM', async () => {
 });
 ```
 
-This connects directly to how an orchestrator (Kubernetes, ECS) rolls out deploys: `SIGTERM` is sent **before** the container is killed (`SIGKILL` follows after a grace period, typically 30s). An app that doesn't handle `SIGTERM` drops users' active requests on every deploy — a common cause of "weird errors that only happen during deploys," which interviewers like to probe backend candidates on.
+This connects directly to how an orchestrator rolls out deploys. Kubernetes and ECS (Elastic Container Service — the container runner in Amazon Web Services) both send `SIGTERM` **before** the container is killed. `SIGKILL` follows after a grace period, typically 30s.
+
+An app that doesn't handle `SIGTERM` drops users' active requests on every deploy. That is a common cause of "weird errors that only happen during deploys," and interviewers like to probe backend candidates on it.
 
 ## The npm ecosystem: scale as both an advantage and a risk
 
@@ -190,7 +216,7 @@ Advantage:
   cryptography) has already been solved and published on npm
 
 Risk (supply chain):
-  a typical Node project has HUNDREDS of transitive
+  a typical Node project has hundreds of transitive
   dependencies — you're trusting code you didn't write and
   probably haven't read, from dozens of different authors
 ```
@@ -199,7 +225,7 @@ Senior-level points worth knowing:
 
 ```txt
 - package-lock.json / yarn.lock / pnpm-lock.yaml — pin the
-  EXACT versions of the entire dependency tree. Without a lock
+  exact versions of the entire dependency tree. Without a lock
   file, "npm install" in CI vs. on a developer's machine can
   install different patch versions of transitive packages —
   a classic source of "works on my machine, broken in prod"
@@ -223,17 +249,19 @@ Senior-level points worth knowing:
 ## What's next in this section
 
 ```txt
-[V8 and the Runtime]       — how V8 executes JS, JIT compilation
+[V8 and the Runtime]       — how V8 executes JS, JIT (just-in-time)
+                               compilation
 [The Event Loop]            — event loop phases, execution order
 [Microtasks, Macrotasks,
  and process.nextTick]      — Promise vs setTimeout vs nextTick
-[libuv and the Thread Pool] — what's REALLY async vs. "async via
+[libuv and the Thread Pool] — what's really async vs. "async via
                                a thread pool"
 [Worker Threads and Cluster]— using multiple CPU cores
 [Streams and Backpressure]  — handling large amounts of data
 [Memory and Garbage
  Collection]                 — heap, memory leaks, GC pauses
-[CommonJS vs ESM]            — the two module systems and their differences
+[CommonJS vs ESM]           — the two module systems, and how they
+                               differ (ESM = ECMAScript modules)
 ```
 
 ## Common interview mistakes
@@ -242,7 +270,7 @@ Senior-level points worth knowing:
 
 - **"Node is single-threaded, full stop"** — without clarifying that single-threadedness applies to JS execution, while the process itself uses a Thread Pool and V8's GC threads.
 
-- **"Node is bad for CPU work"** stated without explaining the MECHANISM (blocking the single event loop thread) and without mentioning mitigations (Worker Threads, offloading to a separate service).
+- **"Node is bad for CPU work"** stated without the **mechanism**: blocking the single thread that runs the event loop. And without the fixes — Worker Threads, or moving the work to a separate service.
 
 - **Not subscribing to `'error'` on an EventEmitter/Stream/Socket** — and not knowing that an unhandled `'error'` crashes the process, unlike any other event.
 

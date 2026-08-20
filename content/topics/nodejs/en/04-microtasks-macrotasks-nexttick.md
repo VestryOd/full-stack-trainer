@@ -2,28 +2,32 @@
 
 ## Why this is a favorite interview topic — and where the real depth is
 
-The shallow level of this topic is "memorize the order: nextTick → microtasks → macrotasks" and predict the `console.log` output of short snippets. That's necessary, but it's not what makes a senior answer. The real depth is in answering: **"between WHAT exactly does queue-switching happen, and how often"**. Missing this is what leads to production bugs like "why does one slow request slow down ALL other requests, even though I use async/await everywhere?"
+The real depth of this topic is one question: **between what exactly does queue-switching happen, and how often?** Answer that, and you can explain a whole class of production bugs. The typical one sounds like this: "why does one slow request slow down **all** other requests, even though I use async/await everywhere?"
 
-## Three queues — and when EACH ONE drains
+The shallow level is different. It is "memorize the order nextTick → microtasks → macrotasks" plus predicting the `console.log` output of short snippets. That is necessary, but it is not what makes a senior answer.
+
+## Three queues — and when each of them drains
 
 ```txt
-process.nextTick queue  — drains COMPLETELY after ANY current
+process.nextTick queue  — drains completely after any current
                            operation finishes: after the script's
-                           synchronous code, AFTER EVERY microtask,
+                           synchronous code, after every microtask,
                            after every Event Loop phase callback
 
-Microtask queue           — drains COMPLETELY (including new
-(Promise.then,              microtasks added WHILE running the
-queueMicrotask)              current ones) after the current
-                           operation finishes AND after the
+Microtask queue           — drains completely, including new
+(Promise.then,              microtasks added while the current
+queueMicrotask)              ones run. Happens after the current
+                           operation finishes and after the
                            nextTick queue has drained
 
 Macrotask queue            — the Event Loop moves to the next
-(setTimeout, setImmediate,   macrotask only once BOTH queues
+(setTimeout, setImmediate,   macrotask only once both queues
 I/O callbacks)                above are completely empty
 ```
 
-The key detail most explanations skip: this doesn't happen **once** "after the script's synchronous block" — it happens **after EVERY callback**, no matter where it runs — whether it's one of several I/O callbacks in the poll phase, or one `setTimeout` among ten scheduled. Each individual callback executed by the Event Loop finishes with a full "drain" of the nextTick + microtask queues before the Event Loop picks up the next task.
+The key detail most explanations skip: this doesn't happen **once**, "after the script's synchronous block". It happens **after every callback**, wherever that callback runs. It may be one of several I/O callbacks in the poll phase, or one `setTimeout` among ten scheduled.
+
+Every single callback the Event Loop runs ends with a full drain of the nextTick and microtask queues. Only then does the Event Loop pick up the next task.
 
 ```txt
 Poll phase, 3 ready I/O callbacks:
@@ -37,13 +41,13 @@ Poll phase, 3 ready I/O callbacks:
   callback3() { ... }
   → queue drain
 
-  Only NOW does the Event Loop move to the check phase
+  Only now does the Event Loop move to the check phase
 ```
 
 ## async/await is .then() with syntactic sugar — and that matters for counting "ticks"
 
 ```ts
-// These two snippets are EQUIVALENT in microtask-tick count
+// These two snippets are equivalent in microtask-tick count
 async function a() {
   await Promise.resolve();
   console.log('after await');
@@ -55,7 +59,7 @@ function b() {
 ```
 
 ```ts
-// ❌ Each await INSIDE a chain adds at least one microtask
+// ❌ Each await inside a chain adds at least one microtask
 // tick — a chain of 100 awaits, even over already-resolved
 // values (no real I/O), takes 100 passes through the
 // microtask queue
@@ -68,13 +72,15 @@ async function chainedAwaits() {
 }
 ```
 
-Practical implication: if you have 100 ready `setTimeout(fn, 0)` calls AND the function above somewhere in a promise chain — all 100 timers will wait until the microtask queue is completely drained, which for sufficiently long promise chains can take a noticeable (though usually sub-millisecond) amount of time. For most applications this is invisible — but for applications with very high event rates (trading, realtime analytics), the difference between "await on every iteration" and "await once every N iterations" is measurable.
+Practical implication: microtasks can make ready timers wait. Suppose 100 `setTimeout(fn, 0)` callbacks are ready to run, and `chainedAwaits` above is also running somewhere in a promise chain. All 100 timers wait until the microtask queue is completely drained.
+
+For long enough promise chains that delay becomes noticeable, though it is usually under a millisecond. Most applications never see it. But applications with very high event rates — trading, realtime analytics — do. There the difference between "await on every iteration" and "await once every N iterations" is measurable.
 
 ## process.nextTick starvation — not a theoretical scenario, a real class of bugs
 
 ```ts
 // ❌ The classic starvation example — the Event Loop will
-// NEVER reach I/O, timers, or anything else. The server
+// never reach I/O, timers, or anything else. The server
 // won't "crash" — it'll just spin forever in the nextTick
 // queue and stop responding to requests
 function loop() {
@@ -110,16 +116,16 @@ function processQueue() {
 }
 ```
 
-The difference is fundamental: `process.nextTick` enqueues into a queue that drains **before moving to the next Event Loop phase**, while `setImmediate` is a macrotask that waits for its own phase (`check`), allowing the `poll` phase (where incoming traffic is handled) to run between iterations.
+The difference is fundamental. With `process.nextTick` the callback goes into a queue that is drained **before the Event Loop moves to the next phase**. But `setImmediate` is a macrotask: it waits for its own phase, `check`. So the `poll` phase, where incoming traffic is handled, gets to run between iterations.
 
 ## The full priority map — tied to Event Loop phases
 
 ```txt
 Call Stack (synchronous code) — runs first, always
     ↓
-process.nextTick queue — drains COMPLETELY
+process.nextTick queue — drains completely
     ↓
-Microtask queue (Promise, queueMicrotask) — drains COMPLETELY
+Microtask queue (Promise, queueMicrotask) — drains completely
     ↓
 ═══════════ end of "current operation" ═══════════
     ↓
@@ -136,7 +142,7 @@ close callbacks
 [next loop iteration → back to timers]
 ```
 
-## Walking through the classic example — explaining the MECHANISM, not just the answer
+## Walking through the classic example — the mechanism, not just the answer
 
 ```ts
 console.log('1');
@@ -168,13 +174,15 @@ Step 4: both queues are empty → the Event Loop moves to the
         timers phase → the timer is ready → prints "4"
 ```
 
-Memorizing the specific output "1 5 2 3 4" is useless in an interview if the example changes (an extra `setTimeout` nested inside the first one, or a `.then()` inside `nextTick`) — but understanding "after ANY operation, nextTick drains completely first, then microtasks completely, and only then the next macrotask" lets you work through ANY variation of this question.
+Memorizing the specific output "1 5 2 3 4" stops helping the moment the example changes. An interviewer only has to nest an extra `setTimeout` inside the first one, or put a `.then()` inside `nextTick`.
+
+One rule covers **any** variation of this question. After any operation, nextTick drains completely first, then microtasks drain completely, and only then comes the next macrotask.
 
 ## Practical guidance: when to choose what
 
 ```txt
 process.nextTick — for:
-  - guaranteeing a callback runs BEFORE any I/O, but AFTER
+  - guaranteeing a callback runs before any I/O, but after
     the current synchronous operation finishes (e.g., emitting
     an event right after a constructor so subscribers have
     time to attach: a classic EventEmitter-based API pattern)
@@ -184,13 +192,13 @@ queueMicrotask / await — for:
   - standard asynchronous code, promise chains
 
 setImmediate — for:
-  - "run as soon as possible, but AFTER the current I/O
+  - "run as soon as possible, but after the current I/O
     phase" — e.g., splitting heavy synchronous work into
     chunks (see [The Event Loop])
 
 setTimeout(fn, 0) — for:
   - similar to setImmediate, but goes through the timers
-    phase, which runs FIRST on the next loop iteration; the
+    phase, which runs first on the next loop iteration; the
     difference between setImmediate and setTimeout(0) is
     usually negligible except inside an I/O callback
     (see [The Event Loop])
@@ -198,12 +206,12 @@ setTimeout(fn, 0) — for:
 
 ## Common interview mistakes
 
-- **Memorizing specific examples instead of the mechanism** — any change to the example (a nested `.then`, `nextTick` inside `nextTick`, multiple `setTimeout`s) breaks a memorized answer; explain it via "queues drain after every operation," not via a table of memorized outputs.
+- **Memorizing specific examples instead of the mechanism.** Any change to the example breaks a memorized answer: a nested `.then`, `nextTick` inside `nextTick`, several `setTimeout` calls. Explain it through "queues drain after every operation", not through a table of memorized outputs.
 
-- **Not knowing the microtask queue drains AFTER EVERY callback**, not once "after the script" — this explains why a promise scheduled during one I/O callback runs before the next I/O callback, even if both are ready.
+- **Not knowing the microtask queue drains after every callback**, not once "after the script". That explains a common surprise. A promise scheduled during one I/O callback runs before the next I/O callback, even when both are ready.
 
-- **Not seeing starvation as a real threat** — process.nextTick recursion is dismissed as an "exotic edge case," even though recursively draining queues via nextTick is a not-uncommon (if mistaken) pattern in real code.
+- **Not seeing starvation as a real threat.** Recursion through `process.nextTick` gets dismissed as an "exotic edge case". In real code, draining a queue recursively through nextTick is a common pattern, even if a mistaken one.
 
-- **Not understanding that async/await is .then() with sugar** — and, as a result, being unable to explain why a long chain of awaits adds microtask ticks even when the awaited values are already available synchronously.
+- **Not understanding that async/await is .then() with sugar.** The consequence: you cannot explain why a long chain of awaits adds microtask ticks, even when the awaited values are already available synchronously.
 
-- **Treating setImmediate and setTimeout(fn, 0) as "the same thing"** — without understanding that one is a separate phase (check) and the other is the timers phase, and the difference shows up specifically when called inside an I/O callback (see [The Event Loop]).
+- **Treating setImmediate and setTimeout(fn, 0) as "the same thing".** One is a separate phase, `check`; the other is the timers phase. The difference shows up specifically when they are called inside an I/O callback (see [The Event Loop]).
