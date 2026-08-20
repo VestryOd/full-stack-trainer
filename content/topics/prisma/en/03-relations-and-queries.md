@@ -2,27 +2,29 @@
 
 ## Relation types
 
-Prisma supports three relation types — all of them map to standard Foreign Keys and JOINs in PostgreSQL. The only difference is which side holds the FK.
+Prisma supports three relation types: one-to-one, one-to-many and many-to-many. It turns all three into plain SQL — the language it uses to talk to PostgreSQL. In the database a relation is an FK (foreign key) column on the child table, and reading rows together with their relations is a `JOIN`.
+
+The only difference between the three is which side holds that key. The model that carries `@relation(fields: [...])` is the one with the column.
 
 ```prisma
-// One-to-One: User has exactly one Profile
-// FK is on the "child" model (Profile.userId)
+// One-to-one: a User has exactly one Profile
+// The foreign key sits on the child model (Profile.userId)
 model User {
   id      Int      @id @default(autoincrement())
-  profile Profile?  // nullable — Profile may not exist
+  profile Profile?  // may be empty — a Profile is optional
 }
 
 model Profile {
   id     Int    @id @default(autoincrement())
   bio    String?
-  userId Int    @unique  // @unique enforces one-to-one (not one-to-many)
+  userId Int    @unique  // @unique is what makes it one-to-one
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// One-to-Many: User has many Posts
+// One-to-many: a User has many Posts
 model User {
   id    Int    @id @default(autoincrement())
-  posts Post[]  // virtual field — no column in the DB
+  posts Post[]  // virtual field — there is no such column
 }
 
 model Post {
@@ -31,7 +33,7 @@ model Post {
   author   User @relation(fields: [authorId], references: [id])
 }
 
-// Many-to-Many explicit (production recommendation)
+// Many-to-many, explicit (the recommendation for production)
 // — when you need extra fields on the join table
 model UserRole {
   userId     Int
@@ -46,7 +48,8 @@ model UserRole {
   @@index([roleId])
 }
 
-// Many-to-Many implicit (when no extra fields are needed — Prisma creates the join table)
+// Many-to-many, implicit: no extra fields needed,
+// so Prisma creates the join table itself
 model Post {
   id   Int   @id @default(autoincrement())
   tags Tag[]
@@ -58,29 +61,31 @@ model Tag {
 // → Prisma creates the "_PostToTag" table automatically
 ```
 
-## onDelete / onUpdate — Referential Actions
+## onDelete / onUpdate — referential actions
+
+`onDelete` and `onUpdate` set the referential actions: what happens to the child rows when the parent row is deleted, or when its `id` changes.
 
 ```prisma
 model Post {
   authorId Int
   author   User @relation(fields: [authorId], references: [id],
-    onDelete: Cascade,  // delete User → delete all their Posts
+    onDelete: Cascade,  // delete a User → delete all their Posts
     onUpdate: Cascade   // change User.id → update Post.authorId
   )
 }
 
 // Options:
-// Cascade  — cascade delete/update (most common)
-// Restrict — prevent deletion if related records exist (data protection)
-// SetNull  — set FK = NULL (field must be nullable: authorId Int?)
-// NoAction — no action at Prisma level (enforced at DB level)
-// SetDefault — set FK to its default value
+// Cascade  — cascade the delete and the update (most common)
+// Restrict — block the delete while related rows still exist
+// SetNull  — write NULL into the key (needs authorId Int?)
+// NoAction — Prisma does nothing; the database checks it
+// SetDefault — write the key's default value
 ```
 
 ## Queries — find*, create, update, delete
 
 ```typescript
-// findUnique — only for @id or @unique fields, returns T | null
+// findUnique — only on @id or @unique fields, returns T | null
 const user = await prisma.user.findUnique({ where: { id: 1 } });
 
 // findFirst — first record matching a condition, returns T | null
@@ -100,12 +105,12 @@ const users = await prisma.user.findMany({
       { role: 'ADMIN' },
       { role: 'EDITOR' },
     ],
-    email: { contains: '@company.com', mode: 'insensitive' }, // case-insensitive LIKE
+    email: { contains: '@company.com', mode: 'insensitive' }, // LIKE, ignoring case
     name: { not: null },
   },
   orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
   take: 20,    // LIMIT
-  skip: 40,    // OFFSET — offset pagination
+  skip: 40,    // OFFSET — pagination by offset
 });
 
 // count + aggregate
@@ -127,7 +132,7 @@ const user = await prisma.user.upsert({
 // createMany / updateMany / deleteMany — bulk operations
 await prisma.post.createMany({
   data: [{ title: 'A', authorId: 1 }, { title: 'B', authorId: 1 }],
-  skipDuplicates: true, // ignore unique constraint conflicts
+  skipDuplicates: true, // do not fail on UNIQUE conflicts
 });
 
 await prisma.post.deleteMany({ where: { authorId: 1 } });
@@ -135,8 +140,10 @@ await prisma.post.deleteMany({ where: { authorId: 1 } });
 
 ## include vs select — loading relations
 
+`include` adds the relations on top of every field of the model. The `select` option does the opposite: it returns exactly the fields you listed, and nothing else.
+
 ```typescript
-// include: load related records (JOIN under the hood)
+// include: pull in related records (a JOIN inside)
 const userWithPosts = await prisma.user.findUnique({
   where: { id: 1 },
   include: {
@@ -150,33 +157,36 @@ const userWithPosts = await prisma.user.findUnique({
   },
 });
 
-// select: choose only the needed fields (projection)
+// select: take only the fields you need (a projection)
 const userNames = await prisma.user.findMany({
   select: {
     id: true,
     email: true,
-    posts: {           // select + relation — works
+    posts: {           // select together with a relation — allowed
       select: { title: true, createdAt: true },
       where: { published: true },
     },
   },
 });
-// Result is strongly typed: { id: number; email: string; posts: { title: string; ... }[] }
+// The result type is exact:
+// { id: number; email: string; posts: { title: string; ... }[] }
 
-// include and select cannot be used together at the same level
+// include and select cannot sit together at the same level
 // ✗ { include: { posts: true }, select: { id: true } } — TS error
 // ✓ select: { id: true, posts: { select: { title: true } } } — correct
 ```
 
-## Nested Writes — related records in one request
+## Nested writes — related records in one request
+
+A nested write creates or changes related records inside a single Prisma call. Prisma wraps such a call in a transaction: either everything is written, or nothing is.
 
 ```typescript
-// create with nested create (User + Posts in one request = one transaction)
+// create with a nested create: a User and their Posts in one request
 const user = await prisma.user.create({
   data: {
     email: 'alice@example.com',
     profile: {
-      create: { bio: 'Senior Engineer' },  // create Profile
+      create: { bio: 'Senior Engineer' },  // create the Profile too
     },
     posts: {
       create: [
@@ -185,17 +195,17 @@ const user = await prisma.user.create({
       ],
     },
   },
-  include: { profile: true, posts: true }, // return with relations
+  include: { profile: true, posts: true }, // return it with its relations
 });
 
-// connect — link an existing record
+// connect — link a record that already exists
 await prisma.post.update({
   where: { id: 1 },
   data: {
     tags: {
       connect: [{ id: 1 }, { id: 2 }],     // add tags
       disconnect: [{ id: 3 }],              // remove a tag
-      set: [{ id: 1 }],                     // set exactly these tags (disconnect old ones)
+      set: [{ id: 1 }],                     // keep exactly these, drop the rest
     },
   },
 });
@@ -214,38 +224,42 @@ await prisma.post.create({
 });
 ```
 
-## Pagination — offset vs cursor
+## Pagination — by offset or by cursor
+
+Pagination comes in two shapes. By offset: "skip 20 rows, give me the next 10". By cursor: "give me 10 rows after this `id`".
 
 ```typescript
-// Offset pagination — simple but slow on large tables
+// Pagination by offset — simple but slow on large tables
 const page2 = await prisma.post.findMany({
   skip: 20,   // OFFSET 20
   take: 10,   // LIMIT 10
   orderBy: { createdAt: 'desc' },
 });
-// Problem: OFFSET 1000000 — PostgreSQL still reads 1000010 rows
+// Problem: with OFFSET 1000000 PostgreSQL still reads 1000010 rows
 
-// Cursor pagination — for large tables and infinite scrolling
+// Pagination by cursor — for large tables and infinite scrolling
 const nextPage = await prisma.post.findMany({
   cursor: { id: lastSeenId },   // start after this id
   take: 10,
-  skip: 1,                       // skip the cursor itself
+  skip: 1,                       // skip the cursor row itself
   orderBy: { id: 'asc' },
 });
-// Under the hood: WHERE id > lastSeenId LIMIT 10 → O(log N) via index
+// Inside: WHERE id > lastSeenId LIMIT 10 → O(log N) through the index
 ```
 
 ## The N+1 problem and how to solve it
 
+N+1 means a list of N rows costs N+1 queries: one for the list itself, plus one per row for its relations.
+
 ```typescript
-// N+1: a separate query to posts is executed for each user
+// N+1: a separate query to posts runs for every user
 const users = await prisma.user.findMany();
 for (const user of users) {
   const posts = await prisma.post.findMany({ where: { authorId: user.id } });
   // 1 query for findMany + N queries for posts = N+1
 }
 
-// Solution: include — a single query with JOIN
+// The fix: include — a single query with a JOIN
 const usersWithPosts = await prisma.user.findMany({
   include: { posts: true },
   // Prisma executes: SELECT users.*, posts.* FROM users LEFT JOIN posts ON ...
@@ -262,12 +276,15 @@ const result = await prisma.$queryRaw<UserWithCount[]>`
 
 ## Common interview mistakes
 
-- **"include always does a JOIN"** — not quite. Prisma 5+ uses `JOIN` for include in most cases, but for some patterns it may issue a separate `SELECT ... WHERE id IN (...)`. Enable `log: ['query']` to see the actual SQL.
+- **"include always does a `JOIN`"** — not quite. In Prisma 5 and later, `include` becomes a `JOIN` in most cases, but for some query shapes Prisma issues a separate `SELECT ... WHERE id IN (...)`. Turn on `log: ['query']` and you see the real SQL instead of a guess about it.
 
-- **"select and include can't be used together"** — they can't at the same level (`{ select, include }` → TS error), but you can do: `select: { id: true, posts: { select: { title: true } } }` — a select with a nested select for the relation.
+- **"select and include can't be used together"** — they can't at the same level. `{ select, include }` in one object is a TypeScript error. Nesting them is fine: `select: { id: true, posts: { select: { title: true } } }` returns two user fields plus one field of each post.
 
-- **"Implicit Many-to-Many is better for production"** — no. Explicit Many-to-Many (explicit join table) is recommended for production: you can add fields (`assignedAt`, `role`), directly query the join table (`prisma.userRole.findMany()`), and cascade deletion is easier to manage.
+- **"An implicit many-to-many is better for production"** — the opposite. An explicit join table is a model you own, so you can:
+  - add fields to it, such as `assignedAt` or `role`;
+  - query it directly with `prisma.userRole.findMany()`;
+  - configure cascade deletion for each side separately.
 
-- **"findUnique is faster than findFirst"** — yes, because `findUnique` translates to `WHERE id = ?` on an indexed field. `findFirst` with the same condition is equivalent but may not be optimized by the Prisma compiler. Use `findUnique` when searching by `@id` or `@unique` fields.
+- **"findUnique is faster than findFirst"** — yes. `findUnique` translates to `WHERE id = ?` on an indexed field. The same condition in `findFirst` returns the same row, but Prisma does not necessarily optimize it the same way. Use `findUnique` when you search by `@id` or `@unique` fields.
 
-- **"Cursor pagination is always better than offset"** — cursor is better for large tables and infinite scrolling. But cursor-based pagination does not support jumping to an arbitrary page (you can't go to page 50 without traversing pages 1–49). For numbered page UIs: offset. For infinite scroll/APIs: cursor.
+- **"Cursor pagination is always better than offset"** — cursor is better on large tables and for infinite scrolling. But a cursor cannot jump to an arbitrary page: reaching page 50 means walking pages 1 to 49. So use offset for a numbered-page interface, and a cursor for infinite scroll and APIs.

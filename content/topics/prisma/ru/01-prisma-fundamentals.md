@@ -1,15 +1,20 @@
-# Prisma Fundamentals
+# Основы Prisma
 
 ## Что такое Prisma и зачем она нужна
 
-Prisma — TypeScript-first ORM toolkit для Node.js. Ключевое отличие от TypeORM/Sequelize: schema-first подход — разработчик описывает модели в `schema.prisma`, а Prisma генерирует полностью типизированный клиент под конкретную схему. Это значит что `prisma.user.findMany()` возвращает `User[]` со всеми полями без дополнительных Generic-аннотаций, а опечатка в имени поля — ошибка компиляции, не runtime-ошибка.
+Prisma — это ORM (Object-Relational Mapping, «объектно-реляционное отображение») для Node.js. ORM — слой, который переводит вызовы на TypeScript в SQL, то есть в язык запросов, на котором говорит база данных.
+
+Ключевое отличие от TypeORM и Sequelize — порядок работы: сначала схема, потом код (schema-first). Разработчик описывает модели в `schema.prisma`, а Prisma генерирует по ним клиент, типизированный под эту конкретную схему.
+
+Что это даёт на практике: `prisma.user.findMany()` возвращает `User[]` со всеми полями, и дописывать обобщённые типы (Generic) руками не нужно. Опечатка в имени поля становится ошибкой компиляции, а не ошибкой во время выполнения (runtime).
 
 ```txt
 Компоненты Prisma:
-  schema.prisma   — описание моделей, связей, datasource, generator
-  Prisma Client   — сгенерированный TypeScript API (node_modules/.prisma/client)
-  Prisma Migrate  — система миграций: schema.prisma → SQL → применить к БД
-  Prisma Studio   — GUI для просмотра и редактирования данных (опционально)
+  schema.prisma   — модели, связи, datasource, generator
+  Prisma Client   — сгенерированный TypeScript API
+                    (node_modules/.prisma/client)
+  Prisma Migrate  — миграции: schema.prisma → SQL → база
+  Prisma Studio   — графический интерфейс к данным (по желанию)
 
 Стек запроса:
   NestJS Service
@@ -51,14 +56,14 @@ model Post {
 ```
 
 ```typescript
-// Инициализация (singleton для NestJS — через PrismaService)
+// Создание клиента (в NestJS — один экземпляр через PrismaService)
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
-  log: ['query', 'error'], // логировать SQL запросы в dev
+  log: ['query', 'error'], // логировать SQL-запросы в разработке
 });
 
-// CRUD — базовые операции
+// CRUD — создать, прочитать, изменить, удалить
 const user = await prisma.user.create({
   data: { email: 'alice@example.com', name: 'Alice' },
 });
@@ -81,7 +86,7 @@ await prisma.user.delete({ where: { id: user.id } });
 ## PrismaService в NestJS
 
 ```typescript
-// prisma.service.ts — стандартный singleton в NestJS
+// prisma.service.ts — один общий экземпляр клиента на всё приложение
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
@@ -119,27 +124,29 @@ export class UsersService {
 
 ```txt
 Prisma подходит для:
-  ✓ TypeScript проекты (NestJS, Next.js, Express + TS)
-  ✓ CRUD-heavy приложения (SaaS, admin panels, APIs)
-  ✓ Команды с разным уровнем SQL — типизация снижает ошибки
-  ✓ Rapid development — schema + migrate + generated client = быстро
-  ✓ GraphQL backends (Prisma + Pothos/Nexus = minimal boilerplate)
+  ✓ проектов на TypeScript (NestJS, Next.js, Express + TS)
+  ✓ приложений, где почти всё — это CRUD, то есть создать,
+     прочитать, изменить, удалить (SaaS, админки, API)
+  ✓ команд с разным уровнем SQL — типизация снижает ошибки
+  ✓ быстрого старта: схема + миграция + готовый клиент
+  ✓ GraphQL-бэкендов (Prisma + Pothos/Nexus = мало кода-обвязки)
 
-Prisma НЕ подходит или требует workaround:
-  ✗ Сложные аналитические запросы (window functions, CTE, LATERAL JOIN)
+Prisma не подходит или потребует обходных приёмов:
+  ✗ сложные аналитические запросы: оконные функции,
+     CTE (общие табличные выражения), LATERAL JOIN
      → решение: prisma.$queryRaw`SELECT ... OVER (PARTITION BY ...)`
-  ✗ Bulk insert/update тысяч записей
-     → Prisma createMany не поддерживает skipDuplicates с relations;
-       для bulk: $executeRaw или pg-copy-streams
-  ✗ Динамическое построение запросов с условными JOIN
-     → TypeORM QueryBuilder более гибкий в этом сценарии
+  ✗ массовая вставка и обновление тысяч строк
+     → createMany не поддерживает skipDuplicates со связями;
+       для массовых операций: $executeRaw или pg-copy-streams
+  ✗ динамические запросы с условными JOIN
+     → TypeORM QueryBuilder в этом сценарии гибче
 ```
 
 ## $queryRaw и $executeRaw — когда нужен SQL
 
 ```typescript
 // $queryRaw — вернуть типизированные результаты
-// Внимание: Prisma.sql template literal обязателен для защиты от SQL injection
+// Внимание: шаблонный литерал (Prisma.sql) обязателен — защита от SQL-инъекций
 const result = await prisma.$queryRaw<{ id: number; rank: number }[]>`
   SELECT id, RANK() OVER (ORDER BY score DESC) as rank
   FROM users
@@ -152,19 +159,23 @@ const count = await prisma.$executeRaw`
 `;
 // Возвращает количество затронутых строк
 
-// НИКОГДА не использовать строковую интерполяцию:
-// ✗ await prisma.$queryRaw(`SELECT * FROM users WHERE id = ${userId}`) // SQL injection!
+// Никогда не использовать строковую интерполяцию:
+// ✗ await prisma.$queryRaw(`SELECT * FROM users WHERE id = ${userId}`) // SQL-инъекция!
 // ✓ await prisma.$queryRaw`SELECT * FROM users WHERE id = ${userId}`   // параметризованный
 ```
 
 ## Типичные ошибки на интервью
 
-- **"Prisma — это база данных"** — нет. Prisma — ORM поверх существующей БД. Данные хранит PostgreSQL/MySQL/SQLite, Prisma только генерирует и выполняет запросы к ней. `prisma.user.findMany()` → Prisma Client → Rust Query Engine → SQL → PostgreSQL.
+- **"Prisma — это база данных"** — нет. Prisma — это ORM поверх уже существующей базы. Данные хранит PostgreSQL, MySQL или SQLite, а Prisma только собирает и выполняет запросы к ним. Путь запроса: `prisma.user.findMany()` → Prisma Client → Query Engine на Rust → SQL → PostgreSQL.
 
-- **"Prisma генерирует неэффективные запросы"** — частично правда для N+1 проблемы (без `include`), но Prisma умеет генерировать JOIN через `include`/`select`. Для сложных запросов: `$queryRaw`. Генерируемые запросы можно посмотреть через `log: ['query']` в PrismaClient.
+- **"Prisma генерирует неэффективные запросы"** — частично правда для проблемы N+1, то есть когда на список из N записей уходит N+1 запросов. Но это лечится: `include` и `select` заставляют Prisma сделать `JOIN`. Для сложных запросов остаётся `$queryRaw`. Что именно уходит в базу, видно через `log: ['query']` в `PrismaClient`.
 
-- **"PrismaClient можно создавать в каждом запросе"** — нет. PrismaClient управляет connection pool. В NestJS — один singleton `PrismaService extends PrismaClient`. Создание нового экземпляра в каждом запросе → утечка соединений и деградация производительности.
+- **"PrismaClient можно создавать в каждом запросе"** — нет. `PrismaClient` держит пул соединений (connection pool), и каждый новый экземпляр открывает свой. В NestJS нужен один общий экземпляр: `PrismaService extends PrismaClient`. Новый экземпляр на каждый запрос — это утечка соединений и просадка производительности.
 
-- **"Prisma Migrate и Prisma Client — одно и то же"** — нет. Migrate — инструмент разработки (CLI): `prisma migrate dev` → генерирует SQL миграции. Client — runtime библиотека: выполняет запросы к БД. В production запускают `prisma migrate deploy` (применяет pending миграции), Client уже скомпилирован в бандле.
+- **"Prisma Migrate и Prisma Client — одно и то же"** — нет. Migrate — инструмент разработчика, команда в терминале: `prisma migrate dev` генерирует SQL-миграции. Client — библиотека, которая работает во время выполнения и делает запросы к базе. В production запускают `prisma migrate deploy` — он применяет ещё не применённые миграции. Client к этому моменту уже собран в бандл приложения.
 
-- **"После изменения schema.prisma изменения сразу доступны"** — нет. Нужно: (1) `prisma migrate dev` — создать миграцию и применить к БД; (2) `prisma generate` — перегенерировать Client. Если только изменить schema без `generate` — TypeScript типы старые, рантайм тоже старый.
+- **"После изменения schema.prisma изменения сразу доступны"** — нет, нужны два шага:
+  - `prisma migrate dev` — создать миграцию и применить её к базе;
+  - `prisma generate` — перегенерировать Client.
+
+  Если изменить схему и не запустить `generate`, останутся старыми и типы TypeScript, и код клиента во время выполнения.
