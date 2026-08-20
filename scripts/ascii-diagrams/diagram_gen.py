@@ -709,6 +709,24 @@ def fanout_pipeline(L):
     ]
 
 
+def flame_chart(L):
+    """Nested boxes: every child render sits inside its parent's box.
+
+    Each node is {'label': str, 'children': [node, ...]}. Leaves become a
+    one-line box; a parent boxes its label plus the hstack of its children,
+    so box geometry is always produced by box() and never hand-padded.
+    """
+
+    def build(node):
+        children = node.get('children') or []
+        if not children:
+            return box([node['label']])
+        inner = hstack([build(c) for c in children], gap=1)
+        return box([node['label'], *inner])
+
+    return build(L['root'])
+
+
 DIAGRAMS = {
     'stack-compare': stack_compare,
     'update-models': update_models,
@@ -858,6 +876,7 @@ DIAGRAMS = {
     'arch-cqrs-es-matrix': cqrs_es_matrix,
     'sd-event-fanout': event_fanout,
     'sd-shortener-architecture': fanout_pipeline,
+    'react-flame-chart': flame_chart,
 }
 
 LABELS = {
@@ -6573,6 +6592,38 @@ LABELS = {
                 'Analytics Service',
                 'CRM Service',
             ],
+        },
+    },
+    'react-flame-chart': {
+        'ru': {
+            'root': {
+                'label': 'App 3.2 мс',
+                'children': [
+                    {'label': 'Header 0.1 мс'},
+                    {
+                        'label': 'Main 3.0 мс',
+                        'children': [
+                            {'label': 'Sidebar 0.2 мс'},
+                            {'label': 'Content 2.7 мс'},
+                        ],
+                    },
+                ],
+            },
+        },
+        'en': {
+            'root': {
+                'label': 'App 3.2 ms',
+                'children': [
+                    {'label': 'Header 0.1 ms'},
+                    {
+                        'label': 'Main 3.0 ms',
+                        'children': [
+                            {'label': 'Sidebar 0.2 ms'},
+                            {'label': 'Content 2.7 ms'},
+                        ],
+                    },
+                ],
+            },
         },
     },
     'sd-shortener-architecture': {

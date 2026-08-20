@@ -5,14 +5,17 @@
 Performance optimization in React has exactly one correct starting point: **measure with the React DevTools Profiler** before touching any code. Unmeasured optimization is guesswork — you will add `useMemo` and `React.memo` everywhere, slow down the app, and still not fix the actual bottleneck.
 
 ```txt
-WORKFLOW:
-  1. Identify a real, user-visible performance problem
-     (jank on interaction, slow initial load, laggy input)
-  2. Open React DevTools → Profiler → record while reproducing the problem
-  3. Find the slowest components (longest bars in the flame chart)
-  4. Understand WHY they are slow (unnecessary re-renders? expensive computation?)
+Workflow
+  1. Find a real, user-visible problem
+     (jank on interaction, slow first load, laggy input)
+  2. Open React DevTools → Profiler, record while
+     reproducing the problem
+  3. Find the slowest components — the longest bars
+     in the flame chart
+  4. Work out why they are slow: unnecessary
+     re-renders, or expensive computation?
   5. Apply the targeted fix
-  6. Measure again to confirm improvement
+  6. Measure again to confirm the improvement
 ```
 
 Without step 2–4, every fix is a guess.
@@ -42,16 +45,14 @@ const ExpensiveList = React.memo(function ExpensiveList({
 });
 ```
 
-### The three conditions that must ALL be true for React.memo to help
+### The three conditions that must **all** be true for React.memo to help
 
-```txt
-1. The component renders often (its parent re-renders frequently)
-2. The re-render is expensive (many children, slow computation in render)
-3. The props are referentially stable between renders
-   (primitives don't change, objects/arrays/functions are memoized)
-```
+1. The component renders often — its parent re-renders frequently.
+2. The re-render is expensive: many children, or slow computation in render.
+3. The props are referentially stable between renders. Primitives do not
+   change, and objects, arrays and functions are memoized.
 
-If condition 3 is not met, `React.memo` provides zero benefit — the props comparison always returns false (changed) because new object/function references are created on every parent render.
+If condition 3 is not met, `React.memo` provides zero benefit. The props comparison always returns false, meaning "changed", because new object and function references are created on every parent render.
 
 ### The most common React.memo mistake
 
@@ -105,7 +106,7 @@ const MemoizedChart = React.memo(
 );
 ```
 
-Use a custom comparator when the default shallow equality is too strict (a new array reference with identical contents would always trigger a re-render). But be careful: a wrong comparator that returns `true` when props have actually changed will cause stale UI bugs.
+Use a custom comparator when the default shallow equality is too strict (a new array reference with identical contents would always trigger a re-render). But be careful: a wrong comparator that returns `true` when props have actually changed will leave stale data on screen. The UI — user interface, what the reader actually sees — stops matching the state.
 
 ### When React.memo actively hurts
 
@@ -204,7 +205,7 @@ function MouseTracker({ children }: { children: React.ReactNode }) {
 function Page() {
   return (
     <MouseTracker>
-      <HeavyChart />  {/* Page's render phase owns HeavyChart — only re-renders when Page does */}
+      <HeavyChart />  {/* Page's render owns HeavyChart, so it re-renders only with Page */}
     </MouseTracker>
   );
 }
@@ -212,7 +213,7 @@ function Page() {
 
 ### 3. Context splitting (revisited in performance context)
 
-See Context article for full details. Summary: split a monolithic context into multiple contexts grouped by update frequency. Components consuming `NotificationsContext` don't re-render when `CartContext` changes.
+Full details are in [Context and State](./04-context-and-state.md). Summary: split a monolithic context into several contexts, grouped by update frequency. Components consuming `NotificationsContext` don't re-render when `CartContext` changes.
 
 ### 4. Deriving state instead of storing it
 
@@ -237,7 +238,7 @@ const filteredItems = useMemo(
 
 ## Virtualization — rendering only what's visible
 
-Rendering 10,000 list rows creates 10,000 DOM nodes — even if only 20 are visible. Virtualization renders only the visible rows (plus a small overscan buffer), dramatically reducing DOM size and render time.
+Rendering 10,000 list rows creates 10,000 nodes in the DOM. That is the Document Object Model — the tree of objects the browser builds from the page. Those nodes appear even if only 20 rows are visible. Virtualization renders only the visible rows, plus a small overscan buffer. That cuts both the size of the DOM and the render time.
 
 ```tsx
 // @tanstack/react-virtual — the modern low-level solution:
@@ -365,28 +366,32 @@ The Profiler is the only reliable way to find actual performance problems.
 
 ### Reading the flame chart
 
-```txt
-FLAME CHART (one bar per component render):
-  ┌──────────────────── App (3.2ms) ─────────────────────────┐
-  │ ┌─── Header (0.1ms) ───┐  ┌──────── Main (3.0ms) ──────┐ │
-  │ └──────────────────────┘  │ ┌── Sidebar ──┐ ┌─ Content ─┐ │ │
-  │                            │ │  (0.2ms)    │ │ (2.7ms)   │ │ │
-  │                            │ └────────────┘ └───────────┘ │ │
-  │                            └──────────────────────────────┘ │
-  └───────────────────────────────────────────────────────────┘
+One bar per component render. A child's bar sits inside its parent's bar:
 
-  Bar width = how long this render took (render phase only, not commit)
-  Bar color:
-    grey  = did not render this commit (skipped by memo)
-    green = rendered, fast (< 1ms)
-    yellow = rendered, slow
-    red    = rendered, very slow (> 16ms = misses 60fps frame)
+```txt
+┌─────────────────────────────────────────────────────────────┐
+│ App 3.2 ms                                                  │
+│ ┌───────────────┐ ┌───────────────────────────────────────┐ │
+│ │ Header 0.1 ms │ │ Main 3.0 ms                           │ │
+│ └───────────────┘ │ ┌────────────────┐ ┌────────────────┐ │ │
+│                   │ │ Sidebar 0.2 ms │ │ Content 2.7 ms │ │ │
+│                   │ └────────────────┘ └────────────────┘ │ │
+│                   └───────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+Bar width is how long that render took — the render phase only, not the
+commit. Bar colour tells you the rest:
+
+- **grey** — did not render in this commit, skipped by memo.
+- **green** — rendered, fast: under 1 ms.
+- **yellow** — rendered, slow.
+- **red** — rendered, very slow: over 16 ms, which misses a frame at 60 fps.
 
 **Workflow for finding unnecessary re-renders:**
 
 1. Record a profiler session while reproducing the slow interaction
-2. Look for grey bars (memoized components that did re-render in a previous commit but were skipped this time — these are working correctly) and yellow/red bars
+2. Look for grey bars and for yellow or red bars. A grey bar is a memoized component that was skipped this commit — that one is working correctly.
 3. Click a yellow/red bar → "Why did this render?" panel shows the reason
 4. "Why did this render?" tells you which prop or state changed
 
@@ -402,12 +407,13 @@ This tells you `onSelect` is a new function reference on every render — the ex
 
 ### Commit vs render timing
 
-The Profiler measures the **render phase** (calling component functions). It does NOT include:
-- Commit phase (applying DOM mutations)
-- `useEffect` execution time
-- Browser paint time
+The Profiler measures the **render phase** — the calls to component functions. Three things are not in that measurement:
 
-A component can be fast in the Profiler but still cause slow paint (if it generates many DOM mutations in the commit phase) or slow perceived performance (if its `useEffect` does heavy work). Use Chrome DevTools Performance tab to measure total frame time including commit and paint.
+- the commit phase, meaning the DOM mutations being applied;
+- `useEffect` execution time;
+- browser paint time.
+
+A component can look fast in the Profiler and still feel slow. Two reasons: it generates many DOM mutations in the commit phase, or its `useEffect` does heavy work. Use the Chrome DevTools Performance tab to measure the whole frame, including commit and paint.
 
 ### The Profiler API for production measurements
 
@@ -475,13 +481,35 @@ Before adding `useMemo`, verify with `console.time` that the computation is actu
 No. `React.memo` only prevents re-renders caused by **prop changes**. It does not prevent re-renders caused by: the component's own `useState`/`useReducer` changes, Context changes (the component consumes a context that updated), or `forceUpdate`. Memo only guards the prop-to-render path.
 
 **"What is the difference between React.memo and useMemo?"**
-`React.memo` wraps a **component** and skips re-rendering it when props are the same. `useMemo` wraps a **computation inside a component** and caches its result between renders. They solve different problems: `React.memo` reduces how often a component function is called; `useMemo` reduces how expensive one render is.
+They solve different problems: one skips a whole render, the other skips one calculation.
+
+| | `React.memo` | `useMemo` |
+|---|---|---|
+| Wraps | a component | a computation inside a component |
+| Skips | the whole re-render when props match | recomputing when dependencies match |
+| Reduces | how often the component function runs | how expensive one render is |
 
 **"Is virtualization always faster than rendering all items?"**
-Not always. Virtualization adds overhead: absolute positioning, scroll event listeners, dynamic height calculations. For lists under ~100 items, regular rendering with a stable key prop is usually faster. Virtualization becomes beneficial when: the list is very long (500+ items), each item is non-trivial to render, and the user scrolls frequently.
+Not always. Virtualization adds overhead: absolute positioning, scroll event listeners, dynamic height calculations. For lists under ~100 items, regular rendering with a stable key prop is usually faster. Virtualization becomes worth it when all three hold:
+
+| Condition | Threshold |
+|---|---|
+| The list is long | 500+ items |
+| Each item is non-trivial to render | more than one line of text |
+| The user scrolls a lot | scrolling is the main action |
 
 **"Can you profile performance in production?"**
-The React DevTools Profiler only works in development (production builds strip profiling code for performance). To profile in production: use the `<Profiler>` component API with custom `onRender` callbacks that send data to your analytics service, or use the `react-dom/profiling` build (an opt-in production build that includes profiling support but has slightly higher runtime cost).
+The React DevTools Profiler only works in development, because production builds strip the profiling code out. Two options remain:
+
+- The `<Profiler>` component API with your own `onRender` callback, sending the numbers to your analytics service.
+- The `react-dom/profiling` build — an opt-in production build that keeps profiling support, at a slightly higher runtime cost.
 
 **"What causes the most re-renders in a typical React app?"**
-In order of frequency in real codebases: (1) Context value objects created inline in JSX (`value={{ user, setUser }}`) — causes all consumers to re-render on every Provider render; (2) inline callbacks passed to memoized children; (3) parent components re-rendering due to unrelated state changes; (4) missing `key` props causing React to remount instead of update. The Profiler's "Why did this render?" panel identifies all of these.
+Four causes, in order of how often they show up in real codebases:
+
+1. Context value objects created inline in JSX — JavaScript XML, the HTML-like syntax React components are written in. A `value={{ user, setUser }}` re-renders every consumer on every Provider render.
+2. Inline callbacks passed to memoized children.
+3. Parent components re-rendering because of unrelated state changes.
+4. Missing `key` props, which make React remount instead of update.
+
+The Profiler's "Why did this render?" panel identifies all four.
