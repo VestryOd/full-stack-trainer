@@ -2,11 +2,13 @@
 
 ## A filter is a document, not a query string
 
-MongoDB has no textual query language: the filter, the update and the projection are all BSON documents. One consequence often surprises people coming from SQL: a query is built like an ordinary object, so it is easy to assemble dynamically — and just as easy to assemble user input into it (`{ $ne: null }` instead of a string), which is why input must be validated.
+CRUD is the four basic operations on data: create, read, update and delete. In MongoDB there is no textual query language for them. The filter, the update and the projection are all BSON documents — BSON is the binary, typed form of JSON that MongoDB stores and sends.
+
+One consequence often surprises people coming from SQL — the text-based query language of relational databases. A query here is built like an ordinary object, so it is easy to assemble dynamically. It is just as easy to assemble user input into it. A client that sends `{ $ne: null }` where a string was expected gets a filter, not a value. That is why the input must be validated.
 
 ```js
-// The full set of read and write operations. Pluralization is the only
-// difference in call shape: One works on the first matching document.
+// The full set of read and write operations. The only difference in call
+// shape is the plural: One works on the first matching document.
 db.posts.insertOne({ title: "Indexes", authorId: userId })
 db.posts.insertMany([{ ... }, { ... }])
 
@@ -20,7 +22,7 @@ db.posts.replaceOne({ _id: id }, { title: "New", authorId: userId })
 db.posts.deleteOne({ _id: id })
 db.posts.deleteMany({ archived: true })
 
-// A separate family: atomically modify AND return the document
+// A separate family: atomically modify and return the document
 db.posts.findOneAndUpdate({ _id: id }, { $inc: { "stats.views": 1 } })
 db.posts.findOneAndDelete({ _id: id })
 db.posts.findOneAndReplace({ _id: id }, { ... })
@@ -32,13 +34,15 @@ What write operations return:
   updateOne   → { matchedCount, modifiedCount, upsertedId }
   deleteOne   → { acknowledged, deletedCount }
 
-matchedCount ≠ modifiedCount: the document was found but $set wrote the
-same value → matched 1, modified 0. Check exactly what you mean:
-"the document did not exist" is matchedCount === 0, not
+matchedCount ≠ modifiedCount: the document was found, but $set wrote
+the same value → matched 1, modified 0. So check exactly what you
+mean: "the document did not exist" is matchedCount === 0, not
 modifiedCount === 0.
 ```
 
 ## Query operators
+
+A filter is built from operators, and there are five families of them: equality, comparison, field presence and type, logical operators, and regular expressions.
 
 ```js
 // Equality needs no operator: {field: value} is an implicit $eq
@@ -52,8 +56,8 @@ db.posts.find({ status: { $ne: "draft" } })
 
 // Field presence and type — a direct consequence of having no rigid schema
 db.posts.find({ coverUrl: { $exists: false } })   // no such field at all
-db.posts.find({ coverUrl: null })                 // no field OR field is null
-db.posts.find({ publishedAt: { $type: "string" } })  // hunting for
+db.posts.find({ coverUrl: null })                 // no field or field is null
+db.posts.find({ publishedAt: { $type: "string" } })  // looking for
                                                      // "broken" documents
 
 // Logical operators
@@ -70,25 +74,28 @@ Two places where mistakes are easy:
 
 ```txt
 { coverUrl: null } ≠ { coverUrl: { $exists: false } }
-  null matches BOTH documents without the field AND documents whose
-  field is null. For a strict "field is missing": { $exists: false }.
-  For a strict "present and null": { coverUrl: { $type: "null" } }.
+  null matches documents without the field and documents whose
+  field is null — both cases. For a strict "field is missing":
+  { $exists: false }. For a strict "present and null":
+  { coverUrl: { $type: "null" } }.
 
-$regex uses an index ONLY when anchored at the start and not
-case-insensitive: /^mongodb-/ — yes, /^mongodb-/i and /indexes/ — no
-(see [Indexes and Query Performance]). A "contains substring" search
-over a large collection via $regex is a COLLSCAN; that needs a text
-index or Atlas Search.
+$regex uses an index only when it is anchored at the start and is
+not case-insensitive. So /^mongodb-/ can use one; /^mongodb-/i
+and /indexes/ cannot — see article 04 on indexes. A "contains
+substring" search over a large collection via $regex ends in a
+COLLSCAN: the plan name for a full collection scan, where the
+server reads every document. That case needs a text index or
+Atlas Search.
 ```
 
 ## Arrays: dot notation vs $elemMatch
 
-An array in a filter behaves differently from what someone with SQL experience expects. A condition on an array field is satisfied if AT LEAST ONE element matches it — and each condition is evaluated independently of the others.
+An array in a filter behaves differently from what someone with SQL experience expects. A condition on an array field is satisfied if **at least one** element matches it. And each condition is evaluated independently of the others.
 
 ```js
 // Array of scalars: a filter by value matches an element, not the array
 db.posts.find({ tags: "mongodb" })              // has that tag
-db.posts.find({ tags: ["mongodb", "perf"] })    // the array EQUALS exactly
+db.posts.find({ tags: ["mongodb", "perf"] })    // the array equals exactly
                                                 // this, same order
 db.posts.find({ tags: { $all: ["mongodb", "perf"] } })  // contains both
 db.posts.find({ tags: { $size: 3 } })           // exactly 3 elements
@@ -98,27 +105,28 @@ db.posts.find({ "tags.0": "mongodb" })          // the first element
 With an array of objects the classic interview trap begins:
 
 ```txt
-       Dot notation on an array checks conditions INDEPENDENTLY
-┌───────────────────────────────────────────────────────────────────┐
-│ a document in the posts collection:                               │
-│ { _id: 1, ratings: [ { userId: "a", score: 5 },                   │
-│                      { userId: "b", score: 2 } ] }                │
-├───────────────────────────────────────────────────────────────────┤
-│ { "ratings.score": { $gte: 4 } }                                  │
-│   → MATCH: at least one element has score >= 4                    │
-├───────────────────────────────────────────────────────────────────┤
-│ { "ratings.userId": "b", "ratings.score": { $gte: 4 } }           │
-│   → MATCH, and this is the trap: the conditions are met by        │
-│     DIFFERENT elements — userId by the second, score by the first │
-├───────────────────────────────────────────────────────────────────┤
-│ { ratings: { $elemMatch: { userId: "b", score: { $gte: 4 } } } }  │
-│   → NO MATCH: ONE element must satisfy both conditions            │
-│     (which is what people usually mean)                           │
-└───────────────────────────────────────────────────────────────────┘
-rule: two or more conditions on the same array element always need $elemMatch
+           Dot notation checks each condition separately
+┌──────────────────────────────────────────────────────────────────┐
+│ a document in the posts collection:                              │
+│ { _id: 1, ratings: [ { userId: "a", score: 5 },                  │
+│                      { userId: "b", score: 2 } ] }               │
+├──────────────────────────────────────────────────────────────────┤
+│ { "ratings.score": { $gte: 4 } }                                 │
+│   → match: at least one element has score >= 4                   │
+├──────────────────────────────────────────────────────────────────┤
+│ { "ratings.userId": "b", "ratings.score": { $gte: 4 } }          │
+│   → match, and this is the trap: the conditions are met          │
+│     by different elements: userId by the second element,         │
+│     score by the first                                           │
+├──────────────────────────────────────────────────────────────────┤
+│ { ratings: { $elemMatch: { userId: "b", score: { $gte: 4 } } } } │
+│   → no match: one single element must satisfy both               │
+│     conditions (which is what people usually mean)               │
+└──────────────────────────────────────────────────────────────────┘
+ rule: two or more conditions on one array element need $elemMatch
 ```
 
-The practical rule: one condition on an array — dot notation; two or more conditions that must hold for the SAME element — `$elemMatch`. The same operator is needed when there is one condition but it is compound:
+The practical rule has two halves. One condition on an array is dot notation. Two or more conditions that must hold for the **same** element need `$elemMatch`. The same operator is needed when there is one condition, but it is compound:
 
 ```js
 // A range on a single element: without $elemMatch this means "some
@@ -154,20 +162,20 @@ The second argument of `updateOne` is not a new document but a set of instructio
 { $pop:      { tags: 1 } }           // 1 — last, -1 — first
 ```
 
-The `$push` + `$slice` + `$sort` combination is the working answer to unbounded array growth: the document keeps only the last N elements (see [Schema Design: Embedding vs Referencing], the Subset pattern).
+The `$push` + `$slice` + `$sort` combination is the working answer to unbounded array growth. The document keeps only the last N elements. Article 03 on schema design calls this the Subset pattern.
 
 There are three positional operators for updating an element inside an array:
 
 ```js
-// $ — the FIRST element matched by the query filter
+// $ — the first element matched by the query filter
 db.posts.updateOne(
   { _id: postId, "comments._id": commentId },
   { $set: { "comments.$.body": "edited" } }
 )
-// requirement: the array field must appear in the FILTER, otherwise you
+// requirement: the array field must appear in the filter, otherwise you
 // get "The positional operator did not find the match"
 
-// $[] — ALL elements of the array
+// $[] — every element of the array
 db.posts.updateMany({}, { $set: { "comments.$[].moderated": false } })
 
 // $[ident] — every element matched by arrayFilters
@@ -178,30 +186,35 @@ db.posts.updateOne(
 )
 ```
 
-`$` updates only the first matched element — if three match, one is updated. That is another reason to give nested objects their own `_id`: an exact match instead of "the first similar one".
+`$` updates only the first matched element: if three match, one is updated. That is another reason to give nested objects their own `_id` — an exact match instead of "the first similar one".
 
 ## updateOne vs replaceOne
+
+`updateOne` changes the fields you name. `replaceOne` swaps the whole document for the one you pass, and everything you did not pass is gone.
 
 ```js
 // updateOne — a partial update: other fields are untouched
 db.posts.updateOne({ _id: id }, { $set: { title: "New" } })
 
-// replaceOne — the WHOLE document is replaced by the one passed (except _id)
+// replaceOne — the whole document is replaced by the one passed (except _id)
 db.posts.replaceOne({ _id: id }, { title: "New" })
-// → authorId, tags, stats, createdAt are GONE from the document
+// → authorId, tags, stats, createdAt are now gone from the document
 ```
 
 ```txt
-The classic bug: PUT /posts/:id that writes req.body through replaceOne
-(or through an update with no operators — drivers treat an
-operator-less document as a replace). The client sent { title }, and
-authorId and createdAt disappeared from the document. Later the post
-page breaks on a missing author, and the cause is looked for in the
-read path, not the write path.
+The classic bug: a PUT /posts/:id handler that writes req.body
+through replaceOne. An update with no operators does the same
+thing, because drivers treat an operator-less document as a
+replace. The client sent { title }, and authorId and createdAt
+disappeared from the document. Later the post page breaks on a
+missing author, and the cause is looked for in the read path, not
+the write path.
 
-Rule: REST PUT semantics ≠ replaceOne. Even for PUT, a $set over an
-explicit allowlist of fields is safer than replacing the document with
-the request body.
+Rule: the PUT semantics of REST — representational state
+transfer, the usual style for HTTP interfaces — are not
+replaceOne. Even for PUT, a $set over an explicit allowlist of
+fields is safer than replacing the document with the request
+body.
 ```
 
 ## upsert and its race condition
@@ -222,11 +235,11 @@ db.postStats.updateOne(
 // one — in a single round-trip, with no "find first, then decide"
 ```
 
-Note that only equalities make it into the new document: a filter like `{ views: { $gt: 5 } }` contributes nothing — comparison operators are ignored on insert.
+Note that only equalities make it into the new document. A filter like `{ views: { $gt: 5 } }` contributes nothing, because comparison operators are ignored on insert.
 
 ```txt
-Race condition. Upsert is NOT atomic as "check and insert" if there is
-no unique index:
+A race condition. Without a unique index, upsert is not atomic as
+"check, then insert":
 
   A: did not find { postId, day } → decides to insert
   B: did not find { postId, day } → decides to insert
@@ -235,14 +248,16 @@ no unique index:
 A unique index is the only real protection:
   db.postStats.createIndex({ postId: 1, day: 1 }, { unique: true })
 
-With it the second upsert gets a duplicate key error (E11000). That is
-an EXPECTED outcome, not a failure: the server itself retries a single
-upsert, and application code keeps the "catch E11000 → retry once"
-pattern (see [Mongoose Queries, populate, and Pitfalls] on mapping
-E11000 to an API error).
+With it, the second upsert gets a duplicate key error, code E11000.
+That is an expected outcome, not a failure. The server itself
+retries a single upsert, and application code keeps the "catch
+E11000 → retry once" pattern. Article 08 shows how to map E11000
+to an API error.
 ```
 
 ## Projections: read only what you need
+
+A projection is the third document in the call, and it lists which fields come back.
 
 ```js
 // Inclusion: _id is always returned unless excluded explicitly
@@ -251,7 +266,7 @@ db.posts.find({ authorId: userId }, { title: 1, slug: 1, _id: 0 })
 // Exclusion: everything except the listed fields
 db.users.find({}, { passwordHash: 0, tokens: 0 })
 
-// Inclusion and exclusion CANNOT be mixed (except for _id):
+// Inclusion and exclusion cannot be mixed (except for _id):
 db.posts.find({}, { title: 1, body: 0 })   // → error
 
 // Array projections
@@ -262,11 +277,13 @@ db.posts.find({ "comments.authorId": userId },
 db.posts.find({}, { comments: { $elemMatch: { score: { $gt: 10 } } } })
 ```
 
-A projection is not only about less traffic: if every field needed is present in the index, the query can be answered without touching the documents at all (a covered query, see [Indexes and Query Performance]). And the reverse — the habit of pulling the whole document in Mongoose also costs object hydration (see [Mongoose Queries, populate, and Pitfalls] on `lean()`).
+A projection is not only about less traffic. If every field needed is present in the index, the query can be answered without touching the documents at all. That is a covered query, and article 04 on indexes covers it.
+
+The reverse also holds. Pulling the whole document in Mongoose costs object hydration on top of the traffic. Article 08 covers that under `lean()`.
 
 ## Cursors and batching
 
-`find` does not return data — it returns a cursor. Documents arrive in batches: the first one with the query reply, the rest via `getMore`.
+`find` does not return data — it returns a cursor. Documents arrive in batches: the first batch with the query reply, the rest via `getMore`.
 
 ```txt
 find → the server prepares a cursor and returns the first batch
@@ -278,9 +295,9 @@ batch exhausted → getMore → next batch (up to 16 MB by default)
        ↓
 cursor exhausted → closed automatically
 
-An idle cursor lives for 10 minutes, then the server closes it
-("cursor id not found" in the logs usually means slow batch processing
-in the application, or a cursor that was never closed).
+An idle cursor lives for 10 minutes, then the server closes it.
+"cursor id not found" in the logs usually means slow batch
+processing in the application, or a cursor that was never closed.
 ```
 
 ```js
@@ -290,8 +307,9 @@ for await (const post of cursor) {
   await handle(post);         // documents arrive in batches, memory is flat
 }
 
-// toArray() materializes the ENTIRE result set into an array — on a large
-// collection that is an OOM. Acceptable only after an explicit limit.
+// toArray() materializes the entire result set into an array. On a large
+// collection that means running out of memory (an OOM kill). Acceptable
+// only after an explicit limit.
 const page = await db.collection("posts").find(f).limit(20).toArray();
 
 // batchSize controls the batch size — useful when processing a single
@@ -299,7 +317,7 @@ const page = await db.collection("posts").find(f).limit(20).toArray();
 db.collection("posts").find(f).batchSize(50);
 ```
 
-Pagination via `skip` looks convenient and degrades linearly: `skip(100000)` makes the server walk and throw away 100,000 documents. For an infinite feed the right tool is keyset pagination on `_id`, or on the (`sort` field, `_id`) pair — all the more so because sorting by `_id` nearly matches sorting by creation time (see [Document Model and Use Cases]).
+Pagination via `skip` looks convenient and degrades linearly: `skip(100000)` makes the server walk and throw away 100,000 documents. For an infinite feed the right tool is keyset pagination on `_id`, or on the (`sort` field, `_id`) pair. Sorting by `_id` nearly matches sorting by creation time anyway, as article 01 explains.
 
 ```js
 // instead of .skip(pageSize * n).limit(pageSize)
@@ -308,7 +326,7 @@ db.posts.find({ _id: { $lt: lastSeenId } }).sort({ _id: -1 }).limit(20)
 
 ## Single-document atomicity is the fundamental guarantee
 
-Any write operation on a SINGLE document is atomic: either all of its changes apply, or none do. That holds for several fields, nested objects and array elements at once — and requires no transaction.
+Any write operation on a **single** document is atomic: either all of its changes apply, or none do. That holds for several fields, nested objects and array elements at once, and it requires no transaction.
 
 ```js
 // One atomic step: three fields and an array element change together.
@@ -328,13 +346,13 @@ The boundaries of the guarantee must be stated precisely:
 
 ```txt
 Atomic:              one operation on one document
-NOT atomic:          updateMany over 100 documents — that is 100 separate
-                     atomic operations; a reader in between sees half of
-                     them updated
-NOT atomic:          two operations in a row in application code
+Not atomic:          updateMany over 100 documents — that is 100
+                     separate atomic operations; a reader in between
+                     sees half of them updated
+Not atomic:          two operations in a row in application code
                      (even on the same document)
-For everything else: multi-document transactions
-                     (see [Replication, Transactions, and Consistency])
+For everything else: multi-document transactions, see article 06 on
+                     replication and transactions
 ```
 
 Hence the main practical consequence: read-modify-write in application code is a race, and `findOneAndUpdate` is not.
@@ -353,10 +371,10 @@ Hence the main practical consequence: read-modify-write in application code is a
 │ 4    │                     │ update: views = 101 │
 └──────┴─────────────────────┴─────────────────────┘
 two increments, result is 101 instead of 102 — one is lost
-findOneAndUpdate({ _id }, { $inc: { views: 1 } }) — one atomic step: 102
+findOneAndUpdate({ _id }, { $inc: { views: 1 } }) — one step: 102
 ```
 
-`findOneAndUpdate` is an atomic read-modify-write: the server finds the document, applies the update and returns its version either before or after the change. That is exactly why it so often covers cases where SQL would reach for a transaction with `SELECT FOR UPDATE`.
+`findOneAndUpdate` is an atomic read-modify-write. The server finds the document, applies the update, and returns its version either before or after the change. That is exactly why it so often covers cases where SQL would reach for a transaction with `SELECT FOR UPDATE`.
 
 ```js
 // 1. An atomic counter that returns the new value
@@ -366,7 +384,7 @@ const post = await db.collection("posts").findOneAndUpdate(
   { returnDocument: "after" }        // "before" — the old version (default)
 );
 
-// 2. Compare-and-set: the condition lives in the FILTER, not in the code.
+// 2. Compare-and-set: the condition lives in the filter, not in the code.
 //    If the status changed in the meantime, no document is found — and
 //    that is the answer.
 const claimed = await db.collection("jobs").findOneAndUpdate(
@@ -392,7 +410,7 @@ const ok = await db.collection("accounts").findOneAndUpdate(
 if (!ok) throw new InsufficientFundsError();
 ```
 
-The general technique: move the check out of the code and into the query filter. Then the "apply or not" decision is made by the server at write time, not by the application from a stale copy of the document. Optimistic locking is the same technique with a version field; in Mongoose that is `__v` (see [Mongoose Queries, populate, and Pitfalls]).
+The general technique: move the check out of the code and into the query filter. Then the "apply or not" decision is made by the server at write time, not by the application from a stale copy of the document. Optimistic locking is the same technique with a version field; in Mongoose that field is `__v`, and article 08 covers it.
 
 Bulk operations of mixed shape are covered by `bulkWrite`, and its `ordered` flag is worth understanding:
 
@@ -411,28 +429,20 @@ await db.collection("posts").bulkWrite([
 
 ## Connection to other topics
 
-```txt
-[Document Model and Use Cases]    — why a filter is a document, BSON
-                                    types in queries, _id
-[Schema Design: Embedding vs      — $push/$slice against unbounded array
- Referencing]                       growth, _id on nested objects
-[Indexes and Query Performance]   — which filters can use an index,
-                                    covered queries, $regex and $ne
-[Aggregation Pipeline]            — when find filters are not enough:
-                                    grouping, computed fields, $lookup
-[Replication, Transactions, and   — what to do when single-document
- Consistency]                       atomicity is not enough; write concern
-[Mongoose Queries, populate,      — findOneAndUpdate in Mongoose,
- and Pitfalls]                      returnDocument, __v, E11000
-```
+- **01 — Document Model and Use Cases.** Why a filter is a document, BSON types in queries, `_id`.
+- **03 — Schema Design: Embedding vs Referencing.** `$push`/`$slice` against unbounded array growth, `_id` on nested objects.
+- **04 — Indexes and Query Performance.** Which filters can use an index, covered queries, `$regex` and `$ne`.
+- **05 — Aggregation Pipeline.** When `find` filters are not enough: grouping, computed fields, `$lookup`.
+- **06 — Replication, Transactions, and Consistency.** What to do when single-document atomicity is not enough; write concern.
+- **08 — Mongoose Queries, populate, and Pitfalls.** `findOneAndUpdate` in Mongoose, `returnDocument`, `__v`, `E11000`.
 
 ## Common interview traps
 
-- **"MongoDB has no atomicity"** — atomicity exists and it is fundamental: any operation on a SINGLE document is atomic, including changes to several fields and arrays. The false claim is a different one: that `updateMany` or two consecutive operations are atomic.
+- **"MongoDB has no atomicity"** — atomicity exists and it is fundamental. Any operation on a **single** document is atomic, including changes to several fields and arrays. The false claim is a different one: that `updateMany`, or two consecutive operations, are atomic.
 
-- **"`{ "ratings.userId": "b", "ratings.score": { $gte: 4 } }` finds an element matching both conditions"** — the conditions are checked independently and may be satisfied by different array elements. That needs `$elemMatch`.
+- **"`{ "ratings.userId": "b", "ratings.score": { $gte: 4 } }` finds an element matching both conditions"** — the conditions are checked independently, and different array elements may satisfy them. That needs `$elemMatch`.
 
-- **"`updateOne` without operators updates the fields passed"** — a document with no operators is treated as a replacement; missing fields disappear. A deliberate replacement is `replaceOne`.
+- **"`updateOne` without operators updates the fields passed"** — a document with no operators is treated as a replacement, and missing fields disappear. A deliberate replacement is `replaceOne`.
 
 - **"`upsert` protects against duplicates"** — without a unique index, two concurrent upserts insert two documents. The index protects; upsert only removes the "find first, then insert" round-trip.
 
@@ -444,4 +454,4 @@ await db.collection("posts").bulkWrite([
 
 - **"`toArray()` is the normal way to get results"** — on a large result set that loads the whole collection into process memory. The standard way is iterating the cursor; `toArray()` comes after a `limit`.
 
-- **"`skip`/`limit` is fine for pagination"** — `skip` gets linearly more expensive with the page number. Feeds need keyset pagination on `_id` or on the (`sort` field, `_id`) pair.
+- **"`skip`/`limit` is fine for pagination"** — `skip` gets linearly more expensive with the page number. Feeds need keyset pagination on `_id`, or on the (`sort` field, `_id`) pair.
