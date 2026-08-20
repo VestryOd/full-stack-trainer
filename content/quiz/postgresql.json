@@ -3,27 +3,27 @@
     "id": "postgresql-quiz-1",
     "topicId": "postgresql",
     "question": {
-      "en": "You run EXPLAIN on a query and see 'Seq Scan' with a high actual time but 'Index Scan' shows estimated time is lower. What does this typically indicate?\n```sql\nEXPLAIN ANALYZE SELECT * FROM users WHERE age > 25;\n```",
-      "ru": "Вы запускаете EXPLAIN на запросе и видите 'Seq Scan' с высоким фактическим временем, но 'Index Scan' показывает более низкое предполагаемое время. Что это обычно указывает?\n```sql\nEXPLAIN ANALYZE SELECT * FROM users WHERE age > 25;\n```"
+      "en": "A booking service stores appointment times for users in several countries. The column is declared `TIMESTAMP`. What breaks when the server's time zone setting is changed?\n```sql\nCREATE TABLE appointments (\n    id      BIGSERIAL PRIMARY KEY,\n    starts  TIMESTAMP NOT NULL   -- should this be TIMESTAMPTZ?\n);\n```",
+      "ru": "Сервис бронирования хранит время встреч и работает с людьми из разных стран. Столбец объявлен как `TIMESTAMP`. Что сломается, когда на сервере поменяют настройку часового пояса?\n```sql\nCREATE TABLE appointments (\n    id      BIGSERIAL PRIMARY KEY,\n    starts  TIMESTAMP NOT NULL   -- может, здесь нужен TIMESTAMPTZ?\n);\n```"
     },
     "options": {
       "en": [
-        "Statistics are outdated and the planner's cost estimates are inaccurate",
-        "The query planner made a wrong choice; the index should always be used",
-        "The index exists but is not being used because it violates MVCC rules",
-        "Sequential scans are always faster in PostgreSQL regardless of index availability"
+        "Stored values carry no zone at all, so the same number now means a different instant",
+        "Nothing breaks, because PostgreSQL normalises every TIMESTAMP column to UTC as it is written",
+        "Only the display shifts, because the stored instant itself is still perfectly correct",
+        "Every stored row is rewritten in the background to match the new server time zone"
       ],
       "ru": [
-        "Статистика устарела и оценки стоимости планировщика неточны",
-        "Планировщик запросов сделал неправильный выбор; индекс всегда должен использоваться",
-        "Индекс существует, но не используется, так как он нарушает правила MVCC",
-        "Последовательные сканирования всегда быстрее в PostgreSQL независимо от наличия индекса"
+        "Сохранённые значения вообще не несут зоны, поэтому то же число означает другой момент",
+        "Ничего не сломается: PostgreSQL приводит столбец TIMESTAMP к UTC ещё при записи значения",
+        "Изменится лишь отображение, ведь сам сохранённый момент времени остаётся полностью верным",
+        "Каждая сохранённая строка перепишется в фоне под новую настройку зоны сервера"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "A big gap between the estimate and the real execution time usually means one thing: the planner's statistics are stale. Those statistics come from ANALYZE. Running ANALYZE refreshes them, so the planner can compare costs on real numbers again. Neither MVCC (Multi-Version Concurrency Control) nor sequential scan speed explains the mismatch.",
-      "ru": "Большой разрыв между оценкой и реальным временем обычно значит одно: статистика планировщика устарела. Собирает её ANALYZE. Запустите ANALYZE, и она обновится, а планировщик снова будет сравнивать стоимости по настоящим числам. Ни MVCC (многоверсионность), ни скорость последовательного сканирования это расхождение не объясняют."
+      "en": "TIMESTAMP stores a wall-clock reading with no zone attached. Change the server or session zone and the same stored number is read against a different offset. TIMESTAMPTZ avoids that: it converts the input to UTC (Coordinated Universal Time) on write and back to the session zone on read. Both types take 8 bytes. PostgreSQL never rewrites stored rows when a zone setting changes.",
+      "ru": "TIMESTAMP хранит показания настенных часов без всякой зоны. Смените зону сервера или сессии, и то же сохранённое число прочитается с другим смещением. TIMESTAMPTZ так не ломается: при записи он переводит значение в UTC (всемирное координированное время), при чтении отдаёт в зоне сессии. Оба типа занимают 8 байт. Сохранённые строки PostgreSQL при смене зоны не перезаписывает."
     }
   },
   {
@@ -165,54 +165,54 @@
     "id": "postgresql-quiz-7",
     "topicId": "postgresql",
     "question": {
-      "en": "In PostgreSQL, which index type is best suited for range queries like `WHERE price BETWEEN 100 AND 500`?",
-      "ru": "В PostgreSQL какой тип индекса лучше всего подходит для диапазонных запросов типа `WHERE price BETWEEN 100 AND 500`?"
+      "en": "The `orders` table has exactly one composite index. Why is this query still slow?\n```sql\nCREATE INDEX idx_orders_user_status ON orders(user_id, status);\n\nSELECT * FROM orders WHERE status = 'paid';\n```",
+      "ru": "У таблицы `orders` есть ровно один составной индекс. Почему этот запрос всё равно медленный?\n```sql\nCREATE INDEX idx_orders_user_status ON orders(user_id, status);\n\nSELECT * FROM orders WHERE status = 'paid';\n```"
     },
     "options": {
       "en": [
-        "Hash index, because it distributes values uniformly",
-        "GiST index, because it's optimized for geometric data types",
-        "B-tree index, because it keeps keys in sorted order",
-        "BRIN index, because it uses block range indexing for large tables"
+        "The index needs REINDEX, because a composite index decays under heavy write traffic",
+        "The index cannot work until status is added to it through the INCLUDE clause",
+        "Keys are sorted by user_id first, so the paid rows are scattered across the index",
+        "A composite index answers only a query that names every one of its columns"
       ],
       "ru": [
-        "Hash индекс, потому что он равномерно распределяет значения",
-        "GiST индекс, потому что он оптимизирован для геометрических типов данных",
-        "B-tree индекс, потому что он хранит ключи в отсортированном порядке",
-        "BRIN индекс, потому что он использует индексирование блочного диапазона для больших таблиц"
+        "Индексу нужен REINDEX: составной индекс деградирует под большим потоком записи в таблицу",
+        "Индекс не заработает, пока status не добавят в него через конструкцию INCLUDE",
+        "Ключи отсортированы сначала по user_id, поэтому строки paid разбросаны по индексу",
+        "Составной индекс отвечает только на запрос, который называет все его столбцы"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "B-tree indexes keep their keys sorted, which is what makes them ideal for range queries and comparisons: BETWEEN, <, >, <=, >=. Hash indexes support equality checks only. GiST (generalized search tree) is built for specialized types such as geometry. BRIN (block range index) suits very large tables whose rows already lie in sequence, but it is less precise on ranges.",
-      "ru": "B-tree держит ключи отсортированными, и поэтому идеален для диапазонных запросов и сравнений: BETWEEN, <, >, <=, >=. Хеш-индексы поддерживают только равенство. GiST (обобщённое дерево поиска) сделан для специальных типов вроде геометрии. BRIN (индекс диапазона блоков) подходит очень большим таблицам, где строки уже лежат по порядку, но на диапазонах он менее точен."
+      "en": "A composite index on user_id and status sorts its keys by user_id first, then by status inside each user_id. Leave the left column unfixed and the paid rows sit in every user_id section. That is the Left Prefix Rule: the index helps for user_id, and for user_id with status, but not for status alone. Reading the whole index and filtering costs as much as a sequential scan.",
+      "ru": "Составной индекс по user_id и status сортирует ключи сначала по user_id, а внутри одного user_id — по status. Если левый столбец не зафиксирован, строки paid лежат в каждой секции user_id. Это правило левого префикса: индекс помогает для user_id и для пары user_id со status, но не для одного status. Прочитать весь индекс и отфильтровать не дешевле последовательного сканирования."
     }
   },
   {
     "id": "postgresql-quiz-8",
     "topicId": "postgresql",
     "question": {
-      "en": "What is the purpose of VACUUM in PostgreSQL, and why is it necessary?\n```sql\nVACUUM ANALYZE table_name;\n```",
-      "ru": "Какова цель VACUUM в PostgreSQL и почему он необходим?\n```sql\nVACUUM ANALYZE table_name;\n```"
+      "en": "Every column this query selects is stored in the index, yet `EXPLAIN` shows a plain `Index Scan` instead of an `Index Only Scan`. Which condition is missing?\n```sql\nCREATE INDEX idx_users_email_covering ON users(email) INCLUDE (id);\n\nSELECT id, email FROM users WHERE email = 'max@test.com';\n```",
+      "ru": "Все столбцы, которые выбирает запрос, лежат в индексе, но `EXPLAIN` показывает обычный `Index Scan` вместо `Index Only Scan`. Какого условия не хватает?\n```sql\nCREATE INDEX idx_users_email_covering ON users(email) INCLUDE (id);\n\nSELECT id, email FROM users WHERE email = 'max@test.com';\n```"
     },
     "options": {
       "en": [
-        "It locks the table exclusively to prevent concurrent access during cleanup",
-        "It encrypts the table data and removes unused columns from the schema",
-        "It defragments the disk and reorganizes all indexes into a single file",
-        "It reclaims storage space from deleted rows and updates table statistics"
+        "INCLUDE columns are never readable from the index, so the heap is always visited",
+        "An Index Only Scan needs the query to select the index key and nothing besides it",
+        "The index has to be declared UNIQUE before PostgreSQL will ever skip the heap",
+        "The heap pages are not marked all-visible, so visibility has to be checked there"
       ],
       "ru": [
-        "Он исключительно блокирует таблицу, чтобы предотвратить одновременный доступ во время очистки",
-        "Он шифрует данные таблицы и удаляет неиспользуемые столбцы из схемы",
-        "Он дефрагментирует диск и переорганизует все индексы в один файл",
-        "Он освобождает место от удалённых строк и обновляет статистику таблицы"
+        "Столбцы из INCLUDE в индексе не читаются, поэтому в кучу всё равно приходится ходить всегда",
+        "Index Only Scan требует, чтобы запрос выбирал только ключ индекса и ничего сверх него",
+        "Индекс должен быть объявлен UNIQUE, иначе PostgreSQL никогда не пропустит кучу",
+        "Страницы кучи не помечены как all-visible, поэтому видимость проверяют именно там"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "VACUUM removes the dead tuples that MVCC (Multi-Version Concurrency Control) leaves behind and reclaims their disk space. ANALYZE updates the optimizer statistics. Together they improve query performance and storage efficiency. A plain VACUUM needs no exclusive lock, unlike VACUUM FULL, and it neither encrypts data, nor drops columns, nor defragments the file system.",
-      "ru": "VACUUM удаляет мёртвые кортежи, которые оставляет после себя MVCC (многоверсионность), и освобождает занятое ими место на диске. ANALYZE обновляет статистику оптимизатора. Вместе они улучшают производительность запросов и эффективность хранения. Обычному VACUUM исключительная блокировка не нужна, в отличие от VACUUM FULL, и он не шифрует данные, не удаляет столбцы и не дефрагментирует диск."
+      "en": "An Index Only Scan needs two conditions at once. Every selected column must be in the index, as a key or inside INCLUDE. And the Visibility Map must mark the heap page all-visible, meaning every row there is visible to every transaction. VACUUM sets that mark. Under heavy writes fresh pages lack it, so PostgreSQL reads the heap to check MVCC (Multi-Version Concurrency Control) row versions.",
+      "ru": "Index Only Scan требует двух условий сразу. Каждый выбираемый столбец лежит в индексе — как ключ или внутри INCLUDE. И карта видимости помечает страницу кучи как all-visible: все строки на ней видны любой транзакции. Пометку ставит VACUUM. Под активной записью у свежих страниц её нет, поэтому PostgreSQL идёт в кучу за версиями строк MVCC (многоверсионность)."
     }
   },
   {
@@ -327,54 +327,54 @@
     "id": "postgresql-quiz-13",
     "topicId": "postgresql",
     "question": {
-      "en": "Which index type is best for queries using range operators like >= and BETWEEN on numeric columns?",
-      "ru": "Какой тип индекса лучше всего подходит для запросов, использующих операторы диапазона, такие как >= и BETWEEN, для числовых столбцов?"
+      "en": "The `accounts` table carries no `CHECK` constraint. This transaction drives a balance to -500 and commits. Which of the four ACID guarantees — atomicity, consistency, isolation, durability — did PostgreSQL violate?\n```sql\n-- balance is 200 before the statement runs\nBEGIN;\nUPDATE accounts SET balance = balance - 700 WHERE id = 1;\nCOMMIT;\n```",
+      "ru": "У таблицы `accounts` нет ограничения `CHECK`. Транзакция уводит баланс в -500 и фиксируется. Какую из четырёх гарантий ACID — атомарность, согласованность, изоляцию, долговечность — нарушил PostgreSQL?\n```sql\n-- до оператора баланс равен 200\nBEGIN;\nUPDATE accounts SET balance = balance - 700 WHERE id = 1;\nCOMMIT;\n```"
     },
     "options": {
       "en": [
-        "B-tree index, because it stores keys in sorted order",
-        "Hash index, because it groups similar values together",
-        "GiST index, because it supports all comparison operators",
-        "BRIN index, because it compresses numeric data"
+        "None of them, because consistency covers only the constraints you declared yourself",
+        "Consistency, because a negative balance is invalid data the database itself has to reject",
+        "Isolation, because another transaction could have read the balance during this update",
+        "Durability, because a value that breaks a business rule still reached the disk"
       ],
       "ru": [
-        "Индекс B-tree, потому что он хранит ключи в отсортированном порядке",
-        "Хеш-индекс, потому что он группирует похожие значения вместе",
-        "Индекс GiST, потому что он поддерживает все операторы сравнения",
-        "Индекс BRIN, потому что он сжимает числовые данные"
+        "Никакую: согласованность отвечает только за ограничения, объявленные вами самими",
+        "Согласованность: отрицательный баланс — это неверные данные, и база обязана их отбивать",
+        "Изоляцию: другая транзакция могла прочитать баланс прямо во время обновления",
+        "Долговечность: значение, ломающее бизнес-правило, всё равно доехало до диска"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "B-tree is the default index type and the most efficient one for ranges. It keeps keys sorted, so a range scan can skip the values that cannot match. Hash indexes support equality only. GiST (generalized search tree) is for complex types. BRIN (block range index) is for very large tables with sequential data. Even there it is not always faster than B-tree.",
-      "ru": "B-tree — индекс по умолчанию и самый эффективный для диапазонов. Он держит ключи отсортированными, поэтому сканирование диапазона пропускает значения, которые точно не подойдут. Хеш-индексы поддерживают только равенство. GiST (обобщённое дерево поиска) — для сложных типов. BRIN (индекс диапазона блоков) — для очень больших таблиц с последовательными данными. Даже там он не всегда быстрее B-tree."
+      "en": "Consistency in ACID (atomicity, consistency, isolation, durability) covers only the constraints declared in the database. It promises nothing about business sense. Nothing here forbade a negative balance, so there was no rule to break. Add CHECK (balance >= 0) and PostgreSQL refuses the statement instead. Atomicity held: the one statement applied whole.",
+      "ru": "Согласованность в ACID (атомарность, согласованность, изоляция, долговечность) отвечает только за ограничения, объявленные в базе. Про осмысленность данных для бизнеса она ничего не обещает. Отрицательный баланс здесь никто не запрещал, нарушать было нечего. Добавьте CHECK (balance >= 0), и PostgreSQL сам откажет оператору. Атомарность соблюдена: единственный оператор применился целиком."
     }
   },
   {
     "id": "postgresql-quiz-14",
     "topicId": "postgresql",
     "question": {
-      "en": "What does VACUUM do and why is it important for long-running PostgreSQL instances?",
-      "ru": "Что делает VACUUM и почему это важно для долгоживущих экземпляров PostgreSQL?"
+      "en": "Two transactions run at the same time and PostgreSQL rolls one back with `ERROR: deadlock detected`. Which change makes this deadlock impossible?\n```sql\n-- Transaction A\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE id = 2;\n\n-- Transaction B\nUPDATE accounts SET balance = balance -  50 WHERE id = 2;\nUPDATE accounts SET balance = balance +  50 WHERE id = 1;\n```",
+      "ru": "Две транзакции работают одновременно, и PostgreSQL откатывает одну с `ERROR: deadlock detected`. Какое изменение делает эту взаимную блокировку невозможной?\n```sql\n-- Транзакция A\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE id = 2;\n\n-- Транзакция B\nUPDATE accounts SET balance = balance -  50 WHERE id = 2;\nUPDATE accounts SET balance = balance +  50 WHERE id = 1;\n```"
     },
     "options": {
       "en": [
-        "It deletes all rows marked as NULL and compresses the database file",
-        "It removes dead tuples left by MVCC and reclaims their disk space",
-        "It rebuilds all indexes to make them faster, similar to REINDEX",
-        "It flushes the buffer cache to free up RAM and improve memory efficiency"
+        "Raise deadlock_timeout, so PostgreSQL waits longer and the transactions untangle",
+        "Have both transactions touch the rows in the same order, first id 1 and then id 2",
+        "Wrap each UPDATE in its own savepoint, so the failing statement rolls back alone",
+        "Run both transactions at SERIALIZABLE, which catches the conflict before it starts"
       ],
       "ru": [
-        "Он удаляет все строки, отмеченные как NULL, и сжимает файл базы данных",
-        "Он удаляет мёртвые кортежи, оставленные MVCC, и освобождает занятое ими место",
-        "Он перестраивает все индексы, чтобы сделать их быстрее, аналогично REINDEX",
-        "Он очищает кэш буфера, чтобы освободить ОЗУ и улучшить эффективность памяти"
+        "Поднять deadlock_timeout: PostgreSQL подождёт дольше, и транзакции сами разойдутся",
+        "Обновлять строки в обеих транзакциях в одном порядке: сначала id 1, а потом id 2",
+        "Обернуть каждый UPDATE в отдельную точку сохранения, чтобы падал лишь один оператор",
+        "Перевести обе транзакции на SERIALIZABLE: он поймает конфликт до его появления"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "VACUUM reclaims the space of dead tuples, and it is critical against transaction id wraparound, a catastrophic event. In modern PostgreSQL the autovacuum daemon runs it for you. The other options confuse VACUUM with other operations. Rows holding NULL are not deleted in any special way. Rebuilding indexes is the job of REINDEX. And the buffer cache is not managed by VACUUM.",
-      "ru": "VACUUM освобождает место, занятое мёртвыми кортежами, и критически важен против переполнения счётчика транзакций — катастрофического события. В современном PostgreSQL за вас его запускает демон autovacuum. Остальные варианты путают VACUUM с другими операциями. Строки со значением NULL никак особенно не удаляются. Перестройка индексов — работа REINDEX. А буферным кэшем VACUUM не управляет."
+      "en": "A deadlock is a circular wait: A holds row 1 and wants row 2, while B holds row 2 and wants row 1. Break the circle by locking rows in one agreed order everywhere. If both transactions update id 1 first, the second simply waits for the first and no cycle forms. Raising deadlock_timeout only delays detection. A savepoint does not release a lock already held.",
+      "ru": "Взаимная блокировка — это круговое ожидание: A держит строку 1 и хочет строку 2, а B держит строку 2 и хочет строку 1. Круг разрывает единый порядок: все блокируют строки одинаково. Если обе сначала обновят id 1, вторая просто дождётся первой, и цикла не будет. Рост deadlock_timeout лишь откладывает обнаружение. Точка сохранения уже взятую блокировку не отпускает."
     }
   },
   {
@@ -408,27 +408,27 @@
     "id": "postgresql-quiz-16",
     "topicId": "postgresql",
     "question": {
-      "en": "Consider the following query execution:\n```sql\nSELECT * FROM orders WHERE user_id = 5 AND created_at > '2024-01-01';\n```\nYou run EXPLAIN and see that PostgreSQL performs a Sequential Scan despite having indexes on both user_id and created_at. What is the most likely reason?",
-      "ru": "Рассмотрите следующий запрос:\n```sql\nSELECT * FROM orders WHERE user_id = 5 AND created_at > '2024-01-01';\n```\nВы запускаете EXPLAIN и видите, что PostgreSQL выполняет Sequential Scan, несмотря на индексы на user_id и created_at. Какова наиболее вероятная причина?"
+      "en": "About 5% of orders sit in the `pending` status, and the partial index below already exists. One of the two queries cannot use it. Which one, and why?\n```sql\nCREATE INDEX idx_orders_pending ON orders(created_at) WHERE status = 'pending';\n\n-- Query 1\nSELECT * FROM orders WHERE status = 'pending' AND created_at > '2024-01-01';\n-- Query 2\nSELECT * FROM orders WHERE created_at > '2024-01-01';\n```",
+      "ru": "Примерно 5% заказов имеют статус `pending`, а частичный индекс ниже уже создан. Один из двух запросов им воспользоваться не может. Какой и почему?\n```sql\nCREATE INDEX idx_orders_pending ON orders(created_at) WHERE status = 'pending';\n\n-- Запрос 1\nSELECT * FROM orders WHERE status = 'pending' AND created_at > '2024-01-01';\n-- Запрос 2\nSELECT * FROM orders WHERE created_at > '2024-01-01';\n```"
     },
     "options": {
       "en": [
-        "PostgreSQL does not support composite indexes on multiple columns",
-        "The indexes are B-tree indexes and cannot be used with OR conditions",
-        "The statistics are outdated and need to be refreshed with ANALYZE",
-        "The table is small enough that a sequential scan is cheaper"
+        "Query 1, because a partial index cannot combine with a range on created_at",
+        "Neither one, since a partial index saves space but the planner never chooses it",
+        "Query 1, because the index key is created_at while the query filters status first",
+        "Query 2, because its condition does not imply the index predicate on status"
       ],
       "ru": [
-        "PostgreSQL не поддерживает составные индексы на несколько столбцов",
-        "Индексы являются B-tree индексами и не могут использоваться с условиями OR",
-        "Статистика устарела и её нужно обновить с помощью ANALYZE",
-        "Таблица достаточно маленькая, и последовательное сканирование дешевле"
+        "Запрос 1: частичный индекс не сочетается с диапазонным условием по created_at",
+        "Ни один: частичный индекс экономит место, но планировщик его не выбирает",
+        "Запрос 1: ключ индекса — created_at, а запрос фильтрует сначала по полю status",
+        "Запрос 2: его условие никак не подразумевает предикат индекса по полю status"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "The planner compares costs before it picks a plan. On a small table, reading every row is often cheaper than walking two indexes and paying for the random reads that follow. The other options are misconceptions. A condition on two columns does not prevent index use, statistics are usually current under a normal workload, and PostgreSQL fully supports composite indexes.",
-      "ru": "Планировщик сравнивает стоимости, прежде чем выбрать план. На маленькой таблице прочитать все строки часто дешевле, чем обойти два индекса и заплатить за следующие за ними случайные чтения. Остальные варианты — заблуждения. Условие по двум столбцам использованию индекса не мешает, статистика при обычной нагрузке обычно актуальна, а составные индексы PostgreSQL поддерживает полностью."
+      "en": "A partial index holds entries only for the rows that satisfy its own condition. The planner can use it only when the query condition implies that predicate. Query 1 asks for status = 'pending', which matches, so the index is used. Query 2 says nothing about status, so it may need rows the index never stored. The payoff is size: at 5% of the rows it is about twenty times smaller.",
+      "ru": "Частичный индекс хранит записи только для строк, которые проходят его условие. Планировщик берёт его лишь тогда, когда условие запроса подразумевает этот предикат. Запрос 1 просит status = 'pending', предикат совпал, индекс работает. Запрос 2 про status не говорит ничего, значит, ему нужны и строки, которых в индексе нет. Выигрыш в размере: на 5% строк индекс в двадцать раз меньше."
     }
   },
   {
@@ -489,27 +489,27 @@
     "id": "postgresql-quiz-19",
     "topicId": "postgresql",
     "question": {
-      "en": "What is the primary purpose of VACUUM in PostgreSQL?",
-      "ru": "Какова основная цель VACUUM в PostgreSQL?"
+      "en": "You need the queries that consume the most **total** time on a production server, without running `EXPLAIN ANALYZE` by hand on each one. Which setup gives you that?",
+      "ru": "Нужны запросы, которые съедают больше всего **суммарного** времени на боевом сервере, и гонять `EXPLAIN ANALYZE` руками на каждом не хочется. Что для этого настраивают?"
     },
     "options": {
       "en": [
-        "To rebuild all indexes to improve query performance",
-        "To compress table data and reduce memory usage",
-        "To reclaim disk space taken by deleted and updated rows",
-        "To remove all NULL values from columns to optimize storage"
+        "Run EXPLAIN (ANALYZE, BUFFERS) on every endpoint and compare the timings by hand",
+        "Query pg_stat_activity, which keeps a running total per query text since startup",
+        "Load pg_stat_statements through shared_preload_libraries, then enable it per database",
+        "Set log_min_duration_statement to 0, which writes the plan of every query into the server log"
       ],
       "ru": [
-        "Перестроить все индексы для повышения производительности запросов",
-        "Сжать данные таблицы и снизить использование памяти",
-        "Освободить дисковое пространство, занятое удалёнными и обновлёнными строками",
-        "Удалить все значения NULL из столбцов для оптимизации хранилища"
+        "Прогнать EXPLAIN (ANALYZE, BUFFERS) по всем ручкам и сравнить полученные времена вручную",
+        "Смотреть pg_stat_activity: он ведёт суммарное время по каждому тексту запроса",
+        "Подключить pg_stat_statements через shared_preload_libraries и включить его в базе",
+        "Выставить log_min_duration_statement в 0: в лог попадёт план каждого запроса"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "VACUUM removes dead tuples: old row versions left by DELETE and UPDATE, because MVCC (Multi-Version Concurrency Control) never overwrites a row in place. It also updates the visibility maps. That matters against transaction id wraparound, a catastrophe if the 32-bit counter hits its maximum. VACUUM does not rebuild indexes (REINDEX does), compress data, or remove NULLs. VACUUM FULL is harsher, but it locks the table.",
-      "ru": "VACUUM удаляет мёртвые кортежи — старые версии строк после DELETE и UPDATE, ведь MVCC (многоверсионность) не перезаписывает строку на месте. Ещё он обновляет карты видимости. Это защита от переполнения счётчика транзакций: 32-битный счётчик дошёл до максимума — катастрофа. VACUUM не перестраивает индексы (это REINDEX), не сжимает данные и не удаляет NULL. VACUUM FULL жёстче, но блокирует таблицу."
+      "en": "The pg_stat_statements extension accumulates totals for every query the server runs: calls, total execution time and mean execution time. That is how expensive queries are found in production without checking each one by hand. It claims shared memory, so it takes two steps: add it to shared_preload_libraries and restart, then enable it in the database.",
+      "ru": "Расширение pg_stat_statements накапливает итоги по каждому запросу сервера: число вызовов, суммарное и среднее время выполнения. Так дорогие запросы и находят в бою, не разбирая каждый руками. Оно забирает общую память, поэтому шагов два: добавить его в shared_preload_libraries и перезапустить сервер, затем включить в нужной базе."
     }
   },
   {
@@ -543,54 +543,54 @@
     "id": "postgresql-quiz-21",
     "topicId": "postgresql",
     "question": {
-      "en": "PostgreSQL is doing a full table scan on a table with millions of rows. Which index type would be **least** useful for filtering on a range of numeric values?\n\nConsider: B-tree, Hash, GiST, BRIN",
-      "ru": "PostgreSQL выполняет полное сканирование таблицы с миллионами строк. Какой тип индекса будет **наименее** полезен для фильтрации по диапазону числовых значений?\n\nРассмотрите: B-tree, Hash, GiST, BRIN"
+      "en": "A counter column is updated thousands of times per second, and the table carries six indexes. What has to be true for PostgreSQL to do this as a HOT (Heap-Only Tuple) update and leave all six indexes untouched?\n```sql\nALTER TABLE page_views SET (fillfactor = 70);\n\nUPDATE page_views SET hits = hits + 1 WHERE id = 42;\n```",
+      "ru": "Столбец-счётчик обновляют тысячи раз в секунду, а на таблице шесть индексов. Что должно быть верно, чтобы PostgreSQL сделал это обновлением HOT (Heap-Only Tuple) и не тронул ни один из шести индексов?\n```sql\nALTER TABLE page_views SET (fillfactor = 70);\n\nUPDATE page_views SET hits = hits + 1 WHERE id = 42;\n```"
     },
     "options": {
       "en": [
-        "Hash index — it supports only equality comparisons",
-        "B-tree index — it is too slow for large datasets",
-        "GiST index — it cannot be used with numeric data types",
-        "BRIN index — it requires sequential access patterns"
+        "The hits column appears in no index, and the new version fits on the same page",
+        "The new value is the same width as the old one, so the row is rewritten in place",
+        "The update runs at the REPEATABLE READ level, which reuses the existing tuple",
+        "Autovacuum passed over that page just before and cleared its dead index entries"
       ],
       "ru": [
-        "Hash индекс — он поддерживает только сравнение на равенство",
-        "B-tree индекс — он слишком медленный для больших наборов данных",
-        "GiST индекс — он не может использоваться с числовыми типами данных",
-        "BRIN индекс — он требует последовательного доступа к данным"
+        "Столбец hits не входит ни в один индекс, а новая версия влезает на ту же страницу",
+        "Новое значение той же ширины, что старое, поэтому строка перезаписывается на месте",
+        "Обновление идёт на уровне REPEATABLE READ, который переиспользует уже готовый кортеж",
+        "По странице только что прошёл autovacuum и убрал мёртвые записи из индексов"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Hash indexes support the equality operator (=) only, which makes them unsuitable for range queries such as < or BETWEEN. B-tree is in fact the standard choice for ranges over numeric columns. GiST (generalized search tree) and BRIN (block range index) can both work with numeric data, each with its own trade-offs.",
-      "ru": "Хеш-индексы поддерживают только оператор равенства (=), и поэтому не годятся для диапазонных запросов вроде < или BETWEEN. B-tree, наоборот, стандартный выбор для диапазонов по числовым столбцам. GiST (generalized search tree, обобщённое дерево поиска) и BRIN (block range index, индекс диапазона блоков) с числовыми данными работать умеют оба, каждый со своими компромиссами."
+      "en": "A HOT (Heap-Only Tuple) update needs both conditions together. No index may reference the updated column, and the new version must fit on the same heap page as the old one. PostgreSQL then links the two versions inside that page and leaves the indexes alone. They still point at the old row, and a read walks the chain forward. That is why fillfactor = 70 helps.",
+      "ru": "Обновление HOT (Heap-Only Tuple, кортеж только в куче) требует двух условий сразу. Обновляемый столбец не входит ни в один индекс, а новая версия влезает на ту же страницу кучи. Тогда PostgreSQL связывает обе версии внутри страницы и индексы не трогает. Они по-прежнему указывают на старую строку, а чтение идёт по цепочке вперёд. Поэтому fillfactor = 70 и помогает."
     }
   },
   {
     "id": "postgresql-quiz-22",
     "topicId": "postgresql",
     "question": {
-      "en": "What does the MVCC (Multi-Version Concurrency Control) mechanism in PostgreSQL primarily allow?",
-      "ru": "Что в первую очередь позволяет делать механизм MVCC (многоверсионный контроль параллелизма) в PostgreSQL?"
+      "en": "An event-log table takes a very high write rate, so the team sets `synchronous_commit = off` for it. What exactly is being traded away?",
+      "ru": "Таблица журнала событий принимает очень плотный поток записи, и для неё выставили `synchronous_commit = off`. Чем именно за это платят?"
     },
     "options": {
       "en": [
-        "Multiple transactions to hold locks on the same row simultaneously",
-        "Each transaction to see a consistent snapshot of the database at the moment it started",
-        "Automatic rollback of conflicting transactions without user intervention",
-        "Elimination of the need for transaction isolation levels"
+        "Nothing measurable, because PostgreSQL still calls fsync before it confirms the commit",
+        "A few hundred milliseconds of already committed transactions can be lost in a crash",
+        "Atomicity, because a crash can leave one transaction half applied inside the table",
+        "Rows can reach the table out of order, so the log timestamps stop being reliable"
       ],
       "ru": [
-        "Нескольким транзакциям одновременно удерживать блокировки на одной строке",
-        "Каждой транзакции видеть согласованный снимок базы данных на момент её начала",
-        "Автоматический откат конфликтующих транзакций без вмешательства пользователя",
-        "Исключение необходимости в уровнях изоляции транзакций"
+        "Ничем заметным: PostgreSQL всё равно вызывает fsync до подтверждения фиксации",
+        "Сбой может унести последние несколько сотен миллисекунд зафиксированных транзакций",
+        "Атомарностью: после сбоя одна транзакция может остаться применённой лишь наполовину",
+        "Строки могут попадать в таблицу не по порядку, и метки времени станут неверными"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "MVCC (Multi-Version Concurrency Control) lets every transaction see its own consistent view of the database, because the database keeps several versions of each row. That is what enables non-blocking reads and better concurrency. Lock-free reading is the key benefit here. MVCC does not prevent locks, and it does not remove the need for isolation levels, which still exist and still matter.",
-      "ru": "MVCC (Multi-Version Concurrency Control, многоверсионность) даёт каждой транзакции свой согласованный вид базы данных, потому что база хранит несколько версий каждой строки. Именно это обеспечивает неблокирующее чтение и лучший параллелизм. Ключевое преимущество здесь — чтение без блокировок. MVCC не предотвращает блокировки и не отменяет уровни изоляции: они по-прежнему существуют и важны."
+      "en": "With synchronous_commit = off the server confirms the commit before the write-ahead log reaches the disk. A crash can then lose the last few hundred milliseconds of transactions already reported as committed. What it cannot do is corrupt anything: the lost transactions look exactly as if they had been rolled back cleanly.",
+      "ru": "При synchronous_commit = off сервер подтверждает фиксацию до того, как журнал упреждающей записи доедет до диска. Сбой тогда унесёт последние несколько сотен миллисекунд транзакций, которые уже отчитались как зафиксированные. Испортить данные это не может: потерянные транзакции выглядят ровно как честно откатанные."
     }
   },
   {

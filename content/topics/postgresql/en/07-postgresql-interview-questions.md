@@ -72,7 +72,7 @@ EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE id = 1;
 - **A — atomicity.** Implemented through the WAL (Write-Ahead Log — the journal written before the data file). Either every operation of the transaction lands in the heap on `COMMIT`, or the WAL is used to undo them all. The undo path covers both `ROLLBACK` and crash recovery. The primitives are `BEGIN`, `COMMIT` and `ROLLBACK`.
 - **C — consistency.** PostgreSQL enforces constraints at `COMMIT` time: `NOT NULL`, `CHECK`, `FOREIGN KEY`, `UNIQUE`. Business consistency, such as "this balance may never go negative", holds only if you wrote it down as `CHECK (balance >= 0)`.
 - **I — isolation.** Implemented through MVCC snapshots. MVCC is Multi-Version Concurrency Control. Three levels are usable: `READ COMMITTED`, `REPEATABLE READ` and `SERIALIZABLE`. The first takes a snapshot per statement, the second one snapshot per transaction. `SERIALIZABLE` adds SSI (Serializable Snapshot Isolation), which tracks dependencies between transactions.
-- **D — durability.** The WAL is flushed with `fsync` before the `COMMIT` is confirmed to the client. Setting `synchronous_commit = on` guarantees durability. Setting it to `off` is faster, but a crash can then lose roughly 200 ms of data.
+- **D — durability.** The WAL is flushed with `fsync` before the `COMMIT` is confirmed to the client. Setting `synchronous_commit = on` guarantees durability. Setting it to `off` is faster, but a crash can then lose up to 600 ms of data. The documented window is three times `wal_writer_delay`, which defaults to 200 ms.
 
 ```sql
 -- SAVEPOINT: a partial rollback point inside one transaction

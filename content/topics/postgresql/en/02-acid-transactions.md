@@ -111,7 +111,7 @@ Three settings change this guarantee:
 | Setting | What it does | Risk |
 |---|---|---|
 | `synchronous_commit = on` | The standard. `fsync()` finishes before the `COMMIT` is confirmed. | None. Durability is guaranteed. |
-| `synchronous_commit = off` | Confirms the `COMMIT` **before** `fsync()`. Faster. | A crash can lose roughly 200 ms of data. |
+| `synchronous_commit = off` | Confirms the `COMMIT` **before** `fsync()`. Faster. | A crash can lose up to 600 ms of data: three times `wal_writer_delay`. |
 | `fsync = off` | Removes the durability guarantee completely. | Very dangerous. Only for bulk loads you can replay. |
 
 ## Deadlock — how it occurs and how PostgreSQL detects it
