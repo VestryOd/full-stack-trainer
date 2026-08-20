@@ -43,8 +43,8 @@ export default async function ArticlePage({ params }: Props) {
 
   // Pre-render both locales on the server
   const [htmlEn, htmlRu] = await Promise.all([
-    articleEn ? renderArticleHtml(articleEn.content) : Promise.resolve(null),
-    articleRu ? renderArticleHtml(articleRu.content) : Promise.resolve(null),
+    articleEn ? renderArticleHtml(articleEn.content, params.topicId) : Promise.resolve(null),
+    articleRu ? renderArticleHtml(articleRu.content, params.topicId) : Promise.resolve(null),
   ]);
 
   // Navigation slugs
