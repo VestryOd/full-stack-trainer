@@ -49,7 +49,7 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "This demonstrates closure: the inner function captures the variable x from the outer function's scope at the time of creation, not at execution time. Even though a new variable x with value 20 is declared later in the global scope, inner still references the x from outer's scope (value 10). The closure maintains its reference to the original lexical environment.",
+      "en": "This demonstrates closure: the inner function captures `x` from the outer function's scope at the time it was created, not when it runs.\n\nA new global `x` with value 20 is declared later, but `inner` still reads the `x` from `outer` — value 10. The closure holds its reference to the original lexical environment.",
       "ru": "Это демонстрирует замыкание: функция inner захватывает переменную x из области видимости функции outer в момент создания, а не в момент выполнения. Несмотря на то, что позже в глобальной области видимости объявлена новая переменная x со значением 20, inner все еще ссылается на x из области видимости outer (значение 10). Замыкание сохраняет ссылку на исходную лексическую среду."
     }
   },
@@ -68,16 +68,16 @@
         "All async operations are queued as macrotasks regardless of whether they're Promises or timers"
       ],
       "ru": [
-        "Макротаски (setTimeout) выполняются перед микротасками (Promise.then), так как они приоритизируются циклом событий",
-        "Микротаски и макротаски выполняются в порядке, в котором они были добавлены в очередь, без разницы в приоритете",
-        "Микротаски (Promise.then) выполняются перед макротасками (setTimeout), и оба обрабатываются после очистки стека вызовов",
-        "Все асинхронные операции ставятся в очередь как макротаски независимо от того, Promise это или таймер"
+        "Макрозадачи (setTimeout) идут перед микрозадачами (Promise.then), потому что цикл событий даёт им приоритет",
+        "Микрозадачи и макрозадачи выполняются в порядке добавления в очередь, без разницы в приоритете",
+        "Микрозадачи (Promise.then) идут перед макрозадачами (setTimeout), обе — после очистки стека",
+        "Все асинхронные операции ставятся в очередь как макрозадачи, будь это Promise или таймер"
       ]
     },
     "correctIndex": 2,
     "explanation": {
       "en": "The event loop processes the call stack first, then all microtasks (Promise.then, queueMicrotask), and only then moves to macrotasks (setTimeout, setInterval). This is crucial for understanding async behavior in JavaScript—promises resolve before setTimeout callbacks execute, even if setTimeout has 0 delay.",
-      "ru": "Цикл событий сначала обрабатывает стек вызовов, затем все микротаски (Promise.then, queueMicrotask), и только потом переходит к макротаскам (setTimeout, setInterval). Это критически важно для понимания асинхронного поведения в JavaScript—промисы разрешаются раньше, чем выполняются обработчики setTimeout, даже если setTimeout имеет задержку 0."
+      "ru": "Цикл событий сначала обрабатывает стек вызовов, затем все микрозадачи (Promise.then, queueMicrotask), и только потом переходит к макрозадачам (setTimeout, setInterval). Промис разрешается раньше, чем сработает обработчик setTimeout, даже если задержка нулевая."
     }
   },
   {
@@ -131,7 +131,7 @@
     "correctIndex": 0,
     "explanation": {
       "en": "The expression evaluates left to right: \"5\" + 3 uses string concatenation (+ operator prefers string coercion), resulting in \"53\" (a string). Then \"53\" - 2 uses numeric coercion for the minus operator, converting \"53\" to 53 and subtracting 2 to get 51 as a number. The minus operator always coerces to numbers, unlike plus which coerces to strings when one operand is a string.",
-      "ru": "Выражение вычисляется слева направо: \"5\" + 3 использует конкатенацию строк (оператор + предпочитает преобразование в строку), результатом является \"53\" (строка). Затем \"53\" - 2 использует числовое преобразование для оператора минус, преобразуя \"53\" в 53 и вычитая 2 для получения 51 в виде числа. Оператор минус всегда преобразует в числа, в отличие от плюса, который преобразует в строки, если один из операндов является строкой."
+      "ru": "Выражение вычисляется слева направо. `\"5\" + 3` — это конкатенация: оператор `+` предпочитает приведение к строке, поэтому получается `\"53\"`.\n\nДальше `\"53\" - 2` идёт по числовому пути: минус приводит `\"53\"` к 53 и вычитает 2, давая число 51.\n\nЕсли бы операнд не приводился, вышло бы NaN — not a number. Минус всегда приводит к числу — в отличие от плюса, который уходит в строку, если хотя бы один операнд строка. Именно поэтому `\"5\" - 3` равно 2, а `\"5\" + 3` равно `\"53\"`."
     }
   },
   {
@@ -157,8 +157,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Once a function is bound with bind(), its this context is permanently fixed and cannot be changed by call() or apply(). The boundFn is bound to { value: 100 }, so even though call() tries to set this to { value: 200 }, the bound context takes precedence and returns 100.",
-      "ru": "После использования bind(), контекст this функции фиксируется и не может быть изменён с помощью call() или apply(). boundFn привязана к объекту { value: 100 }, поэтому несмотря на попытку call() установить this на { value: 200 }, привязанный контекст имеет приоритет и возвращает 100."
+      "en": "Once a function is bound with `bind()`, its `this` is fixed for good. Neither `call()` nor `apply()` can change it afterwards.\n\n`boundFn` is bound to `{ value: 100 }`. The `call()` here tries to set `this` to `{ value: 200 }`, the bound context wins, and the result is 100.",
+      "ru": "После `bind()` контекст `this` у функции зафиксирован навсегда. Ни `call()`, ни `apply()` его потом не меняют.\n\n`boundFn` привязана к `{ value: 100 }`. Здесь `call()` пытается выставить `this` в `{ value: 200 }`, но привязанный контекст сильнее, и возвращается 100."
     }
   },
   {
@@ -192,27 +192,27 @@
     "id": "javascript-quiz-8",
     "topicId": "javascript",
     "question": {
-      "en": "Which statement correctly describes what happens when you use the spread operator on a string in ES6+?",
-      "ru": "Какое утверждение правильно описывает, что происходит при использовании оператора распространения на строку в ES6+?"
+      "en": "What does the spread operator do to a string?\n\n```js\nconst s = 'a😀b';\nconsole.log([...s]);\n```",
+      "ru": "Что оператор spread делает со строкой?\n\n```js\nconst s = 'a😀b';\nconsole.log([...s]);\n```"
     },
     "options": {
       "en": [
-        "It converts the string to an array of individual characters, including surrogate pairs as single characters",
-        "It returns the string unchanged because strings are immutable",
-        "It throws a TypeError because spread operator only works with arrays",
-        "It converts the string to an array of individual characters, treating surrogate pairs as individual code units"
+        "It splits the string into 16-bit code units, so the emoji becomes two entries",
+        "It returns the string unchanged, because strings are immutable",
+        "It throws a TypeError, because spread only works with arrays",
+        "It splits the string by code points, so the emoji stays one entry"
       ],
       "ru": [
-        "Он преобразует строку в массив отдельных символов, включая суррогатные пары как одиночные символы",
-        "Он возвращает строку без изменений, потому что строки неизменяемы",
-        "Он выбрасывает ошибку TypeError, потому что оператор spread работает только с массивами",
-        "Он преобразует строку в массив отдельных символов, рассматривая суррогатные пары как отдельные кодовые единицы"
+        "Разбивает строку на 16-битные кодовые единицы, и эмодзи станет двумя элементами",
+        "Возвращает строку без изменений, потому что строки неизменяемы",
+        "Бросает TypeError, потому что spread работает только с массивами",
+        "Разбивает строку по кодовым точкам, и эмодзи остаётся одним элементом"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "The spread operator iterates using the string's iterator, which splits the string by UTF-16 code units, not Unicode characters. This means emoji and other characters outside the Basic Multilingual Plane may be split across multiple array elements. The option claiming surrogate pairs are kept as single characters incorrectly suggests proper Unicode handling; the option saying the string is returned unchanged ignores that spread creates an array; the option predicting a TypeError is wrong because spread works on any iterable.",
-      "ru": "Оператор распространения использует итератор строки, который разбивает строку по кодовым единицам UTF-16, а не по символам Unicode. Это означает, что emoji и другие символы вне Основной многоязычной плоскости могут быть разделены на несколько элементов массива. Вариант, где суррогатные пары остаются одиночными символами, неправильно предполагает правильную обработку Unicode; вариант, где строка возвращается без изменений, игнорирует, что spread создаёт массив; вариант с TypeError неверен, потому что spread работает с любым итерируемым объектом."
+      "en": "Spread uses the string iterator, and that iterator walks code points — not UTF-16 code units, where UTF is the Unicode transformation format. So `[...'a😀b']` is `['a', '😀', 'b']`, three entries.\n\nThe same string through `split('')` gives four. That one cuts by code unit, so it splits the emoji into its two surrogate halves. And `'a😀b'.length` is 4 for the same reason: `.length` counts code units.\n\nThat makes spread the safe way to count or reverse a string that may hold emoji, and `split('')` the unsafe one.",
+      "ru": "Spread использует итератор строки, а он обходит кодовые точки, а не кодовые единицы UTF-16 (Unicode transformation format). Поэтому `[...'a😀b']` — это `['a', '😀', 'b']`, три элемента.\n\nТа же строка через `split('')` даёт четыре. Он режет по кодовым единицам и разбивает эмодзи на две суррогатные половины. И `'a😀b'.length` равна 4 по той же причине: `.length` считает кодовые единицы.\n\nПоэтому считать или переворачивать строку с эмодзи безопасно через spread, а через `split('')` — нет."
     }
   },
   {
@@ -224,13 +224,13 @@
     },
     "options": {
       "en": [
-        "The prototype chain searches upward through object inheritance, while the scope chain searches through lexical environments where the code was written",
+        "The prototype chain follows object inheritance; the scope chain follows lexical nesting",
         "The scope chain only applies to var/let/const variables, while the prototype chain applies to object properties and methods",
         "Both chains search in the same way; they just apply to different data types",
         "The scope chain uses === comparison while the prototype chain uses == comparison"
       ],
       "ru": [
-        "Цепь прототипов ищет вверх через наследование объектов, в то время как цепь области видимости ищет в лексических окружениях, где был написан код",
+        "Цепь прототипов идёт по наследованию объектов, цепь области видимости — по лексической вложенности",
         "Цепь области видимости применяется только к переменным var/let/const, в то время как цепь прототипов применяется к свойствам и методам объектов",
         "Обе цепи ищут одинаково; они просто применяются к разным типам данных",
         "Цепь области видимости использует сравнение ===, а цепь прототипов использует сравнение =="
@@ -238,8 +238,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The scope chain resolves variable/identifier lookups based on where code is lexically written (lexical scoping), moving outward through parent scopes. The prototype chain resolves property lookups by traversing the [[Prototype]] link of objects at runtime. The option restricting the scope chain to var/let/const variables conflates different concepts; the option claiming both chains search in the same way ignores their fundamental differences; the option about === versus == is about equality operators, not lookup mechanisms.",
-      "ru": "Цепь области видимости разрешает поиск переменных/идентификаторов на основе того, где код лексически написан (лексическое связывание), движась наружу через родительские области. Цепь прототипов разрешает поиск свойств путём обхода связи [[Prototype]] объектов во время выполнения. Вариант, ограничивающий цепь области видимости переменными var/let/const, путает разные концепции; вариант, утверждающий, что обе цепи ищут одинаково, игнорирует их фундаментальные различия; вариант про === и == относится к операторам равенства, а не к механизмам поиска."
+      "en": "The scope chain resolves identifiers by where the code is written. It moves outward through the parent scopes that enclosed the function lexically.\n\nThe prototype chain resolves property lookups by following the `[[Prototype]]` link of objects at runtime.\n\nWhy the other answers are wrong:\n\n- Restricting the scope chain to `var`/`let`/`const` conflates the two mechanisms. Function parameters and imports live there too.\n- Saying both chains search the same way ignores what they search: one walks scopes, the other walks objects.\n- The answer about `===` versus `==` describes equality operators, which have nothing to do with lookup.",
+      "ru": "Цепь области видимости разрешает идентификаторы по тому, где написан код. Она идёт наружу по родительским областям, лексически объемлющим функцию.\n\nЦепь прототипов разрешает поиск свойств, идя по связи `[[Prototype]]` объектов во время выполнения.\n\nПочему остальные ответы неверны:\n\n- Ограничение цепи области видимости переменными `var`/`let`/`const` смешивает два механизма. Параметры функции и импорты тоже живут там.\n- Утверждение, что обе цепи ищут одинаково, игнорирует, что именно они ищут: одна обходит области, другая — объекты.\n- Ответ про `===` и `==` описывает операторы равенства, которые к поиску отношения не имеют."
     }
   },
   {
@@ -301,7 +301,7 @@
     "topicId": "javascript",
     "question": {
       "en": "Consider the event loop behavior with microtasks and macrotasks. What order will be logged?\n```js\nconsole.log('start');\nPromise.resolve().then(() => console.log('promise'));\nsetTimeout(() => console.log('timeout'), 0);\nconsole.log('end');\n```",
-      "ru": "Рассмотрим поведение цикла событий с микротасками и макротасками. В каком порядке будет выведено?\n```js\nconsole.log('start');\nPromise.resolve().then(() => console.log('promise'));\nsetTimeout(() => console.log('timeout'), 0);\nconsole.log('end');\n```"
+      "ru": "Рассмотрим поведение цикла событий с микрозадачами и макрозадачами. В каком порядке будет выведено?\n```js\nconsole.log('start');\nPromise.resolve().then(() => console.log('promise'));\nsetTimeout(() => console.log('timeout'), 0);\nconsole.log('end');\n```"
     },
     "options": {
       "en": [
@@ -320,7 +320,7 @@
     "correctIndex": 3,
     "explanation": {
       "en": "Synchronous code (start, end) executes first. Then the microtask queue (Promise callback) executes before the next macrotask. setTimeout is a macrotask that executes last. This order demonstrates the event loop priority: call stack → microtasks → macrotasks. Understanding this is critical for async behavior prediction.",
-      "ru": "Синхронный код (start, end) выполняется первым. Затем очередь микротасок (обратный вызов Promise) выполняется перед следующей макротаской. setTimeout является макротаской, которая выполняется последней. Этот порядок демонстрирует приоритет цикла событий: стек вызовов → микротаски → макротаски."
+      "ru": "Синхронный код (start, end) выполняется первым. Затем очередь микрозадач (обработчик Promise) выполняется перед следующей макрозадачей. setTimeout — макрозадача, она идёт последней. Это и есть приоритет цикла событий: стек вызовов → микрозадачи → макрозадачи."
     }
   },
   {
@@ -332,16 +332,16 @@
     },
     "options": {
       "en": [
-        "Arrow functions inherit `this` from their enclosing lexical context and cannot be rebound",
-        "Arrow functions have their own `this` binding that can be changed with .call() or .apply()",
-        "Regular functions always have `this` bound to the global object",
-        "Both arrow and regular functions have identical `this` binding behavior in all contexts"
+        "Arrow functions inherit this from their enclosing lexical context and cannot be rebound",
+        "Arrow functions have their own this binding that can be changed with .call() or .apply()",
+        "Regular functions always have this bound to the global object",
+        "Both arrow and regular functions have identical this binding behavior in all contexts"
       ],
       "ru": [
-        "Стрелочные функции наследуют `this` из окружающего лексического контекста и не могут быть переподключены",
-        "Стрелочные функции имеют собственную привязку `this`, которую можно изменить с помощью .call() или .apply()",
-        "Обычные функции всегда имеют `this`, привязанный к глобальному объекту",
-        "Стрелочные и обычные функции имеют одинаковое поведение `this` во всех контекстах"
+        "Стрелочные функции наследуют this из окружающего лексического контекста и не могут быть переподключены",
+        "Стрелочные функции имеют собственную привязку this, которую можно изменить с помощью .call() или .apply()",
+        "Обычные функции всегда имеют this, привязанный к глобальному объекту",
+        "Стрелочные и обычные функции имеют одинаковое поведение this во всех контекстах"
       ]
     },
     "correctIndex": 0,
@@ -400,8 +400,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "`Object.freeze` works one level deep. It locks the own properties of the object you pass and nothing below them. `config.db` points to a separate object that was never frozen, so the write to `config.db.host` goes through and prints 10.0.0.1. `Object.isFrozen(config)` is true, while `Object.isFrozen(config.db)` is false.\n\nWhy the other answers are wrong:\n\n- The answer that keeps `localhost` assumes the freeze walks the whole object tree. It does not.\n- The answer where both checks are true repeats that mistake. `isFrozen` reports only on the object it is given.\n- No `TypeError` appears, because the code never writes to a frozen property. Such a write throws only in strict mode. In non-strict code it fails silently.\n\nTo lock a whole tree, walk it yourself and freeze every nested object.",
-      "ru": "`Object.freeze` работает на один уровень. Он запирает собственные свойства того объекта, который вы передали, и ничего глубже. `config.db` — отдельный объект, его никто не замораживал, поэтому запись в `config.db.host` проходит и печатается 10.0.0.1. `Object.isFrozen(config)` даёт true, а `Object.isFrozen(config.db)` — false.\n\nПочему остальные ответы неверны:\n\n- Ответ, где остаётся `localhost`, предполагает, что заморозка идёт по всему дереву объектов. Это не так.\n- Ответ, где обе проверки дают true, повторяет ту же ошибку. `isFrozen` отвечает только про тот объект, который ему передали.\n- `TypeError` не появится: код ни разу не пишет в замороженное свойство. Такая запись бросает ошибку только в строгом режиме, а в нестрогом молча ничего не делает.\n\nЧтобы запереть всё дерево, обойдите его сами и заморозьте каждый вложенный объект."
+      "en": "`Object.freeze` works one level deep. It locks the own properties of the object you pass, and nothing below them.\n\n`config.db` points to a separate object that was never frozen. The write to `config.db.host` therefore goes through and prints 10.0.0.1. Note that `Object.isFrozen(config)` is true while `Object.isFrozen(config.db)` is false.\n\nWhy the other answers are wrong:\n\n- The answer that keeps `localhost` assumes the freeze walks the whole object tree. It does not.\n- The answer where both checks are true repeats that mistake. `isFrozen` reports only on the object it is given.\n- No `TypeError` appears, because the code never writes to a frozen property. Such a write throws only in strict mode; in non-strict code it fails silently.\n\nTo lock a whole tree, walk it yourself and freeze every nested object.",
+      "ru": "`Object.freeze` работает на один уровень. Он запирает собственные свойства того объекта, который вы передали, и ничего глубже.\n\n`config.db` — отдельный объект, его никто не замораживал, поэтому запись в `config.db.host` проходит и печатается 10.0.0.1. `Object.isFrozen(config)` даёт true, а `Object.isFrozen(config.db)` — false.\n\nПочему остальные ответы неверны:\n\n- Ответ, где остаётся `localhost`, предполагает, что заморозка идёт по всему дереву объектов. Это не так.\n- Ответ, где обе проверки дают true, повторяет ту же ошибку. `isFrozen` отвечает только про тот объект, который ему передали.\n- `TypeError` не появится: код ни разу не пишет в замороженное свойство. Такая запись бросает ошибку только в строгом режиме, а в нестрогом молча ничего не делает.\n\nЧтобы запереть всё дерево, обойдите его сами и заморозьте каждый вложенный объект."
     }
   },
   {
@@ -455,7 +455,7 @@
     "correctIndex": 0,
     "explanation": {
       "en": "The finally() method in Promise chains is specifically designed to execute code after both success and failure paths, ensuring cleanup always runs. The try/catch option has no guarantee if an error occurs after the try block. The Promise.resolve(fetch(url)).then(cleanup) option executes cleanup on resolution only. The plain await fetch(url); cleanup(); option will never reach cleanup if fetch throws.",
-      "ru": "Метод finally() в цепочках Promise специально разработан для выполнения кода после успешного и неудачного выполнения, гарантируя выполнение очистки. Вариант с try/catch не гарантирует выполнение, если ошибка произойдет после блока try. Вариант с Promise.resolve(fetch(url)).then(cleanup) выполняет cleanup только при разрешении. Вариант с обычным await fetch(url); cleanup(); никогда не достигнет cleanup если fetch выбросит ошибку."
+      "ru": "`finally()` в цепочке промисов сделан ровно для этого: он выполняется и после успеха, и после ошибки, поэтому очистка гарантирована.\n\nПочему остальные ответы неверны:\n\n- Вариант с `try`/`catch` не гарантирует очистку, если ошибка случится после блока `try`.\n- `Promise.resolve(fetch(url)).then(cleanup)` вызовет `cleanup` только при успешном разрешении.\n- В варианте с `await fetch(url); cleanup();` до `cleanup()` дело не дойдёт, если `fetch` бросит ошибку."
     }
   },
   {
@@ -508,8 +508,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "JavaScript uses own-first property lookup: the engine checks the object's own properties immediately, and only traverses the prototype chain if the property is not found. This is fundamental to prototype-based inheritance and performance optimization. The option that always searches the prototype chain first reverses the order. The option that skips the constructor function is incorrect because the constructor is part of lookup. The option about hasOwnProperty returning true for inherited properties is false—hasOwnProperty only returns true for non-inherited properties.",
-      "ru": "JavaScript использует поиск 'собственный первый': движок сначала проверяет собственные свойства объекта и только потом обходит цепочку прототипов, если свойство не найдено. Это фундаментально для наследования на основе прототипов и оптимизации производительности. Вариант, где поиск всегда начинается с цепочки прототипов, инвертирует порядок. Вариант, где поиск пропускает функцию конструктора, неправ, так как конструктор является частью поиска. Вариант про hasOwnProperty для унаследованных свойств неверен — hasOwnProperty возвращает true только для неунаследованных свойств."
+      "en": "JavaScript looks at own properties first. The engine checks the object's own properties immediately, and walks the prototype chain only when the property is not there.\n\nWhy the other answers are wrong:\n\n- Searching the prototype chain first reverses the order, and would make shadowing impossible.\n- Skipping the constructor function is wrong: its `prototype` object is a link in the chain.\n- `hasOwnProperty` returns true only for own properties. That is the whole point of the method.",
+      "ru": "JavaScript сначала смотрит собственные свойства. Движок сразу проверяет свойства самого объекта и обходит цепочку прототипов только тогда, когда там ничего нет.\n\nПочему остальные ответы неверны:\n\n- Начинать с цепочки прототипов — это перевёрнутый порядок, при нём было бы невозможно перекрытие свойств.\n- Пропустить функцию-конструктор нельзя: её объект `prototype` — звено той же цепочки.\n- `hasOwnProperty` даёт true только для собственных свойств. В этом и весь смысл метода."
     }
   },
   {
@@ -535,8 +535,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "The Proxy's get trap intercepts property access. When accessing proxy.x, the trap checks if 'x' exists in the target object (it does), so it returns target.x which is 1. When accessing proxy.y, the 'in' operator returns false since y is not in the object, so it returns the string 'NOT_FOUND'. Proxies are ES6+ features that allow custom behavior for object operations.",
-      "ru": "Ловушка get прокси перехватывает доступ к свойствам. При обращении к proxy.x ловушка проверяет, существует ли 'x' в целевом объекте (существует), поэтому она возвращает target.x, что равно 1. При обращении к proxy.y оператор 'in' возвращает false, так как y нет в объекте, поэтому возвращается строка 'NOT_FOUND'. Прокси — это функция ES6+, которая позволяет настраивать поведение операций с объектами."
+      "en": "The proxy's `get` trap intercepts property access.\n\nOn `proxy.x` the trap asks whether `'x'` is in the target object. It is, so the trap returns `target.x`, which is 1. On `proxy.y` the `in` check is false, so the trap returns the string `'NOT_FOUND'`.\n\nProxies arrived in ES6 — ECMAScript 2015 — and let you define custom behaviour for the basic operations on an object.",
+      "ru": "Ловушка `get` у прокси перехватывает доступ к свойствам.\n\nНа `proxy.x` ловушка спрашивает, есть ли `'x'` в целевом объекте. Есть — и она возвращает `target.x`, то есть 1. На `proxy.y` проверка `in` даёт false, и ловушка возвращает строку `'NOT_FOUND'`.\n\nПрокси появились в ES6 — ECMAScript 2015 — и позволяют задать своё поведение для базовых операций с объектом."
     }
   },
   {
@@ -548,13 +548,13 @@
     },
     "options": {
       "en": [
-        "The inner function forms a closure and retains access to the count variable across multiple calls",
+        "The inner function closes over count and keeps it between calls",
         "Each call to counter() creates a new count variable, so count resets to 0 each time",
         "The count variable is stored in the global scope and shared between all counter calls",
         "The inner function loses its reference to count after the outer function returns"
       ],
       "ru": [
-        "Внутренняя функция создаёт замыкание и сохраняет доступ к переменной count при множественных вызовах",
+        "Внутренняя функция замыкает count и хранит его между вызовами",
         "Каждый вызов counter() создаёт новую переменную count, поэтому count сбрасывается на 0 каждый раз",
         "Переменная count хранится в глобальной области видимости и используется всеми вызовами counter",
         "Внутренняя функция теряет ссылку на count после возврата из внешней функции"
@@ -670,7 +670,7 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "A labelled `break` leaves the loop that carries the label, not just the loop it sits in. `outer:` labels the outer `for...of`, so `break outer` stops both loops as soon as `value` is 4. The first row counts two values, the second row counts one more and then breaks, so `seen` is 3.\n\nWhy the other answers are wrong:\n\n- The answer 5 treats `break outer` as a plain `break`. Then the inner loop would end, the outer one would move on to [5, 6] and add two more.\n- The answer 4 puts `seen++` before the check, but the `if` is the first statement in the body.\n- There is no syntax error. A label in front of a loop is valid JavaScript, and `continue outer` is allowed too: it jumps to the next iteration of the labelled loop.",
+      "en": "A labelled `break` leaves the loop that carries the label, not just the loop it sits in. Here `outer:` labels the outer `for...of`, so `break outer` stops both loops as soon as `value` is 4.\n\nThe first row counts two values, the second row counts one more and then breaks, so `seen` is 3.\n\nWhy the other answers are wrong:\n\n- The answer 5 treats `break outer` as a plain `break`. Then the inner loop would end, the outer one would move on to [5, 6] and add two more.\n- The answer 4 puts `seen++` before the check, but the `if` is the first statement in the body.\n- There is no syntax error. A label in front of a loop is valid, and `continue outer` is allowed too — it jumps to the next iteration of the labelled loop.",
       "ru": "`break` с меткой выходит из того цикла, на котором стоит метка, а не только из того, внутри которого он написан. Метка `outer:` относится к внешнему `for...of`, поэтому `break outer` останавливает оба цикла, как только `value` равно 4. В первой строке посчитаны два значения, во второй — ещё одно, дальше выход. Значит, `seen` равно 3.\n\nПочему остальные ответы неверны:\n\n- Ответ 5 считает `break outer` обычным `break`: тогда внутренний цикл закончится, внешний перейдёт к [5, 6] и добавит ещё два.\n- Ответ 4 ставит `seen++` перед проверкой, но первым в теле идёт `if`.\n- Синтаксической ошибки нет. Метка перед циклом — обычный JavaScript, и `continue outer` тоже разрешён: он переходит к следующей итерации помеченного цикла."
     }
   },
@@ -678,27 +678,27 @@
     "id": "javascript-quiz-28",
     "topicId": "javascript",
     "question": {
-      "en": "Which statement accurately describes what happens when a Promise is rejected without a catch handler?\n",
-      "ru": "Какое утверждение точно описывает, что происходит при отклонении Promise без обработчика catch?"
+      "en": "A Promise is rejected and no `catch` handler is ever attached. What happens?",
+      "ru": "Promise отклонён, и обработчик `catch` к нему так и не привязали. Что произойдёт?"
     },
     "options": {
       "en": [
-        "The error is silently ignored and execution continues",
-        "An UnhandledPromiseRejectionWarning is emitted, but execution continues",
-        "The entire program terminates immediately",
-        "The rejection is queued for the next microtask cycle"
+        "Nothing — the rejection is swallowed and the program carries on",
+        "Node exits with code 1; the browser fires an event and continues",
+        "Both Node and the browser stop at the line that rejected",
+        "The rejection waits in the microtask queue until a handler appears"
       ],
       "ru": [
-        "Ошибка молча игнорируется и выполнение продолжается",
-        "Выпускается UnhandledPromiseRejectionWarning, но выполнение продолжается",
-        "Вся программа немедленно завершается",
-        "Отклонение ставится в очередь на следующий цикл микротасков"
+        "Ничего — отклонение проглатывается, и программа идёт дальше",
+        "Node выходит с кодом 1; браузер выпускает событие и продолжает",
+        "И Node, и браузер останавливаются на строке с отклонением",
+        "Отклонение ждёт в очереди микрозадач, пока не появится обработчик"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "In Node.js and modern browsers, an unhandled Promise rejection emits a warning or error event but does not stop program execution. The rejection is detected asynchronously after the current event loop cycle, allowing time to attach a handler.",
-      "ru": "В Node.js и современных браузерах необработанное отклонение Promise выпускает предупреждение или событие ошибки, но не останавливает выполнение программы. Отклонение обнаруживается асинхронно после текущего цикла событий, что дает время для добавления обработчика."
+      "en": "Since Node 15 the default is `--unhandled-rejections=throw`. The rejection becomes an uncaught exception and the process exits with code 1. Older Node only printed `UnhandledPromiseRejectionWarning` and kept running, which is where the myth comes from.\n\nA browser behaves the other way: it fires `unhandledrejection` on `window`, logs to the console, and the page keeps running.\n\nTiming matters. A `catch` attached in the same microtask turn still counts and Node exits 0. One attached inside a later `setTimeout` is too late — the check runs at the microtask checkpoint, not at the end of the program.",
+      "ru": "С Node 15 по умолчанию действует `--unhandled-rejections=throw`. Отклонение становится необработанным исключением, и процесс выходит с кодом 1. Старые версии Node только печатали `UnhandledPromiseRejectionWarning` и продолжали работу — отсюда и миф.\n\nБраузер ведёт себя иначе: выпускает `unhandledrejection` на `window`, пишет в консоль, и страница продолжает жить.\n\nМомент важен. `catch`, привязанный в том же обороте микрозадач, ещё считается, и Node выходит с нулём. Привязанный внутри более позднего `setTimeout` — уже поздно: проверка идёт на чекпоинте микрозадач, а не в конце программы."
     }
   },
   {
@@ -724,16 +724,16 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Each call to outer() creates a new closure with its own count variable. counter1 and counter2 maintain separate count values. counter1() increments its closure's count to 1, then to 2. counter2() is a separate closure, so its count increments to 1.",
-      "ru": "Каждый вызов outer() создает новое замыкание со своей переменной count. counter1 и counter2 имеют отдельные значения count. counter1() увеличивает count в своем замыкании до 1, затем до 2. counter2() — это отдельное замыкание, поэтому его count увеличивается до 1."
+      "en": "Each call to `outer()` creates a new closure with its own `count`.\n\n`counter1` and `counter2` therefore hold separate counters. The first raises its own `count` to 1 and then to 2. The second starts from its own zero and reaches 1.",
+      "ru": "Каждый вызов `outer()` создаёт новое замыкание со своей переменной `count`.\n\nПоэтому у `counter1` и `counter2` счётчики отдельные. `counter1()` поднимает свой `count` до 1, потом до 2, а `counter2()` стартует со своего нуля и доходит до 1."
     }
   },
   {
     "id": "javascript-quiz-30",
     "topicId": "javascript",
     "question": {
-      "en": "Consider this ES6 class inheritance scenario. What is logged?\n```js\nclass Animal {\n  constructor(name) {\n    this.name = name;\n  }\n}\nclass Dog extends Animal {\n  constructor(name, breed) {\n    super(name);\n    this.breed = breed;\n  }\n}\nconst dog = new Dog('Rex', 'Labrador');\nconsole.log(dog instanceof Dog, dog instanceof Animal, dog instanceof Object);\n```",
-      "ru": "Рассмотрим этот сценарий наследования класса ES6. Что выводится?\n```js\nclass Animal {\n  constructor(name) {\n    this.name = name;\n  }\n}\nclass Dog extends Animal {\n  constructor(name, breed) {\n    super(name);\n    this.breed = breed;\n  }\n}\nconst dog = new Dog('Rex', 'Labrador');\nconsole.log(dog instanceof Dog, dog instanceof Animal, dog instanceof Object);\n```"
+      "en": "Consider this class inheritance, using the ES6 (ECMAScript 2015) syntax. What is logged?\n```js\nclass Animal {\n  constructor(name) {\n    this.name = name;\n  }\n}\nclass Dog extends Animal {\n  constructor(name, breed) {\n    super(name);\n    this.breed = breed;\n  }\n}\nconst dog = new Dog('Rex', 'Labrador');\nconsole.log(dog instanceof Dog, dog instanceof Animal, dog instanceof Object);\n```",
+      "ru": "Рассмотрим наследование классов на синтаксисе ES6 (ECMAScript 2015). Что выводится?\n```js\nclass Animal {\n  constructor(name) {\n    this.name = name;\n  }\n}\nclass Dog extends Animal {\n  constructor(name, breed) {\n    super(name);\n    this.breed = breed;\n  }\n}\nconst dog = new Dog('Rex', 'Labrador');\nconsole.log(dog instanceof Dog, dog instanceof Animal, dog instanceof Object);\n```"
     },
     "options": {
       "en": [
@@ -751,8 +751,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "The instanceof operator checks the prototype chain. dog is an instance of Dog (direct class), Animal (parent class via inheritance), and Object (the root of all objects' prototype chains in JavaScript). All three checks return true.",
-      "ru": "Оператор instanceof проверяет цепочку прототипов. dog является экземпляром Dog (прямой класс), Animal (родительский класс через наследование) и Object (корень всех цепочек прототипов объектов в JavaScript). Все три проверки возвращают true."
+      "en": "The `instanceof` operator checks the prototype chain.\n\n`dog` is an instance of `Dog` — its own class — and of `Animal`, the parent it inherits from. It is also an instance of `Object`, which sits at the root of every prototype chain. All three checks return true.",
+      "ru": "Оператор `instanceof` проверяет цепочку прототипов.\n\n`dog` — экземпляр `Dog`, своего класса, и `Animal`, от которого он наследует. Он же экземпляр `Object`, который стоит в корне любой цепи прототипов. Все три проверки дают true."
     }
   },
   {
@@ -805,8 +805,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Due to hoisting, var x is declared (but not initialized) at the top of the function scope. The first console.log accesses the uninitialized variable, which is undefined. After assignment on line 3, it becomes 5. This demonstrates function hoisting and the temporal dead zone for var declarations.",
-      "ru": "Из-за hoisting переменная var x объявляется (но не инициализируется) в начале области видимости функции. Первый console.log обращается к неинициализированной переменной, которая равна undefined. После присваивания она становится 5. Это демонстрирует hoisting и временную мёртвую зону для var."
+      "en": "Due to hoisting, `var x` is declared — but not initialised — at the top of the function scope. The first `console.log` reads the uninitialised variable and prints `undefined`. After the assignment it becomes 5.\n\nNote what this is not: `var` has no temporal dead zone. That is exactly what separates it from `let`, where reading before the declaration throws a `ReferenceError`.",
+      "ru": "Из-за hoisting переменная var x объявляется (но не инициализируется) в начале области видимости функции. Первый console.log обращается к неинициализированной переменной, которая равна undefined. После присваивания она становится 5. У `var` нет временной мёртвой зоны — этим он и отличается от `let`, где чтение до объявления бросает ReferenceError."
     }
   },
   {
@@ -820,20 +820,20 @@
       "en": [
         "Closures are executed by the event loop in a specific order",
         "The event loop creates closures automatically for all functions",
-        "Closures capture variables at creation time; the event loop executes callbacks when the call stack is empty",
+        "Closures capture scope; the loop decides when the callback runs",
         "Closures prevent the event loop from processing macrotasks"
       ],
       "ru": [
         "Замыкания выполняются циклом событий в определённом порядке",
         "Цикл событий автоматически создаёт замыкания для всех функций",
-        "Замыкания захватывают переменные во время создания; цикл событий выполняет обратные вызовы, когда стек вызовов пуст",
+        "Замыкания захватывают область видимости, цикл решает, когда запустить обработчик",
         "Замыкания предотвращают обработку макрозадач циклом событий"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Closures are a scoping mechanism: an inner function keeps access to the variables of its outer scope. The event loop is an execution model that runs callbacks after the call stack empties and microtasks finish. They are independent concepts that work together in async code. The option where the event loop executes closures confuses the two roles. The option about the event loop creating closures automatically is false. The option about closures blocking macrotasks describes something closures cannot do.",
-      "ru": "Замыкания — это механизм области видимости: внутренняя функция сохраняет доступ к переменным внешней области. Цикл событий — это модель выполнения, которая запускает обратные вызовы после того, как стек вызовов опустел и микрозадачи завершились. Это независимые концепции, работающие вместе в асинхронном коде. Вариант, где цикл событий выполняет замыкания, путает эти две роли. Вариант про автоматическое создание замыканий циклом событий просто неверен. Вариант про блокировку макрозадач приписывает замыканиям то, чего они не делают."
+      "en": "Closures are a scoping mechanism: an inner function keeps access to the variables of its outer scope.\n\nThe event loop is an execution model: it runs callbacks once the call stack empties and the microtasks finish. The two are independent, and async code uses both at once.\n\nWhy the other answers are wrong:\n\n- The event loop does not execute closures. It executes callbacks, which may or may not be closures.\n- Closures are created by the engine when a function is created, not by the loop.\n- Blocking macrotasks is something a long synchronous task does. A closure has no say in scheduling.",
+      "ru": "Замыкание — это механизм области видимости: внутренняя функция сохраняет доступ к переменным внешней области.\n\nЦикл событий — это модель выполнения: он запускает обработчики, когда стек вызовов опустел и микрозадачи закончились. Это независимые вещи, и асинхронный код пользуется обеими сразу.\n\nПочему остальные ответы неверны:\n\n- Цикл событий не выполняет замыкания. Он выполняет обработчики, которые могут быть замыканиями, а могут и не быть.\n- Замыкание создаёт движок в момент создания функции, а не цикл.\n- Блокирует макрозадачи долгая синхронная задача. Замыкание на планирование не влияет никак."
     }
   },
   {
@@ -940,7 +940,7 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The `typeof` operator returns \"undefined\" for undefined, \"object\" for null (this is actually a historical bug in JavaScript), \"object\" for plain objects, and \"object\" for arrays (arrays are objects in JavaScript). The operator does not distinguish between different object types.",
+      "en": "The `typeof` operator returns `\"undefined\"` for `undefined` and `\"object\"` for a plain object.\n\nIt also returns `\"object\"` for `null`, a historical bug kept for backward compatibility, and `\"object\"` for an array, because an array is an object.\n\nSo `typeof` cannot tell one kind of object from another. For that you need `Array.isArray` or `Object.prototype.toString`.",
       "ru": "Оператор `typeof` возвращает \"undefined\" для undefined, \"object\" для null (это исторический баг в JavaScript), \"object\" для обычных объектов и \"object\" для массивов (массивы — это объекты в JavaScript). Оператор не различает разные типы объектов."
     }
   },
@@ -980,13 +980,13 @@
     },
     "options": {
       "en": [
-        "x is undefined because the variable declaration is hoisted but not the initialization",
+        "x is undefined — the declaration is hoisted, the assignment is not",
         "x is 5 because var declarations are hoisted to the top with their values",
         "A ReferenceError is thrown because x is not yet defined",
         "x is null because var defaults to null before assignment"
       ],
       "ru": [
-        "x равен undefined, потому что объявление переменной поднято, но не инициализация",
+        "x равен undefined — поднято объявление, но не присваивание",
         "x равен 5, потому что объявления var поднимаются в верх со своими значениями",
         "Выбрасывается ReferenceError, потому что x еще не определен",
         "x равен null, потому что var по умолчанию равен null перед присваиванием"
@@ -994,7 +994,7 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "JavaScript hoists variable declarations but not their initializations. The code is interpreted as if `var x;` appears at the top, then `console.log(x);` logs `undefined`, then `x = 5;` executes. This hoisting behavior is specific to `var`; `let` and `const` are also hoisted but exist in a Temporal Dead Zone until their declaration is reached.",
+      "en": "JavaScript hoists variable declarations but not their initialisations. The code runs as if `var x;` stood at the top: `console.log(x)` prints `undefined`, and only then does `x = 5` execute.\n\nThis behaviour belongs to `var` alone. Both `let` and `const` are hoisted too, but they sit in the Temporal Dead Zone until the declaration is reached, and reading them there throws.",
       "ru": "JavaScript поднимает объявления переменных, но не их инициализацию. Код интерпретируется так, как если бы `var x;` находился в верхней части, затем `console.log(x);` выводит `undefined`, а затем выполняется `x = 5;`. Такое поведение поднятия специфично для `var`; `let` и `const` также поднимаются, но находятся в Temporal Dead Zone до достижения их объявления."
     }
   },
@@ -1064,19 +1064,19 @@
         "typeof checks inheritance chain; instanceof checks primitive type names",
         "instanceof works for primitives; typeof only works for objects",
         "Both are identical and can be used interchangeably for all data types",
-        "typeof returns a string and works well with primitives; instanceof checks if an object is an instance of a constructor"
+        "typeof names a primitive type; instanceof walks the prototype chain"
       ],
       "ru": [
         "typeof проверяет цепь наследования; instanceof проверяет имена примитивных типов",
         "instanceof работает для примитивов; typeof работает только для объектов",
         "Оба идентичны и могут использоваться взаимозаменяемо для всех типов данных",
-        "typeof возвращает строку и хорошо работает с примитивами; instanceof проверяет, является ли объект экземпляром конструктора"
+        "typeof называет тип примитива; instanceof идёт по цепи прототипов"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "typeof returns a string representing the type and works well for primitives (returns 'number', 'string', 'boolean', etc.) but returns 'object' for null and arrays. instanceof checks if an object was created by a specific constructor and traverses the prototype chain, making it unsuitable for primitives. Each tool serves different purposes.",
-      "ru": "typeof возвращает строку, представляющую тип, и хорошо работает с примитивами (возвращает 'number', 'string', 'boolean' и т.д.), но возвращает 'object' для null и массивов. instanceof проверяет, был ли объект создан определённым конструктором, и проходит по цепи прототипов, что делает его непригодным для примитивов. Каждый инструмент служит разным целям."
+      "en": "`typeof` returns a string naming the type. It works well for primitives — `'number'`, `'string'`, `'boolean'` — but answers `'object'` for both `null` and an array.\n\n`instanceof` asks whether a constructor's `prototype` appears in the object's prototype chain. That makes it useless for primitives, which have no chain of their own.\n\nThe two answer different questions: `typeof` asks what kind of value this is, `instanceof` asks where the object came from.",
+      "ru": "`typeof` возвращает строку с именем типа. Он хорошо работает с примитивами — `'number'`, `'string'`, `'boolean'` — но и для `null`, и для массива отвечает `'object'`.\n\n`instanceof` спрашивает, встречается ли `prototype` конструктора в цепи прототипов объекта. Для примитивов он поэтому бесполезен: своей цепи у них нет.\n\nЭто ответы на разные вопросы: `typeof` — что это за значение, `instanceof` — откуда объект взялся."
     }
   },
   {
@@ -1084,26 +1084,26 @@
     "topicId": "javascript",
     "question": {
       "en": "In JavaScript's event loop, what happens when a Promise callback is resolved while a synchronous task is still executing?",
-      "ru": "В цикле событий JavaScript что происходит, когда обратный вызов Promise разрешается, пока выполняется синхронная задача?"
+      "ru": "Что происходит в цикле событий, когда Promise разрешается, пока ещё выполняется синхронная задача?"
     },
     "options": {
       "en": [
-        "The Promise callback is placed in the microtask queue and executes after the current synchronous task completes but before the next macrotask",
+        "It goes to the microtask queue and runs after the current task, before the next macrotask",
         "The Promise callback immediately interrupts the synchronous task and executes",
         "The Promise callback is placed in the macrotask queue and waits for all other tasks to complete",
         "The Promise callback is lost if synchronous code is running"
       ],
       "ru": [
-        "Обратный вызов Promise помещается в очередь микротасков и выполняется после завершения текущей синхронной задачи, но до следующего макротаска",
-        "Обратный вызов Promise немедленно прерывает синхронную задачу и выполняется",
-        "Обратный вызов Promise помещается в очередь макротасков и ждёт завершения всех остальных задач",
-        "Обратный вызов Promise теряется, если выполняется синхронный код"
+        "Попадает в очередь микрозадач и выполняется после текущей задачи, но до следующей макрозадачи",
+        "Обработчик немедленно прерывает синхронную задачу и выполняется",
+        "Попадает в очередь макрозадач и ждёт завершения всех остальных задач",
+        "Обработчик теряется, если в этот момент выполняется синхронный код"
       ]
     },
     "correctIndex": 0,
     "explanation": {
       "en": "Promise callbacks (.then, .catch, .finally) are placed in the microtask queue, which has higher priority than the macrotask queue (setTimeout, setInterval). The event loop processes all microtasks before moving to the next macrotask, ensuring Promises execute promptly after the current synchronous code finishes.",
-      "ru": "Обратные вызовы Promise (.then, .catch, .finally) помещаются в очередь микротасков, которая имеет более высокий приоритет, чем очередь макротасков (setTimeout, setInterval). Цикл событий обрабатывает все микротаски перед переходом к следующему макротаску, обеспечивая быстрое выполнение Promise после завершения текущего синхронного кода."
+      "ru": "Обработчики Promise (.then, .catch, .finally) попадают в очередь микрозадач, а у неё приоритет выше, чем у очереди макрозадач (setTimeout, setInterval). Цикл событий вычерпывает все микрозадачи до следующей макрозадачи, поэтому промис срабатывает сразу после текущего синхронного кода."
     }
   },
   {
@@ -1156,7 +1156,7 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "When a method is extracted from an object and called as a standalone function, `this` is bound to the global object (or undefined in strict mode), not the original object. Since the global object doesn't have a `value` property, `this.value` returns undefined.",
+      "en": "A method extracted from an object and called on its own loses the object. Its `this` becomes the global object, or `undefined` in strict mode.\n\nThe global object has no `value` property, so `this.value` is `undefined`.",
       "ru": "Когда метод извлекается из объекта и вызывается как отдельная функция, `this` привязывается к глобальному объекту (или undefined в strict mode), а не к исходному объекту. Поскольку глобальный объект не имеет свойства `value`, `this.value` возвращает undefined."
     }
   },
@@ -1183,7 +1183,7 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "A `return` inside `finally` replaces whatever the `try` block was about to do. In `pick` the `try` block prepares the value 'try', then `finally` runs and returns 'finally' instead. In `clean` the `try` block throws, but the `return` in `finally` drops the exception as well, so the call quietly returns 'cleanup'.\n\nWhy the other answers are wrong:\n\n- The answers that start with try assume the first `return` wins. `finally` always runs before the function really returns, and its own `return` overrides the pending one.\n- The answers where the Error escapes miss that a `return` in `finally` swallows an exception, not only a return value.\n\nThat is why linters warn about returning from `finally`: the error disappears without a trace.",
+      "en": "A `return` inside `finally` replaces whatever the `try` block was about to do. In `pick` the `try` block prepares the value `'try'`, then `finally` runs and returns `'finally'` instead.\n\nIn `clean` the `try` block throws, but the `return` in `finally` drops the exception as well, so the call quietly returns `'cleanup'`.\n\nWhy the other answers are wrong:\n\n- The answers starting with `try` assume the first `return` wins. But `finally` always runs before the function really returns, and its own `return` overrides the pending one.\n- The answers where the `Error` escapes miss that a `return` in `finally` swallows an exception, not only a return value.\n\nThat is why linters warn about returning from `finally`: the error disappears without a trace.",
       "ru": "`return` внутри `finally` отменяет то, что собирался сделать блок `try`. В `pick` блок `try` готовит значение 'try', затем срабатывает `finally` и возвращает вместо него 'finally'. В `clean` блок `try` бросает ошибку, но `return` в `finally` выбрасывает и её, поэтому вызов тихо возвращает 'cleanup'.\n\nПочему остальные ответы неверны:\n\n- Ответы, которые начинаются с try, считают, что побеждает первый `return`. Но `finally` всегда выполняется до того, как функция действительно вернёт значение, и его собственный `return` перебивает готовое.\n- Ответы, где ошибка вылетает наружу, не учитывают: `return` в `finally` съедает исключение, а не только возвращаемое значение.\n\nПоэтому линтеры и ругаются на `return` из `finally`: ошибка исчезает без следа."
     }
   },
@@ -1196,22 +1196,22 @@
     },
     "options": {
       "en": [
-        "Synchronous code → Microtasks → Macrotasks → Rendering",
-        "Macrotasks → Synchronous code → Microtasks → Rendering",
-        "Synchronous code → Macrotasks → Microtasks → Rendering",
-        "Synchronous code → Rendering → Microtasks → Macrotasks"
+        "Synchronous code → microtasks → rendering → next macrotask",
+        "Macrotasks → synchronous code → microtasks → rendering",
+        "Synchronous code → macrotasks → microtasks → rendering",
+        "Synchronous code → rendering → microtasks → macrotasks"
       ],
       "ru": [
-        "Синхронный код → Микротаски → Макротаски → Отрисовка",
-        "Макротаски → Синхронный код → Микротаски → Отрисовка",
-        "Синхронный код → Макротаски → Микротаски → Отрисовка",
-        "Синхронный код → Отрисовка → Микротаски → Макротаски"
+        "Синхронный код → микрозадачи → отрисовка → следующая макрозадача",
+        "Макрозадачи → синхронный код → микрозадачи → отрисовка",
+        "Синхронный код → макрозадачи → микрозадачи → отрисовка",
+        "Синхронный код → отрисовка → микрозадачи → макрозадачи"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The event loop executes synchronous code first, then processes all microtasks (promises, queueMicrotask), then moves to macrotasks (setTimeout, setInterval), and finally performs rendering. Microtasks always execute before the next macrotask.",
-      "ru": "Event Loop выполняет синхронный код в первую очередь, затем обрабатывает все микротаски (promises, queueMicrotask), потом переходит к макротаскам (setTimeout, setInterval) и наконец выполняет отрисовку. Микротаски всегда выполняются перед следующим макротаском."
+      "en": "The loop runs the current task to the end, then drains the whole microtask queue. Only then does a rendering opportunity arrive: `requestAnimationFrame`, style, layout, paint. The next macrotask comes after that.\n\nSo rendering never happens between two microtasks. A task and all its microtasks are one atomic block as far as the rendering pipeline is concerned. That is why a loop which keeps queueing microtasks freezes the page.",
+      "ru": "Цикл догоняет текущую задачу до конца, затем вычерпывает всю очередь микрозадач. Только после этого появляется возможность отрисовки: `requestAnimationFrame`, стили, layout, paint. Следующая макрозадача идёт уже за ней.\n\nПоэтому отрисовка никогда не происходит между двумя микрозадачами. С точки зрения конвейера отрисовки задача и все её микрозадачи — один неделимый блок, и именно поэтому цикл, который всё время ставит микрозадачи, подвешивает страницу."
     }
   },
   {
