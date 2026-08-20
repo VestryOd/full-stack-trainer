@@ -60,7 +60,7 @@ ABBREV_ALLOWLIST = {"HTML", "CSS", "API", "JS", "TS", "URL", "HTTP", "JSON", "ID
 # (NoSQL, WebP, IoC, GoF, DoS, PaaS all remain flagged).
 PRODUCT_NAMES = {
     "GitHub", "GitLab", "YouTube", "MacBook", "PayPal", "WiFi", "NumPy", "PyPy",
-    "MySQL", "RxJS", "MobX", "NgRx", "RegExp",
+    "MySQL", "RxJS", "MobX", "NgRx", "RegExp", "V8",
 }
 
 # Uppercase tokens that are language keywords or HTTP verbs, not acronyms.
@@ -244,7 +244,13 @@ def is_caps_emphasis(token: str, prose: str) -> bool:
     Self-referential test: if the same word also appears in lower case somewhere
     in this text ("EVERY" here, "every" there), it is emphasis. An acronym never
     shows up lower-cased — the corpus has no "jwt" or "мvcc".
+
+    One exception the test cannot see on its own: an allowlisted abbreviation is
+    never emphasis. "JS" fails the test in any Node.js article, because "Node.js"
+    hands it a lower-case "js" — a compound word, not a shouted one.
     """
+    if token in ABBREV_ALLOWLIST:
+        return False
     lower = token.lower()
     if len(lower) < 2:
         return False
@@ -281,7 +287,7 @@ def find_abbreviations(prose: str, locale: str, stats: dict | None = None) -> li
     for idx, sentence in enumerate(sentences):
         for m in ABBR_UPPER_RE.finditer(sentence):
             tok = m.group(1)
-            if tok in ABBREV_ALLOWLIST or tok in KEYWORDS:
+            if tok in ABBREV_ALLOWLIST or tok in KEYWORDS or tok in PRODUCT_NAMES:
                 continue
             if is_caps_emphasis(tok, prose):   # shouted word, not an acronym
                 continue
