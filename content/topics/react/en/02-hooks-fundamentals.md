@@ -2,7 +2,28 @@
 
 ## Why hooks exist — the problem with class components
 
-Before hooks (React < 16.8), stateful logic lived in class components. The core problem was not syntax — it was that **stateful logic was inseparable from the component that used it**. Two components needing the same subscription logic would either duplicate it or use Higher-Order Components / render props, which produced deeply nested component trees for purely organizational reasons ("wrapper hell"). Hooks let you extract stateful logic into a function and reuse it across components without changing the component hierarchy.
+Before hooks (React < 16.8), stateful logic lived in class components. The core problem was not syntax. It was that **stateful logic was inseparable from the component that used it**.
+
+Two components that needed the same subscription logic had two options. They could duplicate the logic, or wrap themselves in Higher-Order Components or render props. Both options produced deeply nested component trees for purely organizational reasons — "wrapper hell".
+
+Hooks let you extract stateful logic into a plain function and reuse it across components. The component hierarchy stays untouched.
+
+```txt
+SHARING SUBSCRIPTION LOGIC, BEFORE AND AFTER HOOKS
+
+  Before (Higher-Order Components / render props):
+    <WithSubscription>
+      <WithTheme>
+        <Chart />      ← the tree grew only to allow reuse
+      </WithTheme>
+    </WithSubscription>
+
+  After (hooks):
+    function Chart() {
+      const data = useSubscription();   ← same reuse, flat tree
+      const theme = useTheme();
+    }
+```
 
 The secondary problems hooks solve:
 - `this` binding in class methods (a constant source of bugs)
@@ -17,22 +38,20 @@ Hooks are stored as a **singly linked list** attached to the Fiber node of the c
 
 ```txt
 FIBER NODE for <MyComponent>
-│
-└── memoizedState (first hook)
-      │  { state: 0, queue: ..., next: ─────────────────────────┐ }
-      │                                                           │
-      └────────────────────── next ──────────────────────────────▼
-                                      { state: 'Alice', queue: ..., next: ──┐ }
-                                                                              │
-                                                                              ▼
-                                                          { effect: ..., next: null }
+
+  memoizedState ──▶ hook 1: { state: 0,       next: ──▶ hook 2 }
+                    hook 2: { state: 'Alice', next: ──▶ hook 3 }
+                    hook 3: { effect: ...,    next: null }
+
+  Each hook node also carries its own queue of pending updates.
+  There are no names here — only the order of the links.
 ```
 
 On the first render, React builds this list. On every subsequent render, React **walks the same list in the same order** and associates each `useState` / `useEffect` call with its existing node.
 
 This is why:
 
-```ts
+```tsx
 // RULE: never call hooks conditionally
 
 // ✅ Correct — same number of hooks on every render:
@@ -113,7 +132,7 @@ useEffect(() => {
 ```txt
 useEffect(setup, deps)
 
-→ After every render where deps have changed (compared with Object.is):
+→ After every render where deps changed (compared with Object.is):
     1. Run the cleanup of the previous effect (if any)
     2. Run setup
 
@@ -167,28 +186,29 @@ useEffect(() => {
 }, [userId]);
 ```
 
-Without the cleanup: if `userId` changes before the fetch completes, two fetches race; the slower one might resolve last and overwrite the result from the faster newer one (a **race condition**). The cleanup cancels the previous fetch before starting a new one.
+Without the cleanup you get a **race condition**. If `userId` changes before the fetch completes, two fetches are running at once. The slower one may resolve last and overwrite the result of the newer, faster one. The cleanup cancels the previous fetch before starting a new one.
 
 ### Why effects run after paint (and why that matters)
 
 ```txt
 Render → Commit → Browser paint → useEffect
 
-If useEffect blocked paint (like useLayoutEffect does), users would
-see a blank screen until the effect finishes — bad for anything async.
-useEffect is intentionally deferred.
+If useEffect blocked paint (like useLayoutEffect does), users
+would see a blank screen until the effect finishes — bad for
+anything async. useEffect is intentionally deferred.
 ```
 
-The consequence: if your effect reads a layout measurement (element dimensions, scroll position), by the time it runs, the browser has already painted with potentially stale dimensions. Use `useLayoutEffect` for that case.
+The consequence shows up when your effect reads a layout measurement, such as element dimensions or scroll position. By the time the effect runs, the browser has already painted — possibly with stale dimensions. Use `useLayoutEffect` for that case.
 
 ---
 
 ## useLayoutEffect — what it solves
 
-`useLayoutEffect` has the same signature as `useEffect` but fires **synchronously after DOM mutations and before the browser paints**:
+`useLayoutEffect` has the same signature as `useEffect`. The difference is timing: it fires **synchronously after DOM mutations and before the browser paints**. DOM here means Document Object Model — the tree of objects the browser draws the page from.
 
 ```txt
-Render → Commit (DOM mutations) → useLayoutEffect → Browser paint → useEffect
+Render → Commit (DOM mutations) → useLayoutEffect
+       → Browser paint → useEffect
 ```
 
 Use case: reading DOM layout and synchronously adjusting it before the user sees the intermediate state.
@@ -237,7 +257,7 @@ function Timer() {
 }
 ```
 
-Fix: either add `count` to deps (effect re-creates the timer on each count change) or use a functional update to avoid reading count altogether: `setCount(c => c + 1)`.
+There are two fixes. Add `count` to deps, and the effect re-creates the timer on every count change. Or use a functional update and never read `count` at all: `setCount(c => c + 1)`.
 
 ### 2. Object and array deps (reference equality)
 
@@ -256,7 +276,7 @@ Fix: depend on the primitive values instead of the object:
 useEffect(() => { ... }, [config.timeout]);
 ```
 
-Or memoize the object in the parent with `useMemo` (see Hooks Advanced article).
+Or memoize the object in the parent with `useMemo`, described in [Advanced Hooks](./03-hooks-advanced.md).
 
 ### 3. Functions as deps
 
@@ -272,13 +292,25 @@ Fix: wrap `onData` in `useCallback` in the parent, or use `useEffectEvent` (Reac
 
 ### 4. Exhaustive-deps false negatives
 
-The `exhaustive-deps` linter rule catches missing deps but cannot always detect issues with mutable refs. Mutable refs (`ref.current`) are intentionally excluded from dep arrays — the ref object is stable but its content can change silently. This is correct behavior, but it means reading `ref.current` inside an effect gives you the latest value, not a captured snapshot, which can be surprising.
+The `exhaustive-deps` linter rule catches missing deps but cannot always detect issues with mutable refs. Mutable refs (`ref.current`) are intentionally excluded from dep arrays: the ref object is stable, but its content can change silently.
+
+```tsx
+const idRef = useRef(0);
+
+useEffect(() => {
+  // Always the latest value, not a snapshot from the render
+  // that scheduled this effect.
+  console.log(idRef.current);
+}, []); // idRef is intentionally absent from the deps array
+```
+
+This is correct behavior. It does mean, though, that reading `ref.current` inside an effect gives you the latest value, not a captured snapshot. That can be surprising.
 
 ---
 
 ## The "each render is a snapshot" mental model
 
-Every time a component renders, React calls your function. That function call captures the current values of props and state in a closure. `useEffect`'s setup runs with the values from the render that scheduled it — not the latest values at the time the effect fires.
+Every time a component renders, React calls your function. That call captures the current values of props and state in a closure. The setup of `useEffect` then runs with the values from the render that scheduled it. It does not see the latest values at the moment the effect fires.
 
 ```tsx
 function Counter() {
@@ -297,7 +329,7 @@ function Counter() {
 }
 ```
 
-This is not a bug — it is the defined behavior. Each render has its own version of every value. If you need to always read the latest value (not the snapshot), use a `useRef` (covered in the advanced hooks article).
+This is not a bug — it is the defined behavior. Each render has its own version of every value. If you always need the latest value rather than the snapshot, use a `useRef`, covered in [Advanced Hooks](./03-hooks-advanced.md).
 
 ---
 
@@ -307,13 +339,15 @@ This is not a bug — it is the defined behavior. Each render has its own versio
 No — the number and order of hook calls must be the same on every render. Calling hooks inside a loop would produce a different number of hooks depending on the array length. If you need per-item state, extract each item into its own component.
 
 **"What's the difference between `useEffect(() => {}, [])` and `componentDidMount`?"**
-In StrictMode (development), `useEffect` with `[]` runs twice: mount → cleanup → mount. `componentDidMount` runs once. More importantly, the mental model differs: `componentDidMount` is "do this when the component mounts." `useEffect` is "synchronize with these values" — the empty array says "there are no values to synchronize with, so run only once."
+In StrictMode (development), `useEffect` with `[]` runs twice: mount → cleanup → mount. `componentDidMount` runs once.
+
+The mental model matters more than the count. `componentDidMount` means "do this when the component mounts". `useEffect` means "synchronize with these values". An empty array says there are no values to synchronize with, so run only once.
 
 **"Why does my `useEffect` run infinitely?"**
-Almost always: an object or array created inline in the component is listed as a dependency. Objects are compared by reference, so a new `{}` or `[]` on each render is always "changed." Fix: move the object outside the component, memoize it with `useMemo`, or depend on the primitive properties instead.
+Almost always: an object or array created inline in the component is listed as a dependency. Objects are compared by reference, so a new `{}` or `[]` on each render always counts as "changed". There are three fixes: move the object outside the component, memoize it with `useMemo`, or depend on its primitive properties instead.
 
 **"Is it safe to do `async` setup functions in useEffect?"**
-`useEffect`'s setup cannot return a Promise — it must return either nothing or a cleanup function. An `async` function always returns a Promise, so `useEffect(async () => { ... })` will cause a warning and the return value (the cleanup function, if any) is lost. Correct pattern:
+The setup of `useEffect` cannot return a Promise. It must return either nothing or a cleanup function. An `async` function always returns a Promise, so `useEffect(async () => { ... })` causes a warning. Whatever that function returns — including a cleanup function — is lost. Correct pattern:
 
 ```tsx
 useEffect(() => {

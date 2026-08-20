@@ -14,7 +14,8 @@ REACT 18 (concurrent mode):
   setState → schedules work with a priority (lane)
   High-priority work interrupts low-priority renders.
   The browser gets control between Fiber chunks.
-  Multiple versions of the UI can be "in flight" simultaneously.
+  React can hold several unfinished versions of the UI at once —
+  computed in parallel, with none of them shown on screen yet.
 ```
 
 For most day-to-day code the change is invisible — `useState`, `useEffect`, event handlers all work as before. Concurrent rendering becomes observable through the new APIs: `useTransition`, `useDeferredValue`, and `Suspense` for data.
@@ -27,7 +28,7 @@ For most day-to-day code the change is invisible — `useState`, `useEffect`, ev
 
 User input must be instantaneous. List filtering, search results, and navigation — these can lag slightly before the user notices. Before React 18 there was no way to express this distinction: every `setState` had the same urgency.
 
-`startTransition` marks a state update as non-urgent (a *transition*). React renders the transition in the background without blocking the UI. If a higher-priority update arrives while the transition is rendering, React interrupts the transition, processes the high-priority update, then resumes or restarts the transition.
+`startTransition` marks a state update as non-urgent (a *transition*). React renders the transition in the background without blocking the UI — the user interface. If a higher-priority update arrives while the transition is rendering, React interrupts it, processes the high-priority update, then resumes or restarts the transition.
 
 ```tsx
 import { startTransition, useTransition } from 'react';
@@ -77,7 +78,7 @@ function SearchPage() {
 
 `isPending` is `true` from the moment `startTransition` is called until the transition render commits. Use it to show a loading indicator on the *current* content (not a blank screen) while the new version renders in the background.
 
-### What startTransition does NOT do
+### The limits of startTransition
 
 ```tsx
 // ❌ startTransition is NOT for async operations:
@@ -154,7 +155,8 @@ Suspense was introduced for code splitting (`React.lazy`). React 18 expanded it 
 A component "suspends" by throwing a Promise.
 React catches the thrown Promise.
 React shows the nearest Suspense boundary's fallback.
-When the Promise resolves, React retries rendering the suspended component.
+When the Promise resolves, React retries rendering
+the suspended component.
 ```
 
 ### Suspense with React.lazy (code splitting)
@@ -175,7 +177,7 @@ function Dashboard() {
 
 ### Suspense with data libraries
 
-React itself does not have a built-in data fetching mechanism that integrates with Suspense (outside of Server Components). Libraries like React Query and SWR implement the throw-a-Promise protocol:
+React itself does not have a built-in data fetching mechanism that integrates with Suspense (outside of Server Components). Libraries like React Query and SWR implement the throw-a-Promise protocol. SWR is named after stale-while-revalidate, the caching strategy it uses.
 
 ```tsx
 // With React Query (Suspense mode):
@@ -228,7 +230,7 @@ function Dashboard() {
 // They reveal independently as their data arrives.
 ```
 
-Without wrapping each in its own boundary, a single Suspense wrapper would show one fallback for the whole dashboard until ALL data is ready.
+Without wrapping each in its own boundary, a single Suspense wrapper would show one fallback for the whole dashboard until **all** the data is ready.
 
 ### SuspenseList (React 18 experimental)
 
@@ -288,7 +290,7 @@ With `startTransition`: the current page stays visible (Home) while Profile load
 
 ## useDeferredValue for avoiding Suspense fallbacks during updates
 
-When a Suspense boundary's content is already showing (not the first load), and a state update causes it to suspend again, React has a choice: show the fallback again, or keep the stale content visible. The default behavior (without transitions) is to show the fallback:
+A Suspense boundary may already be showing its content, and then a state update makes it suspend again. React has a choice at that point: show the fallback again, or keep the stale content visible. Without transitions the default is to show the fallback:
 
 ```tsx
 function ProductPage({ categoryId }: { categoryId: number }) {
@@ -312,16 +314,31 @@ The `deferredId` lags behind `categoryId`. While `deferredId !== categoryId` (th
 ## Common interview traps
 
 **"Does useTransition make rendering faster?"**
-No. `startTransition` does not speed up computation — the same work still runs on the main thread. It changes the *priority* of the work so the browser can handle higher-priority events (typing, clicking) without waiting for the transition render to complete. The total CPU time is the same or slightly higher (due to potential interrupts and restarts). The perceived performance improves because input is never blocked.
+No. `startTransition` does not speed up computation. The same work still runs on the main thread.
+
+What changes is the *priority* of that work. The browser can now handle higher-priority events, such as typing and clicking, without waiting for the transition render to finish. Total CPU time is the same or slightly higher, because of possible interrupts and restarts. CPU stands for central processing unit. Perceived performance improves because input is never blocked.
 
 **"When does React show a Suspense fallback vs keep the existing content?"**
-During the initial render (no content yet) → always shows fallback. During an update that causes a suspend: if the update is inside `startTransition` → React keeps existing content visible while the new version loads (no fallback shown). If the update is NOT wrapped in `startTransition` → React immediately switches to the fallback (because it treats the update as urgent and cannot show stale content for urgent updates).
+On the initial render there is no content yet, so React always shows the fallback. On an update that causes a suspend, the answer depends on the wrapper:
+
+- Inside `startTransition`: React keeps the existing content visible while the new version loads. No fallback appears.
+- Not inside `startTransition`: React switches to the fallback right away. It treats the update as urgent, and urgent updates are not allowed to show stale content.
 
 **"Can you use Suspense without a data library?"**
-Yes, but you have to implement the throw-a-Promise protocol manually. A data fetching function must throw a Promise on the first call, return the resolved value on subsequent calls (after the Promise resolved), and throw an Error if the request failed. In practice, everyone uses React Query, SWR, or Relay, because implementing a correct cache that integrates with Suspense is non-trivial.
+Yes, but you have to implement the throw-a-Promise protocol yourself. The data fetching function has to do three things:
+
+- Throw a Promise on the first call.
+- Return the resolved value on later calls, once that Promise has resolved.
+- Throw an Error if the request failed.
+
+In practice everyone uses React Query, SWR, or Relay. Writing a correct cache that integrates with Suspense is hard to get right.
 
 **"What is the difference between isPending from useTransition and isLoading from React Query?"**
-`isPending` (from `useTransition`) is true while React is computing the transition render — it reflects the render phase. It turns false the moment the transition commits. `isLoading` (from React Query) is true while the network request is in flight — it reflects the data fetching state. They can be true simultaneously (transition started, fetch in progress) or independently (transition done but fetch still running, or fetch done but React still rendering the result).
+The flag `isPending` from `useTransition` is true while React is computing the transition render. It reflects the render phase, and it turns false the moment the transition commits.
+
+The flag `isLoading` from React Query is true while the network request is still running. It reflects the data fetching state. The two are independent, so both can be true at once. A transition can also finish while the fetch is still running, or a fetch can finish while React is still rendering the result.
 
 **"Is useDeferredValue the same as debouncing?"**
-No. Debouncing delays the state update itself (the setter is not called until after a timeout). `useDeferredValue` receives the already-updated value and tells React to compute its render at a lower priority — the current render uses the previous deferred value while the new render completes in the background. `useDeferredValue` has no delay, no timer, and no dropped updates: React will always eventually render with the latest value.
+No. They work differently. Debouncing delays the state update itself: the setter is not called until the timeout fires.
+
+`useDeferredValue` does not delay the update at all. It receives the already-updated value and tells React to render it at a lower priority. While that low-priority render runs in the background, the screen keeps showing the previous deferred value. There is no delay, no timer, and no dropped update — React always ends up rendering the latest value.

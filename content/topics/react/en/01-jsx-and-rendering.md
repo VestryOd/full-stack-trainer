@@ -17,10 +17,12 @@ const element = React.createElement(
 
 // React 17+ (new JSX transform) — no React import needed:
 import { jsx as _jsx } from 'react/jsx-runtime';
-const element = _jsx(Button, { variant: 'primary', onClick: handleClick, children: 'Save' });
+const element = _jsx(Button, {
+  variant: 'primary', onClick: handleClick, children: 'Save',
+});
 ```
 
-`React.createElement` (or the new JSX runtime's `_jsx`) does not create a DOM node. It creates a **plain JavaScript object** called a React element:
+`React.createElement` (or the new JSX runtime's `_jsx`) does not create a DOM node. DOM stands for Document Object Model — the tree of objects the browser actually draws the page from. What `createElement` returns is a **plain JavaScript object** called a React element:
 
 ```ts
 {
@@ -36,7 +38,7 @@ This object is **immutable** and **cheap to create** — just a `{}` allocation.
 
 ### Why `$$typeof` is a Symbol
 
-`JSON.parse` cannot produce a Symbol. If user-supplied JSON is accidentally rendered (`{JSON.parse(userInput)}`), it will never have `$$typeof: Symbol(react.element)` — React rejects it. This is React's protection against a class of XSS vulnerabilities via dangerously-rendered API responses.
+`JSON.parse` cannot produce a Symbol. If user-supplied JSON is accidentally rendered (`{JSON.parse(userInput)}`), it will never have `$$typeof: Symbol(react.element)` — React rejects it. This blocks one class of XSS attacks: the ones that arrive through carelessly rendered API responses. XSS stands for cross-site scripting — an attacker gets their own markup or script onto your page.
 
 ---
 
@@ -56,9 +58,11 @@ RENDER PHASE (pure, interruptible)
 COMMIT PHASE (impure, synchronous, non-interruptible)
 ──────────────────────────────────────────────────────
   1. React applies all DOM mutations from step 4 above
-  2. Runs layout effects: useLayoutEffect cleanups → useLayoutEffect callbacks
+  2. Runs layout effects:
+       useLayoutEffect cleanups → useLayoutEffect callbacks
   3. Browser paints the screen
-  4. Runs passive effects: useEffect cleanups → useEffect callbacks
+  4. Runs passive effects:
+       useEffect cleanups → useEffect callbacks
 ```
 
 This two-phase split is not an implementation detail — it has observable consequences:
@@ -73,13 +77,18 @@ This two-phase split is not an implementation detail — it has observable conse
 ## What triggers a re-render — the complete list
 
 ```txt
-SOURCE                        WHAT HAPPENS
-─────────────────────────────────────────────────────
-setState / useState setter     schedules a re-render of that component and its subtree
-useReducer dispatch           same as above
-Context value changes          all consumers of that Context re-render
-Parent re-renders              children re-render (unless memo'd)
-forceUpdate (class)           bypasses shouldComponentUpdate, re-renders
+SOURCE → WHAT HAPPENS
+──────────────────────────────────────────────────
+setState / useState setter
+  → schedules a re-render of that component and its subtree
+useReducer dispatch
+  → same as above
+Context value changes
+  → all consumers of that Context re-render
+Parent re-renders
+  → children re-render (unless memo'd)
+forceUpdate (class)
+  → bypasses shouldComponentUpdate, re-renders
 ```
 
 The critical insight: **a re-render is not a DOM update**. A re-render means "React calls your component function again." Whether the DOM is subsequently updated depends entirely on whether the reconciler finds any differences.
@@ -171,9 +180,14 @@ Functional updates are required whenever you call `setState` multiple times in a
 
 ---
 
-## StrictMode double-rendering explained
+## StrictMode renders your component twice on purpose
 
-`<React.StrictMode>` in development mode calls your component function **twice** per render, calls state initializers twice, calls `useReducer` reducers twice, and calls `useEffect` setup functions twice (by intentionally running cleanup and re-running setup).
+In development mode, `<React.StrictMode>` deliberately does several things **twice** per render:
+
+- Calls your component function.
+- Calls the state initializers you passed to `useState`.
+- Calls your `useReducer` reducers.
+- Calls `useEffect` setup functions — it runs setup, then cleanup, then setup again.
 
 ```txt
 WHAT REACT DOES IN STRICT MODE (dev only):
@@ -187,7 +201,7 @@ WHY: verifies your render is a pure function of props + state.
      can discard renders mid-flight and restart them.
 ```
 
-The double-invocation does NOT happen in production. It is exclusively a development-time purity checker.
+The double invocation does **not** happen in production. It is exclusively a development-time purity checker.
 
 ```tsx
 let renderCount = 0;
@@ -202,7 +216,7 @@ function MyComponent() {
 // The difference exposes the bug — renderCount is not idempotent.
 ```
 
-`useEffect` double-invocation (mount → cleanup → mount) was added in React 18 to verify that effects properly clean up after themselves. The classic scenario it catches:
+The double invocation of `useEffect` (mount → cleanup → mount) was added in React 18. It verifies that effects properly clean up after themselves. The classic scenario it catches:
 
 ```tsx
 useEffect(() => {
@@ -246,10 +260,18 @@ No. `setState` schedules a re-render. React batches updates and processes them a
 No. JSX is compiled to `React.createElement` (or the new JSX transform) at build time — there is zero runtime overhead. The compiled output is identical.
 
 **"What does React render to in a React Native app?"**
-Not the DOM. The "renderer" is swappable: `react-dom` renders to the browser DOM; `react-native` renders to native mobile UI elements; `react-three-fiber` renders to a Three.js scene graph. The React core (reconciler, Fiber) is shared.
+Not the DOM. The "renderer" is swappable:
+
+- `react-dom` renders to the browser DOM.
+- `react-native` renders to native mobile UI elements — UI is short for user interface.
+- `react-three-fiber` renders to a Three.js scene graph.
+
+The React core (reconciler, Fiber) is shared by all of them.
 
 **"Can the render phase have side effects?"**
 It shouldn't. The render phase must be a pure function of props and state. In Concurrent Mode, React may invoke your render function multiple times for a single commit, or interrupt and discard a render in progress. Side effects in render (subscriptions, mutations, timers) are not safe because they may execute zero, one, or multiple times for a single "logical" render.
 
 **"Why does React use a virtual DOM?"**
-The framing is slightly off. React doesn't use a "virtual DOM" to make DOM manipulation faster — real DOM manipulation is only called once per commit, which is as fast as it can be. The reconciler's purpose is to compute the *minimal* set of DOM changes needed between renders so that unaffected DOM nodes are not touched at all. The Fiber tree is an implementation detail of the reconciler, not a "copy of the DOM."
+The framing is slightly off. The goal was never to make DOM manipulation itself faster. Real DOM manipulation is called only once per commit, which is already as fast as it gets.
+
+The reconciler's purpose is to compute the *minimal* set of DOM changes needed between renders. Unaffected DOM nodes are then not touched at all. The Fiber tree is an implementation detail of the reconciler, not a "copy of the DOM."
