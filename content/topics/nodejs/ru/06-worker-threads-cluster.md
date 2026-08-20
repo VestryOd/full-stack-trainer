@@ -133,7 +133,8 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 
 if (cluster.isPrimary) {
-  const numCPUs = os.availableParallelism(); // учитывает лимиты cgroup, в отличие от os.cpus().length
+  // availableParallelism учитывает лимиты cgroup, а os.cpus().length — нет
+  const numCPUs = os.availableParallelism();
   for (let i = 0; i < numCPUs; i++) cluster.fork();
 
   cluster.on('exit', (worker) => {
