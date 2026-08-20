@@ -23,7 +23,14 @@
 Приложение явно управляет кешем: читает из кеша, а при промахе идёт в БД и сохраняет результат.
 
 ```ts
-async function getUser(userId: string): Promise<User> {
+import type { User } from '@prisma/client';
+import { createClient } from 'redis'; // node-redis, пакет `redis`
+import { db } from './db'; // уже созданный PrismaClient
+
+const redis = createClient();
+await redis.connect();
+
+async function getUser(userId: string): Promise<User | null> {
   const cached = await redis.get(`user:${userId}`);
   if (cached) {
     return JSON.parse(cached); // cache hit
@@ -32,7 +39,7 @@ async function getUser(userId: string): Promise<User> {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (user) {
     // TTL обязателен — иначе устаревшие данные могут жить вечно
-    await redis.set(`user:${userId}`, JSON.stringify(user), 'EX', 300);
+    await redis.set(`user:${userId}`, JSON.stringify(user), { EX: 300 });
   }
   return user;
 }
@@ -94,13 +101,23 @@ T1: записывает в кеш V1 (устаревшее!) —
 Ключ с очень высоким трафиком — например, главная страница — истекает по TTL. **Тысячи одновременных запросов** видят cache miss и **все** одновременно идут в БД. Это внезапная пиковая нагрузка, способная уронить БД именно в момент истечения TTL.
 
 ```ts
+import { setTimeout as sleep } from 'node:timers/promises';
+import { createClient } from 'redis'; // node-redis, пакет `redis`
+
+interface Homepage { sections: string[] }
+
+declare const db: { buildHomepage(): Promise<Homepage> };
+
+const redis = createClient();
+await redis.connect();
+
 // ❌ Без защиты: при истечении TTL все параллельные запросы
 // одновременно бьют в БД
 async function getHomepage(): Promise<Homepage> {
   const cached = await redis.get('homepage');
   if (cached) return JSON.parse(cached);
   const data = await db.buildHomepage(); // 10 000 параллельных вызовов!
-  await redis.set('homepage', JSON.stringify(data), 'EX', 60);
+  await redis.set('homepage', JSON.stringify(data), { EX: 60 });
   return data;
 }
 
@@ -110,7 +127,7 @@ async function getHomepageSafe(): Promise<Homepage> {
   const cached = await redis.get('homepage');
   if (cached) return JSON.parse(cached);
 
-  const lockAcquired = await redis.set('homepage:lock', '1', 'NX', 'EX', 10);
+  const lockAcquired = await redis.set('homepage:lock', '1', { NX: true, EX: 10 });
   if (!lockAcquired) {
     // другой инстанс уже пересчитывает — отдаём слегка устаревшие данные
     // или ждём и повторяем (с коротким polling)
@@ -120,12 +137,17 @@ async function getHomepageSafe(): Promise<Homepage> {
     return getHomepageSafe();
   }
 
-  const data = await db.buildHomepage();
-  await redis.set('homepage', JSON.stringify(data), 'EX', 60);
-  // резервная копия на час
-  await redis.set('homepage:stale', JSON.stringify(data), 'EX', 3600);
-  await redis.del('homepage:lock');
-  return data;
+  try {
+    const data = await db.buildHomepage();
+    await redis.set('homepage', JSON.stringify(data), { EX: 60 });
+    // резервная копия на час
+    await redis.set('homepage:stale', JSON.stringify(data), { EX: 3600 });
+    return data;
+  } finally {
+    // именно finally, а не только успешный путь: если buildHomepage()
+    // бросит, лок будет держать всех до истечения своих 10 секунд
+    await redis.del('homepage:lock');
+  }
 }
 ```
 

@@ -147,6 +147,16 @@ The problem statelessness solves — the classic example:
 Ways to store state outside the app server:
 
 ```ts
+import jwt from 'jsonwebtoken';
+import { createClient } from 'redis'; // node-redis, the `redis` package
+
+interface UserPayload { userId: string; role: string }
+interface Session { userId: string; expiresAt: number }
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+const redis = createClient();
+await redis.connect();
+
 // Option 1: JWT — state is serialized into the token itself,
 // the server stores nothing, any instance can verify the signature
 function verifyToken(token: string): UserPayload {

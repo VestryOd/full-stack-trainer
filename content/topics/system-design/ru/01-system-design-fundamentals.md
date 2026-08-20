@@ -150,6 +150,16 @@ Senior-нюанс: для **базы данных** горизонтальное
 Решения для хранения состояния вне app-сервера:
 
 ```ts
+import jwt from 'jsonwebtoken';
+import { createClient } from 'redis'; // node-redis, пакет `redis`
+
+interface UserPayload { userId: string; role: string }
+interface Session { userId: string; expiresAt: number }
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+const redis = createClient();
+await redis.connect();
+
 // Вариант 1: JWT — состояние сериализовано в сам токен,
 // сервер ничего не хранит, любой инстанс может проверить подпись
 function verifyToken(token: string): UserPayload {

@@ -37,13 +37,18 @@ export default async function QuizSessionPage({ params }: Props) {
   const { topicId, count } = parseSessionId(params.sessionId);
   const questions = getQuizQuestions([topicId], count);
 
-  // Pre-render question markdown to HTML on the server (shiki github-dark), same pipeline as Theory/Questions
+  // Pre-render question and explanation markdown to HTML on the server (shiki github-dark),
+  // same pipeline as Theory/Questions
   const questionsWithHtml: QuizQuestionWithHtml[] = await Promise.all(
     questions.map(async (q) => ({
       ...q,
       questionHtml: {
         en: await renderArticleHtml(q.question.en),
         ru: await renderArticleHtml(q.question.ru ?? q.question.en),
+      },
+      explanationHtml: {
+        en: await renderArticleHtml(q.explanation.en),
+        ru: await renderArticleHtml(q.explanation.ru ?? q.explanation.en),
       },
     })),
   );

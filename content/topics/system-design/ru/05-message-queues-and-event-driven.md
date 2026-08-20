@@ -78,6 +78,12 @@ Senior-нюанс про exactly-once: в распределённых сист�
 ### Идемпотентность — практическая реализация
 
 ```ts
+import { db } from './db'; // уже созданный PrismaClient
+
+interface PaymentMessage { id: string; userId: string; amount: number }
+
+declare function chargeCard(userId: string, amount: number): Promise<void>;
+
 // ❌ Не идемпотентно: повторная обработка того же сообщения
 // списывает деньги дважды
 async function processPayment(message: PaymentMessage): Promise<void> {

@@ -76,6 +76,12 @@ So a good answer to "how do you ensure exactly-once" isn't "turn on the exactly-
 ### Idempotency — a practical implementation
 
 ```ts
+import { db } from './db'; // an already created PrismaClient
+
+interface PaymentMessage { id: string; userId: string; amount: number }
+
+declare function chargeCard(userId: string, amount: number): Promise<void>;
+
 // ❌ Not idempotent: reprocessing the same message
 // charges the card twice
 async function processPayment(message: PaymentMessage): Promise<void> {

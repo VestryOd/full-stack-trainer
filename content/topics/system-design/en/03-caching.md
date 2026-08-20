@@ -22,7 +22,14 @@ The main interview question isn't "what is a cache". It is **where exactly in th
 The application explicitly manages the cache: read from the cache, and on a miss go to the database and store the result.
 
 ```ts
-async function getUser(userId: string): Promise<User> {
+import type { User } from '@prisma/client';
+import { createClient } from 'redis'; // node-redis, the `redis` package
+import { db } from './db'; // an already created PrismaClient
+
+const redis = createClient();
+await redis.connect();
+
+async function getUser(userId: string): Promise<User | null> {
   const cached = await redis.get(`user:${userId}`);
   if (cached) {
     return JSON.parse(cached); // cache hit
@@ -31,7 +38,7 @@ async function getUser(userId: string): Promise<User> {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (user) {
     // TTL is mandatory — otherwise stale data could live forever
-    await redis.set(`user:${userId}`, JSON.stringify(user), 'EX', 300);
+    await redis.set(`user:${userId}`, JSON.stringify(user), { EX: 300 });
   }
   return user;
 }
@@ -93,13 +100,23 @@ This is a rare but real edge case in high-traffic systems. There are three fixes
 A high-traffic key — say the homepage — expires via TTL. **Thousands of concurrent requests** then see a cache miss and **all** hit the database at the same moment. That is a sudden spike, capable of bringing the database down at exactly the moment of TTL expiration.
 
 ```ts
+import { setTimeout as sleep } from 'node:timers/promises';
+import { createClient } from 'redis'; // node-redis, the `redis` package
+
+interface Homepage { sections: string[] }
+
+declare const db: { buildHomepage(): Promise<Homepage> };
+
+const redis = createClient();
+await redis.connect();
+
 // ❌ No protection: when the TTL expires, all concurrent
 // requests hit the database at the same time
 async function getHomepage(): Promise<Homepage> {
   const cached = await redis.get('homepage');
   if (cached) return JSON.parse(cached);
   const data = await db.buildHomepage(); // 10,000 concurrent calls!
-  await redis.set('homepage', JSON.stringify(data), 'EX', 60);
+  await redis.set('homepage', JSON.stringify(data), { EX: 60 });
   return data;
 }
 
@@ -109,7 +126,7 @@ async function getHomepageSafe(): Promise<Homepage> {
   const cached = await redis.get('homepage');
   if (cached) return JSON.parse(cached);
 
-  const lockAcquired = await redis.set('homepage:lock', '1', 'NX', 'EX', 10);
+  const lockAcquired = await redis.set('homepage:lock', '1', { NX: true, EX: 10 });
   if (!lockAcquired) {
     // another instance is already recomputing — return slightly stale data
     // or wait and retry (with short polling)
@@ -119,12 +136,17 @@ async function getHomepageSafe(): Promise<Homepage> {
     return getHomepageSafe();
   }
 
-  const data = await db.buildHomepage();
-  await redis.set('homepage', JSON.stringify(data), 'EX', 60);
-  // 1-hour fallback copy
-  await redis.set('homepage:stale', JSON.stringify(data), 'EX', 3600);
-  await redis.del('homepage:lock');
-  return data;
+  try {
+    const data = await db.buildHomepage();
+    await redis.set('homepage', JSON.stringify(data), { EX: 60 });
+    // 1-hour fallback copy
+    await redis.set('homepage:stale', JSON.stringify(data), { EX: 3600 });
+    return data;
+  } finally {
+    // finally, not the success path only: if buildHomepage() throws,
+    // the lock would otherwise block everyone until its 10-second expiry
+    await redis.del('homepage:lock');
+  }
 }
 ```
 
