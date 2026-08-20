@@ -9,7 +9,7 @@
 
 ### 1. 🟢 What is HTTP and why is it stateless?
 
-HTTP (HyperText Transfer Protocol) is an application-layer protocol over TCP/IP. Text request → text response. Stateless means every request is independent: the server holds no memory of previous requests. That's exactly why cookies, sessions, and JWTs exist — they carry state explicitly.
+HTTP (HyperText Transfer Protocol) is an application-layer protocol over TCP/IP: the transmission control protocol over the internet protocol. Text request → text response. Stateless means every request is independent: the server holds no memory of previous requests. That's exactly why cookies, sessions, and JWTs exist — they carry state explicitly.
 
 Statelessness is a deliberate design choice, not a limitation: it simplifies horizontal scaling (any instance handles any request), caching, and debugging.
 
@@ -94,7 +94,7 @@ Most "REST APIs" are Richardson Maturity Level 2: resources + HTTP methods. That
 
 ### 7. 🟡 What is HATEOAS? Why doesn't anyone implement it?
 
-HATEOAS (Hypermedia As The Engine Of Application State) is a REST constraint: the client doesn't know URLs in advance and follows hyperlinks from server responses, just like a browser follows links on a page.
+HATEOAS (Hypermedia As The Engine Of Application State) is a REST constraint. The client does not know URLs in advance; it follows hyperlinks from server responses, the way a browser follows links.
 
 ```json
 {
@@ -107,7 +107,7 @@ HATEOAS (Hypermedia As The Engine Of Application State) is a REST constraint: th
 }
 ```
 
-Nobody implements it fully because: clients still hard-code navigation logic; documentation (OpenAPI) provides the same discoverability more simply; no dominant standard (HAL, JSON:API, Siren are incompatible); building a dynamic UI from links is extremely complex.
+Nobody implements it fully. Clients hard-code navigation logic anyway, and an OpenAPI document gives the same discoverability more simply. There is no dominant standard either: HAL (hypertext application language), JSON:API and Siren are incompatible. And building a dynamic interface out of links is extremely complex.
 
 ---
 
@@ -115,7 +115,7 @@ Nobody implements it fully because: clients still hard-code navigation logic; do
 
 Three approaches:
 
-- **URL** (`/v1/users`) — most common. Easy to cache, test, and route at nginx. Downside: violates REST (URI should identify a resource, not an API version).
+- **URL** (`/v1/users`) — most common. Easy to cache, test, and route at nginx. Downside: violates REST — a URI (uniform resource identifier) should identify a resource, not an API version.
 - **Header** (`Accept: application/vnd.api.v2+json`) — REST-correct, but tricky to cache (needs `Vary: Accept`) and less obvious to consumers.
 - **Query param** (`?version=2`) — convenient as optional, but pollutes filter params.
 
@@ -129,7 +129,7 @@ Recommendation for most projects: `/v1` in the URL. Simpler, caches reliably, cl
 
 A classic interview trap:
 
-- `no-cache` — the cache **may** store the response, but must **revalidate** with the server before using it. If the server responds with 304 — the cached copy is used. Saves bandwidth, not RTT.
+- `no-cache` — the cache **may** store the response, but must **revalidate** with the server before using it. If the server responds with 304 — the cached copy is used. Saves bandwidth, not RTT (round-trip time).
 - `no-store` — **don't store** anything. Full request every time. For sensitive data (banking, medical records).
 
 The distinction is critical: `no-cache` is about freshness; `no-store` is about privacy/security.
@@ -156,7 +156,7 @@ Cache-Control: public, max-age=60, stale-while-revalidate=30
 
 The resource is fresh for 60 seconds. For the next 30 seconds the cache serves the stale version while updating in the background. Maximum data staleness: 90 seconds.
 
-Appropriate when perceived speed matters more than absolute freshness: news feeds, public APIs, CDN with dynamic content.
+Appropriate when perceived speed matters more than absolute freshness: news feeds, public APIs, a content delivery network (CDN) serving dynamic content.
 
 Not appropriate: banking transactions, inventory (staleness causes oversell), personalized data.
 
@@ -194,9 +194,9 @@ The browser forcibly blocks the combination of `*` + `credentials: "include"`. W
 
 ### 15. 🔴 Why is `Vary: Origin` needed? What happens without it?
 
-When the server dynamically reflects `Access-Control-Allow-Origin` (one origin from a list), the cache must know: the same URL can return different ACAO values for different clients.
+A server may reflect `Access-Control-Allow-Origin` dynamically, picking one origin from a list. Then the cache has to know that one URL can answer different clients differently.
 
-Without `Vary: Origin`: a CDN caches the response with `ACAO: https://a.com` and returns it to a client with `Origin: https://b.com`. The browser blocks it — CORS error for b.com.
+Without `Vary: Origin` a CDN caches the response that allows the origin `https://a.com` and nothing else. It then hands that response to a client on `https://b.com`, and the browser blocks it as a CORS error.
 
 With `Vary: Origin`: the cache stores separate copies per unique origin.
 
@@ -206,7 +206,7 @@ With `Vary: Origin`: the cache stores separate copies per unique origin.
 
 ### 16. 🟡 Offset vs cursor pagination. When to use which?
 
-Offset (`LIMIT N OFFSET M`): simple to implement, supports jumping to a page, has a total count. Problems: at large offsets the DB reads and discards M rows (O(n) index scan); under concurrent DML, data "drifts" (duplicates or skipped rows).
+Offset (`LIMIT N OFFSET M`): simple to implement, supports jumping to a page, has a total count. Problems: at large offsets the DB (database) reads and discards M rows, an O(n) index scan. Under concurrent writes (DML) the data "drifts" — duplicates or skipped rows.
 
 Cursor (`WHERE id < lastId LIMIT N`): stable, always O(log n), ideal for infinite scroll. Can't jump to page 42, no total count.
 
@@ -228,7 +228,7 @@ On a 10M-row table, offset=5M can take seconds; cursor takes milliseconds.
 
 ### 18. 🟡 How does JWT work? What does it contain and how is it verified?
 
-JWT = `base64url(header).base64url(payload).signature`. The header contains the algorithm (`alg: HS256`), the payload contains claims (`sub`, `exp`, `role`), the signature is an HMAC or RSA signature.
+A JWT (JSON web token) is `base64url(header).base64url(payload).signature`. The header names the algorithm (`alg: HS256`) and the payload carries claims (`sub`, `exp`, `role`). The signature is either an HMAC (hash-based message authentication code) or an RSA (Rivest-Shamir-Adleman) signature.
 
 Important: the payload is **not encrypted** — anyone can read it. The signature guarantees **integrity** (nobody tampered), not **confidentiality**.
 
@@ -252,15 +252,15 @@ Sessions: server stores state in Redis/DB. Client holds only an ID (small cookie
 
 JWT: state inside the token, server stores nothing (stateless). Scales horizontally without Redis. Invalidation before expiry requires a blacklist (= back to stateful).
 
-Choose: traditional web on one domain → sessions. SPA/mobile/microservices → JWT + refresh token.
+Choose: traditional web on one domain → sessions. Single-page apps (SPA), mobile and microservices → JWT + refresh token.
 
 ---
 
 ### 21. 🔴 What is PKCE and why is it needed in OAuth 2.0?
 
-PKCE (Proof Key for Code Exchange) is an extension for protecting the Authorization Code Flow in public clients (SPA, mobile) where a `client_secret` cannot be stored safely.
+PKCE (Proof Key for Code Exchange) protects the Authorization Code Flow in public clients — single-page and mobile apps, which cannot store a `client_secret` safely.
 
-The client generates a random `code_verifier`, sends its SHA256 hash (`code_challenge`) in the authorization request. When exchanging code → token, it sends the original `code_verifier`. The Authorization Server verifies: `SHA256(verifier) == challenge`.
+The client generates a random `code_verifier`, sends its SHA256 (secure hash algorithm) digest as the `code_challenge` in the authorization request. When exchanging code → token, it sends the original `code_verifier`. The Authorization Server verifies: `SHA256(verifier) == challenge`.
 
 If the authorization code is intercepted — without the `code_verifier` it's useless. In an SPA without PKCE, an intercepted code is directly exchangeable for tokens.
 
@@ -268,7 +268,7 @@ If the authorization code is intercepted — without the `code_verifier` it's us
 
 ### 22. 🔴 Why shouldn't JWT be stored in localStorage?
 
-localStorage is accessible to any JavaScript on the page. An XSS attack on any dependency or CDN resource → token stolen → full session compromise.
+localStorage is accessible to any JavaScript on the page. An XSS (cross-site scripting) attack on any dependency or CDN resource → token stolen → full session compromise.
 
 Correct approach: access token in JS memory (a variable) — lost on page reload. Refresh token in an HttpOnly cookie (JS-inaccessible; browser sends it automatically). On reload — silently get a new access token via the refresh flow.
 
@@ -282,7 +282,7 @@ SSE is a unidirectional HTTP stream (server → client). Built-in auto-reconnect
 
 WebSocket is a full-duplex TCP connection. Client and server send independently. Supports binary data. No auto-reconnect — must implement. Harder to scale.
 
-Choose: if you only need server push (notifications, progress, LLM streaming) → SSE. If you need client-to-server real-time push (chat, games, collaborative editing) → WebSockets.
+Choose: if you only need server push (notifications, progress, streaming from a language model) → SSE. If you need client-to-server real-time push (chat, games, collaborative editing) → WebSockets.
 
 ---
 
@@ -301,7 +301,7 @@ On disconnect, the browser automatically reconnects (after `retry` ms) and sends
 
 ### 25. 🔴 How do you scale a WebSocket server horizontally?
 
-Problem: a client on instance A wants to send a message to a user connected to instance B. Instance A has no WebSocket connection for that user in memory.
+Problem: a client on instance A wants to message a user connected to instance B. Instance A holds no WebSocket connection for that user.
 
 Solution: Redis Pub/Sub. When a message arrives from a client → save + `publish("user:42", data)` to Redis. All instances subscribe to `user:*`. Instance B receives from Redis and sends over WebSocket.
 
@@ -325,13 +325,13 @@ WebSocket: 10,000 persistent TCP connections. Minimal per-message overhead (no H
 
 ### 27. 🔴 What is head-of-line blocking? Did HTTP/2 solve it?
 
-HoL blocking in HTTP/1.1: one TCP connection = one request at a time. A slow response blocks subsequent ones. Browsers opened 6 connections — a partial workaround.
+Head-of-line (HoL) blocking in HTTP/1.1: one TCP connection = one request at a time. A slow response blocks subsequent ones. Browsers opened 6 connections — a partial workaround.
 
 HTTP/2 solved HoL **at the HTTP layer**: stream multiplexing in a single TCP connection. Streams are independent at the HTTP level.
 
 **But**: TCP-level HoL remained. A single lost TCP packet blocks all HTTP/2 streams (TCP guarantees byte ordering without knowing about streams).
 
-HTTP/3 (QUIC over UDP) solved the TCP-level HoL too: streams are independent at the transport layer. A lost packet on one stream doesn't block others.
+HTTP/3 runs QUIC (quick UDP internet connections) over UDP, the user datagram protocol. It solved the TCP-level HoL too: streams are independent at the transport layer. A lost packet on one stream doesn't block others.
 
 ---
 
@@ -368,7 +368,7 @@ Advantages over a plain API key:
 - Replay protection: timestamp in the signature + server checks "not older than 5 minutes"
 - A captured request can't be replayed against a different endpoint
 
-Used by: AWS SDK (`AWS4-HMAC-SHA256`), Stripe webhook verification, payment systems.
+Used by: the Amazon Web Services (AWS) request signer (`AWS4-HMAC-SHA256`), Stripe webhook verification, payment systems.
 
 ```typescript
 const message = `${method}\n${path}\n${timestamp}\n${body}`;

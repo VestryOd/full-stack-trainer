@@ -3,7 +3,7 @@
 
 ## Four Approaches
 
-When the client needs to receive updates without making an explicit request, there are four mechanisms: polling, long polling, SSE, and WebSockets. They look similar on the surface but work fundamentally differently. We'll cover each individually — then compare.
+When the client needs to receive updates without making an explicit request, there are four mechanisms: polling, long polling, server-sent events (SSE), and WebSockets. They look similar on the surface but work fundamentally differently. We'll cover each individually — then compare.
 
 ---
 
@@ -174,7 +174,7 @@ Cons:
 
 **When to use:**
 - Low latency needed but SSE/WebSocket unavailable (legacy clients)
-- Historically: Comet, XMPP clients, old WhatsApp Web
+- Historically: Comet, XMPP (extensible messaging and presence protocol) clients, old WhatsApp Web
 - Today: almost always better to use SSE instead of long polling
 
 ---
@@ -364,7 +364,7 @@ Cons:
 
 ## WebSockets
 
-WebSockets are a **full-duplex persistent connection** over TCP (RFC 6455). The client and server can send messages to each other at any time.
+WebSockets are a **full-duplex persistent connection** over TCP (RFC 6455), a document in the request-for-comments series. The client and server can send messages to each other at any time.
 
 ### The Upgrade Handshake
 
@@ -389,7 +389,7 @@ Sec-WebSocket-Protocol: chat
 
 After 101, the connection switches to the WebSocket protocol. The TCP connection stays open; HTTP is no longer used.
 
-`Sec-WebSocket-Accept` = base64(SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")) — protects against accidental HTTP servers accepting WS requests.
+`Sec-WebSocket-Accept = base64(SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))` — protects against accidental HTTP servers accepting WS (WebSocket) requests.
 
 ### WebSocket Frames
 
@@ -680,7 +680,7 @@ Trading terminal (quotes + orders):
 
 ## WebTransport (the future)
 
-A new W3C/IETF standard over HTTP/3 (QUIC), combining WebSocket benefits with QUIC's transport improvements:
+A new standard from the W3C (World Wide Web Consortium) and the IETF (Internet Engineering Task Force). It runs over HTTP/3 (QUIC) and combines WebSocket benefits with QUIC's transport improvements:
 
 ```txt
 WebTransport advantages over WebSockets:
@@ -702,7 +702,7 @@ Too early to use in production.
 
 - **"SSE is an outdated approach"** — no. SSE is actively used. OpenAI streams ChatGPT responses over SSE. GitHub streams live updates over SSE. It's a modern, well-supported standard.
 
-- **"WebSockets don't work over HTTPS"** — they do. `ws://` is unencrypted (like `http://`), `wss://` is encrypted (like `https://`). Always use `wss://` in production.
+- **"WebSockets don't work over HTTPS"** — they do. HTTPS (encrypted HTTP) changes the scheme, not the upgrade. `ws://` is unencrypted (like `http://`), `wss://` is encrypted (like `https://`). Always use `wss://` in production.
 
 - **"Polling is an antipattern — never use it"** — polling is a perfectly valid choice for infrequent updates and simple scenarios. A stats dashboard that updates once a minute needs no WebSocket complexity.
 

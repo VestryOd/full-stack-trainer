@@ -124,7 +124,7 @@ Cons:
 
 ## JWT (JSON Web Tokens)
 
-JWT is a standard (RFC 7519) for transmitting data as signed JSON. The key difference from sessions: **the server holds no state** — all information is inside the token.
+JWT is a standard (RFC 7519, a request-for-comments document) for transmitting data as signed JSON. The key difference from sessions: **the server holds no state** — all information is inside the token.
 
 ### JWT Structure
 
@@ -371,7 +371,7 @@ For web and mobile apps with a backend.
 
 ### PKCE (Proof Key for Code Exchange)
 
-PKCE protects against authorization code interception. Required for mobile and SPA apps (which have no client_secret):
+PKCE protects against authorization code interception. Required for mobile and single-page app (SPA) clients, which cannot keep a client_secret:
 
 ```txt
 Client generates:
@@ -452,7 +452,7 @@ if (!apiKey || apiKey.revokedAt) {
 
 ### HMAC Request Signing
 
-For high-security APIs (payment systems, AWS SDK): the entire request is signed, not just the key.
+For high-security APIs — payment systems, the Amazon Web Services (AWS) software development kit — the whole request is signed, not just the key. The signature is a hash-based message authentication code (HMAC).
 
 ```typescript
 // Client signs the request:
@@ -507,7 +507,7 @@ When to use what:
 
 ## Common Interview Traps
 
-- **"Storing JWT in localStorage is convenient"** — it's dangerous. localStorage is accessible to any JS on the page (XSS → token theft). Access tokens belong in JS memory (lost on page reload), refresh tokens in an HttpOnly cookie (XSS-proof).
+- **"Storing JWT in localStorage is convenient"** — it's dangerous. localStorage is accessible to any JS on the page (XSS — cross-site scripting — steals the token). Access tokens belong in JS memory (lost on page reload), refresh tokens in an HttpOnly cookie (XSS-proof).
 
 - **"JWT can't be invalidated"** — it can, at a cost. Options: blacklist `jti` in Redis, refresh token rotation (each use issues a new one), short-lived access tokens (15 min). Fully stateless JWT is not the right choice when you need instant revocation.
 
@@ -519,4 +519,4 @@ When to use what:
 
 - **"client_secret can live in a SPA or mobile app"** — no. Public clients (SPA, mobile) have no safe place to store a secret. Use PKCE without a client_secret instead.
 
-- **"Use bcrypt for API keys"** — no. bcrypt is intentionally slow (designed for passwords). API keys are long random strings; SHA-256 is sufficient. bcrypt for passwords, SHA-256 for API key hashes.
+- **"Use bcrypt for API keys"** — no. bcrypt is intentionally slow (designed for passwords). API keys are long random strings, so a SHA-256 secure hash algorithm digest is enough. bcrypt for passwords, SHA-256 for API key hashes.

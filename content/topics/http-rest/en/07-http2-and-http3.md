@@ -19,7 +19,7 @@ If main.js is large — style.css waits, even if it's already ready.
 This is head-of-line blocking.
 ```
 
-Browsers worked around this by opening **6 parallel TCP connections** per domain. But each connection means a separate TCP + TLS handshake.
+Browsers worked around this by opening **6 parallel TCP connections** per domain. But each connection means a separate TCP handshake plus a TLS (transport layer security) handshake.
 
 **Uncompressed text headers**
 
@@ -44,7 +44,7 @@ The browser had no way to tell the server "CSS is more important than images —
 
 ## HTTP/2: Binary, Multiplexed
 
-HTTP/2 (2015, RFC 7540) solves these problems while preserving HTTP semantics — same methods, status codes, and headers. Only the **transport** changes.
+HTTP/2 (2015, RFC 7540 — a numbered request-for-comments document) solves these problems while preserving HTTP semantics — same methods, status codes, and headers. Only the **transport** changes.
 
 ### Binary Framing
 
@@ -165,7 +165,7 @@ Why it failed:
 
 ### TLS in HTTP/2
 
-Technically HTTP/2 supports cleartext (h2c). In practice, all browsers require TLS for HTTP/2. So in practice, HTTP/2 = HTTPS.
+Technically HTTP/2 supports cleartext (h2c). In practice, all browsers require TLS for HTTP/2. So in practice, HTTP/2 = HTTPS (HTTP over TLS).
 
 ---
 
@@ -264,7 +264,7 @@ HTTP/2 over TCP:
   On mobile networks with ~2% packet loss — noticeably painful.
 ```
 
-### QUIC — UDP + Reliability
+### QUIC — UDP (user datagram protocol) + Reliability
 
 QUIC (Quick UDP Internet Connections) is a new transport protocol over UDP, developed by Google and standardized by IETF:
 
@@ -330,7 +330,7 @@ HTTP/3 (QUIC):
   A file download is not interrupted when switching networks.
 ```
 
-This is critical for mobile users and IoT devices.
+This is critical for mobile users and IoT (internet of things) devices.
 
 ---
 
@@ -372,7 +372,7 @@ This is critical for mobile users and IoT devices.
 - HTTP methods (GET, POST, PUT, DELETE…)
 - Status codes (200, 404, 500…)
 - Headers (Cache-Control, Authorization, Content-Type…)
-- REST API architecture
+- REST (representational state transfer) API architecture
 
 Fetch API, axios, node-fetch all work with HTTP/2 and HTTP/3 transparently. Your code doesn't change.
 
@@ -450,15 +450,15 @@ Time →
 
 ## Common Interview Traps
 
-- **"HTTP/2 is always faster"** — not always. On fast, low-loss networks, HTTP/1.1 with multiple connections can be comparable. HTTP/2 shows the most benefit on high-latency or unstable connections (mobile, CDN with >100ms RTT).
+- **"HTTP/2 is always faster"** — not always. On fast, low-loss networks, HTTP/1.1 with multiple connections can be comparable. HTTP/2 shows the most benefit on high-latency or unstable connections (mobile, or a CDN — a content delivery network — with >100ms RTT).
 
-- **"HTTP/3 is on UDP — so it's unreliable"** — QUIC implements reliable delivery over UDP at the application layer (acknowledgements, retransmissions, ordering). UDP was chosen because TCP can't be changed without updating the OS on every node in the internet.
+- **"HTTP/3 is on UDP — so it's unreliable"** — QUIC implements reliable delivery over UDP at the application layer (acknowledgements, retransmissions, ordering). UDP was chosen because TCP can't be changed without updating the OS (operating system) on every node in the internet.
 
 - **"HTTP/2 multiplexing fixed all HoL problems"** — no. TCP-level HoL remained. HTTP/3 fixed it through QUIC.
 
 - **"Server Push is a great HTTP/2 feature"** — it failed in practice. Chrome removed support in 2022. Use 103 Early Hints or Resource Hints (`<link rel="preload">`) instead.
 
-- **"Domain sharding is good for HTTP/2"** — the opposite. Domain sharding requires multiple DNS lookups and TLS handshakes. In HTTP/2 everything multiplexes over one connection — sharding only hurts.
+- **"Domain sharding is good for HTTP/2"** — the opposite. Domain sharding requires multiple DNS (domain name system) lookups and TLS handshakes. In HTTP/2 everything multiplexes over one connection — sharding only hurts.
 
 - **"HTTPS is only needed for security"** — in the context of HTTP/2+, HTTPS is also needed for the protocol itself. Browsers don't support HTTP/2 without TLS. QUIC embeds TLS 1.3 as a mandatory part.
 
