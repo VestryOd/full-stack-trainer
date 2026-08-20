@@ -95,7 +95,7 @@ export interface CacheModuleOptions {
   prefix?: string;
 }
 
-export const CACHE_OPTIONS = new InjectionToken<CacheModuleOptions>('CACHE_OPTIONS');
+export const CACHE_OPTIONS = Symbol('CACHE_OPTIONS');
 
 @Module({})
 export class CacheModule {

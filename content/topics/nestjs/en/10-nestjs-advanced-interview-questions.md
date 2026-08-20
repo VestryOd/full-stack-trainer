@@ -17,21 +17,21 @@ NestFactory.create() phases:
 
 A circular dependency without `forwardRef()` breaks phase two. The error arrives while the graph is being built, before the server ever listens on a port.
 
-**Q: Why is `InjectionToken<T>` better than string tokens?**
+**Q: Why is a `Symbol` token better than a string token?**
 
-A string token carries no type: the compiler does not know what sits behind `'DATABASE_URL'`, and it will not catch a typo in the name. A typed token holds the type of the value, so the type is checked at the injection point.
+Because a symbol cannot be misspelled and cannot collide. A string token is retyped at every injection point, so a typo in `'DATABASE_URL'` fails at runtime, not at compile time. Two `'DB'` strings from different modules resolve to the same token and overwrite each other; two symbols never do, even with the same description.
 
-The second benefit is uniqueness. Two `'DB'` strings from different modules will collide and overwrite each other, while two separate tokens will not.
+What a symbol does **not** give you is the type of the value. No Nest token carries it. `InjectionToken<T>` is a type alias for what may serve as a token, not a container for the value type. The constructor annotation is what types the injection.
 
 ```typescript
-// String token — no type safety
+// String token — retyped everywhere, collides across modules
 { provide: 'DATABASE_URL', useValue: 'postgres://...' }
-// Injection: @Inject('DATABASE_URL') url: string — compiler does not check the type
+// Injection: @Inject('DATABASE_URL') url: string — a typo here compiles
 
-// InjectionToken<T> — full type safety
-const DATABASE_URL = new InjectionToken<string>('DATABASE_URL');
+// Symbol token — one constant, unique by construction
+export const DATABASE_URL = Symbol('DATABASE_URL');
 { provide: DATABASE_URL, useValue: 'postgres://...' }
-// Injection: @Inject(DATABASE_URL) url: string — compiler verifies url: string
+// Injection: @Inject(DATABASE_URL) url: string — the name cannot be mistyped
 
 // Additional benefits:
 // - No name conflicts between modules (string 'DB' may clash)

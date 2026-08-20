@@ -177,28 +177,28 @@ export class UserService {
 }
 ```
 
-## InjectionToken — a type-safe token
+## Symbol tokens — unique and typo-proof
 
-A string token works, but it has two problems. The compiler will not notice a typo in `'JWT_SECRET'`, and you have to write the value's type by hand at every injection point.
+A string token works, but it has two problems. The compiler will not notice a typo in `'JWT_SECRET'`, and two modules that happen to pick the same string collide.
 
-A typed token fixes both: the name is written once in a constant, and the type of the value lives in the token itself.
+A `Symbol` in an exported constant fixes both. The name is written once, and every symbol is unique by construction, so no two modules can clash.
 
 ```typescript
-// String tokens ('JWT_SECRET') — risk of typos
-// Solution: InjectionToken<T> for type safety
+// String tokens ('JWT_SECRET') — typos and collisions
+// Solution: a Symbol held in a shared constant
 
-import { InjectionToken } from '@nestjs/common';
-
-export const JWT_SECRET = new InjectionToken<string>('JWT_SECRET');
-export const REDIS_CLIENT = new InjectionToken<RedisClientType>('REDIS_CLIENT');
+export const JWT_SECRET = Symbol('JWT_SECRET');
+export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
 
 // In Module:
 { provide: JWT_SECRET, useValue: process.env.JWT_SECRET }
 
-// Injection — TypeScript knows the type:
+// Injection — the constant cannot be misspelled:
 constructor(@Inject(JWT_SECRET) private jwtSecret: string) {}
-// vs a string token: you must annotate the type manually
+// The type still comes from your annotation, not from the token
 ```
+
+Note what a token cannot do. `InjectionToken<T>` in `@nestjs/common` is a **type**, not a class. It is the union `string | symbol | Type<T> | Abstract<T> | Function` — everything that may serve as a token. There is nothing to instantiate, and no Nest token stores the type of its value — that is what the constructor annotation is for.
 
 ## Circular dependencies — how to untangle them
 
@@ -246,4 +246,4 @@ export class AuthModule {}
 
 - **"Request scope is a good alternative to AsyncLocalStorage"** — both solve the same task: giving a service the data of the current request. A REQUEST provider is re-created together with its whole dependency chain, which is extra work for the garbage collector (GC). AsyncLocalStorage keeps one Singleton and stores the data in the async call context. For an API under high load, pick AsyncLocalStorage.
 
-- **"A token has to be a string"** — no. A token can be a class (the most common case), a string, a `Symbol`, or an `InjectionToken<T>`. For custom tokens `InjectionToken<T>` is the recommended one: it is typed and, unlike a string, will not let a typo slip past the compiler.
+- **"A token has to be a string"** — no. A token can be a class (the most common case), a string or a `Symbol`. `InjectionToken<T>` is the *type* of that union, not a class you instantiate. For your own tokens prefer a `Symbol` in an exported constant: it cannot be misspelled at the injection point and cannot collide with another module.
