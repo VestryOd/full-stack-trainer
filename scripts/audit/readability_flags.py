@@ -253,9 +253,12 @@ def is_caps_emphasis(token: str, prose: str) -> bool:
     in this text ("EVERY" here, "every" there), it is emphasis. An acronym never
     shows up lower-cased — the corpus has no "jwt" or "мvcc".
 
-    One exception the test cannot see on its own: an allowlisted abbreviation is
-    never emphasis. "JS" fails the test in any Node.js article, because "Node.js"
-    hands it a lower-case "js" — a compound word, not a shouted one.
+    A lower-case half of a compound does not count. "Node.js" would otherwise
+    hand "JS" a lower-case "js", and "text/csv" hands "CSV" a lower-case "csv" —
+    neither is a shouted word, so `.` and `/` join the boundary classes.
+
+    One exception the test still cannot see on its own: an allowlisted
+    abbreviation is never emphasis.
     """
     if token in ABBREV_ALLOWLIST:
         return False
@@ -263,8 +266,8 @@ def is_caps_emphasis(token: str, prose: str) -> bool:
     if len(lower) < 2:
         return False
     return bool(
-        re.search(rf"(?<![A-Za-zА-Яа-яЁё0-9_]){re.escape(lower)}"
-                  rf"(?![A-Za-zА-Яа-яЁё0-9_])", prose)
+        re.search(rf"(?<![A-Za-zА-Яа-яЁё0-9_./]){re.escape(lower)}"
+                  rf"(?![A-Za-zА-Яа-яЁё0-9_./])", prose)
     )
 
 
