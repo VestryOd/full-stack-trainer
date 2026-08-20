@@ -2,7 +2,9 @@
 
 ## What is Next.js
 
-Next.js is a full-stack framework built on top of React. The key word is *framework*, not *library*. React gives you building blocks — components, hooks, virtual DOM reconciliation — but deliberately doesn't answer questions like "where do routes live", "when and where should data be fetched", or "should this page render on the server or in the browser". Next.js makes those decisions for you and imposes (in a good way) its own project structure.
+Next.js is a full-stack framework built on top of React. The key word is *framework*, not *library*. React gives you the building blocks: components, hooks, reconciliation of the virtual DOM (Document Object Model — the browser's tree of page nodes). But it deliberately leaves the big questions open. Where do routes live? When and where should data be fetched? Should this page render on the server or in the browser?
+
+Next.js answers those questions for you and imposes (in a good way) its own project structure.
 
 The distinction matters:
 
@@ -12,13 +14,15 @@ Next.js → Application framework: routing, rendering, data fetching,
           caching, bundling, optimizations, a backend layer
 ```
 
-Next.js doesn't replace React — it uses React as its rendering engine and builds the surrounding infrastructure that you'd otherwise have to assemble yourself (React Router + Webpack config + your own SSR server + your own data layer + your own cache).
+Next.js doesn't replace React. It uses React as its rendering engine and builds the infrastructure around it. Without a framework you assemble that yourself: React Router, a Webpack config, your own rendering server, your own data layer, your own cache.
 
 ## Why Next.js exists: problems with classic SPAs
 
-### Problem 1 — SEO and first paint
+An SPA (single-page application) ships one nearly empty HTML page and draws everything else with JS in the browser.
 
-A classic CRA/Vite SPA ships an almost empty HTML document:
+### Problem 1 — search engine optimization (SEO) and first paint
+
+A classic SPA built with Create React App or Vite ships an almost empty HTML document:
 
 ```html
 <!DOCTYPE html>
@@ -36,9 +40,15 @@ Before ~2018-2019, search crawlers executed JS poorly, so such a page was indexe
 - crawl budget is limited — large SPAs get indexed more slowly and less completely;
 - other bots (social network OpenGraph preview scrapers, some search engines) still don't execute JS at all.
 
-SSR/SSG solve this by sending ready-made HTML with content already in it.
+Server-side rendering (SSR) and static site generation (SSG) solve this. Both send ready-made HTML with the content already in it.
 
-### Problem 2 — the cost of the first load (TTFB → FCP → TTI)
+### Problem 2 — the cost of the first load
+
+The path to an interactive page is usually measured with three metrics:
+
+- **TTFB** (time to first byte) — when the first byte of the response arrives;
+- **FCP** (first contentful paint) — when the user first sees anything on screen;
+- **TTI** (time to interactive) — when the page starts reacting to clicks.
 
 In a pure SPA, the user goes through a long, mostly *sequential* chain:
 
@@ -54,11 +64,13 @@ API requests (often after mount, not before)
 re-render with data
 ```
 
-Every step adds latency, and they mostly run one after another. On slow networks (3G, mobile connections in some regions) this turns into seconds of a blank screen. With SSR/SSG, Next.js sends HTML with data already filled in, and hydration "wakes up" the already-rendered markup — the user sees content earlier than the app becomes interactive.
+Every step adds latency, and they mostly run one after another. On slow networks (3G, mobile connections in some regions) this turns into seconds of a blank screen. With SSR/SSG the HTML arrives with the data already in it, and hydration "wakes up" that markup. So the user sees content well before the app becomes interactive.
 
 ### Problem 3 — where and when to fetch data
 
-In classic React (before Suspense/RSC), data fetching was a set of conventions each team invented on its own: `useEffect` + `useState`, custom hooks, react-query/SWR, Redux thunks. Next.js provides a single model: data can be fetched directly in Server Components with `async/await`, with no client-side `useEffect`, no request waterfalls, and no extra client JS just to run fetching logic.
+In classic React — before Suspense and React Server Components (RSC) — data fetching was a set of conventions each team invented on its own. Typical ones: `useEffect` + `useState`, custom hooks, react-query and SWR (stale-while-revalidate), Redux thunks.
+
+Next.js provides a single model instead. You fetch data directly in a Server Component with `async`/`await`. No client-side `useEffect`, no request waterfalls, and no extra client JS shipped just to run fetching logic.
 
 ```tsx
 // app/products/page.tsx — Server Component, runs on the server
@@ -88,7 +100,7 @@ Interviewers often ask what "opinionated" means here. It means the framework mak
 - **Data fetching** — `fetch` with an extended API (`cache`, `next.revalidate`, `next.tags`) is built into the platform, not a third-party library.
 - **Bundling/Code splitting** — automatic per-route splitting, no manual `React.lazy` setup per route.
 
-The upside of this approach is less boilerplate and fewer architectural debates within the team. The downside is that stepping outside these conventions (a custom SSR server, a custom caching layer) is harder than in an "unopinionated" stack (Vite + React Router + your own choice for everything else).
+The upside of this approach is less boilerplate and fewer architectural debates within the team. The downside is that stepping outside these conventions is harder here. A custom SSR server or a custom cache layer costs more here than in an "unopinionated" stack like Vite + React Router. There you pick every piece yourself.
 
 ## Next.js as a fullstack framework
 
@@ -96,10 +108,11 @@ Next.js simultaneously contains:
 
 ```txt
 Frontend:  React Server/Client Components, Layouts, Streaming UI
-Backend:   Route Handlers (app/api/**/route.ts), Server Actions, Middleware
+Backend:   Route Handlers (app/api/**/route.ts), Server Actions,
+           Middleware
 ```
 
-This lets you keep a BFF layer (Backend For Frontend) and the UI in one repository and one deployment, without a separate Express/Nest service just to aggregate data for a specific screen. A Route Handler is a full backend endpoint:
+This lets you keep the BFF layer (Backend For Frontend) and the UI (user interface) in one repository and one deployment. You need no separate Express or Nest service just to aggregate data for one screen. A Route Handler is a full backend endpoint:
 
 ```ts
 // app/api/users/route.ts
@@ -143,7 +156,7 @@ export const config = {
 };
 ```
 
-Typical uses: auth redirects, geo-based routing, A/B testing (picking a variant before render), modifying headers/cookies. An important nuance: middleware runs on the Edge Runtime for *every* request matching its matcher, without access to Node.js-specific APIs (`fs`, `net`, native modules), and every middleware invocation adds latency to all matching requests — keep it as lightweight as possible.
+Typical uses: auth redirects, geo-based routing, A/B testing (picking a variant before render), modifying headers/cookies. An important nuance: middleware runs on the Edge Runtime for *every* request that matches its matcher. There it has no access to Node.js-specific APIs (`fs`, `net`, native modules). And every invocation adds latency to all matching requests, so keep the middleware as lightweight as you can.
 
 ## Code splitting and built-in optimizations
 
@@ -172,7 +185,9 @@ export default function Hero() {
 }
 ```
 
-`next/image` automatically generates a `srcset`, converts images to modern formats (WebP/AVIF), lazily loads images outside the viewport, and reserves space for the image (preventing layout shift — important for Core Web Vitals' CLS). `next/font` downloads fonts at build time and inlines them as static assets, avoiding an extra runtime request to Google Fonts and the associated FOIT/FOUT.
+`next/image` does several things for you. It generates a `srcset`, converts images to modern formats (`.webp`, `.avif`), and lazily loads everything outside the viewport. It also reserves space for the image, which prevents layout shift — the cumulative layout shift (CLS) part of Core Web Vitals.
+
+`next/font` downloads fonts at build time and serves them as static assets of your own project. That removes the runtime request to Google Fonts, and with it the flash of invisible text (FOIT) and the flash of unstyled text (FOUT).
 
 ## React vs Next.js — how to explain the difference in an interview
 
@@ -182,7 +197,7 @@ A common question, and a weak answer is "Next is React with routing built in". A
 |---|---|---|
 | Level | UI library | Application framework |
 | What it solves | How to describe and update UI | Where and when code runs, routing, caching, data delivery |
-| Rendering | Client-side only (by default) | CSR, SSR, SSG, ISR, streaming — chosen granularly per segment |
+| Rendering | Client-side only (by default) | client-side (CSR), server (SSR), static (SSG), incremental (ISR), streaming — chosen per segment |
 | Backend | None | Route Handlers, Server Actions, Middleware |
 
 Next.js uses React *as* its rendering engine — it doesn't replace reconciliation, hooks, or the component model, it wraps them in a request-lifecycle infrastructure.
@@ -197,6 +212,6 @@ Next.js uses React *as* its rendering engine — it doesn't replace reconciliati
 
 - **"Middleware is just a way to redirect"** — middleware runs on the Edge Runtime for *every* matching request, with no Node.js API access. Not knowing this is a common root cause behind "why doesn't Prisma/fs work in my middleware".
 
-- **Can't explain why Next is called "fullstack"** — the answer isn't "because it has API Routes", but that one app and one deployment combine a UI layer (Server/Client Components) with a backend layer (Route Handlers, Server Actions, Middleware), simplifying BFF architecture.
+- **Can't explain why Next is called "fullstack"** — the answer isn't "because it has API Routes". It's that one app and one deployment combine a UI layer (Server and Client Components) with a backend layer (Route Handlers, Server Actions, Middleware). That's what makes a BFF layer cheap to build.
 
-- **Treating `next/image` and `next/font` as "just syntactic sugar"** — they're actually compile-time and runtime optimizations (srcset generation, format conversion, font inlining) that you'd otherwise have to configure manually with third-party tools in vanilla React.
+- **Treating `next/image` and `next/font` as "just syntactic sugar"** — they are real build-time and runtime optimizations: `srcset` generation, format conversion, font inlining. In vanilla React you configure all of that by hand, with third-party tools.

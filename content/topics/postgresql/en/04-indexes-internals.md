@@ -160,7 +160,7 @@ CREATE INDEX idx_users_email_hash ON users USING HASH (email);
 -- In most cases B-Tree is faster and more functional
 ```
 
-## When the planner does NOT use an index — and that's correct
+## When the planner skips the index — and that's correct
 
 ```sql
 -- Index on is_active (boolean), 99% of rows = true

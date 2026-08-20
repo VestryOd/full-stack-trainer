@@ -1,9 +1,9 @@
 <!-- verified: 2026-06-05, corrections: 1 -->
-# Routing, Layouts и Middleware
+# Маршрутизация, файловые конвенции и middleware
 
-## File-system routing: основы и нюансы типизации
+## Файловая маршрутизация: основы и нюансы типизации
 
-В App Router маршрут определяется *папкой*, а не файлом — файл `page.tsx` внутри папки делает её доступной как маршрут. Это отличие важно: можно создать папку `app/blog/components/` с обычными компонентами, и она **не** станет маршрутом, потому что в ней нет `page.tsx`.
+В App Router маршрут определяется *папкой*, а не файлом. Папка становится доступной как маршрут, когда внутри появляется файл `page.tsx`. Это отличие важно: можно создать папку `app/blog/components/` с обычными компонентами, и она **не** станет маршрутом, потому что в ней нет `page.tsx`.
 
 ```txt
 app/
@@ -34,21 +34,27 @@ export default async function BlogPost({
 }
 ```
 
-`id` (из `await params`) всегда `string` (или `string[]` для catch-all) — даже если по смыслу это число, Next не делает автоматического приведения типов. Частая ошибка — забыть `Number(params.id)`/`parseInt` перед использованием в запросе к БД, где ожидается числовой ID.
+`id` (из `await params`) всегда `string`, а для catch-all — `string[]`. Даже если по смыслу это число, Next не делает автоматического приведения типов. Частая ошибка — забыть `Number(params.id)` или `parseInt` перед использованием в запросе к БД (базе данных), где ожидается числовой ID.
 
 ### Catch-all и Optional Catch-all
 
 ```txt
-app/docs/[...slug]/page.tsx     → /docs/a, /docs/a/b, /docs/a/b/c
-                                    НЕ матчит /docs (нужен хотя бы 1 сегмент)
+app/docs/[...slug]/page.tsx
+  → /docs/a, /docs/a/b, /docs/a/b/c
+  → /docs НЕ матчится (нужен хотя бы 1 сегмент)
 
-app/docs/[[...slug]]/page.tsx   → /docs, /docs/a, /docs/a/b
-                                    матчит И /docs (slug будет undefined)
+app/docs/[[...slug]]/page.tsx
+  → /docs, /docs/a, /docs/a/b
+  → /docs тоже матчится, slug будет undefined
 ```
 
 ```tsx
 // app/docs/[...slug]/page.tsx
-export default async function DocsPage({ params }: { params: Promise<{ slug: string[] }> }) {
+export default async function DocsPage({
+  params,
+}: {
+  params: Promise<{ slug: string[] }>;
+}) {
   const { slug } = await params; // Next.js 15: params стал async
   // /docs/react/hooks/useEffect → slug = ['react', 'hooks', 'useEffect']
   const path = slug.join('/');
@@ -56,22 +62,22 @@ export default async function DocsPage({ params }: { params: Promise<{ slug: str
 }
 ```
 
-Типичное применение — CMS/docs-сайты, где дерево страниц произвольной глубины определяется внешним источником данных, а не файловой структурой.
+Типичное применение — сайт документации на CMS (content management system, система управления контентом). Дерево страниц там может быть произвольной глубины, и его форму задаёт внешний источник данных, а не файловая структура.
 
 ### Route Groups — организация без влияния на URL
 
 ```txt
 app/
  ├─ (marketing)/
- │   ├─ layout.tsx        → отдельный layout только для маркетинговых страниц
+ │   ├─ layout.tsx        → layout для маркетинга
  │   ├─ page.tsx          → /
  │   └─ about/page.tsx    → /about
  ├─ (app)/
- │   ├─ layout.tsx        → отдельный layout для авторизованной части
+ │   ├─ layout.tsx        → layout для закрытой части
  │   └─ dashboard/page.tsx → /dashboard
 ```
 
-Папки в круглых скобках `(marketing)`, `(app)` — **не попадают в URL**. Это позволяет иметь несколько независимых Root-подобных layout'ов (например, один с публичным хедером, другой — с авторизованным сайдбаром) без вложенности друг в друга.
+Папки в круглых скобках `(marketing)`, `(app)` — **не попадают в URL**. Это позволяет держать рядом несколько независимых Root-подобных layout'ов: один с публичным хедером, другой — с сайдбаром для авторизованных. Вкладывать их друг в друга не нужно.
 
 ### Parallel Routes и Intercepting Routes (продвинутый уровень)
 
@@ -103,23 +109,25 @@ export default function Layout({
 }
 ```
 
-`(.)photo` — *intercepting route*: при клиентской навигации на `/photo/123` (например, по клику из ленты) открывается модалка с фото *поверх* текущей страницы, но при прямом заходе по URL (refresh, шаринг ссылки) или серверном переходе рендерится полноценная страница `/photo/[id]`. Это классический паттерн "Instagram-style" модалок для фотографий — на интервью senior-уровня его иногда спрашивают именно через формулировку "как сделать так, чтобы клик по фото открывал модалку, но прямая ссылка на фото открывала отдельную страницу".
+`(.)photo` — это *intercepting route*. Клик по превью в ленте — клиентская навигация на `/photo/123`, и открывается модалка с фото *поверх* текущей страницы. А если зайти по тому же адресу напрямую (refresh, ссылка из мессенджера) или прийти серверным переходом, отрендерится полноценная страница `/photo/[id]`.
+
+Это классический паттерн "Instagram-style" модалок для фотографий. На интервью senior-уровня его иногда спрашивают именно такой формулировкой. Как сделать, чтобы клик по фото открывал модалку, а прямая ссылка на то же фото — отдельную страницу?
 
 ## Layout, Template, Loading, Error, Not Found — файловые конвенции
 
 ```txt
 app/dashboard/
- ├─ layout.tsx     → персистентный UI-каркас, НЕ перемонтируется при навигации внутри сегмента
- ├─ template.tsx   → как layout, но ПЕРЕМОНТИРУЕТСЯ на каждую навигацию
+ ├─ layout.tsx     → каркас; НЕ перемонтируется внутри сегмента
+ ├─ template.tsx   → как layout, но ПЕРЕМОНТИРУЕТСЯ каждый раз
  ├─ loading.tsx    → автоматический <Suspense fallback>
- ├─ error.tsx      → автоматический Error Boundary (Client Component)
- ├─ not-found.tsx  → рендерится при вызове notFound() или несуществующем catch-all пути
+ ├─ error.tsx      → Error Boundary (Client Component)
+ ├─ not-found.tsx  → показывается на notFound() и промахе catch-all
  └─ page.tsx       → контент маршрута
 ```
 
 ### Layout vs Template — когда нужен именно Template
 
-`layout.tsx` сохраняет состояние и DOM при навигации между дочерними маршрутами — это и есть основное преимущество App Router (сайдбар не "мигает", скролл не сбрасывается). Но иногда такое поведение **нежелательно**:
+`layout.tsx` сохраняет состояние и DOM (Document Object Model — живое дерево узлов страницы в браузере) при навигации между дочерними маршрутами. Это и есть основное преимущество App Router: сайдбар не "мигает", скролл не сбрасывается. Но иногда такое поведение **нежелательно**:
 
 ```tsx
 // app/blog/[slug]/template.tsx
@@ -138,7 +146,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Если бы это был `layout.tsx`, `useEffect` сработал бы только при первом монтировании сегмента, а не при каждом переходе между `/blog/post-1` и `/blog/post-2` (т.к. layout не размонтируется). `template.tsx` решает именно этот класс задач: per-navigation эффекты, CSS-анимации входа/выхода, сброс локального состояния формы между шагами визарда.
+Положите тот же код в `layout.tsx` — и `useEffect` сработает один раз, при первом монтировании сегмента. При переходе с `/blog/post-1` на `/blog/post-2` он больше не сработает: layout не размонтируется. Файл `template.tsx` решает именно этот класс задач. Три примера: эффекты на каждую навигацию, CSS-анимации входа и выхода, сброс локального состояния формы между шагами визарда.
 
 ### Nested Layouts — что именно не перемонтируется
 
@@ -157,7 +165,7 @@ Settings Layout  — не перемонтируется (если есть)
 page.tsx         — заменяется новым содержимым
 ```
 
-Next запрашивает с сервера только RSC payload для изменившегося сегмента — общие layout'ы остаются смонтированными React-деревом, поэтому состояние (открытое меню, позиция скролла внутри сайдбара) не теряется.
+Next запрашивает с сервера только одно: RSC payload (React Server Components payload — сериализованное описание изменившегося сегмента). Общие layout'ы остаются смонтированными в React-дереве, поэтому их состояние живёт дальше: открытое меню, позиция скролла внутри сайдбара.
 
 ## Middleware
 
@@ -168,10 +176,10 @@ Middleware — это код, выполняющийся **до** того, ка
 ```txt
 Недоступно в middleware:
   fs, net, child_process, любые Node-специфичные нативные модули
-  Полноценные ORM (Prisma Client в стандартной конфигурации не работает на Edge)
+  Полноценные ORM (стандартный Prisma Client не работает на Edge)
 
 Доступно:
-  Web-стандартные API: fetch, Request, Response, URL, crypto (Web Crypto)
+  Web-стандартные API: fetch, Request, Response, URL, Web Crypto
   Next-специфичные обёртки: NextRequest, NextResponse
 ```
 
@@ -199,7 +207,7 @@ export const config = {
 };
 ```
 
-`matcher` — это не просто "оптимизация", это необходимость: без него middleware выполняется **для каждого запроса**, включая статические ассеты (`/_next/static/...`), что добавляет латентность ко всему приложению без надобности.
+`matcher` — это не "оптимизация", это необходимость. Без него middleware выполняется **для каждого запроса**, включая статические ассеты вроде `/_next/static/...`. Латентность добавляется ко всему приложению без всякой пользы.
 
 ### Redirect vs Rewrite — разница, которую путают чаще всего
 
@@ -216,7 +224,8 @@ return NextResponse.rewrite(new URL('/internal/maintenance-page', request.url));
 
 ```ts
 export function middleware(request: NextRequest) {
-  const bucket = request.cookies.get('ab-bucket')?.value ?? (Math.random() < 0.5 ? 'a' : 'b');
+  const existing = request.cookies.get('ab-bucket')?.value;
+  const bucket = existing ?? (Math.random() < 0.5 ? 'a' : 'b');
 
   const response = bucket === 'b'
     ? NextResponse.rewrite(new URL('/home-variant-b', request.url))
@@ -233,11 +242,13 @@ export function middleware(request: NextRequest) {
 
 ```ts
 export function middleware(request: NextRequest) {
-  const country = request.geo?.country ?? 'US'; // доступно на Vercel; в self-hosted нужен свой источник
+  // request.geo заполняется на Vercel; в self-hosted нужен свой источник
+  const country = request.geo?.country ?? 'US';
   const locale = country === 'DE' ? 'de' : country === 'FR' ? 'fr' : 'en';
 
   if (!request.nextUrl.pathname.startsWith(`/${locale}`)) {
-    return NextResponse.redirect(new URL(`/${locale}${request.nextUrl.pathname}`, request.url));
+    const target = new URL(`/${locale}${request.nextUrl.pathname}`, request.url);
+    return NextResponse.redirect(target);
   }
   return NextResponse.next();
 }
@@ -247,32 +258,35 @@ export function middleware(request: NextRequest) {
 
 ```txt
 Хорошо подходит:
-  - аутентификация/авторизация на уровне роутинга (проверка наличия токена)
+  - проверка наличия токена на уровне роутинга
   - редиректы и rewrites
   - модификация заголовков/cookies для всех запросов
-  - geo/locale-based routing, A/B bucket assignment
+  - geo/locale-роутинг, раздача A/B-бакетов
 
 Плохо подходит:
-  - проверка токена с походом в БД на каждый запрос (Edge Runtime + латентность БД
-    на КАЖДЫЙ запрос, включая статику, если matcher настроен широко)
-  - сложная бизнес-логика — её место в Route Handlers/Server Actions,
-    где доступен полноценный Node.js runtime
+  - проверка токена с походом в БД на каждый запрос
+    (Edge Runtime плюс латентность БД на КАЖДЫЙ запрос,
+    включая статику, если matcher настроен широко)
+  - сложная бизнес-логика — её место в Route Handlers
+    и Server Actions, где есть полноценный Node.js runtime
 ```
 
-Частый антипаттерн — валидация JWT с проверкой в БД (например, проверка "не отозван ли токен") прямо в middleware. Технически возможно через `fetch` к внешнему сервису, но добавляет сетевой round-trip к *каждому* защищённому запросу. Более тяжёлая авторизационная логика обычно переносится в сами Route Handlers/Server Actions, а middleware ограничивается дешёвой проверкой (например, валидностью JWT-подписи без похода в БД).
+Частый антипаттерн — валидация JWT (JSON Web Token) прямо в middleware с проверкой в БД, например "не отозван ли токен". Технически это возможно через `fetch` к внешнему сервису. Но так к *каждому* защищённому запросу добавляется сетевой round-trip.
+
+Более тяжёлую авторизационную логику обычно переносят в сами Route Handlers и Server Actions. Middleware тогда ограничивается дешёвой проверкой — например, валидностью JWT-подписи без похода в БД.
 
 ## Типичные ошибки на интервью
 
-- **"params.id — это число, если в URL цифры"** — нет, `params` всегда строки (или массивы строк для catch-all), приведение типов — ответственность разработчика.
+- **"params.id — это число, если в URL цифры"** — нет. Значения `params` всегда строки, а для catch-all — массивы строк. Приведение типов — ответственность разработчика.
 
-- **Путают `[...slug]` и `[[...slug]]`** — первый не матчит родительский путь без сегментов (`/docs` даст 404), второй матчит, и `slug` будет `undefined`.
+- **Путают `[...slug]` и `[[...slug]]`** — первому нужен хотя бы один сегмент, поэтому `/docs` даст 404. Второй матчит и `/docs`, только `slug` там будет `undefined`.
 
 - **"Route Groups влияют на URL"** — нет, `(marketing)`/`(app)` существуют только для организации файлов и разных layout'ов, в URL они не отображаются.
 
-- **"layout.tsx и template.tsx — это одно и то же, просто синонимы"** — `layout` сохраняет state и DOM между навигациями внутри сегмента, `template` пересоздаётся при каждой навигации. Разница критична для `useEffect`-based аналитики или анимаций входа/выхода.
+- **"layout.tsx и template.tsx — это одно и то же, просто синонимы"** — `layout` сохраняет состояние и DOM между навигациями внутри сегмента, `template` пересоздаётся при каждой навигации. Разница критична для `useEffect`-based аналитики или анимаций входа/выхода.
 
-- **"Middleware может делать всё, что Route Handler"** — нет, Edge Runtime не даёт доступа к Node API и большинству ORM. Незнание этого — частая причина "у меня в middleware падает Prisma".
+- **"Middleware может делать всё, что Route Handler"** — нет. Edge Runtime не даёт доступа к Node API и к большинству ORM (object-relational mapper, библиотека доступа к базе). Незнание этого — частая причина "у меня в middleware падает Prisma".
 
 - **Забывают про `matcher`** — без него middleware гоняется на каждый запрос, включая `/_next/static/*`, `/favicon.ico` и т.д., что измеримо увеличивает латентность.
 
-- **"Redirect и Rewrite — это синонимы для 'перенаправить пользователя'"** — Redirect меняет URL в браузере (видимо пользователю и поисковикам), Rewrite — нет. Для SEO это принципиально разные инструменты (redirect передаёт сигнал "контент переехал", rewrite — "это тот же ресурс, просто внутренняя реализация другая").
+- **"Redirect и Rewrite — это синонимы для 'перенаправить пользователя'"** — нет. Redirect меняет URL в браузере, и это видят и пользователь, и поисковик. Rewrite URL не меняет. Для SEO (search engine optimization, поисковая оптимизация) это принципиально разные инструменты: redirect говорит "контент переехал", rewrite — "тот же ресурс, другая внутренняя реализация".

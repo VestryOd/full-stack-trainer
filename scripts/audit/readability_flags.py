@@ -159,13 +159,22 @@ LEAD_INTRO_RE = {
 PROTECT = [
     r"т\.\s?е\.", r"т\.\s?д\.", r"т\.\s?п\.", r"т\.\s?к\.", r"и\.\s?о\.",
     r"др\.", r"см\.", r"напр\.", r"рис\.", r"стр\.", r"гл\.",
-    r"e\.g\.", r"i\.e\.", r"etc\.", r"vs\.", r"Fig\.", r"No\.", r"cf\.",
-    r"Mr\.", r"Ms\.", r"Dr\.", r"approx\.",
+    r"e\.g\.", r"i\.e\.", r"etc\.", r"vs\.", r"cf\.", r"approx\.",
+    # anchored, or they fire mid-word: unanchored `Ms\.` matched "ORMs." and
+    # merged the sentence that ended on it into the next one
+    r"\bFig\.", r"\bNo\.", r"\bMr\.", r"\bMs\.", r"\bDr\.",
     r"\d+\.\d+",                     # 3.14, 18.2
-    r"\b[A-Za-zА-Яа-яЁё]\.",         # single-letter initials
+    # single-letter initials, e.g. "J. Smith". Upper case only, and never after
+    # an apostrophe: `\b[A-Za-z]\.` also matched the "t." in "doesn't.", so a
+    # sentence ending on any contraction silently merged into its successor and
+    # then measured as one over-long sentence.
+    r"(?<![A-Za-zА-Яа-яЁё'’])[A-ZА-ЯЁ]\.",
 ]
 PROTECT_RE = re.compile("|".join(PROTECT))
-SENT_SPLIT_RE = re.compile(r"(?<=[.!?…])[\s ]+(?=[«\"(\[A-ZА-ЯЁ0-9])")
+# `*` opens a sentence too: "*Caution with Vary*: …" is one, and without it in
+# the class the sentence before absorbs it. Same family as the lower-case
+# inline-code opener, which stays unsplit on purpose.
+SENT_SPLIT_RE = re.compile(r"(?<=[.!?…])[\s ]+(?=[«\"(\[*A-ZА-ЯЁ0-9])")
 
 
 # --- helpers ----------------------------------------------------------------
