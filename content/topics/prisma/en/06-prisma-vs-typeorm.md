@@ -2,9 +2,11 @@
 
 ## Fundamental difference in approach
 
-TypeORM: **runtime ORM** — you describe Entities with decorators, TypeORM builds SQL metadata at runtime via reflection (`reflect-metadata`). Typing is partly inferred from decorators, but not all errors are caught at compile time.
+Both tools are ORMs — object-relational mappers, the layer that turns your classes and method calls into SQL (Structured Query Language), the language the database speaks. The difference is *when* that mapping is built.
 
-Prisma: **schema-first, code-generation** — you describe `schema.prisma`, Prisma generates a fully typed client. All types are compile-time, not runtime. Changing a model without `prisma generate` → immediate TS error.
+TypeORM is a **runtime ORM**. You describe Entities with decorators, and TypeORM builds the SQL metadata while the app is running, through reflection (`reflect-metadata`). Typing is partly inferred from those decorators, so not all errors are caught at compile time.
+
+Prisma is **schema-first with code generation**. You describe `schema.prisma`, and Prisma generates a fully typed client from it. All types are compile-time, not runtime. Change a model without running `prisma generate` → immediate TS error.
 
 ```typescript
 // TypeORM — Entity + Decorator approach
@@ -86,19 +88,19 @@ const result = await prisma.$queryRaw<User[]>`
 ## Comparison table
 
 ```txt
-                    Prisma                        TypeORM
-────────────────────────────────────────────────────────────
-Approach:           Schema-first + codegen         Runtime decorators
-TypeScript:         Excellent (compile-time)        Good (partly runtime)
-Autocomplete:       Excellent                       Good
-Migrations:         Automatic (schema diff)         Auto + manual (more control)
-Query Builder:      None (only $queryRaw)           Powerful QueryBuilder
-Complex JOINs:      $queryRaw (verbose)             QueryBuilder (cleaner)
-Performance:        Comparable                      Comparable
-Documentation:      Excellent                       Good (some parts outdated)
-Ecosystem:          Growing fast                    Mature, more examples
-New projects:       Preferred                       Less common
-Legacy projects:    Costly migration                Stable
+               Prisma                   TypeORM
+───────────────────────────────────────────────────────────────────
+Approach:      schema-first + codegen   runtime decorators
+TypeScript:    excellent, compile-time  good, partly runtime
+Autocomplete:  excellent                good
+Migrations:    automatic (schema diff)  auto + manual, more control
+Query builder: none, only $queryRaw     powerful QueryBuilder
+Complex JOINs: $queryRaw (verbose)      QueryBuilder (cleaner)
+Performance:   comparable               comparable
+Documentation: excellent                good, parts outdated
+Ecosystem:     growing fast             mature, more examples
+New projects:  preferred                less common
+Legacy code:   costly migration         stable
 ```
 
 ## Where TypeORM wins
@@ -112,7 +114,8 @@ async function findUsers(filters: UserFilters) {
     qb.andWhere('u.name ILIKE :name', { name: `%${filters.name}%` });
   }
   if (filters.roleIds?.length) {
-    qb.innerJoin('u.roles', 'r').andWhere('r.id IN (:...roleIds)', { roleIds: filters.roleIds });
+    qb.innerJoin('u.roles', 'r')
+      .andWhere('r.id IN (:...roleIds)', { roleIds: filters.roleIds });
   }
   if (filters.hasPublishedPosts) {
     qb.innerJoin('u.posts', 'p', 'p.published = true');
@@ -175,7 +178,7 @@ Choose Prisma when:
 Choose TypeORM when:
   ✓ Existing codebase is already on TypeORM
   ✓ Many dynamic complex queries (QueryBuilder is critical)
-  ✓ JavaScript project (not TypeScript) — Prisma's advantages disappear
+  ✓ JavaScript project, no TypeScript — Prisma's edge disappears
   ✓ ActiveRecord pattern is required
   ✓ TypeORM-specific features are needed (Entity inheritance, etc.)
 
@@ -188,10 +191,10 @@ In practice: both can coexist in one project
 
 - **"Prisma is faster than TypeORM"** — depends on the specific query. Both generate SQL and hand it to PostgreSQL. Performance difference is negligible for equivalent queries. The main difference is developer experience and type safety, not runtime performance.
 
-- **"TypeORM is outdated"** — no. TypeORM is actively maintained and used in production. Prisma is more popular in new projects, but TypeORM has a huge installed base and a mature ecosystem. Both tools are valid.
+- **"TypeORM is outdated"** — no. TypeORM is actively maintained and used in production. Prisma is more popular in new projects, but a huge number of projects already run on TypeORM, and its ecosystem is mature. Both tools are valid.
 
-- **"No QueryBuilder in Prisma is a critical drawback"** — for most CRUD applications, Prisma's `where` object is sufficient. `$queryRaw` with parameterized queries covers complex cases. TypeORM's QueryBuilder matters mainly for highly dynamic query construction (many runtime conditions).
+- **"No QueryBuilder in Prisma is a critical drawback"** — for most CRUD applications, Prisma's `where` object is sufficient. CRUD means create, read, update and delete: the four plain operations most endpoints do. `$queryRaw` with parameterized queries covers the complex cases. TypeORM's QueryBuilder matters mainly for highly dynamic query construction, where many conditions are decided at runtime.
 
-- **"TypeORM migrations are more reliable than Prisma's"** — not clear-cut. TypeORM migrations are more manual (more control, more room for human error). Prisma Migrate automatically generates a SQL diff using a Shadow Database and keeps a versioned history — fewer human mistakes. For teams without deep SQL expertise: Prisma Migrate is more reliable.
+- **"TypeORM migrations are more reliable than Prisma's"** — it depends. TypeORM migrations are more manual: more control, but also more room for human error. Prisma Migrate generates the SQL diff for you using a Shadow Database, and keeps a versioned history. That leaves fewer places for a human mistake. For teams without deep SQL expertise, Prisma Migrate is more reliable.
 
 - **"Migrating from TypeORM to Prisma is quick"** — no. It is a full replacement of the data access layer: Entity → Model, Repositories → PrismaClient, decorators → schema.prisma, QueryBuilder → Prisma API/$queryRaw. On a large project — weeks of work with high regression risk. Strategy: incremental migration module by module.
