@@ -47,8 +47,8 @@ PASSED = {
     'quiz:nestjs': '3036c4a',
     'article:http-rest': '28f1fb1, d4dbf18',
     'quiz:http-rest': 'eeb9fc7',
-    'article:javascript': '3f2bb28, ea1c4c2',
-    'article:nextjs': 'wave A',
+    'article:javascript': '3f2bb28, e07165c',
+    'article:nextjs': '00b9614',
     'quiz:javascript': 'edcb48f',
     'quiz:nextjs': '3f2bb28',
 }
