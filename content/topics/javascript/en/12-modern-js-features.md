@@ -44,7 +44,7 @@ data.users[0]?.address?.city // undefined (no TypeError)
 data.users[0]?.address.city  // TypeError! address = null, but the guard is only on users[0]
 ```
 
-### What `?.` does NOT guard against
+### What `?.` does not guard against
 
 `?.` only triggers on `null` / `undefined`. Falsy values (0, `''`, `false`) do **not** trigger it:
 
@@ -120,8 +120,8 @@ console.log(settings.nested?.value || 'fallback');  // ?
 3000       // 0 is falsy → || gives 3000
 false      // false is not null/undefined → ?? returns false
 'default'  // settings.missing = undefined → ?? gives 'default'
-'fallback' // nested = null → ?. gives undefined → ?? gives 'fallback'
-'fallback' // undefined is falsy → || gives 'fallback' (same result here)
+'fallback' // nested = null → ?. gives undefined → ?? gives it
+'fallback' // undefined is falsy → || gives the same here
 ```
 
 </details>
@@ -188,7 +188,7 @@ cloned.self === cloned; // true (cycle is correctly preserved)
 // Blob, File, ImageData, undefined, null, boolean, number, string, BigInt
 ```
 
-### What `structuredClone` does NOT support
+### What `structuredClone` does not support
 
 ```js
 // ❌ Functions — throws DataCloneError:
@@ -311,7 +311,7 @@ controller.abort();
 
 ## Tagged Template Literals — a real use case
 
-Tagged templates let you intercept interpolation and write a DSL directly in JS.
+Tagged templates let you intercept interpolation and write a DSL (domain-specific language) directly in JS.
 
 ```js
 // Tag function signature:
@@ -326,7 +326,10 @@ tag`Hello ${name}, you are ${age} years old`
 // values  = [name, age]
 ```
 
-### SQL-injection-safe query builder
+### A query builder safe from SQL injection
+
+Values never reach the SQL (structured query language) text. They stay in a
+separate array of parameters, so the database driver escapes them:
 
 ```js
 function sql(strings, ...values) {
@@ -516,14 +519,14 @@ const doubled = await Array.fromAsync(asyncNumbers(), n => n * 2); // [2, 4, 6]
 ## Connection to other topics
 
 ```txt
-[Generators]            — Array.fromAsync consumes async iterables;
-                           for-await-of as an alternative
-[Async Patterns]        — AbortController integrates with Promises via
-                           signal.addEventListener('abort', ...)
-[Closures]              — tag functions are ordinary functions that close
-                           over the strings.raw and interpolated values
-[Coercion]              — ?? vs || — the critical difference stems from
-                           understanding ToBoolean (falsy) vs nullish
+[Generators]     — Array.fromAsync consumes async iterables; for-
+                   await-of as an alternative
+[Async Patterns] — AbortController integrates with Promises via
+                   signal.addEventListener('abort', ...)
+[Closures]       — tag functions are ordinary functions that close
+                   over the strings.raw and interpolated values
+[Coercion]       — ?? vs || — the critical difference stems from
+                   understanding ToBoolean (falsy) vs nullish
 ```
 
 ## Common interview traps
@@ -536,8 +539,8 @@ const doubled = await Array.fromAsync(asyncNumbers(), n => n * 2); // [2, 4, 6]
 
 - **"`structuredClone` fully clones class instances"** — no. The prototype is lost. Data is copied, methods are not. `clone instanceof MyClass` returns false.
 
-- **"AbortController cancels the fetch on the server"** — no. `abort()` cancels the **client-side** request (the browser closes the connection), but the server may not know about it and can continue processing. Server-side cancellation requires a separate mechanism (a cancellation token in the request body/headers).
+- **"AbortController cancels the fetch on the server"** — no. `abort()` cancels the **client-side** request: the browser closes the connection. The server may never learn about it and can keep processing. Server-side cancellation requires a separate mechanism (a cancellation token in the request body or headers).
 
-- **"Tagged templates are just syntactic sugar for strings"** — no. The tag function receives strings and values separately and can return anything — not necessarily a string. `styled.div\`color: red\`` returns a React component; `gql\`query ...\`` returns an AST.
+- **"Tagged templates are just syntactic sugar for strings"** — no. The tag function receives strings and values separately and can return anything, not necessarily a string. In practice, `styled.div\`color: red\`` returns a React component, and `gql\`query ...\`` returns an abstract syntax tree (AST).
 
 - **"`Object.groupBy` has been around for a long time"** — ES2024. In Node.js from v21. Before that: `_.groupBy` from lodash or a manual `reduce`. Knowing the version matters in interviews.

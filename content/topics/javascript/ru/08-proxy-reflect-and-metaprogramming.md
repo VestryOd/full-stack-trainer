@@ -24,7 +24,8 @@ has(t, p)               prop in obj
 deleteProperty(t, p)    delete obj.prop
 apply(t, this, args)    fn(), fn.call(), fn.apply()
 construct(t, args, new) new Fn()
-ownKeys(t)              Object.keys/getOwnPropertyNames/getOwnPropertySymbols
+ownKeys(t)              Object.keys/getOwnPropertyNames/
+                        getOwnPropertySymbols
 getOwnPropertyDescriptor(t, p)   Object.getOwnPropertyDescriptor()
 defineProperty(t, p, d) Object.defineProperty()
 getPrototypeOf(t)       Object.getPrototypeOf(), instanceof
@@ -243,7 +244,8 @@ proxy.anyProp; // TypeError: Cannot perform 'get' on a proxy that has been revok
 
 ```js
 function createLogger(target, name = 'obj') {
-  return new Proxy(target, {
+  // прокси именован, чтобы ловушка могла сравнить с ним `this`
+  const proxy = new Proxy(target, {
     get(t, p, r) {
       const value = Reflect.get(t, p, r);
       if (typeof value === 'function') {
@@ -262,11 +264,12 @@ function createLogger(target, name = 'obj') {
       return Reflect.set(t, p, v, r);
     },
   });
+  return proxy;
 }
 
-const proxy = createLogger({ x: 1 }, 'myObj');
-proxy.x;      // get myObj.x → 1
-proxy.x = 5;  // set myObj.x = 5
+const logged = createLogger({ x: 1 }, 'myObj');
+logged.x;      // get myObj.x → 1
+logged.x = 5;  // set myObj.x = 5
 ```
 
 ## Symbol — уникальные ключи и метапрограммирование
@@ -368,7 +371,7 @@ Infinity instanceof TypeChecker; // false
 
 ### `Symbol.iterator` и `Symbol.asyncIterator`
 
-Подробно разобраны в [Генераторы и итераторы]. Краткий пример кастомного итерируемого:
+Подробно разобраны в [Генераторы и итераторы](./07-generators-and-iterators.md). Краткий пример кастомного итерируемого:
 
 ```js
 class Range {
@@ -434,9 +437,9 @@ console.log('missing' in obj); // ?
 ```
 42       // +obj → hint 'number' → target.value * 2 = 42
 21       // `${obj}` → hint 'string' → String(21) = '21'
-true     // 'real' in obj → has не скрывает 'real' → Reflect.has → true
-false    // 'secret' in obj → has скрывает 'secret' → false (хотя в target оно есть)
-false    // 'missing' in obj → Reflect.has → false (реально отсутствует)
+true     // 'real' in obj → has не скрывает его → Reflect.has → true
+false    // 'secret' in obj → has скрывает его (в target он есть)
+false    // 'missing' in obj → Reflect.has → false (правда нет)
 ```
 
 </details>
@@ -448,24 +451,25 @@ Proxy добавляет накладные расходы на каждую п�
 ```txt
 Практические рекомендации:
   ✅ Proxy для конфигурационных объектов, реактивного состояния
-  ✅ Proxy для разового перехвата (валидация при создании, revocable доступ)
+  ✅ Proxy для разового перехвата (валидация при создании,
+     revocable доступ)
   ❌ Proxy в tight loop с миллионами итераций
   ❌ Proxy как замена кеша (накладные расходы на каждое чтение)
 ```
 
-Vue 3 решает это проблемой через компилятор: шаблоны компилируются в код, который точно знает какие свойства реактивные и минимизирует трансп через Proxy.
+Vue 3 решает эту проблему на уровне компилятора: шаблоны компилируются в код, который заранее знает, какие свойства реактивные. Это сводит к минимуму число обращений через Proxy в рантайме.
 
 ## Связь с другими темами
 
 ```txt
-[Прототипы]            — getPrototypeOf/setPrototypeOf ловушки, invariants
-                          завязаны на прототипные механики
-[Замыкания]            — handler замыкается на данные/состояние, это обычные
-                          замыкания внутри ловушек
-[Генераторы/Symbol]    — Symbol.iterator, Symbol.asyncIterator — well-known
-                          symbols, реализующие протокол итерации
-[Управление памятью]   — Proxy удерживает target; revocable proxy —
-                          способ явно разорвать эту ссылку
+[Прототипы]          — getPrototypeOf/setPrototypeOf ловушки,
+                       invariants завязаны на прототипные механики
+[Замыкания]          — handler замыкается на данные/состояние, это
+                       обычные замыкания внутри ловушек
+[Генераторы/Symbol]  — Symbol.iterator, Symbol.asyncIterator — well-
+                       known symbols, реализующие протокол итерации
+[Управление памятью] — Proxy удерживает target; revocable proxy —
+                       способ явно разорвать эту ссылку
 ```
 
 ## Типичные ошибки на интервью
@@ -480,4 +484,4 @@ Vue 3 решает это проблемой через компилятор: ш
 
 - **"Well-known symbols — это просто константы"** — нет. Это точки расширения языка. Объект с `[Symbol.iterator]()` участвует в `for...of`, spread, деструктуризации. Объект с `[Symbol.toPrimitive]()` управляет всеми неявными приведениями типов. Это мощнее, чем просто именованные методы.
 
-- **Не знать, что `Symbol`-ключи не видны через `JSON.stringify`, `Object.keys`, `for...in`** — используются как "полупривате" ключи: видны через `Object.getOwnPropertySymbols`, но не в стандартных обходах. Это их главное практическое свойство.
+- **Не знать, что `Symbol`-ключи не видны через `JSON.stringify`, `Object.keys`, `for...in`** — используются как "полуприватные" ключи: видны через `Object.getOwnPropertySymbols`, но не в стандартных обходах. Это их главное практическое свойство.

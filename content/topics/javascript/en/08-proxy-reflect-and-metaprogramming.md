@@ -2,7 +2,7 @@
 
 ## Proxy — intercepting fundamental operations
 
-`Proxy` lets you wrap any object or function and intercept **internal methods** of ECMAScript — the low-level operations the engine performs on property access, assignment, function calls, and so on.
+`Proxy` lets you wrap any object or function and intercept its **internal methods**. Those are the low-level ECMAScript operations the engine runs on property access, assignment, a function call, and so on.
 
 ```js
 const proxy = new Proxy(target, handler);
@@ -24,7 +24,8 @@ has(t, p)               prop in obj
 deleteProperty(t, p)    delete obj.prop
 apply(t, this, args)    fn(), fn.call(), fn.apply()
 construct(t, args, new) new Fn()
-ownKeys(t)              Object.keys/getOwnPropertyNames/getOwnPropertySymbols
+ownKeys(t)              Object.keys/getOwnPropertyNames/
+                        getOwnPropertySymbols
 getOwnPropertyDescriptor(t, p)   Object.getOwnPropertyDescriptor()
 defineProperty(t, p, d) Object.defineProperty()
 getPrototypeOf(t)       Object.getPrototypeOf(), instanceof
@@ -243,6 +244,7 @@ proxy.anyProp; // TypeError: Cannot perform 'get' on a proxy that has been revok
 
 ```js
 function createLogger(target, name = 'obj') {
+  // the proxy is named so that the trap can compare `this` against it
   const proxy = new Proxy(target, {
     get(t, p, r) {
       const value = Reflect.get(t, p, r);
@@ -369,7 +371,7 @@ Infinity instanceof TypeChecker; // false
 
 ### `Symbol.iterator` and `Symbol.asyncIterator`
 
-Covered in detail in [Generators and Iterators]. A brief custom iterable example:
+Covered in detail in [Generators and Iterators](./07-generators-and-iterators.md). A brief custom iterable example:
 
 ```js
 class Range {
@@ -435,8 +437,8 @@ console.log('missing' in obj); // ?
 ```
 42     // +obj → hint 'number' → target.value * 2 = 42
 21     // `${obj}` → hint 'string' → String(21) = '21'
-true   // 'real' in obj → has doesn't hide 'real' → Reflect.has → true
-false  // 'secret' in obj → has hides 'secret' → false (even though it exists in target)
+true   // 'real' in obj → has doesn't hide it → Reflect.has → true
+false  // 'secret' in obj → has hides it → false (target has it)
 false  // 'missing' in obj → Reflect.has → false (genuinely absent)
 ```
 
@@ -449,24 +451,27 @@ Proxy adds overhead to every intercepted operation. V8 cannot inline property ac
 ```txt
 Practical guidance:
   ✅ Proxy for config objects, reactive state
-  ✅ Proxy for one-shot interception (validation on creation, revocable access)
+  ✅ Proxy for one-shot interception (validation on creation,
+     revocable access)
   ❌ Proxy in tight loops with millions of iterations
   ❌ Proxy as a substitute for a cache (overhead on every read)
 ```
 
-Vue 3 addresses this via its compiler: templates are compiled to code that knows exactly which properties are reactive, minimizing the number of Proxy traversals at runtime.
+Vue 3 addresses this in the compiler: templates compile to code that already knows which properties are reactive. That keeps the number of Proxy lookups at runtime to a minimum.
 
 ## Connection to other topics
 
 ```txt
-[Prototypes]            — getPrototypeOf/setPrototypeOf traps; invariants
-                           are tied to the prototype mechanics
-[Closures]              — the handler closes over data/state; these are
-                           ordinary closures inside trap methods
-[Generators/Symbol]     — Symbol.iterator, Symbol.asyncIterator are well-known
-                           symbols implementing the iteration protocol
-[Memory Management]     — Proxy keeps target alive; revocable proxy provides
-                           a way to explicitly sever that reference
+[Prototypes]        — getPrototypeOf/setPrototypeOf traps;
+                      invariants are tied to the prototype mechanics
+[Closures]          — the handler closes over data/state; these are
+                      ordinary closures inside trap methods
+[Generators/Symbol] — Symbol.iterator, Symbol.asyncIterator are
+                      well-known symbols implementing the iteration
+                      protocol
+[Memory Management] — Proxy keeps target alive; revocable proxy
+                      provides a way to explicitly sever that
+                      reference
 ```
 
 ## Common interview traps
@@ -481,4 +486,4 @@ Vue 3 addresses this via its compiler: templates are compiled to code that knows
 
 - **"Well-known symbols are just constants"** — no. They are language extension points. An object with `[Symbol.iterator]()` participates in `for...of`, spread, and destructuring. An object with `[Symbol.toPrimitive]()` controls all implicit type coercions. More powerful than just named methods.
 
-- **Not knowing that Symbol keys are invisible to `JSON.stringify`, `Object.keys`, `for...in`** — they act as "semi-private" keys: visible through `Object.getOwnPropertySymbols`, but invisible in standard iteration. This is their main practical property.
+- **Not knowing that Symbol keys are invisible to `JSON.stringify`, `Object.keys`, `for...in`** — they act as "semi-private" keys. They are visible through `Object.getOwnPropertySymbols`, but not in standard iteration. This is their main practical property.

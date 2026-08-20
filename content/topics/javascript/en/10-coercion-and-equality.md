@@ -70,7 +70,7 @@ null == false
 
 Result: `true, true, true, false, false, true`
 
-Key observation: `null == 0` and `null == false` are false, even though `'' == false`, `'' == 0`, and `[] == false` are true. `null` is special: the algorithm only considers it equal to `null` and `undefined`.
+Key observation: `null == 0` and `null == false` are false, even though `'' == false`, `'' == 0`, and `[] == false` are true. The value `null` is special: the algorithm only considers it equal to `null` and `undefined`.
 
 </details>
 
@@ -80,7 +80,8 @@ When an object needs to become a primitive, the engine runs the ToPrimitive algo
 
 ```txt
 ToPrimitive(obj, hint):
-  1. If [Symbol.toPrimitive] exists → call it with hint → return result
+  1. If [Symbol.toPrimitive] exists → call it with hint,
+     return the result
   2. If hint = 'string':
        try obj.toString() → if primitive → return it
        try obj.valueOf()  → if primitive → return it
@@ -166,7 +167,7 @@ In the original JavaScript implementation (Brendan Eich, 1995), values were stor
 
 The special value `null` was represented as the **null pointer** (0x00000000 on most platforms). The type tag of the null pointer was `000` → object.
 
-This is a bug, not a feature. There was a proposal to fix it in ES2015, but it was rejected due to compatibility concerns with billions of lines of existing code.
+This is a bug, not a feature. There was a proposal to fix it in ECMAScript 2015, but it was rejected due to compatibility concerns with billions of lines of existing code.
 
 ```js
 typeof null        // 'object'  ← bug, historical
@@ -187,7 +188,7 @@ typeof x === 'object' && x !== null // ✅ check it's an object and not null
 
 ## NaN — the number not equal to itself
 
-`NaN` (Not-a-Number) is the only value in JS that is not equal to itself. This is mandated by the IEEE 754 spec.
+`NaN` (Not-a-Number) is the only value in JS that is not equal to itself. This is mandated by standard 754 of the IEEE (Institute of Electrical and Electronics Engineers), which defines floating-point arithmetic.
 
 ```js
 NaN === NaN  // false
@@ -254,7 +255,7 @@ Three different equality algorithms:
 ```txt
 ==         Abstract Equality:  type coercion (algorithm above)
 ===        Strict Equality:    no coercion, but: NaN≠NaN, +0===−0
-Object.is  Same Value:         NaN===NaN, +0≠−0 (mathematically precise)
+Object.is  Same Value:         NaN===NaN, +0≠−0 (precise math)
 ```
 
 ```js
@@ -327,7 +328,7 @@ array truthy     // [] is a truthy object
 object truthy    // {} is a truthy object
 string truthy    // '0' is a non-empty string, truthy
 bool obj truthy  // new Boolean(false) is an object, always truthy
-array == false   // true! [] == false via the == algorithm (see above)
+array == false   // true! [] == false via the == algorithm
 ```
 
 This is what makes `==` dangerous: `[]` is truthy in a boolean context (`if`), yet `[] == false` is `true` via the abstract equality algorithm. The apparent contradiction is because `if` uses ToBoolean (no coercion), while `==` uses AbstractEquality (with coercion via step 4: Boolean → Number, then step 5: Object → String).
@@ -380,19 +381,20 @@ ToString:
 
 ToBoolean (no computation, just a lookup table):
   falsy: false, 0, -0, 0n, '', null, undefined, NaN, document.all
-  everything else → true (including [], {}, '0', 'false', new Boolean(false))
+  everything else → true (including [], {}, '0', 'false',
+                          new Boolean(false))
 ```
 
 ## Connection to other topics
 
 ```txt
-[Proxy/Symbol]          — Symbol.toPrimitive intercepts ToPrimitive;
-                           without it — the valueOf/toString chain runs
-[Modern JS]             — Object.hasOwn, Number.isNaN, Number.isFinite —
-                           strict versions of the old functions without
-                           implicit ToNumber
-[Memory Management]     — typeof is used for type checks, but
-                           typeof null === 'object' requires a separate check
+[Proxy/Symbol]      — Symbol.toPrimitive intercepts ToPrimitive;
+                      without it — the valueOf/toString chain runs
+[Modern JS]         — Object.hasOwn, Number.isNaN, Number.isFinite —
+                      strict versions of the old functions without
+                      implicit ToNumber
+[Memory Management] — typeof is used for type checks, but typeof
+                      null === 'object' requires a separate check
 ```
 
 ## Common interview traps

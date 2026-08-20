@@ -4,19 +4,37 @@
 
 **What is an Execution Context and what does it consist of?**
 
-An Execution Context is an abstract specification container created when a function is called or a script starts. It consists of: `LexicalEnvironment` (where `let`/`const` bindings are stored), `VariableEnvironment` (where `var` and `function`-declarations live), `ThisBinding` (the value of `this`), and `code evaluation state` (execution position — critical for generators). The stack of contexts is the Call Stack; the Running Execution Context is always at the top.
+An Execution Context is an abstract specification container. The engine creates one when a function is called or a script starts. It has four fields:
+
+```txt
+LexicalEnvironment    — where let/const bindings are stored
+VariableEnvironment   — where var and function declarations live
+ThisBinding           — the value of this
+code evaluation state — execution position (vital for generators)
+```
+
+The stack of contexts is the Call Stack. The Running Execution Context is always the one on top.
 
 ---
 
 **What is hoisting and why does it happen?**
 
-Hoisting is a consequence of the two-phase execution model: in the creation phase, the engine scans the code and creates bindings before any line executes. `var` is initialized to `undefined`, a `function` declaration to the full function object, and `let`/`const` are created but not initialized (TDZ). Code is not physically "moved" — only the order of operations changes.
+Hoisting is a consequence of the two-phase execution model. In the creation phase, the engine scans the code and creates bindings before any line executes. It initializes `var` to `undefined` and a `function` declaration to the full function object. Bindings for `let`/`const` are created but not initialized — that is the Temporal Dead Zone (TDZ). Code is not physically "moved"; only the order of operations changes.
 
 ---
 
 **What is the difference between `LexicalEnvironment` and `VariableEnvironment`?**
 
-These are two fields of a single Execution Context, each pointing to a different Environment Record. `VariableEnvironment` never changes within the function's lifetime and holds `var`/`function` declarations. `LexicalEnvironment` changes when entering a new `{}` block — a new Declarative ER is created per block to hold that block's `let`/`const`. This is what makes `let` block-scoped and `var` function-scoped simultaneously within the same function.
+These are two fields of a single Execution Context, each pointing to a different Environment Record:
+
+```txt
+VariableEnvironment — var and function declarations; never
+                      changes while the function lives
+LexicalEnvironment  — let/const of the current block; a new
+                      Declarative ER per {} block
+```
+
+This is what makes `let` block-scoped and `var` function-scoped at the same time inside one function.
 
 ---
 
@@ -36,7 +54,16 @@ The scope chain is the linked list of `[[OuterEnv]]` references between Environm
 
 **Name the four rules for determining `this` and their priority.**
 
-The four rules in descending priority: (1) `new` — `this` = the new object; (2) explicit binding (`call`/`apply`/`bind`) — `this` = the first argument; (3) implicit binding (call via an object `obj.fn()`) — `this` = the object to the left of the dot; (4) default binding (standalone call) — `this` = `globalThis` in sloppy mode or `undefined` in strict mode.
+There are four rules, priority from top to bottom:
+
+```txt
+new Fn()           → this = the new object
+fn.call/apply/bind → this = the first argument
+obj.fn()           → this = the object left of the dot
+fn()               → this = globalThis (sloppy) / undefined (strict)
+```
+
+When two rules match the same call, the one higher in the list wins.
 
 ---
 
@@ -60,7 +87,15 @@ An arrow function does not create a `ThisBinding` in its Function Environment Re
 
 **Describe the `[[Construct]]` algorithm for `new Fn()`.**
 
-When `new Fn()` is called, the engine: (1) creates a new object `obj = Object.create(Fn.prototype)`; (2) calls `Fn` with `this = obj`; (3) if `Fn` explicitly returns an object — returns that object, otherwise returns `obj`. So `new Fn()` with `return { x: 1 }` returns `{ x: 1 }`, not `obj`. For `new BoundFn()`, `[[BoundThis]]` is ignored and `obj` is created as normal.
+When `new Fn()` is called, the engine runs three steps:
+
+```txt
+1. obj = Object.create(Fn.prototype)
+2. call Fn with this = obj
+3. if Fn returned an object → return it, otherwise return obj
+```
+
+So `new Fn()` with `return { x: 1 }` returns `{ x: 1 }`, not `obj`. For `new BoundFn()`, `[[BoundThis]]` is ignored and `obj` is created as normal.
 
 ---
 
@@ -68,25 +103,27 @@ When `new Fn()` is called, the engine: (1) creates a new object `obj = Object.cr
 
 **What is a closure at the engine level?**
 
-A closure = a function + a reference to the Environment Record in which it was created (the `[[Environment]]` internal slot). This is not a copy of variables — it is a live reference: changing a variable in the ER is visible to all functions closed over it. Every function in JS is a closure — even a top-level function closes over the Global ER.
+A closure = a function + a reference to the Environment Record in which it was created (the `[[Environment]]` internal slot). This is not a copy of the variables, it is a live reference. A change to a variable in the ER is visible to every function closed over it. Every function in JS is a closure — even a top-level function closes over the Global ER.
 
 ---
 
 **Why does `var` in a loop with `setTimeout` print the same value?**
 
-All callbacks close over the same ER (function's or global), in which `var i` is a single variable. By the time the callbacks execute (after synchronous code), the loop has finished and `i` equals its final value. `let i` fixes this: the spec requires a new LexicalEnvironment (with a fresh copy of `i`) to be created per iteration, so each callback closes over its own unique `i`.
+All callbacks close over the same ER (the function's or the global one), in which `var i` is a single variable. By the time the callbacks run — after the synchronous code — the loop has finished and `i` holds its final value. Using `let i` fixes this. The spec requires a fresh LexicalEnvironment per iteration, with its own copy of `i`, so each callback closes over a unique `i`.
 
 ---
 
 **What does V8 actually retain in memory through a closure?**
 
-V8 creates a **Context object** for each ER that at least one live function references. If multiple functions close over the same ER, V8 creates a single shared Context — holding all variables used by any one of them. This means: a function that only uses `small` may accidentally retain `large` if they were created in the same scope together with another function that uses `large`.
+V8 creates a **Context object** for each ER that at least one live function references. If multiple functions close over the same ER, V8 creates a single shared Context — holding all variables used by any one of them. This means a function that only uses `small` may accidentally retain `large`. That happens when both were created in the same scope as another function that does use `large`.
 
 ---
 
 **What is the main advantage of factory functions over classes for encapsulation?**
 
-A factory function achieves true privacy through a closure: internal variables are physically inaccessible from outside the module. A class with `#`-fields (ES2022) also provides true privacy at the engine level, but each method in a factory function is a separate function object (no prototype chain). For one or two instances the difference is negligible; for thousands — a class is more memory-efficient because methods live in the prototype.
+A factory function achieves true privacy through a closure: internal variables are physically inaccessible from outside the module. A class with `#`-fields (ES2022) also provides true privacy at the engine level.
+
+The difference is elsewhere: every method of a factory function is a separate function object, with no prototype chain. For one or two instances that costs nothing. For thousands, a class is more memory-efficient, because its methods live in the prototype.
 
 ---
 
@@ -94,13 +131,34 @@ A factory function achieves true privacy through a closure: internal variables a
 
 **Explain the difference between `[[Prototype]]`, `__proto__`, and `prototype`.**
 
-`[[Prototype]]` is every object's internal slot pointing to its prototype. `__proto__` is a deprecated get/set accessor on `Object.prototype` that reads/writes `[[Prototype]]` (Annex B, browsers only). `prototype` is a regular property on `Function` objects: it becomes the `[[Prototype]]` of objects created via `new Fn()`. The correct way to read `[[Prototype]]` is `Object.getPrototypeOf(obj)`.
+Three different things with confusingly similar names:
+
+```txt
+[[Prototype]] — internal slot of every object → its prototype
+__proto__     — deprecated accessor on Object.prototype that
+                reads/writes [[Prototype]] (Annex B, browsers only)
+prototype     — plain property of Function objects; becomes the
+                [[Prototype]] of objects created via new Fn()
+```
+
+The correct way to read `[[Prototype]]` is `Object.getPrototypeOf(obj)`.
 
 ---
 
 **What does `class` compile to under the hood? How does it differ from a manual constructor?**
 
-`class` is syntactic sugar over the prototype mechanism. Three differences from a manual constructor: (1) class methods are non-enumerable (`Object.defineProperty` with `enumerable: false`); manual `prototype.method = fn` is enumerable; (2) calling without `new` → `TypeError` (a regular constructor function just runs as a normal call); (3) `extends` sets up TWO chains — `Derived.prototype[[Prototype]] = Base.prototype` and `Derived[[Prototype]] = Base` (for statics).
+`class` is syntactic sugar over the prototype mechanism. Three things still differ from a manual constructor:
+
+```txt
+1. class methods are non-enumerable, as if defined with
+   Object.defineProperty and enumerable: false; a manual
+   prototype.method = fn is enumerable
+2. a call without new throws TypeError; a constructor function
+   just runs as a normal call
+3. extends sets up two chains, not one:
+     Derived.prototype[[Prototype]] = Base.prototype  (instances)
+     Derived[[Prototype]] = Base                      (statics)
+```
 
 ---
 
@@ -112,13 +170,13 @@ A factory function achieves true privacy through a closure: internal variables a
 
 **What happens when you assign a property that has a setter in the prototype?**
 
-If the `[[Prototype]]` chain contains a setter for property `x`, then `obj.x = val` invokes the setter with `this = obj` — no own property is created on `obj`. This is surprising: many expect assignment to always create an own property. `Object.defineProperty(obj, 'x', { value: val })` bypasses the setter and creates an own property.
+If the `[[Prototype]]` chain contains a setter for property `x`, then `obj.x = val` invokes that setter with `this = obj`. No own property appears on `obj`. This is surprising: many expect assignment to always create an own property. `Object.defineProperty(obj, 'x', { value: val })` bypasses the setter and creates an own property.
 
 ---
 
 **Why should you restore `constructor` when manually setting up a prototype chain?**
 
-`Derived.prototype = Object.create(Base.prototype)` replaces the entire `prototype` object, wiping the original `Derived.prototype.constructor = Derived`. After that, `new Derived().constructor === Base` — which breaks reflection and patterns that rely on `.constructor` (e.g., `obj.constructor()` to create a new instance of the same type). Fix: `Derived.prototype.constructor = Derived`.
+`Derived.prototype = Object.create(Base.prototype)` replaces the entire `prototype` object, wiping the original `Derived.prototype.constructor = Derived`. After that, `new Derived().constructor === Base`. That breaks reflection and any pattern relying on `.constructor`, such as `obj.constructor()` to create another instance of the same type. Fix: `Derived.prototype.constructor = Derived`.
 
 ---
 
@@ -126,7 +184,18 @@ If the `[[Prototype]]` chain contains a setter for property `x`, then `obj.x = v
 
 **Describe the full browser Event Loop algorithm.**
 
-Event Loop: (1) take one task from the Task Queue; (2) execute it to completion (run-to-completion); (3) fully drain the Microtask Queue (including new microtasks added during processing); (4) rendering opportunity (rAF → style → layout → paint, if needed); (5) go back to step 1. Critical: the Microtask Queue is drained completely — not one microtask, but all of them until empty.
+One iteration of the Event Loop:
+
+```txt
+1. take one task from the Task Queue
+2. run it to completion (run-to-completion)
+3. drain the Microtask Queue fully, including microtasks
+   added while draining
+4. rendering opportunity (rAF → style → layout → paint)
+5. go back to step 1
+```
+
+Critical: the Microtask Queue is drained completely — not one microtask, but all of them until empty.
 
 ---
 
@@ -138,13 +207,13 @@ The spec requires: a Promise reaction (`.then` callback) is always added to the 
 
 **What is the difference between `process.nextTick`, `queueMicrotask`, and `Promise.then` in Node.js?**
 
-In Node.js, the Microtask Queue is two-tiered: the `nextTick Queue` (process.nextTick) is drained completely first, then the Microtask Queue (Promise.then, queueMicrotask). `process.nextTick` has the highest priority among microtasks — it predates Promises in Node.js history. `queueMicrotask` and `Promise.then` share the same queue (FIFO). Recursive `process.nextTick` starves the Event Loop.
+In Node.js the Microtask Queue is two-tiered. The `nextTick Queue` (`process.nextTick`) is drained completely first, then the Microtask Queue (`Promise.then`, `queueMicrotask`). Among microtasks, `process.nextTick` has the highest priority — it predates Promises in Node.js history. The other two share one queue, in FIFO order (first in, first out). Recursive `process.nextTick` starves the Event Loop.
 
 ---
 
 **How does rendering relate to the Event Loop in a browser?**
 
-Rendering (layout, paint) happens between tasks, **after** the Microtask Queue is fully drained. From rendering's perspective, a task + all its microtasks form an atomic block. Intermediate visual states created via Promise.then are invisible to the user — rendering only occurs after the entire queue is empty. `requestAnimationFrame` fires immediately before rendering, after all microtasks.
+Rendering (layout, paint) happens between tasks, **after** the Microtask Queue is fully drained. From rendering's perspective, a task + all its microtasks form an atomic block. Intermediate visual states created via Promise.then are invisible to the user — rendering only occurs after the entire queue is empty. The `requestAnimationFrame` callback fires immediately before rendering, after all microtasks.
 
 ---
 
@@ -156,7 +225,7 @@ An infinite chain of microtasks starves the Event Loop permanently: the Microtas
 
 **How does `setTimeout(fn, 0)` differ from `queueMicrotask(fn)`?**
 
-`setTimeout(fn, 0)` places `fn` in the Task Queue (a macrotask) — it will run in the next Event Loop iteration, after all current microtasks. `queueMicrotask(fn)` places `fn` in the Microtask Queue — it runs at the end of the current task, before the next macrotask and before rendering. The difference is critical: a microtask runs sooner and "sees" state before rendering.
+`setTimeout(fn, 0)` places `fn` in the Task Queue as a macrotask. It will run in the next Event Loop iteration, after all current microtasks. A call to `queueMicrotask(fn)` places `fn` in the Microtask Queue instead. That runs at the end of the current task, before the next macrotask and before rendering. The difference is critical: a microtask runs sooner and "sees" state before rendering.
 
 ---
 
@@ -164,13 +233,15 @@ An infinite chain of microtasks starves the Event Loop permanently: the Microtas
 
 **What is the structural (not syntactic) problem with callbacks?**
 
-The core problem is **inversion of control**: passing a callback hands control to the callee. There are no guarantees: the callback will be called exactly once, not synchronously, not with both err and data simultaneously, and won't swallow exceptions. Beyond IoC: you can't `return` a value from a callback, parallel operations require manual counters, error handling is duplicated on every level, and code reads inside-out.
+The core problem is **inversion of control** (IoC): passing a callback hands control to the callee. Nothing guarantees that the callback runs exactly once, that it never runs synchronously, or that it never arrives with both `err` and `data`. It may also swallow an exception.
+
+The ergonomics suffer too. You cannot `return` a value from a callback, parallel operations need manual counters, error handling is duplicated at every level, and the code reads inside-out.
 
 ---
 
 **What happens to a Promise when you call `resolve(anotherPromise)`?**
 
-When a thenable (object with `.then`) is passed to `resolve(value)`, the Promise Resolution Procedure kicks in: the new Promise "follows" the thenable by subscribing to its `.then`. This allows chaining to work with any thenable, not just native Promises. If you pass an already-resolved Promise — the new Promise adopts its value asynchronously (via a microtask).
+When a thenable (object with `.then`) is passed to `resolve(value)`, the Promise Resolution Procedure kicks in. The new Promise "follows" that thenable by subscribing to its `.then`. This allows chaining to work with any thenable, not just native Promises. If you pass an already-resolved Promise — the new Promise adopts its value asynchronously (via a microtask).
 
 ---
 
@@ -182,7 +253,7 @@ An `async function` always returns a Promise. Each `await expr` conceptually bec
 
 **How does `Promise.race` differ from `Promise.any`?**
 
-`Promise.race` settles as soon as the **first** Promise settles (fulfilled OR rejected). `Promise.any` settles as soon as the **first** Promise fulfills; it only rejects when all have rejected — with `AggregateError` containing all reasons. `race` with an immediately-rejecting Promise rejects immediately; `any` keeps waiting for the rest.
+`Promise.race` settles as soon as the **first** Promise settles (fulfilled OR rejected). `Promise.any` settles as soon as the **first** Promise fulfills; it only rejects when all have rejected — with `AggregateError` containing all reasons. A `race` with an immediately-rejecting Promise rejects at once, while `any` keeps waiting for the rest.
 
 ---
 
@@ -208,25 +279,25 @@ An Iterable is an object with a `[Symbol.iterator]()` method returning an Iterat
 
 **How does a generator function differ from a regular function when called?**
 
-Calling `gen()` does NOT execute the code — it creates a generator object in state `suspendedStart` and returns it. Code runs only on the first `gen.next()`. This is the key distinction: `function* g() { console.log('hi'); }; g();` — prints nothing. A generator is simultaneously an Iterator and an Iterable: `gen[Symbol.iterator]() === gen` is true.
+Calling `gen()` does not execute the code — it creates a generator object in state `suspendedStart` and returns it. Code runs only on the first `gen.next()`. This is the key distinction: `function* g() { console.log('hi'); }; g();` — prints nothing. A generator is simultaneously an Iterator and an Iterable: `gen[Symbol.iterator]() === gen` is true.
 
 ---
 
 **What is passed to the first `next(value)` of a generator?**
 
-The value of the first `next(value)` is **ignored** — there is nowhere for it to go, since there is no preceding `yield` expression to receive it. The first `next()` only starts the generator up to the first `yield`. From the second `next(value)` onward — `value` becomes the result of the previous `yield` expression: `const x = yield 'prompt'; // x = whatever was passed to the next call`.
+The value of the first `next(value)` is **ignored**. There is nowhere for it to go: no preceding `yield` expression exists to receive it. The first `next()` only starts the generator up to the first `yield`. From the second `next(value)` onward, `value` becomes the result of the previous `yield` expression. In `const x = yield 'prompt';` the variable `x` holds whatever the next call passed in.
 
 ---
 
 **What does `yield*` do and what does it return?**
 
-`yield*` delegates iteration to another iterable: it yields all of its values in order. The value of the expression `yield* inner()` = the `return` value of the inner generator (the final `IteratorResult.value` when `done: true`). `yield*` works with any iterable (array, string, Set) — not just generators.
+`yield*` delegates iteration to another iterable: it yields all of its values in order. The value of the expression `yield* inner()` = the `return` value of the inner generator (the final `IteratorResult.value` when `done: true`). Note that `yield*` works with any iterable (array, string, Set), not just generators.
 
 ---
 
 **What are async generators and how are they consumed?**
 
-`async function*` is an async generator that can both `await` and `yield`. Consumed via `for await...of`. Ideal for paginated APIs (fetch the next page only when the consumer is ready), data streaming, and lazy async pipelines. `for await...of` also works with synchronous iterables (wrapping in Promise.resolve), but not vice versa.
+`async function*` is an async generator that can both `await` and `yield`. Consumed via `for await...of`. Ideal for paginated APIs — fetch the next page only when the consumer is ready — plus data streaming and lazy async pipelines. Note that `for await...of` also works with synchronous iterables, wrapping each value in Promise.resolve, but not the other way round.
 
 ---
 
@@ -246,7 +317,14 @@ Invariants are restrictions that Proxy traps cannot violate. Example: a `get` tr
 
 **How does Vue 3 use Proxy for reactivity?**
 
-`reactive(obj)` wraps an object in a Proxy with a `get` trap (calling `track(target, prop)` on reads) and a `set` trap (calling `trigger(target, prop)` on writes). `track` records that the current `activeEffect` depends on this property. `trigger` re-runs all dependent effects when the property changes. This enables automatic UI updates on state mutation without explicit subscription.
+`reactive(obj)` wraps an object in a Proxy with two traps:
+
+```txt
+get trap → calls track(target, prop) on every read
+set trap → calls trigger(target, prop) on every write
+```
+
+The `track` call records that the current `activeEffect` depends on this property. The `trigger` call re-runs all dependent effects when the property changes. This lets the UI (user interface) update automatically on a state mutation, with no explicit subscription.
 
 ---
 
@@ -266,25 +344,52 @@ Well-known symbols are predefined symbols that override an object's behavior in 
 
 **Explain V8's generational GC (enough for an interview).**
 
-V8 divides the heap into Young Generation (new objects, ~1-8MB) and Old Generation (long-lived). Minor GC (Scavenge) works only on Young: copies live objects to a new semi-space (Cheney's algorithm), dead ones are lost automatically. Objects surviving 2 Minor GCs → promoted to Old Generation. Major GC (Mark-Sweep-Compact) traverses the full graph from GC Roots, removes unreachable objects. Orinoco: incremental/concurrent marking reduces stop-the-world pauses.
+V8 divides the heap into two generations:
+
+```txt
+Young Generation — new objects, ~1-8 MB
+Old Generation   — long-lived objects
+```
+
+Minor GC (Scavenge) works only on Young. It copies live objects into a new semi-space (Cheney's algorithm); dead ones are lost automatically. Objects surviving 2 Minor GCs are promoted to Old Generation. Major GC (Mark-Sweep-Compact) traverses the full graph from GC Roots and removes unreachable objects. Orinoco adds incremental and concurrent marking, which reduces stop-the-world pauses.
 
 ---
 
 **What are GC Roots in JavaScript?**
 
-GC Roots are the starting points for marking — always considered live: (1) global variables (`window`, `globalThis`); (2) the call stack — local variables of all active functions; (3) live closures — Environment Records referenced by live functions; (4) V8 internal references. An object is reachable if there exists a path from any GC Root to it.
+GC Roots are the starting points for marking, always considered live:
+
+```txt
+1. global variables (window, globalThis)
+2. the call stack — locals of all active functions
+3. live closures — Environment Records referenced by
+   live functions
+4. V8 internal references
+```
+
+An object is reachable if a path exists from any GC Root to it.
 
 ---
 
 **Why use `WeakMap` and when is it preferable to `Map`?**
 
-`WeakMap` holds keys weakly: if an object-key has no other references, the GC can collect it and will automatically delete the entry from the WeakMap. This prevents leaks when caching data associated with objects (DOM nodes, request objects) — a `Map` would retain the keys forever. `WeakMap` is not iterable and has no `.size`: the spec cannot guarantee a consistent snapshot of weak keys.
+`WeakMap` holds keys weakly: if an object-key has no other references, the GC can collect it and will automatically delete the entry from the WeakMap. This prevents leaks when caching data attached to objects such as nodes of the DOM (document object model) or request objects. A `Map` would retain those keys forever. `WeakMap` is not iterable and has no `.size`: the spec cannot guarantee a consistent snapshot of weak keys.
 
 ---
 
 **What does `WeakRef` guarantee and what does it not?**
 
-`WeakRef` holds a weak reference that does not prevent GC. `.deref()` returns the object or `undefined` (if collected). What is **not** guaranteed: when the object will be collected, whether it will ever be collected (the spec allows immortal objects with WeakRef), or that `deref()` returns `undefined` immediately after `obj = null` (GC is non-deterministic). Use only for opportunistic caches where losing a value is acceptable.
+`WeakRef` holds a weak reference that does not prevent GC. A call to `.deref()` returns the object, or `undefined` if it was collected. Three things are **not** guaranteed:
+
+```txt
+- when the object will be collected
+- whether it will ever be collected (the spec allows an
+  immortal object behind a WeakRef)
+- that deref() returns undefined right after obj = null
+  (GC is not deterministic)
+```
+
+Use it only for opportunistic caches, where losing a value is acceptable.
 
 ---
 
@@ -292,13 +397,26 @@ GC Roots are the starting points for marking — always considered live: (1) glo
 
 **Describe the Abstract Equality Comparison (`==`) algorithm step by step.**
 
-Algorithm for `x == y`: (1) same types → Strict Equality; (2) `null == undefined` → true, and vice versa; either with anything else → false; (3) Number vs String → ToNumber(String); (4) Boolean → ToNumber, repeat; (5) Object vs String/Number/Symbol → ToPrimitive(Object), repeat; (6) otherwise → false. Key: `null` equals only `null` and `undefined` — step 2 intercepts before everything else.
+Algorithm for `x == y`:
+
+```txt
+1. same types        → Strict Equality
+2. null == undefined → true, and vice versa;
+                       either one with anything else → false
+3. Number vs String  → ToNumber(String)
+4. Boolean           → ToNumber, repeat
+5. Object vs String/Number/Symbol
+                     → ToPrimitive(Object), repeat
+6. otherwise         → false
+```
+
+Key point: `null` equals only `null` and `undefined` — step 2 intercepts before everything else.
 
 ---
 
 **Why is `typeof null === 'object'` a recognized bug?**
 
-In the original JS implementation (1995), values were stored as 32-bit words, with the lower 3 bits as the type tag. `null` was represented as a null pointer (0x000), whose tag = `000` = object. This is a bug that was proposed for fixing in ES2015 but was rejected for backwards compatibility. The correct null check: only `x === null`.
+In the original JS implementation (1995), values were stored as 32-bit words, with the lower 3 bits as the type tag. The value `null` was represented as a null pointer (0x000), whose tag `000` means object. This is a bug that was proposed for fixing in ECMAScript 2015 but was rejected for backwards compatibility. The correct null check: only `x === null`.
 
 ---
 
@@ -310,13 +428,21 @@ In the original JS implementation (1995), values were stored as 32-bit words, wi
 
 **Why is `isNaN('hello') === true` but `Number.isNaN('hello') === false`?**
 
-The global `isNaN(x)` first applies `ToNumber(x)`: `ToNumber('hello') = NaN`, then checks for NaN → true. `Number.isNaN(x)` is a strict check: returns `true` only if `typeof x === 'number' && x !== x`. A string will never pass the first check → false. Rule: always use `Number.isNaN` for checking actual NaN.
+The global `isNaN(x)` first applies `ToNumber(x)`: `ToNumber('hello') = NaN`, then checks for NaN (not a number) → true. `Number.isNaN(x)` is a strict check: returns `true` only if `typeof x === 'number' && x !== x`. A string will never pass the first check → false. Rule: always use `Number.isNaN` for checking actual NaN.
 
 ---
 
 **Why does `[] == false` equal `true` but `if ([])` executes?**
 
-These are different algorithms. `if ([])` uses `ToBoolean([])` — an object is always truthy. `[] == false` uses Abstract Equality: (step 4) `false → 0` → `[] == 0`; (step 5) `[] → ToPrimitive → ''` → `'' == 0`; (step 3) `'' → 0` → `0 == 0` → true. `==` with a Boolean first converts the Boolean to Number, not uses ToBoolean.
+These are different algorithms. `if ([])` uses `ToBoolean([])`, and an object is always truthy. The `[] == false` comparison uses Abstract Equality:
+
+```txt
+step 4: false → 0        → [] == 0
+step 5: [] → ToPrimitive → '' == 0
+step 3: '' → 0           → 0 == 0 → true
+```
+
+With a Boolean, `==` first converts that Boolean to Number. It does not use ToBoolean.
 
 ---
 
@@ -330,19 +456,23 @@ These are different algorithms. `if ([])` uses `ToBoolean([])` — an object is 
 
 **What are live bindings in ESM and how do they differ from CJS?**
 
-ESM exports a **binding** — a live reference to a variable in the exporting module. When the variable changes inside the module, the importing side sees the new value. CJS exports a value at the time of `module.exports` — for primitives, this is a copy. `export let count = 0; export function inc() { count++; }` → `import { count }; inc(); count; // 1` in ESM. With CJS, a destructured `count` would still be 0.
+ESM (ECMAScript Modules) exports a **binding**, while CJS (CommonJS) exports a value. A binding is a live reference to a variable in the exporting module. When that variable changes inside the module, the importing side sees the new value. A CJS export is taken at the moment of `module.exports`, and for primitives that is a copy.
+
+Take `export let count = 0; export function inc() { count++; }`. In ESM, `import { count }; inc(); count;` gives 1. With CJS, a destructured `count` would still be 0.
 
 ---
 
 **How do circular dependencies behave in CJS and ESM — what is the key difference?**
 
-CJS: with a cycle, B receives A's **current** `module.exports` at the time of the circular `require` — a partially filled object (only what was assigned so far). ESM: the Linking phase creates all bindings before evaluation (live bindings exist), but they may be in the TDZ until initialized. ESM cycle fix: use function accessors instead of direct values — functions access the binding later, after initialization.
+CJS: with a cycle, B receives A's **current** `module.exports` at the time of the circular `require`. That is a partially filled object — only what was assigned so far. ESM: the Linking phase creates all bindings before evaluation (live bindings exist), but they may be in the TDZ until initialized. ESM cycle fix: use function accessors instead of direct values — functions access the binding later, after initialization.
 
 ---
 
-**Why can't `require()` load ESM modules?**
+**Can `require()` load an ESM module?**
 
-`require()` is synchronous: it executes immediately and waits for the result. ESM loading is asynchronous (the Parsing phase can be async, top-level await is supported). These are fundamentally incompatible: you can't synchronously wait for an async module. Fix: dynamic `await import('./esm-module.mjs')` from a CJS context — returns a Promise with a namespace object.
+Since Node.js 22.12 (and 20.19) it can, under one condition: the module graph must contain no top-level `await`. Otherwise Node.js throws `ERR_REQUIRE_ASYNC_MODULE`. The reason is that `require()` is synchronous and cannot wait for an asynchronous module.
+
+On older versions, any `require()` of ESM throws `ERR_REQUIRE_ESM`. The universal fix works everywhere: dynamic `await import('./esm-module.mjs')` from a CJS context returns a Promise with the namespace object.
 
 ---
 
@@ -368,13 +498,23 @@ Top-level await is available only in ESM. A module with `export const data = awa
 
 **How does AbortController cancel a `fetch` and what happens on the server side?**
 
-`controller.abort()` sets `signal.aborted = true` and dispatches an `abort` event. `fetch` subscribes to the `signal` and cancels the HTTP request on abort (the browser closes the connection). `fetch` rejects with `AbortError`. On the **server side**: the server may be unaware of the cancellation — it continues processing the request. Server-side cancellation requires an explicit mechanism (e.g., a cancellation token in the request body).
+`controller.abort()` sets `signal.aborted = true` and dispatches an `abort` event. The `fetch` call subscribes to that `signal` and cancels the HTTP request on abort: the browser closes the connection. The promise from `fetch` rejects with `AbortError`.
+
+On the **server side** the story differs. The server may be unaware of the cancellation and keeps processing the request. Server-side cancellation needs an explicit mechanism, for example a cancellation token in the request body.
 
 ---
 
 **What is a tagged template literal and what does the tag function receive?**
 
-A tag is a function called with the `` tag`template ${expr}` `` syntax. It receives: (1) `strings` — a frozen array of string parts (with `strings.raw` for raw escape sequences); (2) `...values` — the evaluated expressions. The function can return anything — not necessarily a string. Use cases: SQL query builder (parameterization without injection), HTML sanitizer, `styled-components`, `gql`.
+A tag is a function called with the `` tag`template ${expr}` `` syntax. It receives two things:
+
+```txt
+strings   — frozen array of string parts, plus strings.raw
+            with the raw escape sequences
+...values — the evaluated expressions
+```
+
+The function can return anything, not necessarily a string. Use cases: a query builder for SQL (structured query language) with parameters instead of string concatenation, an HTML sanitizer, `styled-components`, `gql`.
 
 ---
 
@@ -440,7 +580,7 @@ console.log(fns[0](), fns[1](), fns[2]());
 <details>
 <summary>Answer</summary>
 
-`3 3 3`. All three arrows close over the same ER (global or function scope) with a single `var i`. By the time the functions are called, the loop has finished and `i = 3`.
+`3 3 3`. All three arrows close over the same ER (global or function scope), where `var i` is one single variable. By the time the functions are called, the loop has finished and `i` is 3.
 
 </details>
 
@@ -482,7 +622,15 @@ console.log(null == false); // ?
 <details>
 <summary>Answer</summary>
 
-`''`, `'[object Object]'`, `0`, `NaN`, `true`, `false`. `[] → ''`, `{} → '[object Object]'` via ToPrimitive. `+[]` = ToNumber('') = 0. `+{}` = ToNumber('[object Object]') = NaN. `'' == false`: false→0, ''→0, 0==0→true. `null == false`: null equals only null/undefined → false.
+`''`, `'[object Object]'`, `0`, `NaN`, `true`, `false`.
+
+```txt
+[] → '' and {} → '[object Object]'   via ToPrimitive
++[]  = ToNumber('') = 0
++{}  = ToNumber('[object Object]') = NaN
+'' == false    → false→0, ''→0, 0==0 → true
+null == false  → null equals only null/undefined → false
+```
 
 </details>
 
@@ -509,7 +657,7 @@ console.log(snap === x); // ?
 <details>
 <summary>Answer</summary>
 
-`1`, `3`, `false`. `x` is a live binding, updated on each `inc()`. `snap = x` copies the current primitive value (3) into a local variable, not the binding itself. After one more `inc()`: `x = 4`, `snap = 3` → `3 !== 4` → false.
+`1`, `3`, `false`. Here `x` is a live binding, updated on each `inc()`. The assignment `snap = x` copies the current primitive value (3) into a local variable, not the binding itself. After one more `inc()`, `x` is 4 and `snap` is 3, so `3 !== 4` → false.
 
 </details>
 
@@ -534,7 +682,13 @@ console.log(p + 1);  // ?
 <details>
 <summary>Answer</summary>
 
-`20`, `'-10'`, `21`. `+p` → hint 'number' → 10*2=20. `` `${p}` `` → hint 'string' → 10*-1=-10, template → '-10'. `p + 1` → hint 'default' → 10*2=20 → 20+1=21.
+`20`, `'-10'`, `21`.
+
+```txt
++p       → hint 'number'  → 10*2 = 20
+`${p}`   → hint 'string'  → 10*-1 = -10 → template gives '-10'
+p + 1    → hint 'default' → 10*2 = 20 → 20+1 = 21
+```
 
 </details>
 

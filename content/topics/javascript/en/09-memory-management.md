@@ -7,16 +7,16 @@ Regardless of language, memory goes through three stages:
 ```txt
 1. Allocation  — the engine allocates memory when a value is created
 2. Use         — reading and writing data
-3. Release     — GC reclaims memory when the object is unreachable
+3. Release     — the collector frees unreachable objects
 ```
 
-In JS, allocation and use happen explicitly (you write `{}`, `[]`, `new`), while release is **automatic via the garbage collector**. A memory leak occurs when an object the program no longer needs remains **reachable** from the GC's perspective — the program is accidentally holding a reference to it.
+In JS, allocation and use happen explicitly (you write `{}`, `[]`, `new`), while release is **automatic via the garbage collector (GC)**. A memory leak occurs when the program no longer needs an object, yet the object stays **reachable** for the GC. The program is accidentally holding a reference to it.
 
 ## How V8's GC works — the conceptual level
 
 ### The generational hypothesis
 
-V8 uses a **generational garbage collector** based on the observation: **most objects die young**. Temporary objects (intermediate computations, short-lived values) live very briefly. Long-lived objects (DOM, caches, singletons) are rare.
+V8 uses a **generational garbage collector** based on the observation: **most objects die young**. Temporary objects (intermediate computations, short-lived values) live very briefly. Long-lived objects are rare: nodes of the DOM (document object model), caches, singletons.
 
 This allows splitting the heap into two generations and applying different strategies:
 
@@ -42,8 +42,8 @@ Operates only on the Young Generation. Uses **Cheney's copying algorithm**:
    a. From GC roots, traverse the object graph in From space
    b. Copy live objects into To space (compactly)
    c. Objects that survived 2 Minor GCs → promote to Old Generation
-   d. The From space is treated as entirely free (no "cleaning" needed —
-      just swap the roles)
+   d. The From space is treated as entirely free (no "cleaning"
+      needed — just swap the roles)
 4. Swap From and To
 ```
 
@@ -55,15 +55,17 @@ Triggered when Old Generation approaches its threshold. Three phases:
 
 ```txt
 Phase 1: Marking
-  Starting from GC Roots, traverse the object graph and mark all reachable objects.
+  Starting from GC Roots, traverse the object graph and mark
+  every reachable object.
   GC Roots:
     - Global variables (window, globalThis)
     - The call stack (local variables of active functions)
-    - Live closures (Environment Records referenced by live functions)
+    - Live closures (Environment Records used by live functions)
     - V8 internal references
 
 Phase 2: Sweeping
-  Walk the heap. Unmarked objects are unreachable → their memory is returned to the pool.
+  Walk the heap. Unmarked objects are unreachable → their
+  memory goes back to the pool.
 
 Phase 3: Compaction — optional
   Move live objects together → eliminate fragmentation.
@@ -76,7 +78,8 @@ Marking the entire Old Generation causes a stop-the-world pause on the main thre
 
 ```txt
 Incremental marking  — marking done in small slices between JS tasks
-Concurrent marking   — marking runs on background threads in parallel with JS
+Concurrent marking   — marking runs on background threads,
+                       in parallel with JS
 Lazy sweeping        — dead objects are reclaimed gradually
 ```
 
@@ -182,7 +185,7 @@ function memoize(key, fn) {
 
 ### 4. Closures holding large scopes
 
-Covered in detail in [Closures: The Mechanics]. Key point: multiple closures over the same ER in V8 create a shared Context object that retains all variables used by at least one of them.
+Covered in detail in [Closures: The Mechanics](./03-closures-mechanics.md). Key point: several closures over the same Environment Record (ER) share one Context object in V8. That Context retains every variable used by at least one of those closures.
 
 ```js
 function problem() {
@@ -217,7 +220,7 @@ document.body.removeChild(domNode);
 
 ### WeakMap — weak keys
 
-`WeakMap` holds keys **weakly** — if there are no other references to the key object, the GC can collect it and automatically removes the entry from the WeakMap.
+`WeakMap` holds keys **weakly**. If nothing else references the key object, the GC is free to collect it, and the entry disappears from the WeakMap automatically.
 
 ```txt
 WeakMap:
@@ -335,7 +338,7 @@ class Cache {
 }
 ```
 
-**Critically important**: the spec does NOT guarantee when or whether an object with a WeakRef will be collected. GC is an implementation detail. You cannot rely on WeakRef for business logic or guarantees. Only use it where losing a value is acceptable behavior (caches, optimizations).
+**Critically important**: the spec gives *no* guarantee about when, or even whether, an object behind a WeakRef is collected. GC is an implementation detail. You cannot rely on WeakRef for business logic or guarantees. Only use it where losing a value is acceptable behavior (caches, optimizations).
 
 ```js
 // ❌ Incorrect usage:
@@ -431,32 +434,32 @@ console.log(ref.deref()?.name); // ?
 
 ```
 'tracked'    // deref() returns the object while it's still alive
-'tracked'    // the object has NOT been collected yet — GC doesn't guarantee
-             // immediate collection after obj = null
-             // (GC hasn't necessarily run yet)
+'tracked'    // not collected yet — the GC gives no guarantee
+             // of immediate collection after obj = null
+             // (the GC has not necessarily run)
 
 // At the time of actual GC collection (indeterminate time later):
 // 'Cleaned up: tracked'  — but this is not guaranteed by the spec
 ```
 
-Key takeaway: `obj = null` makes the object *eligible* for GC but doesn't guarantee immediate collection. `ref.deref()` immediately after `obj = null` can still return the object — the GC hasn't run yet.
+Key takeaway: `obj = null` makes the object *eligible* for GC but doesn't guarantee immediate collection. Calling `ref.deref()` right after `obj = null` can still return the object — the GC hasn't run yet.
 
 </details>
 
 ## Connection to other topics
 
 ```txt
-[Closures]              — closures over a shared ER retain all variables
-                           in the scope; the V8 shared Context mechanism
-                           is covered in detail in article 03
-[Proxy]                 — Proxy strongly retains target; revocable proxy
-                           provides a way to explicitly break the reference
-                           graph when done
-[Generators]            — an unfinished generator retains its entire ER
-                           (all local variables) as long as the generator
-                           object is alive
-[Modern JS]             — AbortController for listeners without manual
-                           removeEventListener
+[Closures]   — closures over a shared ER retain all variables in the
+               scope; the V8 shared Context mechanism is covered in
+               detail in article 03
+[Proxy]      — Proxy strongly retains target; revocable proxy
+               provides a way to explicitly break the reference
+               graph when done
+[Generators] — an unfinished generator retains its entire ER (all
+               local variables) as long as the generator object is
+               alive
+[Modern JS]  — AbortController for listeners without manual
+               removeEventListener
 ```
 
 ## Common interview traps
@@ -467,8 +470,8 @@ Key takeaway: `obj = null` makes the object *eligible* for GC but doesn't guaran
 
 - **"WeakRef guarantees the object stays in memory until explicitly removed"** — no. `WeakRef` is a weak reference; GC can collect the object at any time. `deref()` may return `undefined`. It's an "opportunistic" cache.
 
-- **"`FinalizationRegistry` is reliable for resource cleanup"** — no. The callback is not guaranteed. For reliable resource release — use explicit `dispose` / `close` / `destroy` patterns, or `using` (Explicit Resource Management, ES2025).
+- **"`FinalizationRegistry` is reliable for resource cleanup"** — no. The callback is not guaranteed. For reliable resource release — use explicit `dispose` / `close` / `destroy` patterns, or `using` from Explicit Resource Management, standardised in ECMAScript 2025.
 
-- **Not knowing that Minor GC (Scavenge) doesn't touch Old Generation** — understanding generational GC matters for explaining why short-lived objects are cheap (fast Minor GC), while long-lived ones are more expensive (Major GC marking the entire graph).
+- **Not knowing that Minor GC (Scavenge) doesn't touch Old Generation** — the generational split is what explains the cost difference. Short-lived objects are cheap, because a fast Minor GC handles them. Long-lived ones are expensive, because Major GC has to mark the entire graph.
 
 - **"A leak = undefined behavior"** — no. A leak in JS is strictly defined: an object remains reachable through the reference graph even though the program logic no longer accesses it. Understanding GC roots (stack, globals, closures) lets you pinpoint exactly what's keeping an object alive.
