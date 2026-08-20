@@ -172,7 +172,7 @@ most objects die young):
       but expensive (a full traversal of the object graph)
 ```
 
-GC algorithms, practical memory-leak patterns and heap snapshots are covered in full in [Memory and Garbage Collection]. The connection worth fixing here is narrower.
+GC algorithms, practical memory-leak patterns and heap snapshots are covered in full in [Memory, Heap, Stack, and Garbage Collection](./08-memory-garbage-collection.md). The connection worth fixing here is narrower.
 
 Whether an object created in New Space dies quickly or gets "promoted" to Old Space is tied directly to Hidden Classes and object shapes. So reusing same-shaped objects in hot loops does two things at once. It speeds up property access, and it reduces the pressure on the GC.
 
@@ -205,7 +205,7 @@ One line of code crosses all three layers. When you write `await fs.promises.rea
 2. The Node API wraps the call into a form libuv understands.
 3. libuv decides how to actually perform it — on the thread pool, or through an async API of the operating system (OS).
 
-The layers themselves are covered in [The Event Loop] and [libuv and the Thread Pool]. The Promise part is in [Microtasks, Macrotasks, and process.nextTick].
+The layers themselves are covered in [Event Loop](./03-event-loop.md) and [libuv and the Thread Pool]. The Promise part is in [Microtasks, Macrotasks, and process.nextTick](./04-microtasks-macrotasks-nexttick.md).
 
 ## Practical takeaway: when V8 internals actually matter
 

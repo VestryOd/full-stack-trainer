@@ -176,7 +176,7 @@ Heap — разделён на "поколения" (generational hypothesis:
       но дороже (полный обход графа объектов)
 ```
 
-Алгоритмы сборки мусора, практические паттерны утечек памяти и heap snapshot разобраны полностью в [Memory and Garbage Collection]. Здесь важно зафиксировать более узкую связь.
+Алгоритмы сборки мусора, практические паттерны утечек памяти и heap snapshot разобраны полностью в [Память, Heap, Stack и сборка мусора](./08-memory-garbage-collection.md). Здесь важно зафиксировать более узкую связь.
 
 Умрёт ли объект, созданный в New Space, быстро — или "повысится" в Old Space, напрямую завязано на Hidden Classes и форму объектов. Поэтому переиспользование объектов одной формы в горячих циклах делает сразу две вещи. Оно ускоряет доступ к свойствам и снижает давление на GC.
 
@@ -209,7 +209,7 @@ IOCP (I/O completion ports, Windows), читать файл, ...
 2. Node API оборачивает вызов в формат, понятный libuv.
 3. libuv решает, как физически выполнить операцию — через thread pool или через асинхронный API операционной системы (ОС).
 
-Сами слои разобраны в [The Event Loop] и [libuv and the Thread Pool]. Часть про Promise — в [Microtasks, Macrotasks, and process.nextTick].
+Сами слои разобраны в [Event Loop](./03-event-loop.md) и [libuv and the Thread Pool]. Часть про Promise — в [Microtasks, Macrotasks и process.nextTick](./04-microtasks-macrotasks-nexttick.md).
 
 ## Практический вывод: когда V8-детали реально имеют значение
 

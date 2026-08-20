@@ -314,7 +314,7 @@ Top-level await       ❌                     ✅
 ## Connection to other topics
 
 ```txt
-[Node.js Fundamentals]  — the broader npm ecosystem context
+Node.js Fundamentals  — the broader npm ecosystem context
                            and package.json structure
 ```
 

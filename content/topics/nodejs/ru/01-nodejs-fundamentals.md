@@ -14,7 +14,7 @@ Node.js — runtime: программа на C++, которая встраив�
 Express/Nest/Fastify — фреймворки над Node.js
 ```
 
-Путаница "Node = V8" — частая, и её стоит разобрать. V8 выполняет JS-код и управляет памятью: это heap и сборщик мусора (GC, garbage collector — часть движка, которая освобождает неиспользуемую память). И то и другое разобрано в [Memory and Garbage Collection].
+Путаница "Node = V8" — частая, и её стоит разобрать. V8 выполняет JS-код и управляет памятью: это heap и сборщик мусора (GC, garbage collector — часть движка, которая освобождает неиспользуемую память). И то и другое разобрано в [Память, Heap, Stack и сборка мусора](./08-memory-garbage-collection.md).
 
 Но V8 **не знает**, что такое файл или сокет TCP. TCP (Transmission Control Protocol) — это протокол с установлением соединения, на котором работает почти весь сетевой обмен.
 
@@ -40,10 +40,10 @@ Express/Nest/Fastify — фреймворки над Node.js
 
 Эта диаграмма — каркас для всего раздела. У каждого блока своя статья:
 
-- V8 → [V8 and the Runtime], [Memory and Garbage Collection]
-- Event Loop → [The Event Loop], [Microtasks, Macrotasks, and process.nextTick]
+- V8 → [V8 и runtime Node.js](./02-v8-and-runtime.md), [Память, Heap, Stack и сборка мусора](./08-memory-garbage-collection.md)
+- Event Loop → [Event Loop](./03-event-loop.md), [Microtasks, Macrotasks и process.nextTick](./04-microtasks-macrotasks-nexttick.md)
 - Thread Pool → [libuv and the Thread Pool]
-- Несколько процессов и потоков → [Worker Threads and Cluster]
+- Несколько процессов и потоков → [Worker Threads и Cluster](./06-worker-threads-cluster.md)
 
 ## Почему "один поток" — это осознанный архитектурный выбор, а не ограничение
 
@@ -80,7 +80,7 @@ I/O-bound (Node — отличный выбор):
      ними задаются методами HTTP)
   - WebSocket / realtime
   - Reverse proxy / API Gateway
-  - Streaming (видео, файлы — см. [Streams and Backpressure])
+  - Streaming (видео, файлы — см. Streams and Backpressure)
   - BFF (Backend for Frontend) — много параллельных запросов
     к другим сервисам, минимум собственных вычислений
 
@@ -103,7 +103,7 @@ app.get('/hash', (req, res) => {
 
 // ✅ Выносим CPU-bound работу в Worker Thread —
 // event loop основного потока остаётся свободным
-// (полный разбор — в [Worker Threads and Cluster])
+// (полный разбор — в Worker Threads and Cluster)
 app.get('/hash', async (req, res) => {
   const hash = await runInWorker('hash', req.query.password);
   res.json({ hash: hash.toString('hex') });
@@ -250,18 +250,18 @@ Senior-нюансы, которые стоит знать:
 ## Что дальше в этом разделе
 
 ```txt
-[V8 and the Runtime]       — как V8 выполняет JS, JIT-компиляция
+V8 and the Runtime       — как V8 выполняет JS, JIT-компиляция
                                (just-in-time)
-[The Event Loop]            — фазы event loop, порядок выполнения
-[Microtasks, Macrotasks,
- and process.nextTick]      — Promise vs setTimeout vs nextTick
+The Event Loop            — фазы event loop, порядок выполнения
+Microtasks, Macrotasks,
+ and process.nextTick      — Promise vs setTimeout vs nextTick
 [libuv and the Thread Pool] — что действительно асинхронно, а что —
                                "асинхронно через пул потоков"
-[Worker Threads and Cluster]— как использовать несколько ядер CPU
-[Streams and Backpressure]  — обработка больших объёмов данных
-[Memory and Garbage
- Collection]                 — heap, утечки памяти, GC-паузы
-[CommonJS vs ESM]           — две системы модулей и их различия
+Worker Threads and Cluster— как использовать несколько ядер CPU
+Streams and Backpressure  — обработка больших объёмов данных
+Memory and Garbage
+ Collection                 — heap, утечки памяти, GC-паузы
+CommonJS vs ESM           — две системы модулей и их различия
                                (ESM = ECMAScript modules)
 ```
 

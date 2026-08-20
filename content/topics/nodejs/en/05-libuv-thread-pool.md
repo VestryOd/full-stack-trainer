@@ -8,7 +8,7 @@ The statement "Node is single-threaded" is true for one specific thing — execu
 1 thread   — runs JS (V8) + libuv's Event Loop
 N threads  — libuv's Thread Pool (4 by default)
 M threads  — V8's background threads for garbage collection
-             (GC), see [Memory and Garbage Collection]
+             (GC), see Memory and Garbage Collection
 ```
 
 Network operations (`http`, `net`, `tcp`) **don't use the Thread Pool at all** — this is the critical detail that's most often confused. They rely on the native async mechanisms of the operating system (OS):
@@ -132,8 +132,8 @@ it to 128" isn't a solution — it shifts the problem and
 potentially creates a new one (CPU contention).
 
 The real fix for CPU-heavy operations (bcrypt, pbkdf2 with a
-high cost factor) is Worker Threads (see [Worker Threads and
-Cluster]), where the computation gets its own dedicated
+high cost factor) is Worker Threads (see Worker Threads and
+Cluster), where the computation gets its own dedicated
 thread instead of sharing a pool with the whole app's file
 operations.
 ```
@@ -161,17 +161,17 @@ Direct diagnosis:
 ## Connection to other topics
 
 ```txt
-[The Event Loop]            — the Thread Pool is just one
+The Event Loop            — the Thread Pool is just one
                                source of events for the poll
                                phase; networking arrives in
                                poll directly via epoll/kqueue,
                                with no Thread Pool involved
-[Worker Threads and Cluster] — the correct solution for
+Worker Threads and Cluster — the correct solution for
                                CPU-heavy work that shouldn't
                                share a resource with
                                fs/crypto/zlib/dns.lookup
-[Memory and Garbage
- Collection]                  — another source of background
+Memory and Garbage
+ Collection                  — another source of background
                                threads in the process (V8's
                                GC threads)
 ```

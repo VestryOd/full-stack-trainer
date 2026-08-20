@@ -13,7 +13,7 @@ Node.js — a runtime: a C++ program that embeds the V8 engine
 Express/Nest/Fastify — frameworks built on top of Node.js
 ```
 
-The "Node = V8" confusion is common, and it is worth correcting. V8 executes JS code and manages memory: the heap and the GC (garbage collector — the part of the engine that frees unused memory). Both are covered in [Memory and Garbage Collection].
+The "Node = V8" confusion is common, and it is worth correcting. V8 executes JS code and manages memory: the heap and the GC (garbage collector — the part of the engine that frees unused memory). Both are covered in [Memory, Heap, Stack, and Garbage Collection](./08-memory-garbage-collection.md).
 
 But V8 **has no idea** what a file or a TCP socket is. TCP (Transmission Control Protocol) is the connection-based protocol that carries most network traffic.
 
@@ -39,10 +39,10 @@ Those capabilities come from Node itself, via C++ bindings to libuv and other li
 
 This diagram is the skeleton for the whole section. Each box gets its own article:
 
-- V8 → [V8 and the Runtime], [Memory and Garbage Collection]
-- Event Loop → [The Event Loop], [Microtasks, Macrotasks, and process.nextTick]
+- V8 → [V8 and Node.js Runtime](./02-v8-and-runtime.md), [Memory, Heap, Stack, and Garbage Collection](./08-memory-garbage-collection.md)
+- Event Loop → [Event Loop](./03-event-loop.md), [Microtasks, Macrotasks, and process.nextTick](./04-microtasks-macrotasks-nexttick.md)
 - Thread Pool → [libuv and the Thread Pool]
-- Multiple processes and threads → [Worker Threads and Cluster]
+- Multiple processes and threads → [Worker Threads and Cluster](./06-worker-threads-cluster.md)
 
 ## Why "single-threaded" is a deliberate architectural choice, not a limitation
 
@@ -79,7 +79,7 @@ I/O-bound (Node is an excellent choice):
      HTTP methods)
   - WebSocket / realtime
   - Reverse proxy / API Gateway
-  - Streaming (video, files — see [Streams and Backpressure])
+  - Streaming (video, files — see Streams and Backpressure)
   - BFF (Backend for Frontend) — lots of parallel calls to
     other services, minimal computation of its own
 
@@ -102,7 +102,7 @@ app.get('/hash', (req, res) => {
 
 // ✅ Offload CPU-bound work to a Worker Thread —
 // the main thread's event loop stays free
-// (covered in full in [Worker Threads and Cluster])
+// (covered in full in Worker Threads and Cluster)
 app.get('/hash', async (req, res) => {
   const hash = await runInWorker('hash', req.query.password);
   res.json({ hash: hash.toString('hex') });
@@ -249,18 +249,18 @@ Senior-level points worth knowing:
 ## What's next in this section
 
 ```txt
-[V8 and the Runtime]       — how V8 executes JS, JIT (just-in-time)
+V8 and the Runtime       — how V8 executes JS, JIT (just-in-time)
                                compilation
-[The Event Loop]            — event loop phases, execution order
-[Microtasks, Macrotasks,
- and process.nextTick]      — Promise vs setTimeout vs nextTick
+The Event Loop            — event loop phases, execution order
+Microtasks, Macrotasks,
+ and process.nextTick      — Promise vs setTimeout vs nextTick
 [libuv and the Thread Pool] — what's really async vs. "async via
                                a thread pool"
-[Worker Threads and Cluster]— using multiple CPU cores
-[Streams and Backpressure]  — handling large amounts of data
-[Memory and Garbage
- Collection]                 — heap, memory leaks, GC pauses
-[CommonJS vs ESM]           — the two module systems, and how they
+Worker Threads and Cluster— using multiple CPU cores
+Streams and Backpressure  — handling large amounts of data
+Memory and Garbage
+ Collection                 — heap, memory leaks, GC pauses
+CommonJS vs ESM           — the two module systems, and how they
                                differ (ESM = ECMAScript modules)
 ```
 

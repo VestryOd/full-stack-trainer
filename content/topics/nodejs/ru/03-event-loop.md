@@ -52,7 +52,7 @@ JS-движок (V8) умеет выполнять синхронный код �
 
 Между **каждой** парой фаз Event Loop полностью опустошает две очереди: **microtask queue** (Promise callbacks, `queueMicrotask`) и очередь `process.nextTick`. Часто он делает то же самое и внутри одной фазы, после каждого callback.
 
-Деталь критически важная, и у неё есть отдельная статья: [Microtasks, Macrotasks, and process.nextTick]. Именно она объясняет большинство "неожиданных" порядков выполнения.
+Деталь критически важная, и у неё есть отдельная статья: [Microtasks, Macrotasks и process.nextTick](./04-microtasks-macrotasks-nexttick.md). Именно она объясняет большинство "неожиданных" порядков выполнения.
 
 ### Poll — самая важная фаза, и почему
 
@@ -141,7 +141,7 @@ function processBigArrayInChunks(items: Item[], onDone: () => void) {
 }
 ```
 
-Senior-нюанс: "разбивка на чанки" — это **компромисс**, а не решение проблемы. Суммарное CPU-время не меняется. Меняется другое: между чанками Event Loop может обслужить другие запросы. Для действительно тяжёлых вычислений правильное решение — Worker Threads (см. [Worker Threads and Cluster]). Они работают на отдельном потоке и реально освобождают главный.
+Senior-нюанс: "разбивка на чанки" — это **компромисс**, а не решение проблемы. Суммарное CPU-время не меняется. Меняется другое: между чанками Event Loop может обслужить другие запросы. Для действительно тяжёлых вычислений правильное решение — Worker Threads (см. [Worker Threads и Cluster](./06-worker-threads-cluster.md)). Они работают на отдельном потоке и реально освобождают главный.
 
 ## Мониторинг event loop lag в production — то, что отличает теорию от практики
 
@@ -181,15 +181,15 @@ setInterval(() => {
 ## Связь с предыдущими и следующими темами
 
 ```txt
-[V8 and the Runtime]        — V8 выполняет ваш JS-код синхронно,
+V8 and the Runtime        — V8 выполняет ваш JS-код синхронно,
                                "до конца", между фазами
-[Microtasks, Macrotasks,
- and process.nextTick]      — что происходит между фазами и
+Microtasks, Macrotasks,
+ and process.nextTick      — что происходит между фазами и
                                между отдельными callbacks
 [libuv and the Thread Pool] — как конкретно операция попадает
                                в poll-очередь (через thread pool
                                или нативный async API ОС)
-[Worker Threads and Cluster] — реальное решение для CPU-bound
+Worker Threads and Cluster — реальное решение для CPU-bound
                                работы, которая не должна блокировать
                                Event Loop
 ```

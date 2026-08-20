@@ -19,7 +19,7 @@ Problems with this approach:
 ```
 
 ```ts
-// ✅ Sends data in chunks (default chunk size ~64KB)
+// ✅ Sends data in chunks (~64KB each since Node.js 22)
 fs.createReadStream('movie.mp4').pipe(res);
 ```
 
@@ -38,8 +38,9 @@ highWaterMark — the threshold size for this buffer:
   - for Writable: how much data can sit in the "pending
     write" buffer before .write() starts returning false
 
-Default: 64 KB for binary streams (16 for object mode —
-counted in objects, not bytes)
+Default: 64 KB for binary streams since Node.js 22, 16 KB
+before that. Object mode defaults to 16 — counted in
+objects, not bytes.
 ```
 
 ```ts
@@ -256,7 +257,7 @@ about, and doesn't risk a "forgotten callback()" or
 ## Connection to other topics
 
 ```txt
-[The Event Loop]            — streams are built on events
+The Event Loop            — streams are built on events
                                ('data', 'drain', 'end') — an
                                EventEmitter-based API running
                                through the Event Loop

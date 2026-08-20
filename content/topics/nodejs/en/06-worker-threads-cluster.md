@@ -34,8 +34,8 @@ V8 is the JavaScript engine inside Node, and every Worker gets its own instance 
 ```txt
 Each Worker has:
   - its own V8 instance (own heap, own garbage collector —
-    independent from the main thread, see [Memory and
-    Garbage Collection])
+    independent from the main thread, see Memory and
+    Garbage Collection)
   - its own Event Loop (its own microtask/macrotask queue)
   - its own global scope
 
@@ -128,7 +128,7 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 
 if (cluster.isPrimary) {
-  const numCPUs = os.availableParallelism(); // modern API, see below
+  const numCPUs = os.availableParallelism(); // respects cgroup limits, unlike os.cpus().length
   for (let i = 0; i < numCPUs; i++) cluster.fork();
 
   cluster.on('exit', (worker) => {
@@ -167,8 +167,8 @@ other state in memory, the other processes don't know
 about it.
 
 This is the same "connection pinning" / "sticky session"
-issue covered for load balancers in [WebSockets and
-Realtime Systems] and [Scalability and Load Balancing].
+issue covered for load balancers in WebSockets and
+Realtime Systems and Scalability and Load Balancing.
 Cluster just moves the problem from the "multiple servers"
 level to the "multiple processes on one server" level. The
 solution is the same too: Redis Pub/Sub for cross-process
@@ -218,7 +218,7 @@ The strong answer is neither "Cluster is obsolete" nor "Cluster is always needed
 
 - **For Cluster:** inside a container it gives finer-grained CPU utilization of that one replica.
 - **Against Cluster:** observability gets harder, because logs and metrics now come from several processes in one container.
-- **Against Cluster:** graceful shutdown gets harder — on `SIGTERM` you have to stop **all** worker processes correctly (see [Node.js Fundamentals]).
+- **Against Cluster:** graceful shutdown gets harder — on `SIGTERM` you have to stop **all** worker processes correctly (see [Node.js Fundamentals](./01-nodejs-fundamentals.md)).
 
 ## Decision summary table
 

@@ -194,14 +194,14 @@ queueMicrotask / await — for:
 setImmediate — for:
   - "run as soon as possible, but after the current I/O
     phase" — e.g., splitting heavy synchronous work into
-    chunks (see [The Event Loop])
+    chunks (see The Event Loop)
 
 setTimeout(fn, 0) — for:
   - similar to setImmediate, but goes through the timers
     phase, which runs first on the next loop iteration; the
     difference between setImmediate and setTimeout(0) is
     usually negligible except inside an I/O callback
-    (see [The Event Loop])
+    (see The Event Loop)
 ```
 
 ## Common interview mistakes
@@ -214,4 +214,4 @@ setTimeout(fn, 0) — for:
 
 - **Not understanding that async/await is .then() with sugar.** The consequence: you cannot explain why a long chain of awaits adds microtask ticks, even when the awaited values are already available synchronously.
 
-- **Treating setImmediate and setTimeout(fn, 0) as "the same thing".** One is a separate phase, `check`; the other is the timers phase. The difference shows up specifically when they are called inside an I/O callback (see [The Event Loop]).
+- **Treating setImmediate and setTimeout(fn, 0) as "the same thing".** One is a separate phase, `check`; the other is the timers phase. The difference shows up specifically when they are called inside an I/O callback (see [Event Loop](./03-event-loop.md)).

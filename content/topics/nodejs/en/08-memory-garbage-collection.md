@@ -48,7 +48,7 @@ The V8 heap consists of several spaces:
 
   Code Space, Map Space
     - compiled code (JIT — just-in-time compilation),
-      Hidden Classes/Shapes (see [V8 and the Runtime])
+      Hidden Classes/Shapes (see V8 and the Runtime)
 ```
 
 ### Scavenge: why young generation cleanup is so fast
@@ -110,7 +110,7 @@ For an interview, the point isn't "the garbage collector (GC) stops the world an
 
 - A modern GC **reduces** the impact on latency. It does not remove it.
 - For a large enough heap — gigabytes of live objects — pauses are still noticeable at p99 and p999 latency. That is the slowest 1% and 0.1% of requests.
-- So several processes with a smaller heap each beat one process with a huge heap. That is an argument for horizontal scaling, see [Worker Threads and Cluster].
+- So several processes with a smaller heap each beat one process with a huge heap. That is an argument for horizontal scaling, see [Worker Threads and Cluster](./06-worker-threads-cluster.md).
 
 ## process.memoryUsage() — what each field actually means
 
@@ -326,12 +326,12 @@ heap.
 ## Connection to other topics
 
 ```txt
-[V8 and the Runtime]        — Hidden Classes/Shapes and Inline
+V8 and the Runtime        — Hidden Classes/Shapes and Inline
                                Caches affect how much memory
                                each object takes up (this
                                article is about when memory
                                gets freed)
-[Worker Threads and Cluster] — multiple processes with smaller
+Worker Threads and Cluster — multiple processes with smaller
                                heaps each reduce the impact of
                                GC pauses on p99 latency compared
                                to one huge heap

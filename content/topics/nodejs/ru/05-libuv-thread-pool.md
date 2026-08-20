@@ -9,7 +9,7 @@
 1 поток — выполняет JS (V8) + Event Loop libuv
 N потоков — Thread Pool libuv (по умолчанию 4)
 M потоков — фоновые потоки V8 для сборки мусора (GC),
-            см. [Memory and Garbage Collection]
+            см. Memory and Garbage Collection
 ```
 
 Сетевые операции (`http`, `net`, `tcp`) **не используют Thread Pool вообще** — это критически важная деталь, которую путают чаще всего. Они опираются на нативные асинхронные механизмы операционной системы (ОС):
@@ -135,7 +135,7 @@ process.env в коде уже может не сработать, если
 
 Реальное решение для CPU-heavy операций (bcrypt, pbkdf2
 с большим cost factor) — Worker Threads (см.
-[Worker Threads and Cluster]), где вычисление получает
+Worker Threads and Cluster), где вычисление получает
 собственный выделенный поток, а не делит общий пул
 с файловыми операциями всего приложения.
 ```
@@ -165,15 +165,15 @@ process.env в коде уже может не сработать, если
 ## Связь с другими темами
 
 ```txt
-[The Event Loop]            — Thread Pool — это только один
+The Event Loop            — Thread Pool — это только один
                                из источников событий для poll-фазы;
                                сеть приходит в poll напрямую через
                                epoll/kqueue, без Thread Pool
-[Worker Threads and Cluster] — правильное решение для CPU-heavy
+Worker Threads and Cluster — правильное решение для CPU-heavy
                                задач, которое не делит ресурс
                                с fs/crypto/zlib/dns.lookup
-[Memory and Garbage
- Collection]                  — ещё один источник фоновых потоков
+Memory and Garbage
+ Collection                  — ещё один источник фоновых потоков
                                в процессе (потоки V8 для GC)
 ```
 

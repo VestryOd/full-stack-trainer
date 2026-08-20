@@ -51,7 +51,7 @@ This isn't "Node is smart and figures it out" — it's an explicit contract. Eve
 
 Between **every** pair of phases the Event Loop fully drains two queues: the **microtask queue** (Promise callbacks, `queueMicrotask`) and the `process.nextTick` queue. Often it does the same inside a phase, after each callback.
 
-This detail is critical, and it has an article of its own: [Microtasks, Macrotasks, and process.nextTick]. It explains most "unexpected" execution orderings.
+This detail is critical, and it has an article of its own: [Microtasks, Macrotasks, and process.nextTick](./04-microtasks-macrotasks-nexttick.md). It explains most "unexpected" execution orderings.
 
 ### Poll — the most important phase, and why
 
@@ -139,7 +139,7 @@ function processBigArrayInChunks(items: Item[], onDone: () => void) {
 }
 ```
 
-Senior nuance: "splitting into chunks" is a **trade-off**, not a fix. Total CPU time doesn't change. What changes is that between chunks the Event Loop can serve other requests. For genuinely heavy computation the correct solution is Worker Threads (see [Worker Threads and Cluster]). They run on a separate thread, so they really do free the main one.
+Senior nuance: "splitting into chunks" is a **trade-off**, not a fix. Total CPU time doesn't change. What changes is that between chunks the Event Loop can serve other requests. For genuinely heavy computation the correct solution is Worker Threads (see [Worker Threads and Cluster](./06-worker-threads-cluster.md)). They run on a separate thread, so they really do free the main one.
 
 ## Monitoring event loop lag in production — what separates theory from practice
 
@@ -179,15 +179,15 @@ Practical meaning:
 ## Connection to other topics
 
 ```txt
-[V8 and the Runtime]        — V8 runs your JS code synchronously,
+V8 and the Runtime        — V8 runs your JS code synchronously,
                               "to completion", between phases
-[Microtasks, Macrotasks,
- and process.nextTick]      — what happens between phases and
+Microtasks, Macrotasks,
+ and process.nextTick      — what happens between phases and
                               between individual callbacks
 [libuv and the Thread Pool] — how exactly an operation ends up
                                in the poll queue (via the thread
                                pool or a native OS async API)
-[Worker Threads and Cluster] — the real solution for CPU-bound
+Worker Threads and Cluster — the real solution for CPU-bound
                               work that must not block the loop
 ```
 

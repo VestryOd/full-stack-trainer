@@ -49,7 +49,7 @@ V8 Heap состоит из нескольких пространств (spaces)
   Code Space, Map Space
     - скомпилированный код (JIT — компиляция на ходу,
       just-in-time), Hidden Classes/Shapes
-      (см. [V8 and the Runtime])
+      (см. V8 and the Runtime)
 ```
 
 ### Scavenge: почему очистка молодого поколения такая быстрая
@@ -111,7 +111,7 @@ Old Space обычно много больше New Space — обход граф
 
 - Современный GC **снижает** влияние на latency, но не убирает его.
 - При достаточно большом heap (гигабайты живых объектов) паузы всё равно заметны на p99 и p999 latency — то есть на самом медленном 1% и 0.1% запросов.
-- Поэтому несколько процессов с меньшим heap каждый выигрывают у одного процесса с огромным heap. Это аргумент в пользу горизонтального масштабирования, см. [Worker Threads and Cluster].
+- Поэтому несколько процессов с меньшим heap каждый выигрывают у одного процесса с огромным heap. Это аргумент в пользу горизонтального масштабирования, см. [Worker Threads и Cluster](./06-worker-threads-cluster.md).
 
 ## process.memoryUsage() — что означает каждое поле
 
@@ -327,12 +327,12 @@ control-группой Linux (cgroup). На машине с 64 GB памяти,
 ## Связь с другими темами
 
 ```txt
-[V8 and the Runtime]        — Hidden Classes/Shapes и Inline
+V8 and the Runtime        — Hidden Classes/Shapes и Inline
                                Caches влияют на то, сколько
                                памяти занимает каждый объект
                                (этот файл — про то, когда
                                память освобождается)
-[Worker Threads and Cluster] — несколько процессов с
+Worker Threads and Cluster — несколько процессов с
                                меньшим heap каждый снижают
                                влияние пауз GC на p99 latency
                                по сравнению с одним огромным

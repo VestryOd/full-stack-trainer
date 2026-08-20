@@ -37,8 +37,8 @@ V8 — это движок JavaScript внутри Node, и каждый Worker 
 ```txt
 Каждый Worker имеет:
   - свой экземпляр V8 (свой heap, свой сборщик мусора —
-    независимый от главного потока, см. [Memory and
-    Garbage Collection])
+    независимый от главного потока, см. Memory and
+    Garbage Collection)
   - свой Event Loop (свою очередь microtasks/macrotasks)
   - свой global scope
 
@@ -133,7 +133,7 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 
 if (cluster.isPrimary) {
-  const numCPUs = os.availableParallelism(); // современный API, см. ниже
+  const numCPUs = os.availableParallelism(); // учитывает лимиты cgroup, в отличие от os.cpus().length
   for (let i = 0; i < numCPUs; i++) cluster.fork();
 
   cluster.on('exit', (worker) => {
@@ -173,8 +173,8 @@ SO_REUSEPORT: тогда входящие соединения распреде�
 состояние — другие процессы об этом не знают.
 
 Это тот же вопрос "connection pinning" / "sticky session",
-что разобран для балансировщиков нагрузки в [WebSockets and
-Realtime Systems] и [Scalability and Load Balancing].
+что разобран для балансировщиков нагрузки в WebSockets and
+Realtime Systems и Scalability and Load Balancing.
 Cluster просто переносит ту же проблему с уровня "несколько
 серверов" на уровень "несколько процессов на одном
 сервере". Решение тоже то же: Redis Pub/Sub для обмена
@@ -221,7 +221,7 @@ Cluster просто переносит ту же проблему с уровн
 
 - **За Cluster:** внутри контейнера он даёт более тонкую утилизацию CPU этой одной реплики.
 - **Против Cluster:** сложнее наблюдаемость — логи и метрики идут теперь от нескольких процессов в одном контейнере.
-- **Против Cluster:** сложнее graceful shutdown — по `SIGTERM` нужно корректно остановить **все** worker-процессы (см. [Node.js Fundamentals]).
+- **Против Cluster:** сложнее graceful shutdown — по `SIGTERM` нужно корректно остановить **все** worker-процессы (см. [Основы Node.js](./01-nodejs-fundamentals.md)).
 
 ## Итоговая таблица решений
 
