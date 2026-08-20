@@ -1,5 +1,5 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# Message Queues и Event-Driven Architecture
+# Очереди сообщений и событийная архитектура
 
 ## Главная идея: развязка во времени и по доступности
 

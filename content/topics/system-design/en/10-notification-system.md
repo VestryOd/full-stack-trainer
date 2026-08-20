@@ -12,11 +12,15 @@ The problem isn't just "Order Service goes down if Email Service is unavailable"
 This directly violates the principle from the Message Queues article: a business service should publish a fact ("OrderCreated"), not dictate what happens with that fact.
 
 ```txt
-✅ Order Service → publishes "OrderCreated" → Event Bus
-                                                  │
-                          ┌───────────────────────┼───────────────────┐
-                          ▼                       ▼                   ▼
-                  Notification Service      Analytics Service    CRM Service
+✅ Order Service publishes the fact "OrderCreated"
+
+┌──────────────────────────────────────────────────────────────┐
+│ Event Bus, the "OrderCreated" channel                        │
+└──────────────────────────────────────────────────────────────┘
+            ▼                       ▼                   ▼
+┌──────────────────────┐  ┌───────────────────┐  ┌─────────────┐
+│ Notification Service │  │ Analytics Service │  │ CRM Service │
+└──────────────────────┘  └───────────────────┘  └─────────────┘
 ```
 
 This is the fan-out from the Message Queues article, applied to a specific problem. The Notification Service is just one subscriber. Adding a Slack channel means adding a new consumer, with no changes to Order Service.
@@ -78,9 +82,20 @@ Mixing these two categories in a single preferences table, with no separation by
 The Event Bus typically provides at-least-once delivery, as discussed in the Message Queues article. That means the same "OrderCreated" event can be processed **twice**.
 
 ```ts
+import { db } from './db'; // an already created PrismaClient
+
+interface OrderCreatedEvent { eventId: string; userId: string; orderId: string }
+
+declare function sendEmail(
+  userId: string,
+  subject: string,
+  body: string,
+): Promise<void>;
+
 // ❌ On reprocessing, the user gets 2 identical emails
 async function handleOrderCreated(event: OrderCreatedEvent) {
-  await sendEmail(event.userId, 'Order confirmed', ...);
+  const body = `Order ${event.orderId} is confirmed`;
+  await sendEmail(event.userId, 'Order confirmed', body);
 }
 
 // ✅ Idempotency via a notification_id tied to (eventId, channel, type)
@@ -94,7 +109,8 @@ async function handleOrderCreatedIdempotent(event: OrderCreatedEvent) {
     data: { id: notificationId, userId: event.userId, status: 'pending', channel: 'email' },
   });
 
-  await sendEmail(event.userId, 'Order confirmed', ...);
+  const body = `Order ${event.orderId} is confirmed`;
+  await sendEmail(event.userId, 'Order confirmed', body);
   await db.notifications.update({
     where: { id: notificationId },
     data: { status: 'sent' },

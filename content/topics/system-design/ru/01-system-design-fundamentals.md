@@ -1,5 +1,5 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# System Design Fundamentals
+# Основы System Design
 
 ## Что такое System Design и почему это отдельный навык
 

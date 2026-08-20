@@ -45,6 +45,8 @@ Conclusion: three terabytes (TB) over five years is not much, so this system **d
 MD5 is a hash function: it turns any input into a fixed-length string of characters. SHA256 is a stronger hash function that does the same job. Keep only the first few characters of the result.
 
 ```ts
+import crypto from 'node:crypto';
+
 function generateCode(longUrl: string): string {
   const hash = crypto.createHash('md5').update(longUrl).digest('hex');
   return hash.slice(0, 7); // first 7 hex characters
@@ -101,6 +103,18 @@ This is a classic solution, used in Flickr's Ticket Server and in Instagram's ID
 ### Option 3: Random + collision check
 
 ```ts
+import { randomInt } from 'node:crypto';
+import { db } from './db'; // an already created PrismaClient
+
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function randomBase62String(length: number): string {
+  let out = '';
+  // randomInt, not Math.random: the code must not be guessable
+  for (let i = 0; i < length; i++) out += BASE62[randomInt(62)];
+  return out;
+}
+
 async function generateUniqueCode(): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = randomBase62String(7);
@@ -178,23 +192,34 @@ Expiration:
 ## Final architecture
 
 ```txt
-                   ┌───────────────┐
-          Client ─►│ Load Balancer │
-                   └───────┬───────┘
-                           │
-                    ┌──────▼──────┐ (stateless)
-                    │ API Servers │
-                    └─────┬───────┘
-     ┌───────────────────┼─────────────────────┐
-     ▼                   ▼                     ▼
-   Redis            PostgreSQL          Queue (clicks)
-(hot codes)      (source of truth)
-                                               │
-                                               ▼
-                                       Analytics Worker
-                                               │
-                                               ▼
-                                         Analytics DB
+               ┌───────────────┐
+               │ Client        │
+               └───────────────┘
+                       │
+                       ▼
+               ┌───────────────┐
+               │ Load Balancer │
+               └───────────────┘
+                       │
+                       ▼
+               ┌───────────────┐
+               │ API Servers   │
+               │ stateless     │
+               └───────────────┘
+      ▼                 ▼                ▼
+┌───────────┐  ┌─────────────────┐  ┌────────┐
+│ Redis     │  │ PostgreSQL      │  │ Queue  │
+│ hot codes │  │ source of truth │  │ clicks │
+└───────────┘  └─────────────────┘  └────────┘
+                                         ▼
+                               ┌──────────────────┐
+                               │ Analytics Worker │
+                               └──────────────────┘
+                                         │
+                                         ▼
+                               ┌──────────────────┐
+                               │ Analytics DB     │
+                               └──────────────────┘
 ```
 
 Read replicas for PostgreSQL get added if redirect traffic after the Redis cache is still significant. In most realistic scenarios this is a lower priority, because the Redis hit ratio for popular links is high. Link traffic follows a Zipf distribution: a small share of links gets most of the traffic.

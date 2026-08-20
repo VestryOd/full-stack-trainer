@@ -1,5 +1,5 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# Notification System Design
+# Система уведомлений
 
 ## Почему "напрямую" — антипаттерн, и что это значит на практике
 
@@ -13,11 +13,15 @@
 Это прямое нарушение принципа из статьи про очереди сообщений: бизнес-сервис должен публиковать факт ("OrderCreated"), а не диктовать, что с этим фактом делать.
 
 ```txt
-✅ Order Service → publishes "OrderCreated" → Event Bus
-                                                  │
-                          ┌───────────────────────┼───────────────────┐
-                          ▼                       ▼                   ▼
-                  Notification Service      Analytics Service    CRM Service
+✅ Order Service публикует факт "OrderCreated"
+
+┌──────────────────────────────────────────────────────────────┐
+│ Event Bus, канал "OrderCreated"                              │
+└──────────────────────────────────────────────────────────────┘
+            ▼                       ▼                   ▼
+┌──────────────────────┐  ┌───────────────────┐  ┌─────────────┐
+│ Notification Service │  │ Analytics Service │  │ CRM Service │
+└──────────────────────┘  └───────────────────┘  └─────────────┘
 ```
 
 Это fan-out из статьи про очереди сообщений, применённый к конкретной задаче. Notification Service — лишь один из подписчиков. Добавить Slack-канал — значит добавить нового подписчика, без изменений в Order Service.
@@ -78,9 +82,20 @@ OTP — это one-time password, одноразовый код для вход�
 Event Bus обычно даёт доставку at-least-once, как разобрано в статье про очереди сообщений. Значит, одно и то же событие "OrderCreated" может быть обработано **дважды**.
 
 ```ts
+import { db } from './db'; // уже созданный PrismaClient
+
+interface OrderCreatedEvent { eventId: string; userId: string; orderId: string }
+
+declare function sendEmail(
+  userId: string,
+  subject: string,
+  body: string,
+): Promise<void>;
+
 // ❌ При повторной обработке события пользователь получит 2 одинаковых email
 async function handleOrderCreated(event: OrderCreatedEvent) {
-  await sendEmail(event.userId, 'Order confirmed', ...);
+  const body = `Order ${event.orderId} is confirmed`;
+  await sendEmail(event.userId, 'Order confirmed', body);
 }
 
 // ✅ Идемпотентность через notification_id, привязанный к (eventId, channel, type)
@@ -94,7 +109,8 @@ async function handleOrderCreatedIdempotent(event: OrderCreatedEvent) {
     data: { id: notificationId, userId: event.userId, status: 'pending', channel: 'email' },
   });
 
-  await sendEmail(event.userId, 'Order confirmed', ...);
+  const body = `Order ${event.orderId} is confirmed`;
+  await sendEmail(event.userId, 'Order confirmed', body);
   await db.notifications.update({
     where: { id: notificationId },
     data: { status: 'sent' },
@@ -144,7 +160,7 @@ Email Worker:
   }
 ```
 
-Это применение паттерна "устранение SPOF" к внешним зависимостям. SPOF — это single point of failure, единая точка отказа; сам паттерн разобран в статье System Design Fundamentals. SES выше — это Amazon Simple Email Service, провайдер, взятый здесь как резервный.
+Это применение паттерна "устранение SPOF" к внешним зависимостям. SPOF — это single point of failure, единая точка отказа; сам паттерн разобран в статье про основы System Design. SES выше — это Amazon Simple Email Service, провайдер, взятый здесь как резервный.
 
 Допустим, весь Notification Service завязан на единственного email-провайдера, без абстракции над ним. Тогда инцидент у этого провайдера останавливает доставку всех транзакционных писем, а для OTP-кодов это критично. А у крупных email-провайдеров случаются деградации на несколько часов.
 
@@ -178,7 +194,7 @@ status в таблице notifications → "complained" триггерит
   → ЕСЛИ очень критично и push не сработал — SMS как fallback
 ```
 
-Это решение принимается в decision layer. Оно зависит от двух вещей: от presence-статуса пользователя, который лежит в Redis, и от важности конкретного уведомления. Не каждое уведомление заслуживает SMS, даже если push не доставлен. Presence в Redis разобран в статье WebSockets и Realtime Systems.
+Это решение принимается в decision layer. Оно зависит от двух вещей: от presence-статуса пользователя, который лежит в Redis, и от важности конкретного уведомления. Не каждое уведомление заслуживает SMS, даже если push не доставлен. Presence в Redis разобран в статье про системы реального времени.
 
 ## Финальная архитектура
 

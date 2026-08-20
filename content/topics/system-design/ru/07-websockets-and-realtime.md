@@ -1,5 +1,5 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# WebSockets и Realtime Systems
+# WebSocket и системы реального времени
 
 ## Проблема: HTTP — это request/response, а серверу нужно "говорить первым"
 
@@ -70,16 +70,28 @@ User B получает сообщение
 ```
 
 ```ts
+import { createClient } from 'redis'; // node-redis, пакет `redis`
+import type { WebSocket } from 'ws';
+
+const redis = createClient();
+await redis.connect();
+
+const activeConnections = new Map<string, WebSocket>();
+
 // Server #8 при подключении User B подписывается на его канал
-const subscriber = redis.duplicate();
-await subscriber.subscribe(`user:${userId}:messages`);
-subscriber.on('message', (channel, payload) => {
-  const socket = activeConnections.get(userId);
-  socket?.send(payload); // доставка в конкретный открытый WebSocket
-});
+async function subscribeForUser(userId: string): Promise<void> {
+  const subscriber = redis.duplicate(); // подписанное соединение больше ни на что
+  await subscriber.connect();
+  await subscriber.subscribe(`user:${userId}:messages`, (payload) => {
+    const socket = activeConnections.get(userId);
+    socket?.send(payload); // доставка в конкретный открытый WebSocket
+  });
+}
 
 // Любой сервер, получивший сообщение для userId, публикует его
-await redis.publish(`user:${recipientId}:messages`, JSON.stringify(message));
+async function publishToUser(recipientId: string, message: unknown): Promise<void> {
+  await redis.publish(`user:${recipientId}:messages`, JSON.stringify(message));
+}
 ```
 
 Это тот же паттерн Pub/Sub, что в статье про очереди сообщений. Redis Pub/Sub подходит для небольшого и среднего масштаба: низкая latency (задержка), простая эксплуатация. Для крупного масштаба используют Kafka или NATS (легковесная система обмена сообщениями с открытым кодом) — они дают персистентность. Если подписчик временно отвалился, сообщение из Redis Pub/Sub теряется безвозвратно, а в Kafka остаётся.
@@ -112,9 +124,19 @@ Redis: room:42:servers = {server-3, server-8, server-15}
 Решение — heartbeat (периодический сигнал "я жив") плюс TTL в Redis. TTL — это time to live, срок жизни ключа: когда он истекает, Redis сам удаляет ключ.
 
 ```ts
+// node-redis (пакет `redis`) принимает опции объектом: `{ EX: 60 }`.
+// Другой популярный клиент, ioredis, принимает то же самое
+// дополнительными аргументами: `'EX', 60`.
+import { createClient } from 'redis';
+
+const redis = createClient();
+await redis.connect();
+
 // Клиент каждые 30 секунд отправляет heartbeat
 // Сервер при каждом heartbeat обновляет TTL
-await redis.set(`presence:user:${userId}`, 'online', 'EX', 60); // TTL 60 сек
+async function touchPresence(userId: string): Promise<void> {
+  await redis.set(`presence:user:${userId}`, 'online', { EX: 60 }); // TTL 60 сек
+}
 
 // Если heartbeat не пришёл за 60 секунд — ключ протухает сам,
 // presence:user:123 перестаёт существовать → пользователь "offline"

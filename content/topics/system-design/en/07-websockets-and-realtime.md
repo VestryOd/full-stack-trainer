@@ -67,16 +67,28 @@ User B receives the message
 ```
 
 ```ts
+import { createClient } from 'redis'; // node-redis, the `redis` package
+import type { WebSocket } from 'ws';
+
+const redis = createClient();
+await redis.connect();
+
+const activeConnections = new Map<string, WebSocket>();
+
 // When User B connects, Server #8 subscribes to their channel
-const subscriber = redis.duplicate();
-await subscriber.subscribe(`user:${userId}:messages`);
-subscriber.on('message', (channel, payload) => {
-  const socket = activeConnections.get(userId);
-  socket?.send(payload); // delivered into the specific open WebSocket
-});
+async function subscribeForUser(userId: string): Promise<void> {
+  const subscriber = redis.duplicate(); // a subscribed connection does nothing else
+  await subscriber.connect();
+  await subscriber.subscribe(`user:${userId}:messages`, (payload) => {
+    const socket = activeConnections.get(userId);
+    socket?.send(payload); // delivered into the specific open WebSocket
+  });
+}
 
 // Any server that receives a message for userId publishes it
-await redis.publish(`user:${recipientId}:messages`, JSON.stringify(message));
+async function publishToUser(recipientId: string, message: unknown): Promise<void> {
+  await redis.publish(`user:${recipientId}:messages`, JSON.stringify(message));
+}
 ```
 
 This is the same Pub/Sub pattern as in the Message Queues article. Redis Pub/Sub fits small and medium scale: low latency, simple to run. At large scale teams use Kafka or NATS (a lightweight open-source messaging system), which add persistence. If a consumer is briefly disconnected, a Redis Pub/Sub message is lost forever; with Kafka it is not.
@@ -109,9 +121,19 @@ the server doesn't always learn that the client disconnected
 Solution — a heartbeat plus a TTL in Redis. TTL means time to live: an expiry set on a key, after which Redis deletes the key itself.
 
 ```ts
+// node-redis (the `redis` package) takes the options as an object:
+// `{ EX: 60 }`. The other popular client, ioredis, takes the same
+// thing as extra arguments instead: `'EX', 60`.
+import { createClient } from 'redis';
+
+const redis = createClient();
+await redis.connect();
+
 // Client sends a heartbeat every 30 seconds
 // Server refreshes the TTL on each heartbeat
-await redis.set(`presence:user:${userId}`, 'online', 'EX', 60); // 60-second TTL
+async function touchPresence(userId: string): Promise<void> {
+  await redis.set(`presence:user:${userId}`, 'online', { EX: 60 }); // 60s TTL
+}
 
 // If no heartbeat arrives within 60 seconds, the key expires on its own,
 // presence:user:123 stops existing → the user is "offline"

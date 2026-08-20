@@ -671,6 +671,44 @@ def cqrs_es_matrix(L):
     return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
 
 
+def _place(block, center):
+    """Indent a block so that its horizontal centre lands on `center`."""
+    off = max(center - max(len(l) for l in block) // 2, 0)
+    return [' ' * off + l for l in block]
+
+
+def event_fanout(L):
+    """One publisher → a bus box → several subscriber boxes side by side."""
+    gap = 2
+    subscribers = [box([s]) for s in L['subscribers']]
+    row = hstack(subscribers, gap=gap)
+    width = max(len(l) for l in row)
+    return [
+        L['publisher'],
+        '',
+        *box(L['bus'], min_width=width - 4),
+        _marks(_centers(subscribers, gap), width),
+        *row,
+    ]
+
+
+def fanout_pipeline(L):
+    """A vertical chain, a fan-out row, then a tail chain under one branch."""
+    gap = 2
+    branches = [box(lines) for lines in L['branches']]
+    row = hstack(branches, gap=gap)
+    width = max(len(l) for l in row)
+    centers = _centers(branches, gap)
+    tail_center = centers[L['tail_index']]
+    return [
+        *_place(vchain(L['head']), width // 2),
+        _marks(centers, width),
+        *row,
+        _marks([tail_center], width),
+        *_place(vchain(L['tail']), tail_center),
+    ]
+
+
 DIAGRAMS = {
     'stack-compare': stack_compare,
     'update-models': update_models,
@@ -818,6 +856,8 @@ DIAGRAMS = {
     'arch-cqrs-levels': cqrs_levels,
     'arch-es-write-path': es_write_path,
     'arch-cqrs-es-matrix': cqrs_es_matrix,
+    'sd-event-fanout': event_fanout,
+    'sd-shortener-architecture': fanout_pipeline,
 }
 
 LABELS = {
@@ -6512,6 +6552,62 @@ LABELS = {
             ],
             'notes': [
                 'the columns are independent: CQRS is not a synonym for the other',
+            ],
+        },
+    },
+    'sd-event-fanout': {
+        'ru': {
+            'publisher': '✅ Order Service публикует факт "OrderCreated"',
+            'bus': ['Event Bus, канал "OrderCreated"'],
+            'subscribers': [
+                'Notification Service',
+                'Analytics Service',
+                'CRM Service',
+            ],
+        },
+        'en': {
+            'publisher': '✅ Order Service publishes the fact "OrderCreated"',
+            'bus': ['Event Bus, the "OrderCreated" channel'],
+            'subscribers': [
+                'Notification Service',
+                'Analytics Service',
+                'CRM Service',
+            ],
+        },
+    },
+    'sd-shortener-architecture': {
+        'ru': {
+            'head': [
+                ['Client'],
+                ['Load Balancer'],
+                ['API Servers', 'stateless'],
+            ],
+            'branches': [
+                ['Redis', 'горячие коды'],
+                ['PostgreSQL', 'источник правды'],
+                ['Queue', 'клики'],
+            ],
+            'tail_index': 2,
+            'tail': [
+                ['Analytics Worker'],
+                ['Analytics DB'],
+            ],
+        },
+        'en': {
+            'head': [
+                ['Client'],
+                ['Load Balancer'],
+                ['API Servers', 'stateless'],
+            ],
+            'branches': [
+                ['Redis', 'hot codes'],
+                ['PostgreSQL', 'source of truth'],
+                ['Queue', 'clicks'],
+            ],
+            'tail_index': 2,
+            'tail': [
+                ['Analytics Worker'],
+                ['Analytics DB'],
             ],
         },
     },

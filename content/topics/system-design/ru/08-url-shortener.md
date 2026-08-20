@@ -1,9 +1,9 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# URL Shortener Design
+# Сервис коротких ссылок
 
 ## Requirements Clarification
 
-Начинайте с фиксации требований, а не с рисования схемы. Это один из самых "стандартных" вопросов, и именно поэтому интервьюер ждёт структурированный подход, а не "сразу архитектуру". Сам пошаговый фреймворк разобран в статье System Design Fundamentals этого топика.
+Начинайте с фиксации требований, а не с рисования схемы. Это один из самых "стандартных" вопросов, и именно поэтому интервьюер ждёт структурированный подход, а не "сразу архитектуру". Сам пошаговый фреймворк разобран в статье про основы System Design этого топика.
 
 **Functional Requirements:**
 
@@ -46,6 +46,8 @@ Storage: 100M ссылок/месяц * 500 байт (URL + метаданные
 MD5 — это хеш-функция: она превращает любой вход в строку фиксированной длины. SHA256 — более стойкая хеш-функция, которая делает то же самое. Дальше от результата берут только первые несколько символов.
 
 ```ts
+import crypto from 'node:crypto';
+
 function generateCode(longUrl: string): string {
   const hash = crypto.createHash('md5').update(longUrl).digest('hex');
   return hash.slice(0, 7); // первые 7 символов hex
@@ -102,6 +104,18 @@ RETURNING current_max - 1000 AS range_start, current_max AS range_end;
 ### Вариант 3: Random + проверка коллизий
 
 ```ts
+import { randomInt } from 'node:crypto';
+import { db } from './db'; // уже созданный PrismaClient
+
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function randomBase62String(length: number): string {
+  let out = '';
+  // randomInt, а не Math.random: код не должен быть предсказуемым
+  for (let i = 0; i < length; i++) out += BASE62[randomInt(62)];
+  return out;
+}
+
 async function generateUniqueCode(): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = randomBase62String(7);
@@ -179,23 +193,34 @@ Expiration:
 ## Финальная архитектура
 
 ```txt
-                   ┌───────────────┐
-          Client ─►│ Load Balancer │
-                   └───────┬───────┘
-                           │
-                    ┌──────▼──────┐ (stateless)
-                    │ API Servers │
-                    └─────┬───────┘
-     ┌───────────────────┼─────────────────────┐
-     ▼                   ▼                     ▼
-   Redis            PostgreSQL          Queue (clicks)
-(hot codes)      (source of truth)
-                                               │
-                                               ▼
-                                       Analytics Worker
-                                               │
-                                               ▼
-                                         Analytics DB
+                ┌───────────────┐
+                │ Client        │
+                └───────────────┘
+                        │
+                        ▼
+                ┌───────────────┐
+                │ Load Balancer │
+                └───────────────┘
+                        │
+                        ▼
+                ┌───────────────┐
+                │ API Servers   │
+                │ stateless     │
+                └───────────────┘
+        ▼                  ▼               ▼
+┌──────────────┐  ┌─────────────────┐  ┌───────┐
+│ Redis        │  │ PostgreSQL      │  │ Queue │
+│ горячие коды │  │ источник правды │  │ клики │
+└──────────────┘  └─────────────────┘  └───────┘
+                                           ▼
+                                 ┌──────────────────┐
+                                 │ Analytics Worker │
+                                 └──────────────────┘
+                                           │
+                                           ▼
+                                 ┌──────────────────┐
+                                 │ Analytics DB     │
+                                 └──────────────────┘
 ```
 
 Read replicas для PostgreSQL добавляются, если нагрузка редиректами после Redis-кеша всё ещё значима. В большинстве реалистичных сценариев это не первоочередная задача, потому что доля попаданий в Redis по популярным ссылкам высокая. Трафик по ссылкам распределён по Zipf: малая доля ссылок получает большую часть переходов.
