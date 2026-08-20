@@ -39,6 +39,12 @@ PASSED = {
     'bank:browser-runtime': '9e7f625',
     'quiz:postgresql': '6d78f51',
     'quiz:browser-runtime': 'c5a809b',
+    'article:typescript': 'a569679',
+    'article:nestjs': '4d92284, 219814b',
+    'bank:typescript': 'ba80fea, 7b1acf3',
+    'bank:nestjs': '3036c4a',
+    'quiz:typescript': 'ea81281',
+    'quiz:nestjs': '3036c4a',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
