@@ -2,7 +2,14 @@
 
 ## Types of decorators in NestJS
 
-NestJS has four kinds of decorators: Parameter (extract data from the request), Method (attach metadata to a method), Class (attach metadata to a controller/provider), Property (rarely — for serialization/validation). The most useful for customization: Parameter and Composite (combined via `applyDecorators`).
+NestJS has four kinds of decorators, and what separates them is what the decorator attaches to:
+
+- **Parameter** — sits on a method argument and extracts data from the request.
+- **Method** — attaches metadata to a controller method.
+- **Class** — attaches metadata to a class: a controller or a provider.
+- **Property** — sits on a class field. Rarely needed, mostly for serialization and validation.
+
+There is a fifth option built out of the others: Composite — several decorators glued together with `applyDecorators`. For customization you mostly write Parameter and Composite decorators, so this article covers those two in detail.
 
 ```typescript
 // 1. Parameter Decorator — createParamDecorator
@@ -29,7 +36,11 @@ getMe(@CurrentUser('id') userId: number) {
 }
 ```
 
-## Metadata decorators — @Roles, @Public
+## Metadata decorators — @Roles and @Public
+
+A metadata decorator checks nothing by itself. It only marks a method or a controller, and the decision is made by a Guard that reads the mark.
+
+The mark is created by the `SetMetadata(key, value)` helper. Keep the key in a constant, so the decorator and the Guard cannot drift apart because of a typo in a string.
 
 ```typescript
 // Method/Class decorator via SetMetadata
@@ -59,7 +70,11 @@ const roles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
 ]);
 ```
 
-## Composite Decorators — applyDecorators
+## Composite decorators — applyDecorators
+
+`applyDecorators` glues several decorators into one. That fixes a common pain: every protected endpoint carries the same four lines, and one day one of those lines is missing.
+
+Pack them into `@Auth(Role.ADMIN)` and you get a single place to edit. Add a decorator to the set, and it appears on every endpoint at once.
 
 ```typescript
 // Instead of duplicating 4 decorators on every endpoint — one @Auth()
@@ -89,7 +104,11 @@ getUsers() { ... }
 getUsers() { ... }
 ```
 
-## Parameter Decorator with Pipe validation
+## Parameter decorators together with a Pipe
+
+`createParamDecorator` returns a raw value, so checking it is a Pipe's job. A Pipe in NestJS is the step that validates or converts incoming data before it reaches the method argument.
+
+You pass the Pipe as the decorator's second argument, exactly as with the built-in `@Param` and `@Body`. For example, `ParseUUIDPipe` requires the value to be a UUID (universally unique identifier) — an id shaped like `550e8400-e29b-41d4-a716-446655440000`.
 
 ```typescript
 // createParamDecorator returns raw data — Pipes can be applied
@@ -102,8 +121,11 @@ export const ParsedBody = createParamDecorator(
 
 // With a Pipe:
 @Post()
-create(@ParsedBody() body: unknown, @ParsedBody('email', new ParseUUIDPipe()) email: string) {
-  // ParseUUIDPipe validates the email field (if it's a UUID)
+create(
+  @ParsedBody() body: unknown,
+  @ParsedBody('userId', new ParseUUIDPipe()) userId: string,
+) {
+  // ParseUUIDPipe checks that body.userId is a valid UUID
 }
 
 // More realistic example — header with parsing:
@@ -120,7 +142,11 @@ getData(@ClientVersion() version: string) {
 }
 ```
 
-## Class Decorator — custom @ApiController
+## Class decorators — your own @ApiController
+
+A class decorator is attached to the whole class, and `applyDecorators` works there just as it does on methods. The typical case is a controller that always needs both a route prefix and a Swagger tag.
+
+`@ApiController('users', 'Users Management')` sets both at once, and it also fixes a rule: by default the tag name equals the route prefix.
 
 ```typescript
 // Composite class decorator for Swagger + global prefix
@@ -145,6 +171,10 @@ export class UsersController { ... }
 ```
 
 ## Decorators and TypeScript — how they work
+
+A decorator is an ordinary function that TypeScript calls once, when the class loads. It receives the class or one of its methods, and it can either write metadata or replace the method.
+
+The example below replaces one: `Log()` takes the original function out of `descriptor.value`, wraps it in its own function, and returns the changed descriptor.
 
 ```typescript
 // Decorators are just functions called when the class loads
@@ -178,12 +208,12 @@ async findOne(@Param('id') id: string) {
 
 ## Common interview mistakes
 
-- **"createParamDecorator is just a replacement for @Req()"** — no. `createParamDecorator` lets you extract any data from the context (not just the HTTP request), accept an argument (like `@CurrentUser('id')`), and work with Pipes for validation/transformation. It's a full extension point, not just an alias.
+- **"createParamDecorator is just a replacement for @Req()"** — no. It extracts any data from the context, not only from the HTTP request. It accepts an argument, as in `@CurrentUser('id')`. And it works with Pipes, so the value can be validated and converted. It is a real extension point, not an alias for `@Req()`.
 
-- **"applyDecorators applies decorators bottom-up"** — no. `applyDecorators([A, B, C])` applies in order A → B → C (top-down, as written). This differs from stacking decorators with `@A @B @C`, where TypeScript applies right-to-left (C → B → A). With `applyDecorators`, the order is predictable.
+- **"applyDecorators applies decorators bottom-up"** — no. `applyDecorators(A, B, C)` applies them in the order A → B → C, as written. A stack of `@A @B @C` behaves differently: TypeScript applies it right to left, C → B → A. With `applyDecorators` the order is predictable.
 
-- **"Decorators run on every request"** — no. Decorators execute ONCE when the module loads (at startup). The code inside the `createParamDecorator` factory function runs per request, but the decorator itself is registered only once.
+- **"Decorators run on every request"** — no. The decorator itself runs **once** when the module loads, at startup. What runs per request is something else: the function inside `createParamDecorator` that pulls the value out of the context.
 
-- **"@Roles on the class and on the method are added together"** — depends on the Guard implementation. `reflector.getAllAndOverride` takes the method value if present, otherwise the class value (it does not merge). `reflector.getAllAndMerge` combines arrays from both. It's important to know which method your RolesGuard uses.
+- **"@Roles on the class and on the method are added together"** — it depends on the Guard. The `reflector.getAllAndOverride` call takes the method value if there is one, otherwise the class value, and merges nothing. The `reflector.getAllAndMerge` call combines the arrays from both. You need to know which of the two your RolesGuard uses.
 
-- **"Property decorators aren't needed in NestJS"** — they are used in class-validator (`@IsEmail()`, `@IsNotEmpty()`) and class-transformer (`@Expose()`, `@Transform()`). These libraries are deeply integrated into NestJS ValidationPipe. Property decorators store validation rules in metadata via `reflect-metadata`.
+- **"Property decorators aren't needed in NestJS"** — they are. Both class-validator (`@IsEmail()`, `@IsNotEmpty()`) and class-transformer (`@Expose()`, `@Transform()`) are built on them. Both libraries are wired into ValidationPipe. These decorators store validation rules in metadata via `reflect-metadata`.

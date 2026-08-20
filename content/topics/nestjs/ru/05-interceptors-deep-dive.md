@@ -1,8 +1,19 @@
-# Interceptors Deep Dive
+# Interceptors: подробный разбор
 
-## Что такое Interceptor и почему он использует RxJS
+## Что такое Interceptor и почему он работает через RxJS
 
-Interceptor реализует интерфейс `NestInterceptor` с методом `intercept(context, next)`. `next.handle()` возвращает `Observable<any>` — поток ответа контроллера. RxJS операторы (`map`, `tap`, `catchError`, `switchMap`) позволяют трансформировать этот поток до, после или вместо выполнения контроллера.
+Interceptor — это класс, который оборачивает вызов обработчика запроса. Он реализует интерфейс `NestInterceptor` с единственным методом `intercept(context, next)`.
+
+Ключевая деталь: `next.handle()` — это ещё не вызов контроллера, а обещание его вызвать. Технически это Observable — поток значений из библиотеки RxJS. Поток «холодный»: контроллер запустится только тогда, когда на поток кто-то подпишется, и подписывается сам Nest.
+
+Отсюда три возможности. Сделать что-то до `next.handle()`. Навесить обработку на результат через `.pipe(...)`. Или вообще не вызывать `next.handle()` и вернуть свой поток.
+
+Обработку навешивают операторами RxJS, и дальше в статье будет пример на каждый:
+
+- `map` меняет значение в потоке.
+- `tap` смотрит на значение и ничего не меняет.
+- `catchError` перехватывает ошибку.
+- `switchMap` подменяет один поток другим.
 
 ```typescript
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
@@ -28,14 +39,19 @@ export class LoggingInterceptor implements NestInterceptor {
 ```
 
 ```txt
-Request pipeline:
-  Middleware → Guard → Interceptor.before → Pipe → Controller → Interceptor.after → Response
+Порядок обработки запроса:
+  Middleware → Guard → Interceptor.before → Pipe
+    → Controller → Interceptor.after → Response
 
-Interceptor.before: код ПЕРЕД next.handle()
-Interceptor.after:  операторы в .pipe() ПОСЛЕ next.handle()
+Interceptor.before: код до next.handle()
+Interceptor.after:  операторы в .pipe() после next.handle()
 ```
 
-## Response Transformation — стандартизация ответов
+## Трансформация ответа — единый формат для всех эндпоинтов
+
+Оператор `map` меняет значение, которое контроллер вернул, по пути к клиенту. Самое частое применение — обернуть любой ответ в общий конверт вида `{ success, data, timestamp, path }`.
+
+Выгода в том, что контроллеры остаются чистыми: каждый возвращает свои данные и ничего не знает про формат ответа API.
 
 ```typescript
 // Оборачивать все ответы в { success, data, timestamp }
@@ -66,10 +82,16 @@ export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponse<T
 app.useGlobalInterceptors(new TransformInterceptor());
 
 // Результат: контроллер возвращает { id: 1, name: 'Alice' }
-// Клиент получает: { success: true, data: { id: 1, name: 'Alice' }, timestamp: '...', path: '/users/1' }
+// Клиент получает:
+// { success: true, data: { id: 1, name: 'Alice' },
+//   timestamp: '...', path: '/users/1' }
 ```
 
-## Cache Interceptor — обойти контроллер
+## Кеширующий Interceptor — как обойти контроллер
+
+Здесь работает «холодность» потока. Если вместо `next.handle()` вернуть `of(cached)`, подписки на поток контроллера не будет, и контроллер не выполнится вообще.
+
+Здесь `from(...)` превращает промис от кеша в поток. Дальше `switchMap` выбирает, какой поток отдать: значение из кеша или поток контроллера с сохранением результата через `tap`.
 
 ```typescript
 // Вернуть of(cachedData) — контроллер НЕ вызывается
@@ -98,7 +120,11 @@ export class CacheInterceptor implements NestInterceptor {
 }
 ```
 
-## Error Transformation Interceptor
+## Interceptor, переводящий чужие ошибки в HTTP-ответы
+
+`catchError` перехватывает ошибку, которая пришла из контроллера, и решает её судьбу: пробросить как есть или заменить на другую.
+
+Типичная задача — превратить коды драйвера базы данных в осмысленные HTTP-исключения. Читателю ответа не нужно знать, что `P2002` у Prisma означает нарушение уникальности.
 
 ```typescript
 // Трансформировать внутренние ошибки в стандартный формат
@@ -121,7 +147,11 @@ export class ErrorInterceptor implements NestInterceptor {
 }
 ```
 
-## Timeout Interceptor
+## Interceptor с таймаутом
+
+Оператор `timeout(5000)` даёт потоку пять секунд и, если ответа нет, выбрасывает `TimeoutError`. Дальше `catchError` ловит эту ошибку и подменяет её на HTTP-исключение 408.
+
+Без такого перехвата клиент увидит внутреннюю ошибку RxJS вместо понятного кода ответа.
 
 ```typescript
 import { TimeoutError, throwError } from 'rxjs';
@@ -143,33 +173,35 @@ export class TimeoutInterceptor implements NestInterceptor {
 }
 ```
 
-## Interceptor vs Middleware vs Guard vs Pipe
+## Interceptor против Middleware, Guard и Pipe
 
-```txt
-                  Middleware    Guard       Pipe        Interceptor
-Доступ к handler:    Нет         Да          Да           Да
-Доступ к metadata:   Нет         Да          Нет          Да
-Может блокировать:   Да (next)   Да (false)  Да (throw)   Да (of())
-Доступ к response:   Нет         Нет         Нет          Да (.pipe())
-Трансформ. response: Нет         Нет         Нет          Да (map())
-RxJS Observable:     Нет         Нет         Нет          Да
-Позиция:             Раньше всех Guards→     Pipes→       Вокруг Controller
-                                Guards       Controller
+Все четыре механизма встраиваются в обработку запроса, но умеют разное. Interceptor — единственный, кто видит и меняет ответ.
 
-Middleware:    Express-совместимый, без знания Nest контекста
-Guard:         Авторизация — пропустить или запретить
-Pipe:          Трансформировать/валидировать входные данные
-Interceptor:   Трансформировать ответ, логировать, кешировать
-```
+| Что умеет | Middleware | Guard | Pipe | Interceptor |
+|---|---|---|---|---|
+| Доступ к обработчику | Нет | Да | Да | Да |
+| Доступ к метаданным | Нет | Да | Нет | Да |
+| Может остановить запрос | Да (`next`) | Да (`false`) | Да (`throw`) | Да (`of()`) |
+| Доступ к ответу | Нет | Нет | Нет | Да (`.pipe()`) |
+| Меняет ответ | Нет | Нет | Нет | Да (`map()`) |
+| Работает с Observable | Нет | Нет | Нет | Да |
+| Место в конвейере | Раньше всех | После middleware | После guards, до контроллера | Вокруг контроллера |
+
+Зона ответственности у каждого своя:
+
+- **Middleware** — уровень Express/Fastify, про контекст Nest ничего не знает.
+- **Guard** — авторизация: пропустить запрос или запретить.
+- **Pipe** — проверить и преобразовать входные данные.
+- **Interceptor** — изменить ответ, залогировать, закешировать.
 
 ## Типичные ошибки на интервью
 
-- **"Interceptor выполняет код до и после синхронно"** — до контроллера: синхронно (перед `next.handle()`). После: асинхронно через RxJS операторы в `.pipe()`. `tap` выполняется когда Observable завершается, не когда Interceptor возвращает результат.
+- **"Interceptor выполняет код до и после синхронно"** — только первую половину. До контроллера код идёт синхронно, прямо перед `next.handle()`. После — асинхронно, операторами внутри `.pipe()`. `tap` срабатывает, когда поток завершился, а не когда `intercept` вернул результат.
 
-- **"next.handle() вызывает контроллер немедленно"** — нет. `next.handle()` создаёт "холодный" Observable. Контроллер вызывается только когда кто-то подписывается (subscribe). Если вернуть `of(cached)` вместо `next.handle()` — контроллер вообще не вызывается.
+- **"next.handle() вызывает контроллер немедленно"** — нет. `next.handle()` создаёт «холодный» Observable, и контроллер вызывается только при подписке. Верните `of(cached)` вместо `next.handle()` — и контроллер не выполнится ни разу.
 
-- **"Interceptor может читать тело запроса"** — да, через `context.switchToHttp().getRequest().body`. Но трансформировать входные данные — задача Pipe, не Interceptor. Interceptor предназначен для трансформации ОТВЕТА.
+- **"Interceptor может читать тело запроса"** — может, через `context.switchToHttp().getRequest().body`. Но менять входные данные — работа Pipe. Interceptor придуман для **ответа**.
 
-- **"Interceptor и Middleware делают одно и то же"** — нет. Middleware работает на уровне Express/Fastify до Nest routing, не знает какой handler будет вызван, не имеет доступа к Nest metadata. Interceptor работает внутри Nest pipeline, знает handler, controller, может читать metadata через ExecutionContext.
+- **"Interceptor и Middleware делают одно и то же"** — нет. Middleware работает на уровне Express/Fastify, до маршрутизации Nest: он не знает, какой обработчик будет вызван, и не видит метаданные декораторов. Interceptor работает внутри конвейера Nest и через `ExecutionContext` знает и обработчик, и контроллер, и метаданные.
 
-- **"Глобальный Interceptor через useGlobalInterceptors() и APP_INTERCEPTOR делают одно и то же"** — есть разница. `useGlobalInterceptors()` в `main.ts` — вне DI контейнера, не может использовать инжектированные зависимости (new MyInterceptor()). `{ provide: APP_INTERCEPTOR, useClass: MyInterceptor }` в модуле — через DI, может инжектировать сервисы.
+- **"useGlobalInterceptors() и APP_INTERCEPTOR — одно и то же"** — разница есть, и она в зависимостях. Вызов в `main.ts` создаёт объект руками, через `new MyInterceptor()`, вне контейнера внедрения зависимостей (DI). Инжектировать в него ничего нельзя. Запись `{ provide: APP_INTERCEPTOR, useClass: MyInterceptor }` в модуле идёт через контейнер, и зависимости приходят обычным способом.

@@ -2,7 +2,15 @@
 
 ## What is ExecutionContext
 
-`ExecutionContext` is an abstraction over the current incoming request, available in Guards, Interceptors, and Exception Filters. The abstraction is necessary because NestJS works with multiple transports: HTTP, WebSocket, gRPC, and Microservice RPC. The same Guard must work regardless of the transport.
+`ExecutionContext` is a wrapper around the current incoming request. Three Nest mechanisms that plug into request handling receive it:
+
+- **Guard** — decides whether the request reaches the handler or is rejected.
+- **Interceptor** — wraps the handler call and can change the response.
+- **Exception Filter** — turns a thrown exception into a response for the client.
+
+The wrapper exists because NestJS works with several transports. A transport is the channel a request arrives on: HTTP, WebSocket, gRPC, or a microservice RPC message. RPC (remote procedure call) means calling a method on another service over the network.
+
+The same Guard has to work on any transport. That is why it receives an `ExecutionContext` and not a raw `req`.
 
 ```typescript
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
@@ -30,19 +38,21 @@ export class AuthGuard implements CanActivate {
 
 ```txt
 switchTo*() methods:
-  context.switchToHttp()  → { getRequest(), getResponse(), getNext() }
-  context.switchToWs()    → { getClient(), getData() }
-  context.switchToRpc()   → { getContext(), getData() }
+  switchToHttp() → { getRequest(), getResponse(), getNext() }
+  switchToWs()   → { getClient(), getData() }
+  switchToRpc()  → { getContext(), getData() }
 
 Why you can't just call context.getRequest():
   ExecutionContext doesn't know which transport you're on.
-  switchToHttp() explicitly states "I know this is an HTTP request."
-  On a WebSocket transport, switchToHttp().getRequest() returns undefined.
+  switchToHttp() states explicitly: "this is an HTTP request".
+  On WebSocket, switchToHttp().getRequest() returns undefined.
 ```
 
 ## Reflect Metadata — how decorators store data
 
-Reflect Metadata is a standard for storing metadata on classes and methods at runtime. The `reflect-metadata` library (a polyfill for the Reflect API) is used throughout NestJS.
+Reflect Metadata is a standard for storing metadata on classes and methods at runtime. Metadata here means data about your code: for example, the list of roles that `@Roles('admin')` attaches to a method.
+
+NestJS uses the `reflect-metadata` library for this. It is a polyfill, that is, an implementation of the standard for engines that do not have it yet. The decorator writes the metadata, and a Guard reads it through `Reflector`.
 
 ```typescript
 import 'reflect-metadata'; // must be the first import in main.ts
@@ -77,6 +87,8 @@ export class RolesGuard implements CanActivate {
 
 ## Working directly with the Reflect API
 
+`SetMetadata` is a thin wrapper over `Reflect.defineMetadata`, and you can write the same thing by hand. The example below shows four ways to work with the same metadata. They are the built-in helper, a manual decorator, reading through `Reflector`, and reading straight from `Reflect`.
+
 ```typescript
 // SetMetadata — NestJS built-in helper (recommended)
 export const Public = () => SetMetadata('isPublic', true);
@@ -104,6 +116,10 @@ const roles = Reflect.getMetadata('roles', context.getHandler());
 ```
 
 ## Complete pattern: JWT Auth Guard with @Public()
+
+JWT (JSON Web Token) is a signed token that the client sends in the `Authorization` header. A practical approach is to check the token on every route, and mark the rare exceptions with a `@Public()` decorator.
+
+Then you cannot forget to protect a route: everything is closed by default, and a public route is visible in the code.
 
 ```typescript
 // public.decorator.ts
@@ -145,7 +161,11 @@ login(@Body() dto: LoginDto) { ... }
 getProfile(@Request() req) { return req.user; }
 ```
 
-## getType() for multi-transport Guards
+## getType() — one Guard for several transports
+
+`context.getType()` returns `'http' | 'ws' | 'rpc'` and tells you which transport the request came in on. The Guard looks at that value and picks the matching `switchTo*()`.
+
+Without this check a universal Guard breaks on the first non-HTTP request: `switchToHttp().getRequest()` returns `undefined` instead of an error.
 
 ```typescript
 @Injectable()
@@ -175,12 +195,12 @@ export class UniversalGuard implements CanActivate {
 
 ## Common interview mistakes
 
-- **"ExecutionContext is just the request object"** — no. ExecutionContext is a wrapper around the execution context, not the request. `getRequest()` is only one method of the HTTP-specific sub-context. ExecutionContext also gives access to the handler and controller (for metadata reading), and works for WebSocket and RPC.
+- **"ExecutionContext is just the request object"** — no. It wraps the execution context, not the request. `getRequest()` belongs to the HTTP-specific sub-context only. Besides the request, `ExecutionContext` gives you the handler and the controller class so you can read metadata, and it works for WebSocket and RPC.
 
-- **"Reflector.get() and getAllAndOverride() are the same thing"** — no. `get(key, handler)` reads metadata only from the handler. `getAllAndOverride(key, [handler, class])` reads from the handler first; if not found, from the class. For `@Roles` on the controller level with an override on the method level: `getAllAndOverride` is mandatory.
+- **"Reflector.get() and getAllAndOverride() are the same thing"** — no. The call `get(key, handler)` reads metadata only from the handler. The call `getAllAndOverride(key, [handler, class])` reads the handler first, and falls back to the class only if the handler has nothing. For `@Roles` on the controller with an override on the method, you need `getAllAndOverride`.
 
-- **"Reflect.defineMetadata is called on every request"** — no. Decorators execute ONCE at application startup (when the module loads). Metadata is written to memory once and for all. `Reflect.getMetadata` in a Guard reads on every request — but it's an O(1) lookup.
+- **"Reflect.defineMetadata is called on every request"** — no. Decorators run **once** at application startup, when the module loads. Metadata is written to memory once and for all. `Reflect.getMetadata` in a Guard only reads on each request, and that read is an O(1) lookup.
 
-- **"@SetMetadata can be used with any data type"** — yes, but the convention is to use a constant for the key (`export const ROLES_KEY = 'roles'`) to avoid typos in strings. The TypeScript generic `reflector.getAllAndOverride<string[]>` ensures the return type.
+- **"@SetMetadata can be used with any data type"** — yes, with one caveat. Keep the key in a constant: `export const ROLES_KEY = 'roles'`. Then a typo in a string cannot turn into a Guard that silently does nothing. The generic `reflector.getAllAndOverride<string[]>` fixes the return type.
 
-- **"getHandler() returns the method name"** — no. It returns a function reference (`Function`), not a string. `context.getHandler().name` gives the string name. It's used as the key for `Reflect.getMetadata` because metadata is attached to the function object itself.
+- **"getHandler() returns the method name"** — no. It returns a function reference (`Function`), not a string. You get the name from `context.getHandler().name`. The function itself is used as the key for `Reflect.getMetadata`, because metadata is attached to the function object.

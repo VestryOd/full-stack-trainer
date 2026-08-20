@@ -1,8 +1,16 @@
-# Providers, Scopes and DI Container
+# Providers, Scopes and the DI Container
 
 ## How the DI Container works in NestJS
 
-The NestJS DI Container is a registry of providers. At startup, Nest scans all modules, builds a dependency graph (which provider depends on which others), and creates instances in the correct topological order. Under the hood: `Map<Token, { instance, scope, dependencies }>`.
+The DI container (DI stands for dependency injection) is a registry of providers. You never write `new UserService(...)`: a class declares its dependencies in the constructor, and the container finds and passes them in.
+
+At startup Nest does three things:
+
+1. Scans every module and collects the list of providers.
+2. Builds the dependency graph: which provider depends on which others.
+3. Creates instances in topological order — a dependency first, then whoever asked for it.
+
+Inside, the container is a map shaped like `Map<Token, { instance, scope, dependencies }>`. A token is the key a provider is looked up by, and most often that key is the class itself.
 
 ```typescript
 // At startup, Nest does this automatically:
@@ -29,6 +37,15 @@ export class UsersController {
 ```
 
 ## Provider types — useClass, useValue, useFactory, useExisting
+
+A provider record answers two questions: which token to look it up by (`provide`) and how to produce the value. The "how" is one of four fields:
+
+- `useClass` — instantiate the given class. This lets you swap the implementation without touching the consumers.
+- `useValue` — take a ready value: a string from the environment, a config object, a mock in a test.
+- `useFactory` — call a function and take what it returns. The function may be async and may receive its own dependencies through `inject`.
+- `useExisting` — make a second token an alias of the first. There is still only one instance.
+
+The short form `providers: [UserService]` is the same `useClass`, just with the token and the class being the same thing.
 
 ```typescript
 // Module providers — extended syntax
@@ -74,7 +91,13 @@ export class AuthService {
 }
 ```
 
-## Provider Scopes — Singleton, Request, Transient
+## Provider scopes — Singleton, Request, Transient
+
+A scope answers one question: how many instances of the provider live in the app, and when they are created. There are three options:
+
+- **Singleton** (`Scope.DEFAULT`, the default) — one instance for the whole application.
+- **Request** (`Scope.REQUEST`) — a new instance per incoming request.
+- **Transient** (`Scope.TRANSIENT`) — a new instance per injection, so every consumer gets its own.
 
 ```typescript
 import { Injectable, Scope } from '@nestjs/common';
@@ -108,21 +131,26 @@ export class LoggerService {
 Scope.DEFAULT (Singleton):
   Created: once at startup
   Destroyed: when the application shuts down
-  Usage: 95% of all providers
+  Used for: 95% of all providers
 
 Scope.REQUEST:
   Created: on every HTTP request
   Destroyed: when the request completes
-  Usage: tenant context, request-specific data
-  Warning: "scope bubble up" — all dependents also become REQUEST-scoped
+  Used for: per-client (tenant) data, request data
+  Careful: scope bubbles up — consumers become REQUEST too
 
 Scope.TRANSIENT:
-  Created: on every injection (each consumer gets its own instance)
-  Usage: contextualized loggers
-  Rarely needed: Singleton is sufficient in most cases
+  Created: on every injection, a separate instance
+    for each consumer
+  Used for: loggers that carry a context
+  Rarely needed: Singleton is usually enough
 ```
 
-## Scope Bubble Up — an important side effect
+## Scope bubble-up — an important side effect
+
+A scope is contagious and spreads upwards through the dependency graph. As soon as a Singleton asks for a REQUEST provider in its constructor, it silently becomes a REQUEST provider itself. Nest does not complain and logs nothing.
+
+From there it travels along the chain: whoever depends on the newly REQUEST-scoped provider becomes REQUEST-scoped as well. One provider can move half of your app onto per-request re-creation.
 
 ```typescript
 // PROBLEM: if a REQUEST-scoped provider is injected into a Singleton,
@@ -149,7 +177,11 @@ export class UserService {
 }
 ```
 
-## InjectionToken — type-safe token
+## InjectionToken — a type-safe token
+
+A string token works, but it has two problems. The compiler will not notice a typo in `'JWT_SECRET'`, and you have to write the value's type by hand at every injection point.
+
+A typed token fixes both: the name is written once in a constant, and the type of the value lives in the token itself.
 
 ```typescript
 // String tokens ('JWT_SECRET') — risk of typos
@@ -168,7 +200,11 @@ constructor(@Inject(JWT_SECRET) private jwtSecret: string) {}
 // vs a string token: you must annotate the type manually
 ```
 
-## Circular Dependencies — how to resolve
+## Circular dependencies — how to untangle them
+
+A circular dependency is when class `A` asks for `B` in its constructor while `B` asks for `A` back. The container cannot create either one first. So during graph construction one of the constructor arguments ends up as `undefined`.
+
+`forwardRef(() => Class)` delays resolving the class reference until both classes are loaded. You need the wrapper in two places: at the injection point and at the module import.
 
 ```typescript
 // Problem: A depends on B, B depends on A → circular dependency
@@ -202,12 +238,12 @@ export class AuthModule {}
 
 ## Common interview mistakes
 
-- **"@Injectable() creates an instance"** — no. `@Injectable()` adds metadata (`scope`, `token`) that lets Nest discover the class as a provider and manage its lifecycle. The instance is created by the DI Container at startup (or per request for REQUEST scope).
+- **"@Injectable() creates an instance"** — no. The decorator only adds metadata (`scope`, token) that lets Nest recognise the class as a provider and take over its lifecycle. The instance is created by the DI container: at startup, or per request if the scope is REQUEST.
 
-- **"All providers in the application are available everywhere"** — no. A provider is only available in the module that declares it in `providers`. To use it in another module: add it to `exports` of the source module and import that module. Exception: a `@Global()` module — its exports are available everywhere without explicit imports.
+- **"All providers in the application are available everywhere"** — no. A provider is visible only inside the module that lists it in `providers`. To use it from another module, add it to that module's `exports` and import the module. The exception is a module marked `@Global()`: its exports are visible everywhere without an explicit import.
 
-- **"useFactory runs on every request"** — not for Singleton scope. The factory is called ONCE at startup and its return value is stored in the Container. For REQUEST scope: the factory is called on every request.
+- **"useFactory runs on every request"** — not when the scope is Singleton. Then the factory is called **once** at startup and the result is stored in the container. For a REQUEST provider it is different: the factory really does run on every request.
 
-- **"Request Scope is a good alternative to AsyncLocalStorage"** — both solve the request-specific data problem. REQUEST scope: creates a new provider (and the entire dependency chain) per request — overhead on the GC. AsyncLocalStorage: a single Singleton, data stored in the async context — more efficient. For high-throughput APIs: AsyncLocalStorage is preferred.
+- **"Request scope is a good alternative to AsyncLocalStorage"** — both solve the same task: giving a service the data of the current request. A REQUEST provider is re-created together with its whole dependency chain, which is extra work for the garbage collector (GC). AsyncLocalStorage keeps one Singleton and stores the data in the async call context. For an API under high load, pick AsyncLocalStorage.
 
-- **"A TOKEN must be a string"** — no. A token can be: a class (most common), a string, a Symbol, or an `InjectionToken<T>`. `InjectionToken` is recommended for custom tokens — it's type-safe and eliminates typos, unlike a plain string.
+- **"A token has to be a string"** — no. A token can be a class (the most common case), a string, a `Symbol`, or an `InjectionToken<T>`. For custom tokens `InjectionToken<T>` is the recommended one: it is typed and, unlike a string, will not let a typo slip past the compiler.
