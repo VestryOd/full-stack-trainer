@@ -4,6 +4,8 @@
 
 A standalone `mongod` is not used in production: without replicas there is neither fault tolerance nor transactions (they require a replica set). The standard configuration is three members: one primary and two secondaries.
 
+Two words appear on every line below, so here they are up front. The **oplog** is the operation log: a collection where the primary records every write it has applied, so that the other members can replay it. It is a **capped collection** — a collection of a fixed size that overwrites its oldest entries once it is full.
+
 ```txt
 A replica set: one write point, several copies of the data
 
@@ -17,7 +19,7 @@ A replica set: one write point, several copies of the data
   │ applies the write and records it in the oplog │
   │ (local.oplog.rs — a capped collection)        │
   └───────────────────────────────────────────────┘
-                           │  secondaries tail the oplog and apply the operations
+                           │  secondaries tail the oplog and apply it
                            ▼
 ┌─────────────────────┐    ┌─────────────────────────┐
 │ SECONDARY           │    │ SECONDARY               │
@@ -25,8 +27,10 @@ A replica set: one write point, several copies of the data
 │ may lag behind      │    │ during an election      │
 └─────────────────────┘    └─────────────────────────┘
 
-primary unavailable → an election (a few seconds) → a new primary from the majority
-the oplog size sets the window in which a lagging member can still catch up
+  primary unavailable → an election (a few seconds)
+          → a new primary from the majority
+       the oplog size sets the window in which
+         a lagging member can still catch up
 ```
 
 ```txt
@@ -64,6 +68,8 @@ Elections and automatic failover are enough to understand mechanically, without 
 
 ## Read preference: where to read from
 
+Read preference is the setting that decides which member of the set serves your reads. It changes nothing about durability — only about who answers. You set it once in the connection string, or per query.
+
 ```js
 // in the connection string
 mongodb+srv://host/db?readPreference=secondaryPreferred
@@ -80,7 +86,7 @@ secondaryPreferred  — a secondary, or the primary if none are available
 nearest             — the member with the lowest network latency
 ```
 
-Reading from a secondary looks like a free way to "offload the database", and that is exactly why it is one of the most common mistakes:
+Reading from a secondary looks like a free way to "offload the database". That is exactly why it is one of the most common mistakes. There are three separate problems:
 
 ```txt
 1. Read-your-own-write breaks. A user saves their profile (a write to
@@ -101,12 +107,12 @@ Reading from a secondary looks like a free way to "offload the database", and th
 When reading from a secondary is appropriate:
   - reports and analytics (yesterday's data will not go stale)
   - heavy aggregations that should not compete with production traffic
-    (see [Aggregation Pipeline])
+    (see the Aggregation Pipeline article)
   - geo-distributed reads via nearest/tags
   - data exports and backup jobs
 ```
 
-If you need both primary offloading and the "I will see my own write" guarantee, the answer is a causally consistent session: the driver carries the operation's logical time, and the read waits until the member catches up.
+Suppose you need both: the primary offloaded, and the "I will see my own write" guarantee. The answer is a causally consistent session. The driver carries the logical time of your operation, and the read waits until the chosen member has caught up to it.
 
 ```js
 const session = client.startSession();   // causalConsistency: true by default
@@ -116,23 +122,43 @@ const fresh = await posts.findOne({ _id }, { session });  // sees the write
 
 ## Write concern: what "the write was acknowledged" means
 
+Write concern is how many members must confirm a write before the driver reports success. It is the setting that decides what "the write went through" is worth. Every option below trades durability against latency.
+
 ```txt
-                     What "the write was acknowledged" actually means
-┌────────────────────────┬──────────────────────────────────┬───────────────────────────┐
-│ setting                │ acknowledged once                │ the risk you take         │
-├────────────────────────┼──────────────────────────────────┼───────────────────────────┤
-│ w: 0                   │ the driver sent the packet       │ the write may never apply │
-├────────────────────────┼──────────────────────────────────┼───────────────────────────┤
-│ w: 1                   │ the primary applied it           │ rollback on failover      │
-├────────────────────────┼──────────────────────────────────┼───────────────────────────┤
-│ w: 1, j: true          │ the primary journaled it         │ rollback on failover      │
-├────────────────────────┼──────────────────────────────────┼───────────────────────────┤
-│ w: "majority"          │ a majority of members applied it │ higher latency            │
-├────────────────────────┼──────────────────────────────────┼───────────────────────────┤
-│ w: "majority", j: true │ a majority journaled it          │ the highest latency       │
-└────────────────────────┴──────────────────────────────────┴───────────────────────────┘
-                      since MongoDB 5.0 the default is w: "majority"
-           wtimeout bounds the wait but does NOT undo an already applied write
+ What "the write was acknowledged" actually means
+┌────────────────────────────────────────────────┐
+│ w: 0                                           │
+│                                                │
+│ acknowledged once   the driver sent the packet │
+│ the risk you take   the write may never apply  │
+└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│ w: 1                                           │
+│                                                │
+│ acknowledged once   the primary applied it     │
+│ the risk you take   rollback on failover       │
+└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│ w: 1, j: true                                  │
+│                                                │
+│ acknowledged once   the primary journaled it   │
+│ the risk you take   rollback on failover       │
+└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│ w: "majority"                                  │
+│                                                │
+│ acknowledged once   a majority applied it      │
+│ the risk you take   higher latency             │
+└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│ w: "majority", j: true                         │
+│                                                │
+│ acknowledged once   a majority journaled it    │
+│ the risk you take   the highest latency        │
+└────────────────────────────────────────────────┘
+  since MongoDB 5.0 the default is w: "majority"
+  wtimeout bounds the wait but does NOT undo an
+              already applied write
 ```
 
 ```js
@@ -179,6 +205,8 @@ was w: 1 — worth checking.
 
 ## Read concern: which data counts as existing
 
+Read concern is the setting that decides how confirmed the data you read has to be. Write concern is about the write side; this is the mirror question on the read side. There are five levels.
+
 ```txt
 local         — return the member's most recent data even if it is not
                 yet majority-acknowledged (and could therefore be
@@ -194,7 +222,7 @@ linearizable  — the strictest for a single document: guarantees the
                 it; expensive, requires the primary and w: "majority"
 ```
 
-The real guarantees come from the combination of three settings, and this is exactly the question that separates "read the docs" from "operated it in production":
+The real guarantees come from the combination of three settings. This is the question that separates "read the docs" from "ran it in production":
 
 ```txt
 w: "majority" + readConcern: "majority" + readPreference: primary
@@ -212,7 +240,13 @@ w: "majority" + a causally consistent session + a secondary
     the member to catch up
 ```
 
-A phrasing for interviews: write concern answers "when does a write count as done", read concern answers "which data counts as existing", read preference answers "who do I ask". Three independent knobs — and "consistency" without naming all three is an empty word.
+A phrasing for interviews: three independent settings, three different questions.
+
+- **Write concern** answers "when does a write count as done".
+- **Read concern** answers "which data counts as existing".
+- **Read preference** answers "who do I ask".
+
+"Consistency" without naming all three is an empty word.
 
 ## Multi-document transactions
 
@@ -284,16 +318,19 @@ When a transaction is genuinely needed:
 
 When a transaction is not needed but gets written anyway:
   - changing one document — it is already atomic, even when ten fields
-    and an array change (see [CRUD and Query Operators])
+    and an array change (see the CRUD and Query Operators article)
   - incrementing a counter — that is $inc
   - "read, check, write" — that is findOneAndUpdate with the condition
     in the filter
-  - updating denormalized copies where eventual consistency is fine
-    (Extended Reference, Subset — see [Schema Design: Embedding vs
-    Referencing])
+  - updating denormalized copies where eventual consistency is fine.
+    "Eventual consistency" means the copies catch up a little later,
+    and a reader may briefly see the old value (Extended Reference,
+    Subset — see the Schema Design article)
 ```
 
-Hence the main point of this section: transactions in MongoDB are not a substitute for schema design. If the aggregate is designed so that the invariant lives inside a single document, no transaction is needed at all. If transactions are required for every other request, that signals a relational schema — and it is time to reconsider either the schema or the database choice (see [Document Model and Use Cases]).
+Hence the main point of this section: transactions in MongoDB are not a substitute for schema design. If the aggregate is designed so that the invariant lives inside a single document, no transaction is needed at all.
+
+And if transactions are required for every other request, that signals a relational schema. Then it is time to reconsider either the schema or the database choice, which is what the Document Model and Use Cases article is about.
 
 ## Sharding — an overview
 
@@ -311,16 +348,27 @@ The components of a sharded cluster:
 The key decision is the **shard key**: the field (or combination of fields) the data is distributed by. It determines cluster performance and is expensive to change (`reshardCollection` arrived in 5.0, but it is a heavy operation).
 
 ```txt
-TARGETED: the filter contains the shard key    SCATTER-GATHER: no shard key in the filter
-┌────────────────────────────────────┐         ┌───────────────────────────────────┐
-│ find({ tenantId: "acme", _id: x }) │         │ find({ status: "published" })     │
-│                                    │         │                                   │
-│ mongos → shard 2                   │         │ mongos → every shard → merge      │
-│                                    │         │                                   │
-│ shard 1  ·  [shard 2]  ·  shard 3  │         │ [shard 1] · [shard 2] · [shard 3] │
-└────────────────────────────────────┘         └───────────────────────────────────┘
-     the query goes to ONE shard;                  every shard runs the query and
-  scales linearly with their number            mongos merges; the sort happens there too
+TARGETED: the filter contains the shard key
+┌────────────────────────────────────┐
+│ find({ tenantId: "acme", _id: x }) │
+│                                    │
+│ mongos → shard 2                   │
+│                                    │
+│ shard 1  ·  [shard 2]  ·  shard 3  │
+└────────────────────────────────────┘
+     the query goes to ONE shard;
+  scales linearly with their number
+
+SCATTER-GATHER: no shard key in the filter
+┌───────────────────────────────────┐
+│ find({ status: "published" })     │
+│                                   │
+│ mongos → every shard → merge      │
+│                                   │
+│ [shard 1] · [shard 2] · [shard 3] │
+└───────────────────────────────────┘
+    every shard runs the query and
+mongos merges; the sort happens there too
 ```
 
 ```js
@@ -360,15 +408,24 @@ scatter-gather     — a filter without the shard key: mongos broadcasts
 
 restrictions       — a unique index is only possible on the shard key
                      (or its prefix); the shard key value cannot be
-                     changed freely in a document; a sort without the
-                     shard key is performed on mongos
+                     changed freely in a document (possible since 4.2,
+                     and it has a cost); a sort without the shard key
+                     is performed on mongos
 ```
 
-The practical selection criteria: the key should (1) have high cardinality, (2) distribute writes evenly, (3) be present in most read queries. A compound key like `{ tenantId: 1, _id: 1 }` often satisfies all three: tenant isolation gives targeted queries, and `_id` inside provides cardinality.
+The practical selection criteria are three:
 
-And an honest caveat: sharding answers a volume problem, not a slow-query problem. A slow query on a sharded cluster becomes slow on N shards. Indexes and schema first (see [Indexes and Query Performance]), sharding after.
+1. High cardinality — many distinct values.
+2. Writes spread evenly across those values.
+3. The field is present in most read queries.
+
+A compound key like `{ tenantId: 1, _id: 1 }` often satisfies all three: tenant isolation gives targeted queries, and `_id` inside provides cardinality.
+
+And an honest caveat: sharding answers a volume problem, not a slow-query problem. A slow query on a sharded cluster becomes slow on N shards. Indexes and schema first — that is the Indexes and Query Performance article — sharding after.
 
 ## How to answer a question about guarantees
+
+There is no one-sentence answer, and saying so is the strong move. Below is the five-point frame to walk through instead.
 
 ```txt
 "What consistency guarantees does MongoDB give" has no single answer —
@@ -396,31 +453,34 @@ and that is the correct answer. The framework:
 
 ## Connection to other topics
 
+The relational baseline for this article lives in the PostgreSQL topic: the articles on transactions and on transaction isolation levels.
+
+Two terms from there are worth having in hand. `ACID` (atomicity, consistency, isolation, durability) names the four properties a classic transaction promises. `MVCC` (multi-version concurrency control) is the technique where the engine keeps several versions of a row, so readers never block writers.
+
 ```txt
-[CRUD and Query Operators]        — single-document atomicity,
-                                    findOneAndUpdate as a substitute
-                                    for a transaction
-[Schema Design: Embedding vs      — why a good schema makes
- Referencing]                       transactions rare; eventual
-                                    consistency for duplicates
-[Indexes and Query Performance]   — the hashed index for a shard key,
-                                    TTL and the oplog, indexes before
-                                    sharding
-[Aggregation Pipeline]            — heavy aggregations on a secondary,
-                                    $merge for materialized reports
-[Mongoose Queries, populate,      — connection pooling and retryable
- and Pitfalls]                      writes at the driver level,
-                                    transactions in Mongoose sessions
-the PostgreSQL topic,             — the comparison baseline: ACID,
-[ACID and Transactions],            isolation levels and MVCC in a
-[Transaction Isolation Levels]      relational database
+CRUD and Query Operators        — single-document atomicity,
+                                  findOneAndUpdate as a substitute
+                                  for a transaction
+Schema Design: Embedding vs     — why a good schema makes
+Referencing                       transactions rare; eventual
+                                  consistency for duplicates
+Indexes and Query Performance   — the hashed index for a shard key,
+                                  the TTL index (time-to-live: the
+                                  server deletes documents once they
+                                  expire) and the oplog, indexes
+                                  before sharding
+Aggregation Pipeline            — heavy aggregations on a secondary,
+                                  $merge for materialized reports
+Mongoose Queries, populate,     — connection pooling and retryable
+and Pitfalls                      writes at the driver level,
+                                  transactions in Mongoose sessions
 ```
 
 ## Common interview traps
 
 - **"MongoDB has no transactions"** — it has them since 4.0 (replica set) and 4.2 (sharded cluster). The correct phrasing: transactions exist and provide snapshot isolation, but they are expensive, and a good schema makes them rare.
 
-- **"Reading from a secondary offloads the database for free"** — that is eventual consistency: a user may not see their own write. And the lag is unpredictable. Bound it with `maxStalenessSeconds`, fix it with a causally consistent session.
+- **"Reading from a secondary offloads the database for free"** — that is eventual consistency, meaning the copy catches up a moment later. A user may not see their own write, and the lag is unpredictable. Bound it with `maxStalenessSeconds`, fix it with a causally consistent session.
 
 - **"Replicas scale writes"** — every secondary applies the same operations as the primary. Replicas provide availability and read scaling; only sharding scales writes.
 
@@ -428,11 +488,11 @@ the PostgreSQL topic,             — the comparison baseline: ACID,
 
 - **"`wtimeout` cancels the write"** — it only cancels the wait for acknowledgement. The operation may already be applied, so getting a `wtimeout` error and retrying is a path to duplicates unless the operation is idempotent.
 
-- **"A transaction is needed to update two fields of one document"** — a single operation on a single document is atomic by itself, arrays and nested objects included.
+- **"A transaction is needed to update two fields of one document"** — a single operation on a single document is already atomic. That includes arrays and nested objects.
 
 - **"Everything inside `withTransaction` is automatically transactional"** — only the operations that were given the `session`. A forgotten `session` quietly runs outside the transaction.
 
-- **"A transaction can be held as long as needed"** — 60 seconds by default, after which the server aborts it; and all that time the changes occupy cache and hold a snapshot.
+- **"A transaction can be held as long as needed"** — 60 seconds by default, after which the server aborts it. All that time the changes occupy cache and hold a snapshot.
 
 - **"ObjectId is a good shard key"** — it is monotonic: with ranged distribution the entire insert stream goes to one shard (hot shard). Use `hashed` or a compound key with a tenant field in front.
 
