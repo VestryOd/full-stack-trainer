@@ -240,7 +240,8 @@ type CSSProperty =
 
 type CSSDirection = "top" | "right" | "bottom" | "left";
 
-type DirectionalProperty = `${Extract<CSSProperty, "margin" | "padding" | "border">}-${CSSDirection}`;
+type BoxProperty = Extract<CSSProperty, "margin" | "padding" | "border">;
+type DirectionalProperty = `${BoxProperty}-${CSSDirection}`;
 // "margin-top" | "margin-right" | ... | "padding-top" | ... | "border-top" | ...
 
 // Typed CSS variables:
@@ -299,6 +300,8 @@ const user = await apiFetch("POST /users", {
 ---
 
 ## Use Case 6: Typed i18n Translations
+
+i18n is short for internationalization — the machinery that keeps every user-facing string in one table instead of hardcoding it. Template literal types can read the placeholders out of those strings:
 
 ```ts
 type Translations = {
@@ -392,11 +395,11 @@ type Parts = Split<"a,b,c">; // ["a", "b", "c"] ✅ — works recursively
 
 ## Common Interview Traps
 
-- **"Template literal types work like regular expressions"** — not quite: they work with fixed patterns and unions, but don't support quantifiers (`*`, `+`, `?`). `${string}` matches any string (including empty), but there's no equivalent for "one or more characters".
+- **"Template literal types work like regular expressions"** — not quite. They work with fixed patterns and unions, but don't support quantifiers (`*`, `+`, `?`). `${string}` matches any string, empty one included. There is no equivalent for "one or more characters".
 
 - **Not knowing about combinatorial explosion** — if two unions of 10 elements each are cross-multiplied in a template, you get 100 members. TypeScript has a limit and throws "too complex to represent". This is a real limitation worth knowing.
 
-- **Confusing a template literal TYPE with a template literal STRING** — `` `Hello, ${name}` `` in JS is a string. `` `Hello, ${string}` `` in TS is a type. Different usage context, similar syntax.
+- **Confusing a template literal *type* with a template literal *string*** — `` `Hello, ${name}` `` in JS is a string. `` `Hello, ${string}` `` in TS is a type. Different usage context, similar syntax.
 
 - **Not using `Capitalize`/`Uppercase` when generating names** — the classic "generate `onClick` from `click`" problem is one line: `` `on${Capitalize<EventName>}` ``. Not knowing the built-in utilities is a missed point.
 

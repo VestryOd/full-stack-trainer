@@ -1,7 +1,7 @@
 <!-- verified: 2026-06-23, corrections: 0 -->
 # Справочник утилитарных типов
 
-`Partial`, `Required`, `Readonly`, `Pick`, `Omit`, `Record` разобраны в [Generics Deep Dive] — там показана их реализация с нуля. Эта статья покрывает остальное: типы для работы с функциями, множествами, Promise, а также менее известные утилиты и практику выбора правильного инструмента.
+`Partial`, `Required`, `Readonly`, `Pick`, `Omit`, `Record` разобраны в [Дженериках](./02-generics-deep-dive.md) — там показана их реализация с нуля. Эта статья покрывает остальное: типы для работы с функциями, множествами, Promise, а также менее известные утилиты и практику выбора правильного инструмента.
 
 ---
 
@@ -416,7 +416,7 @@ const obj = makeObject({
 
 ## Строковые утилиты (краткий обзор)
 
-Рассмотрены подробно в [Template Literal Types]:
+Рассмотрены подробно в [Template Literal Types](./04-template-literal-types.md):
 
 ```ts
 type U = Uppercase<"hello">;     // "HELLO"
@@ -474,7 +474,7 @@ type SafeConfig = Readonly<Omit<Config, "debug">>;
 
 // Только обязательные поля объекта:
 type RequiredOnly<T> = Required<Pick<T, RequiredKeys<T>>>;
-// (где RequiredKeys — из статьи [Conditional and Mapped Types])
+// (где RequiredKeys — из статьи 03 про conditional и mapped types)
 
 // Тип значений Record:
 type StatusConfig = Record<Status, { label: string }>;
@@ -491,9 +491,9 @@ type StatusLabel = StatusConfig[Status]; // { label: string }
 
 - **Использовать `ReturnType` для async-функции и забыть `Awaited`** — `ReturnType<typeof asyncFn>` вернёт `Promise<X>`, не `X`. Нужно `Awaited<ReturnType<typeof asyncFn>>`.
 
-- **Не знать `ConstructorParameters` и `InstanceType`** — оба нужны при работе с классами как значениями (фабрики, DI-контейнеры, декораторы). На senior-уровне это обязательное знание.
+- **Не знать `ConstructorParameters` и `InstanceType`** — оба нужны при работе с классами как значениями: фабрики, декораторы, DI-контейнеры. DI — это dependency injection, внедрение зависимостей, когда объекты за вас собирает контейнер. На senior-уровне это обязательное знание.
 
-- **Считать `Record<string, T>` и `{ [key: string]: T }` полностью идентичными** — в большинстве контекстов они эквивалентны, но `Record` — это mapped type, что иногда даёт разные результаты при `keyof` и в conditional types.
+- **Считать `Record<string, T>` и `{ [key: string]: T }` полностью идентичными**. В большинстве контекстов они эквивалентны. Но `Record` — это mapped type, поэтому при `keyof` и внутри conditional types результат может отличаться.
 
 - **Не знать реализацию `Awaited`** — спрашивают "как TypeScript понимает, что тип является Promise?" Ответ: через duck typing — наличие метода `.then`. `Awaited` не проверяет `instanceof Promise`, он проверяет форму объекта.
 

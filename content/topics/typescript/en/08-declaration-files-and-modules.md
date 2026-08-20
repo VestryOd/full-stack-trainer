@@ -261,7 +261,7 @@ declare module "some-typed-lib" {
 
 ### What Is a Namespace
 
-`namespace` (formerly called `module` before TypeScript 1.5) was a way to organize code into name spaces before ES modules existed:
+`namespace` (formerly called `module` before TypeScript 1.5) was a way to organize code into name spaces before ES modules existed. ES — ECMAScript, the standard that defines JavaScript itself:
 
 ```ts
 namespace Utils {
@@ -293,7 +293,7 @@ Problems with namespaces:
 2. No explicit dependencies — unclear where things come from
 3. More complex compiler configuration (outFile, concatenate)
 4. Not natively compatible with ES modules
-5. Worse debugging in browsers — no source map integration with modules
+5. Worse debugging in browsers — no source maps for modules
 
 Modern alternative — ES modules (import/export):
   - Natively supported by all bundlers
@@ -397,11 +397,12 @@ Includes a built-in TypeScript library:
 ```txt
 Use triple-slash directives when:
   - Writing a .d.ts file for a library (reference types)
-  - Working with legacy code without a module system (reference path)
+  - Working with legacy code, no module system (reference path)
 
-Do NOT use when:
+Do not use when:
   - Writing a regular .ts file — use import instead
-  - Including types across a project — use tsconfig.json compilerOptions.types
+  - Including types across a project — use
+    compilerOptions.types in tsconfig.json
 ```
 
 ```json
@@ -446,7 +447,8 @@ When to use a type-only .ts file:
     "declaration": true,            // generate .d.ts
     "declarationDir": "./dist/types", // where to put them
     "declarationMap": true,          // source maps for .d.ts (go-to-definition)
-    "emitDeclarationOnly": true      // .d.ts only, no .js (when bundler handles transpilation)
+    // .d.ts only, no .js — for when a bundler transpiles
+    "emitDeclarationOnly": true
   }
 }
 ```
@@ -465,14 +467,14 @@ export declare function formatDate(date: Date): string;
 
 ## Common Interview Traps
 
-- **"Namespace is the same as an ES module"** — no. A namespace compiles to an object (IIFE pattern in JS), not an ES module. Namespaces have no tree-shaking, no explicit dependencies, no native bundler support. For new code, use `import`/`export`.
+- **"Namespace is the same as an ES module"** — no. A namespace compiles to an object built by an IIFE — an immediately invoked function expression — not to an ES module. Namespaces have no tree-shaking, no explicit dependencies, no native bundler support. For new code, use `import`/`export`.
 
 - **Not knowing the difference between `.d.ts` and a type-only `.ts`** — a `.d.ts` file is never compiled to JavaScript. It exists only for TypeScript. A `.ts` file with only types compiles to an empty `.js`. Ambient declarations and module augmentation require `.d.ts`.
 
 - **"Module augmentation works for any module"** — you can only extend an existing module. If you try to extend a non-existent one, or specify the wrong module name, the augmentation silently does nothing (TypeScript does not error!).
 
-- **Not knowing why `declare global` needs `export {}`** — without `export {}` the file is a script (not a module), so all declarations are automatically global without `declare global`. With `export {}` the file is a module, and `declare global {}` is needed to extend the global scope. Confusion between script and module context is a frequent cause of "why aren't my types being picked up".
+- **Not knowing why `declare global` needs `export {}`** — without `export {}` the file is a script, not a module. Every declaration in it is already global, so `declare global` is not needed. With `export {}` the file is a module, and `declare global {}` is needed to extend the global scope. Confusion between script and module context is a frequent cause of "why aren't my types being picked up".
 
-- **Not reading third-party `.d.ts` files** — being able to open `node_modules/@types/express/index.d.ts` and find the right interface for augmentation is a baseline senior skill. Augmenting `declare module "express"` instead of `"express-serve-static-core"` is the classic mistake.
+- **Not reading third-party `.d.ts` files**. Open `node_modules/@types/express/index.d.ts` and find the right interface to augment: that is a baseline senior skill. Augmenting `declare module "express"` instead of `"express-serve-static-core"` is the classic mistake.
 
 - **Using triple-slash in regular `.ts` files** — in modern projects, triple-slash in `.ts` files is an anachronism. The exception: `.d.ts` files for libraries, where `/// <reference types="..." />` is the legitimate way to declare a dependency on another type package.

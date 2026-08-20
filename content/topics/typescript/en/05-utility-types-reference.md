@@ -1,7 +1,7 @@
 <!-- verified: 2026-06-23, corrections: 0 -->
 # Utility Types Reference
 
-`Partial`, `Required`, `Readonly`, `Pick`, `Omit`, and `Record` are covered in [Generics Deep Dive] — with from-scratch implementations. This article covers the rest: function utilities, set operations, Promise utilities, lesser-known helpers, and a guide for picking the right tool.
+`Partial`, `Required`, `Readonly`, `Pick`, `Omit`, and `Record` are covered in [Generics Deep Dive](./02-generics-deep-dive.md) — with from-scratch implementations. This article covers the rest: function utilities, set operations, Promise utilities, lesser-known helpers, and a guide for picking the right tool.
 
 ---
 
@@ -410,7 +410,7 @@ const obj = makeObject({
 
 ## String Utilities (Brief Overview)
 
-Covered in detail in [Template Literal Types]:
+Covered in detail in [Template Literal Types](./04-template-literal-types.md):
 
 ```ts
 type U  = Uppercase<"hello">;    // "HELLO"
@@ -448,7 +448,7 @@ Class instance type                         InstanceType<T>
 Unwrap a Promise                            Awaited<T>
 ──────────────────────────────────────────────────────────────────
 String literal case transformation          Uppercase / Lowercase /
-                                            Capitalize / Uncapitalize
+                                          Capitalize / Uncapitalize
 ```
 
 ### Common Combinations
@@ -481,9 +481,9 @@ type StatusLabel = StatusConfig[Status]; // { label: string }
 
 - **Using `ReturnType` for an async function and forgetting `Awaited`** — `ReturnType<typeof asyncFn>` returns `Promise<X>`, not `X`. You need `Awaited<ReturnType<typeof asyncFn>>`.
 
-- **Not knowing `ConstructorParameters` and `InstanceType`** — both are needed when working with classes as values (factories, DI containers, decorators). At the senior level these are required knowledge.
+- **Not knowing `ConstructorParameters` and `InstanceType`** — both are needed when working with classes as values: factories, decorators, and DI containers. DI is dependency injection, where a container builds your classes for you. At the senior level these are required knowledge.
 
-- **Thinking `Record<string, T>` and `{ [key: string]: T }` are fully identical** — in most contexts they're equivalent, but `Record` is a mapped type, which can produce different results with `keyof` and in conditional types.
+- **Thinking `Record<string, T>` and `{ [key: string]: T }` are fully identical**. In most contexts they are equivalent. But `Record` is a mapped type, so it can produce different results with `keyof` and inside conditional types.
 
 - **Not knowing how `Awaited` is implemented** — the question "how does TypeScript know a type is a Promise?" comes up regularly. The answer: through duck typing — the presence of a `.then` method. `Awaited` doesn't check `instanceof Promise`, it checks the shape of the object.
 

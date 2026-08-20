@@ -24,7 +24,8 @@ TypeScript compilation phases:
 
 Important: phases 3 and 4 are independent.
   - tsc --noEmit — type-check only, no JS generated
-  - isolatedModules — each file compiled independently (Babel/esbuild)
+  - isolatedModules — each file compiled on its own
+    (Babel/esbuild)
   - transpileOnly (ts-node) — skip type checking, emit only
 ```
 
@@ -95,7 +96,7 @@ function process(data: { value: string }) { /* ... */ }
 
 ### `strictFunctionTypes`
 
-Enables contravariant checking of function parameters (instead of bivariant). Covered in detail in [Variance and Assertions]:
+Enables contravariant checking of function parameters (instead of bivariant). Covered in detail in [Variance and Type Assertions](./07-variance-and-assertions.md):
 
 ```ts
 // strictFunctionTypes: false:
@@ -121,7 +122,8 @@ function greet(name: string, age: number): string {
 greet.call(null, "Alice", "30"); // ✅ — string instead of number, TypeScript silent
 
 // strictBindCallApply: true:
-greet.call(null, "Alice", "30"); // ❌ Argument of type 'string' is not assignable to 'number'
+// ❌ Argument of type 'string' is not assignable to 'number'
+greet.call(null, "Alice", "30");
 greet.call(null, "Alice", 30);   // ✅
 ```
 
@@ -151,7 +153,7 @@ class User {
 }
 ```
 
-**What it catches:** class fields that may be `undefined` due to an incomplete constructor — a typical source of runtime errors in OOP code.
+**What it catches:** class fields that may be `undefined` because the constructor never filled them. In object-oriented (OOP) code that is a typical source of runtime errors.
 
 ### `noImplicitThis`
 
@@ -171,7 +173,7 @@ function greet(this: { name: string }) {
 
 ### `alwaysStrict`
 
-Adds `"use strict"` to every generated JS file. In modern ES modules `"use strict"` is already implied, so the effect is minimal — but for CJS output it matters.
+Adds `"use strict"` to every generated JS file. ES — ECMAScript, the standard behind JavaScript. In modern ES modules `"use strict"` is already implied, so the effect is minimal. It still matters when the output is CommonJS (CJS), the older `require`-based module format of Node.js.
 
 ### `useUnknownInCatchVariables` (TS 4.0+)
 
@@ -236,7 +238,7 @@ const c: Config = { timeout: undefined };
 //    Type 'undefined' is not assignable to 'number'
 ```
 
-Useful when the difference between "not provided" and "provided as undefined" matters (e.g. when working with JSON or REST APIs where `null`/absent have different meanings).
+Useful when the difference between "not provided" and "provided as undefined" matters. A REST API is one such place: REST is the usual style of HTTP APIs, and there `null` and a missing field mean different things.
 
 ### `noImplicitOverride`
 

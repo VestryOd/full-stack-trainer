@@ -116,7 +116,8 @@ function handleError(err: Error) {
 interface Point { x: number; y: number }
 const p = { x: 1, y: 2 };
 
-if (p instanceof Point) { // ❌ 'Point' only refers to a type, but is being used as a value here
+// ❌ 'Point' only refers to a type, but is being used as a value here
+if (p instanceof Point) {
 }
 ```
 
@@ -267,7 +268,7 @@ if (isString(x)) {
 }
 ```
 
-Это принципиальное ограничение: type guards — это контракт между разработчиком и компилятором, а не автоматически верифицированная проверка. Именно поэтому в production-коде часто применяют runtime-валидацию через Zod или подобные библиотеки (см. [Advanced Patterns]).
+Это принципиальное ограничение: type guards — это контракт между разработчиком и компилятором, а не автоматически верифицированная проверка. Именно поэтому в production-коде часто применяют runtime-валидацию через Zod или подобные библиотеки (см. [Продвинутые паттерны](./09-advanced-patterns.md)).
 
 ---
 

@@ -24,7 +24,8 @@ TypeScript не транспилируется напрямую в JavaScript б
 
 Важно: шаги 3 и 4 независимы.
   - tsc --noEmit — только проверка типов, без генерации JS
-  - isolatedModules — каждый файл компилируется независимо (Babel/esbuild)
+  - isolatedModules — каждый файл компилируется отдельно
+    (Babel/esbuild)
   - transpileOnly (ts-node) — пропуск проверки типов, только emit
 ```
 
@@ -95,7 +96,7 @@ function process(data: { value: string }) { /* ... */ }
 
 ### `strictFunctionTypes`
 
-Включает контравариантную проверку параметров функций (вместо бивариантной). Рассмотрено подробно в [Variance and Assertions]:
+Включает контравариантную проверку параметров функций (вместо бивариантной). Рассмотрено подробно в [Вариантности и утверждениях типов](./07-variance-and-assertions.md):
 
 ```ts
 // strictFunctionTypes: false:
@@ -121,7 +122,8 @@ function greet(name: string, age: number): string {
 greet.call(null, "Alice", "30"); // ✅ — строка вместо числа, TypeScript молчит
 
 // strictBindCallApply: true:
-greet.call(null, "Alice", "30"); // ❌ Argument of type 'string' is not assignable to 'number'
+// ❌ Argument of type 'string' is not assignable to 'number'
+greet.call(null, "Alice", "30");
 greet.call(null, "Alice", 30);   // ✅
 ```
 
@@ -142,7 +144,9 @@ class User {
 // Исправления:
 class User {
   id: number = 0;         // ✅ инициализатор
-  name!: string;          // ✅ definite assignment assertion (осторожно — отключает проверку)
+  // ✅ definite assignment assertion
+  // (осторожно — отключает проверку)
+  name!: string;
 
   constructor(id: number, name: string) {
     this.id = id;         // ✅ присвоение в конструкторе
@@ -151,7 +155,7 @@ class User {
 }
 ```
 
-**Что ловит:** поля класса, которые могут быть `undefined` из-за незаполненного конструктора — типичный источник runtime ошибок в OOP-коде.
+**Что ловит:** поля класса, которые могут быть `undefined` из-за незаполненного конструктора — типичный источник runtime ошибок в объектно-ориентированном (OOP) коде.
 
 ### `noImplicitThis`
 
@@ -171,7 +175,7 @@ function greet(this: { name: string }) {
 
 ### `alwaysStrict`
 
-Добавляет `"use strict"` в каждый сгенерированный JS-файл. В современных ES-модулях `"use strict"` уже подразумевается, поэтому эффект минимален — но для CJS-вывода важно.
+Добавляет `"use strict"` в каждый сгенерированный JS-файл. ES — это ECMAScript, стандарт, которым описан JavaScript. В современных ES-модулях `"use strict"` уже подразумевается, поэтому эффект минимален. А для вывода в CommonJS (CJS), старый формат модулей Node.js на `require`, флаг важен.
 
 ### `useUnknownInCatchVariables` (TS 4.0+)
 
@@ -236,7 +240,7 @@ const c: Config = { timeout: undefined };
 //    Type 'undefined' is not assignable to 'number'
 ```
 
-Полезно, когда важна разница между "не передали" и "передали undefined" (например, при работе с JSON или REST API, где `null`/отсутствие поля имеют разное значение).
+Полезно, когда важна разница между "не передали" и "передали undefined". Типичный случай — REST API: REST это обычный стиль HTTP-интерфейсов, и там `null` и отсутствующее поле означают разное.
 
 ### `noPropertyAccessFromIndexSignature`
 
@@ -439,7 +443,7 @@ import { createUser, type User } from "./api"; // ✅ inline type
 
 ```txt
 target — определяет, в какой JS TypeScript генерирует код
-         (синтаксические преобразования: arrow → function, class → prototype)
+         (синтаксис: arrow → function, class → prototype)
 
 lib — определяет, какие API TypeScript считает доступными
       (типы для Array.prototype.at, Promise.allSettled и т.д.)

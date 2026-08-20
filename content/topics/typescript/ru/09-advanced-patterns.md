@@ -126,7 +126,9 @@ type FormData<TState> = {
   age: number;
 } & { readonly __state: TState }; // phantom поле
 
-function createForm(data: { name: string; email: string; age: number }): FormData<Unvalidated> {
+function createForm(
+  data: { name: string; email: string; age: number }
+): FormData<Unvalidated> {
   return data as FormData<Unvalidated>;
 }
 
@@ -387,10 +389,12 @@ TypeScript позволяет делать удивительные вещи н�
    type Infinite<T> = { value: Infinite<T> }; — зависнет компилятор
 
 2. Размер union: компилятор имеет лимит (~100k членов)
-   Большие template literal cross-products → "too complex to represent"
+   Большие произведения template literal → "too complex
+   to represent"
 
-3. Время компиляции: сложные типы замедляют TypeScript Language Server
-   IDE начинает "тормозить" при наведении, автодополнение запаздывает
+3. Время компиляции: сложные типы замедляют
+   TypeScript Language Server
+   IDE "тормозит" при наведении, автодополнение запаздывает
 
 4. Читаемость: никто не понимает
    type X = { [K in keyof T as K extends string
@@ -421,7 +425,8 @@ const UserSchema = z.object({
 });
 
 type User = z.infer<typeof UserSchema>;
-// { id: number; name: string; email: string; age: number; role: "admin" | "user" | "moderator" }
+// { id: number; name: string; email: string; age: number;
+//   role: "admin" | "user" | "moderator" }
 
 // Использование:
 function createUser(data: unknown): User {
@@ -434,7 +439,7 @@ Zod решает проблему, которую TypeScript не может: **
 ### Прагматичное правило
 
 ```txt
-Используй type-level программирование когда:
+Используйте type-level программирование когда:
   - Типы выводятся из кода (ReturnType, Parameters, infer)
   - Нужна compile-time гарантия (branded types, exhaustiveness)
   - Библиотечный код для разработчиков (утилитарные типы)
@@ -477,7 +482,7 @@ getUser(42 as unknown as UserId);  // только через двойное п�
 
 ### Higher-Kinded Types симуляция
 
-TypeScript не поддерживает HKT нативно (нет `type F<T>` как аргумента), но можно симулировать через interface merging:
+HKT (higher-kinded types) — это типы, которые принимают в качестве аргумента не тип, а сам конструктор типа: не `Array<string>`, а `Array`. TypeScript не поддерживает HKT нативно — нельзя передать `type F<T>` аргументом. Но их можно симулировать через interface merging:
 
 ```ts
 // Интерфейс для HKT-реестра:
@@ -487,7 +492,8 @@ interface HKT {
   Maybe: unknown;
 }
 
-type Apply<F extends keyof HKT, A> = (HKT & { Array: A[]; Promise: Promise<A>; Maybe: A | null })[F];
+type Apply<F extends keyof HKT, A> =
+  (HKT & { Array: A[]; Promise: Promise<A>; Maybe: A | null })[F];
 
 // Обобщённая функция над любым контейнером:
 type Functor<F extends keyof HKT> = {
@@ -535,6 +541,6 @@ add5and3(2);               // 10 ✅
 
 - **Не знать, когда остановиться и использовать Zod** — типы TypeScript стираются в runtime. Если данные приходят снаружи (`req.body`, `JSON.parse`), TypeScript ничего не проверяет. Строчка `const data = req.body as User` — это ложная безопасность. Нужна runtime-валидация.
 
-- **"Builder pattern с дженериками — это overengineering"** — зависит от контекста. Для публичной библиотеки или внутреннего DSL с большим количеством обязательных шагов — оправдано. Для обычного CRUD — чрезмерно. Умение аргументировать выбор важнее самого паттерна.
+- **"Builder pattern с дженериками — это overengineering"** — зависит от контекста. Для публичной библиотеки или внутреннего DSL — оправдано. DSL — это domain-specific language, узкоспециализированный язык описания под одну задачу, и у него обычно много обязательных шагов. Для обычного CRUD — чрезмерно. Умение аргументировать выбор важнее самого паттерна.
 
 - **Не понимать, что `& { readonly __brand: T }` делает типы несовместимыми** — именно дополнительное поле с уникальным literal-типом является "печатью". Два разных бренда имеют разные literal-типы в поле `__brand`, поэтому структурно несовместимы.
