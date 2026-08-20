@@ -135,7 +135,7 @@ const prisma = new PrismaClient({ log: ['query'] });
 
 ```typescript
 // PrismaClient uses a connection pool by default
-// Pool size: min(10, max_connections / 2) by default
+// Pool size: physical CPUs * 2 + 1 by default (10 with v7 driver adapters)
 // For production: configure explicitly
 
 const prisma = new PrismaClient({

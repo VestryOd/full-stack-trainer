@@ -358,7 +358,7 @@ const prisma = new PrismaClient({
 });
 ```
 
-- `connection_limit` — максимум соединений. По умолчанию `min(10, max_connections / 2)`.
+- `connection_limit` — максимум соединений. До Prisma 6 по умолчанию `num_physical_cpus * 2 + 1`. С Prisma 7 значение задаёт драйверный адаптер, и обычно это 10.
 - `pool_timeout` — сколько секунд ждать соединение из пула, прежде чем упасть с ошибкой. По умолчанию 10.
 - Для serverless (Lambda, Vercel): `connection_limit=1`, по одному соединению на экземпляр функции. Иначе тысячи холодных стартов откроют тысячи соединений.
 - Там же поставьте перед PostgreSQL PgBouncer или Prisma Accelerate, чтобы экземпляры функций делили один пул.

@@ -138,7 +138,7 @@ const prisma = new PrismaClient({ log: ['query'] });
 
 ```typescript
 // PrismaClient держит пул соединений по умолчанию
-// Размер пула по умолчанию: min(10, max_connections / 2)
+// Размер пула по умолчанию: физических ядер * 2 + 1 (10 на адаптерах v7)
 // Для production настраивать явно
 
 const prisma = new PrismaClient({
