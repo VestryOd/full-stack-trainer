@@ -3,7 +3,7 @@
 
 ## What REST Actually Is
 
-REST (Representational State Transfer) is not a protocol and not a standard. It is an **architectural style** described by Roy Fielding in his 2000 dissertation. Fielding was one of the authors of HTTP/1.1 and described REST as a set of constraints that, when satisfied, produce certain desirable properties: scalability, component independence, cacheability.
+REST (Representational State Transfer) is not a protocol and not a standard. It is an **architectural style** described by Roy Fielding in his 2000 dissertation. Fielding was one of the authors of HTTP/1.1. He described REST as a set of constraints that, when satisfied, produce desirable properties: scalability, component independence, cacheability.
 
 ```txt
 REST is NOT:
@@ -31,7 +31,7 @@ Client and server are separated: the client doesn't know about data storage, the
 ```txt
 What this enables:
   - Client (browser, mobile app) changes without touching the server
-  - Server doesn't hold UI state — that's the client's responsibility
+  - Server holds no UI state — that is the client's job
   - One API serves multiple clients (web, mobile, CLI)
 ```
 
@@ -44,7 +44,7 @@ What this enables:
   - Horizontal scaling: any server instance can handle any request
     (no sticky sessions required)
   - Fault tolerance: a crashed instance loses no session state
-  - Visibility: every request is self-contained for logging/monitoring
+  - Visibility: each request is self-contained, so logs make sense
 
 The cost:
   - Client must send an auth token with every request
@@ -53,7 +53,7 @@ The cost:
 
 ### 3. Cacheable
 
-Responses must explicitly state whether they can be cached. Cacheable responses may be reused by the client or intermediaries (CDN, proxies).
+Responses must explicitly state whether they can be cached. Cacheable responses may be reused by the client or by intermediaries: a content delivery network (CDN), a proxy.
 
 ```http
 Cache-Control: max-age=3600, public   ← cacheable for 1 hour, including CDN
@@ -140,11 +140,11 @@ Nesting depth: no more than 2–3 levels
 
 ### Actions That Don't Fit CRUD
 
-Not everything in an API is CRUD. How to model actions:
+Not everything in an API is CRUD — create, read, update, delete. How to model the other actions:
 
 ```txt
 Option 1 — Sub-resource (preferred):
-POST /orders/42/cancel         — create a "cancellation" of the order
+POST /orders/42/cancel         — create a "cancellation"
 POST /users/42/password-reset  — trigger a password reset flow
 POST /articles/7/publish       — publish the article
 
@@ -165,7 +165,7 @@ GET /users?role=admin&status=active
 
 Sorting:
 GET /users?sort=createdAt&order=desc
-GET /users?sort=-createdAt          (minus prefix = desc — popular convention)
+GET /users?sort=-createdAt          (minus = desc)
 
 Pagination:
 GET /users?page=2&limit=20          (offset-based)
@@ -187,9 +187,9 @@ Most "REST APIs" are actually RPC (Remote Procedure Call) over HTTP with JSON an
 
 ```txt
 Theoretical REST requires:
-  1. HATEOAS — client follows links from responses, never hard-codes URLs
-  2. Content negotiation — server returns JSON or XML based on Accept header
-  3. Self-descriptive messages — every response carries full semantics
+  1. HATEOAS — the client follows links, never hard-codes URLs
+  2. Content negotiation — JSON or XML, chosen by the Accept header
+  3. Self-descriptive messages — each response carries its semantics
 
 Reality:
   1. Clients hard-code URLs (baked into code or documentation)
@@ -242,7 +242,7 @@ The client reads `_links` and discovers which actions are available right now �
 
 ```txt
 Theoretical advantages of HATEOAS:
-  - Server can change URLs without breaking clients (client follows links)
+  - Server can change URLs without breaking clients
   - Client can see which actions are available in the current state
     (suspend only shows up if status=active)
   - True client-server decoupling
@@ -281,7 +281,7 @@ https://api.example.com/v2/users
 - Easy to route at nginx/API gateway level
 
 **Cons:**
-- Violates REST: the URI should identify a resource, not an API version
+- Violates REST: a URI (uniform resource identifier) should identify a resource, not an API version
 - `/v1/users/42` and `/v2/users/42` represent the same resource
 - Clients hard-code the version; migration requires code changes
 
@@ -363,13 +363,13 @@ Simpler, more robust, clearer for the team and consumers.
 
 ## Common Interview Traps
 
-- **"REST is HTTP + JSON"** — no. REST is an architectural style with 6 constraints, independent of protocol. Theoretically REST could be implemented over FTP or email. In practice it runs over HTTP, but the substance is the constraints, not the protocol.
+- **"REST is HTTP + JSON"** — no. REST is an architectural style with 6 constraints, independent of protocol. Theoretically REST could be implemented over a file transfer protocol like FTP, or over email. In practice it runs over HTTP, but the substance is the constraints, not the protocol.
 
 - **"Our API is RESTful"** — ask which level. Most APIs sit at Richardson Level 2 (resources + HTTP methods). HATEOAS (Level 3) is rare. Knowing this distinction signals depth of understanding.
 
 - **"`POST /users/42/activate` violates REST"** — no, it's a valid sub-resource pattern. REST doesn't forbid actions — it says to think resource-first. "Activation" is the creation of an "active" state, or a sub-resource called "activation."
 
-- **"Version in URL violates REST, should use headers"** — technically correct (URIs should identify resources), but URL versioning is the industry standard for caching, debugging, and simplicity reasons. Fielding himself said pragmatism matters more than purity.
+- **"Version in URL violates REST, should use headers"** — technically correct, since a URI should identify a resource. But URL versioning is the industry standard, for caching, debugging and simplicity. Fielding himself said pragmatism matters more than purity.
 
 - **"HATEOAS isn't needed at all"** — you need to understand why it exists. Its goal is true client-server decoupling: the ability to change URLs without recompiling clients. That this is usually solved by documentation and versioning instead is an honest answer.
 

@@ -27,9 +27,11 @@ All caching behavior is controlled by headers. The primary one is `Cache-Control
 
 ## Cache-Control — Full Directive Breakdown
 
-`Cache-Control` can appear in both **responses** (server tells caches "here are the rules for this resource") and **requests** (client tells caches "here's how I want to use the cache").
+`Cache-Control` works in both directions. In a **response** the server tells caches the rules for this resource. In a **request** the client tells caches how it wants to use them.
 
 ### Response Directives (server → client/CDN)
+
+These steer both the browser cache and any shared cache in front of the origin, such as a content delivery network (CDN).
 
 ```http
 Cache-Control: max-age=3600
@@ -44,7 +46,7 @@ Same as `max-age`, but only for **shared caches** (CDN, proxies). Overrides `max
 ```http
 Cache-Control: no-cache
 ```
-The cache **may** store the response, but must **revalidate** with the server before using it (conditional request). If the server says "not modified" → 304, the cached copy is used. Does NOT mean "don't cache."
+The cache **may** store the response, but must **revalidate** with the server before using it (conditional request). If the server says "not modified" → 304, the cached copy is used. It does *not* mean "don't cache."
 
 ```http
 Cache-Control: no-store
@@ -107,7 +109,7 @@ The client can also control caching via `Cache-Control` on requests:
 ```http
 Cache-Control: no-cache     # Bypass cache, get a fresh response
 Cache-Control: no-store     # Don't store the response
-Cache-Control: max-age=0    # Only accept a cache fresher than 0 seconds (= always revalidate)
+Cache-Control: max-age=0    # Accept only a cache fresher than 0s (= always revalidate)
 Cache-Control: max-stale=60 # Accept cache even if stale by up to 60 seconds
 ```
 
@@ -115,7 +117,7 @@ Cache-Control: max-stale=60 # Accept cache even if stale by up to 60 seconds
 
 ## Conditional Requests
 
-When a cache is stale, the client doesn't have to download the full resource again — it can ask the server "has the resource changed?" This is a conditional request. Two mechanisms:
+A stale cache does not force a full download. The client can ask the server "has the resource changed?" — a conditional request. Two mechanisms:
 
 ### ETag (Entity Tag)
 
@@ -268,7 +270,7 @@ Vary: Authorization      # different content per user
                          #  every user has a unique token)
 ```
 
-**Caution with `Vary: Authorization`**: combining it with `Cache-Control: public` causes the CDN to store a separate copy for every unique auth token — effectively breaking the cache.
+**Caution with `Vary: Authorization`**: combined with `Cache-Control: public`, it makes the CDN store a separate copy per auth token. That breaks the cache in practice.
 
 ---
 
@@ -445,7 +447,7 @@ Client makes GET /api/articles
 
 ## Common Interview Traps
 
-- **"`no-cache` means don't cache"** — the most common mistake. `no-cache` means: you may store the response, but always revalidate before using it. `no-store` means don't cache at all. These are different things with different performance characteristics.
+- **"`no-cache` means don't cache"** — the most common mistake. It means you may store the response, but must revalidate before using it. Storing nothing at all is `no-store`. The two differ in performance, not just in wording.
 
 - **"ETag is a hash of the file"** — not necessarily. An ETag can be a hash, a version from the database, a timestamp, or any string that uniquely represents the version of the resource. The server defines the format.
 

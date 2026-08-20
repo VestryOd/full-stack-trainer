@@ -13,7 +13,7 @@ HTTP/1.1 was designed in 1997. The web back then was text pages with a handful o
 HTTP/1.1 — one connection, one request at a time:
 
 Client: [GET /main.js] ──────────────────────── [GET /style.css]
-Server:               [..response main.js..]    [..response style.css..]
+Server:            [..response main.js..]  [..response style.css..]
 
 If main.js is large — style.css waits, even if it's already ready.
 This is head-of-line blocking.
@@ -57,7 +57,7 @@ HTTP/1.1:
   \r\n
 
 HTTP/2 (simplified):
-  [Length: 3 bytes][Type: 1 byte][Flags: 1 byte][Stream ID: 4 bytes][Payload: N bytes]
+  [Length: 3B][Type: 1B][Flags: 1B][Stream ID: 4B][Payload: N B]
        ↑ fixed 9-byte frame header
 ```
 
@@ -111,7 +111,8 @@ Static table (61 entries):
 
 Dynamic table:
   First request:  Authorization: Bearer eyJ... → added to the table
-  Second request: Authorization: Bearer eyJ... → just an index (1–4 bytes instead of 500+)
+  Second request: Authorization: Bearer eyJ... → just an index,
+                  1-4 bytes instead of 500+
 
 Result: headers compressed 85–95% starting from the second request.
 ```
@@ -144,12 +145,12 @@ Server: [HTML response]
         [PUSH_PROMISE: /main.js]
         [DATA for /main.js]
 
-Client receives CSS and JS together with HTML — no additional requests.
+Client receives CSS and JS with the HTML — no extra requests.
 ```
 
 Why it failed:
 ```txt
-1. Browsers cache resources. The server doesn't know what's already in
+1. Browsers cache resources. The server does not know what is in
    the client's cache. Pushing cached resources wastes bandwidth.
 
 2. Hard to implement correctly: how do you decide what to push?
@@ -359,7 +360,7 @@ This is critical for mobile users and IoT devices.
 ├────────────────────┼───────────┼──────────────┼─────────────┤
 │ Browser support    │ 100%      │ ~98%         │ ~85%        │
 └────────────────────┴───────────┴──────────────┴─────────────┘
-* Server Push removed from Chrome; poorly implemented almost everywhere
+* Server Push removed from Chrome; badly implemented everywhere
 ```
 
 ---
@@ -379,12 +380,12 @@ Fetch API, axios, node-fetch all work with HTTP/2 and HTTP/3 transparently. Your
 
 ```txt
 HTTP/1.1 optimizations that are HARMFUL in HTTP/2:
-  ❌ Domain sharding (multiple CDN domains to bypass 6-connection limit)
-  ❌ CSS/JS sprites (combining assets into one file to reduce requests)
+  ❌ Domain sharding (many CDN domains to beat the 6-conn limit)
+  ❌ CSS/JS sprites (one big file to cut the number of requests)
   ❌ Inline CSS (embedding styles to save a request)
 
 HTTP/2 optimizations:
-  ✅ Many small files ≈ one large file (multiplexing makes them equally efficient)
+  ✅ Many small files ≈ one large one (multiplexing evens it out)
   ✅ Granular caching (small files cache independently — changing one
      doesn't invalidate the whole bundle)
   ✅ 103 Early Hints instead of Server Push
@@ -433,7 +434,7 @@ HTTP/2 with 2% packet loss:
 Time →
 [S1 frame][S3 frame][S5 frame][S1 frame][X LOST ][S1 frame]
                                                     ↑
-                              ALL streams WAIT until TCP retransmits X.
+                        Every stream waits for the resend of X.
                               S3 and S5 are ready but blocked.
 
 HTTP/3 with 2% packet loss:

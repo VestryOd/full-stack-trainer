@@ -20,7 +20,7 @@ You can't check permissions without knowing who's asking.
 
 HTTP responses reflect this distinction:
 ```txt
-401 Unauthorized — not authenticated (bad name — historical accident)
+401 Unauthorized — not authenticated (bad name, historical)
 403 Forbidden    — authenticated, but not authorized
 ```
 
@@ -45,7 +45,8 @@ The classic approach: the server stores session state, the client holds an ID.
    ▼
 3. Response:
    HTTP/1.1 200 OK
-   Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Lax; Path=/
+   Set-Cookie: sessionId=abc123; HttpOnly; Secure;
+               SameSite=Lax; Path=/
    │
    ▼
 4. Subsequent requests:
@@ -67,8 +68,9 @@ Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=86
 HttpOnly        — JS cannot read this cookie (XSS protection)
 Secure          — send only over HTTPS
 SameSite=Strict — cookie not sent on any cross-site request
-SameSite=Lax    — sent on top-level GET navigation (recommended default)
-SameSite=None   — always sent (needed if API is on a different domain; + Secure required)
+SameSite=Lax    — sent on top-level GET navigation (default)
+SameSite=None   — always sent; needed when the API is on another
+                  domain, and requires Secure
 Path=/          — accessible for all paths
 Max-Age         — TTL in seconds (preferred over Expires)
 ```
@@ -127,13 +129,20 @@ JWT is a standard (RFC 7519) for transmitting data as signed JSON. The key diffe
 ### JWT Structure
 
 ```txt
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcxOTIwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+1. Header
+   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+2. Payload
+   eyJzdWIiOiI0MiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcxOTIwMDAwMH0
+3. Signature
+   SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 
-│──────── Header ────────│───────────── Payload ─────────────│──── Signature ────│
+The three parts travel joined by dots: header.payload.signature
 
 Header  (base64url): { "alg": "HS256", "typ": "JWT" }
-Payload (base64url): { "sub": "42", "role": "admin", "exp": 1719200000 }
-Signature: HMACSHA256(base64url(header) + "." + base64url(payload), secret)
+Payload (base64url):
+  { "sub": "42", "role": "admin", "exp": 1719200000 }
+Signature:
+  HMACSHA256(base64url(header) + "." + base64url(payload), secret)
 ```
 
 **Important**: base64url is **encoding**, not encryption. The payload is visible to anyone. Never put sensitive data in a JWT (passwords, card numbers).
@@ -190,7 +199,7 @@ Flow:
 4. POST /auth/refresh
    Cookie: refreshToken=...       ← browser sends automatically
    → { accessToken: "eyJ...", expiresIn: 900 }
-   + Set-Cookie: refreshToken=... (rotation — new refresh token issued)
+   + Set-Cookie: refreshToken=... (rotation: a new one is issued)
 
 5. Logout:
    POST /auth/logout
@@ -278,7 +287,7 @@ Pros:
 
 Cons:
   ❌ Cannot be invalidated before expiry (without a blacklist)
-  ❌ Grows in size as claims are added (every request carries the payload)
+  ❌ Grows as claims are added — every request carries the payload
   ❌ Complex key rotation
   ❌ Many ways to implement incorrectly (alg:none, not checking exp)
 ```
@@ -307,7 +316,7 @@ With OAuth 2.0:
 ```txt
 Resource Owner      — the user (owner of the data)
 Client              — the application requesting access
-Authorization Server — issues tokens (Google, GitHub, your auth server)
+Authorization Server — issues tokens (Google, GitHub, your own)
 Resource Server     — the API holding protected data
 ```
 
@@ -371,7 +380,7 @@ Client generates:
 
 Sends code_challenge in the authorization request (step 2).
 Sends code_verifier when exchanging code → token (step 5).
-Authorization server verifies: SHA256(code_verifier) == code_challenge
+Authorization server checks: SHA256(code_verifier) == challenge
 ```
 
 Without PKCE: if someone intercepts the authorization code, they get tokens. With PKCE: a code without the verifier is useless.
@@ -400,7 +409,7 @@ OAuth 2.0 is about authorization (resource access). OpenID Connect adds an authe
 
 ```txt
 OAuth 2.0:  "Allow reading Calendar" → access token
-OIDC:       "Who is this user?"      → id_token (sub, email, name, picture)
+OIDC:       "Who is this user?"      → id_token (sub, email, name)
 ```
 
 ---
@@ -469,28 +478,28 @@ headers["X-Signature"] = signature;
 ## Comparison
 
 ```txt
-┌────────────────┬────────────────┬──────────┬─────────────┬───────────┐
-│                │ Session        │ JWT      │ OAuth 2.0   │ API Key   │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Invalidation   │ ✅ Instant      │ ❌ At exp │ ✅ Refresh   │ ✅ Instant │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Stateless      │ ❌ No           │ ✅ Yes    │ ✅ Yes       │ ❌ No      │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Scaling        │ ⚠️ Needs Redis │ ✅ Easy   │ ✅ Easy      │ ⚠️ Redis  │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Cross-domain   │ ❌ Complex      │ ✅ Easy   │ ✅ Native    │ ✅ Easy    │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ 3rd-party auth │ ❌ No           │ ❌ No     │ ✅ Built for │ ❌ No      │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Mobile         │ ⚠️ Awkward     │ ✅ Easy   │ ✅ Easy      │ ✅ Easy    │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Complexity     │ Low            │ Medium   │ High        │ Low       │
-└────────────────┴────────────────┴──────────┴─────────────┴───────────┘
+┌──────────────┬───────────┬──────────┬───────────┬───────────┐
+│              │ Session   │ JWT      │ OAuth 2.0 │ API Key   │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Invalidation │ ✅ Instant │ ❌ At exp │ ✅ Refresh │ ✅ Instant │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Stateless    │ ❌ No      │ ✅ Yes    │ ✅ Yes     │ ❌ No      │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Scaling      │ ⚠️ Redis  │ ✅ Easy   │ ✅ Easy    │ ⚠️ Redis  │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Cross-domain │ ❌ Complex │ ✅ Easy   │ ✅ Native  │ ✅ Easy    │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ 3rd-party    │ ❌ No      │ ❌ No     │ ✅ Core    │ ❌ No      │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Mobile       │ ⚠️ Clumsy │ ✅ Easy   │ ✅ Easy    │ ✅ Easy    │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Complexity   │ Low       │ Medium   │ High      │ Low       │
+└──────────────┴───────────┴──────────┴───────────┴───────────┘
 
 When to use what:
   Session    — traditional web where frontend and API share a domain
   JWT        — SPA/mobile with your own auth, microservices
-  OAuth 2.0  — "Sign in with Google/GitHub", accessing third-party data
+  OAuth 2.0  — "Sign in with Google", access to third-party data
   API Key    — developer APIs, server-to-server without a user
 ```
 

@@ -3,7 +3,7 @@
 
 ## Why This Deserves Its Own Article
 
-Pagination and filtering seem straightforward — until you hit a table with 50 million rows, a real-time feed, or an infinite scroll UI. Then you discover that `LIMIT 20 OFFSET 1000000` kills the database, "page 2" shows duplicates when new records are inserted concurrently, and a simple `?status=active` filter grows into `?status[]=active&status[]=pending&createdAfter=2024-01-01`.
+Pagination and filtering seem straightforward — until you hit a table with 50 million rows, a real-time feed, or an infinite-scroll user interface. Then you discover that `LIMIT 20 OFFSET 1000000` kills the database, and that "page 2" shows duplicates when rows are inserted concurrently. And a simple `?status=active` filter grows into `?status[]=active&status[]=pending&createdAfter=2024-01-01`.
 
 ---
 
@@ -19,6 +19,8 @@ GET /users?skip=20&take=20     (Prisma style)
 ```
 
 ### How It Works in SQL
+
+The database sees a plain SQL (structured query language) query:
 
 ```sql
 -- page=2, limit=20
@@ -88,7 +90,7 @@ You can't reliably say "rows from X to Y" for parallel download.
 - The user navigates to a specific page number ("go to page 42")
 - Data changes infrequently (catalogs, reference data)
 - The table is relatively small (up to ~100K rows)
-- A `total` count is needed for a page counter UI
+- A `total` count is needed for a page counter
 
 ---
 
@@ -98,7 +100,7 @@ Instead of "skip N records" — "give me records after this specific record." Th
 
 ```txt
 GET /users?limit=20                    ← first page
-GET /users?cursor=eyJpZCI6MjB9&limit=20 ← next (cursor from previous response)
+GET /users?cursor=eyJpZCI6MjB9&limit=20 ← next page
 ```
 
 ### How It Works
@@ -305,11 +307,11 @@ WHERE to_tsvector('english', name || ' ' || email) @@ to_tsquery('english', 'ali
 Single column:
 GET /users?sort=createdAt&order=desc
 GET /users?sort=name&order=asc
-GET /users?sort=-createdAt            (minus = desc — popular convention)
+GET /users?sort=-createdAt            (minus = desc, common)
 GET /users?sort=+name                 (plus = asc)
 
 Multiple columns:
-GET /users?sort=-createdAt,name       (desc by date, then asc by name)
+GET /users?sort=-createdAt,name       (date desc, then name asc)
 ```
 
 ### Sorting Safety
