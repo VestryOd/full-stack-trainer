@@ -89,6 +89,14 @@ KEYWORDS = {
     "TODO", "NOTE", "WARN", "INFO", "DEBUG", "ERROR", "FATAL",
 }
 
+# Keywords that English also uses to shout. "requests do NOT send credentials"
+# is emphasis; "DELETE /users/42" is a verb and "ORDER BY id" is syntax. Every
+# other KEYWORDS member is syntax in this corpus, so the caps check skips it —
+# otherwise the self-referential test flags every HTTP verb, because the same
+# page always says "delete a user" in lower case somewhere.
+EN_EMPHASIS = {"NOT", "ALL", "ONLY", "ALWAYS", "ANY", "NO", "YES", "THIS"}
+CAPS_SYNTAX = KEYWORDS - EN_EMPHASIS
+
 # Cyrillic all-caps used for emphasis, not abbreviations.
 RU_EMPHASIS = {
     "НЕ", "НИ", "ВСЕ", "ВСЁ", "ВСЕГО", "ТОЛЬКО", "ВСЕГДА", "НИКОГДА", "ОЧЕНЬ",
@@ -265,6 +273,8 @@ def count_caps_emphasis(prose: str) -> int:
     total = 0
     for m in list(ABBR_UPPER_RE.finditer(prose)) + list(ABBR_CYRILLIC_RE.finditer(prose)):
         tok = m.group(1)
+        if tok in CAPS_SYNTAX:
+            continue
         if tok in RU_EMPHASIS or is_caps_emphasis(tok, prose):
             total += 1
     return total
