@@ -164,11 +164,11 @@ PROTECT = [
     # merged the sentence that ended on it into the next one
     r"\bFig\.", r"\bNo\.", r"\bMr\.", r"\bMs\.", r"\bDr\.",
     r"\d+\.\d+",                     # 3.14, 18.2
-    # single-letter initials, e.g. "J. Smith". Upper case only, and never after
-    # an apostrophe: `\b[A-Za-z]\.` also matched the "t." in "doesn't.", so a
-    # sentence ending on any contraction silently merged into its successor and
-    # then measured as one over-long sentence.
-    r"(?<![A-Za-zА-Яа-яЁё'’])[A-ZА-ЯЁ]\.",
+    # No single-letter-initials rule. It was here for "J. Smith", but a scan of
+    # the whole corpus found zero name initials and 25 sentences that legitimately
+    # end on a capital letter — "…connected to instance B.", "…the keys of T.",
+    # "…AOF causes disk I/O." Each one was masked, merged into its successor and
+    # then measured as one over-long sentence. The rule protected nothing here.
 ]
 PROTECT_RE = re.compile("|".join(PROTECT))
 # `*` opens a sentence too: "*Caution with Vary*: …" is one, and without it in
