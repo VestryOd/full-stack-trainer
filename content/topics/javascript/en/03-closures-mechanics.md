@@ -13,7 +13,8 @@ In the spec, every Function Object has an internal slot `[[Environment]]`:
 ```txt
 Function Object {
   [[Call]]          — the function call algorithm
-  [[Environment]]   → reference to the Environment Record where the function was created
+  [[Environment]]   → reference to the Environment Record
+                      where the function was created
   [[FormalParameters]], [[ECMAScriptCode]], ...
 }
 ```
@@ -106,11 +107,11 @@ for (var i = 0; i < 3; i++) {
 
 Closures are one of the primary sources of memory leaks in JS. To understand why, you need to know what the engine keeps in memory.
 
-### What the GC considers "alive"
+### What the garbage collector (GC) considers "alive"
 
-V8's garbage collector (generational mark-and-sweep) keeps an object alive if there's a **reachable reference** to it — a path from GC roots (stack, global variables, live closures).
+V8's garbage collector (generational mark-and-sweep) keeps an object alive while a **reachable reference** to it exists. Reachable means a path from GC roots: the stack, global variables, live closures.
 
-A closure keeps the entire Environment Record that its `[[Environment]]` points to alive. This means: if at least one function is alive and closes over an ER, the entire ER stays in memory, even if that live function doesn't use every variable in that ER.
+A closure keeps the entire Environment Record that its `[[Environment]]` points to alive. This means that one live function closing over an ER keeps the whole ER in memory. It stays even if that function never touches most of the variables in it.
 
 ```js
 function createLeak() {
@@ -173,7 +174,7 @@ class Widget {
 }
 ```
 
-**2. Detached DOM nodes:**
+**2. Detached nodes in the DOM (Document Object Model):**
 ```js
 function setup() {
   const button = document.getElementById('btn');
@@ -209,7 +210,7 @@ function register(id) {
 
 ### Module Pattern
 
-Before ESM, closures via IIFE were the only way to create "private" variables:
+Before ESM (ECMAScript modules), a closure inside an immediately invoked function expression (IIFE) was the only way to create "private" variables:
 
 ```js
 const userStore = (() => {
@@ -406,15 +407,15 @@ class User {
 ## Connection to other topics
 
 ```txt
-[Execution Contexts]    — a closure = [[Environment]] → the ER created
-                           during that execution context
-[this binding]          — arrow functions capture this through the same
-                           mechanism: no own ThisBinding + resolution
-                           via Scope Chain (through the ER)
-[Memory Management]     — closures as the primary cause of leaks;
-                           WeakMap/WeakRef as GC-safe reference tools
-[Generators]            — a generator stores state in its own ER,
-                           suspending execution — closure + control flow
+[Execution Contexts]  — a closure = [[Environment]] → the ER
+                        created during that execution context
+[this binding]        — arrow functions capture this through the
+                        same mechanism: no own ThisBinding, plus
+                        resolution via the scope chain
+[Memory Management]   — closures are the main cause of leaks;
+                        WeakMap and WeakRef as GC-safe tools
+[Generators]          — a generator keeps state in its own ER and
+                        suspends execution: closure + control flow
 ```
 
 ## Common interview traps

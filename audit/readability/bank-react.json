@@ -1,0 +1,113 @@
+{
+  "zone": "react",
+  "kinds": ["question-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/react.json#ru",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 3, "C": 3, "D": 4, "E": 4, "F": null, "G": 3 }
+    },
+    {
+      "file": "content/questions/react.json#en",
+      "locale": "en",
+      "scores": { "A": 3, "B": 2, "C": 2, "D": 3, "E": 4, "F": 2, "G": null }
+    }
+  ],
+  "averages": { "A": 3.0, "B": 2.5, "C": 2.5, "D": 3.5, "E": 4.0, "F": 2.0, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/react.json#ru",
+      "rubric": "C",
+      "quote": "```jsx\nfunction UserProfile({ userId }) {\n  const [user, setUser] = useState(null);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState(null);",
+      "problem": "react-q-5 (and 10 more: q-30, q-33, q-43, q-45, q-46, q-47, q-49, q-87, q-88, q-89) opens straight into a 15-30 line code block with no prose above it. On a phone the reader scrolls a full screen of code before a single word tells them what the answer is. Rubric C is unsatisfiable here because there is no first sentence at all — the pyramid has no apex. The prose that would have been the lead is buried after the fence, where it reads as commentary on code the reader has not yet been given a reason to read.",
+      "before": "The answer begins with the code fence immediately; the first prose is the bolded «**Почему `useEffect`:**» paragraph roughly 25 lines down.",
+      "after": "Add one lead sentence above the fence, then the identical code block: «Загрузка данных при монтировании делается в `useEffect`, а состояние загрузки держится в отдельном `useState` — компонент рендерится сразу, с `loading: true`, и перерисовывается, когда ответ придёт.\\n\\n```jsx\\nfunction UserProfile({ userId }) { ... } ```» Same code, same depth, but the reader knows the answer before the scroll."
+    },
+    {
+      "file": "content/questions/react.json#en",
+      "rubric": "C",
+      "quote": "Without selective hydration, React would hydrate a server-rendered tree top-to-bottom, in one synchronous pass — if an early Suspense boundary's data hasn't streamed in yet, *everything after it* in document order waits, even fully-ready content further down the page.",
+      "problem": "react-q-80: the lead is a counterfactual about the world *without* the feature. The reader has to hold a hypothetical in their head, negate it, and only then reach the actual definition, which arrives in the next sentence. The same warm-up-before-answering shape appears in q-14, q-69 and q-72 (which opens with the history of expiration times before saying what a lane is).",
+      "before": "Without selective hydration, React would hydrate a server-rendered tree top-to-bottom, in one synchronous pass — if an early Suspense boundary's data hasn't streamed in yet, *everything after it* in document order waits, even fully-ready content further down the page. Selective hydration removes that ordering dependency: each Suspense boundary's content can hydrate independently, as soon as both its HTML has arrived (via streaming) and its corresponding JS/data is ready — not necessarily in document order.",
+      "after": "Selective hydration lets each Suspense boundary hydrate on its own, as soon as two things are true: its HTML has arrived via streaming, and its JS and data are ready. Document order does not decide the order. Without it, React hydrated the server-rendered tree top-to-bottom in one synchronous pass. If an early boundary's data had not streamed in yet, everything after it in document order waited — even fully-ready content further down the page."
+    },
+    {
+      "file": "content/questions/react.json#en",
+      "rubric": "C",
+      "quote": "Lifting state up means moving a piece of state from a component up to its closest common parent, so that two or more components which both need access to that data (or both need to react when it changes) can share a single source of truth, instead of each keeping its own separate, independently-changing copy.",
+      "problem": "react-q-10: the pyramid is correct — this *is* the answer — but the apex is a 52-word sentence with a parenthetical aside, a purpose clause and a contrast clause stacked on one main verb. The reader must finish all 52 words before the definition closes. The same defect (right answer, paragraph-sized first sentence) hits q-7, q-17, q-19, q-37, q-39, q-48, q-78, q-82 and q-83 in EN, and q-7, q-10, q-17, q-19, q-37, q-39 in RU.",
+      "before": "Lifting state up means moving a piece of state from a component up to its closest common parent, so that two or more components which both need access to that data (or both need to react when it changes) can share a single source of truth, instead of each keeping its own separate, independently-changing copy.",
+      "after": "Lifting state up means moving a piece of state up to the closest common parent of the components that need it. Those components then share one source of truth. They need it either because they read that data, or because they must react when it changes. Without lifting, each keeps its own separate copy, and the copies change independently and drift apart."
+    },
+    {
+      "file": "content/questions/react.json#en",
+      "rubric": "F",
+      "quote": "**Why feature-based organization tends to scale better:** with grouping by file type, working on a single feature (say, the profile page) means jumping between several different top-level folders (`components/`, `pages/`, `hooks/`) to find all the pieces related to that one feature, and as the app grows, each of those folders fills up with dozens of files from completely unrelated parts of the app, making it hard to tell what belongs together.",
+      "problem": "react-q-13: one 72-word sentence carrying three facts, with two parentheticals and a trailing participle clause. The RU version of the same passage splits it into two sentences of ~35 and ~15 words. This is the clearest instance of the zone-wide finding that `en` is harder than `ru`: 57.7% of EN sentences exceed 25 words versus 33% of RU over 28, and EN uses 39% more words than RU (27.6k vs 19.9k) for the same technical content. The extra words are almost entirely subordinate clauses bolted onto sentences the RU text already broke apart.",
+      "before": "**Why feature-based organization tends to scale better:** with grouping by file type, working on a single feature (say, the profile page) means jumping between several different top-level folders (`components/`, `pages/`, `hooks/`) to find all the pieces related to that one feature, and as the app grows, each of those folders fills up with dozens of files from completely unrelated parts of the app, making it hard to tell what belongs together.",
+      "after": "**Why feature-based organization tends to scale better:** with grouping by file type, the pieces of one feature are spread across several top-level folders. To work on the profile page you jump between `components/`, `pages/` and `hooks/`. As the app grows, each of those folders fills up with dozens of files from completely unrelated parts of the app, so it gets hard to tell what belongs together."
+    },
+    {
+      "file": "content/questions/react.json#en",
+      "rubric": "B",
+      "quote": "React's render phase assumes it has exclusive, eventually-consistent control over the subtree it's rendering — it builds a workInProgress tree and, on a high-priority interruption, discards that in-progress work and restarts from `current` (the last committed tree), relying on the fact that nothing observable happened during the discarded render (see the discard-and-restart mechanics).",
+      "problem": "react-q-98: the answer's lead is a 55-word sentence chaining four separate claims (exclusive control, tree building, discard-and-restart, the purity precondition) with a dash and two parentheticals; the sentence that follows it is 103 words. Two consecutive over-limit sentences at the top of an advanced answer means the reader hits the hardest syntax in the bank exactly where they most need orientation. Same shape in q-74 (108 words), q-71 (104 words), q-92 (92 words), q-87 (92 words).",
+      "before": "React's render phase assumes it has exclusive, eventually-consistent control over the subtree it's rendering — it builds a workInProgress tree and, on a high-priority interruption, discards that in-progress work and restarts from `current` (the last committed tree), relying on the fact that nothing observable happened during the discarded render (see the discard-and-restart mechanics).",
+      "after": "React's render phase assumes it alone controls the subtree it renders, and that the subtree only has to be consistent by the end. It builds a `workInProgress` tree as it goes. If a high-priority update interrupts, React throws that half-built work away and restarts from `current` — the last committed tree. Restarting is safe only because nothing observable happened during the discarded render (see the discard-and-restart mechanics)."
+    },
+    {
+      "file": "content/questions/react.json#ru",
+      "rubric": "B",
+      "quote": "`new WebSocket(url)` на уровне модуля создаётся один раз при загрузке модуля и делится между всеми экземплярами компонента и монтированиями приложения — у него нет связи с жизненным циклом конкретного компонента, поэтому его нельзя чисто закрыть при размонтировании нужного компонента, а если `url` должен меняться (переключение комнат), нет хука для закрытия старого соединения и открытия нового.",
+      "problem": "react-q-47: the longest sentence in the RU locale. Four independent claims joined by «и», a dash, «поэтому» and «а если» — the reader has to keep the subject («соединение на уровне модуля») live across all four while the grammatical focus keeps shifting. «нет хука для закрытия» is also a calque of the English «no hook for tearing down» in which «хук» collides with the React meaning of the same word two lines above.",
+      "before": "`new WebSocket(url)` на уровне модуля создаётся один раз при загрузке модуля и делится между всеми экземплярами компонента и монтированиями приложения — у него нет связи с жизненным циклом конкретного компонента, поэтому его нельзя чисто закрыть при размонтировании нужного компонента, а если `url` должен меняться (переключение комнат), нет хука для закрытия старого соединения и открытия нового.",
+      "after": "`new WebSocket(url)` на уровне модуля создаётся один раз, при загрузке модуля. Это одно соединение на все экземпляры компонента и на все монтирования приложения. С жизненным циклом конкретного компонента оно не связано, поэтому закрыть его при размонтировании этого компонента чисто нельзя. А если `url` должен меняться (переключение комнат), в коде просто нет момента, где закрыть старое соединение и открыть новое."
+    },
+    {
+      "file": "content/questions/react.json#ru",
+      "rubric": "C",
+      "quote": "Реальный DOM (Document Object Model) — это фактическое представление страницы браузером — изменение его напрямую сравнительно медленно, потому что браузеру может потребоваться пересчитать layout и перерисовать экран в ответ на изменение.",
+      "problem": "react-q-14: the question is «Что такое Virtual DOM, и почему React использует его». The first sentence — and the whole first paragraph — is about the *real* DOM. The reader gets a definition of something they did not ask about plus a performance rationale, and only meets Virtual DOM in paragraph two. The motivation is genuinely needed, but it belongs after the answer, not in front of it.",
+      "before": "Реальный DOM (Document Object Model) — это фактическое представление страницы браузером — изменение его напрямую сравнительно медленно, потому что браузеру может потребоваться пересчитать layout и перерисовать экран в ответ на изменение. Если приложение делало много прямых, по одному, обновлений DOM, браузер мог бы выполнять дорогую работу layout/paint несколько раз для того, что логически одно обновление.",
+      "after": "Virtual DOM — это описание будущего UI обычными JavaScript-объектами. React строит такое описание на каждый рендер, сравнивает с предыдущим и переносит в реальный DOM только разницу.\n\nЗачем это нужно: реальный DOM (Document Object Model — представление страницы внутри браузера) менять напрямую сравнительно медленно. Браузеру может потребоваться пересчитать layout и перерисовать экран в ответ на изменение. Если приложение делает много прямых обновлений по одному, браузер выполняет эту дорогую работу несколько раз для того, что логически является одним обновлением."
+    },
+    {
+      "file": "content/questions/react.json#ru",
+      "rubric": "G",
+      "quote": "проверяя чаще, чем границу полного временного срез, и может уступать **сразу при обнаружении ожидающего ввода**, а не выжидать фиксированный интервал независимо от реальной срочности.",
+      "problem": "react-q-86: «временного срез» is a declension error (needs «среза»), and it occurs twice in this answer plus once inside a code comment («// фиксированный временной срез как fallback»); react-q-79 has the same error in «правильный инструмент для этого срез». Worse, «срез» is doing double duty across the bank: it means \"time slice\" in q-57 and q-86, and \"slice of state\" in q-43 and q-79 — two unrelated concepts under one word, in a bank the reader consumes in random order.",
+      "before": "…проверяя чаще, чем границу полного временного срез… / …откатывается к плоской эвристике временного срез при его отсутствии… / (q-79) …обычно правильный инструмент для этого срез, отдельно от клиент-only UI-состояния.",
+      "after": "Fix the declension and split the two meanings: use «отрезок времени» (or «квант времени») for the scheduler — «…проверяя чаще, чем конец полного отрезка времени…», «…откатывается к плоской эвристике фиксированного отрезка времени…» — and keep «срез» only for state: «…обычно правильный инструмент именно для этого среза состояния, отдельно от клиентского UI-состояния»."
+    },
+    {
+      "file": "content/questions/react.json#ru",
+      "rubric": "G",
+      "quote": "**Кастомный комparator** позволяет сравнивать по *смыслу*, а не по ссылке:",
+      "problem": "react-q-26: «комparator» is a mixed-script artefact — Cyrillic «ком» welded onto Latin «parator». It is not a word in either language, and a reader who tries to look it up will fail. It sits in a bold section heading, so it is one of the first things the eye lands on. react-q-80 has the same class of defect with an invented noun: «через репервизацию к региону взаимодействия» (a mangled rendering of \"reprioritizing toward the interacted region\").",
+      "before": "**Кастомный комparator** позволяет сравнивать по *смыслу*, а не по ссылке: / (q-80) …которое selective hydration пытается минимизировать именно через репервизацию к региону взаимодействия.",
+      "after": "**Своя функция сравнения (comparator)** позволяет сравнивать по *смыслу*, а не по ссылке: / (q-80) …и selective hydration старается сократить это время: она поднимает приоритет именно той границы, с которой пользователь взаимодействует."
+    },
+    {
+      "file": "content/questions/react.json#ru",
+      "rubric": "D",
+      "quote": "Ключевые поля: type, key, stateNode, return, child, sibling, alternate, pendingProps, memoizedProps, memoizedState, lanes, flags.",
+      "problem": "react-q-51: twelve unfamiliar identifiers arrive in one comma list with nothing attached to any of them. Three of them (`alternate`, `child`/`sibling`/`return`, `lanes`) are explained several paragraphs later; the rest are never explained at all. This is the sharpest density spike in the zone, and it sits inside the longest theory wall in the bank (9 consecutive paragraphs, 303 RU / 381 EN words, and q-51 is one of the 6 answers with no code block anywhere).",
+      "before": "Ключевые поля: type, key, stateNode, return, child, sibling, alternate, pendingProps, memoizedProps, memoizedState, lanes, flags.",
+      "after": "Ключевые поля, сгруппированные по назначению:\n- что рендерим: `type`, `key`, `stateNode` (сам DOM-узел или экземпляр компонента);\n- связи в дереве: `return` (родитель), `child` (первый ребёнок), `sibling` (следующий брат);\n- двойник в другом дереве: `alternate`;\n- данные рендера: `pendingProps` (новые props), `memoizedProps` (props прошлого рендера), `memoizedState` (состояние и цепочка хуков);\n- планирование: `lanes` (приоритеты ожидающей работы), `flags` (что сделать с узлом на commit)."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/react.json#ru": ["UI", "DOM", "SSR", "RSC", "SPA", "ARIA", "WAI", "DI", "RPC", "CDN", "ICU", "CLDR", "LTR", "RTL", "i18n", "БД", "ОС", "CPU", "GPU", "ES6"],
+    "content/questions/react.json#en": ["UI", "DOM", "SSR", "RSC", "SPA", "ARIA", "WAI", "RPC", "CDN", "ICU", "CLDR", "LTR", "RTL", "i18n", "OS", "CPU", "GPU", "UX", "CTA", "ES6"]
+  },
+  "patterns": [
+    "THE dominant pattern: the pyramid is present but its apex is a paragraph. In ~30 answers the first sentence really is the direct answer — and then packs the definition, the mechanism and the caveat into one dash-chained clause chain of 35-55 words in RU and 45-118 words in EN (q-7, q-10, q-17, q-19, q-37, q-39, q-48, q-71, q-74, q-78, q-82, q-83, q-98). The fix is never to cut a fact: it is to split the apex into 2-4 sentences that carry the same 3-4 facts. This one habit accounts for most of the 761 over-long-sentence flags and for the majority of the 75 'indirect lead' flags, which are not actually indirect — just too long to land.",
+    "11 of 98 answers (q-5, q-30, q-33, q-43, q-45, q-46, q-47, q-49, q-87, q-88, q-89) open directly with a 15-30 line code fence and no prose lead at all. For a phone reader in a short burst this is a full screen of scrolling before any statement of the answer. Every one of these already contains a perfectly good lead sentence — it is just sitting below the code, where it reads as commentary instead of as the answer.",
+    "Explanatory paragraphs are almost always introduced by a bold label («**Почему обычное `=` не работает:**», '**The trade-off:**', '**Что НЕ перехватывается:**'). This is a genuinely good, scannable habit and should be kept. But the label is then followed by a single 60-130-word sentence, so the scannability stops at the colon: the reader can find the paragraph they want and then still cannot read it in one pass. Labels should introduce 2-4 short sentences, not one long one.",
+    "The senior tier (q-51 through q-68) is written in a visibly different and much better register than the rest of the bank: `###` sub-headings instead of bold labels, short declarative sentences, plain hyphens, and 'Типичная ошибка на интервью' / 'Common interview trap' as the closing section. It is the most readable third of the zone at the highest difficulty level, which proves the depth is not what makes the other tiers hard. That register is the model the junior/middle/advanced tiers should be brought toward.",
+    "RU carries a recurring layer of English grammar left untranslated: «запрос в полёте» (in-flight request, 5 entries), «опаковый ID» (opaque), «рябь ре-рендеров» (ripple of re-renders), «не гоняющаяся сама с собой» (doesn't race itself), «гейтить», «репервизация», «неоформленные примитивы» (unstyled primitives), «нет хука для закрытия» (no hook for tearing down — where «хук» already means a React hook two lines earlier). Individually minor, collectively they make the RU read as a translation rather than as Russian.",
+    "Abbreviation discipline is the weakest single axis. UI is used 21-25 times and never expanded anywhere in either locale. DOM is expanded exactly once, in q-14, while 28 other uses are spread across answers a reader may open first (q-1, q-2, q-6, q-20, q-28, q-51, q-66, q-98). q-97 alone introduces ICU, CLDR, LTR, RTL and i18n and expands none of the five. Because a question bank is read out of order, 'it is expanded in another answer' does not help — each answer needs its own first-use gloss."
+  ],
+  "notes": "The script's '17 answers lack the pitfall marker' is a false positive: the whole senior tier (q-51..q-68, 18 answers) closes with «Типичная ошибка на интервью» / 'Common interview trap' instead. All 98 answers in both locales do have a closing pitfall section — the convention is consistent per tier, not missing.\nSix answers contain no code block at all (q-48, q-51, q-66, q-71, q-79, q-94) and these are exactly the theory walls the script flagged; each would carry an existing-style diagram or table well — q-51 a two-tree/alternate diagram, q-58 already has an inline timeline that q-71 and q-94 could copy.\n95 code lines exceed 95 characters across 53 answers (worst: q-77, q-76, q-98, q-91, q-96, q-50, q-44) — this is the only real threat to the otherwise strong E score, and it is a pure line-wrapping fix with no change to behaviour.\nOne technical staleness note outside the rubric: q-84 builds its Tabs on `React.cloneElement` without flagging that it is deprecated in React 19, while q-59 does correctly note the React 19 ref changes.\nIf the two locales were scored separately for verdict, `ru` would be targeted-fixes; `en` alone forces systemic-refactor, because 511 of its 886 sentences are over the limit and the fix is a sentence-splitting pass over every entry."
+}

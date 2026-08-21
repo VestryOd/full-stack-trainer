@@ -1,8 +1,8 @@
 # Context and State Management
 
-## What Context actually is — and what it is not
+## Context is dependency injection, not a state manager
 
-Context is React's built-in mechanism for making a value available to any component in a subtree without passing it as a prop through every intermediate component. It is a **dependency injection** system, not a state manager.
+Context is React's built-in way to make a value available to any component in a subtree. It does that without passing the value as a prop through every intermediate component. It is a **dependency injection** system, not a state manager.
 
 ```txt
 WHAT CONTEXT PROVIDES:
@@ -22,7 +22,7 @@ The "Context is slow" reputation comes from a specific and avoidable pattern. Un
 
 ## Re-render mechanics — the core rule
 
-**Every component that calls `useContext(MyContext)` re-renders whenever the context value changes** — regardless of whether the specific part of the value that component uses has changed.
+**Every component that calls `useContext(MyContext)` re-renders whenever the context value changes.** It makes no difference whether the part of the value that component actually reads has changed.
 
 ```tsx
 const ThemeContext = React.createContext({ color: 'blue', fontSize: 14 });
@@ -45,7 +45,7 @@ function Button() {
 }
 ```
 
-The comparison React uses: `Object.is(previousValue, nextValue)`. When state changes, a new object is created (`setTheme(prev => ({ ...prev, fontSize: 16 }))`), the reference changes, `Object.is` returns false, and **every consumer re-renders** — even ones that don't use `fontSize`.
+The comparison React uses is `Object.is(previousValue, nextValue)`. When state changes, a new object is created — for example by `setTheme(prev => ({ ...prev, fontSize: 16 }))`. The reference changes, `Object.is` returns false, and **every consumer re-renders**. Even the consumers that never read `fontSize`.
 
 ### Why wrapping in React.memo doesn't help (usually)
 
@@ -129,7 +129,8 @@ function CountProvider({ children }: { children: React.ReactNode }) {
 // A component that only dispatches actions never needs to subscribe to state.
 // It will NOT re-render when count changes.
 function ResetButton() {
-  const dispatch = useContext(CountDispatchContext); // stable reference — dispatch never changes
+  // Stable reference: dispatch never changes.
+  const dispatch = useContext(CountDispatchContext);
   return <button onClick={() => dispatch({ type: 'reset' })}>Reset</button>;
 }
 
@@ -146,7 +147,7 @@ function Counter() {
 
 ## Memoizing the context value
 
-When context value is constructed inline in JSX, it is a new object on every render of the Provider's parent — even if the actual data hasn't changed:
+A context value built inline in JSX is a new object on every render of the Provider's parent. JSX stands for JavaScript XML — the HTML-like markup you write inside JavaScript. So the consumers re-render even when the actual data has not changed:
 
 ```tsx
 // ❌ New object on every render → all consumers re-render on every render:
@@ -257,8 +258,8 @@ PROP DRILLING
         updating every intermediate component
 
 CONTEXT
-  When: genuinely shared value (auth user, theme, locale, feature flags)
-        needed by many components at various depths
+  When: genuinely shared value — auth user, theme, locale,
+        feature flags — needed by many components at any depth
   Pro:  no intermediate prop passing; built-in; zero dependencies
   Con:  all consumers re-render on value change;
         not optimized for high-frequency updates;
@@ -271,8 +272,11 @@ ZUSTAND / JOTAI / REDUX
         global server state (use React Query / SWR instead)
   Pro:  fine-grained subscriptions (only components using the
         changed slice re-render); devtools; middleware
-  Con:  external dependency; learning curve; overkill for simple cases
+  Con:  external dependency; learning curve;
+        overkill for simple cases
 ```
+
+SWR in that last block is a library name. It comes from stale-while-revalidate, the caching strategy the library implements.
 
 ### When Context is the wrong tool
 
@@ -326,7 +330,7 @@ const AuthContext = React.createContext<AuthState>(null!);
 
 ## The Provider placement principle
 
-Providers should be placed as **low in the tree as possible** while still covering all consumers. A Provider at the root of the app means every re-render of that Provider (even from unrelated state changes in the Provider's component) will trigger context change checks for all consumers.
+Providers should be placed as **low in the tree as possible**, while still covering all consumers. Put a Provider at the root of the app, and every re-render of that Provider triggers context change checks for all consumers. That includes re-renders caused by unrelated state changes inside the Provider's own component.
 
 ```tsx
 // ❌ UserProvider at root re-renders whenever the root component re-renders:
@@ -367,10 +371,24 @@ It can, if misused. Context re-renders all consumers when the value changes. The
 No. `React.memo` compares props — context changes bypass it entirely. A `React.memo`'d component that calls `useContext` will still re-render when the context value changes.
 
 **"What's the difference between useReducer + Context and Redux?"**
-The mechanism is similar (a reducer, a dispatch function, subscriptions). The differences: Redux has devtools (time-travel debugging), middleware (thunks, sagas, logging), a global singleton store, and fine-grained subscriptions (via `useSelector`). Context with `useReducer` has none of these, but also has no external dependency. For an app with 5 contexts, `useReducer` + Context is often sufficient. For complex cross-cutting update logic, async flows, or when devtools are a requirement, Redux Toolkit or Zustand is the better fit.
+The mechanism is similar: a reducer, a dispatch function, subscriptions. The differences are what Redux adds on top:
+
+- Devtools, including time-travel debugging.
+- Middleware — thunks, sagas, logging.
+- A single global store.
+- Fine-grained subscriptions through `useSelector`.
+
+Context with `useReducer` has none of that, but it also has no external dependency. For an app with 5 contexts it is often sufficient. Reach for Redux Toolkit or Zustand when the update logic is complex and cross-cutting, the flows are async, or devtools are a requirement.
 
 **"Is the Context API good for server state (API data)?"**
-No. Server state has a different lifecycle: it can go stale, needs background refetching, deduplication of concurrent requests, caching with invalidation, and optimistic updates. Context manages local UI state. React Query and SWR are purpose-built for server state and solve all of those problems. Using Context for server state means reinventing the wheel, badly.
+No. Server state has a different lifecycle. It can go stale, and it needs background refetching, deduplication of concurrent requests, caching with invalidation, and optimistic updates.
+
+Context manages local UI state — UI is short for user interface. React Query and SWR are purpose-built for server state and solve all of those problems. Using Context for server state means writing all of that yourself, badly.
 
 **"When would you choose Zustand over Context?"**
-When: (1) updates are high-frequency (animations, WebSocket events, real-time collaboration); (2) fine-grained subscriptions are needed — only the slice that changed should trigger re-renders, not all consumers; (3) you need middleware (logging, persistence, devtools); (4) the state is genuinely global and accessed from many unrelated parts of the tree.
+In four situations:
+
+- Updates are high-frequency: animations, WebSocket events, real-time collaboration.
+- You need fine-grained subscriptions, so only the components using the changed slice re-render instead of all consumers.
+- You need middleware — logging, persistence, devtools.
+- The state is genuinely global and read from many unrelated parts of the tree.

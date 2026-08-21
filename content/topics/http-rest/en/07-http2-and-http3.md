@@ -13,13 +13,13 @@ HTTP/1.1 was designed in 1997. The web back then was text pages with a handful o
 HTTP/1.1 — one connection, one request at a time:
 
 Client: [GET /main.js] ──────────────────────── [GET /style.css]
-Server:               [..response main.js..]    [..response style.css..]
+Server:            [..response main.js..]  [..response style.css..]
 
 If main.js is large — style.css waits, even if it's already ready.
 This is head-of-line blocking.
 ```
 
-Browsers worked around this by opening **6 parallel TCP connections** per domain. But each connection means a separate TCP + TLS handshake.
+Browsers worked around this by opening **6 parallel TCP connections** per domain. But each connection means a separate TCP handshake plus a TLS (transport layer security) handshake.
 
 **Uncompressed text headers**
 
@@ -44,7 +44,7 @@ The browser had no way to tell the server "CSS is more important than images —
 
 ## HTTP/2: Binary, Multiplexed
 
-HTTP/2 (2015, RFC 7540) solves these problems while preserving HTTP semantics — same methods, status codes, and headers. Only the **transport** changes.
+HTTP/2 (2015, RFC 7540 — a numbered request-for-comments document) solves these problems while preserving HTTP semantics — same methods, status codes, and headers. Only the **transport** changes.
 
 ### Binary Framing
 
@@ -57,7 +57,7 @@ HTTP/1.1:
   \r\n
 
 HTTP/2 (simplified):
-  [Length: 3 bytes][Type: 1 byte][Flags: 1 byte][Stream ID: 4 bytes][Payload: N bytes]
+  [Length: 3B][Type: 1B][Flags: 1B][Stream ID: 4B][Payload: N B]
        ↑ fixed 9-byte frame header
 ```
 
@@ -111,7 +111,8 @@ Static table (61 entries):
 
 Dynamic table:
   First request:  Authorization: Bearer eyJ... → added to the table
-  Second request: Authorization: Bearer eyJ... → just an index (1–4 bytes instead of 500+)
+  Second request: Authorization: Bearer eyJ... → just an index,
+                  1-4 bytes instead of 500+
 
 Result: headers compressed 85–95% starting from the second request.
 ```
@@ -144,12 +145,12 @@ Server: [HTML response]
         [PUSH_PROMISE: /main.js]
         [DATA for /main.js]
 
-Client receives CSS and JS together with HTML — no additional requests.
+Client receives CSS and JS with the HTML — no extra requests.
 ```
 
 Why it failed:
 ```txt
-1. Browsers cache resources. The server doesn't know what's already in
+1. Browsers cache resources. The server does not know what is in
    the client's cache. Pushing cached resources wastes bandwidth.
 
 2. Hard to implement correctly: how do you decide what to push?
@@ -164,7 +165,7 @@ Why it failed:
 
 ### TLS in HTTP/2
 
-Technically HTTP/2 supports cleartext (h2c). In practice, all browsers require TLS for HTTP/2. So in practice, HTTP/2 = HTTPS.
+Technically HTTP/2 supports cleartext (h2c). In practice, all browsers require TLS for HTTP/2. So in practice, HTTP/2 = HTTPS (HTTP over TLS).
 
 ---
 
@@ -263,7 +264,7 @@ HTTP/2 over TCP:
   On mobile networks with ~2% packet loss — noticeably painful.
 ```
 
-### QUIC — UDP + Reliability
+### QUIC — UDP (user datagram protocol) + Reliability
 
 QUIC (Quick UDP Internet Connections) is a new transport protocol over UDP, developed by Google and standardized by IETF:
 
@@ -329,7 +330,7 @@ HTTP/3 (QUIC):
   A file download is not interrupted when switching networks.
 ```
 
-This is critical for mobile users and IoT devices.
+This is critical for mobile users and IoT (internet of things) devices.
 
 ---
 
@@ -359,7 +360,7 @@ This is critical for mobile users and IoT devices.
 ├────────────────────┼───────────┼──────────────┼─────────────┤
 │ Browser support    │ 100%      │ ~98%         │ ~85%        │
 └────────────────────┴───────────┴──────────────┴─────────────┘
-* Server Push removed from Chrome; poorly implemented almost everywhere
+* Server Push removed from Chrome; badly implemented everywhere
 ```
 
 ---
@@ -371,7 +372,7 @@ This is critical for mobile users and IoT devices.
 - HTTP methods (GET, POST, PUT, DELETE…)
 - Status codes (200, 404, 500…)
 - Headers (Cache-Control, Authorization, Content-Type…)
-- REST API architecture
+- REST (representational state transfer) API architecture
 
 Fetch API, axios, node-fetch all work with HTTP/2 and HTTP/3 transparently. Your code doesn't change.
 
@@ -379,12 +380,12 @@ Fetch API, axios, node-fetch all work with HTTP/2 and HTTP/3 transparently. Your
 
 ```txt
 HTTP/1.1 optimizations that are HARMFUL in HTTP/2:
-  ❌ Domain sharding (multiple CDN domains to bypass 6-connection limit)
-  ❌ CSS/JS sprites (combining assets into one file to reduce requests)
+  ❌ Domain sharding (many CDN domains to beat the 6-conn limit)
+  ❌ CSS/JS sprites (one big file to cut the number of requests)
   ❌ Inline CSS (embedding styles to save a request)
 
 HTTP/2 optimizations:
-  ✅ Many small files ≈ one large file (multiplexing makes them equally efficient)
+  ✅ Many small files ≈ one large one (multiplexing evens it out)
   ✅ Granular caching (small files cache independently — changing one
      doesn't invalidate the whole bundle)
   ✅ 103 Early Hints instead of Server Push
@@ -433,7 +434,7 @@ HTTP/2 with 2% packet loss:
 Time →
 [S1 frame][S3 frame][S5 frame][S1 frame][X LOST ][S1 frame]
                                                     ↑
-                              ALL streams WAIT until TCP retransmits X.
+                        Every stream waits for the resend of X.
                               S3 and S5 are ready but blocked.
 
 HTTP/3 with 2% packet loss:
@@ -449,15 +450,15 @@ Time →
 
 ## Common Interview Traps
 
-- **"HTTP/2 is always faster"** — not always. On fast, low-loss networks, HTTP/1.1 with multiple connections can be comparable. HTTP/2 shows the most benefit on high-latency or unstable connections (mobile, CDN with >100ms RTT).
+- **"HTTP/2 is always faster"** — not always. On fast, low-loss networks, HTTP/1.1 with multiple connections can be comparable. HTTP/2 shows the most benefit on high-latency or unstable connections (mobile, or a CDN — a content delivery network — with >100ms RTT).
 
-- **"HTTP/3 is on UDP — so it's unreliable"** — QUIC implements reliable delivery over UDP at the application layer (acknowledgements, retransmissions, ordering). UDP was chosen because TCP can't be changed without updating the OS on every node in the internet.
+- **"HTTP/3 is on UDP — so it's unreliable"** — QUIC implements reliable delivery over UDP at the application layer (acknowledgements, retransmissions, ordering). UDP was chosen because TCP can't be changed without updating the OS (operating system) on every node in the internet.
 
 - **"HTTP/2 multiplexing fixed all HoL problems"** — no. TCP-level HoL remained. HTTP/3 fixed it through QUIC.
 
 - **"Server Push is a great HTTP/2 feature"** — it failed in practice. Chrome removed support in 2022. Use 103 Early Hints or Resource Hints (`<link rel="preload">`) instead.
 
-- **"Domain sharding is good for HTTP/2"** — the opposite. Domain sharding requires multiple DNS lookups and TLS handshakes. In HTTP/2 everything multiplexes over one connection — sharding only hurts.
+- **"Domain sharding is good for HTTP/2"** — the opposite. Domain sharding requires multiple DNS (domain name system) lookups and TLS handshakes. In HTTP/2 everything multiplexes over one connection — sharding only hurts.
 
 - **"HTTPS is only needed for security"** — in the context of HTTP/2+, HTTPS is also needed for the protocol itself. Browsers don't support HTTP/2 without TLS. QUIC embeds TLS 1.3 as a mandatory part.
 

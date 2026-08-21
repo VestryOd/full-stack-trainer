@@ -111,7 +111,7 @@ suspendedStart → executing → suspendedYield → completed
                                ↑___________↓  (цикл yield)
 ```
 
-Ключевое: при `yield` движок **сохраняет весь контекст выполнения** (локальные переменные, позицию в коде, scope chain) — и возвращает управление вызывающему коду. При следующем `next()` — восстанавливает контекст и продолжает с того места.
+Ключевое: при `yield` движок **сохраняет весь контекст выполнения** — локальные переменные, позицию в коде, scope chain. Затем возвращает управление вызывающему коду. При следующем `next()` — восстанавливает контекст и продолжает с того места.
 
 Это принципиально отличается от closure: closure сохраняет Environment Record, но не позицию выполнения. Генератор сохраняет и то, и другое.
 
@@ -473,14 +473,18 @@ console.log([...expensiveSeq]); // нет логов — всё из кеша, [
 ## Связь с другими темами
 
 ```txt
-[Замыкания]             — генератор сохраняет и Environment Record (замыкание),
-                           и позицию выполнения (этого closure не умеет)
-[Асинхронные паттерны]  — async/await внутри — это генератор + автоматический
-                           Promise runner; for-await-of = async iterator protocol
-[Proxy и Symbol]        — Symbol.iterator, Symbol.asyncIterator — well-known symbols,
-                           позволяют любому объекту стать iterable
-[Современный JS]        — Array.from(), spread, деструктуризация — все потребляют
-                           Symbol.iterator; Array.fromAsync — Symbol.asyncIterator
+[Замыкания]             — генератор хранит и Environment Record
+                          (замыкание), и позицию выполнения;
+                          замыкание — только первое
+[Асинхронные паттерны]  — async/await внутри — это генератор плюс
+                          автоматический Promise runner;
+                          for-await-of = async iterator protocol
+[Proxy и Symbol]        — Symbol.iterator и Symbol.asyncIterator —
+                          well-known symbols, они делают любой
+                          объект iterable
+[Современный JS]        — Array.from(), spread, деструктуризация
+                          потребляют Symbol.iterator;
+                          Array.fromAsync — Symbol.asyncIterator
 ```
 
 ## Типичные ошибки на интервью
@@ -495,6 +499,6 @@ console.log([...expensiveSeq]); // нет логов — всё из кеша, [
 
 - **"Значение return в генераторе теряется"** — при `for...of` или spread — да, теряется. Но при ручном `next()` — `{ value: returnValue, done: true }`. А при `yield*` — значение return становится значением выражения `yield*` во внешнем генераторе. Три разных поведения.
 
-- **"for-await-of работает с обычными итераторами"** — да, `for-await-of` работает и с синхронными iterables (оборачивает в Promise.resolve). Но `for...of` **не** работает с async iterables (Symbol.asyncIterator).
+- **"`for-await-of` работает только с async-итераторами"** — нет. `for-await-of` работает и с синхронными iterables (оборачивает значения в `Promise.resolve`). Но `for...of` **не** работает с async iterables (`Symbol.asyncIterator`).
 
 - **Не знать про `return()` и очистку ресурсов** — `for...of` с `break` вызывает `gen.return()`, что запускает `finally` блоки внутри генератора. Это важно для генераторов, удерживающих ресурсы (соединения, файлы).

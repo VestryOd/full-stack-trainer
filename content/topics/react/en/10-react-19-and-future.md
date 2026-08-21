@@ -1,29 +1,32 @@
 # React 19 and the Future
 
-## What React 19 actually shipped (stable, April 2024)
+## What React 19 actually shipped (stable, December 2024)
 
-React 19 is a stable release. It does not break existing React 18 code — the upgrade is mostly additive. The headline changes are:
+React 19.0 went stable on 5 December 2024. The release candidate and the upgrade guide came earlier, on 25 April 2024 — that April date is often mistaken for the stable release. React 19 does not break existing React 18 code; the upgrade is mostly additive. The headline changes:
 
 ```txt
-STABLE IN REACT 19:
+Stable in React 19
   Actions (async transitions)
   useActionState (formerly useFormState)
   useFormStatus
   useOptimistic
   use() hook
   ref as a regular prop (no forwardRef needed)
-  Server Components and Server Actions (framework-integrated)
-  Improved error reporting (hydration errors show diffs)
+  Server Components and Server Actions
+    (integrated by the framework)
+  Better error reporting: hydration errors show a diff
   Document metadata (title, meta tags) in components
   Stylesheet and script loading APIs
-  React Compiler (beta, opt-in)
 ```
+
+React Compiler is not part of React 19 itself. It is a separate build-time
+package, and it reached version 1.0 on 7 October 2025.
 
 ---
 
 ## Actions — async transitions
 
-React 18's `startTransition` only handled synchronous updates. The most common real-world pattern — submit a form, await a server response, update UI — had no first-class support.
+React 18's `startTransition` only handled synchronous updates. The most common real-world pattern had no first-class support: submit a form, await a server response, update the UI. UI here means user interface — what the person on the other side of the screen sees.
 
 React 19 extends transitions to support async functions. An **Action** is an async function passed to a transition:
 
@@ -131,7 +134,7 @@ Key properties:
 
 ## useFormStatus
 
-`useFormStatus` reads the submission status of the parent `<form>`. This solves a specific problem: a submit button inside a form needs to know if the form is submitting, but adding `isPending` as a prop to every button is repetitive.
+`useFormStatus` reads the submission status of the parent `<form>`. It solves one specific problem. A submit button inside a form needs to know whether the form is submitting. Passing `isPending` as a prop to every such button is repetitive.
 
 ```tsx
 import { useFormStatus } from 'react-dom';
@@ -160,13 +163,13 @@ function ProfileForm() {
 
 `useFormStatus` only works **inside** a `<form>` element — it reads from the nearest parent form, not from its own component. If used outside a form, `pending` is always `false`.
 
-The `data` field contains the `FormData` that was submitted — useful for showing optimistic previews of what was submitted while the request is in flight.
+The `data` field contains the `FormData` that was submitted. That is useful for showing an optimistic preview of the submitted values while the request is still running.
 
 ---
 
 ## useOptimistic
 
-`useOptimistic` lets you show an optimistic (assumed-to-succeed) UI update while an async action is pending, then automatically revert to the real state when the action completes (or show the real result if it succeeds).
+`useOptimistic` shows an update as though it had already succeeded, while the async action is still pending. When the action finishes, React replaces that guess with the real state. If the action failed, the guess is discarded.
 
 ```tsx
 import { useOptimistic } from 'react';
@@ -307,7 +310,9 @@ In React 19, `ref` is just a regular prop:
 
 ```tsx
 // React 19 — ref is a regular prop:
-function Input({ ref, placeholder, ...props }: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
+type WithRef = InputProps & { ref?: React.Ref<HTMLInputElement> };
+
+function Input({ ref, placeholder, ...props }: WithRef) {
   return <input ref={ref} placeholder={placeholder} {...props} />;
 }
 
@@ -317,7 +322,13 @@ function Input({ ref, ...props }: React.ComponentProps<'input'>) {
 }
 ```
 
-`forwardRef` still works in React 19 but is deprecated. React will log a warning in development if you use it.
+`forwardRef` still works in React 19, and as of React 19.2 it is **not** deprecated. The API reference says it "is no longer necessary" and "will be deprecated in a future release". There is no development warning for using it today.
+
+What *is* deprecated, with a warning, is reading `ref` off an element — `element.ref`. That is a different thing, and the two are easy to confuse. A codemod exists for the migration:
+
+```bash
+npx codemod react/19/remove-forward-ref --target ./src
+```
 
 ---
 
@@ -341,11 +352,11 @@ function BlogPost({ post }: { post: Post }) {
 }
 ```
 
-This replaces the need for `react-helmet` / `next/head` in most cases. In Next.js App Router, the `generateMetadata` API remains the recommended approach (it integrates with streaming and SSR more deeply), but the native support makes it viable for simpler cases.
+This replaces `react-helmet` and `next/head` in most cases. In the Next.js App Router, `generateMetadata` is still the recommended API. It integrates more deeply with streaming and with SSR — server-side rendering, where the HTML is produced on the server. But the native support is now enough for simpler cases.
 
 ---
 
-## React Compiler (beta)
+## React Compiler (1.0, opt-in)
 
 React Compiler (previously called "React Forget") is an opt-in build-time compiler that **automatically adds memoization** to your components and hooks. It analyzes your code statically and inserts the equivalent of `useMemo` / `useCallback` / `React.memo` where the React rules of reactivity are satisfied.
 
@@ -366,23 +377,28 @@ function TodoList({ todos, filter }: { todos: Todo[]; filter: string }) {
 }
 ```
 
-The compiler only applies memoization where it can prove it's safe — it does not memoize if the component violates React's rules (mutating props, reading values outside of render, etc.).
+The compiler only applies memoization where it can prove it is safe. It does not memoize a component that breaks React's rules — mutating props, reading values outside of render, and so on.
 
 ### What the Compiler means for your code
 
 ```txt
-WITH REACT COMPILER:
-  ✓ useMemo / useCallback / React.memo become largely unnecessary
-  ✓ No risk of "wrong memoization" (the compiler understands React's model)
-  ✓ Performance improvements without manual optimization
-  ✗ Still in beta — correctness edge cases are being discovered
+With React Compiler
+  ✓ useMemo / useCallback / React.memo become
+    largely unnecessary
+  ✓ No risk of "wrong memoization" — the compiler
+    understands React's model
+  ✓ Faster code without manual optimization
+  ✗ You still have to add and configure it per project
   ✗ Requires your code to follow React's rules strictly
-  ✗ Doesn't help with structural problems (state too high, unnecessary re-renders from architecture)
+  ✗ Doesn't help with structural problems: state living
+    too high, re-renders caused by architecture
 ```
 
-### Current status (as of React 19)
+### Current status (React Compiler 1.0, October 2025)
 
-The Compiler is available as a Babel/SWC plugin (`babel-plugin-react-compiler`). Meta has been running it in production on Instagram since 2023. It is opt-in — you enable it project-wide or per-file with `'use memo'` directive.
+The Compiler shipped 1.0 on 7 October 2025, after a beta in October 2024. It is a Babel plugin, `babel-plugin-react-compiler`, and it also runs through SWC — the Speedy Web Compiler, the Rust-based build tool Next.js uses. Meta has been running it in production on Instagram since 2023.
+
+For an existing app it is still opt-in. You install the plugin and turn it on, either project-wide or per file with the `'use memo'` directive. New apps can start with it enabled. Expo ships it on by default from version 54 of its toolkit, and Vite and Next.js offer compiler-enabled templates. The compiler-powered lint rules are in the `recommended` preset of `eslint-plugin-react-hooks`.
 
 ```js
 // babel.config.js:
@@ -400,28 +416,46 @@ module.exports = {
 ## Stable vs experimental — where things stand
 
 ```txt
-STABLE IN REACT 19 (use today):
+Stable in React 19.0 — use today
   Actions / async transitions
   useActionState
   useFormStatus
   useOptimistic
   use() hook
   ref as prop
-  Document metadata (<title>, <meta>, <link> hoisting)
-  Stylesheet ordering (<link rel="stylesheet" precedence="...">)
-  Script deduplication (<script async>)
-  Server Components (via Next.js App Router, Remix, etc.)
+  Document metadata: <title>, <meta>, <link> hoisting
+  Stylesheet ordering:
+    <link rel="stylesheet" precedence="...">
+  Script deduplication: <script async>
+  Server Components (Next.js App Router, Remix, ...)
   Server Actions (via Next.js)
 
-BETA / OPT-IN (production-viable with caution):
-  React Compiler — running in production at Meta, available as Babel plugin
+Stable in React 19.2 — October 2025
+  <Activity> (formerly Offscreen) — hide UI and keep
+    the state of its children
+  useEffectEvent — pull non-reactive logic out of an Effect
+  cacheSignal — tells server code when a cache() lifetime
+    is over, so it can abort work
+  Performance Tracks in Chrome DevTools:
+    Scheduler and Components
+  Partial pre-rendering: prerender() plus resume()
 
-EXPERIMENTAL / FUTURE:
-  Activity (formerly Offscreen) — pre-render hidden UI, preserve state for hidden tabs
+Stable, but shipped separately from React itself
+  React Compiler 1.0 — a build-time package you add
+    to a project yourself
+
+Experimental / future
   React DevTools improvements for Server Components
-  Taint API — prevent specific server data from crossing to client
-    (db.user.create result should never be serializable to the client)
+  Taint API — stop specific server data reaching the client
+    (a db.user.create result must never be serializable)
 ```
+
+`<Activity>` in React 19.2 supports two modes:
+
+- `hidden` — hides the children, unmounts their effects, and defers their updates until React has nothing else to work on.
+- `visible` — shows the children, mounts their effects, and processes updates normally.
+
+More modes are planned.
 
 ---
 
@@ -440,8 +474,9 @@ ReactDOM.render(<App />, document.getElementById('root'));
 // After:
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 
-// 3. forwardRef — still works, but deprecation warning:
-// Migrate gradually — forwardRef components work but show a dev warning.
+// 3. forwardRef — still works, and is not deprecated as of 19.2.
+// Migrate when convenient; there is no dev warning for using it.
+// Codemod: npx codemod react/19/remove-forward-ref --target ./src
 
 // 4. String refs (very old) — removed entirely in React 19.
 ```
@@ -451,16 +486,58 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 ## Common interview traps
 
 **"What is the difference between useActionState and useFormStatus?"**
-`useActionState` manages the state returned by a form action — it holds the result (success/error data) and provides an `isPending` flag for the action. It wraps an action function and is used in the component that owns the form. `useFormStatus` reads the submission status of the **nearest parent `<form>`** — it's designed for a submit button or input that lives *inside* the form but doesn't own the action. They compose: `useActionState` provides the `action` prop to the form; `useFormStatus` reads that form's status from inside.
+One owns the action, the other only reads the form it sits in.
+
+| | `useActionState` | `useFormStatus` |
+|---|---|---|
+| Lives in | the component that owns the form | any component *inside* the form |
+| Gives you | the action's result, plus `isPending` | `pending`, `data`, `method`, `action` |
+| Reads from | the action it wraps | the nearest parent `<form>` |
+
+They compose. `useActionState` supplies the `action` prop to the form, and `useFormStatus` reads that same form's status from inside a child.
 
 **"Can you use React 19 Actions without Server Actions?"**
-Yes. Actions are just async functions passed to `startTransition` or `useActionState`. Server Actions are a specific kind of action where the function runs on the server (marked with `'use server'`). A regular async client-side function (calling an API with `fetch`) works identically from React's perspective — the pending state tracking and error handling work the same way.
+Yes. Actions are just async functions passed to `startTransition` or `useActionState`. Server Actions are one specific kind of action: the function is marked `'use server'` and runs on the server.
+
+A plain async client-side function that calls an API with `fetch` behaves identically from React's point of view. Pending-state tracking and error handling work the same way.
+
+```tsx
+// A client-side Action — no 'use server' anywhere:
+async function saveTitle(prev: string, formData: FormData) {
+  const title = formData.get('title') as string;
+  const res = await fetch('/api/title', { method: 'POST', body: title });
+  return res.ok ? title : prev;   // the return value becomes the new state
+}
+```
 
 **"What problem does useOptimistic solve that you couldn't solve before?"**
-The pattern is not new — you could always keep optimistic state in `useState` and manually reset it on error. `useOptimistic` solves the ergonomics and correctness problem: it automatically ties the optimistic state to the lifecycle of the pending action. When the action completes (success or failure), the optimistic state is automatically replaced by the real state. With manual `useState`, you had to remember to reset it in every error path, and the timing could cause flicker if the real state update and your manual reset were out of sync.
+Nothing that was impossible — the pattern is old. You could always hold optimistic state in `useState` and reset it by hand on error.
+
+What `useOptimistic` fixes is ergonomics and correctness. It ties the optimistic state to the lifecycle of the pending action, so the real state takes over automatically when the action finishes.
+
+| | Manual `useState` | `useOptimistic` |
+|---|---|---|
+| Reset after the action | you write it, in every error path | automatic |
+| Tied to the action's lifecycle | no | yes |
+| Flicker risk | yes, if the reset and the real update desync | no |
 
 **"What does React Compiler actually compile to?"**
-The compiler emits regular React code with `useMemo`, `useCallback`, and memoized components inserted at the correct granularity. It uses React's rules of reactivity as a formal model — a value is "reactive" if it depends on props, state, or other reactive values. The compiler tracks which values are reactive and wraps computations that depend only on non-reactive inputs in `useMemo`. The output is valid React code that runs on any React 18+ runtime — the compiler is purely a build-time optimization, not a runtime change.
+Regular React code, with `useMemo`, `useCallback` and memoized components inserted at the right granularity.
+
+It uses React's rules of reactivity as a formal model. A value is "reactive" if it depends on props, on state, or on other reactive values. The compiler tracks which values are reactive, and wraps computations whose inputs are all non-reactive in `useMemo`. The output is valid React code that runs on any React 18 or newer runtime. The compiler is purely a build-time optimization, not a runtime change.
 
 **"Why is `use()` allowed in conditionals when other hooks are not?"**
-React's rule about not calling hooks conditionally exists because hooks are tracked by call order on the Fiber's hook linked list — inserting or removing a hook call from one render to the next would corrupt the list. `use()` is not a hook in this sense — it's a new React primitive that can suspend the component (throw a special value) and be resumed later. React does not track `use()` calls by order in the same way; instead, it re-executes the component from the top after resuming from suspension, so the call position can change. The Rules of Hooks do not apply to `use()`.
+Because `use()` is not tracked by call order, and ordinary hooks are.
+
+```txt
+Hooks are found by position in the list, not by name:
+
+  render 1:  [1] useState   [2] useEffect   [3] useMemo
+  render 2:  [1] useState   [2] useMemo     ← useEffect skipped
+                             ↑ React hands useEffect's
+                               state to useMemo
+```
+
+Hooks live on a linked list attached to the Fiber, and React finds each one by its position in that list. Insert or remove a hook call between two renders, and every position after it shifts — the list is corrupted. That is the whole reason for the rule.
+
+`use()` is not a hook in that sense. It is a primitive that can suspend the component by throwing a special value, and be resumed later. After resuming, React re-executes the component from the top, so the call position is allowed to change. The Rules of Hooks do not apply to `use()`.

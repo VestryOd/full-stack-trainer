@@ -2,14 +2,19 @@
 
 ## What Prisma is and why it exists
 
-Prisma is a TypeScript-first ORM toolkit for Node.js. The key difference from TypeORM/Sequelize: a schema-first approach — the developer describes models in `schema.prisma`, and Prisma generates a fully typed client for that exact schema. This means `prisma.user.findMany()` returns `User[]` with all fields without extra Generic annotations, and a typo in a field name is a compile-time error, not a runtime one.
+Prisma is a TypeScript-first ORM toolkit for Node.js. An ORM (object-relational mapping) is the layer that turns TypeScript calls into SQL, the query language the database speaks.
+
+The key difference from TypeORM and Sequelize is the order of work: schema first, code second. You describe the models in `schema.prisma`, and Prisma generates a client typed for that exact schema.
+
+What that buys you: `prisma.user.findMany()` returns `User[]` with all fields, and you write no extra Generic annotations. A typo in a field name becomes a compile-time error instead of a runtime one.
 
 ```txt
 Prisma components:
-  schema.prisma   — model definitions, relations, datasource, generator
-  Prisma Client   — generated TypeScript API (node_modules/.prisma/client)
-  Prisma Migrate  — migration system: schema.prisma → SQL → apply to DB
-  Prisma Studio   — GUI for browsing and editing data (optional)
+  schema.prisma   — models, relations, datasource, generator
+  Prisma Client   — generated TypeScript API
+                    (node_modules/.prisma/client)
+  Prisma Migrate  — migrations: schema.prisma → SQL → database
+  Prisma Studio   — a graphical browser and editor for the data
 
 Request stack:
   NestJS Service
@@ -58,7 +63,7 @@ const prisma = new PrismaClient({
   log: ['query', 'error'], // log SQL queries in dev
 });
 
-// CRUD — basic operations
+// CRUD — create, read, update, delete
 const user = await prisma.user.create({
   data: { email: 'alice@example.com', name: 'Alice' },
 });
@@ -120,19 +125,21 @@ export class UsersService {
 ```txt
 Prisma is a good fit for:
   ✓ TypeScript projects (NestJS, Next.js, Express + TS)
-  ✓ CRUD-heavy applications (SaaS, admin panels, APIs)
-  ✓ Mixed-skill teams — typing reduces mistakes
-  ✓ Rapid development — schema + migrate + generated client = fast
-  ✓ GraphQL backends (Prisma + Pothos/Nexus = minimal boilerplate)
+  ✓ apps that are mostly CRUD — create, read, update, delete
+     (SaaS products, admin panels, APIs)
+  ✓ mixed-skill teams — typing reduces mistakes
+  ✓ a fast start: schema + migrate + generated client
+  ✓ GraphQL backends (Prisma + Pothos/Nexus = little glue code)
 
-Prisma does NOT fit or requires workarounds:
-  ✗ Complex analytical queries (window functions, CTE, LATERAL JOIN)
-     → solution: prisma.$queryRaw`SELECT ... OVER (PARTITION BY ...)`
-  ✗ Bulk insert/update of thousands of rows
+Prisma does not fit, or needs a workaround:
+  ✗ complex analytical queries: window functions,
+     CTE (common table expressions), LATERAL JOIN
+     → use prisma.$queryRaw`SELECT ... OVER (PARTITION BY ...)`
+  ✗ bulk insert or update of thousands of rows
      → createMany does not support skipDuplicates with relations;
-       for bulk: $executeRaw or pg-copy-streams
-  ✗ Dynamic query building with conditional JOINs
-     → TypeORM QueryBuilder is more flexible for this scenario
+       for bulk work: $executeRaw or pg-copy-streams
+  ✗ dynamic query building with conditional JOINs
+     → TypeORM QueryBuilder is more flexible here
 ```
 
 ## $queryRaw and $executeRaw — when you need raw SQL
@@ -152,19 +159,23 @@ const count = await prisma.$executeRaw`
 `;
 // Returns the number of affected rows
 
-// NEVER use string interpolation:
+// Never use string interpolation:
 // ✗ await prisma.$queryRaw(`SELECT * FROM users WHERE id = ${userId}`) // SQL injection!
 // ✓ await prisma.$queryRaw`SELECT * FROM users WHERE id = ${userId}`   // parameterized
 ```
 
 ## Common interview mistakes
 
-- **"Prisma is a database"** — no. Prisma is an ORM on top of an existing DB. Data is stored by PostgreSQL/MySQL/SQLite; Prisma only generates and executes queries against it. `prisma.user.findMany()` → Prisma Client → Rust Query Engine → SQL → PostgreSQL.
+- **"Prisma is a database"** — no. Prisma is an ORM on top of a database that already exists. PostgreSQL, MySQL or SQLite stores the data; Prisma only builds and runs the queries. The path of one call: `prisma.user.findMany()` → Prisma Client → Rust Query Engine → SQL → PostgreSQL.
 
-- **"Prisma generates inefficient queries"** — partly true for the N+1 problem (without `include`), but Prisma can generate JOINs via `include`/`select`. For complex queries: `$queryRaw`. The generated SQL can be inspected via `log: ['query']` in PrismaClient.
+- **"Prisma generates inefficient queries"** — partly true for the N+1 problem, where a list of N rows costs N+1 queries. It has a fix: `include` and `select` make Prisma emit a `JOIN`. For complex queries there is still `$queryRaw`. To see what actually reaches the database, set `log: ['query']` in `PrismaClient`.
 
-- **"PrismaClient can be instantiated per request"** — no. PrismaClient manages a connection pool. In NestJS — one singleton `PrismaService extends PrismaClient`. Creating a new instance per request → connection leaks and performance degradation.
+- **"PrismaClient can be instantiated per request"** — no. `PrismaClient` owns a connection pool, and every new instance opens its own. NestJS needs one shared instance: `PrismaService extends PrismaClient`. A new instance per request means leaked connections and slower responses.
 
-- **"Prisma Migrate and Prisma Client are the same thing"** — no. Migrate is a development tool (CLI): `prisma migrate dev` → generates SQL migrations. Client is a runtime library: executes queries against the DB. In production: run `prisma migrate deploy` (applies pending migrations); the Client is already compiled into the bundle.
+- **"Prisma Migrate and Prisma Client are the same thing"** — no. Migrate is a developer tool you run in the terminal: `prisma migrate dev` generates SQL migrations. Client is a library that runs at runtime and queries the database. Production runs `prisma migrate deploy`, which applies migrations that are not applied yet. By then the Client is already compiled into the bundle.
 
-- **"Changing schema.prisma immediately makes the changes available"** — no. You need: (1) `prisma migrate dev` — create the migration and apply it to the DB; (2) `prisma generate` — regenerate the Client. If you only change the schema without `generate` — TypeScript types are stale, and so is the runtime client.
+- **"Changing schema.prisma immediately makes the changes available"** — no, two steps are needed:
+  - `prisma migrate dev` — create the migration and apply it to the database;
+  - `prisma generate` — regenerate the Client.
+
+  Change the schema without `generate`, and both the TypeScript types and the client code stay stale.

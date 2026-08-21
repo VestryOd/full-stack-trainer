@@ -21,10 +21,15 @@ OWASP (Open Worldwide Application Security Project) is a non-profit organization
 
 // Defense:
 app.get('/api/orders/:id', authenticate, async (req, res) => {
-  const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-  if (!order || (order.userId !== req.user.id && req.user.role !== 'admin')) {
-    return res.status(403).json({ error: 'Forbidden' }); // not 404 — info leak
-  }
+  // ownership is baked into the query: someone else's order simply won't be found
+  const order = await prisma.order.findFirst({
+    where: req.user.role === 'admin'
+      ? { id: req.params.id }
+      : { id: req.params.id, userId: req.user.id },
+  });
+  // 404, not 403: a 403 would confirm the order exists but isn't theirs,
+  // which helps an attacker map out valid ids
+  if (!order) return res.status(404).json({ error: 'Not found' });
   res.json(order);
 });
 

@@ -3,7 +3,7 @@
 
 ## Зачем это отдельная тема
 
-Пагинация и фильтрация кажутся простыми — пока не сталкиваешься с таблицей на 50 миллионов записей, real-time лентой или бесконечным скроллом. Тогда выясняется, что `LIMIT 20 OFFSET 1000000` убивает базу данных, "страница 2" показывает дубликаты при одновременной вставке, а простой фильтр `?status=active` превращается в `?status[]=active&status[]=pending&createdAfter=2024-01-01`.
+Пагинация и фильтрация кажутся простыми — пока не сталкиваешься с таблицей на 50 миллионов записей, real-time лентой или бесконечным скроллом. Тогда выясняется, что `LIMIT 20 OFFSET 1000000` убивает базу данных, а "страница 2" показывает дубликаты при одновременной вставке. А простой фильтр `?status=active` превращается в `?status[]=active&status[]=pending&createdAfter=2024-01-01`.
 
 ---
 
@@ -19,6 +19,8 @@ GET /users?skip=20&take=20     (Prisma-стиль)
 ```
 
 ### Как это работает в SQL
+
+База данных видит обычный запрос на SQL (structured query language):
 
 ```sql
 -- page=2, limit=20
@@ -98,7 +100,7 @@ SELECT * FROM users ORDER BY created_at DESC LIMIT 20 OFFSET 1000000;
 
 ```txt
 GET /users?limit=20                    ← первая страница
-GET /users?cursor=eyJpZCI6MjB9&limit=20 ← следующая (cursor из предыдущего ответа)
+GET /users?cursor=eyJpZCI6MjB9&limit=20 ← следующая
 ```
 
 ### Как это работает
@@ -168,7 +170,7 @@ const cursor = Buffer.from(
 ```txt
 Преимущества:
   ✅ Стабильная: вставки/удаления не ломают пагинацию
-  ✅ Производительная: O(log n) по индексу вместо O(n) при большом offset
+  ✅ Производительная: O(log n) по индексу вместо O(n) на offset
   ✅ Идеальна для бесконечного скролла и real-time лент
   ✅ Работает правильно при конкурентных изменениях
 
@@ -176,7 +178,7 @@ const cursor = Buffer.from(
   ❌ Нельзя прыгнуть на страницу 42 напрямую
   ❌ Нельзя показать "страница 2 из 78"
   ❌ Обычно только "вперёд" (назад — сложнее, нужен реверсный курсор)
-  ❌ Нет общего count без COUNT(*) запроса (дорогого на больших таблицах)
+  ❌ Нет общего count без COUNT(*) — дорогого на больших таблицах
 ```
 
 ### Двунаправленная курсорная пагинация
@@ -305,11 +307,11 @@ WHERE to_tsvector('english', name || ' ' || email) @@ to_tsquery('english', 'ali
 Один столбец:
 GET /users?sort=createdAt&order=desc
 GET /users?sort=name&order=asc
-GET /users?sort=-createdAt            (минус = desc — популярная конвенция)
+GET /users?sort=-createdAt            (минус = desc — конвенция)
 GET /users?sort=+name                 (плюс = asc)
 
 Несколько столбцов:
-GET /users?sort=-createdAt,name       (desc by date, then asc by name)
+GET /users?sort=-createdAt,name       (дата desc, потом name)
 GET /users?sort[0]=createdAt&sort[0]direction=desc&sort[1]=name
 ```
 

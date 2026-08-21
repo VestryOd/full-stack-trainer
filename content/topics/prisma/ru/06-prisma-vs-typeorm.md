@@ -1,13 +1,15 @@
-# Prisma vs TypeORM
+# Prisma против TypeORM
 
 ## Фундаментальная разница в подходе
 
-TypeORM: **runtime ORM** — описываешь Entity с декораторами, TypeORM строит SQL метаданные во время выполнения через reflection (`reflect-metadata`). Типизация частично выводится из decorators, но не все ошибки ловятся на этапе компиляции.
+Оба инструмента — это ORM (Object-Relational Mapping, «объектно-реляционное отображение»): слой, который переводит ваши классы и вызовы методов в SQL (Structured Query Language) — язык, на котором говорит база данных. Разница в том, **когда** строится это отображение.
 
-Prisma: **schema-first, code-generation** — описываешь `schema.prisma`, Prisma генерирует полностью типизированный клиент. Все типы — compile-time, не runtime. Изменение модели без `prisma generate` → немедленная ошибка TS.
+TypeORM строит его в рантайме, то есть во время выполнения программы. Вы описываете сущности (Entity) с декораторами, а TypeORM собирает метаданные для SQL уже на ходу, через рефлексию (`reflect-metadata`). Типы частично выводятся из декораторов, поэтому часть ошибок компилятор не поймает.
+
+Prisma работает по-другому: **сначала схема, потом кодогенерация** (schema-first). Вы описываете `schema.prisma`, а Prisma генерирует по ней полностью типизированный клиент. Все типы известны на этапе компиляции, а не во время выполнения. Изменили модель и не запустили `prisma generate` → сразу же ошибка TS.
 
 ```typescript
-// TypeORM — Entity + Decorator подход
+// TypeORM — подход через сущности с декораторами
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 
 @Entity('users')
@@ -86,19 +88,19 @@ const result = await prisma.$queryRaw<User[]>`
 ## Сравнительная таблица
 
 ```txt
-                    Prisma                      TypeORM
-─────────────────────────────────────────────────────────
-Подход:             Schema-first + codegen       Runtime decorators
-TypeScript:         Excellent (compile-time)      Good (частично runtime)
-Автокомплит:        Превосходный                 Хороший
-Миграции:           Автоматические (schema diff)  Авто + ручные (надёжнее)
-Query Builder:      Нет (только $queryRaw)        Мощный QueryBuilder
-Сложные JOIN:       $queryRaw (verbose)           QueryBuilder (чище)
-Производительность: Сопоставимо                  Сопоставимо
-Документация:       Отличная                     Хорошая (но устаревшая)
-Ecosystem:          Растёт быстро                 Зрелый, больше примеров
-Новые проекты:      Предпочтительно              Реже
-Legacy проекты:     Дорогая миграция              Стабильно
+                Prisma                  TypeORM
+────────────────────────────────────────────────────────────────
+Подход:         схема + кодогенерация   декораторы в рантайме
+TypeScript:     отлично (компиляция)    хорошо (частью рантайм)
+Автокомплит:    превосходный            хороший
+Миграции:       авто (diff схемы)       авто + вручную, контроль
+Query builder:  нет, только $queryRaw   мощный QueryBuilder
+Сложные JOIN:   $queryRaw, многословно  QueryBuilder, чище
+Скорость:       сопоставима             сопоставима
+Документация:   отличная                хорошая, местами старая
+Экосистема:     быстро растёт           зрелая, больше примеров
+Новые проекты:  предпочтительно         реже
+Старый код:     миграция дорогая        стабильно
 ```
 
 ## Где TypeORM выигрывает
@@ -112,7 +114,8 @@ async function findUsers(filters: UserFilters) {
     qb.andWhere('u.name ILIKE :name', { name: `%${filters.name}%` });
   }
   if (filters.roleIds?.length) {
-    qb.innerJoin('u.roles', 'r').andWhere('r.id IN (:...roleIds)', { roleIds: filters.roleIds });
+    qb.innerJoin('u.roles', 'r')
+      .andWhere('r.id IN (:...roleIds)', { roleIds: filters.roleIds });
   }
   if (filters.hasPublishedPosts) {
     qb.innerJoin('u.posts', 'p', 'p.published = true');
@@ -120,10 +123,10 @@ async function findUsers(filters: UserFilters) {
 
   return qb.orderBy('u.createdAt', 'DESC').getMany();
 }
-// В Prisma: нет QueryBuilder → нужен либо динамический where object (ограничено)
-// либо $queryRaw с ручной string concatenation (небезопасно без Prisma.sql)
+// В Prisma нет QueryBuilder → либо динамический объект where (возможности
+// ограничены), либо $queryRaw со склейкой строк (небезопасно без Prisma.sql)
 
-// 2. ActiveRecord pattern (если используется)
+// 2. Паттерн ActiveRecord (если он используется в проекте)
 class User extends BaseEntity {
   @PrimaryGeneratedColumn() id: number;
   static findByEmail(email: string) {
@@ -136,28 +139,28 @@ await User.findByEmail('alice@example.com'); // прямо на модели
 ## Где Prisma выигрывает
 
 ```typescript
-// 1. Type Safety — ошибки на compile-time
+// 1. Типобезопасность — ошибки видны уже при компиляции
 const user = await prisma.user.findUnique({
   where: { id: 1 },
-  select: { email: true, naem: true }, // TS ошибка: 'naem' не существует
+  select: { email: true, naem: true }, // ошибка TS: поля 'naem' не существует
 });
-// Тип user: { email: string } | null — точно знаем что вернётся
+// Тип user: { email: string } | null — точно знаем, что вернётся
 
-// TypeORM: User | null — весь Entity, даже если нужны только 2 поля
-// + возможны runtime ошибки если опечатка в имени поля
+// TypeORM: User | null — вся сущность, даже если нужны только 2 поля
+// + опечатка в имени поля упадёт уже во время выполнения
 
-// 2. Nested writes — атомарные операции над relations
+// 2. Вложенная запись (nested writes) — атомарные операции над связями
 await prisma.user.create({
   data: {
     email: 'alice@example.com',
     posts: { create: [{ title: 'Hello' }] },
     profile: { create: { bio: 'Engineer' } },
   },
-}); // одна транзакция, один round-trip
+}); // одна транзакция, один поход в базу
 
-// 3. select — точный projection без лишних данных
+// 3. select — точная выборка полей, без лишних данных
 const publicUserData = await prisma.user.findMany({
-  select: { id: true, name: true }, // никогда не вернёт password/tokens
+  select: { id: true, name: true }, // никогда не вернёт пароли и токены
 });
 // Тип: { id: number; name: string | null }[]  — точный, не User[]
 ```
@@ -165,33 +168,33 @@ const publicUserData = await prisma.user.findMany({
 ## Стратегия выбора
 
 ```txt
-Выбирай Prisma когда:
-  ✓ Новый TypeScript проект (NestJS, Next.js, Express + TS)
-  ✓ Команда ценит type safety и developer experience
-  ✓ CRUD-heavy приложение (SaaS, API, admin panel)
-  ✓ Простые или средней сложности запросы
-  ✓ Нет legacy кодовой базы на TypeORM
+Выбирайте Prisma, когда:
+  ✓ Новый проект на TypeScript (NestJS, Next.js, Express + TS)
+  ✓ Команда ценит типобезопасность и удобство разработки
+  ✓ Приложение в основном про CRUD (SaaS, API, админка)
+  ✓ Запросы простые или средней сложности
+  ✓ Нет старой кодовой базы на TypeORM
 
-Выбирай TypeORM когда:
+Выбирайте TypeORM, когда:
   ✓ Существующая кодовая база уже на TypeORM
   ✓ Много динамических сложных запросов (QueryBuilder критичен)
-  ✓ Проект на JavaScript (не TypeScript) — преимущества Prisma теряются
-  ✓ Нужен ActiveRecord pattern
-  ✓ Требуются специфические TypeORM-фичи (Entity inheritance, etc.)
+  ✓ Проект на JavaScript, без TypeScript — плюсы Prisma пропадают
+  ✓ Нужен паттерн ActiveRecord
+  ✓ Нужны фичи только TypeORM (наследование сущностей и т. п.)
 
-Практика: можно использовать оба в одном проекте
-  — Prisma для основного CRUD, $queryRaw для сложных аналитических запросов
-  — Или TypeORM + Prisma для новых модулей
+На практике: два инструмента могут жить в одном проекте
+  — Prisma для основного CRUD, $queryRaw для сложной аналитики
+  — Или TypeORM для существующего кода + Prisma для новых модулей
 ```
 
 ## Типичные ошибки на интервью
 
-- **"Prisma быстрее TypeORM"** — зависит от конкретного запроса. Оба генерируют SQL и передают его PostgreSQL. Разница в производительности минимальна для одинаковых запросов. Главное различие — developer experience и type safety, не runtime performance.
+- **"Prisma быстрее TypeORM"** — зависит от конкретного запроса. Оба генерируют SQL и передают его PostgreSQL. На одинаковых запросах разница в производительности минимальна. Главное различие — удобство разработки и типобезопасность, а не скорость во время выполнения.
 
-- **"TypeORM устарел"** — нет. TypeORM активно поддерживается и используется в production. Prisma популярнее в новых проектах, но TypeORM имеет огромную кодовую базу и mature ecosystem. Оба инструмента валидны.
+- **"TypeORM устарел"** — нет. TypeORM активно поддерживается и работает в production. Prisma популярнее в новых проектах, но на TypeORM написано огромное количество кода, и экосистема у него зрелая. Оба инструмента рабочие.
 
-- **"В Prisma нет QueryBuilder — это критичный минус"** — для большинства CRUD приложений `where` объекта Prisma достаточно. `$queryRaw` с параметризованными запросами покрывает сложные кейсы. QueryBuilder TypeORM важен только при очень динамичном построении запросов (десятки условий в runtime).
+- **"В Prisma нет QueryBuilder — это критичный минус"** — большинству CRUD-приложений хватает объекта `where`. CRUD — это create, read, update, delete: четыре обычные операции над записями. Сложные случаи закрывает `$queryRaw` с параметризованными запросами. QueryBuilder из TypeORM важен там, где запрос собирается очень динамично: десятки условий решаются во время выполнения.
 
-- **"Миграции TypeORM надёжнее Prisma"** — не однозначно. TypeORM миграции более ручные (больше контроля, больше возможностей для ошибки). Prisma Migrate автоматически генерирует SQL diff с Shadow Database и хранит историю — меньше человеческих ошибок. Для команд без глубокого SQL опыта: Prisma Migrate надёжнее.
+- **"Миграции TypeORM надёжнее"** — не однозначно. Миграции TypeORM пишутся руками: больше контроля, но и больше места для человеческой ошибки. Prisma Migrate сама генерирует SQL-diff через Shadow Database и хранит версионированную историю. Мест для ошибки остаётся меньше. Для команд без глубокого опыта в SQL надёжнее Prisma Migrate.
 
-- **"Переход с TypeORM на Prisma — быстрая операция"** — нет. Это полная замена слоя доступа к данным: Entity → Model, Repositories → PrismaClient, декораторы → schema.prisma, QueryBuilder → Prisma API/$queryRaw. На большом проекте — недели работы с высоким риском регрессий. Стратегия: постепенная миграция по модулям.
+- **"Переход с TypeORM на Prisma — быстрая операция"** — нет. Это полная замена слоя доступа к данным: Entity → model, репозитории → PrismaClient, декораторы → `schema.prisma`, QueryBuilder → Prisma API и `$queryRaw`. На большом проекте это недели работы с высоким риском регрессий. Стратегия одна: постепенная миграция по модулям.

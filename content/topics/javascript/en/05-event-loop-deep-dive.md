@@ -6,7 +6,7 @@ Before examining the algorithm, you need a clear mental model of three things th
 
 ### Call Stack
 
-A LIFO stack of execution frames. Each function call pushes a frame onto the top; returning from a function pops it. **Run-to-completion**: the engine cannot interrupt a running JS function — the Event Loop only gets control when the stack is **completely empty**.
+A last-in, first-out (LIFO) stack of execution frames. Each function call pushes a frame onto the top; returning from a function pops it. **Run-to-completion**: the engine cannot interrupt a running JS function — the Event Loop only gets control when the stack is **completely empty**.
 
 ```js
 function a() { b(); }
@@ -23,7 +23,7 @@ a();
 
 ### Task Queue / Macrotask Queue
 
-A FIFO queue. Sources of tasks:
+A first-in, first-out (FIFO) queue. Sources of tasks:
 - `setTimeout` / `setInterval` (when the delay expires)
 - User events (click, input)
 - I/O callbacks (network, file — in Node.js)
@@ -262,7 +262,8 @@ Synchronous code:
   setTimeout 1           → Task Queue: [t1]
   setTimeout 2           → Task Queue: [t1, t2]
   new Promise(executor):
-    'promise executor'   → output: promise executor (executor is synchronous!)
+    'promise executor'   → output: promise executor
+                           (the executor runs synchronously)
     resolve()            → Promise resolved
   .then('then 1')        → Microtask: [m1]
   .then('then 3')        → Microtask: [m1, m3]
@@ -271,8 +272,9 @@ Synchronous code:
 Drain Microtask Queue:
   m1 ('then 1'):
     'then 1'             → output: then 1
-    return Promise.resolve() → second .then('then 2') waits on this promise
-                          → adds m2 to the queue
+    return Promise.resolve()
+      → second .then('then 2') waits on this promise
+      → adds m2 to the queue
     Microtask: [m3, m2]
 
   m3 ('then 3'):
@@ -326,7 +328,7 @@ console.log('sync');
 // queueMicrotask  ← queueMicrotask (same queue as Promise, FIFO)
 ```
 
-**Why does `process.nextTick` have the highest priority?** It predates Promises and was designed with the semantics "run before the next event loop iteration." Its priority over Promises is an API legacy, not a deliberate design choice. In modern code, `process.nextTick` should only be used when you specifically need that "before all Promises" semantic.
+**Why does `process.nextTick` have the highest priority?** It predates Promises and was designed with the semantics "run before the next event loop iteration". Its priority over Promises is an API legacy, not a deliberate design choice. In modern code, `process.nextTick` should only be used when you specifically need that "before all Promises" semantic.
 
 **Recursive `process.nextTick` — a dangerous trap:**
 
@@ -378,21 +380,23 @@ queueMicrotask(() => {
 ## Connection to other topics
 
 ```txt
-[Asynchronous Patterns]  — Promise internals, async/await as sugar over
-                            microtasks are covered in the next article
-[Node.js Event Loop]     — libuv phases (timers, poll, check, close) in depth
-                            in the Node.js topic; this article covers JS-level only
-[Generators]             — async generator + for-await-of works through
-                            the same Microtask Queue under the hood
-[Performance]            — long synchronous tasks block the Event Loop;
-                            monitor via PerformanceObserver / monitorEventLoopDelay
+[Asynchronous Patterns] — Promise internals and async/await as
+                          sugar over microtasks: the next article
+[Node.js Event Loop]    — libuv phases (timers, poll, check,
+                          close) in depth in the Node.js topic;
+                          this article stays at the JS level
+[Generators]            — async generators and for-await-of run
+                          through the same Microtask Queue
+[Performance]           — long synchronous tasks block the Event
+                          Loop; watch it with PerformanceObserver
+                          or monitorEventLoopDelay
 ```
 
 ## Common interview traps
 
-- **"Microtasks run between macrotasks"** — an oversimplification that doesn't explain the key point: the Microtask Queue is drained **completely** after each task (and at any microtask checkpoint). New microtasks added during processing also run before the next task.
+- **"Microtasks run between macrotasks"** — an oversimplification. It misses the key point: the Microtask Queue is drained **completely** after each task, and at any microtask checkpoint. New microtasks added during processing also run before the next task.
 
-- **"Promise.then runs when the Promise is resolved"** — a Promise may be resolved, but the callback only executes when the stack empties and the Event Loop reaches the Microtask Queue. Synchronous code after `.then()` always runs first.
+- **"Promise.then runs when the Promise is resolved"** — a Promise may already be resolved. The callback still runs only when the stack empties and the Event Loop reaches the Microtask Queue. Synchronous code after `.then()` always runs first.
 
 - **"setTimeout(fn, 0) is immediate"** — no. First, the minimum delay in browsers is typically 1–4 ms (4 ms after several nested setTimeouts). Second, the task enters the queue and only executes after all current tasks and all accumulated microtasks.
 

@@ -5,9 +5,10 @@ import { useLocale } from '@/context/LocaleContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-/** Quiz question with its question text pre-rendered to HTML (shiki github-dark) on the server. */
+/** Quiz question with its question and explanation pre-rendered to HTML (shiki github-dark) on the server. */
 export interface QuizQuestionWithHtml extends QuizQuestion {
   questionHtml: { en: string; ru: string };
+  explanationHtml: { en: string; ru: string };
 }
 
 interface QuizCardProps {
@@ -50,7 +51,10 @@ export function QuizCard({ question, selectedIndex, onSelect }: QuizCardProps) {
       {answered && (
         <div className="rounded-md border p-3 text-sm bg-muted">
           <p className="font-medium mb-1">{t2('quiz.explanation')}:</p>
-          <p className="text-muted-foreground">{t(question.explanation)}</p>
+          <div
+            className="article-body text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: question.explanationHtml[locale] }}
+          />
         </div>
       )}
     </div>

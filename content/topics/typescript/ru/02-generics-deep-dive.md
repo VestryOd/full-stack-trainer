@@ -20,9 +20,11 @@ function identityNum(value: number): number { return value; }
 function identity<T>(value: T): T {
   return value;
 }
-const result = identity("hello"); // result: string ✅
-const result2 = identity(42);     // result2: number ✅
+const result = identity("hello"); // result: "hello" ✅
+const result2 = identity(42);     // result2: 42 ✅
 ```
+
+Литерал выживает потому, что `result` — это `const`. Неограниченный `T` даёт *расширяющийся* литеральный тип. Расширяется он только там, где значение можно изменить: в `let`, в литерале массива или в свойстве объекта. Поэтому `box<T>(x: T): { value: T }` даёт `{ value: string }`, а ограниченный `box<T extends string>` сохраняет `{ value: "hello" }`.
 
 Дженерики — это не "шаблоны как в C++". В C++ шаблоны раскрываются при компиляции в конкретный код. В TypeScript дженерик — это **переменная типа**, значение которой TypeScript *выводит* в момент вызова функции или инстанциации типа. Вся типизация стирается в runtime.
 

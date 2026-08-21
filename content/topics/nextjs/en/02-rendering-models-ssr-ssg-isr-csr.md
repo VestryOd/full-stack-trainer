@@ -1,20 +1,23 @@
 # Rendering Models: CSR, SSR, SSG, ISR
 
+The four models in the title are CSR (client-side rendering), SSR (server-side rendering), SSG (static site generation) and ISR (incremental static regeneration).
+
 ## What a "rendering model" actually is
 
 Rendering is the process of turning a React tree into HTML. The rendering model answers two questions:
 
 ```txt
-Where is the HTML created?  — on the server, on a CDN at build time, or in the browser
+Where is the HTML created?  — on the server, on a CDN at build
+                              time, or in the browser
 When is the HTML created?   — on every request, once at build time,
-                                or periodically via revalidation
+                              or periodically via revalidation
 ```
 
-In the App Router (Next.js 13+) the model is no longer chosen "for the whole app" — it's chosen *granularly*, per route segment, via `fetch` options and exported config (`export const dynamic`, `export const revalidate`). This is a key difference from the Pages Router, where the model was chosen per-page via an exported function (`getServerSideProps`/`getStaticProps`/none).
+In the App Router (Next.js 13+) the model is no longer chosen "for the whole app". It's chosen *granularly*, per route segment: through `fetch` options and exported config (`export const dynamic`, `export const revalidate`). That's a key difference from the Pages Router, where the model was chosen per page by an exported function — `getServerSideProps`, `getStaticProps`, or neither.
 
 ## CSR — Client Side Rendering
 
-The classic SPA model: the server sends minimal HTML, and JS in the browser builds the rest.
+The classic single-page application (SPA) model: the server sends minimal HTML, and JS in the browser builds the rest.
 
 ```txt
 Browser
@@ -45,18 +48,19 @@ export function UserDashboard() {
 }
 ```
 
-**Pros**: minimal server load (it just serves static assets), great UX *after* the initial load — transitions between states are instant and don't require a server round trip.
+**Pros**: minimal server load — the server just hands out static assets. And the experience *after* the initial load is great: transitions between states are instant, with no server round trip.
 
-**Cons**: empty HTML before JS runs (bad for SEO and metrics like FCP/LCP), data fetching inside `useEffect` creates *request waterfalls* — a component has to mount first, then fetch, then render children that may fetch again.
+**Cons**: the HTML is empty until JS runs. That hurts search engine optimization (SEO) and paint metrics — FCP (first contentful paint) and LCP (largest contentful paint). Fetching data inside `useEffect` also creates *request waterfalls*: a component mounts first, then fetches, then renders children that may fetch again.
 
-In the App Router, CSR is achieved via Client Components (`'use client'`) — a deliberate choice for interactive UI pieces (forms, dropdowns, charts), not the default model for entire pages.
+In the App Router, CSR happens through Client Components (`'use client'`). It is a deliberate choice for interactive pieces of the interface — forms, dropdowns, charts — not the default model for entire pages.
 
 ## SSR — Server Side Rendering
 
 HTML is generated on the server **on every request**.
 
 ```txt
-Request → server renders React to HTML → HTML sent to browser → hydration
+Request → server renders React to HTML
+        → HTML sent to browser → hydration
 ```
 
 **In the Pages Router**, via `getServerSideProps`:
@@ -68,7 +72,7 @@ export async function getServerSideProps(context) {
 }
 ```
 
-**In the App Router**, SSR is the *default* behavior for a Server Component that uses dynamic data (e.g. `cookies()`, `headers()`, or a `fetch` with `cache: 'no-store'`):
+**In the App Router**, SSR is the *default* for a Server Component that reads dynamic data. Dynamic means `cookies()`, `headers()`, or a `fetch` with `cache: 'no-store'`:
 
 ```tsx
 // app/profile/page.tsx
@@ -94,14 +98,15 @@ export const dynamic = 'force-dynamic';
 
 **Pros**: always-fresh data, great SEO (full HTML on every request), personalization (you can read cookies/headers before rendering).
 
-**Cons**: server load scales with traffic, higher TTFB (you wait for render + fetch before sending the first byte), harder to cache on a CDN (though Next can still cache SSR responses via `Cache-Control` and its Data Cache).
+**Cons**: server load scales with traffic. TTFB (time to first byte) is higher, because you wait for render plus fetch before the first byte goes out. And caching on a CDN (content delivery network) is harder — though Next can still cache SSR responses via `Cache-Control` and its Data Cache.
 
 ## SSG — Static Site Generation
 
 HTML is generated **at build time**, once, before any user request.
 
 ```txt
-Build time → HTML for every page → deployed to a CDN → users get static files
+Build time → HTML for every page → deployed to a CDN
+           → users get static files
 ```
 
 **In the Pages Router**: `getStaticProps` (+ `getStaticPaths` for dynamic routes).
@@ -134,12 +139,15 @@ export default async function BlogPost({ params }: { params: { slug: string } })
 ISR is SSG that can "go stale" and regenerate without a full redeploy.
 
 ```txt
-Request 1 (within TTL)        → cached page served instantly
-Request after TTL expires     → STALE page served + regeneration runs in the background
-Subsequent request             → the new page is served
+Request 1 (within TTL)
+  → the cached page is served instantly
+Request after TTL expires
+  → the STALE page is served, regeneration runs in the background
+Subsequent request
+  → the new page is served
 ```
 
-The key nuance: the user whose request "triggers" revalidation does **not** wait for the rebuild — they get the stale version, while the new version is cached for subsequent requests (a stale-while-revalidate pattern).
+The key nuance: the user whose request "triggers" revalidation does **not** wait for the rebuild. They get the stale version, and the fresh one is cached for everyone after them. The pattern is called stale-while-revalidate.
 
 **In the Pages Router**:
 
@@ -193,7 +201,7 @@ fetch('https://cms.example.com/posts', { next: { tags: ['posts'] } });
 
 ## Hydration and Hydration Mismatch
 
-After SSR/SSG, the browser receives ready-made HTML — content is visible immediately, but **not interactive**: event handlers aren't wired up yet. Hydration is the process where React walks the existing DOM tree and "attaches" its virtual DOM and event handlers to it, *without* recreating the markup from scratch.
+After SSR/SSG, the browser receives ready-made HTML — content is visible immediately, but **not interactive**: event handlers aren't wired up yet. Hydration is the process where React walks the existing tree of DOM (Document Object Model — the browser's tree of page nodes) nodes. It "attaches" its own virtual DOM and event handlers to that markup, *without* recreating it from scratch.
 
 ```txt
 Server renders HTML
@@ -261,31 +269,34 @@ function Clock() {
 | CSR | In the browser, after JS | Low (static) | Always fresh (client fetch) | Excellent (static) |
 | SSR | On every request | High | Always fresh | Harder (per-request) |
 | SSG | At build time | Low (CDN) | Fixed at build time | Perfect |
-| ISR | Build + periodic regeneration | Low (CDN) | Configurable TTL delay | Good |
+| ISR | Build + periodic regeneration | Low (CDN) | Configurable TTL (time to live) delay | Good |
 
 ## Choosing a model — practical scenarios
 
 ```txt
 Blog / docs                    → SSG
-Product catalog                → ISR (TTL revalidation + on-demand on product update)
-Personal user dashboard        → SSR or CSR (data tied to a session)
-Landing / marketing page        → SSG
-E-commerce product page         → ISR + on-demand revalidation after price/stock updates
-Real-time data (markets, chat)  → CSR + WebSocket/polling, or Server Components + streaming
+Product catalog                → ISR (TTL revalidation, plus
+                                 on-demand on product update)
+Personal user dashboard        → SSR or CSR (session-bound data)
+Landing / marketing page       → SSG
+E-commerce product page        → ISR + on-demand revalidation
+                                 after price/stock updates
+Real-time data (markets, chat) → CSR + WebSocket/polling, or
+                                 Server Components + streaming
 ```
 
-Important: in the App Router the choice isn't "one model for the whole app" but a *composition* — a Layout can be static (SSG) while a nested Server Component with dynamic data renders via the SSR model, and if it's wrapped in `<Suspense>` it can stream as a separate chunk (Partial Prerendering is an experimental feature that pushes this idea even further).
+Important: in the App Router you compose models instead of picking one for the whole app. A Layout can be static (SSG) while a Server Component nested inside it renders dynamic data via SSR. Wrap that component in `<Suspense>` and it streams as a separate chunk. Partial Prerendering is an experimental feature that pushes this idea even further.
 
 ## Common interview mistakes
 
-- **"SSG means the server renders the HTML"** — no, SSG means the HTML is created *at build time*; the server isn't involved in rendering at request time at all, it just serves a pre-built file.
+- **"SSG means the server renders the HTML"** — no. SSG means the HTML is created *at build time*. At request time the server renders nothing at all, it just serves a pre-built file.
 
 - **"ISR is just SSR with a cache"** — more precisely: ISR is SSG with a background regeneration mechanism. The user whose request triggers TTL-based revalidation gets the *old* version, not the new one.
 
-- **Confusing `revalidate: 0` and `cache: 'no-store'`** — both "disable" the static cache, but semantically they're different: `revalidate: 0` is still part of the ISR/Data Cache model (effectively "don't cache at all"), while `no-store` is explicit per-request SSR bypassing the Data Cache entirely. In practice the outcomes are similar, but a strong answer shows you understand the difference between the Full Route Cache and the Data Cache.
+- **Confusing `revalidate: 0` and `cache: 'no-store'`** — both "disable" the static cache, but they mean different things. The option `revalidate: 0` is still part of the ISR and Data Cache model: effectively "don't cache at all". A `no-store` fetch is explicit per-request SSR that bypasses the Data Cache entirely. In practice the outcomes are similar, but a strong answer shows you know the difference between the Full Route Cache and the Data Cache.
 
-- **Treating hydration mismatch as "just a console warning, safe to ignore"** — in production it can cause visible content "repainting" and loss of state (e.g. resetting an input the user has already started typing into).
+- **Treating hydration mismatch as "just a console warning, safe to ignore"** — in production it can visibly "repaint" content and lose state. A typical example: an input the user has already started typing into gets reset.
 
-- **Can't explain why `Date.now()` or `Math.random()` directly in JSX is an anti-pattern** — because the value is computed both on the server (during SSR/SSG) and on the client (during the first render before hydration), and those values will almost certainly diverge.
+- **Can't explain why `Date.now()` or `Math.random()` directly in JSX is an anti-pattern** — the value is computed twice. It is computed once on the server (during SSR or SSG) and again on the client, during the first render before hydration. Those two values will almost certainly diverge.
 
-- **Assuming the model is chosen once for the whole app** — in the App Router the model is chosen per segment and can be combined within a single page (static layout + dynamic content + streaming via Suspense).
+- **Assuming the model is chosen once for the whole app** — in the App Router it is chosen per segment. Models also combine inside one page: a static layout, dynamic content, and streaming via Suspense.

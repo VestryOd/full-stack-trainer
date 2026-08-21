@@ -2,7 +2,9 @@
 
 ## A transaction is a unit of work with guaranteed properties, not just a "group of queries"
 
-A transaction is a sequence of database operations that moves the DB from one **consistent state** to another. The key word is "consistent": not just an "atomic group," but a group that doesn't leave data in a partially-changed or invalid state.
+A transaction is a sequence of database operations that moves the database from one **consistent state** to another. ACID is the name of the four guarantees it gives: atomicity, consistency, isolation, durability.
+
+The key word above is "consistent". A transaction is not just an "atomic group", but a group that never leaves data half-changed or invalid. This article takes the four letters one at a time.
 
 ```sql
 -- Money transfer: the classic example where a partial update is catastrophic
@@ -18,29 +20,19 @@ COMMIT;   -- only HERE do the changes become visible to other transactions
 ROLLBACK; -- rolls back ALL changes since BEGIN, as if they never happened
 ```
 
-```txt
-Autocommit: in PostgreSQL, every SQL statement outside an explicit
-BEGIN/COMMIT runs in its own implicit transaction — BEGIN + COMMIT
-are wrapped automatically. This is the default behavior.
+**Autocommit.** In PostgreSQL every SQL (Structured Query Language) statement outside an explicit `BEGIN`/`COMMIT` runs in its own implicit transaction. The server wraps it in `BEGIN` and `COMMIT` for you. This is the default behaviour.
 
-Practical consequence: INSERT/UPDATE without BEGIN is already a
-transaction (atomic), just a single-statement one. Multiple UPDATEs
-without BEGIN are each in their own transaction — no shared rollback.
-```
+The practical consequence: an `INSERT` or `UPDATE` without `BEGIN` is already an atomic transaction, just a single-statement one. Several `UPDATE`s without `BEGIN` each land in their own transaction, so there is no shared rollback.
 
 ## A — Atomicity: "all or nothing" at the implementation level
 
-```txt
-Atomicity is implemented via the Write-Ahead Log (WAL):
-  1. Before any data change hits the disk, PostgreSQL writes a
-     record to the WAL (transaction log)
-  2. On COMMIT: the WAL record is marked as committed → data can
-     be applied to the heap
-  3. On ROLLBACK (or crash before COMMIT): PostgreSQL reads the WAL
-     at startup and "undoes" unfinished transactions
+Atomicity is implemented through the WAL — the write-ahead log, which is PostgreSQL's transaction journal. Three steps:
 
-WAL is what gives both D (Durability) and A (Atomicity).
-```
+1. Before any data change reaches the disk, PostgreSQL writes a record into the WAL.
+2. On `COMMIT` that WAL record is marked as committed, so the data may now be applied to the heap.
+3. On `ROLLBACK`, or after a crash before `COMMIT`, PostgreSQL reads the WAL at startup and undoes the unfinished transactions.
+
+The WAL is what gives you both D (durability) and A (atomicity).
 
 ```sql
 -- SAVEPOINT — partial rollback within a transaction
@@ -64,21 +56,14 @@ COMMIT;
 
 ## C — Consistency: constraints guarantees, not "business logic correctness"
 
-```txt
-A common misconception: "Consistency" in ACID guarantees that data
-is always "logically correct." That's not right.
+A common misconception says that "consistency" in ACID guarantees data is always logically correct. That is not what it guarantees.
 
-PostgreSQL only guarantees that CONSTRAINTS (NOT NULL, CHECK,
-FOREIGN KEY, UNIQUE) won't be violated after COMMIT. Business logic
-("you can't transfer more than you have") is the APPLICATION's
-responsibility — or a CHECK constraint.
+PostgreSQL only promises that constraints are not violated after `COMMIT`: `NOT NULL`, `CHECK`, `FOREIGN KEY`, `UNIQUE`. Business logic such as "you cannot transfer more than you have" belongs to the application, or to a `CHECK` constraint.
 
 The difference in practice:
-  CHECK (balance >= 0)  → the DBMS blocks the transfer on violation
-  Without CHECK         → the DBMS allows balance to go negative
-                          (logically wrong, but ACID doesn't help —
-                          there's no constraint to check)
-```
+
+- With `CHECK (balance >= 0)` the database blocks the transfer as soon as the rule is broken.
+- Without that `CHECK` the database happily lets `balance` go negative. That is logically wrong, and ACID does not help: there is no constraint to check.
 
 ```sql
 -- Constraints that enforce C (Consistency)
@@ -91,60 +76,47 @@ CREATE TABLE accounts (
 
 -- A transaction that violates CHECK → automatic ROLLBACK
 BEGIN;
-UPDATE accounts SET balance = balance - 10000 WHERE id = 1; -- rolled back if balance < 10000
+UPDATE accounts SET balance = balance - 10000 WHERE id = 1;
+-- rolled back if balance < 10000
 COMMIT;
 ```
 
 ## I — Isolation: "concurrent transactions don't interfere" — more complex than it sounds
 
-```txt
-Full isolation (Serializable) = transactions run as if they execute
-sequentially, one at a time. In practice this is expensive — locks
-reduce concurrency.
+Full isolation, the `SERIALIZABLE` level, means transactions behave as if they ran one at a time. In practice that is expensive, because locks cut down concurrency.
 
-PostgreSQL supports several isolation levels with different
-concurrency/isolation trade-offs (details in [Isolation Levels]):
+So PostgreSQL offers several levels with different trade-offs between isolation and concurrency. All of them are built on MVCC (Multi-Version Concurrency Control): the server keeps several versions of a row instead of locking it against readers.
 
-  READ COMMITTED   — default; sees data committed BEFORE each
-                     STATEMENT starts within the transaction
-  REPEATABLE READ  — sees a snapshot as of the BEGINNING of the
-                     transaction
-  SERIALIZABLE     — full isolation via SSI
-                     (Serializable Snapshot Isolation)
-
-Each level protects differently against: dirty read, non-repeatable
-read, phantom read, serialization anomaly.
+```sql
+-- The level is chosen per transaction
+BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;   -- the default
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 ```
+
+- `READ COMMITTED` — the default. It sees data committed **before each statement** inside the transaction starts.
+- `REPEATABLE READ` — it sees one snapshot, taken at the **beginning** of the transaction.
+- `SERIALIZABLE` — full isolation through SSI, which stands for Serializable Snapshot Isolation.
+
+Each level protects against a different set of anomalies: dirty read, non-repeatable read, phantom read, serialization anomaly. Details in [Isolation Levels](./03-isolation-levels.md).
 
 ## D — Durability: COMMIT = data on disk (but it's not that simple)
 
-```txt
-After COMMIT, the application gets confirmation — and the data is
-guaranteed to survive a power failure, process crash, or OS restart.
+After `COMMIT` the application gets its confirmation. From that moment the data is guaranteed to survive a power failure, a process crash or an operating system restart.
 
-Implementation:
-  WAL fsync — before confirming COMMIT, PostgreSQL calls fsync()
-  (or fdatasync()) on the WAL file — a BLOCKING call that waits for
-  the physical disk write.
+The mechanism is `fsync`. Before confirming the `COMMIT`, PostgreSQL calls `fsync()` — or `fdatasync()` — on the WAL file. That is a **blocking** call: it waits for the physical disk write to finish.
 
-Settings that affect D:
-  synchronous_commit = on    — standard (D guaranteed)
-  synchronous_commit = off   — confirmation BEFORE fsync (risk of
-                              losing ~200ms of data on crash, but faster)
-  fsync = off                — VERY dangerous: completely removes the
-                              D guarantee (only for bulk loads where
-                              data can be replayed)
-```
+Three settings change this guarantee:
+
+| Setting | What it does | Risk |
+|---|---|---|
+| `synchronous_commit = on` | The standard. `fsync()` finishes before the `COMMIT` is confirmed. | None. Durability is guaranteed. |
+| `synchronous_commit = off` | Confirms the `COMMIT` **before** `fsync()`. Faster. | A crash can lose up to 600 ms of data: three times `wal_writer_delay`. |
+| `fsync = off` | Removes the durability guarantee completely. | Very dangerous. Only for bulk loads you can replay. |
 
 ## Deadlock — how it occurs and how PostgreSQL detects it
 
-```txt
-A deadlock is a circular lock-wait between two or more transactions:
-
-  Transaction A: holds lock on row 1, waiting for row 2
-  Transaction B: holds lock on row 2, waiting for row 1
-  → Neither can proceed → deadlock
-```
+A deadlock is a circular lock-wait between two or more transactions. Transaction A holds the lock on row 1 and waits for row 2. Transaction B holds the lock on row 2 and waits for row 1. Neither can move forward, so neither ever finishes on its own.
 
 ```sql
 -- Classic deadlock scenario (executed concurrently)
@@ -165,22 +137,15 @@ COMMIT;
 --   with: ERROR: deadlock detected
 ```
 
-```txt
-PostgreSQL detects deadlocks via a lock wait graph: after
-deadlock_timeout (default 1 second), PostgreSQL inspects the graph
-for cycles. When a cycle is found — it picks a victim (usually the
-transaction with the least work done) and rolls it back with ERROR.
+PostgreSQL finds deadlocks with a lock wait graph. After `deadlock_timeout`, which is 1 second by default, it inspects that graph for cycles. When it finds a cycle it picks a victim — usually the transaction that has done the least work — and rolls it back with an `ERROR`.
 
-The application MUST catch SQLSTATE 40P01 (deadlock detected) and
-retry the transaction.
+Your application **must** catch SQLSTATE 40P01, the `deadlock detected` code, and retry the transaction. SQLSTATE is the five-character error code that every PostgreSQL error carries.
 
-Preventing deadlocks:
-  - always update rows in the SAME ORDER (both transactions do id=1
-    first, then id=2 — deadlock is impossible)
-  - keep transactions short (minimize the window for contention)
-  - use SELECT ... FOR UPDATE with NOWAIT or SKIP LOCKED for
-    explicit lock control
-```
+Three ways to prevent deadlocks:
+
+- Always update rows in the **same order**. If both transactions touch `id=1` first and `id=2` second, a deadlock is impossible.
+- Keep transactions short, so the window for contention stays small.
+- Use `SELECT ... FOR UPDATE` with `NOWAIT` or `SKIP LOCKED` when you want explicit control over locking.
 
 ## Transactions in the application: Prisma, errors, and long transactions
 
@@ -207,46 +172,37 @@ await prisma.$transaction(async (tx) => {
 });
 ```
 
-```txt
-Critical for production:
+Two rules matter in production.
 
-1. Transactions must be SHORT:
-   - While a transaction is open, it holds locks
-   - A long transaction blocks VACUUM (see [MVCC, Locks, and Vacuum])
-   - A long transaction holds WAL, increasing its size
+**1. Transactions must be short.** While a transaction is open it holds its locks. A long transaction also blocks `VACUUM` (see [MVCC, Locks, and Vacuum](./05-mvcc-locks-vacuum.md)), and it holds on to WAL segments, which grows the log on disk.
 
-2. Network calls INSIDE a transaction — an anti-pattern:
-   await prisma.$transaction(async (tx) => {
-     const user = await tx.user.findFirst();
-     await fetch('https://external-api.com/notify'); // BAD
-     // If fetch hangs for 30 seconds — the transaction holds
-     // locks for 30 seconds
-   });
+**2. Network calls inside a transaction are an anti-pattern.**
 
-3. Correct: finish the transaction first, then make external calls.
+```ts
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.findFirst();
+  await fetch('https://external-api.com/notify'); // BAD
+  // If fetch hangs for 30 seconds, the transaction keeps
+  // holding its locks for those 30 seconds too.
+});
 ```
+
+Do it the other way round: finish the transaction first, then make the external calls.
 
 ## Connection to other topics
 
-```txt
-[Isolation Levels]          — how I (Isolation) is concretely
-                               implemented via READ COMMITTED /
-                               REPEATABLE READ / SERIALIZABLE
-[MVCC, Locks, and Vacuum]   — the mechanism PostgreSQL uses to
-                               implement transactions without read
-                               locks
-[Indexes and Internals]     — how WAL interacts with heap files
-                               and indexes when data changes
-```
+- [Isolation Levels](./03-isolation-levels.md) — how I (isolation) is concretely implemented through `READ COMMITTED`, `REPEATABLE READ` and `SERIALIZABLE`.
+- [MVCC, Locks, and Vacuum](./05-mvcc-locks-vacuum.md) — the mechanism PostgreSQL uses to implement transactions without read locks. MVCC is Multi-Version Concurrency Control.
+- [Indexes and Internals](./04-indexes-internals.md) — how the WAL interacts with heap files and indexes when data changes.
 
 ## Common interview mistakes
 
-- **"C (Consistency) in ACID means data is always logically correct"** — not understanding that Consistency in ACID context only means database-level constraints (NOT NULL, CHECK, FK) are maintained. Application business-rule correctness is the app's responsibility.
+- **"C (Consistency) in ACID means data is always logically correct"** — that is not what it means. Consistency in ACID only covers the database's own constraints: `NOT NULL`, `CHECK`, `FOREIGN KEY`, `UNIQUE`. Business-rule correctness stays the application's job.
 
-- **"ROLLBACK deletes data from the table"** — not understanding the mechanism: PostgreSQL uses WAL to "undo" changes not yet applied to the heap (or applies undo via MVCC row versions).
+- **"ROLLBACK deletes data from the table"** — not understanding the mechanism. PostgreSQL uses the WAL to undo changes not yet applied to the heap, or applies undo through MVCC row versions.
 
-- **"A deadlock is when two queries wait longer than usual"** — not distinguishing deadlock (circular wait — fundamentally unresolvable) from lock contention (high competition for one lock — resolves when the lock is released).
+- **"A deadlock is when two queries wait longer than usual"** — not distinguishing a deadlock from lock contention. A deadlock is a circular wait and can never resolve itself. Lock contention is heavy competition for one lock, and it clears as soon as that lock is released.
 
-- **"It's always safe to make external HTTP calls inside Prisma.$transaction"** — not understanding that while a transaction is open, locks are held, and an external API hang blocks database rows for the entire wait.
+- **"It's always safe to make external HTTP calls inside `prisma.$transaction`"** — while a transaction is open it holds locks. So an external API that hangs blocks those database rows for the entire wait.
 
-- **"synchronous_commit = off is always unsafe — keep it on"** — not knowing the use case: for non-critical data (event logs), `synchronous_commit = off` gives a significant performance boost at the acceptable risk of losing a few hundred milliseconds of data.
+- **"`synchronous_commit = off` is always unsafe, keep it on"** — not knowing the use case. For non-critical data such as event logs it gives a large speed-up. The risk is losing a few hundred milliseconds of data, which is acceptable there.

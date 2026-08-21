@@ -115,7 +115,9 @@ type FormData<TState> = {
   age: number;
 } & { readonly __state: TState }; // phantom field
 
-function createForm(data: { name: string; email: string; age: number }): FormData<Unvalidated> {
+function createForm(
+  data: { name: string; email: string; age: number }
+): FormData<Unvalidated> {
   return data as FormData<Unvalidated>;
 }
 
@@ -376,7 +378,7 @@ TypeScript allows remarkable things at the type level. But there are hard limits
    type Infinite<T> = { value: Infinite<T> }; — hangs the compiler
 
 2. Union size: compiler has a limit (~100k members)
-   Large template literal cross-products → "too complex to represent"
+   Big template literal products → "too complex to represent"
 
 3. Compile time: complex types slow the TypeScript Language Server
    IDE starts lagging on hover, autocomplete delays increase
@@ -410,7 +412,8 @@ const UserSchema = z.object({
 });
 
 type User = z.infer<typeof UserSchema>;
-// { id: number; name: string; email: string; age: number; role: "admin" | "user" | "moderator" }
+// { id: number; name: string; email: string; age: number;
+//   role: "admin" | "user" | "moderator" }
 
 function createUser(data: unknown): User {
   return UserSchema.parse(data); // ✅ both types and runtime validation
@@ -424,7 +427,8 @@ Zod solves a problem TypeScript cannot: **runtime data** (HTTP requests, files, 
 ```txt
 Use type-level programming when:
   - Types are derived from code (ReturnType, Parameters, infer)
-  - A compile-time guarantee is needed (branded types, exhaustiveness)
+  - A compile-time guarantee is needed (branded types,
+    exhaustiveness)
   - Library/framework code for other developers (utility types)
   - Better DX: autocomplete, precise error messages
 
@@ -500,6 +504,6 @@ add5and3(2);                 // 10 ✅
 
 - **Not knowing when to stop and use Zod** — TypeScript types are erased at runtime. If data comes from outside (`req.body`, `JSON.parse`), TypeScript checks nothing. Writing `const data = req.body as User` is false security. Runtime validation is required.
 
-- **"The typed Builder pattern is overengineering"** — depends on context. For a public library or an internal DSL with many required steps — justified. For ordinary CRUD code — excessive. Being able to argue the trade-off matters more than the pattern itself.
+- **"The typed Builder pattern is overengineering"** — depends on context. For a public library or an internal DSL — justified. A DSL is a domain-specific language, a narrow language for describing one kind of task, and it usually has many required steps. For ordinary CRUD code — create, read, update, delete — it is excessive. Being able to argue the trade-off matters more than the pattern itself.
 
 - **Not understanding why `& { readonly __brand: T }` makes types incompatible** — it's the extra field with a unique literal type that acts as the "seal". Two different brands have different literal types in the `__brand` field, making them structurally incompatible.

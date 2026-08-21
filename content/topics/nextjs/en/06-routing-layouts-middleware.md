@@ -2,7 +2,7 @@
 
 ## File-system routing: basics and typing nuances
 
-In the App Router, a route is defined by a *folder*, not a file — a `page.tsx` file inside a folder makes it accessible as a route. This distinction matters: you can create `app/blog/components/` with regular components, and it **won't** become a route because it has no `page.tsx`.
+In the App Router, a route is defined by a *folder*, not a file. A folder becomes reachable as a route once it contains a `page.tsx`. This distinction matters: you can create `app/blog/components/` with regular components, and it **won't** become a route because it has no `page.tsx`.
 
 ```txt
 app/
@@ -33,21 +33,27 @@ export default async function BlogPost({
 }
 ```
 
-`id` (from `await params`) is always a `string` (or `string[]` for catch-all segments) — even if it's conceptually a number, Next doesn't coerce it. A common mistake is forgetting `Number(params.id)`/`parseInt` before passing it to a DB query that expects a numeric ID.
+`id` (from `await params`) is always a `string`, or `string[]` for catch-all segments. Even if it is conceptually a number, Next doesn't coerce it. A common mistake is forgetting `Number(params.id)` or `parseInt` before passing the value to a DB (database) query that expects a numeric ID.
 
 ### Catch-all and Optional Catch-all
 
 ```txt
-app/docs/[...slug]/page.tsx     → /docs/a, /docs/a/b, /docs/a/b/c
-                                    does NOT match /docs (needs at least 1 segment)
+app/docs/[...slug]/page.tsx
+  → /docs/a, /docs/a/b, /docs/a/b/c
+  → /docs does NOT match (needs at least 1 segment)
 
-app/docs/[[...slug]]/page.tsx   → /docs, /docs/a, /docs/a/b
-                                    matches /docs too (slug will be undefined)
+app/docs/[[...slug]]/page.tsx
+  → /docs, /docs/a, /docs/a/b
+  → /docs matches too, and slug is undefined
 ```
 
 ```tsx
 // app/docs/[...slug]/page.tsx
-export default async function DocsPage({ params }: { params: Promise<{ slug: string[] }> }) {
+export default async function DocsPage({
+  params,
+}: {
+  params: Promise<{ slug: string[] }>;
+}) {
   const { slug } = await params; // Next.js 15: params is async
   // /docs/react/hooks/useEffect → slug = ['react', 'hooks', 'useEffect']
   const path = slug.join('/');
@@ -55,22 +61,22 @@ export default async function DocsPage({ params }: { params: Promise<{ slug: str
 }
 ```
 
-A typical use case is CMS/docs sites, where an arbitrarily deep page tree is defined by an external data source rather than the file structure.
+A typical use case is a docs site driven by a CMS (content management system). The page tree there can be arbitrarily deep, and its shape comes from an external data source rather than from the file structure.
 
 ### Route Groups — organization without affecting the URL
 
 ```txt
 app/
  ├─ (marketing)/
- │   ├─ layout.tsx        → a separate layout just for marketing pages
+ │   ├─ layout.tsx        → layout for marketing pages only
  │   ├─ page.tsx          → /
  │   └─ about/page.tsx    → /about
  ├─ (app)/
- │   ├─ layout.tsx        → a separate layout for the authenticated section
+ │   ├─ layout.tsx        → layout for the signed-in area
  │   └─ dashboard/page.tsx → /dashboard
 ```
 
-Folders in parentheses, `(marketing)`, `(app)` — **don't appear in the URL**. This lets you have multiple independent "root-like" layouts (e.g. one with a public header, another with an authenticated sidebar) without nesting them inside each other.
+Folders in parentheses, `(marketing)`, `(app)` — **don't appear in the URL**. That lets you keep several independent "root-like" layouts side by side: one with a public header, another with a sidebar for signed-in users. Neither has to nest inside the other.
 
 ### Parallel Routes and Intercepting Routes (advanced)
 
@@ -102,23 +108,25 @@ export default function Layout({
 }
 ```
 
-`(.)photo` is an *intercepting route*: when navigating client-side to `/photo/123` (e.g. by clicking from a feed), a modal opens with the photo *on top of* the current page, but when accessed directly via URL (refresh, shared link) or a server-side transition, the full `/photo/[id]` page renders. This is the classic "Instagram-style" photo modal pattern — senior-level interviews sometimes ask about it via the phrasing "how would you make a click open a modal, but a direct link to the same photo open a full page".
+`(.)photo` is an *intercepting route*. Click a thumbnail in a feed and the client navigates to `/photo/123`. A modal opens with the photo *on top of* the current page. Open the same address directly, through a refresh or a shared link, and the full `/photo/[id]` page renders instead. A server-side transition behaves the same way.
+
+This is the classic "Instagram-style" photo modal. Senior interviews sometimes ask for it in exactly this phrasing. How do you make a click open a modal, while a direct link to the same photo opens a full page?
 
 ## Layout, Template, Loading, Error, Not Found — file conventions
 
 ```txt
 app/dashboard/
- ├─ layout.tsx     → persistent UI shell, NOT remounted on navigation within the segment
- ├─ template.tsx   → like layout, but REMOUNTED on every navigation
+ ├─ layout.tsx     → shell; NOT remounted inside the segment
+ ├─ template.tsx   → like layout, but REMOUNTED every navigation
  ├─ loading.tsx    → automatic <Suspense fallback>
  ├─ error.tsx      → automatic Error Boundary (Client Component)
- ├─ not-found.tsx  → rendered when notFound() is called or a catch-all path doesn't match
+ ├─ not-found.tsx  → shown on notFound() or unmatched catch-all
  └─ page.tsx       → route content
 ```
 
 ### Layout vs Template — when you actually need a Template
 
-`layout.tsx` preserves state and the DOM across navigations between child routes — this is the App Router's main advantage (the sidebar doesn't flicker, scroll position isn't reset). But sometimes that behavior is **undesirable**:
+`layout.tsx` preserves state and the DOM (Document Object Model — the live tree of nodes the browser renders) across navigations between child routes. That is the App Router's main advantage: the sidebar doesn't flicker, and scroll position isn't reset. But sometimes that behavior is **undesirable**:
 
 ```tsx
 // app/blog/[slug]/template.tsx
@@ -137,7 +145,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
 }
 ```
 
-If this were a `layout.tsx`, the `useEffect` would only fire on the segment's first mount, not on every transition between `/blog/post-1` and `/blog/post-2` (since the layout never unmounts). `template.tsx` solves exactly this class of problems: per-navigation effects, enter/exit CSS animations, resetting local form state between wizard steps.
+Put this same code in `layout.tsx` and the `useEffect` fires once, when the segment first mounts. It does not fire again when you move from `/blog/post-1` to `/blog/post-2`, because the layout never unmounts. The `template.tsx` file is for exactly this class of problem. Three examples: effects that must run on every navigation, enter/exit CSS animations, and resetting local form state between wizard steps.
 
 ### Nested Layouts — what exactly doesn't remount
 
@@ -156,7 +164,7 @@ Settings Layout  — not remounted (if it exists)
 page.tsx         — replaced with new content
 ```
 
-Next requests only the RSC payload for the changed segment from the server — shared layouts stay mounted in the React tree, so state (an open menu, scroll position inside the sidebar) isn't lost.
+Next asks the server for only one thing: the RSC payload (React Server Components payload — a serialized description of the changed segment). Shared layouts stay mounted in the React tree, so their state survives: an open menu, the scroll position inside the sidebar.
 
 ## Middleware
 
@@ -167,10 +175,10 @@ Middleware is code that runs **before** a request reaches Next.js routing, on th
 ```txt
 Unavailable in middleware:
   fs, net, child_process, any Node-specific native modules
-  Full ORMs (Prisma Client doesn't work on the Edge in its standard config)
+  Full ORMs (standard Prisma Client does not run on the Edge)
 
 Available:
-  Web-standard APIs: fetch, Request, Response, URL, crypto (Web Crypto)
+  Web-standard APIs: fetch, Request, Response, URL, Web Crypto
   Next-specific wrappers: NextRequest, NextResponse
 ```
 
@@ -198,7 +206,7 @@ export const config = {
 };
 ```
 
-`matcher` isn't just an "optimization" — it's a necessity: without it, middleware runs **for every request**, including static assets (`/_next/static/...`), adding unnecessary latency across the whole app.
+`matcher` isn't an "optimization", it's a necessity. Without it, middleware runs **for every request**, including static assets like `/_next/static/...`. That adds latency across the whole app for no benefit.
 
 ### Redirect vs Rewrite — the difference people confuse most
 
@@ -215,7 +223,8 @@ A practical rewrite example — A/B testing without changing the URL:
 
 ```ts
 export function middleware(request: NextRequest) {
-  const bucket = request.cookies.get('ab-bucket')?.value ?? (Math.random() < 0.5 ? 'a' : 'b');
+  const existing = request.cookies.get('ab-bucket')?.value;
+  const bucket = existing ?? (Math.random() < 0.5 ? 'a' : 'b');
 
   const response = bucket === 'b'
     ? NextResponse.rewrite(new URL('/home-variant-b', request.url))
@@ -226,17 +235,19 @@ export function middleware(request: NextRequest) {
 }
 ```
 
-The user sees `/` in the address bar in both cases, but Next serves the content of different pages depending on the cookie — that's a rewrite in action.
+The user sees `/` in the address bar either way. Next serves the content of a different page depending on the cookie — that's a rewrite in action.
 
 ### Geo and Localization
 
 ```ts
 export function middleware(request: NextRequest) {
-  const country = request.geo?.country ?? 'US'; // available on Vercel; self-hosted needs its own source
+  // request.geo is filled in on Vercel; self-hosting needs its own source
+  const country = request.geo?.country ?? 'US';
   const locale = country === 'DE' ? 'de' : country === 'FR' ? 'fr' : 'en';
 
   if (!request.nextUrl.pathname.startsWith(`/${locale}`)) {
-    return NextResponse.redirect(new URL(`/${locale}${request.nextUrl.pathname}`, request.url));
+    const target = new URL(`/${locale}${request.nextUrl.pathname}`, request.url);
+    return NextResponse.redirect(target);
   }
   return NextResponse.next();
 }
@@ -249,29 +260,32 @@ Good fit:
   - routing-level auth checks (does a token exist)
   - redirects and rewrites
   - modifying headers/cookies for all requests
-  - geo/locale-based routing, A/B bucket assignment
+  - geo/locale routing, A/B bucket assignment
 
 Poor fit:
-  - validating a token with a DB lookup on every request (Edge Runtime + DB latency
-    on EVERY request, including static assets, if the matcher is too broad)
-  - complex business logic — belongs in Route Handlers/Server Actions,
-    which have a full Node.js runtime available
+  - validating a token with a DB lookup on every request
+    (Edge Runtime plus DB latency on EVERY request, including
+    static assets, if the matcher is too broad)
+  - complex business logic — belongs in Route Handlers or
+    Server Actions, which have a full Node.js runtime
 ```
 
-A common anti-pattern is validating a JWT with a DB check (e.g. "has this token been revoked") directly in middleware. It's technically possible via `fetch` to an external service, but adds a network round trip to *every* protected request. Heavier authorization logic is usually moved into the Route Handlers/Server Actions themselves, while middleware sticks to cheap checks (e.g. verifying a JWT signature without a DB lookup).
+A common anti-pattern is validating a JWT (JSON Web Token) in middleware with a DB check — "has this token been revoked", for example. It is technically possible through `fetch` to an external service. But it adds a network round trip to *every* protected request.
+
+Heavier authorization logic usually moves into the Route Handlers and Server Actions themselves. Middleware then sticks to cheap checks, such as verifying a JWT signature without a DB lookup.
 
 ## Common interview mistakes
 
-- **"params.id is a number if the URL has digits"** — no, `params` are always strings (or arrays of strings for catch-all), type coercion is the developer's responsibility.
+- **"params.id is a number if the URL has digits"** — no. `params` values are always strings, or arrays of strings for catch-all. Coercing the type is the developer's job.
 
-- **Confusing `[...slug]` and `[[...slug]]`** — the first doesn't match the parent path with no segments (`/docs` gives a 404), the second does, and `slug` will be `undefined`.
+- **Confusing `[...slug]` and `[[...slug]]`** — the first needs at least one segment, so `/docs` gives a 404. The second matches `/docs` as well, and there `slug` is `undefined`.
 
 - **"Route Groups affect the URL"** — no, `(marketing)`/`(app)` exist only to organize files and provide different layouts; they don't appear in the URL.
 
 - **"layout.tsx and template.tsx are just synonyms"** — `layout` preserves state and the DOM across navigations within a segment, `template` is recreated on every navigation. The difference is critical for `useEffect`-based analytics or enter/exit animations.
 
-- **"Middleware can do everything a Route Handler can"** — no, the Edge Runtime doesn't give access to Node APIs or most ORMs. Not knowing this is a common cause of "Prisma crashes in my middleware".
+- **"Middleware can do everything a Route Handler can"** — no. The Edge Runtime gives no access to Node APIs or to most ORM libraries (object-relational mappers). Not knowing this is a common cause of "Prisma crashes in my middleware".
 
 - **Forgetting `matcher`** — without it, middleware runs on every request, including `/_next/static/*`, `/favicon.ico`, etc., measurably increasing latency.
 
-- **"Redirect and Rewrite are synonyms for 'send the user somewhere'"** — Redirect changes the URL in the browser (visible to the user and search engines), Rewrite doesn't. For SEO these are fundamentally different tools (redirect signals "content has moved", rewrite signals "this is the same resource, just a different internal implementation").
+- **"Redirect and Rewrite are synonyms for 'send the user somewhere'"** — no. A redirect changes the URL in the browser, so both the user and search engines see it. A rewrite does not change it. For SEO (search engine optimization) they are different tools: a redirect says "the content has moved", a rewrite says "same resource, different implementation".

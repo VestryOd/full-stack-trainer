@@ -1,0 +1,120 @@
+{
+  "zone": "solid-grasp",
+  "kinds": ["question-bank", "quiz-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/questions/solid-grasp.json", "locale": "en",
+      "scores": { "A": 3, "B": 2, "C": 3, "D": 4, "E": 4, "F": 2, "G": null } },
+    { "file": "content/questions/solid-grasp.json", "locale": "ru",
+      "scores": { "A": 3, "B": 3, "C": 3, "D": 4, "E": 4, "F": null, "G": 2 } },
+    { "file": "content/quiz/solid-grasp.json", "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 3, "E": 1, "F": 4, "G": null } },
+    { "file": "content/quiz/solid-grasp.json", "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 3, "E": 1, "F": null, "G": 2 } }
+  ],
+  "averages": { "A": 2.5, "B": 3.25, "C": 2.0, "D": 3.5, "E": 2.5, "F": 3.0, "G": 2.0 },
+  "worst_places": [
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "C",
+      "quote": "This is primarily an ISP violation. The PaymentProcessor interface is too broad — not all payment handlers support refunds. ... While LSP is technically also violated, ISP is the root cause",
+      "problem": "quiz-2 and quiz-7 are the SAME scenario (a subclass extending a concrete PaymentProcessor base class and throwing from an inherited method) and the bank gives OPPOSITE correct answers. In quiz-2 the correct option is ISP (index 1) and LSP is a distractor; in quiz-7 the correct option is LSP (index 0) and ISP is a distractor, with the explanation calling ISP wrong. A reader who studies both learns a rule and its negation. On top of that quiz-2 argues ISP about `class PaymentProcessor { ... }` — a class, not an interface — while ISP is by definition about the interface a client sees. The site's own article content/topics/oop-patterns/en/01-solid-principles.md treats throw-from-override as the canonical LSP case.",
+      "before": "Two items with identical shape (base class + subclass that throws) marked ISP and LSP respectively, each explanation declaring the other principle a distractor.",
+      "after": "Make the two items structurally different so both answers are defensible: keep quiz-7 as-is (class inheritance, subclass throws -> LSP). Rewrite quiz-2 so the code is an actual interface: `interface PaymentProcessor { process(amount: number): void; refund(id: string): void; }` and `class SquarePaymentHandler implements PaymentProcessor` with a throwing `refund` — then ISP is the honest root cause, and the explanation can say 'the interface forces an operation on an implementer that cannot support it; the LSP symptom follows from the ISP cause' instead of asserting it."
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "C",
+      "quote": "The Mediator pattern (a GRASP pattern) encapsulates how a set of objects interact by introducing a mediator object that handles their communication.",
+      "problem": "quiz-20 states as fact that Mediator is a GRASP pattern. It is not. The site's own article content/topics/oop-patterns/en/02-grasp-patterns.md lists exactly seven GRASP patterns (Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication) and Mediator is documented in content/topics/oop-patterns/en/05-behavioral-patterns.md as a GoF behavioral pattern. The item then demotes 'Low Coupling' — which IS a real GRASP pattern — to 'just a principle' and marks it wrong. The item teaches the reader a false taxonomy and marks the true GRASP answer as the distractor.",
+      "before": "Which GRASP pattern is applied when you create a Mediator object to handle communication between multiple complex subsystems, reducing direct dependencies between them? / correct: Mediator — centralizes control logic and communication",
+      "after": "Which GRASP pattern does a mediator object apply when it sits between several subsystems so they stop referencing each other directly? / correct: Indirection — an intermediate object mediates, so neither side holds a reference to the other. Explanation: 'Mediator is the GoF pattern; the GRASP pattern it applies is Indirection. Low Coupling is the goal Indirection serves, Creator is about who calls `new`, Expert is about who owns the data.'"
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "C",
+      "quote": "While Creator pattern is foundational, this scenario with multiple complex dependencies is better served by a Factory pattern.",
+      "problem": "quiz-5 asks 'In a GRASP context ... Which pattern best guides this decision?' and marks a NON-GRASP pattern (Factory) correct while marking the actual GRASP answer (Creator) wrong. quiz-8 then does the reverse and asserts 'Factory (Creator) pattern is the GRASP solution for object creation', i.e. that Factory and Creator are the same thing — the exact opposite of quiz-5. The article 02-grasp-patterns.md says 'Creator also echoes the Factory pattern ... Factory is needed when the \"contains or uses\" condition is not met', i.e. related but distinct, and a dedicated factory is a Pure Fabrication. Both quiz items contradict the article, in opposite directions.",
+      "before": "quiz-5: correct = 'Factory — use a dedicated factory class to encapsulate complex object creation logic'; quiz-8: correct = 'Factory (Creator) — a dedicated object responsible for creating instances based on criteria'.",
+      "after": "quiz-5 correct option: 'Pure Fabrication — Creator's rule (\"the class that contains or uses it\") points at no good owner here, so you invent a UserFactory that has no domain meaning and exists only to hold construction logic.' quiz-8 correct option: 'Creator — the object that contains or closely uses the payment decides which concrete class to instantiate; a Factory is the Pure Fabrication you extract once that decision grows too complex to live there.' Then the two items reinforce each other instead of colliding."
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "E",
+      "quote": "java\nclass User {\n  void setPassword(String pwd) { /* hash and validate */ }\n  void validateEmail(String email) { /* regex check */ }\n  void saveToDatabase() { /* SQL insert */ }\n  void logAuditTrail(String action) { /* write to audit table */ }\n}\n",
+      "problem": "Eight of 24 items (quiz-11, 12, 14, 15 with `java`; quiz-22, 23, 24, 25 with `typescript`) have the language tag on its own line and NO ``` fence at all, in both en and ru. On the page they render as a stray word followed by unformatted, unhighlighted, un-indented prose. This is a raw generation artifact — the items were produced in per-language batches and pasted without the fence. Four of them are also Java on a Node/React site, which no other file in the zone uses.",
+      "before": "java\nclass User {\n  void setPassword(String pwd) { /* hash and validate */ }\n  ...\n}\n",
+      "after": "```typescript\nclass User {\n  setPassword(pwd: string): void { /* hash and validate */ }\n  validateEmail(email: string): void { /* regex check */ }\n  saveToDatabase(): void { /* SQL insert */ }\n  logAuditTrail(action: string): void { /* write to audit table */ }\n}\n```"
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "C",
+      "quote": "Liskov Substitution Principle — Robot should not throw errors that Rectangle doesn't",
+      "problem": "quiz-25's distractor mentions `Rectangle`, a class that appears nowhere in quiz-25 (Worker/Robot) — it is copy-pasted verbatim from quiz-23, which is the Rectangle/Square item. Same class of artifact in quiz-12, whose stem opens 'Consider a payment processing system.' and then shows `class Shape`/`Rectangle`/`Square` — the payment sentence is left over from quiz-2/quiz-7. And the file has 24 items with ids 1-25: `solid-grasp-quiz-21` simply does not exist, so the numbering has a hole. Three separate signals that nobody read the file after generation.",
+      "before": "Liskov Substitution Principle — Robot should not throw errors that Rectangle doesn't",
+      "after": "Liskov Substitution Principle — a Robot passed where a Worker is expected breaks the caller's contract by throwing from eat()"
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "C",
+      "quote": "correctIndex: 0 in 20 of 24 items, 1 in 4 items, never 2, never 3",
+      "problem": "Answer A is correct 83% of the time and options C and D are NEVER correct. A reader who always picks A scores 20/24 without reading a single question. Length gives a second free signal: the correct option is the longest of the four in 15/24 (en) and 17/24 (ru), and where it is longest it is longest by an average of ~15 characters — the correct answer routinely carries a trailing '— because ...' clause the distractors do not have (quiz-23: 125 chars vs 66/80/95). The quiz therefore measures pattern-spotting, not SOLID/GRASP knowledge. This is the same failure shape as quiz/oop-patterns (18/25 at index 0, 22/25 longest-correct).",
+      "before": "20/24 at index 0, 0/24 at index 2 or 3; correct option longest in 15/24 (en).",
+      "after": "Shuffle correctIndex to roughly 6/6/6/6 across the four positions, and length-balance every item: either give all four options the same explanatory tail ('— <one clause of why>') or strip the tail from all four and move the reasoning into the explanation. Target: correct option is longest in no more than ~1/4 of items."
+    },
+    {
+      "file": "content/questions/solid-grasp.json",
+      "rubric": "F",
+      "quote": "The senior-level nuance is that IoC isn't one specific tool — a full DI container (like `tsyringe` or `InversifyJS`), a plain object passed as a constructor argument (as above), or React Context all implement the same principle: someone other than the consumer decides which concrete implementation to supply, and that decision point (the \"composition root\") is pushed to the single outermost layer of the app rather than scattered through every component that happens to need a service.",
+      "problem": "76 words, one sentence, with a three-item parenthetical list, a colon, a nested parenthetical definition and a trailing 'rather than' contrast. On a phone this is roughly ten lines with no place to breathe. `DI` is never expanded in this entry. 57.8% of all sentences in the en file exceed 25 words — the worst ratio in either of my two zones, and far worse than the ru file's 39%, so en is measurably harder than ru here.",
+      "before": "The senior-level nuance is that IoC isn't one specific tool — a full DI container (like `tsyringe` or `InversifyJS`), a plain object passed as a constructor argument (as above), or React Context all implement the same principle: someone other than the consumer decides which concrete implementation to supply, and that decision point (the \"composition root\") is pushed to the single outermost layer of the app rather than scattered through every component that happens to need a service.",
+      "after": "The nuance seniors are expected to know: IoC is not one specific tool. A full dependency injection (DI) container like `tsyringe` or `InversifyJS` implements it. So does a plain object passed as a constructor argument, as above. So does React Context. All three do the same thing: someone other than the consumer picks the concrete implementation. That decision lives in one place — the \"composition root\", the outermost layer of the app. Without it, the choice is scattered across every component that needs a service."
+    },
+    {
+      "file": "content/questions/solid-grasp.json",
+      "rubric": "G",
+      "quote": "Класс или модуль должен иметь ровно одну причину для изменения — одну ось ответственности, привязанную к одному actor'у или бизнес-задаче.",
+      "problem": "`actor'у` is an English noun with a Russian case ending glued on through an apostrophe. It appears this way across q-1, q-8 (3×) and q-21 (3×) — `actor'у`, `actor'ам`, `actor'а`, `actor'ов` — and it is the load-bearing term of the whole SRP explanation, so the reader hits it in the very first sentence of the very first question. Russian already has «участник» / «заинтересованная сторона» / «роль», and Uncle Bob's «actor» is standardly rendered as «актор». Same habit elsewhere: `failure mode` untranslated (q-7, q-13), `коллабораторами` (q-6, q-19, q-25), and «заботы» as a word-for-word calque of \"concerns\".",
+      "before": "Класс или модуль должен иметь ровно одну причину для изменения — одну ось ответственности, привязанную к одному actor'у или бизнес-задаче.",
+      "after": "У класса или модуля должна быть ровно одна причина для изменения. Эта причина привязана к одному актору — то есть к одной роли или группе людей, которая может попросить это изменить, — или к одной бизнес-задаче."
+    },
+    {
+      "file": "content/questions/solid-grasp.json",
+      "rubric": "G",
+      "quote": "Понятый слишком буквально, он превращает корень агрегата в разбитые на валидатор, сериализатор, репозиторий и нотификатор для одного доменного понятия, которое на практике всегда меняется по одной причине за раз — бизнес-правила \"User\".",
+      "problem": "Grammatically broken: «превращает корень агрегата в разбитые на валидатор...» — «в разбитые на» is not a valid construction, the sentence has no object it can land on, and the reader has to reverse-engineer the English original ('it produces an aggregate root split into a validator, ...') to parse it. This is a machine-translation seam left unedited, in an `advanced` entry.",
+      "before": "Понятый слишком буквально, он превращает корень агрегата в разбитые на валидатор, сериализатор, репозиторий и нотификатор для одного доменного понятия, которое на практике всегда меняется по одной причине за раз — бизнес-правила \"User\".",
+      "after": "Если понять его слишком буквально, один корень агрегата распадается на валидатор, сериализатор, репозиторий и нотификатор — и всё это для одного доменного понятия «User», которое на практике меняется по одной причине за раз: меняются бизнес-правила про пользователя."
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "A",
+      "quote": "SRP — extract validation, persistence, email, and logging into separate collaborators that the controller delegates to",
+      "problem": "In quiz-10, quiz-11, quiz-12, quiz-13, quiz-14, quiz-22 the four options are bare acronyms — SRP / OCP / ISP / DIP — with nothing in the question, the options or the explanation expanding them. A reader who has not memorised the letters cannot even read the answers, and there is no article on the solid-grasp page to look them up in. Across the quiz file: SRP 9× / DIP 8× / OCP 7× / ISP 6× / GRASP 6× / LSP 3× with no first-use expansion, plus CVV in quiz-7 (a card security code — never explained, and the code branches on `cvv.length !== 3`). The ru file adds untranslated `collaborators` in this same option.",
+      "before": "SRP — extract validation, persistence, email, and logging into separate collaborators that the controller delegates to",
+      "after": "Single Responsibility Principle (SRP) — extract validation, persistence, email and logging into separate helper classes that the controller delegates to"
+    },
+    {
+      "file": "content/quiz/solid-grasp.json",
+      "rubric": "G",
+      "quote": "Принцип подстановки Лисков — класс не может быть заменен на его родительский класс без нарушения поведения",
+      "problem": "The ru distractor in quiz-1 reverses the Liskov Substitution Principle: substitutability runs subtype-for-base ('a subclass can stand in for its parent'), not the other way round. As written it says the class cannot be replaced BY its parent, which is a different (and meaningless) claim, and quiz-2's own ru option 0 states the rule correctly — so the file contradicts itself. Related ru-only slips in the same file: «Лисков» vs «Лискова» used inconsistently across items; quiz-9's «ленивая инстанцировка» is not a Russian word (should be «ленивая инициализация»); quiz-15's «информацию о продвижениях» is a mistranslation of \"promotions\" (should be «об акциях»); quiz-16/17/19 leave the principle names in English while quiz-1/6/7 translate them.",
+      "before": "Принцип подстановки Лисков — класс не может быть заменен на его родительский класс без нарушения поведения",
+      "after": "Принцип подстановки Лискова — подкласс нельзя подставить вместо родительского класса без поломки поведения"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/solid-grasp.json#en": ["GRASP", "DTO", "DI", "DDD", "FP", "SDK", "ORM", "SSO", "CLI", "CRUD", "UX", "JSX", "IoC (expanded in q-16 only)"],
+    "content/questions/solid-grasp.json#ru": ["GRASP", "DTO", "DI", "DDD", "FP", "SDK", "ORM", "SSO", "CLI", "CRUD", "UX", "JSX", "БД"],
+    "content/quiz/solid-grasp.json#en": ["SRP", "OCP", "LSP", "ISP", "DIP", "GRASP", "SOLID", "CVV", "OOP"],
+    "content/quiz/solid-grasp.json#ru": ["SRP", "OCP", "LSP", "ISP", "DIP", "GRASP", "SOLID", "CVV", "ООП", "БД"]
+  },
+  "patterns": [
+    "The quiz is answerable without reading it. correctIndex is 0 in 20/24 and never 2 or 3 (guessing A scores 83%), and the correct option is the longest of the four in 15/24 en / 17/24 ru because only the correct option carries a trailing '— because ...' clause. This is the third quiz bank in a row with exactly this shape (quiz/oop-patterns: 18/25 at index 0, 22/25 longest-correct), so it is a generator default, not a per-file accident: fix it once in the generation template, not item by item.",
+    "The quiz was assembled from per-language generation batches that were never read end to end. The tells cluster: 8/24 items (quiz-11/12/14/15 `java`, quiz-22/23/24/25 `typescript`) have the language tag with no ``` fence in BOTH locales, so the code renders as raw prose; four of them are Java on a Node/React site; id `solid-grasp-quiz-21` is missing from a 1-25 range; quiz-12's stem still opens 'Consider a payment processing system' above a Rectangle/Shape example; quiz-25's distractor still says 'errors that Rectangle doesn't'. Item content duplicates in blocks too — 4 near-identical SRP items (1, 6, 11, 16), 4 DIP-inject-an-interface items (9, 14, 18, 24), 3 ISP forced-stub items (13, 19, 25), and the same Square/Rectangle LSP question twice (12 in Java, 23 in TypeScript).",
+    "The quiz contradicts the site's own theory and itself on GRASP taxonomy. quiz-20 asserts Mediator is a GRASP pattern (the article 02-grasp-patterns.md lists seven, Mediator is not among them; 05-behavioral-patterns.md documents it as GoF) and marks the real GRASP answer 'Low Coupling' wrong; quiz-5 marks non-GRASP Factory correct in a GRASP question with Creator wrong; quiz-8 then says 'Factory (Creator)' are the same thing. Meanwhile the QUESTION bank gets all of this right and goes further than the article (it covers Indirection and Protected Variations, which 02-grasp-patterns.md does not). The two files in one zone teach different facts.",
+    "The question bank is the opposite problem: excellent, internally consistent, senior-level content trapped in over-long single sentences. 57.8% of en sentences exceed 25 words vs 39% ru, so the English is measurably harder than the Russian for the same content. The structural habit is one long sentence carrying a definition plus a parenthetical list plus a contrast clause, all joined by an em-dash — the fix is mechanical (split at the em-dash and the colon) and does not touch a single technical claim.",
+    "The Russian question bank leaves the load-bearing vocabulary in English. «Trade-off» is untranslated in all 25 entries, plus `actor'у/actor'ам/actor'а/actor'ов` (English noun + Russian case ending via apostrophe, q-1/q-8/q-21), `failure mode` (q-7, q-13), «коллабораторами» (q-6/q-19/q-25) and «заботы» as a calque of \"concerns\" (7×). q-21 additionally contains an ungrammatical machine-translation seam («превращает корень агрегата в разбитые на валидатор...»)."
+  ],
+  "notes": "Overlap with questions/oop-patterns.json is near zero, not high: 0 of its 34 entries mention SOLID, GRASP, or any of the five principles by name — it is pure GoF (Singleton, Builder, Decorator, Observer, Command, Bridge, Facade, Proxy, Flyweight, State, Mediator, Null Object...). Only 2 of solid-grasp's 25 overlap: q-9 Factory Method (vs oop-patterns q-2/q-11) and q-10 Adapter (vs q-18). Verdict: keep them as two banks. The real problem is the opposite of duplication — solid-grasp's 25 excellent questions are the ONLY SOLID/GRASP practice on the site, and the articles that explain the theory (topics/oop-patterns/*/01-solid-principles.md, 02-grasp-patterns.md, rated 4-5 by the oop-patterns audit) sit behind a different page the reader never visits. Suggest surfacing those two articles from the solid-grasp page; if that is not possible, the acronym expansions in the quiz stop being optional. Also worth noting: the solid-grasp question bank covers Indirection and Protected Variations, which 02-grasp-patterns.md does not — so the article should gain those two sections rather than the bank losing them."
+}

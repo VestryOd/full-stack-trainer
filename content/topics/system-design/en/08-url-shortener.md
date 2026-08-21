@@ -2,7 +2,7 @@
 
 ## Requirements Clarification
 
-This is one of the most "standard" interview questions — which is exactly why the interviewer expects a structured approach rather than jumping straight to a diagram (see [System Design Fundamentals]).
+Start by fixing the requirements, not by drawing boxes. This is one of the most "standard" interview questions, so the interviewer is watching for structure rather than a memorised diagram. The step-by-step framework is covered in the System Design Fundamentals article of this topic.
 
 **Functional Requirements:**
 
@@ -36,13 +36,17 @@ Storage: 100M links/month * 500 bytes (URL + metadata) * 5 years
   (volume does NOT require sharding by itself — just an index on shortCode)
 ```
 
-Conclusion: this system **doesn't** require sharding for data volume — the core challenges lie elsewhere: generating unique codes at scale and caching the read path.
+Conclusion: three terabytes (TB) over five years is not much, so this system **doesn't** require sharding for data volume. The core challenges lie elsewhere: generating unique codes at scale, and caching the read path.
 
 ## Generating short codes — the central question of this topic
 
 ### Option 1: Hash (MD5/SHA256) + truncation
 
+MD5 is a hash function: it turns any input into a fixed-length string of characters. SHA256 is a stronger hash function that does the same job. Keep only the first few characters of the result.
+
 ```ts
+import crypto from 'node:crypto';
+
 function generateCode(longUrl: string): string {
   const hash = crypto.createHash('md5').update(longUrl).digest('hex');
   return hash.slice(0, 7); // first 7 hex characters
@@ -50,7 +54,7 @@ function generateCode(longUrl: string): string {
 ```
 
 - Pros: deterministic (the same URL → the same code — usable for deduplication).
-- Cons: **collisions are inevitable** with a truncated hash — you need a DB check + a strategy ("if taken, take the next N characters or add a salt"). This turns a simple operation into a potentially multi-step one with retries.
+- Cons: **collisions are inevitable** with a truncated hash. You need a check in the DB (database) plus a strategy: "if taken, take the next N characters or add a salt". This turns a simple operation into a potentially multi-step one with retries.
 
 ### Option 2: Base62-encoding an auto-increment ID
 
@@ -71,7 +75,7 @@ function toBase62(num: number): string {
 ```
 
 - Pros: guaranteed uniqueness (the ID is unique by definition — `PRIMARY KEY AUTO_INCREMENT`), the code gets shorter early on and grows gracefully, no collisions.
-- Cons — and this is **the main senior nuance**: an auto-increment ID from a single DB is a **single point of contention** for writes. At scale, many API instances can't safely generate the next ID "on their own" without hitting the DB on every request.
+- Cons — and this is **the main senior nuance**: an auto-increment ID from a single DB is a **single point of contention** for writes. At scale there are many API instances. None of them can safely generate the next ID "on its own" without hitting the DB on every request.
 
 ### Solution for distributed generation: pre-allocated ID ranges (Ticket Server)
 
@@ -94,11 +98,23 @@ WHERE id = 1
 RETURNING current_max - 1000 AS range_start, current_max AS range_end;
 ```
 
-This is a classic solution (used, e.g., in Flickr's Ticket Server, Instagram's ID generation) — it turns "the DB is a bottleneck on every write" into "the DB is a bottleneck once per 1,000 writes," reducing load by orders of magnitude.
+This is a classic solution, used in Flickr's Ticket Server and in Instagram's ID generation. It turns "the DB is a bottleneck on every write" into "the DB is a bottleneck once per 1,000 writes". That reduces load by orders of magnitude.
 
 ### Option 3: Random + collision check
 
 ```ts
+import { randomInt } from 'node:crypto';
+import { db } from './db'; // an already created PrismaClient
+
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function randomBase62String(length: number): string {
+  let out = '';
+  // randomInt, not Math.random: the code must not be guessable
+  for (let i = 0; i < length; i++) out += BASE62[randomInt(62)];
+  return out;
+}
+
 async function generateUniqueCode(): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = randomBase62String(7);
@@ -109,7 +125,7 @@ async function generateUniqueCode(): Promise<string> {
 }
 ```
 
-- With 7 Base62 characters (~3.5 * 10^12 combinations), the collision probability at millions of records is tiny (see "birthday paradox") but **not zero** — so a check + retry is always needed, and it's important to explicitly note this is a probabilistic approach, unlike auto-increment-based Base62 which is guaranteed.
+- With 7 Base62 characters (~3.5 * 10^12 combinations), the collision probability at millions of records is tiny — see "birthday paradox". Tiny is still **not zero**, so a check plus retry is always needed. Say out loud that this approach is probabilistic, unlike Base62 over an auto-increment ID, which is guaranteed.
 
 ## Read Path: redirect — the hottest path in the system
 
@@ -142,7 +158,7 @@ Redis: SET shortcode:abc123 (with a TTL)
   - more server load (offset by the Redis cache)
 ```
 
-For a URL shortener with analytics, the correct choice is **302**, and you should justify it explicitly (candidates often default to 301 "because permanent sounds right" without considering analytics).
+For a URL shortener with analytics, the correct choice is **302**, and you should justify it explicitly. Candidates often default to 301 "because permanent sounds right", without considering analytics.
 
 ## Analytics — asynchronous, off the hot path
 
@@ -156,7 +172,7 @@ Queue: { shortCode: 'abc123', timestamp, userAgent, referrer, ip }
 Worker → batched insert into the Analytics DB (ClickHouse/an analytical store)
 ```
 
-Why not `UPDATE clicks SET count = count + 1` synchronously on every redirect: it's an extra DB write **on the redirect's critical path** — under peak load, this exact write could become the bottleneck, slowing down what should be as fast as possible. A queue (see [Message Queues]) decouples "respond to the user" from "count the click."
+Why not `UPDATE clicks SET count = count + 1` synchronously on every redirect? It is an extra DB write **on the redirect's critical path**. Under peak load that exact write could become the bottleneck, slowing down what should be as fast as possible. A queue decouples "respond to the user" from "count the click" — the Message Queues article covers the pattern.
 
 ## Custom Aliases and Expiration
 
@@ -176,37 +192,48 @@ Expiration:
 ## Final architecture
 
 ```txt
-                   ┌───────────────┐
-          Client ─►│ Load Balancer │
-                   └───────┬───────┘
-                           │
-                    ┌──────▼──────┐ (stateless)
-                    │ API Servers │
-                    └─────┬───────┘
-     ┌───────────────────┼─────────────────────┐
-     ▼                   ▼                     ▼
-   Redis            PostgreSQL          Queue (clicks)
-(hot codes)      (source of truth)
-                                               │
-                                               ▼
-                                       Analytics Worker
-                                               │
-                                               ▼
-                                         Analytics DB
+               ┌───────────────┐
+               │ Client        │
+               └───────────────┘
+                       │
+                       ▼
+               ┌───────────────┐
+               │ Load Balancer │
+               └───────────────┘
+                       │
+                       ▼
+               ┌───────────────┐
+               │ API Servers   │
+               │ stateless     │
+               └───────────────┘
+      ▼                 ▼                ▼
+┌───────────┐  ┌─────────────────┐  ┌────────┐
+│ Redis     │  │ PostgreSQL      │  │ Queue  │
+│ hot codes │  │ source of truth │  │ clicks │
+└───────────┘  └─────────────────┘  └────────┘
+                                         ▼
+                               ┌──────────────────┐
+                               │ Analytics Worker │
+                               └──────────────────┘
+                                         │
+                                         ▼
+                               ┌──────────────────┐
+                               │ Analytics DB     │
+                               └──────────────────┘
 ```
 
-Read replicas for PostgreSQL get added if redirect traffic after the Redis cache is still significant — but in most realistic scenarios, the Redis hit ratio for popular links (a Zipf distribution: a small share of links gets most of the traffic) makes this a lower priority.
+Read replicas for PostgreSQL get added if redirect traffic after the Redis cache is still significant. In most realistic scenarios this is a lower priority, because the Redis hit ratio for popular links is high. Link traffic follows a Zipf distribution: a small share of links gets most of the traffic.
 
 ## Common interview mistakes
 
-- **Using `hash % N` or simple MD5 truncation without discussing collisions** — without a check + retry strategy, this isn't a "solution," it's a hidden bug source at scale.
+- **Using `hash % N` or simple MD5 truncation without discussing collisions.** Without a check plus retry strategy, this isn't a "solution". It is a hidden source of bugs at scale.
 
-- **Auto-increment ID without discussing distributed generation** — simple on a single server, but "how does this work with 50 API instances" is an expected follow-up, and a Ticket Server/pre-allocated ranges is the expected answer.
+- **Auto-increment ID without discussing distributed generation.** On a single server it is simple. But "how does this work with 50 API instances" is an expected follow-up, and pre-allocated ranges from a Ticket Server is the expected answer.
 
-- **Defaulting to a 301 redirect** — without realizing it makes analytics impossible and the user may never reach the server again.
+- **Defaulting to a 301 redirect.** It makes analytics impossible, and the user may never reach the server again.
 
-- **A synchronous click-counter increment** — a DB write on every redirect on the hot path, with no queue.
+- **A synchronous click-counter increment** — a DB write on every redirect, on the hot path, with no queue.
 
-- **Not estimating data volume** — trying to justify sharding for a system where 5 years of data fits in a couple TB and works fine in a single indexed DB.
+- **Not estimating data volume.** Trying to justify sharding for a system where 5 years of data fits in a couple of terabytes. It works fine in a single indexed DB.
 
-- **Treating the cache as an "optional improvement"** — for a 100:1+ read:write ratio, the cache isn't an optimization, it's a central architectural component.
+- **Treating the cache as an "optional improvement".** At a read:write ratio of 100:1 or higher, the cache isn't an optimization. It is a central architectural component.

@@ -12,18 +12,18 @@ Browsers enforce SOP: JavaScript on `https://app.example.com` cannot read respon
 ```txt
 https://app.example.com:443/path
 │        │              │
-│        │              └── Port (default if omitted: 443 for https, 80 for http)
+│        │              └── Port (default: 443 https, 80 http)
 │        └── Host (including subdomains)
 └── Scheme (protocol)
 
 Examples:
 https://example.com     vs  https://example.com      — SAME origin
-https://example.com     vs  http://example.com       — DIFFERENT (scheme)
-https://example.com     vs  https://api.example.com  — DIFFERENT (host)
-https://example.com     vs  https://example.com:8080 — DIFFERENT (port)
+https://example.com  vs  http://example.com       — scheme differs
+https://example.com  vs  https://api.example.com  — host differs
+https://example.com  vs  https://example.com:8080 — port differs
 ```
 
-SOP protects users: without it, a malicious site could read your `mail.google.com` inbox, make requests to `bank.com` on your behalf, etc. — just by loading JavaScript on their page.
+SOP protects users. Without it, any site could read your `mail.google.com` inbox just by loading JavaScript on its own page. It could also spend money on `bank.com` on your behalf.
 
 ### CORS as a Relaxation of SOP
 
@@ -58,7 +58,8 @@ Conditions for a simple request (all three must be true):
 Method: GET, HEAD, or POST
 Headers: only browser-added headers plus:
   Accept, Accept-Language, Content-Language,
-  Content-Type (only: text/plain, application/x-www-form-urlencoded, multipart/form-data)
+  Content-Type — only text/plain, multipart/form-data or
+                 application/x-www-form-urlencoded
 No custom headers (Authorization, X-Custom-Header, etc.)
 ```
 
@@ -77,7 +78,7 @@ Content-Type: application/json
 
 ### Preflight Requests
 
-For "non-simple" requests, the browser first sends an `OPTIONS` request asking: "am I allowed to make this request?" Only after receiving permission does it send the real request.
+For "non-simple" requests the browser first sends an `OPTIONS` request: "am I allowed to make this one?" The real request follows only after permission arrives.
 
 ```txt
 Browser executes: fetch("https://api.other.com/users", {
@@ -185,7 +186,7 @@ By default, JavaScript can only read a handful of safe response headers (Content
 Access-Control-Allow-Credentials: true
 ```
 
-Permits cookies, HTTP authentication, and TLS client certificates to be sent with the request. Requires a specific origin (not `*`) in `Access-Control-Allow-Origin`.
+Permits cookies, HTTP authentication, and TLS (transport layer security) client certificates to be sent with the request. Requires a specific origin (not `*`) in `Access-Control-Allow-Origin`.
 
 **`Access-Control-Max-Age`**
 
@@ -211,7 +212,7 @@ The browser adds these automatically — your JavaScript code does not.
 
 Credentials in the CORS context means cookies, HTTP Basic/Digest authentication, and TLS client certificates.
 
-By default, cross-origin requests do NOT send credentials. To enable:
+By default, cross-origin requests do *not* send credentials. To enable:
 
 ```typescript
 // Client-side (fetch):
@@ -299,7 +300,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", PATCH", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Authorization", "Content-Type", "X-Request-ID"],
   exposedHeaders: ["X-Total-Count", "X-Request-ID"],
   maxAge: 86400,
@@ -321,7 +322,7 @@ CSRF attack (Cross-Site Request Forgery):
   - evil.com submits an HTML form: POST https://bank.com/transfer
   - Browser sends bank.com cookies automatically!
   - CORS doesn't help here (HTML forms don't follow CORS)
-  - Protection: CSRF tokens, SameSite cookies, Origin/Referer validation
+  - Protection: CSRF tokens, SameSite cookies, Origin check
 ```
 
 CORS controls reading the response, not whether the request runs.
@@ -342,7 +343,7 @@ True, but with nuance:
 ```txt
 Same origin:
   https://example.com + https://example.com/api — SAME origin
-  https://app.example.com + https://api.example.com — DIFFERENT (subdomain)
+  https://app.example.com + https://api.example.com — subdomain
 
 Subdomain ≠ same origin.
 For api.example.com ↔ app.example.com — CORS headers are required.
@@ -352,7 +353,7 @@ For api.example.com ↔ app.example.com — CORS headers are required.
 
 ## Private Network Access (New Chrome Restriction)
 
-Since Chrome 94, there's an additional restriction: requests from a public origin to a private network (localhost, 192.168.x.x, 10.x.x.x) require explicit permission.
+Since Chrome 94 there is one more restriction. A request from a public origin into a private network (localhost, 192.168.x.x, 10.x.x.x) needs explicit permission.
 
 ```http
 # Browser adds to the preflight:
@@ -362,7 +363,7 @@ Access-Control-Request-Private-Network: true
 Access-Control-Allow-Private-Network: true
 ```
 
-Relevant for: local apps, IoT devices, dev tools running on localhost that are accessed from public websites.
+Relevant for: local apps, internet-of-things (IoT) devices, dev tools running on localhost that are accessed from public websites.
 
 ---
 
@@ -402,7 +403,7 @@ Server api.other.com:
        ▼                                          │
 Browser:                                          │
   Preflight passed? ──── No (403/no ACAO) ───────→ CORS Error
-       │ Yes                                      (JS can't read response)
+       │ Yes                            (JS can't read response)
        ▼
 Real request:
 DELETE https://api.other.com/users/42
@@ -426,7 +427,7 @@ Browser:
 
 ## Common Interview Traps
 
-- **"CORS is a server-side security mechanism"** — no. CORS is a browser policy that lets a server **relax** the Same-Origin Policy. The server protects itself through other means (CSRF tokens, SameSite cookies, authentication). CORS only controls what the browser passes to JavaScript.
+- **"CORS is a server-side security mechanism"** — no. CORS is a browser policy that lets a server **relax** the Same-Origin Policy. The server protects itself through other means: cross-site request forgery (CSRF) tokens, SameSite cookies, authentication. CORS only controls what the browser passes to JavaScript.
 
 - **"curl tests CORS"** — no. curl has no SOP. A successful curl call doesn't mean a browser will let JavaScript read the response. Test CORS in an actual browser.
 
@@ -438,4 +439,4 @@ Browser:
 
 - **"A subdomain is the same origin"** — no. `app.example.com` and `api.example.com` are different origins. CORS headers are required for cross-subdomain requests.
 
-- **"Why is `Vary: Origin` needed?"** — without it, a cache (CDN, proxy) might return a response with `Access-Control-Allow-Origin: https://a.com` to a client with origin `https://b.com`. `Vary: Origin` tells the cache to store separate versions of the response for each origin.
+- **"Why is `Vary: Origin` needed?"** — without it a shared cache, such as a content delivery network (CDN), may reuse one response across origins. A client on `https://b.com` then receives a response that names `https://a.com` as the allowed origin. The header tells the cache to keep one version per origin.

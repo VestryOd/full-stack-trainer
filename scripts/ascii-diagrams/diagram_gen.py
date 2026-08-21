@@ -659,6 +659,74 @@ def update_models(L):
     return hstack([left, right], gap=4)
 
 
+def cqrs_levels(L):
+    return with_title_and_notes(layered(L['sections']), L['title'], L['notes'])
+
+
+def es_write_path(L):
+    return with_title_and_notes(vchain(L['steps'], L['edges']), L['title'], L['notes'])
+
+
+def cqrs_es_matrix(L):
+    return with_title_and_notes(table(L['rows']), L['title'], L['notes'])
+
+
+def _place(block, center):
+    """Indent a block so that its horizontal centre lands on `center`."""
+    off = max(center - max(len(l) for l in block) // 2, 0)
+    return [' ' * off + l for l in block]
+
+
+def event_fanout(L):
+    """One publisher → a bus box → several subscriber boxes side by side."""
+    gap = 2
+    subscribers = [box([s]) for s in L['subscribers']]
+    row = hstack(subscribers, gap=gap)
+    width = max(len(l) for l in row)
+    return [
+        L['publisher'],
+        '',
+        *box(L['bus'], min_width=width - 4),
+        _marks(_centers(subscribers, gap), width),
+        *row,
+    ]
+
+
+def fanout_pipeline(L):
+    """A vertical chain, a fan-out row, then a tail chain under one branch."""
+    gap = 2
+    branches = [box(lines) for lines in L['branches']]
+    row = hstack(branches, gap=gap)
+    width = max(len(l) for l in row)
+    centers = _centers(branches, gap)
+    tail_center = centers[L['tail_index']]
+    return [
+        *_place(vchain(L['head']), width // 2),
+        _marks(centers, width),
+        *row,
+        _marks([tail_center], width),
+        *_place(vchain(L['tail']), tail_center),
+    ]
+
+
+def flame_chart(L):
+    """Nested boxes: every child render sits inside its parent's box.
+
+    Each node is {'label': str, 'children': [node, ...]}. Leaves become a
+    one-line box; a parent boxes its label plus the hstack of its children,
+    so box geometry is always produced by box() and never hand-padded.
+    """
+
+    def build(node):
+        children = node.get('children') or []
+        if not children:
+            return box([node['label']])
+        inner = hstack([build(c) for c in children], gap=1)
+        return box([node['label'], *inner])
+
+    return build(L['root'])
+
+
 DIAGRAMS = {
     'stack-compare': stack_compare,
     'update-models': update_models,
@@ -803,6 +871,12 @@ DIAGRAMS = {
     'bt-module-federation': lambda L: with_title_and_notes(flow_box(L['steps']), L['title'], L['notes']),
     'bt-migration-breaks': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
     'bt-slow-build': lambda L: with_title_and_notes(table(L['rows']), L['title'], L['notes']),
+    'arch-cqrs-levels': cqrs_levels,
+    'arch-es-write-path': es_write_path,
+    'arch-cqrs-es-matrix': cqrs_es_matrix,
+    'sd-event-fanout': event_fanout,
+    'sd-shortener-architecture': fanout_pipeline,
+    'react-flame-chart': flame_chart,
 }
 
 LABELS = {
@@ -6377,6 +6451,214 @@ LABELS = {
             'notes': [
                 'the rule: measure first, swap tools second. Changing the bundler on a',
                 'project with a bloated graph speeds up building junk, not building',
+            ],
+        },
+    },
+    'arch-cqrs-levels': {
+        'ru': {
+            'title': 'Три уровня разделения записи и чтения',
+            'sections': [
+                [
+                    'Уровень 1. Два набора методов в одном сервисе',
+                    '  общее: модель, схема, база данных',
+                    '  даёт: читаемость. Не даёт: масштабирования',
+                ],
+                [
+                    'Уровень 2. Две модели поверх одной базы данных',
+                    '  общее: база данных и транзакция',
+                    '  даёт: запрос под конкретный экран',
+                ],
+                [
+                    'Уровень 3. Два хранилища, связанные событиями',
+                    '  общее: только поток событий',
+                    '  даёт: независимое масштабирование. Цена: задержка',
+                ],
+            ],
+            'notes': [
+                'CQRS начинается на уровне 1 — второе хранилище необязательно',
+            ],
+        },
+        'en': {
+            'title': 'Three levels of splitting writes from reads',
+            'sections': [
+                [
+                    'Level 1. Two sets of methods in one service',
+                    '  shared: the model, the schema, the database',
+                    '  gives: clarity. Does not give: scaling',
+                ],
+                [
+                    'Level 2. Two models over one database',
+                    '  shared: the database and the transaction',
+                    '  gives: a query shaped for one screen',
+                ],
+                [
+                    'Level 3. Two stores joined by events',
+                    '  shared: only the event stream',
+                    '  gives: independent scaling. Cost: a lag',
+                ],
+            ],
+            'notes': [
+                'CQRS starts at level 1 — a second store is optional',
+            ],
+        },
+    },
+    'arch-es-write-path': {
+        'ru': {
+            'title': 'Путь записи: журнал вместо UPDATE',
+            'steps': [
+                ['Команда ShipOrder(orderId=42)'],
+                ['Читаем события заказа 42 из журнала'],
+                ['Восстанавливаем состояние и проверяем правила'],
+                ['Дописываем событие OrderShipped(42)'],
+                ['Проектор обновляет строку модели чтения'],
+            ],
+            'edges': [
+                'SELECT по streamId',
+                'свёртка событий',
+                'INSERT, без UPDATE',
+                'подписка на журнал',
+            ],
+            'notes': [
+                'текущего состояния в журнале нет:',
+                'оно каждый раз выводится из событий',
+            ],
+        },
+        'en': {
+            'title': 'The write path: a log instead of UPDATE',
+            'steps': [
+                ['Command ShipOrder(orderId=42)'],
+                ['Read the events of order 42 from the log'],
+                ['Rebuild the state and check the rules'],
+                ['Append the event OrderShipped(42)'],
+                ['A projector updates the read-model row'],
+            ],
+            'edges': [
+                'SELECT by streamId',
+                'fold the events',
+                'INSERT, never UPDATE',
+                'subscribes to the log',
+            ],
+            'notes': [
+                'the log holds no current state:',
+                'it is derived from the events every time',
+            ],
+        },
+    },
+    'arch-cqrs-es-matrix': {
+        'ru': {
+            'title': 'Что даёт каждый паттерн по отдельности',
+            'rows': [
+                ('признак', 'только CQRS', 'только Event Sourcing'),
+                ('источник правды', 'текущее состояние', 'журнал событий'),
+                ('чтение', 'отдельная модель', 'свёртка или проекция'),
+                ('удалить запись', 'обычный DELETE', 'обратное событие'),
+                ('смена схемы', 'ALTER TABLE', 'преобразователь версии'),
+                ('нужен ли второй', 'работает сам', 'почти всегда с CQRS'),
+            ],
+            'notes': [
+                'колонки независимы: пары «CQRS = Event Sourcing» не существует',
+            ],
+        },
+        'en': {
+            'title': 'What each pattern gives you on its own',
+            'rows': [
+                ('trait', 'CQRS alone', 'Event Sourcing alone'),
+                ('source of truth', 'the current state', 'the event log'),
+                ('reads', 'a separate model', 'a fold or a projection'),
+                ('delete a record', 'a normal DELETE', 'a reversing event'),
+                ('schema change', 'ALTER TABLE', 'an event upcaster'),
+                ('needs the other', 'works on its own', 'almost always with CQRS'),
+            ],
+            'notes': [
+                'the columns are independent: CQRS is not a synonym for the other',
+            ],
+        },
+    },
+    'sd-event-fanout': {
+        'ru': {
+            'publisher': '✅ Order Service публикует факт "OrderCreated"',
+            'bus': ['Event Bus, канал "OrderCreated"'],
+            'subscribers': [
+                'Notification Service',
+                'Analytics Service',
+                'CRM Service',
+            ],
+        },
+        'en': {
+            'publisher': '✅ Order Service publishes the fact "OrderCreated"',
+            'bus': ['Event Bus, the "OrderCreated" channel'],
+            'subscribers': [
+                'Notification Service',
+                'Analytics Service',
+                'CRM Service',
+            ],
+        },
+    },
+    'react-flame-chart': {
+        'ru': {
+            'root': {
+                'label': 'App 3.2 мс',
+                'children': [
+                    {'label': 'Header 0.1 мс'},
+                    {
+                        'label': 'Main 3.0 мс',
+                        'children': [
+                            {'label': 'Sidebar 0.2 мс'},
+                            {'label': 'Content 2.7 мс'},
+                        ],
+                    },
+                ],
+            },
+        },
+        'en': {
+            'root': {
+                'label': 'App 3.2 ms',
+                'children': [
+                    {'label': 'Header 0.1 ms'},
+                    {
+                        'label': 'Main 3.0 ms',
+                        'children': [
+                            {'label': 'Sidebar 0.2 ms'},
+                            {'label': 'Content 2.7 ms'},
+                        ],
+                    },
+                ],
+            },
+        },
+    },
+    'sd-shortener-architecture': {
+        'ru': {
+            'head': [
+                ['Client'],
+                ['Load Balancer'],
+                ['API Servers', 'stateless'],
+            ],
+            'branches': [
+                ['Redis', 'горячие коды'],
+                ['PostgreSQL', 'источник правды'],
+                ['Queue', 'клики'],
+            ],
+            'tail_index': 2,
+            'tail': [
+                ['Analytics Worker'],
+                ['Analytics DB'],
+            ],
+        },
+        'en': {
+            'head': [
+                ['Client'],
+                ['Load Balancer'],
+                ['API Servers', 'stateless'],
+            ],
+            'branches': [
+                ['Redis', 'hot codes'],
+                ['PostgreSQL', 'source of truth'],
+                ['Queue', 'clicks'],
+            ],
+            'tail_index': 2,
+            'tail': [
+                ['Analytics Worker'],
+                ['Analytics DB'],
             ],
         },
     },

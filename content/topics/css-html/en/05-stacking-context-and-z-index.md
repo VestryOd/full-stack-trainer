@@ -125,9 +125,11 @@ The tooltip has `z-index: 9999`, but it lives inside the `.card` stacking contex
 </aside>
 ```
 
-`.sidebar`'s stacking context order vs `.page-header`'s stacking context order depends on DOM order and their z-index values. The dropdown's `z-index: 1000` is irrelevant to this comparison — only `.sidebar`'s z-index value (which is `auto`, since we never set it) matters. With `z-index: auto`, the sidebar doesn't form a proper stacking context and its children can compete globally... wait, actually `transform` alone without a z-index: the element participates in the stacking context of its containing block as a stacking-context-forming element with `z-index: auto` effectively — meaning it stacks as if it had `z-index: 0`.
+The dropdown's `z-index: 1000` is irrelevant to this comparison. What matters is where `.sidebar`'s stacking context sits relative to `.page-header`'s, and that is decided by their own z-index values and DOM order.
 
-The real fix needed: remove the `transform` from `.sidebar` (use a different GPU compositing approach) or give `.sidebar` an explicit `z-index` that is higher than `.page-header`.
+`.sidebar` has no z-index of its own, so its `transform` gives it a stacking context that stacks as if `z-index: 0`. `.page-header` has `z-index: 10`, which is higher, so the whole sidebar context — dropdown included — renders behind the header.
+
+The real fix: either remove the `transform` from `.sidebar`, or give `.sidebar` an explicit `z-index` higher than `.page-header`'s.
 
 ## The `isolation` property — intentional stacking context
 
@@ -306,14 +308,13 @@ Chrome DevTools → Layers panel shows all compositing layers (which often corre
   z-index: 20; /* now .sidebar's context is above .header's context */
 }
 
-/* Fix 2: Remove the unintended stacking context trigger */
+/* Fix 2: Drop the trigger if the element does not actually need it */
 .sidebar {
-  /* Remove: transform: translateX(0); */
-  /* Use instead: */
-  will-change: transform; /* still hints GPU, but... wait, this ALSO creates a context */
-  /* Actually for GPU compositing without stacking context side effects,
-     use translateZ(0) or translate3d(0,0,0) is not the answer — they all create contexts.
-     The real answer: accept the context and manage z-index properly. */
+  /* transform: translateX(0);  <- was only a GPU hint, not a layout requirement */
+  /* There is no "hint the GPU without creating a stacking context" option:
+     transform, will-change: transform, translateZ(0), filter and opacity < 1
+     all create one. Either the element genuinely needs its own layer,
+     or the hint comes off. */
 }
 
 /* Fix 3: Isolate intentionally */

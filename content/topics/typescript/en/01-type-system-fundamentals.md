@@ -37,7 +37,7 @@ const dog = new Dog("Rex");
 greet(dog); // ✅ OK — TypeScript does not complain!
 ```
 
-In Java this code wouldn't compile — `Dog` is not a `Cat`. TypeScript considers the types compatible because both have a `name: string` field. This is not a bug — it's a deliberate decision by the TS team, based on how JavaScript is actually used: duck typing and object literals are the foundation of the language.
+In Java this code wouldn't compile — `Dog` is not a `Cat`. TypeScript considers the types compatible because both have a `name: string` field. This is not a bug. It is a deliberate decision by the TS team, based on how JavaScript is actually used. Duck typing and object literals are the foundation of the language.
 
 ### What Structural Typing Means in Practice
 
@@ -64,16 +64,18 @@ printAll([document]); // ✅ — document is structurally compatible with Printa
 ```txt
 1. Extra fields are allowed on assignment:
    { name: string; age: number } is compatible with { name: string }
-   (subtype relationship — a larger type is compatible with a smaller one)
+   (subtype relationship: a larger type fits a smaller one)
 
 2. Object literals are an exception (excess property check):
-   TypeScript ADDITIONALLY disallows extra fields on object literals
+   TypeScript additionally disallows extra fields on object literals
    passed directly — this is not a structural check, it's a separate
    check for catching typos early
 
 3. Functions are checked structurally by parameters:
-   (x: number) => void is compatible with (x: number, y: string) => void
-   in some contexts — this is intentional (see [Variance])
+   (x: number) => void is compatible with
+     (x: number, y: string) => void
+   in some contexts — this is intentional,
+   see article 07 on variance
 ```
 
 The excess property check is a frequent source of confusion:
@@ -115,7 +117,7 @@ const cx = "hello"; // cx: "hello" — constant, no widening
 const cn = 42;      // cn: 42
 ```
 
-Why does `let` widen but `const` doesn't? Because `let` *can be reassigned* (`x = "world"` is valid), so the type must be wide enough to accommodate that. `const` can't be reassigned, so the type can be the precise literal.
+Why does `let` widen but `const` doesn't? Because `let` *can be reassigned* — `x = "world"` is valid, so the type must be wide enough to allow it. A `const` can't be reassigned, so its type can stay the precise literal.
 
 Widening inside objects:
 
@@ -241,7 +243,7 @@ Use type when:
 
 Most teams: interface for objects/classes, type for everything else.
 Breaking one of these rules isn't catastrophic, but it's important
-to know WHY the difference exists.
+to know why the difference exists.
 ```
 
 Why error messages differ:
@@ -294,28 +296,31 @@ function identity<T>(value: T): T {
   return value;
 }
 
-const result = identity("hello"); // T inferred as string, result: string
-const result2 = identity(42);    // T inferred as number
+const result = identity("hello"); // T inferred as "hello", result: "hello"
+const result2 = identity(42);    // T inferred as 42
 
-// Inference from multiple arguments — TypeScript finds the least common type:
+// Inference from multiple arguments — one T has to be a single type:
 function pair<T>(a: T, b: T): [T, T] {
   return [a, b];
 }
 
 pair(1, 2);          // T: number ✅
 pair("a", "b");      // T: string ✅
-pair(1, "hello");    // T: string | number — widens to union
+pair(1, "hello");    // ❌ TS2345: T is fixed as number by the first argument
+pair<string | number>(1, "hello"); // ✅ name the union and it compiles
 ```
+
+The literal survives here because `result` is a `const`. An unconstrained `T` produces a *widening* literal type, and it widens only in a mutable position: a `let`, an array literal, or an object property.
 
 ---
 
 ## Common Interview Traps
 
-- **"TypeScript is nominally typed"** — no, TypeScript is structurally typed. Two classes with the same structure are compatible even if they have different names. (Exception: you can *simulate* nominal typing via branding — see [Advanced Patterns].)
+- **"TypeScript is nominally typed"** — no, TypeScript is structurally typed. Two classes with the same structure are compatible even if they have different names. (Exception: you can *simulate* nominal typing via branding — see [Advanced Patterns](./09-advanced-patterns.md).)
 
 - **"type and interface are the same, just different syntax"** — the key differences are: declaration merging (interface only), union types (type only). Not knowing this signals a surface-level understanding.
 
-- **Confusing excess property check with structural compatibility** — "if I pass an object with an extra field, it's always an error" — no, only when passing a literal directly. Via a variable — it's OK.
+- **Confusing excess property check with structural compatibility** — "if I pass an object with an extra field, it's always an error". No: only when passing a literal directly. Via a variable — it's OK.
 
 - **Not knowing the widening difference between `let` and `const`** — why `let x = "hello"` gives `string`, but `const x = "hello"` gives `"hello"`. This is fundamental mechanics asked at middle/senior level.
 

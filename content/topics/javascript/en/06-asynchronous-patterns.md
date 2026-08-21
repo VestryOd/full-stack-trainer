@@ -17,7 +17,7 @@ thirdPartyApi.fetchData(userId, function(err, data) {
 });
 ```
 
-Beyond IoC, there are structural composition problems:
+Beyond inversion of control (IoC), there are structural composition problems:
 
 ```js
 // Task: fetch a user, then their orders, then the first product
@@ -94,13 +94,13 @@ resolve(value):
   3. Otherwise:
        [[PromiseState]] = 'fulfilled'
        [[PromiseResult]] = value
-       → Enqueue all [[PromiseFulfillReactions]] into the Microtask Queue
+       → All [[PromiseFulfillReactions]] → Microtask Queue
 
 reject(reason):
   1. If [[PromiseState]] !== 'pending' → exit
   2. [[PromiseState]] = 'rejected'
      [[PromiseResult]] = reason
-     → Enqueue all [[PromiseRejectReactions]] into the Microtask Queue
+     → All [[PromiseRejectReactions]] → Microtask Queue
 ```
 
 **The Promise Resolution Procedure** is the mechanism that allows chaining to work with any thenable, not just native Promises:
@@ -431,12 +431,13 @@ Promise.any([
 ### Summary table
 
 ```txt
-Combinator          Resolves                  Rejects
-─────────────────────────────────────────────────────────────
-Promise.all         All fulfilled             First rejected
-Promise.allSettled  Always (never rejects)    —
-Promise.race        First settled             First settled
-Promise.any         First fulfilled           All rejected → AggregateError
+Combinator          Resolves               Rejects
+──────────────────────────────────────────────────────────
+Promise.all         All fulfilled          First rejected
+Promise.allSettled  Always                 Never
+Promise.race        First settled          First settled
+Promise.any         First fulfilled        All rejected →
+                                           AggregateError
 ```
 
 ## Predict the output — async/await + Promise combinators
@@ -482,8 +483,8 @@ main();
 
 ```
 start
-A B            // Promise.all waits for both (100ms), order = input order
-true ['err1', 'err2']  // AggregateError, all rejection reasons in .errors
+A B            // Promise.all waits for both (100ms); input order
+true ['err1', 'err2']  // AggregateError: both reasons in .errors
 fast           // Promise.race → fastest (10ms)
 end
 ```
@@ -530,24 +531,26 @@ try {
 
 ```txt
 [Event Loop]          — Promise.then always adds a microtask;
-                         execution order is governed by the Microtask Queue
-[Generators]          — async/await is generators + an automatic runner;
-                         covered in detail in the next article
-[Modern JS]           — AbortController for cancelling promises — in article 12
-[Node.js streams]     — async iteration over streams via for-await-of
+                        the Microtask Queue decides the order
+[Generators]          — async/await is generators plus an
+                        automatic runner; the next article
+[Modern JS]           — AbortController for cancelling promises:
+                        article 12
+[Node.js streams]     — async iteration over streams with
+                        for-await-of
 ```
 
 ## Common interview traps
 
-- **"Callback hell is about nesting"** — the main problem is not visual but structural: inversion of control, inability to return values, manual error handling at every level.
+- **"Callback hell is about nesting"** — the main problem is structural, not visual. Inversion of control, no way to return values, manual error handling at every level.
 
-- **"Promise.all fails if one Promise is slow"** — no. `Promise.all` waits for ALL of them. It rejects on the first `rejected`. A slow but non-failing Promise simply slows down `Promise.all`.
+- **"Promise.all fails if one Promise is slow"** — no. `Promise.all` waits for **all** of them. It rejects on the first `rejected`. A slow but non-failing Promise simply slows down `Promise.all`.
 
 - **"async/await is not Promises"** — an `async function` always returns a Promise. `await` is `.then()`. They are fully interoperable.
 
-- **"Errors in an async function are caught by an outer try/catch"** — no, if the function isn't `await`ed. `asyncFn()` without `await` is a promise in flight; an outer `try/catch` won't catch it.
+- **"Errors in an async function are caught by an outer try/catch"** — only if you `await` the call. A bare `asyncFn()` is a promise in flight, and an outer `try/catch` never sees its rejection.
 
-- **Not knowing the difference between `Promise.race` and `Promise.any`** — `race` settles on the FIRST settled (including rejection); `any` settles on the FIRST fulfilled. `race` with one immediately-rejecting promise rejects immediately; `any` does not.
+- **Not knowing the difference between `Promise.race` and `Promise.any`** — `race` settles on the **first settled** promise, rejection included. And `any` settles on the **first fulfilled** one. So one immediately rejecting promise makes `race` reject at once, while `any` keeps waiting.
 
 - **"Promise.allSettled came with Promise"** — no, ES2020. `Promise.any` is ES2021. In an interview it matters to know what may be unavailable in older environments.
 

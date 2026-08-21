@@ -369,7 +369,7 @@ type A = UnionToIntersection<{ a: string } | { b: number }>;
 // { a: string } & { b: number }
 ```
 
-Why this works: when TypeScript sees `(x: U) => void` with a distributive U, it creates a union of functions. To assign a union of functions to a single function, the parameter must satisfy ALL variants — which means it must be an intersection.
+Why this works: when TypeScript sees `(x: U) => void` with a distributive U, it creates a union of functions. To assign a union of functions to a single function, the parameter must satisfy **all** variants — which means it must be an intersection.
 
 ---
 
@@ -422,4 +422,4 @@ type OK = OptionalKeys<Config>; // "port" | "debug"
 
 - **Only knowing how to use utility types, not how to implement them** — knowing how to use `Partial<T>` doesn't demonstrate understanding. Being able to write `{ [K in keyof T]?: T[K] }` and explain each part does.
 
-- **Writing `as const` instead of `satisfies`** — these are different tools with different guarantees (see [Variance and Assertions]).
+- **Writing `as const` instead of `satisfies`** — these are different tools with different guarantees (see [Variance and Type Assertions](./07-variance-and-assertions.md)).

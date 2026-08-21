@@ -44,7 +44,7 @@ data.users[0]?.address?.city // undefined (не TypeError)
 data.users[0]?.address.city  // TypeError! address = null, но guard только на users[0]
 ```
 
-### Что `?.` НЕ защищает
+### Что `?.` не защищает
 
 `?.` срабатывает только на `null` / `undefined`. Falsy-значения (0, `''`, `false`) **не** срабатывают:
 
@@ -120,8 +120,8 @@ console.log(settings.nested?.value || 'fallback');  // ?
 3000       // 0 falsy → || даёт 3000
 false      // false не null/undefined → ?? возвращает false
 'default'  // settings.missing = undefined → ?? даёт 'default'
-'fallback' // nested = null → ?. даёт undefined → ?? даёт 'fallback'
-'fallback' // undefined falsy → || даёт 'fallback' (здесь ??, || дают одинаковый результат)
+'fallback' // nested = null → ?. даёт undefined → ?? даёт его
+'fallback' // undefined falsy → || даёт здесь то же самое
 ```
 
 </details>
@@ -188,7 +188,7 @@ cloned.self === cloned; // true (цикл восстановлен коррек�
 // Blob, File, ImageData, undefined, null, boolean, number, string, BigInt
 ```
 
-### Что structuredClone НЕ поддерживает
+### Что `structuredClone` не поддерживает
 
 ```js
 // ❌ Функции — бросит DataCloneError:
@@ -311,7 +311,7 @@ controller.abort();
 
 ## Tagged Template Literals — реальный use case
 
-Тегированные шаблоны позволяют перехватить интерполяцию и написать DSL прямо в JS.
+Тегированные шаблоны позволяют перехватить интерполяцию и написать DSL (domain-specific language — язык под конкретную задачу) прямо в JS.
 
 ```js
 // Сигнатура tag-функции:
@@ -326,7 +326,10 @@ tag`Hello ${name}, you are ${age} years old`
 // values  = [name, age]
 ```
 
-### Безопасный SQL query builder
+### Query builder, безопасный к SQL-инъекциям
+
+Значения не попадают в текст SQL (structured query language). Они остаются в
+отдельном массиве параметров, и драйвер базы данных экранирует их сам:
 
 ```js
 function sql(strings, ...values) {
@@ -469,9 +472,9 @@ const grouped = Object.groupBy(products, p => p.category);
 // }
 
 // Map.groupBy — когда ключи не строки:
-const byLength = Map.groupBy([1, 2, 3, 4, 5], n => n % 2 === 0 ? 'even' : 'odd');
-byLength.get('even'); // [2, 4]
-byLength.get('odd');  // [1, 3, 5]
+const byParity = Map.groupBy([1, 2, 3, 4, 5], n => n % 2 === 0 ? 'even' : 'odd');
+byParity.get('even'); // [2, 4]
+byParity.get('odd');  // [1, 3, 5]
 ```
 
 ### `Promise.withResolvers` (ES2024)
@@ -516,14 +519,14 @@ const doubled = await Array.fromAsync(asyncNumbers(), n => n * 2); // [2, 4, 6]
 ## Связь с другими темами
 
 ```txt
-[Генераторы]          — Array.fromAsync потребляет async iterables;
+[Генераторы]           — Array.fromAsync потребляет async iterables;
                          for-await-of как альтернатива
-[Асинхронные паттерны] — AbortController интегрируется с Promise через
-                         signal.addEventListener('abort', ...)
-[Замыкания]           — tag-функции — обычные функции с замыканием
+[Асинхронные паттерны] — AbortController интегрируется с Promise
+                         через signal.addEventListener('abort', ...)
+[Замыкания]            — tag-функции — обычные функции с замыканием
                          на strings.raw и переданные значения
-[Coercion]            — ?? vs || — принципиальная разница через понимание
-                         ToBoolean (falsy) vs nullish
+[Coercion]             — ?? vs || — принципиальная разница через
+                         понимание ToBoolean (falsy) vs nullish
 ```
 
 ## Типичные ошибки на интервью
@@ -538,6 +541,6 @@ const doubled = await Array.fromAsync(asyncNumbers(), n => n * 2); // [2, 4, 6]
 
 - **"AbortController отменяет fetch на сервере"** — нет. `abort()` отменяет **клиентский** запрос (браузер закрывает соединение), но сервер может не знать об этом и продолжить обработку. Для серверной отмены нужен отдельный API (cancellation token в запросе).
 
-- **"Tagged templates — это просто синтаксический сахар для строк"** — нет. tag-функция получает strings и values раздельно и может вернуть что угодно — не обязательно строку. `styled.div\`color: red\`` возвращает React-компонент, `gql\`query ...\`` возвращает AST.
+- **"Tagged templates — это просто синтаксический сахар для строк"** — нет. tag-функция получает strings и values раздельно. Вернуть она может что угодно, не обязательно строку: `styled.div\`color: red\`` возвращает React-компонент, а `gql\`query ...\`` — синтаксическое дерево (AST).
 
 - **"Object.groupBy доступен давно"** — ES2024. В Node.js с v21. До этого — `_.groupBy` из lodash или ручная реализация через `reduce`. На интервью важно знать версии.

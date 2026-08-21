@@ -244,7 +244,8 @@ type CSSProperty =
 
 type CSSDirection = "top" | "right" | "bottom" | "left";
 
-type DirectionalProperty = `${Extract<CSSProperty, "margin" | "padding" | "border">}-${CSSDirection}`;
+type BoxProperty = Extract<CSSProperty, "margin" | "padding" | "border">;
+type DirectionalProperty = `${BoxProperty}-${CSSDirection}`;
 // "margin-top" | "margin-right" | ... | "padding-top" | ... | "border-top" | ...
 
 // Типизированные CSS переменные:
@@ -308,6 +309,8 @@ const user = await apiFetch("POST /users", {
 ---
 
 ## Практика 6: типизированные переводы (i18n)
+
+i18n — это интернационализация, то есть механизм, который держит все пользовательские строки в одной таблице вместо жёстко вписанного текста. Template literal types умеют вытаскивать placeholder-ы из таких строк:
 
 ```ts
 type Translations = {
@@ -401,11 +404,11 @@ type Parts = Split<"a,b,c">; // ["a", "b", "c"] ✅ — работает в ре
 
 ## Типичные ошибки на интервью
 
-- **"Template literal types работают как регулярные выражения"** — не совсем: они работают с фиксированными паттернами и union-ами, но не поддерживают квантификаторы (`*`, `+`, `?`). `${string}` соответствует любой строке (включая пустую), но нет аналогов "один или более символов".
+- **"Template literal types работают как регулярные выражения"** — не совсем. Они работают с фиксированными паттернами и union-ами, но не поддерживают квантификаторы (`*`, `+`, `?`). `${string}` соответствует любой строке, включая пустую. Аналога "один или более символов" нет.
 
 - **Не знать про комбинаторный взрыв** — если два union по 10 элементов перемножаются в шаблоне, получается 100 членов. TypeScript имеет лимит и выдаёт ошибку "too complex to represent". Это реальное ограничение, которое нужно знать.
 
-- **Путать template literal TYPE и template literal STRING** — `` `Hello, ${name}` `` в JS — строка. `` `Hello, ${string}` `` в TS — тип. Контекст использования разный, синтаксис похожий.
+- **Путать template literal *type* и template literal *string*** — `` `Hello, ${name}` `` в JS — строка. `` `Hello, ${string}` `` в TS — тип. Контекст использования разный, синтаксис похожий.
 
 - **Не использовать `Capitalize`/`Uppercase` при генерации имён** — типичная задача "сгенерировать `onClick` из `click`" решается за одну строку: `` `on${Capitalize<EventName>}` ``. Незнание встроенных утилит — потеря баллов.
 

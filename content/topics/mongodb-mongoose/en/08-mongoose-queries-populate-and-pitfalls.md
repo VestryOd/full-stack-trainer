@@ -40,7 +40,9 @@ Two things about Query:
    function, not an object.
 ```
 
-## populate is NOT $lookup
+## populate is **not** $lookup: it is extra queries
+
+`populate` fills a reference field with the referenced document. It looks like a join, and it is not one. The join happens in your Node process, after Mongoose has fetched the related documents with a second query.
 
 ```txt
     populate is separate queries, not a server-side $lookup
@@ -86,7 +88,9 @@ The key fact: `populate` is not a server-side join but **extra queries** whose r
    an interview answer should explain the mechanics rather than repeat
    the meme.
 
-2. N+1-like effects appear in specific cases:
+2. N+1-like effects appear in specific cases. N+1 means one query for
+   a list of N items, plus one more query per item — N+1 round-trips
+   where two would do. The cases:
    - a nested populate: populate({ path: 'comments',
      populate: { path: 'author' } }) — one query PER nesting level
    - populate inside a loop over documents (populate called per
@@ -127,27 +131,46 @@ postSchema.virtual('commentCount', {
 const post = await PostModel.findById(id).populate('comments');
 ```
 
-Virtual populate is convenient and dangerous at once: `foreignField` must be indexed, otherwise every such populate is a COLLSCAN over the child collection (see [Indexes and Query Performance]). And `count: true` recounts every time — a hot screen needs a stored counter (the Computed pattern from [Schema Design: Embedding vs Referencing]).
+Virtual populate is convenient and dangerous at once. `foreignField` must be indexed. Otherwise every such populate is a `COLLSCAN` over the child collection. `COLLSCAN` is the stage name in a query plan that means "no index was used, the whole collection was read". Indexes and query performance are the subject of their own article.
+
+And `count: true` recounts every time. A hot screen needs a stored counter instead: the Computed pattern from the Schema Design article.
 
 ```txt
-                                           Three ways to get related data
-┌───────────────────┬──────────────────────────────┬────────────────────────────┬──────────────────────────────────┐
-│                   │ populate                     │ $lookup                    │ redesign the schema              │
-├───────────────────┼──────────────────────────────┼────────────────────────────┼──────────────────────────────────┤
-│ where it runs     │ Node + N queries             │ on the server              │ nowhere: already in the document │
-├───────────────────┼──────────────────────────────┼────────────────────────────┼──────────────────────────────────┤
-│ round-trips       │ 2 or more                    │ 1                          │ 1                                │
-├───────────────────┼──────────────────────────────┼────────────────────────────┼──────────────────────────────────┤
-│ filter on related │ match, parent still returned │ fully, inside the pipeline │ a plain find                     │
-├───────────────────┼──────────────────────────────┼────────────────────────────┼──────────────────────────────────┤
-│ cost              │ network and Node memory      │ a nested loop              │ duplicates need syncing          │
-├───────────────────┼──────────────────────────────┼────────────────────────────┼──────────────────────────────────┤
-│ when it fits      │ admin panels, rare screens   │ reports and aggregations   │ the hot read path                │
-└───────────────────┴──────────────────────────────┴────────────────────────────┴──────────────────────────────────┘
-               if populate sits in your most frequent query, the problem is the schema, not populate
+             Three ways to get related data
+┌──────────────────────────────────────────────────────┐
+│ populate                                             │
+│                                                      │
+│ where it runs       Node + N queries                 │
+│ round-trips         2 or more                        │
+│ filter on related   match, parent still returned     │
+│ cost                network and Node memory          │
+│ when it fits        admin panels, rare screens       │
+└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ $lookup                                              │
+│                                                      │
+│ where it runs       on the server                    │
+│ round-trips         1                                │
+│ filter on related   fully, inside the pipeline       │
+│ cost                a nested loop                    │
+│ when it fits        reports and aggregations         │
+└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ redesign the schema                                  │
+│                                                      │
+│ where it runs       nowhere: already in the document │
+│ round-trips         1                                │
+│ filter on related   a plain find                     │
+│ cost                duplicates need syncing          │
+│ when it fits        the hot read path                │
+└──────────────────────────────────────────────────────┘
+     if populate sits in your most frequent query,
+        the problem is the schema, not populate
 ```
 
-A separate note on integrity: `populate` returns `null` if the referenced document was deleted. MongoDB has no FKs and no cascades — dangling references are a normal state of the database, and the code has to survive them. An `if (!post.author) ...` check is not paranoia but a required branch.
+A separate note on integrity: `populate` returns `null` if the referenced document was deleted. MongoDB has no foreign keys and no cascades. A foreign key (FK) is the relational constraint that makes the database itself refuse a reference to a row that does not exist.
+
+Dangling references are therefore a normal state of the database, and the code has to survive them. An `if (!post.author) ...` check is not paranoia but a required branch.
 
 ## lean(): what hydration costs
 
@@ -159,7 +182,7 @@ const post = await PostModel.findById(id);
 post.title = 'new';
 await post.save();
 
-// lean: a plain object (POJO), far cheaper in memory and CPU
+// lean: a plain old JavaScript object, far cheaper in memory and CPU
 const posts = await PostModel.find({ status: 'published' })
   .select('title slug author')
   .lean<Pick<Post, '_id' | 'title' | 'slug' | 'author'>[]>()
@@ -184,7 +207,9 @@ save" query does not. The cleanest way to keep them apart in a
 repository is separate methods: findForRead() and findForUpdate().
 ```
 
-On typing: `lean()` changes the result type, and it must not be confused with `HydratedDocument`. The generic on `lean<T>()` is the simplest way to describe the real shape (especially with `select`), and `_id` in that shape stays a `Types.ObjectId` until you explicitly serialize it to a string at the API boundary (see [Mongoose: Schemas, Models, and Validation]).
+On typing: `lean()` changes the result type, and it must not be confused with `HydratedDocument`. The generic on `lean<T>()` is the simplest way to describe the real shape, especially with `select`.
+
+And `_id` in that shape stays a `Types.ObjectId` until you explicitly serialize it to a string at the API boundary. The article on Mongoose schemas, models and validation covers that boundary.
 
 ## findOneAndUpdate: the behaviour you have to know
 
@@ -205,17 +230,17 @@ if (!post) throw new ConflictError('post not found or already published');
 ```txt
 What matters:
 
-  - returnDocument defaults to 'before': you get the state BEFORE the
-    change. The old alias new: true does the same as
-    returnDocument: 'after' — in new code use returnDocument
+  - returnDocument defaults to 'before': you get the state as it was
+    BEFORE the change, not after it. The old alias new: true does the
+    same as returnDocument: 'after' — in new code use returnDocument
   - runValidators must be requested explicitly, and even then required
-    is not checked for fields absent from the update (see [Mongoose:
-    Schemas, Models, and Validation])
+    is not checked for fields absent from the update (see the article
+    on Mongoose schemas, models and validation)
   - document middleware (pre/post 'save') is NOT called — this is a
     query operation
   - null means "nothing matched the filter". That is part of the API,
     not an error: it is exactly how compare-and-set is implemented
-    (see [CRUD and Query Operators])
+    (see the CRUD and Query Operators article)
   - upsert + setDefaultsOnInsert: schema defaults are applied on
     insert (the default behaviour in current Mongoose versions), but
     it is worth verifying on your version
@@ -239,6 +264,8 @@ How to choose between findOneAndUpdate and save():
 ```
 
 ## versionKey `__v` and optimistic concurrency
+
+`__v` is the version field Mongoose adds to every document, and it is far weaker than the name "optimistic locking" suggests. It guards array positions, not arbitrary field changes.
 
 ```txt
 What __v is: a version field Mongoose adds to the document. It is NOT
@@ -267,9 +294,11 @@ const res = await PostModel.updateOne(
 if (res.matchedCount === 0) throw new ConflictError('document changed');
 ```
 
-The second variant is the same "condition in the filter" technique as in [CRUD and Query Operators]: it works without Mongoose, it is visible in the code and it does not depend on the library version.
+The second variant is the same "condition in the filter" technique as in the article on CRUD (create, read, update, delete) and query operators. It works without Mongoose, it is visible in the code, and it does not depend on the library version.
 
 ## Connections: the pool, buffering and serverless
+
+Mongoose keeps a pool of open connections inside the process and reuses them, so `connect()` belongs at application startup and nowhere else. The settings below are the ones that actually change behaviour under load.
 
 ```typescript
 await mongoose.connect(process.env.MONGO_URL!, {
@@ -339,6 +368,8 @@ export function getConnection() {
 
 ## autoIndex: why production turns it off
 
+`autoIndex` makes Mongoose create every index declared in every schema when the application starts. That is convenient in development and wrong in production. It moves index builds into the deploy, and it lets a schema edit change production indexes with no review.
+
 ```typescript
 await mongoose.connect(url, {
   autoIndex: false,      // do not create indexes automatically
@@ -353,7 +384,7 @@ that is convenient. In production there are three problems:
 
 1. Building an index on a large collection is a noticeable load, and
    it will happen at deploy time — the worst possible moment (see
-   [Indexes and Query Performance]).
+   the Indexes and Query Performance article).
 
 2. With N service instances you get N concurrent attempts to create
    the same index: the server handles it, but the wasted work and the
@@ -375,28 +406,52 @@ await PostModel.syncIndexes();
 const diff = await PostModel.diffIndexes();   // what would be created/dropped
 ```
 
-A separate trap that ties this section to [Mongoose: Schemas, Models, and Validation]: `unique: true` in a schema is an index declaration. With `autoIndex: false` and no migration the index is never created, which means **there is no uniqueness at all**, even though the code looks like there is. Unique indexes must be in the migration.
+A separate trap ties this section to the article on Mongoose schemas, models and validation: `unique: true` in a schema is an index declaration. With `autoIndex: false` and no migration the index is never created. That means **there is no uniqueness at all**, even though the code looks like there is. Unique indexes must be in the migration.
 
 ## Error handling: mapping to the API response
 
+Mongoose and the driver throw six errors that matter, and each one has a correct HTTP status. Most of them are expected outcomes rather than failures, so returning 500 for all of them turns a normal API contract into a pager alert.
+
 ```txt
-                         Mongoose/driver errors → the API response
-┌───────────────────────────┬─────────────────────────────────────┬────────────────────────┐
-│ error                     │ cause                               │ response               │
-├───────────────────────────┼─────────────────────────────────────┼────────────────────────┤
-│ ValidationError           │ the schema rejected the values      │ 400 + field list       │
-├───────────────────────────┼─────────────────────────────────────┼────────────────────────┤
-│ CastError                 │ invalid input: a malformed ObjectId │ 400                    │
-├───────────────────────────┼─────────────────────────────────────┼────────────────────────┤
-│ E11000 (code 11000)       │ a unique index was violated         │ 409 + field name       │
-├───────────────────────────┼─────────────────────────────────────┼────────────────────────┤
-│ VersionError              │ the document changed concurrently   │ 409, ask for a refetch │
-├───────────────────────────┼─────────────────────────────────────┼────────────────────────┤
-│ buffering timed out       │ no connection to the database       │ 503                    │
-├───────────────────────────┼─────────────────────────────────────┼────────────────────────┤
-│ MongoServerSelectionError │ the cluster is unreachable          │ 503                    │
-└───────────────────────────┴─────────────────────────────────────┴────────────────────────┘
-              without this mapping all of it becomes a 500 and a useless alert
+  Mongoose/driver errors → the API response
+┌───────────────────────────────────────────┐
+│ ValidationError                           │
+│                                           │
+│ cause      the schema rejected the values │
+│ response   400 + field list               │
+└───────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ CastError                                 │
+│                                           │
+│ cause      invalid input: a bad ObjectId  │
+│ response   400                            │
+└───────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ E11000 (code 11000)                       │
+│                                           │
+│ cause      a unique index was violated    │
+│ response   409 + field name               │
+└───────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ VersionError                              │
+│                                           │
+│ cause      the document changed meanwhile │
+│ response   409, ask for a refetch         │
+└───────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ buffering timed out                       │
+│                                           │
+│ cause      no connection to the database  │
+│ response   503                            │
+└───────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ MongoServerSelectionError                 │
+│                                           │
+│ cause      the cluster is unreachable     │
+│ response   503                            │
+└───────────────────────────────────────────┘
+    without this mapping all of it becomes
+          a 500 and a useless alert
 ```
 
 ```typescript
@@ -442,9 +497,9 @@ export function mapMongoError(e: unknown): ApiError {
 Why this is worth doing explicitly:
 
   - E11000 is an EXPECTED path, not a failure: two users register with
-    the same email, an upsert race (see [CRUD and Query Operators]).
-    A 409 with the field name is a normal API contract; a 500 is a
-    lost alert and an incomprehensible client error
+    the same email, an upsert race (see the CRUD and Query Operators
+    article). A 409 with the field name is a normal API contract;
+    a 500 is a lost alert and an incomprehensible client error
   - a CastError comes from a malformed URL parameter: that is a 400,
     and it should not be logged as an incident
   - code 11000 comes from the DRIVER, not from Mongoose: it is not an
@@ -457,42 +512,44 @@ Why this is worth doing explicitly:
 ## Connection to other topics
 
 ```txt
-[CRUD and Query Operators]        — what findOneAndUpdate does at the
-                                    server level; upsert and E11000;
-                                    a condition in the filter instead
-                                    of a lock
-[Schema Design: Embedding vs      — why populate on the hot path is a
- Referencing]                       question about the schema; Computed
-                                    instead of count: true
-[Indexes and Query Performance]   — the foreignField index for virtual
-                                    populate; building indexes in
-                                    production; covered queries and lean()
-[Aggregation Pipeline]            — $lookup as the alternative to
-                                    populate, and its cost
-[Replication, Transactions, and   — sessions and transactions in
- Consistency]                       Mongoose, retryable writes at the
-                                    driver level
-[Mongoose: Schemas, Models, and   — where validation and hooks run and
- Validation]                        where they do not; unique as an index
+CRUD and Query Operators        — what findOneAndUpdate does at the
+                                  server level; upsert and E11000;
+                                  a condition in the filter instead
+                                  of a lock
+Schema Design: Embedding vs     — why populate on the hot path is a
+Referencing                       question about the schema;
+                                  Computed instead of count: true
+Indexes and Query Performance   — the foreignField index for virtual
+                                  populate; building indexes in
+                                  production; covered queries
+                                  and lean()
+Aggregation Pipeline            — $lookup as the alternative to
+                                  populate, and its cost
+Replication, Transactions, and  — sessions and transactions in
+Consistency                       Mongoose, retryable writes at the
+                                  driver level
+Mongoose: Schemas, Models, and  — where validation and hooks run
+Validation                        and where they do not; unique
+                                  as an index
 ```
 
 ## Common interview traps
 
 - **"`populate` is `$lookup` in Mongoose"** — it is separate queries plus stitching in Node memory. One populate over a list = one extra query via `$in`; `$lookup` runs on the server.
 
-- **"`populate` always causes N+1"** — not in the basic case. N+1 appears with nested populate, populate inside a loop over documents, and with `perDocumentLimit`. In an interview it is valuable to explain exactly where the extra query comes from.
+- **"`populate` always causes N+1"** — not in the basic case. N+1 means one query for a list of N items plus one more query per item, so N+1 database round-trips instead of two. It appears with nested populate, populate inside a loop over documents, and with `perDocumentLimit`. In an interview it is valuable to explain exactly where the extra query comes from.
 
-- **"`options: { limit: 3 }` in populate gives 3 related documents per parent"** — it is a total limit on the whole `$in` query: the first parent gets three, the rest get none. "3 per each" is `perDocumentLimit`, and it runs a query per document.
+- **"`options: { limit: 3 }` in populate gives 3 related documents per parent"** — it is a total limit on the whole `$in` query. The first parent gets three, the rest get none. "3 per each" is `perDocumentLimit`, and it runs a query per document.
 
 - **"`match` in populate filters the parents"** — it does not: the parent comes back with `null` in the related field. Filtering a parent by a related document's property means `$lookup` + `$match` or a denormalized field.
 
-- **"`lean()` is a micro-optimization"** — on lists it is a multiple-fold difference in CPU and memory, because hydration of every document is skipped. Any read-only path should be `lean()`.
+- **"`lean()` is a micro-optimization"** — on lists it is a several-fold difference in processor time and memory, because hydration of every document is skipped. Any read-only path should be `lean()`.
 
-- **"`findOneAndUpdate` returns the updated document"** — by default `returnDocument: 'before'`, i.e. the state BEFORE the change. `'after'` has to be requested explicitly.
+- **"`findOneAndUpdate` returns the updated document"** — by default `returnDocument: 'before'`, which is the state as it was **before** the change. `'after'` has to be requested explicitly.
 
 - **"`__v` is optimistic locking"** — `__v` is not incremented on every `save()`, and a plain field overwrite raises no conflict. Real locking is `optimisticConcurrency: true` or your own version field in the filter.
 
-- **"The query is just slow"** (when it fails after 10 seconds with `buffering timed out`) — it is not a slow query but a missing connection: the command sat in Mongoose's buffer. Diagnose with `readyState`, connection events and a healthcheck.
+- **"The query is just slow"** (when it fails after 10 seconds with `buffering timed out`) — it is not a slow query but a missing connection. The command sat in Mongoose's buffer. Diagnose with `readyState`, connection events and a healthcheck.
 
 - **"`autoIndex` can stay on, it is convenient"** — in production that means building indexes at deploy time, races between instances and implicit changes. Indexes are applied by a migration; note that `syncIndexes()` **drops** anything not in the schema.
 

@@ -3,7 +3,7 @@
 
 ## Four Approaches
 
-When the client needs to receive updates without making an explicit request, there are four mechanisms: polling, long polling, SSE, and WebSockets. They look similar on the surface but work fundamentally differently. We'll cover each individually — then compare.
+When the client needs to receive updates without making an explicit request, there are four mechanisms: polling, long polling, server-sent events (SSE), and WebSockets. They look similar on the surface but work fundamentally differently. We'll cover each individually — then compare.
 
 ---
 
@@ -16,9 +16,9 @@ The simplest approach: the client periodically asks "is there anything new?"
 ```txt
 Time →
 
-Client: [GET /api/updates] [GET /api/updates] [GET /api/updates] [GET /api/updates]
-           ↓                   ↓                  ↓                  ↓
-Server: [200: empty]       [200: empty]        [200: data!]       [200: empty]
+Client: [GET /updates]  [GET /updates]  [GET /updates]
+           ↓               ↓               ↓
+Server: [200: empty]    [200: empty]    [200: data!]
 
                           ↑ 5-second interval ↑
 ```
@@ -92,10 +92,10 @@ An improvement on polling: the server holds the request open until data arrives 
 ```txt
 Time →
 
-Client: [GET /api/updates] ──────────── hold ──────────── [data!] [GET /api/updates] ──── hold ──
-Server:                    waiting for data...              ↑       waiting for data...
-                                                      data arrived
-                                                      → respond → client reconnects immediately
+Client: [GET /updates] ────── hold ────── [data!] [GET /updates]
+Server:                waiting for data...   ↑     waiting again
+                                    data appeared, server responds,
+                                    client reconnects immediately
 ```
 
 ### Implementation
@@ -167,14 +167,14 @@ Pros:
 Cons:
   ❌ Server complexity: must manage open connections
   ❌ Every response requires a new request (reconnect overhead)
-  ❌ Hard to scale: each instance holds its own waitingClients in memory
+  ❌ Hard to scale: each instance keeps its own waitingClients
      → needs shared pub/sub (Redis) to notify the right instance
   ❌ Holds a thread/worker for the entire wait period (without async)
 ```
 
 **When to use:**
 - Low latency needed but SSE/WebSocket unavailable (legacy clients)
-- Historically: Comet, XMPP clients, old WhatsApp Web
+- Historically: Comet, XMPP (extensible messaging and presence protocol) clients, old WhatsApp Web
 - Today: almost always better to use SSE instead of long polling
 
 ---
@@ -214,9 +214,9 @@ Server: HTTP/1.1 200 OK
 Each event is a set of lines terminated by a blank line (\n\n):
 
 data: text or JSON                    ← required
-event: event-name                     ← optional (default: "message")
+event: event-name                ← optional (default "message")
 id: 42                                ← optional, for Last-Event-ID
-retry: 3000                           ← optional, ms before reconnect
+retry: 3000                      ← optional, ms to reconnect
 
 Examples:
 
@@ -355,7 +355,7 @@ Pros:
 Cons:
   ❌ Server-to-client only (unidirectional)
   ❌ Text only (no binary protocol)
-  ❌ EventSource doesn't support custom headers (can't send Bearer token)
+  ❌ EventSource takes no custom headers (no Bearer token)
      → workarounds: token in query param or cookie
   ❌ In HTTP/1.1: each SSE occupies one of 6 allowed connections
 ```
@@ -364,7 +364,7 @@ Cons:
 
 ## WebSockets
 
-WebSockets are a **full-duplex persistent connection** over TCP (RFC 6455). The client and server can send messages to each other at any time.
+WebSockets are a **full-duplex persistent connection** over TCP (RFC 6455), a document in the request-for-comments series. The client and server can send messages to each other at any time.
 
 ### The Upgrade Handshake
 
@@ -389,13 +389,13 @@ Sec-WebSocket-Protocol: chat
 
 After 101, the connection switches to the WebSocket protocol. The TCP connection stays open; HTTP is no longer used.
 
-`Sec-WebSocket-Accept` = base64(SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")) — protects against accidental HTTP servers accepting WS requests.
+`Sec-WebSocket-Accept = base64(SHA1(key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))` — protects against accidental HTTP servers accepting WS (WebSocket) requests.
 
 ### WebSocket Frames
 
 ```txt
 WebSocket frame (simplified):
-  [FIN][RSV][Opcode 4 bits][Mask 1 bit][Payload Length][Masking Key][Payload]
+  [FIN][RSV][Opcode 4b][Mask 1b][Length][Masking Key][Payload]
 
 Opcodes:
   0x0 — continuation frame
@@ -405,7 +405,8 @@ Opcodes:
   0x9 — ping
   0xA — pong
 
-Masking: all client frames are masked (protection against proxy cache poisoning)
+Masking: every client frame is masked, which protects proxies
+from cache poisoning
          server frames are not masked
 ```
 
@@ -548,9 +549,9 @@ Solution: Redis Pub/Sub (or another pub/sub)
 
 Client A → WS Instance 1 → publish("user:42", message) → Redis
                                                             ↓
-                                                   subscribe("user:42")
+                                        subscribe("user:42")
                                                             ↓
-                                                   WS Instance 2 → Client B
+                                        WS Instance 2 → Client B
 ```
 
 ```typescript
@@ -587,7 +588,7 @@ Cons:
   ❌ No automatic reconnection (unlike SSE) — must implement yourself
   ❌ Proxies and firewalls sometimes close idle WS connections
   ❌ Authentication is harder: no HTTP headers after the handshake
-  ❌ Harder to debug: not visible as regular requests in DevTools Network tab
+  ❌ Harder to debug: not a normal request in the Network tab
   ❌ ws:// is unencrypted; wss:// is mandatory in production
 ```
 
@@ -596,33 +597,34 @@ Cons:
 ## Comparison and Decision Guide
 
 ```txt
-┌─────────────────────┬────────────┬───────────┬───────────┬──────────────────┐
-│                     │ Polling    │ Long Poll │ SSE       │ WebSocket        │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Direction           │ pull       │ pull      │ push S→C  │ push S↔C         │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Latency             │ = interval │ ~ms       │ ~ms       │ ~ms              │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Empty requests      │ many       │ few       │ none      │ none             │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Auto-reconnect      │ client     │ client    │ browser ✅ │ ❌ manual         │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Proxy / firewall    │ ✅ always   │ ✅ always  │ ✅ always  │ ⚠️ sometimes     │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Binary data         │ ❌          │ ❌         │ ❌         │ ✅                │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Scaling             │ ✅ easy     │ ⚠️ Redis  │ ⚠️ Redis  │ ❌ complex        │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ Implementation cost │ ⭐          │ ⭐⭐        │ ⭐⭐        │ ⭐⭐⭐⭐             │
-├─────────────────────┼────────────┼───────────┼───────────┼──────────────────┤
-│ HTTP/2 compatible   │ ✅          │ ✅         │ ✅✅        │ ❌ (own protocol) │
-└─────────────────────┴────────────┴───────────┴───────────┴──────────────────┘
+┌───────────────┬──────────┬───────────┬───────────┬──────────────┐
+│               │ Polling  │ Long Poll │ SSE       │ WebSocket    │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Direction     │ pull     │ pull      │ push S→C  │ push S↔C     │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Latency       │ interval │ ~ms       │ ~ms       │ ~ms          │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Empty reqs    │ many     │ few       │ none      │ none         │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Reconnect     │ client   │ client    │ browser ✅ │ ❌ manual     │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Through proxy │ ✅ always │ ✅ always  │ ✅ always  │ ⚠️ sometimes │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Binary        │ ❌        │ ❌         │ ❌         │ ✅            │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Scaling       │ ✅ easy   │ ⚠️ Redis  │ ⚠️ Redis  │ ❌ complex    │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ Build cost    │ ⭐        │ ⭐⭐        │ ⭐⭐        │ ⭐⭐⭐⭐         │
+├───────────────┼──────────┼───────────┼───────────┼──────────────┤
+│ HTTP/2        │ ✅        │ ✅         │ ✅✅        │ ❌ own proto  │
+└───────────────┴──────────┴───────────┴───────────┴──────────────┘
 ```
 
 ### Practical Decision Guide
 
 ```txt
-Start with the question: does the client need to push to the server in real time?
+Start with one question: does the client need to push to the
+server in real time?
 
 NO (server → client only):
   Use SSE.
@@ -678,12 +680,13 @@ Trading terminal (quotes + orders):
 
 ## WebTransport (the future)
 
-A new W3C/IETF standard over HTTP/3 (QUIC), combining WebSocket benefits with QUIC's transport improvements:
+A new standard from the W3C (World Wide Web Consortium) and the IETF (Internet Engineering Task Force). It runs over HTTP/3 (QUIC) and combines WebSocket benefits with QUIC's transport improvements:
 
 ```txt
 WebTransport advantages over WebSockets:
   - Multiple independent streams in one connection
-  - Unreliable datagrams (like UDP — for games, video, where speed > reliability)
+  - Unreliable datagrams (like UDP — games, video, where speed
+    matters more than reliability)
   - 0-RTT connection setup (QUIC)
   - Packet loss on one stream doesn't block others
 
@@ -699,7 +702,7 @@ Too early to use in production.
 
 - **"SSE is an outdated approach"** — no. SSE is actively used. OpenAI streams ChatGPT responses over SSE. GitHub streams live updates over SSE. It's a modern, well-supported standard.
 
-- **"WebSockets don't work over HTTPS"** — they do. `ws://` is unencrypted (like `http://`), `wss://` is encrypted (like `https://`). Always use `wss://` in production.
+- **"WebSockets don't work over HTTPS"** — they do. HTTPS (encrypted HTTP) changes the scheme, not the upgrade. `ws://` is unencrypted (like `http://`), `wss://` is encrypted (like `https://`). Always use `wss://` in production.
 
 - **"Polling is an antipattern — never use it"** — polling is a perfectly valid choice for infrequent updates and simple scenarios. A stats dashboard that updates once a minute needs no WebSocket complexity.
 

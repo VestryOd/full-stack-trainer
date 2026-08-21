@@ -20,13 +20,19 @@ function stripVerifiedComment(content: string): string {
   return content.replace(/^<!--[\s\S]*?-->\s*/m, '');
 }
 
-/** Server-side: parse markdown + highlight code blocks. Returns HTML string. */
-export async function renderArticleHtml(content: string): Promise<string> {
+/**
+ * Server-side: parse markdown + highlight code blocks. Returns HTML string.
+ *
+ * `topicId` turns the `./04-file.md` links the articles use into real routes.
+ * Without it the href ships verbatim and resolves against the current article's
+ * own path, which 404s.
+ */
+export async function renderArticleHtml(content: string, topicId?: string): Promise<string> {
   const cleaned = stripVerifiedComment(content);
-  return renderMarkdownWithShiki(cleaned);
+  return renderMarkdownWithShiki(cleaned, topicId);
 }
 
-async function renderMarkdownWithShiki(source: string): Promise<string> {
+async function renderMarkdownWithShiki(source: string, topicId?: string): Promise<string> {
   // Pass 1: extract code blocks → placeholders
   const blocks: Array<{ lang: string; code: string }> = [];
   const withPlaceholders = source.replace(
@@ -51,6 +57,13 @@ async function renderMarkdownWithShiki(source: string): Promise<string> {
       .replace(/-+/g, '-')
       .trim();
     return `<h${depth} id="${id}">${text}</h${depth}>\n`;
+  };
+  renderer.link = function ({ href, title, text }) {
+    // `./07-streams-and-backpressure.md` → `/theory/nodejs/07-streams-and-backpressure`
+    const sameTopic = topicId && /^\.\/([\w-]+)\.md$/.exec(href);
+    const target = sameTopic ? `/theory/${topicId}/${sameTopic[1]}` : href;
+    const titleAttr = title ? ` title="${title}"` : '';
+    return `<a href="${target}"${titleAttr}>${text}</a>`;
   };
 
   marked.setOptions({ gfm: true, breaks: false });

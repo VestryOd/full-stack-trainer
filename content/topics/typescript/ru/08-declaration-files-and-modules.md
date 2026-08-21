@@ -261,7 +261,7 @@ declare module "some-typed-lib" {
 
 ### Что такое namespace
 
-`namespace` (ранее назывался `module` до TypeScript 1.5) — это способ организации кода в пространства имён до появления ES-модулей:
+`namespace` (ранее назывался `module` до TypeScript 1.5) — это способ организации кода в пространства имён до появления ES-модулей. ES — это ECMAScript, стандарт, которым описан сам JavaScript:
 
 ```ts
 namespace Utils {
@@ -395,13 +395,14 @@ export function readFile(path: string): Buffer;
 ### Современная практика
 
 ```txt
-Используй triple-slash директивы когда:
-  - Пишешь .d.ts файл для библиотеки (reference types)
-  - Работаешь с legacy-кодом без модульной системы (reference path)
+Используйте triple-slash директивы когда:
+  - Пишете .d.ts файл для библиотеки (reference types)
+  - Работаете с legacy-кодом без модульной системы (reference path)
 
-НЕ используй когда:
-  - Пишешь обычный .ts файл — используй import
-  - Подключаешь типы в проекте — используй tsconfig.json compilerOptions.types
+Не используйте когда:
+  - Пишете обычный .ts файл — берите import
+  - Подключаете типы в проекте — берите
+    compilerOptions.types в tsconfig.json
 ```
 
 ```json
@@ -465,7 +466,7 @@ export declare function formatDate(date: Date): string;
 
 ## Типичные ошибки на интервью
 
-- **"namespace — это то же самое, что ES-модуль"** — нет. Namespace компилируется в объект (IIFE-паттерн в JS), не в ES-модуль. У namespace нет tree-shaking, явных зависимостей, нативной поддержки в бандлерах. Для нового кода используйте `import`/`export`.
+- **"namespace — это то же самое, что ES-модуль"** — нет. Namespace компилируется в объект, который собирает IIFE — immediately invoked function expression, сразу вызванное функциональное выражение. Это не ES-модуль. У namespace нет tree-shaking, явных зависимостей, нативной поддержки в бандлерах. Для нового кода используйте `import`/`export`.
 
 - **Не знать разницу между `.d.ts` и `.ts` с только типами** — `.d.ts` файл никогда не компилируется в JavaScript. Он существует только для TypeScript. `.ts` файл с только типами компилируется в пустой `.js`. Для ambient деклараций и module augmentation нужен именно `.d.ts`.
 

@@ -12,6 +12,10 @@ import { useLocale } from '@/context/LocaleContext';
 const RANDOM_QUIZ_KEY = 'fst-quiz-random';
 const MAX_BADGE_LABELS = 3;
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 interface RandomQuizConfig {
   topicIds: string[];
   count: number;
@@ -68,16 +72,26 @@ export function RandomQuizClient({ allQuestionsPerTopic, topicLabels }: Props) {
               en: await renderArticleHtml(q.question.en),
               ru: await renderArticleHtml(q.question.ru ?? q.question.en),
             },
+            explanationHtml: {
+              en: await renderArticleHtml(q.explanation.en),
+              ru: await renderArticleHtml(q.explanation.ru ?? q.explanation.en),
+            },
           })),
         );
         setQuestionsWithHtml(withHtml);
       } catch {
-        // Shiki failed — fall back to plain text wrapped in a paragraph
+        // Shiki failed — fall back to plain text wrapped in a paragraph. Escaping matters
+        // here: content mentions element names like <nav>, which the browser would
+        // otherwise parse as markup and drop from the page.
         const withPlain: QuizQuestionWithHtml[] = selected.map((q) => ({
           ...q,
           questionHtml: {
-            en: `<p>${q.question.en}</p>`,
-            ru: `<p>${q.question.ru ?? q.question.en}</p>`,
+            en: `<p>${escapeHtml(q.question.en)}</p>`,
+            ru: `<p>${escapeHtml(q.question.ru ?? q.question.en)}</p>`,
+          },
+          explanationHtml: {
+            en: `<p>${escapeHtml(q.explanation.en)}</p>`,
+            ru: `<p>${escapeHtml(q.explanation.ru ?? q.explanation.en)}</p>`,
           },
         }));
         setQuestionsWithHtml(withPlain);

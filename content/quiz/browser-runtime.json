@@ -3,108 +3,108 @@
     "id": "browser-runtime-quiz-1",
     "topicId": "browser-runtime",
     "question": {
-      "en": "Which of the following best describes the difference between a repaint and a reflow in the browser's rendering pipeline?",
-      "ru": "Какой из следующих вариантов лучше всего описывает разницу между перерисовкой (repaint) и перепроцессингом макета (reflow) в конвейере рендеринга браузера?"
+      "en": "Which statement best describes the difference between a repaint and a reflow in the browser's rendering pipeline?",
+      "ru": "Какой вариант лучше всего описывает разницу между repaint (перерисовкой) и reflow (пересчётом макета) в конвейере рендеринга браузера?"
     },
     "options": {
       "en": [
-        "Repaint updates visual styles without recalculating layout, while reflow recalculates layout and triggers a repaint",
+        "Repaint updates visual styles; reflow recalculates layout and repaints",
         "Reflow only affects text content, while repaint affects all visual elements",
         "Repaint and reflow are synonymous terms for the same process",
         "Reflow is faster than repaint because it skips style calculations"
       ],
       "ru": [
-        "Перерисовка обновляет визуальные стили без пересчета макета, а reflow пересчитывает макет и вызывает перерисовку",
-        "Reflow влияет только на текстовое содержимое, а repaint влияет на все визуальные элементы",
-        "Перерисовка и reflow - синонимичные термины для одного и того же процесса",
-        "Reflow быстрее перерисовки, потому что пропускает расчеты стилей"
+        "Repaint обновляет визуальные стили, а reflow пересчитывает макет и вызывает перерисовку",
+        "Reflow влияет только на текстовое содержимое, а repaint — на все визуальные элементы",
+        "Repaint и reflow — синонимы, обозначающие один и тот же процесс",
+        "Reflow быстрее repaint, потому что пропускает расчёт стилей"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Repaint occurs when only visual properties change (color, background, etc.) without affecting layout. Reflow is more expensive as it recalculates the entire layout and always triggers a repaint. Understanding this distinction is crucial for performance optimization.",
-      "ru": "Перерисовка происходит при изменении только визуальных свойств (цвет, фон и т.д.) без влияния на макет. Reflow дороже, так как пересчитывает весь макет и всегда вызывает перерисовку. Понимание этого различия критично для оптимизации производительности."
+      "en": "A repaint happens when only visual properties change — colour, background and so on — without affecting layout. A reflow is more expensive: it recalculates the entire layout and always triggers a repaint after it.\n\nSo the two are not the same process, and a reflow is never the cheaper of the two. A reflow is also not limited to text: any change to size or position causes one.",
+      "ru": "Repaint происходит, когда меняются только визуальные свойства (цвет, фон и подобные) и макет остаётся прежним. Reflow дороже: он пересчитывает весь макет и всегда вызывает repaint после себя.\n\nЗначит, это не один и тот же процесс, и reflow никогда не бывает дешевле. И reflow касается не только текста: его вызывает любое изменение размера или позиции."
     }
   },
   {
     "id": "browser-runtime-quiz-2",
     "topicId": "browser-runtime",
     "question": {
-      "en": "What will be logged to the console?\n```js\nconst parent = document.getElementById('parent');\nparent.addEventListener('click', (e) => {\n  if (e.target.classList.contains('item')) {\n    console.log('Item clicked:', e.target.textContent);\n  }\n});\n// User clicks on a newly added element with class 'item'\nconst newItem = document.createElement('div');\nnewItem.className = 'item';\nnewItem.textContent = 'Dynamic';\nparent.appendChild(newItem);\n// User then clicks on newItem\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nconst parent = document.getElementById('parent');\nparent.addEventListener('click', (e) => {\n  if (e.target.classList.contains('item')) {\n    console.log('Item clicked:', e.target.textContent);\n  }\n});\n// Пользователь нажимает на недавно добавленный элемент с классом 'item'\nconst newItem = document.createElement('div');\nnewItem.className = 'item';\nnewItem.textContent = 'Dynamic';\nparent.appendChild(newItem);\n// Пользователь затем нажимает на newItem\n```"
+      "en": "What will be logged to the console?\n```js\nconst parent = document.getElementById('parent');\nparent.addEventListener('click', (e) => {\n  if (e.target.classList.contains('item')) {\n    console.log('Item clicked:', e.target.textContent);\n  }\n});\n// The element is created after the listener was attached\nconst newItem = document.createElement('div');\nnewItem.className = 'item';\nnewItem.textContent = 'Dynamic';\nparent.appendChild(newItem);\n// Only now does the user click on newItem\n```",
+      "ru": "Что будет выведено в консоль?\n```js\nconst parent = document.getElementById('parent');\nparent.addEventListener('click', (e) => {\n  if (e.target.classList.contains('item')) {\n    console.log('Item clicked:', e.target.textContent);\n  }\n});\n// Элемент создаётся после того, как обработчик уже добавлен\nconst newItem = document.createElement('div');\nnewItem.className = 'item';\nnewItem.textContent = 'Dynamic';\nparent.appendChild(newItem);\n// И только теперь пользователь нажимает на newItem\n```"
     },
     "options": {
       "en": [
-        "Item clicked: Dynamic",
         "Nothing, because the event listener was added before the element existed",
+        "Item clicked: Dynamic",
         "An error will be thrown because e.target is undefined",
         "Item clicked: undefined"
       ],
       "ru": [
+        "Ничего, потому что обработчик был добавлен до создания элемента",
         "Item clicked: Dynamic",
-        "Ничего, потому что обработчик событий был добавлен до создания элемента",
-        "Будет выброшена ошибка, потому что e.target не определен",
+        "Будет выброшена ошибка, потому что e.target не определён",
         "Item clicked: undefined"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Event delegation works by listening to events on a parent element. When a click bubbles up from the dynamically added element, the parent's listener catches it. The event.target correctly references the clicked element regardless of when it was added to the DOM.",
-      "ru": "Делегирование событий работает путем прослушивания событий на родительском элементе. Когда клик всплывает из динамически добавленного элемента, обработчик родителя его перехватывает. Event.target правильно ссылается на нажатый элемент независимо от того, когда он был добавлен в DOM."
+      "en": "Event delegation works by listening on a parent element. The click starts on the new `div`, bubbles up, and the parent's handler catches it.\n\n`event.target` still points at the element that was actually clicked, no matter when that element was added to the DOM. DOM is the Document Object Model — the tree of objects the browser builds from your HTML.",
+      "ru": "Делегирование событий работает так: обработчик добавляют не на сам элемент, а на его родителя. Клик возникает на новом `div`, всплывает вверх, и обработчик родителя его перехватывает.\n\n`event.target` по-прежнему указывает на элемент, по которому нажали, — неважно, когда этот элемент добавили в DOM. DOM — это Document Object Model, дерево объектов, которое браузер строит из вашего HTML."
     }
   },
   {
     "id": "browser-runtime-quiz-3",
     "topicId": "browser-runtime",
     "question": {
-      "en": "A request from your frontend (origin: https://app.example.com) to an API (origin: https://api.example.com) is blocked by CORS. Which header in the server response would explicitly allow this cross-origin request?",
-      "ru": "Запрос с вашего фронтенда (origin: https://app.example.com) к API (origin: https://api.example.com) блокируется CORS. Какой заголовок в ответе сервера явно разрешит этот кросс-доменный запрос?"
+      "en": "A request from your frontend (origin `https://app.example.com`) to an API (origin `https://api.example.com`) is blocked by CORS. CORS stands for Cross-Origin Resource Sharing: the rules a browser applies to requests between two different origins. Which header in the server's response would explicitly allow this request?",
+      "ru": "Запрос с вашего фронтенда (источник `https://app.example.com`) к API (источник `https://api.example.com`) блокируется CORS. CORS — это Cross-Origin Resource Sharing, правила браузера для запросов между двумя разными источниками (origin). Какой заголовок в ответе сервера явно разрешит этот запрос?"
     },
     "options": {
       "en": [
-        "Access-Control-Allow-Origin: https://app.example.com",
         "Allow-Cross-Origin: true",
         "X-Requested-With: XMLHttpRequest",
+        "Access-Control-Allow-Origin: https://app.example.com",
         "Access-Control-Request-Headers: Content-Type"
       ],
       "ru": [
-        "Access-Control-Allow-Origin: https://app.example.com",
         "Allow-Cross-Origin: true",
         "X-Requested-With: XMLHttpRequest",
+        "Access-Control-Allow-Origin: https://app.example.com",
         "Access-Control-Request-Headers: Content-Type"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The Access-Control-Allow-Origin header is the standard CORS response header that explicitly permits cross-origin requests from the specified origin. The other options either don't exist or serve different purposes in HTTP communication.",
-      "ru": "Заголовок Access-Control-Allow-Origin - это стандартный заголовок ответа CORS, который явно разрешает кросс-доменные запросы от указанного источника. Остальные варианты либо не существуют, либо служат другим целям в HTTP-коммуникации."
+      "en": "`Access-Control-Allow-Origin` is the response header that names which origin is allowed to read the response. Here the server has to send it with the value `https://app.example.com`.\n\nThe other three do not do that job:\n\n- `Allow-Cross-Origin` is not a real header at all.\n- `X-Requested-With` is an old convention some libraries send, and the browser ignores it when deciding access.\n- `Access-Control-Request-Headers` is sent by the browser in a preflight request, not by the server in a response.",
+      "ru": "`Access-Control-Allow-Origin` — это заголовок ответа, который называет источник, которому разрешено читать ответ. Здесь сервер должен вернуть его со значением `https://app.example.com`.\n\nОстальные три эту задачу не решают:\n\n- `Allow-Cross-Origin` — такого заголовка не существует.\n- `X-Requested-With` — старое соглашение, которое отправляют некоторые библиотеки; на решение о доступе браузер его не смотрит.\n- `Access-Control-Request-Headers` отправляет сам браузер в предварительном запросе (preflight), а не сервер в ответе."
     }
   },
   {
     "id": "browser-runtime-quiz-4",
     "topicId": "browser-runtime",
     "question": {
-      "en": "You need to store 5MB of structured data that should persist across browser sessions and be accessible only from your web application, not from JavaScript in iframes or other origins. Which storage mechanism is most appropriate?",
-      "ru": "Вам нужно сохранить 5 МБ структурированных данных, которые должны сохраняться между сеансами браузера и быть доступными только из вашего веб-приложения, но не из JavaScript в iframe или других источников. Какой механизм хранения наиболее подходящий?"
+      "en": "You need to store 5MB of structured data that survives across browser sessions. Only your own web application should be able to read it. JavaScript in an iframe or on another origin must not. Which storage mechanism is most appropriate?",
+      "ru": "Вам нужно сохранить 5 мегабайт структурированных данных, которые переживают перезапуск браузера. Читать их должно только ваше приложение. JavaScript из iframe или с другого источника (origin) доступа получать не должен. Какой механизм хранения подходит лучше всего?"
     },
     "options": {
       "en": [
-        "IndexedDB with proper origin isolation",
         "localStorage because it has unlimited storage",
         "sessionStorage because it's more secure",
-        "Cookies because they persist across sessions"
+        "Cookies because they persist across sessions",
+        "IndexedDB with proper origin isolation"
       ],
       "ru": [
-        "IndexedDB с надлежащей изоляцией источника",
         "localStorage, потому что он имеет неограниченное хранилище",
         "sessionStorage, потому что он более безопасен",
-        "Cookies, потому что они сохраняются между сеансами"
+        "Cookies, потому что они сохраняются между сеансами",
+        "IndexedDB с надлежащей изоляцией источника"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "IndexedDB supports large data storage (typically 50MB+), provides origin isolation, and can store structured data efficiently. localStorage has a 5-10MB limit per origin, sessionStorage clears on tab close, and cookies have size limitations and are sent with every request.",
-      "ru": "IndexedDB поддерживает большое хранилище данных (обычно 50МБ+), обеспечивает изоляцию источника и может эффективно хранить структурированные данные. localStorage имеет лимит 5-10МБ на источник, sessionStorage очищается при закрытии вкладки, а cookies имеют ограничения размера и отправляются с каждым запросом."
+      "en": "IndexedDB is the one option that meets every requirement. It stores structured data efficiently, it is scoped to a single origin, and its quota is normally far above 5MB (typically 50MB or more).\n\nThe other three each fail on something:\n\n- `localStorage` allows only about 5-10MB per origin, which leaves no headroom.\n- `sessionStorage` is cleared when the tab is closed, so the data does not survive the session.\n- Cookies are limited to a few kilobytes each, and every cookie is sent with every request.",
+      "ru": "IndexedDB — единственный вариант, который закрывает все требования сразу. Он эффективно хранит структурированные данные, ограничен одним источником (origin), а его квота обычно намного больше 5 МБ (обычно 50 МБ и выше).\n\nОстальные три не проходят каждый по своей причине:\n\n- `localStorage` даёт всего 5-10 МБ на источник, запаса не остаётся.\n- `sessionStorage` очищается при закрытии вкладки, то есть данные не переживут сеанс.\n- Cookie ограничены несколькими килобайтами каждая и отправляются с каждым запросом."
     }
   },
   {
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The synchronous console.log executes immediately during script parsing. DOMContentLoaded fires after the DOM is fully parsed, and load fires after all resources (images, stylesheets) are loaded. This order reflects the critical rendering path stages.",
-      "ru": "Синхронный console.log выполняется сразу же во время разбора скрипта. DOMContentLoaded срабатывает после полного разбора DOM, а load срабатывает после загрузки всех ресурсов (изображений, стилей). Этот порядок отражает этапы критического пути рендеринга."
+      "en": "The synchronous `console.log` runs first: it executes the moment the browser reaches that line. `DOMContentLoaded` fires next, as soon as the HTML has been fully parsed into the DOM. DOM is the Document Object Model — the tree of objects the browser builds from the page. Then `load` fires last, after every resource is in place, including images and stylesheets.\n\nSo the order follows the page lifecycle: the script runs, then parsing finishes, then the resources arrive.",
+      "ru": "Синхронный `console.log` выполняется первым: он срабатывает в тот момент, когда браузер доходит до этой строки. `DOMContentLoaded` срабатывает вторым — как только HTML полностью разобран в DOM. DOM — это Document Object Model, дерево объектов, которое браузер строит из страницы. Затем `load` срабатывает последним, когда загружены все ресурсы, включая изображения и стили.\n\nТо есть порядок повторяет жизненный цикл страницы: сначала выполняется скрипт, затем заканчивается разбор HTML, затем подгружаются ресурсы."
     }
   },
   {
@@ -139,26 +139,26 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "What is the primary difference between a reflow and a repaint in the browser rendering pipeline?\n```js\nelement.style.width = '200px'; // triggers reflow\nelement.style.color = 'red';   // triggers repaint\n```",
-      "ru": "В чем основное различие между reflow и repaint в конвейере рендеринга браузера?\n```js\nelement.style.width = '200px'; // вызывает reflow\nelement.style.color = 'red';   // вызывает repaint\n```"
+      "ru": "В чём основное различие между reflow (пересчётом макета) и repaint (перерисовкой) в конвейере рендеринга браузера?\n```js\nelement.style.width = '200px'; // вызывает reflow\nelement.style.color = 'red';   // вызывает repaint\n```"
     },
     "options": {
       "en": [
-        "Reflow recalculates layout and dimensions, repaint only updates visual styles without layout changes",
         "Reflow and repaint are the same process, just different terminology used by different browsers",
+        "Reflow recalculates layout and dimensions, repaint only updates visual styles",
         "Repaint recalculates the entire DOM tree, while reflow only updates colors and visual properties",
         "Reflow is faster than repaint because it skips the rendering step"
       ],
       "ru": [
-        "Reflow пересчитывает макет и размеры, repaint только обновляет визуальные стили без изменения макета",
         "Reflow и repaint — это одно и то же, просто разная терминология, используемая разными браузерами",
+        "Reflow пересчитывает макет и размеры, repaint только обновляет визуальные стили",
         "Repaint пересчитывает всё дерево DOM, в то время как reflow только обновляет цвета и визуальные свойства",
         "Reflow быстрее, чем repaint, потому что пропускает этап рендеринга"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Reflow is a more expensive operation that recalculates element layout, dimensions, and positions in the document tree. Repaint occurs when visual properties (like color or opacity) change without affecting layout. Reflow always triggers a repaint, but repaint does not always trigger reflow. The other options conflate these concepts or incorrectly describe their costs.",
-      "ru": "Reflow — это дорогостоящая операция, которая пересчитывает макет, размеры и позиции элементов в дереве документа. Repaint происходит, когда изменяются визуальные свойства (например, цвет или прозрачность) без влияния на макет. Reflow всегда вызывает repaint, но repaint не всегда вызывает reflow. Остальные варианты либо смешивают эти концепции, либо неправильно описывают их стоимость."
+      "en": "A reflow is the expensive one: it recalculates the layout, dimensions and positions of elements in the document tree. A repaint happens when visual properties change — colour or opacity, for example — without affecting layout. A reflow always triggers a repaint after it, but a repaint on its own does not trigger a reflow.\n\nThat rules out the other three answers. Reflow and repaint are not one process under two names. A repaint never rebuilds the document tree. And a reflow is the slower step of the two, not the faster one.",
+      "ru": "Reflow — дорогая операция: она пересчитывает макет, размеры и позиции элементов в дереве документа. Repaint происходит, когда меняются визуальные свойства (например, цвет или прозрачность), не влияя на макет. Reflow всегда вызывает repaint после себя, а repaint сам по себе reflow не вызывает.\n\nОтсюда видно, почему остальные три варианта неверны. Reflow и repaint — не одно и то же под разными названиями. Repaint не перестраивает дерево документа. И reflow — более медленный из двух шагов, а не более быстрый."
     }
   },
   {
@@ -166,26 +166,26 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "Which of the following statements about event delegation is correct?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked:', e.target);\n  }\n});\n```",
-      "ru": "Какое из следующих утверждений о делегировании событий верно?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked:', e.target);\n  }\n});\n```"
+      "ru": "Какое утверждение о делегировании событий верно?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked:', e.target);\n  }\n});\n```"
     },
     "options": {
       "en": [
-        "Event delegation reduces memory usage by attaching one listener to a parent instead of multiple listeners to individual child elements",
         "Event delegation is slower than attaching listeners directly to each element because it requires DOM traversal",
         "Event delegation only works with events that do not bubble, such as focus and blur",
+        "Event delegation saves memory by using one listener on a parent instead of one per child",
         "Event delegation requires the use of stopPropagation() to prevent event bubbling to parent elements"
       ],
       "ru": [
-        "Делегирование событий снижает использование памяти, прикрепляя один слушатель к родителю вместо нескольких слушателей к отдельным дочерним элементам",
-        "Делегирование событий медленнее, чем прикрепление слушателей непосредственно к каждому элементу, так как требует обхода DOM",
+        "Делегирование событий медленнее, чем добавление обработчиков напрямую к каждому элементу, так как требует обхода DOM",
         "Делегирование событий работает только с событиями, которые не всплывают, такими как focus и blur",
-        "Делегирование событий требует использования stopPropagation() для предотвращения всплывания события к родительским элементам"
+        "Делегирование событий экономит память: один обработчик на родителе вместо одного на каждом потомке",
+        "Делегирование событий требует использования stopPropagation() для предотвращения всплытия события к родительским элементам"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "Event delegation leverages event bubbling to handle events on parent elements, reducing the number of event listeners in memory and improving performance. It works primarily with bubbling events and does not require stopPropagation(). The other options misunderstand the performance benefits and event bubbling mechanics.",
-      "ru": "Делегирование событий использует всплывание событий для обработки событий на родительских элементах, уменьшая количество слушателей событий в памяти и улучшая производительность. Оно работает в основном с событиями всплывания и не требует stopPropagation(). Остальные варианты неправильно понимают преимущества производительности и механику всплывания событий."
+      "en": "Event delegation uses event bubbling: one listener on a parent handles the events of all its children. Fewer listeners means less memory held and one function to maintain instead of many.\n\nThe other three answers get the mechanics wrong. Bubbling is what makes delegation work, so delegation cannot be limited to events that do not bubble. It does not need `stopPropagation()` either: that call stops bubbling, which is exactly what delegation depends on. And the cost per event is one `classList` check, not a walk over the element tree.",
+      "ru": "Делегирование событий использует всплытие: один обработчик на родителе обслуживает события всех потомков. Меньше обработчиков — меньше занятой памяти и одна функция вместо множества.\n\nОстальные три варианта путают механику. Именно всплытие делает делегирование возможным, поэтому оно не может работать только с невсплывающими событиями. `stopPropagation()` тоже не нужен: этот вызов останавливает всплытие, на котором делегирование и держится. А накладные расходы на событие — одна проверка `classList`, а не обход дерева элементов."
     }
   },
   {
@@ -193,26 +193,26 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "What is the purpose of the Critical Rendering Path in web performance optimization?",
-      "ru": "Какова цель Critical Rendering Path в оптимизации производительности веб-сайта?"
+      "ru": "Какова цель критического пути рендеринга (Critical Rendering Path) в оптимизации производительности сайта?"
     },
     "options": {
       "en": [
-        "To identify the minimum set of resources and steps needed to render the first pixels on screen, enabling optimization of load time",
         "To ensure that all CSS and JavaScript files are compressed before being sent to the browser",
         "To prevent the browser from rendering any content until all resources are fully downloaded",
-        "To redirect all non-critical requests to a separate server to improve bandwidth allocation"
+        "To redirect all non-critical requests to a separate server to improve bandwidth allocation",
+        "To find the minimum set of resources and steps needed to render the first pixels on screen"
       ],
       "ru": [
-        "Определить минимальный набор ресурсов и шагов, необходимых для отрисовки первых пикселей на экране, позволяя оптимизировать время загрузки",
         "Обеспечить сжатие всех CSS и JavaScript файлов перед отправкой в браузер",
         "Предотвратить рендеринг контента браузером до полной загрузки всех ресурсов",
-        "Перенаправить все некритические запросы на отдельный сервер для улучшения распределения пропускной способности"
+        "Перенаправить все некритические запросы на отдельный сервер для улучшения распределения пропускной способности",
+        "Определить минимальный набор ресурсов и шагов, нужных для отрисовки первых пикселей на экране"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "The Critical Rendering Path refers to the sequence of steps the browser must take to convert HTML, CSS, and JavaScript into rendered pixels on screen. Understanding and optimizing it (by minimizing critical resources, reducing file sizes, and deferring non-critical content) is essential for improving Time to First Contentful Paint (FCP). The other options describe unrelated optimization techniques.",
-      "ru": "Critical Rendering Path относится к последовательности шагов, которые браузер должен выполнить для преобразования HTML, CSS и JavaScript в отрисованные пиксели на экране. Понимание и оптимизация его (минимизацией критических ресурсов, снижением размеров файлов и отложением некритического контента) необходимы для улучшения Time to First Contentful Paint (FCP). Остальные варианты описывают не связанные с этим методы оптимизации."
+      "en": "The Critical Rendering Path is the sequence of steps the browser takes to turn HTML, CSS and JavaScript into pixels on the screen. Naming that sequence lets you find the shortest version of it.\n\nOptimising it means shortening the sequence: fewer critical resources, smaller files, non-critical content deferred. The metric this moves is First Contentful Paint (FCP) — the moment the user first sees real content.\n\nThe other three answers describe something else: compressing all assets, blocking rendering until every resource has arrived, and moving non-critical requests to another server.",
+      "ru": "Критический путь рендеринга (Critical Rendering Path) — это последовательность шагов, которые браузер проходит, чтобы превратить HTML, CSS и JavaScript в пиксели на экране. Если эта последовательность описана, её можно сократить.\n\nОптимизация как раз и означает сокращение: меньше критических ресурсов, меньше размер файлов, некритическое содержимое отложено. Метрика, на которую это влияет, — First Contentful Paint (FCP), первая отрисовка реального контента.\n\nОстальные три варианта описывают другое: сжатие всех файлов, ожидание всех ресурсов перед отрисовкой и перенос некритических запросов на другой сервер."
     }
   },
   {
@@ -220,17 +220,17 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "How does CORS (Cross-Origin Resource Sharing) prevent unauthorized cross-origin requests?\n```js\n// Frontend: https://example.com\nfetch('https://api.other-domain.com/data')\n  .then(res => res.json())\n  .catch(err => console.log('CORS error'));\n```",
-      "ru": "Как CORS (Cross-Origin Resource Sharing) предотвращает несанкционированные запросы между источниками?\n```js\n// Frontend: https://example.com\nfetch('https://api.other-domain.com/data')\n  .then(res => res.json())\n  .catch(err => console.log('CORS error'));\n```"
+      "ru": "Как CORS (Cross-Origin Resource Sharing) предотвращает несанкционированные запросы между источниками (origin)?\n```js\n// Frontend: https://example.com\nfetch('https://api.other-domain.com/data')\n  .then(res => res.json())\n  .catch(err => console.log('CORS error'));\n```"
     },
     "options": {
       "en": [
-        "The browser enforces CORS by checking the Access-Control-Allow-Origin header from the server response; if it doesn't match the request origin, the browser blocks access to the response",
+        "The browser checks Access-Control-Allow-Origin in the response and blocks access to it if it doesn't match",
         "CORS prevents requests by blocking all cross-origin requests at the network layer before they reach the server",
         "CORS is enforced by the server refusing to process requests that don't include a valid Authorization header",
         "The browser blocks cross-origin requests by encrypting them, and only the same-origin server can decrypt them"
       ],
       "ru": [
-        "Браузер обеспечивает CORS, проверяя заголовок Access-Control-Allow-Origin в ответе сервера; если он не совпадает с источником запроса, браузер блокирует доступ к ответу",
+        "Браузер проверяет Access-Control-Allow-Origin в ответе и блокирует доступ к нему, если значение не совпадает",
         "CORS предотвращает запросы, блокируя все кроссдоменные запросы на уровне сети перед тем, как они достигнут сервера",
         "CORS обеспечивается сервером, который отказывает в обработке запросов, не содержащих действительный заголовок Authorization",
         "Браузер блокирует кроссдоменные запросы, зашифровывая их, и только сервер того же источника может их расшифровать"
@@ -238,8 +238,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "CORS is a browser security mechanism where the server explicitly grants permission to cross-origin requests by sending appropriate CORS headers. The browser makes the actual request but blocks JavaScript access to the response if the Access-Control-Allow-Origin header doesn't match the request origin. The actual HTTP request is sent to the server (not blocked at network level), but the response is blocked by the browser. The other options misunderstand how CORS enforcement works.",
-      "ru": "CORS — это механизм безопасности браузера, при котором сервер явно разрешает кроссдоменные запросы, отправляя соответствующие заголовки CORS. Браузер выполняет фактический запрос, но блокирует доступ JavaScript к ответу, если заголовок Access-Control-Allow-Origin не совпадает с источником запроса. Фактический HTTP-запрос отправляется на сервер (не блокируется на уровне сети), но ответ блокируется браузером. Остальные варианты неправильно понимают, как работает enforcement CORS."
+      "en": "CORS is a rule the browser enforces, and the server is the side that grants permission. The browser sends the request, then reads `Access-Control-Allow-Origin` from the response. If that header does not match the page's origin, the browser refuses to let JavaScript read the response.\n\nSo the request itself is not stopped at the network level: for a simple request the server receives it and answers. What gets blocked is the page's access to that answer.\n\nThat is why the other three answers are wrong. Nothing is filtered before it reaches the server, CORS does not require an `Authorization` header, and no encryption is involved.",
+      "ru": "CORS — это правило, которое применяет браузер, а разрешение выдаёт сервер. Браузер отправляет запрос, а потом читает из ответа заголовок `Access-Control-Allow-Origin`. Если значение не совпадает с источником (origin) страницы, браузер не даёт JavaScript прочитать ответ.\n\nТо есть сам запрос не отсекается на уровне сети: при простом запросе сервер его получает и отвечает. Блокируется именно доступ страницы к этому ответу.\n\nПоэтому остальные три варианта неверны. Ничего не фильтруется до сервера, заголовок `Authorization` для CORS не нужен, и никакого шифрования здесь нет."
     }
   },
   {
@@ -252,21 +252,21 @@
     "options": {
       "en": [
         "localStorage, because it persists across sessions and can be manually cleared by JavaScript when the user logs out",
+        "Cookies with the HttpOnly, Secure and SameSite flags, because JavaScript cannot read them",
         "sessionStorage, because it automatically clears when the browser tab is closed",
-        "Cookies with HttpOnly flag, because they are automatically sent with requests and secure from XSS attacks",
         "IndexedDB, because it provides the largest storage capacity and best performance for all data types"
       ],
       "ru": [
         "localStorage, потому что он сохраняется между сеансами и может быть вручную очищен JavaScript при выходе пользователя",
+        "Cookie с флагами HttpOnly, Secure и SameSite, потому что JavaScript не может их прочитать",
         "sessionStorage, потому что он автоматически очищается при закрытии вкладки браузера",
-        "Cookies с флагом HttpOnly, потому что они автоматически отправляются с запросами и защищены от XSS-атак",
         "IndexedDB, потому что обеспечивает наибольший объем хранилища и лучшую производительность для всех типов данных"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "localStorage persists across browser sessions until explicitly cleared, making it ideal for tokens that should remain available across multiple visits. The developer can clear it on logout via removeItem(). sessionStorage clears on tab close, making it unsuitable for persistent storage. HttpOnly cookies are secure but less flexible for logout scenarios. IndexedDB is overkill for token storage. localStorage provides the best balance of persistence, accessibility, and manual control.",
-      "ru": "localStorage сохраняется между сеансами браузера до явного удаления, что делает его идеальным для токенов, которые должны оставаться доступными при нескольких посещениях. Разработчик может очистить его при выходе через removeItem(). sessionStorage очищается при закрытии вкладки, что делает его непригодным для постоянного хранилища. HttpOnly cookies безопасны, но менее гибки для сценариев выхода. IndexedDB — это избыточно для хранения токенов. localStorage обеспечивает лучший баланс между постоянством, доступностью и ручным управлением."
+      "en": "HttpOnly cookies are the right choice, because JavaScript cannot read them.\n\nAny XSS bug on the page can read everything in `localStorage`. XSS is cross-site scripting: an attacker gets their own JavaScript to run inside your page. A token kept in `localStorage` can therefore be stolen and replayed from somewhere else.\n\n`HttpOnly` closes that path. `Secure` keeps the cookie off plain HTTP, and `SameSite` limits when the browser sends it to other sites.\n\nLogout still works: the server answers with a `Set-Cookie` that expires the cookie. That is more reliable than clearing storage in the browser, which never runs if the tab was closed.\n\n`localStorage` does persist across sessions and is easy to clear from JavaScript — but that convenience is exactly what an attacker inherits. And `sessionStorage` disappears when the tab closes, so it fails the requirement. IndexedDB is just as exposed to XSS as `localStorage`, with far more complexity.",
+      "ru": "Правильный выбор — cookie с флагом HttpOnly, потому что JavaScript не может их прочитать.\n\nЛюбая XSS-уязвимость на странице читает всё содержимое `localStorage`. XSS — это cross-site scripting, межсайтовый скриптинг: атакующий добивается, чтобы его JavaScript выполнился внутри вашей страницы. Значит, лежащий там токен можно украсть и использовать откуда угодно.\n\n`HttpOnly` закрывает этот путь. `Secure` не даёт отправить cookie по обычному HTTP, а `SameSite` ограничивает отправку на другие сайты.\n\nВыход из аккаунта при этом работает: сервер отвечает `Set-Cookie` с истёкшим сроком. Это надёжнее очистки хранилища в браузере, которая просто не выполнится, если вкладку закрыли.\n\n`localStorage` действительно живёт между сеансами и легко чистится из JavaScript — но именно это удобство достаётся и атакующему. `sessionStorage` исчезает при закрытии вкладки, то есть не выполняет условие задачи. IndexedDB открыт для XSS так же, как `localStorage`, только устроен куда сложнее."
     }
   },
   {
@@ -274,26 +274,26 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "What is the correct sequence of steps in the Critical Rendering Path?",
-      "ru": "Какова правильная последовательность этапов критического пути отрисовки?"
+      "ru": "Какова правильная последовательность этапов критического пути рендеринга (Critical Rendering Path)?"
     },
     "options": {
       "en": [
-        "Parse HTML → Parse CSS → Construct DOM → Construct CSSOM → Render Tree → Layout → Paint",
         "Parse HTML → Construct DOM → Parse CSS → Layout → Construct CSSOM → Paint → Render Tree",
         "Construct DOM → Construct CSSOM → Parse HTML → Render Tree → Layout → Paint",
+        "Parse HTML → Parse CSS → Construct DOM → Construct CSSOM → Render Tree → Layout → Paint",
         "Parse CSS → Parse HTML → Construct CSSOM → Construct DOM → Paint → Layout → Render Tree"
       ],
       "ru": [
-        "Парсинг HTML → Парсинг CSS → Построение DOM → Построение CSSOM → Render Tree → Layout → Paint",
         "Парсинг HTML → Построение DOM → Парсинг CSS → Layout → Построение CSSOM → Paint → Render Tree",
         "Построение DOM → Построение CSSOM → Парсинг HTML → Render Tree → Layout → Paint",
+        "Парсинг HTML → Парсинг CSS → Построение DOM → Построение CSSOM → Render Tree → Layout → Paint",
         "Парсинг CSS → Парсинг HTML → Построение CSSOM → Построение DOM → Paint → Layout → Render Tree"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The Critical Rendering Path begins with parsing HTML and CSS in parallel to build the DOM and CSSOM trees. These are then combined into a Render Tree, followed by Layout (calculating positions) and Paint (rasterizing pixels). This is the only correct order for optimal rendering performance.",
-      "ru": "Критический путь отрисовки начинается с параллельного парсинга HTML и CSS для построения деревьев DOM и CSSOM. Они объединяются в Render Tree, за которым следуют Layout (расчет позиций) и Paint (растеризация пикселей). Это единственный правильный порядок для оптимальной производительности отрисовки."
+      "en": "The browser parses HTML and CSS in parallel. Parsing HTML builds the DOM: the Document Object Model, a tree of objects for the page. Parsing CSS builds the CSSOM, the same kind of tree for styles (CSS Object Model).\n\nThe two trees are then combined into the render tree. Layout comes after that and computes the position and size of every box, and Paint turns those boxes into pixels. Layout cannot run before the render tree exists, so no other order in the list is possible.",
+      "ru": "Браузер разбирает HTML и CSS параллельно. Из HTML строится DOM: Document Object Model, дерево объектов страницы. Из CSS строится CSSOM — такое же дерево для стилей (CSS Object Model).\n\nЗатем эти два дерева объединяются в дерево рендеринга (Render Tree). После него идёт Layout, который считает позицию и размер каждого блока, а затем Paint, который превращает блоки в пиксели. Layout не может начаться раньше, чем появилось дерево рендеринга, поэтому другой порядок из списка невозможен."
     }
   },
   {
@@ -301,34 +301,34 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "What is the key difference between a reflow and a repaint in browser rendering?\n```js\nconst element = document.getElementById('box');\nelement.style.backgroundColor = 'red';  // Operation A\nelement.style.width = '200px';          // Operation B\n```",
-      "ru": "В чем ключевое различие между reflow и repaint в отрисовке браузера?\n```js\nconst element = document.getElementById('box');\nelement.style.backgroundColor = 'red';  // Операция A\nelement.style.width = '200px';          // Операция B\n```"
+      "ru": "В чём ключевое различие между reflow (пересчётом макета) и repaint (перерисовкой) при рендеринге в браузере?\n```js\nconst element = document.getElementById('box');\nelement.style.backgroundColor = 'red';  // Операция A\nelement.style.width = '200px';          // Операция B\n```"
     },
     "options": {
       "en": [
-        "Operation A triggers a repaint (visual change only), Operation B triggers a reflow (recalculates layout) then a repaint",
         "Both operations trigger identical reflows without any repaints occurring",
         "Operation A triggers a reflow, Operation B triggers only a repaint",
-        "Reflow and repaint are the same process and the terms are used interchangeably"
+        "Reflow and repaint are the same process and the terms are used interchangeably",
+        "Operation A triggers a repaint, Operation B triggers a reflow then a repaint"
       ],
       "ru": [
-        "Операция A вызывает repaint (только визуальное изменение), Операция B вызывает reflow (пересчет разметки), затем repaint",
         "Обе операции вызывают одинаковые reflow без каких-либо repaint",
         "Операция A вызывает reflow, Операция B вызывает только repaint",
-        "Reflow и repaint — это один и тот же процесс, и термины используются взаимозаменяемо"
+        "Reflow и repaint — это один и тот же процесс, и термины используются взаимозаменяемо",
+        "Операция A вызывает repaint, Операция B вызывает reflow, затем repaint"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "A repaint occurs when only visual properties change (like color), while a reflow occurs when layout-affecting properties change (like width, height, position). A reflow always triggers a repaint afterward. Changing backgroundColor is a repaint-only operation; changing width triggers both reflow and repaint, making Operation B more expensive.",
-      "ru": "Repaint происходит при изменении только визуальных свойств (например, цвета), а reflow происходит при изменении свойств, влияющих на разметку (ширина, высота, позиция). Reflow всегда вызывает repaint после себя. Изменение backgroundColor — это операция только repaint; изменение width вызывает оба процесса, что делает Операцию B более дорогостоящей."
+      "en": "Changing `backgroundColor` only changes how the box looks, so Operation A is a repaint. Changing `width` changes geometry, so Operation B triggers a reflow and then a repaint.\n\nThat is the general rule. Properties that affect layout — width, height, position — cause a reflow, and a reflow always causes a repaint after it. Purely visual properties such as colour or background cause a repaint on their own. Operation B is therefore the more expensive of the two.",
+      "ru": "Изменение `backgroundColor` меняет только внешний вид блока, поэтому Операция A — это repaint. Изменение `width` меняет геометрию, поэтому Операция B вызывает сначала reflow, а затем repaint.\n\nОбщее правило такое. Свойства, влияющие на макет (ширина, высота, позиция), вызывают reflow, а reflow всегда влечёт за собой repaint. Чисто визуальные свойства вроде цвета или фона вызывают только repaint. Поэтому Операция B дороже."
     }
   },
   {
     "id": "browser-runtime-quiz-13",
     "topicId": "browser-runtime",
     "question": {
-      "en": "Which Web API and storage mechanism would be most appropriate for storing sensitive authentication tokens that should persist across browser sessions but be inaccessible to JavaScript?\n```js\n// Where should auth tokens be stored?\nlocalStorage.setItem('token', 'secret_token');  // Not ideal\n```",
-      "ru": "Какой Web API и механизм хранения были бы наиболее подходящими для хранения конфиденциальных токенов аутентификации, которые должны сохраняться между сеансами браузера, но быть недоступными для JavaScript?\n```js\n// Где следует хранить токены аутентификации?\nlocalStorage.setItem('token', 'secret_token');  // Не идеально\n```"
+      "en": "Where should sensitive authentication tokens be stored? They must persist across browser sessions, and JavaScript on the page must not be able to read them.\n```js\n// Where should auth tokens be stored?\nlocalStorage.setItem('token', 'secret_token');  // Not ideal\n```",
+      "ru": "Где хранить конфиденциальные токены аутентификации? Они должны сохраняться между сеансами браузера, а JavaScript на странице не должен иметь к ним доступа.\n```js\n// Где следует хранить токены аутентификации?\nlocalStorage.setItem('token', 'secret_token');  // Не идеально\n```"
     },
     "options": {
       "en": [
@@ -338,16 +338,16 @@
         "IndexedDB with a password-protected database"
       ],
       "ru": [
-        "HttpOnly защищенные cookie, установленные через заголовок Set-Cookie на сервере",
+        "Cookie с флагами HttpOnly и Secure, установленные сервером через заголовок Set-Cookie",
         "sessionStorage, так как он доступен только во время текущего сеанса",
         "localStorage, зашифрованный с помощью клиентской библиотеки шифрования",
-        "IndexedDB с базой данных, защищенной паролем"
+        "IndexedDB с базой данных, защищённой паролем"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "HttpOnly cookies are set by the server and automatically sent with requests, making them inaccessible to JavaScript (protecting against XSS attacks). sessionStorage clears on tab close and is still vulnerable to XSS. localStorage is persistent but JavaScript-accessible. Client-side encryption still leaves the decryption key vulnerable. HttpOnly secure cookies are the security best practice for tokens.",
-      "ru": "HttpOnly cookie устанавливаются сервером и автоматически отправляются с запросами, что делает их недоступными для JavaScript (защита от XSS-атак). sessionStorage очищается при закрытии вкладки и остается уязвимым для XSS. localStorage сохраняется, но доступен для JavaScript. Клиентское шифрование все равно оставляет ключ дешифрования уязвимым. HttpOnly защищенные cookie — это лучшая практика безопасности для токенов."
+      "en": "The server sets the cookie with the `HttpOnly` flag, and the browser then attaches it to every request on its own. JavaScript cannot read it at all, and that is what protects the token from XSS. XSS is cross-site scripting: an attacker gets their own JavaScript to run inside your page.\n\nThe other three options leave the token reachable from JavaScript:\n\n- `sessionStorage` is cleared when the tab closes, so it fails the persistence requirement — and any script on the page can read it meanwhile.\n- `localStorage` with client-side encryption does not help, because the decryption key has to live in the same JavaScript the attacker can reach.\n- IndexedDB with a password-protected database is the same story: the password sits in the page.\n\nThe `Secure` flag is the other half of the answer. It keeps the cookie off plain HTTP.",
+      "ru": "Сервер выставляет cookie с флагом `HttpOnly`, и дальше браузер сам прикладывает её к каждому запросу. JavaScript прочитать её не может — именно это и защищает токен от XSS. XSS — это cross-site scripting, межсайтовый скриптинг: атакующий добивается, чтобы его JavaScript выполнился внутри вашей страницы.\n\nОстальные три варианта оставляют токен доступным из JavaScript:\n\n- `sessionStorage` очищается при закрытии вкладки, то есть не выполняет условие о сеансах, а пока живёт — доступен любому скрипту.\n- `localStorage` с шифрованием на клиенте не помогает: ключ расшифровки лежит в том же JavaScript, до которого атакующий уже добрался.\n- IndexedDB с паролем — та же история: пароль находится на странице.\n\nФлаг `Secure` — вторая половина ответа. Он не даёт отправить cookie по обычному HTTP."
     }
   },
   {
@@ -355,26 +355,26 @@
     "topicId": "browser-runtime",
     "question": {
       "en": "What is the primary advantage of using event delegation instead of attaching event listeners directly to individual elements?",
-      "ru": "Каково основное преимущество использования делегирования событий вместо прямого присоединения прослушивателей событий к отдельным элементам?"
+      "ru": "Каково основное преимущество делегирования событий по сравнению с добавлением обработчиков к каждому элементу по отдельности?"
     },
     "options": {
       "en": [
-        "Reduces memory usage and automatically handles dynamically added elements through event bubbling",
         "Event delegation executes event handlers faster than direct listeners",
+        "Reduces memory usage and automatically handles dynamically added elements",
         "Event delegation prevents event bubbling, which improves performance significantly",
         "Event delegation only works with click events, making code more predictable"
       ],
       "ru": [
-        "Снижает использование памяти и автоматически обрабатывает динамически добавленные элементы через всплытие событий",
-        "Делегирование событий выполняет обработчики событий быстрее, чем прямые прослушиватели",
+        "Делегирование событий выполняет обработчики быстрее, чем обработчики, добавленные напрямую",
+        "Снижает использование памяти и автоматически обрабатывает динамически добавленные элементы",
         "Делегирование событий предотвращает всплытие событий, что значительно улучшает производительность",
         "Делегирование событий работает только с событиями click, что делает код более предсказуемым"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Event delegation leverages event bubbling to attach a single listener to a parent element instead of many to individual children. This reduces memory overhead and automatically handles dynamically added elements without needing to rebind listeners. Bubbling is not prevented; it's the mechanism that makes delegation work. Performance depends on implementation, not the technique itself.",
-      "ru": "Делегирование событий использует всплытие для присоединения единственного прослушивателя к родительскому элементу вместо множества к отдельным потомкам. Это снижает использование памяти и автоматически обрабатывает динамически добавленные элементы без необходимости переприсоединения прослушивателей. Всплытие не предотвращается; это механизм, который делает делегирование рабочим. Производительность зависит от реализации, а не от самого метода."
+      "en": "Delegation puts one listener on a parent instead of many on the children, and bubbling carries every child's event up to it. Two things follow: less memory used, and new children work without rebinding anything.\n\nThe other three answers are wrong. Handlers do not run faster this way, because the saving is in setup and memory, not in dispatch. Bubbling is not prevented; it is the mechanism delegation relies on. And delegation works with any bubbling event, not only `click`.",
+      "ru": "Делегирование ставит один обработчик на родителя вместо множества на потомках, а всплытие доносит до него события всех потомков. Отсюда два следствия: расходуется меньше памяти, и новые потомки работают без повторного добавления обработчиков.\n\nОстальные три варианта неверны. Обработчики не выполняются быстрее: экономия в подготовке и в памяти, а не в скорости вызова. Всплытие не предотвращается — именно на нём делегирование и держится. И делегирование работает с любым всплывающим событием, а не только с `click`."
     }
   },
   {
@@ -386,130 +386,130 @@
     },
     "options": {
       "en": [
-        "The fetch fails, the catch block executes and returns a cached response if available, otherwise undefined",
         "The request is blocked by the browser's CORS policy and an error is thrown",
         "The Service Worker automatically retries the request indefinitely until the network returns",
+        "The fetch fails and the catch block returns a cached response, or undefined if none",
         "The cached response is returned directly without attempting any network request"
       ],
       "ru": [
-        "fetch не выполняется, блок catch выполняется и возвращает кэшированный ответ, если доступен, иначе undefined",
         "Запрос блокируется политикой CORS браузера и выбрасывается ошибка",
-        "Service Worker автоматически повторяет запрос бесконечно, пока сеть не вернется",
-        "Кэшированный ответ возвращается непосредственно без попытки любого сетевого запроса"
+        "Service Worker автоматически повторяет запрос бесконечно, пока сеть не вернётся",
+        "fetch падает, и блок catch возвращает ответ из кеша или undefined, если кеша нет",
+        "Ответ из кеша возвращается сразу, без попытки сетевого запроса"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The code implements a network-first strategy with cache fallback. When fetch fails (network unavailable), the catch handler is triggered and attempts to match the request against cached responses. If a cached response exists, it's returned; if not, caches.match returns undefined and the promise resolves with that value. This is a common offline-support pattern.",
-      "ru": "Код реализует стратегию network-first с fallback на кэш. Когда fetch не выполняется (сеть недоступна), срабатывает обработчик catch и пытается найти запрос в кэшированных ответах. Если кэшированный ответ существует, он возвращается; если нет, caches.match возвращает undefined и обещание разрешается с этим значением. Это общий паттерн для поддержки работы в оффлайне."
+      "en": "The code is a network-first strategy with a cache fallback. `fetch` is tried first. When the network is down it rejects, so the `.catch` runs and `caches.match(event.request)` looks for a stored response.\n\nIf a matching response is in the cache, that response is returned. If there is none, `caches.match` resolves to `undefined`, and the promise handed to `respondWith` resolves with that value. This is a common pattern for offline support.",
+      "ru": "Код реализует стратегию «сначала сеть, потом кеш» (network-first with cache fallback). Сначала выполняется `fetch`. Если сети нет, он завершается ошибкой, срабатывает `.catch`, и `caches.match(event.request)` ищет сохранённый ответ.\n\nЕсли подходящий ответ в кеше есть, возвращается он. Если нет, `caches.match` разрешается в `undefined`, и обещание, переданное в `respondWith`, разрешается этим же значением. Это обычный приём для работы офлайн."
     }
   },
   {
     "id": "browser-runtime-quiz-17",
     "topicId": "browser-runtime",
     "question": {
-      "en": "What does event delegation leverage to handle events efficiently?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked');\n  }\n});\n```\nWhy is this approach more efficient than attaching listeners to individual buttons?",
-      "ru": "На чем основан принцип делегирования событий для эффективной обработки событий?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked');\n  }\n});\n```\nПочему этот подход более эффективен, чем присоединение слушателей к отдельным кнопкам?"
+      "en": "What does event delegation rely on to handle events efficiently?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked');\n  }\n});\n```\nWhy is this cheaper than attaching a listener to every individual button?",
+      "ru": "На каком механизме браузера построено делегирование событий?\n```js\ndocument.addEventListener('click', (e) => {\n  if (e.target.classList.contains('btn')) {\n    console.log('Button clicked');\n  }\n});\n```\nПочему это дешевле, чем добавлять обработчик к каждой кнопке?"
     },
     "options": {
       "en": [
-        "It uses event bubbling and a single listener on a parent element instead of multiple listeners on child elements",
         "It prevents the default browser behavior and stops all event propagation",
-        "It uses event capturing instead of bubbling, which is faster",
-        "It creates a virtual DOM layer that optimizes event handling"
+        "It uses event capturing instead of bubbling, because bubbling is too slow for many elements",
+        "It creates a virtual DOM layer that intercepts events before the real DOM",
+        "It uses event bubbling and one listener on a parent instead of one per child"
       ],
       "ru": [
-        "Он использует всплывание событий и один слушатель на родительском элементе вместо нескольких слушателей на дочерних элементах",
-        "Он предотвращает поведение браузера по умолчанию и останавливает всю пропагацию событий",
-        "Он использует захват событий вместо всплывания, что быстрее",
-        "Он создает слой виртуального DOM, который оптимизирует обработку событий"
+        "Он предотвращает поведение браузера по умолчанию и останавливает всё распространение событий",
+        "Он использует захват событий вместо всплытия, потому что всплытие слишком медленное",
+        "Он создаёт слой виртуального DOM, который перехватывает события до настоящего DOM",
+        "Он использует всплытие событий: один обработчик на родителе вместо одного на каждом потомке"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "Event delegation exploits event bubbling: events propagate from child elements up to parent elements. By attaching a single listener to a parent (or document), you avoid the memory overhead of multiple listeners on individual elements. This is especially beneficial for dynamic content where elements are added/removed frequently.",
-      "ru": "Делегирование событий использует всплывание событий: события распространяются от дочерних элементов к родительским. Присоединив один слушатель к родителю (или документу), вы избегаете затрат памяти от нескольких слушателей на отдельных элементах. Это особенно полезно для динамического контента, где элементы часто добавляются/удаляются."
+      "en": "Event delegation relies on bubbling: an event fires on the element that was clicked and then travels up through its ancestors. A single listener on the parent — or on `document` — sees all of them.\n\nSo you pay for one listener instead of one per button, and elements added later are handled with no extra work. That matters most for lists that change often.\n\nNothing here uses event capturing or a virtual copy of the DOM (Document Object Model — the browser's tree of page objects). And nothing is stopped: delegation needs the event to keep propagating.",
+      "ru": "Делегирование построено на всплытии: событие возникает на элементе, по которому нажали, и затем поднимается по его родителям. Один обработчик на родителе — или на `document` — видит их все.\n\nЗначит, вы платите за один обработчик вместо одного на каждую кнопку, а элементы, добавленные позже, обрабатываются без дополнительной работы. Особенно это важно для списков, которые часто меняются.\n\nНи захват событий, ни виртуальная копия DOM здесь не участвуют. DOM — это Document Object Model, дерево объектов страницы, которое строит браузер. И ничего не блокируется: делегированию нужно, чтобы событие продолжало распространяться."
     }
   },
   {
     "id": "browser-runtime-quiz-18",
     "topicId": "browser-runtime",
     "question": {
-      "en": "Which of the following best describes the Critical Rendering Path (CRP) in browser performance?\n```js\n// A web page starts loading\n// Step 1: Parse HTML → build DOM\n// Step 2: Fetch and parse CSS → build CSSOM\n// Step 3: Combine DOM + CSSOM → build Render Tree\n// Step 4: Layout (Reflow) → Paint (Repaint)\n```\nWhich step would be blocked if a critical CSS file fails to load?",
-      "ru": "Какое из следующих описаний лучше всего описывает критический путь рендеринга (CRP) в производительности браузера?\n```js\n// Веб-страница начинает загружаться\n// Шаг 1: Парсинг HTML → построение DOM\n// Шаг 2: Загрузка и парсинг CSS → построение CSSOM\n// Шаг 3: Объединение DOM + CSSOM → построение Render Tree\n// Шаг 4: Layout (Reflow) → Paint (Repaint)\n```\nКакой шаг будет заблокирован, если критический файл CSS не загружается?"
+      "en": "The Critical Rendering Path has four steps:\n```js\n// A web page starts loading\n// Step 1: Parse HTML → build DOM\n// Step 2: Fetch and parse CSS → build CSSOM\n// Step 3: Combine DOM + CSSOM → build Render Tree\n// Step 4: Layout (Reflow) → Paint (Repaint)\n```\nA critical CSS file fails to load. Which steps are blocked?",
+      "ru": "Критический путь рендеринга (Critical Rendering Path) состоит из четырёх шагов:\n```js\n// Веб-страница начинает загружаться\n// Шаг 1: парсинг HTML → построение DOM\n// Шаг 2: загрузка и парсинг CSS → построение CSSOM\n// Шаг 3: объединение DOM + CSSOM → построение Render Tree\n// Шаг 4: Layout (reflow) → Paint (repaint)\n```\nКритический файл CSS не загрузился. Какие шаги будут заблокированы?"
     },
     "options": {
       "en": [
         "Steps 3 and 4 would be blocked; the render tree cannot be built without CSSOM",
-        "Only Step 2 would be blocked; CSS loading is asynchronous",
-        "Only Step 1 would be delayed; HTML parsing depends on CSS",
+        "Only Step 2 would be blocked; CSS loads asynchronously and never blocks rendering",
+        "Only Step 1 would be delayed; HTML parsing cannot finish without the CSSOM",
         "All steps would be completed normally; CSS failures are non-critical"
       ],
       "ru": [
         "Шаги 3 и 4 будут заблокированы; дерево рендеринга не может быть построено без CSSOM",
-        "Только шаг 2 будет заблокирован; загрузка CSS асинхронна",
-        "Только шаг 1 будет отложен; парсинг HTML зависит от CSS",
+        "Только шаг 2 будет заблокирован; CSS загружается асинхронно и не блокирует рендеринг",
+        "Только шаг 1 будет отложен; парсинг HTML не может завершиться без CSSOM",
         "Все шаги будут завершены нормально; сбои CSS некритичны"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "CSS is a render-blocking resource. If a critical CSS file fails to load, the CSSOM (CSS Object Model) cannot be fully constructed, which prevents the render tree from being built. Without the render tree, layout and paint operations (Steps 3 and 4) cannot proceed, effectively blocking the rendering of the page.",
-      "ru": "CSS является блокирующим ресурсом рендеринга. Если критический файл CSS не загружается, CSSOM (CSS Object Model) не может быть полностью построен, что предотвращает построение дерева рендеринга. Без дерева рендеринга операции layout и paint (шаги 3 и 4) не могут продолжаться, фактически блокируя рендеринг страницы."
+      "en": "CSS is a render-blocking resource. Without it the CSSOM cannot be finished, and the CSSOM is one of the two inputs to the render tree. So step 3 has nothing to build from, and step 4 has nothing to lay out or paint.\n\nCSSOM is the CSS Object Model: the tree the browser builds from your stylesheets. The DOM (Document Object Model) is the same idea for your HTML.\n\nStep 1 is not affected, because parsing HTML does not need the CSSOM. And a stylesheet in a `<link>` tag is not asynchronous by default, so it does not quietly drop out of the picture.",
+      "ru": "CSS — блокирующий рендеринг ресурс. Без него нельзя достроить CSSOM, а CSSOM — один из двух входов для дерева рендеринга. Значит, шагу 3 не из чего строить дерево, а шагу 4 нечего размещать и красить.\n\nCSSOM — это CSS Object Model, дерево, которое браузер строит из ваших стилей. DOM (Document Object Model) — то же самое, но для HTML.\n\nШаг 1 при этом не страдает: разбору HTML модель CSSOM не нужна. А стили в теге `<link>` по умолчанию не асинхронные, поэтому сами собой из картины они не выпадают."
     }
   },
   {
     "id": "browser-runtime-quiz-19",
     "topicId": "browser-runtime",
     "question": {
-      "en": "A service worker is installed and activated. When a user makes a fetch request while offline, how should the service worker respond?\n```js\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    fetch(event.request).catch(() => {\n      // What should be returned here?\n    })\n  );\n});\n```",
-      "ru": "Service worker установлен и активирован. Когда пользователь делает fetch запрос в режиме оффлайн, как должен ответить service worker?\n```js\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    fetch(event.request).catch(() => {\n      // Что должно быть возвращено здесь?\n    })\n  );\n});\n```"
+      "en": "A service worker is installed and activated. What should it return when the user makes a fetch request while offline?\n```js\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    fetch(event.request).catch(() => {\n      // What should be returned here?\n    })\n  );\n});\n```",
+      "ru": "Service worker установлен и активирован. Что он должен вернуть, когда пользователь делает fetch-запрос офлайн?\n```js\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    fetch(event.request).catch(() => {\n      // Что должно быть возвращено здесь?\n    })\n  );\n});\n```"
     },
     "options": {
       "en": [
+        "The original fetch request, so the browser keeps retrying until the network returns",
         "A cached Response object, or a new Response with a fallback page/message",
-        "The original fetch request to retry indefinitely",
-        "An error object that automatically refreshes the page",
-        "A null value to inform the browser of the offline state"
+        "An error object, which makes the browser reload the page automatically",
+        "A null value, which tells the browser to show its own offline page"
       ],
       "ru": [
-        "Объект Response из кэша или новый Response с резервной страницей/сообщением",
-        "Исходный fetch запрос для повторных попыток бесконечно",
-        "Объект ошибки, который автоматически обновляет страницу",
-        "Значение null для информирования браузера о состоянии оффлайн"
+        "Исходный запрос fetch, чтобы браузер повторял его, пока не появится сеть",
+        "Объект Response из кеша или новый Response с резервной страницей/сообщением",
+        "Объект ошибки, из-за которого браузер сам перезагрузит страницу",
+        "Значение null, чтобы браузер показал свою страницу об отсутствии сети"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "When a fetch fails (usually due to network being offline), a service worker should respond with cached content from storage (using caches.match()) or return a new Response object with a fallback page or offline message. Returning null or the original request does not provide a useful response to the user.",
-      "ru": "Когда fetch не удается (обычно из-за отсутствия сети), service worker должен ответить с кэшированным контентом из хранилища (используя caches.match()) или вернуть новый объект Response с резервной страницей или сообщением оффлайн. Возврат null или исходного запроса не предоставляет полезного ответа пользователю."
+      "en": "Inside the `.catch` you have to return something the browser can use as a response. Two things work: a cached `Response` found with `caches.match()`, or a new `Response` you build yourself with a fallback page or an offline message.\n\n`null` gives the browser nothing to show, and the original request object is not a response at all. Neither of them helps the user.",
+      "ru": "Внутри `.catch` нужно вернуть то, что браузер сможет показать как ответ. Подходят два варианта: `Response` из кеша, найденный через `caches.match()`, или новый `Response`, который вы собираете сами — с резервной страницей или сообщением о работе офлайн.\n\n`null` не даёт браузеру ничего, а исходный объект запроса — это вообще не ответ. Ни то, ни другое пользователю не поможет."
     }
   },
   {
     "id": "browser-runtime-quiz-20",
     "topicId": "browser-runtime",
     "question": {
-      "en": "A cross-origin request from https://app.example.com to https://api.different.com is blocked. Which CORS header sent by the server would allow this request?",
-      "ru": "Кроссдоменный запрос с https://app.example.com на https://api.different.com заблокирован. Какой заголовок CORS, отправленный сервером, разрешит этот запрос?"
+      "en": "A request from https://app.example.com to https://api.different.com is blocked, because the two origins are different. CORS — Cross-Origin Resource Sharing — is the browser mechanism that can allow it. Which CORS header from the server does that?",
+      "ru": "Запрос с https://app.example.com на https://api.different.com заблокирован, потому что это разные источники (origin). Разрешить его может механизм CORS — Cross-Origin Resource Sharing. Какой заголовок CORS в ответе сервера это делает?"
     },
     "options": {
       "en": [
-        "Access-Control-Allow-Origin: https://app.example.com",
         "Access-Control-Allow-Methods: GET, POST",
         "Access-Control-Allow-Credentials: true",
+        "Access-Control-Allow-Origin: https://app.example.com",
         "Access-Control-Max-Age: 3600"
       ],
       "ru": [
-        "Access-Control-Allow-Origin: https://app.example.com",
         "Access-Control-Allow-Methods: GET, POST",
         "Access-Control-Allow-Credentials: true",
+        "Access-Control-Allow-Origin: https://app.example.com",
         "Access-Control-Max-Age: 3600"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The Access-Control-Allow-Origin header explicitly grants permission for a specific origin (or *) to access the resource. Without this header, the browser blocks the response due to the Same-Origin Policy. The other headers control method/credentials behavior but don't grant basic cross-origin access permission.",
-      "ru": "Заголовок Access-Control-Allow-Origin явно предоставляет разрешение конкретному источнику (или *) на доступ к ресурсу. Без этого заголовка браузер блокирует ответ из-за политики Same-Origin. Остальные заголовки контролируют поведение метода/учетных данных, но не предоставляют базовое разрешение на кроссдоменный доступ."
+      "en": "`Access-Control-Allow-Origin` is the header that grants one specific origin — or `*` — permission to read the response. Without it the browser applies the same-origin policy and blocks the page from reading the answer.\n\nThe other three headers assume that permission already exists:\n\n- `Access-Control-Allow-Methods` lists the HTTP methods that are allowed.\n- `Access-Control-Allow-Credentials` says whether cookies may be sent along.\n- `Access-Control-Max-Age` says how long the preflight result may be cached.",
+      "ru": "`Access-Control-Allow-Origin` — это заголовок, который даёт конкретному источнику (origin) или `*` право прочитать ответ. Без него браузер применяет политику одного источника (same-origin policy) и не даёт странице прочитать ответ.\n\nОстальные три заголовка предполагают, что разрешение уже есть:\n\n- `Access-Control-Allow-Methods` перечисляет разрешённые HTTP-методы.\n- `Access-Control-Allow-Credentials` говорит, можно ли отправлять cookie.\n- `Access-Control-Max-Age` говорит, как долго можно кешировать результат предварительного запроса (preflight)."
     }
   }
 ]

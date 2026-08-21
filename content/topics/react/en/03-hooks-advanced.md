@@ -117,7 +117,7 @@ const fetchUser = useCallback(async () => {
 
 ## useRef — beyond DOM refs
 
-`useRef` is commonly taught as "a way to get a DOM element." That's one use case. The deeper purpose: **a mutable container that persists across renders without triggering re-renders**.
+`useRef` is commonly taught as "a way to get a DOM element". DOM is short for Document Object Model — the tree of objects the browser draws the page from. That is one use case. The deeper purpose is different: **a mutable container that persists across renders without triggering re-renders**.
 
 ```tsx
 const ref = useRef(initialValue);
@@ -164,7 +164,7 @@ function Component({ onScroll }: { onScroll: (y: number) => void }) {
 }
 ```
 
-This is the `useEffectEvent` pattern in disguise — React 19 formalizes it as a hook, but the ref trick is the underlying implementation concept.
+This is the same idea that React 19 formalizes as the `useEffectEvent` hook. The ref trick is the implementation concept underneath it.
 
 ### Use case 3: tracking previous values
 
@@ -173,7 +173,9 @@ function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T | undefined>(undefined);
 
   useEffect(() => {
-    ref.current = value; // runs after render, so ref.current holds the PREVIOUS value during render
+    // Runs after render, so during render ref.current still holds
+    // the value from the previous render.
+    ref.current = value;
   });
 
   return ref.current;
@@ -209,7 +211,7 @@ function VideoPlayer({ src }: { src: string }) {
 
 ## useImperativeHandle — controlled parent-to-child imperative API
 
-By default, when a parent holds a `ref` to a child, it gets the DOM node directly. `useImperativeHandle` lets the child component control exactly what the parent's `ref.current` exposes.
+By default a parent that holds a `ref` to a child gets the child's DOM node directly. With `useImperativeHandle`, the child decides exactly what the parent's `ref.current` exposes.
 
 ```tsx
 interface VideoHandle {
@@ -248,13 +250,13 @@ function Page() {
 
 The parent cannot access `videoRef.current.play` unless the child explicitly exposes it via `useImperativeHandle`. The raw `<video>` DOM node is not accessible to the parent — the child has full encapsulation. This is the correct pattern for components like date pickers, rich text editors, and custom media players.
 
-**When to use:** sparingly. Most component communication should flow through props and callbacks (React's data-down / events-up model). `useImperativeHandle` is for cases where a parent needs to trigger an imperative action (focus, scroll, play/pause) that doesn't fit the props model.
+**When to use:** sparingly. Reach for `useImperativeHandle` only when props cannot cover the case — a parent triggering focus, scroll, or play/pause. Everything else should flow through props and callbacks: React's data-down, events-up model.
 
 ---
 
 ## useId — stable IDs across server and client
 
-`useId` generates a unique string ID that is **stable across the server and client renders** — preventing hydration mismatches when components that need unique IDs are server-rendered.
+`useId` generates a unique string ID that is **stable across the server and client renders**. That prevents hydration mismatches when server-rendered components need unique IDs.
 
 ```tsx
 function FormField({ label }: { label: string }) {
@@ -271,7 +273,7 @@ function FormField({ label }: { label: string }) {
 }
 ```
 
-**Why not `Math.random()` or a counter?** `Math.random()` generates different values on server and client → hydration mismatch → React error. A module-level counter is reset between server renders but not client renders (due to module caching differences). `useId` is internally derived from the component's position in the Fiber tree, which is identical on server and client.
+**Why not `Math.random()` or a counter?** `Math.random()` generates different values on server and client → hydration mismatch → React error. A module-level counter is reset between server renders but not between client renders, because module caching differs. The value of `useId` comes from the component's position in the Fiber tree, and that position is identical on server and client.
 
 **Generating multiple IDs from one call:**
 
@@ -447,7 +449,7 @@ The `use` prefix causes the linter to treat the function as a hook and enforce:
 - No calls from non-hooks and non-components
 - Exhaustive deps checking for any `useEffect`/`useMemo`/`useCallback` it calls
 
-If you name a function `useSomething`, it MUST follow all hook rules even if it doesn't currently call any built-in hooks — because it might in the future, and the linter enforces it immediately.
+If you name a function `useSomething`, it **must** follow all hook rules. That holds even if it calls no built-in hooks today. It might call one tomorrow, and the linter enforces the rules right away.
 
 ---
 
@@ -476,7 +478,13 @@ The second argument (formatter) is only called by DevTools — it is not called 
 `useCallback(fn, deps)` is exactly `useMemo(() => fn, deps)` — they differ only in what they cache: a function vs a computed value. Both are about referential stability across renders.
 
 **"Should I wrap everything in useMemo/useCallback for performance?"**
-No. This is one of the most common over-engineering patterns in React codebases. `useMemo` and `useCallback` have their own overhead. They help only when: (1) the computation is measurably expensive, (2) the memoized value is passed to a `React.memo`'d child, or (3) it's a dependency of a `useEffect`. Default: no memoization. Add when profiling shows a real problem.
+No. This is one of the most common over-engineering patterns in React codebases, and both hooks have their own overhead. They help in only three cases:
+
+- The computation is measurably expensive.
+- The memoized value is passed to a `React.memo`'d child.
+- The value is a dependency of a `useEffect`.
+
+Default to no memoization. Add it when profiling shows a real problem.
 
 **"Can useRef hold a function?"**
 Yes. A common pattern is storing event handlers in a ref to get the latest version without re-creating effects:
@@ -490,7 +498,14 @@ useEffect(() => {
 ```
 
 **"Why does useImperativeHandle need forwardRef in React < 19?"**
-In React < 19, `ref` is not a regular prop — it is handled specially by React and is not passed through `props`. `forwardRef` is a wrapper that explicitly passes the parent's `ref` to the child, where `useImperativeHandle` can then intercept it. In React 19, `ref` is a regular prop and `forwardRef` is no longer needed.
+In React < 19, `ref` is not a regular prop. React handles it specially and does not pass it through `props`. `forwardRef` is a wrapper that explicitly passes the parent's `ref` down to the child. There, `useImperativeHandle` can intercept it. In React 19, `ref` is a regular prop and `forwardRef` is no longer needed.
 
 **"When would you use useRef instead of useState?"**
-When you need to store a value that the component uses internally but that should NOT trigger a re-render when it changes: timer IDs, animation frame IDs, WebSocket instances, previous render values, focus state for non-visual tracking. If a value change should update the UI → `useState`. If it should not → `useRef`.
+When the component needs a value internally, but changing that value should **not** trigger a re-render. Typical examples:
+
+- Timer IDs and animation frame IDs.
+- WebSocket instances.
+- Values from the previous render.
+- Focus state you track without displaying it.
+
+If a change to the value should update the UI (user interface) → `useState`. If it should not → `useRef`.

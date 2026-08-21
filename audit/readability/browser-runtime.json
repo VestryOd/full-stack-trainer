@@ -1,0 +1,116 @@
+{
+  "zone": "browser-runtime",
+  "kinds": ["question-bank", "quiz-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/questions/browser-runtime.json#ru",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 3, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/questions/browser-runtime.json#en",
+      "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 3, "E": 4, "F": 2, "G": null } },
+    { "file": "content/quiz/browser-runtime.json#ru",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 4, "C": 5, "D": 4, "E": 4, "F": null, "G": 2 } },
+    { "file": "content/quiz/browser-runtime.json#en",
+      "locale": "en",
+      "scores": { "A": 3, "B": 4, "C": 5, "D": 4, "E": 4, "F": 4, "G": null } }
+  ],
+  "averages": { "A": 2.5, "B": 3.0, "C": 4.0, "D": 3.5, "E": 4.0, "F": 3.0, "G": 2.5 },
+  "worst_places": [
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "C",
+      "quote": "`setTimeout(fn, 16)` schedules `fn` to run *approximately* every 16ms, but it has no idea when the browser is actually about to paint — it can fire mid-frame, get throttled in background tabs to 1x per second (some browsers), or drift because timers are minimum-delay, not exact-delay.",
+      "problem": "browser-runtime-q-11: this is the FIRST sentence of the answer and it is 45+ words about the other API. It carries four separate facts behind one dash, and never says what requestAnimationFrame is — the reader gets the actual answer only in sentence two, past the end of a phone screen. The ru version has the same shape at 83 words.",
+      "before": "`setTimeout(fn, 16)` schedules `fn` to run *approximately* every 16ms, but it has no idea when the browser is actually about to paint — it can fire mid-frame, get throttled in background tabs to 1x per second (some browsers), or drift because timers are minimum-delay, not exact-delay. `requestAnimationFrame(fn)` instead asks the browser to call `fn` right before the next repaint, synced to the display's actual refresh rate (typically 60Hz, but 120Hz on newer displays) — so the timing always matches what will actually be shown.",
+      "after": "`requestAnimationFrame(fn)` asks the browser to call `fn` right before the next repaint. It is synced to the display's real refresh rate (usually 60Hz, 120Hz on newer displays), so the timing always matches what will actually be shown.\n\n`setTimeout(fn, 16)` cannot give you that. It only promises to run `fn` after *at least* 16ms, and it has no idea when the browser is about to paint. Three things go wrong as a result: it can fire in the middle of a frame; background tabs throttle it (down to once per second in some browsers); and it drifts, because a timer delay is a minimum, not an exact time."
+    },
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "C",
+      "quote": "By default, the browser can't assume changes inside one element are isolated — a change to a deeply nested child's size can, in principle, ripple up and affect ancestor layout (e.g. via `height: auto` on a parent), and style recalculation has to consider the cascade across the whole affected subtree.",
+      "problem": "browser-runtime-q-26: the question is \"explain CSS containment\". The answer spends its entire first paragraph (three sentences, 90 words) on what the browser does by default and only names `contain` in paragraph two. Since browser-runtime has no theory article, a reader who stops after the first screen leaves with no answer at all. Same structure in ru.",
+      "before": "By default, the browser can't assume changes inside one element are isolated — a change to a deeply nested child's size can, in principle, ripple up and affect ancestor layout (e.g. via `height: auto` on a parent), and style recalculation has to consider the cascade across the whole affected subtree. This means even a small DOM change can trigger the engine to re-evaluate more of the tree than intuition suggests, especially for large, deeply-nested subtrees like item lists or dashboards.",
+      "after": "CSS containment is a promise you give the browser that a subtree is self-contained, so it can skip style and layout work it would otherwise have to do defensively.\n\nHere is what it is defending against. By default the browser can't assume changes inside one element are isolated. A change to a deeply nested child's size can, in principle, ripple up and affect ancestor layout — for example when a parent has `height: auto`. And style recalculation has to consider the cascade across the whole affected subtree. So even a small DOM change makes the engine re-evaluate more of the tree than intuition suggests, especially in large, deeply nested subtrees like item lists or dashboards."
+    },
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "C",
+      "quote": "The main thread runs JS, style, layout, and paint, but it's also the only thread that can respond to a click or key press.",
+      "problem": "browser-runtime-q-23: the question asks \"what is a long task, why is 50ms the threshold\". The term \"long task\" is not defined until paragraph two — the first paragraph is background about the main thread. The reader must hold unexplained context before they know what is being defined. Same in ru.",
+      "before": "The main thread runs JS, style, layout, and paint, but it's also the only thread that can respond to a click or key press. Input events queue up and wait if the main thread is busy — this is why a single blocking synchronous function can make a page feel frozen even though nothing has actually crashed.",
+      "after": "A **long task** is any piece of work that occupies the main thread for more than 50ms.\n\nWhy that matters: the main thread runs JS, style, layout and paint, and it is also the only thread that can respond to a click or a key press. If it is busy, input events queue up and wait. That is why one blocking synchronous function can make a page feel frozen even though nothing has actually crashed."
+    },
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "A",
+      "quote": "Since `innerHTML` parses its input as markup, any `<script>` or event-attribute string an attacker submits gets executed as real HTML/JS — this is exactly how stored XSS happens.",
+      "problem": "browser-runtime-q-7: XSS appears in four answers (q-3, q-7, q-12, q-32) and is never once expanded to \"cross-site scripting\" anywhere in the zone. Same for CSSOM, RAIL, IPC, CORP, JSONP, MITM, FIFO, TTL, PWA, SW, and for DOM everywhere except q-2. With no browser-runtime theory article, there is nothing to fall back on — the reader has to leave the page and google. The ru file is identical plus SPA and ОС.",
+      "before": "Since `innerHTML` parses its input as markup, any `<script>` or event-attribute string an attacker submits gets executed as real HTML/JS — this is exactly how stored XSS happens.",
+      "after": "`innerHTML` parses its input as markup. So any `<script>` tag, or any `onerror=`-style event attribute, that an attacker submits gets executed as real HTML/JS. This is exactly how stored XSS works: XSS is cross-site scripting, an attack where someone gets their own JavaScript to run inside your page."
+    },
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "B",
+      "quote": "If `script-src` allowlists a whole origin (`'self'` or `https://cdn.example.com`) rather than specific hashes/nonces, any script reachable at that origin is fair game — including old JSONP endpoints, Angular/older-library \"script gadgets\" that `eval` a JSON-looking query param, or an open redirect on that same host that a `<script src=\"/redirect?to=evil\">` can piggyback through the allowlist.",
+      "problem": "browser-runtime-q-32: 60+ words, a conditional clause before the subject, then three stacked examples in one list, two idioms a B1-B2 reader will stall on (\"fair game\", \"piggyback through\"), and JSONP never expanded. The ru version is 98 words and additionally contains a broken fragment: «('self' или а не конкретные хеши/nonce» — the CDN example was lost in editing.",
+      "before": "If `script-src` allowlists a whole origin (`'self'` or `https://cdn.example.com`) rather than specific hashes/nonces, any script reachable at that origin is fair game — including old JSONP endpoints, Angular/older-library \"script gadgets\" that `eval` a JSON-looking query param, or an open redirect on that same host that a `<script src=\"/redirect?to=evil\">` can piggyback through the allowlist.",
+      "after": "Say `script-src` allowlists a whole origin — `'self'`, or `https://cdn.example.com` — instead of listing specific hashes or nonces. Then *any* script reachable at that origin is allowed to run. That includes three things you have probably forgotten are there:\n\n- old JSONP endpoints (JSONP = a legacy technique where the server wraps JSON in a script that the page then executes);\n- \"script gadgets\" in Angular or older libraries — code that calls `eval` on a query parameter that looks like JSON;\n- an open redirect on that same host, so `<script src=\"/redirect?to=evil\">` passes the allowlist check and then loads the attacker's script."
+    },
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "D",
+      "quote": "The reason SharedArrayBuffer needs `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` is Spectre: shared, high-resolution memory access is exactly the primitive a timing side-channel attack needs to read data across security boundaries it shouldn't.",
+      "problem": "browser-runtime-q-28: 38 words in which four unfamiliar things arrive with no example between them (Spectre, \"primitive\", \"timing side-channel\", cross-origin isolation), and the grammatical subject runs 14 words before the verb. This is the third such paragraph in a row — the whole answer stacks Atomics, wait/notify, spin-loops, Spectre, cross-origin isolation and agent clusters across ~500 words before the first line of code. Every `advanced` entry (q-28…q-35) has this shape.",
+      "before": "The reason SharedArrayBuffer needs `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` is Spectre: shared, high-resolution memory access is exactly the primitive a timing side-channel attack needs to read data across security boundaries it shouldn't.",
+      "after": "SharedArrayBuffer needs two response headers: `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`. The reason is Spectre.\n\nA Spectre attack measures tiny timing differences to work out what is stored in memory it is not allowed to read directly — a timing side-channel. Shared memory plus a precise clock is exactly the pair of tools such an attack needs. So browsers only hand SharedArrayBuffer out when the page is isolated."
+    },
+    {
+      "file": "content/questions/browser-runtime.json#en",
+      "rubric": "B",
+      "quote": "Once an element has its own layer, the browser has already painted it once into a texture (like a bitmap on the GPU); animating `transform` or `opacity` on that layer afterward just tells the GPU \"move this existing texture\" or \"blend this existing texture at a different alpha\" — no repaint, no layout, just a cheap matrix/alpha operation the compositor thread can do on its own, independent of whatever the main thread is doing.",
+      "problem": "browser-runtime-q-27: 74 words in one sentence, joined by a semicolon and a dash, with two quoted GPU commands and a three-item negative list. The payload the reader came for (\"no repaint, no layout\") sits at word 55. The ru version is 65 words with the same structure.",
+      "before": "Once an element has its own layer, the browser has already painted it once into a texture (like a bitmap on the GPU); animating `transform` or `opacity` on that layer afterward just tells the GPU \"move this existing texture\" or \"blend this existing texture at a different alpha\" — no repaint, no layout, just a cheap matrix/alpha operation the compositor thread can do on its own, independent of whatever the main thread is doing.",
+      "after": "Once an element has its own layer, the browser has already painted it once into a texture — think of a bitmap living on the GPU. Animating `transform` or `opacity` on that layer then just tells the GPU \"move this existing texture\", or \"blend this existing texture at a different alpha\". No repaint, no layout: it is a cheap matrix or alpha operation. And the compositor thread can do it on its own, whatever the main thread happens to be busy with."
+    },
+    {
+      "file": "content/quiz/browser-runtime.json#ru",
+      "rubric": "G",
+      "quote": "Какой из следующих вариантов лучше всего описывает разницу между перерисовкой (repaint) и перепроцессингом макета (reflow) в конвейере рендеринга браузера?",
+      "problem": "browser-runtime-quiz-1: «перепроцессинг макета» is not a Russian term — it is an invented calque, and the reader has to decode the label before they can even read the question. The same file leaves reflow untranslated in quiz-6 and quiz-12, and switches between «макет», «разметка» and «layout» for the same concept between items.",
+      "before": "Какой из следующих вариантов лучше всего описывает разницу между перерисовкой (repaint) и перепроцессингом макета (reflow) в конвейере рендеринга браузера?",
+      "after": "Какой вариант лучше всего описывает разницу между repaint (перерисовкой) и reflow (пересчётом геометрии элементов) в конвейере рендеринга браузера?"
+    },
+    {
+      "file": "content/questions/browser-runtime.json#ru",
+      "rubric": "G",
+      "quote": "Это останавливает скомпрометированный или подменённый через MITM CDN от незаметной подмены кода, но никак не защищает от DOM-XSS в вашем собственном первостепенном коде и никак не помогает против обходов allowlist выше.",
+      "problem": "browser-runtime-q-32: «останавливает X от подмены» is the English «stops X from doing Y» construction, not Russian. «первостепенном коде» is a mistranslation of \"first-party code\" — in Russian it reads \"code of paramount importance\". MITM is never expanded. Three Latin-script terms (MITM, CDN, allowlist) collide inside one 32-word sentence.",
+      "before": "Это останавливает скомпрометированный или подменённый через MITM CDN от незаметной подмены кода, но никак не защищает от DOM-XSS в вашем собственном первостепенном коде и никак не помогает против обходов allowlist выше.",
+      "after": "Так ловится случай, когда CDN взломали или трафик подменили по пути (MITM, man-in-the-middle — атака «человек посередине»): подменённый файл не совпадёт с хешем, и браузер его не выполнит. Но от DOM-XSS в коде вашего собственного сайта это не защищает — как и от обходов списка разрешённых источников, описанных выше."
+    },
+    {
+      "file": "content/quiz/browser-runtime.json#en",
+      "rubric": "E",
+      "quote": "// User clicks on a newly added element with class 'item'\nconst newItem = document.createElement('div');",
+      "problem": "browser-runtime-quiz-2: the comment describing the click appears BEFORE the element is created, and a second comment (\"// User then clicks on newItem\") repeats it after — so the snippet states the sequence twice, in two different orders. On a narrow screen the reader has to work out which comment is the real timeline before they can answer. Same in ru.",
+      "before": "// User clicks on a newly added element with class 'item'\nconst newItem = document.createElement('div');\nnewItem.className = 'item';\nnewItem.textContent = 'Dynamic';\nparent.appendChild(newItem);\n// User then clicks on newItem",
+      "after": "// The element is created AFTER the listener was attached\nconst newItem = document.createElement('div');\nnewItem.className = 'item';\nnewItem.textContent = 'Dynamic';\nparent.appendChild(newItem);\n// Only now does the user click on newItem"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/browser-runtime.json#en": ["XSS", "CSSOM", "DOM (raw in q-1, q-7, q-8, q-9, q-24; expanded only in q-2)", "rAF", "GC", "COOP", "COEP", "CORP", "JSONP", "MITM", "IPC", "RAIL", "FIFO", "TTL", "PWA", "SW", "DB", "CDN", "CPU", "GPU", "OS", "UI", "UX", "JIT", "DNS", "CSRF"],
+    "content/questions/browser-runtime.json#ru": ["XSS", "CSSOM", "DOM", "rAF", "GC", "COOP", "COEP", "CORP", "JSONP", "MITM", "IPC", "RAIL", "FIFO", "TTL", "PWA", "SPA", "БД", "CDN", "CPU", "GPU", "ОС", "UI", "UX", "JIT", "DNS", "CSRF"],
+    "content/quiz/browser-runtime.json#en": ["XSS", "DOM", "CORS (raw in quiz-3, expanded only in quiz-9)"],
+    "content/quiz/browser-runtime.json#ru": ["XSS", "DOM", "CORS (raw in quiz-3, expanded only in quiz-9)"]
+  },
+  "patterns": [
+    "Background-first leads. About a third of the 35 answers (q-4, q-6, q-10, q-14, q-16, q-17, q-20, q-23, q-26, q-27, q-28, q-34) open with a paragraph on how the browser behaves *by default*, or on the older/worse alternative, and only name the thing the question asked about in sentence two or in paragraph two. Because browser-runtime has no theory article, a reader who reads only the first screen on a phone leaves with the setup and not the answer. The fix is mechanical: move the existing 'X is …' sentence to the front and keep the default-behaviour paragraph underneath as the 'why'.",
+    "Difficulty inversely tracks example placement. Junior and middle answers put code within 2-3 sentences of the lead and are genuinely easy to follow; every `advanced` answer (q-28…q-35) front-loads two or three ~200-word paragraphs introducing 5-8 new terms and only then shows code. So the entries with the most new vocabulary are exactly the ones with the least support — and there is no article behind them. q-21 and q-22 are the same failure at senior level (5 and 7 consecutive paragraphs with no code, diagram or table).",
+    "Facts are appended to a sentence with a dash instead of being split into sentences. The recurring shape is `main claim — extra fact 1, extra fact 2, or extra fact 3`, and it is what produces every one of the top-8 longest sentences in both locales (60-104 words). No technical detail needs to be cut to fix this: one dash-clause becomes one sentence.",
+    "The English version is consistently harder than the Russian, not just longer: 52.8% of en sentences exceed 25 words versus 36.2% of ru over 28, and en leans on idioms and phrasal verbs above B1-B2 — \"fair game\", \"piggyback through\", \"hand-rolling a protocol\", \"pegging a core\", \"sits in waiting\", \"bails out\", \"sidestep the whole problem\", \"blowing the frame budget\", \"design smell\", \"neutered\" (in a code comment in q-10).",
+    "Terminology is not shared between the two files, so the same concept looks like two concepts: кеш/кэш, листенер/слушатель/прослушиватель/обработчик, origin/источник, and Critical Rendering Path rendered three different ways across the ru quiz alone (\"Critical Rendering Path\" in quiz-8, «критический путь отрисовки» in quiz-11, «критический путь рендеринга» in quiz-18). Section headings in the ru question bank are also left untranslated (### Event Delegation, ### Web Workers, ### CSS Containment, ### Hidden Classes и Inline Caching), as are the inline «Use case:» and «Workflow диагностики» labels."
+  ],
+  "notes": "Outside the readability rubric but the most important thing found: browser-runtime-quiz-10 marks localStorage as the correct place for auth tokens and its explanation calls HttpOnly cookies \"less flexible for logout scenarios\" — directly contradicting quiz-13, and contradicting q-3 and q-12, whose whole point is that a token in localStorage is the classic XSS mistake. One of those two quiz items is teaching the anti-pattern as the right answer.\nThe quiz bank is also heavily duplicated: 19 items cover about 6 topics (reflow/repaint in quiz-1, 6, 12; event delegation in quiz-2, 7, 14, 17; Critical Rendering Path in quiz-8, 11, 18; CORS in quiz-3, 9, 20; token storage in quiz-10, 13; service-worker offline in quiz-15, 19). `browser-runtime-quiz-16` is missing from the id sequence.\nMany quiz explanations end with a blanket \"The other options misunderstand …\" / «Остальные варианты неправильно понимают …» without saying which claim is false — for the reader who picked a distractor, that sentence carries no information.\nThe question bank contains no diagrams at all (one ASCII process tree in q-25); q-21 and q-22 are precisely where a pipeline diagram would carry the load an article normally carries.\nNo answer says \"as covered in the theory\", so nothing is literally broken by the missing article — the gap shows up instead as abbreviations that are never expanded anywhere in the zone."
+}

@@ -2,7 +2,7 @@
 
 ## CommonJS — the mechanics from the inside
 
-CommonJS (CJS) is Node.js's module system that predates ESM standardization. Understanding its mechanics matters for working with legacy code and for explaining the key differences from ESM.
+CommonJS (CJS) is Node.js's own module system, older than the standard ESM (ECMAScript Modules). Understanding its mechanics matters for working with legacy code and for explaining the key differences from ESM.
 
 ### The module wrapper
 
@@ -99,7 +99,8 @@ ESM (ECMAScript Modules) is the language's standard module system. A fundamental
 
 2. Linking
    — Environment Records are created for each module
-   — exported bindings (let/const/function) are created but not initialized
+   — exported bindings (let/const/function) are created,
+     but not initialized
    — imported names are linked to those bindings
 
 3. Evaluation
@@ -171,7 +172,7 @@ function sloppy() {
 
 ### CJS: the partially-built `module.exports`
 
-In CJS, when A requires B which requires A (a cycle), B receives the **current state of A's `module.exports`** — whatever has been assigned before the circular `require`.
+In CJS, let A require B while B requires A — a cycle. Then B receives the **current state of A's `module.exports`**: whatever was assigned before the circular `require` ran.
 
 ```js
 // === a.cjs ===
@@ -227,11 +228,11 @@ ESM execution order (post-order: dependencies first):
        console.log('b: a =', a) → ReferenceError! a is in TDZ
 
   If b.mjs uses a function instead of const:
-  export function getA() { return a; } // ← function captures a later
+  export function getA() { return a; } // ← captures a later
   // Then calling getA() after a is initialized works fine
 ```
 
-**The golden rule for ESM cycles**: if you need data from a circular import, use functions (they capture the binding, not the value at creation time), or ensure the needed module is initialized before access.
+**The golden rule for ESM cycles**: if you need data from a circular import, reach for it through a function. A function captures the binding, not the value it had at creation time. The alternative is to make sure the module you need is initialized before you touch it.
 
 ```js
 // ✅ Works with ESM cycles:
@@ -277,7 +278,7 @@ false // snapshot = 2 (primitive copied), then value became 3
       // snapshot (2) !== value (3)
 ```
 
-Nuance: `const snapshot = value` copies the **current value** of the primitive (2) into a local variable. `value` is a live binding to the variable in lib.mjs, but the assignment `snapshot = value` copies the primitive's value, not the binding itself. So `snapshot` doesn't update with subsequent `increment()` calls.
+Nuance: `const snapshot = value` copies the **current value** of the primitive (2) into a local variable. The name `value` is itself a live binding to the variable in lib.mjs. But the assignment copies the primitive's value, not the binding, so `snapshot` never updates on later `increment()` calls.
 
 </details>
 
@@ -297,7 +298,7 @@ const module = await import(
   process.env.NODE_ENV === 'test' ? './mock-db.mjs' : './db.mjs'
 );
 
-// import() in CJS can import ESM (require() cannot):
+// import() in CJS loads any ESM, including one with top-level await:
 // main.cjs
 async function main() {
   const { foo } = await import('./esm-module.mjs'); // ✅
@@ -361,9 +362,10 @@ Top-level await **does not work** in CJS modules — there's no mechanism for to
 ## CJS ↔ ESM interop
 
 ```txt
-CJS → ESM: require() from CJS cannot import ESM (in Node.js)
-           Why: require() is synchronous, ESM loads asynchronously
-           Fix: use import() (dynamic, returns a Promise)
+CJS → ESM: require() loads ESM since Node.js 22.12 (and 20.19)
+           Limit: no top-level await anywhere in that module graph,
+                  otherwise ERR_REQUIRE_ASYNC_MODULE is thrown
+           Older Node, or top-level await: use import() instead
 
 ESM → CJS: import 'something.cjs' works
            module.exports of CJS becomes the default export in ESM:
@@ -383,31 +385,31 @@ Dual packages (CJS + ESM):
 ## Key differences: summary table
 
 ```txt
-Feature              CJS                        ESM
-────────────────────────────────────────────────────────────────
-Syntax               require/module.exports     import/export
-Loading              Synchronous (blocking)     Asynchronous
-Dependency analysis  Runtime (dynamic)          Parse time (static)
-Import paths         Computed (dynamic)         String literals only
-Exported values      Copy (for primitives)      Live binding
-Strict mode          Optional                   Always
-Top-level await      ❌                          ✅
-Tree-shaking         ❌ (difficult)              ✅ (static analysis)
-Circular deps        Partially-built            Live bindings (TDZ risk)
+Feature              CJS                     ESM
+──────────────────────────────────────────────────────────────
+Syntax               require/module.exports  import/export
+Loading              Synchronous (blocking)  Asynchronous
+Dependency analysis  Runtime (dynamic)       Parse time (static)
+Import paths         Computed (dynamic)      String literals only
+Exported values      Copy (for primitives)   Live binding
+Strict mode          Optional                Always
+Top-level await      ❌                       ✅
+Tree-shaking         ❌ (difficult)           ✅ (static analysis)
+Circular deps        Partially-built         Live binding (TDZ risk)
                      module.exports
 ```
 
 ## Connection to other topics
 
 ```txt
-[Execution Contexts]    — Module Environment Record: import bindings
-                           are live bindings in the LexicalEnvironment
-[Event Loop]            — ESM loading is async; top-level await
-                           blocks dependent modules via Promise
-[Generators]            — for-await-of, async generators work
-                           only in ESM (or async functions)
-[Modern JS]             — dynamic import(), AbortSignal for cancelling
-                           fetch inside top-level await
+[Execution Contexts] — Module Environment Record: import bindings
+                       are live bindings in the LexicalEnvironment
+[Event Loop]         — ESM loading is async; top-level await blocks
+                       dependent modules via Promise
+[Generators]         — for-await-of, async generators work only in
+                       ESM (or async functions)
+[Modern JS]          — dynamic import(), AbortSignal for cancelling
+                       fetch inside top-level await
 ```
 
 ## Common interview traps
@@ -420,7 +422,7 @@ Circular deps        Partially-built            Live bindings (TDZ risk)
 
 - **"Circular dependencies are always an error"** — no, both systems support cycles. But you must understand what you get: CJS gives a partially-executed `module.exports`; ESM gives a live binding (potentially in TDZ). Fix: use accessor functions instead of directly exporting values.
 
-- **"`import()` and `require()` are the same"** — no. `import()` returns `Promise<namespace object>` with `default` and named exports. `require()` returns `module.exports` synchronously. `import()` can load ESM modules from a CJS context; `require()` cannot.
+- **"`import()` and `require()` are the same"** — no. `import()` returns `Promise<namespace object>` with `default` and named exports. A call to `require()` returns `module.exports` synchronously. Since Node.js 22.12, `require()` loads ESM too, but only when the module graph has no top-level `await`. Dynamic `import()` has no such limit.
 
 - **"Top-level await is available in any JS file"** — only in ESM modules. In CJS (`require`/`module.exports`) there is no top-level waiting mechanism.
 

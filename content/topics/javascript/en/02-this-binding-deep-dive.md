@@ -21,7 +21,7 @@ showThis(); // window (browser, sloppy mode) / global (Node.js, sloppy mode)
             // undefined (strict mode — browser and Node.js)
 ```
 
-In **strict mode**, `this` under default binding = `undefined`. This is one reason `'use strict'` exists: in sloppy mode, an accidental `this.property = value` inside a standalone function silently created a property on the global object — a classic source of bugs.
+In **strict mode**, `this` under default binding = `undefined`. This is one reason `'use strict'` exists. In sloppy mode an accidental `this.property = value` inside a standalone function quietly created a property on the global object. A classic source of bugs.
 
 ```js
 'use strict';
@@ -36,7 +36,7 @@ function sloppy() {
 
 ### Rule 2: Implicit binding
 
-Applies when a function is called **through an object** (a method call). `this` = the object **immediately to the left of the dot** at the call site.
+Applies when a function is called **through an object** — a method call. Then `this` = the object **immediately to the left of the dot** at the call site.
 
 ```js
 const user = {
@@ -92,7 +92,7 @@ BoundFunction {
 }
 ```
 
-When a bound function is called, the engine uses `[[BoundThis]]` as `this` and prepends `[[BoundArguments]]` to the provided arguments. `call`/`apply` on a bound function **cannot override** `[[BoundThis]]` — it's permanently fixed (except for `new`, see below).
+When a bound function is called, the engine uses `[[BoundThis]]` as `this` and prepends `[[BoundArguments]]` to the provided arguments. Neither `call` nor `apply` can override `[[BoundThis]]` on a bound function — it is fixed permanently (only `new` gets around it, see below).
 
 **Partial application:**
 
@@ -179,7 +179,7 @@ This isn't accidental — the spec explicitly states: `[[Construct]]` on a bound
 An arrow function does not create its own `ThisBinding` in its Function Environment Record. This is not "syntactic sugar over `bind`" — it's a different environment record creation semantics.
 
 When the engine creates an arrow function, it:
-1. Does **NOT** create a `[[ThisValue]]` field in the function's Environment Record
+1. Does **not** create a `[[ThisValue]]` field in the function's Environment Record
 2. Any access to `this` inside the arrow resolves via the Scope Chain — finding `this` in the **lexically enclosing** context
 
 ```js
@@ -368,11 +368,15 @@ obj.getValueDelayedArrow().then(console.log); // ?
 
 ```
 42          // obj.getValue() — implicit binding, this = obj
-undefined   // getValueArrow: arrow, this = global (object literal doesn't create a new this)
-undefined   // getValue() after destructuring — default binding, this = undefined (strict) / global
-undefined   // getValueDelayed — setTimeout with function(), this = global
-42          // getValueDelayedArrow — setTimeout with arrow, this captured from
-            // getValueDelayedArrow() where this = obj (implicit binding on obj.getValueDelayedArrow())
+undefined   // getValueArrow — arrow, this = global; an object
+            // literal creates no new this
+undefined   // getValue() after destructuring — default binding,
+            // this = undefined (strict) / global
+undefined   // getValueDelayed — setTimeout with function(),
+            // this = global
+42          // getValueDelayedArrow — setTimeout with arrow, this
+            // captured from getValueDelayedArrow(), where the
+            // implicit binding made this = obj
 ```
 
 </details>
@@ -400,15 +404,19 @@ The only thing that "beats" bind is `new`.
 ## Connection to other topics
 
 ```txt
-[Execution Contexts]    — ThisBinding is a separate field in the Execution
-                           Context, unrelated to the Scope Chain
-[Closures]              — arrow functions use this from the enclosing context —
-                           this is where closure mechanics and this-binding intersect
-[Prototypes]            — this inside a prototype-chain method always points to
-                           the object the call was made on, not the prototype
-                           where the method is defined
-[Classes]               — class method in strict mode vs class field arrow
-                           function — different trade-offs for this-binding
+[Execution Contexts]  — ThisBinding is a separate field of the
+                        Execution Context, unrelated to the scope
+                        chain
+[Closures]            — arrow functions take this from the
+                        enclosing context: this is where closures
+                        and this-binding intersect
+[Prototypes]          — this inside a prototype-chain method
+                        always points to the object the call was
+                        made on, not to the prototype that defines
+                        the method
+[Classes]             — a class method in strict mode versus a
+                        class-field arrow: different trade-offs
+                        for this-binding
 ```
 
 ## Common interview traps
@@ -421,6 +429,6 @@ The only thing that "beats" bind is `new`.
 
 - **"An arrow method in an object literal captures the object's this"** — no. An object literal `{}` does not create a new execution context. The `this` of an arrow in `{ arrow: () => ... }` is the `this` of the lexically enclosing context (often global).
 
-- **Not knowing that `bind` returns a bound function exotic object** — important for understanding why `bind(bind(fn, a), b)` doesn't change `this` (the outer bind wraps the bound function, but `[[BoundThis]]` is already fixed in the inner one).
+- **Not knowing that `bind` returns a bound function exotic object** — that explains why `bind(bind(fn, a), b)` doesn't change `this`. The outer `bind` wraps the bound function, but `[[BoundThis]]` is already fixed in the inner one.
 
 - **Forgetting about strict mode for default binding** — `this = undefined` in strict mode vs `globalThis` in sloppy mode. In module code (ESM), strict mode is always on — this changes the default behavior.

@@ -1,0 +1,138 @@
+{
+  "zone": "security",
+  "kinds": ["topic-article", "question-bank", "quiz-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/topics/security/ru/01-security-fundamentals.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/security/ru/02-authentication-vs-authorization.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 3, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/security/ru/03-jwt-access-refresh-tokens.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 3, "D": 4, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/security/ru/04-xss-csrf-cors.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/security/ru/05-sql-injection-and-input-validation.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 3, "F": null, "G": 4 } },
+    { "file": "content/topics/security/ru/06-passwords-and-secrets.md", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 3, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/security/ru/07-owasp-top-10.md", "locale": "ru", "scores": { "A": 1, "B": 4, "C": 2, "D": 3, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/security/ru/08-security-interview-questions.md", "locale": "ru", "scores": { "A": 1, "B": 4, "C": 4, "D": 3, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/security/en/01-security-fundamentals.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 4, "D": 4, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/02-authentication-vs-authorization.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 3, "D": 4, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/03-jwt-access-refresh-tokens.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 3, "D": 4, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/04-xss-csrf-cors.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/05-sql-injection-and-input-validation.md", "locale": "en", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/06-passwords-and-secrets.md", "locale": "en", "scores": { "A": 2, "B": 4, "C": 3, "D": 4, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/07-owasp-top-10.md", "locale": "en", "scores": { "A": 1, "B": 4, "C": 2, "D": 3, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/security/en/08-security-interview-questions.md", "locale": "en", "scores": { "A": 1, "B": 4, "C": 4, "D": 3, "E": 4, "F": 4, "G": null } },
+    { "file": "content/questions/security.json#ru", "locale": "ru", "scores": { "A": 2, "B": 3, "C": 4, "D": 4, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/questions/security.json#en", "locale": "en", "scores": { "A": 2, "B": 2, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } },
+    { "file": "content/quiz/security.json#ru", "locale": "ru", "scores": { "A": 2, "B": 4, "C": 3, "D": 4, "E": 4, "F": null, "G": 2 } },
+    { "file": "content/quiz/security.json#en", "locale": "en", "scores": { "A": 2, "B": 4, "C": 3, "D": 4, "E": 4, "F": 4, "G": null } }
+  ],
+  "averages": { "A": 2.1, "B": 3.85, "C": 3.4, "D": 3.8, "E": 3.9, "F": 3.9, "G": 3.5 },
+  "worst_places": [
+    {
+      "file": "content/topics/security/en/07-owasp-top-10.md",
+      "rubric": "correctness",
+      "quote": "return res.status(403).json({ error: 'Forbidden' }); // not 404 — info leak",
+      "problem": "The article teaches the exact anti-pattern its own question bank names as a 'Common pitfall', and the comment is self-refuting: 403 is the response that leaks existence, 404 is the one that doesn't. security-q-12 in the bank says the opposite in both prose ('Returning a 403 Forbidden instead of 404 Not Found when the ownership check fails ... leaks information') and code ('return res.status(404).send('Not found'); // 404, not 403 — don't confirm existence'). A reader who studies the OWASP article and then reads q-12 gets two contradictory rules for the same IDOR fix. Same defect in the RU file line 26: '// не 404 — утечка info'.",
+      "before": "if (!order || (order.userId !== req.user.id && req.user.role !== 'admin')) {\n    return res.status(403).json({ error: 'Forbidden' }); // not 404 — info leak\n  }",
+      "after": "if (!order || (order.userId !== req.user.id && req.user.role !== 'admin')) {\n    // 404, not 403: a 403 would confirm the object exists and let the attacker map valid ids\n    return res.status(404).json({ error: 'Not found' });\n  }"
+    },
+    {
+      "file": "content/quiz/security.json",
+      "rubric": "correctness",
+      "quote": "\"correctIndex\": 0",
+      "problem": "All 25 items have correctIndex = 0, and the correct option is also the longest option in 24 of 25 items (EN; 23 of 25 RU). A reader who always picks the first option, or always picks the longest option, scores 100% without knowing any security. This is not a readability defect but it makes the whole quiz bank worthless as a check on understanding, and it silently teaches 'longest answer wins' as an exam heuristic.",
+      "before": "Every item: correctIndex = 0; option[0] is 21-33 words, the three distractors are 8-18 words.",
+      "after": "Shuffle correct answers across 0/1/2/3 (roughly 6-7 items each) and length-balance the options so the correct one is the longest in no more than ~25% of items. Padding distractors with the same amount of qualifying detail as the correct option is the cheapest fix; shortening the correct option risks losing technical content."
+    },
+    {
+      "file": "content/quiz/security.json",
+      "rubric": "correctness",
+      "quote": "Secure (HTTPS only), HttpOnly (no JS access), SameSite=Strict (no cross-site requests) together block XSS via JS, CSRF via cross-origin isolation, and ensure encryption",
+      "problem": "This is security-quiz-25's correct answer, and it teaches that cookie flags 'block XSS'. They do not — they block cookie theft after an XSS has already fired. content/topics/security/ru/04-xss-csrf-cors.md lists this exact belief as a typical interview mistake ('\"HttpOnly полностью защищает от XSS\" — HttpOnly защищает только cookie от чтения через JS'), and security-q-6 in the bank says HttpOnly's 'only job is to limit the damage an XSS bug can do'. The quiz marks as correct the belief the other two sources mark as wrong. security-quiz-13's explanation repeats it ('HttpOnly prevents XSS from stealing the session token').",
+      "before": "Secure (HTTPS only), HttpOnly (no JS access), SameSite=Strict (no cross-site requests) together block XSS via JS, CSRF via cross-origin isolation, and ensure encryption",
+      "after": "Secure (sent over HTTPS only), HttpOnly (JavaScript cannot read the cookie, so an XSS cannot steal the session), SameSite=Strict (the cookie is not sent on cross-site requests, which blocks CSRF) — together they limit what an XSS can do and block CSRF, but they do not prevent XSS itself"
+    },
+    {
+      "file": "content/topics/security/ru/07-owasp-top-10.md",
+      "rubric": "C",
+      "quote": "## A05: Security Misconfiguration\n\n```typescript\n// Примеры неправильной конфигурации:",
+      "problem": "Four of the ten OWASP sections (A05, A06, A07, A09) open with a code block and no sentence at all — the reader has to reverse-engineer what the category means from a list of code comments. Every other section in the zone starts with a one-line definition, so this is an inconsistency the reader feels as 'the article stopped explaining'. Same in the EN file (line 108-110).",
+      "before": "## A05: Security Misconfiguration\n\n```typescript\n// Примеры неправильной конфигурации:",
+      "after": "## A05: Security Misconfiguration\n\nНастройки по умолчанию, отладочные режимы и лишние разрешения, оставленные в продакшене. Код при этом может быть полностью корректным — уязвимость в конфигурации.\n\n```typescript\n// Примеры неправильной конфигурации:"
+    },
+    {
+      "file": "content/questions/security.json#en",
+      "rubric": "B",
+      "quote": "*Build provenance* — for anything beyond a small team, \"build once, deploy the same signed artifact everywhere\" beats \"rebuild from source at each environment\": it guarantees staging and production are running byte-identical code, and a signed/hashed artifact lets a later audit prove what was actually deployed at a given time, rather than trusting that a rebuild from the same commit produced the same result (it doesn't always — floating dependency versions, different builder environments, and non-deterministic build steps can all cause drift).",
+      "problem": "81 words, one sentence, four facts, two nested quoted phrases, a colon, an em-dash aside and a parenthetical list. On a phone this is roughly six screen lines with no place to stop. 115 of 216 EN sentences in this file (53%) are over 25 words; this is the extreme, but the habit is everywhere.",
+      "before": "*Build provenance* — for anything beyond a small team, \"build once, deploy the same signed artifact everywhere\" beats \"rebuild from source at each environment\": it guarantees staging and production are running byte-identical code, and a signed/hashed artifact lets a later audit prove what was actually deployed at a given time, rather than trusting that a rebuild from the same commit produced the same result (it doesn't always — floating dependency versions, different builder environments, and non-deterministic build steps can all cause drift).",
+      "after": "*Build provenance* — build once, then deploy that same signed artifact to every environment. Beyond a small team this beats rebuilding from source per environment, for two reasons. First, staging and production are then guaranteed to run byte-identical code. Second, a signed and hashed artifact lets a later audit prove exactly what was deployed and when. The alternative — trusting that a rebuild from the same commit gives the same result — does not always hold: floating dependency versions, different builder environments and non-deterministic build steps all cause drift."
+    },
+    {
+      "file": "content/topics/security/ru/03-jwt-access-refresh-tokens.md",
+      "rubric": "G",
+      "quote": "Stateless природа JWT создаёт фундаментальную проблему: после COMMIT токена невозможно \"забыть\" его до истечения TTL.",
+      "problem": "\"после COMMIT токена\" is meaningless — there is no commit in JWT issuance. The EN file has the correct wording ('once a token is issued'), so this is a broken translation artefact left in the RU text. A junior reader stops here and tries to work out which commit is meant. TTL is also unexpanded on first use in this file.",
+      "before": "Stateless природа JWT создаёт фундаментальную проблему: после COMMIT токена невозможно \"забыть\" его до истечения TTL.",
+      "after": "JWT не хранит состояние на сервере, и отсюда фундаментальная проблема: после выдачи токена его невозможно \"забыть\" — он остаётся валидным до конца своего TTL (time to live, срок жизни)."
+    },
+    {
+      "file": "content/quiz/security.json#ru",
+      "rubric": "G",
+      "quote": "Разработчик использует подготовленные утверждения для предотвращения SQL injection, но всё ещё конкатенирует пользовательский ввод в динамические имена таблиц.",
+      "problem": "\"Подготовленные утверждения\" is a machine-translation of 'prepared statements' — \"утверждение\" means assertion/claim, not statement-as-SQL. The standard Russian term is \"подготовленные выражения\" (which content/questions/security.json#ru security-q-4 uses correctly, so the two banks disagree on the term for the same concept). The error repeats three times in security-quiz-20. The same file also uses \"маркер доступа\" for access token in items 3/4/9 but \"токен доступа\" in items 15/24/25.",
+      "before": "Разработчик использует подготовленные утверждения для предотвращения SQL injection, но всё ещё конкатенирует пользовательский ввод в динамические имена таблиц. Какая уязвимость остаётся?",
+      "after": "Разработчик использует подготовленные выражения (prepared statements), чтобы защититься от SQL-инъекции, но имя таблицы всё ещё склеивает со строкой из пользовательского ввода. Какая уязвимость остаётся?"
+    },
+    {
+      "file": "content/topics/security/ru/08-security-interview-questions.md",
+      "rubric": "A",
+      "quote": "**A01 Broken Access Control** (#1 с 2021): отсутствие проверки прав на ресурс. IDOR: пользователь меняет `/orders/123` на `/orders/124` → видит чужой заказ. Защита: ownership check на уровне каждого запроса, deny by default.",
+      "problem": "21 unexpanded abbreviations in 670 words. Here alone: A01 is used as if the reader knows it is an OWASP Top 10 entry number, IDOR is never expanded in this file, and 'ownership check'/'deny by default' are untranslated English terms used as if they were established Russian ones. The file is the topic's revision sheet — it is exactly the file read out of order and in a hurry, so nothing may depend on another article.",
+      "before": "**A01 Broken Access Control** (#1 с 2021): отсутствие проверки прав на ресурс. IDOR: пользователь меняет `/orders/123` на `/orders/124` → видит чужой заказ. Защита: ownership check на уровне каждого запроса, deny by default.",
+      "after": "**A01 Broken Access Control** — пункт №1 в списке OWASP Top 10 с 2021 года. Это отсутствие проверки прав на конкретный ресурс. Классический пример — IDOR (Insecure Direct Object Reference, небезопасная прямая ссылка на объект): пользователь меняет `/orders/123` на `/orders/124` и видит чужой заказ. Защита: проверять владение ресурсом (ownership check) в каждом запросе и запрещать по умолчанию (deny by default), разрешая явно."
+    },
+    {
+      "file": "content/topics/security/ru/01-security-fundamentals.md",
+      "rubric": "G",
+      "quote": "- **\"CIA = Confidentiality, Integrity, Availability в контексте ЦРУ\"** — в контексте security это CIA Triad: три фундаментальных свойства безопасности системы, не связанных с разведкой.",
+      "problem": "The bullet quotes the *correct* expansion as if it were the mistake, then 'corrects' it with the same expansion. The EN file has the real intended mistake ('CIA = Central Intelligence Agency in a security context'); the RU version garbled it in translation. On top of that, CIA is never expanded at its first use — the heading '## CIA Triad — три фундаментальных свойства безопасности' assumes the reader already knows, and the expansion only arrives 180 lines later, in this broken bullet.",
+      "before": "- **\"CIA = Confidentiality, Integrity, Availability в контексте ЦРУ\"** — в контексте security это CIA Triad: три фундаментальных свойства безопасности системы, не связанных с разведкой.",
+      "after": "- **\"CIA — это ЦРУ\"** — в информационной безопасности CIA Triad расшифровывается как Confidentiality, Integrity, Availability (конфиденциальность, целостность, доступность): три фундаментальных свойства защищённой системы, к разведке отношения не имеющие."
+    },
+    {
+      "file": "content/quiz/security.json#en",
+      "rubric": "C",
+      "quote": "Stored XSS persists in the database and is served to every user viewing that content, making it more dangerous. Reflected XSS exists only in the malicious URL and affects only users who click it. Option 1 correctly distinguishes the persistence and scope of impact.",
+      "problem": "Explanations refer to options by number ('Option 1', 'Option 2 is false', 'option 4 misrepresents'), but the reader sees rendered options with no visible numbering, and the numbering used is 1-based while correctIndex is 0-based — so 'Option 1' means index 0 and 'Option 2 is false' means index 1. The reader has to count options and guess the offset. Separately: 21 of the 25 items are near-duplicates of only five questions (Stored-vs-Reflected XSS ×4: items 1, 6, 11, 21; JWT structure/signature ×5: 3, 7, 12, 16, 22; OAuth Authorization Code ×5: 4, 9, 15, 19, 24; CSP ×4: 10, 14, 17, 23; cookie flags ×3: 8, 13, 25), so the bank covers a fraction of the eight articles.",
+      "before": "... Option 1 correctly distinguishes the persistence and scope of impact.",
+      "after": "... The persistence — saved once and replayed to everyone, versus living only in one crafted URL — is the whole difference. (Drop the 'Option N' references entirely: name the wrong idea instead, e.g. 'The claim that Reflected XSS is stored in the database reverses the two.')"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/security/ru/01-security-fundamentals.md": ["CIA", "MITM", "TLS", "RBAC", "DDoS", "DoS", "SQL", "БД", "JWT", "IAM", "ABAC", "ACL", "IDOR", "HSTS", "MIME"],
+    "content/topics/security/ru/02-authentication-vs-authorization.md": ["JWT", "TTL", "БД", "REST", "TOTP", "MFA", "UI"],
+    "content/topics/security/ru/03-jwt-access-refresh-tokens.md": ["HS256", "RS256", "TTL", "UUID", "PII", "XSS", "CSRF", "БД", "JWKS", "SPA", "DOM", "HMAC"],
+    "content/topics/security/ru/04-xss-csrf-cors.md": ["DOM", "БД", "JWT", "CSP", "XHR", "MIME"],
+    "content/topics/security/ru/05-sql-injection-and-input-validation.md": ["SQL", "ORM", "БД", "MIME", "UX", "DTO", "XXE", "SVG", "XML"],
+    "content/topics/security/ru/06-passwords-and-secrets.md": ["SHA", "AES", "GPU", "CPU", "ASIC", "RAM", "БД", "AWS", "IAM", "RDS", "PCI DSS", "SOC2", "JWKS", "CI"],
+    "content/topics/security/ru/07-owasp-top-10.md": ["IDOR", "SQL", "NoSQL", "LDAP", "OS", "SSTI", "RCE", "MD5", "SHA-1", "PII", "ECB", "AES-256-GCM", "CVE", "SRI", "CDN", "CI/CD", "AWS", "GCP", "IAM", "S3", "MFA", "STRIDE", "SSRF", "IMDSv2", "PDF"],
+    "content/topics/security/ru/08-security-interview-questions.md": ["CIA", "MITM", "SQL", "RBAC", "HMAC", "DDoS", "DoS", "HS256", "RS256", "JWT", "TTL", "БД", "jti", "XSS", "CSRF", "CORS", "DOM", "XHR", "GPU", "SHA", "RAM", "IAM", "DNS", "IP", "A01", "A03", "A10", "IDOR", "SSRF", "OWASP", "NoSQL", "JWKS"],
+    "content/topics/security/en/01-security-fundamentals.md": ["CIA", "MITM", "TLS", "RBAC", "DDoS", "DoS", "SQL", "DB", "JWT", "IAM", "AWS", "ABAC", "ACL", "IDOR", "HSTS", "MIME", "CSRF", "XSS"],
+    "content/topics/security/en/02-authentication-vs-authorization.md": ["JWT", "TTL", "DB", "REST", "TOTP", "MFA", "UI", "IDOR"],
+    "content/topics/security/en/03-jwt-access-refresh-tokens.md": ["HS256", "RS256", "TTL", "UUID", "PII", "XSS", "CSRF", "DB", "JWKS", "SPA", "DOM", "HMAC"],
+    "content/topics/security/en/04-xss-csrf-cors.md": ["DOM", "DB", "JWT", "CSP", "XHR", "MIME"],
+    "content/topics/security/en/05-sql-injection-and-input-validation.md": ["SQL", "ORM", "DB", "MIME", "UX", "DTO", "XXE", "SVG", "XML"],
+    "content/topics/security/en/06-passwords-and-secrets.md": ["SHA", "AES", "GPU", "CPU", "ASIC", "RAM", "AWS", "IAM", "RDS", "PCI DSS", "SOC2", "JWKS", "CI", "K8s"],
+    "content/topics/security/en/07-owasp-top-10.md": ["IDOR", "SQL", "NoSQL", "LDAP", "OS", "SSTI", "RCE", "MD5", "SHA-1", "PII", "ECB", "AES-256-GCM", "CVE", "SRI", "CDN", "CI/CD", "AWS", "GCP", "IAM", "S3", "MFA", "STRIDE", "SSRF", "IMDSv2", "PDF"],
+    "content/topics/security/en/08-security-interview-questions.md": ["CIA", "MITM", "SQL", "RBAC", "HMAC", "DDoS", "DoS", "HS256", "RS256", "JWT", "TTL", "DB", "jti", "XSS", "CSRF", "CORS", "DOM", "GPU", "SHA", "RAM", "IAM", "DNS", "IP", "A01", "A03", "A10", "IDOR", "SSRF", "OWASP"],
+    "content/questions/security.json#ru": ["XSS", "CSRF", "DOM", "SQL", "БД", "HTTPS", "UX", "JWT", "HMAC", "CI", "CD", "CA", "SSL", "TLS", "SPA", "GPU", "SHA", "MD5", "UUID", "CVE", "DTO", "ES256", "HS256", "RS256", "JWKS", "CSP", "NAT", "VPN", "VPC", "DNS", "PDF", "IDOR", "ORM", "TOCTOU", "PKCE", "HSTS", "RLS"],
+    "content/questions/security.json#en": ["XSS", "CSRF", "DOM", "SQL", "DB", "HTTPS", "UX", "JWT", "HMAC", "CI", "CD", "CA", "ISP", "SSL", "TLS", "SPA", "GPU", "SHA", "MD5", "CVE", "DTO", "ES256", "HS256", "RS256", "JWKS", "CSP", "IP", "NAT", "DNS", "VPC", "PDF", "IDOR", "ORM", "TOCTOU", "PKCE", "HSTS", "RLS"],
+    "content/quiz/security.json#ru": ["XSS", "CSRF", "JWT", "HTTPS", "CSP", "SQL", "ORM", "БД", "MITM", "TLS", "PKCE", "SPA", "CORS", "UX", "CDN"],
+    "content/quiz/security.json#en": ["XSS", "CSRF", "JWT", "HTTPS", "CSP", "SQL", "ORM", "MITM", "TLS", "PKCE", "SPA", "CORS", "UX", "CDN"]
+  },
+  "patterns": [
+    "Abbreviation-first writing is the zone's defining habit: 140 unexpanded abbreviations across only 6.0k words of article prose (24.5 per 1k). The pattern is structural, not accidental — abbreviations are introduced in section HEADINGS ('## CIA Triad', '## Алгоритмы подписи — HS256 vs RS256', '## A10: Server-Side Request Forgery (SSRF)'), where there is no room for a gloss, and then used freely in the body. 07-owasp-top-10.md and 08-security-interview-questions.md are the worst (13 and 21 flags in 295 and 670 words) because they are index/revision files that name every concept and explain none. Fix pattern: put the expansion in the first body sentence under each heading, not in the heading.",
+    "Sections systematically skip the lead sentence and open straight into a fenced block. 02 ('## Фундаментальное различие'), 03 ('## Access Token + Refresh Token'), 06 ('## Hashing vs Encryption'), 01 ('## HTTPS и TLS') open with a ```txt diagram; 07's A05, A06, A07 and A09 open with ```typescript. The reader gets the comparison table before being told what is being compared. This is why C averages 3.4 in a zone whose sentences (B 3.85) and examples (E 3.9) are otherwise strong: the language is clear, but the pyramid is inverted at section level.",
+    "The RU quiz bank is machine-translated where the RU question bank is hand-written, and they disagree on core terminology: 'prepared statements' is 'подготовленные выражения' in questions/security.json but 'подготовленные утверждения' in quiz/security.json; 'token' is 'токен' in half the quiz items and 'маркер' in the other half; 'output encoding and input validation' became 'кодирование выхода и валидацию входа'; 'defense in depth' became 'защиту в глубину'. Item 19 has a grammar error ('для кража кода авторизации'). The quiz is the only file in the zone scoring G=2."
+  ],
+  "notes": "Correctness findings (report even though not readability): (1) HARD CONTRADICTION — topics/security/{ru,en}/07-owasp-top-10.md returns 403 on a failed ownership check with the comment '// не 404 — утечка info' / '// not 404 — info leak', while questions/security.json security-q-12 names exactly that a 'Common pitfall' and returns 404 with '// 404, not 403 — don't confirm existence'. The article's comment is also backwards on its own terms: 403 is the leaking response. (2) quiz item 25's correct answer says the cookie flags 'block XSS via JS', and item 13's explanation says 'HttpOnly prevents XSS from stealing the session token' — 04-xss-csrf-cors.md lists this belief under 'Типичные ошибки на интервью' and security-q-6 contradicts it directly. (3) quiz items 23/17/14 state flatly that 'CSP prevents XSS'; the article calls CSP 'последний рубеж обороны' and security-q-10 calls it 'a second layer of defense' — the quiz teaches CSP as a primary control. (4) quiz-18's explanation calls SameSite cookies an 'anti-CSRF token' ('like SameSite cookies or synchronizer tokens') — a category error. (5) quiz-24 claims the Authorization Code flow keeps the access token on the backend 'where it's safely stored and used server-to-server'; that describes a BFF, not plain Authorization Code, and security-q-9 (PKCE for public clients) implies the opposite for SPAs. Token storage, password hashing and CORS are CONSISTENT across all three surfaces — no localStorage-for-tokens defect of the browser-runtime kind exists here; every source says memory or HttpOnly cookie. Quiz counts as requested: correctIndex distribution 0→25, 1→0, 2→0, 3→0; correct option is the longest option in 24/25 items (EN) and 23/25 (RU); by word count 24/25 (EN), 22/25 (RU). Also: 21 of 25 quiz items are near-duplicates of five questions (XSS stored-vs-reflected ×4, JWT structure ×5, OAuth code flow ×5, CSP ×4, cookie flags ×3), leaving SQL injection, secrets, SSRF, IDOR, rate limiting and supply chain almost untested. Minor code defect: 05-sql-injection-and-input-validation.md uses path.extname(fileType.ext) — fileType.ext is 'jpg', not a filename, so path.extname returns '' and the saved file gets no extension."
+}

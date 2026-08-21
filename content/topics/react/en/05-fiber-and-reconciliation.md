@@ -14,7 +14,7 @@ STACK RECONCILER (React < 16)
         → reconcile(Sidebar)
         → reconcile(Content)
             → reconcile(ArticleList)
-                → reconcile(Article) × 50  ← this loop cannot be paused
+                → reconcile(Article) × 50  ← cannot be paused
     → reconcile(Footer)
 
   Total wall time: however long it takes to walk the whole tree.
@@ -23,7 +23,7 @@ STACK RECONCILER (React < 16)
   Result: jank on trees with many components or slow renders.
 ```
 
-The fundamental constraint: JavaScript is single-threaded. A recursive call stack cannot be paused — you have to let it run to completion. If reconciling a large tree took 150 ms, the UI froze for 150 ms.
+The fundamental constraint: JavaScript is single-threaded. A recursive call stack cannot be paused — you have to let it run to completion. If reconciling a large tree took 150 ms, the UI (user interface) froze for 150 ms.
 
 Fiber rewrites the reconciler from a recursive algorithm into an **iterative one using an explicit work queue**, so React can pause, resume, and prioritize work.
 
@@ -31,7 +31,7 @@ Fiber rewrites the reconciler from a recursive algorithm into an **iterative one
 
 ## What a Fiber node is
 
-A Fiber is a JavaScript object that represents a unit of work — one component instance, one DOM element, one text node. The entire component tree is mirrored as a tree of Fiber nodes.
+A Fiber is a JavaScript object that represents a unit of work: one component instance, one DOM element, one text node. DOM stands for Document Object Model — the tree of objects the browser draws the page from. The entire component tree is mirrored as a tree of Fiber nodes.
 
 ```ts
 // Simplified — the real FiberNode has ~25 fields
@@ -65,15 +65,19 @@ type Fiber = {
 React doesn't traverse a tree array — it follows pointers: `child` to go deeper, `sibling` to go right, `return` to go up. This allows the traversal to be interrupted at any Fiber node and resumed later without needing to hold the call stack open.
 
 ```txt
-App
-├── child → Header
-│             ├── sibling → Nav
-│             │               └── sibling → Main
-│                                             ├── child → Sidebar
-│                                             │             └── sibling → Content
-│                                             └── ...
-│
-(each node also has a return pointer back to its parent)
+POINTERS STORED ON EACH FIBER NODE
+
+  App      .child   → Header
+  Header   .sibling → Nav
+  Nav      .sibling → Main
+  Main     .child   → Sidebar
+  Sidebar  .sibling → Content
+
+  Every node also stores .return, pointing back to its parent.
+
+  Depth-first walk: follow .child; if there is none, follow
+  .sibling; if there is none either, follow .return and then
+  take that node's .sibling.
 ```
 
 ---
@@ -114,14 +118,15 @@ const IdleLane            = 0b0100000000000000000000000000000; // lowest: backgr
 
 ```txt
 PRIORITY ORDER (highest → lowest):
-  SyncLane          ← onClick, onKeyDown (user must see result immediately)
-  InputContinuousLane ← onMouseMove, onScroll (must be responsive)
-  DefaultLane       ← normal setState in event handlers
-  TransitionLane    ← startTransition (can be interrupted)
-  IdleLane          ← background prefetching, non-visible work
+  SyncLane            ← onClick, onKeyDown
+                        (user must see the result at once)
+  InputContinuousLane ← onMouseMove, onScroll (must stay responsive)
+  DefaultLane         ← normal setState in event handlers
+  TransitionLane      ← startTransition (can be interrupted)
+  IdleLane            ← background prefetching, non-visible work
 ```
 
-When two updates are pending, React processes the higher-priority one first. If a low-priority render is in progress (e.g., a transition) and a high-priority update arrives (e.g., a keypress), React **interrupts** the transition render, processes the keypress synchronously, then resumes the transition from where it left off (or restarts it if the keypress changed the inputs).
+When two updates are pending, React processes the higher-priority one first. Say a low-priority render is in progress — a transition — and a high-priority update arrives, such as a keypress. React **interrupts** the transition render and processes the keypress synchronously. It then resumes the transition from where it left off, or restarts it if the keypress changed the inputs.
 
 ```tsx
 // Without startTransition:
@@ -269,17 +274,17 @@ This is idiomatic React — using the reconciler's own rules to express intent c
 
 ## Time slicing — what it means in practice
 
-Time slicing is the ability to **split the render phase into small chunks** and yield control back to the browser between chunks, so the browser can handle input events and paint frames.
+Time slicing means React can **split the render phase into small chunks**. Between chunks it yields control back to the browser, so the browser can handle input events and paint frames.
 
 ```txt
 WITHOUT TIME SLICING (synchronous rendering):
-  ─────────────────────────────────────────────────────────────────▶ time
+  ──────────────────────────────────────────────────────────▶ time
   [     long render (100ms)     ][paint][input handler][paint]
         ↑ browser is blocked for 100ms during this render
 
 WITH TIME SLICING (concurrent rendering):
-  ─────────────────────────────────────────────────────────────────▶ time
-  [5ms render][input][5ms render][paint][5ms render][5ms render][paint]
+  ──────────────────────────────────────────────────────────▶ time
+  [5ms render][input][5ms render][paint][5ms render][paint]
                ↑ browser gets to handle input every ~5ms
 ```
 
@@ -317,14 +322,18 @@ PASSIVE (scheduled asynchronously, after paint)
   → useEffect setups (from this render)
 ```
 
-The distinction matters: code in `useLayoutEffect` runs before the browser paints — it can read layout, and if it calls `setState`, the resulting re-render is flushed synchronously before paint (no flicker). Code in `useEffect` runs after paint — it cannot synchronously prevent visual updates but also doesn't block the user from seeing the screen.
+The distinction matters. Code in `useLayoutEffect` runs before the browser paints, so it can read layout. If it calls `setState`, the resulting re-render is flushed synchronously before paint, and there is no flicker.
+
+Code in `useEffect` runs after paint. It cannot synchronously prevent a visual update, but it also does not delay what the user sees.
 
 ---
 
 ## Common interview traps
 
 **"What is the virtual DOM and how does it relate to Fiber?"**
-"Virtual DOM" is an informal term for the element tree that React's reconciler maintains. Fiber is the internal data structure React uses to implement the reconciler. Each Fiber node represents one component/element. The Fiber tree IS what people loosely call the "virtual DOM." The term "virtual DOM" predates Fiber and was accurate for the stack reconciler era — today "Fiber tree" is more precise.
+"Virtual DOM" is an informal term for the element tree that React's reconciler maintains. Fiber is the internal data structure React uses to implement that reconciler. Each Fiber node represents one component or element.
+
+So the Fiber tree **is** what people loosely call the "virtual DOM". The older term predates Fiber and was accurate in the stack reconciler era. Today "Fiber tree" is the more precise name.
 
 **"What does React do when setState is called inside useLayoutEffect?"**
 `useLayoutEffect` runs synchronously in the layout sub-phase of commit. If `setState` is called inside it, React schedules an additional synchronous render and flushes it before the browser paints. This is why tooltip repositioning with `useLayoutEffect` has no visible flicker — the DOM is updated twice in a single frame.
@@ -336,4 +345,6 @@ Keys control Fiber identity. If a key is present in one render and absent in the
 Technically React won't crash, but behavior is undefined — React will arbitrarily pick one of the duplicates and discard the other. Duplicate keys in the same sibling list are a bug. The ESLint rule `react/jsx-key` catches missing keys but not duplicate ones — you need `react/no-duplicate-key` for that.
 
 **"What is a Fiber lane? How is it different from priority?"**
-A lane is a bit in a 32-bit integer bitmask. Multiple updates can be in different lanes simultaneously, and React can batch, split, or interleave them. Before lanes (React < 18), React used a simple integer priority and could only track one pending priority level at a time — if two updates were pending with different priorities, the higher one would supersede the lower, potentially starving low-priority work. Lanes allow React to track many concurrent updates and guarantee that low-priority work eventually completes (starvation prevention).
+A lane is a bit in a 32-bit integer bitmask. Multiple updates can sit in different lanes at the same time, and React can batch, split, or interleave them.
+
+Before lanes (React < 18), React used a simple integer priority. It could track only one pending priority level at a time. If two updates were pending with different priorities, the higher one superseded the lower, so low-priority work could be starved. Lanes let React track many concurrent updates and guarantee that low-priority work eventually completes.

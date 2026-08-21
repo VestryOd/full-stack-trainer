@@ -1,8 +1,8 @@
-# Request Scope and Performance
+# REQUEST Scope and Performance
 
-## Scope Propagation — the most important effect
+## Scope propagation — the most important effect
 
-When a provider becomes `Scope.REQUEST`, Nest must create a new dependency tree for every request. This affects NOT just that provider — all providers that depend on it also become REQUEST-scoped (scope bubble up).
+When a provider gets `Scope.REQUEST`, Nest has to build a new dependency tree for every request. This affects more than that one provider: everything that depends on it becomes REQUEST-scoped too. The effect is known as scope bubble-up.
 
 ```typescript
 // Scope propagation example:
@@ -29,15 +29,20 @@ export class OrderService {
 ```
 
 ```txt
-Scope Propagation rules:
+Scope propagation rules:
   Singleton can depend on Singleton ✓
-  Singleton CANNOT depend on REQUEST (becomes REQUEST) ⚠️
+  Singleton CANNOT depend on REQUEST (it becomes REQUEST) ⚠️
   REQUEST can depend on Singleton ✓
   REQUEST can depend on REQUEST ✓
-  TRANSIENT — new instance per injection (independent of scope)
+  TRANSIENT — a new instance per injection,
+    whatever the scope of the others
 ```
 
 ## Performance — measurable overhead
+
+The cost of REQUEST scope is measurable, and it is the cost of creating objects. Take 1000 RPS (requests per second) and a chain of five REQUEST-scoped providers. That is 5000 new objects per second, and every one of them ends up with the garbage collector (GC).
+
+The orders of magnitude and the measuring tools are below. NestJS has no built-in profiler, so people use external ones.
 
 ```typescript
 // At 1000 RPS with a chain of 5 REQUEST-scoped providers:
@@ -55,7 +60,11 @@ Scope Propagation rules:
 // - pino/winston for request timing
 ```
 
-## AsyncLocalStorage — an alternative without overhead
+## AsyncLocalStorage — an alternative without the overhead
+
+`AsyncLocalStorage` is a built-in Node.js mechanism that binds data to a chain of async calls. From here on it is shortened to ALS (AsyncLocalStorage).
+
+The scheme is this: the service stays a Singleton, and the request data lives in the ALS store. Middleware opens the context once per request, and every async call inside that request sees the same data. No new providers are created, so nothing bubbles up.
 
 ```typescript
 // Node.js built-in mechanism for request-scoped data WITHOUT creating new providers
@@ -108,7 +117,11 @@ export class AuditService {
 // AuditService stays Singleton — no scope propagation, no GC overhead
 ```
 
-## REQUEST token — injecting the request object itself
+## The REQUEST token — injecting the request object itself
+
+The `REQUEST` token from `@nestjs/core` hands the request object straight into the constructor. You can only inject it into a provider with REQUEST scope.
+
+The reason is simple: a Singleton has no request of its own. It is created once, so it would hold on to whichever request happened to arrive first.
 
 ```typescript
 import { REQUEST } from '@nestjs/core';
@@ -136,6 +149,12 @@ export class TenantService {
 ```
 
 ## Multi-tenancy — when REQUEST scope is justified
+
+Multi-tenancy is one application serving several isolated customers, and each customer is called a tenant. The typical case is SaaS (software as a service), a product customers use as a subscription service.
+
+If every tenant has its own database, REQUEST scope looks natural: the database address is only known once a request arrives with the tenant id.
+
+There is still a cost — a new `PrismaClient` per request. That is why the example's comment points at the alternative: keep a connection pool per tenant and reuse it.
 
 ```typescript
 // Scenario: SaaS with multiple tenants, each with their own DB connection
@@ -168,6 +187,10 @@ export class TenantDatabaseService {
 
 ## Performance checklist for production
 
+The list is short, and the first item weighs more than the rest. Start with Singleton, and change the scope only when there is no way around it.
+
+The rest is about measuring. Until you have numbers, talk about overhead is a guess, so the example below includes an Interceptor that logs slow requests.
+
 ```typescript
 // 1. Always start with Singleton — change only when necessary
 // 2. Profile memory: node --inspect + Chrome DevTools heap snapshot
@@ -198,12 +221,12 @@ const lazyModule = await import('./heavy.module');
 
 ## Common interview mistakes
 
-- **"REQUEST scope is a good idea for all services"** — no. This is an anti-pattern. Every REQUEST-scoped provider is re-created on every request along with its entire dependency chain. At high RPS this adds significant GC overhead. Default: Singleton.
+- **"REQUEST scope is a good idea for all services"** — no, it is an anti-pattern. Every REQUEST provider is re-created on every request together with its whole dependency chain. At high RPS that is a noticeable load on the garbage collector. The default is Singleton.
 
-- **"AsyncLocalStorage is more complex than REQUEST scope"** — no. ALS: one Singleton service, data is automatically bound to the async context. Pros: no scope propagation, no GC overhead, service stays Singleton. Con: less obvious concept for developers unfamiliar with Node.js internals.
+- **"AsyncLocalStorage is more complex than REQUEST scope"** — no. ALS is one Singleton service, and the data binds itself to the async context. The upsides: no scope bubble-up, no extra work for the garbage collector, the service stays a Singleton. The single downside: to anyone who has not dug into Node.js internals, the mechanism looks unclear.
 
-- **"A Singleton provider cannot access current request data"** — it can, via ALS. `AsyncLocalStorage.getStore()` returns data bound to the current async execution chain. Middleware sets the store once; all subsequent async calls within that request see the same data.
+- **"A Singleton provider cannot access current request data"** — it can, through ALS. `AsyncLocalStorage.getStore()` returns the data bound to the current chain of async calls. Middleware puts it in the store once, and every call inside that request sees the same thing.
 
-- **"TRANSIENT scope is useful for logging"** — partially. A LoggerService with context (service name) is convenient to make TRANSIENT. But each consumer gets a separate instance — for 10 services that's 10 LoggerService objects per request. Alternative: one `LoggerService.setContext(ctxName)` or use pino/winston with contextual bindings.
+- **"TRANSIENT scope is useful for logging"** — partly. A logger that carries a service name is convenient as TRANSIENT. But an instance is created per injection: ten services mean ten logger objects. The alternatives are one logger with `setContext(ctxName)`, or pino or winston with context bindings.
 
-- **"Scope.REQUEST and Scope.TRANSIENT solve the same problem"** — no. REQUEST: one instance per HTTP request, shared across the entire dependency chain. TRANSIENT: one instance per INJECTION (A and B will receive different instances of the same TRANSIENT provider within one request). Different problems — different solutions.
+- **"Scope.REQUEST and Scope.TRANSIENT solve the same problem"** — no. REQUEST is one instance per HTTP request, shared by the whole dependency chain. TRANSIENT is one instance **per injection**: inside a single request, services A and B get different instances of the same TRANSIENT provider. Different problems, different solutions.

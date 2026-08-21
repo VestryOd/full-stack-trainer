@@ -3,7 +3,7 @@
 
 ## What Is Variance?
 
-Variance describes how the subtyping relationship between simple types (e.g. `Cat extends Animal`) transfers to complex types that contain them (e.g. `Box<Cat>` vs `Box<Animal>`, or `(x: Cat) => void` vs `(x: Animal) => void`).
+Variance describes how a subtyping relationship between simple types transfers to the complex types that contain them. Start from `Cat extends Animal`. Variance answers what that says about `Box<Cat>` vs `Box<Animal>`, or about `(x: Cat) => void` vs `(x: Animal) => void`.
 
 Four kinds:
 
@@ -134,8 +134,10 @@ const animalComparer: Comparer<Animal> = {
 ```ts
 // With strictFunctionTypes:
 interface Handler<T> {
-  handle(value: T): void;           // method — still BIVARIANT (even with strictFunctionTypes)
-  handleFn: (value: T) => void;     // function property — CONTRAVARIANT (correctly checked)
+  // method — still bivariant, even with strictFunctionTypes
+  handle(value: T): void;
+  // function property — contravariant, checked correctly
+  handleFn: (value: T) => void;
 }
 
 type CatHandlerFn    = (cat: Cat) => void;
@@ -445,10 +447,10 @@ interface Producer<out T> {
 
 - **"Arrays in TypeScript are invariant"** — no, TypeScript allows `Cat[] extends Animal[]` (covariant), which is theoretically unsound. A runtime bug can be demonstrated by `push`ing into a shared array.
 
-- **Confusing `satisfies` and an explicit annotation** — `const x: Config = value` changes the type of `x` to `Config`. `const x = value satisfies Config` keeps the inferred type, only verifies compatibility. This is the key distinction when working with configs.
+- **Confusing `satisfies` and an explicit annotation**. An annotation like `const x: Config = value` changes the type of `x` to `Config`. Writing `const x = value satisfies Config` keeps the inferred type and only verifies compatibility. This is the key distinction when working with configs.
 
 - **Not understanding that `as const` is recursive** — `as const` applies recursively: all nested fields become `readonly` with literal types. Without `as const` — only the top-level `const` applies.
 
 - **Thinking `as` is a safe operation** — `as` disables type checking. The only guarantee: TypeScript won't allow `as` between fully incompatible types (you need a double assertion through `unknown`). But even that can be worked around — making `as` fundamentally unsafe.
 
-- **Not knowing the `as const satisfies` combination** — this is the modern idiomatic pattern for typed configs: get both `readonly` literal types and compatibility with the expected type.
+- **Not knowing the `as const satisfies` combination**. This is the modern idiomatic pattern for typed configs. You get `readonly` literal types and compatibility with the expected type at once.

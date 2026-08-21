@@ -4,6 +4,8 @@
 
 Mongoose is not a standalone client but a layer on top of the official `mongodb` driver. It brings back into the code what MongoDB does not require: a declared schema, type casting, validation and hooks.
 
+It is often called an ORM (object-relational mapper — a library that maps database records to objects in your language). The label fits only loosely: MongoDB is not relational, and Mongoose maps documents, not rows.
+
 ```txt
 What exactly Mongoose adds between your code and the server
 ┌───────────────────────────────────────────────────────┐
@@ -24,8 +26,8 @@ every line of the Mongoose layer is a convenience with a behavioural cost
 ```txt
 What you get:
   + a schema as the single source of truth about document shape — the
-    very schema that in MongoDB "lives in the code" (see [Document
-    Model and Use Cases])
+    very schema that in MongoDB "lives in the code" (see the Document
+    Model and Use Cases article)
   + automatic type casting: "42" from a query string becomes a number,
     a date string becomes a Date, an id string becomes an ObjectId
   + validation before writes, and clear errors instead of garbage in
@@ -37,8 +39,8 @@ What you get:
 What you pay:
   - a query result is not a database document but a Document wrapper:
     getters/setters, change tracking, validation. That is memory and
-    CPU per object (cured by lean() — see [Mongoose Queries, populate,
-    and Pitfalls])
+    CPU per object (cured by lean() — see the article on Mongoose
+    queries, populate and pitfalls)
   - "hidden magic": some mechanisms do not run where you expect them
     to (validation and pre('save') on update operations — the main
     theme of this article)
@@ -53,7 +55,9 @@ thin services with three or four queries. There the raw driver is
 more honest and more predictable.
 ```
 
-## Schema, Model, Document
+## Schema, Model, Document — three different objects
+
+These three names get used interchangeably, and they are not the same thing. The Schema describes the shape and the rules. The Model is a class bound to one collection. The Document is a single instance that a query returned.
 
 ```typescript
 import { Schema, model, Types, HydratedDocument } from 'mongoose';
@@ -120,10 +124,13 @@ Three things that surprise you the first time:
    is mongoose.models.Post ?? model(...)).
 
 3. A schema creates nothing in the database except indexes. There is
-   no DDL: the collection appears on the first write.
+   no DDL (data definition language — the CREATE TABLE / ALTER TABLE
+   half of SQL): the collection appears on the first write.
 ```
 
-## SchemaTypes and casting
+## SchemaTypes and casting: the value is converted before it is checked
+
+A SchemaType is the declared type of a field, and it does real work: Mongoose converts the incoming value to that type before validating it. That is why a query string `"42"` becomes the number `42` on its own. And a value that cannot be converted produces an input error, not a server failure.
 
 ```txt
 Types: String · Number · Date · Boolean · ObjectId · Buffer
@@ -140,7 +147,8 @@ If casting is impossible you get a CastError, and that is an INPUT
 error (400), not a server failure (500):
   { views: "many" } → CastError: Cast to Number failed
 Which is exactly why mapping Mongoose errors to HTTP codes has to be
-deliberate (see [Mongoose Queries, populate, and Pitfalls]).
+deliberate (see the article on Mongoose queries, populate and
+pitfalls).
 ```
 
 ```typescript
@@ -172,8 +180,8 @@ Three SchemaTypes traps:
    ValidationError. Consequences: (a) the error handler must know
    about E11000; (b) if the index was never created (autoIndex
    disabled in production) there is NO uniqueness at all, even though
-   the schema says unique: true (see [Mongoose Queries, populate, and
-   Pitfalls]).
+   the schema says unique: true (see the article on Mongoose queries,
+   populate and pitfalls).
 
 2. Mixed does not track changes. doc.meta.x = 1 will not be saved
    until you call doc.markModified('meta').
@@ -185,6 +193,8 @@ Three SchemaTypes traps:
 ```
 
 ## Validators and the key nuance: when they actually run
+
+A validator is a rule attached to a field, and it can be built in (`required`, `enum`, `min`) or your own function. It may also be asynchronous, which lets it query the database. The code below shows both kinds; the table after it shows the part that catches people out — which operations reach a validator at all.
 
 ```typescript
 const userSchema = new Schema<User>({
@@ -212,28 +222,56 @@ const userSchema = new Schema<User>({
 });
 ```
 
-The async "is this username taken" validator is useful for a clear error message, but it is **not a uniqueness guarantee**: time passes between the check and the write (see the race condition in [CRUD and Query Operators]). Only a unique index guarantees it.
+The async "is this username taken" validator is useful for a clear error message, but it is **not a uniqueness guarantee**. Time passes between the check and the write, and someone else can write in that window. The article on CRUD (create, read, update, delete) and query operators walks through that race condition. Only a unique index guarantees uniqueness.
 
 Next comes the thing that breaks the most code in real projects:
 
 ```txt
-                   Which operations go through validation and hooks
-┌────────────────────────────┬─────────────────────────┬───────────────┬─────────────┐
-│ operation                  │ validation              │ pre/post save │ query hooks │
-├────────────────────────────┼─────────────────────────┼───────────────┼─────────────┤
-│ doc.save()                 │ yes                     │ yes           │ no          │
-├────────────────────────────┼─────────────────────────┼───────────────┼─────────────┤
-│ Model.create()             │ yes                     │ yes           │ no          │
-├────────────────────────────┼─────────────────────────┼───────────────┼─────────────┤
-│ Model.insertMany()         │ yes                     │ no            │ no          │
-├────────────────────────────┼─────────────────────────┼───────────────┼─────────────┤
-│ findOneAndUpdate()         │ only with runValidators │ NO            │ yes         │
-├────────────────────────────┼─────────────────────────┼───────────────┼─────────────┤
-│ updateOne() / updateMany() │ only with runValidators │ NO            │ yes         │
-├────────────────────────────┼─────────────────────────┼───────────────┼─────────────┤
-│ bulkWrite()                │ no                      │ no            │ no          │
-└────────────────────────────┴─────────────────────────┴───────────────┴─────────────┘
-       hence the password hashing bug: pre('save') never sees findOneAndUpdate
+Which operations go through validation and hooks
+┌─────────────────────────────────────────┐
+│ doc.save()                              │
+│                                         │
+│ validation      yes                     │
+│ pre/post save   yes                     │
+│ query hooks     no                      │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ Model.create()                          │
+│                                         │
+│ validation      yes                     │
+│ pre/post save   yes                     │
+│ query hooks     no                      │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ Model.insertMany()                      │
+│                                         │
+│ validation      yes                     │
+│ pre/post save   no                      │
+│ query hooks     no                      │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ findOneAndUpdate()                      │
+│                                         │
+│ validation      only with runValidators │
+│ pre/post save   NO                      │
+│ query hooks     yes                     │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ updateOne() / updateMany()              │
+│                                         │
+│ validation      only with runValidators │
+│ pre/post save   NO                      │
+│ query hooks     yes                     │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ bulkWrite()                             │
+│                                         │
+│ validation      no                      │
+│ pre/post save   no                      │
+│ query hooks     no                      │
+└─────────────────────────────────────────┘
+      hence the password hashing bug:
+  pre('save') never sees findOneAndUpdate
 ```
 
 ```typescript
@@ -274,6 +312,9 @@ honest approaches:
   (2) update operations are allowed, but validation is duplicated at
       the boundary (zod/class-validator in the DTO), and the schema is
       treated as the last line of defence, not the only one.
+
+A DTO here is a data transfer object: the plain shape your API accepts
+or returns, kept separate from the database document.
 ```
 
 ```typescript
@@ -367,8 +408,8 @@ Three ways to fix it:
      user.passwordHash = newPassword;
      await user.save();               // the hook runs
    Upside: invariants live in one place. Downside: an extra read and
-   the loss of atomic read-modify-write (see [CRUD and Query
-   Operators]).
+   the loss of atomic read-modify-write (see the CRUD and Query
+   Operators article).
 
 2. Duplicate the hook on query operations — remembering that `this` is
    the Query:
@@ -399,7 +440,9 @@ A few more places where hooks do not behave as expected:
     otherwise they simply never apply
 ```
 
-## Virtuals, methods, statics, query helpers
+## Virtuals, methods, statics, query helpers: behaviour next to the data
+
+These four are how you attach behaviour to a schema instead of scattering it around services. A virtual is a computed field. A method belongs to one document, a static to the model, and a query helper is a reusable link in a query chain.
 
 ```typescript
 // A virtual — a computed field that is not stored in the database
@@ -441,6 +484,8 @@ An important point about virtuals: they do not exist for the database. You canno
 
 ## strict mode: why extra fields vanish silently
 
+`strict` decides what Mongoose does with a field that is not in the schema. By default it drops it — without an error, without a log line. That is a protection against garbage in the database and a very good way to hide a typo.
+
 ```typescript
 const schema = new Schema({ title: String }, { strict: true }); // default
 
@@ -469,6 +514,8 @@ nothing.
 
 ## Typing schemas in TypeScript (an overview)
 
+There are two directions, and you pick one per project. Either the interface is the source of truth and the schema follows it. Or the schema is the source of truth, and the type is inferred from it.
+
 ```typescript
 // Option 1: the interface is the source of truth (shown above)
 const postSchema = new Schema<Post>({ ... });
@@ -491,54 +538,55 @@ interface PostStatics extends Model<Post, {}, PostMethods> {
 const PostModel = model<Post, PostStatics>('Post', postSchema);
 
 // An ObjectId in types is Types.ObjectId, not string. At the API
-// boundary it turns into a string (Extended JSON — see [Document
-// Model and Use Cases]), and those are TWO different types that must
-// not be mixed up in DTOs
+// boundary it turns into a string (Extended JSON — see the Document
+// Model and Use Cases article), and those are TWO different types
+// that must not be mixed up in DTOs
 ```
 
 ```txt
 A practical tip: keep separate types for the "raw" document
 (lean/DTO) and for the hydrated one (HydratedDocument). Otherwise the
 code grows a type that has both save() and whatever already went out
-as JSON — and the first lean() breaks the typing (see [Mongoose
-Queries, populate, and Pitfalls]).
+as JSON — and the first lean() breaks the typing. That is covered in
+the article on Mongoose queries, populate and pitfalls.
 ```
 
 ## Connection to other topics
 
 ```txt
-[Document Model and Use Cases]    — the schema that "lives in the
-                                    code"; ObjectId and Extended JSON
-                                    at the API boundary
-[CRUD and Query Operators]        — what updateOne and findOneAndUpdate
-                                    actually do — the operations that
-                                    document hooks never see
-[Schema Design: Embedding vs      — what to describe as a nested schema
- Referencing]                       and what as a ref
-[Indexes and Query Performance]   — unique as an index rather than a
-                                    validator; indexes declared in the
-                                    schema
-[Mongoose Queries, populate,      — lean(), populate, autoIndex, __v,
- and Pitfalls]                      mapping E11000 to an API error
+Document Model and Use Cases    — the schema that "lives in the
+                                  code"; ObjectId and Extended JSON
+                                  at the API boundary
+CRUD and Query Operators        — what updateOne and
+                                  findOneAndUpdate actually do —
+                                  the operations that document
+                                  hooks never see
+Schema Design: Embedding vs     — what to describe as a nested
+Referencing                       schema and what as a ref
+Indexes and Query Performance   — unique as an index rather than a
+                                  validator; indexes declared in
+                                  the schema
+Mongoose Queries, populate,     — lean(), populate, autoIndex, __v,
+and Pitfalls                      mapping E11000 to an API error
 ```
 
 ## Common interview traps
 
-- **"Mongoose validation always runs"** — it runs on `save()`/`create()`, and on `updateOne`/`findOneAndUpdate` only with `runValidators: true` — and even then `required` is not checked for fields absent from the update. `bulkWrite` is not validated at all.
+- **"Mongoose validation always runs"** — it runs on `save()` and `create()`. On `updateOne` and `findOneAndUpdate` it runs only with `runValidators: true`. Even then `required` is not checked for fields absent from the update. `bulkWrite` is not validated at all.
 
-- **"`pre('save')` fires on any document change"** — it does not fire on `findOneAndUpdate`, `updateOne`, `updateMany` or `bulkWrite`: those are query operations and the document is never loaded. The classic consequence is a password stored in plaintext.
+- **"`pre('save')` fires on any document change"** — it does not fire on `findOneAndUpdate`, `updateOne`, `updateMany` or `bulkWrite`. Those are query operations, and the document is never loaded. The classic consequence is a password stored in plaintext.
 
-- **"`unique: true` in the schema is validation"** — it is a unique index declaration. A violation arrives as the database error `E11000`, not a `ValidationError`; and if the index was never created (`autoIndex: false` in production) there is no uniqueness at all.
+- **"`unique: true` in the schema is validation"** — it is a unique index declaration. A violation arrives as the database error `E11000`, not a `ValidationError`. And if the index was never created (`autoIndex: false` in production) there is no uniqueness at all.
 
 - **"An async validator guarantees uniqueness"** — there is a race window between the check and the write. Only a unique index guarantees it; the validator exists for a readable message.
 
-- **"Mongoose is an ORM, it abstracts MongoDB away"** — it does not remove the need to understand the document model, indexes and atomicity: `populate` is still extra queries, and a bad schema stays bad (see [Schema Design: Embedding vs Referencing]).
+- **"Mongoose is an ORM, it abstracts MongoDB away"** — it still requires you to understand the document model, indexes and atomicity. `populate` is still extra queries. A bad schema stays bad, which is what the Schema Design article is about.
 
 - **"An unknown field in create() causes an error"** — with `strict: true` it is silently dropped. You only get an error with `strict: 'throw'`.
 
-- **"A virtual can be used in a query"** — a virtual does not exist for the database: you cannot filter, sort or index by it, and it only reaches JSON with `toJSON: { virtuals: true }`.
+- **"A virtual can be used in a query"** — a virtual does not exist for the database. You cannot filter, sort or index by it, and it only reaches JSON with `toJSON: { virtuals: true }`.
 
-- **"`Mixed` is a convenient way to store arbitrary data"** — convenient, but Mongoose does not track its changes: without `markModified()` an edit to a nested field is not saved.
+- **"`Mixed` is a convenient way to store arbitrary data"** — convenient, but Mongoose does not track its changes. Without `markModified()` an edit to a nested field is not saved.
 
 - **"The collection name is the model name"** — Mongoose lowercases and pluralizes it (`Post` → `posts`, `Person` → `people`). For an existing collection the name is set with the `collection` option.
 

@@ -1,6 +1,8 @@
 # Guards, Pipes, Interceptors, Middleware
 
-## Полный pipeline запроса в NestJS
+## Полный конвейер запроса в NestJS
+
+Конвейер (pipeline) — это фиксированная последовательность шагов, через которые Nest прогоняет каждый входящий запрос. Порядок задан фреймворком, и от него зависит, какая проверка на каком шаге вообще возможна.
 
 ```txt
 Incoming Request
@@ -24,7 +26,13 @@ Incoming Request
   Response
 ```
 
-## Middleware — HTTP-уровень, до Nest
+Дальше в статье — каждый шаг по отдельности: что он умеет и чего от него ждать не стоит.
+
+## Middleware — уровень HTTP, до Nest
+
+Middleware — функция, которая работает на уровне Express или Fastify, до того как Nest определил, какой контроллер обслужит запрос. У неё есть сырые `req` и `res`, но нет доступа ни к обработчику, ни к метаданным декораторов.
+
+Отсюда правило. Middleware годится для сквозной обвязки: CORS (cross-origin resource sharing — правила доступа к API из браузера с другого домена), идентификатор запроса, разбор cookies. Для авторизации не годится: решение о доступе зависит от метаданных, а их здесь ещё нет.
 
 ```typescript
 // Middleware — Express-совместимый, не знает о Nest pipeline
@@ -59,6 +67,10 @@ export class AppModule implements NestModule {
 
 ## Guard — авторизация и контроль доступа
 
+Guard отвечает на один вопрос: пускать этот запрос дальше или нет. Метод `canActivate` вернул `true` — запрос идёт к контроллеру. Вернул `false` — Nest отвечает 403 Forbidden. Можно и выбросить своё исключение, например `UnauthorizedException`.
+
+В отличие от middleware, Guard уже знает, какой обработчик выбран, и читает метаданные декораторов через `Reflector`. Поэтому приём с `@Public()` реализуется только на уровне Guard.
+
 ```typescript
 // Guard: вернуть true = пропустить, false/throw = отклонить (403)
 @Injectable()
@@ -92,7 +104,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 // ✗ НЕ для трансформации данных
 ```
 
+В примере проверяется JWT (JSON Web Token) — подписанный токен, который клиент присылает в заголовке `Authorization`.
+
 ## Pipe — валидация и трансформация входных данных
+
+Pipe стоит между запросом и аргументом метода: он проверяет значение и при необходимости преобразует его. Проверка не прошла — Pipe выбрасывает `BadRequestException` (400), и контроллер не вызывается.
+
+Важно, что Pipe применяется к каждому параметру отдельно. Встроенные разбирают одиночное значение: `ParseIntPipe` — число, `ParseUUIDPipe` — UUID (universally unique identifier), идентификатор вида `550e8400-e29b-41d4-a716-446655440000`.
+
+`ValidationPipe` работает крупнее: он проверяет весь объект по DTO (data transfer object) — классу, который описывает форму входящих данных и правила для каждого поля.
 
 ```typescript
 // Встроенные Pipes:
@@ -148,6 +168,10 @@ create(
 
 ## Exception Filters — перехват и форматирование ошибок
 
+Exception Filter — последний рубеж: он превращает выброшенное исключение в ответ клиенту. Своего фильтра нет — работает встроенный, и клиент получает минимальный JSON без пути, времени и внутреннего кода ошибки.
+
+`@Catch(HttpException)` ограничивает фильтр одним классом исключений, а пустой `@Catch()` ловит всё подряд. Внутри доступен `ArgumentsHost` — та же обёртка над контекстом, от которой наследует `ExecutionContext`, поэтому фильтр работает не только на HTTP.
+
 ```typescript
 // ExceptionFilter: перехватить любое исключение и форматировать ответ
 @Catch(HttpException) // или @Catch() для всех исключений
@@ -180,34 +204,34 @@ app.useGlobalFilters(new HttpExceptionFilter());
 // ✓ Скрыть внутренние детали (stack trace) от клиента
 ```
 
-## Сравнительная таблица — когда что использовать
+## Что выбрать под конкретную задачу
 
-```txt
-Задача                            Механизм
-─────────────────────────────────────────────────────────────
-JWT/Session validation            Guard
-Role-based access                 Guard + @Roles decorator
-Resource ownership                Guard
-Validate request body             ValidationPipe + DTO
-Transform path/query params       ParseIntPipe, ParseUUIDPipe
-Response wrapping { data, meta }  Interceptor (map)
-Request/Response logging          Interceptor (tap)
-Caching responses                 Interceptor (switchMap)
-Timeout handling                  Interceptor (timeout)
-Error format standardization      ExceptionFilter
-CORS, Helmet, compression         Middleware
-Request ID injection              Middleware
-Cookie parsing                    Middleware
-```
+Правило выбора короткое: посмотрите, что именно вы собираетесь трогать — доступ, вход, выход или формат ошибки.
+
+| Задача | Механизм |
+|---|---|
+| Проверка JWT или сессии | Guard |
+| Доступ по ролям | Guard + декоратор `@Roles` |
+| Проверка, что ресурс принадлежит пользователю | Guard |
+| Валидация тела запроса | `ValidationPipe` + DTO |
+| Преобразование параметров пути и запроса | `ParseIntPipe`, `ParseUUIDPipe` |
+| Обёртка ответа в `{ data, meta }` | Interceptor (`map`) |
+| Логирование запросов и ответов | Interceptor (`tap`) |
+| Кеширование ответов | Interceptor (`switchMap`) |
+| Таймаут на запрос | Interceptor (`timeout`) |
+| Единый формат ошибок | ExceptionFilter |
+| CORS, Helmet, сжатие | Middleware |
+| Проброс идентификатора запроса | Middleware |
+| Разбор cookies | Middleware |
 
 ## Типичные ошибки на интервью
 
-- **"Guard и Middleware могут делать одно и то же"** — нет. Middleware не имеет доступа к Nest ExecutionContext, Handler, metadata декораторов (`@Public`, `@Roles`). Guard имеет доступ через `context.getHandler()` и Reflector. JWT проверка в Middleware работает технически, но нельзя реализовать `@Public()` паттерн (нет metadata).
+- **"Guard и Middleware могут делать одно и то же"** — нет. У middleware нет доступа ни к `ExecutionContext`, ни к обработчику, ни к метаданным декораторов (`@Public`, `@Roles`). У Guard доступ есть: через `context.getHandler()` и `Reflector`. Проверять токен в middleware технически можно, но приём с `@Public()` там не реализуется — метаданных ещё нет.
 
-- **"Pipes применяются ко всему запросу сразу"** — нет. Pipes применяются к каждому параметру отдельно: `@Body()` → ValidationPipe, `@Param('id')` → ParseIntPipe, `@Query('page')` → ParseIntPipe. Разные параметры могут иметь разные Pipes.
+- **"Pipes применяются ко всему запросу сразу"** — нет, к каждому параметру отдельно: `@Body()` → `ValidationPipe`, `@Param('id')` → `ParseIntPipe`, `@Query('page')` → `ParseIntPipe`. У разных параметров могут быть разные Pipes.
 
-- **"ExceptionFilter нужен только для кастомных ошибок"** — нет. Global ExceptionFilter нужен чтобы: (1) стандартизировать формат всех HTTP ошибок; (2) конвертировать database/library ошибки в HTTP ошибки; (3) логировать все ошибки с трейсом. Без ExceptionFilter Nest использует встроенный, который возвращает минимальный JSON.
+- **"ExceptionFilter нужен только для кастомных ошибок"** — нет. Глобальный фильтр решает три задачи: единый формат всех ошибок API, перевод ошибок драйвера базы данных в HTTP-ошибки, логирование ошибок со стеком. Без него работает встроенный фильтр, который отдаёт минимальный JSON.
 
-- **"Порядок Pipe → Guard"** — нет. Правильно: Guard → Interceptor(pre) → Pipe → Controller. Pipe выполняется ПОСЛЕ Guard потому что нет смысла валидировать данные если пользователь не авторизован.
+- **"Порядок такой: Pipe → Guard"** — наоборот. Правильный порядок: Guard → Interceptor (до) → Pipe → Controller. Pipe выполняется после Guard, потому что нет смысла валидировать данные того, кому доступ всё равно закрыт.
 
-- **"useGlobalGuards/Pipes/Filters и APP_GUARD/PIPE/FILTER — одно и то же"** — нет. `useGlobal*` в `main.ts` — вне DI, нельзя инжектировать сервисы. `APP_*` в модуле — через DI, можно инжектировать. Если Guard/Pipe/Filter нужен ConfigService или PrismaService — используй `APP_*`.
+- **"Вызовы `useGlobal*` и токены `APP_*` — одно и то же"** — нет. Вызовы `useGlobal*` в `main.ts` создают объект вне контейнера внедрения зависимостей (DI), поэтому сервисы в него не инжектируются. Токены `APP_*` в модуле идут через контейнер, и зависимости приходят обычным способом. Нужен `ConfigService` или `PrismaService` внутри Guard, Pipe или Filter — берите форму с токеном.

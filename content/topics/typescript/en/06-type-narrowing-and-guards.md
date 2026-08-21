@@ -116,7 +116,8 @@ function handleError(err: Error) {
 interface Point { x: number; y: number }
 const p = { x: 1, y: 2 };
 
-if (p instanceof Point) { // ❌ 'Point' only refers to a type, but is being used as a value here
+// ❌ 'Point' only refers to a type, but is being used as a value here
+if (p instanceof Point) {
 }
 ```
 
@@ -267,7 +268,7 @@ if (isString(x)) {
 }
 ```
 
-This is a fundamental limitation: type guards are a contract between the developer and the compiler, not an automatically verified check. This is exactly why production code often uses runtime validation with Zod or similar libraries (see [Advanced Patterns]).
+This is a fundamental limitation: type guards are a contract between the developer and the compiler, not an automatically verified check. This is exactly why production code often uses runtime validation with Zod or similar libraries (see [Advanced Patterns](./09-advanced-patterns.md)).
 
 ---
 
@@ -415,7 +416,7 @@ function move(dir: Direction): [number, number] {
 
 ## Assertion Functions: The `asserts` Keyword
 
-TypeScript 3.7+ introduces assertion functions — functions that return void but tell TypeScript that if the function returns normally (without throwing), a certain type is guaranteed.
+TypeScript 3.7+ introduces assertion functions. They return void, but they tell TypeScript that a certain type is guaranteed if the function returns normally — that is, without throwing.
 
 ### `asserts condition`
 

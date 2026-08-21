@@ -20,7 +20,7 @@ You can't check permissions without knowing who's asking.
 
 HTTP responses reflect this distinction:
 ```txt
-401 Unauthorized — not authenticated (bad name — historical accident)
+401 Unauthorized — not authenticated (bad name, historical)
 403 Forbidden    — authenticated, but not authorized
 ```
 
@@ -45,7 +45,8 @@ The classic approach: the server stores session state, the client holds an ID.
    ▼
 3. Response:
    HTTP/1.1 200 OK
-   Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Lax; Path=/
+   Set-Cookie: sessionId=abc123; HttpOnly; Secure;
+               SameSite=Lax; Path=/
    │
    ▼
 4. Subsequent requests:
@@ -67,8 +68,9 @@ Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=86
 HttpOnly        — JS cannot read this cookie (XSS protection)
 Secure          — send only over HTTPS
 SameSite=Strict — cookie not sent on any cross-site request
-SameSite=Lax    — sent on top-level GET navigation (recommended default)
-SameSite=None   — always sent (needed if API is on a different domain; + Secure required)
+SameSite=Lax    — sent on top-level GET navigation (default)
+SameSite=None   — always sent; needed when the API is on another
+                  domain, and requires Secure
 Path=/          — accessible for all paths
 Max-Age         — TTL in seconds (preferred over Expires)
 ```
@@ -122,18 +124,25 @@ Cons:
 
 ## JWT (JSON Web Tokens)
 
-JWT is a standard (RFC 7519) for transmitting data as signed JSON. The key difference from sessions: **the server holds no state** — all information is inside the token.
+JWT is a standard (RFC 7519, a request-for-comments document) for transmitting data as signed JSON. The key difference from sessions: **the server holds no state** — all information is inside the token.
 
 ### JWT Structure
 
 ```txt
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcxOTIwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+1. Header
+   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+2. Payload
+   eyJzdWIiOiI0MiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcxOTIwMDAwMH0
+3. Signature
+   SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 
-│──────── Header ────────│───────────── Payload ─────────────│──── Signature ────│
+The three parts travel joined by dots: header.payload.signature
 
 Header  (base64url): { "alg": "HS256", "typ": "JWT" }
-Payload (base64url): { "sub": "42", "role": "admin", "exp": 1719200000 }
-Signature: HMACSHA256(base64url(header) + "." + base64url(payload), secret)
+Payload (base64url):
+  { "sub": "42", "role": "admin", "exp": 1719200000 }
+Signature:
+  HMACSHA256(base64url(header) + "." + base64url(payload), secret)
 ```
 
 **Important**: base64url is **encoding**, not encryption. The payload is visible to anyone. Never put sensitive data in a JWT (passwords, card numbers).
@@ -190,7 +199,7 @@ Flow:
 4. POST /auth/refresh
    Cookie: refreshToken=...       ← browser sends automatically
    → { accessToken: "eyJ...", expiresIn: 900 }
-   + Set-Cookie: refreshToken=... (rotation — new refresh token issued)
+   + Set-Cookie: refreshToken=... (rotation: a new one is issued)
 
 5. Logout:
    POST /auth/logout
@@ -278,7 +287,7 @@ Pros:
 
 Cons:
   ❌ Cannot be invalidated before expiry (without a blacklist)
-  ❌ Grows in size as claims are added (every request carries the payload)
+  ❌ Grows as claims are added — every request carries the payload
   ❌ Complex key rotation
   ❌ Many ways to implement incorrectly (alg:none, not checking exp)
 ```
@@ -307,7 +316,7 @@ With OAuth 2.0:
 ```txt
 Resource Owner      — the user (owner of the data)
 Client              — the application requesting access
-Authorization Server — issues tokens (Google, GitHub, your auth server)
+Authorization Server — issues tokens (Google, GitHub, your own)
 Resource Server     — the API holding protected data
 ```
 
@@ -362,7 +371,7 @@ For web and mobile apps with a backend.
 
 ### PKCE (Proof Key for Code Exchange)
 
-PKCE protects against authorization code interception. Required for mobile and SPA apps (which have no client_secret):
+PKCE protects against authorization code interception. Required for mobile and single-page app (SPA) clients, which cannot keep a client_secret:
 
 ```txt
 Client generates:
@@ -371,7 +380,7 @@ Client generates:
 
 Sends code_challenge in the authorization request (step 2).
 Sends code_verifier when exchanging code → token (step 5).
-Authorization server verifies: SHA256(code_verifier) == code_challenge
+Authorization server checks: SHA256(code_verifier) == challenge
 ```
 
 Without PKCE: if someone intercepts the authorization code, they get tokens. With PKCE: a code without the verifier is useless.
@@ -400,7 +409,7 @@ OAuth 2.0 is about authorization (resource access). OpenID Connect adds an authe
 
 ```txt
 OAuth 2.0:  "Allow reading Calendar" → access token
-OIDC:       "Who is this user?"      → id_token (sub, email, name, picture)
+OIDC:       "Who is this user?"      → id_token (sub, email, name)
 ```
 
 ---
@@ -443,7 +452,7 @@ if (!apiKey || apiKey.revokedAt) {
 
 ### HMAC Request Signing
 
-For high-security APIs (payment systems, AWS SDK): the entire request is signed, not just the key.
+For high-security APIs — payment systems, the Amazon Web Services (AWS) software development kit — the whole request is signed, not just the key. The signature is a hash-based message authentication code (HMAC).
 
 ```typescript
 // Client signs the request:
@@ -469,28 +478,28 @@ headers["X-Signature"] = signature;
 ## Comparison
 
 ```txt
-┌────────────────┬────────────────┬──────────┬─────────────┬───────────┐
-│                │ Session        │ JWT      │ OAuth 2.0   │ API Key   │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Invalidation   │ ✅ Instant      │ ❌ At exp │ ✅ Refresh   │ ✅ Instant │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Stateless      │ ❌ No           │ ✅ Yes    │ ✅ Yes       │ ❌ No      │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Scaling        │ ⚠️ Needs Redis │ ✅ Easy   │ ✅ Easy      │ ⚠️ Redis  │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Cross-domain   │ ❌ Complex      │ ✅ Easy   │ ✅ Native    │ ✅ Easy    │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ 3rd-party auth │ ❌ No           │ ❌ No     │ ✅ Built for │ ❌ No      │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Mobile         │ ⚠️ Awkward     │ ✅ Easy   │ ✅ Easy      │ ✅ Easy    │
-├────────────────┼────────────────┼──────────┼─────────────┼───────────┤
-│ Complexity     │ Low            │ Medium   │ High        │ Low       │
-└────────────────┴────────────────┴──────────┴─────────────┴───────────┘
+┌──────────────┬───────────┬──────────┬───────────┬───────────┐
+│              │ Session   │ JWT      │ OAuth 2.0 │ API Key   │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Invalidation │ ✅ Instant │ ❌ At exp │ ✅ Refresh │ ✅ Instant │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Stateless    │ ❌ No      │ ✅ Yes    │ ✅ Yes     │ ❌ No      │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Scaling      │ ⚠️ Redis  │ ✅ Easy   │ ✅ Easy    │ ⚠️ Redis  │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Cross-domain │ ❌ Complex │ ✅ Easy   │ ✅ Native  │ ✅ Easy    │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ 3rd-party    │ ❌ No      │ ❌ No     │ ✅ Core    │ ❌ No      │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Mobile       │ ⚠️ Clumsy │ ✅ Easy   │ ✅ Easy    │ ✅ Easy    │
+├──────────────┼───────────┼──────────┼───────────┼───────────┤
+│ Complexity   │ Low       │ Medium   │ High      │ Low       │
+└──────────────┴───────────┴──────────┴───────────┴───────────┘
 
 When to use what:
   Session    — traditional web where frontend and API share a domain
   JWT        — SPA/mobile with your own auth, microservices
-  OAuth 2.0  — "Sign in with Google/GitHub", accessing third-party data
+  OAuth 2.0  — "Sign in with Google", access to third-party data
   API Key    — developer APIs, server-to-server without a user
 ```
 
@@ -498,7 +507,7 @@ When to use what:
 
 ## Common Interview Traps
 
-- **"Storing JWT in localStorage is convenient"** — it's dangerous. localStorage is accessible to any JS on the page (XSS → token theft). Access tokens belong in JS memory (lost on page reload), refresh tokens in an HttpOnly cookie (XSS-proof).
+- **"Storing JWT in localStorage is convenient"** — it's dangerous. localStorage is accessible to any JS on the page (XSS — cross-site scripting — steals the token). Access tokens belong in JS memory (lost on page reload), refresh tokens in an HttpOnly cookie (XSS-proof).
 
 - **"JWT can't be invalidated"** — it can, at a cost. Options: blacklist `jti` in Redis, refresh token rotation (each use issues a new one), short-lived access tokens (15 min). Fully stateless JWT is not the right choice when you need instant revocation.
 
@@ -510,4 +519,4 @@ When to use what:
 
 - **"client_secret can live in a SPA or mobile app"** — no. Public clients (SPA, mobile) have no safe place to store a secret. Use PKCE without a client_secret instead.
 
-- **"Use bcrypt for API keys"** — no. bcrypt is intentionally slow (designed for passwords). API keys are long random strings; SHA-256 is sufficient. bcrypt for passwords, SHA-256 for API key hashes.
+- **"Use bcrypt for API keys"** — no. bcrypt is intentionally slow (designed for passwords). API keys are long random strings, so a SHA-256 secure hash algorithm digest is enough. bcrypt for passwords, SHA-256 for API key hashes.

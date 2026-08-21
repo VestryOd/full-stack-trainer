@@ -2,9 +2,11 @@
 
 ## Why isolation levels exist — and why "full isolation" is expensive
 
-When multiple transactions run concurrently, a question arises: **what data does each transaction see?** The theoretically correct answer is "only what would be seen if all transactions ran strictly sequentially." But achieving this requires locking every operation, which destroys concurrency.
+An isolation level is the setting that decides **what one transaction sees while other transactions are changing the same data**. PostgreSQL has four of them, and they differ only in which anomalies they let through.
 
-Isolation levels are a trade-off between the strictness of guarantees and performance. The SQL standard defines 4 levels via a list of **anomalies** that each level prevents.
+The theoretically correct answer would be "each transaction sees only what it would see if all transactions ran strictly one after another". Reaching that requires a lock on every operation, which destroys concurrency. So an isolation level is a trade-off between the strictness of the guarantee and performance.
+
+The SQL standard defines the four levels by listing the **anomalies** that each level prevents. SQL stands for Structured Query Language, the standard language for querying relational data.
 
 ## Three classic concurrency anomalies — with mechanics, not just definitions
 
@@ -21,12 +23,7 @@ SELECT balance FROM accounts WHERE id = 1; -- returns 0
 -- If A does ROLLBACK — B read data that never existed
 ```
 
-```txt
-PostgreSQL: does NOT support Dirty Read at any isolation level
-(including READ UNCOMMITTED). Implemented via MVCC (see
-[MVCC, Locks, and Vacuum]) — readers only see row versions
-marked as committed.
-```
+PostgreSQL does **not** allow a dirty read at any isolation level, including `READ UNCOMMITTED`. MVCC is the reason. Multi-Version Concurrency Control keeps several versions of every row, and a reader only ever sees versions marked as committed. Details in [MVCC, Locks, and Vacuum](./05-mvcc-locks-vacuum.md).
 
 ### Non-Repeatable Read — a repeated SELECT returns a different result
 
@@ -45,11 +42,7 @@ SELECT balance FROM accounts WHERE id = 1;  -- → 200 (!!)
 COMMIT;
 ```
 
-```txt
-Why this is a problem: Transaction A may have used the first value
-(100) to make a business decision — and now the second SELECT
-contradicts the first within one logical operation.
-```
+Why this is a problem: transaction A may already have used the first value, 100, to make a business decision. Now the second `SELECT` contradicts the first one inside a single logical operation.
 
 ### Phantom Read — a repeated SELECT returns a different row count
 
@@ -67,47 +60,48 @@ SELECT COUNT(*) FROM orders WHERE status = 'NEW';  -- → 6 (phantom!)
 COMMIT;
 ```
 
-```txt
-Difference from Non-Repeatable Read: there, an EXISTING row changes;
-here, NEW rows APPEAR (or disappear). In PostgreSQL, REPEATABLE READ
-protects against Phantom Read too thanks to the MVCC snapshot (unlike
-standard Repeatable Read, which only protects against Non-Repeatable
-Read).
-```
+The difference from a non-repeatable read: there an **existing** row changes its value, here **new** rows appear or disappear.
+
+In PostgreSQL, `REPEATABLE READ` prevents phantom reads too, thanks to the MVCC snapshot. The standard's `REPEATABLE READ` is weaker: it only promises protection from non-repeatable reads.
 
 ### Serialization Anomaly — the result doesn't match any sequential order
 
 ```sql
--- Transaction A                  -- Transaction B
-BEGIN;                            BEGIN;
-SELECT SUM(balance)               SELECT SUM(balance)
-FROM accounts;  -- → 1000        FROM accounts;  -- → 1000
+-- Both transactions run AT THE SAME TIME; the steps interleave.
+-- Business rule: the total across all accounts must never fall below 900.
 
-INSERT INTO audit                 INSERT INTO audit
-VALUES ('sum=1000');              VALUES ('sum=1000');
+-- Transaction A:
+BEGIN;
+SELECT SUM(balance) FROM accounts;  -- → 1000
+-- 1000 - 100 = 900, so taking 100 out is allowed
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 
-COMMIT;                           COMMIT;
--- Result: both read the same value and wrote the same thing.
--- With sequential execution, one would have read the already-changed sum.
--- This is a Serialization Anomaly — only caught by SERIALIZABLE.
+-- Transaction B (at the same moment):
+BEGIN;
+SELECT SUM(balance) FROM accounts;  -- → 1000 (the same sum!)
+-- B does the same arithmetic on the same number
+UPDATE accounts SET balance = balance - 100 WHERE id = 2;
+
+-- Transaction A:
+COMMIT;
+
+-- Transaction B:
+COMMIT;
+-- The total is now 800, and the rule is broken.
 ```
+
+Run these one after the other and the second transaction reads 900, so it stops. Run them together and each one reads the total before the other's write lands, so the outcome matches no sequential order at all. That is a serialization anomaly, and only `SERIALIZABLE` catches it. Its everyday form has its own section below, under the name write-skew.
 
 ## The four PostgreSQL isolation levels — what actually happens
 
-```txt
-┌─────────────────────┬──────────────┬───────────────────┬───────────────┬───────────────────────┐
-│ Level               │ Dirty Read   │ Non-Repeatable    │ Phantom Read  │ Serialization Anomaly │
-│                     │              │ Read              │               │                       │
-├─────────────────────┼──────────────┼───────────────────┼───────────────┼───────────────────────┤
-│ READ UNCOMMITTED    │ impossible*  │ possible          │ possible      │ possible              │
-│ READ COMMITTED      │ impossible   │ possible          │ possible      │ possible              │
-│ REPEATABLE READ     │ impossible   │ impossible        │ impossible*   │ possible              │
-│ SERIALIZABLE        │ impossible   │ impossible        │ impossible    │ impossible            │
-└─────────────────────┴──────────────┴───────────────────┴───────────────┴───────────────────────┘
+| Level | Dirty Read | Non-Repeatable Read | Phantom Read | Serialization Anomaly |
+|---|---|---|---|---|
+| `READ UNCOMMITTED` | impossible* | possible | possible | possible |
+| `READ COMMITTED` | impossible | possible | possible | possible |
+| `REPEATABLE READ` | impossible | impossible | impossible* | possible |
+| `SERIALIZABLE` | impossible | impossible | impossible | impossible |
 
-(*) PostgreSQL implements READ UNCOMMITTED as READ COMMITTED.
-(*) PostgreSQL REPEATABLE READ also prevents Phantom Read (MVCC bonus).
-```
+Both starred cells are PostgreSQL extras rather than standard behaviour. PostgreSQL implements `READ UNCOMMITTED` as `READ COMMITTED`, and its `REPEATABLE READ` also prevents phantom reads — an MVCC bonus.
 
 ### READ COMMITTED — the default level, most widely used
 
@@ -115,19 +109,14 @@ COMMIT;                           COMMIT;
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED; -- or just BEGIN (this is the default)
 ```
 
-```txt
-A snapshot is taken at the start of EACH STATEMENT (statement-level
-snapshot). This means:
-  - SELECT #1 sees all commits before SELECT #1
-  - SELECT #2 (later in the same transaction) sees all commits before
-    SELECT #2 (including those that happened between SELECT #1 and #2)
+A snapshot is taken at the start of **each statement**, so this is a statement-level snapshot. That means:
 
-This is the source of Non-Repeatable Read.
+- `SELECT` #1 sees every commit that landed before `SELECT` #1.
+- `SELECT` #2, later in the same transaction, sees every commit before `SELECT` #2 — including the ones that happened between #1 and #2.
 
-Typical use case: 90%+ of CRUD applications. Sufficient for most
-operations where a consistent data view across the whole transaction
-isn't needed.
-```
+This is exactly where a non-repeatable read comes from.
+
+Typical use case: more than 90% of CRUD applications (create, read, update, delete). It is enough for any operation that does not need one consistent data view across the whole transaction.
 
 ### REPEATABLE READ — snapshot at BEGIN time
 
@@ -135,18 +124,19 @@ isn't needed.
 BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 ```
 
+The snapshot is created **once**, at the first statement of the transaction. In PostgreSQL that is either at `BEGIN` or at the first `SELECT`, depending on the context. Every later `SELECT` in the transaction sees that one snapshot, no matter what other transactions commit meanwhile.
+
+A PostgreSQL specific: the mechanism is MVCC, not range locks as in Oracle. That is why `REPEATABLE READ` also prevents phantom reads — rows another transaction inserted after your snapshot are simply not visible.
+
+Writes can still fail here. Suppose your transaction updates or deletes a row that another transaction changed and committed after your snapshot. PostgreSQL then rolls your transaction back:
+
 ```txt
-A snapshot is created ONCE — at the time of the first statement in
-the transaction. All subsequent SELECTs in the transaction see this
-snapshot, regardless of new commits from other transactions.
-
-PostgreSQL specificity: thanks to MVCC (not range locks like Oracle),
-REPEATABLE READ also prevents Phantom Read — rows inserted by another
-transaction after the snapshot was taken are not visible.
-
-When to use: financial analytics, reports, aggregations where a
-consistent view at query start time matters.
+ERROR:  could not serialize access due to concurrent update
 ```
+
+That message belongs to `REPEATABLE READ`, not to `SERIALIZABLE`. Its SQLSTATE is 40001, so the retry logic is the same. SQLSTATE is the five-character error code that every PostgreSQL error carries.
+
+When to use it: financial analytics, reports and aggregations — anywhere a consistent view as of the query start matters.
 
 ### SERIALIZABLE — full isolation via SSI
 
@@ -154,22 +144,21 @@ consistent view at query start time matters.
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 ```
 
+PostgreSQL implements `SERIALIZABLE` through SSI, which stands for Serializable Snapshot Isolation. It avoids traditional read locks, because those destroy concurrency. Instead it tracks the read/write dependencies between transactions.
+
+Sometimes the combined result of two concurrent transactions matches no sequential order of those same transactions. PostgreSQL detects that and fails one of them:
+
 ```txt
-PostgreSQL implements SERIALIZABLE via SSI (Serializable Snapshot
-Isolation) — not through traditional read locks (which destroy
-concurrency), but by tracking dependencies between transactions
-(read/write dependencies).
-
-If PostgreSQL detects that the result of concurrent execution of two
-transactions isn't equivalent to any sequential order of their
-execution — one transaction fails with:
-ERROR: could not serialize access due to concurrent update
-
-The application MUST catch SQLSTATE 40001 and retry the transaction.
-
-When to use: banking operations with balances/limits, billing,
-situations where write-skew anomaly could violate business invariants.
+ERROR:  could not serialize access due to read/write dependencies
+        among transactions
+HINT:   The transaction might succeed if retried.
 ```
+
+This is the SSI check reporting itself, and only `SERIALIZABLE` can produce it. A `SERIALIZABLE` transaction can also get the plain "concurrent update" error shown above. The first-updater-wins rule of `REPEATABLE READ` still applies here.
+
+Both messages carry SQLSTATE 40001. The application **must** catch that code and retry the transaction.
+
+When to use it: banking operations with balances and limits, billing, and any case where a write-skew anomaly could break a business invariant.
 
 ## Write-Skew Anomaly — the anomaly REPEATABLE READ doesn't catch
 
@@ -195,12 +184,7 @@ COMMIT;
 -- SERIALIZABLE would detect the conflict and roll back one transaction.
 ```
 
-```txt
-Write-Skew is a class of anomalies where each transaction individually
-doesn't violate the invariant, but their combined execution does.
-REPEATABLE READ prevents non-repeatable read and phantom read, but
-NOT write-skew (each transaction saw a correct snapshot).
-```
+Write-skew is a class of anomalies where each transaction on its own keeps the invariant, but the two together break it. `REPEATABLE READ` prevents non-repeatable reads and phantom reads, but **not** write-skew — each transaction did see a correct snapshot.
 
 ## Setting the isolation level in the application
 
@@ -232,24 +216,18 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
 ## Connection to other topics
 
-```txt
-[ACID and Transactions]         — I (Isolation) as one of the four
-                                   ACID principles
-[MVCC, Locks, and Vacuum]       — the MVCC mechanism that lets
-                                   PostgreSQL implement snapshots
-                                   without read locks
-[Query Planner and EXPLAIN]     — isolation level affects the
-                                   planner's choices in edge cases
-```
+- [ACID and Transactions](./02-acid-transactions.md) — I (isolation) as one of the four ACID principles: atomicity, consistency, isolation, durability.
+- [MVCC, Locks, and Vacuum](./05-mvcc-locks-vacuum.md) — the MVCC mechanism that lets PostgreSQL build snapshots without read locks.
+- [Query Planner and EXPLAIN](./06-query-planner-explain.md) — the isolation level affects the planner's choices in edge cases.
 
 ## Common interview mistakes
 
-- **"READ UNCOMMITTED allows reading uncommitted data in PostgreSQL"** — PostgreSQL implements READ UNCOMMITTED as READ COMMITTED; dirty reads are physically impossible because of MVCC.
+- **"`READ UNCOMMITTED` allows reading uncommitted data in PostgreSQL"** — it does not. PostgreSQL implements `READ UNCOMMITTED` as `READ COMMITTED`, and dirty reads are physically impossible because of MVCC.
 
-- **"REPEATABLE READ and SERIALIZABLE are just different names for the same thing"** — not explaining Write-Skew Anomaly as a class of anomalies that REPEATABLE READ allows but SERIALIZABLE prevents.
+- **"`REPEATABLE READ` and `SERIALIZABLE` are just different names for the same thing"** — they are not. The write-skew anomaly is a whole class of anomalies that `REPEATABLE READ` allows and `SERIALIZABLE` prevents.
 
-- **"SERIALIZABLE blocks all other transactions"** — PostgreSQL implements SERIALIZABLE via SSI (dependency tracking), not via explicit read locks; concurrency is preserved at the cost of possible serialization errors.
+- **"`SERIALIZABLE` blocks all other transactions"** — it blocks nothing. PostgreSQL implements it through SSI, which tracks dependencies rather than taking explicit read locks. Concurrency survives, and the price is serialization errors you have to retry.
 
-- **"The default isolation level is SERIALIZABLE — it's the safest"** — the default is READ COMMITTED; SERIALIZABLE requires explicit specification and retry logic in the application.
+- **"The default isolation level is `SERIALIZABLE` — it's the safest"** — the default is `READ COMMITTED`. `SERIALIZABLE` has to be requested explicitly, and it needs retry logic in the application.
 
-- **"Phantom Read is impossible in REPEATABLE READ per the SQL standard"** — the standard allows Phantom Read at REPEATABLE READ; PostgreSQL provides a stronger guarantee (MVCC snapshot), but this is an implementation detail, not a standard requirement.
+- **"Phantom reads are impossible in `REPEATABLE READ` per the SQL standard"** — the standard does allow them at that level. PostgreSQL gives a stronger guarantee through its MVCC snapshot, but that is an implementation detail, not a standard requirement.

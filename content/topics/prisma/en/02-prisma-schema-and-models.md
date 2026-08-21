@@ -2,7 +2,13 @@
 
 ## schema.prisma structure
 
-`schema.prisma` is the single source of truth for the database structure in a Prisma project. It consists of three blocks: datasource (DB connection), generator (what to generate), and model (table definitions).
+`schema.prisma` is the single source of truth for the database structure in a Prisma project. What is not in this file does not exist for Prisma.
+
+The file is made of three kinds of block:
+
+- `datasource` — which database to connect to;
+- `generator` — what to generate from the schema;
+- `model` — the definition of one table.
 
 ```prisma
 // schema.prisma — full structure
@@ -15,7 +21,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // required for migrate dev against a prod DB
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // for migrate dev on a prod database
 }
 
 // Enum — a type shared by multiple models
@@ -26,26 +32,28 @@ enum UserRole {
 }
 
 model User {
-  id        String   @id @default(uuid())         // UUID primary key
+  id        String   @id @default(uuid())         // primary key: UUID v4
   email     String   @unique                        // UNIQUE constraint
-  name      String?                                 // nullable (NULL in SQL)
+  name      String?                                 // may be NULL
   role      UserRole @default(VIEWER)
   isActive  Boolean  @default(true)
-  score     Decimal  @default(0) @db.Decimal(10, 2) // precise decimal for money
-  metadata  Json?                                   // JSON field (PostgreSQL jsonb)
+  score     Decimal  @default(0) @db.Decimal(10, 2) // exact decimals for money
+  metadata  Json?                                   // JSON field (jsonb in PostgreSQL)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt                     // Prisma updates automatically
+  updatedAt DateTime @updatedAt                     // Prisma sets this itself
 
   posts     Post[]   // one-to-many: a User has many Posts
-  profile   Profile? // one-to-one: a User has one Profile (optional)
+  profile   Profile? // one-to-one: a User has one Profile, or none
 
   @@index([email, createdAt])                      // composite index
-  @@map("users")                                   // table name in DB (default = "User")
+  @@map("users")                                   // table name (else it is "User")
 }
 ```
 
-## Data types and their SQL equivalents
+## Data types and their equivalents in SQL
+
+Every Prisma type becomes a concrete column type in SQL — the language Prisma uses to talk to the database. The mapping below is for PostgreSQL.
 
 ```prisma
 // Prisma types → PostgreSQL types
@@ -60,7 +68,7 @@ Json      → JSONB (PostgreSQL) / JSON (MySQL)
 Bytes     → BYTEA — for binary data
 String[]  → TEXT[] — arrays (PostgreSQL only)
 
-// @db modifiers — narrow the DB-level type
+// @db modifiers — narrow the type at the database level
 email  String @db.VarChar(255)    // limit length
 price  Decimal @db.Decimal(10, 2) // 10 digits, 2 decimal places
 bio    String @db.Text            // explicit TEXT (not VARCHAR)
@@ -70,10 +78,10 @@ bio    String @db.Text            // explicit TEXT (not VARCHAR)
 
 ```prisma
 model Product {
-  // Primary Keys
+  // Primary keys
   id     Int    @id @default(autoincrement())  // SERIAL / INTEGER
-  uuid   String @id @default(uuid())           // UUID v4
-  cuid   String @id @default(cuid())           // CUID — collision-resistant ID
+  uuid   String @id @default(uuid())           // UUID v4: 128 random bits
+  cuid   String @id @default(cuid())           // CUID: short, collision-free id
 
   // Constraints
   sku    String @unique
@@ -84,10 +92,10 @@ model Product {
   count  Int    @default(0)
   flag   Boolean @default(false)
   createdAt DateTime @default(now())           // NOW() in SQL
-  updatedAt DateTime @updatedAt                // update trigger
+  updatedAt DateTime @updatedAt                // set on every update
 
-  // Mapping
-  productName String @map("product_name")      // camelCase in TS, snake_case in DB
+  // Renaming
+  productName String @map("product_name")      // camelCase in TS, snake_case in the DB
 }
 ```
 
@@ -102,9 +110,9 @@ model OrderItem {
   order   Order   @relation(fields: [orderId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 
-  @@id([orderId, productId])       // composite Primary Key (many-to-many join table)
+  @@id([orderId, productId])       // composite primary key (a join table)
   @@unique([orderId, productId])   // composite UNIQUE (alternative to @@id)
-  @@index([productId])             // index on foreign key (important for performance)
+  @@index([productId])             // index on the foreign key — matters for speed
   @@map("order_items")
 }
 ```
@@ -121,18 +129,20 @@ model Post {
   createdAt DateTime @default(now())
 
   // Explicit indexes — for fields used in WHERE/ORDER BY
-  @@index([authorId])                          // always index FK fields
+  @@index([authorId])                          // always index foreign keys
   @@index([status, createdAt(sort: Desc)])     // composite with sort direction
 }
 ```
 
 ```txt
-Rule: always index:
-  ✓ Foreign key fields (authorId, userId, orderId)
-  ✓ Fields in frequent WHERE conditions (status, type, isActive)
-  ✓ Fields in ORDER BY when other WHERE conditions are already present
-  ✗ Do NOT index low-cardinality boolean fields (isActive = true/false)
-     → the query planner often ignores such an index and does a seq scan
+Rule: always index
+  ✓ foreign key fields (authorId, userId, orderId)
+  ✓ fields in frequent WHERE conditions (status, type, isActive)
+  ✓ fields in ORDER BY, when WHERE already has other conditions
+  ✗ but not low-cardinality boolean fields, that is, fields with
+     only two values (isActive = true/false)
+     → the planner usually ignores such an index and reads the
+       whole table instead (a sequential scan, or seq scan)
 ```
 
 ## Enum — when to prefer String
@@ -166,12 +176,14 @@ const orders = await prisma.order.findMany({
 
 ## Common interview mistakes
 
-- **"Prisma automatically uses any table name"** — no. By default: model `User` → table `"User"` (quoted, case-sensitive in PostgreSQL). For `snake_case`: always add `@@map("users")`. Without `@@map` on PostgreSQL, errors can occur when someone creates a table without quotes.
+- **"Prisma automatically uses any table name"** — no. By default the model `User` becomes the table `"User"`: quoted, and case-sensitive on PostgreSQL. If you want `snake_case`, add `@@map("users")`. Without `@@map` on PostgreSQL you can hit errors as soon as someone creates the same table without quotes.
 
-- **"Float is fine for prices"** — no. `Float` is IEEE 754 floating point and introduces rounding errors: `0.1 + 0.2 = 0.30000000000000004`. For money: `Decimal @db.Decimal(10, 2)` in the schema + `Decimal.js`, or store amounts in cents as `Int`. Never use Float for financial calculations.
+- **"Float is fine for prices"** — no. `Float` is a binary floating-point number (the IEEE 754 standard), and `0.1` has no exact binary form. That is where `0.1 + 0.2 = 0.30000000000000004` comes from. For money use `Decimal @db.Decimal(10, 2)` in the schema plus `Decimal.js`, or store cents in an `Int`. `Float` is never right for financial maths.
 
-- **"@updatedAt always updates automatically"** — it updates on any Prisma `update` operation, but NOT on `$executeRaw`. If you update via raw SQL, `updatedAt` will not be updated. Also: `@updatedAt` is set on the Prisma Client side, not via a DB trigger.
+- **"@updatedAt always updates automatically"** — it updates on any `update` through Prisma, but not on `$executeRaw`. Change a row with raw SQL and `updatedAt` keeps its old value. Note too that Prisma Client sets the value, not a trigger inside the database.
 
-- **"Indexing every field speeds up queries"** — no. Indexes slow down INSERT/UPDATE (the index structure must be updated). Excessive indexes: waste space, slow down writes, and may be ignored by the query planner. Only index fields that appear in real `WHERE`/`JOIN`/`ORDER BY` queries.
+- **"Indexing every field speeds up queries"** — no. Indexes slow down `INSERT` and `UPDATE`, because every write must update the index as well. Extra indexes waste space, slow writes, and may still be ignored by the planner. Index only the fields that really appear in `WHERE`, `JOIN` or `ORDER BY`.
 
-- **"UUID is always better than autoincrement"** — it depends. UUID: no predictable sequence (safer for public APIs), can be generated client-side, convenient for merging data from multiple DBs. Autoincrement: more compact (4 bytes vs 16), better locality for B-tree indexes (new rows at the end). For internal IDs + JOINs: `autoincrement`. For public resources: `uuid`.
+- **"UUID is always better than autoincrement"** — it depends. A UUID (universally unique identifier) is a 128-bit random value. Nobody can guess the next one from the previous one, which makes it safer for public APIs. It can also be generated on the client, and it makes merging data from several databases easy.
+
+  `autoincrement` has different strengths. It is more compact: 4 bytes against 16. It also gives better locality in B-tree indexes — new rows land at the end of the index instead of in random places. Use `autoincrement` for internal ids and `JOIN`s, and `uuid` for public resources.

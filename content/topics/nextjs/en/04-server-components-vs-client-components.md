@@ -67,7 +67,7 @@ export default function Page() {
 
 ## Client Components — explicit opt-in
 
-`'use client'` doesn't mean "make this component client-side" — it's a marker for a **module boundary**: everything imported from a file with this directive (and everything *that* module imports) joins the client dependency graph.
+The directive `'use client'` doesn't mean "make this component client-side". It marks a **module boundary**. Everything imported from a file with this directive joins the client dependency graph — and everything *that* module imports joins it too.
 
 ```tsx
 // app/components/Counter.tsx
@@ -81,7 +81,7 @@ export function Counter() {
 }
 ```
 
-An important, often-missed nuance: **the directive applies to the whole module and everything it imports**. If `Counter.tsx` imports a helper from `utils/date.ts`, that helper also ends up in the client bundle, even if it contains no browser APIs itself — it sits "downstream" of the `'use client'` boundary.
+An important, often-missed nuance: **the directive applies to the whole module and everything it imports**. If `Counter.tsx` imports a helper from `utils/date.ts`, that helper also ends up in the client bundle. It doesn't matter that the helper itself contains no browser APIs: it sits "downstream" of the `'use client'` boundary.
 
 ## Composing Server and Client components together
 
@@ -109,11 +109,13 @@ export default async function ProductsPage() {
 
 ### Client → Server: not directly, but there's a "slots" pattern via children
 
-You **can't** import a Server Component directly inside a Client Component — at the moment the Client Component renders on the client, it has no access to the server resources the imported component would need. But you can pass a Server Component as `children`/a prop *while still on the server*, before crossing the boundary:
+You **can't** import a Server Component directly inside a Client Component. When the Client Component renders in the browser, it has no access to the server resources that the imported component would need. But you can pass a Server Component as `children` or a prop *while still on the server*, before crossing the boundary:
 
 ```tsx
 // app/components/ClientWrapper.tsx
 'use client';
+
+import { useState } from 'react';
 
 export function ClientWrapper({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -132,17 +134,20 @@ import { ServerOnlyContent } from './ServerOnlyContent'; // Server Component
 export default function Page() {
   return (
     <ClientWrapper>
-      <ServerOnlyContent /> {/* rendered on the server BEFORE being passed to ClientWrapper */}
+      {/* rendered on the server, before it reaches ClientWrapper */}
+      <ServerOnlyContent />
     </ClientWrapper>
   );
 }
 ```
 
-`ServerOnlyContent` renders on the server as part of the parent Server Component **before** its result (an RSC payload, not source code) is passed to `ClientWrapper` as `children`. From `ClientWrapper`'s perspective it's just an opaque React node — it doesn't "know" there was server code inside, and can't affect it (e.g. wrap it in a condition based on client state and force it to re-render on the server).
+`ServerOnlyContent` renders on the server, as part of the parent Server Component. Only then is its result passed to `ClientWrapper` as `children`. That result is an RSC (React Server Component) payload — a serialized description of the rendered tree, not source code.
+
+From `ClientWrapper`'s perspective this is just an opaque React node. It doesn't "know" there was server code inside and can't affect it. For instance, it can't wrap that node in a condition based on client state and make it re-render on the server.
 
 ## What can cross the Server → Client boundary as props
 
-The `'use client'` boundary is a **serialization boundary**. A Server Component serializes props into a special RSC format (JSON-like, but with support for `Promise`/`Date` and a few other types) that's sent to the client. This creates constraints:
+The `'use client'` boundary is a **serialization boundary**. A Server Component serializes props into a special RSC format that is sent to the client. That format is JSON-like, but it also supports `Promise`, `Date` and a few other types. This creates constraints:
 
 ```tsx
 // ❌ Can't pass a function — functions don't serialize
@@ -158,11 +163,11 @@ The `'use client'` boundary is a **serialization boundary**. A Server Component 
 </form>
 ```
 
-This is a common cause of the `Functions cannot be passed directly to Client Components` runtime error — usually it happens when a developer passes a callback from a Server Component out of habit, the way you would in plain React.
+This is a common cause of the `Functions cannot be passed directly to Client Components` runtime error. It usually happens when a developer passes a callback from a Server Component out of habit, exactly as you would in plain React.
 
 ## `server-only` and protecting against accidental imports
 
-Because the `'use client'` boundary is determined by the *import graph*, it's easy to accidentally pull server code (with secrets, direct DB access) into the client bundle — a simple example: a utility file with a function that reads `process.env.DB_PASSWORD` gets imported by both a Server and a Client component.
+The `'use client'` boundary is determined by the *import graph*. So it is easy to accidentally pull server code into the client bundle — code with secrets, or with direct database access. A simple example: a utility file reads `process.env.DB_PASSWORD`, and both a Server and a Client component import it.
 
 The `server-only` package (and its counterpart `client-only`) adds build-time protection:
 
@@ -173,45 +178,49 @@ import 'server-only';
 export const db = new PrismaClient();
 ```
 
-If this module ends up in a Client Component's dependency graph, the build fails with an explicit error instead of leaking secrets into the production bundle.
+If this module ends up in a Client Component's dependency graph, the build fails with an explicit error. Secrets don't leak into the production bundle.
 
 ## Why Server Components are faster — the concrete mechanisms
 
 ```txt
 1. Less JS in the bundle
-   Client Component  → HTML + the component's JS + dependencies (ship to the bundle)
-   Server Component  → only the render result (HTML/RSC payload), 0 bytes of JS
+   Client Component  → HTML + the component's JS + its dependencies
+                       (all of it ships to the bundle)
+   Server Component  → only the render result, 0 bytes of JS
+                       (HTML / RSC payload)
 
 2. Less hydration work
-   Every Client Component requires React, during hydration, to reconcile
-   the server HTML with a virtual DOM and attach event handlers.
+   Every Client Component makes React reconcile the server HTML
+   with a virtual DOM during hydration, then attach event handlers.
    Server Component — no hydration at all, no client CPU cost.
 
 3. Direct data access
    A Server Component can hit the database directly — no extra
-   "browser → API → DB" round trip that a Client Component would need.
+   "browser → API → database" round trip that a Client Component
+   would need.
 
 4. Heavy dependencies never reach the client
    E.g. a markdown parser (remark/rehype) or a formatting library
-   is only used on the server — the client doesn't pay for its weight.
+   runs only on the server — the client never pays for its weight.
 ```
 
 ## Composition pattern: "maximize Server, minimize Client"
 
-The recommended strategy is to push the `'use client'` boundary as far down the tree as possible, keeping only the parts that genuinely need interactivity client-side:
+The recommended strategy is to push the `'use client'` boundary as far down the tree as possible. Only the parts that genuinely need interactivity stay client-side:
 
 ```txt
 ProductsPage (Server)
  └─ ProductList (Server)        — renders the list, fetches data
      └─ ProductCard (Server)     — static card
-         └─ AddToCartButton (Client) — needs onClick → useState/useTransition
+         └─ AddToCartButton (Client)
+             — needs onClick → useState/useTransition
 ```
 
-The anti-pattern is marking `'use client'` at the top level "for convenience" (e.g. because something deep inside needs one interactive element). This turns the entire subtree into a Client Component — including all the data fetching, which now has to be rewritten via `useEffect`/react-query, and all the dependency weight.
+The anti-pattern is marking `'use client'` at the top level "for convenience" (e.g. because something deep inside needs one interactive element). This turns the entire subtree into a Client Component. All the data fetching has to be rewritten via `useEffect` or react-query, and all the dependency weight ships to the browser.
 
 ## Context and providers — unavoidably Client
 
-React Context (via `useContext`/`createContext` with state) only works in the browser, so theme providers, React Query, auth state, etc. must be Client Components — but they're usually isolated into a thin layer at the root of the tree:
+React Context (via `useContext`/`createContext` with state) only works in the browser. So theme providers, React Query, auth state and so on must be Client Components. They are usually isolated into a thin layer at the root of the tree:
 
 ```tsx
 // app/providers.tsx
@@ -237,7 +246,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-Important: `RootLayout` itself stays a Server Component — the `'use client'` boundary is localized to `Providers`, and anything passed as `children` can remain server-rendered thanks to the "slots" pattern described above.
+Important: `RootLayout` itself stays a Server Component. The `'use client'` boundary is localized to `Providers`. Anything passed as `children` can stay server-rendered, thanks to the "slots" pattern described above.
 
 ## Common interview mistakes
 
@@ -245,10 +254,10 @@ Important: `RootLayout` itself stays a Server Component — the `'use client'` b
 
 - **"`'use client'` only makes that one component client-side"** — the directive defines a *module* boundary and applies to everything that module imports. It's easy to forget that helper utilities imported by a Client Component also end up in the bundle.
 
-- **"You can just pass a function from a Server Component to a Client Component as a callback"** — no, props are serialized via the RSC protocol, and functions don't serialize (except the special case of Server Actions). This is a classic runtime error for people new to the App Router.
+- **"You can just pass a function from a Server Component to a Client Component as a callback"** — no. Props are serialized via the RSC protocol, and functions don't serialize. The one exception is Server Actions. This is a classic runtime error for people new to the App Router.
 
 - **"If one element needs interactivity, mark the whole page `'use client'`"** — an anti-pattern that turns the entire subtree into client code. The right approach is to push interactivity down into a small leaf component.
 
-- **"A Server Component can never be used inside a Client Component"** — it can, but only via the `children`/slots pattern: the Server Component renders on the server *before* crossing the boundary and is passed as an already-rendered React node, not as an importable component.
+- **"A Server Component can never be used inside a Client Component"** — it can, through the `children`/slots pattern. The Server Component renders on the server *before* crossing the boundary. It arrives as an already-rendered React node, not as an importable component.
 
-- **Not knowing about the `server-only`/`client-only` packages** — these are the standard way to enforce at build time that a module with secrets or browser APIs doesn't accidentally cross the boundary through an import chain.
+- **Not knowing about the `server-only`/`client-only` packages** — they are the standard build-time guard. They make sure a module with secrets or browser APIs can't cross the boundary through an import chain.

@@ -17,6 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const { styleContract } = require('./style-contract');
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
@@ -427,21 +428,26 @@ Schema for each object:
     "ru": "Тот же вопрос на русском языке"
   },
   "answer": {
-    "en": "### Brief heading\\n\\nExplanation (2-3 sentences max).\\n\\n\`\`\`typescript\\n// Code example (max 10 lines)\\n\`\`\`\\n\\n**Common interview trap:** One sentence.",
-    "ru": "### Заголовок\\n\\nОбъяснение (2-3 предложения).\\n\\n\`\`\`typescript\\n// Тот же код\\n\`\`\`\\n\\n**Типичная ошибка:** Одно предложение."
+    "en": "### Brief heading\\n\\nExplanation (2-3 sentences max).\\n\\n\`\`\`typescript\\n// Code example. Use the fence language that matches the code:\\n// css, html, graphql, sql, bash, dockerfile — not typescript by default\\n\`\`\`\\n\\n**Common interview trap:** Two or three SHORT sentences.",
+    "ru": "### Заголовок\\n\\nОбъяснение (2-3 предложения).\\n\\n\`\`\`typescript\\n// Тот же код\\n\`\`\`\\n\\n**Типичная ошибка:** Два-три КОРОТКИХ предложения."
   },
   "tags": ["specific-tag-1", "specific-tag-2"]
 }
 
 Rules:
-- Keep answers SHORT: 2-3 sentences + max 10 lines of code. No lengthy introductions.
+- First sentence = the direct answer in plain words. No warm-up, no history, no "before X".
+- Then the mechanism, then the code. Where options are compared, use a bulleted list, never a
+  chain of clauses separated by semicolons.
+- Depth stays senior — it is the LANGUAGE that must be simple, not the content.
 - Every answer MUST have a code example in a fenced typescript block
 - ${batch.difficulty === 'senior' || batch.difficulty === 'advanced' ? 'Every answer MUST include a "Common interview trap" line' : 'Include a practical short example'}
 - Both en and ru fields must be complete — no placeholders
 - Tags must be specific (e.g. "closures", "event-loop", not "javascript", "advanced")
 - Questions must be distinct — no duplicates
 
-Generate exactly ${chunkSize} questions now:`;
+Generate exactly ${chunkSize} questions now:
+
+${styleContract()}`;
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const { styleContract } = require('./style-contract');
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
@@ -346,7 +347,9 @@ Rules:
 - Tags must be specific to the algorithm/pattern used
 - Tasks must be distinct — no duplicates within the batch
 
-Generate exactly ${chunkSize} tasks now:`;
+Generate exactly ${chunkSize} tasks now:
+
+${styleContract()}`;
 }
 
 // ─── GENERATE BATCH ──────────────────────────────────────────────────────────

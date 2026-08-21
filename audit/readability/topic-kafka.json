@@ -1,0 +1,148 @@
+{
+  "zone": "kafka",
+  "kinds": ["topic-article"],
+  "verdict": "targeted-fixes",
+  "files": [
+    { "file": "content/topics/kafka/ru/01-kafka-fundamentals.md", "locale": "ru",
+      "scores": { "A": 3, "B": 4, "C": 5, "D": 5, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/kafka/ru/02-core-concepts.md", "locale": "ru",
+      "scores": { "A": 4, "B": 5, "C": 5, "D": 5, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/kafka/ru/03-partitioning-and-ordering.md", "locale": "ru",
+      "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 4, "F": null, "G": 2 } },
+    { "file": "content/topics/kafka/ru/04-kafka-in-nodejs.md", "locale": "ru",
+      "scores": { "A": 2, "B": 5, "C": 4, "D": 5, "E": 4, "F": null, "G": 3 } },
+    { "file": "content/topics/kafka/ru/05-delivery-guarantees-and-reliability.md", "locale": "ru",
+      "scores": { "A": 2, "B": 5, "C": 4, "D": 5, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/topics/kafka/ru/06-kafka-vs-rabbitmq.md", "locale": "ru",
+      "scores": { "A": 1, "B": 5, "C": 4, "D": 3, "E": 3, "F": null, "G": 2 } },
+    { "file": "content/topics/kafka/ru/07-real-world-use-cases.md", "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 4, "D": 5, "E": 3, "F": null, "G": 4 } },
+    { "file": "content/topics/kafka/ru/08-kafka-interview-questions.md", "locale": "ru",
+      "scores": { "A": 2, "B": 2, "C": 4, "D": 2, "E": 4, "F": null, "G": 3 } },
+
+    { "file": "content/topics/kafka/en/01-kafka-fundamentals.md", "locale": "en",
+      "scores": { "A": 3, "B": 3, "C": 5, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/kafka/en/02-core-concepts.md", "locale": "en",
+      "scores": { "A": 4, "B": 5, "C": 5, "D": 5, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/kafka/en/03-partitioning-and-ordering.md", "locale": "en",
+      "scores": { "A": 3, "B": 4, "C": 4, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/kafka/en/04-kafka-in-nodejs.md", "locale": "en",
+      "scores": { "A": 2, "B": 5, "C": 4, "D": 5, "E": 4, "F": 4, "G": null } },
+    { "file": "content/topics/kafka/en/05-delivery-guarantees-and-reliability.md", "locale": "en",
+      "scores": { "A": 2, "B": 5, "C": 4, "D": 5, "E": 4, "F": 3, "G": null } },
+    { "file": "content/topics/kafka/en/06-kafka-vs-rabbitmq.md", "locale": "en",
+      "scores": { "A": 1, "B": 4, "C": 4, "D": 3, "E": 3, "F": 3, "G": null } },
+    { "file": "content/topics/kafka/en/07-real-world-use-cases.md", "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 4, "D": 5, "E": 3, "F": 3, "G": null } },
+    { "file": "content/topics/kafka/en/08-kafka-interview-questions.md", "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 4, "D": 2, "E": 4, "F": 2, "G": null } }
+  ],
+  "averages": { "A": 2.4, "B": 4.1, "C": 4.3, "D": 4.4, "E": 3.8, "F": 3.1, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/topics/kafka/ru/06-kafka-vs-rabbitmq.md",
+      "rubric": "A",
+      "quote": "Нет. Kafka не умеет то, что умеет RabbitMQ: приоритизация очередей, встроенный DLX, богатая маршрутизация через Exchange, RPC-паттерн с reply queue.",
+      "problem": "Four undefined terms in a single sentence (DLX, Exchange, RPC, reply queue), in a file that defines nothing at all. Article 06 is 480 words of pure comparison: it uses DLX, DLQ, RPC, SNS, SQS, MSK, prefetch count, backpressure, fanout/direct/topic/headers exchange, compact topics, vendor lock-in, source of truth, throughput, latency, replay, offset, partition and consumer group — and glosses none of them. The reader who arrives here from a search for 'Kafka or RabbitMQ' has no anchor.",
+      "before": "Нет. Kafka не умеет то, что умеет RabbitMQ: приоритизация очередей, встроенный DLX, богатая маршрутизация через Exchange, RPC-паттерн с reply queue.",
+      "after": "Нет. У RabbitMQ есть четыре вещи, которых у Kafka нет. Приоритизация очередей: срочные сообщения обгоняют обычные. Встроенный DLX (dead letter exchange) — брокер сам складывает неудачные сообщения в отдельную очередь, без кода. Богатая маршрутизация через Exchange: брокер сам решает по правилам, в какую очередь положить сообщение. RPC-паттерн с reply queue: отправитель ждёт ответ в отдельной очереди, как при обычном вызове функции."
+    },
+    {
+      "file": "content/topics/kafka/en/08-kafka-interview-questions.md",
+      "rubric": "B",
+      "quote": "This enables three things: (1) **Multiple independent consumers** — Search, Analytics, and Fraud Detection all read the same topic independently; (2) **Replay after failure** — a service goes down for 2 hours, restarts, reads from its last committed offset, catches up on everything it missed without loss; (3) **New services** — a new ML service connects and reads the full 30-day event history from scratch, requiring zero changes to the producer.",
+      "problem": "68 words in one sentence, with three numbered facts hidden inside it and no full stop to breathe. This is the single longest sentence in the zone. The RU original is already long (59w) and EN inflates it further. File 08 has 25 sentences over 25 words (11.6% of all sentences) and 25 paragraphs over 6 lines — on a phone this is a solid grey block. ML is also unexpanded here.",
+      "before": "This enables three things: (1) **Multiple independent consumers** — Search, Analytics, and Fraud Detection all read the same topic independently; (2) **Replay after failure** — a service goes down for 2 hours, restarts, reads from its last committed offset, catches up on everything it missed without loss; (3) **New services** — a new ML service connects and reads the full 30-day event history from scratch, requiring zero changes to the producer.",
+      "after": "This enables three things.\n\n**Multiple independent consumers.** Search, Analytics, and Fraud Detection all read the same topic, and none of them affects the others.\n\n**Replay after failure.** A service goes down for 2 hours and restarts. It reads from its last committed offset and catches up on everything it missed, with no loss.\n\n**New services.** A new ML (machine learning) service connects and reads the full 30-day event history from the start. The producer needs no changes at all."
+    },
+    {
+      "file": "content/topics/kafka/ru/05-delivery-guarantees-and-reliability.md",
+      "rubric": "A",
+      "quote": "  // acks: -1 (все ISR должны подтвердить)",
+      "problem": "ISR is never expanded anywhere in the zone — not in this file, not in 02 where replicas are introduced, not in 08. Article 04 writes it out once as 'in-sync replicas' but never says what 'in sync' means or how a replica leaves the set. Since ISR is exactly what makes `acks: -1` a durability guarantee rather than a slogan, the reader cannot judge the strength of the setting they are being told to use. Same defect at en/05:105 ('all ISRs must confirm').",
+      "before": "  // acks: -1 (все ISR должны подтвердить)",
+      "after": "  // acks: -1 — запись подтверждена, только когда её приняли все ISR.\n  // ISR (in-sync replicas) — те реплики партишна, которые не отстали от лидера.\n  // Реплика, которая перестала успевать, из ISR выпадает и в подсчёте не участвует."
+    },
+    {
+      "file": "content/topics/kafka/ru/03-partitioning-and-ordering.md",
+      "rubric": "A",
+      "quote": "→ Consumer, читающий P0, не успевает. Lag растёт.",
+      "problem": "`lag` is used as a load-bearing consequence in article 03 (twice), article 05 ('Lag растёт. Новые сообщения не обрабатываются.') and article 07 ('lag < 1 сек') — and is defined in none of them. The definition lives only in 04 and 08. Every one of those three files is a plausible search landing page, and in each of them 'lag растёт' is the punchline of the section.",
+      "before": "→ Consumer, читающий P0, не успевает. Lag растёт.",
+      "after": "→ Consumer, читающий P0, не успевает. Растёт lag — отставание группы: сколько сообщений уже записано в партишн, но ещё не обработано."
+    },
+    {
+      "file": "content/topics/kafka/ru/03-partitioning-and-ordering.md",
+      "rubric": "G",
+      "quote": "Нет. Во время eager rebalancing вся группа приостанавливает обработку: сначала все consumer'ы ревокают партишны, ждут координатора, получают новые назначения.",
+      "problem": "«ревокают» and «ревокации» (line 220: «пауза равна времени ревокации») are not Russian words — they are the English verb `revoke` with Russian endings glued on. The reader has to reverse-engineer the English to understand a step that is the whole point of the section. The same paragraph also mixes Latin script mid-sentence with Russian agreement («для ВСЕХ partition»).",
+      "before": "Нет. Во время eager rebalancing вся группа приостанавливает обработку: сначала все consumer'ы ревокают партишны, ждут координатора, получают новые назначения.",
+      "after": "Нет. Во время eager rebalancing вся группа приостанавливает обработку. Сначала все consumer'ы отдают назначенные им партишны (в документации это называется revoke), потом ждут координатора и только потом получают новые назначения."
+    },
+    {
+      "file": "content/topics/kafka/ru/01-kafka-fundamentals.md",
+      "rubric": "B",
+      "quote": "Практический результат этой философии — Kafka **горизонтально масштабируется** гораздо лучше: брокер не хранит состояние per-consumer, он просто последовательно пишет и читает данные с диска (что очень быстро из-за sequential I/O).",
+      "problem": "30 words carrying three separate facts, plus the calque «состояние per-consumer», plus a term (`sequential I/O`) used as the reason for a claim one section before it is explained. The EN version is worse at 38 words. The reader is asked to accept 'very fast' on the credit of a phrase they have not met yet.",
+      "before": "Практический результат этой философии — Kafka **горизонтально масштабируется** гораздо лучше: брокер не хранит состояние per-consumer, он просто последовательно пишет и читает данные с диска (что очень быстро из-за sequential I/O).",
+      "after": "Практический результат этой философии — Kafka **горизонтально масштабируется** гораздо лучше. Брокер не хранит состояние по каждому consumer'у отдельно. Он просто дописывает данные в конец файла и читает их подряд. Такая последовательная запись и чтение (sequential I/O) очень быстрые — почему именно, разберём в следующем разделе."
+    },
+    {
+      "file": "content/topics/kafka/en/01-kafka-fundamentals.md",
+      "rubric": "F",
+      "quote": "**No.** This is the single most common misconception about Kafka, and it's precisely where interviews start going sideways. Kafka is a **distributed log**, not a message queue. This isn't a terminology quibble — it's an architectural difference that affects everything: how data is stored, who reads it and when, and what happens to messages after they're read.",
+      "problem": "'go sideways' is an idiom and 'quibble' is a rare noun — both above B1-B2, and both are inventions of the EN version: the RU says plainly «именно с него начинают ломать голову на интервью» and «Разница не терминологическая». The same file adds 'leverages', 'commodity hardware' and 'proliferation'. Measurably, EN 01 has 7 sentences over 25 words (10.9%) against RU 01's single one (1.5%) — the EN layer is harder than the RU layer, not just longer.",
+      "before": "**No.** This is the single most common misconception about Kafka, and it's precisely where interviews start going sideways. Kafka is a **distributed log**, not a message queue. This isn't a terminology quibble — it's an architectural difference that affects everything: how data is stored, who reads it and when, and what happens to messages after they're read.",
+      "after": "**No.** This is the most common misconception about Kafka, and it is where interview answers usually go wrong. Kafka is a **distributed log**, not a message queue. This is not just a difference in words. It is a difference in architecture, and it affects everything: how data is stored, who reads it and when, and what happens to messages after they are read."
+    },
+    {
+      "file": "content/topics/kafka/ru/08-kafka-interview-questions.md",
+      "rubric": "D",
+      "quote": "**Превышение max.poll.interval.ms** — обработка длится дольше 5 минут → брокер исключает consumer из группы → rebalancing → другой consumer получает ту же партишну и то же сообщение → цикл.",
+      "problem": "Grammar slip («ту же партишну» — feminine, while «партишн» is masculine everywhere else in the zone), inside the zone's densest file. Article 08 is 2714 RU / 2896 EN words with exactly one code block and zero diagrams, while the other seven articles pair every single idea with a txt diagram. Since this topic has no question bank and no quiz, 08 is the reader's only retrieval-practice surface — and it is the one file that reads as an unbroken wall.",
+      "before": "**Превышение max.poll.interval.ms** — обработка длится дольше 5 минут → брокер исключает consumer из группы → rebalancing → другой consumer получает ту же партишну и то же сообщение → цикл.",
+      "after": "**Превышение `max.poll.interval.ms`** — обработка длится дольше 5 минут. Брокер исключает consumer из группы, начинается rebalancing. Тот же партишн и то же сообщение достаются другому consumer'у — и цикл повторяется."
+    },
+    {
+      "file": "content/topics/kafka/ru/03-partitioning-and-ordering.md",
+      "rubric": "G",
+      "quote": "`murmur2` — нефриптографическая хеш-функция. Важно: один и тот же ключ **всегда** попадает в один и тот же партишн (при неизменном числе партишнов).",
+      "problem": "«нефриптографическая» is a typo for «некриптографическая» — a reader who tries to google the word finds nothing. And even spelled correctly the term is dropped bare: it carries no meaning here, because the only property that matters for partitioning is determinism, which the sentence never states as the reason.",
+      "before": "`murmur2` — нефриптографическая хеш-функция. Важно: один и тот же ключ **всегда** попадает в один и тот же партишн (при неизменном числе партишнов).",
+      "after": "`murmur2` — некриптографическая хеш-функция: быстрая, но не предназначенная для защиты данных. Здесь это и не нужно — от хеша требуется только одно: одинаковые ключи всегда дают одинаковое число. Поэтому один и тот же ключ **всегда** попадает в один и тот же партишн (при неизменном числе партишнов)."
+    },
+    {
+      "file": "content/topics/kafka/ru/02-core-concepts.md",
+      "rubric": "G",
+      "quote": "  → Faster controller failover (миллисекунды vs секунды)\n  → Поддержка миллионов партишнов (ZooKeeper масштабировался плохо)",
+      "problem": "An English sentence sitting inside a Russian diagram, next to a Russian one — the untranslated layer in RU goes well below the H1. The same file leaves «Это bottleneck» (line 43) and «ZooKeeper deprecated и будет удалён» untranslated; 04 has «клиент использует их для discovery кластера»; 05 has «ACK потерян в сети (network blip)»; 06 has «event-driven retention», «Dead Letter Queue for failed messages», «Conditional routing без кода в consumer'е»; 08 has «а не чистым техническим fit».",
+      "before": "  → Один кластер вместо двух\n  → Faster controller failover (миллисекунды vs секунды)\n  → Поддержка миллионов партишнов (ZooKeeper масштабировался плохо)",
+      "after": "  → Один кластер вместо двух\n  → Быстрее переизбирается Controller при сбое (миллисекунды вместо секунд)\n  → Поддержка миллионов партишнов (ZooKeeper масштабировался плохо)"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/kafka/ru/01-kafka-fundamentals.md": ["HDD", "ML", "SQS", "ОС", "RPC"],
+    "content/topics/kafka/ru/02-core-concepts.md": ["CPU", "AWS", "MSK", "KIP", "JVM"],
+    "content/topics/kafka/ru/03-partitioning-and-ordering.md": [],
+    "content/topics/kafka/ru/04-kafka-in-nodejs.md": ["TCP", "UI"],
+    "content/topics/kafka/ru/05-delivery-guarantees-and-reliability.md": ["ISR", "ACK"],
+    "content/topics/kafka/ru/06-kafka-vs-rabbitmq.md": ["DLX", "DLQ", "RPC", "SNS", "SQS", "MSK", "GCP", "IoT"],
+    "content/topics/kafka/ru/07-real-world-use-cases.md": ["БД", "DB", "ES", "JVM", "ML", "SQL", "OLAP", "ELK", "LSN", "S3"],
+    "content/topics/kafka/ru/08-kafka-interview-questions.md": ["CDC", "AWS", "MSK", "KIP", "ML", "RPC", "SQS", "UI", "WAL", "БД"],
+    "content/topics/kafka/en/01-kafka-fundamentals.md": ["HDD", "ML", "SQS", "OS", "RPC"],
+    "content/topics/kafka/en/02-core-concepts.md": ["CPU", "AWS", "MSK", "KIP", "JVM"],
+    "content/topics/kafka/en/03-partitioning-and-ordering.md": [],
+    "content/topics/kafka/en/04-kafka-in-nodejs.md": ["TCP", "UI"],
+    "content/topics/kafka/en/05-delivery-guarantees-and-reliability.md": ["ISR", "ACK"],
+    "content/topics/kafka/en/06-kafka-vs-rabbitmq.md": ["DLX", "DLQ", "RPC", "SNS", "SQS", "MSK", "GCP", "IoT"],
+    "content/topics/kafka/en/07-real-world-use-cases.md": ["DB", "ES", "JVM", "ML", "SQL", "OLAP", "ELK", "LSN", "S3"],
+    "content/topics/kafka/en/08-kafka-interview-questions.md": ["CDC", "KIP", "ML", "RPC", "SQS", "UI", "WAL", "DB"]
+  },
+  "patterns": [
+    "Article 02 is written as the zone's glossary — every Kafka noun gets a bold lead definition — and articles 03, 05, 06 and 07 then silently inherit it and define nothing of their own. 03 opens with «в какой из N партишнов топика его записать» (topic, partition, producer bare); 05 uses producer/broker/consumer/offset/acks/ISR bare; 06 and 07 use consumer group, retention, replay, throughput, at-least-once bare. The load-bearing case is `lag`: it is the punchline of a section in 03, 05 and 07, and defined in none of them (only in 04 and 08). This is the site-wide failure mode, confirmed here: a reader arriving from search into 03, 05, 06 or 07 gets no definitions at all.",
+    "Layout and density invert exactly at the interview file. Articles 01-07 hold D=5 because every new idea is immediately followed by a txt diagram — this zone's strongest asset. Article 08 (2714 RU / 2896 EN words) has one code block and zero diagrams, 25-27 over-long paragraphs and the zone's longest sentences (RU 59w, EN 68w). Because the kafka topic has no question bank and no quiz, 08 is the reader's only retrieval-practice surface and is the one file formatted as a wall.",
+    "The RU layer is not fully translated below the H1. English survives inside Russian diagrams and prose («Это bottleneck», «Faster controller failover», «event-driven retention», «Dead Letter Queue for failed messages», «discovery кластера», «network blip», «а не чистым техническим fit»), and English verbs get Russian endings («ревокают», «ревокации», «мониторится», «батчить»). Two of these are outright errors: «нефриптографическая» (03) and «ту же партишну» / «фундаментальная компромисс» (08 / 01).",
+    "EN is harder than RU wherever the flags cluster, and not only because it is longer. EN 01 has 10.9% long sentences against RU's 1.5%; EN 08 11.6% against RU's 4.3%. EN also introduces C1 vocabulary that has no RU counterpart in the same slot: 'going sideways', 'quibble', 'commodity hardware', 'headroom', 'provision', 'canonical', 'forfeits', 'spin up', 'wired directly', 'retroactively'."
+  ],
+  "notes": "RU 06's H1 «Kafka vs RabbitMQ» is fine as-is (both are product names, «vs» is standard in RU tech writing) — the real untranslated layer is inside the RU diagrams, see pattern 3. Kafka/06 heavily duplicates content/topics/rabbitmq/ru|en/05-rabbitmq-vs-alternatives.md (both cover log-vs-queue, dumb/smart broker, replay, routing, cloud managed options) and the two disagree twice: rabbitmq/05 lists «Exactly-once semantics с Kafka транзакциями» as a plain Kafka strength while kafka/05 and kafka/08 insist it holds only Kafka→Kafka; and rabbitmq/05 rates RabbitMQ at «~50k–150k сообщений/сек на ноду» while kafka/06 says it «отлично справляется с сотнями тысяч сообщений в секунду». Cross-zone RU terminology also clashes: kafka uses «партишн»/«consumer», rabbitmq uses «партиция»/«потребитель» — for a reader following the cross-reference these read as different concepts. Two factual slips noticed in passing, outside the readability remit: ru/04 and en/04 call `idempotent: true` «настройка брокера» / «broker-side setting» (it is a producer client option), and ru/04:390 leaves a dead destructure `const { CONNECT, DISCONNECT, REQUEST_TIMEOUT } = consumer.events;` that the EN version already removed."
+}

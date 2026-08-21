@@ -6,7 +6,7 @@
 
 ### Call Stack (Стек вызовов)
 
-LIFO-стек фреймов выполнения. Каждый вызов функции добавляет фрейм наверх; возврат из функции удаляет его. **Run-to-completion**: движок не может прервать выполняющуюся JS-функцию — Event Loop получает управление только когда стек **полностью пуст**.
+Стек фреймов выполнения по принципу «последним пришёл — первым вышел» (LIFO). Каждый вызов функции добавляет фрейм наверх; возврат из функции удаляет его. **Run-to-completion**: движок не может прервать выполняющуюся JS-функцию — Event Loop получает управление только когда стек **полностью пуст**.
 
 ```js
 function a() { b(); }
@@ -23,7 +23,7 @@ a();
 
 ### Task Queue / Macrotask Queue (Очередь задач)
 
-FIFO-очередь. Источники задач:
+Очередь по принципу «первым пришёл — первым вышел» (FIFO). Источники задач:
 - `setTimeout` / `setInterval` (по истечении времени)
 - События пользователя (клик, ввод)
 - I/O callbacks (network, file — в Node.js)
@@ -151,7 +151,8 @@ Promise.resolve().then(() => console.log('D'));
 Синхронный код:
   .then('A + inner B')   → Microtask Queue: [mA]
   .then('D')             → Microtask Queue: [mA, mD]
-  (второй .then('C') зарегистрирован на первом Promise, но ждёт разрешения mA)
+  (второй .then('C') зарегистрирован на первом Promise,
+   но ждёт разрешения mA)
 
 Дренируем Microtask Queue:
 
@@ -261,7 +262,8 @@ console.log('end');
   setTimeout 1           → Task Queue: [t1]
   setTimeout 2           → Task Queue: [t1, t2]
   new Promise(executor):
-    'promise executor'   → вывод: promise executor (executor синхронный!)
+    'promise executor'   → вывод: promise executor
+                           (executor выполняется синхронно)
     resolve()            → Promise resolved
   .then('then 1')        → Microtask: [m1]
   .then('then 3')        → Microtask: [m1, m3]
@@ -270,8 +272,9 @@ console.log('end');
 Дренируем Microtask Queue:
   m1 ('then 1'):
     'then 1'             → вывод: then 1
-    return Promise.resolve() → второй .then('then 2') ждёт этого промиса
-                          → добавляет m2 в очередь
+    return Promise.resolve()
+      → второй .then('then 2') ждёт этого промиса
+      → добавляет m2 в очередь
     Microtask: [m3, m2]
 
   m3 ('then 3'):
@@ -357,7 +360,7 @@ button.addEventListener('click', () => {
 `requestAnimationFrame` выполняется **в конце той задачи, перед рендером** — он идеален для анимаций, но не гарантирует точный тайминг в мс.
 
 ```txt
-Задача → Microtask Queue (полностью) → rAF → Рендер → следующая задача
+Задача → Microtask Queue (вся) → rAF → Рендер → следующая задача
 ```
 
 ## `queueMicrotask` vs `Promise.resolve().then`
@@ -376,21 +379,25 @@ queueMicrotask(() => {
 ## Связь с другими темами
 
 ```txt
-[Асинхронные паттерны]   — Promise internals, async/await как сахар над
-                            микрозадачами разбираются в следующей статье
-[Node.js Event Loop]     — фазы libuv (timers, poll, check, close) детально
-                            в теме Node.js; здесь — только JS-уровень
-[Генераторы]             — async generator + for-await-of работает через
-                            тот же Microtask Queue под капотом
-[Производительность]     — долгие синхронные задачи блокируют Event Loop;
-                            мониторинг через PerformanceObserver / monitorEventLoopDelay
+[Асинхронные паттерны]   — Promise internals и async/await как
+                           сахар над микрозадачами: в следующей
+                           статье
+[Node.js Event Loop]     — фазы libuv (timers, poll, check,
+                           close) детально в теме Node.js; здесь
+                           только JS-уровень
+[Генераторы]             — async generator и for-await-of идут
+                           через тот же Microtask Queue
+[Производительность]     — долгие синхронные задачи блокируют
+                           Event Loop; следить через
+                           PerformanceObserver или
+                           monitorEventLoopDelay
 ```
 
 ## Типичные ошибки на интервью
 
-- **"Микрозадачи выполняются между макрозадачами"** — упрощение, которое не объясняет главного: Microtask Queue дренируется **полностью** после каждой задачи (и вообще в любой checkpoint). Новые микрозадачи, добавленные во время обработки, тоже выполняются до следующей задачи.
+- **"Микрозадачи выполняются между макрозадачами"** — упрощение. Оно упускает главное: Microtask Queue дренируется **полностью** после каждой задачи и вообще в любой checkpoint. Новые микрозадачи, добавленные во время обработки, тоже выполняются до следующей задачи.
 
-- **"Promise.then выполняется, когда Promise resolved"** — Promise может быть resolved, но callback выполнится только когда стек опустеет и Event Loop достигнет Microtask Queue. Синхронный код после `.then()` всегда выполнится первым.
+- **"Promise.then выполняется, когда Promise resolved"** — Promise действительно может быть уже resolved. Но callback выполнится только когда стек опустеет и Event Loop дойдёт до Microtask Queue. Синхронный код после `.then()` всегда выполнится первым.
 
 - **"setTimeout(fn, 0) — это сразу"** — нет. Во-первых, минимальная задержка в браузерах обычно 1–4 мс (4 мс после нескольких вложенных setTimeout). Во-вторых, задача попадёт в очередь и выполнится только после всех текущих задач и всех накопившихся микрозадач.
 

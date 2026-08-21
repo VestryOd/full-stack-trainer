@@ -2,7 +2,9 @@
 
 ## A pipeline of stages, not a query
 
-`find` can filter, project and sort. Everything else — grouping, computed fields, joins, statistics — is the job of aggregation. A pipeline is an array of stages: each one receives a stream of documents, does something with it and passes it on. The documents leaving a stage do not have to match the shape of the documents entering it.
+`find` can filter, project and sort. Everything else is the job of aggregation: grouping, computed fields, joins, statistics. A pipeline is an array of stages. Each stage receives a stream of documents, does something with it and passes it on. The documents leaving a stage do not have to match the shape of the documents entering it.
+
+Two plan names show up throughout this article, because an aggregation is planned like any other query. COLLSCAN means a full collection scan: the server reads every document. IXSCAN — an index scan — means it walks sorted index keys instead.
 
 ```txt
 A pipeline: every stage takes a stream and emits a stream
@@ -51,15 +53,19 @@ db.comments.aggregate([
 
 ```txt
 What matters about the mechanism itself:
-  - aggregate returns a CURSOR, just like find: the result is read in
-    batches (see [CRUD and Query Operators])
-  - a field reference inside a stage is a string with a dollar sign:
-    "$author.name". Without the dollar it is a literal
-  - stages can repeat: two $match stages, three $addFields — all fine
-  - the order of stages determines both the result and the performance
+  - aggregate returns a cursor, just like find: the result is read
+    in batches (see article 02 on CRUD and query operators)
+  - a field reference inside a stage is a string with a dollar
+    sign: "$author.name". Without the dollar it is a literal
+  - stages can repeat: two $match stages, three $addFields — all
+    fine
+  - the order of stages determines both the result and the
+    performance
 ```
 
 ## The main stages
+
+Roughly a dozen stages cover almost every real pipeline. Here they are with one line each:
 
 ```js
 // $match — a filter. The same syntax as find
@@ -69,7 +75,7 @@ What matters about the mechanism itself:
 { $project: { _id: 0, title: 1, author: "$author.name",
               short: { $substrCP: ["$body", 0, 200] } } }
 
-// $addFields / $set — add fields WITHOUT dropping the rest
+// $addFields / $set — add fields without dropping the rest
 { $addFields: { commentsPerView: { $divide: ["$stats.comments",
                                             "$stats.views"] } } }
 
@@ -102,7 +108,7 @@ What matters about the mechanism itself:
 
 ## $group and accumulators
 
-`_id` in `$group` is the grouping key, not an identifier. It can be a field, a composite object or `null` (one group for the whole input).
+`_id` in `$group` is the grouping key, not an identifier. It can be a field, a composite object, or `null` — which makes one group for the whole input.
 
 ```js
 db.comments.aggregate([
@@ -126,53 +132,65 @@ db.comments.aggregate([
 ```
 
 ```txt
-The $push trap: it collects EVERYTHING into an array inside a single
-result document, and a document is capped at 16 MB. A $push grouping
-over a large collection fails with BSONObjectTooLarge. If you need a
-list, bound it ($slice after $push, $limit before grouping) — or do
-not group at all.
+The $push trap: it collects everything into an array inside a
+single result document, and a document is capped at 16 MB
+(megabytes). A $push grouping over a large collection fails with
+BSONObjectTooLarge. If you need a list, bound it: $slice after
+$push, or $limit before grouping. Or do not group at all.
 ```
 
 ## The "filter early" principle
 
-Indexes in an aggregation only work on the stages that come BEFORE the first stage that reshapes the document stream. In practice that means `$match` and `$sort` belong at the front of the pipeline.
+Indexes in an aggregation only work on the stages that come before the first stage that reshapes the document stream. In practice that means `$match` and `$sort` belong at the front of the pipeline.
 
 ```txt
-   BAD: filtering after unwinding            GOOD: filter and sort first
-┌─────────────────────────────────┐      ┌─────────────────────────────────┐
-│ $unwind: "$tags"                │      │ $match: { status: "published" } │
-│ $lookup: from: "users"          │      │ $sort:  { publishedAt: -1 }     │
-│ $match: { status: "published" } │      │ $limit: 20                      │
-│ $sort:  { publishedAt: -1 }     │      │ $lookup: from: "users"          │
-└─────────────────────────────────┘      │ $unwind: "$tags"                │
-no index is used: stages that reshape    └─────────────────────────────────┘
-documents already ran before $match;         $match + $sort use the index
-  $lookup also ran for the drafts          { status: 1, publishedAt: -1 };
-                                            $lookup runs over 20 documents
+   BAD: filtering after unwinding
+┌─────────────────────────────────┐
+│ $unwind: "$tags"                │
+│ $lookup: from: "users"          │
+│ $match: { status: "published" } │
+│ $sort:  { publishedAt: -1 }     │
+└─────────────────────────────────┘
+no index is used: stages that reshape
+documents already ran before $match;
+  $lookup also ran for the drafts
+
+    GOOD: filter and sort first
+┌─────────────────────────────────┐
+│ $match: { status: "published" } │
+│ $sort:  { publishedAt: -1 }     │
+│ $limit: 20                      │
+│ $lookup: from: "users"          │
+│ $unwind: "$tags"                │
+└─────────────────────────────────┘
+    $match + $sort use the index
+  { status: 1, publishedAt: -1 };
+   $lookup runs over 20 documents
 ```
 
 The optimizer does rearrange some things, and knowing its limits helps:
 
 ```txt
 What the optimizer can do:
-  - move $match forward through $project/$addFields/$unwind when the
-    condition refers to fields those stages did not change
-  - merge $sort + $limit into a top-k sort: the sorter keeps only the
-    N best in memory instead of the whole input
+  - move $match forward through $project/$addFields/$unwind when
+    the condition refers to fields those stages did not change
+  - merge $sort + $limit into a top-k sort: the sorter keeps only
+    the N best in memory instead of the whole input
   - coalesce consecutive $limit, $skip and $match stages
   - drop fields that are not used downstream (projection pushdown)
 
-What the optimizer CANNOT do:
-  - move $match through $group when the filter is on a computed field:
-    { $group: ... }, { $match: { total: { $gt: 10 } } } — the filter
-    runs AFTER grouping, over all groups. That is normal and
-    unavoidable (the equivalent of HAVING in SQL); just be aware that
-    no index is involved
-  - guess that $lookup should have run after $limit — the order is
-    yours to choose
+What the optimizer cannot do:
+  - move $match through $group when the filter is on a computed
+    field. In { $group: ... }, { $match: { total: { $gt: 10 } } }
+    the filter runs after grouping, over all groups. That is
+    normal and unavoidable — it is the equivalent of HAVING in
+    SQL, the query language of relational databases. Just be
+    aware that no index is involved.
+  - guess that $lookup should have run after $limit — the order
+    is yours to choose
 ```
 
-Verify it the same way as for `find` — with explain (see [Indexes and Query Performance]):
+Verify it the same way as for `find`, with explain. Article 04 on indexes covers reading a plan.
 
 ```js
 db.posts.explain("executionStats").aggregate([ ... ]);
@@ -181,14 +199,16 @@ db.posts.explain("executionStats").aggregate([ ... ]);
 // with the $sort
 ```
 
-## $lookup — why it is not a free JOIN
+## $lookup — why it is not a free join
+
+`$lookup` looks like a join and behaves like a loop. It runs once per document that reaches the stage.
 
 ```txt
        $lookup is a nested loop, not a hash join
 ┌──────────────────────────────────────────────────────┐
 │ stage input: 500 posts                               │
 ├──────────────────────────────────────────────────────┤
-│ for EVERY post a lookup runs against users:          │
+│ for every post a lookup runs against users:          │
 │   { _id: <the post authorId> }                       │
 │   → 500 separate accesses to the users collection    │
 │   → with an index on _id these are 500 fast IXSCANs  │
@@ -201,7 +221,7 @@ an Extended Reference in the schema removes this stage entirely
 ```
 
 ```js
-// The basic form: an equality join, the result is an ARRAY of matches
+// The basic form: an equality join, the result is an array of matches
 db.posts.aggregate([
   { $match: { status: "published" } },
   { $sort:  { publishedAt: -1 } },
@@ -231,25 +251,31 @@ db.posts.aggregate([
 
 ```txt
 What you need to know about the mechanics:
-  - $lookup is a nested loop: it runs for EVERY document that reaches
-    the stage. There is no hash join, no merge join and no join-order
-    choice by a planner — a fundamental difference from a JOIN in
-    PostgreSQL (see the PostgreSQL topic, [Query Planner and EXPLAIN])
-  - an index on foreignField is mandatory: without it each of the N
-    lookups scans the target collection in full
-  - the result is ALWAYS an array; to get an object you need $unwind
-    (and then decide what to do with documents that had no match)
-  - in the sub-pipeline form the join condition is written with $expr
-    and a $$variable — that is a correlated subquery, and it also runs
-    per input document
-  - $lookup + $unwind on a to-many relationship multiplies the number
-    of documents in the pipeline
+  - $lookup is a nested loop: it runs for every document that
+    reaches the stage. There is no hash join, no merge join and no
+    join-order choice by a planner. That is a fundamental
+    difference from a join in PostgreSQL — see article 06 of the
+    PostgreSQL topic, on the query planner.
+  - an index on foreignField is mandatory: without it each of the
+    N lookups scans the target collection in full
+  - the result is always an array; to get an object you need
+    $unwind, and then you have to decide what to do with
+    documents that had no match
+  - in the sub-pipeline form the join condition is written with
+    $expr and a $$variable. That is a correlated subquery, and it
+    also runs per input document.
+  - $lookup + $unwind on a to-many relationship multiplies the
+    number of documents in the pipeline
 
-Hence the rule: narrow the input BEFORE $lookup ($match, $sort,
-$limit), and keep $lookup out of the hot read path.
+Hence the rule: narrow the input before $lookup, with $match,
+$sort and $limit. And keep $lookup out of the hot read path.
 ```
 
-The main takeaway of this section is not about aggregation but about schema: if the primary query requires a `$lookup`, the schema was most likely designed relationally. An Extended Reference (`author: { _id, name, avatar }` right inside the post) removes the stage entirely rather than optimizing it — see [Schema Design: Embedding vs Referencing]. `$lookup` remains a legitimate tool for reports, admin panels and rare queries where a second round-trip costs more than a server-side join.
+The main takeaway of this section is not about aggregation but about schema. If the primary query requires a `$lookup`, the schema was most likely designed relationally.
+
+An Extended Reference — `author: { _id, name, avatar }` right inside the post — removes the stage entirely rather than optimizing it. Article 03 on schema design covers that.
+
+`$lookup` stays a legitimate tool for reports, admin panels and rare queries. Those are the cases where a second round-trip costs more than a server-side join.
 
 ## $unwind and the cardinality explosion
 
@@ -271,20 +297,21 @@ Two mandatory options people forget:
   { $unwind: { path: "$tags",
                preserveNullAndEmptyArrays: true } }
 
-  By default a document whose array is MISSING or empty is DROPPED
-  from the pipeline. This is the most common $unwind bug: "posts
-  without tags disappeared from the report" — and nobody notices
-  until someone reconciles the totals.
+  By default a document whose array is missing or empty is
+  dropped from the pipeline. This is the most common $unwind bug:
+  "posts without tags disappeared from the report" — and nobody
+  notices until someone reconciles the totals.
 
   { $unwind: { path: "$tags", includeArrayIndex: "tagIndex" } }
   — keep the element's position if you need it.
 ```
 
 ```txt
-A sign that $unwind is unnecessary: it is immediately followed by a
-$group that reassembles the document ($first on every field plus
-$push on the unwound one). Often the following is enough instead:
-  - $filter / $map / $reduce — expressions over the array WITHOUT
+A sign that $unwind is unnecessary: it is immediately followed by
+a $group that reassembles the document ($first on every field
+plus $push on the unwound one). Often the following is enough
+instead:
+  - $filter / $map / $reduce — expressions over the array with no
     unwinding
   - $size — the array length
   - $reduce for a sum over the array
@@ -295,24 +322,27 @@ Example: { $addFields: { hot: { $size: { $filter: {
 
 ## Memory limits and allowDiskUse
 
-```txt
-Blocking stages are the ones that must collect data before emitting
-the first document: $group, $sort (without an index), $bucket,
-$setWindowFields, $facet.
+Some stages cannot stream. They have to collect data before they emit a single document. Those are the stages that run into the per-stage memory limit of 100 MB (megabytes).
 
-The limit for such a stage is 100 MB of RAM.
+```txt
+Blocking stages are the ones that must collect data before
+emitting the first document: $group, $sort (without an index),
+$bucket, $setWindowFields, $facet.
+
+The limit for such a stage is 100 MB of memory.
 On overflow: "Exceeded memory limit for $group ... pass
 allowDiskUse:true".
 
   db.comments.aggregate(pipeline, { allowDiskUse: true })
 
-allowDiskUse permits spilling to disk: the query stops failing but
-becomes noticeably slower. It is a lifeline, not an operating mode.
-The right moves: narrow the $match, give the $sort an index, reduce
-the grouping cardinality, compute incrementally via $merge.
+allowDiskUse permits spilling to disk. The query stops failing
+but becomes noticeably slower, so treat it as an emergency
+measure rather than a normal setting. The right moves: narrow the
+$match, give the $sort an index, reduce the grouping cardinality,
+compute incrementally via $merge.
 
-A separate limit: every RESULT document, like any BSON document, is
-capped at 16 MB — which is why $group with $push over a large
+A separate limit: every result document, like any BSON document,
+is capped at 16 MB. That is why $group with $push over a large
 collection fails even with allowDiskUse.
 ```
 
@@ -337,44 +367,52 @@ db.posts.aggregate([
       ]
   } }
 ]);
-// the result is ONE document: { items: [...], total: [{count}], byTag: [...] }
+// the result is one document: { items: [...], total: [{count}], byTag: [...] }
 ```
 
 ```txt
 What matters about $facet:
-  - indexes are only used by the stages BEFORE $facet; inside the
+  - indexes are only used by the stages before $facet; inside the
     branches the work happens on the already-retrieved stream
-  - every branch processes the ENTIRE input stream independently —
-    the saving is that the collection is read once, not three times
-  - the result is a single document, so the 16 MB limit applies to it
+  - every branch processes the entire input stream independently.
+    The saving is that the collection is read once, not three
+    times.
+  - the result is a single document, so the 16 MB limit applies
+    to it
   - $facet is blocking: the first document is emitted once all
     branches are computed
 ```
 
 ## Aggregate in the database or process in Node
 
+The dividing line is the ratio between input volume and result volume.
+
 ```txt
 Compute in the database when:
-  - the input volume is much larger than the result (2M comments →
-    10 report rows): the result travels over the network, not the data
-  - the work comes down to $match/$sort over indexes plus grouping
+  - the input volume is much larger than the result (2M comments
+    → 10 report rows): the result travels over the network, not
+    the data
+  - the work comes down to $match/$sort over indexes plus
+    grouping
   - you need a sort with a limit over the whole collection (top-k)
   - the result is materialized into a collection via $merge/$out
   - the result set would not fit in the Node process memory
 
 Compute in Node when:
-  - the volume is already small (you fetched 20 documents — no need to
-    build a pipeline just to shape the response)
-  - the logic involves calls to external services, cache lookups, or
-    rules that change with the product
-  - the logic needs unit tests and has to be readable a year from now
+  - the volume is already small: you fetched 20 documents, so
+    there is no need to build a pipeline just to shape the
+    response
+  - the logic involves calls to external services, cache lookups,
+    or rules that change with the product
+  - the logic needs unit tests and has to be readable a year from
+    now
   - aggregation expressions start looking like a program:
     $cond/$switch/$reduce nested ten levels deep
 ```
 
-A practical rule of thumb: aggregation is good at computing **data**, the application is good at expressing **business rules**. A 12-stage pipeline with branching is a program written in an awkward language with no debugger; split it — leave the heavy filtering and grouping in the database, keep formatting and rules in code.
+A practical rule of thumb: aggregation is good at computing **data**, the application is good at expressing **business rules**. A 12-stage pipeline with branching is a program written in an awkward language with no debugger. Split it: leave the heavy filtering and grouping in the database, keep formatting and rules in code.
 
-And the opposite mistake, which is more common: pulling 200,000 documents into Node and summing them in a loop. That is network traffic, process memory and GC pressure instead of one `$group` stage.
+And the opposite mistake, which is more common: pulling 200,000 documents into Node and summing them in a loop. That means network traffic, process memory, and pressure on the garbage collector (GC) — instead of one `$group` stage.
 
 ## Materialized views with $merge
 
@@ -399,7 +437,8 @@ db.comments.aggregate([
 
 ```txt
 $merge vs $out:
-  $out    — REPLACES the target collection entirely with the result
+  $out    — replaces the target collection entirely with the
+            result
   $merge  — inserts/updates/merges by key; supports incremental
             recomputation and works with the target collection's
             existing data and indexes
@@ -407,40 +446,29 @@ $merge vs $out:
 
 ## Connection to other topics
 
-```txt
-[CRUD and Query Operators]        — $match uses the same filter
-                                    language; cursors and result
-                                    batching
-[Schema Design: Embedding vs      — why a good schema removes $lookup;
- Referencing]                       Computed fields instead of
-                                    aggregating on every read
-[Indexes and Query Performance]   — indexes only work on the leading
-                                    stages; explain for a pipeline; the
-                                    foreignField index for $lookup
-[Replication, Transactions, and   — running heavy aggregations on a
- Consistency]                       secondary and why that is risky
-[Mongoose Queries, populate,      — populate vs $lookup: N+1 queries
- and Pitfalls]                      against one stage
-the PostgreSQL topic,             — what a real join planner looks like,
-[Query Planner and EXPLAIN]         the one $lookup gets compared to
-```
+- **02 — CRUD and Query Operators.** CRUD is create, read, update, delete. `$match` uses the same filter language; cursors and result batching.
+- **03 — Schema Design: Embedding vs Referencing.** Why a good schema removes `$lookup`; Computed fields instead of aggregating on every read.
+- **04 — Indexes and Query Performance.** Indexes only work on the leading stages; explain for a pipeline; the `foreignField` index for `$lookup`.
+- **06 — Replication, Transactions, and Consistency.** Running heavy aggregations on a secondary, and why that is risky.
+- **08 — Mongoose Queries, populate, and Pitfalls.** `populate` against `$lookup`: N+1 queries against one stage.
+- **The PostgreSQL topic, article 06 — Query Planner and EXPLAIN.** What a real join planner looks like, the one `$lookup` gets compared to.
 
 ## Common interview traps
 
-- **"$lookup is a JOIN, just in MongoDB"** — it is a nested loop executed per input document, with no hash join and no join-order choice. It requires an index on `foreignField` and does not belong in the hot read path.
+- **"$lookup is a join, just in MongoDB"** — it is a nested loop executed per input document, with no hash join and no join-order choice. It requires an index on `foreignField` and does not belong in the hot read path.
 
-- **"Stage order doesn't matter, the optimizer will sort it out"** — the optimizer will move `$match` through `$project`/`$addFields`, but it will not push it through `$group` and will not guess that `$lookup` should have come after `$limit`. Indexes only work on the stages before the first reshaping one.
+- **"Stage order doesn't matter, the optimizer will sort it out"** — the optimizer will move `$match` through `$project`/`$addFields`. It will not push it through `$group`, and it will not guess that `$lookup` should have come after `$limit`. Indexes only work on the stages before the first reshaping one.
 
-- **"$unwind just expands an array"** — it also multiplies the document count in the pipeline, and by default it DROPS documents with no array. `preserveNullAndEmptyArrays: true` is needed when the empty ones matter.
+- **"$unwind just expands an array"** — it also multiplies the document count in the pipeline. And by default it **drops** documents with no array. `preserveNullAndEmptyArrays: true` is needed when the empty ones matter.
 
-- **"Aggregation doesn't use indexes"** — it does, but only on the leading stages (`$match`, `$sort` before anything that reshapes documents). That is exactly why "filter early" is a requirement, not a style preference.
+- **"Aggregation doesn't use indexes"** — it does, but only on the leading stages: `$match` and `$sort` before anything that reshapes documents. That is exactly why "filter early" is a requirement, not a style preference.
 
 - **"allowDiskUse fixes the memory problem"** — it removes the failure, not the slowness. The real fix is an index for the `$sort`, a narrower `$match`, or incremental recomputation via `$merge`.
 
-- **"I'll collect everything with $group + $push"** — the result document is capped at 16 MB, and `$push` over a large collection will hit that regardless of `allowDiskUse`.
+- **"I'll collect everything with $group + $push"** — the result document is capped at 16 MB. `$push` over a large collection will hit that regardless of `allowDiskUse`.
 
 - **"$facet runs its branches in parallel, so it's fast"** — the benefit is not parallelism but that the input stream is read once. Inside the branches there are no indexes, and the stage is blocking.
 
-- **"Since we have aggregation, counters can be computed on the fly"** — on a hot read path (a feed) that is extra work per request. Keep the counter ready (`$inc` on write, the Computed pattern) and leave aggregation for recomputation and reports.
+- **"Since we have aggregation, counters can be computed on the fly"** — on a hot read path that is extra work on every request. A feed is the usual example. Keep the counter ready (`$inc` on write, the Computed pattern) and leave aggregation for recomputation and reports.
 
-- **"Better to keep all logic in the pipeline — less code in the app"** — a 12-stage pipeline with `$cond`/`$switch` cannot be unit-tested and cannot be read a year later. The database gets bulk filtering and grouping; the application gets business rules.
+- **"Better to keep all logic in the pipeline — less code in the app"** — a 12-stage pipeline with `$cond`/`$switch` cannot be unit-tested. It also cannot be read a year later. The database gets bulk filtering and grouping; the application gets business rules.

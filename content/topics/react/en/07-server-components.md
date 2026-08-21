@@ -2,7 +2,7 @@
 
 ## The mental model shift
 
-Before React Server Components (RSC), React always ran on the client. Server-side rendering (SSR) meant "run the same React code on the server to produce HTML, then rehydrate it on the client." The code was identical — it ran in both environments.
+Before React Server Components (RSC), React always ran on the client. Server-side rendering (SSR) meant one thing: run the same React code on the server to produce HTML. The client then rehydrated that HTML, attaching event handlers and state to the markup the server had sent. The code was identical, and it ran in both environments.
 
 RSC introduces a fundamental split:
 
@@ -14,7 +14,7 @@ BEFORE RSC:
 
 WITH RSC:
   Server Components run ONLY on the server.
-  Client Components run on the client (and also on the server for SSR).
+  Client Components run on the client, and on the server for SSR.
   Server Components never ship their code to the browser.
   The boundary between them is explicit: 'use client'.
 ```
@@ -25,19 +25,18 @@ This is not just a performance optimization — it is a different way of thinkin
 
 ## What runs where
 
-```txt
-SERVER COMPONENTS                       CLIENT COMPONENTS
-─────────────────────────────────────   ────────────────────────────────────
-Run: server only (build time or request time)
-                                        Run: browser + server (for SSR)
-Can: async/await directly               Can: useState, useEffect, event handlers
-Can: access DB, filesystem, env vars    Can: use browser APIs (window, localStorage)
-Can: import heavy server-only libs      Can: use refs, context (as provider or consumer)
-     (no bundle size impact)
-Cannot: useState, useEffect             Cannot: access DB/filesystem directly
-Cannot: browser APIs                    Cannot: async component body (currently)
-Cannot: event handlers                  Cannot: import server-only modules
-```
+| | Server Components | Client Components |
+|---|---|---|
+| Runs on | server only, at build or request time | browser, plus the server for SSR |
+| `useState`, `useEffect` | no | yes |
+| Event handlers | no | yes |
+| Browser APIs (`window`, `localStorage`) | no | yes |
+| `async`/`await` in the component body | yes | no, not supported yet |
+| Database, filesystem, env vars | direct access | no direct access |
+| Heavy server-only libraries | yes, and no bundle cost | no |
+| Refs and context | no | yes, as provider or consumer |
+
+A **server-only** module is one that must never reach the browser: a database client, a file reader, a module holding a secret key.
 
 ```tsx
 // SERVER COMPONENT — runs on the server, result is serialized and sent to the client
@@ -82,16 +81,16 @@ function AddToCartButton({ productId }: { productId: string }) {
 
 ## The serialization boundary
 
-When a Server Component renders a Client Component, it cannot pass arbitrary JavaScript objects across the boundary — only **serializable values**. The server produces a JSON-like wire format (the RSC payload) that the client deserializes.
+When a Server Component renders a Client Component, it cannot pass arbitrary JavaScript objects across the boundary. Only **serializable values** may cross. The server produces the RSC payload: a JSON-like **wire format**, which means the shape the data takes while it travels over the network. The client deserializes that payload.
 
 ```txt
-SERVER                          WIRE FORMAT              CLIENT
-──────────────────────────────────────────────────────────────
-Server Component renders        →  RSC payload (JSON-like)  →  Client hydrates
-                                   - React element trees
-                                   - serialized props
-                                   - references to Client
-                                     Component chunks
+Server                     wire format                Client
+────────────────────────────────────────────────────────────
+Server Component  ──▶  RSC payload (JSON-like)  ──▶  client
+renders                                              hydrates
+                       - React element trees
+                       - serialized props
+                       - references to Client Component chunks
 ```
 
 **What can cross the serialization boundary (props from Server to Client Components):**
@@ -109,7 +108,7 @@ Server Component renders        →  RSC payload (JSON-like)  →  Client hydrat
 />
 ```
 
-**What CANNOT cross the boundary:**
+**What cannot cross the boundary:**
 
 ```tsx
 // ❌ Not serializable — cannot pass as props to Client Components:
@@ -195,13 +194,16 @@ const theme = useContext(ThemeContext);
 const ref = useRef(null);
 ```
 
-**'use client' propagates downward:** once a component is a Client Component, all components it imports are also treated as Client Components — even if they don't have `'use client'` themselves. The directive marks the root of a client subtree, not individual components.
+**'use client' propagates downward.** Once a component is a Client Component, every component it imports becomes one too. That holds even when those components carry no `'use client'` of their own. The directive marks the root of a client subtree, not individual components.
 
 ```txt
-Page (Server) ─── imports ──▶ ProductList (Server) ─── imports ──▶ AddToCart ('use client')
-                                                                      └── Button (no directive)
-                                                                            ↑ implicitly Client
-                                                                              (imported by Client)
+Page (Server)
+  → imports ProductList (Server)
+      → imports AddToCart ('use client')   ← the boundary
+          → imports Button (no directive)
+
+Button has no directive of its own. A Client Component imported it,
+so Button is a Client Component too.
 ```
 
 ### The 'use server' directive
@@ -251,22 +253,24 @@ Server Actions look like regular async functions but execute on the server. When
 
 ## Streaming SSR explained
 
-Traditional SSR: the server renders the entire page to HTML, sends it all at once, then the client downloads JS and hydrates everything.
+Traditional SSR: the server renders the entire page to HTML, sends it all at once, then the client downloads JS and hydrates everything. The metric this hurts is TTFB — time to first byte, the delay before the first byte of the response reaches the browser.
 
 ```txt
-TRADITIONAL SSR:
-  Server:  ──────────────── render all ────────────── send HTML ──▶
-  Client:  ──────────────────────────────── receive ── hydrate ──▶
-  TTFB:    long (must render everything before sending anything)
+Traditional SSR
+  Server: ──── render the whole page ──── send all HTML ──▶
+  Client: ──────────────────── receive ──── hydrate ──▶
+
+  TTFB is long: nothing is sent until everything is rendered.
 ```
 
-Streaming SSR (React 18): the server sends HTML in chunks as components finish rendering. The client starts rendering and hydrating as soon as the first chunk arrives.
+Streaming SSR (React 18): the server sends HTML in chunks as components finish rendering. The client starts rendering and hydrating as soon as the first chunk arrives. The first chunk is the **shell** — the part of the page that does not wait for any data.
 
 ```txt
-STREAMING SSR (React 18):
-  Server:  ── send shell ─── render A ─ send A ─── render B ─ send B ──▶
-  Client:  ── receive & show shell ── receive & hydrate A ── receive & hydrate B ──▶
-  TTFB:    fast (shell is sent immediately)
+Streaming SSR (React 18)
+  Server: send shell ─ render A ─ send A ─ render B ─ send B ──▶
+  Client: show shell ─── hydrate A ────────── hydrate B ──▶
+
+  TTFB is short: the shell goes out immediately.
 ```
 
 Suspense boundaries are the streaming split points:
@@ -299,7 +303,14 @@ The browser receives and renders `<Header />` and both `<Skeleton />`s immediate
 
 ### Selective hydration
 
-Streaming also enables selective hydration: the client can hydrate components in priority order. If the user clicks on a component that hasn't hydrated yet, React prioritizes hydrating it first (before hydrating other components that loaded before it).
+Streaming also enables selective hydration: the client can hydrate components in priority order.
+
+```txt
+The user clicks a component that is not hydrated yet
+
+  React moves that component to the front of the queue
+  and hydrates it before the ones that loaded earlier.
+```
 
 ---
 
@@ -349,7 +360,7 @@ function Timestamp() {
 ```tsx
 // 3. Random values:
 function Avatar() {
-  const color = `#${Math.random().toString(16).slice(2, 8)}`; // different on server and client
+  const color = `#${Math.random().toString(16).slice(2, 8)}`; // differs per run
   return <div style={{ background: color }} />;
 }
 
@@ -389,7 +400,7 @@ For intentional, known mismatches (like a timestamp that will always differ), Re
 </time>
 ```
 
-This suppresses the warning but does not prevent the mismatch — the client will still update the DOM after hydration. Use sparingly.
+This suppresses the warning but does not prevent the mismatch. The client will still update the DOM — the Document Object Model, the tree of objects the browser builds from the page — after hydration. Use it sparingly.
 
 ---
 
@@ -417,16 +428,57 @@ In a traditional client-side React app, importing `marked` and `highlight.js` wo
 ## Common interview traps
 
 **"Can a Server Component import a Client Component?"**
-Yes. A Server Component can import and render a Client Component. The Client Component is included in the client bundle and hydrated on the browser. The reverse direction has restrictions: a Client Component cannot import a Server Component (the import would fail because server-only code like `fs`, `db`, or `'server-only'` imports cannot run in the browser). A Client Component *can* receive a Server Component as `children` — passed as an already-rendered serialized element.
+Yes. A Server Component can import and render a Client Component. That Client Component goes into the client bundle and is hydrated in the browser.
+
+```txt
+Server Component  ── imports ──▶  Client Component    ✓
+Client Component  ── imports ──▶  Server Component    ✗
+Client Component  ◀─ children ──  Server Component    ✓
+```
+
+The reverse direction is restricted. A Client Component cannot import a Server Component — the import fails. Server-only code such as `fs`, `db` or a `'server-only'` import cannot run in the browser. A Client Component *can* receive a Server Component as `children`, which arrives as an already-rendered, serialized element.
 
 **"Can a Server Component use useState?"**
-No. Server Components have no lifecycle and no state — they run once on the server and produce static output. If you need interactivity, that piece must be a Client Component. The split is: data fetching and static rendering → Server Component; interactivity, state, effects → Client Component.
+No. Server Components have no lifecycle and no state — they run once on the server and produce static output. If you need interactivity, that piece must be a Client Component.
+
+```txt
+data fetching, static rendering  →  Server Component
+interactivity, state, effects    →  Client Component
+```
 
 **"What is the RSC payload?"**
-When a Server Component tree renders, React serializes the output into a special JSON-like wire format (the RSC payload). It contains: the virtual DOM tree from the server render, references to Client Component chunks (so the client knows which JS to load), and serialized props. The client receives this payload, uses it to render the Client Component tree, and hydrates the result against the server-generated HTML. It is not the same as the server-sent HTML — the RSC payload is consumed by the React runtime, not by the browser's HTML parser.
+It is the serialized output of a Server Component tree — the JSON-like wire format React sends to the client. It carries three kinds of rows:
+
+```txt
+RSC payload — simplified shape
+
+  tree    ["$","ul",null,{"children":[ ... ]}]
+          the virtual DOM tree the server render produced
+
+  client  a reference to the chunk holding <AddToCartButton>
+          tells the client which JS file to load
+
+  props   {"productId":"42"}
+          the serialized props for that Client Component
+```
+
+The client takes the payload, renders the Client Component tree from it, and hydrates the result against the server-generated HTML. The payload is not the same thing as the HTML the server sent. It is consumed by the React runtime, not by the browser's HTML parser.
 
 **"Does 'use client' mean the component only runs on the client?"**
-No. Client Components run on the client AND on the server (for SSR/SSG). `'use client'` means: this component and its subtree use client-side React features (state, effects, browser APIs) and must be included in the client bundle. The `'use client'` directive marks the server/client boundary, not the "never run on server" boundary.
+No. Client Components run on the client **and** on the server. On the server they run for SSR, and for SSG — static site generation, rendering pages to HTML at build time.
+
+`'use client'` means something narrower. This component and its subtree use client-side React features: state, effects, browser APIs. So they must be included in the client bundle. The directive marks the server/client boundary, not a "never run on the server" boundary.
 
 **"What is the difference between Server Actions and API routes?"**
-API routes are explicit HTTP endpoints — you define the route, handle the request, parse the body, return a response. Server Actions are functions marked with `'use server'` that the framework automatically exposes as POST endpoints. You call them like normal functions from Client Components. The framework handles serialization, transport, and deserialization. Server Actions integrate with the React form model (`<form action={serverAction}>`) and can call `revalidatePath` / `revalidateTag` to invalidate cached data without a full page reload.
+API routes are explicit HTTP endpoints. You define the route, handle the request, parse the body and return a response. Server Actions are functions marked with `'use server'`, and the framework exposes them as POST endpoints for you.
+
+| | API route | Server Action |
+|---|---|---|
+| How you define it | a route file with a request handler | a function marked `'use server'` |
+| How you call it | `fetch` to a URL | like a normal function |
+| Serialization and transport | you write it | the framework does it |
+| Works without JavaScript | no | yes, through `<form action={...}>` |
+| Cache invalidation | your own code | `revalidatePath` / `revalidateTag` |
+| Best for | public APIs used by third parties | internal form submits and mutations |
+
+Because a Server Action can call `revalidatePath` or `revalidateTag` itself, it can invalidate cached data without a full page reload.

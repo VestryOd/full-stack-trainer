@@ -8,13 +8,13 @@
     },
     "options": {
       "en": [
-        "Pending callbacks → Idle prepare → Poll → Check → process.nextTick",
+        "Pending callbacks → Idle prepare → Poll → Check",
         "Pending callbacks → Poll → Check → Idle prepare → setImmediate",
         "Poll → Pending callbacks → Check → Idle prepare → microtasks",
         "Check → Poll → Pending callbacks → Idle prepare → timers"
       ],
       "ru": [
-        "Pending callbacks → Idle prepare → Poll → Check → process.nextTick",
+        "Pending callbacks → Idle prepare → Poll → Check",
         "Pending callbacks → Poll → Check → Idle prepare → setImmediate",
         "Poll → Pending callbacks → Check → Idle prepare → microtasks",
         "Check → Poll → Pending callbacks → Idle prepare → timers"
@@ -30,8 +30,8 @@
     "id": "nodejs-quiz-2",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be logged?\n```js\nsetTimeout(() => console.log('setTimeout'), 0);\nsetImmediate(() => console.log('setImmediate'));\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nsetTimeout(() => console.log('setTimeout'), 0);\nsetImmediate(() => console.log('setImmediate'));\nPromise.resolve().then(() => console.log('Promise'));\nprocess.nextTick(() => console.log('nextTick'));\n```"
+      "en": "What will be logged? All four calls are made inside an I/O callback.\n```js\nfs.readFile('file.txt', () => {\n  setTimeout(() => console.log('setTimeout'), 0);\n  setImmediate(() => console.log('setImmediate'));\n  Promise.resolve().then(() => console.log('Promise'));\n  process.nextTick(() => console.log('nextTick'));\n});\n```",
+      "ru": "Что будет выведено? Все четыре вызова сделаны внутри I/O-колбэка.\n```js\nfs.readFile('file.txt', () => {\n  setTimeout(() => console.log('setTimeout'), 0);\n  setImmediate(() => console.log('setImmediate'));\n  Promise.resolve().then(() => console.log('Promise'));\n  process.nextTick(() => console.log('nextTick'));\n});\n```"
     },
     "options": {
       "en": [
@@ -49,8 +49,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "process.nextTick has highest priority and runs first, followed by Promise microtasks. setImmediate runs in the check phase (before timers in the next iteration), while setTimeout runs in the timers phase. In the poll phase with no pending I/O, setImmediate actually executes before setTimeout despite being registered after.",
-      "ru": "process.nextTick имеет наивысший приоритет и выполняется первым, за ним следуют microtasks Promise. setImmediate выполняется на фазе check (перед timers в следующей итерации), а setTimeout выполняется на фазе timers. На фазе poll без ожидающих операций I/O setImmediate выполняется раньше setTimeout, несмотря на позднюю регистрацию."
+      "en": "Inside an I/O callback the order is fully determined: nextTick, Promise, setImmediate, setTimeout.\n\n`process.nextTick` runs first — its queue is drained before anything else. Then promise microtasks. Both happen before the event loop moves on at all.\n\n`setImmediate` runs in the **check** phase, which comes right after the poll phase the I/O callback belongs to, so it fires later in the same loop iteration. `setTimeout(..., 0)` waits for the **timers** phase, which is only reached on the next iteration.\n\nThis guarantee holds only because the code sits inside an I/O callback. At the top level of a module, `setTimeout(..., 0)` and `setImmediate` fire in an order that depends on how long the process took to start, and Node does not promise either one.",
+      "ru": "Внутри I/O-колбэка порядок полностью определён: nextTick, Promise, setImmediate, setTimeout.\n\n`process.nextTick` выполняется первым — его очередь опустошается раньше всего остального. Затем микрозадачи промисов. И то, и другое происходит до того, как цикл событий вообще двинется дальше.\n\n`setImmediate` выполняется в фазе **check**, которая идёт сразу за фазой poll, где и находится I/O-колбэк, — то есть в той же итерации цикла. А `setTimeout(..., 0)` ждёт фазу **timers**, до которой дело дойдёт только на следующей итерации.\n\nЭта гарантия работает именно потому, что код находится внутри I/O-колбэка. На верхнем уровне модуля порядок `setTimeout(..., 0)` и `setImmediate` зависит от того, сколько времени запускался процесс, и Node не обещает ни один из вариантов."
     }
   },
   {
@@ -62,22 +62,22 @@
     },
     "options": {
       "en": [
-        "For CPU-intensive tasks that need to run in parallel, sharing the same memory space efficiently",
         "To spawn separate Node.js processes with their own V8 instances and full isolation for multi-core utilization",
         "When you need to distribute incoming HTTP connections across multiple processes",
+        "For CPU-intensive tasks that need to run in parallel, sharing the same memory space efficiently",
         "To handle blocking I/O operations without blocking the event loop"
       ],
       "ru": [
-        "Для CPU-интенсивных задач, которые должны работать параллельно, эффективно используя одно пространство памяти",
         "Чтобы запустить отдельные процессы Node.js со своими V8 экземплярами и полной изоляцией для многоядерного использования",
         "Когда нужно распределить входящие HTTP-соединения между несколькими процессами",
+        "Для CPU-интенсивных задач, которые должны работать параллельно, эффективно используя одно пространство памяти",
         "Для обработки блокирующих операций I/O без блокировки цикла событий"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "Worker Threads are ideal for CPU-intensive tasks since they share the same V8 heap and memory space, allowing efficient data sharing. Cluster is better for distributing HTTP load across processes (option C). I/O operations don't need either—just use async/await (option D). Option B describes Cluster, which creates separate processes, not Worker Threads.",
-      "ru": "Worker Threads идеальны для CPU-интенсивных задач, так как они используют одну V8 heap и пространство памяти, позволяя эффективно обмениваться данными. Cluster лучше подходит для распределения HTTP-нагрузки на процессы (вариант C). Для операций I/O не нужно ни то, ни другое—просто используйте async/await (вариант D). Вариант B описывает Cluster, который создает отдельные процессы, а не Worker Threads."
+      "en": "Worker Threads are ideal for CPU-intensive tasks since they share the same V8 heap and memory space, allowing efficient data sharing. Cluster is better for distributing HTTP load across processes (the option about distributing incoming HTTP connections). I/O operations don't need either—just use async/await (the option about blocking I/O operations). The option about spawning separate Node.js processes with their own V8 instances describes Cluster, which creates separate processes, not Worker Threads.",
+      "ru": "Worker Threads идеальны для CPU-интенсивных задач, так как они используют одну V8 heap и пространство памяти, позволяя эффективно обмениваться данными. Cluster лучше подходит для распределения HTTP-нагрузки на процессы (вариант о распределении входящих HTTP-соединений). Для операций I/O не нужно ни то, ни другое—просто используйте async/await (вариант о блокирующих операциях I/O). Вариант об отдельных процессах Node.js со своими экземплярами V8 описывает Cluster, который создает отдельные процессы, а не Worker Threads."
     }
   },
   {
@@ -89,22 +89,22 @@
     },
     "options": {
       "en": [
-        "ESM bindings are live and reflect updates, while CommonJS exports are static snapshots taken at require time",
         "CommonJS allows circular dependencies without issues, while ESM completely forbids them",
         "Both systems handle circular dependencies identically through module caching",
-        "ESM creates new instances for each import, while CommonJS uses a single cached instance"
+        "ESM creates new instances for each import, while CommonJS uses a single cached instance",
+        "ESM bindings are live; CommonJS exports are a snapshot taken at require time"
       ],
       "ru": [
-        "ESM binding — это живые ссылки, отражающие обновления, а exports CommonJS — это статические снимки, сделанные во время require",
         "CommonJS позволяет циклические зависимости без проблем, в то время как ESM их полностью запрещает",
         "Обе системы обрабатывают циклические зависимости одинаково через кэширование модулей",
-        "ESM создает новые экземпляры для каждого импорта, а CommonJS использует один кэшированный экземпляр"
+        "ESM создает новые экземпляры для каждого импорта, а CommonJS использует один кэшированный экземпляр",
+        "ESM binding — это живые ссылки; exports в CommonJS — снимок на момент require"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "ESM uses live bindings—if a module updates an exported value, importers see the updated value. CommonJS exports a snapshot at require time, so circular dependencies can result in incomplete objects. Both systems do cache modules (option C is partially true but misses the live binding difference). Option B is incorrect—both allow circular dependencies, but handle them differently.",
-      "ru": "ESM использует live bindings—если модуль обновляет экспортированное значение, импортеры видят обновленное значение. CommonJS экспортирует снимок во время require, поэтому циклические зависимости могут привести к неполным объектам. Обе системы действительно кэшируют модули (вариант C частично верен, но упускает разницу в live bindings). Вариант B неверен—обе системы позволяют циклические зависимости, но обрабатывают их по-разному."
+      "en": "ESM uses live bindings—if a module updates an exported value, importers see the updated value. CommonJS exports a snapshot at require time, so circular dependencies can result in incomplete objects. Both systems do cache modules (the option about identical handling through module caching is partially true but misses the live binding difference). The option saying ESM completely forbids circular dependencies is incorrect—both allow circular dependencies, but handle them differently.",
+      "ru": "ESM использует live bindings—если модуль обновляет экспортированное значение, импортеры видят обновленное значение. CommonJS экспортирует снимок во время require, поэтому циклические зависимости могут привести к неполным объектам. Обе системы действительно кэшируют модули (вариант об одинаковой обработке через кэширование модулей частично верен, но упускает разницу в live bindings). Вариант о том, что ESM полностью запрещает циклические зависимости, неверен—обе системы позволяют циклические зависимости, но обрабатывают их по-разному."
     }
   },
   {
@@ -116,13 +116,13 @@
     },
     "options": {
       "en": [
-        "Chunks of 16KB will be logged with 100ms delays between them, demonstrating backpressure handling and controlled reading",
+        "Chunks of 16KB will be logged with 100ms delays between them",
         "Only one chunk of 16KB will be logged because pause() stops the stream permanently",
         "All chunks will be logged immediately without delays because setTimeout runs asynchronously",
         "The stream will throw an error because pause() and resume() cannot be used together in the same listener"
       ],
       "ru": [
-        "Chunks размером 16 KB будут логироваться с задержками 100 мс между ними, демонстрируя обработку backpressure и контролируемое чтение",
+        "Chunks размером 16 KB будут логироваться с задержками 100 мс между ними",
         "Только один chunk размером 16 KB будет залогирован, потому что pause() остановит stream навсегда",
         "Все chunks будут залогированы сразу без задержек, потому что setTimeout работает асинхронно",
         "Stream выбросит ошибку, потому что pause() и resume() не могут использоваться вместе в одном listener"
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The code demonstrates proper stream backpressure handling. pause() stops emitting 'data' events, and resume() resumes them. Each chunk arrives, gets logged, pauses, waits 100ms via setTimeout, then resumes for the next chunk. This is a safe pattern for controlled stream consumption. Options B and C misunderstand pause/resume behavior, and option D is incorrect—they work together safely.",
-      "ru": "Код демонстрирует правильную обработку backpressure потока. pause() останавливает emission событий 'data', а resume() их возобновляет. Каждый chunk поступает, логируется, pauses, ожидает 100 мс через setTimeout, затем resumes для следующего chunk. Это безопасный паттерн для контролируемого потребления потока. Варианты B и C неправильно понимают поведение pause/resume, а вариант D неверен—они безопасно работают вместе."
+      "en": "The code demonstrates proper stream backpressure handling. pause() stops emitting 'data' events, and resume() resumes them. Each chunk arrives, gets logged, pauses, waits 100ms via setTimeout, then resumes for the next chunk. This is a safe pattern for controlled stream consumption. The option claiming pause() stops the stream permanently and the option claiming all chunks are logged immediately misunderstand pause/resume behavior, and the option predicting an error is incorrect—they work together safely.",
+      "ru": "Код демонстрирует правильную обработку backpressure потока. pause() останавливает emission событий 'data', а resume() их возобновляет. Каждый chunk поступает, логируется, pauses, ожидает 100 мс через setTimeout, затем resumes для следующего chunk. Это безопасный паттерн для контролируемого потребления потока. Вариант о том, что pause() останавливает stream навсегда, и вариант о том, что все chunks логируются сразу, неправильно понимают поведение pause/resume, а вариант с ошибкой неверен—они безопасно работают вместе."
     }
   },
   {
@@ -143,19 +143,19 @@
     },
     "options": {
       "en": [
-        "sync, nextTick, promise, immediate",
         "sync, immediate, nextTick, promise",
+        "sync, nextTick, promise, immediate",
         "sync, promise, nextTick, immediate",
         "nextTick, sync, promise, immediate"
       ],
       "ru": [
-        "sync, nextTick, promise, immediate",
         "sync, immediate, nextTick, promise",
+        "sync, nextTick, promise, immediate",
         "sync, promise, nextTick, immediate",
         "nextTick, sync, promise, immediate"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Synchronous code executes first. Then process.nextTick and Promises (microtasks) execute before the next event loop phase. Finally, setImmediate executes in the check phase. process.nextTick has higher priority than Promises, and both are higher than setImmediate.",
       "ru": "Синхронный код выполняется первым. Затем process.nextTick и Promises (микротаски) выполняются перед следующей фазой event loop. И наконец, setImmediate выполняется на фазе check. process.nextTick имеет более высокий приоритет, чем Promises, и оба выше, чем setImmediate."
@@ -171,18 +171,18 @@
     "options": {
       "en": [
         "ESM uses synchronous module resolution while CommonJS uses asynchronous resolution",
-        "CommonJS uses require() and module.exports, while ESM uses import/export statements and supports top-level await",
         "ESM is deprecated and should not be used in modern Node.js applications",
+        "CommonJS uses require() and module.exports; ESM uses import/export",
         "CommonJS and ESM are identical in functionality but differ only in syntax"
       ],
       "ru": [
         "ESM использует синхронное разрешение модулей, а CommonJS использует асинхронное разрешение",
-        "CommonJS использует require() и module.exports, а ESM использует import/export и поддерживает top-level await",
         "ESM устарел и не должен использоваться в современных приложениях Node.js",
+        "CommonJS использует require() и module.exports; ESM — import/export",
         "CommonJS и ESM идентичны по функциональности, но отличаются только синтаксисом"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM (ECMAScript modules) supports top-level await, static imports, and asynchronous module loading, while CommonJS uses synchronous require() and module.exports. Both are supported in modern Node.js, with ESM being the standard going forward. They differ significantly in behavior, not just syntax.",
       "ru": "ESM (ECMAScript modules) поддерживает top-level await, статические импорты и асинхронную загрузку модулей, в то время как CommonJS использует синхронный require() и module.exports. Оба поддерживаются в современном Node.js, причем ESM является стандартом в будущем. Они существенно отличаются по поведению, а не только по синтаксису."
@@ -198,18 +198,18 @@
     "options": {
       "en": [
         "Streams allow processing of data faster than traditional methods",
-        "Streams enable processing of large files with constant memory usage through backpressure handling and chunked processing",
         "Streams automatically compress data as it is being read",
-        "Streams provide built-in error recovery and retry mechanisms"
+        "Streams provide built-in error recovery and retry mechanisms",
+        "Streams process large files with constant memory usage"
       ],
       "ru": [
         "Streams позволяют обрабатывать данные быстрее, чем традиционные методы",
-        "Streams позволяют обрабатывать большие файлы с постоянным использованием памяти через управление обратным давлением и обработку по частям",
         "Streams автоматически сжимает данные при их чтении",
-        "Streams предоставляют встроенные механизмы восстановления ошибок и повторных попыток"
+        "Streams предоставляют встроенные механизмы восстановления ошибок и повторных попыток",
+        "Streams обрабатывают большие файлы при постоянном расходе памяти"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 3,
     "explanation": {
       "en": "Streams process data in chunks with backpressure handling, meaning memory usage stays constant regardless of file size. This prevents loading entire files into memory, enabling processing of gigabyte-sized files efficiently. Backpressure ensures that the producer doesn't overwhelm the consumer.",
       "ru": "Streams обрабатывают данные по частям с управлением обратным давлением, означая что использование памяти остается постоянным независимо от размера файла. Это предотвращает загрузку целых файлов в память, позволяя эффективно обрабатывать файлы размером в гигабайты. Обратное давление гарантирует, что производитель не перегружает потребителя."
@@ -224,19 +224,19 @@
     },
     "options": {
       "en": [
+        "Worker threads suit CPU-bound tasks that need shared memory",
         "Cluster should always be used because it provides process-level isolation",
-        "Worker threads should be used for CPU-bound tasks requiring shared memory access, while cluster is better for load balancing multiple server instances",
         "Worker threads are only for I/O operations and cannot handle CPU-bound work",
         "There is no practical difference; choose based on personal preference"
       ],
       "ru": [
+        "Worker threads подходят для CPU-задач, которым нужна общая память",
         "Cluster всегда должен использоваться, потому что он обеспечивает изоляцию на уровне процесса",
-        "Worker threads следует использовать для задач, привязанных к CPU, требующих доступа к общей памяти, в то время как cluster лучше для балансировки нагрузки нескольких экземпляров сервера",
         "Worker threads предназначены только для операций ввода-вывода и не могут обрабатывать работу, привязанную к CPU",
         "Практического различия нет; выбирайте в зависимости от личных предпочтений"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
       "en": "Worker threads are ideal for CPU-intensive work within a single process with shared memory via SharedArrayBuffer, while cluster creates separate Node.js processes for load balancing HTTP servers. Worker threads have lower overhead and better data sharing; cluster provides isolation and multi-core server scaling.",
       "ru": "Worker threads идеальны для работы, интенсивной по CPU, в одном процессе с общей памятью через SharedArrayBuffer, в то время как cluster создает отдельные процессы Node.js для балансировки нагрузки HTTP серверов. Worker threads имеют меньше накладных расходов и лучший обмен данными; cluster обеспечивает изоляцию и масштабирование сервера на несколько ядер."
@@ -251,19 +251,19 @@
     },
     "options": {
       "en": [
-        "Caught, After, then an uncaught exception",
         "Test error is caught and execution stops",
+        "Caught, After, then an uncaught exception",
         "After, Caught, then an uncaught exception",
         "Uncaught exception is thrown immediately, preventing other code from running"
       ],
       "ru": [
-        "Caught, After, затем необработанное исключение",
         "Error Test перехватывается и выполнение останавливается",
+        "Caught, After, затем необработанное исключение",
         "After, Caught, затем необработанное исключение",
         "Необработанное исключение выбрасывается немедленно, предотвращая выполнение другого кода"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "The try-catch block catches the first error, and 'Caught' is logged. Then 'After' logs synchronously. The process.nextTick callback executes in the next phase, throwing an uncaught error since it's outside the try-catch scope. Errors thrown in asynchronous callbacks cannot be caught by surrounding try-catch blocks.",
       "ru": "Блок try-catch перехватывает первую ошибку, и выводится 'Caught'. Затем 'After' логируется синхронно. Callback process.nextTick выполняется на следующей фазе, выбрасывая необработанную ошибку, так как она вне области видимости try-catch. Ошибки, выброшенные в асинхронных callback-ах, не могут быть перехвачены окружающими блоками try-catch."
@@ -278,19 +278,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "check → timers → pending callbacks → poll → idle/prepare → close callbacks",
         "poll → timers → check → pending callbacks → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
         "timers → check → pending callbacks → poll → idle/prepare → close callbacks"
       ],
       "ru": [
-        "таймеры → отложенные обратные вызовы → простой/подготовка → опрос → проверка → обратные вызовы закрытия",
         "проверка → таймеры → отложенные обратные вызовы → опрос → простой/подготовка → обратные вызовы закрытия",
         "опрос → таймеры → проверка → отложенные обратные вызовы → простой/подготовка → обратные вызовы закрытия",
+        "таймеры → отложенные обратные вызовы → простой/подготовка → опрос → проверка → обратные вызовы закрытия",
         "таймеры → проверка → отложенные обратные вызовы → опрос → простой/подготовка → обратные вызовы закрытия"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The event loop phases in order are: timers, pending callbacks, idle/prepare, poll, check, and close callbacks. The timers phase executes callbacks scheduled by setTimeout/setInterval, followed by the check phase where setImmediate callbacks run. Within the timers phase itself, setTimeout executes before setImmediate reaches its check phase.",
       "ru": "Фазы цикла событий в порядке: таймеры, отложенные обратные вызовы, простой/подготовка, опрос, проверка и обратные вызовы закрытия. Фаза таймеров выполняет обратные вызовы, запланированные setTimeout/setInterval, за которой следует фаза проверки, где запускаются обратные вызовы setImmediate."
@@ -308,19 +308,19 @@
         "1",
         "6",
         "100",
-        "The program will hang indefinitely"
+        "Nothing is logged — the 'end' event never fires"
       ],
       "ru": [
         "1",
         "6",
         "100",
-        "Программа будет зависать бесконечно"
+        "Ничего не выводится — событие 'end' не наступает"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "When readable.pause() is called in the 'data' event handler, the stream pauses and no more 'data' events are emitted. Since the stream is never resumed via readable.resume(), only the first chunk (16 bytes due to highWaterMark) triggers the 'data' event once, and the 'end' event never fires. The program hangs. However, if 'end' were to be logged, chunks would be 1.",
-      "ru": "Когда readable.pause() вызывается в обработчике события 'data', поток приостанавливается и больше никакие события 'data' не излучаются. Поскольку поток никогда не возобновляется через readable.resume(), только первый блок (16 байт из-за highWaterMark) вызывает событие 'data' один раз, и событие 'end' никогда не срабатывает. Программа зависает, однако chunks будет равно 1."
+      "en": "Nothing is logged, because the `'end'` event never fires.\n\nThe first `'data'` event delivers one chunk and immediately calls `readable.pause()`. A paused stream stops emitting `'data'`, and since nothing ever calls `readable.resume()`, the remaining bytes are never read. `'end'` is emitted only after the stream has been read to completion, so the `console.log(chunks)` line never runs.\n\n`1` is what `chunks` holds in memory, but it is never printed. `6` assumes the whole 100-byte file was read in 16-byte chunks — that would be 7 chunks, and it did not happen anyway. The process does not hang either: with no pending read, the event loop simply runs out of work and Node exits silently, which is exactly what makes this class of bug hard to spot.",
+      "ru": "Ничего не выводится, потому что событие `'end'` не наступает.\n\nПервое событие `'data'` отдаёт один чанк и сразу вызывает `readable.pause()`. Приостановленный поток перестаёт эмитить `'data'`, а `readable.resume()` никто не вызывает — значит, остальные байты так и не будут прочитаны. Событие `'end'` наступает только после того, как поток дочитан до конца, поэтому строка `console.log(chunks)` не выполняется никогда.\n\n`1` — это значение, которое лежит в `chunks`, но его не печатают. `6` предполагает, что все 100 байт прочитаны по 16 — это дало бы 7 чанков, и всё равно этого не произошло. Программа при этом и не зависает: незавершённых чтений нет, работа у цикла событий кончается, и Node молча завершается. Именно поэтому такой класс ошибок трудно заметить."
     }
   },
   {
@@ -359,22 +359,22 @@
     },
     "options": {
       "en": [
-        "When you need CPU-intensive tasks on a multi-core system without spawning separate Node.js processes",
         "When you need to distribute incoming network connections across multiple instances",
+        "When you need CPU-intensive work without spawning separate Node.js processes",
         "When you want automatic load balancing of HTTP requests across cores",
         "When you need better memory isolation and independent event loops per core"
       ],
       "ru": [
-        "Когда вам нужны CPU-интенсивные задачи на многоядерной системе без создания отдельных процессов Node.js",
         "Когда вам нужно распределить входящие сетевые соединения на несколько экземпляров",
+        "Когда нужны CPU-интенсивные задачи без создания отдельных процессов Node.js",
         "Когда вы хотите автоматической балансировки нагрузки HTTP-запросов по ядрам",
         "Когда вам нужна лучшая изоляция памяти и независимые циклы событий на ядро"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Worker Threads are ideal for CPU-intensive tasks because they run JavaScript on separate threads within the same process, sharing memory efficiently without the overhead of spawning full Node.js processes. Cluster is better for I/O-bound applications and distributing network connections. Options 2 and 3 describe Cluster benefits, and option 4 is actually a feature of Cluster (separate processes), not Worker Threads (shared memory).",
-      "ru": "Worker Threads идеальны для CPU-интенсивных задач, потому что они запускают JavaScript на отдельных потоках в одном процессе, эффективно делясь памятью без дополнительных расходов на создание полных процессов Node.js. Cluster лучше подходит для I/O-связанных приложений и распределения сетевых соединений. Варианты 2 и 3 описывают преимущества Cluster, а вариант 4 — это особенность Cluster (отдельные процессы), а не Worker Threads (общая память)."
+      "en": "Worker Threads are ideal for CPU-intensive tasks because they run JavaScript on separate threads within the same process, sharing memory efficiently without the overhead of spawning full Node.js processes. Cluster is better for I/O-bound applications and distributing network connections. The option about distributing incoming network connections and the option about automatic HTTP load balancing describe Cluster benefits, and the option about better memory isolation and independent event loops is actually a feature of Cluster (separate processes), not Worker Threads (shared memory).",
+      "ru": "Worker Threads идеальны для CPU-интенсивных задач, потому что они запускают JavaScript на отдельных потоках в одном процессе, эффективно делясь памятью без дополнительных расходов на создание полных процессов Node.js. Cluster лучше подходит для I/O-связанных приложений и распределения сетевых соединений. Вариант о распределении входящих сетевых соединений и вариант об автоматической балансировке нагрузки HTTP описывают преимущества Cluster, а вариант о лучшей изоляции памяти и независимых циклах событий — это особенность Cluster (отдельные процессы), а не Worker Threads (общая память)."
     }
   },
   {
@@ -386,19 +386,19 @@
     },
     "options": {
       "en": [
-        "ESM uses static analysis to detect circular dependencies at parse time, while CommonJS resolves them at runtime and may return incomplete exports",
         "CommonJS prevents circular dependencies entirely, while ESM allows them unconditionally",
         "Both handle circular dependencies identically because they use the same caching mechanism",
+        "ESM links imports at parse time; CommonJS may return incomplete exports at runtime",
         "ESM caches modules more aggressively than CommonJS, leading to stale exports in circular scenarios"
       ],
       "ru": [
-        "ESM использует статический анализ для обнаружения циклических зависимостей во время парсинга, в то время как CommonJS разрешает их во время выполнения и может вернуть неполные экспорты",
         "CommonJS полностью предотвращает циклические зависимости, в то время как ESM разрешает их безусловно",
         "Оба обрабатывают циклические зависимости идентично, потому что они используют один и тот же механизм кеширования",
+        "ESM связывает импорты во время парсинга; CommonJS может вернуть неполные экспорты во время выполнения",
         "ESM кеширует модули более агрессивно, чем CommonJS, что приводит к устаревшим экспортам в циклических сценариях"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM's static module structure allows it to analyze dependencies at parse time and handle circular imports more reliably through binding. CommonJS dynamically loads modules at runtime, so circular dependencies can result in incomplete exports if a module is required before it finishes initializing. Both cache modules, but ESM's approach is more predictable.",
       "ru": "Статическая структура модулей ESM позволяет ей анализировать зависимости во время парсинга и более надежно обрабатывать циклические импорты через привязку. CommonJS динамически загружает модули во время выполнения, поэтому циклические зависимости могут привести к неполным экспортам, если модуль требуется до завершения инициализации. Оба кешируют модули, но подход ESM более предсказуем."
@@ -408,27 +408,27 @@
     "id": "nodejs-quiz-16",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of Node.js event loop phases?\n```js\n// Which phase executes first after the call stack is empty?\n```",
-      "ru": "Какой правильный порядок фаз event loop в Node.js?\n```js\n// Какая фаза выполняется первой после очистки call stack?\n```"
+      "en": "What will be logged?\n```js\nconst fields = ['heapTotal', 'heapUsed', 'external', 'arrayBuffers'];\nconst before = process.memoryUsage();\n\nconst big = Buffer.alloc(50 * 1024 * 1024);\nconst after = process.memoryUsage();\n\nconst grown = fields.filter((f) => after[f] - before[f] > 40 * 1024 * 1024);\nconsole.log(grown.join(', '), big.length);\n```",
+      "ru": "Что будет выведено?\n```js\nconst fields = ['heapTotal', 'heapUsed', 'external', 'arrayBuffers'];\nconst before = process.memoryUsage();\n\nconst big = Buffer.alloc(50 * 1024 * 1024);\nconst after = process.memoryUsage();\n\nconst grown = fields.filter((f) => after[f] - before[f] > 40 * 1024 * 1024);\nconsole.log(grown.join(', '), big.length);\n```"
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
-        "pending callbacks → timers → poll → idle/prepare → check → close callbacks",
-        "idle/prepare → poll → timers → pending callbacks → check → close callbacks"
+        "heapTotal, heapUsed 52428800 — the bytes sit on the V8 heap",
+        "heapUsed, external 52428800 — the bytes are counted in two fields",
+        "external, arrayBuffers 52428800 — the V8 heap barely changes",
+        "heapTotal, heapUsed, external, arrayBuffers 52428800 — all four grow"
       ],
       "ru": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "poll → timers → pending callbacks → idle/prepare → check → close callbacks",
-        "pending callbacks → timers → poll → idle/prepare → check → close callbacks",
-        "idle/prepare → poll → timers → pending callbacks → check → close callbacks"
+        "heapTotal, heapUsed 52428800 — байты лежат в куче V8",
+        "heapUsed, external 52428800 — байты посчитаны сразу в двух полях",
+        "external, arrayBuffers 52428800 — куча V8 почти не меняется",
+        "heapTotal, heapUsed, external, arrayBuffers 52428800 — растут все четыре"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The event loop always starts with the timers phase to check if any setTimeout/setInterval callbacks are ready, followed by pending callbacks for deferred I/O operations. The poll phase is where most I/O occurs, check phase handles setImmediate callbacks, and close callbacks execute last. Understanding this sequence is critical for predicting callback execution order.",
-      "ru": "Event loop всегда начинает с фазы timers для проверки готовых setTimeout/setInterval обратных вызовов, затем идёт фаза pending callbacks для отложенных I/O операций. Фаза poll — это где происходит большинство I/O операций, фаза check обрабатывает setImmediate обратные вызовы, а close callbacks выполняются в последнюю очередь. Понимание этой последовательности критично для предсказания порядка выполнения обратных вызовов."
+      "en": "A `Buffer` is allocated outside the V8 JavaScript heap, so its 50 MB show up in `external` and in `arrayBuffers`. `arrayBuffers` is the part of `external` that belongs to `ArrayBuffer` objects, and every `Buffer` is backed by one, so the two move together. On the heap only a small wrapper object appears, far below the 40 MB threshold in the filter.\n\nThe other counters answer different questions. `heapTotal` is how much memory V8 has reserved for JavaScript objects, and `heapUsed` is how much of that is occupied right now. `rss` (resident set size) is the total amount the operating system currently keeps in physical memory for this process. It covers the heap, the buffers, the code and the stacks at once. That makes `rss` the number to compare against a container limit, and the wrong number for finding which allocation grew.\n\nThe variant naming `heapTotal, heapUsed` puts the payload on the V8 heap. The variant with `heapUsed, external` splits the same bytes between the heap and the outside. The variant naming all four counts one buffer in every field at once.",
+      "ru": "`Buffer` выделяется вне JavaScript-кучи V8, поэтому его 50 МБ видны в `external` и в `arrayBuffers`. `arrayBuffers` — это та часть `external`, которая принадлежит объектам `ArrayBuffer`, а под каждым `Buffer` лежит именно такой объект, поэтому оба поля растут вместе. В куче появляется только небольшая обёртка, далеко ниже порога 40 МБ из фильтра.\n\nОстальные счётчики отвечают на другие вопросы. `heapTotal` — сколько памяти V8 зарезервировал под объекты JavaScript, а `heapUsed` — сколько из этого занято сейчас. `rss` (resident set size — размер резидентного набора) — весь объём, который операционная система держит для процесса в физической памяти. Он покрывает и кучу, и буферы, и код, и стеки сразу. Поэтому `rss` сравнивают с лимитом контейнера, но по нему нельзя понять, какое именно выделение выросло.\n\nВариант с `heapTotal, heapUsed` помещает полезные данные в кучу V8. Вариант с `heapUsed, external` делит те же байты между кучей и внешней памятью. Вариант со всеми четырьмя полями считает один буфер сразу везде."
     }
   },
   {
@@ -440,22 +440,22 @@
     },
     "options": {
       "en": [
-        "sync → nextTick → setTimeout → setImmediate",
-        "sync → setTimeout → nextTick → setImmediate",
+        "sync → nextTick → then setTimeout and setImmediate, in an order that is not guaranteed",
+        "sync → then nextTick, setTimeout and setImmediate, all three in an order that is not guaranteed",
         "sync → nextTick → setImmediate → setTimeout",
         "setTimeout → setImmediate → nextTick → sync"
       ],
       "ru": [
-        "sync → nextTick → setTimeout → setImmediate",
-        "sync → setTimeout → nextTick → setImmediate",
+        "sync → nextTick → затем setTimeout и setImmediate в порядке, который не гарантирован",
+        "sync → затем nextTick, setTimeout и setImmediate — все три в негарантированном порядке",
         "sync → nextTick → setImmediate → setTimeout",
         "setTimeout → setImmediate → nextTick → sync"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code executes first (sync). process.nextTick callbacks execute before any I/O or timers phase (nextTick). setTimeout with 0ms delay enters the timers phase but executes after nextTick. setImmediate executes in the check phase after the poll phase, making it last. The microtask queue (nextTick) always has priority over macrotask phases.",
-      "ru": "Синхронный код выполняется первым (sync). Обратные вызовы process.nextTick выполняются до любой фазы I/O или timers (nextTick). setTimeout с задержкой 0мс входит в фазу timers, но выполняется после nextTick. setImmediate выполняется на фазе check после фазы poll, делая его последним. Очередь микротасков (nextTick) всегда имеет приоритет над фазами макротасков."
+      "en": "`sync` prints first, then `nextTick` — and after that the order is genuinely not guaranteed.\n\nSynchronous code finishes before the event loop starts. `process.nextTick` callbacks are drained next, always before any loop phase, so those two positions are fixed.\n\nThe last two are not. `setTimeout(..., 0)` is clamped to 1 ms, so whether its timer has already expired when the loop first reaches the timers phase depends on how long the process took to start. If it has, `setTimeout` wins; if not, the loop moves on and `setImmediate` runs in the check phase first. The Node documentation states this order is non-deterministic.\n\nMove the same four calls inside an I/O callback and the order becomes fixed: `setImmediate` then runs in the check phase of the current iteration, always before the next timers phase.",
+      "ru": "Сначала печатается `sync`, затем `nextTick` — а дальше порядок действительно не гарантирован.\n\nСинхронный код успевает завершиться до старта цикла событий. Следом опустошается очередь `process.nextTick`, всегда раньше любой фазы цикла, поэтому эти две позиции зафиксированы.\n\nПоследние две — нет. `setTimeout(..., 0)` подтягивается до 1 мс, и успел ли таймер истечь к моменту, когда цикл впервые дойдёт до фазы timers, зависит от того, сколько времени запускался процесс. Если успел — первым выполнится `setTimeout`; если нет — цикл идёт дальше и раньше срабатывает `setImmediate` в фазе check. Документация Node прямо называет этот порядок недетерминированным.\n\nПеренесите те же четыре вызова внутрь I/O-колбэка — и порядок станет определённым: `setImmediate` выполнится в фазе check текущей итерации, всегда раньше следующей фазы timers."
     }
   },
   {
@@ -468,13 +468,13 @@
     "options": {
       "en": [
         "require() is synchronous and loads modules immediately; import is asynchronous and uses top-level await",
-        "import statements are hoisted and can only appear at module top-level; require() is dynamic and can be called conditionally",
+        "import statements can only appear at the module top level; require() can be called conditionally",
         "ESM modules are cached globally while CommonJS modules have separate caches per require() call",
         "require() supports circular dependencies transparently while import causes module load failures"
       ],
       "ru": [
         "require() является синхронной и загружает модули немедленно; import является асинхронной и использует top-level await",
-        "Операторы import поднимаются и могут появляться только в начале модуля; require() является динамической и может быть вызвана условно",
+        "Операторы import допустимы только на верхнем уровне модуля; require() можно вызвать условно",
         "Модули ESM кешируются глобально, в то время как модули CommonJS имеют отдельные кеши для каждого вызова require()",
         "require() поддерживает циклические зависимости прозрачно, в то время как import вызывает ошибки загрузки модулей"
       ]
@@ -494,19 +494,19 @@
     },
     "options": {
       "en": [
-        "Multiple 'chunk size' logs with sizes ≤ 16 bytes, then 'end' after all data is paused and resumed",
         "A single 'chunk size' log with the entire file size, then 'end' immediately",
         "'chunk size' logs with sizes increasing progressively, then 'end'",
+        "Multiple 'chunk size' logs of ≤ 16 bytes, then 'end'",
         "An error because pause() is called while data event is being handled"
       ],
       "ru": [
-        "Несколько логов 'chunk size' с размерами ≤ 16 байт, затем 'end' после того, как все данные были приостановлены и возобновлены",
         "Один лог 'chunk size' с размером всего файла, затем 'end' сразу",
         "Логи 'chunk size' с размерами, прогрессивно увеличивающимися, затем 'end'",
+        "Несколько логов 'chunk size' по ≤ 16 байт, затем 'end'",
         "Ошибка, потому что pause() вызывается во время обработки события data"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "The highWaterMark of 16 bytes controls the internal buffer size, causing the stream to emit data chunks of approximately 16 bytes or less. Each chunk event calls pause(), which stops the stream from emitting more data until resume() is called. The setTimeout ensures each chunk is processed with a 100ms delay before the next chunk is emitted. The 'end' event fires after all data has been read and processed.",
       "ru": "highWaterMark из 16 байт контролирует размер внутреннего буфера, вызывая испускание потоком чанков данных примерно по 16 байт или меньше. Каждое событие chunk вызывает pause(), что останавливает поток от испускания новых данных до вызова resume(). setTimeout обеспечивает обработку каждого чанка с задержкой в 100мс перед испусканием следующего чанка. Событие 'end' запускается после того, как все данные были прочитаны и обработаны."
@@ -521,19 +521,19 @@
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks, with microtasks running after each phase",
         "microtasks → timers → poll → pending callbacks → check → close callbacks",
         "poll → timers → pending callbacks → check → close callbacks → microtasks",
-        "timers → check → pending callbacks → poll → idle/prepare → close callbacks"
+        "timers → check → pending callbacks → poll → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
       ],
       "ru": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks, с выполнением microtasks после каждой фазы",
         "microtasks → timers → poll → pending callbacks → check → close callbacks",
         "poll → timers → pending callbacks → check → close callbacks → microtasks",
-        "timers → check → pending callbacks → poll → idle/prepare → close callbacks"
+        "timers → check → pending callbacks → poll → idle/prepare → close callbacks",
+        "timers → pending callbacks → idle/prepare → poll → check → close callbacks"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "The event loop executes in the order: timers, pending callbacks, idle/prepare, poll, check (setImmediate), and close callbacks. Microtasks (Promises, process.nextTick) run after each phase completes, not as a separate phase. The other options confuse the phase order or misplace microtask execution.",
       "ru": "Event loop выполняется в порядке: timers, pending callbacks, idle/prepare, poll, check (setImmediate) и close callbacks. Microtasks (Promises, process.nextTick) выполняются после завершения каждой фазы, а не как отдельная фаза. Остальные варианты путают порядок фаз или неправильно размещают выполнение microtasks."
@@ -575,19 +575,19 @@
     },
     "options": {
       "en": [
-        "It automatically handles backpressure and prevents memory overflow when the destination is slower than the source",
         "It makes the code run faster by using native C++ implementations",
+        "It automatically handles backpressure when the destination is slower than the source",
         "It allows reading and writing from multiple files simultaneously without additional setup",
         "It converts data types automatically, allowing you to pipe text streams into binary streams"
       ],
       "ru": [
-        "Он автоматически обрабатывает backpressure и предотвращает переполнение памяти, когда назначение медленнее источника",
         "Он ускоряет выполнение кода, используя встроенные реализации на C++",
+        "Он автоматически обрабатывает backpressure, когда назначение медленнее источника",
         "Позволяет одновременно читать и писать из нескольких файлов без дополнительной настройки",
         "Автоматически преобразует типы данных, позволяя передавать текстовые потоки в двоичные потоки"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "pipe() implements automatic backpressure handling: when the destination cannot keep up, it pauses the source stream to prevent buffering excessive data in memory. Manual reading/writing requires explicit backpressure management. While C++ is used, speed is not the primary advantage; backpressure management is. pipe() doesn't handle multiple files or automatic type conversion.",
       "ru": "pipe() реализует автоматическую обработку backpressure: когда назначение не может справиться, он приостанавливает исходный поток, чтобы предотвратить буферизацию избыточных данных в памяти. Ручное чтение/запись требует явного управления backpressure. Хотя C++ используется, скорость — не основное преимущество; управление backpressure — это. pipe() не обрабатывает несколько файлов и не выполняет автоматическое преобразование типов."
@@ -602,19 +602,19 @@
     },
     "options": {
       "en": [
-        "Cluster spawns separate Node.js processes with independent V8 instances and is ideal for CPU-intensive tasks across multiple cores; worker_threads share the same V8 instance and memory space, better for CPU-bound work within a single process",
         "Worker_threads spawn separate processes while cluster runs in the same process; cluster is preferred for all scenarios",
         "Cluster uses less memory because it shares the main event loop; worker_threads each require their own event loop",
+        "Cluster spawns separate processes with their own V8 instances; worker_threads share one V8 and memory",
         "Worker_threads are only for I/O operations; cluster is only for CPU-intensive work"
       ],
       "ru": [
-        "Cluster порождает отдельные процессы Node.js с независимыми V8 и идеален для CPU-интенсивных задач на нескольких ядрах; worker_threads делят один V8 и память, лучше для CPU-bound работы в одном процессе",
         "Worker_threads порождают отдельные процессы, а cluster работает в одном процессе; cluster предпочтителен во всех сценариях",
         "Cluster использует меньше памяти, потому что делит основной event loop; каждый worker_threads требует своего event loop",
+        "Cluster порождает отдельные процессы со своими V8; worker_threads делят один V8 и память",
         "Worker_threads только для I/O операций; cluster только для CPU-интенсивной работы"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Cluster creates separate Node.js processes, each with its own V8 instance, useful for distributing load across CPU cores. Worker_threads share memory and the same V8 instance within one process, lighter-weight for CPU tasks. Cluster uses more memory overall but better isolates processes; worker_threads are more efficient for shared-memory scenarios. Both can handle various tasks, but cluster is better for process isolation and worker_threads for shared-state parallelism.",
       "ru": "Cluster создает отдельные процессы Node.js, каждый с собственным V8, полезен для распределения нагрузки на ядра CPU. Worker_threads делят память и один V8 в процессе, более легкие для CPU задач. Cluster использует больше памяти в целом, но лучше изолирует процессы; worker_threads эффективнее для сценариев с общей памятью. Оба могут обрабатывать различные задачи, но cluster лучше для изоляции процессов, а worker_threads для параллелизма с общим состоянием."
@@ -629,19 +629,19 @@
     },
     "options": {
       "en": [
-        "exports is a reference to module.exports; reassigning exports breaks the link, so exports = {...} won't export the object. You must use module.exports = {...} or exports.property = ...",
         "exports and module.exports are identical; both can be reassigned and will export correctly",
         "exports is the correct way to export; module.exports is only for ES modules compatibility",
-        "There is no difference; Node.js treats both reassignments the same way internally"
+        "There is no difference; Node.js treats both reassignments the same way internally",
+        "exports is a reference to module.exports, and reassigning exports breaks that link"
       ],
       "ru": [
-        "exports — это ссылка на module.exports; переприсваивание exports нарушает связь, поэтому exports = {...} не экспортирует объект. Используйте module.exports = {...} или exports.property = ...",
         "exports и module.exports идентичны; оба можно переприсвоить и они будут правильно экспортироваться",
         "exports — правильный способ экспорта; module.exports только для совместимости с ES модулями",
-        "Разницы нет; Node.js внутри обрабатывает оба переприсваивания одинаково"
+        "Разницы нет; Node.js внутри обрабатывает оба переприсваивания одинаково",
+        "exports — это ссылка на module.exports, и переприсваивание exports разрывает связь"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Initially, exports points to module.exports (they reference the same object). If you reassign exports, it no longer points to module.exports, so the new value is ignored on export. To export a new object, use module.exports = {...}. To add properties, use exports.prop = ... or module.exports.prop = .... This is a frequent source of bugs when developers confuse the two.",
       "ru": "Изначально exports указывает на module.exports (они ссылаются на один объект). Если вы переприсвоите exports, он больше не указывает на module.exports, поэтому новое значение игнорируется при экспорте. Для экспорта нового объекта используйте module.exports = {...}. Для добавления свойств используйте exports.prop = ... или module.exports.prop = .... Это частый источник ошибок, когда разработчики путают эти два."
@@ -678,27 +678,27 @@
     "id": "nodejs-quiz-27",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be logged to the console?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nPromise.resolve().then(() => console.log('3'));\nsetImmediate(() => console.log('4'));\nconsole.log('5');\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nPromise.resolve().then(() => console.log('3'));\nsetImmediate(() => console.log('4'));\nconsole.log('5');\n```"
+      "en": "Two requests are handled at the same time. What will be logged?\n```js\nconst { AsyncLocalStorage } = require('node:async_hooks');\nconst store = new AsyncLocalStorage();\nlet currentId = null;\n\nasync function handle(id) {\n  currentId = id;\n  await new Promise((resolve) => setTimeout(resolve, id === 'a' ? 30 : 5));\n  console.log('module var:', currentId, '| store:', store.getStore());\n}\n\nstore.run('a', () => handle('a'));\nstore.run('b', () => handle('b'));\n```",
+      "ru": "Два запроса обрабатываются одновременно. Что будет выведено?\n```js\nconst { AsyncLocalStorage } = require('node:async_hooks');\nconst store = new AsyncLocalStorage();\nlet currentId = null;\n\nasync function handle(id) {\n  currentId = id;\n  await new Promise((resolve) => setTimeout(resolve, id === 'a' ? 30 : 5));\n  console.log('module var:', currentId, '| store:', store.getStore());\n}\n\nstore.run('a', () => handle('a'));\nstore.run('b', () => handle('b'));\n```"
     },
     "options": {
       "en": [
-        "1, 5, 2, 3, 4",
-        "1, 2, 3, 4, 5",
-        "1, 5, 3, 2, 4",
-        "1, 5, 2, 4, 3"
+        "module var: a | store: a, then module var: b | store: b — both lines correct",
+        "module var: b | store: b, then module var: b | store: a — only the store survives",
+        "module var: b | store: b, then module var: b | store: b — the store copies the variable",
+        "module var: b | store: a, then module var: b | store: b — the store is one step behind"
       ],
       "ru": [
-        "1, 5, 2, 3, 4",
-        "1, 2, 3, 4, 5",
-        "1, 5, 3, 2, 4",
-        "1, 5, 2, 4, 3"
+        "module var: a | store: a, затем module var: b | store: b — обе строки верны",
+        "module var: b | store: b, затем module var: b | store: a — уцелело только хранилище",
+        "module var: b | store: b, затем module var: b | store: b — хранилище копирует переменную",
+        "module var: b | store: a, затем module var: b | store: b — хранилище отстаёт на шаг"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "Synchronous code executes first (1, 5), then the microtask queue (process.nextTick → 2, Promises → 3), and finally macrotasks (setImmediate → 4). process.nextTick has higher priority than Promises in the microtask queue, so it runs before Promise.then(). This demonstrates the critical distinction between microtasks and macrotasks.",
-      "ru": "Синхронный код выполняется первым (1, 5), затем очередь микротасков (process.nextTick → 2, Promises → 3), и наконец макротаски (setImmediate → 4). process.nextTick имеет более высокий приоритет, чем Promises в микротаск очереди, поэтому он выполняется перед Promise.then(). Это демонстрирует критическое различие между микротасками и макротасками."
+      "en": "A variable at module level is shared by every request, so the last assignment wins. AsyncLocalStorage keeps a separate value for each chain of asynchronous calls. It comes from the built-in `node:async_hooks` module.\n\n`handle('b')` waits 5 ms and prints first. By then `currentId` already holds `'b'`: the second call overwrote it while the first one was waiting. `handle('a')` wakes up 30 ms later and reads the same `'b'`, so its own request id is gone. `store.getStore()` still answers `'a'` there, because that call chain started inside `store.run('a', ...)`.\n\nThe variant where each line prints its own letter treats a module variable as safe under concurrency. The variant with `store: b` in both lines makes the store just another global. The variant that shows `store: a` first would need the slow request to print before the fast one.",
+      "ru": "Переменная уровня модуля одна на все запросы, поэтому в ней остаётся последнее присвоенное значение. AsyncLocalStorage хранит отдельное значение для каждой цепочки асинхронных вызовов. Класс лежит во встроенном модуле `node:async_hooks`.\n\n`handle('b')` ждёт 5 мс и печатает первым. К этому моменту в `currentId` уже лежит `'b'`: второй вызов перезаписал переменную, пока первый ждал. `handle('a')` просыпается через 30 мс и читает то же `'b'` — свой идентификатор запроса потерян. А `store.getStore()` там по-прежнему отдаёт `'a'`, потому что эта цепочка вызовов началась внутри `store.run('a', ...)`.\n\nВариант, где в каждой строке своя буква, считает переменную модуля безопасной при параллельных запросах. Вариант с `store: b` в обеих строках превращает хранилище в ещё одну глобальную переменную. Вариант, где сначала показано `store: a`, потребовал бы, чтобы медленный запрос напечатался раньше быстрого."
     }
   },
   {
@@ -711,18 +711,18 @@
     "options": {
       "en": [
         "ESM uses synchronous loading while CommonJS uses asynchronous loading",
-        "ESM is asynchronous and performs static analysis at parse time, while CommonJS is synchronous and dynamic",
         "CommonJS supports top-level await while ESM does not",
+        "ESM is asynchronous and static; CommonJS is synchronous and dynamic",
         "ESM requires a bundler while CommonJS works natively in Node.js"
       ],
       "ru": [
         "ESM использует синхронную загрузку, а CommonJS использует асинхронную загрузку",
-        "ESM асинхронна и выполняет статический анализ во время парсинга, а CommonJS синхронна и динамична",
         "CommonJS поддерживает top-level await, а ESM не поддерживает",
+        "ESM асинхронна и статична; CommonJS синхронна и динамична",
         "ESM требует bundler, а CommonJS работает нативно в Node.js"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM performs static analysis at parse time (before execution) and loads modules asynchronously, while CommonJS loads modules synchronously at runtime using require(). This is why ESM can perform tree-shaking and has stricter scoping, while CommonJS allows dynamic require() calls. ESM's async nature makes it better for browsers and modern tooling.",
       "ru": "ESM выполняет статический анализ во время парсинга (перед выполнением) и загружает модули асинхронно, тогда как CommonJS загружает модули синхронно во время выполнения с помощью require(). Поэтому ESM может выполнять tree-shaking и имеет более строгую область видимости, в то время как CommonJS позволяет динамические вызовы require(). Асинхронная природа ESM делает её лучше для браузеров и современных инструментов."
@@ -737,19 +737,19 @@
     },
     "options": {
       "en": [
-        "It logs 'caught: ENOENT' because error events can be caught with on('error')",
         "It throws an uncaught error because streams don't emit errors",
         "It logs 'caught: undefined' because the error event doesn't receive error details",
-        "It logs nothing because the stream silently fails without emitting events"
+        "It logs nothing because the stream silently fails without emitting events",
+        "It logs 'caught: ENOENT' because error events can be caught with on('error')"
       ],
       "ru": [
-        "Выводит 'caught: ENOENT' потому что error события могут быть обработаны с on('error')",
         "Выбрасывает необработанное исключение потому что streams не эмитят ошибки",
         "Выводит 'caught: undefined' потому что error событие не получает детали ошибки",
-        "Ничего не выводит потому что stream молча падает без эмиттинга событий"
+        "Ничего не выводит потому что stream молча падает без эмиттинга событий",
+        "Выводит 'caught: ENOENT' потому что error события могут быть обработаны с on('error')"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Streams emit 'error' events when something goes wrong, and attaching an 'error' listener prevents the error from crashing the application. The ENOENT code indicates 'Error NO ENTry' (file not found). Without the error listener, the stream would throw an unhandled error and crash the process. This shows why proper error handling on streams is critical.",
       "ru": "Streams эмитят события 'error' когда что-то идет не так, и присоединение слушателя 'error' предотвращает сбой приложения. Код ENOENT означает 'Error NO ENTry' (файл не найден). Без слушателя error, stream выбросит необработанную ошибку и сломает процесс. Это показывает, почему правильная обработка ошибок на streams критична."
@@ -759,27 +759,27 @@
     "id": "nodejs-quiz-31",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of execution for the following code?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```",
-      "ru": "Какой порядок выполнения для следующего кода?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```"
+      "en": "What will be logged?\n```js\nconst { Writable } = require('node:stream');\n\nconst slow = new Writable({\n  highWaterMark: 8,\n  write(chunk, encoding, callback) { setTimeout(callback, 10); },\n});\n\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.writableLength);\n```",
+      "ru": "Что будет выведено?\n```js\nconst { Writable } = require('node:stream');\n\nconst slow = new Writable({\n  highWaterMark: 8,\n  write(chunk, encoding, callback) { setTimeout(callback, 10); },\n});\n\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.write(Buffer.alloc(6)));\nconsole.log(slow.writableLength);\n```"
     },
     "options": {
       "en": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 4, 3"
+        "true, false, 12 — the second chunk is buffered in memory anyway",
+        "true, false, 6 — the second chunk waits outside until 'drain' fires",
+        "true, true, 12 — write() answers false only when a write fails",
+        "true, false, 0 — writableLength counts only chunks still unwritten"
       ],
       "ru": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 4, 3"
+        "true, false, 12 — второй чанк всё равно ложится в буфер в памяти",
+        "true, false, 6 — второй чанк ждёт снаружи до события 'drain'",
+        "true, true, 12 — write() отвечает false только при ошибке записи",
+        "true, false, 0 — writableLength считает только незаписанные чанки"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code executes first (1, 4), then process.nextTick callbacks (2) execute in the nextTick phase before the check phase, and finally setImmediate (3) executes in the check phase. process.nextTick has higher priority than setImmediate within the event loop.",
-      "ru": "Синхронный код выполняется первым (1, 4), затем обратные вызовы process.nextTick (2) выполняются на фазе nextTick перед фазой check, и наконец setImmediate (3) выполняется на фазе check. process.nextTick имеет более высокий приоритет, чем setImmediate в цикле событий."
+      "en": "`false` from `write()` means the queue has grown past `highWaterMark`, not that a chunk was refused. Both chunks are accepted, so the last line prints 12. `writableLength` counts every byte the stream has not confirmed yet, including the one currently inside `write`.\n\nThe first call returns `true`, because 6 bytes are still below the mark of 8. The second call brings the total to 12 and returns `false`. That is a request: stop writing and wait for the `'drain'` event.\n\nIgnoring `false` costs memory, not data. Nothing is lost, but the queue keeps growing, and a fast producer against a slow socket can drive the process into an out-of-memory crash. The variant with 6 assumes the extra chunk stayed outside the stream. The variant with two `true` values expects `false` on failure — failures arrive through the `'error'` event. The variant with 0 assumes the counter drops before the write callback runs.",
+      "ru": "`false` из `write()` значит, что очередь переросла `highWaterMark`, а не что чанк отвергнут. Оба чанка приняты, поэтому последняя строка печатает 12. `writableLength` считает все байты, которые поток ещё не подтвердил, включая тот, что прямо сейчас находится в `write`.\n\nПервый вызов возвращает `true`: 6 байт всё ещё ниже порога 8. Второй доводит сумму до 12 и возвращает `false`. Это просьба: перестать писать и дождаться события `'drain'`.\n\nИгнорировать `false` стоит памяти, а не данных. Ничего не теряется, но очередь растёт, и быстрый источник на медленном сокете способен довести процесс до падения из-за нехватки памяти. Вариант с 6 предполагает, что лишний чанк остался снаружи потока. Вариант с двумя `true` ждёт `false` при ошибке — ошибки приходят событием `'error'`. Вариант с 0 считает, что счётчик обнуляется раньше, чем сработает колбэк записи."
     }
   },
   {
@@ -791,15 +791,15 @@
     },
     "options": {
       "en": [
-        "Streams are always faster than readFile",
-        "Streams allow processing large files with constant memory usage instead of loading the entire file into memory",
-        "Streams automatically compress data during transfer",
+        "Streams are always faster than readFile, no matter how large the file is",
+        "Streams keep memory usage constant instead of buffering the whole file",
+        "Streams automatically compress data while it is being transferred",
         "Streams provide better error handling than readFile"
       ],
       "ru": [
-        "Потоки всегда быстрее, чем readFile",
-        "Потоки позволяют обрабатывать большие файлы с постоянным использованием памяти вместо загрузки всего файла в память",
-        "Потоки автоматически сжимают данные при передаче",
+        "Потоки всегда быстрее readFile, каким бы большим ни был файл",
+        "Потоки держат расход памяти постоянным, не буферизуя весь файл",
+        "Потоки автоматически сжимают данные во время передачи",
         "Потоки обеспечивают лучшую обработку ошибок, чем readFile"
       ]
     },
@@ -813,27 +813,27 @@
     "id": "nodejs-quiz-33",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the key difference between the cluster module and worker_threads in Node.js?",
-      "ru": "В чём ключевое различие между модулем cluster и worker_threads в Node.js?"
+      "en": "The project holds two copies of `token-lib` at the same version: one in the root `node_modules`, one in `sub/node_modules`. What will be logged?\n```js\n// token-lib/index.js, identical in both copies:\n//   module.exports = { Token: class Token {} };\n// sub/user.js:\n//   const { Token } = require('token-lib');\n//   module.exports = { make: () => new Token() };\nconst { Token } = require('token-lib');\nconst { make } = require('./sub/user.js');\n\nconsole.log(make() instanceof Token);\nconsole.log(Object.keys(require.cache).filter((p) => p.includes('token-lib')).length);\n```",
+      "ru": "В проекте лежат две копии `token-lib` одной и той же версии: одна в корневом `node_modules`, вторая в `sub/node_modules`. Что будет выведено?\n```js\n// token-lib/index.js, identical in both copies:\n//   module.exports = { Token: class Token {} };\n// sub/user.js:\n//   const { Token } = require('token-lib');\n//   module.exports = { make: () => new Token() };\nconst { Token } = require('token-lib');\nconst { make } = require('./sub/user.js');\n\nconsole.log(make() instanceof Token);\nconsole.log(Object.keys(require.cache).filter((p) => p.includes('token-lib')).length);\n```"
     },
     "options": {
       "en": [
-        "Cluster uses multiple processes with separate V8 instances, while worker_threads share the same V8 instance and memory space",
-        "Worker_threads are only for CPU-intensive tasks, while cluster is for I/O operations",
-        "Cluster is deprecated and should not be used in new projects",
-        "Worker_threads automatically distribute load across CPU cores, while cluster requires manual distribution"
+        "true, 1 — one copy is reused, because the two versions are equal",
+        "true, 2 — two cache entries, but they share a single Token class",
+        "false, 1 — the second require() replaces the first entry",
+        "false, 2 — each resolved file path is its own module instance"
       ],
       "ru": [
-        "Cluster использует несколько процессов с отдельными экземплярами V8, а worker_threads делят один и тот же экземпляр V8 и пространство памяти",
-        "Worker_threads предназначены только для CPU-интенсивных задач, а cluster для операций ввода-вывода",
-        "Cluster устарел и не должен использоваться в новых проектах",
-        "Worker_threads автоматически распределяют нагрузку между ядрами CPU, а cluster требует ручного распределения"
+        "true, 1 — используется одна копия, ведь версии полностью совпадают",
+        "true, 2 — записей в кэше две, но класс Token у них общий",
+        "false, 1 — второй require() заменяет запись первого",
+        "false, 2 — каждый разрешённый путь даёт свой экземпляр модуля"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "Cluster creates separate Node.js processes, each with its own V8 instance and memory, communicating via IPC. Worker_threads run within the same process and share memory through SharedArrayBuffer, making them lighter but requiring careful synchronization. Both are useful but for different scenarios.",
-      "ru": "Cluster создаёт отдельные процессы Node.js, каждый с собственным экземпляром V8 и памятью, общающиеся через IPC. Worker_threads запускаются в одном процессе и делят память через SharedArrayBuffer, что делает их легче, но требует тщательной синхронизации. Оба полезны, но для разных сценариев."
+      "en": "`require.cache` is keyed by the resolved absolute file path, and the two copies sit at two different paths. So the module body runs twice, there are two distinct `Token` classes, and an object built by one is not an `instanceof` the other.\n\n`sub/user.js` resolves `token-lib` starting from its own folder, finds `sub/node_modules` and never looks at the root copy. Both entries then stay in `require.cache` for the whole life of the process. That doubles whatever the module keeps inside: its configuration, its connection pool, its counters. The same trap breaks `instanceof` checks on custom error classes and quietly turns one singleton into two.\n\nBoth variants with `1` expect the resolver to merge equal versions. It compares paths, not versions. Removing a duplicate is the package manager's job, and it can only hoist a copy when the dependency tree allows it. The variant with `true, 2` assumes two entries can share one class object, but each entry has its own.",
+      "ru": "Ключ в `require.cache` — это разрешённый абсолютный путь к файлу, а две копии лежат по двум разным путям. Поэтому тело модуля выполняется дважды, классов `Token` получается два, и объект, созданный одним из них, не проходит проверку `instanceof` для другого.\n\n`sub/user.js` ищет `token-lib`, начиная со своей папки, находит `sub/node_modules` и до корневой копии не доходит. Обе записи потом живут в `require.cache` до конца работы процесса, а значит удваивается всё, что модуль держит внутри: настройки, пул соединений, счётчики. Та же ловушка ломает проверки `instanceof` для своих классов ошибок и тихо превращает один синглтон в два.\n\nОба варианта с `1` ждут, что загрузчик сольёт одинаковые версии. Он сравнивает пути, а не версии: убирать дубликат — работа менеджера пакетов, и поднять копию наверх он может только там, где это позволяет дерево зависимостей. Вариант с `true, 2` считает, что две записи делят один класс, но у каждой записи он свой."
     }
   },
   {
@@ -845,19 +845,19 @@
     },
     "options": {
       "en": [
-        "5, 'hello', 104",
         "5, 'hello', 'h'",
         "hello, hello, h",
-        "5, 104, hello"
+        "5, 104, hello",
+        "5, 'hello', 104"
       ],
       "ru": [
-        "5, 'hello', 104",
         "5, 'hello', 'h'",
         "hello, hello, h",
-        "5, 104, hello"
+        "5, 104, hello",
+        "5, 'hello', 104"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
       "en": "Buffer.from('hello') creates a buffer with 5 bytes (length = 5). toString('utf8') converts it back to the string 'hello'. buffer[0] accesses the first byte as a number (ASCII value of 'h' is 104). Buffers store raw bytes, and accessing by index returns numeric values.",
       "ru": "Buffer.from('hello') создаёт буфер из 5 байт (length = 5). toString('utf8') преобразует его обратно в строку 'hello'. buffer[0] обращается к первому байту как к числу (ASCII значение 'h' равно 104). Буферы хранят сырые байты, и обращение по индексу возвращает числовые значения."
@@ -867,54 +867,54 @@
     "id": "nodejs-quiz-35",
     "topicId": "nodejs",
     "question": {
-      "en": "In CommonJS, if module A requires module B, and module B requires module A, what happens?",
-      "ru": "В CommonJS, если модуль A требует модуль B, и модуль B требует модуль A, что происходит?"
+      "en": "In CommonJS, module A is loaded first and requires module B, which requires module A back. What happens?",
+      "ru": "В CommonJS модуль A загружается первым и подключает модуль B, а модуль B в ответ подключает модуль A. Что происходит?"
     },
     "options": {
       "en": [
+        "Module B receives an incomplete or empty object from module A",
         "A circular dependency error is thrown immediately",
-        "Module A receives an incomplete or empty object from module B at the point of the circular require",
         "Node.js automatically resolves the circular dependency by cloning modules",
         "The require statement is ignored when a circular dependency is detected"
       ],
       "ru": [
+        "Модуль B получает неполный или пустой объект от модуля A",
         "Немедленно выбрасывается ошибка циклической зависимости",
-        "Модуль A получает неполный или пустой объект от модуля B в момент циклического require",
         "Node.js автоматически разрешает циклическую зависимость путём клонирования модулей",
         "Оператор require игнорируется при обнаружении циклической зависимости"
       ]
     },
-    "correctIndex": 1,
+    "correctIndex": 0,
     "explanation": {
-      "en": "Node.js handles circular requires by caching partially-loaded modules. When B requires A while A is still loading, B receives the current state of module.exports (which may be an empty object or partially populated). This is by design and can lead to unexpected behavior if not handled carefully.",
-      "ru": "Node.js обрабатывает циклические require, кэшируя частично загруженные модули. Когда B требует A, пока A всё ещё загружается, B получает текущее состояние module.exports (которое может быть пустым объектом или частично заполненным). Это сделано намеренно и может привести к неожиданному поведению, если не обработать осторожно."
+      "en": "Node.js returns an unfinished copy of the exports object instead of throwing. Module A starts first and pauses on its `require` line. Module B then requires A back and sees only what A assigned before that line: an empty object or half the properties. Module B finishes normally, so A gets a complete copy of B. The partial view hits whoever closes the cycle.",
+      "ru": "Node.js не бросает ошибку, а отдаёт незаконченную копию объекта exports. Первым стартует модуль A и замирает на строке с `require`. Затем модуль B подключает A обратно и видит только то, что A успел присвоить до этой строки: пустой объект или половину свойств. Модуль B дорабатывает нормально, поэтому у A копия B полная. Неполный объект достаётся тому, кто замыкает цикл."
     }
   },
   {
     "id": "nodejs-quiz-36",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of Node.js event loop phases?\n```js\n// Which phase executes setTimeout callbacks?\n```",
-      "ru": "Какой правильный порядок фаз цикла событий Node.js?\n```js\n// В какой фазе выполняются callbacks setTimeout?\n```"
+      "en": "A request has been running for one second when the orchestrator sends SIGTERM, the signal that asks a process to shut down. What happens?\n```js\nconst http = require('node:http');\n\nconst server = http.createServer((req, res) => {\n  setTimeout(() => res.end('slow answer'), 5000);\n});\nserver.listen(3100);\n\nprocess.on('SIGTERM', () => {\n  server.close(() => console.log('closed'));\n});\n```",
+      "ru": "Запрос обрабатывается уже секунду, и в этот момент оркестратор присылает SIGTERM — сигнал с просьбой завершиться. Что произойдёт?\n```js\nconst http = require('node:http');\n\nconst server = http.createServer((req, res) => {\n  setTimeout(() => res.end('slow answer'), 5000);\n});\nserver.listen(3100);\n\nprocess.on('SIGTERM', () => {\n  server.close(() => console.log('closed'));\n});\n```"
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
-        "check → timers → pending callbacks → poll → idle/prepare → close callbacks"
+        "The open socket is cut at once and closed is printed right away",
+        "The client still receives slow answer, then closed prints and Node exits",
+        "Fresh requests keep arriving on the sockets that are already open",
+        "Node first waits out the keep-alive timeout of every idle socket, then closes"
       ],
       "ru": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
-        "check → timers → pending callbacks → poll → idle/prepare → close callbacks"
+        "Открытый сокет обрывается сразу, и closed печатается тут же",
+        "Клиент всё же получит slow answer, затем печатается closed и Node выйдет",
+        "Новые запросы продолжают приходить по уже открытым сокетам",
+        "Node сначала выждет таймаут keep-alive у каждого простаивающего сокета, потом закроется"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "The event loop processes phases in this exact order: timers (setTimeout/setInterval) → pending callbacks → idle/prepare → poll → check (setImmediate) → close callbacks. setTimeout callbacks are executed in the timers phase, which comes first.",
-      "ru": "Цикл событий обрабатывает фазы в точном порядке: timers (setTimeout/setInterval) → pending callbacks → idle/prepare → poll → check (setImmediate) → close callbacks. Callbacks setTimeout выполняются в фазе timers, которая идёт первой."
+      "en": "`server.close()` stops the listener and does not touch the request in flight. That socket keeps its response, so the client gets `slow answer` about four seconds later. The callback given to `close()` runs when the last connection is gone. After that nothing holds the event loop open and the process exits on its own.\n\nIdle keep-alive connections are closed by `close()` as well: those that are neither sending a request nor waiting for a response. When you need to be harsher, Node.js has `server.closeIdleConnections()` and `server.closeAllConnections()`, both added in version 18.2. The second one does cut requests in flight.\n\nThe variant with an immediate cut describes `closeAllConnections()`. The variant with fresh requests forgets that the listening socket closes first, so new connections are refused. The variant about waiting out keep-alive timeouts was true before Node.js 19. Until then `close()` left idle sockets alone, and shutdown could stall for the whole `server.keepAliveTimeout`.",
+      "ru": "`server.close()` закрывает слушающий сокет и не трогает запрос, который уже обрабатывается. Этот сокет доживёт до ответа, поэтому клиент получит `slow answer` примерно через четыре секунды. Колбэк, переданный в `close()`, вызывается, когда закрылось последнее соединение. Дальше цикл событий держать нечем, и процесс завершается сам.\n\nПростаивающие соединения keep-alive `close()` тоже закрывает: те, которые не передают запрос и не ждут ответа. Если нужно жёстче, у Node.js есть `server.closeIdleConnections()` и `server.closeAllConnections()`, оба появились в версии 18.2. Второй как раз обрывает запросы в работе.\n\nВариант с мгновенным обрывом описывает `closeAllConnections()`. Вариант с новыми запросами забывает, что слушающий сокет закрывается первым и новые соединения не принимаются. Вариант про ожидание таймаутов keep-alive был верен до Node.js 19: до этой версии `close()` не трогал простаивающие сокеты, и завершение могло встать на весь `server.keepAliveTimeout`."
     }
   },
   {
@@ -926,19 +926,19 @@
     },
     "options": {
       "en": [
-        "start, end, nextTick, promise, immediate",
         "start, nextTick, promise, end, immediate",
         "start, end, immediate, nextTick, promise",
+        "start, end, nextTick, promise, immediate",
         "start, end, promise, nextTick, immediate"
       ],
       "ru": [
-        "start, end, nextTick, promise, immediate",
         "start, nextTick, promise, end, immediate",
         "start, end, immediate, nextTick, promise",
+        "start, end, nextTick, promise, immediate",
         "start, end, promise, nextTick, immediate"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "Synchronous code runs first (start, end), then microtasks in order: process.nextTick and Promise (nextTick, promise), then macrotasks (immediate). process.nextTick has higher priority than Promise.then, both execute before setImmediate.",
       "ru": "Синхронный код выполняется первым (start, end), затем микротаски по порядку: process.nextTick и Promise (nextTick, promise), затем макротаски (immediate). process.nextTick имеет приоритет выше, чем Promise.then, оба выполняются до setImmediate."
@@ -948,54 +948,54 @@
     "id": "nodejs-quiz-40",
     "topicId": "nodejs",
     "question": {
-      "en": "In ESM, what is the correct way to replicate the CommonJS `__dirname` and `__filename` globals?",
-      "ru": "В ESM какой правильный способ воспроизвести глобальные переменные CommonJS `__dirname` и `__filename`?"
+      "en": "Your service still runs on Node.js 18, so APIs added in 20.11 are not available. In ESM (ECMAScript modules — the `import`/`export` system), how do you get `__dirname` and `__filename` there?",
+      "ru": "Ваш сервис всё ещё работает на Node.js 18, поэтому API, добавленные в 20.11, недоступны. Как в ESM (ECMAScript modules — система модулей с `import`/`export`) получить там `__dirname` и `__filename`?"
     },
     "options": {
       "en": [
-        "import { fileURLToPath } from 'url'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);",
         "const __filename = process.env.FILE_PATH; const __dirname = process.env.DIR_PATH;",
-        "import __filename from '__filename'; import __dirname from '__dirname';",
-        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;"
+        "import __filename from '__filename'; import __dirname from '__dirname'; Node resolves both as built-in modules",
+        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;",
+        "Import fileURLToPath from 'url' and dirname from 'path', then convert import.meta.url"
       ],
       "ru": [
-        "import { fileURLToPath } from 'url'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);",
         "const __filename = process.env.FILE_PATH; const __dirname = process.env.DIR_PATH;",
-        "import __filename from '__filename'; import __dirname from '__dirname';",
-        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;"
+        "import __filename from '__filename'; import __dirname from '__dirname'; Node разрешает оба как встроенные модули",
+        "const __filename = import.meta.filename; const __dirname = import.meta.dirname;",
+        "Импортировать fileURLToPath из 'url' и dirname из 'path', затем преобразовать import.meta.url"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "ESM doesn't provide __dirname and __filename directly. You must use import.meta.url with fileURLToPath from the 'url' module to get the filename, then derive __dirname using path.dirname(). The other options use non-existent APIs or environment variables.",
-      "ru": "ESM не предоставляет __dirname и __filename напрямую. Вы должны использовать import.meta.url с fileURLToPath из модуля 'url' для получения имени файла, затем вывести __dirname с помощью path.dirname(). Остальные варианты используют несуществующие API или переменные окружения."
+      "en": "`fileURLToPath(import.meta.url)` is the only choice that runs on Node.js 18. It turns the `file:` URL of the module into a path, and `path.dirname()` gives the directory. As of writing, Node.js 20.11 and 21.2 added the shorter `import.meta.dirname` and `import.meta.filename`. Those are `undefined` outside `file:` modules. The other options read unset environment variables or import names that do not exist.",
+      "ru": "`fileURLToPath(import.meta.url)` — единственный рабочий вариант на Node.js 18. Он превращает `file:`-URL модуля в путь, а `path.dirname()` даёт каталог. На момент написания в Node.js 20.11 и 21.2 появились короткие `import.meta.dirname` и `import.meta.filename`. Вне модулей по протоколу `file:` они дают `undefined`. Остальные варианты читают незаданные переменные окружения или импортируют несуществующие имена."
     }
   },
   {
     "id": "nodejs-quiz-42",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be the output of this code?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```",
-      "ru": "Каков будет результат выполнения этого кода?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```"
+      "en": "What does this program do on Node.js 24?\n```js\nconst failing = Promise.reject(new Error('boom'));\n\nsetTimeout(() => {\n  failing.catch(() => console.log('caught later'));\n}, 10);\n\nconsole.log('scheduled');\n```",
+      "ru": "Что сделает эта программа на Node.js 24?\n```js\nconst failing = Promise.reject(new Error('boom'));\n\nsetTimeout(() => {\n  failing.catch(() => console.log('caught later'));\n}, 10);\n\nconsole.log('scheduled');\n```"
     },
     "options": {
       "en": [
-        "1 4 2 3",
-        "1 2 3 4",
-        "1 3 2 4",
-        "2 1 4 3"
+        "Prints scheduled, then dies on the rejection with exit code 1",
+        "Prints scheduled, warns about the rejection, then prints caught later",
+        "Prints scheduled and caught later: the late catch works",
+        "Prints scheduled, ignores the rejection and keeps running to the end"
       ],
       "ru": [
-        "1 4 2 3",
-        "1 2 3 4",
-        "1 3 2 4",
-        "2 1 4 3"
+        "Печатает scheduled, затем падает из-за отказа с кодом выхода 1",
+        "Печатает scheduled, предупреждает об отказе, затем печатает caught later",
+        "Печатает scheduled и caught later: поздний catch работает",
+        "Печатает scheduled, не замечает отказ и спокойно доходит до конца"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code (1, 4) executes first. Then process.nextTick (2) runs because it executes before any I/O or timers in the next phase. Finally, setImmediate (3) runs during the check phase of the event loop. process.nextTick has higher priority than setImmediate.",
-      "ru": "Синхронный код (1, 4) выполняется первым. Затем process.nextTick (2) выполняется, потому что он запускается перед любым I/O или таймерами на следующей фазе. Наконец, setImmediate (3) запускается на фазе check цикла событий. process.nextTick имеет более высокий приоритет, чем setImmediate."
+      "en": "Since Node.js 15 an unhandled rejection is fatal by default. The `--unhandled-rejections` flag defaults to `throw`. A promise still rejected with no handler at the end of the current turn is raised as an uncaught exception. Node prints the stack and exits with code 1, so the timer never fires.\n\nThe `.catch()` scheduled 10 ms later is too late. The verdict is passed at the end of the turn in which the rejection happened. To keep the process alive, register `process.on('unhandledRejection', handler)` — with a listener in place Node calls it instead of crashing. In production that handler usually logs the reason and starts a deliberate shutdown.\n\nThe variant with a warning describes Node.js 14 and earlier, where this code printed a rejection warning and carried on. The variant where `caught later` appears assumes Node waits for a handler to show up. The variant that keeps running to the end would need the flag set to `none`.",
+      "ru": "Начиная с Node.js 15 необработанный отказ промиса по умолчанию смертелен. Флаг `--unhandled-rejections` по умолчанию стоит в значении `throw`: промис, который к концу текущего прохода так и остался отклонённым без обработчика, поднимается как неперехваченное исключение. Node печатает стек и выходит с кодом 1, поэтому таймер уже не срабатывает.\n\n`.catch()`, назначенный через 10 мс, опаздывает. Приговор выносится в конце того прохода, в котором случился отказ. Чтобы процесс выжил, подпишитесь на `process.on('unhandledRejection', handler)`: при наличии слушателя Node вызывает его вместо падения. В продакшене такой обработчик обычно пишет причину в лог и начинает управляемое завершение.\n\nВариант с предупреждением описывает Node.js 14 и раньше: там этот код печатал предупреждение об отказе и продолжал работу. Вариант, где появляется `caught later`, предполагает, что Node дождётся обработчика. Вариант, где программа спокойно доходит до конца, потребовал бы флага со значением `none`."
     }
   },
   {
@@ -1007,19 +1007,19 @@
     },
     "options": {
       "en": [
-        "Streams process data in chunks and use backpressure handling, while readFile loads the entire file into memory at once",
         "Streams are always faster regardless of file size",
+        "Streams read in chunks; readFile loads the whole file",
         "readFile is asynchronous while streams are synchronous",
         "Streams are only useful for text files, not binary data"
       ],
       "ru": [
-        "Потоки обрабатывают данные порциями и используют управление обратным давлением, а readFile загружает весь файл в память сразу",
         "Потоки всегда быстрее независимо от размера файла",
+        "Потоки читают порциями; readFile загружает весь файл",
         "readFile является асинхронным, а потоки синхронными",
         "Потоки полезны только для текстовых файлов, не для бинарных данных"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Streams read data in chunks (default 64KB), preventing excessive memory consumption for large files. They also implement backpressure handling to pause reading when the consumer can't keep up. readFile loads the entire file into memory, which is inefficient and dangerous for large files. Streams are essential for handling large files, downloads, and real-time data processing.",
       "ru": "Потоки читают данные порциями (по умолчанию 64KB), предотвращая чрезмерное потребление памяти для больших файлов. Они также реализуют управление обратным давлением, чтобы приостановить чтение, когда потребитель не может угнаться. readFile загружает весь файл в память, что неэффективно и опасно для больших файлов. Потоки необходимы для обработки больших файлов, загрузок и обработки данных в реальном времени."
@@ -1034,19 +1034,19 @@
     },
     "options": {
       "en": [
-        "ESM supports top-level await and static imports, while CommonJS uses require() which is dynamic and synchronous",
         "CommonJS is faster than ESM in all cases",
         "ESM and CommonJS can be freely mixed in the same file without any compatibility issues",
+        "ESM supports top-level await and static imports; require() is dynamic",
         "Node.js automatically converts CommonJS require() to ESM imports at runtime"
       ],
       "ru": [
-        "ESM поддерживает top-level await и статические импорты, в то время как CommonJS использует require(), который является динамичным и синхронным",
         "CommonJS всегда быстрее, чем ESM",
         "ESM и CommonJS могут свободно смешиваться в одном файле без каких-либо проблем совместимости",
+        "ESM поддерживает top-level await и статические импорты; require() динамичен",
         "Node.js автоматически преобразует CommonJS require() в ESM импорты во время выполнения"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 2,
     "explanation": {
       "en": "ESM is the standard module system with static structure enabling optimizations and top-level await support. CommonJS require() is dynamic and synchronous, evaluated at runtime. While Node.js supports both, mixing them requires careful handling—ESM can import CommonJS modules, but CommonJS cannot import ESM modules. Each has different performance characteristics and use cases.",
       "ru": "ESM — это стандартная система модулей со статической структурой, что позволяет оптимизировать и поддерживать top-level await. CommonJS require() является динамичным и синхронным, вычисляемым во время выполнения. Хотя Node.js поддерживает оба, их смешивание требует тщательной обработки — ESM может импортировать модули CommonJS, но CommonJS не может импортировать модули ESM. Каждый имеет разные характеристики производительности и варианты использования."
@@ -1056,54 +1056,54 @@
     "id": "nodejs-quiz-46",
     "topicId": "nodejs",
     "question": {
-      "en": "What is the correct order of Node.js event loop phases?\n```js\n// Phases execution order\n```",
-      "ru": "Какой правильный порядок фаз цикла событий Node.js?"
+      "en": "What will be logged?\n```js\nprocess.env.PORT = 8080;\nprocess.env.ENABLE_CACHE = false;\n\nconsole.log(typeof process.env.PORT, process.env.PORT === 8080);\nconsole.log(process.env.ENABLE_CACHE ? 'cache on' : 'cache off');\nconsole.log(process.env.MISSING_KEY);\n```",
+      "ru": "Что будет выведено?\n```js\nprocess.env.PORT = 8080;\nprocess.env.ENABLE_CACHE = false;\n\nconsole.log(typeof process.env.PORT, process.env.PORT === 8080);\nconsole.log(process.env.ENABLE_CACHE ? 'cache on' : 'cache off');\nconsole.log(process.env.MISSING_KEY);\n```"
     },
     "options": {
       "en": [
-        "timers → pending callbacks → idle/prepare → poll → check → close callbacks",
-        "poll → timers → pending callbacks → check → idle/prepare → close callbacks",
-        "pending callbacks → timers → poll → check → idle/prepare → close callbacks",
-        "timers → poll → pending callbacks → check → idle/prepare → close callbacks"
+        "number true, cache off, undefined — Node keeps the type you assign",
+        "string true, cache off, undefined — the check against 8080 holds",
+        "string false, cache off, null — a missing key reads as null",
+        "string false, cache on, undefined — every value is stored as text"
       ],
       "ru": [
-        "таймеры → отложенные обратные вызовы → холостой/подготовка → опрос → проверка → закрытие",
-        "опрос → таймеры → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие",
-        "отложенные обратные вызовы → таймеры → опрос → проверка → холостой/подготовка → закрытие",
-        "таймеры → опрос → отложенные обратные вызовы → проверка → холостой/подготовка → закрытие"
+        "number true, cache off, undefined — Node хранит тип, который вы присвоили",
+        "string true, cache off, undefined — сравнение с 8080 всё равно проходит",
+        "string false, cache off, null — незаданный ключ читается как null",
+        "string false, cache on, undefined — любое значение хранится текстом"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 3,
     "explanation": {
-      "en": "The event loop executes phases in order: timers (setTimeout/setInterval), pending callbacks (system operations), idle/prepare (internal use), poll (I/O events), check (setImmediate), and close callbacks. This sequence repeats until the event loop is empty.",
-      "ru": "Цикл событий выполняет фазы по порядку: таймеры (setTimeout/setInterval), отложенные обратные вызовы (системные операции), холостой/подготовка (внутреннее использование), опрос (события ввода-вывода), проверка (setImmediate) и закрытие. Эта последовательность повторяется до тех пор, пока цикл событий не будет пуст."
+      "en": "Everything assigned to `process.env` is converted to a string. `PORT` becomes `'8080'`, so the strict comparison with the number 8080 fails, and `ENABLE_CACHE` becomes `'false'`. That string is not empty, so it is truthy: the flag meant to switch the cache off prints `cache on`. A key that was never set reads as `undefined`.\n\nThis is why configuration needs an explicit conversion step. Use `Number(process.env.PORT)` with a check for `NaN` (not a number), and compare flags as `process.env.ENABLE_CACHE === 'true'`. Schema libraries do the same job in one place and fail at startup instead of at the first request.\n\nThe variant with `number` expects `process.env` to keep the type you assigned. Both variants with `cache off` treat `'false'` as falsy, but among strings only the empty one is falsy. The variant with `null` would need `process.env` to store keys that were never set.",
+      "ru": "Всё, что присвоено в `process.env`, превращается в строку. `PORT` становится `'8080'`, поэтому строгое сравнение с числом 8080 не проходит, а `ENABLE_CACHE` становится `'false'`. Эта строка не пустая, значит она истинна: флаг, который должен был выключить кэш, печатает `cache on`. Ключ, который никто не задавал, читается как `undefined`.\n\nПоэтому конфигурации нужен отдельный шаг преобразования. Берите `Number(process.env.PORT)` с проверкой на `NaN` (not a number — не число), а флаги сравнивайте так: `process.env.ENABLE_CACHE === 'true'`. Библиотеки схем делают то же самое в одном месте и падают при старте, а не на первом запросе.\n\nВариант с `number` ждёт, что `process.env` сохранит присвоенный тип. Оба варианта с `cache off` считают `'false'` ложным значением, но из строк ложной бывает только пустая. Вариант с `null` потребовал бы, чтобы `process.env` хранил ключи, которых никто не задавал."
     }
   },
   {
     "id": "nodejs-quiz-47",
     "topicId": "nodejs",
     "question": {
-      "en": "What will be logged?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```",
-      "ru": "Что будет выведено в консоль?\n```js\nconsole.log('1');\nprocess.nextTick(() => console.log('2'));\nsetImmediate(() => console.log('3'));\nconsole.log('4');\n```"
+      "en": "The target directory does not exist. What will be logged?\n```js\nconst { createReadStream, createWriteStream } = require('node:fs');\n\nconst source = createReadStream('big.bin');\nconst target = createWriteStream('/no/such/dir/out.bin');\n\nsource.pipe(target);\n\ntarget.on('error', (err) => {\n  console.log(err.code, source.destroyed);\n});\n```",
+      "ru": "Каталога назначения не существует. Что будет выведено?\n```js\nconst { createReadStream, createWriteStream } = require('node:fs');\n\nconst source = createReadStream('big.bin');\nconst target = createWriteStream('/no/such/dir/out.bin');\n\nsource.pipe(target);\n\ntarget.on('error', (err) => {\n  console.log(err.code, source.destroyed);\n});\n```"
     },
     "options": {
       "en": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 3, 4"
+        "ENOENT false — pipe() unpipes the target, the source stays open",
+        "ENOENT true — pipe() destroys the whole chain when one stream fails",
+        "ENOENT undefined — a readable stream has no destroyed property",
+        "Nothing: the write error kills the process before the listener runs"
       ],
       "ru": [
-        "1, 4, 2, 3",
-        "1, 2, 3, 4",
-        "1, 4, 3, 2",
-        "2, 1, 3, 4"
+        "ENOENT false — pipe() отсоединяет назначение, но источник не закрыт",
+        "ENOENT true — pipe() уничтожает всю цепочку, если падает один поток",
+        "ENOENT undefined — у потока для чтения нет свойства destroyed",
+        "Ничего: ошибка записи убивает процесс раньше, чем сработает слушатель"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Synchronous code (1, 4) executes first. Then process.nextTick callbacks execute before any event loop phases (2). Finally, setImmediate runs in the check phase (3). process.nextTick has higher priority than setImmediate because it executes between event loop phases, not within a phase.",
-      "ru": "Синхронный код (1, 4) выполняется первым. Затем обратные вызовы process.nextTick выполняются перед какими-либо фазами цикла событий (2). В конце концов, setImmediate запускается на фазе проверки (3). process.nextTick имеет более высокий приоритет, чем setImmediate, потому что он выполняется между фазами, а не внутри фазы."
+      "en": "`pipe()` answers a failing destination by unpiping it, and does nothing else. The code is `ENOENT` (no such file or directory), and `source.destroyed` is still `false`. The file stays open, its descriptor is held, and the data already read has nowhere to go. In a server that repeats on every request until the process runs out of descriptors.\n\n`pipeline` from `node:stream/promises` is the fix. Replace `source.pipe(target)` with `await pipeline(source, target)` and the same check prints `ENOENT true`. `pipeline()` destroys every stream in the chain and reports the failure once, through a rejected promise.\n\nThe variant with `true` credits `pipe()` with that cleanup. The variant with `undefined` overlooks `destroyed`, a property every stream has had since Node.js 8. The variant about a killed process describes the same code without the `'error'` listener: an `'error'` event with no listener is thrown.",
+      "ru": "`pipe()` реагирует на упавшее назначение только тем, что отсоединяет его. Код ошибки — `ENOENT` (нет такого файла или каталога), а `source.destroyed` всё ещё `false`. Файл открыт, его дескриптор занят, а прочитанным данным некуда деваться. На сервере это повторяется на каждом запросе, пока в процессе не кончатся дескрипторы.\n\nЛечится это `pipeline` из `node:stream/promises`. Замените `source.pipe(target)` на `await pipeline(source, target)` — и та же проверка напечатает `ENOENT true`: `pipeline()` уничтожает все потоки цепочки и сообщает об ошибке один раз, отклонённым промисом.\n\nВариант с `true` приписывает такую уборку самому `pipe()`. Вариант с `undefined` забывает про свойство `destroyed`, которое есть у любого потока начиная с Node.js 8. Вариант про убитый процесс описывает тот же код без слушателя `'error'`: событие `'error'` без слушателя выбрасывается как исключение."
     }
   },
   {
@@ -1115,19 +1115,19 @@
     },
     "options": {
       "en": [
-        "5 5 true object",
         "5 5 true string",
+        "5 5 true object",
         "0 5 true object",
         "5 undefined true object"
       ],
       "ru": [
-        "5 5 true object",
         "5 5 true string",
+        "5 5 true object",
         "0 5 true object",
         "5 undefined true object"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
       "en": "Buffer.alloc(5) creates a buffer of 5 bytes, and Buffer.from('hello') creates a buffer from the string with length 5. Buffer.isBuffer() returns true for buffers, and typeof returns 'object' since Buffer is an object type in JavaScript, not a string.",
       "ru": "Buffer.alloc(5) создает буфер из 5 байт, а Buffer.from('hello') создает буфер из строки длиной 5. Buffer.isBuffer() возвращает true для буферов, а typeof возвращает 'object', потому что Buffer - это объектный тип в JavaScript, а не строка."

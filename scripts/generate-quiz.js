@@ -17,6 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const { styleContract } = require('./style-contract');
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
@@ -278,7 +279,7 @@ Schema for each question:
     "en": ["Option A", "Option B", "Option C", "Option D"],
     "ru": ["Вариант А", "Вариант Б", "Вариант В", "Вариант Г"]
   },
-  "correctIndex": 0,
+  "correctIndex": 2,
   "explanation": {
     "en": "Why the correct answer is correct, and why the other options are wrong. 2-3 sentences.",
     "ru": "Почему правильный ответ верный, и почему остальные варианты неверны. 2-3 предложения."
@@ -287,7 +288,17 @@ Schema for each question:
 
 Critical rules:
 - correctIndex must be 0, 1, 2, or 3 — the index of the correct answer in the options array
-- Distribute correctIndex evenly across questions — don't always use 0
+- Distribute correctIndex evenly: across the whole batch each of 0/1/2/3 must be used roughly
+  the same number of times. A previous run put 78% of the keys at index 0, which let a reader
+  score 78% by always picking the first option. The per-topic quiz does NOT shuffle options.
+- The correct option must NOT be the longest one. Give every option comparable length: if the
+  correct one carries an explanatory "— because ..." clause, either drop it or give the wrong
+  options one too. A previous run made the correct option longest in 71% of items.
+- NEVER refer to an option by position ("Option B", "Вариант 2") anywhere in the explanation.
+  The interface shows no letters or numbers, and the random-quiz route reorders the options.
+  Name the option by its content instead.
+- The explanation must not contradict the key, the topic's articles, or its question bank.
+  A correct option must exist: check that one of the four is actually right.
 - All 4 options must be plausible — wrong options should be common misconceptions, not obviously wrong
 - Options order in en and ru must match (ru[0] is translation of en[0], etc.)
 - Questions must test UNDERSTANDING, not memorization of syntax
@@ -297,7 +308,9 @@ Critical rules:
 - If the question contains a code snippet, NEVER put it inline. ALWAYS format as markdown code block with triple backticks and language tag. Example: "${codeExample}"
 - The \\\\n before opening backticks and after closing backticks are required.
 
-Generate exactly ${chunkSize} questions now:`;
+Generate exactly ${chunkSize} questions now:
+
+${styleContract()}`;
 }
 
 // ─── GENERATE CHUNK ──────────────────────────────────────────────────────────
@@ -451,6 +464,40 @@ async function main() {
       hasErrors = true;
     } else {
       console.log(`  ✓  ${topic.id}.json: ${questions.length} questions`);
+    }
+
+    // Guessability check. Asking the model in prose for an even spread was not
+    // enough — a previous run still put 78% of the keys at index 0 and made the
+    // correct option the longest in 71% of items, so it is verified here instead.
+    if (questions.length >= 8) {
+      const atZero = questions.filter(q => q.correctIndex === 0).length / questions.length;
+      const longest = questions.filter(q => {
+        const opts = q.options?.en || [];
+        if (!opts.length) return false;
+        const max = Math.max(...opts.map(o => o.length));
+        return opts[q.correctIndex]?.length === max;
+      }).length / questions.length;
+      const positional = questions.filter(q =>
+        /\b(?:Option|Вариант)s?\s+[A-D0-9]\b/.test(
+          `${q.explanation?.en || ''} ${q.explanation?.ru || ''}`,
+        ),
+      ).length;
+
+      if (atZero > 0.4) {
+        console.log(`  ⚠  ${topic.id}.json: ${Math.round(atZero * 100)}% of keys at index 0 ` +
+          `— run: python3 scripts/audit/rebalance_quiz_keys.py --apply`);
+        hasErrors = true;
+      }
+      if (longest > 0.4) {
+        console.log(`  ⚠  ${topic.id}.json: correct option is the longest in ` +
+          `${Math.round(longest * 100)}% of items — rewrite the options to comparable length`);
+        hasErrors = true;
+      }
+      if (positional > 0) {
+        console.log(`  ⚠  ${topic.id}.json: ${positional} explanations refer to an option by ` +
+          `position — the UI shows no letters and the random quiz reorders them`);
+        hasErrors = true;
+      }
     }
   }
 

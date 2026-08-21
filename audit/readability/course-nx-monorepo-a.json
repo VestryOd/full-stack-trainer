@@ -1,0 +1,131 @@
+{
+  "zone": "nx-monorepo (ch 00-07)",
+  "kinds": ["course-chapter"],
+  "verdict": "targeted-fixes",
+  "files": [
+    { "file": "content/courses/nx-monorepo/ru/00-monorepo-problem-and-nx.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 3, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/ru/01-workspace-anatomy.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/ru/02-project-graph.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 5, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/ru/03-tasks-and-pipeline.md", "locale": "ru", "scores": { "A": 4, "B": 4, "C": 5, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/ru/04-computation-caching.md", "locale": "ru", "scores": { "A": 4, "B": 5, "C": 5, "D": 4, "E": 5, "F": null, "G": 5 } },
+    { "file": "content/courses/nx-monorepo/ru/05-affected.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 5, "D": 4, "E": 5, "F": null, "G": 3 } },
+    { "file": "content/courses/nx-monorepo/ru/06-libs-architecture-and-boundaries.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 5, "D": 4, "E": 5, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/ru/07-generators.md", "locale": "ru", "scores": { "A": 3, "B": 4, "C": 4, "D": 4, "E": 4, "F": null, "G": 4 } },
+    { "file": "content/courses/nx-monorepo/en/00-monorepo-problem-and-nx.md", "locale": "en", "scores": { "A": 3, "B": 2, "C": 4, "D": 3, "E": 5, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/01-workspace-anatomy.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 4, "D": 4, "E": 5, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/02-project-graph.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 5, "D": 4, "E": 5, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/03-tasks-and-pipeline.md", "locale": "en", "scores": { "A": 4, "B": 3, "C": 5, "D": 4, "E": 5, "F": 4, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/04-computation-caching.md", "locale": "en", "scores": { "A": 4, "B": 4, "C": 5, "D": 4, "E": 5, "F": 4, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/05-affected.md", "locale": "en", "scores": { "A": 3, "B": 3, "C": 5, "D": 4, "E": 5, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/06-libs-architecture-and-boundaries.md", "locale": "en", "scores": { "A": 3, "B": 2, "C": 4, "D": 4, "E": 5, "F": 3, "G": null } },
+    { "file": "content/courses/nx-monorepo/en/07-generators.md", "locale": "en", "scores": { "A": 3, "B": 2, "C": 4, "D": 4, "E": 4, "F": 3, "G": null } }
+  ],
+  "averages": { "A": 3.3, "B": 3.4, "C": 4.6, "D": 3.9, "E": 4.9, "F": 3.3, "G": 4.0 },
+  "worst_places": [
+    {
+      "file": "content/courses/nx-monorepo/ru/05-affected.md",
+      "rubric": "G",
+      "quote": "На push после squash-merge из пяти коммитов CI сравнит только с четырьмя из них уже проверенное состояние... и молча пропустит первый.",
+      "problem": "Порядок слов сломан: «сравнит только с четырьмя из них уже проверенное состояние» — грамматически не разбирается ни с какого захода. Это единственное место в зоне, где русский текст физически нечитаем; читатель вынужден идти в английскую версию, где мысль изложена ясно. Плюс здесь же впервые появляется squash-merge без пояснения.",
+      "before": "Обратная крайность — самодельный affected: `--base=HEAD~1`, \"сравним с прошлым коммитом, чего мелочиться\". На push после squash-merge из пяти коммитов CI сравнит только с четырьмя из них уже проверенное состояние... и молча пропустит первый.",
+      "after": "Обратная крайность — самодельный affected: `--base=HEAD~1`, \"сравним с прошлым коммитом, чего мелочиться\". Разберём push после squash-merge — когда пять коммитов ветки схлопнули в один. `HEAD~1` — это предыдущий коммит, а в нём уже учтены четыре изменения из пяти. Пятое в diff не попадёт, и CI молча его не проверит."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/00-monorepo-problem-and-nx.md",
+      "rubric": "B",
+      "quote": "The first is a harmless but redundant layer (Nx commands are self-sufficient and parameterizable: `nx build shell --configuration=production`); the second is outright sabotage: calling the tool directly bypasses the cache, the task pipeline and affected, and in CI such a command honestly rebuilds everything from scratch every time, reducing the value of Nx to zero.",
+      "problem": "56 words in one sentence, carrying five separate facts, held together by a semicolon, a colon, a parenthesis and two 'and's. The Russian original is two sentences and 43 words. This is the single worst instance of the zone-wide pattern: RU keeps 10% of sentences over the limit, EN 24%.",
+      "before": "The first is a harmless but redundant layer (Nx commands are self-sufficient and parameterizable: `nx build shell --configuration=production`); the second is outright sabotage: calling the tool directly bypasses the cache, the task pipeline and affected, and in CI such a command honestly rebuilds everything from scratch every time, reducing the value of Nx to zero.",
+      "after": "The first is a harmless but redundant layer: Nx commands already take parameters on their own, e.g. `nx build shell --configuration=production`. The second is outright sabotage. Calling the tool directly bypasses the cache, the task pipeline and affected. In CI such a command rebuilds everything from scratch on every run, so Nx gives the repo nothing."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/02-project-graph.md",
+      "rubric": "F",
+      "quote": "`src/index.ts` (the barrel) is the single entry point: the alias in tsconfig.base.json points at this file, not at the folder. Anything not re-exported from index.ts is the lib's private kitchen.",
+      "problem": "\"The lib's private kitchen\" is a word-for-word carry-over of the Russian idiom «приватная кухня либы», which does not exist in English and reads as nonsense. \"The barrel\" is dropped in as a bare label with no explanation, in the chapter where the pattern first appears.",
+      "before": "`src/index.ts` (the barrel) is the single entry point: the alias in tsconfig.base.json points at this file, not at the folder. Anything not re-exported from index.ts is the lib's private kitchen. For now it's a gentleman's agreement; in chapter 06 we'll turn it into a lint rule.",
+      "after": "`src/index.ts` is the single entry point — a barrel file, meaning one file that re-exports everything the lib offers. The alias in tsconfig.base.json points at this file, not at the folder. Anything not re-exported from index.ts stays private to the lib. For now this is only an agreement between people; in chapter 06 we turn it into a lint rule."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/07-generators.md",
+      "rubric": "F",
+      "quote": "A built-in generator is habitually invoked with the same five flags (visible in command history/docs)? That's an application for a local wrapper generator.",
+      "problem": "\"An application for\" is a calque of «заявка на» and means \"a case for\" — but in a course where every second paragraph says \"application\" meaning \"an app in apps/\", the reader parses it the wrong way and stalls. \"Habitually invoked\" is also above B1 register for a bullet meant to be skimmed.",
+      "before": "A built-in generator is habitually invoked with the same five flags (visible in command history/docs)? That's an application for a local wrapper generator.",
+      "after": "Is a built-in generator always called with the same five flags (check the shell history or the team docs)? That's a strong reason to write a local wrapper generator around it."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/06-libs-architecture-and-boundaries.md",
+      "rubric": "B",
+      "quote": "The reflex \"I'll make every lib buildable, like npm packages\" is an expensive mistake: every lib grows a build config, the pipeline grows `^build` orchestration, cold starts slow down severalfold — and at ordinary repo sizes there's no payoff: vite builds the app from lib sources just fine.",
+      "problem": "47 words, two colons and an em-dash aside in one breath; \"severalfold\" is a rare word a B1-B2 reader will not know, and \"cold starts\" is used here without ever being defined in the course. Chapter 06 EN is the most sentence-heavy file in the zone (25% over limit).",
+      "before": "The reflex \"I'll make every lib buildable, like npm packages\" is an expensive mistake: every lib grows a build config, the pipeline grows `^build` orchestration, cold starts slow down severalfold — and at ordinary repo sizes there's no payoff: vite builds the app from lib sources just fine.",
+      "after": "The reflex \"I'll make every lib buildable, like npm packages\" is an expensive mistake. Every lib grows a build config of its own, and the pipeline grows `^build` orchestration on top of it. A build from an empty cache becomes several times slower. At ordinary repo sizes there is no payoff in return: vite builds the app straight from the libs' sources just fine."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/06-libs-architecture-and-boundaries.md",
+      "rubric": "A",
+      "quote": "│ type:feature     │ feature · ui · data-access · util │ страницы, smart-компоненты, флоу │\n│ type:ui          │ ui · util                         │ глупые компоненты, без данных    │",
+      "problem": "Вся ось type — центральное понятие главы 06 — стоит на различении smart/dumb компонентов, которое в курсе нигде не введено. Читатель, не знавший этого React-жаргона, не может отличить type:feature от type:ui и дальше не понимает ни матрицу, ни depConstraints. То же в en («smart components» / «dumb components»).",
+      "before": "Читается матрица сверху вниз как \"от умного к глупому\": feature знает всё, util не знает никого.",
+      "after": "Два термина из React-практики, на которых стоит эта матрица: **smart-компонент** сам добывает данные (запрос к API, чтение стора), **dumb-компонент** получает всё готовым через props и только рисует. Читается матрица сверху вниз как \"от умного к глупому\": feature знает всё, util не знает никого."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/00-monorepo-problem-and-nx.md",
+      "rubric": "D",
+      "quote": "Начиная с Nx 19–20 граница размыта: project crystal (плагины сами выводят targets из конфигов инструментов — глава 01) сделал integrated-режим таким же \"лёгким\", как package-based, а новый TS-preset (Nx 20+) по умолчанию использует workspaces пакетного менеджера + TypeScript project references вместо алиасов в `tsconfig.base.json`.",
+      "problem": "45 слов и четыре незнакомых сущности подряд (project crystal, targets, TS-preset, project references) — в самой первой главе курса, где читатель ещё не видел ни одного конфига. Ни примера, ни диаграммы между ними: это верхушка самой длинной теоретической стены зоны (11 абзацев / 306 слов о Lerna, Turborepo, integrated vs package-based).",
+      "before": "Начиная с Nx 19–20 граница размыта: project crystal (плагины сами выводят targets из конфигов инструментов — глава 01) сделал integrated-режим таким же \"лёгким\", как package-based, а новый TS-preset (Nx 20+) по умолчанию использует workspaces пакетного менеджера + TypeScript project references вместо алиасов в `tsconfig.base.json`.",
+      "after": "Начиная с Nx 19–20 граница размыта — по двум причинам. Первая: **project crystal** — механизм, в котором плагины сами выводят задачи проекта (targets) из конфигов инструментов вроде `vite.config.ts` (глава 01). Из-за него integrated-режим стал таким же \"лёгким\", как package-based. Вторая: новый TS-preset (Nx 20+) по умолчанию связывает проекты через workspaces пакетного менеджера и TypeScript project references, а не через алиасы в `tsconfig.base.json`."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/05-affected.md",
+      "rubric": "A",
+      "quote": "В CI-конфиге репы найдите, как вычисляется base: хардкод `--base=HEAD~1` — красный флаг (при squash-merge и пропущенных прогонах теряются изменения); правильный паттерн — SHA последнего успешного прогона (в GitHub Actions это делает `nrwl/nx-set-shas`, глава 13).",
+      "problem": "В одном предложении на 35 слов три нерасшифрованных термина: CI (в этом файле встречается 15 раз, ни разу не раскрыт), SHA, squash-merge. Для читателя, который ещё не работал с монорепо-пайплайнами, это три похода в гугл подряд посреди пункта «В рабочем монорепо», который задуман как быстрый чеклист.",
+      "before": "В CI-конфиге репы найдите, как вычисляется base: хардкод `--base=HEAD~1` — красный флаг (при squash-merge и пропущенных прогонах теряются изменения); правильный паттерн — SHA последнего успешного прогона (в GitHub Actions это делает `nrwl/nx-set-shas`, глава 13).",
+      "after": "В конфиге CI (continuous integration — сборка и тесты на сервере при каждом пуше) найдите, как вычисляется base. Хардкод `--base=HEAD~1` — красный флаг: при squash-merge (когда все коммиты ветки схлопывают в один) и при пропущенных прогонах часть изменений теряется. Правильный паттерн — SHA (идентификатор коммита) последнего успешного прогона; в GitHub Actions это делает `nrwl/nx-set-shas` (глава 13)."
+    },
+    {
+      "file": "content/courses/nx-monorepo/ru/07-generators.md",
+      "rubric": "A",
+      "quote": "На этой же механике работает `nx migrate` (глава 13): миграции — те же генераторы, только их пишет команда Nx, а запускают они кодмоды над вашей репой при обновлении версий.",
+      "problem": "«Кодмоды» встречается здесь один раз и нигде не раскрывается. Тем же болеет заголовок главы — «Генераторы: скаффолдинг как код»: слово «скаффолдинг» стоит в H1 и ни разу не объясняется во всём курсе, хотя это и есть тема главы. Читатель начинает главу с непонятного слова в названии.",
+      "before": "На этой же механике работает `nx migrate` (глава 13): миграции — те же генераторы, только их пишет команда Nx, а запускают они кодмоды над вашей репой при обновлении версий.",
+      "after": "На этой же механике работает `nx migrate` (глава 13): миграции — те же генераторы, только их пишет команда Nx. При обновлении версий они запускают **кодмоды** — скрипты, которые автоматически переписывают ваш код и конфиги под новый формат."
+    },
+    {
+      "file": "content/courses/nx-monorepo/en/01-workspace-anatomy.md",
+      "rubric": "B",
+      "quote": "Since Nx 18 the project path is taken as provided (`--directory=apps/shell` — literally that folder); in older versions (`projectNameAndRootFormat=derived`) Nx constructed the path itself from the name and nesting options, and the same command could put the project somewhere else.",
+      "problem": "44 words with two parenthetical code asides and a semicolon splice, inside a 'Versions' callout the reader is meant to skim. The Russian version of the same callout is 36 words and reads noticeably lighter — the standard ~19% EN inflation pushes a borderline RU sentence well past the limit.",
+      "before": "Since Nx 18 the project path is taken as provided (`--directory=apps/shell` — literally that folder); in older versions (`projectNameAndRootFormat=derived`) Nx constructed the path itself from the name and nesting options, and the same command could put the project somewhere else.",
+      "after": "Since Nx 18 the project path is taken exactly as you provide it: `--directory=apps/shell` means literally that folder. Older versions behaved differently (`projectNameAndRootFormat=derived`): Nx built the path itself out of the project name and the nesting options. The same command could therefore drop the project somewhere else entirely."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/courses/nx-monorepo/ru/00-monorepo-problem-and-nx.md": ["CI", "PR", "CLI", "IDE", "single version policy", "big ball of mud", "preset", "визард"],
+    "content/courses/nx-monorepo/ru/01-workspace-anatomy.md": ["UI", "CLI", "e2e", "crystal", "flat config", "идемпотентность", "diff"],
+    "content/courses/nx-monorepo/ru/02-project-graph.md": ["AST", "CI", "PR", "e2e", "daemon", "barrel", "deep-import", "резолв/резолвер"],
+    "content/courses/nx-monorepo/ru/03-tasks-and-pipeline.md": ["CLI", "cwd", "спавнит", "no-op", "сахар (синтаксический)"],
+    "content/courses/nx-monorepo/ru/04-computation-caching.md": ["CI", "README", "флаки-тест", "карго-культ", "codegen"],
+    "content/courses/nx-monorepo/ru/05-affected.md": ["CI", "PR", "SHA", "README", "e2e", "squash-merge", "force-push"],
+    "content/courses/nx-monorepo/ru/06-libs-architecture-and-boundaries.md": ["CI", "PR", "smart-компоненты", "глупые компоненты", "grouping folder", "сторибук", "флоу"],
+    "content/courses/nx-monorepo/ru/07-generators.md": ["CI", "PR", "ФС", "скаффолдинг", "кодмоды", "flush", "каноникализация", "юнит"],
+    "content/courses/nx-monorepo/en/00-monorepo-problem-and-nx.md": ["CI", "PR", "CLI", "IDE", "single version policy", "big ball of mud", "preset", "wizard"],
+    "content/courses/nx-monorepo/en/01-workspace-anatomy.md": ["UI", "CLI", "e2e", "crystal", "flat config", "idempotency"],
+    "content/courses/nx-monorepo/en/02-project-graph.md": ["AST", "CI", "PR", "e2e", "daemon", "barrel", "deep import", "specifier"],
+    "content/courses/nx-monorepo/en/03-tasks-and-pipeline.md": ["CLI", "cwd", "sugar (syntactic)", "no-op", "spawn"],
+    "content/courses/nx-monorepo/en/04-computation-caching.md": ["CI", "README", "flaky test", "cargo cult", "codegen", "memoize"],
+    "content/courses/nx-monorepo/en/05-affected.md": ["CI", "PR", "SHA", "README", "e2e", "squash merge", "force-push", "blast radius"],
+    "content/courses/nx-monorepo/en/06-libs-architecture-and-boundaries.md": ["CI", "PR", "smart components", "dumb components", "grouping folder", "storybook", "cold start"],
+    "content/courses/nx-monorepo/en/07-generators.md": ["CI", "PR", "FS", "scaffolding", "codemods", "flush", "canonicalization", "devkit"]
+  },
+  "patterns": [
+    "The English version is systematically harder than the Russian one, and it is a length problem, not a vocabulary problem. RU keeps 3.5-10.5% of sentences over the limit; EN runs 12-26% on the very same chapters (ch00 24%, ch06 25%, ch07 26%). The cause is mechanical: the translator preserved the RU punctuation architecture — semicolon splice, colon, em-dash aside — while adding ~19% more words, so a controlled 38-word RU sentence becomes an uncontrolled 56-word EN one. Fix by splitting at the semicolons and colons that already mark the seams, not by cutting content.",
+    "Every chapter is disciplined about Nx's own vocabulary (target, task, executor, inputs, affected, tags are each defined at first use, in the chapter that owns them) and completely undisciplined about the surrounding industry vocabulary. CI appears 8-15 times per chapter and is never expanded anywhere in the first half; PR, SHA, e2e, AST, squash-merge, codemod, scaffolding, barrel, smart/dumb component, cold start all arrive as if already known. The rule the zone follows implicitly is 'explain what Nx invented, assume what the industry invented' — and the target reader is exactly the person who knows neither.",
+    "The 'Частая ошибка' / 'Common mistake' section is the single densest and longest-sentenced block in all 16 files. It always opens with the same 9-12 line paragraph shape ('Разработчик из single-app мира ...' / 'A developer from the single-app world ...') that packs the wrong reflex, its three consequences and the cure into one breath. It is also the most valuable section in each chapter, which is why it deserves the paragraph break most.",
+    "A small but repeating RU register slip: dev-slang lands mid-sentence where a neutral word was available — «в этом пойнт главы» (ch02), «тикет на выпил» (ch06), «структура репы уехала», «генерить прошлогоднюю структуру» (ch07). Individually charming, collectively they make the text harder for a reader whose Russian technical slang is thinner than the author's."
+  ],
+  "notes": "Resembles `angular` (targeted-fixes), not `python-fullstack`: both locales are complete, idiomatic and independently authored — there is no Latin/Cyrillic hybrid-word layer here, and the RU reads as native writing, not translation. It falls short of angular's G 4.8 for two reasons only: the slang register above and one genuinely broken sentence in ru/05. Rubric E is the zone's strongest asset (4.9): every chapter opens its exercise with an explicit `Вход: workspace после главы NN`, and every code block carries its file path as the first comment line, so a reader returning after a week can restart from any chapter. Practice coverage is the real gap: the `nx` bank has 12 cards, all `junior`, and mapping them to this range gives ch00 (q1,2,9), ch01 (q3,7), ch02 (q5,11), ch03 (q4,10), ch04 (q8,12), ch07 (q6, dry-run only) — meaning **chapter 05 (affected) and chapter 06 (libs architecture, tags, module boundaries) have zero practice behind them**, and those are the two chapters the course itself calls its core value. The bank also writes `NX` where all 16 chapters write `Nx`. Chapter 06 specifically: judged on the 'assumed rather than taught' risk it holds up well — both axes are stated, tags are shown in project.json, the linter mechanics are traced through the graph, and the `'*' → '*'` placeholder trap is called out explicitly; its only real assumption is the smart/dumb component distinction (worst_places #6)."
+}

@@ -20,9 +20,11 @@ function identityNum(value: number): number { return value; }
 function identity<T>(value: T): T {
   return value;
 }
-const result = identity("hello"); // result: string ✅
-const result2 = identity(42);     // result2: number ✅
+const result = identity("hello"); // result: "hello" ✅
+const result2 = identity(42);     // result2: 42 ✅
 ```
+
+The literal survives because `result` is a `const`. An unconstrained `T` becomes a *widening* literal type. It widens only when it lands somewhere mutable: a `let`, an array literal, or an object property. That is why `box<T>(x: T): { value: T }` gives `{ value: string }`, while a constrained `box<T extends string>` keeps `{ value: "hello" }`.
 
 Generics are **not** "templates like in C++". In C++, templates are expanded at compile time into concrete code. In TypeScript, a generic is a **type variable** whose value TypeScript *infers* at the call site or type instantiation. All typing is erased at runtime.
 
@@ -439,8 +441,8 @@ const b = process(42);      // b: number ✅
 
 - **Not understanding why TypeScript infers `never` from an empty array** — `[]` is typed as `never[]` without context, because there are no elements to infer from. Fix: annotate as `const arr: string[] = []` or use an explicit parameter `createArray<string>()`.
 
-- **Not knowing that `keyof any` = `string | number | symbol`** — so in `Record<K, V>`, the constraint `K extends keyof any` means "K can be string, number, or symbol". Without the constraint TypeScript doesn't know K can be used as an object key.
+- **Not knowing that `keyof any` = `string | number | symbol`**. In `Record<K, V>` the constraint `K extends keyof any` means "K can be string, number, or symbol". Without the constraint TypeScript doesn't know K can be used as an object key.
 
-- **Assuming a generic class and a generic function work the same way** — in a class, T is fixed at `new Stack<number>()` and doesn't change for the instance. In a function, T is inferred fresh at every call site.
+- **Assuming a generic class and a generic function work the same way**. In a class, T is fixed at `new Stack<number>()` and doesn't change for the instance. In a function, T is inferred fresh at every call site.
 
 - **Writing `<T extends any>` instead of just `<T>`** — `extends any` constrains nothing, it's equivalent to having no constraint at all, but looks confusing. Sometimes written by mistake instead of `<T extends object>`.

@@ -100,7 +100,7 @@ Consumer has full control over layout and composition:
 
 ### The core distinction
 
-A **controlled** component has its state owned by the parent — the parent passes the current value and a change handler. An **uncontrolled** component manages its own state internally — the parent reads the value only when needed (via ref or on submit).
+A **controlled** component has its state owned by the parent: the parent passes the current value and a change handler. An **uncontrolled** component manages its own state internally. The parent reads the value only when it needs it — through a ref to the DOM node, or on submit. DOM is the Document Object Model, the tree of objects the browser builds from the page.
 
 ```tsx
 // CONTROLLED — parent owns the value:
@@ -145,14 +145,12 @@ function Form() {
 
 ### When to use which
 
-```txt
-CONTROLLED                              UNCONTROLLED
-──────────────────────────────────────  ──────────────────────────────────────
-Instant validation as user types        Simple forms with submit-only reads
-Conditional field visibility            File inputs (always uncontrolled)
-Syncing value to external state         Integrating third-party DOM libraries
-Programmatically setting the value      Performance-sensitive forms (1000+ fields)
-```
+| Reach for controlled when… | Reach for uncontrolled when… |
+|---|---|
+| you validate as the user types | the form is simple and read on submit only |
+| field visibility is conditional | it is a file input — always uncontrolled |
+| the value syncs to external state | you integrate a third-party DOM library |
+| you set the value programmatically | the form is performance-sensitive, 1000+ fields |
 
 ### Building a library component that supports both
 
@@ -189,7 +187,7 @@ The pattern React itself uses for all native form elements: `value` + `onChange`
 
 ### The pattern (historical context)
 
-Render props were the primary logic-sharing mechanism before hooks. A component accepts a function as a prop; that function receives state/logic and returns JSX. The component controls when to call the function.
+Render props were the primary logic-sharing mechanism before hooks. A component accepts a function as a prop. That function receives the state and logic, and returns JSX. JSX is the HTML-like syntax React components are written in. The component decides when to call the function.
 
 ```tsx
 type RenderPropMousePosition = {
@@ -262,7 +260,7 @@ Render props survive in cases where a component needs **render-time control** ov
 </FixedSizeList>
 ```
 
-In these cases the library component needs to inject props (field registration, style with absolute positioning) into the consumer's JSX at render time — a pattern hooks alone can't replace.
+In both cases the library component injects props into the consumer's JSX at render time. `Controller` injects the field registration; `FixedSizeList` injects a `style` with absolute positioning. Hooks alone cannot replace that.
 
 ---
 
@@ -368,19 +366,21 @@ class ErrorBoundary extends React.Component<
 }
 ```
 
-### What Error Boundaries DO catch
+### What Error Boundaries **do** catch
 
 ```txt
-✓ Errors thrown during render (inside component return / JSX evaluation)
-✓ Errors in lifecycle methods (componentDidMount, componentDidUpdate)
-✓ Errors in constructors of child components
+✓ Errors thrown during render, inside the component's
+  return or while JSX is evaluated
+✓ Errors in lifecycle methods: componentDidMount,
+  componentDidUpdate
+✓ Errors in the constructors of child components
 ```
 
-### What Error Boundaries DO NOT catch
+### What Error Boundaries **do not** catch
 
 ```txt
 ✗ Event handlers — use try/catch inside the handler
-✗ Async code — errors in setTimeout, Promises, async/await
+✗ Async code — setTimeout, Promises, async/await
 ✗ Server-side rendering errors
 ✗ Errors in the Error Boundary itself
 ```
@@ -471,7 +471,7 @@ function ErrorFallback({ error, resetErrorBoundary }: {
 
 ### What they are
 
-A Portal renders a child component into a DOM node that exists outside the React root element:
+A Portal renders a child component into a DOM node that sits outside the React root element:
 
 ```tsx
 import { createPortal } from 'react-dom';
@@ -492,23 +492,26 @@ function Modal({ children, isOpen }: { children: React.ReactNode; isOpen: boolea
 
 ### Why portals exist
 
-Without a portal, a modal inside a parent with `overflow: hidden` or a z-index stacking context will be clipped or hidden behind other elements — CSS containment traps it. Portals escape the visual containment while keeping the component in the React tree.
+Put a modal inside a parent with `overflow: hidden`, or inside a z-index stacking context. It will be clipped, or hidden behind other elements. The ancestor's CSS locks it in. A portal frees the modal from those visual limits while keeping the component in the React tree.
 
 ```txt
-REACT TREE (event bubbling, context):       DOM TREE (visual rendering):
-<App>                                        <body>
-  <Dashboard>                                  <div id="root">
-    <Modal isOpen={true}>     ─────────────      <div id="main">...</div>
-      <ConfirmDialog />         portal           </div>
-    </Modal>                  ─────────────    <div class="modal-overlay">
-  </Dashboard>                                   <div class="modal-content">
-</App>                                             <ConfirmDialog />
-                                                 </div>
-                                               </div>
-                                             </body>
+React tree                    DOM tree
+(events, context)             (what the browser paints)
+─────────────────────────     ────────────────────────────
+<App>                         <body>
+  <Dashboard>                   <div id="root">
+    <Modal isOpen={true}>         <div id="main">...</div>
+      <ConfirmDialog />         </div>
+    </Modal>                    <div class="modal-overlay">
+  </Dashboard>                    <div class="modal-content">
+</App>                              <ConfirmDialog />
+                                  </div>
+                                </div>
+                              </body>
 
-React tree: Modal is still inside Dashboard — context and event bubbling work normally.
-DOM tree: Modal renders directly in <body> — no CSS clipping.
+React tree: Modal is still inside Dashboard, so context and
+event bubbling work normally.
+DOM tree: Modal renders straight into <body>, so no CSS clips it.
 ```
 
 Key property: **events still bubble through the React tree**, not the DOM tree. A click inside the portal's content bubbles to `<Dashboard>` and `<App>` in React even though in the DOM it's a sibling of `<div id="root">`.
@@ -587,16 +590,41 @@ Dialog.Footer = DialogFooter;
 ## Common interview traps
 
 **"What's the difference between Compound Components and Render Props?"**
-Compound Components use context to share state implicitly between a parent and its children — consumers assemble the UI from provided sub-components. Render Props call a function prop to inject state into consumer JSX at render time. Compound Components give consumers layout freedom; Render Props give consumers rendering control per-item. Both were largely superseded by custom hooks for the logic-sharing use case, but Compound Components remain the right pattern when consumer layout flexibility is the actual goal.
+They hand the consumer a different kind of control. Compound Components let the consumer assemble the UI — the user interface, what the reader sees on screen — out of provided sub-components.
+
+Custom hooks have largely replaced both patterns for plain logic sharing. But Compound Components stay the right choice when layout freedom for the consumer is the actual goal.
+
+| | Compound Components | Render Props |
+|---|---|---|
+| How state reaches children | through context, implicitly | passed into a function prop |
+| What the consumer controls | the layout: where each part goes | the rendering of each item |
+| Consumer writes | sub-components inside the parent | a function that returns JSX |
 
 **"Can Error Boundaries catch async errors?"**
-No. An error thrown inside a `setTimeout`, a `Promise.catch`, or an `async` function runs outside the React render cycle. By the time it throws, React has already returned from rendering. To surface an async error through an Error Boundary, you must catch it manually and set it into state — React will then throw it during the next render, which the boundary will catch.
+No. An error thrown inside a `setTimeout`, a `Promise.catch`, or an `async` function runs outside the React render cycle. By the time it throws, React has already returned from rendering. To surface an async error through an Error Boundary, catch it manually and put it into state. React then throws it during the next render, and the boundary catches it there.
 
 **"When would you use a Portal over just rendering inline?"**
-When CSS containment of an ancestor makes inline rendering visually wrong: `overflow: hidden` clips the content, a low `z-index` hides it behind siblings, or a CSS transform creates a new stacking context. A dialog inside a card with `overflow: hidden` will be clipped. A portal renders it in `document.body` where none of those constraints apply, while keeping it in the React tree for context and events.
+When an ancestor's CSS makes inline rendering visually wrong. Three shapes of that:
+
+- `overflow: hidden` clips the content.
+- A low `z-index` hides it behind its siblings.
+- A CSS transform creates a new stacking context.
+
+A dialog inside a card with `overflow: hidden` will be clipped. A portal renders it in `document.body`, where none of those constraints apply, and it stays in the React tree for context and events.
 
 **"Why did HOCs fall out of favor if they work perfectly fine?"**
-HOCs work, but they compose awkwardly. Each HOC wraps the component in a new component, making DevTools traces confusing. Multiple HOCs injecting the same prop name silently overwrite each other. Typing the component props minus the injected props (`Omit<P, 'user'>`) requires mechanical TypeScript boilerplate. `forwardRef` must be added explicitly. Custom hooks achieve the same logic reuse without any of these costs — the hook's output is just variables, named explicitly by the caller.
+They work, but they compose awkwardly. Four costs add up, and a custom hook has none of them.
+
+| HOC cost | With a custom hook |
+|---|---|
+| wraps the component, so DevTools traces get confusing | no wrapper component at all |
+| two HOCs injecting the same prop name overwrite each other | outputs are variables named by the caller |
+| `Omit<P, 'user'>` boilerplate to type the injected props away | the return type is inferred |
+| `forwardRef` has to be added by hand | nothing to forward |
 
 **"Is a controlled or uncontrolled input better?"**
-Neither is categorically better — they optimize for different things. Controlled inputs make the current value available synchronously in React state, enabling immediate validation, conditional rendering, and programmatic updates. They re-render on every keystroke. Uncontrolled inputs avoid the keystroke re-renders and simplify code when you only need the value on submit. React Hook Form uses uncontrolled inputs internally for this reason — it achieves better performance on large forms by bypassing the React render cycle for individual keystrokes.
+Neither is categorically better. They optimize for different things.
+
+A controlled input keeps the current value in React state, available synchronously. That enables immediate validation, conditional rendering and programmatic updates. The cost is a re-render on every keystroke.
+
+An uncontrolled input avoids those re-renders and keeps the code simpler when you only need the value on submit. React Hook Form uses uncontrolled inputs internally for exactly this reason. It gets better performance on large forms by keeping individual keystrokes out of the React render cycle.

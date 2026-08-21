@@ -2,7 +2,9 @@
 
 ## Concept — separating reads and writes
 
-CQRS (Command Query Responsibility Segregation) splits operations into two independent flows: Commands (mutate state, return nothing) and Queries (only read data, change nothing). Bertrand Meyer's principle: a method should either do something (command) or answer a question (query) — but not both.
+CQRS (Command Query Responsibility Segregation) splits operations into two independent flows. Commands change state. Queries only read data and change nothing.
+
+The strict formulation belongs to Bertrand Meyer: a method should either do something (a command) or answer a question (a query), but never both. The `@nestjs/cqrs` package bends that rule a little — more on that at the end of the article.
 
 ```txt
 Traditional Service Layer:
@@ -19,11 +21,19 @@ CQRS:
   ├── UpdateUserCommand        ├── GetUsersQuery
   └── DeleteUserCommand        └── GetUserProfileQuery
 
-  CommandBus → CommandHandler → DB (write)
-  QueryBus   → QueryHandler   → DB/Cache (read)
+  CommandBus → CommandHandler → write to database
+  QueryBus   → QueryHandler   → read from database or cache
 ```
 
-## Full implementation with @nestjs/cqrs
+## Full implementation with `@nestjs/cqrs`
+
+The `@nestjs/cqrs` package gives you six building blocks, and they are easiest to read in pairs:
+
+- **Command** and **CommandHandler** — the intent to change state, and the code that carries it out.
+- **Query** and **QueryHandler** — a description of what to read, and the reading itself.
+- **Event** and **EventHandler** — a message that something already happened, and the reaction to it.
+
+Command and Query are plain classes with `readonly` fields and no logic. The logic lives in the handler. Finding the right handler for a given class is the bus's job: `CommandBus`, `QueryBus`, `EventBus`.
 
 ```typescript
 // 1. Command — describes the intent to mutate state
@@ -108,7 +118,11 @@ export class UserCreatedHandler implements IEventHandler<UserCreatedEvent> {
 }
 ```
 
-## Usage in Controller
+## Usage in a controller
+
+No business logic is left in the controller. It builds a command or a query out of the input and hands it to the bus, and the bus finds the handler by class.
+
+One condition: the handlers must be declared as ordinary module providers, and `CqrsModule` must be imported. Otherwise the bus never learns about them.
 
 ```typescript
 @Controller('users')
@@ -148,31 +162,40 @@ export class UsersController {
 export class UsersModule {}
 ```
 
-## Event Sourcing vs CQRS — a common confusion
+## Event Sourcing and CQRS — a common confusion
+
+These are two different patterns. CQRS splits the read and write models. Event Sourcing (ES) changes how data is stored. Instead of the current state, the database keeps a chain of events, and the state is computed by replaying that chain.
+
+Hence the one-sided relationship: CQRS without Event Sourcing is everywhere, while Event Sourcing without CQRS almost never happens.
+
+| | CQRS | Event Sourcing |
+|---|---|---|
+| What it does | Separates read and write models | Stores event history instead of state |
+| Does it need the other one | Works without Event Sourcing | Almost always used with CQRS |
+| Effect on storage | Storage strategy unchanged | Changes the storage strategy completely |
 
 ```txt
-CQRS:                           Event Sourcing:
-Separates read/write models     Stores event history instead of state
-Can be used without ES          Almost always uses CQRS
-Doesn't change how data stored  Fundamentally changes storage strategy
+CQRS without Event Sourcing:
+  Commands → write the current state to the database
+  Queries  → read from the same database or a replica
 
-CQRS without ES:
-  Commands → write current state to DB
-  Queries  → read from same DB or read replica
-
-CQRS + ES:
-  Commands → append Event to event store (immutable log)
-  Queries  → read from materialized view (projection of events)
-  Replay   → reconstruct any previous state
+CQRS + Event Sourcing:
+  Commands → append an event to the log (append-only)
+  Queries  → read from a projection of the events
+  Replay   → reconstruct any past state
 
 When to add Event Sourcing:
-  ✓ Full audit trail needed (finance, medical, legal)
-  ✓ Temporal queries ("what was the balance 30 days ago?")
-  ✓ Complex business rules based on history
-  ✗ Simple CRUD — ES adds enormous complexity
+  ✓ Full history of changes is required (finance, medical, legal)
+  ✓ Questions about the past ("what was the balance 30 days ago?")
+  ✓ Complex business rules that depend on history
+  ✗ Simple CRUD — Event Sourcing adds enormous complexity
 ```
 
 ## Sagas — coordinating between commands
+
+A Saga listens to the stream of events and sends commands in response. You need one when a business process runs as a chain: event A → command B → event C → command D.
+
+A saga is written as an arrow-function field with a `@Saga()` decorator. The stream of events comes in, `ofType` keeps the type you want, and `map` turns the event into a command. The bus executes the returned commands itself.
 
 ```typescript
 // Saga reacts to events and can publish new Commands
@@ -196,31 +219,34 @@ export class UserRegistrationSaga {
 
 ## When CQRS is justified
 
-```txt
-CQRS fits:                        CQRS NOT needed:
-─────────────────────────────────────────────────────────
-Complex domain (DDD)              Simple CRUD (≤10 endpoints)
-Different read/write load         Admin Panel, Internal Tool
-Microservice architecture         MVP / prototype
-Event-driven side effects         Team < 5 engineers
-Audit trail required              No scaling plans
-Different read and write schemas  Tight deadlines
+CQRS costs you several extra files per operation, so the question is always the same: what are you buying with that price.
 
-Signs it's time to add CQRS:
-  Service has >10 methods
-  Methods mix read and write logic
-  Hard to test (too many dependencies)
-  Side effects needed after commands
-```
+The left column lists signs that the price pays off, the right column signs that it does not. Three abbreviations in it are worth expanding right away. DDD (domain-driven design) means designing from the business domain. CRUD (create, read, update, delete) are the four basic operations on a record. MVP (minimum viable product) is the smallest version of a product you put in front of users.
+
+| CQRS fits | CQRS not needed |
+|---|---|
+| Complex domain designed with DDD | Simple CRUD, up to 10 endpoints |
+| Different read and write load | Admin panel, internal tool |
+| Microservice architecture | MVP or prototype |
+| Side effects driven by events | Team smaller than five people |
+| Full history of changes required | No plans for load growth |
+| Different schemas for reads and writes | Tight deadlines |
+
+Signs that an existing service is ready to be split:
+
+- The service has more than ten methods.
+- Its methods mix reads and writes.
+- It is hard to test: too many dependencies.
+- Side effects are needed after commands.
 
 ## Common interview mistakes
 
-- **"CQRS is a microservices pattern"** — no. CQRS works inside a single monolithic application. `@nestjs/cqrs` is for monoliths. Yes, CQRS is often used in microservices, but it's not a requirement.
+- **"CQRS is a microservices pattern"** — no. CQRS works inside a single monolithic application, and `@nestjs/cqrs` was built for exactly that. It is indeed used in microservices often, but that is not a requirement.
 
-- **"A Command must not return anything"** — strictly speaking, the CQS (Command Query Separation) principle says a Command is void, but in practice `@nestjs/cqrs` CommandHandler.execute() can return data (e.g., the created object with a generated ID). Many commands return the ID of the created entity.
+- **"A Command must not return anything"** — strictly by the CQS principle (Command Query Separation) that is true. In practice `@nestjs/cqrs` does not restrict the return type, and `CommandHandler.execute()` often returns the created object or its id.
 
-- **"CQRS and Event Sourcing are the same thing"** — no. CQRS separates read and write models. Event Sourcing is a data storage pattern where state is stored as a sequence of events. You can use CQRS without Event Sourcing (most NestJS projects do). Event Sourcing almost always requires CQRS, but not vice versa.
+- **"CQRS and Event Sourcing are the same thing"** — no. CQRS separates the read and write models. Event Sourcing is a way of storing data as a sequence of events. CQRS without Event Sourcing works fine, and that is how most NestJS projects are built. Event Sourcing almost always requires CQRS, but not the other way round.
 
-- **"EventHandler blocks the Command"** — no. `eventBus.publish()` publishes an event asynchronously. The CommandHandler does not wait for EventHandlers to complete. If execution guarantees are needed, the EventHandler needs its own retry logic or a message queue (BullMQ, Kafka).
+- **"EventHandler blocks the Command"** — no. `eventBus.publish()` publishes the event asynchronously, and the CommandHandler does not wait for the event handlers to finish. If you need a delivery guarantee, add retries inside the handler or push the work into a queue (BullMQ, Kafka).
 
-- **"Sagas are needed for all events"** — no. Add a Saga when you need to coordinate multiple commands in response to an event (distributed saga pattern). A simple side effect (sending an email) is the job of an EventHandler, not a Saga. A Saga is needed when event A → command B → event C → command D (a chained business process).
+- **"Sagas are needed for all events"** — no. A saga is for when one event has to trigger several commands in a coordinated way. A simple side effect such as sending an email is an EventHandler's job. A saga starts where the chain does: event A → command B → event C → command D.

@@ -1,0 +1,202 @@
+{
+  "zone": "nextjs",
+  "kinds": [
+    "question-bank"
+  ],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "locale": "ru",
+      "scores": {
+        "A": 2,
+        "B": 2,
+        "C": 3,
+        "D": 2,
+        "E": 4,
+        "F": null,
+        "G": 3
+      }
+    },
+    {
+      "file": "content/questions/nextjs.json#en",
+      "locale": "en",
+      "scores": {
+        "A": 2,
+        "B": 2,
+        "C": 2,
+        "D": 2,
+        "E": 4,
+        "F": 2,
+        "G": null
+      }
+    }
+  ],
+  "averages": {
+    "A": 2.0,
+    "B": 2.0,
+    "C": 2.5,
+    "D": 2.0,
+    "E": 4.0,
+    "F": 2.0,
+    "G": 3.0
+  },
+  "worst_places": [
+    {
+      "file": "content/questions/nextjs.json#en",
+      "rubric": "D",
+      "quote": "**Self-hosted/Docker:** you run `next start` (or the `output: 'standalone'` build) inside a container behind your own load balancer. Full control over runtime, but you own ISR's on-demand revalidation storage (by default it's the local filesystem — in a multi-instance deployment, a revalidated page on instance A doesn't invalidate the cached copy on instance B unless you wire up a shared cache, e.g. Redis via a custom `cache-handler`), your own CDN/edge caching layer, and your own rollout orchestration.",
+      "problem": "nextjs-q-59: the answer is 480 words with zero code blocks, zero diagrams and zero tables — the only entry-level wall of that size in the bank. It compares three hosting models on five axes (control, ISR storage, CDN purge, cache headers, rollout) entirely in prose, and this opening paragraph alone stacks four new ideas (standalone output, per-instance ISR cache, custom cache-handler, rollout orchestration) with nothing to anchor them. The bank already has the right tool for this (comparison tables in nextjs-q-36 and nextjs-q-41) and does not use it here. It also opens on option 1 of the comparison instead of on the answer.",
+      "before": "**Self-hosted/Docker:** you run `next start` (or the `output: 'standalone'` build) inside a container behind your own load balancer. Full control over runtime, but you own ISR's on-demand revalidation storage (by default it's the local filesystem — in a multi-instance deployment, a revalidated page on instance A doesn't invalidate the cached copy on instance B unless you wire up a shared cache, e.g. Redis via a custom `cache-handler`), your own CDN/edge caching layer, and your own rollout orchestration.",
+      "after": "Pick by how much of the caching layer you want to own: Vercel owns all of it, a container behind a CDN splits it with you, plain self-hosted Docker leaves all of it to you.\n\n| | Self-hosted Docker | Container + CDN | Vercel |\n|---|---|---|---|\n| Runtime control | Full | Full | Limited |\n| ISR revalidation store | You wire it up | You wire it up | Platform |\n| CDN purge on revalidate | No CDN by default | You must purge it too | Automatic |\n| Rollout | You orchestrate | You orchestrate | Platform |\n\n**Self-hosted/Docker:** you run `next start` (or the `output: 'standalone'` build) in a container behind your own load balancer. You get full control of the runtime. You also own ISR's on-demand revalidation storage. By default that storage is the container's local filesystem. So with several instances running, revalidating a page on instance A does not invalidate the cached copy on instance B. To fix that you plug in a shared cache — for example Redis through a custom `cache-handler`. The CDN/edge caching layer and the rollout orchestration are yours too."
+    },
+    {
+      "file": "content/questions/nextjs.json#en",
+      "rubric": "B",
+      "quote": "The `'use client'` directive marks a **module boundary**, not just the one component in that file — but critically, it doesn't just affect that component in isolation, it affects every component that appears as a *child in that component's own JSX*, because once you cross into client-rendered code, everything nested directly inside it via JSX is also forced to be part of the client bundle and client render, even if those child components have no `'use client'` directive themselves and contain no interactivity at all.",
+      "problem": "nextjs-q-51: an 84-word opening sentence (77 in ru) with an em-dash aside, a 'because' clause and an 'even if' concession stacked on one subject. It is also the answer's lead, so rubric C is hit at the same time as rubric B: the reader must hold four clauses in memory before learning anything. On a phone this is roughly seven lines with no stopping point.",
+      "before": "The `'use client'` directive marks a **module boundary**, not just the one component in that file — but critically, it doesn't just affect that component in isolation, it affects every component that appears as a *child in that component's own JSX*, because once you cross into client-rendered code, everything nested directly inside it via JSX is also forced to be part of the client bundle and client render, even if those child components have no `'use client'` directive themselves and contain no interactivity at all.",
+      "after": "`'use client'` marks a **module boundary**, not a single component. It also pulls in every component written as a child inside that component's own JSX. Once you cross into client-rendered code, anything nested directly inside it via JSX joins the client bundle and the client render. That happens even if those children carry no `'use client'` directive of their own and have no interactivity at all."
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "C",
+      "quote": "**Дефолтный пайплайн (без кастомного loader'а, self-hosted или на Vercel):** `next/image` не выдаёт заранее оптимизированное изображение на этапе сборки для удалённых/динамических картинок — он выпускает `<img>`, указывающий на собственный внутренний эндпоинт оптимизации Next, `/_next/image?url=<закодированный-источник>&w=<ширина>&q=<качество>`, и реальная трансформация происходит **при первом запросе** для данной комбинации источник + ширина + качество:",
+      "problem": "nextjs-q-68: the answer opens with a bold configuration label and a 48-word sentence (58 in en), so the actual answer to 'what happens between the request and the optimised image' arrives only in the numbered list below. The label ('default pipeline, no custom loader, self-hosted or on Vercel') fires four scoping conditions at the reader before a single fact. The same label-first opening is used in nextjs-q-59, q-60, q-61, q-66, q-69 and q-70.",
+      "before": "**Дефолтный пайплайн (без кастомного loader'а, self-hosted или на Vercel):** `next/image` не выдаёт заранее оптимизированное изображение на этапе сборки для удалённых/динамических картинок — он выпускает `<img>`, указывающий на собственный внутренний эндпоинт оптимизации Next, `/_next/image?url=<закодированный-источник>&w=<ширина>&q=<качество>`, и реальная трансформация происходит **при первом запросе** для данной комбинации источник + ширина + качество:",
+      "after": "Изображение оптимизируется не на сборке, а при первом запросе — и результат кэшируется.\n\n**Дефолтный пайплайн** (без кастомного loader'а, self-hosted или на Vercel): для удалённых и динамических картинок `next/image` не готовит оптимизированный файл заранее. Вместо этого он выпускает `<img>`, указывающий на внутренний эндпоинт оптимизации Next: `/_next/image?url=<закодированный-источник>&w=<ширина>&q=<качество>`. Реальная трансформация происходит при первом запросе для каждой комбинации источник + ширина + качество:"
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "A",
+      "quote": "**Full Route Cache** — серверный, переживает запросы (и разных пользователей). Хранит готовый HTML плюс RSC-пейлоад для роута, сгенерированные на билде для полностью статичных роутов или после первого запроса для ISR-роутов.",
+      "problem": "nextjs-q-35: this is the first use of RSC anywhere in the bank, and it is never expanded — not here and not in any of the six entries that use it (11 times). 'RSC-пейлоад' is the load-bearing concept of the whole App Router half of the bank, and the reader is expected to already know it. The same paragraph also introduces TTL later with no expansion. Because a question bank is read one card at a time, every entry that mentions RSC needs it spelled out, not just the first one in file order.",
+      "before": "**Full Route Cache** — серверный, переживает запросы (и разных пользователей). Хранит готовый HTML плюс RSC-пейлоад для роута, сгенерированные на билде для полностью статичных роутов или после первого запроса для ISR-роутов.",
+      "after": "**Full Route Cache** — серверный, переживает запросы (и разных пользователей). Хранит готовый HTML плюс RSC-пейлоад для роута — RSC (React Server Components) payload, то есть сериализованное описание дерева элементов, которое React отправляет клиенту вместо HTML. Всё это генерируется на билде для полностью статичных роутов или после первого запроса для роутов с ISR."
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "C",
+      "quote": "До PPR решение \"статичный или динамический\" принималось на уровне всего роута, по принципу всё-или-ничего (см. предыдущий вопрос) — один вызов Dynamic API где угодно в дереве переводил весь роут в динамический рендеринг, даже если у 95% контента страницы не было ничего динамического.",
+      "problem": "nextjs-q-47: the question is 'explain Partial Prerendering'; the answer opens with the state of the world before PPR — history first, exactly what the pyramid forbids. It also refers to 'the previous question', which a bank reader shuffling cards has not seen. The reader learns what PPR *is* only in the second section.",
+      "before": "### Какую проблему решает PPR\n\nДо PPR решение \"статичный или динамический\" принималось на уровне всего роута, по принципу всё-или-ничего (см. предыдущий вопрос) — один вызов Dynamic API где угодно в дереве переводил весь роут в динамический рендеринг, даже если у 95% контента страницы не было ничего динамического.",
+      "after": "### Что делает PPR\n\nPartial Prerendering (PPR) позволяет одному роуту быть статичным и динамическим одновременно: статичная оболочка страницы собирается на билде и отдаётся мгновенно, а дырки внутри `<Suspense>`-границ достраиваются на каждый запрос.\n\nЗачем это понадобилось: раньше выбор \"статичный или динамический\" делался для всего роута сразу, по принципу всё-или-ничего. Один вызов Dynamic API где угодно в дереве переводил весь роут в динамический рендеринг — даже если у 95% контента страницы не было ничего динамического."
+    },
+    {
+      "file": "content/questions/nextjs.json#en",
+      "rubric": "B",
+      "quote": "**Common pitfall:** passing a Date, a class instance from an ORM (like a Prisma model with methods attached), or a non-plain object (e.g. something with circular references or a `Map` used in a way Flight doesn't expect) from a Server Component to a Client Component and getting a cryptic serialization error — the fix is almost always to explicitly convert to plain data (`.toISOString()`, spreading into a plain object, `JSON.parse(JSON.stringify(...))` as a blunt fallback) at the server/client boundary rather than assuming \"it's just a prop\" the way you would in a regular non-RSC React tree.",
+      "problem": "nextjs-q-62: 99 words in one sentence — the longest in the bank. A three-item list with two nested parentheticals, then an em-dash pivot into a second three-item list, then a closing comparison clause. Every 'Common pitfall' block in the bank is written as exactly one sentence like this, and it is always the last thing the reader sees, i.e. the part read while most tired.",
+      "before": "**Common pitfall:** passing a Date, a class instance from an ORM (like a Prisma model with methods attached), or a non-plain object (e.g. something with circular references or a `Map` used in a way Flight doesn't expect) from a Server Component to a Client Component and getting a cryptic serialization error — the fix is almost always to explicitly convert to plain data (`.toISOString()`, spreading into a plain object, `JSON.parse(JSON.stringify(...))` as a blunt fallback) at the server/client boundary rather than assuming \"it's just a prop\" the way you would in a regular non-RSC React tree.",
+      "after": "**Common pitfall:** passing a value that Flight cannot serialize from a Server Component to a Client Component, and getting a cryptic serialization error. Typical offenders: a Date, a class instance from an ORM (a Prisma model with methods attached, for example), or a non-plain object such as one with circular references or a `Map` used in a way Flight doesn't expect. The fix is almost always to convert to plain data at the server/client boundary — `.toISOString()` for dates, spreading into a plain object, or `JSON.parse(JSON.stringify(...))` as a blunt fallback. Don't assume \"it's just a prop\" the way you would in a regular non-RSC React tree."
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "D",
+      "quote": "**Механика selective hydration:** при стриминговом SSR и Suspense-границах сервер отправляет HTML всего дерева постепенно — fallback границы (эквивалент `loading.tsx`) отправляется первым, если контент ещё не готов, а реальный контент стримится позже отдельным чанком `<script>`, который патчит fallback на месте.",
+      "problem": "nextjs-q-70: 464 words (517 in en) about streaming SSR, hydration priority and non-deterministic hydration mismatches, with zero code, zero diagrams and zero tables. Five unfamiliar concepts stack up (streaming SSR, boundary fallback, patch-in-place scripts, interaction-driven hydration priority, per-boundary hydration state) before anything concrete appears. Eight entries in the bank are built this way — q-59, q-60, q-61, q-64, q-65, q-66, q-68, q-70 — all 370–520 words with no example of any kind.",
+      "before": "**Механика selective hydration:** при стриминговом SSR и Suspense-границах сервер отправляет HTML всего дерева постепенно — fallback границы (эквивалент `loading.tsx`) отправляется первым, если контент ещё не готов, а реальный контент стримится позже отдельным чанком `<script>`, который патчит fallback на месте.",
+      "after": "React гидрирует Suspense-границы по отдельности и начинает с той, с которой пользователь пытается взаимодействовать, — а не сверху вниз по документу.\n\n**Механика.** При стриминговом SSR сервер отправляет HTML дерева постепенно. Если контент границы ещё не готов, первым уходит её fallback — эквивалент `loading.tsx`. Реальный контент приходит позже, отдельным чанком `<script>`, который подменяет fallback на месте:\n\n```\n[оболочка + fallback'ы]  →  браузер рисует скелетоны\n[чанк границы A]         →  <script> патчит A\n[чанк границы B]         →  <script> патчит B\n```"
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "E",
+      "quote": "{/* если это ВСТРАИВАЕТСЯ как проп, написанный\n                                          в этом файле, вызов из собственного дерева\n                                          ExpandablePanel наивным способом\n                                          заставил бы это тоже стать клиентским */}",
+      "problem": "nextjs-q-51: the section is titled '### Ошибка' but the code block under it is the *correct* pattern — the identical JSX reappears later under '### Паттерн композиции, который это избегает' as the fix. The only thing marking it as wrong is this four-line hypothetical comment, which describes code that is not on screen. The reader looking for the mistake finds the solution labelled as the mistake, and the comment's indentation makes it wrap badly on a phone.",
+      "before": "    <ExpandablePanel title=\"Details\">\n      <HeavyDataTable data={data} /> {/* если это ВСТРАИВАЕТСЯ как проп, написанный\n                                          в этом файле, вызов из собственного дерева\n                                          ExpandablePanel наивным способом\n                                          заставил бы это тоже стать клиентским */}\n    </ExpandablePanel>",
+      "after": "// Плохо: данные передаются пропом, таблицу рендерит сам клиентский компонент\n'use client';\nexport function ExpandablePanel({ title, data }) {\n  const [open, setOpen] = useState(false);\n  return (\n    <div>\n      <button onClick={() => setOpen(!open)}>{title}</button>\n      {open && <HeavyDataTable data={data} />} {/* HeavyDataTable уехал в клиентский бандл */}\n    </div>\n  );\n}"
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "C",
+      "quote": "В традиционном долгоживущем сервере на Node.js мониторинг подключается один раз, при старте процесса, и каждый запрос естественно через него проходит.",
+      "problem": "nextjs-q-54: the question asks how to set up observability and what `instrumentation.ts` is for; the answer opens with a paragraph about how monitoring worked in a traditional Node.js server. Three sentences and 90 words of contrast pass before `instrumentation.ts` is even named. The same 'start from the old world' opening is used in q-47, q-50, q-52, q-53 and q-60.",
+      "before": "### Почему observability здесь сложнее, чем в традиционном сервере\n\nВ традиционном долгоживущем сервере на Node.js мониторинг подключается один раз, при старте процесса, и каждый запрос естественно через него проходит.",
+      "after": "### Куда подключать мониторинг\n\nТочка входа одна — файл `instrumentation.ts` в корне проекта: Next.js вызывает его `register()` один раз при старте серверного процесса, и там же живёт хук `onRequestError` для ошибок рендера.\n\nПочему нужен отдельный хук: в традиционном долгоживущем сервере на Node.js мониторинг подключается один раз при старте процесса, и каждый запрос естественно через него проходит."
+    },
+    {
+      "file": "content/questions/nextjs.json#ru",
+      "rubric": "G",
+      "quote": "**Когда это оправдано:** реально редкие случаи, когда нужна логика обработки запроса, которая обязана выполниться *до* того, как Next.js вообще коснётся запроса, и её нельзя выразить как middleware — например, ты постепенно мигрируешь существующее Express-приложение на Next.js и тебе нужно, чтобы роуты Next.js и легаси-Express сосуществовали за одним процессом и портом, либо нужно обрабатывать не-HTTP протокол на том же сервере (сырой WebSocket-сервер, подключённый к тому же инстансу `http.Server`, поскольку собственная обработка запросов Next.js не управляет логикой апгрейда WebSocket сама по себе).",
+      "problem": "nextjs-q-65: 84 words in one sentence, the longest in the ru file, held together by 'и'/'либо' chains. It also shows the register break: entries q-1 to q-54 address the reader as «вы» («Используйте», «Берите», «вы экспортируете»), q-55 to q-70 switch to «ты» («запусти», «ты сам пишешь», «берёшь на себя», «сверься»). The switch lands exactly on the difficulty boundary and is visible in 12 of the 16 advanced entries, plus in the question texts themselves («Объясните» → «Объясни»).",
+      "before": "**Когда это оправдано:** реально редкие случаи, когда нужна логика обработки запроса, которая обязана выполниться *до* того, как Next.js вообще коснётся запроса, и её нельзя выразить как middleware — например, ты постепенно мигрируешь существующее Express-приложение на Next.js и тебе нужно, чтобы роуты Next.js и легаси-Express сосуществовали за одним процессом и портом, либо нужно обрабатывать не-HTTP протокол на том же сервере (сырой WebSocket-сервер, подключённый к тому же инстансу `http.Server`, поскольку собственная обработка запросов Next.js не управляет логикой апгрейда WebSocket сама по себе).",
+      "after": "**Когда это оправдано.** Случаи реально редкие: нужна логика обработки запроса, которая обязана выполниться *до* того, как Next.js вообще коснётся запроса, и выразить её как middleware нельзя. Таких сценариев два.\n\nПервый — вы постепенно мигрируете существующее Express-приложение на Next.js, и роуты Next.js должны сосуществовать с легаси-роутами Express в одном процессе и на одном порту.\n\nВторой — на том же сервере нужно обрабатывать не-HTTP протокол: например, сырой WebSocket-сервер, подключённый к тому же инстансу `http.Server`. Собственная обработка запросов Next.js логикой WebSocket-апгрейда не управляет."
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/nextjs.json#ru": [
+      "RSC",
+      "SSR",
+      "SSG",
+      "CDN",
+      "UI",
+      "JSX",
+      "DOM",
+      "TCP",
+      "TTL",
+      "CMS",
+      "SDK",
+      "SEO",
+      "CSRF",
+      "ORM",
+      "БД",
+      "ОС",
+      "V8",
+      "SWR",
+      "REST",
+      "JWT",
+      "AST",
+      "RPC",
+      "APM",
+      "ABI",
+      "HMR",
+      "SSRF",
+      "E2E",
+      "DNS",
+      "IP",
+      "CI/CD",
+      "OG",
+      "МБ"
+    ],
+    "content/questions/nextjs.json#en": [
+      "RSC",
+      "SSR",
+      "SSG",
+      "CDN",
+      "UI",
+      "JSX",
+      "DOM",
+      "TCP",
+      "TTL",
+      "CMS",
+      "SDK",
+      "SEO",
+      "CSRF",
+      "ORM",
+      "DB",
+      "OS",
+      "V8",
+      "SWR",
+      "REST",
+      "JWT",
+      "AST",
+      "RPC",
+      "APM",
+      "ABI",
+      "HMR",
+      "SSRF",
+      "E2E",
+      "DNS",
+      "IP",
+      "CI/CD",
+      "OG"
+    ]
+  },
+  "patterns": [
+    "The bank is really two banks with different writing rules, and the seam is the difficulty boundary. Entries q-1..q-54 open with an `### Heading` and a short lead that lands the answer, and carry 2-4 code blocks each. Entries q-55..q-70 (all `advanced`) have no heading at all, open with a bold label ('**Self-hosted/Docker:**', '**Модель Pages Router:**', '**Структура:**', '**Механика selective hydration:**') or a 40-58 word mechanism sentence, run 370-520 words, and eight of the sixteen contain no code, diagram or table whatsoever. The ru side additionally switches the reader's address form from «вы» to «ты» at exactly the same seam, including in the question texts. Any fix pass should treat q-55..q-70 as one job: add the answer-first heading, add the missing example or table, unify the address form.",
+    "Answers habitually open on the contrast instead of the answer: the old world ('До PPR решение…', 'В традиционном долгоживущем сервере на Node.js…', '**Модель Pages Router:** на каждый запрос…'), the naive approach ('Это можно было бы наивно сымитировать через `useState`'), or why the obvious thing fails ('Почему \"сгенерировать всё\" не работает на таком масштабе'). The real answer then arrives one or two paragraphs later. This affects at least q-36, q-40, q-47, q-50, q-52, q-53, q-54, q-59, q-60, q-64, q-69. The contrast is usually worth keeping — it just belongs after a one-sentence direct answer, not instead of it.",
+    "Every entry ends with a '**Частая ловушка / Common pitfall:**' block written as exactly one sentence, and those are the longest sentences in the bank: 6 of the 8 longest en sentences (99w, 89w, 88w, 87w, 85w, 83w) and 3 of the 8 longest ru ones are pitfall blocks. The content is valuable and should stay; the shape (one sentence carrying a three-item list, a parenthetical, an em-dash pivot and a closing comparison) should become three or four sentences. This is the single highest-leverage mechanical fix in the zone: it is a fixed template applied 70 times in each locale.",
+    "Roughly thirty abbreviations are never expanded in either locale, and the most important one is the most used: RSC appears 11 times across six entries and is never written out as React Server Components, even though 'RSC payload' is load-bearing for the whole App Router half of the bank. Because a question bank is read card by card, 'explained in an earlier entry' is even weaker here than in an article series — ISR and CLS are expanded on first use and then reused bare a dozen entries later, which is the right instinct applied only once."
+  ],
+  "notes": "Only two comparison tables exist in 70 entries (q-36, q-41) and both are excellent and phone-readable — the natural fix for the theory walls in q-59, q-63, q-64, q-65 and q-68 is already in the bank's own style. Code examples are the clear strength: short, self-contained, commented at non-obvious lines, no dependence on a previous entry's variables; the only real defect is q-51, where the section titled 'The Mistake'/'Ошибка' shows the correct snippet and the fix section repeats it verbatim. En is measurably harder than ru, not just longer: 54.4% of en sentences exceed 25 words vs 40.8% of ru sentences over 28, and en leans on idiom a B1-B2 reader will stall on ('trips people up', 'hand-roll', 'reach for' 10x, 'say-so', 'a blunt fallback', 'cross-origin-in-spirit', 'wire up', 'tear down', 'under the hood' 7x)."
+}

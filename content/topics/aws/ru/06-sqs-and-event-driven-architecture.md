@@ -52,7 +52,8 @@ FIFO Queue (.fifo suffix):
   Throughput: 3000 сообщений/сек с batching, 300 без
   Порядок:    строгий (First-In-First-Out в рамках MessageGroupId)
   Дубликаты: исключены (Exactly-Once Processing, 5-минутное окно дедупликации)
-  Когда:     финансовые транзакции, ordering systems, состояния машин
+  Когда:     финансовые транзакции, системы с гарантией порядка,
+             конечные автоматы
   
   MessageGroupId: позволяет иметь несколько "потоков" внутри одной FIFO очереди
   DeduplicationId: hash тела сообщения или явный ID для дедупликации

@@ -12,18 +12,18 @@ CORS — это механизм браузера, а не HTTP-протокол
 ```txt
 https://app.example.com:443/path
 │        │              │
-│        │              └── Порт (если не указан — дефолтный: 443 для https, 80 для http)
+│        │              └── Порт (по умолчанию: 443 https, 80 http)
 │        └── Хост (включая поддомены)
 └── Схема (протокол)
 
 Примеры:
 https://example.com     vs  https://example.com      — ОДИН origin
-https://example.com     vs  http://example.com       — РАЗНЫЕ (схема)
+https://example.com  vs  http://example.com       — разная схема
 https://example.com     vs  https://api.example.com  — РАЗНЫЕ (хост)
 https://example.com     vs  https://example.com:8080 — РАЗНЫЕ (порт)
 ```
 
-SOP защищает пользователей: без неё вредоносный сайт мог бы читать вашу почту на `mail.google.com`, делать запросы от вашего имени на `bank.com` и т.д. — просто загрузив JavaScript на своей странице.
+SOP защищает пользователей. Без неё любой сайт мог бы читать вашу почту на `mail.google.com`, просто загрузив JavaScript на своей странице. Или тратить деньги на `bank.com` от вашего имени.
 
 ### CORS как исключение из SOP
 
@@ -58,7 +58,8 @@ CORS (Cross-Origin Resource Sharing) — механизм, позволяющи�
 Метод: GET, HEAD, или POST
 Заголовки: только автоматически добавляемые браузером +
   Accept, Accept-Language, Content-Language,
-  Content-Type (только: text/plain, application/x-www-form-urlencoded, multipart/form-data)
+  Content-Type — только text/plain, multipart/form-data или
+                 application/x-www-form-urlencoded
 Нет кастомных заголовков (Authorization, X-Custom-Header и т.д.)
 ```
 
@@ -185,7 +186,7 @@ Access-Control-Expose-Headers: X-Total-Count, X-Request-ID, ETag
 Access-Control-Allow-Credentials: true
 ```
 
-Разрешает отправку cookies, HTTP-аутентификации и TLS-сертификатов с запросом. Требует явного origin (не `*`) в `Access-Control-Allow-Origin`.
+Разрешает отправку cookies, HTTP-аутентификации и клиентских сертификатов TLS (transport layer security) с запросом. Требует явного origin (не `*`) в `Access-Control-Allow-Origin`.
 
 **`Access-Control-Max-Age`**
 
@@ -211,7 +212,7 @@ Access-Control-Request-Headers: Authorization  # Какие кастомные �
 
 Credentials в контексте CORS — это cookies, HTTP Basic/Digest аутентификация, и TLS client certificates.
 
-По умолчанию cross-origin запросы НЕ отправляют credentials. Для включения нужно:
+По умолчанию cross-origin запросы *не* отправляют credentials. Для включения нужно:
 
 ```typescript
 // На клиенте (fetch):
@@ -344,7 +345,7 @@ CORS защищает от чтения ответа, но не от выпол�
 ```txt
 Один origin:
   https://example.com + https://example.com/api — ОДИН origin
-  https://app.example.com + https://api.example.com — РАЗНЫЕ (поддомен)
+  https://app.example.com + https://api.example.com — поддомен
 
 Поддомен ≠ тот же origin.
 Для api.example.com ↔ app.example.com — нужен CORS.
@@ -354,7 +355,7 @@ CORS защищает от чтения ответа, но не от выпол�
 
 ## Private Network Access (новое ограничение Chrome)
 
-С Chrome 94+ появилось ещё одно ограничение: запросы с публичного origin на приватную сеть (localhost, 192.168.x.x, 10.x.x.x) требуют дополнительного разрешения.
+С Chrome 94+ появилось ещё одно ограничение. Запрос с публичного origin в приватную сеть (localhost, 192.168.x.x, 10.x.x.x) требует отдельного разрешения.
 
 ```http
 # Браузер добавляет в preflight:
@@ -364,7 +365,7 @@ Access-Control-Request-Private-Network: true
 Access-Control-Allow-Private-Network: true
 ```
 
-Актуально для: локальных приложений, IoT-устройств, инструментов разработки, которые работают по localhost но к ним обращаются с публичных сайтов.
+Актуально для: локальных приложений, устройств интернета вещей (IoT), инструментов разработки, которые работают по localhost но к ним обращаются с публичных сайтов.
 
 ---
 
@@ -404,7 +405,7 @@ Access-Control-Request-Headers: Authorization
        ▼                                           │
 Браузер:                                           │
   Preflight прошёл? ──── Нет (403/нет ACAO) ─────→ CORS Error
-       │ Да                                        (JS не видит ответ)
+       │ Да                              (JS не видит ответ)
        ▼
 Настоящий запрос:
 DELETE https://api.other.com/users/42
@@ -428,7 +429,7 @@ Origin: https://app.example.com
 
 ## Типичные ошибки на интервью
 
-- **"CORS — это серверная защита от атак"** — нет. CORS — это браузерная политика, позволяющая серверу **ослабить** Same-Origin Policy. Сервер защищается другими механизмами (CSRF-токены, SameSite cookies, аутентификация). CORS только контролирует, что браузер передаёт JavaScript.
+- **"CORS — это серверная защита от атак"** — нет. CORS — это браузерная политика, позволяющая серверу **ослабить** Same-Origin Policy. Сервер защищается другими механизмами: токены против межсайтовой подделки запросов (CSRF), SameSite cookies, аутентификация. CORS только контролирует, что браузер передаёт JavaScript.
 
 - **"curl тестирует CORS"** — нет. curl не браузер, у него нет SOP. Успешный curl-запрос не означает, что браузер разрешит читать ответ. Для тестирования CORS — только браузер.
 
@@ -440,4 +441,4 @@ Origin: https://app.example.com
 
 - **"Поддомен — тот же origin"** — нет. `app.example.com` и `api.example.com` — разные origins. Для cross-subdomain CORS нужны заголовки на сервере.
 
-- **"`Vary: Origin` зачем?"** — без этого заголовка кэш (CDN, прокси) может вернуть ответ с `Access-Control-Allow-Origin: https://a.com` клиенту с origin `https://b.com`. `Vary: Origin` говорит кэшу хранить разные версии ответа для разных origins.
+- **"`Vary: Origin` зачем?"** — без него общий кэш, например сеть доставки контента (CDN), переиспользует один ответ для всех origins. Клиент с origin `https://b.com` получит ответ, где в `Access-Control-Allow-Origin` стоит чужой адрес. Заголовок велит кэшу хранить по версии ответа на каждый origin.

@@ -3,7 +3,7 @@
 
 ## What HTTP Is and Why It Works the Way It Does
 
-HTTP (HyperText Transfer Protocol) is an application-layer protocol built on top of TCP/IP. Every HTTP request is a text message sent over a TCP connection; the response is the same kind of text message back.
+HTTP (HyperText Transfer Protocol) is an application-layer protocol. It runs on top of TCP/IP: the transmission control protocol carries the bytes, the internet protocol routes them. Every HTTP request is a text message sent over a TCP connection; the response is the same kind of text message back.
 
 ```txt
 Protocol stack:
@@ -46,7 +46,7 @@ Request structure:
 ├─────────────────────────────────────────┤
 │ (empty line)                            │  ← separator
 ├─────────────────────────────────────────┤
-│ { "name": "Alice" }                     │  ← body (for POST/PUT/PATCH)
+│ { "name": "Alice" }                     │  ← body (POST/PUT/PATCH)
 └─────────────────────────────────────────┘
 ```
 
@@ -100,9 +100,9 @@ Scenario: client sends a PUT request, the TCP connection drops.
 The client doesn't know — did the request arrive or not?
 
 PUT (idempotent): safe to retry — result is the same.
-POST (not idempotent): a retry may create a duplicate order or payment.
+POST (not idempotent): a retry may duplicate an order or payment.
 
-This is why payment systems often require an idempotency-key header on POST /payments.
+That is why payments require an idempotency key on POST /payments.
 ```
 
 ### Methods One by One
@@ -133,7 +133,7 @@ Idempotent only if the operation is absolute (not `"increment": 1`).
 
 **HEAD** — same as GET but without a response body. Used to check a resource's existence or fetch metadata (Content-Length, Last-Modified) without downloading the content.
 
-**OPTIONS** — discover which methods and headers the server supports for a given resource. Used by browsers for CORS preflight requests (see [CORS Deep Dive]).
+**OPTIONS** — discover which methods and headers the server supports for a given resource. Used by browsers for the CORS (cross-origin resource sharing) preflight request (see [CORS Deep Dive](./04-cors-deep-dive.md)).
 
 ---
 
@@ -168,7 +168,7 @@ Content-Type: application/json
 
 | Code | Name | Semantics |
 |------|------|-----------|
-| 301 | Moved Permanently | Resource moved forever. Browsers and SEO cache this |
+| 301 | Moved Permanently | Resource moved forever. Browsers and search engines cache this |
 | 302 | Found | Temporary redirect. Method may change to GET |
 | 303 | See Other | After POST — redirect to GET (Post/Redirect/Get pattern) |
 | 304 | Not Modified | Cache is fresh, no body (response to If-None-Match) |
@@ -229,7 +229,7 @@ Accept: application/json
 { "name": "Alice" }
 ```
 
-Common MIME types:
+Common MIME (multipurpose internet mail extensions) types:
 ```txt
 application/json          — JSON (primary for REST APIs)
 application/x-www-form-urlencoded — HTML forms
@@ -248,9 +248,9 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==   (user:password in base64)
 Authorization: API-Key sk-proj-abc123
 ```
 
-`Bearer` — the standard scheme for JWT and OAuth 2.0 tokens (RFC 6750). `Basic` — for simple auth (HTTPS only!). Non-standard schemes (`API-Key`, `Token`) — for API keys.
+`Bearer` — the standard scheme for JWT (JSON web token) and OAuth 2.0 tokens, defined by RFC 6750 — a numbered request-for-comments document. `Basic` — for simple auth, and only over HTTPS (the encrypted form of HTTP). Non-standard schemes (`API-Key`, `Token`) — for API keys.
 
-### Cache-Control (overview; details in [Caching and Headers])
+### Cache-Control (overview; details in [Caching and Headers](./03-caching-and-headers.md))
 
 ```http
 Cache-Control: no-cache        — always revalidate with server
@@ -260,7 +260,7 @@ Cache-Control: private         — browser only, not CDN
 Cache-Control: public          — shareable in CDN
 ```
 
-Critical: `no-cache` does not mean "don't cache" — it means "always check freshness before using the cache." `no-store` means "don't cache at all." This is one of the most common HTTP misconceptions.
+Critical: `no-cache` does not mean "don't cache." It means "always check freshness before using the cache." The directive that forbids caching outright is `no-store`. This misconception is one of the most common in HTTP.
 
 ### Other Important Headers
 
@@ -359,4 +359,4 @@ app.get("/api/users/:id", async (req, res) => {
 
 - **"DELETE is idempotent, so it must return 200"** — not necessarily. First DELETE → 200 or 204. Second → 404 (resource already gone). This doesn't break idempotency: idempotency is about the same *server state*, not the same *response code*.
 
-- **"HEAD is just GET without a body — what's the point?"** — HEAD is important for checking resource existence, getting Content-Length before downloading, and validating cache freshness without transferring data. Used by CDNs and download managers.
+- **"HEAD is just GET without a body — what's the point?"** — HEAD checks cheaply whether a resource exists and reads its `Content-Length`. It also validates cache freshness without transferring data. Used by CDNs and download managers.

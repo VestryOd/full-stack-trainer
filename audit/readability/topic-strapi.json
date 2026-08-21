@@ -1,0 +1,155 @@
+{
+  "zone": "strapi",
+  "kinds": ["topic-article"],
+  "verdict": "systemic-refactor",
+  "files": [
+    { "file": "content/topics/strapi/ru/01-headless-cms-and-strapi.md",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 4, "C": 2, "D": 2, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/ru/02-strapi-architecture.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/ru/03-content-types-and-data-modeling.md",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 4, "C": 1, "D": 1, "E": 2, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/ru/04-routes-controllers-services.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/ru/05-policies-middlewares-rbac.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 2, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/ru/06-lifecycle-hooks-and-customization.md",
+      "locale": "ru",
+      "scores": { "A": 3, "B": 4, "C": 1, "D": 2, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/ru/07-strapi-interview-questions.md",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 4, "C": 2, "D": 2, "E": 3, "F": null, "G": 3 } },
+    { "file": "content/topics/strapi/en/01-headless-cms-and-strapi.md",
+      "locale": "en",
+      "scores": { "A": 3, "B": 4, "C": 2, "D": 2, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/strapi/en/02-strapi-architecture.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/strapi/en/03-content-types-and-data-modeling.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 2, "F": 4, "G": null } },
+    { "file": "content/topics/strapi/en/04-routes-controllers-services.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/strapi/en/05-policies-middlewares-rbac.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 1, "D": 1, "E": 2, "F": 4, "G": null } },
+    { "file": "content/topics/strapi/en/06-lifecycle-hooks-and-customization.md",
+      "locale": "en",
+      "scores": { "A": 3, "B": 4, "C": 1, "D": 2, "E": 3, "F": 4, "G": null } },
+    { "file": "content/topics/strapi/en/07-strapi-interview-questions.md",
+      "locale": "en",
+      "scores": { "A": 2, "B": 4, "C": 2, "D": 2, "E": 3, "F": 3, "G": null } }
+  ],
+  "averages": { "A": 2.4, "B": 4.0, "C": 1.3, "D": 1.4, "E": 2.7, "F": 3.9, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/topics/strapi/ru/05-policies-middlewares-rbac.md",
+      "rubric": "C",
+      "quote": "Strapi имеет два отдельных пользовательских пространства с разными механизмами авторизации:",
+      "problem": "This is the ONLY prose sentence in the entire body of the article — 10 words. The file is 848 words, of which 629 sit inside code blocks and 211 of the remaining 219 are the «Типичные ошибки на интервью» bullet list at the very bottom. So the body of an article titled «Policies, Middlewares и RBAC» contains 8 words of explanation. All five remaining sections (lines 21, 56, 109, 168, 193) are a heading followed immediately by ```typescript or ```txt. The word Policy is never defined in a sentence anywhere in the file: its definition lives in the heading itself, «Policy — аналог Guard в NestJS», which only works for a reader who already knows NestJS Guards. Same for Middleware and API Token. The technical content is genuinely senior-level and must stay — it needs a lead paragraph per section, not less code.",
+      "before": "## Policy — аналог Guard в NestJS\n\n```typescript\n// Global policy: src/policies/is-admin.ts\nexport default async (policyContext, config, { strapi }) => {",
+      "after": "## Policy — проверка «пускать или не пускать»\n\nPolicy — это функция, которая возвращает `true` или `false` перед вызовом контроллера. Вернула `true` — запрос идёт дальше; вернула `false` — Strapi отвечает 403. Внутри доступен `policyContext.state.user`, то есть Policy знает, кто именно стучится. Если вы писали на NestJS — это ровно его Guard. Есть два вида: глобальные (лежат в `src/policies/`, доступны как `global::имя`) и привязанные к одному Content Type (`src/api/article/policies/`, доступны как `api::article.имя`).\n\n```typescript\n// Global policy: src/policies/is-admin.ts\nexport default async (policyContext, config, { strapi }) => {"
+    },
+    {
+      "file": "content/topics/strapi/ru/03-content-types-and-data-modeling.md",
+      "rubric": "D",
+      "quote": "Content Type — основная единица моделирования в Strapi. Аналог таблицы в БД + Prisma Model + NestJS Entity. Три варианта:",
+      "problem": "The central concept of the whole topic is defined by three analogies stacked in one line, and all three assume knowledge the target reader may not have: what a DB table is (БД itself unexpanded), what a Prisma Model is, what a NestJS Entity is. If the reader knows none of the three, they now know nothing about Content Types. Then the article gives an ASCII box with three one-line labels and jumps straight into 40 lines of schema.json. Dynamic Zone gets the same treatment: the heading «Dynamic Zone — конструктор страниц» at line 756, then a JSON block; the concept is only actually explained 100 lines later, inside the pitfalls list. This is the zone's defining rubric-D failure — a new idea arrives, and the thing that is supposed to hold it up is another framework the reader has to already know.",
+      "before": "Content Type — основная единица моделирования в Strapi. Аналог таблицы в БД + Prisma Model + NestJS Entity. Три варианта:",
+      "after": "Content Type — это описание одного вида контента: какие у него поля, какого они типа и какие обязательны. Например, Article: заголовок (строка, обязательный), текст, обложка (картинка), автор (ссылка на другую сущность). Вы описываете Content Type один раз — Strapi сам создаёт под него таблицу в базе данных, REST-эндпоинты и экран редактирования в админке. Если вам это знакомо: то же место в проекте занимают таблица в базе, Model в Prisma или Entity в NestJS. Content Type бывает трёх видов:"
+    },
+    {
+      "file": "content/topics/strapi/ru/06-lifecycle-hooks-and-customization.md",
+      "rubric": "D",
+      "quote": "Lifecycle Hooks — механизм для выполнения кода до/после операций с данными. Аналог Prisma middleware или Mongoose pre/post hooks. Используются для cross-cutting задач привязанных к операциям с конкретным Content Type.",
+      "problem": "The article's only prose paragraph, and it explains a new concept using two other unexplained ones (Prisma middleware, Mongoose pre/post hooks) plus the untranslated jargon «cross-cutting задач», which is a calque with no Russian meaning and no gloss. After this paragraph the file is 890 words of which 666 are code — the remaining five sections are all heading-then-code, so Bootstrap, Register, Cron Jobs, Webhooks and EventHub are each introduced only by a comment inside a code block. EventHub in particular is used in the bootstrap example at line 40+ and only explained in the last bullet of the pitfalls list, hundreds of lines later.",
+      "before": "Lifecycle Hooks — механизм для выполнения кода до/после операций с данными. Аналог Prisma middleware или Mongoose pre/post hooks. Используются для cross-cutting задач привязанных к операциям с конкретным Content Type.",
+      "after": "Lifecycle Hook — это функция, которую Strapi вызывает сам, до или после операции с записью. Создаёте статью — сначала срабатывает `beforeCreate`, потом запись уходит в базу, потом срабатывает `afterCreate`. Вызывать хук вручную не нужно: он привязан к Content Type и работает при любом обращении — из REST API, из админки, из вашего сервиса.\n\nНужны они там, где логика повторяется при каждой операции и не относится к конкретному месту вызова: сгенерировать slug, записать строку в аудит, сбросить кеш. В Prisma то же самое делает middleware, в Mongoose — pre/post hooks."
+    },
+    {
+      "file": "content/topics/strapi/en/01-headless-cms-and-strapi.md",
+      "rubric": "E",
+      "quote": "**\"Strapi v4 and v5 are the same thing\"** — no. Strapi v5 (2024) is a major breaking change: new Document Service API instead of Entity Service, new query engine, improved typing. API responses have a different structure (nested `attributes` have been removed).",
+      "problem": "The article states that v5 removed the nested `attributes` wrapper — and the article's own REST API example, three screens earlier in the same file, returns `\"data\": [{ \"id\": 1, \"attributes\": { \"title\": ... } }]`, i.e. the v4 shape. So the reader is shown a response, then told at the bottom of the same file that that response shape is obsolete, with no marker on the example saying which version it is. The same collision repeats in 03-content-types-and-data-modeling.md (the Dynamic Zone response uses `data`/`attributes`) and in 05-policies-middlewares-rbac.md line 66, where the is-admin policy calls `strapi.entityService.findOne(...)` — the v4 API that articles 02, 04 and 07 all say was replaced by Document Service in v5. Files are read out of order and on a phone, so a reader landing on 05 has no way to know its example is a version behind.",
+      "before": "// Response:\n{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"attributes\": {\n        \"title\": \"Getting Started with Strapi\",",
+      "after": "// Response (Strapi v5 — no nested \"attributes\" wrapper; see the v4 shape at the end of this article):\n{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"documentId\": \"abc123\",\n      \"title\": \"Getting Started with Strapi\","
+    },
+    {
+      "file": "content/topics/strapi/ru/02-strapi-architecture.md",
+      "rubric": "A",
+      "quote": "Strapi построен на Koa.js — минималистичный Node.js фреймворк с middleware pipeline. Архитектура аналогична NestJS: request проходит через middleware → router → policy → controller → service → Document Service → DB.",
+      "problem": "The opening two sentences of the architecture article name seven pipeline stages the reader has never met, in a row, separated by arrows, and then the article stops writing prose entirely — the rest of the file is 559 code words against 205 prose words, 176 of which are the pitfalls list at the bottom. DB, DI, GUI, ORM, PM2, SQL and БД all appear unexpanded in this file. «middleware pipeline» is untranslated jargon used to explain the thing the reader opened the article to understand. The ASCII diagram right below does label each stage with one phrase, which is good — but it is inside a code block, so the labels are the only explanation those seven concepts ever get.",
+      "before": "Strapi построен на Koa.js — минималистичный Node.js фреймворк с middleware pipeline. Архитектура аналогична NestJS: request проходит через middleware → router → policy → controller → service → Document Service → DB.",
+      "after": "Strapi построен на Koa.js — минималистичном Node.js-фреймворке. «Минималистичный» здесь значит, что сам Koa умеет немного: принять HTTP-запрос и пропустить его через цепочку функций-обработчиков (middleware). Всё остальное добавляет Strapi.\n\nПуть запроса такой: сначала общие middleware (разбор тела, CORS, аутентификация), потом router выбирает обработчик по URL, потом policy решает, есть ли у пользователя доступ, потом controller разбирает запрос, service выполняет бизнес-логику, Document Service читает и пишет данные, и в самом низу — база данных. Ниже каждый шаг разобран отдельно; если вы знаете NestJS, порядок ровно тот же."
+    },
+    {
+      "file": "content/topics/strapi/en/05-policies-middlewares-rbac.md",
+      "rubric": "A",
+      "quote": "End Users ( ) — JWT auth, Public/Authenticated roles, permissions on Content Type actions.",
+      "problem": "RBAC is in this file's title and appears three times in it, and it is never expanded here — the expansion «RBAC (Role-Based Access Control)» exists only in article 01, which a phone reader arriving from search will not have opened. Same for JWT, which appears twice with no gloss. The rubric is explicit that 'it's explained in another article' does not count. Note also the mangled `( )` in the quoted line: the plugin name was stripped, leaving an empty parenthesis in the rendered text (the ```txt block above it has the full `plugin users-permissions`, so the bullet lost its content).",
+      "before": "## Policies, Middlewares and RBAC\n\n## Two authorization spaces in Strapi\n\nStrapi has two separate user spaces with different authorization mechanisms:",
+      "after": "## Policies, Middlewares and RBAC\n\n## Two authorization spaces in Strapi\n\nStrapi checks permissions in two completely separate systems, and mixing them up is the usual source of confusion. Both use RBAC — role-based access control, meaning a user gets a role and the role, not the user, carries the permissions. One system covers the people who use your app through the API; the other covers the editors who log into the Admin Panel. They share no roles, no tokens and no settings screen."
+    },
+    {
+      "file": "content/topics/strapi/ru/04-routes-controllers-services.md",
+      "rubric": "C",
+      "quote": "## Кастомный Controller — расширение стандартного\n\n```typescript\n// src/api/article/controllers/article.ts",
+      "problem": "Four of the six sections in this article (lines for «Кастомный Controller», «Кастомный Service», «Кастомный Route», «Query Engine vs Document Service») are a heading followed with no gap by a code block. Rubric C asks whether the first sentence of a section gives the essence in plain words — here there is no first sentence at all, which is the worst possible case, and it is the single most repeated structural fact in this zone: across the seven articles, 24 of 33 body sections open directly into code. The reader is expected to reverse-engineer the concept from a 50-line TypeScript block on a phone screen. `super.find(ctx)`, `this.sanitizeOutput`, `this.transformResponse` and `factories.createCoreController`'s two-argument form all appear only inside that block.",
+      "before": "## Кастомный Controller — расширение стандартного\n\n```typescript\n// src/api/article/controllers/article.ts\nimport { factories } from '@strapi/strapi';",
+      "after": "## Кастомный Controller — расширение стандартного\n\nАвтогенерированный контроллер создаётся одной строкой: `createCoreController('api::article.article')`. Если передать вторым аргументом функцию, она вернёт объект с вашими методами — и они либо переопределят стандартные, либо добавятся к ним. Внутри переопределённого метода доступен `super`: `super.find(ctx)` вызовет ту самую стандартную реализацию, так что можно добавить логику до и после неё, не переписывая её целиком.\n\n```typescript\n// src/api/article/controllers/article.ts\nimport { factories } from '@strapi/strapi';"
+    },
+    {
+      "file": "content/topics/strapi/en/07-strapi-interview-questions.md",
+      "rubric": "F",
+      "quote": "Solutions: (1) Distributed lock via Redis — acquire a lock with TTL before executing the task, only one instance does the work; (2) move the Cron to a separate worker process/Lambda running as a single instance; (3) use BullMQ for a task queue with a single worker.",
+      "problem": "47 words, three numbered options inside one sentence, and TTL unexpanded (it appears exactly once in the file). This is the longest sentence in the EN half of the zone and it is a list pretending to be a sentence — the numbering is already telling the reader these are separate items, so the semicolons are doing no work. Note the EN half of this zone is otherwise the stronger one for sentence syntax: 2 long sentences in 14 files, B averages 4.0. The problem in this zone is never sentence length; it is that there are barely any sentences.",
+      "before": "Solutions: (1) Distributed lock via Redis — acquire a lock with TTL before executing the task, only one instance does the work; (2) move the Cron to a separate worker process/Lambda running as a single instance; (3) use BullMQ for a task queue with a single worker.",
+      "after": "Three ways out:\n\n1. **A distributed lock in Redis.** Before running the task, an instance takes a lock with a TTL (time to live — the lock expires by itself, so a crashed instance cannot block the job forever). Only the instance that got the lock does the work.\n2. **Move the Cron out.** Run it in a separate worker process or a Lambda, started as a single instance.\n3. **Use a queue.** BullMQ with one worker gives you the same guarantee plus retries."
+    },
+    {
+      "file": "content/topics/strapi/ru/01-headless-cms-and-strapi.md",
+      "rubric": "G",
+      "quote": "# Routes, Controllers и Services",
+      "problem": "Four of the seven RU article titles are English with a Russian conjunction dropped in: «Routes, Controllers и Services», «Policies, Middlewares и RBAC», «Lifecycle Hooks и Customization», «Strapi Interview Questions» (this last one is not translated at all). «Strapi Architecture» and «Content Types и Data Modeling» too. Section headings inside the RU files do the same: «Автогенерация vs кастомизация», «Bootstrap и Register — инициализация на старте», «Webhooks — уведомление внешних систем». Rubric G names untranslated headings explicitly. The body prose has the same habit — «cross-cutting задач», «granular permissions», «horizontal scaling», «Frontend жёстко привязан», «hidden, трудно тестировать» — but headings are worse because they are the reader's navigation.",
+      "before": "# Routes, Controllers и Services\n## Автогенерация vs кастомизация",
+      "after": "# Routes, Controllers, Services\n## Что Strapi генерирует сам, а что придётся дописать\n\n(Keep the API identifiers — Route, Controller, Service, Policy — in English, they are the names of things in the code. Translate the connective words around them.)"
+    },
+    {
+      "file": "content/topics/strapi/ru/03-content-types-and-data-modeling.md",
+      "rubric": "E",
+      "quote": "// Использование в Article:\n\"seo\": {\n  \"type\": \"component\",\n  \"repeatable\": false,\n  \"component\": \"shared.seo\"\n}",
+      "problem": "This JSON fragment is not valid JSON and not self-contained: it is a key-value pair with no enclosing object, and the reader has to remember from 60 lines earlier that it belongs inside `\"attributes\"` in the Article `schema.json`. The same block also silently switches file — the comment above it points at `src/components/shared/seo.json`, but this fragment goes in a different file entirely. Rubric E asks that examples not require remembering a previous example's state; here the reader must remember both the previous example's file path and its nesting level.",
+      "before": "// Использование в Article:\n\"seo\": {\n  \"type\": \"component\",\n  \"repeatable\": false,\n  \"component\": \"shared.seo\"\n}",
+      "after": "// Подключаем этот компонент к Article — в src/api/article/content-types/article/schema.json,\n// внутрь \"attributes\" (рядом с \"title\", \"slug\" и остальными полями):\n{\n  \"attributes\": {\n    \"seo\": {\n      \"type\": \"component\",\n      \"repeatable\": false,\n      \"component\": \"shared.seo\"\n    }\n  }\n}"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/topics/strapi/ru/01-headless-cms-and-strapi.md": ["CMS", "PHP", "REST", "S3", "UI", "БД", "GUI", "ORM", "MVP", "ERP", "i18n", "SEO"],
+    "content/topics/strapi/ru/02-strapi-architecture.md": ["DB", "БД", "DI", "GUI", "ORM", "PM2", "SQL", "CORS", "JWT", "SEO", "OAuth"],
+    "content/topics/strapi/ru/03-content-types-and-data-modeling.md": ["БД", "i18n", "uid", "SEO", "VARCHAR", "TEXT", "TIMESTAMP", "D&P", "M2M", "FAQ", "CTA"],
+    "content/topics/strapi/ru/04-routes-controllers-services.md": ["CRUD", "SQL", "i18n", "RBAC"],
+    "content/topics/strapi/ru/05-policies-middlewares-rbac.md": ["RBAC", "JWT", "CI/CD", "IP"],
+    "content/topics/strapi/ru/06-lifecycle-hooks-and-customization.md": ["CDN", "TTL", "tz"],
+    "content/topics/strapi/ru/07-strapi-interview-questions.md": ["RBAC", "CRUD", "CMS", "TTL", "ISR", "CORS", "M2M", "SEO", "ENV"],
+    "content/topics/strapi/en/01-headless-cms-and-strapi.md": ["CMS", "DB", "PHP", "REST", "S3", "UI", "GUI", "ORM", "MVP", "ERP", "i18n", "SEO"],
+    "content/topics/strapi/en/02-strapi-architecture.md": ["DB", "DI", "GUI", "ORM", "PM2", "SQL", "CORS", "JWT", "SEO", "OAuth"],
+    "content/topics/strapi/en/03-content-types-and-data-modeling.md": ["DB", "i18n", "uid", "SEO", "VARCHAR", "TEXT", "TIMESTAMP", "D&P", "FAQ", "CTA"],
+    "content/topics/strapi/en/04-routes-controllers-services.md": ["SQL", "i18n", "CRUD", "RBAC"],
+    "content/topics/strapi/en/05-policies-middlewares-rbac.md": ["RBAC", "JWT", "CI/CD", "IP"],
+    "content/topics/strapi/en/06-lifecycle-hooks-and-customization.md": ["CDN", "TTL", "tz"],
+    "content/topics/strapi/en/07-strapi-interview-questions.md": ["CMS", "CRUD", "DB", "RBAC", "REST", "TTL", "UI", "ISR", "CORS", "M2M", "SEO", "ENV"]
+  },
+  "patterns": [
+    "The structural habit that defines this zone: **heading, then straight into a code block, with no sentence in between.** 24 of the 33 body sections across the seven articles do this. Measured, every file is 52-75% code by word count (ru/05: 629 of 848 words; ru/06: 666 of 890; en/02: 571 of 797). The consequence is that every concept in the topic is introduced by name inside a code comment or an ASCII table rather than defined in prose — Policy, Middleware, API Token, Dynamic Zone, Component, Bootstrap, Register, Cron Job, EventHub, Query Engine, sanitizeOutput. The reader is asked to infer the idea from a 50-line TypeScript listing on a phone. Nothing here needs cutting; each of those sections needs a 3-5 sentence lead added above the existing code.",
+    "**The teaching has migrated to the bottom of the file.** The «Типичные ошибки на интервью» / «Common interview mistakes» bullet list carries 64-96% of all non-code words in every article 01-06 (ru/05: 211 of 219 prose words = 96%; en/03: 228 of 252 = 90%; en/05: 240 of 250 = 96%). Those bullets are genuinely the best writing in the zone — «Policy и Middleware — одно и то же» — нет. Middleware выполняется раньше...» is exactly the plain-language definition the body needed. So the answer to the zone question is: it is not that 4.3k words are too few to teach anything, it is that the explanatory prose is all in the last screen of each file, and the body above it is a code dump. The material for the missing leads already exists inside the article — it just needs to be moved up.",
+    "**Every concept is anchored to another framework the reader may not know.** Content Type is «Аналог таблицы в БД + Prisma Model + NestJS Entity». Policy is «аналог Guard в NestJS». Lifecycle Hooks are «Аналог Prisma middleware или Mongoose pre/post hooks». Middleware is «аналог Koa/Express middleware». Two of the seven articles carry a full Strapi-vs-NestJS comparison table. This is a good habit turned into the only habit: an analogy is a shortcut for readers who have the reference, and nothing at all for readers who do not. Every one needs to follow a first-principles sentence, not replace it.",
+    "**Version drift inside single files.** Article 01 tells the reader v5 removed the nested `attributes` wrapper, and its own REST example above returns the v4 `data`/`attributes` shape; article 03's Dynamic Zone response does the same; article 05's is-admin policy calls `strapi.entityService.findOne` (the v4 API that articles 02, 04 and 07 all say was replaced). Articles are read out of order, so nothing tells a reader landing on 03 or 05 that the example they are copying is a major version behind. Every code block in this zone needs a version marker in its first comment line."
+  ],
+  "notes": "B is the zone's best score (4.0 flat — 3 long sentences in 14 files, no bureaucratic register, no genitive chains). C at 1.3 and D at 1.4 are the worst two scores I would expect to see anywhere on this site, and they measure the same defect: not dense prose, but absent prose. Volume is not the problem the way the zone brief framed it — 4.3k words could teach this material; the issue is that ~70% of those words are inside code fences and ~90% of what remains is the closing pitfalls list, so the average article body is 10-30 words of explanation for 600 words of code. Fixing this zone means adding, not rewriting: a lead paragraph per section (~150 words x 33 sections), lifted largely from the pitfalls lists that already exist. EN and RU are near-identical translations of the same skeleton, so every finding above applies to both locales; EN is not harder than RU here (F 3.9) precisely because there is so little prose to be hard."
+}

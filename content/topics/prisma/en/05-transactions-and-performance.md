@@ -2,7 +2,7 @@
 
 ## Transactions — two modes
 
-Prisma provides two transaction modes. Both translate to `BEGIN / COMMIT / ROLLBACK` in PostgreSQL.
+Prisma has two transaction modes. Both turn into the same three commands in PostgreSQL: `BEGIN`, `COMMIT`, `ROLLBACK`. Those commands are SQL (Structured Query Language) — the language the database speaks, and Prisma writes it for you.
 
 ```typescript
 // Mode 1: Sequential (batch) — array of operations; results are not available between them
@@ -49,23 +49,28 @@ await prisma.$transaction(async (tx) => {
 type IsolationLevel = 
   | 'ReadUncommitted'  // dirty reads (not recommended)
   | 'ReadCommitted'    // PostgreSQL default — sees only committed data
-  | 'RepeatableRead'   // single snapshot for the entire transaction, no non-repeatable reads
+  | 'RepeatableRead'   // one snapshot for the whole transaction:
+                       // no non-repeatable reads
   | 'Serializable';    // strictest: transactions appear to run sequentially
 
 // Example: financial operation with Serializable
 await prisma.$transaction(async (tx) => {
   const account = await tx.account.findUnique({ where: { id: accountId } });
   
-  // Without Serializable: another transaction can change balance between findUnique and update
+  // Without Serializable: another transaction can change balance
+  // between findUnique and update
   // With Serializable: PostgreSQL detects the conflict → one transaction gets an error
   // The application must retry on SerializationFailure (error code 40001)
-  
+
   if (account.balance < amount) throw new Error('Insufficient funds');
-  await tx.account.update({ where: { id: accountId }, data: { balance: { decrement: amount } } });
+  await tx.account.update({
+    where: { id: accountId },
+    data: { balance: { decrement: amount } },
+  });
 }, { isolationLevel: 'Serializable' });
 ```
 
-## Locks — SELECT FOR UPDATE via $queryRaw
+## Locks — `SELECT FOR UPDATE` via `$queryRaw`
 
 ```typescript
 // Prisma has no built-in API for FOR UPDATE
@@ -130,7 +135,7 @@ const prisma = new PrismaClient({ log: ['query'] });
 
 ```typescript
 // PrismaClient uses a connection pool by default
-// Pool size: min(10, max_connections / 2) by default
+// Pool size: physical CPUs * 2 + 1 by default (10 with v7 driver adapters)
 // For production: configure explicitly
 
 const prisma = new PrismaClient({
@@ -229,4 +234,4 @@ await prisma.$executeRaw`
 
 - **"Connection pool doesn't need configuration"** — it does for production. The default pool size may be insufficient under load or excessive for serverless. For Lambda/Vercel: `connection_limit=1` + PgBouncer/Prisma Accelerate. Without proper pooling: "connection count exceeded" errors.
 
-- **"The timeout in $transaction is how long the SQL runs"** — no. `timeout` is the maximum time for the ENTIRE transaction (including callback execution time). `maxWait` is the time to wait for a connection from the pool. If the callback is slow (e.g., an external API call inside the transaction) → timeout → ROLLBACK. External API calls must not be inside a transaction.
+- **"The timeout in $transaction is how long the SQL runs"** — no. It is the budget for the **whole** transaction, and that includes the time your callback spends running. The other option, `maxWait`, is a different number: how long Prisma waits for a free connection from the pool. So a slow callback — an external API call inside the transaction, for example — burns the timeout and ends in a ROLLBACK. Keep external API calls outside the transaction.

@@ -1,0 +1,144 @@
+{
+  "zone": "system-design",
+  "kinds": ["question-bank"],
+  "verdict": "systemic-refactor",
+  "files": [
+    {
+      "file": "content/questions/system-design.json#ru",
+      "locale": "ru",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 3, "E": 3, "F": null, "G": 3 }
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "locale": "en",
+      "scores": { "A": 2, "B": 2, "C": 3, "D": 3, "E": 3, "F": 2, "G": null }
+    }
+  ],
+  "averages": { "A": 2.0, "B": 2.0, "C": 3.0, "D": 3.0, "E": 3.0, "F": 2.0, "G": 3.0 },
+  "worst_places": [
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "C",
+      "quote": "The latency requirement and the availability requirement pull in the same direction here, which simplifies the design: evaluating a flag over the network on every render is both slow and a single point of failure, so the flag definitions need to live as close to the render path as possible — embedded in the build artifact as the last-known-good baseline, refreshed in the background from a CDN-distributed flag service, never blocking render on a network round trip.",
+      "problem": "system-design-q-20. The single worst lead in the bank: the whole answer to \"how would you minimize flag-evaluation latency\" is one 76-word sentence chained by a colon, a \"so\", and an em-dash, carrying seven separate facts. A phone reader gets no landing point at all — the actionable instruction (read from a local copy) is the fifth clause. CDN is also first used here, unexpanded.",
+      "before": "The latency requirement and the availability requirement pull in the same direction here, which simplifies the design: evaluating a flag over the network on every render is both slow and a single point of failure, so the flag definitions need to live as close to the render path as possible — embedded in the build artifact as the last-known-good baseline, refreshed in the background from a CDN-distributed flag service, never blocking render on a network round trip.",
+      "after": "Read flags from a local copy, never over the network on the render path. Here the latency requirement and the availability requirement point the same way, which makes the design simpler. A flag call over the network on every render is slow, and it is also a single point of failure: if the flag service is down, nothing renders. So keep the flag values next to the render code. Ship them inside the build artifact as the last known good baseline. Refresh them in the background from the flag service, delivered through a CDN (content delivery network — servers near the user that cache and serve files). Rendering never waits for a network round trip."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "C",
+      "quote": "At small scale, WebSockets win on every axis: full-duplex, lowest latency (single-digit ms), no HTTP overhead per message.",
+      "problem": "system-design-q-11. The question ends with \"Which would you choose and what does it cost you operationally?\", but the recommendation (\"For Google-Docs-style collaboration specifically, WebSockets are usually the right call despite the operational cost\") sits in the fourth prose paragraph, after a 20-line code block. The lead instead states a caveat about small scale, which is the one case the question did not ask about. A phone reader has to scroll past everything to find the verdict.",
+      "before": "At small scale, WebSockets win on every axis: full-duplex, lowest latency (single-digit ms), no HTTP overhead per message.",
+      "after": "Choose WebSockets, and budget for their operational cost from day one. At small scale they win on every axis: two-way traffic on one connection (full-duplex), the lowest latency (single-digit milliseconds), and no HTTP overhead per message. The cost shows up in production infrastructure, not in the latency number — that is the rest of this answer."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "C",
+      "quote": "Offset pagination (`?offset=20&limit=20`) means \"skip 20 rows, take 20\" — a position in the current result set.",
+      "problem": "system-design-q-4. The question asks \"Which one is better for caching and why?\" The answer opens with a textbook definition of offset pagination and only reaches caching in the paragraph after the code block (\"Caching: cursor-based pages are cacheable per cursor value...\"). It is a definition warm-up in front of the thing that was asked, and the reader must hold two definitions in their head before getting the comparison.",
+      "before": "Offset pagination (`?offset=20&limit=20`) means \"skip 20 rows, take 20\" — a position in the current result set.",
+      "after": "Cursors are better for caching, because a cursor page key stays correct when data shifts and an offset page key does not. Here is why. Offset pagination (`?offset=20&limit=20`) means \"skip 20 rows, take 20\" — it names a position in the current result set."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "A",
+      "quote": "Cache them separately: long TTL + immutable, hashed filenames for JS/CSS/images at the CDN; short TTL with `stale-while-revalidate` for the product data itself, so users get an instant (slightly stale) response while a background request refreshes the cache for the next visitor.",
+      "problem": "system-design-q-3. TTL is the load-bearing term of the whole answer (it appears in the heading, the lead, the code and the pitfall) and is never expanded anywhere in the file; the same is true of CDN. A reader who does not already know that TTL means \"time to live — how long a cached copy may be reused\" cannot follow the argument at all, and must google mid-answer. Same defect across the file for SSE (first used unexpanded in q-5), ORM (q-1), CI (q-9), SSR/SSG (q-16), DOM (q-15).",
+      "before": "Cache them separately: long TTL + immutable, hashed filenames for JS/CSS/images at the CDN; short TTL with `stale-while-revalidate` for the product data itself, so users get an instant (slightly stale) response while a background request refreshes the cache for the next visitor.",
+      "after": "Cache them separately. For JS/CSS/images, use a long TTL (time to live — how long a cached copy may be reused before it must be checked again) plus `immutable` and a hash in the filename, at the CDN (content delivery network — servers near the user that cache your files). For the product data itself, use a short TTL with `stale-while-revalidate`. That way the user gets an instant, slightly stale response, while a background request refreshes the cache for the next visitor."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "B",
+      "quote": "The fan-out bottleneck is architectural: a single server process holding all WebSocket connections for a popular document caps out — you need a pub-sub layer (Redis Pub/Sub, or a dedicated message broker) so any server instance handling a client's connection can publish a cursor update once, and every other instance subscribed to that document's channel relays it to its own connected clients, decoupling \"how many users are viewing this document\" from \"how many connections one process can hold\".",
+      "problem": "system-design-q-24. 78 words, one sentence — the longest in the file. It defines the bottleneck, prescribes the fix, names two implementation options, describes the publish step, describes the relay step, and states the resulting property, all without a full stop. The RU version has the same shape at 65 words. \"Fan-out\" and \"caps out\" are also never explained.",
+      "before": "The fan-out bottleneck is architectural: a single server process holding all WebSocket connections for a popular document caps out — you need a pub-sub layer (Redis Pub/Sub, or a dedicated message broker) so any server instance handling a client's connection can publish a cursor update once, and every other instance subscribed to that document's channel relays it to its own connected clients, decoupling \"how many users are viewing this document\" from \"how many connections one process can hold\".",
+      "after": "The fan-out bottleneck — sending one update out to many listeners — is architectural. One server process cannot hold all the WebSocket connections for a popular document; it hits its connection limit. The fix is a pub-sub layer: Redis Pub/Sub, or a dedicated message broker. Whichever server instance holds a client's connection publishes that client's cursor update once, to the document's channel. Every other instance subscribed to that channel relays the update to its own connected clients. This decouples \"how many users are viewing this document\" from \"how many connections one process can hold\"."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "D",
+      "quote": "For statistical rigor: fixed-horizon testing (waiting for a pre-computed sample size before looking) avoids the classic \"peeking\" error, but a Bayesian or sequential-testing approach with proper alpha-spending lets you check results early without inflating the false-positive rate — the trap is checking a p-value repeatedly as data comes in and stopping the moment it crosses 0.05, which invalidates the statistics entirely regardless of which framework you're nominally using.",
+      "problem": "system-design-q-23. Eight unfamiliar concepts stack up in one 68-word sentence with nothing to hold on to: fixed-horizon testing, pre-computed sample size, the peeking error, Bayesian approach, sequential testing, alpha-spending, false-positive rate, p-value and the 0.05 threshold. No example, no number, no analogy. \"Alpha-spending\" is never explained anywhere in the file. This is a frontend question bank — statistics is exactly where the target reader has no background to fall back on.",
+      "before": "For statistical rigor: fixed-horizon testing (waiting for a pre-computed sample size before looking) avoids the classic \"peeking\" error, but a Bayesian or sequential-testing approach with proper alpha-spending lets you check results early without inflating the false-positive rate — the trap is checking a p-value repeatedly as data comes in and stopping the moment it crosses 0.05, which invalidates the statistics entirely regardless of which framework you're nominally using.",
+      "after": "For statistical rigor, decide up front when you are allowed to look at the results. The trap is \"peeking\": you watch the p-value (the chance of seeing this result if the variants were really identical) as data comes in, and you stop the test the moment it drops below 0.05. Do that and you will find a \"winner\" in tests where both variants are identical, because you gave yourself many chances to hit 0.05 by luck. Two ways out. Fixed-horizon testing: compute the needed sample size before you start, and do not look until you reach it. Or sequential/Bayesian testing with alpha-spending: you may look early, but each early look costs part of your error budget, so the total false-positive rate stays where you set it. Either framework is invalidated by peeking, so the framework name alone protects nothing."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "F",
+      "quote": "Strict semantic versioning (patch = fix, minor = additive, major = breaking) is table stakes; the actual design problem is that with 10+ consumer apps on their own release schedules, you can never assume everyone upgrades to a new major on day one.",
+      "problem": "system-design-q-10. \"Table stakes\" is a poker idiom a B1-B2 reader will not know, and it carries the whole load of the first clause (\"the bare minimum everyone already does\"). The file leans on this register throughout: \"BFF Earns Its Keep\", \"'shared' is doing a lot of work in that sentence\", \"`stale-while-revalidate` is doing real work here\", \"a monolith's blast radius\", \"the worst of both\", \"the part that actually trips teams up\", \"a single server process ... caps out\", \"CRDTs sidestep the transform-function problem\", \"right up until\", \"as an afterthought\", \"rely on the client to politely not render them\". EN is also measurably the harder locale: 6952 words vs 6251 in RU, and 138 over-limit sentences vs 124.",
+      "before": "Strict semantic versioning (patch = fix, minor = additive, major = breaking) is table stakes; the actual design problem is that with 10+ consumer apps on their own release schedules, you can never assume everyone upgrades to a new major on day one.",
+      "after": "Strict semantic versioning (patch = fix, minor = additive, major = breaking) is the easy, expected part. The real design problem is different: with 10+ consumer apps on their own release schedules, you can never assume everyone upgrades to a new major version on day one."
+    },
+    {
+      "file": "content/questions/system-design.json#ru",
+      "rubric": "G",
+      "quote": "Весь смысл микрофронтендов в том, что команды деплоятся независимо, но это обещание нарушается, если баг в одном remote может уронить всю страницу для всех пользователей — в этот момент у вас blast radius монолита с координационными накладными расходами микрофронтендов, худшее из обоих миров.",
+      "problem": "system-design-q-18. Three problems in one sentence. «blast radius» is left in Latin script inside Russian prose and never explained; «худшее из обоих миров» is a word-for-word calque of \"the worst of both worlds\"; «координационными накладными расходами» is bureaucratic noun-stacking where a verb would do. The file does this throughout: «независимо владеемые микрофронтенды» (calque of \"independently owned\"), «а не как запоздалую мысль» (calque of \"afterthought\"), «это база» (calque of \"table stakes\"), «печально известны тем, что их легко тонко сломать» (calque of \"notoriously easy to get subtly wrong\"), plus English nouns inflected with an apostrophe: tree-shake'ить, remote'у, barrel'а, tombstone'ов, broadcast'ов, join'ы, codemod'а, round-trip'а.",
+      "before": "Весь смысл микрофронтендов в том, что команды деплоятся независимо, но это обещание нарушается, если баг в одном remote может уронить всю страницу для всех пользователей — в этот момент у вас blast radius монолита с координационными накладными расходами микрофронтендов, худшее из обоих миров.",
+      "after": "Весь смысл микрофронтендов в том, что команды деплоятся независимо. Но это обещание нарушается, если баг в одном remote роняет всю страницу для всех пользователей. Тогда падение расходится так же широко, как в монолите, — а координировать релизы всё равно приходится, как в микрофронтендах. Вы получаете минусы обоих подходов и плюсы ни одного."
+    },
+    {
+      "file": "content/questions/system-design.json#en",
+      "rubric": "D",
+      "quote": "Collaborative text editing is a harder version of the generic sync problem: edits aren't independent operations on separate fields (like adding two different cart items) — they're character insertions/deletions at *positions* in a shared sequence, and positions shift under you as other people type.",
+      "problem": "system-design-q-13. A question bank is read in random order, one card at a time, but this lead assumes the reader has just read q-12: \"the generic sync problem\" is q-12's framing and \"adding two different cart items\" is q-12's example. On its own, the analogy explains nothing — the reader is asked to contrast against something they have not seen. The same coupling appears in q-24 (\"the durable, ordered delivery a document CRDT needs\", where CRDT is only expanded back in q-13) and q-19 (\"the same versioned-operation approach as any other distributed sync\").",
+      "before": "Collaborative text editing is a harder version of the generic sync problem: edits aren't independent operations on separate fields (like adding two different cart items) — they're character insertions/deletions at *positions* in a shared sequence, and positions shift under you as other people type.",
+      "after": "Collaborative text editing is a harder version of ordinary offline sync. In ordinary sync, two edits usually touch separate fields, so both can just be applied: adding a hat to a cart and adding a scarf to the same cart do not conflict. Text edits are different. They are character insertions and deletions at *positions* in one shared sequence, and those positions shift under you while other people type."
+    },
+    {
+      "file": "content/questions/system-design.json#ru",
+      "rubric": "E",
+      "quote": "interface Op { id: string; deviceId: string; timestamp: number; type: 'add_item' | 'set_field'; payload: unknown; }",
+      "problem": "system-design-q-12. 115 characters on one line — it wraps three or four times on a phone and the type union breaks mid-line. This is systematic: roughly 120 code lines across the file exceed 82 characters, and the RU blocks are consistently worse than EN because the translated comments are longer (up to 127 chars in q-17, 115 in q-23, 112 in q-24/q-25). Separately, several blocks are fenced as `typescript` but contain another language: q-15 is CSS with `//` comments (not valid CSS), q-14's first block is JSON with a `//` comment, q-25's blocks are HTML and raw CSP headers.",
+      "before": "interface Op { id: string; deviceId: string; timestamp: number; type: 'add_item' | 'set_field'; payload: unknown; }",
+      "after": "interface Op {\n  id: string;\n  deviceId: string;\n  timestamp: number;\n  type: 'add_item' | 'set_field';\n  payload: unknown;\n}"
+    }
+  ],
+  "unexpanded_abbrevs": {
+    "content/questions/system-design.json#ru": [
+      "TTL",
+      "CDN",
+      "SSE",
+      "SSR",
+      "SSG",
+      "ORM",
+      "CI",
+      "DOM",
+      "RBAC",
+      "PR",
+      "UUID",
+      "SDK",
+      "UX",
+      "БД",
+      "CRDT (expanded in q-13 only; used bare in q-24)"
+    ],
+    "content/questions/system-design.json#en": [
+      "TTL",
+      "CDN",
+      "SSE",
+      "SSR",
+      "SSG",
+      "ORM",
+      "CI",
+      "DOM",
+      "RBAC",
+      "PR",
+      "UUID",
+      "SDK",
+      "UX",
+      "DB",
+      "CRDT (expanded in q-13 only; used bare in q-24)"
+    ]
+  },
+  "patterns": [
+    "The `Senior nuance` dumping ground WAS inherited, just without the label. All 25 answers use one fixed shape: `### <thesis heading>` -> 1-3 prose paragraphs -> code -> one or two closing paragraphs that pack the three or four hardest facts of the topic into a single 45-78-word sentence -> `**Common pitfall:**`. In 16 of 25 EN answers the last prose paragraph before the pitfall is literally one sentence, and in 21 of 25 it is 40+ words. That paragraph is where nearly all of the 256 flagged over-long sentences live, and it is the one paragraph in each answer with no example, no code and no numbers. Fixing this one slot would move the flag density more than any other change.",
+    "The house sentence is `<framing clause>: <fact A>, so <fact B> — <fact C>, <fact D>` — a colon followed by an em-dash-chained tail. The punctuation already marks the seams, so almost every over-limit sentence can be split at its own existing colon and em-dashes into 3-4 sentences with zero content loss. This is a mechanical fix, not a rewrite.",
+    "The `### <thesis>` heading is a genuinely good pattern and is the main thing propping up Rubric C — every one of the 25 headings is a real claim, not a topic label. But the first body paragraph then restarts from zero instead of continuing the heading, usually with a negation or framing warm-up: `The naive model —`, `The naive answer —`, `The naive heuristic (...)`, `The part that makes this harder`, `The part that actually trips teams up`, `The whole point of X is`, `There are two separate problems here`, `At small scale, X wins`. Nine of 25 answers open this way, and in four of them (q-4, q-11, q-13, q-18) the specific thing the question asked for lands only after the code block.",
+    "The `[Article Name]` bracket-reference habit was NOT inherited: the bank contains zero plain-text bracket references. It also contains zero real links and zero diagrams — in the one topic where the site's diagram primitive would pay off most (fan-out via pub-sub in q-24, host/remote isolation in q-18, compliance-aware failover in q-22, the three-tier token hierarchy in q-15). Four or five diagrams would absorb the densest closing paragraphs directly.",
+    "RU is the shorter and plainer locale; EN is the harder one. EN is 11% longer (6952 vs 6251 words), has 14 more over-limit sentences, and carries all the idiom load. But RU pays for it in two other ways: English nouns inflected with an apostrophe (tree-shake'ить, remote'у, tombstone'ов, broadcast'ов) and untranslated English noun phrases sitting bare in Russian sentences (blast radius, sparse fieldsets, ingestion pipeline, happy-path, fire-and-forget, drop-oldest, комплаенс-регион)."
+  ],
+  "notes": "The `**Common pitfall:**` block is the best-written part of the bank — a concrete wrong choice plus its concrete consequence, present in all 25 answers — but it is itself a single 40-50-word em-dash sentence every time, so it inherits the same B defect. Code quality is otherwise high: self-contained, commented at the non-obvious lines, no cross-example state; the only real E defects are line width (~120 lines over 82 chars, RU worse than EN) and mislabelled fence languages. Bureaucratic RU markers are essentially absent (no «является», «осуществляется», «в случае если»); the RU problem is calque, not officialese. Question stems sometimes expand an abbreviation the answer then uses bare (BFF, CSP, SRI, ABAC), which is why those are not in the unexpanded list — but TTL, CDN, SSE, SSR, SSG, ORM, CI and DOM are expanded nowhere in either locale."
+}
