@@ -18,6 +18,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from collections import Counter
@@ -35,13 +36,45 @@ def walk(path: Path):
         yield path
         return
     yield from sorted(path.rglob("*.md"))
+    yield from sorted(path.rglob("*.json"))
 
 
-def check(md: Path) -> list[tuple[int, int, str, str]]:
+def lines_of(path: Path):
+    """(label, text) per fenced-block host: one per markdown file, one per
+    locale-field of a JSON bank or quiz.
+
+    Banks were invisible to this tool until now — it only walked *.md, so the
+    code fences inside `answer` and `explanation` were never measured. They are
+    rendered by the same component as an article body, in the same scrolling
+    <pre>, so they get the same budget.
+    """
+    if path.suffix == ".md":
+        yield "", path.read_text(encoding="utf-8")
+        return
+    try:
+        items = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return
+    if not isinstance(items, list):
+        return
+    for item in items:
+        if not isinstance(item, dict) or "id" not in item:
+            continue
+        for field in ("question", "answer", "explanation"):
+            value = item.get(field)
+            if not isinstance(value, dict):
+                continue
+            for locale in ("en", "ru"):
+                text = value.get(locale)
+                if isinstance(text, str):
+                    yield f"{item['id']}.{field}.{locale}", text
+
+
+def check_text(text: str) -> list[tuple[int, int, str, str]]:
     """[(line_no, width, tag, line), ...] for every line over its budget."""
     out: list[tuple[int, int, str, str]] = []
     tag: str | None = None
-    for n, line in enumerate(md.read_text(encoding="utf-8").splitlines(), 1):
+    for n, line in enumerate(text.splitlines(), 1):
         fence = FENCE_RE.match(line)
         if fence:
             tag = fence.group(1).lower() if tag is None else None
@@ -51,6 +84,13 @@ def check(md: Path) -> list[tuple[int, int, str, str]]:
         budget = PROSE_BUDGET if tag in PROSE_TAGS else CODE_BUDGET
         if len(line) > budget:
             out.append((n, len(line), tag or "txt", line))
+    return out
+
+
+def check(path: Path) -> list[tuple[str, int, int, str, str]]:
+    out = []
+    for label, text in lines_of(path):
+        out += [(label, *row) for row in check_text(text)]
     return out
 
 
@@ -70,12 +110,18 @@ def main() -> int:
         files += 1
         total += len(wide)
         parts = md.parts
-        zone = parts[parts.index("topics") + 1] if "topics" in parts else md.parent.name
+        if "topics" in parts:
+            zone = parts[parts.index("topics") + 1]
+        elif md.suffix == ".json":
+            zone = f"{md.parent.name}/{md.stem}"
+        else:
+            zone = md.parent.name
         per_zone[zone] += len(wide)
         if not quiet:
             print(f"{md}")
-            for n, width, tag, line in wide:
-                print(f"  :{n} {width} cols ({tag}) {line[:60]}")
+            for label, n, width, tag, line in wide:
+                where = f"{label}:{n}" if label else f":{n}"
+                print(f"  {where} {width} cols ({tag}) {line[:60]}")
 
     if per_zone:
         print("\nwide lines by zone:")
