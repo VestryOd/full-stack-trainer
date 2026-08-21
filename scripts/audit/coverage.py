@@ -51,7 +51,7 @@ PASSED = {
     'article:nextjs': '00b9614',
     'quiz:javascript': 'edcb48f',
     'quiz:nextjs': '3f2bb28',
-    'bank:nextjs': 'wave B',
+    'bank:nextjs': '238a295',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
