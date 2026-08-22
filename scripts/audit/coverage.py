@@ -53,6 +53,13 @@ PASSED = {
     'quiz:nextjs': '3f2bb28',
     'bank:nextjs': '238a295',
     'bank:javascript': '3811745',
+    'article:redis': 'c24b702',
+    'article:graphql': '79f88bb',
+    'bank:graphql': '79f88bb',
+    'quiz:graphql': '79f88bb',
+    'article:oop-patterns': 'f9dc1ca',
+    'bank:oop-patterns': 'f9dc1ca',
+    'quiz:oop-patterns': 'f9dc1ca',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
