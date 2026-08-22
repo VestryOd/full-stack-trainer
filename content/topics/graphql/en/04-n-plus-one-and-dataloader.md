@@ -2,7 +2,7 @@
 
 ## The most common GraphQL senior question — and why it's specific to GraphQL
 
-N+1 isn't a "GraphQL bug" — it's a direct consequence of the resolver architecture described in [Schema, Types, and Resolvers]: every field can have its OWN resolver, and the resolver for an array field is called SEPARATELY for EACH element of the parent array.
+N+1 isn't a "GraphQL bug". It follows directly from the resolver architecture described in [Schema, Types, and Resolvers](./02-schema-types-resolvers.md). Every field can have its own resolver. The resolver for an array field is called separately for each element of the parent array.
 
 ```graphql
 type User {
@@ -158,7 +158,7 @@ ctx.userLoader.prime(id, updatedData)
 for the specific key the mutation changed.
 ```
 
-## DataLoader is created PER REQUEST — why this isn't optional
+## DataLoader is created per request — why this isn't optional
 
 ```ts
 // NestJS / Apollo Server — a NEW instance in context for every request
@@ -272,14 +272,14 @@ level" (not "1 per node"), which is DataLoader's goal — but NOT
 
 ## Common interview mistakes
 
-- **"N+1 is an ORM/Prisma bug"** — not understanding that the cause is GraphQL's resolver architecture (each array field → a separate resolver call per element), not a specific ORM.
+- **"N+1 is a bug in the ORM (object-relational mapper) or in Prisma"** — not understanding that the cause is GraphQL's resolver architecture. Each array field means a separate resolver call per element, whatever the ORM.
 
-- **"include/JOIN solves N+1 for GraphQL the same way it does for REST"** — not explaining that in GraphQL the query shape isn't known in advance, so include can't be statically hardcoded into a resolver without losing flexibility.
+- **"include/JOIN solves N+1 for GraphQL the same way it does for REST"** — not explaining the difference. In REST (Representational State Transfer) each endpoint has a fixed response shape. In GraphQL the query shape isn't known in advance, so `include` can't be hardcoded into a resolver without losing flexibility.
 
-- **Returning batch function results in an order that doesn't match the input ids** — not knowing that DataLoader maps results to keys POSITIONALLY, and getting the order wrong means one user's data can "arrive" for another.
+- **Returning batch function results in an order that doesn't match the input ids** — not knowing that DataLoader maps results to keys **positionally**. Get the order wrong, and one user's data can "arrive" for another user.
 
-- **"DataLoader's cache is a regular TTL cache"** — not understanding it's request-scoped memoization, which can return stale data after a mutation within the same request unless `.clear()`/`.prime()` is called.
+- **"DataLoader's cache is a regular TTL cache"** — not understanding it is request-scoped memoization. There is no TTL (time to live) here. It can return stale data after a mutation in the same request, unless `.clear()` or `.prime()` is called.
 
 - **Creating a DataLoader as a singleton at server startup** — not seeing the risk of cache leaks between users and unbounded memory growth.
 
-- **"DataLoader fully replaces JOIN"** — not understanding that DataLoader gives O(nesting levels) queries, not O(1), and for frequently-requested relations a targeted JOIN can be faster.
+- **"DataLoader fully replaces JOIN"** — not understanding that DataLoader gives O(nesting levels) queries, not O(1). For frequently requested relations, a targeted JOIN can still be faster.

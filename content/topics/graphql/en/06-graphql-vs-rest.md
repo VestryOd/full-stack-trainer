@@ -2,7 +2,7 @@
 
 ## The right level of comparison — architectural, not "which is better"
 
-Both approaches use HTTP, JSON, and stateless requests. The difference isn't about "technology" — it's about WHO controls the shape of the response and WHAT architectural invariants are baked into the protocol.
+Both approaches use HTTP, JSON, and stateless requests. REST (Representational State Transfer) is an architectural style built around resources and URLs. The difference isn't about "technology". It is about who controls the shape of the response, and what architectural invariants are baked into the protocol.
 
 ```txt
 REST    — RESOURCE-oriented approach:
@@ -47,8 +47,9 @@ GET /v2/users/1
 ```txt
 /v2 = duplicating all the logic, maintaining two versions in
 parallel, eventually "/v3"...
-Attempts to solve it via headers (Accept: application/vnd.api.v2+json)
-or parameters (?version=2) don't fix the fundamental problem:
+Attempts to solve it via headers
+(Accept: application/vnd.api.v2+json) or parameters
+(?version=2) don't fix the fundamental problem:
 REMOVING or CHANGING a field in an existing endpoint is a
 BREAKING CHANGE for clients.
 ```
@@ -119,7 +120,8 @@ GraphQL compensations:
   2. @cacheControl directive (Apollo):
      type Post @cacheControl(maxAge: 60) { ... }
      in the resolver: info.cacheControl.setCacheHint()
-     → the server adds Cache-Control: max-age=60 to the HTTP response
+     → the server adds Cache-Control: max-age=60 to the
+       HTTP response
   3. Client-side normalized cache (Apollo Client) — cached by
      type id, not by URL, allowing one query to automatically
      update another query's cache if both touched the same
@@ -161,7 +163,7 @@ describes ONLY JSON). For file uploads you need either:
     the cleanest architectural pattern for production
 ```
 
-## BFF — the most common way to use both together
+## BFF (Backend For Frontend) — the most common way to use both together
 
 ```txt
 Frontend
@@ -238,12 +240,12 @@ GraphQL as a BFF for your own frontend.
 
 ## Common interview mistakes
 
-- **"GraphQL will replace REST"** — not understanding that they solve different problems: GraphQL has no native CDN caching, makes file uploads harder, and most public APIs will stay REST precisely because of ease of consumption and HTTP caching.
+- **"GraphQL will replace REST"** — not understanding that they solve different problems. GraphQL has no native CDN (content delivery network) caching and makes file uploads harder. Most public APIs will stay REST, precisely because they are easy to consume and easy to cache over HTTP.
 
-- **"REST is less type-safe because it has no schema"** — not mentioning OpenAPI/Swagger as the standard for REST API typing, and not explaining the difference in guarantees (OpenAPI can drift, GraphQL schema IS the runtime contract).
+- **"REST is less type-safe because it has no schema"** — not mentioning OpenAPI/Swagger as the standard for typing a REST API. Also not explaining the difference in guarantees: an OpenAPI document can drift from the code, while the GraphQL schema **is** the runtime contract.
 
-- **"GraphQL has no versioning — so things are always breaking"** — not knowing about @deprecated + additive evolution as the primary strategy, not mentioning breaking-change detection via schema diffing in CI.
+- **"GraphQL has no versioning — so things are always breaking"** — not knowing about `@deprecated` plus additive evolution as the primary strategy. Breaking-change detection through schema diffing in CI (continuous integration) also goes unmentioned.
 
-- **"GraphQL caching is Apollo Client"** — confusing the client-side normalized cache with HTTP caching; not knowing about @cacheControl and Persisted Queries as a way to get CDN caching for GraphQL.
+- **"GraphQL caching is Apollo Client"** — confusing the client-side normalized cache with HTTP caching. Not knowing about `@cacheControl` and Persisted Queries as a way to get CDN caching for GraphQL.
 
-- **"You have to choose: REST or GraphQL"** — not proposing the hybrid BFF pattern (GraphQL as an aggregation layer over REST microservices) as the most common production solution.
+- **"You have to choose: REST or GraphQL"** — not proposing the hybrid BFF pattern. GraphQL as an aggregation layer over REST microservices is the most common production solution.

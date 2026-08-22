@@ -10,7 +10,13 @@ GraphQL — the client builds the query DYNAMICALLY, and the
           combination of schema fields
 ```
 
-This asymmetry is why GraphQL APIs need an EXTRA layer of protection that a typical REST API doesn't: depth limiting, query complexity analysis, resolver timeouts. Without them, a single request that's perfectly valid from the schema's point of view can become a DoS vector.
+This asymmetry is why a GraphQL API needs a protection layer that a typical REST (Representational State Transfer) API does not. That layer has three parts:
+
+- Depth limiting.
+- Query complexity analysis.
+- Resolver timeouts.
+
+Without them, a single request that is perfectly valid against the schema can become a DoS (denial of service) vector.
 
 ## Query Depth and Depth Limiting — a simple but blunt defense
 
@@ -104,7 +110,7 @@ rate limiting based on query COMPLEXITY rather than the number of
 HTTP requests.
 ```
 
-## Rate Limiting — GraphQL doesn't make the classics obsolete, but the unit should be COMPLEXITY
+## Rate Limiting — GraphQL doesn't make the classics obsolete, but the unit should be complexity
 
 ```txt
 Naively: "100 requests per minute per IP" doesn't work, because
@@ -182,7 +188,9 @@ on URL). Persisted Queries solve it like this:
    (or computes a SHA-256 hash itself — Automatic Persisted
    Queries)
 2. On every SUBSEQUENT call, the client sends ONLY the hash:
-   GET /graphql?extensions={"persistedQuery":{"sha256Hash":"abc123"}}&variables={"id":"1"}
+   GET /graphql
+     ?extensions={"persistedQuery":{"sha256Hash":"abc123"}}
+     &variables={"id":"1"}
 3. The server: if the hash is known — executes the query using
    the stored text + the received variables; if unknown — asks
    the client to send the full text once (to register it)
@@ -325,14 +333,14 @@ requests between services.
 
 ## Common interview mistakes
 
-- **"Depth limiting solves the problem of expensive queries"** — not mentioning Query Aliasing as a way to bypass depth limiting at depth 1, and not knowing about Query Complexity with multipliers as a more precise mechanism.
+- **"Depth limiting solves the problem of expensive queries"** — not mentioning Query Aliasing, which bypasses depth limiting at depth 1. Query Complexity with multipliers is the more precise mechanism, and it also goes unmentioned.
 
-- **"Offset pagination is enough, just add a limit"** — not explaining the performance degradation at large offsets and the instability under inserts/deletes, not knowing about the Relay Connection spec (cursor-based).
+- **"Offset pagination is enough, just add a limit"** — missing two problems. Performance degrades at large offsets, and pages shift under inserts and deletes. Not knowing the Relay Connection spec (cursor-based).
 
-- **"Persisted Queries are just a traffic optimization"** — not connecting them to security (allowlisting known hashes as a defense against Query Explosion) and to caching via GET.
+- **"Persisted Queries are just a traffic optimization"** — not connecting them to security. An allowlist of known hashes defends against Query Explosion, and GET requests become cacheable.
 
-- **"Authorization can be done with one middleware on /graphql"** — not understanding that in GraphQL, authorization must happen at the RESOLVER level for a specific field, not for the whole request.
+- **"Authorization can be done with one middleware on /graphql"** — not understanding that in GraphQL authorization belongs at the **resolver** level, on a specific field. One check for the whole request is not enough.
 
-- **Not seeing the conflict between field-level authorization and non-null fields** — a resolver that returns null due to access rights for a `String!` field triggers null bubbling of the entire object.
+- **Not seeing the conflict between field-level authorization and non-null fields** — suppose a `String!` field returns null because of access rights. That triggers null bubbling of the entire object.
 
-- **"Federation is just microservices for GraphQL"** — not mentioning that the Gateway introduces ITS OWN N+1-like layer between services when assembling entities (`_entities`).
+- **"Federation is just microservices for GraphQL"** — not mentioning that the Gateway introduces its own N+1-like layer between services when assembling entities (`_entities`).

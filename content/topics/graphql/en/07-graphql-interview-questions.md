@@ -8,9 +8,11 @@ Questions are grouped thematically. Each group has a full senior-level answer + 
 
 ### What is GraphQL and how does it differ from REST at the spec level?
 
-GraphQL is a SPECIFICATION (a query language + a type system + execution semantics), not a specific technology or transport protocol. Implementations: graphql-js (the reference), Apollo Server, Mercurius, GraphQL Yoga — all implement one spec with different extensions. Unlike REST (which isn't a spec at all — it's an architectural style), GraphQL strictly defines what a valid query looks like, how the server must execute it, and what the response must contain.
+GraphQL is a **specification**; REST (Representational State Transfer) is not one. That is the difference at the spec level. GraphQL defines a query language, a type system and execution semantics. It is not a technology and not a transport protocol.
 
-The key difference is in who controls the response shape: in REST the SERVER decides what each endpoint returns; in GraphQL the CLIENT decides via a selection set which fields are needed. This solves overfetching (only the needed fields come back) and underfetching (one request = multiple related entities).
+Implementations include `graphql-js` (the reference), Apollo Server, Mercurius and GraphQL Yoga. They all implement the same spec with different extensions. REST is an architectural style, so it defines no such contract. GraphQL states exactly what a valid query looks like, how the server must execute it, and what the response must contain.
+
+The other key difference is who controls the response shape. In REST the server decides what each endpoint returns. In GraphQL the client decides, through a selection set, which fields it needs. That solves overfetching (only the needed fields come back) and underfetching (one request returns several related entities).
 
 ```txt
 Typical follow-ups:
@@ -38,9 +40,9 @@ A: "Strongly typed" means that a MISMATCH BETWEEN THE QUERY AND
 
 ### Describe the three phases of GraphQL query execution.
 
-1. **Parse** — the query text is parsed into an AST (Abstract Syntax Tree). A syntax error (unclosed brace) is rejected HERE, before any data access.
+1. **Parse** — the query text is parsed into an AST (Abstract Syntax Tree). A syntax error, such as an unclosed brace, is rejected here, before any data access.
 
-2. **Validate** — the AST is checked against the SCHEMA: do the requested types/fields/arguments exist, do argument types match? A validation error (a requested field doesn't exist in the schema) → resolvers are NOT called AT ALL. This lets you reject invalid queries without hitting the database.
+2. **Validate** — the AST is checked against the schema. Do the requested types, fields and arguments exist? Do the argument types match? On a validation error, such as a field that doesn't exist in the schema, no resolver is called at all. So invalid queries are rejected without touching the database.
 
 3. **Execute** — for each field in the query, the corresponding resolver is called, and results are assembled into a tree matching the query's shape.
 
@@ -66,10 +68,10 @@ A: At the Execute phase — this is a runtime error inside the
 
 ### What's the difference between Query and Mutation from a spec perspective (not just semantics)?
 
-Semantically: Query = read, Mutation = write. But the spec adds a CRITICALLY IMPORTANT behavioral difference:
+Semantically: Query = read, Mutation = write. But the spec adds a **critically important** behavioral difference:
 
-- **Query**: top-level fields MAY (and by default SHOULD, if async) execute IN PARALLEL. The order of fields in the response matches the query, but the order resolvers are CALLED is not guaranteed.
-- **Mutation**: top-level fields execute STRICTLY SEQUENTIALLY, in the order they appear in the request. This is a spec requirement, specifically to prevent race conditions when multiple data changes are made in one request.
+- **Query**: top-level fields may (and by default should, if async) execute in parallel. The order of fields in the response matches the query, but the order in which resolvers are called is not guaranteed.
+- **Mutation**: top-level fields execute strictly sequentially, in the order they appear in the request. This is a spec requirement, specifically to prevent race conditions when multiple data changes are made in one request.
 
 ```txt
 Typical follow-ups:
@@ -97,10 +99,14 @@ A: When polling (a notification counter) or SSE (a one-way stream)
 
 On the surface — a style preference. But there's an architectural reason:
 
-- **Inline arguments** (`user(id: "42") { name }`) — every unique dataset creates a NEW query string.
-- **Variables** (`query GetUser($id: ID!) { user(id: $id) }` + `{"id": "42"}`) — the query text is STABLE, only the variables change.
+- **Inline arguments** (`user(id: "42") { name }`) — every unique dataset creates a new query string.
+- **Variables** (`query GetUser($id: ID!) { user(id: $id) }` + `{"id": "42"}`) — the query text stays stable, only the variables change.
 
-Text stability is critical for: 1) **Persisted Queries/APQ** — the client sends a SHA-256 hash of the text instead of the full text; if the text changes with each request, the hash changes and caching is useless; 2) **Query allowlisting** — a whitelist of allowed queries only works with stable texts; 3) **Security** — values in variables go through `parseValue` of custom scalars for validation.
+Text stability is critical for three things:
+
+- **Persisted Queries / APQ (Automatic Persisted Queries).** The client sends a SHA-256 hash of the query text instead of the full text. SHA-256 is a secure hash algorithm: the same text always produces the same short string. If the text changes on every request, the hash changes with it, and hash-based caching is useless.
+- **Query allowlisting.** A whitelist of allowed queries only works when query texts are stable.
+- **Security.** Values in variables pass through `parseValue` of custom scalars, which gives a single place for validation.
 
 ```txt
 Typical follow-ups:
@@ -118,7 +124,7 @@ A: 1) Client sends only the hash → server: "I don't know this hash"
 
 ### What is Null Bubbling and why is overusing "!" dangerous?
 
-If a resolver returns null (or throws) for a field marked NON-NULL (`String!`), GraphQL cannot violate the schema contract and return `{ "name": null }`. So the error "bubbles up" through the response tree to the NEAREST NULLABLE ancestor, which becomes null.
+If a resolver returns null (or throws) for a field marked non-null (`String!`), GraphQL cannot violate the schema contract and return `{ "name": null }`. So the error "bubbles up" through the response tree to the nearest nullable ancestor, which becomes null.
 
 ```graphql
 type Query { user: User }    # nullable
@@ -175,7 +181,7 @@ A: An Object Type can contain fields with resolvers, interfaces,
 
 ### What is the N+1 Problem in GraphQL and why does it happen specifically here?
 
-Every GraphQL field can have its own resolver. The resolver for an array field is called SEPARATELY for EACH element of the parent array:
+Every GraphQL field can have its own resolver. The resolver for an array field is called separately for each element of the parent array:
 
 ```txt
 Query.users → 1 SQL (returns 100 users)
@@ -183,15 +189,15 @@ User.posts  → called 100 times → 100 SQL queries
 Total: 101 queries instead of 2
 ```
 
-In REST, every endpoint has a fixed shape → you can hardcode the JOIN upfront. In GraphQL, the request shape is dynamic → a JOIN in the Query.users resolver only works if the client ALWAYS requests posts. The GraphQL-specific issue is that this is linear degradation, invisible on small dev data (10 → 11 queries) and destructive in production (1000 → 1001).
+In REST, every endpoint has a fixed shape → you can hardcode the JOIN upfront. In GraphQL, the request shape is dynamic → a JOIN in the Query.users resolver only works if the client always requests posts. The GraphQL-specific issue is that this is linear degradation, invisible on small dev data (10 → 11 queries) and destructive in production (1000 → 1001).
 
 ### How does DataLoader solve N+1?
 
 DataLoader works via **batching** + **request-scoped caching**:
 
 - `.load(key)` doesn't execute a query immediately — it adds the key to a queue and returns a Promise.
-- On the next event loop tick, DataLoader calls the batch function ONCE with ALL accumulated keys → one SQL `WHERE id IN (1,2,...,100)` instead of 100 separate queries.
-- Within one request, a repeated `.load("1")` returns the cached Promise without hitting the DB again.
+- On the next event loop tick, DataLoader calls the batch function once, with all accumulated keys. That is one SQL (Structured Query Language) statement `WHERE id IN (1,2,...,100)` instead of 100 separate queries.
+- Within one request, a repeated `.load("1")` returns the cached Promise without hitting the database again.
 
 ```ts
 const createUserLoader = (db: Db) =>
@@ -232,7 +238,7 @@ A: No. DataLoader gives O(nesting levels) queries, not O(1). For
 
 ### Why is a GraphQL API potentially more dangerous than REST from a DoS perspective?
 
-In REST, every endpoint has a fixed cost (the server controls JOINs and depth). In GraphQL, the client builds the query dynamically, and ANY syntactically valid combination must be executed:
+DoS (denial of service) is easier here because the client, not the server, decides how expensive a query is. In REST, every endpoint has a fixed cost: the server controls JOINs and depth. In GraphQL the client builds the query dynamically, and any syntactically valid combination must be executed:
 
 ```graphql
 query {
@@ -251,6 +257,7 @@ query {
 ```
 
 Defense — multiple layers:
+
 - **Depth Limiting** (graphql-depth-limit) — blunt, bypassed by Query Aliasing (1000 aliases of one field at depth 1).
 - **Query Complexity with multipliers** — `users(first: 100) { posts(first: 100) }` costs `100 * (1 + 100*2) = 20100` — more precise, accounts for multiplication of limit arguments.
 - **Persisted Queries + allowlisting** — only known queries reach the server.
@@ -274,7 +281,7 @@ A: In GraphQL one endpoint handles everything. Middleware on
 
 ### Why is cursor-based pagination better than offset at scale?
 
-`OFFSET 100000 LIMIT 20` — the DB still scans and discards 100,000 rows (seq scan or index scan to the right point).
+`OFFSET 100000 LIMIT 20` — the database still scans and discards 100,000 rows (seq scan or index scan to the right point).
 
 `WHERE id > cursor LIMIT 20` — uses the index directly, without scanning skipped rows. Bonus: stable under inserts/deletes (offset "shifts" pages; a cursor is tied to a specific record).
 
@@ -282,14 +289,15 @@ The Relay Connection spec formalizes cursor pagination: `UserConnection` with `e
 
 ---
 
-## Group 6: Architecture — Federation, BFF, GraphQL vs REST
+## Group 6: Architecture — Federation, BFF (Backend For Frontend), GraphQL vs REST
 
 ### How would you scale a large GraphQL API in a microservices architecture?
 
-The key tool is **Apollo Federation**: each microservice owns its part of the GraphQL graph (`@key(fields: "id")`, `extend type`, `__resolveReference`); the Gateway/Router assembles them into one unified schema for the client. Teams work independently without a monolithic BFF.
+The key tool is **Apollo Federation**. Each microservice owns its part of the GraphQL graph, marked with `@key(fields: "id")`, `extend type` and `__resolveReference`. The Gateway (or Router) assembles those parts into one unified schema for the client. Teams then work independently, without a monolithic BFF.
 
 Additionally:
-- **DataLoader** in each service (for N+1 to its own DB)
+
+- **DataLoader** in each service (for N+1 to its own database)
 - The Gateway also batches `_entities` requests between services — analogous to DataLoader at the inter-service level
 - **Query complexity + depth limiting** at the Gateway
 - **Persisted Queries** for caching and allowlisting

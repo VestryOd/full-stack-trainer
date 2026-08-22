@@ -8,9 +8,9 @@ Mutation      — modifying data
 Subscription  — a real-time stream of events
 ```
 
-The surface-level analogy to HTTP methods is helpful as a starting point, but it hides the MOST important difference between Query and Mutation — the execution order of top-level fields, which is defined by the specification and has direct consequences for data consistency.
+The analogy to HTTP methods is a helpful starting point, but it hides the most important difference between Query and Mutation. That difference is the execution order of top-level fields. The specification defines that order, and it has direct consequences for data consistency.
 
-## Query: top-level fields execute IN PARALLEL
+## Query: top-level fields execute in parallel
 
 ```graphql
 query Dashboard {
@@ -43,7 +43,7 @@ const resolvers = {
 };
 ```
 
-## Mutation: top-level fields execute STRICTLY SEQUENTIALLY — the spec's most underappreciated fact
+## Mutation: top-level fields execute strictly sequentially — the spec's most underappreciated fact
 
 ```graphql
 mutation BatchUpdate {
@@ -211,7 +211,9 @@ messageAdded(@Args('chatId') chatId: string) {
 }
 ```
 
-### Senior nuance #1: in-memory PubSub does NOT WORK with horizontal scaling
+### Senior nuance #1: in-memory PubSub does not work with horizontal scaling
+
+PubSub (publish/subscribe) is the bus that carries an event from the mutation that published it to every open subscription.
 
 ```txt
 graphql-subscriptions provides PubSub "out of the box" — but
@@ -231,7 +233,7 @@ or Kafka — events are published through an EXTERNAL bus that
 EVERY replica listens to.
 ```
 
-### Senior nuance #2: WebSocket connection authentication happens ONCE, not per message
+### Senior nuance #2: WebSocket connection authentication happens once, not per message
 
 ```ts
 // graphql-ws — connectionParams are sent ONCE when the
@@ -293,12 +295,12 @@ trading quotes), and events are BIDIRECTIONAL or very frequent
 
 ## Common interview mistakes
 
-- **"Query and Mutation differ only semantically (read vs write)"** — not knowing that the spec REQUIRES sequential execution of Mutation top-level fields, unlike Query's parallel execution.
+- **"Query and Mutation differ only semantically (read vs write)"** — not knowing that the spec **requires** sequential execution of Mutation top-level fields, unlike Query's parallel execution.
 
-- **"Errors in GraphQL are always `errors[]`"** — not knowing about the Payload Pattern with typed error unions for expected business errors, and not explaining the trade-off between null bubbling and explicit client-side error handling.
+- **"Errors in GraphQL are always `errors[]`"** — not knowing about the Payload Pattern with typed error unions for expected business errors. The trade-off between null bubbling and explicit client-side error handling also goes unexplained.
 
 - **"Variables are just syntactic sugar for arguments"** — not connecting variables to Persisted Queries/query allowlisting, where stable query text is critical.
 
-- **"Subscriptions work out of the box with any number of replicas"** — not knowing about the in-memory PubSub limitation and the need for Redis/Kafka-backed PubSub for horizontal scaling.
+- **"Subscriptions work out of the box with any number of replicas"** — not knowing the in-memory PubSub limitation. Horizontal scaling needs a PubSub backed by Redis or Kafka.
 
 - **Not mentioning the authentication problem for long-lived WebSocket connections** — not understanding that a subscription's context is built once at connection time, not per event.
