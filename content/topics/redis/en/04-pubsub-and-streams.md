@@ -41,15 +41,18 @@ await subscriber.subscribe('notifications', (message) => {
 Pub/Sub: when it fits and when it doesn't
 
 Fits:
-  ✓ WebSocket broadcasting: server A → Redis Pub/Sub → server B → client
+  ✓ WebSocket broadcasting: server A → Redis Pub/Sub →
+    server B → client
   ✓ Live dashboard updates (missing one update is acceptable)
   ✓ Cache invalidation between multiple instances of a service
   ✓ Real-time notifications (duplicate if offline → OK)
 
-Does NOT fit:
-  ✗ Critical business events (order, payment) — loss is unacceptable
+Does not fit:
+  ✗ Critical business events (order, payment) — loss is
+    unacceptable
   ✗ Background jobs — retry logic is needed
-  ✗ Multiple independent consumers — each receives everything (not load balancing)
+  ✗ Multiple independent consumers — each receives
+    everything, so this is not load balancing
   ✗ Event replay — no history
 ```
 
@@ -87,9 +90,14 @@ await redis.xTrim('orders', 'MAXLEN', '~', 10000); // ~ = approximate (faster)
 
 ## Consumer Groups — reliable parallel processing
 
+A Consumer Group lets several workers split one stream: each message is handed to exactly one member of the group. The message then sits in a pending list until that worker sends `XACK` — the acknowledgement that says "processed, you can forget it".
+
 ```typescript
 // Consumer Group: multiple workers share the stream (each message → one worker)
 // + Acknowledgement: message stays pending until XACK
+
+// Declared elsewhere in the service: the business handler for one event
+declare function handleOrderEvent(message: Record<string, string>): Promise<void>;
 
 // Create the group ($ = start from new messages, 0 = from the beginning)
 try {
@@ -128,42 +136,59 @@ async function processOrderWorker(workerId: string) {
 
 // Check pending messages (not yet acknowledged)
 const pending = await redis.xPending('orders', 'order-processors', '-', '+', 10);
-// If a message has been pending too long → worker may have crashed → XCLAIM for another worker
+// Pending for too long → the worker probably crashed
+// → hand the message to someone else with XCLAIM
 
 // XCLAIM: reassign a pending message to another worker
-const claimed = await redis.xClaim('orders', 'order-processors', 'worker-2', 30000, [messageId]);
+const claimed = await redis.xClaim(
+  'orders', 'order-processors', 'worker-2', 30000, [messageId],
+);
 // 30000ms = idle time after which XCLAIM is allowed
 ```
 
 ## Pub/Sub vs Streams vs List (Queue) — decision matrix
 
-```txt
-                    Pub/Sub         List (Queue)      Streams
-Storage:            None            Yes (in-memory)   Yes (persistent)
-Delivery:           At-most-once    At-least-once*    At-least-once
-Multiple consumers: Fan-out         Point-to-point    Groups (sharding) + Fan-out
-ACK:                No              No (RPOP=delete)  Yes (XACK)
-History/Replay:     No              No                Yes
-Ordering:           Per channel     FIFO              Yes (by ID)
-Backpressure:       No              BLPOP blocks      BLOCK option
+Pick by the guarantee you need, not by what is easiest to write. Pub/Sub delivers at most once, a List delivers at least once but cannot tell you whether the work finished, and only Streams keep history.
 
-*List: BLPOP receives and deletes atomically, but no ACK → if worker crashes after RPOP
+```txt
+                 Pub/Sub        List (Queue)     Streams
+Storage:         None           In-memory        Persistent
+Delivery:        At-most-once   At-least-once*   At-least-once
+Consumers:       Fan-out        Point-to-point   Groups + fan-out
+Acknowledgement: No             No (RPOP=delete) Yes (XACK)
+History/Replay:  No             No               Yes
+Ordering:        Per channel    FIFO             By message ID
+Backpressure:    No             BLPOP blocks     BLOCK option
+
+*List: BLPOP receives and deletes atomically, but there is no
+ acknowledgement → the message is gone if the worker then crashes
 
 Pub/Sub: real-time broadcasting, cache invalidation, WebSocket relay
 List:    simple job queue (with BullMQ on top)
 Streams: reliable event log, event sourcing, audit trail
 
 Streams vs Kafka:
-  Streams: Redis already in infrastructure → zero extra cost, low throughput (~100k/sec)
-  Kafka:   dedicated streaming, millions of events/sec, days/weeks retention, ecosystem
+  Streams: Redis is already in your infrastructure → zero extra
+           cost, but low throughput (~100k/sec)
+  Kafka:   dedicated streaming, millions of events/sec, retention
+           of days or weeks, large ecosystem
 ```
 
 ## Practical example: WebSocket + Pub/Sub for scaling
+
+The moment you run a second instance of the server, a WebSocket connection lives on exactly one of them. Pub/Sub is the cheapest bus for telling the other instances that something happened.
 
 ```typescript
 // Problem: 2 NestJS instances, client connected to instance A
 // Event fires on instance B → client won't receive it
 // Solution: Redis Pub/Sub as a message bus between instances
+
+// The service that tracks which socket belongs to which user
+// on this instance (an in-memory Map behind a small facade)
+type ClientSocket = { emit(event: string, payload: unknown): void };
+declare const socketManager: {
+  getSocket(userId: string): ClientSocket | null;
+};
 
 // On instance B (when event fires):
 await redis.publish(`user:${userId}:events`, JSON.stringify({
@@ -186,11 +211,11 @@ await subscriber.subscribe(`user:${userId}:events`, (message) => {
 
 ## Common interview mistakes
 
-- **"Redis Pub/Sub is a reliable message broker like RabbitMQ"** — Pub/Sub is ephemeral: no storage, no retry, no acknowledgement. Subscriber offline → message lost forever. For reliable delivery: Redis Streams with Consumer Groups, or SQS/RabbitMQ.
+- **"Redis Pub/Sub is a reliable message broker like RabbitMQ"** — Pub/Sub is ephemeral: no storage, no retry, no acknowledgement. Subscriber offline → message lost forever. For reliable delivery: Redis Streams with Consumer Groups, RabbitMQ, or Amazon SQS (Simple Queue Service).
 
 - **"A subscriber connection can be used for other commands"** — no. After `SUBSCRIBE`/`PSUBSCRIBE` the connection enters subscribe mode: only `SUBSCRIBE`, `UNSUBSCRIBE`, `PSUBSCRIBE`, `PUNSUBSCRIBE`, `PING`, `QUIT` are allowed. A separate connection is required for other commands.
 
-- **"Redis Streams is a full replacement for Kafka"** — no. Streams: in-memory (with optional persistence), throughput ~100k-500k/sec, retention limited by RAM. Kafka: disk-based, millions of events/sec, days/weeks/forever retention, built-in partitioning, rich ecosystem (Kafka Connect, Kafka Streams). Streams is lightweight Kafka for lower-volume workloads.
+- **"Redis Streams is a full replacement for Kafka"** — no. Streams: in-memory (with optional persistence), throughput ~100k-500k/sec, retention limited by how much memory you have. Kafka: disk-based, millions of events/sec, days/weeks/forever retention, built-in partitioning, rich ecosystem (Kafka Connect, Kafka Streams). Streams is lightweight Kafka for lower-volume workloads.
 
 - **"XACK is not needed if processing succeeded"** — without XACK, the message stays in the pending list forever. When the pending list overflows → memory leak. Always call XACK after successful processing, and implement logic to retry/claim pending messages.
 

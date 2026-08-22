@@ -2,6 +2,10 @@
 
 ## Cache-Aside (Lazy Loading) — the most common pattern
 
+With Cache-Aside the application manages the cache itself. On a read it checks Redis first. If the key is missing — a cache miss — it reads PostgreSQL, writes the result into Redis with a TTL, and returns it. TTL (time to live) is how many seconds the key survives before Redis deletes it.
+
+Hence the second name, lazy loading: only what somebody actually asked for ends up in the cache. On a write the cache is not updated but deleted. The next read then refills it with fresh data.
+
 ```typescript
 import { createClient } from 'redis';
 import { PrismaClient } from '@prisma/client';
@@ -46,16 +50,21 @@ async function updateUser(userId: string, data: Partial<User>) {
 Cache-Aside advantages:
   ✓ Simple to implement
   ✓ Only what's actually requested gets cached (lazy)
-  ✓ Redis failure → requests fall through to DB (graceful degradation)
-  ✓ DB schema and cache schema are independent
+  ✓ Redis failure → requests fall through to the database
+    (graceful degradation)
+  ✓ Database schema and cache schema are independent
 
 Cache-Aside disadvantages:
   ✗ First request after TTL expires: always a Cache MISS (slow)
-  ✗ Race condition: two processes can simultaneously read from DB and write to cache
-  ✗ Stale data possible between DB update and cache invalidation
+  ✗ Race condition: two processes can read the database and
+    write the cache at the same time
+  ✗ Stale data possible between the database update and the
+    cache invalidation
 ```
 
-## Write-Through — synchronous write to cache and DB
+## Write-Through — synchronous write to cache and database
+
+Write-Through updates the cache on the same code path as the write to the database. The cache is therefore never stale. The price is that you cache rows nobody may ever read, and a Redis outage can now fail a write request.
 
 ```typescript
 // Write-Through: DB AND cache are written in one operation
@@ -88,20 +97,25 @@ async function updateUserWriteThroughSafe(userId: string, data: Partial<User>) {
 }
 ```
 
-## Write-Behind (Write-Back) — async DB write
+## Write-Behind (Write-Back) — async database write
+
+Write-Behind acknowledges the write as soon as Redis has it, and a background process pushes it to the database later. Writes become very fast, but anything Redis has not flushed yet is lost if Redis dies.
 
 ```txt
 Uncommon pattern:
-  Write → Redis (fast) → background process → DB (with delay)
+  Write → Redis (fast) → background process → database
+  (with delay)
 
 When it's justified:
-  Counters (page views, likes) — exact precision per second not critical
+  Counters (page views, likes) — per-second precision is
+  not critical
   Analytics events — can flush once a minute
   Session updates — user activity tracking
 
 Risks:
   Redis crash before flush → data lost
-  Complex to implement: needs a reliable flush process (BullMQ job, cron)
+  Complex to implement: needs a reliable flush process
+  (BullMQ job, cron)
 
 Example: accumulating page views
   INCR page:123:views (in Redis, instant)
@@ -109,6 +123,8 @@ Example: accumulating page views
 ```
 
 ## Cache Stampede (Thundering Herd) — the problem and solutions
+
+A stampede happens when one popular key expires and every in-flight request misses at the same moment. All of them go to the database at once. The three fixes below let only one request rebuild the value, or stop the keys from expiring together.
 
 ```typescript
 // Problem: TTL expires → 1000 concurrent requests → all hit DB → overload
@@ -154,6 +170,8 @@ await redis.set(cacheKey, JSON.stringify(data), { EX: BASE_TTL + jitter });
 
 ## Cache Penetration — protection against non-existent keys
 
+Penetration is the opposite problem: the requested row does not exist anywhere, so nothing is ever cached and every request reaches the database. The cure is to cache the absence itself, or to reject the key before you query at all.
+
 ```typescript
 // Attack/problem: requests for user:99999999 that doesn't exist
 // Every request: Redis MISS → DB query → null → not cached → DB again
@@ -189,6 +207,8 @@ async function getUserSafe(userId: string) {
 
 ## Cache Avalanche — mass TTL expiration
 
+A stampede is one hot key; an avalanche is thousands of unrelated keys expiring in the same second. It usually follows a deploy, because every key was written at the same moment with the same TTL. Spread the expiry times and the load stays flat.
+
 ```typescript
 // Cache Avalanche: many different keys expire at the same time
 // Example: new service deployed → all TTLs started from zero → all expire together
@@ -211,6 +231,8 @@ function getRandomTTL(base: number, spread = 0.1): number {
 
 ## Session storage pattern
 
+Sessions, token blacklists and rate-limit counters share one shape: short-lived keys whose loss is survivable. That is exactly what a TTL is for, so Redis cleans up after you and no cron job is needed.
+
 ```typescript
 // Typical use of Redis for sessions / JWT blacklist
 
@@ -226,7 +248,11 @@ async function isTokenBlacklisted(jti: string): Promise<boolean> {
 }
 
 // Rate Limiting (INCR + EXPIRE — sliding counter)
-async function checkRateLimit(identifier: string, maxRequests: number, windowSec: number): Promise<boolean> {
+async function checkRateLimit(
+  identifier: string,
+  maxRequests: number,
+  windowSec: number,
+): Promise<boolean> {
   const key = `ratelimit:${identifier}:${Math.floor(Date.now() / 1000 / windowSec)}`;
   const count = await redis.incr(key);
   if (count === 1) await redis.expire(key, windowSec * 2);
@@ -236,12 +262,22 @@ async function checkRateLimit(identifier: string, maxRequests: number, windowSec
 
 ## Common interview mistakes
 
-- **"Cache-Aside is the only correct pattern"** — it depends on requirements. Write-Through: when cache staleness is unacceptable. Write-Behind: when ultra-fast writes with eventual consistency are needed. Read-Through (in some ORMs/libraries): the cache itself goes to DB on MISS, the application is unaware of the cache.
+- **"Cache-Aside is the only correct pattern"** — it depends on requirements. Write-Through: when cache staleness is unacceptable. Write-Behind: when ultra-fast writes with eventual consistency are needed. Read-Through, built into some object-relational mapping (ORM) libraries: the cache itself queries the database on a miss, and the application never sees the cache.
 
-- **"Cache Invalidation = just delete the key"** — in a distributed system (multiple instances) there's a race condition: Instance A updated DB, deleted cache → Instance B read from DB (stale data due to replica lag) → wrote to cache → stale data served. Solution: short TTL + explicit invalidation, or event-driven invalidation.
+- **"Cache Invalidation = just delete the key"** — not in a distributed system. With several application instances, deleting the key opens a race:
 
-- **"Cache everything you can"** — cache adds complexity (invalidation, stale data, cache penetration). Cache what's worth it: expensive queries (heavy JOINs), external APIs with rate limits, static data. Don't cache: simple PK lookups (PostgreSQL B-Tree index is fast enough), data that changes very frequently.
+```txt
+1. Instance A updates the database, then deletes the cache key
+2. Instance B reads the same row — but from a read replica that
+   has not caught up yet, so it gets the OLD value (replica lag)
+3. Instance B writes that old value into the cache
+4. Everyone reads stale data until the TTL expires
+```
+
+  Fixes: a short TTL on top of explicit invalidation, or event-driven invalidation.
+
+- **"Cache everything you can"** — cache adds complexity (invalidation, stale data, cache penetration). Cache what's worth it: expensive queries (heavy JOINs), external APIs with rate limits, static data. Don't cache: simple lookups by primary key (the PostgreSQL B-Tree index is fast enough), or data that changes very frequently.
 
 - **"TTL solves all staleness problems"** — no. With TTL=1h, data can be up to 1 hour stale after an update. For critical data (balance, inventory) — invalidate cache on every update, not TTL-only. TTL is a safety net, not the primary mechanism.
 
-- **"Cache Stampede is a rare edge case"** — at high traffic it's a real problem. With a popular key, TTL=60s and 10k RPS — every minute up to 10k requests simultaneously hit the DB. Mutex lock or probabilistic early expiration (refresh cache N seconds before TTL expires) are essential.
+- **"Cache Stampede is a rare edge case"** — at high traffic it's a real problem. With a popular key, TTL=60s and 10k requests per second, every minute up to 10k requests hit the database at once. Mutex lock or probabilistic early expiration (refresh cache N seconds before TTL expires) are essential.

@@ -6,9 +6,9 @@ RDB (Redis Database) — a binary snapshot of the entire Redis memory at a point
 
 ```txt
 redis.conf — RDB configuration:
-  save 3600 1     # snapshot if at least 1 key changed in the last hour
-  save 300 100    # snapshot if 100+ keys changed in the last 5 min
-  save 60 10000   # snapshot if 10000+ keys changed in the last 1 min
+  save 3600 1     # snapshot if 1+ key changed in 1 hour
+  save 300 100    # snapshot if 100+ keys changed in 5 min
+  save 60 10000   # snapshot if 10000+ keys changed in 1 min
 
   dbfilename dump.rdb
   dir /var/lib/redis
@@ -27,7 +27,7 @@ RDB advantages:
 
 RDB disadvantages:
   ✗ Data loss: everything written after the last snapshot
-  ✗ Fork for snapshot: with >10GB of data, fork overhead is noticeable
+  ✗ Fork for the snapshot: at >10GB of data the fork costs
 ```
 
 ## AOF — append-only log of every command
@@ -40,14 +40,18 @@ redis.conf — AOF configuration:
   appendfilename "appendonly.aof"
 
   # fsync policy (the main trade-off):
-  appendfsync always    # fsync after every command → maximum reliability, slow
-  appendfsync everysec  # fsync once per second → compromise (recommended)
-  appendfsync no        # OS decides when → fast, but data loss possible on crash
+  appendfsync always    # fsync after every command
+                        # → maximum reliability, slow
+  appendfsync everysec  # fsync once per second
+                        # → compromise (recommended)
+  appendfsync no        # the OS decides when → fast, but
+                        # data can be lost on a crash
 
 AOF Rewrite (log compaction):
   Over time AOF grows: 1000 INCR → can be replaced with one SET
-  auto-aof-rewrite-percentage 100  # rewrite if AOF grew 2x from base size
-  auto-aof-rewrite-min-size 64mb   # but not before AOF reaches 64MB
+  auto-aof-rewrite-percentage 100  # rewrite when the AOF has
+                                   # doubled from its base size
+  auto-aof-rewrite-min-size 64mb   # but not before AOF hits 64MB
   BGREWRITEAOF  # manual rewrite (background, non-blocking)
 
 AOF advantages:
@@ -62,6 +66,8 @@ AOF disadvantages:
 ```
 
 ## RDB + AOF together (production recommendation)
+
+The two are not competitors. RDB gives you a small file and a fast restart, AOF gives you a small loss window, and running both costs little. On restart Redis prefers the AOF, because it is the more accurate of the two.
 
 ```txt
 Combination: redis.conf
@@ -80,12 +86,19 @@ Strategy:
 
 ## Replication — Master/Replica
 
-```typescript
-// redis.conf for Replica:
-// replicaof <master-ip> <master-port>
-// masterauth <password>
+A replica is a read-only copy that follows one master. You set it up in the config file, not in application code:
 
-// In Node.js with ioredis — separate clients:
+```txt
+# redis.conf on the replica
+replicaof <master-ip> <master-port>
+masterauth <password>
+```
+
+To check what a node currently is, run the `ROLE` command. A master answers `['master', offset, [list of replicas]]`, a replica answers `['slave', master-ip, master-port, state, offset]`.
+
+In Node.js with ioredis, keep two separate clients — one for writes, one for scaled reads:
+
+```typescript
 const masterClient = new Redis({ host: 'redis-master', port: 6379 });
 const replicaClient = new Redis({ host: 'redis-replica', port: 6379 });
 
@@ -119,10 +132,12 @@ Redis Cluster (sharding + HA):
   Each master has replicas
   key → CRC16(key) % 16384 → slot → node
   Automatic failover within the cluster
-  Limitation: multi-key operations only work for keys in the same slot
+  Limitation: multi-key ops work only within one hash slot
 ```
 
 ## Persistence disabled — when it's the right choice
+
+Turning persistence off is a real option, not a shortcut. It is correct exactly when losing the whole dataset costs you nothing but a slow first request.
 
 ```txt
 Redis as ephemeral cache (maxmemory + allkeys-lru):
@@ -130,7 +145,7 @@ Redis as ephemeral cache (maxmemory + allkeys-lru):
   save ""  # disable RDB
 
 When this fits:
-  Cache layer on top of PostgreSQL — on data loss, just get Cache MISS
+  Cache layer on top of PostgreSQL — data loss = a Cache MISS
   Session storage if user logouts on restart are acceptable
   Rate limiting counters — reset on restart is acceptable
 
@@ -146,7 +161,7 @@ When it does NOT fit:
 
 - **"RDB is better than AOF"** — different trade-offs. RDB: fast restart, compact, data loss up to several minutes. AOF: slower restart with large log, more disk space, loss up to 1 sec. Production: both together.
 
-- **"Replica automatically becomes Master when the Master fails"** — no. Without Sentinel or Cluster: the replica stays a replica. Sentinel is needed for automatic failover. Without Sentinel: manual promotion (`REPLICAOF NO ONE` on the replica, update DNS/config).
+- **"Replica automatically becomes Master when the Master fails"** — no. Without Sentinel or Cluster: the replica stays a replica. Sentinel is needed for automatic failover. Without Sentinel you promote by hand. Run `REPLICAOF NO ONE` on the replica, then update the config or the DNS (domain name system) record that clients follow.
 
 - **"Redis Cluster solves all scaling problems"** — Cluster adds complexity. Multi-key operations (`MGET`, `MSET`, Lua scripts) only work if all keys are in the same hash slot. If keys are on different nodes → error. Solution: hash tags `{prefix}:key` or avoid cross-slot operations.
 
