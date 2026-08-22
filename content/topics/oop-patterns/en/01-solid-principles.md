@@ -8,13 +8,13 @@ SOLID principles are not about "beautiful code" or academic purity. They are abo
 Symptoms of code that violates SOLID:
   - "I changed one class and tests failed in five unrelated places"
   - "To add a new user type I need to change 12 files"
-  - "I can't write a unit test for this class without spinning up a database"
-  - "This class can't be reused — it drags the entire application with it"
+  - "I can't unit-test this class without spinning up a database"
+  - "This class drags the whole application along when reused"
 
-Each of these symptoms is a violation of one or more SOLID principles.
+Every symptom here breaks one or more of the five principles.
 ```
 
-An important warning up front: SOLID is a **tool**, not a religion. At the end of each principle there is a "when strict adherence hurts" section — because blindly following principles creates over-engineered code that is just as hard to maintain as code without principles.
+An important warning up front: SOLID is a **tool**, not a religion. At the end of each principle there is a "when strict adherence hurts" section. Blindly following principles creates over-engineered code, and that code is just as hard to maintain as code with no principles at all.
 
 ## S — Single Responsibility Principle (SRP)
 
@@ -99,7 +99,7 @@ In NestJS, an SRP violation is a service that makes HTTP requests, writes to the
 
 ### When strict SRP hurts
 
-If the application is small and responsibilities NEVER change independently — artificial splitting creates cognitive overhead with no real benefit. A "user registration" feature in a 200-line MVP does not need four classes.
+If the application is small and responsibilities **never** change independently — artificial splitting creates cognitive overhead with no real benefit. A "user registration" feature in a 200-line minimum viable product does not need four classes.
 
 ---
 
@@ -174,7 +174,7 @@ In React, OCP is the difference between a component with hardcoded behavior and 
 
 ### When strict OCP hurts
 
-Premature abstraction is worse than its absence. If you have two channel types and there will never be a third — an interface + switch is more honest than a complex plugin registration system. **YAGNI until the second or third variation, OCP after.**
+Premature abstraction is worse than its absence. If you have two channel types and there will never be a third — an interface + switch is more honest than a complex plugin registration system. **YAGNI (you aren't gonna need it) until the second or third variation, OCP after.**
 
 ---
 
@@ -251,7 +251,8 @@ class Repository<T> {
 
 class ReadOnlyRepository<T> extends Repository<T> {
   async save(entity: T): Promise<void> {
-    throw new Error('Not supported'); // ← LSP violation: code using Repository doesn't expect this
+    // ← LSP violation: code using Repository doesn't expect this
+    throw new Error('Not supported');
   }
   async delete(id: string): Promise<void> {
     throw new Error('Not supported');
@@ -401,7 +402,7 @@ function UserAvatar({ userId, email }: UserAvatarProps) {
 
 ### When strict ISP hurts
 
-Too granular interfaces create excessive composition. If you have 8 single-method interfaces — that's also a problem: code becomes hard to read, and TypeScript intersection types (`A & B & C & D`) lose their meaning. The guideline: **an interface should correspond to one "role"** (Readable, Writable, Searchable), not one method.
+Too granular interfaces create excessive composition. If you have 8 single-method interfaces, that's also a problem. Code becomes hard to read, and TypeScript intersection types (`A & B & C & D`) lose their meaning. The guideline: **an interface should correspond to one "role"** (Readable, Writable, Searchable), not one method.
 
 ---
 
@@ -489,11 +490,13 @@ const service = new OrderService(
 
 ### Real-world context (NestJS)
 
-NestJS builds its entire system around DIP: `@Injectable()` providers are registered in the module, and classes receive dependencies through the constructor. The `IUserRepository` token in `provide` and `useClass: PostgresUserRepository` — that is DIP in action. This is exactly why testing NestJS services via `Test.createTestingModule` is so convenient: concrete implementations are swapped for mocks without changing the tested code.
+NestJS builds its entire system around DIP: `@Injectable()` providers are registered in the module, and classes receive dependencies through the constructor. The `IUserRepository` token in `provide` and `useClass: PostgresUserRepository` — that is DIP in action.
+
+This is exactly why testing NestJS services via `Test.createTestingModule` is so convenient: concrete implementations are swapped for mocks without changing the tested code.
 
 ### When strict DIP hurts
 
-For small utilities (helper functions, formatters, validators) — introducing abstractions for their own sake creates bloat. If `formatPrice(amount: number): string` will never change its implementation and doesn't need to be mocked in tests — it doesn't need an interface. DIP is critical for **dependencies with side effects** (IO, network, time) and for **variable behavior** (multiple email providers).
+For small utilities (helper functions, formatters, validators) — introducing abstractions for their own sake creates bloat. If `formatPrice(amount: number): string` will never change its implementation and doesn't need to be mocked in tests — it doesn't need an interface. DIP is critical for **dependencies with side effects** (input/output, network, time) and for **variable behavior** (multiple email providers).
 
 ---
 
@@ -503,11 +506,11 @@ For small utilities (helper functions, formatters, validators) — introducing a
 SRP → one "actor" changes the class → easier to comply with OCP
 OCP → extension via new classes → requires ISP (no "fat" interfaces)
 ISP → small interfaces → simplifies DIP (inject only what's needed)
-DIP → dependency on abstractions → simplifies testing (swap implementations)
-LSP → correct hierarchy → polymorphism works predictably (no surprises)
+DIP → depend on abstractions → simpler tests (swap implementations)
+LSP → correct hierarchy → polymorphism is predictable (no surprises)
 ```
 
-Violating one principle often violates others: a class with three responsibilities (SRP) is usually also tightly coupled to concrete dependencies (DIP), and adding new behavior requires modifying it (OCP).
+Violating one principle often violates others. A class with three responsibilities (SRP) is usually also tightly coupled to concrete dependencies (DIP). Adding new behavior then means editing that class, which breaks OCP too.
 
 ## Common interview traps
 
@@ -517,8 +520,8 @@ Violating one principle often violates others: a class with three responsibiliti
 
 - **OCP through inheritance instead of composition** — candidates often explain OCP via `extends`, but the modern idiomatic approach is interfaces + strategies. Inheritance is one way, not the only way.
 
-- **LSP only as "rectangle and square"** — this is the canonical example, but in practice LSP is more often violated via `throw new Error('Not implemented')` in interface methods. Being able to recognize this form of violation matters more than knowing the canonical example.
+- **LSP only as "rectangle and square"** — this is the canonical example. In practice LSP is more often violated via `throw new Error('Not implemented')` in interface methods. Being able to recognize this form of violation matters more than knowing the canonical example.
 
-- **Confusing ISP and DIP** — ISP is about interfaces from the client's perspective ("don't force extra methods"), DIP is about the direction of dependency ("depend on abstraction, not on concreteness"). These are different axes.
+- **Confusing ISP and DIP** — these are different axes. ISP is about interfaces from the client's perspective ("don't force extra methods"). DIP is about the direction of dependency ("depend on abstraction, not on concreteness").
 
 - **DIP = Dependency Injection** — DIP is the principle (direction of dependency), DI is the pattern (mechanism of delivering the dependency). DI implements DIP, but DIP is broader: you can invert dependencies via Service Locator or factories — that is also DIP, though not classical DI.

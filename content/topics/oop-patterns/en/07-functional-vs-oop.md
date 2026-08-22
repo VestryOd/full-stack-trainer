@@ -2,7 +2,7 @@
 
 ## A false dichotomy and the real choice
 
-The first thing to understand: in JavaScript/TypeScript the question "FP or OOP?" is not a choice between two mutually exclusive paradigms. It is a choice of **tools for specific problems** in a language that supports both paradigms simultaneously.
+Two acronyms run through this article. FP is functional programming, and OOP is object-oriented programming. In JavaScript/TypeScript the question "FP or OOP?" is not a choice between two mutually exclusive paradigms. It is a choice of **tools for specific problems** in a language that supports both at once.
 
 ```txt
 JavaScript — a multi-paradigm language:
@@ -62,7 +62,7 @@ function addUser(users: readonly User[], newUser: User): User[] {
 - Determinism: easy to test (no setup/teardown)
 - Memoization: result can be cached by arguments
 - Concurrency: no data races (no shared mutable state)
-- Debugging: behavior is predictable without understanding call history
+- Debugging: behavior is predictable without the call history
 ```
 
 ### Immutability
@@ -136,7 +136,8 @@ triple(5); // 15
 type Validator<T> = (value: T) => string | null;
 
 function required<T>(message = 'Required'): Validator<T> {
-  return (value) => (value === null || value === undefined || value === '') ? message : null;
+  return (value) =>
+    value === null || value === undefined || value === '' ? message : null;
 }
 
 function minLength(min: number): Validator<string> {
@@ -572,7 +573,8 @@ const DEFAULT_CONFIG = Object.freeze({
 
 // as const — compile-time immutability (TypeScript):
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as const;
-type HttpMethod = typeof HTTP_METHODS[number]; // 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+// HttpMethod is 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+type HttpMethod = typeof HTTP_METHODS[number];
 // HTTP_METHODS[0] has type 'GET', not string
 
 const STATUS_CODES = {
@@ -612,7 +614,7 @@ const nextState = produce(state, draft => {
 
 ```txt
 Task                                Recommended approach
-──────────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────
 Data transformation                 Pure functions
   (formatting, calculations)
 
@@ -648,10 +650,10 @@ Immutable updates of                Immer / spread / structuredClone
 
 - **"Immutability is slow"** — for most cases, spread and structuredClone are fast enough. For performance-critical code — Immer with structural sharing. Premature optimization vs code readability: correct first, fast later.
 
-- **"Inheritance is bad, always use composition"** — too categorical. Inheritance is justified for error hierarchies (`Error → HttpError → NotFoundError`), Template Method, and framework base classes. The problem is not inheritance itself, but deep hierarchies and LSP violations.
+- **"Inheritance is bad, always use composition"** — too categorical. Inheritance is justified for error hierarchies (`Error → HttpError → NotFoundError`), Template Method, and framework base classes. The problem is not inheritance itself, but deep hierarchies and violations of LSP (Liskov substitution principle).
 
-- **"Hooks replaced class components — so FP beats OOP"** — hooks solve a specific React problem (reusing stateful logic without HOC wrappers). That's not a manifesto for FP. Behind hooks lie State, Observer, and Mediator from OOP patterns.
+- **"Hooks replaced class components — so FP beats OOP"** — hooks solve a specific React problem, namely reusing stateful logic without HOC (higher-order component) wrappers. That's not a manifesto for FP. Behind hooks lie State, Observer, and Mediator from OOP patterns.
 
-- **Not knowing Result/Option** — TypeScript interviews increasingly ask about functional error handling. Knowing `Result<T, E>` as an alternative to exceptions, and understanding when to use which (exceptions — for genuinely exceptional situations, Result — for expected business-logic errors) is senior-level knowledge.
+- **Not knowing Result/Option** — TypeScript interviews increasingly ask about functional error handling. Knowing `Result<T, E>` as an alternative to exceptions is senior-level knowledge, and so is knowing when to use which. Exceptions are for genuinely exceptional situations. Result is for expected business-logic errors.
 
 - **Confusing immutability and const-ness** — `const` in JavaScript prevents reassigning a variable, not mutating an object. Immutability is about the impossibility of mutating the object itself. `const arr = []` + `arr.push(1)` — a constant variable, a mutable object.

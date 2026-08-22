@@ -20,7 +20,7 @@ An anti-pattern is a solution that seems reasonable, is applied frequently, but 
 
 ### God Object
 
-A class that knows too much and does too much. Violates SRP, High Cohesion, and Low Coupling simultaneously.
+A class that knows too much and does too much. It violates three guidelines at once: SRP (single responsibility principle), High Cohesion and Low Coupling.
 
 ```ts
 // ❌ UserManager — God Object: registration, auth, avatars,
@@ -108,8 +108,8 @@ class OrderProcessor {
 
 ```txt
 Golden Hammer manifestations:
-  - "We use Redux for all state" → even for local UI state in a single
-    component that's not needed anywhere else
+  - "We use Redux for all state" → even for local state in a
+    single component, needed nowhere else
   - "We use microservices" → for an application built by 2 people
   - "We use a job queue" → for a synchronous 10ms operation
   - "We use Singleton" → for every service
@@ -365,7 +365,12 @@ function useSelectContext() {
 }
 
 // Root component — holds state and provides context
-function Select({ children, onChange }: { children: React.ReactNode; onChange?: (v: string) => void }) {
+type SelectProps = {
+  children: React.ReactNode;
+  onChange?: (v: string) => void;
+};
+
+function Select({ children, onChange }: SelectProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
   const onSelect = useCallback((value: string) => {
@@ -456,7 +461,8 @@ function DataFetcher<T>({ url, render }: DataFetcherProps<T>) {
 // Modern alternative to Render Props — custom hooks:
 // (preferred in 2024+ over Render Props)
 function useData<T>(url: string) {
-  const [state, setState] = useState<{ data: T | null; loading: boolean; error: Error | null }>({
+  type State = { data: T | null; loading: boolean; error: Error | null };
+  const [state, setState] = useState<State>({
     data: null, loading: true, error: null,
   });
 
@@ -663,23 +669,33 @@ async function transferOrder(pool: Pool, orderId: string, newUserId: string) {
 
 ---
 
-## When NOT to apply a pattern
+## When a pattern is the wrong answer
 
 This is the most important skill: knowing when a pattern is needed is almost as important as knowing how to implement it.
 
 ```txt
-Situation                         Pattern?         Solution
-────────────────────────────────────────────────────────────────
-One notification type             Observer         No — just call a function
-Two types, third will never       Strategy         No — if/else is more honest
-come
-Simple CRUD without business      Repository       Maybe not — ORM queries
-logic                                              directly in the service are fine
-Single "algorithm" step           Template Method  No — just a method
-Simple config with 2-3 fields     Builder          No — object literal is clearer
+One notification type
+  Tempting pattern: Observer
+  Verdict: no — just call a function.
+
+Two types, and a third will never come
+  Tempting pattern: Strategy
+  Verdict: no — if/else is more honest.
+
+Simple create/read/update/delete, no business logic
+  Tempting pattern: Repository
+  Verdict: maybe not — plain queries in the service are fine.
+
+A single "algorithm" step
+  Tempting pattern: Template Method
+  Verdict: no — just a method.
+
+Simple config with 2-3 fields
+  Tempting pattern: Builder
+  Verdict: no — an object literal is clearer.
 ```
 
-**Rule of three:** a pattern is justified when there are (or will almost certainly be) three or more different cases. Until then — YAGNI.
+**Rule of three:** a pattern is justified when there are (or will almost certainly be) three or more different cases. Until then, follow YAGNI — you aren't gonna need it.
 
 ---
 
@@ -689,12 +705,12 @@ Simple config with 2-3 fields     Builder          No — object literal is clea
 
 - **Not seeing patterns in familiar tools** — Redux is Command+Observer. Express middleware is Chain of Responsibility. React Context is Mediator. Passport.js is Strategy. Inability to name the pattern behind a known library signals that pattern knowledge is book-based, not practical.
 
-- **"Anemic Domain Model is fine"** — it depends. For a CRUD service with no business logic — acceptable. For domain-rich systems (finance, e-commerce, logistics) — technical debt that grows with every iteration.
+- **"Anemic Domain Model is fine"** — it depends. For a CRUD service (create, read, update, delete) with no business logic — acceptable. For domain-rich systems (finance, e-commerce, logistics) — technical debt that grows with every iteration.
 
 - **Compound Components only for complex components** — Compound Components is worth applying when a component has several interdependent sub-components. For simple cases — regular props. Criterion: "does the component's user need control over the structure?"
 
-- **Repository as "just a wrapper over ORM"** — Repository solves a different problem: isolating business logic from storage details. If Repository methods mirror the ORM API one-to-one without adding domain semantics — it's just a wrapper and the pattern is being used mindlessly.
+- **Repository as "just a wrapper over the ORM"** — an ORM (object-relational mapper) turns table rows into objects. Repository solves a different problem: isolating business logic from storage details. If Repository methods mirror the ORM API one-to-one without adding domain semantics, it's just a wrapper and the pattern is being used mindlessly.
 
-- **God Object → immediate refactor** — in legacy code, God Objects are a fact of life. The right approach: don't rewrite everything at once (that's risky), but gradually displace it — extract new services following the Open/Closed principle, keeping the God Object as a facade during the transition period.
+- **God Object → immediate refactor** — in legacy code, God Objects are a fact of life. Rewriting everything at once is risky. Displace the God Object gradually instead: extract new services following the Open/Closed principle, and keep the God Object as a facade during the transition.
 
-- **Not distinguishing patterns from principles** — SOLID and GRASP are principles (guidance on how to think about architecture). GoF patterns are concrete solutions for concrete problems. A pattern may implement several principles. A principle may be realized through several patterns.
+- **Not distinguishing patterns from principles** — principles are guidance on how to think about architecture. That covers SOLID (the five design principles) and GRASP (general responsibility assignment software patterns). GoF (Gang of Four) patterns are concrete solutions for concrete problems. A pattern may implement several principles. A principle may be realized through several patterns.
