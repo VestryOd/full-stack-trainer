@@ -1,7 +1,9 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# Distributed Locks
+# Распределённые блокировки
 
-## Проблема Race Condition в distributed системах
+## Проблема Race Condition в распределённых системах
+
+Race condition — это когда два процесса читают одно и то же значение, а потом оба записывают результат, посчитанный по устаревшему чтению. Внутри одного процесса это лечится мьютексом. У трёх инстансов сервиса общего мьютекса нет, поэтому блокировка должна лежать там, где её видят все.
 
 ```txt
 Сценарий: два сервиса пытаются списать деньги с одного счёта
@@ -10,14 +12,16 @@ Account balance = $100
 Service A: читает $100, вычисляет $100 - $70 = $30
 Service B: читает $100, вычисляет $100 - $80 = $20
 Service A: записывает $30
-Service B: записывает $20  ← перезаписывает A! Итог $20 вместо отклонения
+Service B: записывает $20  ← перезаписывает A! Итог $20
 
 Монолит: mutex.lock() → один поток за раз
 Distributed: 3 инстанса сервиса → локальный mutex не помогает
 Решение: Redis distributed lock — общий для всех инстансов
 ```
 
-## SET NX EX — базовый distributed lock
+## SET NX EX — базовая распределённая блокировка
+
+Одна команда — и блокировка готова. NX означает «not exists»: Redis запишет ключ, только если его ещё нет, поэтому гонку выигрывает ровно один вызывающий. `EX` и `PX` задают TTL (time to live) — срок жизни ключа в секундах или миллисекундах, чтобы упавший процесс не держал блокировку вечно.
 
 ```typescript
 import { createClient } from 'redis';
@@ -44,8 +48,9 @@ class RedisLock {
   async release(resource: string, token: string): Promise<boolean> {
     const lockKey = `lock:${resource}`;
 
-    // КРИТИЧНО: проверить что освобождаем СВОЙ lock, не чужой!
-    // Без проверки: TTL истёк → другой процесс захватил lock → мы случайно освобождаем его lock
+    // Критично: проверить, что освобождаем свой lock, а не чужой!
+    // Без проверки: TTL истёк, lock захватил другой процесс,
+    // и мы освободим чужую блокировку
     // Lua script: атомарная проверка + удаление (нельзя делать двумя отдельными командами!)
     const luaScript = `
       if redis.call("get", KEYS[1]) == ARGV[1] then
@@ -92,21 +97,25 @@ async function processPayment(orderId: string, amount: number) {
 
 ## Почему Lua script обязателен для release
 
+Проверка токена и удаление ключа — два обращения к серверу, и в промежутке между ними у блокировки может смениться владелец. Lua убирает этот промежуток: весь скрипт Redis выполняет как одну команду.
+
 ```txt
 Проблема без Lua (два отдельных GET + DEL):
 
 Process A: SET lock:123 "token-A" NX EX 5
 Process A: ... работает (задержка 5+ сек) ...
 Redis:      TTL истёк → lock удалён
-Process B:  SET lock:123 "token-B" NX EX 5  ← Process B захватил lock
+Process B:  SET lock:123 "token-B" NX EX 5  ← B захватил lock
 Process A:  GET lock:123 → "token-B"  ← видит чужой токен
 Process A:  DEL lock:123  ← ОШИБКА! удаляет чужой lock
 
 Lua script: GET и DEL в одной атомарной операции
-Redis single-threaded: между check и delete никто не может вклиниться
+Redis однопоточен: между check и delete никто не вклинится
 ```
 
 ## Lock с retry и timeout
+
+Не получить блокировку — это ещё не ошибка: обычно достаточно подождать и попробовать снова. Добавьте к каждой попытке небольшую случайную задержку, чтобы ожидающие процессы не стучались в один и тот же момент.
 
 ```typescript
 async function acquireWithRetry(
@@ -134,9 +143,11 @@ const token = await acquireWithRetry(lock, `order:${orderId}`, 30_000, 5_000);
 
 ## Redlock — надёжность с несколькими Redis нодами
 
+Один узел Redis — единая точка отказа. Если он умрёт сразу после выдачи блокировки, сменщик о ней ничего не знает, и блокировку заберёт второй процесс. Redlock размазывает блокировку по нескольким независимым узлам и считает её взятой, только если согласилось большинство.
+
 ```typescript
-// Redlock алгоритм (ioredis-based библиотека: redlock npm package)
-// Защищает от: одиночного Redis упавшего после выдачи lock (SPOF)
+// Redlock алгоритм (npm-пакет: redlock)
+// Защищает от падения одиночного Redis сразу после выдачи lock
 
 import Redlock from 'redlock';
 import { createClient } from 'redis';
@@ -158,29 +169,38 @@ const redlock = new Redlock(clients, {
 
 // Получение lock через большинство (2/3 нод)
 async function processWithRedlock(orderId: string) {
-  // lock автоматически освобождается в конце using block (или в finally)
-  await using lock = await redlock.acquire([`lock:order:${orderId}`], 30_000);
-
   // Если 2/3 инстансов подтвердили lock → безопасно работать
-  await processPaymentLogic(orderId);
-  // lock.release() вызывается автоматически
+  const lock = await redlock.acquire([`lock:order:${orderId}`], 30_000);
+  try {
+    await processPaymentLogic(orderId);
+  } finally {
+    await lock.release(); // освобождаем даже при исключении
+  }
 }
+
+// В TypeScript 5.2+ есть форма короче: `await using` сам вызовет
+// lock.release() при выходе из блока:
+// await using lock = await redlock.acquire([...], 30_000);
 ```
 
 ```txt
 Redlock: алгоритм
 1. Запустить clock: startTime = currentTime
-2. Попробовать SET NX PX на всех N нодах (малый timeout чтобы не зависнуть)
+2. Попробовать SET NX PX на всех N нодах (малый timeout,
+   чтобы не зависнуть на мёртвой ноде)
 3. Если quorum (>N/2) ответили OK И elapsed < ttl*0.1 → lock получен
 4. Effective TTL = TTL - elapsed - clockDrift
 5. Если quorum не достигнут → DEL на всех нодах, retry
 
 Когда Redlock избыточен:
-  Single Redis инстанс с Sentinel → достаточно для большинства приложений
-  Redlock: для критичной инфраструктуры где потеря lock = серьёзная проблема
+  Один инстанс Redis с Sentinel → хватает большинству
+  Redlock: для критичной инфраструктуры, где потеря lock —
+  серьёзная проблема
 ```
 
 ## Redis Lock vs PostgreSQL FOR UPDATE
+
+Если вся операция и так укладывается в одну транзакцию PostgreSQL, Redis не нужен: `SELECT ... FOR UPDATE` блокирует строку, а commit снимает блокировку. Redis-блокировка нужна, когда критическая секция выходит за пределы этой транзакции.
 
 ```typescript
 // PostgreSQL SELECT FOR UPDATE — alternative к Redis lock
@@ -210,10 +230,10 @@ await prisma.$transaction(async (tx) => {
 
 - **"SET NX EX — атомарная операция"** — да, это одна атомарная команда. Но неправильное использование: `SET lock NX` без `EX` → если процесс упал → deadlock навсегда. Всегда `SET lock token NX EX <seconds>` или `PX <milliseconds>`.
 
-- **"Для release достаточно DEL"** — нет. Сценарий: Process A захватил lock (TTL=5сек), завис на 6 сек → TTL истёк → Process B захватил lock → Process A возобновился → `DEL lock` → Process B потерял lock. Правильно: Lua script: GET + compare token + DEL атомарно.
+- **"Для release достаточно `DEL`"** — нет. Process A захватил lock с TTL=5 сек и завис на 6 сек. TTL истёк, lock захватил Process B. Process A очнулся, выполнил `DEL lock` — и Process B потерял свою блокировку. Правильно: Lua-скрипт, который атомарно делает `GET`, сверяет токен и вызывает `DEL`.
 
-- **"Redlock нужен для любого production lock"** — для большинства приложений Single Redis + Sentinel (или Redis Cluster) достаточно. Redlock нужен только при жёстких требованиях к консистентности и недопустимости потери lock при сбое одной ноды. Martin Kleppmann ([Kleppmann Critique](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html)) указывал, что даже Redlock не даёт 100% гарантии при GC паузах.
+- **"Redlock нужен для любого production lock"** — для большинства приложений Single Redis + Sentinel (или Redis Cluster) достаточно. Redlock нужен только при жёстких требованиях к консистентности и недопустимости потери lock при сбое одной ноды. Martin Kleppmann ([разбор Redlock](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html)) указывал, что даже Redlock не даёт 100% гарантии при паузах сборки мусора (GC).
 
-- **"Redis Lock заменяет PostgreSQL транзакции"** — разные инструменты. Если операция атомарна внутри одной PostgreSQL транзакции — используй `FOR UPDATE` или сериализацию транзакций. Redis Lock нужен для cross-service координации или когда lock нужен до начала транзакции.
+- **"Redis Lock заменяет PostgreSQL транзакции"** — разные инструменты. Если операция атомарна внутри одной PostgreSQL транзакции — используйте `FOR UPDATE` или сериализацию транзакций. Redis Lock нужен для координации между сервисами или когда lock нужен до начала транзакции.
 
 - **"TTL lock можно выбирать произвольно"** — TTL должен быть больше максимального ожидаемого времени критической секции + буфер. Слишком маленький TTL → lock истечёт пока процесс работает → другой захватит lock → race condition. Слишком большой → при сбое процесса ресурс заблокирован надолго. Typical: 2-10x ожидаемого времени операции.

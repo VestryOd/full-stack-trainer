@@ -1,5 +1,5 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# Redis Data Structures
+# Структуры данных Redis
 
 ## Обзор структур и их сложность
 
@@ -17,6 +17,8 @@ HyperLogLog → O(1) PFADD/PFCOUNT, ~0.81% error, 12KB памяти
 ```
 
 ## String — универсальная структура
+
+String хранит любые байты: текст, число или сериализованный JSON-объект. Redis умеет обращаться с ним и как со счётчиком, поэтому `INCR` на String атомарен без транзакции.
 
 ```typescript
 import { createClient } from 'redis';
@@ -46,6 +48,8 @@ const old = await redis.getDel('session:abc'); // получить и удали
 ```
 
 ## Hash — объект с полями
+
+Hash — это один ключ, внутри которого плоский набор пар «поле — значение». Берите его, когда отдельные поля объекта обновляются часто: можно записать одно поле, не вычитывая объект целиком.
 
 ```typescript
 // Hash vs JSON String: Hash позволяет обновлять отдельные поля без десериализации
@@ -85,11 +89,16 @@ await redis.hDel('user:123', 'temporaryToken');
 
 ## List — двусторонняя очередь / стек
 
+List — упорядоченная последовательность, в которую можно класть и из которой можно забирать с любого конца. Это самый дешёвый способ собрать очередь задач или буфер «последние N событий».
+
 ```typescript
 // List = doubly linked list: O(1) push/pop с обоих концов, O(N) по индексу
 
 // Queue (FIFO): LPUSH + RPOP
-await redis.lPush('jobs:email', JSON.stringify({ to: 'user@example.com', template: 'welcome' }));
+await redis.lPush(
+  'jobs:email',
+  JSON.stringify({ to: 'user@example.com', template: 'welcome' }),
+);
 const job = await redis.rPop('jobs:email');
 
 // Stack (LIFO): LPUSH + LPOP
@@ -102,6 +111,7 @@ const result = await redis.blPop('jobs:email', 5); // timeout 5 сек
 // → { key: 'jobs:email', element: '...' } или null при timeout
 
 // Ограничение длины (sliding window log)
+const event = { type: 'page-view', path: '/pricing', at: Date.now() };
 await redis.lPush('recent:events', JSON.stringify(event));
 await redis.lTrim('recent:events', 0, 99); // хранить только последние 100
 
@@ -114,6 +124,8 @@ const len = await redis.lLen('jobs:email');
 ```
 
 ## Set — уникальные значения и операции над множествами
+
+Set хранит уникальные строки без порядка, проверка членства — O(1). Пересечение, объединение и разность двух множеств Redis считает на своей стороне, так что тянуть оба списка в приложение не надо.
 
 ```typescript
 // Set: уникальные строки, O(1) добавление/проверка/удаление
@@ -143,12 +155,17 @@ const diff = await redis.sDiff('user:123:following', 'user:456:following');
 // Случайный элемент (для лотерей, случайных рекомендаций)
 const random = await redis.sRandMember('post:123:tags');
 
-// Rate limiting с Set (уникальные IP за последний час)
+// Rate limiting с Set (уникальные адреса за последний час)
+const hourKey = new Date().toISOString().slice(0, 13); // '2024-01-01T14'
+const clientIp = '203.0.113.7'; // req.ip в Express/Nest
+
 await redis.sAdd(`visitors:${hourKey}`, clientIp);
 const uniqueVisitors = await redis.sCard(`visitors:${hourKey}`);
 ```
 
 ## Sorted Set — ранжированные данные
+
+Sorted Set — это Set, где у каждого элемента есть ещё и числовой score, и Redis держит элементы отсортированными по нему. Запросы «топ-10» и «всё в диапазоне score от X до Y» не требуют сортировки при чтении.
 
 ```typescript
 // Sorted Set: уникальные элементы со score (float), O(log N) вставка/обновление
@@ -179,6 +196,7 @@ const score = await redis.zScore('leaderboard:game', 'user:alice');
 const highScorers = await redis.zRangeByScore('leaderboard:game', 5001, '+inf');
 
 // Sliding Window Rate Limiting с Sorted Set:
+const userId = 'user:alice';
 const now = Date.now();
 const windowMs = 60_000; // 1 минута
 
@@ -190,6 +208,8 @@ await redis.expire(`ratelimit:${userId}`, 60);
 ```
 
 ## HyperLogLog и Bitmap
+
+Обе структуры меняют точность или выразительность на память. HyperLogLog считает уникальные значения в фиксированных 12 килобайтах независимо от их количества. Bitmap упаковывает один флаг «да/нет» в каждый бит.
 
 ```typescript
 // HyperLogLog: приблизительный подсчёт уникальных элементов
@@ -215,12 +235,15 @@ const activeDays = await redis.bitCount(`user:123:activity:2024`);
 
 ## Типичные ошибки на интервью
 
-- **"Для хранения пользователя всегда лучше Hash"** — зависит от паттерна. Hash оптимален при частых обновлениях отдельных полей. Если объект всегда читается/записывается целиком — JSON String с `SET`/`GET` проще и быстрее (`HGETALL` делает несколько операций vs один `GET`).
+- **"Для хранения пользователя всегда лучше Hash"** — зависит от паттерна. Hash оптимален при частых обновлениях отдельных полей. Если объект всегда читается и записывается целиком, JSON String с `SET`/`GET` проще и быстрее. `HGETALL` затрагивает все поля, а `GET` — это одно чтение.
 
-- **"List подходит для очереди с несколькими consumers"** — List без дополнительной логики не подходит: если несколько consumers делают `RPOP`, сообщение получает только один, но нет acknowledgment — при падении consumer сообщение теряется. Для надёжных очередей: BullMQ (поверх Redis) или SQS.
+- **"List подходит для очереди с несколькими consumers"** — у простого List нет гарантий доставки:
+  - Если несколько consumers делают `RPOP`, сообщение достаётся только одному из них.
+  - Подтверждения (acknowledgement) нет, поэтому при падении этого consumer сообщение теряется.
+  - Для надёжных очередей берите BullMQ поверх Redis или Amazon SQS (Simple Queue Service).
 
-- **"Sorted Set медленнее Set"** — для ZADD/ZRANK: O(log N) vs O(1) для Set. Но Sorted Set даёт range queries по score, которых у Set нет вообще. Выбор зависит от нужных операций, не просто от "скорости".
+- **"Sorted Set медленнее Set"** — для `ZADD`/`ZRANK` это O(log N) против O(1) у Set. Но Sorted Set даёт range queries по score, которых у Set нет вообще. Выбор зависит от нужных операций, не просто от "скорости".
 
 - **"SMEMBERS безопасно для больших Set"** — SMEMBERS блокирует Redis на время выполнения (single-threaded). Для Set с миллионами элементов — использовать `SSCAN` (cursor-based итерация, не блокирует). То же правило для `KEYS *` vs `SCAN`, `HGETALL` для больших Hash vs `HSCAN`.
 
-- **"HyperLogLog точнее чем обычный счётчик"** — HyperLogLog приблизительный (~0.81% погрешность). Если нужна точность — использовать Set (но память O(N)) или обычный инкремент в DB. HyperLogLog для аналитики где допустима погрешность: уникальные посетители за день, уникальные IP.
+- **"HyperLogLog точнее чем обычный счётчик"** — HyperLogLog приблизительный (~0.81% погрешность). Если нужна точность — использовать Set (но память O(N)) или счётчик в самой базе. HyperLogLog нужен для аналитики, где погрешность допустима: уникальные посетители за день, уникальные сетевые адреса (IP).

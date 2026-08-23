@@ -2,15 +2,19 @@
 
 ## How to use this cheat sheet
 
-Each answer is a compressed version of what's covered in depth in the topic articles. In a senior interview, almost every question here is an opener — not the final question. The interviewer expects you to go deeper on "why", "when would you not use it", and "show me a real example". Each group ends with **"Typical follow-ups"** to show where the conversation usually goes next.
+This page covers OOP (object-oriented programming) and SOLID — five design principles: single responsibility, open/closed, Liskov substitution, interface segregation and dependency inversion. Each answer is a compressed version of what the topic articles cover in depth.
+
+In a senior interview, almost every question here is an opener, not the final question. The interviewer expects you to go deeper on "why", "when would you not use it", and "show me a real example". Each group ends with **"Typical follow-ups"** to show where the conversation usually goes next.
 
 ---
 
 ## Group 1: SOLID Principles
 
-**1. What does SRP actually mean — and how is it misunderstood?**
+**1. What does SRP (single responsibility principle) actually mean — and how is it misunderstood?**
 
-SRP says a class should have one *reason to change*, not one *method*. Misunderstanding: splitting every class into tiny pieces with one method each. Correct reading: "who are the stakeholders that could request a change?" A `UserService` that both sends emails and manages DB records has two stakeholders (marketing team vs. DB team) → two reasons to change → violates SRP. A class with 10 methods all related to user persistence has one reason to change (schema/query changes) → SRP is fine.
+SRP says a class should have one *reason to change*, not one *method*. The usual misunderstanding is splitting every class into tiny pieces with one method each.
+
+The correct reading is a question: who are the stakeholders that could request a change? A `UserService` that both sends emails and manages database records has two of them — the marketing team and the data team. Two stakeholders means two reasons to change, so SRP is violated. A class with 10 methods all related to user persistence has one reason to change, namely schema and query changes, so SRP is fine.
 
 ---
 
@@ -37,7 +41,7 @@ class NotificationService {
 
 **3. What is LSP and what does it mean in practice?**
 
-LSP: a subtype must be substitutable for its base type without breaking the program's correctness. Classic violation: `Square extends Rectangle` — setting width changes height (to keep it square), which breaks code that expects independent dimensions. The test: if you need an `instanceof` check or a try/catch around a method of the base class when calling a subclass — LSP is violated.
+LSP: a subtype must be substitutable for its base type without breaking the program's correctness. Classic violation: `Square extends Rectangle` — setting width changes height (to keep it square), which breaks code that expects independent dimensions. Here is the test. If calling a subclass needs an `instanceof` check, or a try/catch around a base class method, LSP is violated.
 
 ```ts
 // ❌ Violation: Square breaks the Rectangle contract
@@ -60,13 +64,17 @@ class Square    implements Shape { /* single side */ }
 
 **4. ISP — when does a "fat interface" cause real problems?**
 
-ISP: clients should not be forced to depend on methods they do not use. Real problem: a `IRepository` with `findOne`, `findAll`, `create`, `update`, `delete`, `bulkInsert`, `runReport`. A read-only reporting module that only needs `findAll` and `runReport` must still depend on mutation methods — any change to `create` forces a recompile/retest of the report module. Fix: split into `IReadRepository`, `IWriteRepository`, `IReportRepository`.
+ISP: clients should not be forced to depend on methods they do not use. Real problem: an `IRepository` with `findOne`, `findAll`, `create`, `update`, `delete`, `bulkInsert`, `runReport`.
+
+A read-only reporting module needs only `findAll` and `runReport`, yet it still depends on the mutation methods. Any change to `create` then forces a recompile and a retest of the report module. Fix: split into `IReadRepository`, `IWriteRepository`, `IReportRepository`.
 
 ---
 
 **5. DIP — what is the difference between Dependency Inversion and Dependency Injection?**
 
-DIP is a *principle*: high-level modules should not depend on low-level modules — both should depend on abstractions. DI is a *mechanism* for implementing DIP: instead of `new EmailService()` inside a class, the dependency is injected via constructor. You can have DI without DIP (inject a concrete class → still tightly coupled). DIP without DI is possible but awkward. In NestJS, the `@Injectable()` + `@Module` system gives DI; depending on an interface token (not a class) gives DIP.
+DIP is a *principle*: high-level modules should not depend on low-level modules — both should depend on abstractions. DI is a *mechanism* for implementing DIP: instead of `new EmailService()` inside a class, the dependency is injected via constructor.
+
+You can have DI without DIP: inject a concrete class and you are still tightly coupled. DIP without DI is possible but awkward. In NestJS, the `@Injectable()` + `@Module` system gives DI; depending on an interface token rather than a class gives DIP.
 
 ```ts
 // ❌ DIP violation — high-level depends on low-level concrete class
@@ -94,7 +102,7 @@ class OrderService {
 
 "Can you violate SOLID intentionally?" →
   Yes. A script, a test helper, a one-off migration — strict SOLID
-  in throw-away code is waste. Principles apply to code that evolves.
+  in throw-away code is waste. Principles are for code that evolves.
 
 "Which principle does NestJS enforce by design?" →
   DIP via its DI container; OCP via interceptors, guards, pipes
@@ -107,7 +115,7 @@ class OrderService {
 
 **6. What problem does Factory Method solve that a simple `new` does not?**
 
-`new ConcreteClass()` couples the caller to a specific implementation. Factory Method decouples: the caller works with the base type, and subclasses or factory functions decide what to instantiate. In Node.js, `http.createServer()` and `https.createServer()` are factory methods returning different server implementations through the same interface — calling code doesn't know or care which transport is used.
+`new ConcreteClass()` couples the caller to a specific implementation. Factory Method decouples: the caller works with the base type, and subclasses or factory functions decide what to instantiate. In Node.js, `http.createServer()` and `https.createServer()` are factory methods. They return different server implementations through the same interface, and calling code neither knows nor cares which transport is used.
 
 ---
 
@@ -149,13 +157,14 @@ Singletons in Node.js are module-level singletons (the module cache keeps one in
 ```txt
 "Is PrismaClient a Singleton? Should it be?" →
   Yes — one PrismaClient per process manages the connection pool.
-  Multiple instances = multiple pools = "too many connections" in prod.
-  But in tests, a new instance per test suite avoids state leakage.
+  Several instances mean several pools, and then "too many
+  connections" in production. But in tests, a new instance per
+  test suite avoids state leakage.
 
-"What's the difference between Abstract Factory and Factory Method?" →
+"Abstract Factory vs Factory Method — what is the difference?" →
   Factory Method: one product, subclasses decide the implementation.
-  Abstract Factory: family of related products (Button + Checkbox for
-  Windows vs. macOS), always consistent with each other.
+  Abstract Factory: a family of related products (Button plus
+  Checkbox for Windows or macOS), always consistent together.
 ```
 
 ---
@@ -197,7 +206,13 @@ Facade provides a simplified interface over a complex subsystem. In React: a cus
 
 **11. Proxy pattern — what are the three main use cases?**
 
-(1) **Virtual proxy** — lazy loading (instantiate the real object only on first use). (2) **Protection proxy** — access control (check permissions before delegating). (3) **Logging/caching proxy** — intercept calls to add cross-cutting behaviour. JavaScript's native `Proxy` object is the pattern implemented at language level. MobX uses JS Proxy as a virtual proxy over observable objects to intercept reads and writes for reactive tracking.
+There are three common kinds:
+
+- **Virtual proxy** — lazy loading. The real object is built only on first use.
+- **Protection proxy** — access control. Permissions are checked before delegating.
+- **Logging or caching proxy** — calls are intercepted to add cross-cutting behaviour.
+
+JavaScript's native `Proxy` object is this pattern implemented at language level. MobX uses it as a virtual proxy over observable objects, intercepting reads and writes for reactive tracking.
 
 ```ts
 function withCache<T extends object>(target: T, ttlMs: number): T {
@@ -278,13 +293,19 @@ Command encapsulates an action as an object with `execute()` and optionally `und
 
 **15. Template Method vs Strategy — when to use each?**
 
-Template Method: define the *skeleton* of an algorithm in a base class, let subclasses override specific steps. Coupling is via inheritance. Strategy: encapsulate the *whole* algorithm as a replaceable object. Coupling is via composition. Rule: if the steps are invariant and you only customise a few — Template Method. If the whole algorithm needs to swap at runtime or per-instance — Strategy. Template Method violates OCP when a new variant requires touching the base class; Strategy does not.
+Template Method: define the *skeleton* of an algorithm in a base class, let subclasses override specific steps. Coupling is via inheritance. Strategy: encapsulate the *whole* algorithm as a replaceable object. Coupling is via composition.
+
+The rule is simple. If the steps are invariant and you only customise a few, use Template Method. If the whole algorithm needs to swap at runtime or per instance, use Strategy. Template Method violates OCP when a new variant requires touching the base class; Strategy does not.
 
 ---
 
 **16. What is the Chain of Responsibility pattern and where does it appear in backend code?**
 
-A request passes through a chain of handlers; each handler either processes it or passes it to the next. Appears in: Express/Koa middleware, NestJS guards + interceptors + pipes + exception filters (each is a link in the chain), and AWS Lambda handler chains. Key property: the sender doesn't know which handler will process the request, and handlers can be added/removed without touching the sender.
+A request passes through a chain of handlers; each handler either processes it or passes it to the next. Real examples:
+
+- Express and Koa middleware.
+- NestJS guards, interceptors, pipes and exception filters — each is a link in the chain.
+- Lambda handler chains on Amazon Web Services. Key property: the sender doesn't know which handler will process the request, and handlers can be added/removed without touching the sender.
 
 ---
 
@@ -292,8 +313,8 @@ A request passes through a chain of handlers; each handler either processes it o
 
 ```txt
 "If Redux actions are Commands, what is the Reducer?" →
-  Pure function that applies a Command to produce a new state —
-  it's closest to an Interpreter or a state machine transition function.
+  Pure function that applies a Command to produce a new state.
+  Closest to an Interpreter, or to a state machine transition.
 
 "How would you implement an undo stack for a form?" →
   Command pattern: each field change is a Command with execute()
@@ -335,7 +356,7 @@ This is a violation of OCP and a missed Strategy / Factory Method opportunity. E
 
 - **Composite**: the React element tree — every node is either a leaf (`<span>`) or a composite (`<div>` containing children). `React.Children` utilities operate on both uniformly.
 - **Observer**: `useContext` + `createContext` — React propagates context changes to all consumers (observers) automatically.
-- **Proxy**: Synthetic Event system — React wraps native DOM events in a uniform proxy object.
+- **Proxy**: Synthetic Event system — React wraps native DOM (document object model) events in a uniform proxy object.
 - **Template Method**: `React.Component` lifecycle — `render()` is abstract (must be overridden), lifecycle hooks (`componentDidMount`, etc.) are optional steps.
 - **HOC (Higher-Order Component)**: Decorator pattern — wraps a component to add behaviour without modifying it.
 
@@ -345,7 +366,7 @@ This is a violation of OCP and a missed Strategy / Factory Method opportunity. E
 
 **19. What is "God Object" and what SOLID principle does it violate?**
 
-A God Object knows too much and does too much — it accumulates business logic, data access, and presentation concerns. Violates SRP (many reasons to change) and usually OCP (can't extend without modifying). In Node.js: a 1000-line `UserController` that validates input, queries the DB, sends emails, writes audit logs, and formats responses. Fix: split by responsibility into services, each with a single concern.
+A God Object knows too much and does too much — it accumulates business logic, data access, and presentation concerns. Violates SRP (many reasons to change) and usually OCP (can't extend without modifying). In Node.js: a 1000-line `UserController` that validates input, queries the database, sends emails, writes audit logs, and formats responses. Fix: split by responsibility into services, each with a single concern.
 
 ---
 
@@ -378,14 +399,22 @@ function sendWelcome(email: Email) { /* always valid by construction */ }
 
 **22. What is "Anemic Domain Model" and when is it actually acceptable?**
 
-Anemic Domain Model: classes that are data bags (getters/setters) with no behaviour; all logic lives in service classes. Violates the OOP principle that objects should have both state and behaviour. However, it's *acceptable* in: CRUD-heavy apps where business logic is minimal, DTOs (they are intentionally data containers), and functional-style code where data and functions are deliberately separate. The anti-pattern label applies when an anemic model is used in a rich-domain context and the logic scatters across services.
+Anemic Domain Model: classes that are data bags (getters/setters) with no behaviour; all logic lives in service classes. It violates the OOP principle that objects should have both state and behaviour.
+
+It is *acceptable* in three places:
+
+- Apps that are mostly CRUD (create, read, update, delete), where business logic is minimal.
+- DTOs (data transfer objects) — they are intentionally data containers.
+- Functional-style code, where data and functions are deliberately separate.
+
+The anti-pattern label applies when an anemic model is used in a rich-domain context and the logic scatters across services.
 
 ---
 
 ## Typical follow-ups (Group 5 & 6)
 
 ```txt
-"If you see a 500-line service class in a PR, what's your review comment?" →
+"A 500-line service class shows up in review. What do you say?" →
   Ask "what are the reasons this class would change?" If there are
   more than one — suggest extracting responsibilities. Avoid "it's
   too long" without a principle behind it.
@@ -398,7 +427,7 @@ Anemic Domain Model: classes that are data bags (getters/setters) with no behavi
 "Give an example of a pattern that's almost always an anti-pattern
 in modern JS/TS" →
   Singleton with global mutable state — module caching creates
-  implicit singletons; if they're stateful, tests pollute each other.
+  implicit singletons. If they hold state, tests pollute each other.
   Better: DI container manages lifetime explicitly.
 ```
 
@@ -406,7 +435,7 @@ in modern JS/TS" →
 
 ## Group 7: Patterns in React and Node.js
 
-**23. What is the Compound Component pattern in React and which GoF pattern does it resemble?**
+**23. What is the Compound Component pattern in React and which GoF (Gang of Four) pattern does it resemble?**
 
 Compound Components: a parent component manages state and shares it via Context; child components are separate exports that consume that context implicitly. The user composes them:
 
@@ -425,20 +454,30 @@ Resembles **Composite** (parent + child are composed freely) and **Mediator** (p
 
 **24. How does NestJS's module system implement Dependency Inversion?**
 
-NestJS modules declare `providers` (what they create) and `exports` (what they share). Other modules declare `imports` to consume what was exported. The DI container resolves the dependency graph at startup. The key DIP part: you can register a provider as an interface token (`{ provide: IMailer, useClass: SendGridMailer }`) — the consumer depends on the token (abstraction), not the concrete class. Swapping `SendGridMailer` for `ResendMailer` in tests or for a different environment requires zero changes to the consuming class.
+NestJS modules declare `providers` (what they create) and `exports` (what they share). Other modules declare `imports` to consume what was exported. The DI container resolves the dependency graph at startup.
+
+Here is the key DIP part. You can register a provider as an interface token, as in `{ provide: IMailer, useClass: SendGridMailer }`. The consumer then depends on the token, which is the abstraction, not on the concrete class. Swapping `SendGridMailer` for `ResendMailer` in tests or in another environment requires zero changes to the consuming class.
 
 ---
 
 **25. Where does the Repository pattern appear in a Prisma + NestJS codebase, and why is it controversial?**
 
-Repository: an abstraction over data access that looks like an in-memory collection from the domain's point of view. In NestJS + Prisma: a `UserRepository` class wraps `prisma.user.*` and exposes `findById`, `save`, `delete`. Why controversial: Prisma's client is already a well-typed data-access abstraction — adding a Repository layer can be redundant boilerplate with no real benefit for simple cases. The pattern *is* justified when: (1) the Repository interface enables test doubles without a real DB; (2) the domain is complex and you want to hide Prisma details from domain logic; (3) you need to support multiple data sources behind one interface.
+Repository: an abstraction over data access that looks like an in-memory collection from the domain's point of view. In NestJS + Prisma, a `UserRepository` class wraps `prisma.user.*` and exposes `findById`, `save`, `delete`.
+
+Why it is controversial: Prisma's client is already a well-typed data-access abstraction. Adding a Repository layer on top can be redundant boilerplate with no real benefit in simple cases.
+
+The pattern *is* justified in three situations:
+
+- The Repository interface enables test doubles without a real database.
+- The domain is complex and you want to hide Prisma details from domain logic.
+- You need to support several data sources behind one interface.
 
 ---
 
 ## Typical follow-ups (Group 7)
 
 ```txt
-"Render Props vs HOC vs Custom Hooks — which pattern wins in 2025?" →
+"Render Props, HOC or Custom Hooks — which wins in 2025?" →
   Custom Hooks — they compose without wrapper hell, work with
   TypeScript naturally, and don't add nodes to the component tree.
   HOCs are still useful for class components (legacy) and for
@@ -448,6 +487,6 @@ Repository: an abstraction over data access that looks like an in-memory collect
 "Is useReducer a pattern?" →
   Yes — it's the Command pattern (actions are commands) combined
   with a state machine (reducer is a transition function).
-  For complex local state, useReducer is preferable to useState
-  because state transitions are explicit and testable as pure functions.
+  For complex local state, useReducer beats useState: transitions
+  are explicit and testable as pure functions.
 ```

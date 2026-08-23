@@ -10,7 +10,9 @@ type User {
 }
 ```
 
-SDL (Schema Definition Language) is a formal language describing EVERY possible query against the API and guarantees about the shape of the response. "Guarantees" is the key word here: `String!` isn't just "usually not null" — it's a COMMITMENT from the server, and violating it produces an execution error (see null bubbling below) — i.e., the schema affects runtime behavior, not just static typing.
+SDL (Schema Definition Language) is a formal language. It describes every possible query against the API and the guarantees about the shape of the response.
+
+"Guarantees" is the key word here. `String!` isn't just "usually not null" — it is a **commitment** from the server. Violating it produces an execution error (see null bubbling below). So the schema affects runtime behavior, not just static typing.
 
 ## Scalar types and custom scalars
 
@@ -38,7 +40,8 @@ const DateTimeScalar = new GraphQLScalarType({
   name: 'DateTime',
   serialize: (value: Date) => value.toISOString(),       // server → client
   parseValue: (value: string) => new Date(value),         // client → server (variables)
-  parseLiteral: (ast) => new Date((ast as StringValueNode).value), // client → server (inline)
+  // client → server (inline literal)
+  parseLiteral: (ast) => new Date((ast as StringValueNode).value),
 });
 ```
 
@@ -50,9 +53,9 @@ type Post {
 }
 ```
 
-Without a custom scalar, `createdAt: String!` TECHNICALLY works, but loses semantic typing — the client can't tell from the schema that the string is an ISO date, and codegen will generate `string` instead of `Date`/`DateTime`.
+Without a custom scalar, `createdAt: String!` technically works, but it loses semantic typing. The client can't tell from the schema that the string is a date written in ISO (the international `2026-08-22T10:00:00Z` notation). Codegen will also generate `string` instead of `Date`/`DateTime`.
 
-## Non-Null and Lists — combinations and THEIR REAL IMPACT on error behavior
+## Non-Null and Lists — combinations and their real impact on error behavior
 
 ```graphql
 posts: [Post]      # the array can be null, elements can be null
@@ -239,7 +242,7 @@ returned by the parent resolver to already contain the
 property.
 ```
 
-### `context` — created ONCE per request, not per resolver
+### `context` — created once per request, not once per resolver
 
 ```ts
 // NestJS / Apollo Server
@@ -271,7 +274,7 @@ then one user's cache can "leak" into another user's response
 (a data leak across requests).
 ```
 
-### `info` — rarely used, but solves a specific overfetching problem AT THE DATABASE LEVEL
+### `info` — rarely used, but it solves a specific overfetching problem at the database level
 
 ```ts
 // info.fieldNodes / graphql-parse-resolve-info lets you find
@@ -332,25 +335,25 @@ in [N+1 Problem and DataLoader].
 ## Connection to other topics
 
 ```txt
-[GraphQL Fundamentals]            — the Parse/Validate/Execute
-                                      pipeline in which resolvers run
-[N+1 Problem and DataLoader]       — why resolvers for array fields
-                                      are called N times and how
-                                      batching solves it
+[GraphQL Fundamentals]        — the Parse/Validate/Execute
+                                pipeline in which resolvers run
+[N+1 Problem and DataLoader]  — why resolvers for array fields
+                                are called N times, and how
+                                batching solves it
 [Queries, Mutations, and
- Subscriptions]                     — Mutation resolvers and how
-                                      they differ (execution order,
-                                      side effects)
+ Subscriptions]               — Mutation resolvers and how they
+                                differ (execution order, side
+                                effects)
 ```
 
 ## Common interview mistakes
 
-- **"`!` in the schema is just like TypeScript's non-null, a purely static check"** — not knowing about null bubbling: an error in a non-null field cascades to null out the nearest nullable ancestor, possibly all of `data`.
+- **"`!` in the schema is just like TypeScript's non-null, a purely static check"** — not knowing about null bubbling. An error in a non-null field cascades upward and nulls out the nearest nullable ancestor, possibly all of `data`.
 
 - **Confusing Interface and Union** — not knowing that a Union doesn't require common fields between members while an Interface does, and that both need `__resolveType`.
 
-- **"Why do we need Input Types if we have Object Types?"** — not explaining that Object Types can contain resolvers/interfaces/unions — concepts that don't make sense for input data.
+- **"Why do we need Input Types if we have Object Types?"** — not explaining that Object Types can contain resolvers, interfaces and unions. Those concepts make no sense for input data.
 
-- **"`parent` is the parent GraphQL query"** — not understanding that `parent` is the RESULT of the parent resolver (a regular JS object), and the default resolver just reads a property off it.
+- **"`parent` is the parent GraphQL query"** — not understanding that `parent` is the **result** of the parent resolver, a regular JS object. The default resolver just reads a property off it.
 
-- **Creating a DataLoader/cache as a singleton outside `context`** — missing the risk of one user's data leaking into another's response via a shared cache across requests.
+- **Creating a DataLoader or cache as a singleton outside `context`** — not seeing the risk it creates. One user's data can leak into another user's response through a cache shared across requests.

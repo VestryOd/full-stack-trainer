@@ -9,7 +9,11 @@ Structural  → "static relationships between classes and objects"
 Behavioral  → "dynamic interaction protocols between objects"
 ```
 
-Behavioral patterns are the largest GoF group. They address: how to avoid tight coupling between a message sender and receiver, how to encapsulate an algorithm, how to react to state changes.
+Behavioral patterns are the largest group in the GoF (Gang of Four) catalogue. They address three questions:
+
+- How do you avoid tight coupling between a message sender and its receiver?
+- How do you encapsulate an algorithm?
+- How do you react to state changes?
 
 ---
 
@@ -17,7 +21,7 @@ Behavioral patterns are the largest GoF group. They address: how to avoid tight 
 
 > Defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
 
-Observer is one of the most fundamental patterns in frontend and Node.js development. EventEmitter, DOM events, React state, RxJS — all are implementations of Observer.
+Observer is one of the most fundamental patterns in frontend and Node.js development. EventEmitter, DOM (document object model) events, React state, RxJS — all are implementations of Observer.
 
 ### Basic implementation
 
@@ -116,7 +120,10 @@ orderService.on('error', (err) => logger.error('OrderService error', err));
 
 // A custom hook as Observable — subscribes to an external event:
 function useWindowSize() {
-  const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [size, setSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 
   useEffect(() => {
     const handler = () => setSize({ width: window.innerWidth, height: window.innerHeight });
@@ -136,7 +143,8 @@ function useWindowSize() {
 Observer problems in large applications:
   - "Reaction chains": event A → event B → event C → ...
     hard to trace what happens when a user takes a specific action
-  - Memory leaks: subscriber lives longer than Observable — didn't unsubscribe → leak
+  - Memory leaks: the subscriber outlives the Observable —
+    nobody unsubscribed, so the memory is never released
   - Execution order: subscribers are called in registration order,
     but there is no explicit guarantee — if one subscriber depends
     on another's result, that's hidden coupling
@@ -148,7 +156,7 @@ Observer problems in large applications:
 
 > Defines a family of algorithms, encapsulates each one, and makes them interchangeable. Lets the algorithm vary independently from clients that use it.
 
-Strategy is the pattern for "swappable behavior." If you have a place in the code where the algorithm needs to vary based on context (sorting, validation, pricing, authentication), Strategy is the right choice.
+Strategy is the pattern for swappable behavior. Reach for it when the algorithm at some point in the code has to vary with context: sorting, validation, pricing, authentication.
 
 ### Example: pricing strategies
 
@@ -920,7 +928,8 @@ Chain of Responsibility:
 
 Express middleware is both patterns at once:
   - cors(), helmet() → Decorator (add behavior, always call next)
-  - authenticate() → Chain of Responsibility (may return 401 and not call next)
+  - authenticate() → Chain of Responsibility (may return 401
+    and never call next)
 ```
 
 ---
@@ -928,16 +937,37 @@ Express middleware is both patterns at once:
 ## Comparison of behavioral patterns
 
 ```txt
-Pattern                  Core idea                              Real-world example
-──────────────────────────────────────────────────────────────────────────────────
-Observer                 Subscribe and notify                   EventEmitter, Redux store
-Strategy                 Interchangeable algorithm              Passport.js strategies, Array.sort
-Command                  Action as an object                    Redux actions, BullMQ jobs
-Iterator                 Traversal without exposing structure   Generators, Streams, for-await-of
-Template Method          Algorithm skeleton with hooks          DataImporter, React lifecycle
-State                    Behavior depends on state              XState, Order states
-Mediator                 Intermediary instead of direct links   Redux Store, EventBus, Socket.IO room
-Chain of Responsibility  Handler chain, breakable               Express middleware, NestJS Guards
+Observer
+  Subscribe and notify.
+  Seen in: EventEmitter, the Redux store.
+
+Strategy
+  Interchangeable algorithm.
+  Seen in: Passport.js strategies, Array.sort.
+
+Command
+  Action as an object.
+  Seen in: Redux actions, BullMQ jobs.
+
+Iterator
+  Traversal without exposing the structure.
+  Seen in: generators, streams, for-await-of.
+
+Template Method
+  Algorithm skeleton with hooks.
+  Seen in: DataImporter, the React lifecycle.
+
+State
+  Behavior depends on the current state.
+  Seen in: XState, order states.
+
+Mediator
+  Intermediary instead of direct links.
+  Seen in: the Redux store, an event bus, a Socket.IO room.
+
+Chain of Responsibility
+  Handler chain that can be broken.
+  Seen in: Express middleware, NestJS guards.
 ```
 
 ## Common interview traps
@@ -950,7 +980,7 @@ Chain of Responsibility  Handler chain, breakable               Express middlewa
 
 - **Template Method is always better than Strategy** — the opposite: GoF itself recommends preferring composition (Strategy) over inheritance (Template Method). Template Method is justified when the "algorithm skeleton" is itself an important architectural concept.
 
-- **Chain of Responsibility == Decorator** — a common confusion. Decorator ALWAYS wraps; Chain of Responsibility may break the chain. Express middleware is both patterns simultaneously, depending on the specific handler.
+- **Chain of Responsibility == Decorator** — a common confusion. Decorator **always** wraps; Chain of Responsibility may break the chain. Express middleware is both patterns simultaneously, depending on the specific handler.
 
 - **Iterator only as a "class with hasNext/next"** — in TypeScript/JavaScript, Iterator is built into the language: `Symbol.iterator`, generators, `for-of`, `for-await-of`. Not knowing the built-in iteration protocol when discussing the Iterator pattern is a weak spot.
 

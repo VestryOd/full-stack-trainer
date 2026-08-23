@@ -26,15 +26,16 @@ app.post('/orders', async (req, res) => {
 ```
 
 Three problems:
+
 1. **Untestable business rule** — "user can't exceed credit limit" can only be tested via HTTP + real database
-2. **Scattered data access** — changing `prisma.order.create` to a raw SQL query means touching every controller
+2. **Scattered data access** — changing `prisma.order.create` to a raw SQL (Structured Query Language) query means touching every controller
 3. **Tangled responsibilities** — credit check, order creation, email sending, HTTP response — all in one function
 
 The Repository and Service patterns give each concern its own place.
 
 ## The Repository Pattern
 
-A **Repository** provides a collection-like interface to a domain entity. From the caller's perspective, it looks like a typed in-memory collection — you call `findById`, `save`, `delete`. The repository handles all the SQL, ORM queries, or API calls internally.
+A **Repository** provides a collection-like interface to a domain entity. From the caller's perspective, it looks like a typed in-memory collection — you call `findById`, `save`, `delete`. The repository handles all the SQL, ORM (object-relational mapper) queries, or API calls internally.
 
 ```txt
 Controller / Use Case
@@ -42,7 +43,7 @@ Controller / Use Case
         │ calls (domain language: findById, save, findByUserId)
         ▼
   ┌─────────────┐
-  │  Repository │  ← the interface, defined in the domain/service layer
+  │  Repository │  ← the interface, defined in the service layer
   └──────┬──────┘
          │ implements
          ▼
@@ -164,20 +165,20 @@ export interface IOrderRepository extends IRepository<Order> {
 }
 ```
 
-The risk: a generic `IRepository<T>` often leads to `findAll()` methods with complex filter/sort parameters that turn into a query builder — effectively re-implementing the ORM on top of the ORM. Keep the generic base thin (only `findById`, `save`, `delete`) and put all domain-specific queries on the concrete interface.
+The risk: a generic `IRepository<T>` often leads to `findAll()` methods with complex filter and sort parameters. Those turn into a query builder, which re-implements the ORM on top of the ORM. Keep the generic base thin (only `findById`, `save`, `delete`) and put all domain-specific queries on the concrete interface.
 
 ## The Service Layer Pattern
 
-A **Service** (or **Service Layer**) is the place where business operations live. It orchestrates repositories and other dependencies to carry out a use case — without knowing about HTTP, WebSockets, or CLI.
+A **Service** (or **Service Layer**) is the place where business operations live. It orchestrates repositories and other dependencies to carry out a use case — without knowing about HTTP, WebSockets, or the command line (CLI).
 
 ```txt
 Controller (HTTP)   CLI Command   Background Job
         │                │               │
         └────────────────┴───────────────┘
-                         │ calls (business language: placeOrder, cancelOrder)
+                         │ business words: placeOrder, cancelOrder
                          ▼
                   ┌───────────────┐
-                  │ OrdersService │  ← contains business logic and orchestration
+                  │ OrdersService │  ← logic + orchestration
                   └──────┬────────┘
                          │ uses
              ┌──────────────────────────┐
@@ -311,20 +312,20 @@ src/
 │   └── order.ts                    ← pure types and business rules
 │
 ├── repositories/
-│   ├── order.repository.interface.ts     ← IOrderRepository (interface)
-│   ├── user.repository.interface.ts      ← IUserRepository (interface)
+│   ├── order.repository.interface.ts     ← IOrderRepository
+│   ├── user.repository.interface.ts      ← IUserRepository
 │   ├── prisma-order.repository.ts        ← implementation
 │   └── prisma-user.repository.ts         ← implementation
 │
 ├── services/
-│   ├── notification.service.interface.ts ← INotificationService (interface)
+│   ├── notification.service.interface.ts ← INotificationService
 │   ├── orders.service.ts                 ← business logic
 │   └── sendgrid-notification.service.ts  ← implementation
 │
 ├── controllers/
 │   └── orders.controller.ts              ← HTTP translation layer
 │
-└── main.ts                               ← wiring (Composition Root)
+└── main.ts                               ← the Composition Root
 ```
 
 ## Testing each layer independently
@@ -359,8 +360,12 @@ const service = new OrdersService(mockOrderRepo, mockUserRepo, mockNotifier);
 beforeEach(() => jest.clearAllMocks());
 
 test('places an order when credit is sufficient', async () => {
-  mockUserRepo.findById.mockResolvedValue({ id: 'u1', email: 'user@test.com', creditLimit: 500 });
-  mockOrderRepo.save.mockResolvedValue({ id: 'o1', userId: 'u1', total: 100, status: 'pending', createdAt: new Date() });
+  mockUserRepo.findById.mockResolvedValue({
+    id: 'u1', email: 'user@test.com', creditLimit: 500,
+  });
+  mockOrderRepo.save.mockResolvedValue({
+    id: 'o1', userId: 'u1', total: 100, status: 'pending', createdAt: new Date(),
+  });
   mockNotifier.sendOrderConfirmation.mockResolvedValue(undefined);
 
   const order = await service.placeOrder('u1', 100);
@@ -370,9 +375,12 @@ test('places an order when credit is sufficient', async () => {
 });
 
 test('throws InsufficientCreditError when credit is exceeded', async () => {
-  mockUserRepo.findById.mockResolvedValue({ id: 'u1', email: 'user@test.com', creditLimit: 50 });
+  mockUserRepo.findById.mockResolvedValue({
+    id: 'u1', email: 'user@test.com', creditLimit: 50,
+  });
 
-  await expect(service.placeOrder('u1', 100)).rejects.toBeInstanceOf(InsufficientCreditError);
+  await expect(service.placeOrder('u1', 100))
+    .rejects.toBeInstanceOf(InsufficientCreditError);
   expect(mockOrderRepo.save).not.toHaveBeenCalled();
 });
 
@@ -469,12 +477,12 @@ Unit of Work is useful when you need transactional consistency across multiple a
 
 ## Common interview traps
 
-- **"The repository is just a wrapper around Prisma"** — a repository that does `return prisma.order.findMany(filter)` and leaks Prisma's `WhereInput` types up to the service layer is not a proper repository — it's a thin proxy. The repository's value is in the abstraction: the service asks "give me all pending orders" in domain language; the repository translates that into however the data happens to be stored. If Prisma types appear in the service, the repository layer doesn't exist in any meaningful sense.
+- **"The repository is just a wrapper around Prisma"** — that describes a thin proxy, not a repository. A proxy does `return prisma.order.findMany(filter)` and leaks Prisma's `WhereInput` types up to the service layer. The repository's value is in the abstraction. The service asks for all pending orders in domain language, and the repository translates that into however the data happens to be stored. If Prisma types appear in the service, the repository layer doesn't exist in any meaningful sense.
 
 - **"Services should be stateless, so no fields allowed"** — it's not about fields vs no fields; it's about instance state that varies between calls. Constructor-injected dependencies (repositories, other services) are fine as fields — they're consistent across calls. Mutable state that tracks partial computation across calls (like `this.currentTransaction`) would be a problem in a singleton service.
 
-- **"One service per entity"** — this leads to `UserService`, `OrderService`, `ProductService` each trying to own all operations on their entity, and then cross-cutting operations (place an order, which involves users AND orders AND inventory) not having a clear home. A better mental model: one service per business capability or use case group. `OrdersService` handles placing, cancelling, refunding orders — it can call `userRepository` directly. The entity boundary doesn't have to match the service boundary.
+- **"One service per entity"** — this leads to `UserService`, `OrderService` and `ProductService`, each trying to own every operation on its entity. Then a cross-cutting operation has no clear home. Placing an order involves users, orders and inventory at once. A better mental model: one service per business capability or use case group. `OrdersService` handles placing, cancelling, refunding orders — it can call `userRepository` directly. The entity boundary doesn't have to match the service boundary.
 
-- **"Repositories should have a `findAll()` method"** — `findAll()` on a large table is a performance hazard. If the service needs to filter data, put a domain-meaningful method on the repository: `findPendingOlderThan(date: Date)` is better than returning everything and filtering in memory. If a generic filter is genuinely needed, pass a typed filter object rather than letting Prisma's `WhereInput` leak into the interface.
+- **"Repositories should have a `findAll()` method"** — `findAll()` on a large table is a performance hazard. If the service needs to filter data, put a domain-meaningful method on the repository. Returning everything and filtering in memory is worse than a method like `findPendingOlderThan(date: Date)`. If a generic filter is genuinely needed, pass a typed filter object rather than letting Prisma's `WhereInput` leak into the interface.
 
-- **"The service layer is where you put everything that isn't routing"** — this describes what the service layer often becomes, not what it should be. Transaction management, caching, retry logic, rate limiting all tend to creep into services. When a service is doing business logic AND managing cache invalidation AND handling retry backoff, the next step is extracting those into separate concerns (a caching decorator, a retry middleware). The service's job is pure business orchestration.
+- **"The service layer is where you put everything that isn't routing"** — this describes what the service layer often becomes, not what it should be. Transaction management, caching, retry logic, rate limiting all tend to creep into services. A service may be doing business logic **and** cache invalidation **and** retry backoff at once. The next step is to extract those into separate concerns: a caching decorator, a retry middleware. The service's job is pure business orchestration.

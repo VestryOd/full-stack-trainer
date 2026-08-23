@@ -4,7 +4,7 @@
 
 ## The problem layered architecture solves
 
-Imagine a codebase where an Express route handler queries the database directly, formats the response, applies business rules, and sends emails — all in the same function. This is not hypothetical; it's what unstructured codebases look like after a few months of moving fast.
+Imagine a codebase where one Express route handler does everything in the same function. It queries the database, formats the response, applies business rules, and sends emails. This is not hypothetical; it's what unstructured codebases look like after a few months of moving fast.
 
 ```ts
 // ❌ Everything mixed together — the reality of "just ship it" code
@@ -23,9 +23,10 @@ app.post('/orders', async (req, res) => {
 ```
 
 Problems with this approach:
+
 - **Can't test the business rule** ("insufficient credit") without an HTTP request, a real database, and a real email service
-- **Can't reuse the business rule** from a CLI script, a cron job, or a WebSocket handler — the logic is hardwired to HTTP
-- **A database schema change** (renaming a column) requires hunting through route files to find all raw SQL
+- **Can't reuse the business rule** from a command-line (CLI) script, a cron job, or a WebSocket handler — the logic is hardwired to HTTP
+- **A database schema change** (renaming a column) requires hunting for raw SQL (Structured Query Language) in every route file
 - **A new team member** can't understand where the "logic" is — it's everywhere
 
 Layered architecture is the answer to all four problems at once.
@@ -49,11 +50,16 @@ Layered architecture is the answer to all four problems at once.
 └────────────────────────────────────────┘
 ```
 
-**Presentation Layer** — translates between the outside world (HTTP requests, WebSocket messages, CLI arguments) and the application. It knows about `req`, `res`, HTTP status codes, headers. It does NOT contain business rules. Its job: validate input shape, call a service, format output.
+**Presentation Layer** — translates between the outside world (HTTP requests, WebSocket messages, CLI arguments) and the application. It knows about `req`, `res`, HTTP status codes, headers. It does **not** contain business rules. Its job: validate the input shape, call a service, format the output. The types it accepts and returns are DTOs (data transfer objects).
 
-**Business Logic Layer** — the heart of the application. Contains rules like "a user can't place an order if their credit limit is exceeded" or "an invoice must have at least one line item." It knows nothing about HTTP, databases, or email providers — it works with plain objects and interfaces.
+**Business Logic Layer** — the heart of the application. It holds rules of the business:
 
-**Data Access Layer (DAL)** — knows how to read and write data. SQL queries, ORM calls, Redis operations, calls to external APIs. It does NOT contain business rules. It translates between what the business layer asks for ("give me user 42") and how data is actually stored.
+- A user can't place an order if their credit limit is exceeded.
+- An invoice must have at least one line item.
+
+This layer knows nothing about HTTP, databases, or email providers. It works with plain objects and interfaces.
+
+**Data Access Layer (DAL)** — knows how to read and write data. SQL queries, ORM (object-relational mapper) calls, Redis operations, calls to external APIs. It does **not** contain business rules. It translates between what the business layer asks for ("give me user 42") and how data is actually stored.
 
 ## The strict layering rule — and why it matters
 
@@ -231,10 +237,14 @@ test('throws InsufficientCreditError when credit limit is exceeded', async () =>
 
 ## NestJS and layered architecture
 
-NestJS enforces this structure by convention. The `@Controller` decorator marks the presentation layer; `@Injectable()` services are the business layer; repositories (often via TypeORM or Prisma service wrappers) are the data access layer.
+NestJS enforces this structure by convention:
+
+- The `@Controller` decorator marks the presentation layer.
+- Services marked `@Injectable()` are the business layer.
+- Repositories are the data access layer, often thin wrappers over TypeORM or Prisma.
 
 ```ts
-// NestJS — the layering is enforced by the framework's DI container
+// NestJS — the layering is enforced by the dependency injection (DI) container
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
@@ -268,17 +278,17 @@ Layered architecture is the right default for most applications:
 - Applications that may need to swap out their database or delivery mechanism (HTTP → CLI → cron)
 
 When it starts to show strain:
-- Very complex domains where each "layer" becomes a fat class with dozens of methods — this is when Clean Architecture or Hexagonal Architecture (see articles 03 and 04) provide more granular organization
+- Very complex domains, where each "layer" becomes a fat class with dozens of methods. That is the point to move to [Clean Architecture](./03-clean-architecture.md) or [Hexagonal Architecture](./04-hexagonal-architecture.md), which split the same code more finely
 - Cross-cutting concerns (auditing, authorization, logging) that don't fit neatly into one layer
 
 ## Common interview traps
 
 - **"The service layer is just a pass-through, it doesn't add value"** — this is the sign of under-extracted business logic. If your service literally does `return this.repo.findById(id)` for every method, your business rules have leaked into the repository or the controller. The service layer should contain decisions, validations, and orchestration.
 
-- **"I put the database call directly in the controller to keep it simple"** — "simple now" means "painful to test and change later." The effort to extract a repository is minimal; the cost of bypassing it accumulates with every feature added.
+- **"I put the database call directly in the controller to keep it simple"** — what is simple now becomes painful to test and change later. The effort to extract a repository is small. The cost of bypassing it grows with every feature you add.
 
-- **"Repositories are only useful when you're planning to swap databases"** — this framing misses the main benefit: repositories make the service layer testable without a real database. The fact that you *could* swap PostgreSQL for MySQL is a side effect, not the primary reason.
+- **"Repositories are only useful when you're planning to swap databases"** — this framing misses the main benefit. Repositories make the service layer testable without a real database. The fact that you *could* swap PostgreSQL for MySQL is a side effect, not the primary reason.
 
-- **"Business logic in the model/entity class is better than in a service"** — sometimes true (a `User.hasPermission()` method that checks properties is a good fit). The failure mode is when model methods start receiving database clients or HTTP objects as arguments — then you've dissolved the layer boundary inside the entity itself.
+- **"Business logic in the model/entity class is better than in a service"** — sometimes true. A `User.hasPermission()` method that checks properties is a good fit. The failure mode arrives when model methods start receiving database clients or HTTP objects as arguments. At that point you have dissolved the layer boundary inside the entity itself.
 
-- **"Layered architecture is the same as Clean Architecture"** — layered architecture and Clean Architecture (article 03) solve related but distinct problems. Layered architecture organizes code into horizontal tiers; Clean Architecture adds the Dependency Rule (outer layers depend on inner layers, never the reverse) and defines which direction abstractions must point. You can have bad layered architecture where the service layer imports from Express directly; Clean Architecture explicitly forbids it.
+- **"Layered architecture is the same as Clean Architecture"** — layered architecture and [Clean Architecture](./03-clean-architecture.md) solve related but distinct problems. Layered architecture organizes code into horizontal tiers. Clean Architecture adds the Dependency Rule: outer layers depend on inner layers, never the reverse. It also defines which direction abstractions must point. You can have bad layered architecture where the service layer imports from Express directly, and Clean Architecture explicitly forbids that.

@@ -2,14 +2,16 @@
 
 ## Why isolate object creation into a pattern
 
-Creational patterns solve one question: **how to create objects so that the code using an object does not depend on the details of its creation**. This is the direct consequence of DIP from SOLID: if `new ConcreteClass(arg1, arg2, arg3)` is scattered throughout the codebase — changing the implementation means touching every occurrence.
+Creational patterns solve one question: **how to create objects so that the code using an object does not depend on the details of its creation**.
+
+This is the direct consequence of DIP (dependency inversion principle). DIP is the D in SOLID — five design principles, each one covered in [article 01](./01-solid-principles.md) of this topic. If `new ConcreteClass(arg1, arg2, arg3)` is scattered throughout the codebase, changing the implementation means touching every occurrence.
 
 ```txt
 Without a creational pattern:
-  const db = new PostgresDatabase(host, port, user, password, poolSize);
+  const db = new PostgresDatabase(host, port, user, pass, poolSize);
   // this line in 40 places → switching to MongoDB requires 40 edits
 
-With a factory / DI container:
+With a factory or a dependency injection container:
   const db = DatabaseFactory.create(config);
   // changing the implementation — in one place
 ```
@@ -148,7 +150,7 @@ import { config } from './config';
 
 > Defines an interface for creating an object, but lets subclasses (or specific functions) decide which class to instantiate.
 
-Factory Method is not necessarily a method in a subclass (as in GoF). In TypeScript/JavaScript it more commonly appears as a **function or static method** that hides the details of creation.
+Factory Method is not necessarily a method in a subclass, the way the GoF (Gang of Four) book describes it. In TypeScript/JavaScript it more commonly appears as a **function or static method** that hides the details of creation.
 
 ### Example: logger with different transports
 
@@ -241,9 +243,9 @@ function createNotification(type: NotificationType, message: string): React.Reac
 
 > Provides an interface for creating **families** of related objects without specifying their concrete classes.
 
-The key word is **family**: when you need to create multiple objects that must be consistent with each other (one UI theme, one payment system, one cloud provider).
+The key word is **family**. You need it when several objects must be consistent with each other: one interface theme, one payment system, one cloud provider.
 
-### Example: UI components for different themes
+### Example: interface components for different themes
 
 ```ts
 // Interfaces for each component type
@@ -555,8 +557,13 @@ const baseTemplate = new EmailTemplate(
 );
 
 // Variations — cheap, via cloning:
-const welcomeTemplate = baseTemplate.withSubject('Welcome!').withBody('Hi {{name}}, welcome!');
-const resetTemplate = baseTemplate.withSubject('Password Reset').withBody('Reset link: {{link}}');
+const welcomeTemplate = baseTemplate
+  .withSubject('Welcome!')
+  .withBody('Hi {{name}}, welcome!');
+
+const resetTemplate = baseTemplate
+  .withSubject('Password Reset')
+  .withBody('Reset link: {{link}}');
 ```
 
 ### Prototype in JavaScript/TypeScript — built-in tools
@@ -604,8 +611,8 @@ const newUser = { ...baseUser, createdAt: new Date() };
 
 ```txt
 Needed:
-  - Object creation requires complex initialization (regex compilation,
-    schema parsing, connection establishment)
+  - Object creation needs complex initialization: compiling a regex,
+    parsing a schema, opening a connection
   - Many similar objects with small differences are needed
   - Immutable updates (Redux, Immer)
 
@@ -619,31 +626,34 @@ Not needed (just use new):
 ## Comparison of creational patterns
 
 ```txt
-Pattern          Problem solved                 When to use
-────────────────────────────────────────────────────────────────────
-Singleton        One instance for the           Logger, config, cache
-                 entire application             (but prefer DI)
+Singleton
+  Problem: one instance for the entire application
+  Use for: logger, config, cache (but prefer injection)
 
-Factory Method   Creating one object            Logger by env,
-                 with variable implementation   component by type
+Factory Method
+  Problem: create one object with a variable implementation
+  Use for: logger chosen by environment, component by type
 
-Abstract Factory Creating a family of           UI theme, cloud
-                 consistent objects             provider
+Abstract Factory
+  Problem: create a family of consistent objects
+  Use for: interface theme, cloud provider
 
-Builder          Step-by-step construction      SQL query, HTTP request,
-                 of a complex object            config with >4 params
+Builder
+  Problem: step-by-step construction of a complex object
+  Use for: SQL query, HTTP request, config with >4 params
 
-Prototype        Cloning an object              Expensive initialization,
-                 as the basis for variations   test fixtures, immutability
+Prototype
+  Problem: clone an object as the basis for variations
+  Use for: expensive initialization, test fixtures, immutability
 ```
 
 ## Common interview traps
 
-- **"Singleton is a good pattern for shared resources"** — without mentioning the problems: hidden dependencies, global state, testability issues. The correct answer includes "but prefer DI + one instance in the container."
+- **"Singleton is a good pattern for shared resources"** — without mentioning the problems: hidden dependencies, global state, testability issues. The correct answer adds: prefer DI (dependency injection) with a single instance held in the container.
 
 - **Confusing Factory Method and Abstract Factory** — Factory Method creates one object, Abstract Factory creates a family of related ones. The key phrase for Abstract Factory is "family consistency."
 
-- **Builder always == "GoF Builder pattern"** — in TypeScript, Builder more commonly appears as a chainable API (Knex, Zod, TypeORM), not the classical GoF version with a separate Director. Both are valid; understanding the goal matters more than the specific form.
+- **Builder always == "GoF Builder pattern"** — in TypeScript, Builder more commonly appears as a chainable API: Knex, Zod, TypeORM. The classical GoF version with a separate Director is rarer. Both are valid; understanding the goal matters more than the specific form.
 
 - **"Prototype is the JavaScript prototype chain"** — these are different things. The Prototype pattern is about cloning objects. JavaScript's prototype chain is about delegating property lookup along `__proto__`. Make this distinction explicit in an interview.
 

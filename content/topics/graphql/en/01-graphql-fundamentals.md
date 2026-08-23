@@ -2,7 +2,9 @@
 
 ## What GraphQL actually is — more precise than "an alternative to REST"
 
-GraphQL is a SPECIFICATION (a query language + a type system + execution semantics), not a specific technology or transport protocol. There are many implementations: `graphql-js` (the reference implementation), Apollo Server, Mercurius (Fastify), GraphQL Yoga, etc. — they all implement ONE specification, but with different extensions (caching, federation, subscriptions transport).
+GraphQL is a **specification**: a query language, a type system, and execution semantics. It is not a specific technology, and it is not a transport protocol. That already separates it from REST (Representational State Transfer), which is an architectural style rather than a written spec.
+
+There are many implementations: `graphql-js` (the reference implementation), Apollo Server, Mercurius (Fastify), GraphQL Yoga. They all implement the same specification, but with different extensions — caching, federation, subscriptions transport.
 
 ```txt
 From the GraphQL specification:
@@ -73,7 +75,9 @@ GraphQL — the CLIENT determines the shape of the response
    matching the shape of the query.
 ```
 
-This three-phase pipeline explains why "GraphQL is strongly typed" does NOT mean "type errors are impossible at runtime." It means: a MISMATCH BETWEEN THE QUERY AND THE SCHEMA is rejected at the Validate phase, BEFORE any resolvers run — i.e., before touching the database. But errors INSIDE a resolver (e.g., the database is down, or a resolver returns `null` for a field typed `String!`) are EXECUTE-phase errors, and they happen at runtime, just like in any other API.
+"GraphQL is strongly typed" does not mean "type errors are impossible at runtime". The three phases show why. A query that does not match the schema is rejected in the Validate phase. No resolver runs, so the database is never touched.
+
+But errors *inside* a resolver are Execute-phase errors. The database may be down. A resolver may return `null` for a field declared `String!`. Both happen at runtime, exactly as in any other API.
 
 ## Schema + Resolvers — separating "what's available" from "how to get it"
 
@@ -234,12 +238,12 @@ Weaknesses (require dedicated engineering effort):
 
 ## Common interview mistakes
 
-- **"GraphQL is a database / a replacement protocol for REST"** — confusing a query-language specification with a specific transport or storage; GraphQL is a layer between the client and ANY data sources (databases, REST APIs, gRPC).
+- **"GraphQL is a database, or a replacement protocol for REST"** — confusing a query-language specification with a specific transport or storage. GraphQL is a layer between the client and any data source: databases, REST APIs, gRPC services.
 
-- **"GraphQL's strong typing means no runtime errors"** — not distinguishing Validate-phase errors (the query doesn't match the schema, resolvers never run) from Execute-phase errors (a resolver threw, the database is down — ordinary runtime errors).
+- **"GraphQL's strong typing means no runtime errors"** — not distinguishing two kinds of error. Validate-phase errors mean the query doesn't match the schema, and no resolver runs. Execute-phase errors are ordinary runtime errors: a resolver threw, or the database is down.
 
-- **"GraphQL always returns HTTP 200, so it doesn't distinguish success from failure"** — not knowing about the `errors` array in the response body and that monitoring must inspect it instead of the HTTP status.
+- **"GraphQL always returns HTTP 200, so it doesn't distinguish success from failure"** — not knowing about the `errors` array in the response body. Monitoring must inspect that array instead of the HTTP status.
 
-- **"Introspection is just a convenience feature with no risk"** — not mentioning that exposing the full schema in production may be undesirable from a security standpoint, and that disabling introspection is a trade-off, not a "free improvement."
+- **"Introspection is just a convenience feature with no risk"** — not mentioning that exposing the full schema in production can be a security problem. Disabling introspection is itself a trade-off, not a free improvement.
 
-- **Not mentioning that a single endpoint complicates HTTP caching** — a typical "hidden" downside of GraphQL that isn't obvious until you try to set up CDN caching for a GraphQL API.
+- **Not mentioning that a single endpoint complicates HTTP caching** — a typical "hidden" downside of GraphQL. It only becomes obvious when you try to put a CDN (content delivery network) cache in front of a GraphQL API.

@@ -1,10 +1,10 @@
 # Clean Architecture
 
-> **Scope note:** Clean Architecture is about organizing code within a single service so that the core business logic is independent of frameworks, databases, and delivery mechanisms. How multiple services coordinate with each other is a System Design concern.
+> **Scope note:** Clean Architecture is about organizing code within a single service. The goal is that the core business logic stays independent of frameworks, databases, and delivery mechanisms. How multiple services coordinate with each other is a System Design concern.
 
 ## The problem Clean Architecture solves — more precisely than layered architecture
 
-Layered architecture (article 01) tells you *what layers to have*. Clean Architecture tells you *which direction dependencies must point* between those layers — and makes that rule explicit and non-negotiable.
+[Layered architecture](./01-layered-architecture.md) tells you *what layers to have*. Clean Architecture tells you *which direction dependencies must point* between those layers — and makes that rule explicit and non-negotiable.
 
 The problem it's specifically solving: **your business logic depends on things that change for external reasons**.
 
@@ -22,12 +22,14 @@ export async function createOrder(req: Request, res: Response) {
   if (!user || user.creditLimit < req.body.total) {
     return res.status(400).json({ error: 'Insufficient credit' });
   }
-  const order = await prisma.order.create({ data: { userId: user.id, total: req.body.total } });
+  const order = await prisma.order.create({
+    data: { userId: user.id, total: req.body.total },
+  });
   res.status(201).json(order);
 }
 ```
 
-The business rule ("user can't exceed their credit limit") is buried inside a function that imports `express` and `prisma`. You can't test that rule without spinning up HTTP and a database. You can't reuse it from a CLI tool or a cron job. Every time Prisma releases a breaking change, you're hunting for business logic inside framework-coupled files.
+The business rule ("user can't exceed their credit limit") is buried inside a function that imports `express` and `prisma`. You can't test that rule without spinning up HTTP and a database. You can't reuse it from a command-line (CLI) tool or a cron job. Every time Prisma releases a breaking change, you're hunting for business logic inside framework-coupled files.
 
 Clean Architecture's answer: **the core business logic must not import from, or know about, anything that lives in an outer layer**.
 
@@ -60,7 +62,7 @@ Robert C. Martin (known as "Uncle Bob") described Clean Architecture as concentr
 └──────────────────────────────────────────────┘
 
 Dependencies: always point ──► inward
-NEVER point outward
+never point outward
 ```
 
 ### Ring 1: Entities
@@ -92,7 +94,7 @@ export class InsufficientCreditError extends Error {
 
 ### Ring 2: Use Cases
 
-Application-specific business rules. A Use Case (also called "Interactor") orchestrates Entities to carry out one specific business operation. It knows about Entities, but it does NOT know about HTTP, databases, or frameworks.
+Application-specific business rules. A Use Case (also called "Interactor") orchestrates Entities to carry out one specific business operation. It knows about Entities, but it does **not** know about HTTP, databases, or frameworks.
 
 Crucially: Use Cases define **interfaces** for the data they need from the outside world — the repositories, external services, notifiers. These interfaces live *inside* the use case ring (inner layer), but their *implementations* live in the outer rings.
 
@@ -231,7 +233,8 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { PrismaUserRepository } from './adapters/repositories/prisma-user.repository';
 import { PrismaOrderRepository } from './adapters/repositories/prisma-order.repository';
-import { SendgridNotificationService } from './adapters/services/sendgrid-notification.service';
+import { SendgridNotificationService }
+  from './adapters/services/sendgrid-notification.service';
 import { PlaceOrderUseCase } from './use-cases/place-order.use-case';
 import { OrdersController } from './adapters/controllers/orders.controller';
 
@@ -257,7 +260,7 @@ app.listen(3000);
 src/
 ├── entities/                      ← ring 1: pure business objects
 │   └── order.ts
-├── use-cases/                     ← ring 2: use cases + their interfaces
+├── use-cases/                     ← ring 2: use cases + interfaces
 │   └── place-order.use-case.ts
 ├── adapters/                      ← ring 3: translators
 │   ├── controllers/
@@ -295,7 +298,9 @@ beforeEach(() => jest.clearAllMocks());
 
 test('places an order when credit is sufficient', async () => {
   mockUserRepo.findById.mockResolvedValue({ id: '1', email: 'a@b.com', creditLimit: 500 });
-  mockOrderRepo.create.mockResolvedValue({ id: 'o1', userId: '1', total: 100, status: 'pending', createdAt: new Date() });
+  mockOrderRepo.create.mockResolvedValue({
+    id: 'o1', userId: '1', total: 100, status: 'pending', createdAt: new Date(),
+  });
   mockNotifier.sendOrderConfirmation.mockResolvedValue(undefined);
 
   const order = await useCase.execute({ userId: '1', total: 100 });
@@ -323,42 +328,47 @@ Both organize code into layers. The crucial difference is what the Dependency Ru
 Layered Architecture:
   Presentation → Service → Repository
   Dependency direction: typically top-down
-  But: the service CAN import from Express if the developer isn't careful
-       ("just this once")
+  But the service can still import from Express if the
+  developer is not careful ("just this once")
 
 Clean Architecture:
   Outer rings (frameworks) → Inner rings (use cases, entities)
-  Dependency direction: always inward, enforced by the interface abstraction
-  Use Case defines an IRepository interface — it imports an interface, not a class
-  The repository implementation (which imports Prisma) lives in an outer ring
-  The use case cannot accidentally import Prisma — Prisma is not in its ring
+  Dependency direction: always inward, via interfaces
+  The Use Case defines an IRepository interface, so it
+  imports an interface, not a class
+  The repository implementation, which imports Prisma,
+  lives in an outer ring
+  The use case cannot import Prisma by accident, because
+  Prisma is not in its ring
 ```
 
-The Dependency Rule is enforced through **Dependency Inversion**: the inner layer defines the interface (the "port"), the outer layer provides the implementation (the "adapter"). This is the same idea as Hexagonal Architecture (article 04) — different vocabulary, same principle.
+The Dependency Rule is enforced through **Dependency Inversion**: the inner layer defines the interface (the "port"), the outer layer provides the implementation (the "adapter"). This is the same idea as [Hexagonal Architecture](./04-hexagonal-architecture.md) — different vocabulary, same principle.
 
 ## When Clean Architecture is worth the overhead
 
 Clean Architecture has real costs: more files, more interfaces, more indirection. It's overkill for:
-- A simple CRUD API with minimal business logic
-- Prototype or MVP-stage projects where requirements change daily
+
+- A simple CRUD API (create, read, update, delete) with minimal business logic
+- Prototypes and projects at the minimum viable product (MVP) stage, where requirements change daily
 - A team of one or two where the extra structure adds friction without payback
 
 It pays off when:
+
 - Business logic is complex and needs to be testable in isolation
-- The team needs to swap infrastructure (e.g. migrate from PostgreSQL to MongoDB, or from REST to GraphQL) without touching business logic
+- The team needs to swap infrastructure (e.g. migrate from PostgreSQL to MongoDB, or from REST (Representational State Transfer) to GraphQL) without touching business logic
 - Multiple delivery mechanisms exist (HTTP API + CLI + background jobs that share the same use cases)
 - The codebase is expected to live for years and be worked on by multiple teams
 
 ## Common interview traps
 
-- **"Clean Architecture and Layered Architecture are the same thing"** — layered architecture gives you layers; Clean Architecture gives you the Dependency Rule: inner layers must never import from outer layers. You can have a three-layer app where the service imports from Express (violating the Dependency Rule) — that's layered architecture without the clean part.
+- **"Clean Architecture and Layered Architecture are the same thing"** — layered architecture gives you layers. Clean Architecture gives you the Dependency Rule: inner layers must never import from outer layers. You can have a three-layer app where the service imports from Express (violating the Dependency Rule) — that's layered architecture without the clean part.
 
-- **"The use case layer is the same as the service layer"** — in practice they often overlap, but a "service" in layered architecture typically allows framework imports; a Use Case in Clean Architecture explicitly forbids them. The strict enforcement is the difference.
+- **"The use case layer is the same as the service layer"** — in practice they often overlap. But a "service" in layered architecture typically allows framework imports, and a Use Case in Clean Architecture explicitly forbids them. The strict enforcement is the difference.
 
-- **"Clean Architecture means I have to write an interface for every class"** — you write interfaces where the Dependency Rule would be violated without them: wherever an inner layer needs to talk to something in an outer layer (database, email, external API). Two classes in the same ring that are tightly coupled don't necessarily need an interface between them.
+- **"Clean Architecture means I have to write an interface for every class"** — you write interfaces only where the Dependency Rule would otherwise be violated. That means wherever an inner layer needs to talk to something in an outer layer: a database, email, an external API. Two classes in the same ring that are tightly coupled don't necessarily need an interface between them.
 
-- **"Dependency Inversion means injecting dependencies through the constructor"** — that's Dependency Injection, which is a technique. Dependency Inversion (the "D" in SOLID) is a principle: high-level modules should not depend on low-level modules; both should depend on abstractions. Constructor injection is one way to achieve this, but the principle is about the direction of the abstraction, not the injection mechanism.
+- **"Dependency Inversion means injecting dependencies through the constructor"** — that's Dependency Injection, which is a technique. Dependency Inversion (the "D" in SOLID — five principles of object-oriented design) is a principle. High-level modules should not depend on low-level modules; both should depend on abstractions. Constructor injection is one way to achieve this, but the principle is about the direction of the abstraction, not the injection mechanism.
 
-- **"Entities are database models"** — in Clean Architecture, entities are pure business objects with no ORM decorators, no `@Column`, no `@Entity`. The ORM model lives in the outermost ring (ring 4) or the adapter ring. The entity is what the business cares about; the ORM model is how data happens to be stored.
+- **"Entities are database models"** — in Clean Architecture, entities are pure business objects with no ORM (object-relational mapper) decorators, no `@Column`, no `@Entity`. The ORM model lives in the outermost ring (ring 4) or the adapter ring. The entity is what the business cares about; the ORM model is how data happens to be stored.
 
 - **"Clean Architecture is always worth doing"** — Uncle Bob himself says you apply it where it brings value. A 200-line script doesn't need four rings. The pattern addresses the pain of large codebases where business logic gets entangled with framework details over time. Apply it proportionally.

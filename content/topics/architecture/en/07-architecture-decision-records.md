@@ -1,17 +1,19 @@
 # Architecture Decision Records (ADRs)
 
-> **Scope note:** ADRs are a documentation practice, not a code pattern. They apply at any scope — a single service, a platform, an entire organization. They're included in this series because architectural decisions are only half the work; capturing *why* they were made is what makes a codebase navigable for the next engineer.
+> **Scope note:** ADRs are a documentation practice, not a code pattern. They apply at any scope — a single service, a platform, an entire organization.
+
+They're included in this series because architectural decisions are only half the work. Capturing *why* they were made is what makes a codebase navigable for the next engineer.
 
 ## The problem ADRs solve
 
 Six months after building a system, a new engineer joins and finds something puzzling in the codebase:
 
 - The service uses PostgreSQL and Redis for what seems to be overlapping purposes
-- Authentication is handled by a custom JWT implementation instead of Passport.js
+- Authentication is handled by a custom JWT (JSON Web Token) implementation instead of Passport.js
 - The monorepo has a `shared/` package that only two of seven services actually use
-- Prisma is used for reads, but raw SQL for writes
+- Prisma is used for reads, but raw SQL (hand-written database queries) for writes
 
-They have two options: accept these as facts and work around them, or spend time reconstructing the reasoning. Often the original engineers have left. The Slack thread where the decision was made is buried under 50,000 other messages. The PR description says "add Redis caching" but not "we chose Redis over Memcached because..."
+They have two options: accept these as facts and work around them, or spend time reconstructing the reasoning. Often the original engineers have left. The Slack thread where the decision was made is buried under 50,000 other messages. The pull request description says "add Redis caching", not "we chose Redis over Memcached because..."
 
 The codebase captures *what was decided*. Nothing captures *why*.
 
@@ -29,7 +31,8 @@ Accepted
 
 ## Context
 We need a persistent data store for user accounts, orders, and inventory.
-The data is relational (users have orders, orders have line items, line items reference products).
+The data is relational: users have orders, orders have line items,
+and line items reference products.
 The team has deep experience with SQL; nobody has production MongoDB experience.
 We expect strong consistency requirements for financial transactions.
 We're targeting AWS; RDS for PostgreSQL is available with managed backups and failover.
@@ -140,7 +143,7 @@ Why in the repository (not Confluence, not Notion):
 
 1. **ADRs live next to the code they describe** — when you read the code, the ADR is one `git log` away
 2. **ADRs are version-controlled** — you can see when a decision changed and link commits to ADRs
-3. **ADRs are reviewed in PRs** — the pull request for "migrate from Passport.js to custom JWT" can include a new ADR as part of the change
+3. **ADRs are reviewed in pull requests.** The request for "migrate from Passport.js to custom JWT" can include a new ADR as part of the change.
 
 The numbering is intentionally padded (`0001` not `1`) so files sort correctly in filesystems that sort lexicographically.
 
@@ -148,18 +151,20 @@ The numbering is intentionally padded (`0001` not `1`) so files sort correctly i
 
 Not every decision needs an ADR. The test is:
 
-> "Would a competent engineer who joins this project in 6 months be confused about why this decision was made, or be tempted to reverse it without knowing the full context?"
+> "Would a competent engineer who joins this project in 6 months be confused about why this decision was made? Or would they be tempted to reverse it without knowing the full context?"
 
 If yes — write an ADR.
 
 **Write an ADR for:**
-- Technology choices (database, framework, ORM, queue, cache)
+
+- Technology choices: database, framework, ORM (object-relational mapper), queue, cache
 - Architectural pattern choices (layered vs clean vs hexagonal, monolith vs microservices)
 - Decisions that involve explicit trade-offs that aren't obvious from the code
-- Decisions to *not* use something that would otherwise be an obvious choice ("we evaluated GraphQL but chose REST because...")
+- Decisions to *not* use something that would otherwise be an obvious choice: "we evaluated GraphQL but chose REST because...". REST is the plain HTTP style where each URL is a resource.
 - Anything that was debated in the team and resolved in a specific direction
 
 **Don't write an ADR for:**
+
 - Implementation details that can be understood by reading the code
 - Decisions that are trivially reversible (which logging library to use for a prototype)
 - Coding style conventions (use a `.eslintrc` and `README` section instead)
@@ -216,7 +221,7 @@ accepting <downside>.
 
 Example:
 ```
-In the context of needing a caching layer for expensive database queries,
+In the context of a caching layer for expensive database queries,
 facing high read latency on the orders summary endpoint,
 we decided to use Redis with a 60-second TTL,
 to achieve sub-100ms response times for the dashboard,
@@ -243,10 +248,10 @@ export async function handlePaymentWebhook(req: Request): Promise<void> {
 
 - **"ADRs are only for big architecture decisions like choosing a database"** — ADRs are for any decision that would cause a future engineer to ask "why?". "Why do we have a custom retry wrapper instead of using axios-retry?" is a valid ADR. "Why does the Orders module not call the Users service directly but instead reads user data from a denormalized column?" is a valid ADR. The scope is any non-obvious decision, not just the ones that appear on architecture diagrams.
 
-- **"We document decisions in Confluence / Notion"** — the problem isn't the tool, it's the distance from the code. Documentation that lives in a separate system gradually diverges from the code as the code changes and nobody updates the doc. ADRs stored in the repository are read when the code is being changed (because the engineer is already in the repo), and updated in the same PR that makes the change. This is the key property, not the markdown format.
+- **"We document decisions in Confluence / Notion"** — the problem isn't the tool, it's the distance from the code. Documentation that lives in a separate system gradually diverges from the code as the code changes and nobody updates the doc. ADRs stored in the repository are read when the code is being changed, because the engineer is already in the repo. They are updated in the same pull request that makes the change. This is the key property, not the markdown format.
 
-- **"An ADR becomes outdated when the decision changes, so it's maintenance overhead"** — an outdated ADR (with `Status: Superseded by ADR-XXXX`) is not useless. It's historical context: it tells you what was decided, when, and why it was later changed. This is exactly what you can't recover from Slack history or commit messages. The maintenance cost of writing "Superseded by ADR-XXXX" in the status field is negligible compared to the value of the preserved context.
+- **"An ADR becomes outdated when the decision changes, so it's maintenance overhead"** — an outdated ADR (with `Status: Superseded by ADR-XXXX`) is not useless. It's historical context: it tells you what was decided, when, and why it was later changed. This is exactly what you can't recover from Slack history or commit messages. The maintenance cost of writing one line — "Superseded by ADR-0011" — in the status field is negligible compared to the value of the preserved context.
 
-- **"ADRs slow down fast-moving teams"** — writing an ADR after an architectural discussion takes 20–30 minutes. Reconstructing the reasoning behind a decision 12 months later (new engineer, migration, debugging a weird constraint) can take hours or days — and may be impossible if people have left. The investment is highly asymmetric.
+- **"ADRs slow down fast-moving teams"** — writing an ADR after an architectural discussion takes 20–30 minutes. Reconstructing the reasoning behind a decision 12 months later can take hours or days. That is what a new engineer faces, or a migration, or debugging a weird constraint. It may even be impossible if people have left. The investment is highly asymmetric.
 
-- **"If the code is clean, you don't need ADRs"** — clean code explains *what* it does. Clean Architecture explains *how* it's structured. Neither explains *why* a specific technology or pattern was chosen over alternatives that were also reasonable. "We use Redis for caching" is obvious from the code. "We chose Redis over Memcached because we also needed pub/sub for invalidation, and Memcached doesn't support pub/sub" is not visible anywhere except an ADR.
+- **"If the code is clean, you don't need ADRs"** — clean code explains *what* it does. Clean Architecture explains *how* it's structured. Neither explains *why* a specific technology or pattern was chosen over alternatives that were also reasonable. "We use Redis for caching" is obvious from the code. "We chose Redis over Memcached because we also needed pub/sub for invalidation, and Memcached doesn't support pub/sub". That sentence is not visible anywhere except in an ADR.

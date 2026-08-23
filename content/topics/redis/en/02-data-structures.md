@@ -17,6 +17,8 @@ HyperLogLog → O(1) PFADD/PFCOUNT, ~0.81% error, 12KB memory
 
 ## String — the universal structure
 
+A String holds any bytes: plain text, a number, or a serialized JSON object. Redis also treats it as a counter, so `INCR` on a String is atomic without a transaction.
+
 ```typescript
 import { createClient } from 'redis';
 const redis = createClient({ url: process.env.REDIS_URL });
@@ -45,6 +47,8 @@ const old = await redis.getDel('session:abc'); // get and delete
 ```
 
 ## Hash — object with fields
+
+A Hash is one key holding a flat map of field-value pairs. Reach for it when you update single fields of an object often, because you can write one field without reading the whole object back.
 
 ```typescript
 // Hash vs JSON String: Hash allows updating individual fields without deserialization
@@ -84,11 +88,16 @@ await redis.hDel('user:123', 'temporaryToken');
 
 ## List — doubly-ended queue / stack
 
+A List is an ordered sequence you can push to and pop from at either end. That makes it the cheapest way to build a job queue or a "last N events" buffer.
+
 ```typescript
 // List = doubly linked list: O(1) push/pop from both ends, O(N) by index
 
 // Queue (FIFO): LPUSH + RPOP
-await redis.lPush('jobs:email', JSON.stringify({ to: 'user@example.com', template: 'welcome' }));
+await redis.lPush(
+  'jobs:email',
+  JSON.stringify({ to: 'user@example.com', template: 'welcome' }),
+);
 const job = await redis.rPop('jobs:email');
 
 // Stack (LIFO): LPUSH + LPOP
@@ -101,6 +110,7 @@ const result = await redis.blPop('jobs:email', 5); // 5-second timeout
 // → { key: 'jobs:email', element: '...' } or null on timeout
 
 // Capped length (sliding window log)
+const event = { type: 'page-view', path: '/pricing', at: Date.now() };
 await redis.lPush('recent:events', JSON.stringify(event));
 await redis.lTrim('recent:events', 0, 99); // keep only the last 100
 
@@ -113,6 +123,8 @@ const len = await redis.lLen('jobs:email');
 ```
 
 ## Set — unique values and set operations
+
+A Set stores unique strings with no order, and membership checks are O(1). Redis can also intersect, union or subtract two Sets on the server, so you never pull both lists into the application.
 
 ```typescript
 // Set: unique strings, O(1) add/check/remove
@@ -143,11 +155,16 @@ const diff = await redis.sDiff('user:123:following', 'user:456:following');
 const random = await redis.sRandMember('post:123:tags');
 
 // Rate limiting with Set (unique IPs in the last hour)
+const hourKey = new Date().toISOString().slice(0, 13); // '2024-01-01T14'
+const clientIp = '203.0.113.7'; // req.ip in Express/Nest
+
 await redis.sAdd(`visitors:${hourKey}`, clientIp);
 const uniqueVisitors = await redis.sCard(`visitors:${hourKey}`);
 ```
 
 ## Sorted Set — ranked data
+
+A Sorted Set is a Set where every member also carries a numeric score, and Redis keeps the members ordered by that score. It answers "top 10" and "everything between score X and Y" without sorting anything at read time.
 
 ```typescript
 // Sorted Set: unique elements with a score (float), O(log N) insert/update
@@ -178,6 +195,7 @@ const score = await redis.zScore('leaderboard:game', 'user:alice');
 const highScorers = await redis.zRangeByScore('leaderboard:game', 5001, '+inf');
 
 // Sliding Window Rate Limiting with Sorted Set:
+const userId = 'user:alice';
 const now = Date.now();
 const windowMs = 60_000; // 1 minute
 
@@ -189,6 +207,8 @@ await redis.expire(`ratelimit:${userId}`, 60);
 ```
 
 ## HyperLogLog and Bitmap
+
+These two trade accuracy or expressiveness for memory. HyperLogLog counts unique values in a fixed 12 kilobytes no matter how many there are. A Bitmap packs one yes/no flag into every single bit.
 
 ```typescript
 // HyperLogLog: approximate count of unique elements
@@ -214,12 +234,15 @@ const activeDays = await redis.bitCount(`user:123:activity:2024`);
 
 ## Common interview mistakes
 
-- **"Hash is always better for storing a user object"** — it depends on the access pattern. Hash is optimal for frequent updates to individual fields. If the entire object is always read/written at once — a JSON String with `SET`/`GET` is simpler and faster (`HGETALL` involves multiple ops vs a single `GET`).
+- **"Hash is always better for storing a user object"** — it depends on the access pattern. Hash is optimal for frequent updates to individual fields. If the entire object is always read and written at once, a JSON String with `SET`/`GET` is simpler and faster. `HGETALL` touches every field, while `GET` is a single read.
 
-- **"List is fine for a queue with multiple consumers"** — List without extra logic is not suitable: if multiple consumers call `RPOP`, only one gets the message, but there's no acknowledgment — if the consumer crashes, the message is lost. For reliable queues: BullMQ (on top of Redis) or SQS.
+- **"List is fine for a queue with multiple consumers"** — a plain List has no delivery guarantees:
+  - If several consumers call `RPOP`, only one of them gets the message.
+  - There is no acknowledgment, so if that consumer crashes the message is gone.
+  - For reliable queues use BullMQ on top of Redis, or Amazon SQS (Simple Queue Service).
 
-- **"Sorted Set is slower than Set"** — for ZADD/ZRANK: O(log N) vs O(1) for Set. But Sorted Set enables range queries by score, which Set doesn't support at all. The choice depends on the operations needed, not just "speed."
+- **"Sorted Set is slower than Set"** — for `ZADD`/`ZRANK` it is O(log N) against O(1) for Set. But Sorted Set enables range queries by score, which Set doesn't support at all. The choice depends on the operations needed, not just "speed."
 
 - **"SMEMBERS is safe to use on large Sets"** — SMEMBERS blocks Redis for the duration (single-threaded). For Sets with millions of elements — use `SSCAN` (cursor-based iteration, non-blocking). Same rule applies to `KEYS *` vs `SCAN`, and `HGETALL` for large Hashes vs `HSCAN`.
 
-- **"HyperLogLog is more precise than a regular counter"** — HyperLogLog is approximate (~0.81% error). If exact counts are required — use a Set (but memory is O(N)) or a regular DB increment. HyperLogLog is for analytics where approximation is acceptable: unique daily visitors, unique IPs.
+- **"HyperLogLog is more precise than a regular counter"** — HyperLogLog is approximate (~0.81% error). If exact counts are required — use a Set (but memory is O(N)) or a counter column in the database. HyperLogLog is for analytics where approximation is acceptable: unique daily visitors, unique IPs.

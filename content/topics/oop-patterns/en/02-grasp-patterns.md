@@ -15,7 +15,9 @@ These are different levels of abstraction. GRASP is closer to SOLID
 in level than to GoF in character. They complement each other.
 ```
 
-GRASP was formulated by Craig Larman in "Applying UML and Patterns" (1997). Unlike GoF patterns, GRASP is less well-known in interviews — which is exactly why knowing GRASP distinguishes a candidate who thinks about architecture from one who simply memorized patterns.
+GRASP was formulated by Craig Larman in his 1997 book "Applying UML and Patterns". UML (unified modeling language) is the standard notation for class and sequence diagrams. GoF (Gang of Four) is the nickname of the four authors of the 1994 book that gave us Singleton, Observer and the rest.
+
+Unlike GoF patterns, GRASP is less well-known in interviews. That is exactly why knowing it separates a candidate who thinks about architecture from one who just memorized pattern names.
 
 ---
 
@@ -23,12 +25,13 @@ GRASP was formulated by Craig Larman in "Applying UML and Patterns" (1997). Unli
 
 > Assign a responsibility to the class that has the information needed to fulfill it.
 
-This is the most fundamental GRASP principle and simultaneously the most commonly violated. The violation looks like "a service that takes an object's data and computes something from the outside" instead of delegating the computation to the object itself.
+This is the most fundamental GRASP principle and simultaneously the most commonly violated. The violation always has the same shape: a service reaches into an object's data and computes something from the outside. The computation should have been delegated to the object itself.
 
 ### Information Expert Violation
 
 ```ts
-// ❌ OrderController knows Order's structure (items, discount) and computes total externally.
+// ❌ OrderController knows Order's structure (items, discount)
+// and computes the total from the outside.
 // If Order's structure changes — OrderController and every other place
 // that computes total manually must also change.
 
@@ -75,7 +78,9 @@ class OrderController {
 
 ### Relation to SOLID
 
-Information Expert is the practical realization of SRP at the data level. The class that owns the data has one reason to change in this context: a change in the data itself or the rules for processing it. If the logic is extracted outside — the external class gains an additional reason to change.
+SOLID is the acronym for five design principles: single responsibility, open/closed, Liskov substitution, interface segregation and dependency inversion. Information Expert is the practical realization of SRP (single responsibility principle) at the data level.
+
+The class that owns the data has one reason to change here: the data itself changes, or the rules for processing it change. If the logic is extracted outside — the external class gains an additional reason to change.
 
 ### Real-world context (React)
 
@@ -103,7 +108,8 @@ function CartSummary({ cart }: { cart: Cart }) {
 
 ## 2. Creator — "create where you contain or use"
 
-> Class B should create instances of class A if B contains A, aggregates A, is the initializer for A, or has the data needed to create A.
+> Class B should create instances of class A if B contains A, aggregates A,
+> is the initializer for A, or holds the data needed to create A.
 
 Creator answers the question "where should `new` be written?" without always having to extract creation into a factory.
 
@@ -153,7 +159,7 @@ class OrderService {
 
 ### Relation to SOLID
 
-Creator relates to SRP: if a class creates objects that don't "belong" to it, that adds an extra responsibility. Creator also echoes the Factory pattern (see [Creational Patterns]) — Factory is needed when the "contains or uses" condition is not met and a dedicated creation point is required.
+Creator relates to SRP: if a class creates objects that don't "belong" to it, that adds an extra responsibility. Creator also echoes the Factory pattern, described in [Creational Patterns](./03-creational-patterns.md). Factory is needed when the "contains or uses" condition is not met and a dedicated creation point is required.
 
 ---
 
@@ -161,7 +167,7 @@ Creator relates to SRP: if a class creates objects that don't "belong" to it, th
 
 > Assign responsibility for handling a system event to a controller class representing either the overall system or a use-case scenario.
 
-Controller is the intermediary between the UI/API layer and business logic. It contains no logic itself — it delegates to domain objects or services.
+Controller is the intermediary between the user interface or API layer and business logic. It contains no logic itself — it delegates to domain objects or services.
 
 ### Controller Violation
 
@@ -210,7 +216,7 @@ async createOrder(
 
 ### Relation to SOLID
 
-A "thin controller" is the direct consequence of SRP (the controller changes only when the HTTP interface changes) and DIP (the controller depends on the service abstraction, not on concrete logic). In NestJS this manifests as the controller injecting a service rather than instantiating it.
+A "thin controller" is the direct consequence of two principles. SRP says the controller changes only when the HTTP interface changes. DIP (dependency inversion principle) says the controller depends on the service abstraction, not on concrete logic. In NestJS this shows up as the controller injecting a service rather than instantiating it.
 
 ---
 
@@ -221,11 +227,19 @@ A "thin controller" is the direct consequence of SRP (the controller changes onl
 Low Coupling is not the goal of "having no dependencies at all" — it's the goal of **depending only on what is stable**. Depending on an interface = low coupling. Depending on a concrete class that changes frequently = high coupling.
 
 ```txt
-Types of coupling (from least to most problematic):
-  Data coupling    — classes exchange only simple data (good)
-  Stamp coupling   — pass entire object when only one field is needed (neutral)
-  Control coupling — one class controls another's behavior via a flag (bad)
-  Content coupling — one class reads/writes another's internal data (very bad)
+Types of coupling, from least to most problematic:
+
+  Data coupling (good)
+    Classes exchange only simple data.
+
+  Stamp coupling (neutral)
+    A whole object is passed when only one field is needed.
+
+  Control coupling (bad)
+    One class controls another's behavior through a flag.
+
+  Content coupling (very bad)
+    One class reads or writes another class's internal data.
 ```
 
 ### Low Coupling Violation
@@ -296,7 +310,7 @@ function UserProfile({ userId }: { userId: string }) {
 
 > A class's responsibilities should be closely related and focused on one area. Low cohesion produces "god classes" that are hard to understand and change.
 
-High Cohesion is the functional sibling of Low Coupling: Low Coupling says "don't depend on unnecessary things from outside," High Cohesion says "don't do unnecessary things inside."
+High Cohesion is the functional sibling of Low Coupling. Low Coupling says: don't depend on unnecessary things from outside. High Cohesion says: don't do unnecessary things inside.
 
 ```txt
 Signs of low cohesion:
@@ -368,7 +382,7 @@ a violation of one usually accompanies a violation of the other.
 
 > When behavior varies by type, use polymorphism instead of conditional constructs.
 
-This is one of the foundational OOP principles, but GRASP frames it as a responsibility assignment guideline: **responsibility for variable behavior should lie with the object itself**, not with external code that inspects its type.
+This is one of the foundational principles of OOP (object-oriented programming). GRASP frames it as a responsibility assignment guideline. **Responsibility for variable behavior should lie with the object itself**, not with external code that inspects its type.
 
 ### Violation — "type-checking antipattern"
 
@@ -464,15 +478,17 @@ class ExportService {
 
 ### Relation to OCP
 
-Polymorphism is the mechanism that makes OCP work in practice. "Open for extension, closed for modification" is achieved precisely through polymorphism: new behavior = new class implementing an interface.
+Polymorphism is the mechanism that makes OCP (open/closed principle) work in practice. "Open for extension, closed for modification" is achieved precisely through polymorphism: new behavior = new class implementing an interface.
 
 ---
 
 ## 7. Pure Fabrication — "sometimes you need a class without a real-world counterpart"
 
-> If no domain class is a suitable candidate for a responsibility (and assigning it would violate High Cohesion or Low Coupling), create an artificial service class.
+> If no domain class is a suitable candidate for a responsibility, create an
+> artificial service class. That is the case when assigning the responsibility
+> to a domain class would violate High Cohesion or Low Coupling.
 
-Pure Fabrication is "permission to create a class without a domain meaning." Most services in layered architecture (Repository, Mapper, Formatter, Gateway) are Pure Fabrications: "UserRepository" doesn't exist in the real world — it's a technical abstraction.
+Pure Fabrication gives you permission to create a class with no domain meaning. Most services in layered architecture are Pure Fabrications: Repository, Mapper, Formatter, Gateway. `UserRepository` doesn't exist in the real world — it's a technical abstraction.
 
 ### Example: when Pure Fabrication is needed
 
@@ -517,7 +533,7 @@ In layered architecture, Pure Fabrications form the entire infrastructure layer:
 
 ### When Pure Fabrication becomes an anti-pattern
 
-If **all** classes in a project are Pure Fabrications (services, managers, helpers with no domain objects) — this is called an "Anemic Domain Model": procedural code disguised as OOP. Domain classes — `Order`, `User`, `Product` — should contain domain-specific logic (discount calculation, invariant validation). Pure Fabrication supplements them, it does not replace them.
+Sometimes **all** classes in a project are Pure Fabrications: services, managers and helpers, with no domain objects at all. That is called an Anemic Domain Model — procedural code disguised as OOP. Domain classes — `Order`, `User`, `Product` — should contain domain-specific logic (discount calculation, invariant validation). Pure Fabrication supplements them, it does not replace them.
 
 ---
 
@@ -527,12 +543,12 @@ If **all** classes in a project are Pure Fabrications (services, managers, helpe
 GRASP principle      Corresponding SOLID principle
 ──────────────────────────────────────────────────
 Information Expert → SRP (data and its processing in one place)
-Creator            → SRP (creation is the aggregate's responsibility)
+Creator            → SRP (creation belongs to the aggregate)
 Controller         → SRP (thin layer without business logic)
 Low Coupling       → DIP (depend on abstractions, not concretions)
 High Cohesion      → SRP (focus on one area of knowledge)
 Polymorphism       → OCP (extension without modification)
-Pure Fabrication   → SRP + ISP (extract infrastructural responsibility)
+Pure Fabrication   → SRP + ISP (extract the infrastructure part)
 ```
 
 GRASP does not contradict SOLID — they are two lenses on the same question: how to structure code so it can be changed without fear.
@@ -543,12 +559,12 @@ GRASP does not contradict SOLID — they are two lenses on the same question: ho
 
 - **Not knowing GRASP at all** — everyone knows SOLID, very few know GRASP. Mentioning GRASP with a correct explanation immediately distinguishes a candidate in an architecture discussion.
 
-- **Information Expert == "put all logic in the model"** — this is a swing toward a "fat model." Information Expert says: put computation that directly depends on an object's data into the object. But business operations with side effects (saving, sending) stay in services.
+- **Information Expert == "put all logic in the model"** — this is a swing toward the opposite extreme, the fat model. Information Expert says: put computation that directly depends on an object's data into the object. But business operations with side effects (saving, sending) stay in services.
 
 - **Creator as "always use new inside a class"** — Creator describes who is the logical creator (whoever contains or uses the object). It's not a ban on factories — Factory is needed when creation is complex or variable.
 
 - **Low Coupling as "no dependencies at all"** — zero coupling is impossible and undesirable. The goal is to depend only on stable abstractions, not to avoid dependencies entirely.
 
-- **Not distinguishing High Cohesion from SRP** — both are about "do one thing" but from different angles: SRP is about the reason for change (an external actor), High Cohesion is about internal method relatedness (do they use shared data and knowledge). You can violate one without violating the other.
+- **Not distinguishing High Cohesion from SRP** — both are about "do one thing", but from different angles. SRP is about the reason for change: which external actor demands it. High Cohesion is about internal method relatedness: do the methods use shared data and knowledge. You can violate one without violating the other.
 
 - **Pure Fabrication as justification for "a service for everything"** — Pure Fabrication is legitimate when no domain object fits. But if the entire application consists of manager-services with no domain objects containing logic — that's an Anemic Domain Model, and that's a problem.

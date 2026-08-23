@@ -2,7 +2,7 @@
 
 ## Why structural patterns exist
 
-Structural patterns describe **how to compose classes and objects into larger structures** while keeping flexibility. Where creational patterns answer "how to create an object," structural patterns answer "how to connect objects so the system interface stays simple and internal complexity stays encapsulated."
+Structural patterns describe **how to compose classes and objects into larger structures** while keeping flexibility. Creational patterns answer the question of how to create an object. Structural patterns answer a different one. How do you connect objects so the system interface stays simple and internal complexity stays encapsulated?
 
 ```txt
 Creational  → "who creates, and how"
@@ -16,7 +16,7 @@ Behavioral  → "how objects interact and distribute responsibility"
 
 > Converts a class's interface into another interface the client expects. Allows classes with incompatible interfaces to work together.
 
-Adapter is one of the most common patterns in real code: almost every time you connect a third-party library to your own architecture, you need an adapter.
+Adapter is one of the most common patterns in real code. Almost every time you connect a third-party library to your own architecture, you need an adapter.
 
 ### Example: adapting a third-party email client
 
@@ -183,14 +183,17 @@ const lightInput = new TextInput(new LightTheme(), 'Enter email');
 ### Bridge vs Strategy
 
 ```txt
-Bridge — structural pattern: implementation is chosen at object creation time
-  and usually doesn't change (an architectural decision about how the object is built)
+Bridge — a structural pattern.
+  The implementation is chosen when the object is created and
+  usually does not change. It is an architectural decision
+  about how the object is built.
 
-Strategy — behavioral pattern: algorithm can be swapped at runtime
-  (a decision about how the object behaves at a specific moment)
+Strategy — a behavioral pattern.
+  The algorithm can be swapped at runtime. It is a decision
+  about how the object behaves at a given moment.
 
-The boundary is blurry — often the same thing is implemented via both.
-Key question: "Is this a permanent structure or switchable behavior?"
+The boundary is blurry: the same thing is often built either way.
+Key question: permanent structure, or switchable behavior?
 ```
 
 ---
@@ -199,7 +202,7 @@ Key question: "Is this a permanent structure or switchable behavior?"
 
 > Composes objects into tree structures to represent part-whole hierarchies. Lets clients treat individual objects and compositions of objects uniformly.
 
-Composite is needed whenever a data structure is recursive: file systems, DOM trees, organizational hierarchies, product categories.
+Composite is needed whenever a data structure is recursive: file systems, DOM (document object model) trees, organizational hierarchies, product categories.
 
 ### Example: file system
 
@@ -533,11 +536,15 @@ async checkout(dto: CheckoutDto) {
 ### Facade vs Controller (GRASP)
 
 ```txt
-Controller (GRASP) — thin layer between HTTP and business logic, contains no logic itself.
-Facade — contains orchestration logic between subsystems, hides them from the client.
+Controller (GRASP) — a thin layer between HTTP and business
+  logic. It contains no logic of its own.
+
+Facade — holds the orchestration logic between subsystems
+  and hides them from the client.
 
 Common NestJS structure: Controller → Facade → individual Services.
-Facade is not a Controller; it's the layer between the controller and the domain.
+A Facade is not a Controller. It sits between the controller
+and the domain.
 ```
 
 ---
@@ -591,7 +598,8 @@ class GlyphFactory {
   get glyphCount(): number { return this.glyphs.size; }
 }
 
-// Character in document — only extrinsic state (position, the character itself) + flyweight reference
+// Character in document — only extrinsic state (position, the character
+// itself) plus a reference to the shared flyweight
 class Character {
   constructor(
     private readonly char: string,
@@ -619,10 +627,12 @@ console.log(factory.glyphCount); // 1, not 100 000
 
 ```txt
 Real Flyweight examples:
-  - String interning: identical strings stored as one object in memory
+  - String interning: identical strings kept as one object
   - Database connection pool: connections shared across requests
-  - Icons and sprites in UI: one image object used in thousands of DOM places
-  - React Virtual DOM: React reuses DOM nodes when rendering lists (key prop)
+  - Icons and sprites: one image object used in thousands of
+    places on the page
+  - React Virtual DOM: React reuses DOM nodes when rendering
+    lists (the key prop)
 ```
 
 ---
@@ -635,8 +645,8 @@ Proxy has the same interface as the target object, but intercepts calls to add: 
 
 ```txt
 Proxy types:
-  Virtual Proxy    — lazy initialization (object created on first access)
-  Protection Proxy — access control (permission check before delegating)
+  Virtual Proxy    — lazy init (object built on first access)
+  Protection Proxy — access control (rights checked before the call)
   Caching Proxy    — caches results of expensive operations
   Remote Proxy     — represents a remote object (RPC, microservices)
   Logging Proxy    — logs accesses (like Decorator, but via Proxy)
@@ -741,15 +751,34 @@ app.use('/api', router);     // finally — the real handler
 ## Comparison of structural patterns
 
 ```txt
-Pattern    Core idea                                  Real-world example
-────────────────────────────────────────────────────────────────────────
-Adapter    Translates a foreign interface to yours    Sendgrid SDK → EmailService
-Bridge     Separates abstraction from implementation  Component × Theme
-Composite  Object tree with a single interface        React tree, file system
-Decorator  Wraps an object, adding behavior           HOC, HTTP client with retry+logging
-Facade     Simplified interface to a subsystem        OrderFacade, BFF layer
-Flyweight  Shares common state                        String pool, connection pool
-Proxy      Surrogate with additional control          Cache, auth guard, ES6 Proxy
+Adapter
+  Translates a foreign interface into yours.
+  Example: the Sendgrid client wrapped into EmailService.
+
+Bridge
+  Separates abstraction from implementation.
+  Example: Component × Theme.
+
+Composite
+  Object tree behind a single interface.
+  Example: the React tree, a file system.
+
+Decorator
+  Wraps an object and adds behavior.
+  Example: a higher-order component, an HTTP client with
+  retry and logging.
+
+Facade
+  Simplified interface to a subsystem.
+  Example: OrderFacade, a backend-for-frontend layer.
+
+Flyweight
+  Shares state that many objects have in common.
+  Example: a string pool, a connection pool.
+
+Proxy
+  Surrogate that adds control around the real object.
+  Example: a cache, an auth guard, the built-in Proxy object.
 ```
 
 ## Common interview traps
@@ -762,8 +791,8 @@ Proxy      Surrogate with additional control          Cache, auth guard, ES6 Pro
 
 - **Flyweight without separating intrinsic/extrinsic state** — without clearly defining what is shared (immutable) and what is contextual (unique), Flyweight becomes just a regular cache. The state separation is the essence of the pattern.
 
-- **Composite only for file systems** — this is the best-known example, but Composite appears anywhere there is a recursive structure: DOM, AST, organizational hierarchies, menu/submenu, categories with subcategories.
+- **Composite only for file systems** — this is the best-known example. Composite appears anywhere there is a recursive structure: the DOM, an AST, organizational hierarchies, menu and submenu, categories with subcategories. AST stands for abstract syntax tree — the tree-shaped form of parsed code.
 
 - **Proxy and ES6 `new Proxy()`** — ES6 Proxy implements the Proxy pattern, but they are not the same thing. The Proxy pattern is the architectural idea of a surrogate object. ES6 Proxy is a language mechanism conveniently used to implement the pattern, but it doesn't exhaust it.
 
-- **Not recognizing that Express middleware is a structural pattern** — the middleware chain via `app.use()` can and should be described in terms of patterns: Decorator (adds behavior) and Chain of Responsibility (passes control via `next()`). This shows understanding of patterns in real code, not just in textbooks.
+- **Not recognizing that Express middleware is a structural pattern** — the middleware chain via `app.use()` can and should be described in terms of patterns. Decorator adds behavior; Chain of Responsibility passes control along via `next()`. This shows understanding of patterns in real code, not just in textbooks.

@@ -3,8 +3,8 @@
     "id": "architecture-quiz-1",
     "topicId": "architecture",
     "question": {
-      "en": "When comparing Hexagonal Architecture (Ports & Adapters) with Layered Architecture, which statement best describes a key advantage of Hexagonal Architecture?\n\nHexagonal: Domain → Ports → Adapters\nLayered: Presentation → Business → Persistence\n",
-      "ru": "При сравнении Шестиугольной архитектуры (Ports & Adapters) с Многоуровневой архитектурой, какое утверждение лучше всего описывает ключевое преимущество Шестиугольной архитектуры?\n\nШестиугольная: Domain → Ports → Adapters\nМногоуровневая: Presentation → Business → Persistence\n"
+      "en": "When comparing Hexagonal Architecture (Ports & Adapters) with Layered Architecture, which statement best describes a key advantage of Hexagonal Architecture?\n\n```txt\nHexagonal: Domain → Ports → Adapters\nLayered:   Presentation → Business → Persistence\n```\n",
+      "ru": "При сравнении Шестиугольной архитектуры (Ports & Adapters) с Многоуровневой архитектурой, какое утверждение лучше всего описывает ключевое преимущество Шестиугольной архитектуры?\n\n```txt\nШестиугольная: Domain → Ports → Adapters\nМногоуровневая: Presentation → Business → Persistence\n```\n"
     },
     "options": {
       "en": [
@@ -17,48 +17,48 @@
         "Она инвертирует зависимости: ядро домена не зависит ни от чего внешнего",
         "Она исключает необходимость внедрения зависимостей, используя статические импорты",
         "Она требует меньше классов и интерфейсов, снижая сложность кода",
-        "Она автоматически обрабатывает кросс-функциональные задачи, такие как логирование и кэширование"
+        "Она автоматически обрабатывает сквозные аспекты, такие как логирование и кэширование"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Hexagonal Architecture's core benefit is the inversion of dependencies—the domain layer has no knowledge of frameworks, databases, or external systems, which allows for true unit testing and technology independence. The other options are misconceptions: DI is still used, complexity isn't automatically reduced, and cross-cutting concerns still need explicit handling.",
-      "ru": "Основное преимущество Шестиугольной архитектуры заключается в инверсии зависимостей—слой домена не знает о фреймворках, базах данных или внешних системах, что позволяет проводить истинное модульное тестирование и технологическую независимость. Остальные варианты являются неправильными представлениями: DI все еще используется, сложность автоматически не снижается, и кросс-функциональные задачи все еще требуют явной обработки."
+      "en": "Hexagonal Architecture inverts dependencies: the domain layer knows nothing about frameworks, databases, or external systems. That is what makes real unit testing and technology independence possible.\n\nThe other options are misconceptions. Dependency injection (DI) is still used, complexity does not drop by itself, and cross-cutting concerns still need explicit handling.",
+      "ru": "Шестиугольная архитектура инвертирует зависимости: слой домена ничего не знает о фреймворках, базах данных и внешних системах. Именно поэтому его можно покрыть настоящими модульными тестами и не привязываться к конкретной технологии.\n\nОстальные варианты неверны. Внедрение зависимостей (DI) никуда не девается, сложность сама по себе не снижается, а сквозные аспекты по-прежнему нужно обрабатывать явно."
     }
   },
   {
     "id": "architecture-quiz-2",
     "topicId": "architecture",
     "question": {
-      "en": "In a CQRS (Command Query Responsibility Segregation) system, what is the primary responsibility of the Command side versus the Query side?\n\nCommand: User clicks 'Transfer $100'\nQuery: User views 'Account Balance: $1500'\n",
-      "ru": "В системе CQRS (Command Query Responsibility Segregation) какова основная ответственность стороны Command в сравнении со стороной Query?\n\nCommand: Пользователь нажимает 'Перевести $100'\nQuery: Пользователь видит 'Баланс счета: $1500'\n"
+      "en": "In a CQRS (Command Query Responsibility Segregation) system, what is the primary responsibility of the Command side versus the Query side?\n\n```txt\nCommand: User clicks 'Transfer $100'\nQuery:   User views 'Account Balance: $1500'\n```\n",
+      "ru": "В системе CQRS (Command Query Responsibility Segregation) какова основная ответственность стороны Command в сравнении со стороной Query?\n\n```txt\nCommand: Пользователь нажимает 'Перевести $100'\nQuery:   Пользователь видит 'Баланс счёта: $1500'\n```\n"
     },
     "options": {
       "en": [
         "Command modifies state and returns the new state; Query only reads without any model transformation",
         "Command handles user actions and changes state; Query reads from denormalized views",
         "Command validates input; Query executes business logic to prevent invalid reads",
-        "Command and Query are identical—they just have different names for separation of concerns"
+        "Command and Query are identical — they just have different names for separation of concerns"
       ],
       "ru": [
         "Command изменяет состояние и возвращает новое состояние; Query только читает без трансформации модели",
         "Command обрабатывает действия и меняет состояние; Query читает из денормализованных представлений",
         "Command проверяет ввод; Query выполняет бизнес-логику, чтобы предотвратить неправильные чтения",
-        "Command и Query идентичны—они просто имеют разные названия для разделения ответственности"
+        "Command и Query идентичны — они просто имеют разные названия для разделения ответственности"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "CQRS separates write and read models: Commands change state and typically return minimal confirmation, while Queries read from separate optimized denormalized views built for read performance. This allows scaling read and write paths independently. The other options misunderstand the pattern—CQRS is not about return values, validation only, or naming alone.",
-      "ru": "CQRS разделяет модели записи и чтения: Commands изменяют состояние и обычно возвращают минимальное подтверждение, а Queries читают из отдельных оптимизированных денормализованных представлений, созданных для производительности чтения. Это позволяет масштабировать пути чтения и записи независимо. Остальные варианты неправильно понимают паттерн—CQRS не только о возвращаемых значениях, только валидации или просто названиях."
+      "en": "CQRS separates the write model from the read model. The acronym spells out command query responsibility segregation. Commands change state and usually return only a short confirmation. Queries read from separate denormalized views that are built for read speed. So the read path and the write path can scale independently.\n\nThe other options misunderstand the pattern. It is not about return values, not about validation alone, and not about naming.",
+      "ru": "CQRS разделяет модель записи и модель чтения. Расшифровка — command query responsibility segregation, то есть разделение ответственности команд и запросов. Commands меняют состояние и обычно возвращают лишь короткое подтверждение. Queries читают из отдельных денормализованных представлений, собранных ради скорости чтения. Так путь чтения и путь записи масштабируются независимо.\n\nОстальные варианты понимают паттерн неверно. Дело не в возвращаемых значениях, не только в валидации и не в названиях."
     }
   },
   {
     "id": "architecture-quiz-3",
     "topicId": "architecture",
     "question": {
-      "en": "What is the primary difference between the Repository Pattern and a Raw Data Access Layer (DAO)?\n\nRepository: orderRepo.getOrdersByCustomer(customerId)\nDAO: executeQuery('SELECT * FROM orders WHERE customer_id = ?')\n",
-      "ru": "В чём основное различие между паттерном Repository и сырым слоем доступа к данным (DAO)?\n\nRepository: orderRepo.getOrdersByCustomer(customerId)\nDAO: executeQuery('SELECT * FROM orders WHERE customer_id = ?')\n"
+      "en": "What is the primary difference between the Repository Pattern and a raw Data Access Object (DAO)?\n\n```txt\nRepository: orderRepo.getOrdersByCustomer(customerId)\nDAO: executeQuery('SELECT * FROM orders WHERE customer_id = ?')\n```\n",
+      "ru": "В чём основное различие между паттерном Repository и сырым объектом доступа к данным (DAO — Data Access Object)?\n\n```txt\nRepository: orderRepo.getOrdersByCustomer(customerId)\nDAO: executeQuery('SELECT * FROM orders WHERE customer_id = ?')\n```\n"
     },
     "options": {
       "en": [
@@ -76,35 +76,35 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The Repository Pattern abstracts data access behind a domain-focused interface (e.g., 'getOrdersByCustomer'), hiding implementation details and making the domain independent of database technology. A DAO exposes raw database operations directly, tightly coupling business code to SQL. Repository enables easier testing and database switching; DAO does not. The other options are incorrect because both patterns can use ORM, Repository doesn't guarantee caching, and the repository is not necessarily more complex.",
-      "ru": "Паттерн Repository абстрагирует доступ к данным за доменно-ориентированным интерфейсом (например, 'getOrdersByCustomer'), скрывая детали реализации и делая домен независимым от технологии базы данных. DAO открывает сырые операции базы данных напрямую, тесно связывая бизнес-код с SQL. Repository облегчает тестирование и переключение базы данных; DAO этого не делает. Остальные варианты неправильны, потому что оба паттерна могут использовать ORM, Repository не гарантирует кэширование, и Repository не обязательно более сложный."
+      "en": "The Repository Pattern hides queries behind a domain-focused interface such as `getOrdersByCustomer`. The domain code then stays independent of the database technology. A Data Access Object (DAO) exposes raw database operations instead, so business code is tightly coupled to SQL (structured query language).\n\nThat difference is what makes a repository easier to test and easier to move to another database. The other options are wrong:\n\n- Both patterns can sit on top of an ORM (object-relational mapper).\n- A repository does not guarantee caching.\n- A repository is not necessarily more complex.",
+      "ru": "Паттерн Repository прячет запросы за доменным интерфейсом — например, `getOrdersByCustomer`. Домен при этом не зависит от того, какая под ним база данных. Объект доступа к данным (DAO) наоборот открывает сырые операции базы, и бизнес-код намертво привязывается к SQL — языку запросов к реляционной базе.\n\nИменно поэтому Repository проще тестировать и проще перевести на другую базу, а DAO — нет. Остальные варианты неверны:\n\n- Оба паттерна могут работать поверх ORM (object-relational mapper, объектно-реляционный маппер).\n- Кэширование Repository не гарантирует.\n- Сложнее он тоже не обязательно."
     }
   },
   {
     "id": "architecture-quiz-4",
     "topicId": "architecture",
     "question": {
-      "en": "In the context of Event Sourcing, what does the event log represent and why is it critical?\n\nEvent 1: UserCreated(id=123, email='john@example.com')\nEvent 2: UserEmailUpdated(id=123, newEmail='john.doe@example.com')\nEvent 3: UserSubscribed(id=123, plan='premium')\n",
-      "ru": "В контексте Event Sourcing, что представляет журнал событий и почему это критически важно?\n\nEvent 1: UserCreated(id=123, email='john@example.com')\nEvent 2: UserEmailUpdated(id=123, newEmail='john.doe@example.com')\nEvent 3: UserSubscribed(id=123, plan='premium')\n"
+      "en": "In the context of Event Sourcing, what does the event log represent and why is it critical?\n\n```txt\nEvent 1: UserCreated(id=123, email='john@example.com')\nEvent 2: UserEmailUpdated(id=123, newEmail='john.doe@example.com')\nEvent 3: UserSubscribed(id=123, plan='premium')\n```\n",
+      "ru": "В контексте Event Sourcing, что представляет журнал событий и почему это критически важно?\n\n```txt\nEvent 1: UserCreated(id=123, email='john@example.com')\nEvent 2: UserEmailUpdated(id=123, newEmail='john.doe@example.com')\nEvent 3: UserSubscribed(id=123, plan='premium')\n```\n"
     },
     "options": {
       "en": [
         "It is a backup of the current database state; it allows quick recovery if the main database crashes",
         "It is a cache for frequently accessed queries to speed up read performance",
         "It is a log of user actions for analytics purposes only, separate from the actual application state",
-        "It is the single source of truth—the immutable history of all state changes"
+        "It is the single source of truth — the immutable history of all state changes"
       ],
       "ru": [
         "Это резервная копия текущего состояния базы данных; позволяет быстро восстановиться в случае сбоя основной базы данных",
         "Это кэш часто используемых запросов для повышения производительности чтения",
         "Это журнал действий пользователя только в целях аналитики, отдельный от фактического состояния приложения",
-        "Это единственный источник истины—неизменяемая история всех изменений состояния"
+        "Это единственный источник истины — неизменяемая история всех изменений состояния"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Event Sourcing stores the immutable event log as the single source of truth, not the current state. Every state change is captured as an event, enabling complete audit trails, the ability to replay events to any point in time, and perfect reconstruction of past states. The other options confuse Event Sourcing with backups, caching, or analytics—they misunderstand its core purpose as an architectural pattern for state management.",
-      "ru": "Event Sourcing хранит неизменяемый журнал событий как единственный источник истины, а не текущее состояние. Каждое изменение состояния захватывается как событие, что обеспечивает полные журналы аудита, возможность воспроизведения событий в любой момент времени и идеальное восстановление прошлых состояний. Остальные варианты путают Event Sourcing с резервными копиями, кэшированием или аналитикой—они неправильно понимают его основную цель как архитектурного паттерна управления состоянием."
+      "en": "Event Sourcing stores the immutable event log as the single source of truth, not the current state. Every state change is captured as an event. That gives you a complete audit trail. You can also replay the events up to any point in time and rebuild past states exactly.\n\nThe other options confuse Event Sourcing with backups, caching, or analytics. None of those is its purpose: it is an architectural pattern for managing state.",
+      "ru": "Event Sourcing хранит неизменяемый журнал событий как единственный источник истины, а не текущее состояние. Каждое изменение состояния записывается как событие. Отсюда полный журнал аудита. Отсюда же возможность проиграть события до любого момента времени и точно восстановить прошлое состояние.\n\nОстальные варианты путают Event Sourcing с резервными копиями, кэшем или аналитикой. Ничего из этого не описывает его цель: это архитектурный паттерн управления состоянием."
     }
   },
   {
@@ -116,30 +116,30 @@
     },
     "options": {
       "en": [
-        "Option A—it directly instantiates the database inside the service",
-        "Option B—it depends on an abstraction (interface) injected via constructor",
-        "Option C—it creates the repository inside the method, keeping dependencies local",
-        "Option D—it uses a static field to centralize dependency management"
+        "Option A — it directly instantiates the database inside the service",
+        "Option B — it depends on an abstraction (interface) injected via constructor",
+        "Option C — it creates the repository inside the method, keeping dependencies local",
+        "Option D — it uses a static field to centralize dependency management"
       ],
       "ru": [
-        "Вариант A—он напрямую создаёт экземпляр базы данных внутри сервиса",
-        "Вариант B—он зависит от абстракции (интерфейса), внедрённой через конструктор",
-        "Вариант C—он создаёт репозиторий внутри метода, сохраняя зависимости локальными",
-        "Вариант D—он использует статическое поле для централизации управления зависимостями"
+        "Вариант A — он напрямую создаёт экземпляр базы данных внутри сервиса",
+        "Вариант B — он зависит от абстракции (интерфейса), внедрённой через конструктор",
+        "Вариант C — он создаёт репозиторий внутри метода, сохраняя зависимости локальными",
+        "Вариант D — он использует статическое поле для централизации управления зависимостями"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "The option where UserService depends on the interface correctly applies Dependency Inversion: UserService depends on the UserRepository abstraction (interface), not on concrete implementations. Dependencies are injected via the constructor, enabling easy testing with mocks and runtime swapping of implementations. The option that directly instantiates the database inside the service and the option that creates the repository inside the method directly instantiate concrete classes inside UserService, violating DIP. The option that uses a static field uses static coupling, which also violates DIP and makes testing difficult.",
-      "ru": "Вариант, где UserService зависит от интерфейса, правильно применяет принцип инверсии зависимостей: UserService зависит от абстракции UserRepository (интерфейса), а не от конкретных реализаций. Зависимости внедряются через конструктор, что позволяет легко тестировать с помощью моков и переключать реализации во время выполнения. Вариант, который напрямую создаёт экземпляр базы данных внутри сервиса, и вариант, который создаёт репозиторий внутри метода, напрямую создают экземпляры конкретных классов внутри UserService, нарушая DIP. Вариант, который использует статическое поле, использует статическую связь, что также нарушает DIP и затрудняет тестирование."
+      "en": "The correct option is the one where `UserService` takes a `UserRepository` interface through its constructor. That is the Dependency Inversion Principle (DIP) in practice: the service depends on an abstraction, not on a concrete class. Dependencies are injected from outside, so a test can pass a mock and production can swap the implementation at runtime.\n\nThe option that builds `MySQLDatabase` in a field and the option that builds `PostgresRepository` inside the method both create concrete classes inside `UserService`. That violates DIP. The option with the static field couples the service to static state, which also violates DIP and makes testing hard.",
+      "ru": "Правильный вариант — тот, где `UserService` получает интерфейс `UserRepository` через конструктор. Это и есть принцип инверсии зависимостей (DIP) на практике: сервис зависит от абстракции, а не от конкретного класса. Зависимости приходят снаружи, поэтому в тесте можно подставить мок, а в бою поменять реализацию на лету.\n\nВариант, который создаёт `MySQLDatabase` в поле, и вариант, который создаёт `PostgresRepository` внутри метода, оба создают конкретные классы прямо внутри `UserService`. Это нарушает DIP. Вариант со статическим полем завязывает сервис на статику, что тоже нарушает DIP и мешает тестировать."
     }
   },
   {
     "id": "architecture-quiz-6",
     "topicId": "architecture",
     "question": {
-      "en": "Which architectural pattern best addresses the separation of command (write) and query (read) operations, allowing them to use different data models?\n\nWrite Model: Normalized relational schema\nRead Model: Denormalized NoSQL documents\n\nWhat pattern does this exemplify?",
-      "ru": "Какой архитектурный паттерн лучше всего решает разделение операций команд (запись) и запросов (чтение), позволяя им использовать разные модели данных?\n\nWrite Model: Нормализованная реляционная схема\nRead Model: Денормализованные документы NoSQL\n\nКакой паттерн это демонстрирует?"
+      "en": "Which architectural pattern best addresses the separation of command (write) and query (read) operations, allowing them to use different data models? In the sketch below the read side is a NoSQL (non-relational) document store.\n\n```txt\nWrite model: normalized relational schema\nRead model:  denormalized NoSQL documents\n```\n\nWhat pattern does this exemplify?",
+      "ru": "Какой архитектурный паттерн лучше всего решает разделение операций команд (запись) и запросов (чтение), позволяя им использовать разные модели данных? На схеме ниже сторона чтения — это NoSQL (нереляционное) документное хранилище.\n\n```txt\nWrite model: нормализованная реляционная схема\nRead model:  денормализованные документы NoSQL\n```\n\nКакой паттерн это демонстрирует?"
     },
     "options": {
       "en": [
@@ -157,16 +157,16 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "CQRS explicitly separates read and write models, allowing each to be optimized independently for their specific concerns. The other patterns don't mandate this separation—Layered and Hexagonal are about overall structure, and Repository Pattern manages data access but doesn't require separate models.",
-      "ru": "CQRS явно разделяет модели чтения и записи, позволяя каждой оптимизироваться независимо. Остальные паттерны не требуют этого разделения — слоистая и шестиугольная архитектуры касаются общей структуры, а Repository управляет доступом, но не требует отдельных моделей."
+      "en": "CQRS — command query responsibility segregation — explicitly separates the read model from the write model, so each one can be optimized on its own. The other patterns do not require that split. Layered and Hexagonal describe the overall structure, and the Repository Pattern manages data access without demanding separate models.",
+      "ru": "CQRS — command query responsibility segregation, разделение ответственности команд и запросов — явно разделяет модели чтения и записи, и каждую можно оптимизировать отдельно. Остальные паттерны такого разделения не требуют. Слоистая и шестиугольная архитектуры описывают общую структуру, а Repository управляет доступом к данным, но отдельных моделей не просит."
     }
   },
   {
     "id": "architecture-quiz-7",
     "topicId": "architecture",
     "question": {
-      "en": "You have a UserService that depends on UserRepository and EmailService. Instead of passing concrete implementations, you inject interfaces. Which SOLID principle are you primarily applying?\n\ninterface IUserRepository { }\ninterface IEmailService { }\n\nclass UserService {\n  constructor(repo: IUserRepository, email: IEmailService) { }\n}\n",
-      "ru": "У вас есть UserService, который зависит от UserRepository и EmailService. Вместо передачи конкретных реализаций вы инжектируете интерфейсы. Какой принцип SOLID вы в первую очередь применяете?\n\ninterface IUserRepository { }\ninterface IEmailService { }\n\nclass UserService {\n  constructor(repo: IUserRepository, email: IEmailService) { }\n}\n"
+      "en": "You have a `UserService` that depends on `UserRepository` and `EmailService`. Instead of passing concrete implementations, you inject interfaces. SOLID is a set of five class-design principles. Which of them are you primarily applying here?\n\n```typescript\ninterface IUserRepository { }\ninterface IEmailService { }\n\nclass UserService {\n  constructor(repo: IUserRepository, email: IEmailService) { }\n}\n```\n",
+      "ru": "У вас есть `UserService`, который зависит от `UserRepository` и `EmailService`. Вместо конкретных реализаций вы передаёте интерфейсы. SOLID — это набор из пяти принципов проектирования классов. Какой из них вы применяете здесь в первую очередь?\n\n```typescript\ninterface IUserRepository { }\ninterface IEmailService { }\n\nclass UserService {\n  constructor(repo: IUserRepository, email: IEmailService) { }\n}\n```\n"
     },
     "options": {
       "en": [
@@ -185,15 +185,15 @@
     "correctIndex": 1,
     "explanation": {
       "en": "Dependency Inversion Principle states that high-level modules should not depend on low-level modules; both should depend on abstractions. By injecting interfaces rather than concrete classes, UserService depends on abstractions (IUserRepository, IEmailService), inverting the typical dependency direction.",
-      "ru": "Принцип инверсии зависимостей гласит, что высокоуровневые модули не должны зависеть от низкоуровневых; оба должны зависеть от абстракций. Инжектируя интерфейсы вместо конкретных классов, UserService зависит от абстракций, инвертируя типичное направление зависимостей."
+      "ru": "Принцип инверсии зависимостей гласит: высокоуровневые модули не должны зависеть от низкоуровневых, оба зависят от абстракций. Когда вы передаёте интерфейсы вместо конкретных классов, `UserService` зависит от абстракций, и обычное направление зависимости переворачивается."
     }
   },
   {
     "id": "architecture-quiz-8",
     "topicId": "architecture",
     "question": {
-      "en": "In Event Sourcing, instead of storing current state, you store a log of all events. Which benefit does this NOT provide?\n\nEvents: UserCreated(id=1) → EmailChanged(id=1, email='old@test.com')\n        → EmailChanged(id=1, email='new@test.com')\n",
-      "ru": "В Event Sourcing вместо сохранения текущего состояния вы сохраняете журнал всех событий. Какое преимущество это НЕ дает?\n\nEvents: UserCreated(id=1) → EmailChanged(id=1, email='old@test.com')\n        → EmailChanged(id=1, email='new@test.com')\n"
+      "en": "In Event Sourcing, instead of storing current state, you store a log of all events. Which benefit does this **not** provide?\n\n```txt\nUserCreated(id=1)\n  → EmailChanged(id=1, email='old@test.com')\n  → EmailChanged(id=1, email='new@test.com')\n```\n",
+      "ru": "В Event Sourcing вместо текущего состояния вы сохраняете журнал всех событий. Какое преимущество это **не** даёт?\n\n```txt\nUserCreated(id=1)\n  → EmailChanged(id=1, email='old@test.com')\n  → EmailChanged(id=1, email='new@test.com')\n```\n"
     },
     "options": {
       "en": [
@@ -205,22 +205,22 @@
       "ru": [
         "Полный журнал всех изменений без внешнего логирования",
         "Способность воспроизводить события для восстановления исторического состояния в любой момент",
-        "Автоматическое снижение задержки запросов к БД для высоконагруженных систем",
-        "Временная отладка — понимание точной последовательности изменений состояния"
+        "Автоматическое снижение задержки запросов к базе данных для нагруженных систем",
+        "Отладка во времени — понимание точной последовательности изменений состояния"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Event Sourcing provides auditability, replay capability, and temporal debugging, but it does NOT inherently reduce query latency. In fact, reconstructing current state from an event stream can be slower than querying a single record. To solve latency, Event Sourcing is often paired with CQRS and projections (materialized views).",
-      "ru": "Event Sourcing обеспечивает аудитность, возможность воспроизведения и временную отладку, но НЕ уменьшает задержку запросов по сути. На самом деле восстановление текущего состояния из потока событий может быть медленнее, чем запрос одной записи. Чтобы решить проблему задержки, Event Sourcing часто сочетают с CQRS и проекциями (материализованными представлениями)."
+      "en": "Event Sourcing gives you auditability, replay, and debugging across time. It does **not** reduce query latency by itself. Rebuilding current state from an event stream can in fact be slower than reading one record. To fix that, Event Sourcing is usually paired with CQRS (command query responsibility segregation) and projections, also called materialized views.",
+      "ru": "Event Sourcing даёт аудит, воспроизведение событий и отладку во времени. Но задержку запросов он сам по себе **не** снижает. Восстановление текущего состояния из потока событий может быть даже медленнее, чем чтение одной записи. Поэтому Event Sourcing обычно сочетают с CQRS (command query responsibility segregation) и проекциями — материализованными представлениями."
     }
   },
   {
     "id": "architecture-quiz-9",
     "topicId": "architecture",
     "question": {
-      "en": "Compare three architectural styles:\n- Clean Architecture: Concentric circles, business logic at core\n- Hexagonal Architecture: Ports and adapters around a central domain\n- Layered Architecture: Horizontal layers (Presentation, Business, Persistence)\n\nWhich statement is TRUE?",
-      "ru": "Сравните три архитектурных стиля:\n- Clean Architecture: Концентрические круги, бизнес-логика в центре\n- Hexagonal Architecture: Ports и adapters вокруг центральной domain\n- Layered Architecture: Горизонтальные слои (Presentation, Business, Persistence)\n\nКакое утверждение ВЕРНО?"
+      "en": "Compare three architectural styles:\n\n- Clean Architecture: concentric circles, business logic at the core\n- Hexagonal Architecture: ports and adapters around a central domain\n- Layered Architecture: horizontal layers (Presentation, Business, Persistence)\n\nWhich statement is **true**?",
+      "ru": "Сравните три архитектурных стиля:\n\n- Clean Architecture: концентрические круги, бизнес-логика в центре\n- Hexagonal Architecture: порты и адаптеры вокруг центрального домена\n- Layered Architecture: горизонтальные слои (Presentation, Business, Persistence)\n\nКакое утверждение **верно**?"
     },
     "options": {
       "en": [
@@ -238,8 +238,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Both Hexagonal and Clean Architecture emphasize isolating business logic (core domain) from external concerns and use dependency inversion. Layered Architecture is fundamentally different—it relies on strict vertical separation and doesn't inherently invert dependencies, making it more prone to tight coupling between layers.",
-      "ru": "Hexagonal и Clean Architecture подчеркивают изоляцию бизнес-логики (ядро домена) от внешних проблем и используют инверсию зависимостей. Layered Architecture принципиально отличается — она полагается на строгое вертикальное разделение и не инвертирует зависимости по сути, что делает ее более подверженной связанности между слоями."
+      "en": "Hexagonal and Clean Architecture both isolate business logic — the core domain — from external concerns, and both use dependency inversion.\n\nLayered Architecture is different: it stacks horizontal layers and only fixes the call order, where each layer calls the one below. It does not invert dependencies, so a layer can still import the concrete class beneath it and become tightly coupled to it.",
+      "ru": "Hexagonal и Clean Architecture обе изолируют бизнес-логику (ядро домена) от внешнего мира и обе используют инверсию зависимостей.\n\nLayered Architecture устроена иначе: она складывает горизонтальные слои и задаёт только порядок вызовов — каждый слой вызывает тот, что под ним. Зависимости она не инвертирует, поэтому слой по-прежнему может импортировать конкретный класс снизу и намертво с ним связаться."
     }
   },
   {
@@ -253,20 +253,20 @@
       "en": [
         "To decouple business logic from the data access implementation",
         "To ensure all queries are cached automatically and improve performance",
-        "To eliminate the need for any ORM or database query language",
-        "To enforce that every database operation must be serializable and ACID-compliant at the application level"
+        "To eliminate the need for any ORM (object-relational mapper) or query language",
+        "To enforce that every database operation is serializable and ACID (atomic, consistent, isolated, durable) at the application level"
       ],
       "ru": [
         "Чтобы отделить бизнес-логику от реализации доступа к данным",
         "Чтобы обеспечить автоматическое кэширование всех запросов и улучшить производительность",
-        "Чтобы исключить необходимость в любом ORM или языке запросов базы данных",
-        "Чтобы обеспечить, что каждая операция с БД должна быть сериализуемой и ACID-совместимой на уровне приложения"
+        "Чтобы исключить необходимость в ORM (object-relational mapper) или языке запросов",
+        "Чтобы каждая операция с базой данных была сериализуемой и удовлетворяла ACID (атомарность, согласованность, изоляция, долговечность) на уровне приложения"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The Repository Pattern's core value is decoupling business logic from data access implementation. This enables unit testing with mock repositories, swapping from SQL to NoSQL without changing services, and keeping infrastructure concerns separate from domain logic. The other options misrepresent the pattern's purpose.",
-      "ru": "Основная ценность паттерна Repository — отделение бизнес-логики от реализации доступа к данным. Это позволяет unit-тестирование с mock репозиториями, переход с SQL на NoSQL без изменения сервисов и отделение инфраструктурных проблем от бизнес-логики. Остальные варианты неправильно описывают цель паттерна."
+      "en": "The Repository Pattern's core value is decoupling business logic from the data access implementation. That buys you three things:\n\n- Unit tests that run against a mock repository.\n- A move from SQL (structured query language) storage to a NoSQL (non-relational) store without touching services.\n- Infrastructure concerns kept out of domain logic.\n\nThe other options misrepresent the pattern's purpose.",
+      "ru": "Основная ценность паттерна Repository — отделить бизнес-логику от реализации доступа к данным. Это даёт три вещи:\n\n- Модульные тесты, которые работают с mock-репозиторием.\n- Переход с SQL (structured query language, язык запросов к реляционной базе) на NoSQL (нереляционное хранилище) без правки сервисов.\n- Инфраструктурные детали, вынесенные за пределы доменной логики.\n\nОстальные варианты описывают цель паттерна неверно."
     }
   },
   {
@@ -292,16 +292,16 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Hexagonal Architecture's core strength is the inversion of dependencies—business logic sits at the center and doesn't depend on frameworks or databases, only on abstractions (ports). This makes testing straightforward with mock implementations. The options claiming automatic query optimization and infinite scaling are false promises, and the option claiming that no design patterns or interfaces are needed is incorrect because Hexagonal *relies heavily* on interfaces (ports and adapters).",
-      "ru": "Основная сила архитектуры Hexagonal — инверсия зависимостей: бизнес-логика находится в центре и не зависит от фреймворков или баз данных, а только от абстракций (портов). Это делает тестирование простым с помощью mock-реализаций. Варианты про автоматическую оптимизацию запросов и бесконечное масштабирование — ложные обещания, а вариант про отсутствие необходимости в паттернах и интерфейсах неверен, потому что Hexagonal *полагается на интерфейсы* (порты и адаптеры)."
+      "en": "Hexagonal Architecture's core strength is the inversion of dependencies. Business logic sits at the center and depends only on abstractions called ports, never on frameworks or databases. Testing is then straightforward: you hand the domain a mock adapter.\n\nThe other options do not hold up. Automatic query optimization and infinite scaling are false promises. The claim that no design patterns or interfaces are needed is backwards, because Hexagonal *relies heavily* on interfaces (ports and adapters).",
+      "ru": "Основная сила архитектуры Hexagonal — инверсия зависимостей. Бизнес-логика лежит в центре и зависит только от абстракций-портов, а не от фреймворков или баз данных. Тестировать её просто: подставили mock-адаптер, и всё.\n\nОстальные варианты не выдерживают проверки. Автоматическая оптимизация запросов и бесконечное масштабирование — пустые обещания. Вариант про то, что паттерны и интерфейсы не нужны, переворачивает всё с ног на голову: Hexagonal *держится именно на интерфейсах* — портах и адаптерах."
     }
   },
   {
     "id": "architecture-quiz-12",
     "topicId": "architecture",
     "question": {
-      "en": "In CQRS (Command Query Responsibility Segregation), what is the fundamental principle that distinguishes it from traditional CRUD operations?\n\n```python\n# Traditional CRUD\nclass UserService:\n  def save_user(self, user): # Write\n    return self.db.insert(user)\n  \n  def get_user(self, id): # Read\n    return self.db.select(id)\n\n# CQRS approach\nclass UserCommandHandler:\n  def handle_create_user(self, cmd): # Write\n    pass\n\nclass UserQueryHandler:\n  def handle_get_user(self, query): # Read\n    pass\n```",
-      "ru": "В CQRS (Command Query Responsibility Segregation) какой фундаментальный принцип отличает его от традиционных операций CRUD?\n\n```python\n# Traditional CRUD\nclass UserService:\n  def save_user(self, user): # Write\n    return self.db.insert(user)\n  \n  def get_user(self, id): # Read\n    return self.db.select(id)\n\n# CQRS approach\nclass UserCommandHandler:\n  def handle_create_user(self, cmd): # Write\n    pass\n\nclass UserQueryHandler:\n  def handle_get_user(self, query): # Read\n    pass\n```"
+      "en": "In CQRS (Command Query Responsibility Segregation), what is the fundamental principle that distinguishes it from traditional CRUD (create, read, update, delete) operations?\n\n```python\n# Traditional CRUD\nclass UserService:\n  def save_user(self, user): # Write\n    return self.db.insert(user)\n\n  def get_user(self, id): # Read\n    return self.db.select(id)\n\n# CQRS approach\nclass UserCommandHandler:\n  def handle_create_user(self, cmd): # Write\n    pass\n\nclass UserQueryHandler:\n  def handle_get_user(self, query): # Read\n    pass\n```",
+      "ru": "В CQRS (Command Query Responsibility Segregation) какой фундаментальный принцип отличает его от традиционных операций CRUD (create, read, update, delete — создать, прочитать, обновить, удалить)?\n\n```python\n# Traditional CRUD\nclass UserService:\n  def save_user(self, user): # Write\n    return self.db.insert(user)\n\n  def get_user(self, id): # Read\n    return self.db.select(id)\n\n# CQRS approach\nclass UserCommandHandler:\n  def handle_create_user(self, cmd): # Write\n    pass\n\nclass UserQueryHandler:\n  def handle_get_user(self, query): # Read\n    pass\n```"
     },
     "options": {
       "en": [
@@ -319,8 +319,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "CQRS's core principle is the separation of write (Command) and read (Query) concerns into distinct models, enabling each to be scaled and optimized independently. The option about using only asynchronous communication is a deployment choice, not a CQRS requirement. The option about replacing database calls with REST API calls confuses CQRS with REST patterns, and the option about requiring JSON-only responses is a serialization detail irrelevant to CQRS itself.",
-      "ru": "Основной принцип CQRS — разделение операций записи (Command) и чтения (Query) на отдельные модели, позволяя каждой масштабироваться и оптимизироваться независимо. Вариант про использование только асинхронной коммуникации — это выбор развертывания, а не требование CQRS. Вариант про замену вызовов базы данных на REST API путает CQRS с REST паттернами, а вариант про обязательный формат JSON — это деталь сериализации, не относящаяся к CQRS."
+      "en": "CQRS — command query responsibility segregation — splits write concerns (Command) from read concerns (Query) into separate models. Each one can then be scaled and optimized independently.\n\nThe other options miss the point:\n\n- Using only asynchronous communication is a deployment choice, not a requirement of the pattern.\n- Replacing database calls with REST (representational state transfer) API calls is a different concern entirely.\n- Requiring JSON-only responses is a serialization detail, unrelated to CQRS.",
+      "ru": "CQRS — command query responsibility segregation — разделяет запись (Command) и чтение (Query) на отдельные модели. Каждую из них можно масштабировать и оптимизировать независимо.\n\nОстальные варианты мимо:\n\n- Полностью асинхронное общение — это выбор при развёртывании, а не требование паттерна.\n- Замена вызовов базы данных на вызовы REST (representational state transfer) API — вообще про другое.\n- Требование отдавать только JSON — деталь сериализации, к CQRS отношения не имеющая."
     }
   },
   {
@@ -346,8 +346,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Event Sourcing trades increased storage and query complexity for immutability, auditability, and the ability to replay events to any point in time. The option claiming that databases are no longer needed is false—Event Sourcing still requires persistent storage. The option claiming guaranteed identical event order across all services without coordination ignores ordering challenges in distributed systems. The option claiming automatic prevention of inconsistencies and race conditions is false because Event Sourcing doesn't magically solve consistency issues; you still need careful event ordering.",
-      "ru": "Event Sourcing обменивает увеличенное хранилище и сложность запросов на неизменяемость, проверяемость и возможность воспроизведения событий в любой момент времени. Вариант про полный отказ от баз данных ложен — Event Sourcing все еще требует постоянного хранилища. Вариант про гарантированный одинаковый порядок событий на всех сервисах без координации игнорирует проблемы упорядочения в распределенных системах. Вариант про автоматическое предотвращение несоответствий и условий гонки ложен, потому что Event Sourcing не волшебным образом решает проблемы консистентности; вам все еще нужно тщательное упорядочение событий."
+      "en": "Event Sourcing buys immutability, auditability, and the ability to replay events to any point in time. The price is more storage and more complex queries.\n\nThe other options are false:\n\n- Databases are still needed. The event log itself has to be stored durably somewhere.\n- Identical event order across all services is not guaranteed without coordination. Ordering is a hard problem in distributed systems.\n- Inconsistencies and race conditions are not prevented automatically. You still have to order events carefully.",
+      "ru": "Event Sourcing даёт неизменяемость, проверяемость и возможность проиграть события до любого момента времени. Плата за это — больше места в хранилище и более сложные запросы.\n\nОстальные варианты неверны:\n\n- База данных всё равно нужна: сам журнал событий надо где-то надёжно хранить.\n- Одинаковый порядок событий на всех сервисах без координации не гарантирован. Упорядочивание в распределённых системах — трудная задача.\n- Несогласованность и гонки сами собой не исчезают. Порядок событий всё равно приходится выстраивать аккуратно."
     }
   },
   {
@@ -373,16 +373,16 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Dependency Inversion means depending on abstractions (IOrderRepository) rather than concrete classes (MySqlOrderRepository). This allows easy substitution with mock implementations for testing and switching databases without changing service code. The option about reducing the number of constructors conflates constructor count with architectural quality. The option about eliminating N+1 queries is false—the pattern doesn't solve N+1 queries. The option about lower memory use and faster execution misunderstands interface semantics; interfaces incur zero runtime overhead.",
-      "ru": "Инверсия зависимостей означает зависимость от абстракций (IOrderRepository) а не от конкретных классов (MySqlOrderRepository). Это позволяет легко подменять mock-реализациями при тестировании и переключать базы данных без изменения кода сервиса. Вариант про сокращение количества конструкторов путает количество конструкторов с архитектурным качеством. Вариант про устранение проблем N+1 запросов ложен — паттерн не решает проблемы N+1 запросов. Вариант про меньшее потребление памяти и большую скорость неправильно понимает семантику интерфейсов; интерфейсы не имеют никаких затрат на выполнение."
+      "en": "Dependency Inversion means depending on abstractions (`IOrderRepository`) rather than on concrete classes (`MySqlOrderRepository`). A test can then hand the service a mock, and you can switch databases without changing service code.\n\nThe other options are false:\n\n- Counting constructors says nothing about architectural quality.\n- The pattern does not remove N+1 queries, where one query is followed by one extra query per returned row.\n- Interfaces do not make the program smaller or faster. In TypeScript they disappear at compile time and cost nothing at runtime.",
+      "ru": "Инверсия зависимостей — это зависимость от абстракции (`IOrderRepository`), а не от конкретного класса (`MySqlOrderRepository`). Тогда в тесте сервису можно подсунуть мок, а базу данных поменять, не трогая код сервиса.\n\nОстальные варианты неверны:\n\n- Количество конструкторов ничего не говорит о качестве архитектуры.\n- Проблему N+1 запросов паттерн не решает. Это когда за одним запросом идёт ещё по одному на каждую полученную строку.\n- Интерфейсы не делают программу меньше или быстрее: в TypeScript они исчезают при компиляции и на выполнении не стоят ничего."
     }
   },
   {
     "id": "architecture-quiz-15",
     "topicId": "architecture",
     "question": {
-      "en": "You are evaluating three architectural approaches for a new payment processing system:\n\n1. **Layered Architecture**: Controllers → Services → Repositories → Database\n2. **Clean Architecture (Hexagonal)**: Core domain → Use Cases → Interface Adapters → Frameworks\n3. **CQRS + Event Sourcing**: Separate read/write models with immutable event log\n\nFor a payment system where you need strong auditability, the ability to replay transactions, handle high read volumes separately from writes, and support multiple payment gateways, which combination would be most appropriate?",
-      "ru": "Вы оцениваете три архитектурных подхода для новой системы обработки платежей:\n\n1. **Многоуровневая архитектура**: Controllers → Services → Repositories → Database\n2. **Чистая архитектура (Hexagonal)**: Core domain → Use Cases → Interface Adapters → Frameworks\n3. **CQRS + Event Sourcing**: Отдельные модели чтения/записи с неизменяемым журналом событий\n\nДля системы платежей, где вам нужна сильная проверяемость, возможность воспроизведения транзакций, отдельная обработка больших объемов чтения от записей и поддержка нескольких платежных шлюзов, какая комбинация была бы наиболее подходящей?"
+      "en": "You are evaluating three architectural approaches for a new payment processing system:\n\n1. **Layered Architecture**: Controllers → Services → Repositories → Database\n2. **Clean Architecture (Hexagonal)**: Core domain → Use Cases → Interface Adapters → Frameworks\n3. **CQRS (Command Query Responsibility Segregation) + Event Sourcing**: separate read and write models with an immutable event log\n\nThe payment system needs four things: strong auditability, replay of transactions, high read volume handled separately from writes, and support for several payment gateways. Which combination fits best?",
+      "ru": "Вы оцениваете три архитектурных подхода для новой системы обработки платежей:\n\n1. **Многоуровневая архитектура**: Controllers → Services → Repositories → Database\n2. **Чистая архитектура (Hexagonal)**: Core domain → Use Cases → Interface Adapters → Frameworks\n3. **CQRS (Command Query Responsibility Segregation) + Event Sourcing**: отдельные модели чтения и записи с неизменяемым журналом событий\n\nСистеме платежей нужны четыре вещи: надёжный аудит, возможность проиграть транзакции заново, отдельная обработка большого объёма чтения и поддержка нескольких платёжных шлюзов. Какая комбинация подойдёт лучше всего?"
     },
     "options": {
       "en": [
@@ -400,16 +400,16 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "For payments, auditability and replay are non-negotiable—Event Sourcing provides immutable event logs. CQRS separates high-read-volume dashboard queries from write-heavy transaction processing. Clean Architecture isolates payment gateway adapters as ports/adapters, making them testable and swappable. The pure Layered Architecture option ignores auditability requirements. The Clean-Architecture-alone option underestimates the value of CQRS for read/write separation in this domain. The option proposing CQRS without Event Sourcing is incorrect—Event Sourcing's storage cost is justified by auditability and replay capabilities in financial systems.",
-      "ru": "Для платежей проверяемость и воспроизведение обязательны — Event Sourcing обеспечивает неизменяемые журналы событий. CQRS разделяет запросы высокого объема чтения на панелях инструментов от обработки транзакций с интенсивной записью. Clean Architecture изолирует адаптеры платежных шлюзов как порты/адаптеры, делая их тестируемыми и взаимозаменяемыми. Вариант с чистой многоуровневой архитектурой игнорирует требования проверяемости. Вариант только с Clean Architecture недооценивает ценность CQRS для разделения чтения/записи в этом домене. Вариант с CQRS без Event Sourcing неверен — затраты на хранилище Event Sourcing оправданы проверяемостью и возможностью воспроизведения в финансовых системах."
+      "en": "For payments, auditability and replay are mandatory, and Event Sourcing gives you an immutable event log. CQRS (command query responsibility segregation) then keeps heavy dashboard reads away from write-heavy transaction processing. Clean Architecture wraps each payment gateway in its own adapter behind a port, so gateways stay testable and swappable.\n\nThe other options fall short:\n\n- Pure Layered Architecture ignores the auditability requirement.\n- Clean Architecture alone underestimates what CQRS gives you here: separate read and write paths.\n- CQRS without Event Sourcing drops the audit log. In a financial system that storage cost is worth paying.",
+      "ru": "Для платежей аудит и повторное проигрывание обязательны, а неизменяемый журнал событий даёт именно Event Sourcing. CQRS (command query responsibility segregation) отделяет тяжёлое чтение для дашбордов от обработки транзакций, где много записи. Clean Architecture прячет каждый платёжный шлюз в свой адаптер за портом, поэтому шлюзы легко тестировать и менять.\n\nОстальные варианты слабее:\n\n- Чистая многоуровневая архитектура игнорирует требование аудита.\n- Только Clean Architecture недооценивает то, что здесь даёт CQRS: раздельные пути чтения и записи.\n- CQRS без Event Sourcing теряет журнал аудита. В финансовой системе место в хранилище за такой журнал отдать не жалко."
     }
   },
   {
     "id": "architecture-quiz-16",
     "topicId": "architecture",
     "question": {
-      "en": "You are designing a domain model for an e-commerce system. Which architectural pattern best supports separating the concern of reading product catalogs from writing inventory updates, while maintaining a unified domain model?\ncsharp\n// Current monolithic approach\npublic class Product {\n  public void GetCatalogInfo() { }\n  public void UpdateInventory(int quantity) { }\n}\n",
-      "ru": "Вы проектируете доменную модель для системы электронной коммерции. Какой архитектурный паттерн лучше всего поддерживает разделение задач чтения каталогов товаров от записи обновлений инвентаря, сохраняя единую доменную модель?\ncsharp\n// Текущий монолитный подход\npublic class Product {\n  public void GetCatalogInfo() { }\n  public void UpdateInventory(int quantity) { }\n}\n"
+      "en": "You are designing a domain model for an e-commerce system. Which architectural pattern best supports separating the reading of product catalogs from the writing of inventory updates, while keeping a single domain model?\n\n```csharp\n// Current monolithic approach\npublic class Product {\n  public void GetCatalogInfo() { }\n  public void UpdateInventory(int quantity) { }\n}\n```\n",
+      "ru": "Вы проектируете доменную модель для системы электронной коммерции. Какой архитектурный паттерн лучше всего разделит чтение каталога товаров и запись обновлений склада, сохранив при этом единую доменную модель?\n\n```csharp\n// Текущий монолитный подход\npublic class Product {\n  public void GetCatalogInfo() { }\n  public void UpdateInventory(int quantity) { }\n}\n```\n"
     },
     "options": {
       "en": [
@@ -427,8 +427,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "CQRS explicitly separates read and write operations into different models and handlers, which is ideal for scenarios where read and write patterns differ significantly. Layered Architecture and Repository Pattern are structural but don't inherently address the operational asymmetry. Dependency Inversion alone is a principle that supports CQRS but doesn't define the pattern itself.",
-      "ru": "CQRS явно разделяет операции чтения и записи на различные модели и обработчики, что идеально подходит для сценариев, где паттерны чтения и записи значительно различаются. Многоуровневая архитектура и паттерн Repository являются структурными, но не решают операционную асимметрию. Инверсия зависимостей - это принцип, поддерживающий CQRS, но не определяющий сам паттерн."
+      "en": "CQRS — command query responsibility segregation — splits reads and writes into separate models and handlers. That is exactly what you want when the read pattern and the write pattern differ a lot.\n\nLayered Architecture and the Repository Pattern are structural: neither addresses the asymmetry between reads and writes. Dependency Inversion is a principle that supports CQRS, but it does not define the pattern.",
+      "ru": "CQRS — command query responsibility segregation — разделяет чтение и запись на отдельные модели и обработчики. Это ровно то, что нужно, когда паттерн чтения и паттерн записи сильно расходятся.\n\nМногоуровневая архитектура и Repository — структурные решения: асимметрию чтения и записи они не трогают. Инверсия зависимостей — принцип, который поддерживает CQRS, но сам паттерн не задаёт."
     }
   },
   {
@@ -454,8 +454,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Hexagonal Architecture's core value is testability and flexibility—domain logic depends on abstractions (ports), not concrete implementations (adapters), making it trivial to swap implementations for testing. While it may reduce certain interdependencies, it doesn't automatically reduce code or optimize queries. Circular dependencies are still possible without additional constraints.",
-      "ru": "Основная ценность шестиугольной архитектуры - это тестируемость и гибкость: доменная логика зависит от абстракций (портов), а не конкретных реализаций (адаптеров), что позволяет легко заменять реализации при тестировании. Хотя это может снизить некоторые взаимозависимости, оно не автоматически снижает код или оптимизирует запросы. Циклические зависимости все еще возможны без дополнительных ограничений."
+      "en": "Hexagonal Architecture's core value is testability and flexibility. Domain logic depends on abstractions (ports), not on concrete implementations (adapters), so swapping an implementation for a test is trivial.\n\nIt does remove some interdependencies, but it does not shrink the codebase or optimize queries by itself. Circular dependencies are still possible unless you add extra constraints.",
+      "ru": "Основная ценность шестиугольной архитектуры — тестируемость и гибкость. Доменная логика зависит от абстракций (портов), а не от конкретных реализаций (адаптеров), поэтому подменить реализацию в тесте элементарно.\n\nЧасть взаимозависимостей она действительно убирает, но сама по себе код не сокращает и запросы не оптимизирует. Циклические зависимости всё ещё возможны, если не добавить отдельные ограничения."
     }
   },
   {
@@ -481,8 +481,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Event schema evolution is critical because events are immutable and permanent—when business logic changes, old events must still be interpretable. Single table storage may cause scaling issues, snapshots are a performance optimization (not a complication), and causality ordering is essential for correct state reconstruction, not just timestamp order.",
-      "ru": "Эволюция схемы событий критична, потому что события неизменяемы и постоянны—когда бизнес-логика меняется, старые события должны оставаться интерпретируемыми. Хранение в одной таблице может вызвать проблемы масштабирования, снимки - это оптимизация производительности (а не усложнение), и упорядочение причинности необходимо для правильной реконструкции состояния, а не только по временной метке."
+      "en": "Event schema evolution is critical because events are immutable and permanent. When business logic changes, the new code must still be able to read old events.\n\nThe other options are wrong:\n\n- One non-partitioned table becomes a scaling problem, not a simplification.\n- Snapshots are a performance optimization, not a complication.\n- Causal ordering matters. Sorting by creation timestamp alone can rebuild the state incorrectly.",
+      "ru": "Эволюция схемы событий критична, потому что события неизменяемы и остаются навсегда. Когда бизнес-логика меняется, новый код всё равно должен уметь прочитать старые события.\n\nОстальные варианты неверны:\n\n- Одна неразделённая таблица — это будущая проблема с масштабированием, а не упрощение.\n- Снимки состояния — это оптимизация производительности, а не усложнение.\n- Причинно-следственный порядок важен. Сортировка только по времени создания может собрать состояние неправильно."
     }
   },
   {
@@ -509,15 +509,15 @@
     "correctIndex": 1,
     "explanation": {
       "en": "Hexagonal Architecture (Alistair Cockburn, 2005) and Clean Architecture (Robert Martin, 2012) share the same core philosophy: isolate domain logic from external concerns through dependency inversion. Hexagonal is a concrete implementation technique that embodies Clean Architecture principles via ports and adapters. They are complementary, not exclusive, and both can be applied together.",
-      "ru": "Шестиугольная архитектура (Алистер Кокберн, 2005) и чистая архитектура (Роберт Мартин, 2012) разделяют одну и ту же философию: изолировать доменную логику от внешних забот посредством инверсии зависимостей. Шестиугольная архитектура - это конкретный метод реализации, который воплощает принципы чистой архитектуры через порты и адаптеры. Они дополняют друг друга, а не исключают, и могут применяться вместе."
+      "ru": "Шестиугольная архитектура (Алистер Кокберн, 2005) и чистая архитектура (Роберт Мартин, 2012) стоят на одной философии: изолировать доменную логику от внешнего мира через инверсию зависимостей.\n\nШестиугольная архитектура — это конкретный способ реализации, который воплощает принципы чистой архитектуры через порты и адаптеры. Они дополняют друг друга, а не исключают, и применяются вместе."
     }
   },
   {
     "id": "architecture-quiz-20",
     "topicId": "architecture",
     "question": {
-      "en": "When implementing the Repository Pattern with Dependency Inversion, what is the key architectural benefit?\n```csharp\n// Abstraction\npublic interface IOrderRepository {\n  Task<Order> GetById(int id);\n  Task Save(Order order);\n}\n\n// Domain service depends on abstraction\npublic class OrderService {\n  private readonly IOrderRepository _repo;\n  public OrderService(IOrderRepository repo) => _repo = repo;\n}\n```\n",
-      "ru": "При реализации паттерна Repository с инверсией зависимостей, в чем заключается ключевое архитектурное преимущество?\n```csharp\n// Абстракция\npublic interface IOrderRepository {\n  Task<Order> GetById(int id);\n  Task Save(Order order);\n}\n\n// Доменный сервис зависит от абстракции\npublic class OrderService {\n  private readonly IOrderRepository _repo;\n  public OrderService(IOrderRepository repo) => _repo = repo;\n}\n```"
+      "en": "When implementing the Repository Pattern with Dependency Inversion, what is the key architectural benefit?\n\n```csharp\n// Abstraction\npublic interface IOrderRepository {\n  Task<Order> GetById(int id);\n  Task Save(Order order);\n}\n\n// Domain service depends on abstraction\npublic class OrderService {\n  private readonly IOrderRepository _repo;\n  public OrderService(IOrderRepository repo) => _repo = repo;\n}\n```\n",
+      "ru": "При реализации паттерна Repository с инверсией зависимостей, в чём заключается ключевое архитектурное преимущество?\n\n```csharp\n// Абстракция\npublic interface IOrderRepository {\n  Task<Order> GetById(int id);\n  Task Save(Order order);\n}\n\n// Доменный сервис зависит от абстракции\npublic class OrderService {\n  private readonly IOrderRepository _repo;\n  public OrderService(IOrderRepository repo) => _repo = repo;\n}\n```"
     },
     "options": {
       "en": [
@@ -536,7 +536,7 @@
     "correctIndex": 2,
     "explanation": {
       "en": "By making domain services depend on the IOrderRepository abstraction rather than concrete implementations, you decouple business logic from persistence details. This enables testing with mock repositories and swapping database technologies without touching domain code. Query optimization and memory storage are unrelated to the Repository pattern's design benefits.",
-      "ru": "Когда доменные сервисы зависят от абстракции IOrderRepository, а не от конкретных реализаций, вы разделяете бизнес-логику от деталей сохранения. Это позволяет тестировать с помощью фиктивных репозиториев и заменять технологии баз данных без изменения кода домена. Оптимизация запросов и хранение в памяти не связаны с преимуществами дизайна паттерна Repository."
+      "ru": "Когда доменный сервис зависит от абстракции `IOrderRepository`, а не от конкретной реализации, бизнес-логика отделяется от деталей хранения. Это позволяет тестировать с mock-репозиториями и менять технологию базы данных, не трогая код домена. Оптимизация запросов и хранение в памяти к преимуществам паттерна Repository отношения не имеют."
     }
   }
 ]

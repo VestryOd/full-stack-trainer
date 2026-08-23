@@ -4,7 +4,7 @@
     "topicId": "graphql",
     "question": {
       "en": "In GraphQL, what is the primary difference between a Query and a Mutation?\n\n```graphql\nquery GetUser {\n  user(id: \"1\") { name }\n}\n\nmutation UpdateUser {\n  updateUser(id: \"1\", name: \"John\") { name }\n}\n```",
-      "ru": "В GraphQL, в чем основное различие между Query и Mutation?\n\n```graphql\nquery GetUser {\n  user(id: \"1\") { name }\n}\n\nmutation UpdateUser {\n  updateUser(id: \"1\", name: \"John\") { name }\n}\n```"
+      "ru": "В чём основное различие между Query и Mutation в GraphQL?\n\n```graphql\nquery GetUser {\n  user(id: \"1\") { name }\n}\n\nmutation UpdateUser {\n  updateUser(id: \"1\", name: \"John\") { name }\n}\n```"
     },
     "options": {
       "en": [
@@ -49,8 +49,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "The N+1 problem occurs when resolving nested fields requires multiple database queries: one for the parent list and one for each child entity. DataLoader and batch loading are common solutions to address this by combining multiple requests into a single database operation, reducing the total number of queries from N+1 to 2.",
-      "ru": "Проблема N+1 возникает, когда разрешение вложенных полей требует нескольких запросов к базе данных: один для родительского списка и один для каждого дочернего объекта. DataLoader и пакетная загрузка — это распространенные решения для решения этой проблемы путем объединения нескольких запросов в одну операцию базы данных, сокращая общее количество запросов с N+1 до 2."
+      "en": "The N+1 problem occurs when resolving nested fields requires multiple database queries: one for the parent list, then one more for each child entity.\n\nDataLoader and batch loading are the common fix. They collect the N child requests made in one execution cycle and send them as a single database operation. The total drops from N+1 queries to 2.",
+      "ru": "Проблема N+1 возникает, когда для вложенного поля нужен отдельный запрос к базе: один запрос за родительским списком и ещё по одному на каждый дочерний объект.\n\nОбычное решение — DataLoader и пакетная загрузка. Они собирают N дочерних запросов, сделанных за один цикл выполнения, и отправляют их одной операцией к базе. Всего запросов становится 2 вместо N+1."
     }
   },
   {
@@ -58,7 +58,7 @@
     "topicId": "graphql",
     "question": {
       "en": "What is the primary advantage of using GraphQL Fragments in client code?",
-      "ru": "Какое основное преимущество использования GraphQL Fragments в коде клиента?"
+      "ru": "Какое основное преимущество даёт использование фрагментов GraphQL в коде клиента?"
     },
     "options": {
       "en": [
@@ -76,8 +76,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Fragments are reusable selections of fields that can be shared across multiple queries, mutations, and subscriptions in your client code. They reduce duplication and make it easier to maintain field selections—when a component's data requirements change, you update the fragment once rather than multiple queries. While fragments don't directly compress bandwidth or enable server-side parallelization, they are a code organization tool.",
-      "ru": "Фрагменты — это повторно используемые выборки полей, которые могут быть общими для нескольких запросов, мутаций и подписок в коде вашего клиента. Они уменьшают дублирование и упрощают обслуживание выборок полей — когда требования компонента к данным изменяются, вы обновляете фрагмент один раз, а не несколько запросов. Хотя фрагменты не сжимают пропускную способность напрямую и не включают параллелизм на стороне сервера, они являются инструментом организации кода."
+      "en": "Fragments are reusable selections of fields. You can share one fragment across many queries, mutations and subscriptions in your client code.\n\nThat removes duplication and makes field selections easier to maintain. When a component's data requirements change, you update the fragment once instead of editing every query that uses it. Fragments do not compress bandwidth and do not enable server-side parallelization — they are a code organization tool.",
+      "ru": "Фрагмент — это переиспользуемая выборка полей. Один и тот же фрагмент можно включать в разные запросы, мутации и подписки в коде клиента.\n\nЭто убирает дублирование и упрощает поддержку. Когда компоненту нужны другие поля, вы правите фрагмент один раз, а не каждый запрос отдельно. Пропускную способность фрагменты не экономят и параллельное выполнение на сервере не включают — это инструмент организации кода."
     }
   },
   {
@@ -85,7 +85,7 @@
     "topicId": "graphql",
     "question": {
       "en": "How does Apollo Client's cache normalization work, and what is a key benefit?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: \"1\" } });\nconst { data: data2 } = useQuery(GET_POST, { variables: { userId: \"1\" } });\n```",
-      "ru": "Как работает нормализация кэша Apollo Client и в чем основное преимущество?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: \"1\" } });\nconst { data2 } = useQuery(GET_POST, { variables: { userId: \"1\" } });\n```"
+      "ru": "Как работает нормализация кэша Apollo Client и в чём её главное преимущество?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: \"1\" } });\nconst { data2 } = useQuery(GET_POST, { variables: { userId: \"1\" } });\n```"
     },
     "options": {
       "en": [
@@ -103,8 +103,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Apollo Client's normalized cache stores entities by their type and ID, creating a single source of truth for each entity. When the same entity (e.g., a User with id \"1\") appears in multiple queries, they all reference the same cached object. This means updating a user through a mutation automatically propagates to all queries that use that user, eliminating inconsistency and reducing unnecessary refetches.",
-      "ru": "Нормализованный кэш Apollo Client хранит сущности по их типу и идентификатору, создавая единый источник истины для каждой сущности. Когда одна и та же сущность (например, User с id \"1\") появляется в нескольких запросах, они все ссылаются на один и тот же кэшированный объект. Это означает, что обновление пользователя через мутацию автоматически распространяется на все запросы, использующие этого пользователя, устраняя несогласованность и сокращая ненужные повторные выборки."
+      "en": "Apollo Client's normalized cache stores entities by their type and id, creating a single source of truth for each entity. When the same entity appears in several queries — say a User with id \"1\" — all of them point at the same cached object.\n\nSo a mutation that updates that user propagates to every query using it. Nothing goes out of sync, and Apollo does not have to refetch the same data again.",
+      "ru": "Нормализованный кэш Apollo Client хранит сущности по типу и идентификатору, поэтому у каждой сущности один источник истины. Когда одна и та же сущность появляется в нескольких запросах — например, User с id \"1\" — все они ссылаются на один и тот же объект в кэше.\n\nПоэтому мутация, изменившая этого пользователя, сразу видна во всех запросах, где он есть. Данные не расходятся, и повторно загружать их не нужно."
     }
   },
   {
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "GraphQL introspection allows clients to query the __schema meta-field to discover available types, fields, arguments, and their descriptions. This enables tools like GraphQL IDE (GraphiQL), Apollo Studio, and IDE extensions to provide intelligent code completion, validation, and automatically generated documentation. Disabling introspection in production is sometimes recommended for security hardening, but the feature itself is crucial for development experience.",
-      "ru": "Интроспекция (introspection) в GraphQL позволяет клиентам запрашивать мета-поле __schema для обнаружения доступных типов, полей, аргументов и их описаний. Это позволяет инструментам, таким как GraphQL IDE (GraphiQL), Apollo Studio и расширения IDE, предоставлять интеллектуальное автодополнение кода, проверку и автоматически сгенерированную документацию. Отключение интроспекции в production иногда рекомендуется для укрепления безопасности, но сама функция имеет решающее значение для опыта разработки."
+      "en": "GraphQL introspection lets clients query the `__schema` meta-field to discover the available types, fields, arguments and their descriptions.\n\nThat is what developer tools are built on. GraphiQL, Apollo Studio and plugins for your IDE (Integrated Development Environment) read the schema live. They can then offer code completion, validation and generated documentation. Disabling introspection in production is often recommended as security hardening, but the feature itself is what makes GraphQL pleasant to develop against.",
+      "ru": "Интроспекция (introspection) в GraphQL позволяет клиенту запросить мета-поле `__schema` и узнать доступные типы, поля, аргументы и их описания.\n\nНа этом построены инструменты разработчика. GraphiQL, Apollo Studio и плагины к вашей IDE (Integrated Development Environment — среда разработки) читают схему на лету. Дальше они дают автодополнение, проверку запроса и готовую документацию. Отключать интроспекцию в production часто советуют ради безопасности, но именно она делает разработку под GraphQL удобной."
     }
   },
   {
@@ -139,7 +139,7 @@
     "topicId": "graphql",
     "question": {
       "en": "What is the primary difference between a GraphQL Query and a Mutation?",
-      "ru": "В чем основное различие между GraphQL Query и Mutation?"
+      "ru": "В чём основное различие между GraphQL Query и Mutation?"
     },
     "options": {
       "en": [
@@ -149,24 +149,24 @@
         "Queries require authentication, while mutations are open to anonymous clients"
       ],
       "ru": [
-        "Queries могут запросить только одно поле, а mutations могут запросить несколько полей",
-        "Queries — операции только для чтения, а mutations модифицируют состояние сервера",
-        "Mutations выполняются параллельно, а queries выполняются последовательно",
-        "Queries требуют аутентификации, а mutations открыты для анонимных клиентов"
+        "Query могут запросить только одно поле, а Mutation — несколько полей",
+        "Query — операции только для чтения, а Mutation модифицируют состояние сервера",
+        "Mutation выполняются параллельно, а Query выполняются последовательно",
+        "Query требуют аутентификации, а Mutation открыты для анонимных клиентов"
       ]
     },
     "correctIndex": 1,
     "explanation": {
       "en": "Queries are intended for fetching data without side effects, while mutations are designed for operations that modify data on the server. This semantic distinction helps clients understand the intent and allows servers to optimize execution accordingly. The other options describe incorrect or non-fundamental differences.",
-      "ru": "Queries предназначены для получения данных без побочных эффектов, а mutations предназначены для операций, которые модифицируют данные на сервере. Это семантическое различие помогает клиентам понять намерение и позволяет серверам оптимизировать выполнение. Остальные варианты описывают неправильные или несущественные различия."
+      "ru": "Query предназначены для получения данных без побочных эффектов, а Mutation — для операций, которые изменяют данные на сервере. Это семантическое различие помогает клиенту выразить намерение, а серверу — соответственно спланировать выполнение. Остальные варианты описывают различия, которых нет или которые не главные."
     }
   },
   {
     "id": "graphql-quiz-7",
     "topicId": "graphql",
     "question": {
-      "en": "Consider this GraphQL query with an N+1 problem scenario:\n\n```graphql\nquery GetAuthors {\n  authors {\n    id\n    name\n    books {\n      id\n      title\n    }\n  }\n}\n```\n\nWhich technique BEST solves this at the resolver level?",
-      "ru": "Рассмотрите этот GraphQL запрос с сценарием проблемы N+1:\n\n```graphql\nquery GetAuthors {\n  authors {\n    id\n    name\n    books {\n      id\n      title\n    }\n  }\n}\n```\n\nКакая техника ЛУЧШЕ всего решает это на уровне resolver?"
+      "en": "Consider this GraphQL query with an N+1 problem scenario:\n\n```graphql\nquery GetAuthors {\n  authors {\n    id\n    name\n    books {\n      id\n      title\n    }\n  }\n}\n```\n\nWhich technique **best** solves this at the resolver level?",
+      "ru": "Рассмотрите этот GraphQL-запрос со сценарием проблемы N+1:\n\n```graphql\nquery GetAuthors {\n  authors {\n    id\n    name\n    books {\n      id\n      title\n    }\n  }\n}\n```\n\nКакая техника **лучше всего** решает это на уровне резолвера?"
     },
     "options": {
       "en": [
@@ -176,16 +176,16 @@
         "Moving the books field to a separate subscription query"
       ],
       "ru": [
-        "Добавление лимитов pagination к полю books для уменьшения количества результатов",
+        "Добавление пагинации к полю books, чтобы уменьшить количество результатов",
         "Выполнение всех запросов книг параллельно с использованием Promise.all()",
         "Использование DataLoader для группировки запросов и реализации кэширования для запросов книг",
-        "Перемещение поля books в отдельный subscription запрос"
+        "Перенос поля books в отдельную подписку"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "DataLoader is the industry-standard solution for the N+1 problem in GraphQL. It batches requests made during a single execution cycle and deduplicates identical requests, turning N+1 queries into a single batched query. Pagination reduces data but doesn't solve the underlying N+1 issue; Promise.all() executes requests in parallel but still creates multiple queries; subscriptions are unrelated to this problem.",
-      "ru": "DataLoader — стандартное решение для проблемы N+1 в GraphQL. Оно группирует запросы, сделанные во время одного цикла выполнения, и дедублицирует идентичные запросы, превращая N+1 запросов в один групповой запрос. Pagination уменьшает данные, но не решает основную проблему N+1; Promise.all() выполняет запросы параллельно, но все еще создает несколько запросов; subscriptions не связаны с этой проблемой."
+      "en": "DataLoader is the standard solution for the N+1 problem in GraphQL. It collects the requests made during one execution cycle, drops the duplicates, and sends the N book queries as one batched query. The whole request then costs 2 database queries instead of N+1.\n\nThe other options do not fix it:\n\n- Pagination returns less data, but the resolver still runs once per author.\n- `Promise.all()` runs the queries in parallel; there are still N of them.\n- Subscriptions push live updates and have nothing to do with batching.",
+      "ru": "DataLoader — стандартное решение проблемы N+1 в GraphQL. Он собирает запросы, сделанные за один цикл выполнения, убирает дубли и отправляет N запросов за книгами одним групповым запросом. Весь запрос обходится в 2 обращения к базе вместо N+1.\n\nОстальные варианты проблему не решают:\n\n- Пагинация уменьшает объём данных, но резолвер всё равно вызывается по разу на каждого автора.\n- `Promise.all()` запускает запросы параллельно, но их по-прежнему N штук.\n- Подписки доставляют живые обновления и к группировке отношения не имеют."
     }
   },
   {
@@ -193,7 +193,7 @@
     "topicId": "graphql",
     "question": {
       "en": "In Apollo Client, how does the cache-first fetch policy behave when a previously cached query is requested again?",
-      "ru": "В Apollo Client, как себя ведет политика fetch policy \"cache-first\" при повторном запросе ранее закэшированного запроса?"
+      "ru": "Как ведёт себя политика загрузки `cache-first` в Apollo Client при повторном запросе ранее закэшированных данных?"
     },
     "options": {
       "en": [
@@ -211,8 +211,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "cache-first policy prioritizes cached data and returns it immediately if available, avoiding network requests entirely. This optimizes performance but risks serving stale data. cache-and-network would fetch from the server in the background; cache-only never checks the server; network-first checks the server first. Understanding fetch policies is critical for managing data freshness and performance tradeoffs.",
-      "ru": "Политика cache-first приоритизирует закэшированные данные и возвращает их немедленно, если они доступны, избегая сетевых запросов полностью. Это оптимизирует производительность, но рискует доставить устаревшие данные. cache-and-network получала бы данные с сервера в фоне; cache-only никогда не проверяет сервер; network-first сначала проверяет сервер. Понимание fetch policies критически важно для управления актуальностью данных и компромиссами производительности."
+      "en": "The `cache-first` policy prefers cached data and returns it immediately when it is available, avoiding a network request entirely. That optimizes performance, but it risks serving stale data.\n\nThe other policies behave differently:\n\n- `cache-and-network` would fetch from the server in the background.\n- `cache-only` never checks the server.\n- `network-first` checks the server first.\n\nUnderstanding fetch policies is critical for managing the tradeoff between data freshness and performance.",
+      "ru": "Политика `cache-first` предпочитает закэшированные данные и возвращает их сразу, если они есть, вообще не обращаясь к сети. Это быстро, но данные могут оказаться устаревшими.\n\nОстальные политики ведут себя иначе:\n\n- `cache-and-network` отдаёт кэш и параллельно догружает данные с сервера в фоне.\n- `cache-only` никогда не проверяет сервер.\n- `network-first` сначала проверяет сервер.\n\nВыбор политики загрузки — это и есть выбор между свежестью данных и скоростью."
     }
   },
   {
@@ -220,7 +220,7 @@
     "topicId": "graphql",
     "question": {
       "en": "What is a GraphQL Fragment, and when should you use it?\n\n```graphql\nfragment UserFields on User {\n  id\n  email\n  createdAt\n}\n```",
-      "ru": "Что такое GraphQL Fragment и когда его следует использовать?\n\n```graphql\nfragment UserFields on User {\n  id\n  email\n  createdAt\n}\n```"
+      "ru": "Что такое фрагмент (fragment) в GraphQL и когда его стоит использовать?\n\n```graphql\nfragment UserFields on User {\n  id\n  email\n  createdAt\n}\n```"
     },
     "options": {
       "en": [
@@ -232,22 +232,22 @@
       "ru": [
         "Переиспользуемый набор полей типа, который можно включать в разные запросы",
         "Частичный ответ запроса, который сервер отправляет порциями для оптимизации пропускной способности сети",
-        "Закэшированное подмножество данных на клиенте, которое обновляется при выполнении mutations",
-        "Directive, которая фильтрует результаты запроса на основе разрешений пользователя"
+        "Закэшированное подмножество данных на клиенте, которое обновляется при выполнении мутаций",
+        "Директива, которая фильтрует результаты запроса на основе разрешений пользователя"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Fragments allow you to define a reusable selection set of fields that can be included in multiple queries, reducing code duplication and improving maintainability when field requirements change. They're a client-side abstraction tool, not related to server chunking, caching strategy, or permission directives. Fragments are essential for managing complex queries in large applications.",
-      "ru": "Fragments позволяют определить переиспользуемый набор полей, который может быть включен в несколько запросов, уменьшая дублирование кода и улучшая поддерживаемость при изменении требований к полям. Это инструмент абстракции на клиенте, не связанный с разбивкой сервера на части, стратегией кэширования или директивами разрешений. Fragments необходимы для управления сложными запросами в больших приложениях."
+      "en": "Fragments let you define a reusable selection set of fields and include it in many queries. That removes code duplication and keeps things maintainable when the required fields change.\n\nA fragment is a client-side tool. It has nothing to do with sending the response in chunks, with the caching strategy, or with permission directives. In a large application fragments are what keeps complex queries manageable.",
+      "ru": "Фрагмент позволяет описать переиспользуемый набор полей и подключать его в разных запросах. Это убирает дублирование кода и упрощает правки, когда набор нужных полей меняется.\n\nФрагмент живёт на клиенте. К разбиению ответа на части, к стратегии кэширования и к директивам разрешений он отношения не имеет. В большом приложении именно фрагменты удерживают сложные запросы в управляемом виде."
     }
   },
   {
     "id": "graphql-quiz-10",
     "topicId": "graphql",
     "question": {
-      "en": "Which of the following is a significant advantage of GraphQL over REST in terms of data fetching efficiency?",
-      "ru": "Какое из следующих утверждений является значительным преимуществом GraphQL над REST с точки зрения эффективности получения данных?"
+      "en": "Which of the following is a significant advantage of GraphQL over REST (Representational State Transfer) in terms of data fetching efficiency?",
+      "ru": "В чём GraphQL заметно выигрывает у REST (Representational State Transfer) по эффективности загрузки данных?"
     },
     "options": {
       "en": [
@@ -257,16 +257,16 @@
         "GraphQL automatically compresses responses, reducing bandwidth consumption compared to REST"
       ],
       "ru": [
-        "Endpoints GraphQL кэшируют ответы более эффективно, чем endpoints REST",
-        "Клиенты запрашивают только нужные им поля, без излишнего и недостаточного получения данных",
-        "GraphQL требует меньше HTTP запросов, потому что все запросы используют один POST endpoint",
+        "Эндпоинты GraphQL кэшируют ответы эффективнее, чем эндпоинты REST",
+        "Клиенты запрашивают только нужные им поля, без избыточной и недостаточной выборки",
+        "GraphQL требует меньше HTTP-запросов, потому что все запросы используют один POST-эндпоинт",
         "GraphQL автоматически сжимает ответы, уменьшая потребление полосы пропускания по сравнению с REST"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "GraphQL's key advantage is precise field selection — clients specify exactly which fields they need, eliminating over-fetching (requesting unnecessary fields) and under-fetching (needing multiple requests to get all required data). This is a fundamental architectural difference from REST, where endpoints return fixed data shapes. While GraphQL does use a single endpoint, that alone doesn't guarantee efficiency; caching and compression are implementation details not inherent to GraphQL.",
-      "ru": "Ключевое преимущество GraphQL — точное выбор полей: клиенты точно указывают, какие поля им нужны, исключая излишнее получение (запрос ненужных полей) и недостаточное получение (необходимость нескольких запросов для получения всех требуемых данных). Это фундаментальное архитектурное различие с REST, где endpoints возвращают фиксированные структуры данных. Хотя GraphQL использует один endpoint, это само по себе не гарантирует эффективность; кэширование и сжатие являются деталями реализации, а не присущи GraphQL."
+      "en": "GraphQL's key advantage is precise field selection: the client says exactly which fields it needs.\n\nThat removes two problems at once:\n\n- Over-fetching — the response carries fields nobody asked for.\n- Under-fetching — one response is not enough, so the client sends several more requests.\n\nA fixed endpoint always returns the same data shape, so it cannot do this. Using a single endpoint does not by itself guarantee efficiency. Caching and compression are implementation details, not properties of GraphQL.",
+      "ru": "Ключевое преимущество GraphQL — точный выбор полей: клиент указывает ровно те поля, которые ему нужны.\n\nЭто снимает сразу две проблемы:\n\n- Избыточная выборка (over-fetching) — в ответе приходят поля, которых никто не просил.\n- Недостаточная выборка (under-fetching) — одного ответа не хватает, и клиент делает ещё несколько запросов.\n\nФиксированный эндпоинт всегда отдаёт одну и ту же структуру, поэтому так не умеет. Один общий эндпоинт сам по себе эффективности не гарантирует. Кэширование и сжатие — детали реализации, а не свойства GraphQL."
     }
   },
   {
@@ -278,22 +278,22 @@
     },
     "options": {
       "en": [
-        "`data` itself is `null`, because one failed field invalidates the whole response",
-        "`data.user.email` is `null` and the rest of the user object comes back as usual",
-        "`data.user` becomes `null`, and the error is listed in the `errors` array",
-        "The request fails with status 500 and the response carries no `data` key"
+        "data itself is null, because one failed field invalidates the whole response",
+        "data.user.email is null and the rest of the user object comes back as usual",
+        "data.user becomes null, and the error is listed in the errors array",
+        "The request fails with status 500 and the response carries no data key"
       ],
       "ru": [
-        "Само поле `data` станет `null`: одно упавшее поле обнуляет весь ответ",
-        "`data.user.email` станет `null`, а остальные поля пользователя вернутся как обычно",
-        "Поле `data.user` станет `null`, а сведения об ошибке попадут в массив `errors`",
-        "Запрос упадёт со статусом 500, и в ответе вообще не будет ключа `data`"
+        "Само поле data станет null: одно упавшее поле обнуляет весь ответ",
+        "data.user.email станет null, а остальные поля пользователя вернутся как обычно",
+        "Поле data.user станет null, а сведения об ошибке попадут в массив errors",
+        "Запрос упадёт со статусом 500, и в ответе вообще не будет ключа data"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "`email` is declared `String!`, so null is not allowed there. When its resolver throws, the executor cannot leave a null in place, so it nulls the closest parent field that may be null. `user` returns `User`, not `User!`, so `data.user` becomes `null` and the error is added to `errors`. This walk upwards is called null bubbling.\n\nLeaving `email: null` inside the user object would break the schema's own promise. `data` turns into `null` only when the bubbling reaches the root, which would happen if the field were declared `user: User!`. And the status code stays 200: a field error travels in `errors`, not in the HTTP status.",
-      "ru": "Поле `email` объявлено как `String!`, то есть null там запрещён. Когда его резолвер падает, оставить null на месте нельзя, поэтому исполнитель обнуляет ближайшее родительское поле, которому null разрешён. Поле `user` возвращает `User`, а не `User!`, поэтому `data.user` станет `null`, а ошибка уедет в `errors`. Этот подъём вверх называют всплытием null.\n\nОставить `email: null` внутри объекта нельзя: это нарушило бы обещание самой схемы. Всё поле `data` станет `null` только если всплытие дойдёт до корня — так было бы при объявлении `user: User!`. Статус ответа при этом остаётся 200: ошибка поля живёт в `errors`, а не в статусе HTTP."
+      "en": "The field `email` is declared `String!`, so null is not allowed there. When its resolver throws, the executor cannot leave a null in place. It nulls the closest parent field that may be null instead. The field `user` returns `User`, not `User!`, so `data.user` becomes `null` and the error is added to `errors`. This walk upwards is called null bubbling.\n\nLeaving `email: null` inside the user object would break the schema's own promise. The whole `data` object turns into `null` only when the bubbling reaches the root. That would happen if the field were declared `user: User!`. And the status code stays 200: a field error travels in `errors`, not in the HTTP status.",
+      "ru": "Поле `email` объявлено как `String!`, то есть null там запрещён. Когда его резолвер падает, оставить null на месте нельзя. Исполнитель обнуляет ближайшее родительское поле, которому null разрешён. Поле `user` возвращает `User`, а не `User!`, поэтому `data.user` станет `null`, а ошибка уедет в `errors`. Этот подъём вверх называют всплытием null.\n\nОставить `email: null` внутри объекта нельзя: это нарушило бы обещание самой схемы. Всё поле `data` станет `null`, только если всплытие дойдёт до корня. Так было бы при объявлении `user: User!`. Статус ответа при этом остаётся 200: ошибка поля живёт в `errors`, а не в статусе HTTP."
     }
   },
   {
@@ -319,16 +319,16 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Without optimization techniques like DataLoader, the resolver for posts is called once per user, resulting in N+1 queries (1 for users, N for each user's posts). The option claiming GraphQL automatically batches all requests into a single database query is false because GraphQL doesn't automatically batch at the database level without explicit implementation. The option that expects a single query from automatic joins ignores that GraphQL is resolver-based and doesn't know about database relationships. The option that dismisses the query count because requests run in parallel is incorrect because parallel execution still incurs the same total query cost.",
-      "ru": "Без техник оптимизации, таких как DataLoader, резолвер постов вызывается один раз для каждого пользователя, что приводит к N+1 запросам (1 для пользователей, N для постов каждого пользователя). Вариант про автоматическое объединение всех запросов в один запрос к базе данных неверен, потому что GraphQL не объединяет автоматически на уровне базы данных без явной реализации. Вариант про один запрос за счет автоматических join игнорирует, что GraphQL основан на резолверах и не знает о связях в базе данных. Вариант про параллельное выполнение без учета количества запросов неверен, потому что параллельное выполнение все еще несет одинаковую общую стоимость запроса."
+      "en": "Without DataLoader or a similar batching layer, the resolver for `posts` runs once per user. That is 1 query for the users plus 10 queries for their posts, so 11 in total.\n\nWhy the other options are wrong:\n\n- GraphQL does not batch database calls on its own. Batching is something you add.\n- GraphQL cannot turn nested fields into a join, because it knows about resolvers, not about tables and the relations between them.\n- Running the 10 queries in parallel shortens the wait, but the database still does the same 10 pieces of work.",
+      "ru": "Без DataLoader или другого слоя пакетной загрузки резолвер поля `posts` вызывается по разу на каждого пользователя. Это 1 запрос за пользователями плюс 10 запросов за их постами — 11 запросов всего.\n\nПочему остальные варианты неверны:\n\n- Сам по себе GraphQL запросы к базе не группирует, группировку добавляете вы.\n- Превратить вложенные поля в join GraphQL не может: он знает про резолверы, а не про таблицы и связи между ними.\n- Параллельный запуск сокращает ожидание, но база всё равно выполняет те же 10 запросов."
     }
   },
   {
     "id": "graphql-quiz-13",
     "topicId": "graphql",
     "question": {
-      "en": "How does Apollo Client's cache management improve performance compared to traditional REST?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: 1 } });\n// User data is cached\nconst { data: data2 } = useQuery(GET_USER, { variables: { id: 1 } });\n// What happens on the second query?\n```",
-      "ru": "Как управление кэшем Apollo Client улучшает производительность по сравнению с традиционным REST?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: 1 } });\n// Данные пользователя кэшируются\nconst { data: data2 } = useQuery(GET_USER, { variables: { id: 1 } });\n// Что происходит на втором запросе?\n```"
+      "en": "How does Apollo Client's cache management improve performance compared to a traditional REST (Representational State Transfer) API?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: 1 } });\n// User data is cached\nconst { data: data2 } = useQuery(GET_USER, { variables: { id: 1 } });\n// What happens on the second query?\n```",
+      "ru": "Как управление кэшем Apollo Client улучшает производительность по сравнению с обычным REST (Representational State Transfer)?\n```js\nconst { data } = useQuery(GET_USER, { variables: { id: 1 } });\n// Данные пользователя кэшируются\nconst { data: data2 } = useQuery(GET_USER, { variables: { id: 1 } });\n// Что происходит на втором запросе?\n```"
     },
     "options": {
       "en": [
@@ -346,8 +346,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Apollo Client uses an in-memory normalized cache that returns identical query results instantly from cache, improving perceived performance and reducing network traffic. It can optionally refetch in the background via cache policies. The option saying Apollo ignores caching entirely and always hits the network ignores Apollo's core feature. The option that limits the cache to a single component is wrong because the cache is global and persists across components. The option about localStorage with manual invalidation after every mutation is incorrect because Apollo uses in-memory caching by default, not localStorage, and has intelligent cache invalidation strategies.",
-      "ru": "Apollo Client использует нормализованный кэш в памяти, который возвращает идентичные результаты запросов мгновенно из кэша, улучшая воспринимаемую производительность и снижая сетевой трафик. Он может опционально переполучить данные в фоне через политики кэша. Вариант про полное игнорирование кэширования и постоянные сетевые запросы игнорирует основную функцию Apollo. Вариант, ограничивающий кэш одним компонентом, неверен, потому что кэш глобален и сохраняется между компонентами. Вариант про localStorage с ручной инвалидацией после каждой мутации неверен, потому что Apollo использует кэширование в памяти по умолчанию, а не localStorage, и имеет интеллектуальные стратегии инвалидации кэша."
+      "en": "Apollo Client keeps an in-memory normalized cache. An identical query is answered from that cache instantly, which improves perceived performance and cuts network traffic. Depending on the fetch policy, Apollo can still refetch in the background.\n\nWhy the other options are wrong:\n\n- Apollo does not ignore caching; the cache is one of its core features.\n- The cache is global, not per component, and survives unmounting.\n- Apollo caches in memory rather than in `localStorage`, and it invalidates entries itself instead of making you clear them after every mutation.",
+      "ru": "Apollo Client держит нормализованный кэш в памяти. Одинаковый запрос он отдаёт из кэша мгновенно: воспринимаемая скорость выше, а сетевого трафика меньше. В зависимости от политики загрузки Apollo может дополнительно обновить данные в фоне.\n\nПочему остальные варианты неверны:\n\n- Кэширование Apollo не игнорирует — это одна из его основных возможностей.\n- Кэш глобальный, а не привязан к компоненту, и переживает размонтирование.\n- Данные лежат в памяти, а не в `localStorage`, и Apollo сам инвалидирует записи, не требуя ручной очистки после каждой мутации."
     }
   },
   {
@@ -355,7 +355,7 @@
     "topicId": "graphql",
     "question": {
       "en": "What is a GraphQL Fragment and why is it useful in queries?\n\n```graphql\nfragment UserFields on User {\n  id\n  name\n  email\n}\n\nquery GetUsers {\n  users {\n    ...UserFields\n  }\n}\n```\n\nWhich benefit does this approach provide?",
-      "ru": "Что такое GraphQL Fragment и почему это полезно в запросах?\n\n```graphql\nfragment UserFields on User {\n  id\n  name\n  email\n}\n\nquery GetUsers {\n  users {\n    ...UserFields\n  }\n}\n```\n\nКакое преимущество дает этот подход?"
+      "ru": "Что такое фрагмент в GraphQL и чем он полезен в запросах?\n\n```graphql\nfragment UserFields on User {\n  id\n  name\n  email\n}\n\nquery GetUsers {\n  users {\n    ...UserFields\n  }\n}\n```\n\nКакое преимущество даёт этот подход?"
     },
     "options": {
       "en": [
@@ -367,22 +367,22 @@
       "ru": [
         "Фрагменты требуются спецификацией GraphQL и все запросы должны их использовать",
         "Фрагменты позволяют переиспользовать выборки полей в нескольких запросах",
-        "Фрагменты улучшают производительность базы данных путем автоматической оптимизации SQL объединений",
+        "Фрагменты улучшают производительность базы данных, автоматически оптимизируя join в SQL",
         "Фрагменты позволяют мутациям выполняться быстрее, чем обычные запросы, пропуская проверку типов"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Fragments are reusable sets of fields that reduce query duplication and make schema changes easier to maintain. They're syntactic sugar for clarity, not a requirement. The option calling fragments a requirement of the specification is false because fragments are optional. The option about automatically optimizing SQL joins conflates client-side query construction with server-side optimization. The option about faster mutations and skipped type checking is incorrect because fragments don't affect mutation execution speed or type checking behavior.",
-      "ru": "Фрагменты — это переиспользуемые наборы полей, которые снижают дублирование запросов и упрощают обслуживание изменений схемы. Они являются синтаксическим сахаром для ясности, а не требованием. Вариант про требование спецификации неверен, потому что фрагменты необязательны. Вариант про автоматическую оптимизацию SQL объединений смешивает конструирование запросов на стороне клиента с оптимизацией на стороне сервера. Вариант про ускорение мутаций и пропуск проверки типов неверен, потому что фрагменты не влияют на скорость выполнения мутаций или поведение проверки типов."
+      "en": "Fragments are reusable sets of fields. They cut query duplication and make schema changes easier to absorb, because you edit one fragment instead of every query.\n\nWhy the other options are wrong:\n\n- Fragments are optional. The specification does not require them.\n- Fragments are built on the client, so they cannot optimize SQL (Structured Query Language) joins on the server.\n- Fragments change neither the speed of a mutation nor type checking.",
+      "ru": "Фрагменты — это переиспользуемые наборы полей. Они снижают дублирование в запросах и упрощают правки при изменении схемы: править нужно один фрагмент, а не каждый запрос.\n\nПочему остальные варианты неверны:\n\n- Фрагменты необязательны, спецификация их не требует.\n- Фрагмент собирается на клиенте, поэтому оптимизировать join в SQL (Structured Query Language — язык запросов к базе) он не может.\n- На скорость мутаций и на проверку типов фрагменты не влияют."
     }
   },
   {
     "id": "graphql-quiz-15",
     "topicId": "graphql",
     "question": {
-      "en": "What are the key advantages of GraphQL over REST for API design, and what are realistic tradeoffs?",
-      "ru": "Каковы ключевые преимущества GraphQL перед REST для проектирования API и каковы реальные компромиссы?"
+      "en": "What are the key advantages of GraphQL over REST (Representational State Transfer) for API design, and what are the realistic tradeoffs?",
+      "ru": "В чём GraphQL выигрывает у REST (Representational State Transfer) при проектировании API и чем за это приходится платить?"
     },
     "options": {
       "en": [
@@ -394,14 +394,14 @@
       "ru": [
         "GraphQL объективно превосходит REST во всех сценариях и не имеет недостатков",
         "REST работает быстрее, чем GraphQL, потому что использует кэширование HTTP, которое GraphQL не может использовать",
-        "GraphQL исключает избыточную загрузку, но усложняет сервер и может привести к проблемам N+1 запросов",
+        "GraphQL убирает избыточную выборку, но усложняет сервер и может привести к проблемам N+1",
         "GraphQL полностью заменяет REST, и REST никогда не следует использовать для новых проектов"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "GraphQL's key strength is precise data fetching (no over/under-fetching), but this comes with tradeoffs: increased server complexity, potential N+1 issues, and reduced effectiveness of standard HTTP caching. The option calling GraphQL superior in all scenarios with no downsides ignores real architectural tradeoffs. The option saying GraphQL cannot leverage HTTP caching is wrong because GraphQL can leverage HTTP caching and has query complexity tools. The option that retires REST entirely is false because REST remains appropriate for many use cases and the choice depends on requirements.",
-      "ru": "Основная сила GraphQL — точная загрузка данных (без избыточности), но это сопровождается компромиссами: повышенная сложность сервера, потенциальные проблемы N+1 и сниженная эффективность стандартного кэширования HTTP. Вариант про превосходство GraphQL во всех сценариях без недостатков игнорирует реальные архитектурные компромиссы. Вариант про невозможность использовать кэширование HTTP в GraphQL неверен, потому что GraphQL может использовать кэширование HTTP и имеет инструменты сложности запросов. Вариант про полную замену REST неверен, потому что REST остается подходящим для многих случаев использования и выбор зависит от требований."
+      "en": "GraphQL's key strength is precise data fetching: the client asks for the fields it needs and gets no more and no less. The price is paid on the server.\n\nThe tradeoffs are real:\n\n- Resolvers get more complex.\n- N+1 query problems appear easily.\n- Standard HTTP caching becomes much less effective.\n\nWhy the other options are wrong:\n\n- GraphQL is not superior everywhere with no downsides; the three tradeoffs above are real.\n- GraphQL can use HTTP caching, and it also has query complexity tools.\n- Fixed endpoints are still right for many systems, so retiring that style outright is wrong.",
+      "ru": "Главная сила GraphQL — точная выборка данных: клиент получает ровно те поля, которые попросил. Платить за это приходится на сервере.\n\nКомпромиссы вполне реальные:\n\n- Резолверы усложняются.\n- Легко получить проблему N+1 запросов.\n- Обычное кэширование HTTP работает заметно хуже.\n\nПочему остальные варианты неверны:\n\n- Недостатки у GraphQL есть, и это как раз три пункта выше.\n- Кэширование HTTP в GraphQL возможно, а ещё есть инструменты оценки сложности запроса.\n- Фиксированные эндпоинты по-прежнему уместны во многих системах, поэтому отказываться от них навсегда незачем."
     }
   },
   {
@@ -415,28 +415,28 @@
       "en": [
         "It filters the list so that only books reach the client and authors are dropped",
         "It is a hint for the client cache only, and the server never calls it at all",
-        "It adds `__typename` to every object, and nothing breaks without it",
+        "It adds __typename to every object, and nothing breaks without it",
         "It names the concrete type of each value, so the right inline fragment runs"
       ],
       "ru": [
         "Он фильтрует список: до клиента доходят только книги, а все авторы отбрасываются",
         "Это подсказка только для клиентского кэша, сам сервер её никогда не вызывает",
-        "Он добавляет `__typename` каждому объекту, и без него ничего не сломается",
+        "Он добавляет __typename каждому объекту, и без него ничего не сломается",
         "Он называет конкретный тип каждого значения, и тогда сработает нужный фрагмент"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "A union has no fields of its own, so at run time the executor must learn which member type each value is. `__resolveType` answers that by returning a type name as a string, here `Book` or `Author`. Only then can the executor apply the matching inline fragment such as `... on Book { title }`.\n\nDelete it and the graphql-js default takes over: it reads `__typename` off the value, otherwise tries `isTypeOf` on each member type. If neither answers, execution fails with an error saying the abstract type could not be resolved at run time.\n\nIt does not filter anything, and it runs on the server, so no client cache is involved. `__typename` is filled in by the executor once the type is known, so asking for that field in the query does not replace `__resolveType`.",
-      "ru": "У объединения нет собственных полей, поэтому во время выполнения исполнителю надо узнать, какой из типов-участников пришёл. Это и говорит `__resolveType`: он возвращает имя типа строкой, здесь `Book` или `Author`. Только после этого исполнитель применит нужный встроенный фрагмент вида `... on Book { title }`.\n\nЕсли его убрать, включится поведение по умолчанию из graphql-js: библиотека прочитает `__typename` у значения, а иначе вызовет `isTypeOf` у каждого типа. Если не ответит ни то, ни другое, запрос упадёт с ошибкой о том, что абстрактный тип не удалось определить.\n\nНичего он не фильтрует, и работает на сервере, так что клиентский кэш тут не при чём. Поле `__typename` подставляет сам исполнитель, когда тип уже известен, поэтому запросить его вместо `__resolveType` не получится."
+      "en": "A union has no fields of its own, so at run time the executor must learn which member type each value is. The hook `__resolveType` answers that by returning a type name as a string, here `Book` or `Author`. Only then can the executor apply the matching inline fragment such as `... on Book { title }`.\n\nDelete it and the graphql-js default takes over: it reads `__typename` off the value, otherwise tries `isTypeOf` on each member type. If neither answers, execution fails with an error saying the abstract type could not be resolved at run time.\n\nIt does not filter anything, and it runs on the server, so no client cache is involved. The field `__typename` is filled in by the executor once the type is known. Asking for it in the query does not replace `__resolveType`.",
+      "ru": "У объединения нет собственных полей, поэтому во время выполнения исполнителю надо узнать, какой из типов-участников пришёл. Это и говорит `__resolveType`: он возвращает имя типа строкой, здесь `Book` или `Author`. Только после этого исполнитель применит нужный встроенный фрагмент вида `... on Book { title }`.\n\nЕсли его убрать, включится поведение по умолчанию из graphql-js: библиотека прочитает `__typename` у значения, а иначе вызовет `isTypeOf` у каждого типа. Если не ответит ни то, ни другое, запрос упадёт с ошибкой о том, что абстрактный тип не удалось определить.\n\nНичего он не фильтрует, и работает на сервере, так что клиентский кэш тут не при чём. Поле `__typename` подставляет сам исполнитель, когда тип уже известен. Запросить его вместо `__resolveType` не получится."
     }
   },
   {
     "id": "graphql-quiz-17",
     "topicId": "graphql",
     "question": {
-      "en": "Which of the following best describes the N+1 query problem in GraphQL and how it differs from typical REST implementations?\n\n```graphql\nquery {\n  users { id name posts { id title } }\n}\n```",
-      "ru": "Что лучше всего описывает проблему N+1 запроса в GraphQL и как она отличается от типичных реализаций REST?\n\n```graphql\nquery {\n  users { id name posts { id title } }\n}\n```"
+      "en": "Which of the following best describes the N+1 query problem in GraphQL and how it differs from typical REST (Representational State Transfer) implementations?\n\n```graphql\nquery {\n  users { id name posts { id title } }\n}\n```",
+      "ru": "Что лучше всего описывает проблему N+1 в GraphQL и чем она отличается от типичных реализаций REST (Representational State Transfer)?\n\n```graphql\nquery {\n  users { id name posts { id title } }\n}\n```"
     },
     "options": {
       "en": [
@@ -446,16 +446,16 @@
         "N+1 problems in GraphQL are solved by using fragments instead of nested selections"
       ],
       "ru": [
-        "N+1 происходит, когда resolver для вложенного поля выполняет один запрос на элемент родителя",
+        "N+1 происходит, когда резолвер для вложенного поля выполняет один запрос на элемент родителя",
         "GraphQL автоматически предотвращает N+1 путем объединения всех запросов, что делает его превосходнее REST",
-        "N+1 существует только в REST API; GraphQL устраняет его по дизайну с помощью одной конечной точки",
-        "Проблемы N+1 в GraphQL решаются использованием fragments вместо вложенных выборок"
+        "N+1 существует только в REST API; GraphQL устраняет его по замыслу, за счёт единственного эндпоинта",
+        "Проблемы N+1 в GraphQL решаются использованием фрагментов вместо вложенных выборок"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "GraphQL does not automatically prevent N+1 queries—this is a common misconception. When fetching nested data, if each parent's posts are fetched individually, you get N+1 queries. Solutions include DataLoader for batching, query optimization, and caching. REST has similar issues but they're often less visible due to fixed response structures.",
-      "ru": "GraphQL не предотвращает N+1 запросы автоматически — это распространенное заблуждение. При выборке вложенных данных, если посты каждого родителя выбираются индивидуально, вы получаете N+1 запросы. Решения включают DataLoader для объединения, оптимизацию запросов и кэширование. REST имеет похожие проблемы, но они часто менее видны из-за фиксированных структур ответа."
+      "en": "GraphQL does not prevent N+1 queries automatically — that is the common misconception. When each parent's posts are fetched separately, one query per parent, you end up with N+1 queries. The usual fixes are DataLoader batching, query optimization and caching.\n\nA fixed endpoint hides the same problem. The server decides the response shape there, so the extra queries happen out of sight instead of being triggered by the client's own selection set.",
+      "ru": "GraphQL не предотвращает N+1 автоматически — это распространённое заблуждение. Если посты каждого родителя выбираются по отдельности, по одному запросу на родителя, вы получаете N+1 запросов. Обычные решения — группировка через DataLoader, оптимизация запросов и кэширование.\n\nЗа фиксированным эндпоинтом та же проблема просто менее заметна. Форму ответа там задаёт сервер, поэтому лишние запросы происходят незаметно, а не по набору полей, который прислал клиент."
     }
   },
   {
@@ -463,7 +463,7 @@
     "topicId": "graphql",
     "question": {
       "en": "In Apollo Client, what is the primary purpose of fragments in a GraphQL query, and how do they relate to cache management?",
-      "ru": "В Apollo Client, какова основная цель fragments в GraphQL запросе и как они связаны с управлением кэшем?"
+      "ru": "В чём основная цель фрагментов в запросе GraphQL и как они связаны с управлением кэшем в Apollo Client?"
     },
     "options": {
       "en": [
@@ -473,16 +473,16 @@
         "Fragments reduce bundle size by removing unused fields from the final query sent to the server"
       ],
       "ru": [
-        "Fragments в основном используются для разделения больших запросов на несколько сетевых запросов для производительности",
-        "Fragments задают переиспользуемые наборы выборок и держат ключи кэша согласованными",
-        "Fragments — это способ зашифровать конфиденциальные поля в кэше",
-        "Fragments уменьшают размер пакета, удаляя неиспользуемые поля из итогового запроса, отправляемого на сервер"
+        "Фрагменты в основном используются для разделения больших запросов на несколько сетевых запросов",
+        "Фрагменты задают переиспользуемые наборы полей и держат ключи кэша согласованными",
+        "Фрагменты — это способ зашифровать конфиденциальные поля в кэше",
+        "Фрагменты уменьшают размер бандла, удаляя неиспользуемые поля из итогового запроса к серверу"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Fragments enable reusable selection sets and improve cache organization by consistently normalizing data—when the same fragment is used in multiple queries, Apollo can merge updates efficiently. They don't split network requests, encrypt data, or reduce bundle size. Fragments are essential for maintaining cache coherence across complex applications.",
-      "ru": "Fragments позволяют переиспользовать наборы выборок и улучшают организацию кэша путем последовательной нормализации данных — когда один и тот же fragment используется в нескольких запросах, Apollo может эффективно объединять обновления. Они не разделяют сетевые запросы, не шифруют данные и не уменьшают размер пакета. Fragments являются важными для поддержания согласованности кэша в сложных приложениях."
+      "en": "Fragments give you reusable selection sets, and they keep the cache tidy by normalizing the same data the same way every time. When one fragment is used in several queries, Apollo can merge updates into one cached entity.\n\nFragments do not split network requests, do not encrypt anything and do not reduce bundle size. In a complex application they are what keeps the cache coherent.",
+      "ru": "Фрагменты дают переиспользуемые наборы полей и держат кэш в порядке: одни и те же данные нормализуются всегда одинаково. Когда один фрагмент используется в нескольких запросах, Apollo объединяет обновления в одну сущность кэша.\n\nСетевые запросы фрагменты не разделяют, ничего не шифруют и размер бандла не уменьшают. В сложном приложении именно они удерживают кэш согласованным."
     }
   },
   {
@@ -497,27 +497,27 @@
         "Introspection queries are cached separately and can cause memory leaks if not properly managed",
         "Enabling introspection allows queries to run faster by skipping type validation",
         "Introspection can expose your whole API surface, including field names and types",
-        "Introspection is only a security risk if you use REST endpoints alongside GraphQL"
+        "Introspection is only a security risk if you use REST (Representational State Transfer) endpoints alongside GraphQL"
       ],
       "ru": [
         "Запросы интроспекции кэшируются отдельно и могут вызвать утечки памяти, если ими не управлять",
         "Включение интроспекции позволяет запросам работать быстрее, пропуская проверку типов",
         "Интроспекция может раскрыть всю поверхность вашего API, включая имена полей и типы",
-        "Интроспекция опасна только в том случае, если рядом с GraphQL вы используете REST-эндпоинты"
+        "Интроспекция опасна только тогда, когда рядом с GraphQL есть эндпоинты REST (Representational State Transfer)"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Introspection exposes the entire API schema, including all types, fields, arguments, and their descriptions—this gives attackers a complete map of your API surface for reconnaissance and exploitation. It's best practice to disable introspection in production unless specifically needed, or restrict it to authenticated users. The other options misrepresent technical facts about introspection.",
-      "ru": "Интроспекция (introspection) раскрывает всю схему API: все типы, поля, аргументы и их описания. Это даёт злоумышленнику готовую карту вашего API для разведки и атаки. Хорошая практика — выключать интроспекцию в production, если она там не нужна, или оставлять её только аутентифицированным пользователям. Остальные варианты искажают технические факты об интроспекции."
+      "en": "Introspection exposes the entire API schema: every type, field, argument and description. That hands an attacker a complete map of your API to plan an attack from.\n\nThe usual practice is to disable introspection in production unless you actually need it, or to allow it only for authenticated users. The other options misrepresent how introspection works.",
+      "ru": "Интроспекция (introspection) раскрывает всю схему API: все типы, поля, аргументы и их описания. Это даёт злоумышленнику готовую карту вашего API для разведки и атаки.\n\nХорошая практика — выключать интроспекцию в production, если она там не нужна, или оставлять её только аутентифицированным пользователям. Остальные варианты искажают то, как интроспекция работает."
     }
   },
   {
     "id": "graphql-quiz-20",
     "topicId": "graphql",
     "question": {
-      "en": "What is a key tradeoff when choosing GraphQL over REST for your API?",
-      "ru": "Какой ключевой компромисс существует при выборе GraphQL вместо REST для вашего API?"
+      "en": "What is a key tradeoff when choosing GraphQL over REST (Representational State Transfer) for your API?",
+      "ru": "Какой ключевой компромисс возникает при выборе GraphQL вместо REST (Representational State Transfer) для вашего API?"
     },
     "options": {
       "en": [
@@ -530,13 +530,13 @@
         "REST проще для клиентов, потому что им не нужно изучать синтаксис запросов, а GraphQL устраняет все проблемы кэширования на сервере",
         "GraphQL всегда быстрее REST, потому что использует одну конечную точку, независимо от сложности запроса",
         "REST поддерживает аутентификацию, а GraphQL — нет, что делает GraphQL непригодным для защищенных приложений",
-        "GraphQL позволяет точный выбор полей, уменьшая избыточную загрузку, но увеличивает сложность сервера при разрешении вложенных запросов"
+        "GraphQL позволяет точно выбирать поля и убирает избыточную выборку, но усложняет сервер при разрешении вложенных запросов"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "GraphQL's primary advantage is precise client-specified data fetching (avoiding over-fetching), but this comes at the cost of increased server-side complexity—resolvers must handle dynamic nested queries, and subtle issues like N+1 problems can emerge. REST has simpler, predictable endpoints but clients often receive unnecessary data. Authentication works equally well in both, single endpoints don't guarantee speed, and GraphQL doesn't eliminate server caching needs.",
-      "ru": "Основное преимущество GraphQL — точная выборка данных, указанная клиентом (избегание избыточной загрузки), но это происходит за счет повышенной сложности на сервере — resolvers должны обрабатывать динамические вложенные запросы, и могут возникнуть такие проблемы, как N+1. REST имеет более простые, предсказуемые конечные точки, но клиенты часто получают ненужные данные. Аутентификация работает одинаково хорошо в обоих случаях, одна конечная точка не гарантирует скорость, и GraphQL не устраняет необходимость кэширования сервера."
+      "en": "GraphQL's main advantage is that the client specifies exactly what it needs, which avoids over-fetching. The cost lands on the server: resolvers have to handle dynamic nested queries, and subtle problems such as N+1 appear.\n\nFixed endpoints are simpler and more predictable, but clients often receive data they never use. Authentication works equally well in both styles. A single endpoint does not guarantee speed. And GraphQL does not remove the need for server-side caching.",
+      "ru": "Главное преимущество GraphQL в том, что клиент сам указывает нужные поля, и избыточная выборка (over-fetching) исчезает. Плата за это ложится на сервер: резолверы должны обрабатывать динамические вложенные запросы, и легко появляются проблемы вроде N+1.\n\nФиксированные эндпоинты проще и предсказуемее, но клиент часто получает данные, которые ему не нужны. Аутентификация одинаково хорошо работает в обоих подходах. Один общий эндпоинт скорости не гарантирует. И кэширование на сервере GraphQL не отменяет."
     }
   },
   {
@@ -562,35 +562,35 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The N+1 problem occurs when the resolver for each user separately queries the database for their comments, resulting in 1 query for users + 50 queries for comments = 51 queries total (or worse with nested resolution). This is a classic GraphQL performance issue solved by using dataloaders or batch queries. The options about the query string being rejected as too long and about the server returning incomplete data are not how GraphQL works, and the option about Apollo Client batching the requests automatically is incorrect because Apollo Client caches responses but doesn't prevent the initial N+1 queries on the server.",
-      "ru": "Проблема N+1 возникает, когда резолвер для каждого пользователя отдельно запрашивает базу данных за их комментариями, в результате чего получается 1 запрос для пользователей + 50 запросов для комментариев = 51 запрос всего. Это классическая проблема производительности GraphQL, решаемая с помощью dataloaders или пакетных запросов. Варианты про отклонение слишком длинной строки запроса и про неполные данные от сервера не соответствуют тому, как работает GraphQL, а вариант про автоматическое пакетирование запросов в Apollo Client неверен, потому что Apollo Client кэширует ответы, но не предотвращает начальные N+1 запросы на сервере."
+      "en": "The N+1 problem shows up here because the resolver for `comments` runs once per user. That is 1 query for the 50 users plus 50 queries for their comments, so 51 database queries for one request. Nesting deeper makes it worse.\n\nThis is the classic GraphQL performance issue, and DataLoader or batch queries fix it.\n\nWhy the other options are wrong:\n\n- The query string is short; servers do not reject it for length.\n- A GraphQL server does not silently return incomplete data to protect itself.\n- Apollo Client caches responses on the client, so it cannot prevent the N+1 queries the server already ran.",
+      "ru": "Проблема N+1 проявляется здесь потому, что резолвер поля `comments` вызывается по разу на каждого пользователя. Это 1 запрос за 50 пользователями плюс 50 запросов за их комментариями — 51 запрос к базе на один запрос клиента. При более глубокой вложенности будет ещё хуже.\n\nЭто классическая проблема производительности GraphQL, и решают её через DataLoader или пакетные запросы.\n\nПочему остальные варианты неверны:\n\n- Строка запроса короткая, по длине сервер её не отклонит.\n- Сервер GraphQL не отдаёт молча неполные данные, чтобы себя разгрузить.\n- Apollo Client кэширует ответы на клиенте и не может предотвратить N+1 запросы, которые сервер уже выполнил."
     }
   },
   {
     "id": "graphql-quiz-23",
     "topicId": "graphql",
     "question": {
-      "en": "You are using Apollo Client and notice that after executing a mutation, your UI does not update even though the mutation succeeded. What is the most likely cause?",
-      "ru": "Вы используете Apollo Client и замечаете, что после выполнения mutation ваш интерфейс не обновляется, хотя mutation выполнен успешно. Какова наиболее вероятная причина?"
+      "en": "You are using Apollo Client and notice that after a successful mutation your interface does not update. What is the most likely cause?",
+      "ru": "Вы используете Apollo Client и замечаете, что после успешной мутации интерфейс не обновляется. Какова наиболее вероятная причина?"
     },
     "options": {
       "en": [
         "The Apollo Client cache needs to be manually cleared after every mutation",
-        "The mutation response did not include the fields the UI queries",
+        "The mutation response did not include the fields the interface queries",
         "The mutation should have been sent as a Query, since only Queries update the cache",
         "GraphQL subscriptions are required for cache updates to work"
       ],
       "ru": [
-        "Кэш Apollo Client необходимо вручную очищать после каждого mutation",
-        "Ответ mutation не включал поля, которые запрашивает интерфейс",
-        "Вместо mutation нужно было отправить Query, ведь только Query обновляют кэш",
+        "Кэш Apollo Client необходимо вручную очищать после каждой мутации",
+        "Ответ мутации не включал поля, которые запрашивает интерфейс",
+        "Вместо мутации нужно было отправить Query, ведь только Query обновляют кэш",
         "Подписки GraphQL необходимы для работы обновлений кэша"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Apollo Client's cache updates automatically when mutation responses match cached query fields. If the mutation response doesn't include fields that the UI queries, the cache won't update those fields. The option requiring the cache to be cleared manually after every mutation is incorrect because manual cache clearing defeats the purpose of automatic updates. The option suggesting a Query instead of the mutation misunderstands mutation purpose. The option that requires subscriptions for cache updates is wrong because subscriptions are for real-time updates, not standard cache synchronization.",
-      "ru": "Кэш Apollo Client автоматически обновляется, когда ответы mutation совпадают с кэшированными полями запросов. Если ответ mutation не включает поля, которые запрашивает интерфейс, кэш не будет обновлять эти поля. Вариант про ручную очистку кэша после каждого mutation неверен, потому что ручная очистка кэша противоречит целям автоматических обновлений. Вариант про замену mutation на Query неправильно интерпретирует назначение mutation. Вариант про обязательные подписки для обновлений кэша неверен, потому что подписки предназначены для обновлений в реальном времени, а не для стандартной синхронизации кэша."
+      "en": "Apollo Client updates the cache automatically when the mutation response contains the same fields the cached query asked for. If those fields are missing from the response, the cache keeps the old values and the screen does not change.\n\nWhy the other options are wrong:\n\n- Clearing the cache by hand after every mutation throws away the automatic updates you are paying for.\n- A Query cannot replace the mutation: it is not allowed to change server state.\n- Subscriptions deliver real-time pushes; ordinary cache synchronization does not need them.",
+      "ru": "Кэш Apollo Client обновляется сам, когда в ответе мутации есть те же поля, которые запрашивал кэшированный запрос. Если этих полей в ответе нет, в кэше остаются старые значения и экран не меняется.\n\nПочему остальные варианты неверны:\n\n- Ручная очистка кэша после каждой мутации перечёркивает те самые автоматические обновления.\n- Query не заменит мутацию: менять состояние сервера ему не разрешено.\n- Подписки нужны для доставки событий в реальном времени, обычной синхронизации кэша они не требуются."
     }
   },
   {
@@ -611,21 +611,21 @@
         "Уменьшение размера сетевых запросов путем сжатия информации схемы",
         "Замена необходимости управления версиями API и обеспечения обратной совместимости",
         "Поддержка инструментов документации API и функций IDE вроде автодополнения",
-        "Автоматическое создание SQL запросов из GraphQL запросов без участия разработчика"
+        "Автоматическое создание SQL-запросов из GraphQL-запросов без участия разработчика"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Introspection is essential for building developer tools—IDEs like GraphQL Playground use it to provide real-time schema validation and autocomplete. The option about compressing schema information to shrink requests is incorrect because introspection adds overhead, not reduces it. The option about replacing API versioning is wrong because introspection doesn't replace versioning strategies. The option about automatically generating SQL queries is incorrect because introspection reveals schema structure but doesn't generate SQL; that's the resolver's responsibility.",
-      "ru": "Интроспекция нужна для инструментов разработчика — IDE, такие как GraphQL Playground, используют её для валидации схемы в реальном времени и автодополнения. Вариант про сжатие информации схемы для уменьшения запросов неверен, потому что интроспекция добавляет нагрузку, а не уменьшает ее. Вариант про замену управления версиями API неверен, потому что интроспекция не заменяет стратегии управления версиями. Вариант про автоматическое создание SQL запросов неверен, потому что интроспекция раскрывает структуру схемы, но не генерирует SQL; это ответственность резолвера."
+      "en": "Introspection is what developer tooling is built on. An IDE (Integrated Development Environment) such as GraphQL Playground reads the schema and gives you live validation and autocomplete.\n\nWhy the other options are wrong:\n\n- Introspection does not compress anything; the schema query is extra traffic, not less.\n- Introspection does not replace API versioning or a backwards-compatibility policy.\n- Introspection describes the schema. It does not generate SQL (Structured Query Language) — that is the resolver's job.",
+      "ru": "На интроспекции держатся инструменты разработчика. IDE (Integrated Development Environment — среда разработки) вроде GraphQL Playground читает схему и даёт валидацию и автодополнение на лету.\n\nПочему остальные варианты неверны:\n\n- Интроспекция ничего не сжимает: запрос схемы — это дополнительный трафик, а не экономия.\n- Интроспекция не заменяет версионирование API и политику обратной совместимости.\n- Интроспекция описывает схему, но SQL (Structured Query Language — язык запросов к базе) не генерирует, это работа резолвера."
     }
   },
   {
     "id": "graphql-quiz-25",
     "topicId": "graphql",
     "question": {
-      "en": "When comparing REST and GraphQL, which statement most accurately reflects a tradeoff rather than a clear advantage?\n\nREST: GET /api/users/1, GET /api/users/1/posts, GET /api/posts/5/comments\nGraphQL: query { user(id: 1) { posts { comments } } }\n",
-      "ru": "При сравнении REST и GraphQL, какое утверждение наиболее точно отражает компромисс, а не явное преимущество?\n\nREST: GET /api/users/1, GET /api/users/1/posts, GET /api/posts/5/comments\nGraphQL: query { user(id: 1) { posts { comments } } }\n"
+      "en": "When comparing REST (Representational State Transfer) and GraphQL, which statement most accurately describes a tradeoff rather than a clear advantage?\n\n```txt\nREST:    GET /api/users/1\n         GET /api/users/1/posts\n         GET /api/posts/5/comments\nGraphQL: query { user(id: 1) { posts { comments } } }\n```",
+      "ru": "При сравнении REST (Representational State Transfer) и GraphQL какое утверждение точнее всего описывает компромисс, а не явное преимущество?\n\n```txt\nREST:    GET /api/users/1\n         GET /api/users/1/posts\n         GET /api/posts/5/comments\nGraphQL: query { user(id: 1) { posts { comments } } }\n```"
     },
     "options": {
       "en": [
@@ -635,7 +635,7 @@
         "GraphQL queries are harder to cache at the HTTP/CDN level because they use POST"
       ],
       "ru": [
-        "GraphQL устраняет избыточное получение данных, поэтому клиенту GraphQL вообще не нужен слой кэширования",
+        "GraphQL убирает избыточную выборку, поэтому клиенту GraphQL слой кэширования вообще не нужен",
         "REST требует нескольких запросов, а GraphQL использует только один, что делает GraphQL всегда быстрее",
         "REST API невозможно защитить, а GraphQL API имеют встроенные функции безопасности",
         "Запросы GraphQL сложнее кэшировать на уровне HTTP/CDN, потому что они идут через POST"
@@ -643,8 +643,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "GraphQL sends queries as POST bodies to one endpoint, so caches that key on the URL cannot help. That is a real trade-off: flexible queries cost you the free caching that REST gets from HTTP and any CDN (content delivery network). The option saying a GraphQL client needs no cache at all is false, because normalized client caches are exactly how GraphQL apps avoid refetching. The option that makes GraphQL always faster overstates the speed advantage, since that depends on the implementation. The option calling REST APIs impossible to secure is wrong: both styles need the same security work.",
-      "ru": "GraphQL отправляет запросы телом POST на один эндпоинт, поэтому кэши, которые опираются на URL, тут бесполезны. Это настоящий компромисс: за гибкость запросов вы платите тем самым бесплатным кэшированием, которое REST получает от HTTP и любого CDN (content delivery network — сеть доставки контента). Вариант про то, что клиенту GraphQL кэш вообще не нужен, неверен: нормализованный кэш на клиенте — как раз то, чем такие приложения избегают повторных запросов. Вариант про то, что GraphQL всегда быстрее, переоценивает выигрыш в скорости: это зависит от реализации. Вариант про невозможность защитить REST API тоже неверен — обе архитектуры требуют одинаковой работы по безопасности."
+      "en": "GraphQL sends queries as POST bodies to a single endpoint, so caches that key on the URL cannot help. That is the real tradeoff. Flexible queries cost you the free caching that a plain GET URL gets from HTTP and from any CDN (content delivery network).\n\nWhy the other options are not tradeoffs:\n\n- A GraphQL client still needs a cache. A normalized client cache is exactly how these apps avoid refetching.\n- \"Always faster\" overstates it; speed depends on the implementation.\n- Both styles need the same security work, so neither of them is impossible to secure.",
+      "ru": "GraphQL отправляет запросы телом POST на один эндпоинт, поэтому кэши, которые опираются на URL, тут бесполезны. Это и есть настоящий компромисс. За гибкость запросов вы платите тем самым бесплатным кэшированием, которое обычный GET-адрес получает от HTTP и от любого CDN (content delivery network — сеть доставки контента).\n\nПочему остальные варианты — не компромиссы:\n\n- Кэш клиенту всё равно нужен: нормализованный кэш на клиенте — как раз то, чем такие приложения избегают повторных запросов.\n- «Всегда быстрее» — преувеличение, скорость зависит от реализации.\n- Обе архитектуры требуют одинаковой работы по безопасности, так что защитить можно и ту, и другую."
     }
   }
 ]

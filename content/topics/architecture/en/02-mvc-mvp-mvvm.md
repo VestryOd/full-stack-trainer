@@ -1,10 +1,10 @@
 # MVC, MVP, and MVVM
 
-> **Scope note:** These patterns describe how to organize code within a single application — specifically how to separate UI concerns from business logic. They are not about how services communicate with each other.
+> **Scope note:** MVC (Model-View-Controller), MVP (Model-View-Presenter) and MVVM (Model-View-ViewModel) describe how to organize code inside one application. They are about separating the user interface (UI) from business logic, not about how services communicate with each other.
 
 ## Why these patterns exist
 
-Before MVC (Model-View-Controller), GUI applications were written as one large blob: the code that rendered the UI also made database calls, also contained business rules. Changing how a button looked meant wading through pricing logic. Testing a calculation meant instantiating a full UI.
+Before MVC, graphical user interface (GUI) applications were written as one large blob. The code that rendered the UI also made database calls and contained business rules. Changing how a button looked meant reading through pricing logic. Testing a calculation meant starting up a full UI.
 
 MVC, introduced in the 1970s in Smalltalk, gave a name to a separation that let these concerns evolve independently. MVP (Model-View-Presenter) and MVVM (Model-View-ViewModel) are variants that emerged later to solve specific problems that MVC had in certain environments.
 
@@ -49,7 +49,8 @@ Server-side MVC (Rails, Laravel, Django, NestJS with template rendering) maps cl
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  // Receives input (HTTP request) → updates model (via service) → selects view (returns JSON)
+  // Receives input (HTTP request) → updates model (via service)
+  // → selects view (returns JSON)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.ordersService.findById(id); // model
@@ -71,7 +72,7 @@ app.get('/orders/:id', async (req, res) => {
 });
 ```
 
-In a REST API, the "View" is just JSON serialization. There's no HTML template. The pattern still applies: the controller receives HTTP input, delegates to the model (service/repository), and chooses how to render the response.
+In a REST (Representational State Transfer) API, the "View" is just JSON serialization. There's no HTML template. The pattern still applies: the controller receives HTTP input, delegates to the model (service/repository), and chooses how to render the response.
 
 ### MVC in server-rendered HTML (NestJS + template engines)
 
@@ -88,7 +89,11 @@ export class OrdersController {
 }
 ```
 
-Here the separation is more tangible: the controller selects the template; the template (View) knows how to render an order object; the service (Model) knows nothing about templates.
+Here the separation is more tangible:
+
+- The controller selects the template.
+- The template (View) knows how to render an order object.
+- The service (Model) knows nothing about templates.
 
 ## MVP — Model-View-Presenter
 
@@ -99,12 +104,12 @@ MVP emerged from the problems of applying MVC to desktop GUI frameworks (Windows
                       │
                       ▼
 ┌─────────────────────────────────────────────┐
-│                     View                    │  ← passive: only renders, delegates all events
+│                     View                    │  ← renders only
 └─────────────────────┬───────────────────────┘
                       │ events (user clicked "Submit")
                       ▼
 ┌─────────────────────────────────────────────┐
-│                  Presenter                  │  ← all logic lives here, knows the View interface
+│                  Presenter                  │  ← all the logic
 └──┬─────────────────────────────────────┬────┘
    │ queries/updates                     │ updates View explicitly
    ▼                                     ▼
@@ -152,7 +157,9 @@ class ExpressOrderView implements IOrderView {
 }
 ```
 
-**Where MVP is used today:** MVP was the dominant pattern for Android development before Android Jetpack's ViewModel API arrived. It's still found in legacy Android codebases and in some frontend frameworks. On the backend, explicit MVP is rare — but the idea of "Presenter talks to View through an interface" shows up anywhere you want to decouple the response format from the business logic.
+**Where MVP is used today:** MVP was the dominant pattern for Android development before Android Jetpack's ViewModel API arrived. It's still found in legacy Android codebases and in some frontend frameworks.
+
+On the backend, explicit MVP is rare. One idea from it is still useful: the Presenter talks to the View through an interface. You can apply that anywhere you want to separate the response format from the business logic.
 
 ## MVVM — Model-View-ViewModel
 
@@ -206,7 +213,7 @@ function OrderDetail({ orderId }: { orderId: string }) {
 }
 ```
 
-The custom hook is the ViewModel: it holds state, talks to the Model (the API/service), and the View (the component) re-renders automatically when the hook's state changes. This is two-way data binding without the ceremony of explicit binding annotations.
+The custom hook is the ViewModel: it holds state and talks to the Model (the API or service). The View — the component — re-renders automatically when the hook's state changes. This is two-way data binding without explicit binding annotations.
 
 ### MVVM in Vue and Angular
 
@@ -230,7 +237,7 @@ onMounted(async () => {
 // template (View) reactively binds to these refs — classic MVVM
 ```
 
-Angular's Services + Component pattern follows the same structure: the Component (ViewModel) subscribes to Observables from a Service (Model), and the template (View) uses `| async` pipe to bind to the data stream.
+Angular's Services + Component pattern follows the same structure. The Component (ViewModel) subscribes to Observables from a Service (Model). The template (View) then uses the `| async` pipe to bind to that data stream.
 
 ## The honest picture — how these terms are actually used
 
@@ -239,10 +246,15 @@ Here is where candidates often struggle: these patterns don't have one precise, 
 ```txt
 What "MVC" means in different contexts:
 
-  Rails developer:      "M = ActiveRecord, V = ERB template, C = ApplicationController"
-  NestJS developer:     "M = service + repository, V = serialized JSON, C = controller"
-  Angular developer:    "We use MVC but our Controller is actually a ViewModel..."
-  Job description:      "Experience with MVC required" = "writes structured code, not spaghetti"
+  Rails developer:
+    "M = ActiveRecord, V = ERB template, C = ApplicationController"
+  NestJS developer:
+    "M = service + repository, V = serialized JSON, C = controller"
+  Angular developer:
+    "We use MVC but our Controller is actually a ViewModel..."
+  Job description:
+    "Experience with MVC required"
+      = "writes structured code, not spaghetti"
 ```
 
 The concepts matter more than the labels:
@@ -256,35 +268,22 @@ The concepts matter more than the labels:
 
 ## Comparison table
 
-```txt
-┌────────────────┬───────────────────┬──────────────────────┬─────────────────────┐
-│                │       MVC         │        MVP           │        MVVM         │
-├────────────────┼───────────────────┼──────────────────────┼─────────────────────┤
-│ View knows     │ Model (directly   │ Nothing (only        │ Nothing (only       │
-│ about          │ in original MVC)  │ an interface)        │ ViewModel's state)  │
-├────────────────┼───────────────────┼──────────────────────┼─────────────────────┤
-│ Mediator       │ Controller        │ Presenter            │ ViewModel           │
-│ knows about    │ both Model+View   │ View interface only  │ Model only          │
-├────────────────┼───────────────────┼──────────────────────┼─────────────────────┤
-│ UI update      │ Controller/Model  │ Presenter calls      │ Automatic via       │
-│ mechanism      │ drives View       │ view.method()        │ data binding        │
-├────────────────┼───────────────────┼──────────────────────┼─────────────────────┤
-│ Testability    │ Controller needs  │ Presenter fully      │ ViewModel fully     │
-│                │ View to test      │ testable with mock   │ testable without UI │
-├────────────────┼───────────────────┼──────────────────────┼─────────────────────┤
-│ Used today in  │ Express, NestJS,  │ Legacy Android,      │ React (hooks),      │
-│                │ Rails, Django     │ some frontends       │ Vue, Angular        │
-└────────────────┴───────────────────┴──────────────────────┴─────────────────────┘
-```
+|  | MVC | MVP | MVVM |
+|---|---|---|---|
+| View knows about | Model, directly, in the original MVC | Nothing, only an interface | Nothing, only the ViewModel's state |
+| Mediator knows about | Both Model and View | The View interface only | The Model only |
+| UI update mechanism | Controller/Model drives the View | Presenter calls `view.method()` | Automatic, via data binding |
+| Testability | Controller needs a View to test | Presenter fully testable with a mock | ViewModel fully testable without UI |
+| Used today in | Express, NestJS, Rails, Django | Legacy Android, some frontends | React (hooks), Vue, Angular |
 
 ## Common interview traps
 
-- **"MVC means the model talks directly to the view"** — that's the original Smalltalk MVC with Observer. In modern server-side MVC (Rails, NestJS), the Controller fetches from the Model and passes data to the View explicitly — the Model has no reference to the View at all. The original Observer-based flow exists conceptually but is rarely implemented literally today.
+- **"MVC means the model talks directly to the view"** — that's the original Smalltalk MVC with Observer. In modern server-side MVC (Rails, NestJS), the Controller fetches from the Model and passes data to the View explicitly. The Model has no reference to the View at all. The original Observer-based flow exists conceptually but is rarely implemented literally today.
 
 - **"MVP and MVVM are the same thing with different names"** — they solve the same broad problem (testable UI logic) but differ in the mechanism. MVP uses explicit method calls through an interface (`view.showError()`); MVVM uses data binding (ViewModel exposes state, View reacts automatically). In MVVM, the ViewModel literally doesn't know the View exists. In MVP, the Presenter holds a reference to the View interface.
 
-- **"React uses MVC"** — React's component model is closer to MVVM: the component re-renders in response to state changes (data binding), and the data fetching/logic in a custom hook acts as a ViewModel. Calling React "MVC" isn't wrong per se, but it's imprecise and suggests you haven't thought about what each term actually means.
+- **"React uses MVC"** — React's component model is closer to MVVM. The component re-renders in response to state changes, and that is data binding. The data fetching and logic in a custom hook act as a ViewModel. Calling React "MVC" is not exactly wrong, but it is imprecise. It suggests you haven't thought about what each term actually means.
 
-- **"The Controller is just a router — it delegates everything to the service"** — in a thin controller this is intentional and correct. But "delegates everything" doesn't mean the controller adds no value: it translates HTTP-level concerns (parsing params, validating request shape, mapping errors to HTTP status codes) that the service shouldn't need to know about. A controller that does `return service.doEverything(req)` and passes the raw `req` object to the service has collapsed the abstraction boundary.
+- **"The Controller is just a router — it delegates everything to the service"** — in a thin controller this is intentional and correct. But "delegates everything" doesn't mean the controller adds no value. It translates HTTP-level concerns that the service should not need to know about. That means parsing params, validating the request shape, and mapping errors to HTTP status codes. A controller that does `return service.doEverything(req)` and passes the raw `req` object to the service has collapsed the abstraction boundary.
 
 - **"These patterns are only relevant for frontend"** — MVC originated in desktop GUIs and is deeply embedded in server-side frameworks (NestJS, Rails, Laravel, Django). The patterns describe a separation of concerns that applies wherever you have input, processing, and output — which is everywhere.
