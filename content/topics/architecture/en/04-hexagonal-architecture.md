@@ -4,29 +4,29 @@
 
 ## The mental model — a hexagon with pluggable sides
 
-Hexagonal Architecture (also called **Ports and Adapters**) was described by Alistair Cockburn in 2005. The name "hexagonal" is not significant — Cockburn used a hexagon simply because it has more sides than a rectangle, making it easier to draw multiple ports around it. The real name — *Ports and Adapters* — is more descriptive.
+Hexagonal Architecture (also called **Ports and Adapters**) was described by Alistair Cockburn in 2005. *Ports and Adapters* is the more descriptive name, and it is the one worth remembering. The word "hexagonal" carries no meaning. Cockburn used a hexagon because it has more sides than a rectangle, which makes it easier to draw multiple ports around it.
 
-The central idea: the application has a **core** (its business logic) and a **boundary**. Everything outside the boundary is an external system: a database, an HTTP client, a message queue, a CLI, a test harness. The application talks to every external system through one of two things:
+The central idea: the application has a **core** (its business logic) and a **boundary**. Everything outside the boundary is an external system: a database, an HTTP client, a message queue, a command-line interface (CLI), a test harness. The application talks to every external system through one of two things:
 
 - A **Port** — an interface (a contract) defined by the application itself
 - An **Adapter** — a concrete implementation of that interface that connects to a specific external system
 
 ```txt
-                 ┌───────────────────────────────┐
- HTTP Client ────│ Adapter (Express Controller)  │
-                 │               ↓               │
-  REST API ──────│ ──────────►  PORT             │
-                 │ (IOrderService)               │
-                 │               ↓               │
-                 │          APPLICATION          │
-                 │              CORE             │
-                 │               ↓               │
-                 │              PORT             │
-                 │ (IOrderRepository)  ◄──────── │ ── Adapter (Prisma Repository)
-                 │               ↓               │
-                 │              PORT             │
-                 │ (INotificationService) ◄───── │ ── Adapter (Sendgrid)
-                 └───────────────────────────────┘
+             ┌───────────────────────────────┐
+HTTP client ─│ Adapter (Express Controller)  │
+             │               ↓               │
+   REST API ─│ ──────────►  PORT             │
+             │ (IOrderService)               │
+             │               ↓               │
+             │          APPLICATION          │
+             │              CORE             │
+             │               ↓               │
+             │              PORT             │
+             │ (IOrderRepository)  ◄──────── │── Adapter (Prisma)
+             │               ↓               │
+             │              PORT             │
+             │ (INotificationService) ◄───── │── Adapter (Sendgrid)
+             └───────────────────────────────┘
 ```
 
 The core knows nothing about Express, Prisma, or Sendgrid. It only knows about the ports it defined. Swapping Sendgrid for Mailgun is a matter of writing a new adapter — the core is untouched.
@@ -106,26 +106,26 @@ src/
 │   ├── domain/                    ← entities and business rules
 │   │   └── order.ts
 │   ├── ports/                     ← all port interfaces
-│   │   ├── driving/               ← driving ports (how to USE the app)
+│   │   ├── driving/               ← driving ports (inbound)
 │   │   │   └── place-order.port.ts
-│   │   └── driven/                ← driven ports (what the app NEEDS)
+│   │   └── driven/                ← driven ports (outbound)
 │   │       ├── order-repository.port.ts
 │   │       └── email-notifier.port.ts
-│   └── use-cases/                 ← application logic (implements driving ports)
+│   └── use-cases/                 ← application logic
 │       └── place-order.use-case.ts
 │
 └── adapters/                      ← everything outside the hexagon
-    ├── driving/                   ← driving adapters (translate inbound calls)
+    ├── driving/                   ← driving adapters (inbound)
     │   ├── http/
     │   │   └── orders.controller.ts
     │   └── cli/
     │       └── place-order.command.ts
-    └── driven/                    ← driven adapters (implement driven ports)
+    └── driven/                    ← driven adapters (outbound)
         ├── persistence/
         │   └── prisma-order.repository.ts
         ├── notification/
         │   └── sendgrid-email.notifier.ts
-        └── in-memory/             ← test adapters — fast, no I/O
+        └── in-memory/             ← test adapters, no I/O
             ├── in-memory-order.repository.ts
             └── fake-email.notifier.ts
 ```
@@ -161,7 +161,8 @@ export class InMemoryOrderRepository implements IOrderRepository {
 // use-cases/place-order.use-case.test.ts
 // Uses in-memory adapters — no mocks, no stubs, real implementations
 import { PlaceOrderUseCase } from '../core/use-cases/place-order.use-case';
-import { InMemoryOrderRepository } from '../adapters/driven/in-memory/in-memory-order.repository';
+import { InMemoryOrderRepository }
+  from '../adapters/driven/in-memory/in-memory-order.repository';
 import { FakeEmailNotifier } from '../adapters/driven/in-memory/fake-email.notifier';
 
 const orderRepo = new InMemoryOrderRepository();
@@ -180,9 +181,9 @@ test('saves order and sends confirmation', async () => {
 
 ## The Anti-Corruption Layer (ACL)
 
-The **Anti-Corruption Layer** (ACL) is a pattern that often appears alongside Hexagonal Architecture. It's a driven adapter with an extra job: not just translating data format, but **protecting your domain model from the terminology and concepts of an external system**.
+The **Anti-Corruption Layer** (ACL) is a pattern that often appears alongside Hexagonal Architecture. It's a driven adapter with an extra job. It does not just translate the data format: it **protects your domain model from the terminology and concepts of an external system**.
 
-The problem it solves: external APIs have their own vocabulary, data shapes, and concepts that may be different from — or actively harmful to — your domain model. Without an ACL, that external vocabulary leaks into your core.
+The problem it solves: external APIs have their own vocabulary, data shapes, and concepts. Those may differ from your domain model, or actively harm it. Without an ACL, that external vocabulary leaks into your core.
 
 ```ts
 // External payment API returns this shape — its own vocabulary, not yours
@@ -254,16 +255,17 @@ Use Cases               ↔  Application Core + driving ports
 Interface Adapters      ↔  Adapters (both driving and driven)
 Frameworks & Drivers    ↔  External systems that adapters connect to
 
-Dependency Rule         ↔  Core knows only about ports it defined;
-                           adapters know about the core and external systems
+Dependency Rule         ↔  Core knows only its own ports
+                           Adapters know the core and the
+                           external systems
 ```
 
 The most meaningful practical difference is emphasis:
 
 - **Clean Architecture** emphasizes the **rings and their direction** — the "don't cross this boundary" rule is about which ring a piece of code lives in
-- **Hexagonal Architecture** emphasizes the **symmetry of ports** — both sides of the application (inbound and outbound) are treated the same way: through interfaces defined by the core
+- **Hexagonal Architecture** emphasizes the **symmetry of ports**. Both sides of the application, inbound and outbound, are treated the same way: through interfaces defined by the core
 
-In a real TypeScript project, applying either one results in nearly identical code. If an interviewer asks "which one do you use?" the honest answer is: "I apply the Dependency Rule from Clean Architecture, organized using the Ports and Adapters vocabulary from Hexagonal Architecture — they reinforce each other."
+In a real TypeScript project, applying either one results in nearly identical code. An interviewer may ask which one you use. The honest answer: you apply the Dependency Rule from Clean Architecture and organize it with the Ports and Adapters vocabulary from Hexagonal Architecture. The two reinforce each other.
 
 ## When to reach for Hexagonal Architecture specifically
 
@@ -271,20 +273,20 @@ The "ports and adapters" framing is particularly useful when:
 
 1. **Multiple driving adapters exist** — the same application core is called by an HTTP server, a CLI tool, a test suite, and a background job runner. Each is a separate driving adapter on the left side of the hexagon.
 
-2. **Multiple driven adapters exist** — the application needs both a production Postgres repository and a fast in-memory repository for tests (and maybe a CSV-file repository for a data import script).
+2. **Multiple driven adapters exist** — the application needs a production Postgres repository and a fast in-memory repository for tests. It may also need a repository over CSV (comma-separated values) files for a data import script.
 
 3. **External APIs need insulation** — you're calling a third-party API whose data model you don't control. An ACL adapter prevents their vocabulary from spreading through your domain.
 
-4. **You need to swap infrastructure** — migrating from Sendgrid to AWS SES, or from PostgreSQL to DynamoDB, is a matter of writing a new driven adapter. The core doesn't change.
+4. **You need to swap infrastructure.** Migrating from Sendgrid to Amazon SES (Simple Email Service), or from PostgreSQL to DynamoDB, means writing a new driven adapter. The core doesn't change.
 
 ## Common interview traps
 
-- **"Ports are the same as interfaces"** — a port is a specific *kind* of interface: one that marks the boundary between the application core and the outside world, defined by the core itself (not by the external system). A `UserRepository` interface used internally within the service layer is just an interface. A `IOrderRepository` interface that the use case defines — expecting an outer adapter to implement — is a port.
+- **"Ports are the same as interfaces"** — a port is a specific *kind* of interface. It marks the boundary between the application core and the outside world, and the core itself defines it, not the external system. A `UserRepository` interface used internally within the service layer is just an interface. A `IOrderRepository` interface that the use case defines — expecting an outer adapter to implement — is a port.
 
-- **"The ACL is just a data mapper"** — a data mapper translates field names and types. An ACL translates *concepts*: `'requires_payment_method'` → `'pending'` is not field renaming, it's a semantic translation between two domain vocabularies. The purpose of an ACL is to keep the external system's conceptual model from colonizing your own.
+- **"The ACL is just a data mapper"** — a data mapper translates field names and types. An ACL translates *concepts*: `'requires_payment_method'` → `'pending'` is not field renaming, it's a semantic translation between two domain vocabularies. The purpose of an ACL is to keep the external system's model of the world out of your own.
 
 - **"Hexagonal and Clean Architecture are different and you should pick one"** — they're more like two descriptions of the same insight. Most production codebases that apply one will look identical to codebases applying the other, because both enforce the Dependency Rule through interface abstractions.
 
-- **"Driving and driven ports work the same way"** — they don't. A driving port is an interface *implemented* by the application core (the use case class implements the driving port). A driven port is an interface *defined* by the application core but *implemented* by an outer adapter. The direction is reversed. Getting this wrong in an interview signals a superficial understanding of the pattern.
+- **"Driving and driven ports work the same way"** — they don't. A driving port is an interface that the application core *implements*. The use case class is the one implementing it. A driven port is an interface *defined* by the application core but *implemented* by an outer adapter. The direction is reversed. Getting this wrong in an interview signals a superficial understanding of the pattern.
 
-- **"I'll add the hexagonal structure later when the project gets bigger"** — the cost of adding it later is high: every place that violated the boundary needs to be untangled. The structure is cheapest to add at the start when the codebase is small. That said, applying it to a 5-file CRUD app is genuinely overkill — the right answer is proportional application, not "always" or "never."
+- **"I'll add the hexagonal structure later when the project gets bigger"** — the cost of adding it later is high. Every place that violated the boundary needs to be untangled. The structure is cheapest to add at the start when the codebase is small. That said, applying it to a 5-file CRUD (create, read, update, delete) app is genuinely overkill. Apply the pattern in proportion to the problem, rather than "always" or "never".

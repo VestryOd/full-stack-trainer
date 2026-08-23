@@ -323,12 +323,12 @@ export class OrderReportProjector {
 There is a window between the write and the projection update. Inside it the command is already accepted, but a screen reading the projection still shows old data. This is what eventual consistency means:
 
 ```txt
-t = 0 ms    the command is accepted, OrderPlaced is written to the log
+t = 0 ms    the command is accepted, OrderPlaced goes to the log
 t = 0 ms    the client gets a 201 Created response
 t = 15 ms   the projector reads the event from the log
 t = 40 ms   the row in the read model is updated
 
-window 0..40 ms: the order exists, but the order list does not show it
+window 0..40 ms: the order exists, but the list does not show it
 ```
 
 Users notice this very fast: they place an order and immediately refresh the history page. There are three working ways to close the window, and the choice is a product decision:
