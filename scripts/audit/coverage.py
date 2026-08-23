@@ -60,6 +60,9 @@ PASSED = {
     'article:oop-patterns': 'f9dc1ca',
     'bank:oop-patterns': 'f9dc1ca',
     'quiz:oop-patterns': 'f9dc1ca',
+    'article:architecture': '61ad2a3',
+    'bank:architecture': '61ad2a3',
+    'quiz:architecture': '61ad2a3',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
