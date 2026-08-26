@@ -5,7 +5,7 @@
 Deploying new code to production is the riskiest moment in the software delivery lifecycle. If something goes wrong — a bug slipped through testing, a performance regression, a broken third-party integration — users are affected immediately. Deployment strategies are techniques for controlling *how* a new version of code replaces the old version, with the goals of:
 
 1. **Minimizing downtime** — users experience the service as continuously available
-2. **Limiting blast radius** — if the new version has a bug, only a fraction of users are affected before you catch it
+2. **Limiting the blast radius** — the share of users a bad version can reach. If the new version has a bug, only a fraction of them see it before you catch it
 3. **Enabling fast rollback** — if something is wrong, you can return to the previous state quickly
 
 Each strategy makes different tradeoffs between complexity, resource cost, and risk.
@@ -26,7 +26,8 @@ Naive (downtime) deployment:
 
 All the strategies below are variations on how to eliminate that gap.
 
-A prerequisite for zero-downtime deployment: **your application must handle graceful shutdown** — when it receives a `SIGTERM` signal (which the orchestrator sends before stopping the process), it must:
+Zero-downtime deployment has a prerequisite: **your application must handle graceful shutdown.** The orchestrator sends a `SIGTERM` signal before it stops the process. On that signal the application must:
+
 1. Stop accepting new connections
 2. Finish processing in-flight requests
 3. Close database connections cleanly
@@ -36,7 +37,7 @@ Without graceful shutdown, even the most sophisticated deployment strategy will 
 
 ## Rolling deployment
 
-**Rolling deployment** (also called a *rolling update*) replaces instances of the old version with instances of the new version **incrementally** — one at a time, or a few at a time — while the service continues running.
+**Rolling deployment** (also called a *rolling update*) replaces old instances with new ones **incrementally**, while the service keeps running. It swaps one instance at a time, or a few at a time.
 
 ```txt
 Service has 4 instances (pods/containers/VMs) of v1:
@@ -57,31 +58,23 @@ Step 4: complete
 
 **How a single instance is replaced (zero-downtime per instance):**
 
-```txt
-1. New v2 instance starts and passes health check
-2. Load balancer / proxy adds v2 to the routing pool
-3. Load balancer drains v1 — stops sending new requests to it,
-   waits for in-flight requests to finish (drain timeout: typically 30–60s)
-4. v1 instance is stopped after drain completes
-```
+1. The new v2 instance starts and passes its health check.
+2. The load balancer or proxy adds v2 to the routing pool.
+3. The load balancer drains v1: no new requests go there, and it waits for the in-flight ones to finish. The drain timeout is typically 30–60 seconds.
+4. The v1 instance is stopped once the drain completes.
 
-**Tradeoffs:**
+**Advantages:**
 
-```txt
-Advantages:
-  + Simple to implement — built into Kubernetes, ECS, most PaaS platforms
-  + No extra infrastructure needed — uses existing instances
-  + Low resource cost (compared to blue-green)
+- Simple to implement — built into Kubernetes, Amazon ECS (Elastic Container Service) and most platform-as-a-service (PaaS) providers.
+- No extra infrastructure needed — it reuses the instances you already have.
+- Low resource cost, compared to blue-green.
 
-Disadvantages:
-  - During the rollout, v1 and v2 run simultaneously
-    → requests may be served by either version — inconsistency is possible
-  - If v2 has a bug, some users see the bug while others don't
-    (the percentage increases as the rollout progresses)
-  - Rollback requires another rolling update in reverse (slow)
-  - Database migrations must be backward-compatible with both v1 and v2
-    (since both run at the same time during the rollout)
-```
+**Disadvantages:**
+
+- During the rollout v1 and v2 run at once, so a request may hit either version. Inconsistent responses are possible.
+- If v2 has a bug, some users see it and others do not. The share grows as the rollout progresses.
+- Rollback means another rolling update in reverse, which is slow.
+- Database migrations must stay compatible with both v1 and v2, since both run during the rollout.
 
 Kubernetes rolling deployment configuration:
 
@@ -107,62 +100,57 @@ spec:
             periodSeconds: 5
 ```
 
-The `readinessProbe` is what makes rolling deployments zero-downtime: a pod only receives traffic after the probe passes, so a buggy v2 that fails the health check never receives real user traffic — the rollout stalls and alerts fire.
+The `readinessProbe` is what makes a rolling deployment zero-downtime. A pod receives traffic only after the probe passes. A buggy v2 that fails its health check therefore never sees real user traffic: the rollout stalls and alerts fire.
 
 ## Blue-green deployment
 
 **Blue-green deployment** maintains **two identical production environments** — called "blue" and "green" — and switches traffic between them instantaneously.
 
 ```txt
-Current state: "blue" is live (serving all traffic)
-  [blue: v1, v1, v1, v1]  ←── 100% of user traffic
-  [green: idle / v1]       ← standing by (or absent)
+Current state — "blue" is live:
+  [blue:  v1 v1 v1 v1]  ←── 100% of user traffic
+  [green: idle       ]      standing by (or absent)
 
-Deploy v2:
-  [blue: v1, v1, v1, v1]  ← still live, still serving traffic
-  [green: v2, v2, v2, v2] ← v2 is deployed and tested here (no real traffic yet)
+Deploy v2 to green:
+  [blue:  v1 v1 v1 v1]  ←── 100% of user traffic, still
+  [green: v2 v2 v2 v2]      deployed and tested, no real traffic
 
-Switch: update the load balancer / DNS to point to green
-  [blue: v1, v1, v1, v1]  ← now idle (kept for rollback)
-  [green: v2, v2, v2, v2] ←── 100% of user traffic
+Switch the load balancer (or DNS) over to green:
+  [blue:  v1 v1 v1 v1]      now idle, kept for rollback
+  [green: v2 v2 v2 v2]  ←── 100% of user traffic
 
-If v2 has a bug — rollback in seconds:
-  [blue: v1, v1, v1, v1]  ←── switch back — 100% traffic back to v1 instantly
-  [green: v2, v2, v2, v2] ← now idle again
+If v2 has a bug, switch back — that takes seconds:
+  [blue:  v1 v1 v1 v1]  ←── 100% of user traffic again
+  [green: v2 v2 v2 v2]      idle again
 ```
 
-The traffic switch can be a DNS change, a load balancer rule change, or a reverse proxy configuration reload — and it can happen in under a second.
+The switch itself is a small change: a DNS (Domain Name System) record, a load balancer rule, or a reverse proxy config reload. Any of the three takes under a second.
 
-**Tradeoffs:**
+**Advantages:**
 
-```txt
-Advantages:
-  + Instant rollback — just switch the load balancer back (seconds, not minutes)
-  + Zero mixed-version traffic — at any point in time, all users see the same version
-  + Full v2 environment can be tested in isolation before traffic switch
-    (smoke tests, load tests, QA sign-off)
+- Instant rollback — switch the load balancer back, in seconds rather than minutes.
+- No mixed-version traffic. At any point in time every user sees the same version.
+- The full v2 environment can be tested in isolation before the switch — smoke tests, load tests, sign-off from QA (quality assurance).
 
-Disadvantages:
-  - Double infrastructure cost — two full production environments must exist simultaneously
-  - Database migrations: if v2 has schema changes, v1 must still work with the new schema
-    during the pre-switch period (backward-compatible migrations required)
-  - DNS-based switching has propagation delay (TTL) — not truly instant at the DNS level;
-    use load balancer switching instead to avoid this
-```
+**Disadvantages:**
 
-Blue-green with a reverse proxy (NGINX or similar):
+- Double infrastructure cost: two full production environments have to exist at the same time.
+- Database migrations get harder. If v2 changes the schema, v1 must keep working with it until the switch, so migrations have to be backward-compatible.
+- Switching by DNS is not instant: a record carries a propagation delay set by its TTL (time to live). Switch at the load balancer instead.
+
+Blue-green with a reverse proxy (nginx or similar):
 
 ```nginx
-# Switch by updating the upstream and reloading NGINX (zero-downtime reload)
+# Switch by updating the upstream and reloading nginx (zero-downtime reload)
 upstream app {
     server green:3000;   # was: server blue:3000;
 }
 ```
 
-Or with a cloud load balancer (AWS ALB target group switch, GCP Backend Service update):
+Or with a cloud load balancer. On AWS (Amazon Web Services) you repoint the listener of an Application Load Balancer. On Google Cloud you update the Backend Service instead:
 
 ```bash
-# AWS: switch ALB listener rule to point to green target group
+# AWS: switch the load balancer listener rule to the green target group
 aws elbv2 modify-listener \
   --listener-arn arn:aws:elasticloadbalancing:... \
   --default-actions Type=forward,TargetGroupArn=<green-target-group-arn>
@@ -170,7 +158,7 @@ aws elbv2 modify-listener \
 
 ## Canary release
 
-A **canary release** (named after "canary in a coal mine" — canaries were sent into mines to detect toxic gas before humans entered) sends a **small percentage of real user traffic** to the new version while the majority still hits the old version. The new version is observed for errors and performance regressions before traffic is gradually increased to 100%.
+A **canary release** sends a **small percentage of real user traffic** to the new version, while the majority still hits the old one. You watch the new version for errors and performance regressions, then raise its share step by step up to 100%. The name comes from the canary in a coal mine: miners sent the bird in first to detect toxic gas.
 
 ```txt
 Phase 1: 5% canary
@@ -192,11 +180,11 @@ Phase 4: 100% (rollout complete)
   (v1 retired)
 ```
 
-The key difference from rolling deployment: in a rolling update, you replace instances sequentially until all are updated — there is no concept of "send 5% to the new version." In a canary, you specifically control the *traffic split* (by weight in the load balancer, not by instance count).
+The key difference from a rolling deployment is what you control. A rolling update replaces instances one by one until every instance is new. You cannot say "send 5% of the traffic to v2" here — the split is only a side effect of how far the rollout got. A canary controls the *traffic split* directly, by weight in the load balancer rather than by instance count.
 
 **Where canary is implemented:**
 
-- **Load balancer weighted routing** — AWS ALB weighted target groups, NGINX `weight`, Kubernetes Gateway API
+- **Load balancer weighted routing** — weighted target groups on an AWS Application Load Balancer, `weight` in nginx, Kubernetes Gateway API
 - **Service mesh** (Istio, Linkerd) — fine-grained traffic control at the network layer without touching the application
 - **Platform-level** — Vercel (traffic splitting), AWS CodeDeploy with canary configuration
 
@@ -215,38 +203,29 @@ spec:
           weight: 5      # 5% canary
 ```
 
-**Tradeoffs:**
+**Advantages:**
 
-```txt
-Advantages:
-  + Real user traffic tests the new version — catches bugs that staging missed
-  + Small blast radius — a bug in v2 initially affects only 5% of users
-  + Gradual rollout gives time to detect performance regressions that only
-    appear under real-world load
+- Real user traffic tests the new version and catches bugs that staging missed.
+- Small blast radius: a bug in v2 initially reaches only 5% of users.
+- A gradual rollout gives time to spot performance regressions that appear only under real load.
 
-Disadvantages:
-  - Both versions run simultaneously (same database migration constraints as rolling)
-  - Requires a load balancer that supports weighted routing
-  - More complex observability setup — you need to track metrics per version,
-    not just per service
-  - Canary analysis (deciding when it's safe to increase traffic) can be automated
-    (Argo Rollouts, Flagger) or manual — manual is error-prone under time pressure
-```
+**Disadvantages:**
+
+- Both versions run at the same time, with the same database-migration constraints as a rolling update.
+- You need a load balancer that supports weighted routing.
+- Observability has to be set up per version, not just per service.
+- Canary analysis — deciding when it is safe to raise the share — is either automated (Argo Rollouts, Flagger) or manual. Manual analysis is error-prone under time pressure.
 
 ## Feature flags
 
-A **feature flag** (also called a *feature toggle* or *feature switch*) is a mechanism in the application code that enables or disables a feature at runtime — without deploying new code.
+A **feature flag** is a switch in the application code that turns a feature on or off at runtime, without deploying new code. It is also called a *feature toggle* or a *feature switch*.
 
-**Feature flags are NOT a deployment strategy.** They are a code-level technique that complements deployment strategies. The distinction:
+**Feature flags are not a deployment strategy.** They are a code-level technique that complements deployment strategies. The distinction:
 
-```txt
-Deployment strategy  = controls HOW new code reaches the production environment
-                       (rolling / blue-green / canary)
-
-Feature flag         = controls WHETHER a feature in already-deployed code
-                       is active for a given user
-                       (the code is already in production — the flag controls visibility)
-```
+| Mechanism | What it controls |
+|---|---|
+| Deployment strategy | *How* new code reaches the production environment: rolling, blue-green or canary. |
+| Feature flag | *Whether* a feature in already-deployed code is active for a given user. The code is in production either way; the flag controls visibility. |
 
 Basic implementation:
 
@@ -262,7 +241,7 @@ app.get('/checkout', (req, res) => {
 });
 ```
 
-**Why feature flags are powerful in combination with CI/CD:**
+**Why feature flags fit CI/CD (continuous integration and continuous delivery):**
 
 ```txt
 Without feature flags:
@@ -297,16 +276,11 @@ These services allow:
 
 **The critical difference with canary release:**
 
-```txt
-Canary release:  traffic split at the infrastructure level (load balancer)
-                 → different *servers* handle the requests
-                 → both v1 code and v2 code are deployed
-
-Feature flag:    traffic split at the application level (inside the code)
-                 → the *same server* handles the request, but executes
-                   different code paths based on the flag value
-                 → only one version of code is deployed
-```
+| | Canary release | Feature flag |
+|---|---|---|
+| Where the split happens | Infrastructure, in the load balancer | Application, inside the code |
+| Who serves the request | Different servers | The same server, on a different code path |
+| What is deployed | Both the v1 code and the v2 code | One version of the code |
 
 ## Rollback strategies
 
@@ -343,7 +317,7 @@ This is why blue-green's double infrastructure cost is often worth it: rollback 
 
 ```yaml
 # Set canary weight to 0 — all traffic back to stable
-# (using Argo Rollouts CRD)
+# (using the Argo Rollouts CRD — CustomResourceDefinition)
 kubectl argo rollouts set weight my-app 0
 # Or simply abort the rollout
 kubectl argo rollouts abort my-app
@@ -351,50 +325,25 @@ kubectl argo rollouts abort my-app
 
 ### Database migrations and rollback
 
-The hardest part of rollback is often the database. If v2 ran a migration that added a column and populated it, rolling back to v1 means v1 might not know about that column — or worse, v2 deleted a column that v1 depends on.
+The hardest part of rollback is often the database. Say v2 ran a migration that added a column and filled it in. Rolling back to v1 leaves v1 unaware of that column. Worse, v2 may have deleted a column that v1 still depends on.
 
-The safe pattern is the **expand-contract migration** (also called the *parallel-change pattern*):
+The safe pattern is the **expand-contract migration**, also called the *parallel-change pattern*. It runs in four phases:
 
-```txt
-Phase 1 — EXPAND (deploy v2a):
-  v2a adds the new column as nullable (backward-compatible)
-  v1 and v2a run simultaneously — v1 ignores the new column, v2a writes to it
+1. **Expand** — deploy `v2a`, which adds the new column as nullable. The change stays backward-compatible. Now v1 and `v2a` run side by side: v1 ignores the new column, `v2a` writes to it.
+2. **Migrate** — backfill the new column for the existing rows. Run this in the background, not as part of the deploy.
+3. **Contract** — deploy `v2b`. Every row now has data, so `v2b` can make the column `NOT NULL` and drop the old column references from the code. The old v1 code is out of production by then.
+4. **Cleanup** — deploy v3, dropping the old column once `v2b` has been stable for some time.
 
-Phase 2 — MIGRATE:
-  Backfill data in the new column for existing rows
-  Run in the background, not as part of the deploy
-
-Phase 3 — CONTRACT (deploy v2b):
-  v2b makes the column NOT NULL (now safe — all rows have data)
-  Remove old column references from the code
-  Old v1 code is no longer in production
-
-Phase 4 — CLEANUP (deploy v3):
-  Drop the old column once v2b has been stable for some time
-```
-
-This means: **never drop a column in the same migration that adds its replacement**. Never make a column NOT NULL in the first migration. Always deploy in multiple phases so that rollback at any phase is safe.
+This means: **never drop a column in the same migration that adds its replacement**. Never make a column `NOT NULL` in the first migration. Always deploy in multiple phases, so that a rollback at any phase is safe.
 
 ## Which strategy to use
 
-```txt
-Project type / constraint         → Recommended strategy
-───────────────────────────────────────────────────────────────────
-Simple app, small team,           Rolling update
-limited infrastructure
-
-Zero tolerance for mixed-version  Blue-green
-states, instant rollback required,
-can afford 2x infra cost
-
-High traffic, want to validate    Canary release
-new version on real traffic
-before full rollout
-
-Code ready but feature not ready  Feature flag
-for all users, or need gradual
-user rollout without re-deploying
-```
+| Project type or constraint | Recommended strategy |
+|---|---|
+| Simple app, small team, limited infrastructure | Rolling update |
+| No mixed-version states allowed, instant rollback required, 2× infrastructure affordable | Blue-green |
+| High traffic, and you want to validate the new version on real traffic first | Canary release |
+| Code is ready but the feature is not, or you need a gradual user rollout without re-deploying | Feature flag |
 
 In practice, most mature pipelines combine strategies: rolling or blue-green for infrastructure-level deployment, feature flags for application-level control, and canary for high-risk releases.
 
@@ -406,8 +355,8 @@ In practice, most mature pipelines combine strategies: rolling or blue-green for
 
 - **Forgetting about database migrations in rolling deployments** — when v1 and v2 run simultaneously, both hit the same database. If v2's migration drops a column that v1 reads, v1 breaks. All migrations during a rolling update must be backward-compatible (additive only in the same deploy wave; deletions in a later wave after v1 is gone).
 
-- **Treating `maxUnavailable: 1` and `maxSurge: 0` as zero-downtime** — with these settings, Kubernetes will stop one old pod before starting a new one, meaning capacity temporarily drops. For zero-downtime, use `maxUnavailable: 0` (never go below desired count) and `maxSurge: 1` (temporarily run one extra pod).
+- **Treating `maxUnavailable: 1` and `maxSurge: 0` as zero-downtime** — with these settings Kubernetes stops one old pod before it starts a new one. Capacity temporarily drops. For zero-downtime use `maxUnavailable: 0` (never go below the desired count) and `maxSurge: 1` (temporarily run one extra pod).
 
-- **"Rollback is just redeploying the old Docker image"** — true for stateless code, but if the database schema changed in the "forward" direction and the old code doesn't understand the new schema, redeploying old code will break the app. Rollback must be planned as part of the migration strategy.
+- **"Rollback is just redeploying the old Docker image"** — true for stateless code. But if the database schema has moved forward and the old code does not understand it, redeploying the old code breaks the app. Rollback must be planned as part of the migration strategy.
 
 - **Claiming zero-downtime without addressing graceful shutdown** — zero-downtime deployment at the infrastructure level is defeated if the application doesn't handle `SIGTERM` gracefully. The platform waits to drain connections — but if the app exits immediately on `SIGTERM`, in-flight requests are dropped. The application code must cooperate.

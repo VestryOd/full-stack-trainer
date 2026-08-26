@@ -2,7 +2,9 @@
 
 ## What GitHub Actions is
 
-**GitHub Actions** is GitHub's built-in CI/CD (Continuous Integration / Continuous Delivery) platform. Instead of connecting an external service (Jenkins, CircleCI, Travis CI), you define your automation directly in the repository as YAML files. Those files — called **workflows** — live in the `.github/workflows/` directory and are version-controlled alongside your code.
+**GitHub Actions** is GitHub's built-in CI/CD (Continuous Integration / Continuous Delivery) platform. Instead of connecting an external service like Jenkins, CircleCI or Travis CI, you define your automation directly in the repository. It lives in files written in YAML (a plain-text format for configuration).
+
+Those files are called **workflows**. They live in the `.github/workflows/` directory and are version-controlled alongside your code.
 
 The core idea: describe *what to do* (a sequence of steps) and *when to do it* (a trigger event). GitHub's infrastructure takes care of the rest.
 
@@ -58,7 +60,7 @@ The four top-level keys to know:
 ```txt
 name    — display name (optional but recommended)
 on      — trigger(s): what events cause this workflow to run
-env     — environment variables available to all jobs in this workflow
+env     — environment variables shared by all jobs in the workflow
 jobs    — the actual work: a map of job IDs to job definitions
 ```
 
@@ -88,7 +90,11 @@ on:
     types: [opened, synchronize]   # default: opened + synchronize (new commits on the PR)
 ```
 
-Runs on pull request events. The most important types: `opened` (PR created), `synchronize` (new commit pushed to the PR branch), `closed` (PR closed or merged).
+Runs on pull request events. The most important types:
+
+- `opened` — a pull request (PR) is created.
+- `synchronize` — a new commit is pushed to the PR branch.
+- `closed` — the PR is closed or merged.
 
 ### `schedule`
 
@@ -98,7 +104,7 @@ on:
     - cron: '0 6 * * 1'           # every Monday at 06:00 UTC
 ```
 
-Runs on a cron schedule — useful for nightly builds, weekly dependency audits (`npm audit`), or scheduled end-to-end tests against production. The format is standard UNIX cron: `minute hour day-of-month month day-of-week`.
+Runs on a cron schedule — useful for nightly builds, weekly dependency audits (`npm audit`), or scheduled end-to-end tests against production. The format is the standard Unix cron format: `minute hour day-of-month month day-of-week`.
 
 ### `workflow_dispatch`
 
@@ -114,7 +120,7 @@ on:
         options: [staging, production]
 ```
 
-Allows running the workflow manually from the GitHub UI or via the API. The `inputs` block adds a form with fields — useful for deploy workflows where you want a human to pick the target environment.
+Allows running the workflow manually from the GitHub web interface (UI) or via the API. The `inputs` block adds a form with fields — useful for deploy workflows where you want a human to pick the target environment.
 
 ### `workflow_call`
 
@@ -221,9 +227,12 @@ strategy:
 There are three levels of configuration values, and choosing the wrong one is a security risk:
 
 ```txt
-Environment variables  → non-sensitive config (NODE_ENV, PORT, API_URL)
-Secrets                → sensitive values (passwords, tokens, private keys)
-GitHub Environments    → secrets scoped to a specific deploy target (staging, production)
+Environment variables → non-sensitive config
+                        (NODE_ENV, PORT, API_URL)
+Secrets               → sensitive values
+                        (passwords, tokens, private keys)
+GitHub Environments   → secrets scoped to one deploy target
+                        (staging, production)
 ```
 
 **Defining and using secrets:**
@@ -258,9 +267,10 @@ jobs:
 
 ### Senior nuance #1: secrets are masked but not encrypted in logs
 
-GitHub Actions masks secret values in logs (replaces them with `***`). However:
-- If you `echo` a secret split into parts (e.g., `echo ${SECRET:0:3}`) the mask won't catch it
-- If a dependency prints the secret to stdout during installation (supply chain attack), GitHub's mask catches it *after* the fact only if the secret appears verbatim
+GitHub Actions masks secret values in logs, replacing them with `***`. Three ways the mask still lets a secret through:
+
+- If you `echo` a secret split into parts (`echo ${SECRET:0:3}`), the mask does not catch it.
+- If a dependency prints the secret to standard output during installation, that is a supply chain attack. The mask catches it after the fact, and only if the secret appears verbatim.
 - **Never pass secrets as command arguments** (`run: ./deploy.sh --token $SECRET`) — they appear in process listings on the runner. Pass them as environment variables instead.
 
 ## Artifacts and caching
@@ -268,11 +278,14 @@ GitHub Actions masks secret values in logs (replaces them with `***`). However:
 These are two different concepts that are often confused:
 
 ```txt
-Cache     → speeds up the pipeline by persisting files between RUNS of the same workflow
-            (node_modules, pip packages, Maven .m2 — things that don't change often)
+Cache     → keeps files between RUNS of the same workflow,
+            so the next run is faster
+            (node_modules, pip packages, Maven .m2 —
+             things that do not change often)
 
-Artifact  → stores the OUTPUT of a job so it can be downloaded or used by a LATER JOB
-            in the same run (compiled bundle, test report, Docker image layer)
+Artifact  → stores the OUTPUT of a job, so a LATER JOB in
+            the same run can use it, or you can download it
+            (compiled bundle, test report, Docker image layer)
 ```
 
 **Caching `node_modules`:**
@@ -295,7 +308,7 @@ Or more explicitly:
       ${{ runner.os }}-npm-
 ```
 
-The `key` is the cache hit condition: if the `package-lock.json` hash changes (new/updated dependency), the old cache is a miss and `npm ci` runs fully, creating a new cache entry. On cache hit, `npm ci` still runs but is much faster (it validates rather than downloads).
+The `key` is the cache hit condition. If the `package-lock.json` hash changes, the old cache is a miss, and `npm ci` runs fully and creates a new cache entry. That hash changes whenever a dependency is added or updated. On cache hit, `npm ci` still runs but is much faster (it validates rather than downloads).
 
 **Passing build output between jobs:**
 
@@ -411,10 +424,12 @@ steps:
 Composite action vs Reusable workflow — when to use which:
 
   Composite action    → reuse a GROUP OF STEPS within a job
-                        (setup, install, build — then the caller adds more steps)
+                        (setup, install, build — then the
+                         caller adds more steps)
 
   Reusable workflow   → reuse an ENTIRE JOB (or set of jobs)
-                        (a complete test suite, a complete deploy sequence)
+                        (a complete test suite, a complete
+                         deploy sequence)
 ```
 
 ## Complete real-world example: test → build → deploy to Vercel
@@ -504,41 +519,44 @@ jobs:
 ## GitHub-hosted vs self-hosted runners
 
 ```txt
-                    GitHub-hosted         Self-hosted
-─────────────────────────────────────────────────────────────
-Setup               Zero                  Install runner software,
-                                          register with GitHub
-Maintenance         None (GitHub's job)   Your responsibility
-                                          (OS updates, security patches)
-Network access      Public internet only  Can reach private VPCs, DBs
-Hardware            Standard VMs          Any — GPU, specific CPU, ARM
-Cost model          Per-minute billing    Your own infrastructure cost
-Isolation           Fresh VM each run     Can be persistent (shared state risk)
-OS options          ubuntu, windows,      Anything you can run the
-                    macos                 runner software on
+                GitHub-hosted         Self-hosted
+──────────────────────────────────────────────────────────
+Setup           Zero                  Install runner software,
+                                      register with GitHub
+Maintenance     None (GitHub's job)   Yours: OS updates,
+                                      security patches
+Network access  Public internet only  Can reach private
+                                      networks and databases
+Hardware        Standard VMs          Any — GPU, specific CPU, ARM
+Cost model      Per-minute billing    Your own infrastructure
+Isolation       Fresh VM each run     Can be persistent
+                                      (shared state risk)
+OS options      ubuntu, windows,      Anything that can run
+                macos                 the runner software
 ```
 
 ### Senior nuance #2: self-hosted runner security
 
-Self-hosted runners on **public repositories** are a serious security risk: a malicious PR could modify a workflow to run arbitrary code on your runner — accessing private keys, internal databases, or other secrets on the machine.
+Self-hosted runners on **public repositories** are a serious security risk. A malicious pull request could modify a workflow to run arbitrary code on your runner. That code can read private keys, internal databases, or other secrets on the machine.
 
 Mitigations:
+
 - **Require approval for first-time contributors** (GitHub setting: "Require approval for all outside collaborators")
 - **Run self-hosted runners in isolated environments** (ephemeral VMs, containers) — not on machines with persistent access to sensitive systems
 - **Keep self-hosted runners for private repos only** if they have access to internal resources
 
 ## Common interview traps
 
-- **Confusing `env` at workflow level vs job level vs step level** — environment variables cascade: workflow-level `env` is available everywhere; job-level `env` is available to all steps in that job; step-level `env` is available only to that step. A secret set at the wrong level may simply not be visible where you need it.
+- **Confusing `env` at workflow level vs job level vs step level** — environment variables cascade. Workflow-level `env` is available everywhere. Job-level `env` is available to all steps in that job. Step-level `env` is available only to that step. A secret set at the wrong level may simply not be visible where you need it.
 
-- **Using `npm install` instead of `npm ci` in pipelines** — `npm install` can modify `package-lock.json` if it finds inconsistencies; `npm ci` always installs the exact versions from the lockfile and fails if the lockfile is out of sync. In CI, always use `npm ci`.
+- **Using `npm install` instead of `npm ci` in pipelines** — `npm install` can modify `package-lock.json` if it finds inconsistencies. The command `npm ci` always installs the exact versions from the lockfile, and it fails if the lockfile is out of sync. In CI, always use `npm ci`.
 
 - **Not caching properly** — running `npm ci` without a cache in a pipeline adds 1–3 minutes per job just for dependency installation. The `actions/setup-node@v4` with `cache: npm` makes this a one-liner.
 
-- **Putting secrets in `env` at the workflow level** — workflow-level `env` values are visible in the GitHub UI and logs; secrets accessed via `${{ secrets.NAME }}` are masked. Never store sensitive values in plain `env`.
+- **Putting secrets in `env` at the workflow level** — workflow-level `env` values are visible in the GitHub web interface and in the logs. Secrets accessed via `${{ secrets.NAME }}` are masked. Never store sensitive values in plain `env`.
 
-- **Not understanding `needs` creates a hard dependency, not just ordering** — if a job in `needs` fails, the dependent job does not run at all (unless `if: always()` is set). This means a failed test job *will block* the deploy job — which is exactly what you want, but you need to understand it's not just "run after."
+- **Not understanding `needs`** — it creates a hard dependency, not just ordering. If a job listed in `needs` fails, the dependent job does not run at all, unless `if: always()` is set. This means a failed test job *will block* the deploy job. That is exactly what you want, but `needs` is stronger than a plain "run after" ordering.
 
-- **Reusable workflow vs composite action mix-up** — a reusable workflow is called with `uses:` in the `jobs:` section and is a complete job; a composite action is called with `uses:` in the `steps:` section and is a group of steps. They are not interchangeable.
+- **Reusable workflow vs composite action mix-up** — a reusable workflow is called with `uses:` in the `jobs:` section and is a complete job. A composite action is called with `uses:` in the `steps:` section and is a group of steps. They are not interchangeable.
 
-- **Forgetting `if: github.event_name == 'push'` on the deploy job** — a workflow triggered by both `push` and `pull_request` will attempt to deploy on PR creation too unless guarded. A PR from a fork also won't have access to secrets — that deploy job will fail or run with empty values.
+- **Forgetting the `push` guard on the deploy job** — a workflow triggered by both `push` and `pull_request` tries to deploy on pull request creation too. Add `if: github.event_name == 'push'` to the deploy job. A pull request from a fork also has no access to secrets, so that deploy job would fail or run with empty values.
