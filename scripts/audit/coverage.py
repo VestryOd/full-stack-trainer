@@ -65,6 +65,12 @@ PASSED = {
     'quiz:architecture': '61ad2a3',
     'article:cicd-devops': '7e15fb8',
     'bank:cicd-devops': '7e15fb8',
+    'article:microfrontends': '8ee72de',
+    'article:css-html': '8ee72de',
+    'bank:css-html': '8ee72de',
+    'quiz:css-html': '8ee72de',
+    'quiz:react': '8ee72de',
+    'quiz:nodejs': '8ee72de',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
