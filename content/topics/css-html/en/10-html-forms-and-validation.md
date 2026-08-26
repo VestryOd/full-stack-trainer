@@ -50,7 +50,7 @@ A `<button type="submit">` inside the form submits it. `<button>` without `type`
 <input type="file">        <!-- file selector, requires multipart/form-data encoding -->
 
 <!-- Hidden -->
-<input type="hidden">      <!-- submits value without user interaction (CSRF tokens, etc.) -->
+<input type="hidden">      <!-- value sent without user action (CSRF tokens) -->
 
 <!-- Buttons -->
 <button type="submit">     <!-- submits the form -->
@@ -59,7 +59,7 @@ A `<button type="submit">` inside the form submits it. `<button>` without `type`
 <input type="submit">      <!-- deprecated in favour of <button type="submit"> -->
 ```
 
-`<input type="email">` on mobile shows a keyboard with `@` and `.com` prominently placed. This alone is a reason to use the correct input type — it costs nothing and improves UX for mobile users.
+`<input type="email">` on mobile shows a keyboard with `@` and `.com` prominently placed. This alone is a reason to use the correct input type: it costs nothing and improves the experience (UX) for mobile users.
 
 ## Form accessibility — the foundation
 
@@ -85,9 +85,9 @@ Every visible form control needs a visible, programmatically associated label. "
 </label>
 ```
 
-Both methods create the same accessible name. The explicit `for`/`id` method is more flexible — the label and input don't need to be adjacent in the DOM.
+Both methods create the same accessible name. The explicit `for`/`id` method is more flexible: the label and the input need not be adjacent in the DOM (Document Object Model).
 
-**What NOT to do:**
+**What not to do:**
 
 ```html
 <!-- Wrong: placeholder is not a label -->
@@ -102,7 +102,7 @@ Both methods create the same accessible name. The explicit `for`/`id` method is 
 <input type="email" id="email" placeholder="user@example.com" />
 ```
 
-`aria-label` is appropriate for icon-only inputs (a search field inside a search form with a visible search button), but not as a replacement for a visible label on a standard field.
+`aria-label` is appropriate for icon-only inputs, such as a search field next to a visible search button. It is not a replacement for a visible label on a standard field.
 
 ### `fieldset` and `legend` — grouping related controls
 
@@ -266,7 +266,7 @@ The `pattern` attribute is a regular expression applied to the entire input valu
 input:valid { border-color: green; }
 input:invalid { border-color: red; }
 
-/* :user-valid / :user-invalid — only applies after the user has interacted with the field */
+/* :user-valid / :user-invalid — only after the user touches the field */
 /* Prevents showing red borders on page load before user has typed anything */
 input:user-invalid { border-color: red; }
 input:user-valid { border-color: green; }
@@ -282,7 +282,7 @@ input[type="range"]:in-range { }
 input[type="range"]:out-of-range { }
 ```
 
-`:user-valid` and `:user-invalid` (now supported in all major browsers) solve the UX problem of `:valid`/`:invalid` — which apply immediately on page load, showing empty required fields as invalid before the user has even focused them.
+`:user-valid` and `:user-invalid` are now supported in all major browsers. They solve a problem with `:valid` and `:invalid`, which apply immediately on page load. Those older pseudo-classes show empty required fields as invalid before the user has even focused them.
 
 ## The Constraint Validation API
 
@@ -462,6 +462,7 @@ The browser's native validation bubbles are unstyled, not part of your design sy
 ### 2. Validation timing is wrong for UX
 
 Native validation only fires on form submit. Best practice is:
+
 - Validate on **blur** (first time the user leaves a field)
 - Validate on **input** after the first error (real-time feedback once the user knows there's an issue)
 - Validate everything on **submit**
@@ -488,7 +489,7 @@ confirm.addEventListener('input', () => {
 
 ### 4. Server-side errors can't be shown natively
 
-After a form submission, the server might reject a value for a reason the client can't predict — username already taken, credit card declined, address not in delivery zone. Native validation has no mechanism for this. `setCustomValidity` bridges the gap, but requires JavaScript.
+After a form submission, the server might reject a value for a reason the client cannot predict. The username is taken, the credit card was declined, the address is outside the delivery zone. Native validation has no mechanism for this. `setCustomValidity` bridges the gap, but requires JavaScript.
 
 ### 5. Async validation is impossible
 
@@ -518,8 +519,8 @@ usernameInput.addEventListener('input', () => {
 Use native attributes for what they provide (input type semantics, basic constraints, `ValidityState` without re-implementing logic), but build the validation UX in JavaScript:
 
 ```
-HTML attributes: type, required, minlength, maxlength, pattern, min, max
-  → define the rules (browser validates against these)
+HTML attributes: type, required, minlength, maxlength, pattern,
+  min, max → define the rules (the browser validates against them)
 
 JavaScript + Constraint Validation API:
   → control timing (blur, input, submit)
@@ -572,34 +573,61 @@ for (const [name, value] of formData) {
 
 **"Why can't you use placeholder as a label?"**
 
-Placeholder disappears as soon as the user starts typing — if they need to recall what the field expects, they must clear their input. It has insufficient contrast by design (browsers render it lighter). It's not read as a label by all assistive technologies — some screen readers skip it. WCAG 2.5.3 requires a visible label that matches or contains the accessible name. Placeholder is a hint for format (e.g., `user@example.com`), not a label for the field's purpose.
+Placeholder text disappears as soon as the user starts typing. To recall what the field expects, they have to clear their input.
+
+It also has insufficient contrast by design, because browsers render it lighter. And not every assistive technology reads it as a label: some screen readers skip it. WCAG 2.5.3 (Web Content Accessibility Guidelines) requires a visible label that matches or contains the accessible name. A placeholder is a hint about format, such as `user@example.com`, not a label for the field's purpose.
 
 ---
 
 **"When is `fieldset` + `legend` required vs optional?"**
 
-Required: radio groups (users need context to understand what they're choosing), checkbox groups (same reasoning), any set of related inputs that form a logical unit (shipping address fields). Optional (but still good practice): a single-field form, or when the surrounding visual context provides sufficient group labeling. The test: if a screen reader announced just "Yes, radio button, 1 of 2" — would the user know what they're answering? If no, `fieldset` + `legend` is needed.
+Required in three cases:
+
+- Radio groups, because users need context to understand what they are choosing.
+- Checkbox groups, for the same reason.
+- Any set of related inputs that forms a logical unit, such as shipping address fields.
+
+Optional, though still good practice, on a single-field form, or when the surrounding visual context already labels the group. The test: if a screen reader announced only "Yes, radio button, 1 of 2", would the user know what they are answering? If not, you need `fieldset` and `legend`.
 
 ---
 
 **"What does `novalidate` on a form element do?"**
 
-Disables the browser's built-in validation UI (the popup bubbles) while keeping the Constraint Validation API active. With `novalidate`, `input.validity.valid` still reflects the actual validity state, `input.checkValidity()` still returns correct results, and `setCustomValidity` still works — you just take over responsibility for showing validation feedback in your own UI.
+Disables the browser's built-in validation UI (the popup bubbles) while keeping the Constraint Validation API active. With `novalidate`, `input.validity.valid` still reflects the actual validity state, `input.checkValidity()` still returns correct results, and `setCustomValidity` still works. You simply take over the job of showing validation feedback in your own interface.
 
 ---
 
 **"What is `setCustomValidity` and when would you use it?"**
 
-`setCustomValidity(message)` sets a custom validation error message on a form control. Setting a non-empty string marks the control as invalid and sets `validity.customError = true`. Setting an empty string clears the custom error. Use cases: (1) server-side errors after form submission (email already exists); (2) cross-field validation (password confirmation mismatch); (3) async validation results (username availability). Always clear it with `setCustomValidity('')` when the user modifies the field, otherwise the field stays invalid indefinitely.
+`setCustomValidity(message)` sets a custom validation error message on a form control. A non-empty string marks the control invalid and sets `validity.customError = true`. An empty string clears the custom error.
+
+Three use cases:
+
+- Server-side errors after form submission, such as "email already exists".
+- Cross-field validation, such as a password confirmation mismatch.
+- Results of async validation, such as username availability.
+
+Always clear it with `setCustomValidity('')` when the user modifies the field. Otherwise the field stays invalid indefinitely.
 
 ---
 
 **"What's the difference between `checkValidity()` and `reportValidity()`?"**
 
-`checkValidity()`: returns `true`/`false`, fires the `invalid` event on invalid controls, does NOT show any browser UI. `reportValidity()`: same as `checkValidity()` but also shows the browser's native validation popup on the first invalid control and focuses it. Use `checkValidity()` when building custom validation UI (you don't want the browser popup). Use `reportValidity()` when you want the browser to handle feedback. On the form element, both validate all controls and return false if any fails.
+The difference is whether the browser shows anything:
+
+- `checkValidity()` returns `true` or `false` and fires the `invalid` event on invalid controls. It shows **no** browser interface at all.
+- `reportValidity()` does the same, and also shows the browser's native validation popup on the first invalid control and focuses it.
+
+Use `checkValidity()` when you build your own validation interface and don't want the browser popup. Use `reportValidity()` when you want the browser to handle feedback. On the form element, both validate every control and return false if any of them fails.
 
 ---
 
 **"Why is `<input type="email">` better than `<input type="text">` with a pattern for email fields, even if you validate on the server anyway?"**
 
-Three reasons beyond validation: (1) mobile keyboards — email type shows a keyboard with `@` and `.com` prominently, improving mobile UX; (2) autofill — browsers know to suggest email addresses for email-type inputs; (3) accessibility — screen readers announce the input type ("email field" vs "text field"), giving users context. Pattern validation is additive — use both `type="email"` for these UX benefits and `pattern` or server validation for stricter format rules.
+Three reasons beyond validation:
+
+1. **Mobile keyboards.** The email type shows a keyboard with `@` and `.com` in easy reach.
+2. **Autofill.** Browsers know to suggest email addresses for email-type inputs.
+3. **Accessibility.** Screen readers announce the input type — "email field" rather than "text field" — which gives users context.
+
+Pattern validation is additive. Use `type="email"` for the benefits above, and `pattern` or server validation for stricter format rules.

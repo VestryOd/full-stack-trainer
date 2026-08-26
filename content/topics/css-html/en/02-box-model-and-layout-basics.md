@@ -38,7 +38,7 @@ This structure is fixed — the question is how `width` and `height` are interpr
 /* Total rendered width: 200 + 20 + 20 + 2 + 2 = 244px */
 ```
 
-This means: `width: 200px` does NOT mean the element is 200px wide on screen. The 200px is consumed by content, and the element grows outward beyond that. If you're sizing an element to fit a container, you must subtract padding and border from the desired width — arithmetic that's error-prone and breaks when any of those values change.
+This means: `width: 200px` does **not** mean the element is 200px wide on screen. The 200px is consumed by content, and the element grows outward beyond that. To size an element to fit a container, you must subtract padding and border from the desired width. That arithmetic is error-prone, and it breaks the moment any of those values change.
 
 ### `border-box` (the sane default)
 
@@ -71,7 +71,7 @@ The modern CSS reset applies `border-box` to every element:
 
 The `::before` and `::after` inclusion matters: pseudo-elements are not covered by `*` alone and default to `content-box` unless explicitly set.
 
-The reason this reset became universal: when building column layouts (e.g., `width: 50%` for two equal columns), `content-box` makes it impossible to add any padding without breaking the layout. With `border-box`, `width: 50%; padding: 16px` works as expected — the element is exactly 50% of its container.
+This reset became universal because of column layouts. Take `width: 50%` for two equal columns: with `content-box` you cannot add any padding without breaking the layout. With `border-box`, `width: 50%; padding: 16px` works as expected — the element is exactly 50% of its container.
 
 **The one case `content-box` is still useful:** when you want an element's dimensions to expand based on content while having fixed padding. Rare in practice.
 
@@ -114,8 +114,9 @@ If a parent element has no border, padding, inline content, or block formatting 
 This is the "margin leaking" phenomenon. Adding `padding-top: 1px` to the parent breaks the collapse — any separation (border or padding) prevents it.
 
 **What prevents collapse between parent and child:**
+
 - Parent has `padding-top` or `border-top` (any non-zero value)
-- Parent has `overflow` other than `visible` (creates a BFC)
+- Parent has `overflow` other than `visible` (creates a BFC — a block formatting context)
 - Parent has `display: flow-root`
 - Parent is a flex or grid container (children are flex/grid items, not in flow)
 
@@ -132,7 +133,7 @@ A block element with no height, no padding, no border, and no inline content col
 /* Effective margin contribution: 30px (max of 20 and 30) */
 ```
 
-### When margin collapsing does NOT happen
+### When margin collapsing does not happen
 
 - Elements in flex containers (flex items don't collapse margins)
 - Elements in grid containers
@@ -141,13 +142,14 @@ A block element with no height, no padding, no border, and no inline content col
 - The root element's margins
 - Between a parent and child when a BFC, border, or padding intervenes
 
-The practical implication: if you switch a layout from `display: block` to `display: flex`, previously collapsed margins suddenly add up — elements that were 20px apart are now 50px apart. This is a common source of layout shifts during refactors.
+The practical implication: switch a layout from `display: block` to `display: flex`, and previously collapsed margins suddenly add up. Elements that were 20px apart are now 50px apart. This is a common source of layout shifts during refactors.
 
 ### Block Formatting Context (BFC) — why it matters for collapsing
 
 A BFC is an isolated layout environment where the normal-flow rules apply independently. Elements inside a BFC do not collapse margins with elements outside it.
 
 What creates a BFC:
+
 - `overflow: hidden`, `overflow: auto`, `overflow: scroll` (any value other than `visible`)
 - `display: flow-root` (explicit BFC creation, no side effects)
 - `display: flex`, `display: grid`, `display: inline-flex`, `display: inline-grid`
@@ -177,7 +179,7 @@ Element participates in normal flow. `top`, `right`, `bottom`, `left`, and `z-in
 
 ### `position: relative`
 
-Element participates in normal flow (occupies space as normal). Offset properties (`top`, `left`, etc.) move the **visual rendering** without affecting layout — the element's original space in the flow is preserved and other elements don't reflow around it.
+Element participates in normal flow (occupies space as normal). Offset properties (`top`, `left`, and so on) move the **visual rendering** without affecting layout. The element keeps its original space in the flow, and other elements do not reflow around it.
 
 ```css
 .box {
@@ -214,16 +216,17 @@ Element is **removed from normal flow** — it takes up no space in the document
 </div>
 ```
 
-**Common gotcha:** the containing block is determined by `position` being non-static, NOT by visual nesting. An absolutely positioned element inside visually-nested divs will "escape" all of them until it finds one with `position: relative/absolute/fixed/sticky`.
+**Common gotcha:** the containing block is determined by `position` being non-static, **not** by visual nesting. An absolutely positioned element inside visually-nested divs will "escape" all of them until it finds one with `position: relative/absolute/fixed/sticky`.
 
-**What also creates a containing block for absolute children** (beyond `position`):**
+**What also creates a containing block for absolute children** (beyond `position`):
+
 - `transform` (any value other than `none`)
 - `filter` (any value other than `none`)
 - `will-change: transform` or `will-change: filter`
 - `contain: layout`, `contain: paint`, `contain: strict`
 - `perspective`
 
-This list trips up even experienced developers. A `transform: translateZ(0)` or `filter: blur(0)` on a parent will silently capture absolutely positioned descendants, causing them to position relative to that parent instead of a further ancestor.
+This list trips up even experienced developers. A `transform: translateZ(0)` or `filter: blur(0)` on a parent silently captures absolutely positioned descendants. They then position themselves relative to that parent, not to a further ancestor.
 
 ```css
 /* This will capture absolutely-positioned children — often unexpected */
@@ -295,7 +298,7 @@ Block-level elements (default for `<div>`, `<p>`, `<h1>`, etc.) generate block b
 
 Inline-level elements (`<span>`, `<a>`, `<strong>`) generate inline boxes. They have horizontal padding/margin but vertical margin doesn't collapse and doesn't push block-level siblings.
 
-`display: inline-block` is the hybrid: the element is treated as inline by the parent (sits in a line of text), but internally generates a block formatting context. Vertical margin and padding work as expected, and it creates a BFC (so no margin collapsing with children).
+`display: inline-block` is the hybrid. The parent treats the element as inline, so it sits in a line of text, but internally the element generates a block formatting context. Vertical margin and padding work as expected, and it creates a BFC (so no margin collapsing with children).
 
 ```css
 /* inline-block: takes up only as much width as needed,
@@ -344,10 +347,10 @@ Flex items are not in block formatting context — margin collapsing only happen
 
 **"What's the difference between `display: flow-root` and `overflow: hidden` for clearing floats / preventing margin collapse?"**
 
-Both create a Block Formatting Context (BFC). The difference: `overflow: hidden` clips content that extends beyond the element's bounds — a side effect that is sometimes unwanted (dropdown menus, tooltips, box shadows). `display: flow-root` creates a BFC with no side effects — it was introduced precisely because `overflow: hidden` was being misused as a BFC hack.
+Both create a Block Formatting Context (BFC). The difference is the side effect. With `overflow: hidden`, content that extends beyond the element's bounds gets clipped, and that is sometimes unwanted: dropdown menus, tooltips, box shadows. The value `display: flow-root` creates a BFC with no side effect at all. It was introduced precisely because `overflow: hidden` was being misused as a BFC hack.
 
 ---
 
 **"An absolutely positioned element is in the wrong place — how do you debug it?"**
 
-Find the containing block: walk up the DOM and find the nearest ancestor with `position` other than `static`. Also check for `transform`, `filter`, or `will-change` on ancestors — those also capture `position: absolute` children. In DevTools, select the positioned element and look at the "Computed" panel for the offset values, then identify what it's being positioned relative to.
+Find the containing block: walk up the DOM (Document Object Model) tree to the nearest ancestor with `position` other than `static`. Also check for `transform`, `filter`, or `will-change` on ancestors — those also capture `position: absolute` children. In DevTools, select the positioned element and look at the "Computed" panel for the offset values, then identify what it's being positioned relative to.

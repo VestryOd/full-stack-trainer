@@ -49,8 +49,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "The rendered width is 250px.\n\nWith `box-sizing: content-box` (the default), `width` sets the **content** box only. Padding and border are added around it:\n\n- content: 200px\n- padding: 20px on each side, so 40px\n- border: 5px on each side, so 10px\n\n200 + 40 + 10 = 250px.\n\nSwitch to `box-sizing: border-box` and the same declaration means something different: the element renders 200px wide in total, and the content box shrinks to 150px to make room for the padding and border.",
-      "ru": "Отрисованная ширина — 250px.\n\nПри `box-sizing: content-box` (значение по умолчанию) свойство `width` задаёт только **контентную** область. Внутренние отступы и рамка добавляются вокруг неё:\n\n- контент: 200px\n- padding: по 20px с каждой стороны, то есть 40px\n- border: по 5px с каждой стороны, то есть 10px\n\n200 + 40 + 10 = 250px.\n\nС `box-sizing: border-box` та же запись означает другое: элемент занимает 200px целиком, а контентная область сжимается до 150px, чтобы вместить padding и рамку."
+      "en": "The rendered width is 250px.\n\nWith `box-sizing: content-box` (the default), `width` sets the **content** box only. Padding and border are added around it:\n\n- content: 200px\n- padding: 20px on each side, so 40px\n- border: 5px on each side, so 10px\n\n200 + 40 + 10 = 250px.\n\nSwitch to `box-sizing: border-box` and the same declaration means something different. The element then renders 200px wide in total, and the content box shrinks to 150px to make room for the padding and border.",
+      "ru": "Отрисованная ширина — 250px.\n\nПри `box-sizing: content-box` (значение по умолчанию) свойство `width` задаёт только **контентную** область. Внутренние отступы и рамка добавляются вокруг неё:\n\n- контент: 200px\n- padding: по 20px с каждой стороны, то есть 40px\n- border: по 5px с каждой стороны, то есть 10px\n\n200 + 40 + 10 = 250px.\n\nС `box-sizing: border-box` та же запись означает другое. Элемент занимает 200px целиком, а контентная область сжимается до 150px, чтобы вместить padding и рамку."
     }
   },
   {
@@ -76,8 +76,8 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The `<nav>` element is specifically designed for navigation sections and communicates intent to screen readers and search engines. While `<section>`, `<article>`, and `<header>` are semantic elements, they don't convey the specific purpose of navigation. Using semantic HTML improves accessibility and SEO.",
-      "ru": "Элемент `<nav>` специально разработан для разделов навигации и передаёт намерение программам чтения с экрана и поисковым системам. Хотя `<section>`, `<article>` и `<header>` — семантические элементы, они не передают специфическое назначение навигации. Использование семантического HTML улучшает доступность и SEO."
+      "en": "The `<nav>` element is specifically designed for navigation sections and communicates intent to screen readers and search engines. The `<section>`, `<article>` and `<header>` elements are semantic too, but none says the block is navigation. Semantic HTML improves accessibility and search engine indexing.",
+      "ru": "Элемент `<nav>` специально разработан для разделов навигации и передаёт намерение программам чтения с экрана и поисковым системам. Элементы `<section>`, `<article>` и `<header>` тоже семантические, но ни один не говорит, что блок — навигация. Семантический HTML улучшает доступность и индексацию поисковиками."
     }
   },
   {
@@ -111,8 +111,8 @@
     "id": "css-html-quiz-5",
     "topicId": "css-html",
     "question": {
-      "en": "What is the stacking context in CSS, and which property does NOT create a new stacking context?\n```css\n.box {\n  position: relative;\n  z-index: 1;\n}\n.another-box {\n  opacity: 0.5;\n}\n.third-box {\n  transform: translateX(10px);\n}\n```",
-      "ru": "Что такое контекст наложения в CSS, и какое свойство НЕ создаёт новый контекст наложения?\n```css\n.box {\n  position: relative;\n  z-index: 1;\n}\n.another-box {\n  opacity: 0.5;\n}\n.third-box {\n  transform: translateX(10px);\n}\n```"
+      "en": "What is the stacking context in CSS, and which property does **not** create a new stacking context?\n```css\n.box {\n  position: relative;\n  z-index: 1;\n}\n.another-box {\n  opacity: 0.5;\n}\n.third-box {\n  transform: translateX(10px);\n}\n```",
+      "ru": "Что такое контекст наложения в CSS, и какое свойство **не** создаёт новый контекст наложения?\n```css\n.box {\n  position: relative;\n  z-index: 1;\n}\n.another-box {\n  opacity: 0.5;\n}\n.third-box {\n  transform: translateX(10px);\n}\n```"
     },
     "options": {
       "en": [
@@ -130,8 +130,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "`position: relative` on its own does not create a stacking context — it needs a `z-index` other than `auto`.\n\nThe other three do create one unconditionally: `opacity` below 1, any `transform` other than `none`, and `filter` other than `none`. So does `position: fixed` or `sticky`, regardless of z-index.\n\nThis is why the bug is so common: adding `transform: translateX(0)` as a GPU hint silently traps every child's z-index inside that element.",
-      "ru": "`position: relative` сам по себе контекст наложения не создаёт — для этого нужен `z-index`, отличный от `auto`.\n\nОстальные три создают его безусловно: `opacity` меньше 1, любой `transform` кроме `none` и `filter` кроме `none`. Так же ведут себя `position: fixed` и `sticky` — независимо от z-index.\n\nИменно поэтому ошибка так распространена: добавили `transform: translateX(0)` как подсказку для GPU — и z-index всех потомков молча оказался запертым внутри этого элемента."
+      "en": "`position: relative` on its own does not create a stacking context — it needs a `z-index` other than `auto`.\n\nThe other three do create one unconditionally: `opacity` below 1, any `transform` other than `none`, and `filter` other than `none`. So does `position: fixed` or `sticky`, regardless of z-index.\n\nThis is why the bug is so common. Add `transform: translateX(0)` as a hint for the graphics card, and every child's z-index is silently trapped inside.",
+      "ru": "`position: relative` сам по себе контекст наложения не создаёт — для этого нужен `z-index`, отличный от `auto`.\n\nОстальные три создают его безусловно: `opacity` меньше 1, любой `transform` кроме `none` и `filter` кроме `none`. Так же ведут себя `position: fixed` и `sticky` — независимо от z-index.\n\nИменно поэтому ошибка так распространена. Добавили `transform: translateX(0)` как подсказку для видеокарты — и z-index всех потомков молча заперт внутри."
     }
   },
   {
@@ -157,8 +157,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The first selector (.container > div.item#main) has the highest specificity: (0,2,2) — one ID, two classes, and a combinator. The ID selector alone is (0,1,0), attribute selector is (0,1,0), and element+class is (0,0,2). Specificity wins over cascade order.",
-      "ru": "Первый селектор (.container > div.item#main) имеет наивысшую специфичность: (0,2,2) — один ID, два класса и комбинатор. Селектор только с ID имеет (0,1,0), селектор атрибута (0,1,0), а элемент+класс (0,0,2). Специфичность побеждает порядок каскада."
+      "en": "The element is blue: `.container > div.item#main` has the highest specificity.\n\nCount three buckets — IDs, then classes and attribute selectors, then type selectors:\n\n- `.container > div.item#main` — one ID, two classes, one type: **1-2-1**\n- `div.item` — **0-1-1**\n- `#main` — **1-0-0**\n- `[id=\"main\"]` — an attribute selector counts as a class: **0-1-0**\n\nBuckets are compared left to right: the two with an ID win, and the class bucket decides between them. The combinator `>` adds nothing.",
+      "ru": "Элемент будет синим: у `.container > div.item#main` самая высокая специфичность.\n\nСчитаем три группы — ID, затем классы и селекторы атрибутов, затем селекторы тегов:\n\n- `.container > div.item#main` — один ID, два класса, один тег: **1-2-1**\n- `div.item` — **0-1-1**\n- `#main` — **1-0-0**\n- `[id=\"main\"]` — селектор атрибута считается за класс: **0-1-0**\n\nГруппы сравниваются слева направо: побеждают два селектора с ID, а между ними решает группа классов. Комбинатор `>` не добавляет ничего."
     }
   },
   {
@@ -238,15 +238,15 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "BEM uses double underscores (__) to denote elements within a block and double hyphens (--) for modifiers. The correct format is 'block__element--modifier'. 'form__button--disabled' correctly identifies the button as an element of the form block with a disabled modifier state.",
-      "ru": "BEM использует двойные подчеркивания (__) для обозначения элементов внутри блока и двойные дефисы (--) для модификаторов. Правильный формат — 'block__element--modifier'. 'form__button--disabled' правильно определяет кнопку как элемент блока form с модификатором disabled."
+      "en": "The correct name is `form__button--disabled`.\n\nBEM (block, element, modifier) has two separators:\n\n- Double underscore `__` ties an element to its block: `form__button`.\n- Double hyphen `--` adds a modifier: `--disabled`.\n\nSo the pattern is always `block__element--modifier`.",
+      "ru": "Правильное имя — `form__button--disabled`.\n\nУ BEM (block, element, modifier) два разделителя:\n\n- Двойное подчёркивание `__` связывает элемент с блоком: `form__button`.\n- Двойной дефис `--` добавляет модификатор: `--disabled`.\n\nПоэтому схема всегда `block__element--modifier`."
     }
   },
   {
     "id": "css-html-quiz-10",
     "topicId": "css-html",
     "question": {
-      "en": "Which statement about CSS custom properties (variables) is TRUE?\n\n```css\n:root {\n  --primary-color: #3498db;\n  --spacing: 16px;\n}\n\n.container {\n  --primary-color: #e74c3c;\n}\n\n.container p {\n  color: var(--primary-color);\n  padding: var(--spacing);\n}\n```",
+      "en": "Which statement about CSS custom properties (variables) is **true**?\n\n```css\n:root {\n  --primary-color: #3498db;\n  --spacing: 16px;\n}\n\n.container {\n  --primary-color: #e74c3c;\n}\n\n.container p {\n  color: var(--primary-color);\n  padding: var(--spacing);\n}\n```",
       "ru": "Какое утверждение о CSS пользовательских свойствах (переменных) верно?\n\n```css\n:root {\n  --primary-color: #3498db;\n  --spacing: 16px;\n}\n\n.container {\n  --primary-color: #e74c3c;\n}\n\n.container p {\n  color: var(--primary-color);\n  padding: var(--spacing);\n}\n```"
     },
     "options": {
@@ -265,8 +265,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "CSS custom properties cascade and inherit like normal properties. The .container selector redefines --primary-color to #e74c3c, which is inherited by its p child. The --spacing variable is still available from :root and inherits to .container p. Custom properties are properly scoped and inherited through the DOM tree.",
-      "ru": "CSS пользовательские свойства каскадируют и наследуются как обычные свойства. Селектор .container переопределяет --primary-color на #e74c3c, который наследуется его потомком p. Переменная --spacing по-прежнему доступна из :root и наследуется .container p. Пользовательские свойства правильно ограничены и наследуются через дерево DOM."
+      "en": "CSS custom properties cascade and inherit like normal properties. The `.container` selector redefines `--primary-color` to `#e74c3c`, and its `p` child inherits that. Nothing closer redefines `--spacing`, so the `:root` value still applies. The paragraph is red with 16px of padding. A custom property is scoped to the element it is declared on, and it inherits down the element tree.",
+      "ru": "Пользовательские свойства CSS каскадируются и наследуются как обычные. Селектор `.container` переопределяет `--primary-color` на `#e74c3c`, и потомок `p` наследует это значение. Переменную `--spacing` ближе никто не переопределил, поэтому работает значение из `:root`. Абзац получается красным с отступом 16px. Свойство ограничено элементом, на котором объявлено, и наследуется вниз по дереву."
     }
   },
   {
@@ -317,10 +317,10 @@
         "240px"
       ]
     },
-    "correctIndex": 2,
+    "correctIndex": 1,
     "explanation": {
-      "en": "With `box-sizing: content-box` (the default), the width property only applies to the content area. The total width includes content (200px) + left padding (20px) + right padding (20px) + left border (10px) + right border (10px) = 280px. Many developers mistake this for 200px because they forget padding and borders are added on top.",
-      "ru": "При `box-sizing: content-box` (по умолчанию) свойство width применяется только к области контента. Общая ширина включает контент (200px) + левый отступ (20px) + правый отступ (20px) + левую границу (10px) + правую границу (10px) = 280px. Многие разработчики ошибаются и думают 200px, забывая, что отступы и границы добавляются сверху."
+      "en": "The rendered width is 260px.\n\nWith `box-sizing: content-box` (the default), `width` sizes the content area only, and padding and border are added around it:\n\n- content: 200px\n- padding: 20px each side, so 40px\n- border: 10px each side, so 20px\n\n200 + 40 + 20 = 260px.\n\nThe common wrong answer is 200px: padding and border are easy to forget.",
+      "ru": "Отрисованная ширина — 260px.\n\nПри `box-sizing: content-box` (по умолчанию) `width` задаёт только контентную область, а padding и рамка добавляются вокруг:\n\n- контент: 200px\n- padding: по 20px с каждой стороны, то есть 40px\n- border: по 10px с каждой стороны, то есть 20px\n\n200 + 40 + 20 = 260px.\n\nЧастый неверный ответ — 200px: про padding и рамку легко забыть."
     }
   },
   {
@@ -354,8 +354,8 @@
     "id": "css-html-quiz-14",
     "topicId": "css-html",
     "question": {
-      "en": "What semantic HTML5 element should be used to mark up a sidebar containing related links, and why is it important for accessibility?",
-      "ru": "Какой семантический элемент HTML5 следует использовать для разметки боковой панели со связанными ссылками, и почему это важно для доступности?"
+      "en": "What semantic HTML element should be used for a sidebar that holds the site's own navigation links, and why does that matter for accessibility?",
+      "ru": "Какой семантический элемент HTML следует использовать для боковой панели с навигационными ссылками самого сайта, и почему это важно для доступности?"
     },
     "options": {
       "en": [
@@ -373,35 +373,35 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The `<nav>` element is specifically designed for navigation sections and signals to assistive technologies (screen readers, voice controls) that this is a major navigation landmark. This improves keyboard navigation and provides users with disabilities a faster way to skip to specific page regions. Using `<aside>` would be incorrect as it's for tangentially related content, not primary navigation.",
-      "ru": "Элемент `<nav>` специально разработан для навигационных секций и сигнализирует вспомогательным технологиям (экранные читатели, голосовые команды), что это основной ориентир навигации. Это улучшает клавиатурную навигацию и дает пользователям с ограничениями способность быстрее переходить к определенным регионам страницы. Использование `<aside>` было бы неправильным, так как оно предназначено для косвенно связанного контента, а не основной навигации."
+      "en": "The `<nav>` element is designed for navigation sections. It tells assistive technologies — screen readers, voice control — that this block is a major navigation landmark.\n\nThat landmark lets a screen reader user jump straight to the menu instead of reading down the page.\n\nThe `<aside>` element would be wrong: it marks content only tangentially related to the page.",
+      "ru": "Элемент `<nav>` предназначен для навигационных разделов. Он сообщает вспомогательным технологиям — программам чтения с экрана, голосовому управлению — что этот блок является основным навигационным ориентиром.\n\nОриентир позволяет пользователю программы чтения с экрана сразу перейти к меню, а не идти по странице сверху.\n\nЭлемент `<aside>` не подошёл бы: он размечает контент, лишь косвенно связанный со страницей."
     }
   },
   {
     "id": "css-html-quiz-15",
     "topicId": "css-html",
     "question": {
-      "en": "What is a stacking context in CSS, and which property creates a new one?\n```css\n.modal {\n  position: relative;\n  z-index: 1000;\n}\n\n.dropdown {\n  position: absolute;\n  z-index: 999;\n}\n```\nWhy might `.dropdown` appear behind `.modal` despite having a lower z-index?",
-      "ru": "Что такое контекст наложения в CSS, и какое свойство создает новый?\n```css\n.modal {\n  position: relative;\n  z-index: 1000;\n}\n\n.dropdown {\n  position: absolute;\n  z-index: 999;\n}\n```\nПочему `.dropdown` может появиться позади `.modal`, несмотря на более низкий z-index?"
+      "en": "What is a stacking context in CSS, and which property creates a new one?\n```css\n.modal {\n  position: relative;\n  z-index: 1000;\n}\n\n.dropdown {\n  position: absolute;\n  z-index: 999;\n}\n```\nHere `.dropdown` sits inside `.modal`. Why can no `z-index` on `.dropdown` lift it above the elements that sit next to `.modal`?",
+      "ru": "Что такое контекст наложения в CSS, и какое свойство создаёт новый?\n```css\n.modal {\n  position: relative;\n  z-index: 1000;\n}\n\n.dropdown {\n  position: absolute;\n  z-index: 999;\n}\n```\nЗдесь `.dropdown` лежит внутри `.modal`. Почему никакой `z-index` на `.dropdown` не вынесет его поверх соседей `.modal`?"
     },
     "options": {
       "en": [
         "Because 1000 is a higher number than 999, and z-index always follows numerical ordering regardless of context",
-        "Because `.modal` pairs `position: relative` with a `z-index`, which creates a stacking context",
-        "Because `.modal` has a higher specificity, which affects how z-index is rendered on the page",
+        "Because .modal pairs position: relative with a z-index, which creates a stacking context",
+        "Because .modal has a higher specificity, which affects how z-index is rendered on the page",
         "Because absolute positioning automatically creates a new stacking context that overrides z-index values"
       ],
       "ru": [
         "Потому что 1000 больше, чем 999, и z-index всегда следует численному порядку независимо от контекста",
-        "Потому что `.modal` сочетает `position: relative` с `z-index`, а это создаёт контекст наложения",
-        "Потому что `.modal` имеет более высокую специфичность, которая влияет на то, как z-index отображается на странице",
+        "Потому что .modal сочетает position: relative с z-index, а это создаёт контекст наложения",
+        "Потому что .modal имеет более высокую специфичность, которая влияет на то, как z-index отображается на странице",
         "Потому что абсолютное позиционирование автоматически создает новый контекст наложения, который переопределяет значения z-index"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "`.modal` creates a stacking context because it combines `position: relative` with `z-index: 1000` — position alone would not be enough.\n\nA stacking context is an isolated layer: z-index values inside it are compared with each other, not with anything outside. So `.dropdown`'s `z-index: 999` competes only with its siblings inside `.modal`, and the whole `.modal` block is placed relative to its own siblings using its 1000.\n\nOther properties create a stacking context on their own, without any z-index: `opacity` below 1, `transform`, `filter`, `will-change` for those properties, `isolation: isolate`, and `position: fixed` or `sticky`. `display: flex` does **not**.",
-      "ru": "`.modal` создаёт контекст наложения, потому что сочетает `position: relative` с `z-index: 1000` — одного позиционирования было бы недостаточно.\n\nКонтекст наложения — это изолированный слой: значения z-index внутри него сравниваются между собой, а не с чем-либо снаружи. Поэтому `z-index: 999` у `.dropdown` конкурирует только с соседями внутри `.modal`, а сам блок `.modal` размещается относительно своих соседей по значению 1000.\n\nЕсть свойства, которые создают контекст сами, без z-index: `opacity` меньше 1, `transform`, `filter`, `will-change` для этих свойств, `isolation: isolate`, а также `position: fixed` и `sticky`. `display: flex` — **нет**."
+      "en": "`.modal` creates a stacking context because it combines `position: relative` with `z-index: 1000` — position alone would not be enough.\n\nA stacking context is an isolated layer: `z-index` values inside it are compared with each other, not with anything outside. So `z-index: 999` on `.dropdown` competes only with its siblings inside `.modal`, while `.modal` itself is placed among its own siblings by its 1000.\n\nOther properties create a stacking context on their own, without any `z-index`:\n\n- `opacity` below 1\n- `transform` or `filter` other than `none`\n- `will-change` naming those properties\n- `isolation: isolate`\n- `position: fixed` and `position: sticky`\n\nNote that `display: flex` does **not**.",
+      "ru": "`.modal` создаёт контекст наложения, потому что сочетает `position: relative` с `z-index: 1000` — одного позиционирования было бы недостаточно.\n\nКонтекст наложения — это изолированный слой: значения `z-index` внутри него сравниваются между собой, а не с чем-либо снаружи. Поэтому `z-index: 999` у `.dropdown` конкурирует только с соседями внутри `.modal`, а сам `.modal` размещается среди своих соседей по значению 1000.\n\nЕсть свойства, которые создают контекст сами, без `z-index`:\n\n- `opacity` меньше 1\n- `transform` или `filter` кроме `none`\n- `will-change` с этими свойствами\n- `isolation: isolate`\n- `position: fixed` и `position: sticky`\n\nА вот `display: flex` — **нет**."
     }
   },
   {
@@ -443,19 +443,19 @@
         "Total width: 240px, content width: 160px, centered horizontally",
         "Total width: 200px, content width: 200px, not centered",
         "Total width: 260px, content width: 200px, centered horizontally",
-        "Total width: 200px, content width: 160px, centered horizontally"
+        "Total width: 200px, content width: 140px, centered horizontally"
       ],
       "ru": [
         "Общая ширина: 240px, ширина контента: 160px, центрирована горизонтально",
         "Общая ширина: 200px, ширина контента: 200px, не центрирована",
         "Общая ширина: 260px, ширина контента: 200px, центрирована горизонтально",
-        "Общая ширина: 200px, ширина контента: 160px, центрирована горизонтально"
+        "Общая ширина: 200px, ширина контента: 140px, центрирована горизонтально"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "With `box-sizing: border-box`, the width property (200px) includes padding and border. So content width = 200 - 20*2 - 10*2 = 160px. The `margin: 0 auto` centers the box horizontally because margin: auto is applied to a block element with a defined width.",
-      "ru": "С `box-sizing: border-box`, свойство width (200px) включает padding и border. Поэтому ширина контента = 200 - 20*2 - 10*2 = 160px. `margin: 0 auto` центрирует блок горизонтально, потому что margin: auto применяется к блочному элементу с определенной шириной."
+      "en": "The box is 200px wide in total, its content area is 140px, and it is centred.\n\nWith `box-sizing: border-box` the declared `width` includes padding and border, so content gets the remainder:\n\n- declared width: 200px\n- padding: 20px each side, so 40px\n- border: 10px each side, so 20px\n- content: 200 − 40 − 20 = **140px**\n\nThe `margin: 0 auto` centres it: `auto` side margins split the leftover space evenly.",
+      "ru": "Блок целиком занимает 200px, контентная область — 140px, и он стоит по центру.\n\nПри `box-sizing: border-box` заданная `width` включает padding и рамку, поэтому контенту достаётся остаток:\n\n- заданная ширина: 200px\n- padding: по 20px с каждой стороны, то есть 40px\n- border: по 10px с каждой стороны, то есть 20px\n- контент: 200 − 40 − 20 = **140px**\n\nЗапись `margin: 0 auto` центрирует блок: боковые поля `auto` делят остаток места поровну."
     }
   },
   {
@@ -481,8 +481,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "`justify-content` aligns flex items along the main axis (horizontal for row direction). `align-items` aligns items on the cross axis (vertical for row), `align-content` applies to wrapped lines, and `flex-wrap` controls wrapping behavior.",
-      "ru": "`justify-content` выравнивает flex-элементы вдоль главной оси (горизонтально для направления row). `align-items` выравнивает элементы по поперечной оси (вертикально для row), `align-content` применяется к обернутым строкам, а `flex-wrap` управляет поведением переноса."
+      "en": "`justify-content` aligns flex items along the main axis, horizontal when `flex-direction` is `row`. The other three do different jobs:\n\n- `align-items` aligns items on the cross axis, vertical for a row.\n- `align-content` spaces wrapped lines apart.\n- `flex-wrap` decides whether items wrap at all.",
+      "ru": "`justify-content` выравнивает flex-элементы вдоль главной оси — при `flex-direction: row` это горизонталь. Остальные три делают другое:\n\n- `align-items` выравнивает элементы по поперечной оси, для строки это вертикаль.\n- `align-content` распределяет перенесённые строки.\n- `flex-wrap` решает, переносятся ли элементы вообще."
     }
   },
   {
@@ -508,8 +508,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Good semantic markup combines multiple factors: meaningful HTML5 tags describe content structure, heading hierarchy helps both users and screen readers navigate, and aria-label provides additional context when needed. aria-label alone is insufficient, multiple articles don't guarantee better SEO, and header is not mandatory.",
-      "ru": "Хорошая семантическая разметка сочетает несколько факторов: содержательные теги HTML5 описывают структуру контента, иерархия заголовков помогает пользователям и программам чтения с экрана, а aria-label предоставляет дополнительный контекст при необходимости. Только aria-label недостаточна, несколько статей не гарантируют лучший SEO, и header не обязателен."
+      "en": "Three things work together here:\n\n- Meaningful HTML tags describe the structure of the content.\n- The heading hierarchy `h1` → `h2` helps users and screen readers navigate.\n- The `aria-label` adds context the tags do not carry.\n\nNone works alone. An `aria-label` cannot rescue a page built from `<div>`, extra `<article>` tags do not guarantee better SEO (search engine optimisation), and `<header>` is optional.",
+      "ru": "Здесь три вещи работают вместе:\n\n- Содержательные теги HTML описывают структуру контента.\n- Иерархия заголовков `h1` → `h2` помогает ориентироваться пользователям и программам чтения с экрана.\n- Атрибут `aria-label` добавляет контекст, которого сами теги не несут.\n\nПо отдельности ни одно не работает. Один `aria-label` не спасёт страницу из `<div>`, лишние `<article>` не гарантируют лучший SEO (search engine optimization — поисковая оптимизация), а `<header>` необязателен."
     }
   },
   {
@@ -562,8 +562,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Rule 3 wins, because `#main-link` has an ID and the other two do not.\n\nSpecificity is three separate counters compared left to right — IDs, then classes and pseudo-classes, then type selectors:\n\n- `#main-link` — **1-0-0**\n- `.link` — **0-1-0**\n- `a` — **0-0-1**\n\nIt is not a single number. Thinking of it as 100 / 10 / 1 points happens to give the right answer here, but it breaks as soon as you have eleven classes: eleven classes are still 0-11-0 and still lose to one ID, whereas 11 × 10 = 110 would wrongly suggest they win.",
-      "ru": "Побеждает правило 3, потому что у `#main-link` есть ID, а у двух остальных — нет.\n\nСпецифичность — это три отдельных счётчика, которые сравниваются слева направо: ID, затем классы и псевдоклассы, затем селекторы тегов:\n\n- `#main-link` — **1-0-0**\n- `.link` — **0-1-0**\n- `a` — **0-0-1**\n\nЭто не одно число. Модель «100 / 10 / 1 очко» здесь случайно даёт верный ответ, но ломается на одиннадцати классах: одиннадцать классов — это по-прежнему 0-11-0, и они всё равно проигрывают одному ID, тогда как 11 × 10 = 110 ошибочно подсказало бы обратное."
+      "en": "Rule 3 wins, because `#main-link` has an ID and the other two do not.\n\nSpecificity is three separate counters compared left to right — IDs, then classes and pseudo-classes, then type selectors:\n\n- `#main-link` — **1-0-0**\n- `.link` — **0-1-0**\n- `a` — **0-0-1**\n\nIt is not a single number. Thinking of it as 100 / 10 / 1 points happens to give the right answer here, but it breaks on eleven classes. Eleven classes are still 0-11-0, and they still lose to one ID. The points model scores them 11 × 10 = 110 and wrongly declares them winners.",
+      "ru": "Побеждает правило 3, потому что у `#main-link` есть ID, а у двух остальных — нет.\n\nСпецифичность — это три отдельных счётчика, которые сравниваются слева направо: ID, затем классы и псевдоклассы, затем селекторы тегов:\n\n- `#main-link` — **1-0-0**\n- `.link` — **0-1-0**\n- `a` — **0-0-1**\n\nЭто не одно число. Модель «100 / 10 / 1 очко» здесь случайно даёт верный ответ, но ломается на одиннадцати классах. Одиннадцать классов — это по-прежнему 0-11-0, и одному ID они всё равно проигрывают. А модель очков дала бы им 11 × 10 = 110 и ошибочно объявила победителями."
     }
   },
   {
@@ -575,22 +575,22 @@
     },
     "options": {
       "en": [
-        "280px (content + padding + border)",
+        "260px (content + padding + border)",
         "200px (content width only)",
-        "260px (content + padding)",
-        "340px (content + padding + border + margin)"
+        "240px (content + padding)",
+        "320px (content + padding + border + margin)"
       ],
       "ru": [
-        "280px (содержимое + отступ + граница)",
+        "260px (содержимое + отступ + граница)",
         "200px (только ширина содержимого)",
-        "260px (содержимое + отступ)",
-        "340px (содержимое + отступ + граница + поле)"
+        "240px (содержимое + отступ)",
+        "320px (содержимое + отступ + граница + поле)"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "With box-sizing: content-box (the default), the width property applies only to the content. The total rendered width is content (200px) + left padding (20px) + right padding (20px) + left border (10px) + right border (10px) = 280px. Margin is external spacing and doesn't affect the box's width.",
-      "ru": "При box-sizing: content-box (по умолчанию), свойство width применяется только к содержимому. Общая отрисованная ширина составляет содержимое (200px) + левый отступ (20px) + правый отступ (20px) + левая граница (10px) + правая граница (10px) = 280px. Поле - это внешнее расстояние и не влияет на ширину коробки."
+      "en": "The total rendered width is 260px.\n\nWith `box-sizing: content-box` (the default), `width` applies only to the content, and padding and border are added around it:\n\n- content: 200px\n- padding: 20px each side, so 40px\n- border: 10px each side, so 20px\n\n200 + 40 + 20 = 260px.\n\nThe `margin: 30px` sits outside the box and changes no width. In the layout the element claims 320px.",
+      "ru": "Общая отрисованная ширина — 260px.\n\nПри `box-sizing: content-box` (по умолчанию) `width` относится только к содержимому, а padding и рамка добавляются вокруг:\n\n- содержимое: 200px\n- padding: по 20px с каждой стороны, то есть 40px\n- border: по 10px с каждой стороны, то есть 20px\n\n200 + 40 + 20 = 260px.\n\nПоле `margin: 30px` лежит снаружи и ширину не меняет. В раскладке элемент забирает 320px."
     }
   },
   {
@@ -616,8 +616,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "`<nav>` is the HTML5 semantic element specifically designed for major navigation blocks. It improves accessibility by helping screen readers identify navigation areas and provides semantic meaning to search engines. While `<div>`, `<section>`, and `<menu>` exist, `<nav>` is the semantically correct choice for navigation.",
-      "ru": "`<nav>` — это семантический элемент HTML5, специально разработанный для основных блоков навигации. Это улучшает доступность, помогая программам чтения с экрана идентифицировать области навигации, и обеспечивает семантическое значение для поисковых систем. Хотя `<div>`, `<section>` и `<menu>` существуют, `<nav>` — это семантически правильный выбор для навигации."
+      "en": "`<nav>` is the semantic HTML element designed for major navigation blocks. It helps screen readers identify navigation areas and gives search engines a clear signal. The `<div>`, `<section>` and `<menu>` elements all exist, but none says the block is navigation.",
+      "ru": "`<nav>` — это семантический элемент HTML, специально разработанный для основных блоков навигации. Он помогает программам чтения с экрана находить области навигации и даёт ясный сигнал поисковым системам. Элементы `<div>`, `<section>` и `<menu>` тоже есть, но ни один не говорит, что блок — навигация."
     }
   },
   {
@@ -643,16 +643,16 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The order property works in CSS Grid to reorder flex/grid items visually without changing the DOM. With order values 2, 3, and 1, item-3 displays first (order: 1), followed by item-1 (order: 2), then item-2 (order: 3). This is purely visual and doesn't affect accessibility for screen readers that read source order.",
-      "ru": "Свойство order работает в CSS Grid для визуального переупорядочивания элементов flex/grid без изменения DOM. При значениях order 2, 3 и 1, item-3 отображается первым (order: 1), за ним следует item-1 (order: 2), затем item-2 (order: 3). Это исключительно визуально и не влияет на доступность для программ чтения с экрана, которые читают исходный порядок."
+      "en": "The `order` property works in CSS Grid, and it reorders items visually without changing the order in the HTML. With the values 2, 3 and 1, `item-3` displays first, then `item-1`, then `item-2`. The change is purely visual: screen readers and keyboard focus still follow the source order, which is exactly the accessibility trap in `order`.",
+      "ru": "Свойство `order` работает в CSS Grid: оно переупорядочивает элементы визуально, не меняя порядок в HTML. При значениях 2, 3 и 1 первым отображается `item-3`, за ним `item-1`, затем `item-2`. Изменение чисто визуальное: программы чтения с экрана и фокус клавиатуры идут по исходному порядку, и в этом как раз ловушка `order` для доступности."
     }
   },
   {
     "id": "css-html-quiz-25",
     "topicId": "css-html",
     "question": {
-      "en": "How should you define CSS custom properties using the BEM naming convention in a component-based architecture?\n```css\n.button {\n  --button-bg-color: blue;\n  --button-text-color: white;\n  background-color: var(--button-bg-color);\n  color: var(--button-text-color);\n}\n\n.button--primary {\n  --button-bg-color: darkblue;\n}\n```",
-      "ru": "Как вы должны определять пользовательские свойства CSS, используя соглашение об именовании BEM в архитектуре на основе компонентов?\n```css\n.button {\n  --button-bg-color: blue;\n  --button-text-color: white;\n  background-color: var(--button-bg-color);\n  color: var(--button-text-color);\n}\n\n.button--primary {\n  --button-bg-color: darkblue;\n}\n```"
+      "en": "How should you define CSS custom properties using the BEM (block, element, modifier) naming convention in a component-based architecture?\n```css\n.button {\n  --button-bg-color: blue;\n  --button-text-color: white;\n  background-color: var(--button-bg-color);\n  color: var(--button-text-color);\n}\n\n.button--primary {\n  --button-bg-color: darkblue;\n}\n```",
+      "ru": "Как определять пользовательские свойства CSS по соглашению об именовании BEM (block, element, modifier) в архитектуре на основе компонентов?\n```css\n.button {\n  --button-bg-color: blue;\n  --button-text-color: white;\n  background-color: var(--button-bg-color);\n  color: var(--button-text-color);\n}\n\n.button--primary {\n  --button-bg-color: darkblue;\n}\n```"
     },
     "options": {
       "en": [
@@ -670,8 +670,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Using BEM-style prefixes for CSS custom properties (--component-property) prevents naming collisions in larger projects and makes the scope clear. This approach scales well in component-based architectures. Modifiers like --button--primary can override base values, creating a clear hierarchy that's easy to maintain and debug.",
-      "ru": "Использование префиксов в стиле BEM для пользовательских свойств CSS (--component-property) предотвращает конфликты имён в более крупных проектах и делает область видимости ясной. Такой подход хорошо масштабируется в архитектурах на основе компонентов. Модификаторы, такие как --button--primary, могут переопределять базовые значения, создавая четкую иерархию, которая легко поддерживается и отлаживается."
+      "en": "Prefixing every custom property with its component name (`--button-bg-color`) prevents naming collisions as the project grows and makes the scope obvious. The approach scales well in a component-based architecture. A modifier class such as `.button--primary` then only redefines the value, and every rule reading `var(--button-bg-color)` picks it up.",
+      "ru": "Префикс с именем компонента (`--button-bg-color`) предотвращает конфликты имён по мере роста проекта и сразу показывает область видимости. Подход хорошо масштабируется в компонентной архитектуре. Классу-модификатору вроде `.button--primary` остаётся переопределить значение, и все правила с `var(--button-bg-color)` его подхватят."
     }
   },
   {
@@ -684,20 +684,20 @@
     "options": {
       "en": [
         "Both cards get two columns, because the query reads the 1200px window",
-        "Neither card changes, because `@container` matches only a named container",
+        "Neither card changes, because @container matches only a named container",
         "Only the card in the main area gets two columns: each card asks its own width",
         "Neither card changes: a query container can never be styled by its own query rule"
       ],
       "ru": [
         "Обе карточки получат две колонки: запрос смотрит на ширину окна 1200px",
-        "Ничего не изменится: `@container` срабатывает только с заданным именем контейнера",
+        "Ничего не изменится: @container срабатывает только с заданным именем контейнера",
         "Две колонки получит только карточка в основной области: каждая мерит свою ширину",
         "Ничего не изменится: сам контейнер запроса нельзя оформить этим же запросом"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "Each card is its own query container, so the answer is computed per card. `container-type: inline-size` asks the browser to track the element's inline size, which is its width in horizontal writing. `@container (min-width: 400px)` then asks the nearest such ancestor: the 700px card passes, the 300px card does not. Only one card body becomes a two-column grid.\n\nThe window width plays no part. Reading the window is what a media query `@media (min-width: 400px)` does, and that is exactly the difference. A `container-name` is optional and only needed to address one specific container. It is true that a container cannot be styled by its own query, but `.card__body` is a descendant, so the rule reaches it.",
+      "en": "Each card is its own query container, so the answer is computed per card. The declaration `container-type: inline-size` asks the browser to track the element's inline size, which is its width in horizontal writing. The query `@container (min-width: 400px)` then asks the nearest such ancestor: the 700px card passes, the 300px card does not. Only one card body becomes a two-column grid.\n\nThe window width plays no part. Reading the window is what a media query `@media (min-width: 400px)` does, and that is exactly the difference. A `container-name` is optional and only needed to address one specific container. It is true that a container cannot be styled by its own query, but `.card__body` is a descendant, so the rule reaches it.",
       "ru": "Каждая карточка — свой контейнер запроса, поэтому ответ считается для каждой отдельно. Свойство `container-type: inline-size` просит браузер следить за размером элемента по оси строки: при горизонтальном письме это ширина. Запрос `@container (min-width: 400px)` спрашивает ближайшего такого предка. Карточка на 700px проходит, карточка на 300px — нет, поэтому две колонки появятся только в одной.\n\nШирина окна тут ни при чём: окно читает медиазапрос `@media (min-width: 400px)`, и в этом вся разница. Имя контейнера задавать необязательно, оно нужно, только чтобы адресовать конкретный контейнер. А правило «сам контейнер своим запросом не оформить» верное, но `.card__body` — потомок, до него правило доходит."
     }
   },
@@ -724,8 +724,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "A is 30px, B is 150px, C is 100px.\n\nThe container is 300px and two 10px gaps take 20px, leaving 280px for the items.\n\nC has `width: 100px` and no `flex-grow`, so it stays at 100px. A and B both have `flex-basis: 0` (that is what the `flex: 1` and `flex: 2` shorthands set), so they start at zero and share the free space.\n\nFirst pass: free space is 280 − 100 = 180px, split 1:2, which would give A 60px and B 120px. But B has `min-width: 150px`, so 120px is not allowed. B is clamped to 150px and frozen.\n\nSecond pass: the remaining free space is 280 − 150 − 100 = 30px, and A is the only flexible item left, so A takes all 30px. This two-pass behaviour — clamp, freeze, redistribute — is why the final sizes rarely match the raw flex ratio.",
-      "ru": "A — 30px, B — 150px, C — 100px.\n\nКонтейнер шириной 300px, два зазора по 10px забирают 20px, на элементы остаётся 280px.\n\nУ C задан `width: 100px` и нет `flex-grow`, поэтому он остаётся 100px. У A и B `flex-basis: 0` (именно это задают сокращения `flex: 1` и `flex: 2`), поэтому они стартуют с нуля и делят между собой свободное место.\n\nПервый проход: свободного места 280 − 100 = 180px, делим в отношении 1:2 — вышло бы 60px у A и 120px у B. Но у B есть `min-width: 150px`, и 120px недопустимы. B фиксируется на 150px.\n\nВторой проход: свободного места остаётся 280 − 150 − 100 = 30px, и A — единственный гибкий элемент, поэтому все 30px уходят ему. Из-за этого двухпроходного поведения — ограничить, зафиксировать, перераспределить — итоговые размеры редко совпадают с исходной пропорцией flex."
+      "en": "A is 30px, B is 150px, C is 100px.\n\nThe container is 300px and two 10px gaps take 20px, leaving 280px for the items.\n\nC has `width: 100px` and no `flex-grow`, so it stays at 100px. A and B both start from `flex-basis: 0`, which is what the `flex: 1` and `flex: 2` shorthands set. From zero they share out the free space.\n\nFirst pass: free space is 280 − 100 = 180px, split 1:2, which would give A 60px and B 120px. But B has `min-width: 150px`, so 120px is not allowed. B is clamped to 150px and frozen.\n\nSecond pass: the remaining free space is 280 − 150 − 100 = 30px, and A is the only flexible item left, so A takes all 30px. This two-pass behaviour — clamp, freeze, redistribute — is why the final sizes rarely match the raw flex ratio.",
+      "ru": "A — 30px, B — 150px, C — 100px.\n\nКонтейнер шириной 300px, два зазора по 10px забирают 20px, на элементы остаётся 280px.\n\nУ C задан `width: 100px` и нет `flex-grow`, поэтому он остаётся 100px. У A и B стартовая ширина `flex-basis: 0` — именно это задают сокращения `flex: 1` и `flex: 2`. От нуля они и делят между собой свободное место.\n\nПервый проход: свободного места 280 − 100 = 180px, делим в отношении 1:2 — вышло бы 60px у A и 120px у B. Но у B есть `min-width: 150px`, и 120px недопустимы. B фиксируется на 150px.\n\nВторой проход: свободного места остаётся 280 − 150 − 100 = 30px, и A — единственный гибкий элемент, поэтому все 30px уходят ему. Из-за этого двухпроходного поведения — ограничить, зафиксировать, перераспределить — итоговые размеры редко совпадают с исходной пропорцией flex."
     }
   },
   {
@@ -751,16 +751,16 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The `<nav>` element is specifically designed for navigation sections and is the correct semantic choice for menus. While `<header>` can contain navigation, `<nav>` is more semantically precise. `<menu>` is for lists of commands and `<section>` is generic, neither being appropriate for navigation structure.",
-      "ru": "Элемент `<nav>` специально разработан для навигационных секций и является правильным семантическим выбором для меню. Хотя `<header>` может содержать навигацию, `<nav>` семантически точнее. `<menu>` предназначен для списков команд, а `<section>` универсален и не подходит для навигационной структуры."
+      "en": "The `<nav>` element is specifically designed for navigation sections and is the correct semantic choice for menus. A `<header>` can contain navigation, but it also holds the logo and other page furniture, so `<nav>` is more precise. The `<menu>` element is for lists of commands, and `<section>` is generic.",
+      "ru": "Элемент `<nav>` специально разработан для навигационных секций и является правильным семантическим выбором для меню. Элемент `<header>` может содержать навигацию, но в нём же логотип и прочая обвязка, поэтому `<nav>` точнее. Элемент `<menu>` предназначен для списков команд, а `<section>` универсален."
     }
   },
   {
     "id": "css-html-quiz-29",
     "topicId": "css-html",
     "question": {
-      "en": "Which property creates a new stacking context and has no other visual effect on the element, so it can be added purely to contain the z-index of its children?",
-      "ru": "Какое свойство создаёт новый контекст наложения и не имеет никаких других визуальных эффектов, то есть его можно добавить только чтобы ограничить z-index потомков?"
+      "en": "Which property creates a new stacking context and has no other visual effect on the element? You want to add it purely to contain the `z-index` of its children.",
+      "ru": "Какое свойство создаёт новый контекст наложения и не имеет никаких других визуальных эффектов? Добавить его нужно только затем, чтобы ограничить `z-index` потомков."
     },
     "options": {
       "en": [
@@ -778,8 +778,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "`isolation: isolate` is the one to use: it creates a stacking context and changes nothing else about how the element looks.\n\nThe other three also create a stacking context, but each brings a side effect you did not ask for. `will-change: transform` promotes the element to its own compositing layer and consumes memory. `opacity: 0.99` makes the element very slightly transparent and forces compositing. `contain: paint` also clips anything that overflows the element's box, which can silently cut off a dropdown.\n\nThat is why `isolation: isolate` is the intention-revealing choice: a reader can see the z-index containment was deliberate rather than a side effect of an optimisation.",
-      "ru": "Нужен `isolation: isolate`: он создаёт контекст наложения и больше ничего во внешнем виде элемента не меняет.\n\nОстальные три тоже создают контекст, но каждый приносит побочный эффект, о котором не просили. `will-change: transform` выносит элемент в отдельный слой композитинга и расходует память. `opacity: 0.99` делает элемент слегка прозрачным и тоже включает композитинг. `contain: paint` вдобавок обрезает всё, что выходит за границы элемента, — так можно молча отрезать дропдаун.\n\nПоэтому `isolation: isolate` — вариант, выражающий намерение: читатель кода видит, что ограничение z-index сделано осознанно, а не как побочный эффект оптимизации."
+      "en": "`isolation: isolate` is the one to use: it creates a stacking context and changes nothing else about how the element looks.\n\nThe other three also create a stacking context, but each brings a side effect you did not ask for:\n\n- `will-change: transform` promotes the element to its own compositing layer and consumes memory.\n- `opacity: 0.99` makes the element very slightly transparent and forces compositing.\n- `contain: paint` also clips anything that overflows the element's box, which can silently cut off a dropdown.\n\nThat is why `isolation: isolate` shows intent: a reader sees the containment was deliberate, not a side effect of an optimisation.",
+      "ru": "Нужен `isolation: isolate`: он создаёт контекст наложения и больше ничего во внешнем виде элемента не меняет.\n\nОстальные три тоже создают контекст, но каждый приносит побочный эффект, о котором не просили:\n\n- `will-change: transform` выносит элемент в отдельный слой композитинга и расходует память.\n- `opacity: 0.99` делает элемент слегка прозрачным и тоже включает композитинг.\n- `contain: paint` вдобавок обрезает всё, что выходит за границы элемента, — так можно молча отрезать выпадающее меню.\n\nПоэтому `isolation: isolate` выражает намерение: читатель видит, что ограничение сделано осознанно, а не как побочный эффект оптимизации."
     }
   },
   {
@@ -792,21 +792,21 @@
     "options": {
       "en": [
         "The checked checkboxes themselves, because the outline lands on the argument",
-        "The first and the third `<li>`, because `:has()` accepts any descendant",
+        "The first and the third li, because :has() accepts any descendant",
         "No element at all: CSS cannot select a parent by what it contains",
-        "Only the first `<li>`, because its checked checkbox is a direct child"
+        "Only the first li, because its checked checkbox is a direct child"
       ],
       "ru": [
         "Сами отмеченные чекбоксы, потому что обводка достаётся аргументу селектора",
-        "Первый и третий `<li>`, потому что `:has()` берёт любого потомка",
+        "Первый и третий li, потому что :has() берёт любого потомка",
         "Ни один: CSS не умеет выбрать родителя по его содержимому",
-        "Только первый `<li>`, потому что его отмеченный чекбокс — прямой потомок"
+        "Только первый li, потому что его отмеченный чекбокс — прямой потомок"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "`:has()` styles the element it is attached to, and `> input:checked` demands that the checked checkbox be a direct child of that `<li>`. The first list item holds such a checkbox, so it gets the outline. The third item's checkbox is checked too, but it sits inside a `<label>`, and the child combinator `>` rules it out. The second item is not checked.\n\nThe checkbox itself is not styled: the argument of `:has()` is a condition, not the target. Without `>` the third item would indeed match, but the selector as written keeps it out. And the claim that CSS cannot look at content is out of date: `:has()` is that selector, and current Chrome, Safari, Firefox and Edge all support it.",
-      "ru": "`:has()` оформляет тот элемент, к которому приписан, а `> input:checked` требует, чтобы отмеченный чекбокс был прямым потомком этого `<li>`. У первого пункта он такой и есть, поэтому обводку получает пункт. У третьего чекбокс тоже отмечен, но лежит внутри `<label>`, и комбинатор `>` его отсекает. Второй пункт не отмечен.\n\nСам чекбокс не оформляется: аргумент `:has()` — это условие, а не цель. Без `>` третий пункт действительно подошёл бы, но в записанном селекторе он не подходит. А утверждение, что CSS не смотрит на содержимое, устарело: `:has()` именно это и делает, и его поддерживают актуальные Chrome, Safari, Firefox и Edge."
+      "en": "`:has()` styles the element it is attached to, and `> input:checked` demands that the checked checkbox be a direct child of that `<li>`. The first list item holds such a checkbox, so it gets the outline. The third item's checkbox is checked too, but it sits inside a `<label>`, and the child combinator `>` rules it out. The second item is not checked.\n\nThe checkbox itself is not styled: the argument of `:has()` is a condition, not the target. Without `>` the third item would indeed match, but the selector as written keeps it out. The claim that CSS cannot look at content is out of date. Selecting a parent by content is the job of `:has()`, and Chrome, Safari, Firefox and Edge all support it.",
+      "ru": "`:has()` оформляет тот элемент, к которому приписан, а `> input:checked` требует, чтобы отмеченный чекбокс был прямым потомком этого `<li>`. У первого пункта он такой и есть, поэтому обводку получает пункт. У третьего чекбокс тоже отмечен, но лежит внутри `<label>`, и комбинатор `>` его отсекает. Второй пункт не отмечен.\n\nСам чекбокс не оформляется: аргумент `:has()` — это условие, а не цель. Без `>` третий пункт действительно подошёл бы, но в записанном селекторе он не подходит. А утверждение, что CSS не смотрит на содержимое, устарело. Выбор родителя по содержимому — это и есть работа `:has()`, и его поддерживают Chrome, Safari, Firefox и Edge."
     }
   }
 ]

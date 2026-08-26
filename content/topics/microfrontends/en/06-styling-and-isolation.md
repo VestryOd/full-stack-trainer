@@ -1,14 +1,18 @@
 # Styling and Isolation
 
-## Why global CSS leakage is the most common real-world MFE bug
+## Why global CSS leakage is the most common real-world micro-frontend bug
 
-CSS has zero encapsulation by default. A `.button { padding: 8px; }` written by the catalog team will override a visually identical `.button` in the checkout team's DOM — because all rendered DOM ends up in the same document, sharing one global CSSOM, no matter how independently each team built their code.
+CSS has zero encapsulation by default. Say the catalog team writes `.button { padding: 8px; }`. That rule will override a visually identical `.button` in the checkout team's DOM (document object model — the browser's live tree of page elements).
 
-This is worse than the shared-dependency conflict from article 03: there, at least an error sometimes gets thrown (`Invalid hook call`) that you can trace through a stack trace. A CSS conflict just silently looks wrong — a badge is the wrong color, a margin is off — and it's much harder to trace back to whose stylesheet is at fault, especially when the teams involved never see each other's code.
+Everything rendered ends up in the same document, sharing one global CSSOM (CSS object model — the matching tree of style rules). How independently each team built its code makes no difference.
+
+This is worse than the shared-dependency conflict in [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md). There, at least, an error sometimes gets thrown (`Invalid hook call`) and you can follow a stack trace.
+
+A CSS conflict just silently looks wrong: a badge is the wrong color, a margin is off. Tracing it back to the guilty stylesheet is much harder, especially when the teams involved never see each other's code.
 
 ## Solution 1 — CSS Modules
 
-The mechanism: class names are hashed at build time (`.button` → `.button_a3f9d1`), scoped locally to the file — a naming collision becomes practically impossible because the hash is (nearly) globally unique.
+The mechanism: class names are hashed at build time (`.button` → `.button_a3f9d1`) and scoped to the file. A naming collision becomes practically impossible, because the hash is very nearly globally unique.
 
 ```css
 /* CheckoutApp.module.css */
@@ -22,7 +26,7 @@ import styles from './CheckoutApp.module.css';
 
 **Strengths:** works with ordinary CSS tooling, zero runtime cost, supported out of the box by most bundlers.
 
-**Weaknesses:** only guarantees uniqueness of **class names** — it does nothing against a high-specificity global selector elsewhere on the page (a global tag selector like `button { ... }` from someone else's reset stylesheet still applies). And it requires **every** team to actually and consistently use CSS Modules — it does nothing, on its own, to protect against a sibling remote that decided not to.
+**Weaknesses:** the guarantee covers **class names** only. A high-specificity global selector elsewhere on the page still applies. One example is a global tag selector such as `button { ... }` in someone else's reset stylesheet. And CSS Modules only help if **every** team uses them consistently. A sibling remote that opted out can still break your layout.
 
 ## Solution 2 — Shadow DOM
 
@@ -43,9 +47,9 @@ customElements.define('checkout-widget', CheckoutWidget);
 
 **Real trade-offs, not just upsides:**
 
-- **Event retargeting.** Events dispatched inside a shadow DOM get their `target` retargeted to the shadow host when observed from outside — not to the actual element that fired them. This breaks naive event-delegation code and some analytics/tracking scripts that read `event.target` directly.
-- **Third-party library compatibility.** Many libraries assume they can query the DOM globally (`document.querySelector`) or inject global styles/portals (React portals, modal libraries, some UI kits, tag-manager scripts). Such libraries often silently fail to find elements inside a shadow root, because it's a separate DOM subtree, unreachable by a plain global `document.querySelector` without explicitly piercing the boundary.
-- **CSS custom properties (variables) cross the shadow DOM boundary by default** — inheritance through them still works. This is useful for passing shared design tokens (colors, spacing) into isolated shadow content, but it's often wrongly assumed that shadow DOM blocks absolutely everything — it doesn't; it only blocks "ordinary" style rules.
+- **Event retargeting.** An event dispatched inside a shadow DOM is seen from outside with its `target` set to the shadow host. It is not set to the element that actually fired it. This breaks naive event-delegation code, and some analytics scripts that read `event.target` directly.
+- **Third-party library compatibility.** Many libraries assume they can query the DOM globally with `document.querySelector`. Others inject global styles or portals: React portals, modal libraries, component kits, tag-manager scripts. Such libraries often fail silently inside a shadow root. It is a separate DOM subtree, and a plain global `document.querySelector` cannot reach it without explicitly piercing the boundary.
+- **CSS custom properties (variables) cross the shadow DOM boundary by default** — inheritance through them still works. That is useful: shared design tokens such as colors and spacing reach isolated shadow content. People often assume shadow DOM blocks absolutely everything. It does not — it blocks only ordinary style rules.
 
 ## Solution 3 — scoped CSS-in-JS
 
@@ -59,11 +63,21 @@ const Button = styled.button`
 
 **Strengths:** styles live next to the component, can be dynamic based on props, the same collision-avoidance guarantee as CSS Modules (hashed class names).
 
-**Weaknesses:** a runtime cost (computing and injecting styles on every render), plus an MFE-specific gotcha: if two independently built remotes each use styled-components as **separate** bundled copies (not a shared singleton via Module Federation's `shared` config — see article 03), they can inject conflicting global resets, or — more subtly — run incompatible major versions of the library with different SSR/hydration behavior. The order of `<style>` tags injected independently by different remotes is essentially undefined — a later-injected tag can win on specificity regardless of the source order a developer expects, which looks like an intermittent, "flaky" visual bug tied to load order/timing rather than a logic error in either team's code.
+**Weaknesses:** styles cost time at runtime, because they are computed and injected on every render. There is also a gotcha specific to micro-frontends, and it has several faces.
+
+Suppose two independently built remotes each bundle their **own separate copy** of styled-components, instead of sharing one singleton through Module Federation's `shared` config. Three things can go wrong:
+
+- The copies inject conflicting global resets.
+- They run incompatible major versions of the library, with different SSR (server-side rendering) and hydration behavior.
+- The order of the `<style>` tags they inject independently is undefined.
+
+That last one bites hardest. A tag injected later can win on specificity, whatever source order the developer expected. The symptom is an intermittent, flaky visual bug tied to load order and timing, not a logic error in anyone's code.
+
+The `shared` config is covered in [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md).
 
 ## Solution 4 — naming convention discipline (BEM-style prefixing)
 
-The pragmatic, zero-tooling default: prefix every class name with a namespace unique to each MFE.
+The pragmatic, zero-tooling default: prefix every class name with a namespace unique to each micro-frontend. BEM (block, element, modifier) is the naming scheme this borrows from.
 
 ```css
 /* checkout-mfe */
@@ -75,51 +89,41 @@ The pragmatic, zero-tooling default: prefix every class name with a namespace un
 
 **Strengths:** works everywhere, requires no tooling, easy to reason about in devtools, works for legacy code and gradual migration.
 
-**Weaknesses:** entirely convention-based — nothing technically enforces the prefix, and a new team member unfamiliar with the convention can trivially write an unprefixed global selector that silently collides with someone else's.
+**Weaknesses:** the whole thing rests on convention. Nothing technically enforces the prefix. A new team member who does not know the convention can write an unprefixed global selector that silently collides with someone else's.
 
-This is exactly why it's called "the pragmatic default" — it's the lowest common denominator that works when you can't force every team onto the same CSS tooling at the same time.
+That is exactly why it earns the label of pragmatic default. It is the lowest common denominator, and it works when you cannot move every team onto the same CSS tooling at once.
 
 ## A shared design system as a versioned package — and the version-skew problem
 
-The real production practice: to avoid all of the above for the common building blocks (buttons, inputs, modals, typography), organizations extract them into a shared design-system package, e.g. `@company/design-system`, versioned and published like any npm package (or shared via Module Federation's `shared` config as a singleton — see article 03).
+In real production the common building blocks — buttons, inputs, modals, typography — are not left to each team. Organizations extract them into a shared design-system package such as `@company/design-system`. That package is versioned and published like any npm package. It can also be shared as a singleton through Module Federation's `shared` config.
 
-**The version-skew problem:** if catalog-mfe is pinned to `@company/design-system@2.1.0` and checkout-mfe to `@company/design-system@3.0.0` (a major version with breaking visual changes — a new spacing scale, different border-radius tokens), and the two are composed side by side on the same page (say, a checkout modal opening over a catalog page), the user literally sees **two visually different** button styles, both claiming to be the same design system, on the same screen.
+**The version-skew problem.** Suppose catalog-mfe is pinned to `@company/design-system@2.1.0` and checkout-mfe to `@company/design-system@3.0.0`. That major bump carries breaking visual changes: a new spacing scale, different `border-radius` tokens.
 
-This is the CSS-domain equivalent of the "two React copies" bug from article 03 — except no error is thrown here; it just looks visually inconsistent, which is arguably worse, since the problem is silent and only caught when an actual human looks at the page.
+Now compose the two side by side on one page — a checkout modal opening over a catalog page, say. The user literally sees **two visually different** button styles on the same screen, both claiming to be the same design system.
 
-**Mitigation:** the same organizational discipline as shared-JS-dependency governance in article 03 — treat the design system's major version as a singleton requirement enforced across every consuming MFE (a CI check comparing versions across repos), with a defined upgrade window and rollout process, rather than letting each team upgrade a breaking version on its own schedule.
+This is the CSS-domain twin of the two-React-copies bug from [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md). Here, though, no error is thrown at all. The page just looks inconsistent, which is arguably worse: the problem stays silent until an actual human looks at the screen.
+
+**Mitigation:** the same organizational discipline that governs shared JS dependencies in [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md). Treat the design system's major version as a singleton requirement across every consuming micro-frontend.
+
+Enforcement is a CI (continuous integration) check that compares versions across repositories. Add a defined upgrade window and a rollout process, rather than letting each team ship a breaking upgrade on its own schedule.
 
 ## Summary table of approaches
 
-```txt
-┌───────────────┬──────────────────────┬─────────────────┬─────────────────────┬──────────────────┐
-│ Approach      │ Isolation mechanism  │ Runtime cost    │ Third-party lib     │ Enforcement      │
-│               │                      │                 │ compatibility       │                  │
-├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
-│ CSS Modules   │ Build-time name hash │ None            │ Fine                │ Build convention │
-│               │                      │                 │                     │ only             │
-├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
-│ Shadow DOM    │ Real DOM boundary    │ Small           │ Poor (many libs     │ Enforced by the  │
-│               │                      │ (shadow root    │ expect a global     │ browser          │
-│               │                      │ parsing)        │ document)           │                  │
-├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
-│ CSS-in-JS     │ Runtime hash +       │ Some            │ Fine, but tag order │ Build/runtime    │
-│               │ injected <style>     │ (style compute) │ across remotes is   │ convention       │
-│               │                      │                 │ undefined           │                  │
-├───────────────┼──────────────────────┼─────────────────┼─────────────────────┼──────────────────┤
-│ BEM prefixing │ Naming convention    │ None            │ Fine                │ None — pure      │
-│               │                      │                 │                     │ discipline       │
-└───────────────┴──────────────────────┴─────────────────┴─────────────────────┴──────────────────┘
-```
+| Approach | Isolation mechanism | Runtime cost | Third-party library compatibility | Enforcement |
+|---|---|---|---|---|
+| CSS Modules | Build-time name hash | None | Fine | Build convention only |
+| Shadow DOM | Real DOM boundary | Small (shadow root parsing) | Poor — many libraries expect a global `document` | Enforced by the browser |
+| CSS-in-JS | Runtime hash plus injected `<style>` | Some (style computation) | Fine, but tag order across remotes is undefined | Build and runtime convention |
+| BEM prefixing | Naming convention | None | Fine | None — pure discipline |
 
 ## Common interview traps
 
-- **"One of these approaches fully solves style isolation"** — in practice, mature organizations combine them: BEM prefixing as a baseline discipline, a shared design-system package for common elements, and CSS Modules/CSS-in-JS within each MFE's own unique components.
+- **"One of these approaches fully solves style isolation"** — none of them does. Mature organizations combine all of them. BEM prefixing is the baseline discipline, a shared design-system package covers common elements, and CSS Modules or CSS-in-JS handle each micro-frontend's own components.
 
-- **"Shadow DOM is strictly superior to the other approaches because it's the only real isolation"** — real DOM isolation, yes, but paid for with event retargeting and incompatibility with libraries that expect global DOM access. It's a deliberate trade-off, not a free upgrade.
+- **"Shadow DOM is strictly superior to the other approaches because it's the only real isolation"** — the isolation is real, yes. You pay for it with event retargeting, and with libraries that expect global DOM access and no longer find it. That is a deliberate trade-off, not a free upgrade.
 
-- **"CSS Modules protect against all style leakage"** — they only hash class names from your own modules; a global tag selector or a high-specificity reset stylesheet from someone else's CSS can still override your styles.
+- **"CSS Modules protect against all style leakage"** — they hash class names from your own modules, and nothing more. A global tag selector from someone else's CSS still overrides your styles, and so does a high-specificity reset stylesheet.
 
-- **"A shared design system automatically solves version skew just by being shared"** — not on its own. A design system needs the same version-governance discipline as shared JS dependencies from article 03: without a CI check comparing versions across repos, major-version skew leads to silent visual inconsistency rather than a thrown error.
+- **"A shared design system automatically solves version skew just by being shared"** — not on its own. It needs the same version-governance discipline as shared JS dependencies in [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md). Without a CI check comparing versions across repositories, major-version skew produces silent visual inconsistency instead of a thrown error.
 
-- **"CSS custom properties (variables) are blocked by the Shadow DOM boundary just like ordinary styles"** — no, they cross the shadow DOM boundary by default via inheritance, which is exactly what makes them a convenient mechanism for passing shared design tokens into isolated content.
+- **"CSS custom properties (variables) are blocked by the Shadow DOM boundary just like ordinary styles"** — no. They cross that boundary by default, through inheritance. That is exactly what makes them a convenient way to pass shared design tokens into isolated content.

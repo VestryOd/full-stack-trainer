@@ -5,7 +5,7 @@
 The **cascade** is the algorithm browsers use to resolve conflicts when multiple CSS rules target the same element and property. It is not just "last rule wins" — that's only the tiebreaker at the very end. The cascade applies five criteria in order, stopping as soon as one criterion produces a winner:
 
 1. **Origin and importance** — where the rule comes from and whether `!important` is set
-2. **Context** — shadow DOM encapsulation boundaries
+2. **Context** — shadow DOM (Document Object Model) encapsulation boundaries
 3. **Cascade layer** — `@layer` ordering
 4. **Specificity** — selector weight
 5. **Order of appearance** — source position (the tiebreaker)
@@ -24,13 +24,14 @@ Without `!important`, the priority order is: **author > user > user-agent**.
 
 With `!important`, the order **reverses for that property**: **user-agent `!important` > user `!important` > author `!important` > author normal > user normal > user-agent normal**.
 
-This reversal is intentional. A user who applies `!important` to a rule (e.g., via an accessibility extension that enforces high-contrast colors) must be able to override even an `!important` author rule — because the user's needs take precedence.
+This reversal is intentional. A user may apply `!important` through an accessibility extension that enforces high-contrast colors. That user must be able to override even an `!important` author rule, because the user's needs take precedence.
 
-Inline styles (`style=""`) are author styles with extremely high specificity — but they are still in the "author" origin bucket and can be overridden by author `!important`.
+Inline styles (`style=""`) are author styles with extremely high specificity. They still sit in the author origin, so an author `!important` can override them.
 
 ## Specificity — the precise calculation
 
 Specificity is represented as three numbers: **(A, B, C)** where:
+
 - **A** — count of ID selectors (`#id`)
 - **B** — count of class selectors (`.class`), attribute selectors (`[attr]`), and pseudo-classes (`:hover`, `:focus`, `:nth-child()`)
 - **C** — count of type selectors (elements: `div`, `p`, `span`) and pseudo-elements (`::before`, `::after`)
@@ -54,7 +55,7 @@ a:hover                    /* (0, 1, 1) — one pseudo-class + one type */
 a::before                  /* (0, 0, 2) — one pseudo-element + one type */
 input[type="text"]         /* (0, 1, 1) — one attribute selector + one type */
 :not(.active)              /* (0, 1, 0) — :not() contributes its argument's specificity */
-:is(.nav, #header)         /* (1, 0, 0) — :is() takes the highest specificity of its arguments */
+:is(.nav, #header)         /* (1, 0, 0) — :is() takes its highest argument */
 :where(.nav, #header)      /* (0, 0, 0) — :where() always contributes zero */
 ```
 
@@ -71,7 +72,7 @@ These pseudo-classes are "forgiving" — they accept selector lists. Their speci
 /* but specificity is still (1, 0, 1) because #id is in the list */
 ```
 
-This is a key difference between `:is()` and `:where()`: `:where()` always contributes zero specificity, making it ideal for base styles you want to be easily overridden.
+This is a key difference between `:is()` and `:where()`. The `:where()` selector always contributes zero specificity, which makes it ideal for base styles you want to be easy to override.
 
 ```css
 /* Base styles with :where() — zero specificity, easily overridden */
@@ -162,6 +163,7 @@ Rarely, but `!important` in `@keyframes` prevents the value from being overridde
 ### The problem `@layer` solves
 
 In a large application, you have:
+
 - Browser resets (e.g., normalize.css)
 - Framework base styles
 - Your design system tokens and components
@@ -207,7 +209,7 @@ Without layers, all of these compete on specificity and order. A reset's `.btn` 
 
 **Priority order:** unlayered styles > `utilities` > `components` > `base` > `reset`.
 
-The layer declared last in the `@layer` declaration wins over earlier layers. Unlayered styles (outside any `@layer`) always win over layered styles — this is intentional for gradual migration: your existing CSS without layers takes precedence over layered third-party code.
+The layer declared last in the `@layer` declaration wins over earlier layers. Styles that are not in any layer always beat styles that are. That is intentional, and it exists for gradual migration: your existing unlayered CSS takes precedence over layered third-party code.
 
 ### The key insight: layers beat specificity
 
@@ -348,7 +350,7 @@ Without `@property`, `transition: --hue 0.3s` does nothing — the browser doesn
 
 ### The invalid-at-computed-value-time concept
 
-Unlike regular properties, an invalid custom property value doesn't cause the declaration to be ignored — it causes the property to resolve to its **inherited value** or the **initial value**, not to the browser default:
+With a regular property, an invalid value makes the browser ignore the declaration. A custom property behaves differently: it resolves to its **inherited value**, or to the **initial value**, and not to the browser default:
 
 ```css
 :root { --color: 16px; } /* Not a valid color, but valid as a custom property string */
@@ -432,7 +434,7 @@ The fallback is only used if the variable is **not defined** (or is defined as a
 
 **"What's the specificity of `:is(div, .class, #id)`?"**
 
-`(1, 0, 0)` — the specificity of `:is()` equals the specificity of its most specific argument. `#id` is `(1, 0, 0)`, so the entire `:is()` selector carries that specificity even when matching via `div` or `.class`. This is different from `:where()`, which always contributes `(0, 0, 0)`.
+`(1, 0, 0)` — the specificity of `:is()` equals the specificity of its most specific argument. Here `#id` is `(1, 0, 0)`, so the whole selector carries that, even when the match came through `div` or `.class`. This is different from `:where()`, which always contributes `(0, 0, 0)`.
 
 ---
 
@@ -450,7 +452,7 @@ Yes — specificity comparison is not additive across columns. `(1, 0, 0)` beats
 
 **"Does unlayered CSS win over layered CSS?"**
 
-Yes — unlayered styles always beat layered styles in the same origin. This allows gradual migration: wrap third-party CSS in a layer, your existing unlayered CSS takes precedence without changes. This also means utility-first frameworks like Tailwind should be imported inside a layer if you want any authored styles to be able to override them without `!important`.
+Yes — unlayered styles always beat layered styles in the same origin. This allows gradual migration: wrap third-party CSS in a layer, and your existing unlayered CSS takes precedence without changes. It also means you should import a utility-first framework such as Tailwind inside a layer. Otherwise nothing you write can override it without `!important`.
 
 ---
 
@@ -462,4 +464,4 @@ Only if registered via `@property` with a typed `syntax`. Unregistered custom pr
 
 **"What happens when you use `var(--color)` and `--color` has an invalid value for that context?"**
 
-The invalid-at-computed-value-time behavior: the property uses its **inherited value** (if the property inherits) or its **initial value** (if it doesn't) — NOT the browser's default value. For `color`, the initial value is technically specified as `CanvasText` (browser's default for text). This is a subtle distinction that matters for debugging: you won't see the expected browser-default fallback.
+The invalid-at-computed-value-time behavior: the property uses its **inherited value** (if the property inherits) or its **initial value** (if it doesn't) — **not** the browser's default value. For `color`, the initial value is technically specified as `CanvasText` (browser's default for text). This is a subtle distinction that matters for debugging: you won't see the expected browser-default fallback.

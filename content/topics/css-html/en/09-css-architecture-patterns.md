@@ -7,7 +7,7 @@ CSS has two properties that make it difficult at scale:
 1. **Global scope** — every selector competes against every other selector in the entire document. There is no built-in module boundary.
 2. **Specificity escalation** — when a style doesn't apply, the instinctive fix is to make the selector more specific. This creates a ratchet: specificity only ever goes up, making overrides increasingly difficult.
 
-Every CSS architecture — BEM, CSS Modules, CSS-in-JS, Tailwind — is a different answer to the same question: **how do we prevent global scope and specificity escalation from making CSS unmaintainable?**
+Every CSS architecture is a different answer to one question: **how do we keep global scope and specificity escalation from making CSS unmaintainable?** BEM, CSS Modules, CSS-in-JS and Tailwind each answer it differently.
 
 ## BEM — Block Element Modifier
 
@@ -71,9 +71,9 @@ With BEM:
 .card--featured { } /* (0, 1, 0) */
 ```
 
-Everything is `(0, 1, 0)`. There are **no specificity conflicts** — the last rule wins (source order). Overriding is trivially: write a rule with any specificity above `(0, 1, 0)`.
+Everything is `(0, 1, 0)`. There are **no specificity conflicts** — the last rule wins (source order). Overriding is trivial: write a rule with any specificity above `(0, 1, 0)`.
 
-The name encodes the relationship: `.card__title` tells you this is the title inside a card, without requiring nesting in the selector. You can move the HTML, change the DOM structure, and the styles still work — the coupling is in the name, not in the selector hierarchy.
+The name encodes the relationship: `.card__title` tells you this is the title inside a card, without requiring nesting in the selector. You can move the HTML and change the DOM (Document Object Model) structure, and the styles still work. The coupling lives in the name, not in the selector hierarchy.
 
 ### BEM gotchas
 
@@ -255,6 +255,7 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
 Dynamic styles (based on props) generate new class names — each unique combination of prop values can create a new CSS rule.
 
 **Runtime CSS-in-JS advantages:**
+
 - Full JavaScript power in styles — conditions, loops, theme variables
 - Co-location: styles and component in one file
 - Automatic scoping — no class name collisions
@@ -262,9 +263,10 @@ Dynamic styles (based on props) generate new class names — each unique combina
 - Dead code elimination: unused components = unused styles
 
 **Runtime CSS-in-JS disadvantages:**
-- **Runtime cost**: style injection happens in JavaScript on the main thread — adds to TTI (Time to Interactive)
+
+- **Runtime cost**: style injection happens in JavaScript on the main thread, which adds to TTI (Time to Interactive)
 - **React Server Components incompatibility**: runtime style injection requires the browser JS environment — RSC doesn't have it
-- **Hydration cost**: on SSR, styles must be serialized and re-injected on the client
+- **Hydration cost**: with SSR (server-side rendering), styles must be serialized and re-injected on the client
 - Larger JavaScript bundle
 
 ### Zero-runtime CSS-in-JS (vanilla-extract, StyleX, Linaria)
@@ -295,7 +297,9 @@ import { card, cardVariants, title } from './styles.css';
 
 function Card({ featured }: { featured?: boolean }) {
   return (
-    <article className={`${card} ${featured ? cardVariants.featured : cardVariants.default}`}>
+    <article
+      className={`${card} ${featured ? cardVariants.featured : cardVariants.default}`}
+    >
       <h2 className={title}>Title</h2>
     </article>
   );
@@ -373,7 +377,7 @@ Every class has specificity `(0, 1, 0)` and declares a single property. Conflict
 
 **No naming decisions**: the hardest part of CSS at scale is naming. Tailwind eliminates it — you never name a component or choose a class hierarchy.
 
-**Co-location**: styles are in the HTML (or JSX). You don't switch files to change a style.
+**Co-location**: styles live in the HTML, or in the JSX (the markup syntax React embeds in JavaScript). You don't switch files to change a style.
 
 **Predictable specificity**: every class is `(0, 1, 0)`. No specificity wars possible.
 
@@ -387,7 +391,7 @@ Every class has specificity `(0, 1, 0)` and declares a single property. Conflict
 
 **Component abstraction pressure**: without naming, you rely on component abstraction (React/Vue components) to avoid repeating class lists. Raw HTML + Tailwind becomes unwieldy.
 
-**Customization friction**: non-standard values require either extending the config or using arbitrary values (`text-[17px]`, `bg-[#1a1a2e]`). Extending the config is YAML, not CSS.
+**Customization friction**: non-standard values require either extending the config or using arbitrary values (`text-[17px]`, `bg-[#1a1a2e]`). Extending the config means editing a config file, not writing CSS.
 
 **Cognitive load for newcomers**: requires learning the Tailwind API (class names aren't obvious — `py-4` vs `padding-block: 1rem`).
 
@@ -436,26 +440,31 @@ For repetitive utility combinations that need a name, Tailwind provides `@apply`
 ### Technical constraints
 
 **Use BEM when:**
+
 - The project is framework-agnostic or uses multiple frameworks
 - You need styles to work in environments without build tools
 - The team is comfortable with CSS but not deep JavaScript
 
 **Use CSS Modules when:**
+
 - You're using a component framework (React, Vue, Svelte)
 - You want the benefits of scoping without giving up "normal" CSS syntax
 - You need to share styles across components without complex tooling
 
 **Use runtime CSS-in-JS when:**
+
 - Your styles depend heavily on runtime JavaScript state (theme switching, user customization)
 - You need deep TypeScript integration (prop-typed styled components)
 - **Not** when: using React Server Components, performance is critical (TTI), or SSR is a core requirement
 
 **Use zero-runtime CSS-in-JS (vanilla-extract, StyleX) when:**
+
 - You want type-safe styles without runtime cost
 - Building a design system that needs to work across frameworks
 - React Server Components or SSR performance matter
 
 **Use Tailwind when:**
+
 - Rapid prototyping or startup environments where iteration speed matters
 - Component-framework projects where components abstract the class lists
 - The team values convention over configuration
@@ -476,28 +485,41 @@ This hybrid approach uses each tool where it excels. Pure Tailwind for everythin
 
 **"Why does BEM use single classes instead of descendant selectors?"**
 
-Single classes have uniform specificity `(0, 1, 0)`. Descendant selectors (`.card .title`) have higher specificity `(0, 2, 0)` and create coupling between the parent and child in the selector — if you move `.title` outside `.card` in the DOM, the style breaks. With BEM's `.card__title`, the relationship is in the name, not the selector. Overriding is trivial — any selector above `(0, 1, 0)` wins.
+Single classes have uniform specificity `(0, 1, 0)`. Descendant selectors (`.card .title`) have higher specificity `(0, 2, 0)`, and they couple the parent and the child inside the selector. Move `.title` outside `.card` in the DOM and the style breaks. With BEM's `.card__title`, the relationship is in the name, not the selector. Overriding is trivial — any selector above `(0, 1, 0)` wins.
 
 ---
 
 **"What's the difference between CSS Modules and CSS-in-JS?"**
 
-CSS Modules: a build-time transformation that generates unique class names from CSS files. The CSS itself is standard CSS — no JavaScript at runtime. CSS-in-JS (runtime): JavaScript generates CSS at runtime, injecting `<style>` tags into the document. Allows dynamic styles based on props/state. Runtime cost, incompatible with RSC. CSS-in-JS (zero-runtime): like CSS Modules but with JavaScript/TypeScript syntax for authoring — styles are generated at build time, no runtime cost.
+Three approaches, three trade-offs:
+
+- **CSS Modules** — a build-time transformation that generates unique class names from CSS files. The CSS itself is standard CSS, with no JavaScript at runtime.
+- **CSS-in-JS (runtime)** — JavaScript generates CSS at runtime and injects `<style>` tags into the document. It allows dynamic styles based on props and state, at a runtime cost, and it is incompatible with RSC.
+- **CSS-in-JS (zero-runtime)** — like CSS Modules, but you write the styles in JavaScript or TypeScript syntax. Styles are generated at build time, so there is no runtime cost.
 
 ---
 
 **"What's the main performance concern with runtime CSS-in-JS like Styled Components?"**
 
-Two issues: (1) **JavaScript bundle size** — style definitions are JavaScript, adding to the bundle. (2) **Runtime style injection** — on every render, JavaScript computes the styles and injects/updates `<style>` tags on the main thread. This adds to Time to Interactive. On SSR, styles must be serialized (typically as a `<style>` tag in the HTML) and then the client must reconcile its generated styles with the server's, adding to hydration cost. These concerns become significant on large pages with many components.
+Two issues:
+
+1. **JavaScript bundle size** — style definitions are JavaScript, so they add to the bundle.
+2. **Runtime style injection** — on every render, JavaScript computes the styles and injects or updates `<style>` tags on the main thread. That adds to Time to Interactive.
+
+With SSR the styles must also be serialized, typically as a `<style>` tag in the HTML. The client then reconciles its generated styles with the server's, which adds to hydration cost. Both concerns become significant on large pages with many components.
 
 ---
 
 **"What problem does Tailwind solve that BEM doesn't?"**
 
-The naming problem. With BEM, you still must decide what to call your block, what its elements are, and what modifiers apply. This naming is a significant cognitive load at scale. Tailwind eliminates naming entirely — you apply utility classes directly. Additionally, Tailwind enforces design system constraints (using the scale's predefined values rather than arbitrary pixels) and avoids stylesheet growth — unused utilities are purged, so the CSS file stays small regardless of project size.
+The naming problem. With BEM, you still must decide what to call your block, what its elements are, and what modifiers apply. That naming is a significant cognitive load at scale, and Tailwind removes it entirely: you apply utility classes directly.
+
+Tailwind also enforces design system constraints, because you use the scale's predefined values instead of arbitrary pixels. And it avoids stylesheet growth: unused utilities are purged, so the CSS file stays small whatever the size of the project.
 
 ---
 
 **"When would you choose CSS Modules over Tailwind?"**
 
-For complex component styles that are difficult to express as utility combinations — intricate pseudo-element designs, complex animation keyframes, deeply conditional style logic, or styles that make more sense as a cohesive block than as 20 individual utilities. Also: when the team has strong CSS expertise and values explicit style authorship over convention; or when integrating with a design system that expresses styles as CSS variables rather than utility class mappings.
+For component styles that are hard to express as combinations of utilities. Intricate pseudo-element designs, complex animation keyframes, deeply conditional style logic, or styles that read better as one cohesive block than as 20 separate utilities.
+
+Two more cases. When the team has strong CSS expertise and prefers writing styles explicitly over following a convention. And when you integrate with a design system that expresses styles as CSS variables rather than as utility class mappings.

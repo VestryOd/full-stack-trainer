@@ -12,25 +12,27 @@ Each stage can invalidate subsequent ones — triggering Layout always triggers 
 
 ### Stage 1: Parse
 
-The browser parses HTML into a DOM tree and CSS into a CSSOM tree. These are merged into the **Render Tree** — only elements that affect visual output are included (`display: none` elements are excluded; `visibility: hidden` elements are included, they just paint as transparent).
+The browser parses HTML into a DOM (Document Object Model) tree and CSS into a CSSOM (CSS Object Model) tree. These two are merged into the **Render Tree**, which holds only the elements that affect visual output. Elements with `display: none` are excluded. Elements with `visibility: hidden` are included; they simply paint as transparent.
 
 Blocking behavior:
-- CSS is **render-blocking**: the browser won't paint until the CSSOM is built (a partial CSSOM could cause flash of unstyled content)
-- JavaScript is **parser-blocking** by default (unless `async` or `defer`): a `<script>` tag pauses HTML parsing until the script downloads and executes
-- `defer` scripts execute after parsing completes, in order
-- `async` scripts execute as soon as downloaded, possibly out of order
+
+- CSS is **render-blocking**. The browser won't paint until the CSSOM is built, because a partial CSSOM could cause a flash of unstyled content.
+- JavaScript is **parser-blocking** by default, unless marked `async` or `defer`. A `<script>` tag pauses HTML parsing until the script downloads and executes.
+- `defer` scripts execute after parsing completes, in order.
+- `async` scripts execute as soon as they are downloaded, possibly out of order.
 
 ### Stage 2: Style (Recalculate Style)
 
 The browser computes the **computed style** for every element in the render tree — resolving inheritance, the cascade, custom properties, and relative units. This is where `em`, `%`, `var()` become absolute pixel values.
 
 What triggers a full style recalculation:
+
 - Adding/removing a class on any element
 - Any DOM insertion or removal
 - Changes to CSS custom properties
 - Pseudoclass state changes (`:hover`, `:focus`)
 
-The cost of style recalculation scales with the number of elements affected. Deep selector chains (`div > section > article > .card > p`) require the browser to walk more of the tree — one reason shallow selectors and BEM are faster in large DOMs.
+The cost of style recalculation scales with the number of elements affected. Deep selector chains such as `div > section > article > .card > p` make the browser walk more of the tree. Shallow selectors are therefore faster in a large DOM. That is one reason naming conventions like BEM (Block, Element, Modifier) keep selectors flat.
 
 ### Stage 3: Layout (Reflow)
 
@@ -39,14 +41,15 @@ Layout computes the **geometry** of every element — position, size, and relati
 ```
 Layout is computed in document order.
 Each block element's width is determined by its container.
-Each block element's height is determined by its content (unless explicitly set).
-A change to an element's height can change every sibling's position below it.
-A change to a flex container's size can reposition all its flex items.
+Each block element's height comes from its content, unless set.
+Changing an element's height moves every sibling below it.
+Resizing a flex container can reposition all its flex items.
 ```
 
 **What triggers Layout:**
 
 Any property that affects the geometry of an element or its surroundings:
+
 - `width`, `height`, `min-width`, `max-width`, `min-height`, `max-height`
 - `padding`, `margin`, `border-width`
 - `top`, `right`, `bottom`, `left` (for positioned elements)
@@ -75,6 +78,7 @@ Paint records drawing instructions for each layer: backgrounds, borders, text, s
 **What triggers Paint (but not Layout):**
 
 Properties that change appearance without affecting geometry:
+
 - `color`, `background-color`, `background-image`
 - `border-color`, `outline-color`
 - `box-shadow`, `text-shadow`
@@ -83,11 +87,12 @@ Properties that change appearance without affecting geometry:
 
 ### Stage 5: Composite
 
-The browser takes all the painted layers, applies transforms and opacity, and composites them together into the final frame — using the GPU. This is the cheapest stage because it's entirely GPU-side and doesn't require the main thread.
+The browser takes all the painted layers, applies transforms and opacity, and composites them into the final frame. That work runs on the GPU (graphics processing unit). This is the cheapest stage, because none of it needs the main thread.
 
 **What triggers only Composite (skipping Layout and Paint):**
 
 Only two CSS properties are composited without paint on all major browsers:
+
 - `transform` (including `translate`, `rotate`, `scale`)
 - `opacity`
 
@@ -112,6 +117,7 @@ This is the most important performance rule in CSS: **animate `transform` and `o
 The GPU compositor works with discrete layers. Certain CSS properties cause the browser to **promote** an element to its own GPU layer (called a "compositing layer" or "compositor layer"):
 
 **Guaranteed layer promotion:**
+
 - `will-change: transform` or `will-change: opacity`
 - `transform: translateZ(0)` or `transform: translate3d(0,0,0)` (old hack)
 - Elements with CSS animations running on the compositor thread (transform/opacity animations)
@@ -119,12 +125,13 @@ The GPU compositor works with discrete layers. Certain CSS properties cause the 
 - `<video>`, `<canvas>`, `<iframe>` elements
 
 **Conditional promotion:**
+
 - Elements overlapping other promoted elements (squashing/compositing overlap)
 - Elements with `filter` or `backdrop-filter`
 
 ### Why layer promotion helps
 
-Once on its own GPU layer, an element's transform and opacity changes don't require the CPU to re-paint — the GPU handles the compositing directly. A layer's content is uploaded to GPU memory once and reused across frames.
+Once an element is on its own GPU layer, changes to its transform and opacity need no repaint from the CPU (central processing unit). The GPU handles the compositing directly. A layer's content is uploaded to GPU memory once and reused across frames.
 
 ```
 Without layer promotion:
@@ -144,8 +151,9 @@ With layer promotion (transform):
 ### The cost of too many layers
 
 GPU layers consume GPU memory. Promoting too many elements causes:
-- High GPU memory usage (visible as jank in Chrome DevTools → Memory)
-- **Layer explosion**: when a promoted element overlaps many other elements, the browser may promote all overlapping elements to prevent rendering artifacts — creating dozens of unintended layers
+
+- High GPU memory use, which Chrome DevTools → Memory makes visible. The user feels it as **jank**: visible stutter, caused by frames the browser fails to deliver in time.
+- **Layer explosion**. When a promoted element overlaps many others, the browser may promote all of them to prevent rendering artifacts. Dozens of unintended layers appear.
 
 ## `will-change` — usage and risks
 
@@ -209,7 +217,7 @@ Good candidates: modals, drawers, tooltips, loading spinners, parallax elements.
 .element { will-change: transform; }
 ```
 
-`will-change` is preferable: it's declarative (states intent, not implementation), the browser can choose the best optimization strategy, and it doesn't add a transform to the element that might affect stacking contexts or coordinates.
+`will-change` is preferable for three reasons. It is declarative: it states intent, not implementation. The browser stays free to pick the best optimization strategy. And it adds no transform that could affect stacking contexts or coordinates.
 
 ## The `contain` property — layout and paint containment
 
@@ -290,6 +298,7 @@ An important side effect: `contain: layout` (and `contain: paint`) makes the ele
 ```
 
 With `content-visibility: auto`:
+
 - Off-screen sections are not laid out, painted, or composited
 - The browser uses `contain-intrinsic-size` as a placeholder to maintain scroll position
 - When the section scrolls into view, it's rendered normally
@@ -298,7 +307,7 @@ The performance benefit on long pages can be dramatic — a 10,000-item list onl
 
 ## Avoiding layout thrashing
 
-**Layout thrashing** occurs when JavaScript alternates between reading and writing layout properties in a tight loop, causing the browser to perform synchronous reflows on every read:
+**Layout thrashing** happens when JavaScript alternates reads and writes of layout properties in a tight loop. Every read then forces a synchronous reflow:
 
 ```javascript
 // Layout thrashing — forces a synchronous reflow on every iteration
@@ -355,34 +364,50 @@ The most important table to know for senior interviews:
 
 **"What's the difference between reflow, repaint, and compositing?"**
 
-Reflow (Layout): the browser recalculates geometry — positions and sizes of all affected elements. Triggered by any property that changes dimensions or positioning. Most expensive — cascades through the document. Repaint (Paint): the browser re-records drawing commands for a layer's visual appearance. Triggered by color/style changes that don't affect geometry. Compositing: the GPU combines layers into the final frame — only transforms and opacity can be changed without triggering reflow or repaint. Most performant — runs on GPU without main thread involvement.
+The three stages differ in what they recompute and in what they cost.
+
+- **Reflow (Layout)** — the browser recalculates geometry: positions and sizes of every affected element. Any property that changes dimensions or positioning triggers it. It is the most expensive stage, because it cascades through the document.
+- **Repaint (Paint)** — the browser re-records the drawing commands for a layer's appearance. Color and style changes that leave geometry alone trigger it.
+- **Compositing** — the GPU combines layers into the final frame. Only transform and opacity can change without reflow or repaint, which makes this the cheapest stage: it runs on the GPU, off the main thread.
 
 ---
 
 **"Why is animating `transform: translateX()` cheaper than `left: Xpx`?"**
 
-`left` is a layout property — changing it triggers Layout → Paint → Composite on every frame (CPU-bound work). `transform` is a compositing property — the browser promotes the element to a GPU layer, paints it once, then only applies a matrix transformation each frame (GPU-bound, extremely cheap). The element's layout position doesn't change when `transform` is used — the GPU reads the layer's texture and applies the transform to it, no CPU work required.
+`left` is a layout property. Changing it triggers Layout → Paint → Composite on every frame, and all of that is work for the CPU.
+
+`transform` is a compositing property. The browser promotes the element to a GPU layer and paints it once. Every frame after that only applies a matrix transformation, which is cheap work for the GPU.
+
+The element's layout position never changes under `transform`. The GPU reads the layer's texture and applies the transform to it, with no CPU work at all.
 
 ---
 
 **"What does `will-change` actually do?"**
 
-It signals to the browser that a specific property will change soon. The browser typically responds by promoting the element to a GPU compositing layer early — before the animation starts — so the layer transition doesn't cause a jank on the first frame. It's a hint, not a guarantee. Risks: GPU memory overhead (each promoted layer uses VRAM), potential layer explosion when a promoted element overlaps many others. Apply it immediately before animation, remove it immediately after.
+It signals to the browser that a specific property will change soon. The browser usually responds by promoting the element to a GPU compositing layer early, before the animation starts. The layer then already exists, so the first frame does not stutter.
+
+It is a hint, not a guarantee, and it carries two risks. Each promoted layer occupies video memory on the graphics card. And when a promoted element overlaps many others, the browser may promote all of them — a layer explosion. Apply it immediately before the animation, and remove it immediately after.
 
 ---
 
 **"What is layout thrashing and how do you prevent it?"**
 
-Layout thrashing is a JavaScript pattern where reads and writes to layout-affecting DOM properties are interleaved in a loop. Each read forces the browser to flush pending style/layout changes to get an accurate value, causing a synchronous reflow. Each write then invalidates layout again. The fix: batch all reads first, then batch all writes. This way the browser performs one reflow for all reads and one layout update for all writes.
+Layout thrashing is a JavaScript pattern where reads and writes to layout-affecting DOM properties are interleaved in a loop. Each read forces the browser to flush pending style and layout changes to get an accurate value, which causes a synchronous reflow. Each write then invalidates layout again.
+
+The fix: batch all reads first, then batch all writes. The browser performs one reflow for all the reads and one layout update for all the writes.
 
 ---
 
 **"What does `contain: layout` do?"**
 
-It declares that changes inside the element don't affect layout outside it, and vice versa. The browser can reflow the element's subtree without considering the rest of the document, and external layout changes don't propagate inside. Side effects: creates a stacking context, a block formatting context, and a containing block for absolutely/fixed positioned descendants. Most useful for frequently-updating components (news feeds, chat, data grids) where internal DOM changes should not cause a full-page reflow.
+It declares that changes inside the element don't affect layout outside it, and vice versa. The browser can reflow the element's subtree without considering the rest of the document, and external layout changes don't propagate inside.
+
+It has side effects. The element becomes a stacking context, a block formatting context, and a containing block for absolutely and fixed positioned descendants. It is most useful for components that update often — news feeds, chat, data grids — where internal DOM changes should not reflow the whole page.
 
 ---
 
 **"Which CSS properties trigger only Composite and why?"**
 
-Only `transform` and `opacity` (on all major browsers). The reason: they don't affect geometry (no Layout) and don't change pixel-level appearance of the element itself (no Paint). The browser uploads the element as a texture to the GPU once, and subsequent changes are handled entirely by the GPU compositing stage — applying a matrix multiplication (`transform`) or alpha blend (`opacity`). This is intentional API design: the browser spec guarantees these properties don't trigger layout to enable performant animations.
+Only `transform` and `opacity`, on all major browsers. They don't affect geometry, so there is no Layout, and they don't change the pixel-level appearance of the element itself, so there is no Paint.
+
+The browser uploads the element to the GPU as a texture once. Every change after that is handled by the compositing stage alone: a matrix multiplication for `transform`, an alpha blend for `opacity`. This is intentional API design — the spec guarantees these two properties never trigger layout, so that animations can stay smooth.

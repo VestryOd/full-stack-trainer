@@ -56,6 +56,7 @@ grid-auto-flow: dense;  /* backfill holes left by large items — changes visual
 ```
 
 Resolution:
+
 1. Subtract fixed tracks: `900 - 200 = 700px` available
 2. Total fractions: `1 + 2 = 3`
 3. One `fr` = `700 / 3 ≈ 233px`
@@ -119,6 +120,7 @@ grid-template-columns: minmax(200px, 1fr) minmax(200px, 2fr);
 ```
 
 Rules for `grid-template-areas`:
+
 - Each row is a quoted string; each word is a cell name
 - A named area must be rectangular — L-shapes are invalid
 - Use `.` for an unnamed cell (a hole)
@@ -216,7 +218,7 @@ Items A, B, C each get 300px (900/3 tracks)
 
 **When to use which:**
 
-- `auto-fill`: when you want items to maintain their minimum size even if that leaves empty columns — useful when you'll add more items dynamically and don't want the layout to reflow
+- `auto-fill`: when items should keep their minimum size even if that leaves empty columns. Useful when you add more items dynamically and don't want the layout to reflow.
 - `auto-fit`: when you want items to grow and fill the entire row — the common "responsive grid without media queries" use case
 
 ```css
@@ -241,7 +243,7 @@ grid-template-columns: minmax(200px, 1fr);
 grid-template-rows: minmax(min-content, 300px);
 ```
 
-`min-content`: the smallest size where content doesn't overflow (long word width for text, image intrinsic width for images).
+`min-content`: the smallest size where content doesn't overflow. For text that is the width of the longest word; for an image, its own natural width.
 `max-content`: the size at which content doesn't wrap at all (a full sentence on one line).
 
 ```css
@@ -383,7 +385,7 @@ All items stay assigned to their named areas. The media query only changes where
   padding: 8px;
 }
 
-.day[data-weekday="1"] { grid-column: 2; } /* First day of month on Tuesday */
+.day[data-weekday="2"] { grid-column: 2; } /* First day of month on Tuesday */
 ```
 
 ### Magazine layout with named areas
@@ -457,19 +459,24 @@ They compose naturally:
 
 **"What's the difference between `auto-fill` and `auto-fit`?"**
 
-Both create as many tracks as fit in the container. The difference appears when there are fewer items than tracks. `auto-fill` keeps empty tracks — items don't grow beyond their `max` in `minmax()`. `auto-fit` collapses empty tracks to zero — items grow to fill the full container width. With enough items to fill all columns, both behave identically.
+Both create as many tracks as fit in the container. The difference appears when there are fewer items than tracks.
+
+- `auto-fill` keeps the empty tracks, so items never grow beyond their `max` in `minmax()`.
+- `auto-fit` collapses the empty tracks to zero, so items grow to fill the full container width.
+
+With enough items to fill all columns, both behave identically.
 
 ---
 
 **"What does `1fr` mean exactly?"**
 
-One fraction unit of the available free space — not one fraction of the container width. Free space is what remains after all fixed-size tracks (px, em, %) and gaps are resolved. If a 900px container has a 200px fixed column and two `1fr` columns with a 20px gap, free space = `900 - 200 - 2×20 = 660px`, and each `fr` = `330px`.
+One fraction unit of the available free space — not one fraction of the container width. Free space is what remains after all fixed-size tracks (px, em, %) and gaps are resolved. Take a 900px container with one fixed 200px column and two `1fr` columns, separated by 20px gaps. Free space is `900 - 200 - 2×20 = 660px`, so each `fr` is `330px`.
 
 ---
 
 **"Why is `fr` better than `%` for grid columns?"**
 
-Percentages are calculated from the container's full width, before gaps are subtracted. Three `33.33%` columns with a `20px` gap sum to more than 100% and overflow. `fr` distributes only the remaining space after gaps — columns never overflow.
+Percentages are calculated from the container's full width, before gaps are subtracted. Three `33.33%` columns with a `20px` gap sum to more than 100% and overflow. The `fr` unit distributes only the space left after gaps, so columns never overflow.
 
 ---
 
@@ -481,10 +488,14 @@ Percentages are calculated from the container's full width, before gaps are subt
 
 **"Why doesn't `grid-auto-flow: dense` preserve the visual order of items?"**
 
-Dense packing backfills gaps in the grid left by larger items. To do this, the browser may place a smaller later item before a larger earlier item. The DOM order (and therefore tab order) remains unchanged — only visual position changes. This creates a mismatch between visual and keyboard order, which is an accessibility issue. `dense` should only be used for purely decorative grids (image galleries) where keyboard navigation order doesn't need to match visual order.
+Dense packing backfills gaps in the grid left by larger items. To do this, the browser may place a smaller later item before a larger earlier item.
+
+The DOM (Document Object Model) order, and therefore the tab order, stays unchanged. Only the visual position moves. That mismatch between visual and keyboard order is an accessibility issue. Use `dense` only for purely decorative grids such as image galleries, where keyboard order need not match what the eye sees.
 
 ---
 
 **"What is subgrid and when would you use it?"**
 
-Subgrid allows a grid item that is itself a grid container to inherit (not copy) the parent's row or column tracks. Without subgrid: a card grid where each card has a header, body, and footer — if card bodies have different content heights, footers don't align across cards. With `grid-template-rows: subgrid`, all cards share the parent's row tracks, and footers align automatically. Supported in all major browsers since Chrome 117 (August 2023).
+Subgrid lets a grid item that is itself a grid container inherit the parent's row or column tracks instead of copying them.
+
+Take a card grid where every card has a header, a body and a footer. Without subgrid, cards with different body heights push their footers to different places. With `grid-template-rows: subgrid`, all cards share the parent's row tracks and the footers line up on their own. All major browsers support it since Chrome 117 (August 2023).
