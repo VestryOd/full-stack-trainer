@@ -71,6 +71,10 @@ PASSED = {
     'quiz:css-html': '8ee72de',
     'quiz:react': '8ee72de',
     'quiz:nodejs': '8ee72de',
+    'article:build-tools': '6484f91',
+    'bank:bundlers': '6484f91',
+    'bank:algorithms': '6484f91',
+    'quiz:algorithms': '6484f91',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
