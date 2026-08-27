@@ -2,7 +2,7 @@
 
 ## SQL Injection — how the attack works
 
-SQL Injection occurs when user input is concatenated into a SQL query without escaping. An attacker can change the query's logic, bypass authentication, and read or delete data.
+SQL Injection occurs when user input is concatenated into a database query without escaping. SQL — Structured Query Language — is the language the database reads, so the injected text becomes part of the command. An attacker can change the query's logic, bypass authentication, and read or delete data.
 
 ```typescript
 // VULNERABLE: concatenating user input into SQL
@@ -30,6 +30,8 @@ async function findUser(email: string) {
 ```
 
 ### Parameterized Queries — the only correct defense
+
+A parameterized query keeps a placeholder such as `$1` in the SQL text and passes the value alongside it. The driver never builds the query by concatenation, and every example below follows that rule.
 
 ```typescript
 // SAFE: parameterized query (pg/node-postgres)
@@ -64,11 +66,11 @@ const users = await prisma.$queryRaw(
 );
 ```
 
-**Principle**: data never becomes part of the SQL text. The DB receives the query template and data separately — there's no way to "escape" the string context.
+**Principle**: data never becomes part of the SQL text. The database receives the query template and data separately — there's no way to "escape" the string context.
 
 ## Input Validation — why server-side validation is mandatory
 
-Frontend validation is UX, not security. Anyone can send a request directly via curl/Postman, bypassing the browser and JS entirely.
+Frontend validation is about user experience, not security. Anyone can send a request directly via curl/Postman, bypassing the browser and JS entirely.
 
 ```typescript
 // With Zod (Express)
@@ -161,17 +163,14 @@ app.patch('/api/users/:id', authenticate, async (req, res) => {
 
 ## Sanitization vs Validation — the difference
 
-```txt
-Validation:    Is the data correct?
-  Checks structure, type, format.
-  On failure → reject the request (400 Bad Request).
-  Example: is the email valid? is the password long enough?
+The two steps answer different questions. Validation asks whether the data is correct, sanitization asks whether it is safe to use.
 
-Sanitization:  Is the data safe?
-  Transforms/cleans data for safe use.
-  Doesn't reject — transforms.
-  Example: HTML escaping for display, whitespace normalization
-```
+| | Validation | Sanitization |
+|---|---|---|
+| Question it asks | Is the data correct? | Is the data safe? |
+| What it does | Checks structure, type, format | Transforms and cleans data for safe use |
+| On bad input | Rejects the request (400 Bad Request) | Never rejects — transforms |
+| Example | Is the email valid? Is the password long enough? | HTML escaping for display, whitespace normalization |
 
 ```typescript
 import DOMPurify from 'isomorphic-dompurify';
@@ -194,6 +193,8 @@ function sanitizeString(input: string): string {
 ```
 
 ## File Upload Validation — common attacks and defenses
+
+The snippet below lists the five attacks an upload endpoint has to survive, then the four server-side checks that stop them.
 
 ```typescript
 import path from 'path';
@@ -233,12 +234,12 @@ async function validateFileUpload(file: Express.Multer.File): Promise<void> {
 
 ## Common interview mistakes
 
-- **"ORM fully protects against SQL Injection"** — ORM protects when using standard methods (`findBy`, `where: {}`). But `$queryRawUnsafe` (Prisma), `query()` with concatenation (TypeORM), `createQueryBuilder` with unsafe interpolation — are all vulnerable. Always audit raw queries.
+- **"ORM fully protects against SQL Injection"** — an ORM, an object-relational mapper, protects you when you use its standard methods (`findBy`, `where: {}`). But `$queryRawUnsafe` (Prisma), `query()` with concatenation (TypeORM), `createQueryBuilder` with unsafe interpolation — are all vulnerable. Always audit raw queries.
 
 - **"Frontend validation is sufficient"** — the client is entirely under the user's control. Server-side validation is mandatory and is the only real validation.
 
 - **"Sanitization = Validation"** — these are different processes. Validation checks correctness (reject or accept). Sanitization transforms data for safe use (transform). Both are needed in different contexts.
 
-- **"Escaping strings is enough to protect against SQL Injection"** — manual escaping depends on encoding, locale, DB version, and is easy to get wrong. The only reliable protection is parameterized queries / prepared statements.
+- **"Escaping strings is enough to protect against SQL Injection"** — manual escaping depends on encoding, locale, and database version, and it is easy to get wrong. The only reliable protection is parameterized queries / prepared statements.
 
 - **"Checking the Content-Type header is sufficient for file uploads"** — Content-Type is set by the client; an attacker can put anything there. Always check the file's magic bytes (actual content), not the request header.

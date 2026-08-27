@@ -2,45 +2,32 @@
 
 ## The fundamental distinction
 
-```txt
-Authentication                     Authorization
-────────────────────────────────   ──────────────────────────────
-"WHO ARE YOU?"                      "WHAT ARE YOU ALLOWED TO DO?"
-Verifying identity                  Checking permissions
-Happens FIRST                       Happens AFTER authentication
-Result: identity (userId)           Result: permitted/denied
-```
+The two words answer different questions and run in a fixed order. Side by side they look like this.
 
-A typical vulnerability: the system checks that a JWT is valid (authentication) but doesn't check that this specific user has the right to access this resource (authorization) → Insecure Direct Object Reference (IDOR).
+| | Authentication | Authorization |
+|---|---|---|
+| The question | Who are you? | What are you allowed to do? |
+| What it does | Verifying identity | Checking permissions |
+| Order | Happens first | Happens after authentication |
+| Result | Identity, the `userId` | Permitted or denied |
+
+A typical vulnerability: the system checks that a JWT (JSON Web Token) is valid, which is authentication. It never checks that this specific user has the right to access this resource, which is authorization. The name of that hole is insecure direct object reference (IDOR).
 
 ## Authentication methods
 
-```txt
-1. Password-based
-   Most common. Risks: brute force, phishing, password reuse.
-   Requires: bcrypt/argon2 storage, rate limiting, lockout after N attempts.
+Six methods cover almost everything you will meet in practice.
 
-2. Token-based (JWT)
-   Stateless. Server doesn't store session state.
-   Used in REST APIs and mobile apps. More detail: [JWT and Refresh Tokens].
+**1. Password-based.** Most common. Risks: brute force, phishing, password reuse. Requires bcrypt or argon2 storage, rate limiting, and lockout after N attempts.
 
-3. OAuth 2.0 / OpenID Connect
-   Delegated authentication: "Sign in with Google/GitHub".
-   OAuth 2.0 = authorization protocol (resource access).
-   OpenID Connect = layer on top of OAuth 2.0 for identity (authentication).
+**2. Token-based (JWT).** Stateless: the server doesn't store session state. Used in REST (representational state transfer) APIs and mobile apps. More detail in [JWT and Refresh Tokens](./03-jwt-access-refresh-tokens.md).
 
-4. Session-based (Cookie + Server Session)
-   Server stores the session (Redis/DB). Cookie contains only session ID.
-   Advantage: instant revoke. Disadvantage: stateful, harder to scale.
+**3. OAuth 2.0 / OpenID Connect.** Delegated authentication: "Sign in with Google" or "Sign in with GitHub". OAuth 2.0 on its own is an authorization protocol about resource access. OpenID Connect is a layer on top of OAuth 2.0 for identity, which is authentication.
 
-5. Multi-Factor Authentication (MFA)
-   Something you know (password) + something you have (TOTP code) +
-   something you are (biometrics). Critical for admin accounts.
+**4. Session-based (cookie + server session).** The server stores the session in Redis or a database, and the cookie contains only the session id. Advantage: instant revoke. Disadvantage: stateful, harder to scale.
 
-6. Passkeys (WebAuthn)
-   Cryptographic keypair: private key on device, public key at server.
-   Phishing-resistant: key is bound to the origin. The emerging standard.
-```
+**5. Multi-factor authentication (MFA).** Something you know (password) plus something you have (a TOTP code, time-based one-time password) plus something you are (biometrics). Critical for admin accounts.
+
+**6. Passkeys (WebAuthn).** A cryptographic keypair: private key on the device, public key at the server. Phishing-resistant, because the key is bound to the origin. The emerging standard.
 
 ## Authorization models
 
@@ -73,7 +60,7 @@ function requirePermission(permission: string) {
 router.delete('/users/:id', authenticate, requirePermission('users:delete'), deleteUser);
 ```
 
-RBAC limitation: roles become blunt instruments as complexity grows. A "Manager" might be able to see ALL users — but should only see THEIR OWN.
+RBAC limitation: roles become blunt instruments as complexity grows. A "Manager" might be able to see **all** users — but should only see **their own**.
 
 ### ABAC — Attribute-Based Access Control
 
@@ -156,30 +143,31 @@ function authenticate(req: Request, res: Response, next: NextFunction) {
 }
 ```
 
-Important: the role/permissions in a JWT are a snapshot at issuance time. If a user's role changes in the DB, the JWT with the old role remains valid until expiry. Solution: short TTL (15 min) + refresh token.
+Important: the role and permissions in a JWT are a snapshot at issuance time. If a user's role changes in the database, the JWT with the old role remains valid until it expires. The fix is a short TTL (time to live) of 15 minutes plus a refresh token.
 
 ## Session-based vs Token-based — comparison
 
-```txt
-Session-based (Cookie + Redis):
-  ✓ Instant revoke: delete session from Redis → user is logged out
-  ✓ Payload not visible to the client
-  ✗ Stateful: all servers need access to the same Redis
-  ✗ CSRF risk (cookie sent automatically by browser)
-  When: traditional web apps, when instant revoke matters
+Both approaches keep a user logged in. They differ in where the state lives, and that single difference drives every line below.
 
-Token-based (JWT):
-  ✓ Stateless: any server can verify without a storage roundtrip
-  ✓ Great for microservices and APIs
-  ✗ Revoke only via blacklist (negates the stateless advantage)
-     or wait for TTL expiry
-  ✗ Payload is visible (base64) — don't put sensitive data in it
-  When: REST API, mobile, inter-service communication
-```
+**Session-based (cookie + Redis):**
+
+- ✓ Instant revoke: delete the session from Redis and the user is logged out.
+- ✓ Payload not visible to the client.
+- ✗ Stateful: all servers need access to the same Redis.
+- ✗ CSRF (cross-site request forgery) risk, because the browser sends the cookie automatically.
+- When: traditional web apps, when instant revoke matters.
+
+**Token-based (JWT):**
+
+- ✓ Stateless: any server can verify the token without a storage roundtrip.
+- ✓ Great for microservices and APIs.
+- ✗ Revoke only via a blacklist, which negates the stateless advantage, or wait for the TTL to expire.
+- ✗ Payload is visible, since base64 is encoding and not encryption — don't put sensitive data in it.
+- When: REST API, mobile, inter-service communication.
 
 ## OAuth 2.0 — delegated authorization
 
-OAuth 2.0 is an authorization protocol (not authentication). The user grants an application access to their resources at another provider.
+OAuth 2.0 is an authorization protocol (not authentication). The user grants an application access to their resources at another provider. The Authorization Code Flow below is the variant to use on the web, and it runs in five steps.
 
 ```txt
 Authorization Code Flow (most secure for web):
@@ -211,12 +199,12 @@ OpenID Connect adds an `id_token` (JWT with identity data) to the standard OAuth
 
 ## Common interview mistakes
 
-- **"OAuth = Authentication"** — OAuth 2.0 is an AUTHORIZATION protocol (resource access). For authentication via OAuth, you need OpenID Connect (a layer on top of OAuth 2.0 that adds id_token and a /userinfo endpoint).
+- **"OAuth = Authentication"** — OAuth 2.0 is an **authorization** protocol (resource access). For authentication via OAuth, you need OpenID Connect (a layer on top of OAuth 2.0 that adds id_token and a /userinfo endpoint).
 
 - **"JWT itself = authorization"** — JWT is a token format that carries identity and claims. Authorization is the act of checking those claims against access rules. JWT without subsequent permission checks = only authentication.
 
 - **"RBAC is always sufficient"** — for simple systems, yes. But for "a user sees only their own resources," you need an ownership check (resource-based authorization), not just a role check.
 
-- **"Authorization doesn't need to be checked on every endpoint"** — every endpoint must explicitly verify authorization. The pattern of "we'll add auth later" leads to IDOR (Insecure Direct Object Reference) vulnerabilities.
+- **"Authorization doesn't need to be checked on every endpoint"** — every endpoint must explicitly verify authorization. The pattern of "we'll add auth later" leads to IDOR vulnerabilities, that is insecure direct object reference.
 
-- **"Sessions and JWT are incompatible"** — they're not competitors. You can use JWT for the API and cookie sessions for the web UI in the same application. The choice depends on revoke requirements, clients, and architecture.
+- **"Sessions and JWT are incompatible"** — they're not competitors. You can use JWT for the API and cookie sessions for the web interface in the same application. The choice depends on revoke requirements, clients, and architecture.
