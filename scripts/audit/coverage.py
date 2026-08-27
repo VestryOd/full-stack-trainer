@@ -75,6 +75,7 @@ PASSED = {
     'bank:bundlers': '6484f91',
     'bank:algorithms': '6484f91',
     'quiz:algorithms': '6484f91',
+    'article:aws': 'f13f14e',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
