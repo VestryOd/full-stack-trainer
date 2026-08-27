@@ -2,7 +2,7 @@
 
 ## Автогенерация vs кастомизация
 
-При создании Content Type Strapi автоматически создаёт Route, Controller и Service с полным CRUD. Кастомизация нужна когда стандартного CRUD недостаточно: нестандартные endpoints, агрегация, внешние API, сложная бизнес-логика.
+При создании Content Type Strapi автоматически создаёт Route, Controller и Service с полным CRUD, то есть создание, чтение, обновление и удаление записи. Кастомизация нужна когда стандартного CRUD недостаточно: нестандартные endpoints, агрегация, внешние API, сложная бизнес-логика.
 
 ```typescript
 // Автогенерированный Route (src/api/article/routes/article.ts):
@@ -24,6 +24,12 @@ export default factories.createCoreService('api::article.article');
 ```
 
 ## Кастомный Controller — расширение стандартного
+
+Controller — это файл с методами, которым route передаёт запрос. В Strapi такие методы называют actions. Controller отвечает за сторону HTTP: прочитать параметры из `ctx`, вызвать Service и вернуть ответ.
+
+Фабрика `createCoreController` принимает второй аргумент — функцию, которая получает `{ strapi }` и возвращает объект с методами. Метод, названный именем стандартного (`find`, `findOne`, `create`, `update`, `delete`), заменяет его, а любое другое имя добавляет новый endpoint. Внутри заменённого метода вызов `super.find(ctx)` по-прежнему выполняет оригинальную реализацию.
+
+Ниже встретятся два помощника. Метод `sanitizeOutput` убирает поля, читать которые у текущего пользователя нет прав, — это управление доступом на основе ролей (RBAC) в применении к ответу. Метод `transformResponse` заворачивает результат в стандартную форму с полями `data` и `meta`.
 
 ```typescript
 // src/api/article/controllers/article.ts
@@ -68,6 +74,16 @@ export default factories.createCoreController(
 
 ## Кастомный Service — бизнес-логика
 
+Service — это набор переиспользуемых функций, в которых живёт бизнес-логика конкретного API. Когда логика вынесена из контроллера, один и тот же код могут вызвать несколько контроллеров, хуки или Cron Jobs, а не копировать его у себя.
+
+Фабрика `createCoreService` устроена так же, как фабрика контроллера: те же два аргумента. Методы, которые она возвращает, доступны снаружи как `strapi.service('api::article.article').findPopular(...)`, и именно так до этого файла добирается контроллер выше.
+
+Дальше идут три вида логики:
+
+- чтение с фильтрами через Document Service;
+- создание записи с уведомлением внешней системы;
+- агрегация, которая параллельно считает три Content Type.
+
 ```typescript
 // src/api/article/services/article.ts
 import { factories } from '@strapi/strapi';
@@ -98,7 +114,10 @@ export default factories.createCoreService(
         await fetch(process.env.WEBHOOK_URL!, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ event: 'article.published', articleId: article.documentId }),
+          body: JSON.stringify({
+            event: 'article.published',
+            articleId: article.documentId,
+          }),
         });
       } catch (error) {
         strapi.log.error('Failed to notify webhook', error);
@@ -110,7 +129,9 @@ export default factories.createCoreService(
     // Агрегация данных из нескольких сущностей
     async getDashboardStats() {
       const [articles, authors, categories] = await Promise.all([
-        strapi.documents('api::article.article').count({ filters: { publishedAt: { $notNull: true } } }),
+        strapi.documents('api::article.article').count({
+          filters: { publishedAt: { $notNull: true } },
+        }),
         strapi.documents('api::author.author').count({}),
         strapi.documents('api::category.category').count({}),
       ]);
@@ -122,6 +143,12 @@ export default factories.createCoreService(
 ```
 
 ## Кастомный Route
+
+Route связывает один метод HTTP и один путь с одним методом контроллера. Стандартный router уже генерирует пять привычных endpoints, поэтому свой файл роутов нужен только для того, что выходит за их рамки.
+
+Кастомные routes кладут в отдельный файл внутри той же папки `routes/`. Strapi загружает оттуда все файлы в алфавитном порядке, и разделение кастомных записей с core-роутером избавляет от конфликтов. У каждой записи есть `method`, `path` и `handler`, где `article.popular` означает метод `popular` контроллера article.
+
+Необязательный объект `config` несёт защиту маршрута. По умолчанию route требует аутентификации, а `auth: false` открывает его всем. Массив `policies` перечисляет проверки, которые должны пройти. Массив `middlewares` перечисляет код, который выполняется вокруг обработчика.
 
 ```typescript
 // src/api/article/routes/custom-article.ts
@@ -160,6 +187,12 @@ export default {
 ```
 
 ## Query Engine vs Document Service
+
+До базы данных в Strapi есть два пути, и они не взаимозаменяемы. Document Service — способ по умолчанию в v5. Он понимает Draft & Publish, интернационализацию (i18n), populate и очистку ответа, а записи адресует по `documentId`.
+
+Query Engine лежит уровнем ниже. Он почти напрямую ложится на SQL (язык структурированных запросов) и этих возможностей не даёт. Документация советует брать его только тогда, когда Document Service не выражает нужный запрос.
+
+Отличить их в коде проще всего по словарю. Document Service принимает `filters`, `sort` и `pagination`. Query Engine принимает `where`, `orderBy`, `limit` и `offset`.
 
 ```typescript
 // Document Service (рекомендуется, v5+):
