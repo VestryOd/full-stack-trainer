@@ -79,6 +79,7 @@ PASSED = {
     'article:security': '41ef61b',
     'bank:security': '41ef61b',
     'quiz:security': '41ef61b',
+    'article:strapi': 'b74d2cc',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
