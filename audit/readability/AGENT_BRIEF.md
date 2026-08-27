@@ -57,6 +57,17 @@ four short sentences — not three facts.
   **do not silently fix it**. Leave it and report it. Several such reports have already turned out to
   be more valuable than the language pass itself.
 
+## Do not commit, and do not use Edit or Write
+
+`git commit` is the orchestrator's job, never yours. Other agents are usually editing
+neighbouring files in the same zone at the same time, so a commit from you can capture
+their half-finished state. One agent did commit in wave 9; it happened to touch only its
+own three files, but nothing in the process guaranteed that.
+
+Edit the content with a Python script run through Bash. The `Edit` and `Write` tools open
+a diff tab in the user's IDE and exhaust their memory — this has stopped agents mid-run
+more than once.
+
 ## How to deliver
 
 You do **not** edit the content file. Several agents work on the same file at once, and a
