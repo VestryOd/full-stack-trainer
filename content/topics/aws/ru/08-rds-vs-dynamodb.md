@@ -3,56 +3,60 @@
 
 ## RDS — управляемая реляционная БД
 
-RDS (Relational Database Service) — managed SQL база данных. AWS управляет: patching, backup (daily + point-in-time restore до 35 дней), Multi-AZ replication (автоматический failover ~60-120 сек), monitoring. Вы работаете с обычной PostgreSQL/MySQL — подключаетесь той же строкой подключения.
+RDS (Relational Database Service) — управляемая база данных SQL (Structured Query Language). AWS (Amazon Web Services) берёт на себя эксплуатацию:
 
-```txt
-Движки RDS:
-  PostgreSQL (самый популярный для fullstack)
-  MySQL
-  MariaDB
-  Oracle
-  SQL Server
-  Aurora (AWS-разработка, 5x быстрее MySQL, 3x быстрее PostgreSQL)
-  Aurora Serverless v2 — автоматическое масштабирование вычислений
+- Патчинг.
+- Резервные копии: ежедневные, плюс восстановление на любой момент времени в пределах 35 дней.
+- Репликацию Multi-AZ (Availability Zone — зона доступности) с автоматическим переключением на резерв за ~60-120 сек.
+- Мониторинг.
 
-RDS Multi-AZ:
-  Primary instance (синхронная репликация) → Standby в другой AZ
-  При падении Primary: DNS автоматически переключается на Standby (~1-2 мин)
-  Read Replica: асинхронная репликация, для scale read-нагрузки
+Вы работаете с обычной PostgreSQL/MySQL — подключаетесь той же строкой подключения.
 
-Типичный режим:
-  Production: Multi-AZ + 1-2 Read Replicas
-  Dev/Staging: Single-AZ (дешевле)
-```
+**Движки, которые запускает RDS:**
 
-## DynamoDB — managed NoSQL БД
+- PostgreSQL — самый популярный для fullstack.
+- MySQL, MariaDB, Oracle, SQL Server.
+- Aurora, разработка AWS: в 5 раз быстрее MySQL, в 3 раза быстрее PostgreSQL.
+- Aurora Serverless v2 — автоматическое масштабирование вычислений.
 
-DynamoDB — serverless key-value/document store: нет серверов для управления, автоматическое масштабирование, single-digit millisecond latency (P99), 99.99% SLA. Гарантирует предсказуемую производительность при любом масштабе за счёт отказа от JOIN и гибких запросов.
+**Как работает Multi-AZ:**
 
-```txt
-Модель данных:
-  Таблица (Table)
-  Item (документ/запись, до 400KB)
-  Attribute (поле)
+- Primary-инстанс синхронно реплицируется в Standby в другой AZ.
+- При падении Primary DNS (Domain Name System) автоматически переключается на Standby за ~1-2 мин.
+- Read Replica — это другое: асинхронная репликация, для масштабирования нагрузки на чтение.
 
-Обязательные ключи:
-  Partition Key (hash key): определяет партицию хранения
-  Sort Key (range key): опциональный, позволяет несколько item с одним PK
+**Типичный режим:**
 
-Нет:
-  JOIN — данные денормализуются или вложены
-  Foreign Key Constraints
-  Сложных запросов (GROUP BY, WINDOW FUNCTIONS)
-  Фиксированной схемы
-```
+- Production: Multi-AZ + 1-2 Read Replicas.
+- Dev и staging: Single-AZ, дешевле.
+
+## DynamoDB — управляемая NoSQL БД
+
+DynamoDB — бессерверное хранилище NoSQL (нереляционное), типа ключ-значение и документного. Серверов для управления нет, масштабирование автоматическое, задержка — единицы миллисекунд на P99 (это самый медленный 1% запросов), SLA (Service Level Agreement — обязательство по доступности) 99.99%. Предсказуемую производительность при любом масштабе оно даёт за счёт отказа от JOIN и гибких запросов.
+
+**Модель данных** — три уровня:
+
+- Таблица (Table).
+- Item — документ или запись, до 400KB.
+- Attribute — поле.
+
+**Обязательные ключи:**
+
+- Partition Key (hash key) определяет партицию хранения.
+- Sort Key (range key) опциональный, позволяет держать несколько item с одним ключом партиции.
+
+**Чего в DynamoDB нет:**
+
+- JOIN — данные денормализуются или вкладываются друг в друга.
+- Ограничений по внешним ключам (foreign key constraints).
+- Сложных запросов вроде `GROUP BY` и оконных функций.
+- Фиксированной схемы.
 
 ## DynamoDB Data Modeling — Single Table Design
 
-```typescript
-// Классическая ошибка: думать о DynamoDB как о SQL таблицах
-// В SQL: Users таблица + Orders таблица → JOIN по userId
-// В DynamoDB: Single Table — всё в одной таблице, ключи — паттерны доступа
+Single Table Design держит все типы сущностей в одной таблице, а паттерн доступа зашивает в ключи. Классическая ошибка — думать о DynamoDB как о таблицах SQL: таблица Users плюс таблица Orders, соединённые по `userId`.
 
+```typescript
 // Паттерн Single Table Design:
 // pk (Partition Key) + sk (Sort Key) определяют тип и доступ
 
@@ -89,7 +93,9 @@ const order: DynamoItem = {
 ```typescript
 // DynamoDB SDK v3: основные операции
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand, UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -129,24 +135,29 @@ await client.send(new UpdateCommand({
 
 ## Capacity Modes — On-Demand vs Provisioned
 
-```txt
-On-Demand Mode (Serverless):
-  Авто-масштабирование под нагрузку
-  Оплата: $1.25/million Write RCU, $0.25/million Read RCU
-  Когда: непредсказуемый трафик, dev/staging, новые проекты
+Режим ёмкости решает, как вы платите за пропускную способность. Считается всё в единицах ёмкости: RCU (Read Capacity Units) на чтение и WCU (Write Capacity Units) на запись.
 
-Provisioned Mode:
-  Задаёшь RCU (Read Capacity Units) + WCU (Write Capacity Units)
-  С Auto Scaling: увеличивает/уменьшает в заданных пределах
-  Дешевле при стабильной нагрузке
-  Когда: production с предсказуемым трафиком
+**On-Demand Mode (serverless)**
 
-Read/Write Capacity Units:
-  1 RCU = 1 strongly consistent read или 2 eventually consistent read (до 4KB)
-  1 WCU = 1 write (до 1KB)
-```
+- Авто-масштабирование под нагрузку.
+- Оплата: $1.25/million Write RCU, $0.25/million Read RCU.
+- Когда: непредсказуемый трафик, dev/staging, новые проекты.
+
+**Provisioned Mode**
+
+- Вы сами задаёте RCU и WCU.
+- С Auto Scaling увеличивает и уменьшает их в заданных пределах.
+- Дешевле при стабильной нагрузке.
+- Когда: production с предсказуемым трафиком.
+
+**Размер одной единицы:**
+
+- 1 RCU = одно строго согласованное чтение или два согласованных в конечном счёте, до 4KB.
+- 1 WCU = одна запись, до 1KB.
 
 ## Global Secondary Index (GSI) — дополнительные паттерны доступа
+
+GSI — это вторая пара ключей поверх той же таблицы, чтобы искать по атрибуту, который не является ключом партиции. Индекс ниже делает `email` ключом для запроса, чего пара `pk`/`sk` базовой таблицы не позволяет.
 
 ```typescript
 // CDK: таблица с GSI
@@ -179,43 +190,46 @@ const result = await client.send(new QueryCommand({
 
 ## RDS vs DynamoDB — матрица выбора
 
-```txt
-                    RDS (PostgreSQL)      DynamoDB
-Schema:             Strict, migrations    Flexible, schema-less
-Query:              Full SQL (JOIN etc)   Key-based (Query/GetItem)
-Scale Write:        Vertical (instance)   Horizontal (auto)
-Max Scale:          ~100k TPS (Aurora)    Unlimited (millions TPS)
-Latency:            1-10ms (variable)     Single-digit ms (predictable)
-Transactions:       Full ACID             Limited (25 items/5 tables)
-Relations:          Native (FK, JOIN)     Denormalization required
-Cold Start (Lambda):Connection overhead   SDK only (no connections!)
-Operational:        Instance management   Fully serverless
-Cost Model:         Per instance/hour     Per request (On-Demand)
+Десять строк решают почти любой случай:
 
-Выбирай RDS когда:
-  ✓ Сложные связи между сущностями (e-commerce, CRM, ERP)
-  ✓ Нужны гибкие SQL-запросы (аналитика, отчёты)
-  ✓ ACID транзакции критичны (финансы, инвентарь)
-  ✓ Команда знает SQL, паттерны доступа не определены заранее
-  ✓ Стандартный fullstack проект (Next.js + NestJS + PostgreSQL)
+| | RDS (PostgreSQL) | DynamoDB |
+|---|---|---|
+| Схема | Строгая, миграции | Гибкая, без схемы |
+| Запросы | Полный SQL, включая JOIN | По ключу: `Query`, `GetItem` |
+| Масштабирование записи | Вертикальное, по инстансу | Горизонтальное, автоматическое |
+| Потолок масштаба | ~100k TPS (транзакций в секунду) на Aurora | Не ограничен, миллионы TPS |
+| Задержка | 1-10ms, плавает | Единицы миллисекунд, предсказуемо |
+| Транзакции | Полный ACID (атомарность, согласованность, изоляция, устойчивость) | Ограниченные: 25 items, 5 таблиц |
+| Связи | Внешние ключи и JOIN из коробки | Нужна денормализация |
+| Холодный старт с Lambda | Накладные расходы на соединение | Только вызов SDK (software development kit), соединений нет |
+| Эксплуатация | Управление инстансом | Полностью serverless |
+| Модель оплаты | За час инстанса | За запрос (On-Demand) |
 
-Выбирай DynamoDB когда:
-  ✓ Требуется масштаб (миллионы RPS, IoT, gaming, social feed)
-  ✓ Паттерны доступа известны заранее и простые
-  ✓ Lambda backend (нет connection pool проблемы)
-  ✓ Serverless архитектура (нет постоянных инстансов)
-  ✓ Session store, event log, real-time leaderboard
-  ✓ Предсказуемая low-latency latency обязательна
-```
+**Выбирайте RDS, когда:**
+
+- Связи между сущностями сложные: e-commerce, CRM (управление отношениями с клиентами), ERP (планирование ресурсов предприятия).
+- Нужны гибкие SQL-запросы для аналитики и отчётов.
+- ACID-транзакции критичны — финансы, инвентарь.
+- Команда знает SQL, а паттерны доступа не определены заранее.
+- Это стандартный fullstack-проект (Next.js + NestJS + PostgreSQL).
+
+**Выбирайте DynamoDB, когда:**
+
+- Требуется масштаб: миллионы RPS (запросов в секунду), IoT (Internet of Things — интернет вещей), gaming, social feed.
+- Паттерны доступа известны заранее и просты.
+- Бэкенд на Lambda, и проблемы пула соединений просто нет.
+- Архитектура serverless, постоянных инстансов нет.
+- Нужен session store, event log или real-time leaderboard.
+- Предсказуемо низкая задержка обязательна.
 
 ## Типичные ошибки на интервью
 
-- **"DynamoDB — это просто быстрая NoSQL, можно использовать везде вместо PostgreSQL"** — принципиальная разница: DynamoDB требует знания паттернов доступа ДО проектирования схемы. Если паттерны изменятся — схема меняется тяжело. PostgreSQL: можно добавить индекс и новый запрос без реструктуризации данных.
+- **"DynamoDB — это просто быстрая NoSQL, можно использовать везде вместо PostgreSQL"** — принципиальная разница: DynamoDB требует знания паттернов доступа **до** проектирования схемы. Если паттерны изменятся — схема меняется тяжело. PostgreSQL: можно добавить индекс и новый запрос без реструктуризации данных.
 
-- **"DynamoDB поддерживает транзакции, значит как PostgreSQL"** — транзакции DynamoDB ограничены: максимум 25 items и 5 таблиц за раз, платишь 2x RCU/WCU. PostgreSQL: ACID транзакции без ограничений по количеству строк, реальные FOREIGN KEY constraints.
+- **"DynamoDB поддерживает транзакции, значит как PostgreSQL"** — транзакции DynamoDB ограничены: максимум 25 items и 5 таблиц за раз, и вы платите 2x RCU/WCU. PostgreSQL: ACID транзакции без ограничений по количеству строк, реальные FOREIGN KEY constraints.
 
-- **"Для Lambda лучше DynamoDB потому что быстрее"** — правда о соединениях: Lambda + RDS имеет проблему connection pool exhaustion (1000 Lambda = 1000 соединений). Решение: RDS Proxy. DynamoDB: stateless HTTP-запросы, нет проблемы соединений. Но "быстрее" — зависит от запроса: сложный JOIN в PostgreSQL может быть быстрее, чем несколько GetItem в DynamoDB.
+- **"Для Lambda лучше DynamoDB потому что быстрее"** — правда о соединениях: Lambda + RDS имеет проблему connection pool exhaustion (1000 Lambda = 1000 соединений). Решение: RDS Proxy. DynamoDB: stateless HTTP-запросы, нет проблемы соединений. Но "быстрее" — зависит от запроса: сложный JOIN в PostgreSQL может быть быстрее, чем несколько вызовов `GetItem` в DynamoDB.
 
 - **"Single Table Design обязателен в DynamoDB"** — это лучшая практика, не требование. Для небольших проектов или начала — можно использовать несколько таблиц (Multi-Table Design). Single Table оптимально для high-traffic или когда нужны транзакции между разными типами сущностей.
 
-- **"RDS Aurora — это просто дорогой PostgreSQL"** — Aurora имеет другую архитектуру storage: shared distributed storage до 128TB, автоматически растущий, до 15 Read Replicas (vs 5 у RDS), failover <30 секунд (vs 60-120 у RDS). Aurora Serverless v2 — автоматическое масштабирование вычислений без предварительного provisioning.
+- **"RDS Aurora — это просто дорогой PostgreSQL"** — у Aurora другая архитектура хранилища. Хранилище общее и распределённое, растёт автоматически и доходит до 128TB. Read Replicas до 15 против 5 у RDS, переключение на резерв <30 секунд против 60-120 у RDS. Aurora Serverless v2 — автоматическое масштабирование вычислений без предварительного выделения ресурсов.

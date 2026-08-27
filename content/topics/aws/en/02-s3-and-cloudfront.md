@@ -2,55 +2,39 @@
 
 ## S3 — object storage, not a filesystem
 
-S3 (Simple Storage Service) is object storage: unlimited scaling, 11 nines durability (99.999999999%), data is automatically replicated across at least 3 AZs within a region.
+S3 (Simple Storage Service) is the object storage of AWS (Amazon Web Services). It scales without a limit and gives 11 nines of durability (99.999999999%). Data is replicated automatically across at least 3 availability zones within a region.
 
-```txt
-Key differences from a filesystem:
-  - No folder hierarchy: "folders" are just a prefix in the object key
-  - No partial file updates: replace the entire object
-  - Operations: PUT/GET/DELETE (no append, seek, lock)
-  - Access via HTTP API (or SDK), not filesystem mount
-    (EFS — if you need a filesystem for EC2)
+Four differences from a filesystem drive every design decision around S3:
 
-Object = key + data + metadata:
-  Key:      "avatars/user-123/profile.jpg"  (path is just a string)
-  Value:    file bytes (up to 5TB per object)
-  Metadata: Content-Type, Cache-Control, custom x-amz-meta-*
-```
+- No folder hierarchy. A "folder" is only a prefix inside the object key.
+- No partial file updates. You replace the entire object.
+- Three operations: PUT, GET, DELETE. There is no append, no seek, no lock.
+- Access over an HTTP API or an SDK (software development kit), never a mounted filesystem. If you do need a filesystem for EC2 (Elastic Compute Cloud), that is EFS (Elastic File System).
+
+An object is a key plus data plus metadata:
+
+- **Key** — `avatars/user-123/profile.jpg`. The path is just a string, not a directory tree.
+- **Value** — the file bytes, up to 5 terabytes per object.
+- **Metadata** — `Content-Type`, `Cache-Control`, and custom `x-amz-meta-*` entries.
 
 ## Storage Classes — choosing by access pattern
 
-```txt
-Standard:
-  Frequent access (>1x/month). Millisecond latency.
-  $0.023/GB/month. For active application data.
+S3 charges less for storage the longer you are willing to wait to read it back. Picking a class is a bet on how often the object will actually be read.
 
-Intelligent-Tiering:
-  Automatically moves between Hot/Cold tiers.
-  Plus $0.0025/1000 objects for monitoring.
-  For data with unpredictable access patterns.
+- **Standard** — frequent access, more than once a month, millisecond latency. $0.023 per gigabyte per month. For active application data.
+- **Intelligent-Tiering** — moves objects between hot and cold tiers on its own. Adds $0.0025 per 1000 objects for the monitoring. For data with unpredictable access patterns.
+- **Standard-IA (Infrequent Access)** — rare access, less than once a month, but retrieval still has to be fast. Cheaper storage, more expensive retrieval, 30-day minimum. For backups and disaster recovery (DR) copies.
+- **Glacier Instant Retrieval** — archive with millisecond access, 90-day minimum. For quarterly backups.
+- **Glacier Flexible Retrieval** — archive with 1-12 hour access, 90-day minimum. Expedited retrieval costs $0.03 per gigabyte, standard retrieval is free.
+- **Glacier Deep Archive** — archive for 7-10+ years, 12-48 hour access, cheapest of all at $0.00099 per gigabyte per month. For compliance data and medical records.
 
-Standard-IA (Infrequent Access):
-  Rare access (<1x/month), but fast retrieval needed.
-  Cheaper storage, more expensive retrieval. 30-day minimum.
-  For backups, DR copies.
+An S3 Lifecycle Policy moves objects between classes on a schedule, so nobody has to remember to do it:
 
-Glacier Instant Retrieval:
-  Archive, millisecond access. 90-day minimum. For quarterly backups.
-
-Glacier Flexible Retrieval:
-  Archive, 1-12h access (expedited: $0.03/GB, standard: free).
-  90-day minimum.
-
-Glacier Deep Archive:
-  7-10+ year archive, 12-48h access. Cheapest ($0.00099/GB/month).
-  Compliance data, medical records.
-
-S3 Lifecycle Policy: automatically transition objects between classes:
-  30 days → Standard-IA → 90 days → Glacier → 365 days → Deep Archive
-```
+`Standard` → 30 days → `Standard-IA` → 90 days → `Glacier` → 365 days → `Deep Archive`
 
 ## S3 security — three access control layers
+
+Three layers decide who may read a bucket, and the snippet sets them up in the right order. First the account-level public-access switch, then the policy on the bucket, then the policy on whoever is asking.
 
 ```typescript
 // 1. Block Public Access (mandatory for private buckets)
@@ -87,20 +71,17 @@ bucket.grantReadWrite(lambdaFunction);      // GetObject + PutObject
 
 A classic senior question: how to implement file uploads without proxying through your server?
 
-```txt
-Problem without Pre-Signed URL:
-  Client → Backend (10GB video) → S3
-  Downsides: traffic through your server (expensive, slow), backend load
+Without a pre-signed URL every byte travels client → backend → S3. A 10-gigabyte video crosses your server on the way: traffic you pay for, latency you add, and load your backend never needed.
 
-Solution with Pre-Signed URL:
-  1. Client → Backend: "I want to upload avatar.jpg"
-  2. Backend → AWS SDK: generate pre-signed PUT URL
-  3. Backend → Client: { url: "https://s3.amazonaws.com/...", fields: {...} }
-  4. Client → S3: PUT directly (Backend is not involved!)
-  5. S3 → Client: 200 OK
-  6. Client → Backend: "upload done, key: avatars/user-123/avatar.jpg"
-  7. Backend → DB: save the key to the user's profile
-```
+With a pre-signed URL the file goes straight to S3 and your backend only hands out permission:
+
+1. Client to backend: "I want to upload `avatar.jpg`".
+2. Backend asks the AWS SDK to generate a pre-signed PUT URL.
+3. Backend returns it: `{ url: "https://s3.amazonaws.com/...", fields: {...} }`.
+4. Client sends PUT directly to S3. The backend is not involved.
+5. S3 answers the client with `200 OK`.
+6. Client tells the backend: "upload done, key `avatars/user-123/avatar.jpg`".
+7. Backend saves that key to the user profile in the database.
 
 ```typescript
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -116,6 +97,8 @@ async function generateUploadUrl(userId: string, filename: string): Promise<stri
     Bucket: process.env.BUCKET_NAME!,
     Key: key,
     ContentType: 'image/jpeg',
+    // Size limits go through content conditions in the S3 bucket policy,
+    // or through Presigned POST
   });
 
   const url = await getSignedUrl(s3, command, {
@@ -142,17 +125,19 @@ async function generateDownloadUrl(key: string): Promise<string> {
 
 CloudFront is a Content Delivery Network: content is cached at 250+ Edge Locations worldwide. A request from Sydney to S3 in us-east-1 (~200ms) vs a Sydney Edge Location (~5ms).
 
-```txt
-How caching works:
-  1. Request → nearest Edge Location
-  2. Cache HIT: response is served immediately from edge cache
-  3. Cache MISS: EdgeLocation → Origin (S3/ALB/EC2/API GW) → cached
+Caching has only three states, and just one of them is fast:
 
-TTL is controlled by:
-  - Cache-Control header from Origin (max-age=86400)
-  - CloudFront Behavior settings (min/max/default TTL)
-  - Default: 24 hours
-```
+1. The request reaches the nearest edge location.
+2. Cache hit — the response is served immediately from the edge cache.
+3. Cache miss — the edge location goes to the origin and caches the answer on the way back. An origin can be S3, an ALB (Application Load Balancer), EC2 or API Gateway.
+
+Three things control the TTL (time to live) of a cached object:
+
+- The `Cache-Control` header sent by the origin, for example `max-age=86400`.
+- The min, max and default TTL in the CloudFront behavior settings.
+- The default of 24 hours, when nothing else says otherwise.
+
+The distribution below serves the bucket through an OAC (origin access control), so the bucket stays private and only CloudFront is allowed to read it.
 
 ```typescript
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
@@ -182,6 +167,8 @@ const distribution = new cloudfront.Distribution(this, 'Distribution', {
 ```
 
 ## Cache Invalidation — clearing stale cache
+
+Invalidation tells CloudFront to forget a path before its TTL runs out. You need it after a deploy that changed the content of a file without changing its name.
 
 ```typescript
 import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
@@ -215,31 +202,32 @@ Browser/CDN caches these forever (`max-age=31536000, immutable`). Only `index.ht
 
 ## SPA deployment on S3 + CloudFront
 
-```txt
-Architecture:
-  Next.js (static export) / React (CRA/Vite) → `npm run build`
-  dist/               → S3 bucket
-  CloudFront          → serves from S3, edge caching
-  Route53             → DNS → CloudFront distribution
+A single-page application (SPA) is a folder of static files, so it needs no server: S3 stores it and CloudFront serves it. The one thing that breaks is client-side routing, and the fix is a single setting.
 
-CloudFront settings for SPA:
-  Default Root Object: index.html
-  Error pages: 404 → /index.html (200) — for client-side routing
+**Architecture**
 
-SPA routing problem:
-  /dashboard → CloudFront → S3 looks for a "dashboard" object → 403/404
-  Solution: Custom Error Response 403/404 → /index.html (status 200)
-  React Router/Next.js Router handles the path on the client.
-```
+- Next.js (static export) or React built with CRA (Create React App) or Vite — `npm run build`.
+- `dist/` goes into an S3 bucket.
+- CloudFront serves from that bucket, with edge caching.
+- Route53 points DNS (domain name system) at the CloudFront distribution.
+
+**CloudFront settings**
+
+- Default Root Object: `index.html`.
+- Error pages: 404 → `/index.html` with status 200, which is what makes client-side routing work.
+
+**The routing problem**
+
+A request for `/dashboard` reaches CloudFront, CloudFront asks S3 for an object named `dashboard`, and S3 answers 403 or 404. The fix is a Custom Error Response mapping 403 and 404 to `/index.html` with status 200. React Router or the Next.js router then resolves the path on the client.
 
 ## Common interview mistakes
 
-- **"S3 is a filesystem"** — S3 is object storage. No real folders (only prefixes), no partial updates, no append operations. For a shared filesystem between EC2 — EFS. For block storage (EC2 disk) — EBS.
+- **"S3 is a filesystem"** — S3 is object storage. No real folders (only prefixes), no partial updates, no append operations. For a filesystem shared between EC2 instances, use EFS. For block storage, the disk of one EC2 instance, use EBS (Elastic Block Store).
 
 - **"Pre-Signed URL is needed to hide AWS credentials"** — the main purpose is to avoid proxying files through the backend. Credentials are never given to the client. The URL contains a server-signed signature valid for a limited time.
 
-- **"CloudFront is only needed for video"** — CloudFront accelerates any content, including JS/CSS/HTML. For SPA deployment, S3+CloudFront is essential: the S3 endpoint is slower (no edge caching), and there's no HTTPS for a custom domain without CloudFront.
+- **"CloudFront is only needed for video"** — CloudFront accelerates any content, including JS, CSS and HTML. For a single-page application, S3 + CloudFront is essential. The raw S3 endpoint is slower, because it has no edge caching, and it cannot give you HTTPS (encrypted HTTP) on a custom domain.
 
 - **"Cache Invalidation `/*` is the right way to update the cache"** — it works, but it's not optimal. Invalidating `/*` costs money (>1000 invalidations/month are paid), and takes time (~1-5 min). The right approach: content-hashed filenames + only invalidate `index.html`.
 
-- **"A CloudFront SSL certificate can be created in any region"** — for CloudFront, an ACM certificate MUST be in the `us-east-1` region (CloudFront, being a global service, only reads certificates from there). A common mistake: create a certificate in eu-west-1 → CloudFront doesn't see it.
+- **"A CloudFront SSL certificate can be created in any region"** — no. The SSL (Secure Sockets Layer) certificate for CloudFront **must** sit in `us-east-1`, and it is issued by ACM (AWS Certificate Manager). CloudFront is a global service and reads certificates only from that one region. The common mistake is creating the certificate in `eu-west-1`, after which CloudFront never sees it.

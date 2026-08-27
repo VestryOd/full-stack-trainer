@@ -2,21 +2,23 @@
 
 ## What is SNS and when to use it
 
-SNS (Simple Notification Service) is a managed AWS Pub/Sub service. One publisher → one Topic → N subscribers all receive a copy of the message simultaneously. Unlike SQS (point-to-point), SNS implements fan-out: one event, many recipients.
+SNS (Simple Notification Service) is a managed Pub/Sub service from AWS (Amazon Web Services). One publisher → one Topic → N subscribers all receive a copy of the message simultaneously. Unlike SQS (Simple Queue Service), which is point-to-point, SNS implements fan-out: one event, many recipients.
 
-```txt
-SQS (Point-to-Point):
-  Order Service → SQS → one Consumer
-  If Consumer is slow → message waits in the queue
-  If 3 Consumers are needed → 3 separate SQS queues → 3 separate calls
+The difference shows up as soon as a second consumer appears.
 
-SNS (Pub/Sub):
-  Order Service → SNS Topic → all subscribers receive a copy
-  Add a new consumer → just subscribe it to the Topic
-  Order Service has no knowledge of who the consumers are
-```
+**SQS — point-to-point.** The flow is `Order Service → SQS → one consumer`.
+
+- If the consumer is slow, the message waits in the queue.
+- Three consumers mean three separate SQS queues and three separate calls.
+
+**SNS — Pub/Sub.** The flow is `Order Service → SNS Topic → every subscriber gets a copy`.
+
+- Adding a consumer is one action: subscribe it to the Topic.
+- Order Service has no knowledge of who the consumers are.
 
 ## Topic and subscribers — integration types
+
+Publishing is a single `PublishCommand` against the Topic ARN (Amazon Resource Name). The message attributes you attach here are what subscribers can filter on later.
 
 ```typescript
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
@@ -42,22 +44,26 @@ async function publishOrderCreated(order: Order): Promise<void> {
 }
 ```
 
-```txt
-SNS subscriber types:
-  SQS      → queue receives the message (most common, adds buffer + retry)
-  Lambda   → invoked directly (async, no buffer)
-  HTTP/S   → POST to an endpoint (webhooks)
-  Email    → email is sent (for alerts)
-  SMS      → SMS is sent (for critical alerts)
-  Kinesis  → streaming pipeline
+A Topic can push to six kinds of subscriber:
 
-SQS vs Lambda as subscriber:
-  SQS:    buffer + retry + DLQ + batch processing → more reliable
-  Lambda: instant processing, no buffer → if Lambda fails, retry is limited
-  Production: SNS → SQS → Lambda (double protection)
-```
+| Subscriber | What the Topic delivers to it |
+|---|---|
+| SQS | Queue receives the message. Most common — adds a buffer and retry. |
+| Lambda | Invoked directly — async, no buffer. |
+| HTTP/S | A POST to an endpoint (webhooks). |
+| Email | An email is sent (for alerts). |
+| SMS (Short Message Service) | A text message is sent (for critical alerts). |
+| Kinesis | Message goes into a streaming pipeline. |
+
+**SQS or Lambda as the subscriber** is the choice that matters most:
+
+- SQS: buffer, retry, DLQ (dead-letter queue) and batch processing — more reliable.
+- Lambda: instant processing, no buffer — if Lambda fails, retry is limited.
+- Production default: SNS → SQS → Lambda, double protection.
 
 ## Fan-Out Pattern — SNS + SQS
+
+Fan-out means one publish call reaches every interested service. The CDK (Cloud Development Kit) stack below gives each consumer its own queue, so retry, DLQ and scaling stay independent.
 
 ```typescript
 // CDK: SNS Topic + fan-out to multiple SQS queues
@@ -102,20 +108,19 @@ Fan-Out Pattern flow:
        ├── SQS_Billing   → Lambda_Billing (payment processing)
        ├── SQS_Email     → Lambda_Email (confirmation email)
        └── SQS_Analytics → Lambda_Analytics (metrics)
-
-Benefits:
-  Order Service makes ONE call (SNS Publish)
-  Each downstream service: independent retry, DLQ, scaling
-  Add a new service → subscribe a new SQS → Order Service unchanged
 ```
+
+Three things follow from that shape:
+
+- Order Service makes exactly one call: a single SNS publish.
+- Each downstream service: independent retry, DLQ, scaling.
+- Adding a new service means subscribing a new SQS queue — Order Service unchanged.
 
 ## SNS Message Filtering — selective delivery
 
-```typescript
-// Problem: different event types are published to the Topic
-// Without filtering: every subscriber receives EVERYTHING → checks the type itself
-// With filtering: SNS delivers only the relevant messages to each subscriber
+Different event types are published to the same Topic. Without filtering, every subscriber receives all of them and has to check the type itself. With a filter policy, SNS delivers only the relevant messages to each subscriber.
 
+```typescript
 // CDK: subscription with a filter on MessageAttribute
 orderTopic.addSubscription(new snsSubscriptions.SqsSubscription(euBillingQueue, {
   filterPolicy: {
@@ -140,33 +145,36 @@ orderTopic.addSubscription(new snsSubscriptions.SqsSubscription(usBillingQueue, 
 
 ## SNS vs SQS vs EventBridge
 
-```txt
-SQS (Simple Queue Service):
-  Pattern:   Point-to-Point (one consumer)
-  Storage:   stores messages up to 14 days
-  Retry:     Visibility Timeout + DLQ
-  Ordering:  Standard (best-effort) / FIFO (strict)
-  Use when:  tasks that should be processed by a single worker
+All three move events between services. They differ in who receives a message, whether it is stored, and how much routing you get.
 
-SNS (Simple Notification Service):
-  Pattern:   Pub/Sub (many subscribers)
-  Storage:   no storage (fire-and-forget, retry is limited)
-  Retry:     for HTTP: 3 attempts; for SQS/Lambda: reliable
-  Filtering: Message Filtering by attributes
-  Use when:  fan-out, domain events, notifications
+**SQS (Simple Queue Service)**
 
-EventBridge:
-  Pattern:   Event Bus (routing by event patterns)
-  Storage:   no storage
-  Routing:   complex rules on JSON content
-  Sources:   AWS services, SaaS (Salesforce, Datadog), custom
-  Use when:  complex event routing logic, AWS service integration,
-             cron jobs (Scheduled Rules), cross-account events
+- Pattern: point-to-point, one consumer.
+- Storage: stores messages up to 14 days.
+- Retry: Visibility Timeout plus DLQ.
+- Ordering: Standard is best-effort, FIFO (first in, first out) is strict.
+- Use when: tasks that should be processed by a single worker.
 
-Common question: "When SNS, when EventBridge?"
-  SNS: simple fan-out by event type, filtering by attributes
-  EventBridge: routing by JSON body fields, many rules, cron, SaaS integrations
-```
+**SNS**
+
+- Pattern: Pub/Sub, many subscribers.
+- Storage: none — fire-and-forget, and retry is limited.
+- Retry: for HTTP, 3 attempts; for SQS and Lambda, reliable.
+- Filtering: Message Filtering by attributes.
+- Use when: fan-out, domain events, notifications.
+
+**EventBridge**
+
+- Pattern: event bus, routing by event patterns.
+- Storage: none.
+- Routing: complex rules on JSON content.
+- Sources: AWS services, SaaS (Salesforce, Datadog), custom.
+- Use when: complex event routing logic, AWS service integration, cron jobs (Scheduled Rules), cross-account events.
+
+A common interview question is "when SNS, when EventBridge?"
+
+- SNS: simple fan-out by event type, filtering by attributes.
+- EventBridge: routing by JSON body fields, many rules, cron, SaaS integrations.
 
 ## Common interview mistakes
 
@@ -174,7 +182,7 @@ Common question: "When SNS, when EventBridge?"
 
 - **"SQS and SNS are interchangeable"** — they implement different patterns. SQS = one consumer pulls a message from the queue. SNS = push to all subscribers. Fan-out requires SNS (or EventBridge). For "one worker processes it" — SQS.
 
-- **"SNS Fan-Out adds unnecessary complexity"** — without SNS, to notify 3 services the Order Service makes 3 HTTP calls: tight coupling, if one fails the Order Service must handle it. With SNS: one call + each service retries independently. Adding a 4th service = subscribe it, no changes to the Order Service.
+- **"SNS Fan-Out adds unnecessary complexity"** — without SNS, notifying 3 services means 3 HTTP calls from the Order Service. That is tight coupling: if one call fails, the Order Service must handle it. With SNS it is one call, and each service retries independently. Adding a 4th service = subscribe it, no changes to the Order Service.
 
 - **"SNS Message Filtering works on the message body"** — no. SNS Message Filtering works only on Message Attributes (metadata), not on the JSON body. For filtering by body content → use EventBridge (supports content-based filtering on JSON fields).
 

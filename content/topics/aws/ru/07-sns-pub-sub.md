@@ -3,21 +3,23 @@
 
 ## Что такое SNS и когда он нужен
 
-SNS (Simple Notification Service) — managed Pub/Sub сервис AWS. Один publisher → один Topic → N subscribers получают копию сообщения одновременно. В отличие от SQS (point-to-point), SNS реализует fan-out: одно событие, много получателей.
+SNS (Simple Notification Service) — управляемый сервис Pub/Sub от AWS (Amazon Web Services). Один издатель → один Topic → N подписчиков получают копию сообщения одновременно. В отличие от SQS (Simple Queue Service), который работает по схеме «точка-точка» (point-to-point), SNS реализует fan-out: одно событие, много получателей.
 
-```txt
-SQS (Point-to-Point):
-  Order Service → SQS → один Consumer
-  Если Consumer медленный → сообщение ждёт в очереди
-  Если нужны 3 Consumer → 3 разных SQS очереди → 3 отдельных вызова
+Разница видна сразу, как только появляется второй потребитель.
 
-SNS (Pub/Sub):
-  Order Service → SNS Topic → все подписчики получают копию
-  Добавить нового потребителя → просто подписать его на Topic
-  Order Service не знает о существовании конкретных потребителей
-```
+**SQS — точка-точка.** Поток такой: `Order Service → SQS → один потребитель`.
+
+- Если потребитель медленный, сообщение ждёт в очереди.
+- Три потребителя — это три разные очереди SQS и три отдельных вызова.
+
+**SNS — Pub/Sub.** Поток такой: `Order Service → SNS Topic → копию получает каждый подписчик`.
+
+- Добавить потребителя — одно действие: подписать его на Topic.
+- Order Service не знает о существовании конкретных потребителей.
 
 ## Topic и подписчики — типы интеграций
+
+Публикация — это один вызов `PublishCommand` в Topic ARN (Amazon Resource Name — уникальный идентификатор ресурса AWS). Атрибуты сообщения, которые вы прикрепляете здесь, — это то, по чему подписчики потом фильтруют.
 
 ```typescript
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
@@ -43,22 +45,26 @@ async function publishOrderCreated(order: Order): Promise<void> {
 }
 ```
 
-```txt
-Типы подписчиков SNS:
-  SQS      → queue получает сообщение (most common, добавляет буфер + retry)
-  Lambda   → вызывается напрямую (асинхронно, без буфера)
-  HTTP/S   → POST на endpoint (webhooks)
-  Email    → отправляется письмо (для алертов)
-  SMS      → отправляется СМС (для критических алертов)
-  Kinesis  → стриминг pipeline
+Topic умеет доставлять в шесть типов подписчиков:
 
-SQS vs Lambda как subscriber:
-  SQS:    буфер + retry + DLQ + batch processing → надёжнее
-  Lambda: мгновенная обработка, нет буфера → если Lambda упала, retry ограничен
-  Production: SNS → SQS → Lambda (двойная защита)
-```
+| Подписчик | Что он получает от Topic |
+|---|---|
+| SQS | Сообщение попадает в очередь. Самый частый вариант — добавляет буфер и повторы. |
+| Lambda | Функция вызывается напрямую — асинхронно, без буфера. |
+| HTTP/S | POST на endpoint (вебхуки). |
+| Email | Отправляется письмо (для алертов). |
+| SMS (Short Message Service) | Отправляется текстовое сообщение на телефон (для критических алертов). |
+| Kinesis | Сообщение уходит в стриминговый конвейер (streaming pipeline). |
+
+**SQS или Lambda как подписчик** — это главный выбор здесь:
+
+- SQS: буфер, повторы, DLQ (dead-letter queue — очередь необработанных сообщений), пакетная обработка — надёжнее.
+- Lambda: мгновенная обработка без буфера — если Lambda упала, повторы ограничены.
+- Стандарт для production: SNS → SQS → Lambda, двойная защита.
 
 ## Fan-Out Pattern — SNS + SQS
+
+Fan-out означает, что один вызов публикации доходит до каждого заинтересованного сервиса. Стек CDK (Cloud Development Kit) ниже даёт каждому потребителю свою очередь, поэтому повторы, DLQ и масштабирование независимы.
 
 ```typescript
 // CDK: SNS Topic + fan-out в несколько SQS
@@ -103,20 +109,19 @@ Flow Fan-Out Pattern:
        ├── SQS_Billing → Lambda_Billing (payment processing)
        ├── SQS_Email   → Lambda_Email (confirmation email)
        └── SQS_Analytics → Lambda_Analytics (metrics)
-
-Преимущества:
-  Order Service делает ОДИН вызов (SNS Publish)
-  Каждый downstream сервис: независимый retry, DLQ, масштабирование
-  Добавить новый сервис → подписать новую SQS → Order Service не трогать
 ```
+
+Из этой схемы следуют три вещи:
+
+- Order Service делает ровно один вызов: одну публикацию в SNS.
+- У каждого сервиса-потребителя свои повторы, DLQ и масштабирование.
+- Добавить новый сервис — подписать новую очередь SQS, Order Service не трогаем.
 
 ## SNS Message Filtering — избирательная доставка
 
-```typescript
-// Проблема: в Topic приходят разные типы событий
-// Без фильтрации: каждый subscriber получает ВСЁ → сам проверяет тип
-// С фильтрацией: SNS доставляет subscriber только нужные сообщения
+В один Topic приходят разные типы событий. Без фильтрации каждый подписчик получает их все и сам проверяет тип. С фильтром SNS доставляет подписчику только нужные сообщения.
 
+```typescript
 // CDK: подписка с фильтром по MessageAttribute
 orderTopic.addSubscription(new snsSubscriptions.SqsSubscription(euBillingQueue, {
   filterPolicy: {
@@ -141,33 +146,36 @@ orderTopic.addSubscription(new snsSubscriptions.SqsSubscription(usBillingQueue, 
 
 ## SNS vs SQS vs EventBridge
 
-```txt
-SQS (Simple Queue Service):
-  Паттерн:    Point-to-Point (один consumer)
-  Хранение:   сохраняет сообщения до 14 дней
-  Retry:      Visibility Timeout + DLQ
-  Ordering:   Standard (best-effort) / FIFO (strict)
-  Когда:      задачи, которые должен выполнить один worker
+Все три переносят события между сервисами. Разница в том, кто получает сообщение, хранится ли оно и сколько маршрутизации вам достаётся.
 
-SNS (Simple Notification Service):
-  Паттерн:    Pub/Sub (много subscribers)
-  Хранение:   не хранит (fire-and-forget, retry ограничен)
-  Retry:      для HTTP: 3 попытки; для SQS/Lambda: надёжнее
-  Filtering:  Message Filtering по атрибутам
-  Когда:      fan-out, domain events, notifications
+**SQS (Simple Queue Service)**
 
-EventBridge:
-  Паттерн:    Event Bus (routing по event patterns)
-  Хранение:   не хранит
-  Routing:    сложные rules по содержимому JSON
-  Sources:    AWS сервисы, SaaS (Salesforce, Datadog), custom
-  Когда:      сложная event routing логика, интеграция с AWS сервисами,
-              cron jobs (Scheduled Rules), cross-account events
+- Паттерн: точка-точка, один потребитель.
+- Хранение: сохраняет сообщения до 14 дней.
+- Повторы: Visibility Timeout плюс DLQ.
+- Порядок: Standard — по возможности, FIFO (first in, first out) — строгий.
+- Когда: задачи, которые должен выполнить один worker.
 
-Частый вопрос: "Когда SNS, когда EventBridge?"
-  SNS: простой fan-out по типу события, фильтрация по атрибутам
-  EventBridge: routing по полям JSON тела, много rules, cron, SaaS интеграции
-```
+**SNS**
+
+- Паттерн: Pub/Sub, много подписчиков.
+- Хранение: не хранит — fire-and-forget, повторы ограничены.
+- Повторы: для HTTP 3 попытки; для SQS и Lambda надёжнее.
+- Фильтрация: Message Filtering по атрибутам.
+- Когда: fan-out, доменные события, уведомления.
+
+**EventBridge**
+
+- Паттерн: шина событий, маршрутизация по шаблонам событий.
+- Хранение: не хранит.
+- Маршрутизация: сложные правила по содержимому JSON.
+- Источники: сервисы AWS, SaaS (Salesforce, Datadog), свои события.
+- Когда: сложная логика маршрутизации, интеграция с сервисами AWS, задачи по расписанию (Scheduled Rules), события между аккаунтами.
+
+Частый вопрос на собеседовании: «Когда SNS, а когда EventBridge?»
+
+- SNS: простой fan-out по типу события, фильтрация по атрибутам.
+- EventBridge: маршрутизация по полям тела JSON, много правил, cron, интеграции с SaaS.
 
 ## Типичные ошибки на интервью
 

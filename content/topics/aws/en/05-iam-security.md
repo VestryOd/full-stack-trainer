@@ -2,20 +2,20 @@
 
 ## What is IAM
 
-IAM (Identity and Access Management) is AWS's authentication and authorization system. It answers two questions: who are you (Identity) and what are you allowed to do (Access Management).
+IAM (Identity and Access Management) is the authentication and authorization system of AWS (Amazon Web Services). It answers two questions: who are you (Identity) and what are you allowed to do (Access Management).
 
-```txt
-Core IAM entities:
-  User   — human user or service account
-  Group  — group of users with shared permissions
-  Role   — a set of permissions that an AWS service or user can assume
-  Policy — a JSON document describing what is allowed/denied
+Four entities carry all of it:
 
-Hierarchy:
-  User / Group / Role → attach → Policy → defines permissions
-```
+- **User** — a human user, or a service account.
+- **Group** — a group of users with shared permissions.
+- **Role** — a set of permissions that an AWS service or a user can assume.
+- **Policy** — a JSON document describing what is allowed and what is denied.
+
+They stack in one direction. You attach a Policy to a User, a Group or a Role, and that Policy is what defines the permissions.
 
 ## Policy — structure and evaluation mechanism
+
+A policy is a JSON document with a list of statements. The one below allows two S3 (Simple Storage Service) actions under a single prefix, and denies deletion outright.
 
 ```json
 {
@@ -43,20 +43,22 @@ Hierarchy:
 }
 ```
 
-```txt
-Policy Evaluation Logic:
-  1. Default: everything is DENY (implicit deny)
-  2. If there is an explicit Allow → permitted
-  3. If there is an explicit Deny → always overrides Allow
+**How a policy is evaluated**
 
-Policy types:
-  Identity-based:  attached to User/Group/Role
-  Resource-based:  attached to the resource (S3 Bucket Policy, Lambda Resource Policy)
-  SCP (Org-level): limits the entire AWS Organization
-  Permission Boundary: maximum allowed permissions for a role
-```
+1. Everything is denied by default. This is the implicit deny.
+2. An explicit Allow permits the action.
+3. An explicit Deny always overrides an Allow.
+
+**Policy types**
+
+- **Identity-based** — attached to a User, a Group or a Role.
+- **Resource-based** — attached to the resource itself: an S3 Bucket Policy, a Lambda Resource Policy.
+- **SCP (Service Control Policy)** — an organization-level policy that limits the entire AWS Organization.
+- **Permission Boundary** — the maximum permissions a role is ever allowed to hold.
 
 ## IAM Role — why it's better than Access Keys
+
+A Role beats Access Keys on one property: the credentials it hands out expire by themselves. The snippet puts the two side by side.
 
 ```typescript
 // Bad: hardcoded Access Keys in code or env files
@@ -75,19 +77,18 @@ const s3 = new S3Client({ region: process.env.AWS_REGION });
 // AWS_SESSION_TOKEN from env vars that Lambda Runtime sets
 ```
 
-```txt
-Temporary credentials (STS — Security Token Service):
-  AccessKeyId:     temporary (looks like a regular one)
-  SecretAccessKey: temporary
-  SessionToken:    confirms this is a temporary credential
-  Expiration:      typically 1-12 hours
+Those temporary credentials come from STS (Security Token Service) and have four fields:
 
-Lambda gets temporary credentials automatically:
-  Lambda Runtime → IMDS endpoint → STS → credentials → SDK
-  No need to store AWS_ACCESS_KEY/SECRET anywhere in code
-```
+- `AccessKeyId` — temporary, even though it looks like a regular one.
+- `SecretAccessKey` — temporary.
+- `SessionToken` — the field that confirms this is a temporary credential.
+- `Expiration` — typically 1-12 hours.
+
+Lambda obtains them with no code from you. The Lambda runtime calls the IMDS (instance metadata service) endpoint, IMDS calls STS, and the SDK (software development kit) picks the credentials up. No `AWS_ACCESS_KEY` or `AWS_SECRET` has to be stored anywhere in the code.
 
 ## Trust Policy — who can assume the role
+
+A role carries two different policies, and confusing them is the classic mistake. The Trust Policy says who may assume the role; the permission policy says what the role may do afterwards.
 
 ```typescript
 // CDK: creating an IAM Role for Lambda with Trust Policy
@@ -119,20 +120,26 @@ const crossAccountRole = new iam.Role(this, 'CrossAccountRole', {
 });
 ```
 
-```txt
-Trust Policy structure (JSON):
+The Trust Policy itself is a short JSON document:
+
+```json
 {
   "Principal": { "Service": "lambda.amazonaws.com" },
   "Action": "sts:AssumeRole",
   "Effect": "Allow"
 }
-
-Distinction:
-  Trust Policy      → who can assume the role (Who)
-  Permission Policy → what the role can do (What)
 ```
 
+The distinction worth memorizing:
+
+| Policy | Question it answers |
+|---|---|
+| Trust Policy | Who can assume the role |
+| Permission Policy | What the role can do |
+
 ## Principle of Least Privilege — in practice
+
+Least privilege is about naming the exact resource, not the exact service. Below, an admin role that should never exist stands next to a role scoped to one bucket prefix, one table and one queue.
 
 ```typescript
 // Bad: AdministratorAccess for Lambda
@@ -161,6 +168,8 @@ queue.grantSendMessages(handler);
 
 ## Resource-based Policy — direct resource access
 
+A resource-based policy hangs on the resource instead of the caller, and that is the only way to let another service reach it. Here CloudFront gets read access to a bucket, and API Gateway gets permission to invoke a Lambda.
+
 ```typescript
 // S3 Bucket Policy: allow CloudFront to read objects
 const bucketPolicy = new iam.PolicyStatement({
@@ -187,6 +196,8 @@ new lambda.CfnPermission(this, 'ApiGwPermission', {
 ```
 
 ## IAM in development — practical patterns
+
+Three patterns cover almost all day-to-day IAM work. CDK (Cloud Development Kit) grant methods replace hand-written policies. Conditions narrow a permission down to tags or time. AssumeRole opens a temporary door into another account.
 
 ```typescript
 // 1. CDK Grants — ready-made Least Privilege methods
@@ -224,12 +235,12 @@ async function assumeRole(roleArn: string) {
 
 ## Common interview mistakes
 
-- **"IAM User is better suited for services than Role"** — the opposite: services (Lambda, EC2, ECS) should use IAM Roles. A User with Access Keys is a long-lived credential: if it leaks, you must manually rotate it. A Role issues temporary credentials automatically via STS.
+- **"IAM User is better suited for services than Role"** — the opposite is true. Services such as Lambda, EC2 (Elastic Compute Cloud) and ECS (Elastic Container Service) should use IAM Roles. A User with Access Keys is a long-lived credential: if it leaks, you have to rotate it by hand. A Role issues temporary credentials automatically through STS.
 
-- **"Resource `*` in a Policy is fine for a single action"** — no. `"Resource": "*"` means the action applies to ALL resources of that type in the account. For S3, that's all buckets; for DynamoDB — all tables. Always specify a concrete ARN.
+- **"Resource `*` in a Policy is fine for a single action"** — no. `"Resource": "*"` means the action applies to **every** resource of that type in the account. For S3 that is all buckets, for DynamoDB all tables. Always name a concrete ARN (Amazon Resource Name).
 
 - **"A Deny in one Policy can be overridden by an Allow in another"** — explicit Deny always wins. You cannot "re-allow" something explicitly denied by adding an Allow in another policy. Implicit deny (not mentioned) can be overridden by an Allow.
 
-- **"Permission Boundary = maximum permissions on an Identity"** — correct, but with an important nuance: even if the Permission Boundary allows an action, there must also be an Identity Policy that explicitly allows it. Permission Boundary only restricts, it does not grant.
+- **"Permission Boundary = maximum permissions on an Identity"** — correct, with one important nuance. Even when the Permission Boundary allows an action, an Identity Policy still has to allow it explicitly. A Permission Boundary only restricts; it never grants.
 
-- **"An IAM Role can't be shared between accounts"** — it can, via Cross-Account Role: the Trust Policy of a role in account A allows a Principal from account B to call `sts:AssumeRole`. Account B calls AssumeRole → gets temporary credentials → works with resources in account A. This is the foundation of multi-account architectures.
+- **"An IAM Role can't be shared between accounts"** — it can, through a Cross-Account Role. The Trust Policy of a role in account A allows a Principal from account B to call `sts:AssumeRole`. Account B calls AssumeRole, receives temporary credentials, and works with resources in account A. This is the foundation of multi-account architectures.

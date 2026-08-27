@@ -2,80 +2,79 @@
 
 ## What is SQS and why queues exist
 
-SQS (Simple Queue Service) is a managed AWS message queue. It decouples services: the producer sends a message and forgets about it; the consumer processes it independently.
+SQS (Simple Queue Service) is the managed message queue of AWS (Amazon Web Services). It decouples services: the producer sends a message and forgets about it; the consumer processes it independently.
 
-```txt
-Problem without a queue (tight coupling):
-  API → Email Service (synchronous)
-  If Email Service crashes → API also returns an error
-  If Email Service is slow → API hangs waiting
-  If load grows → both services become overloaded together
+**Without a queue the two services are tightly coupled.** The API calls the Email Service synchronously, and every failure of one becomes a failure of the other:
 
-With SQS (loose coupling):
-  API → SQS → Email Service
-  API: sent the message, got 200 OK immediately
-  Email Service crashes → message stays in the queue, automatic retry
-  Email Service is slow → accumulates a backlog, processes at its own pace
-  Load increases → scale consumers independently
-```
+- If the Email Service crashes, the API returns an error too.
+- If the Email Service is slow, the API hangs waiting for it.
+- If load grows, both services get overloaded together.
+
+**With SQS between them the coupling is loose.** The API writes to the queue and the Email Service reads from it at its own speed:
+
+- The API sends the message and gets `200 OK` immediately.
+- If the Email Service crashes, the message stays in the queue and is retried automatically.
+- If the Email Service is slow, a backlog accumulates and it processes at its own pace.
+- If load grows, you scale the consumers independently.
 
 ## Visibility Timeout and at-least-once delivery
 
-```txt
-Message lifecycle in SQS:
+Reading a message neither locks it nor deletes it. SQS only hides it for a while, and that single design choice is what makes at-least-once delivery unavoidable.
 
-1. Producer → SQS: SendMessage → message in queue (visible)
-2. Consumer → SQS: ReceiveMessage → message becomes invisible
-   (Visibility Timeout starts, default 30 sec)
-3. Consumer processes the message...
-4a. Success: Consumer → SQS: DeleteMessage → message deleted
-4b. Consumer crashed / timeout expired → message becomes visible again
-    → another consumer (or the same) will receive it again
+The lifecycle of one message:
 
-Key point:
-  SQS guarantees At-Least-Once Delivery (Standard Queue)
-  A message can be delivered MORE than once
-  → Handlers must be IDEMPOTENT
-```
+1. The producer calls `SendMessage`, and the message sits in the queue, visible.
+2. A consumer calls `ReceiveMessage`, and the message becomes invisible. The Visibility Timeout starts here, 30 seconds by default.
+3. The consumer processes the message.
+4. On success the consumer calls `DeleteMessage`, and the message is deleted.
+5. If the consumer crashes, or the timeout expires first, the message becomes visible again. Another consumer, or the same one, will receive it again.
+
+Key point: SQS guarantees At-Least-Once Delivery on a Standard Queue. One message can be delivered **more** than once, so handlers must be **idempotent**.
 
 ## Standard Queue vs FIFO Queue
 
-```txt
-Standard Queue:
-  Throughput: unlimited (virtually unlimited TPS)
-  Order:      Best-effort ordering (not guaranteed)
-  Duplicates: possible (At-Least-Once Delivery)
-  Use when:   most tasks: email, notifications, background jobs
+FIFO stands for first-in-first-out, and that ordering guarantee is exactly what costs you throughput. The two queue types trade one against the other.
 
-FIFO Queue (.fifo suffix):
-  Throughput: 3000 messages/sec with batching, 300 without
-  Order:      strict (First-In-First-Out within a MessageGroupId)
-  Duplicates: eliminated (Exactly-Once Processing, 5-minute dedup window)
-  Use when:   financial transactions, ordering systems, state machines
+**Standard Queue**
 
-  MessageGroupId: allows multiple "streams" inside one FIFO queue
-  DeduplicationId: hash of message body or explicit ID for deduplication
-```
+- Throughput: unlimited, or virtually unlimited transactions per second.
+- Order: best-effort ordering, not guaranteed.
+- Duplicates: possible, because delivery is at-least-once.
+- Use for most tasks: email, notifications, background jobs.
+
+**FIFO Queue (the `.fifo` suffix)**
+
+- Throughput: 3000 messages per second with batching, 300 without.
+- Order: strict, first-in-first-out within one `MessageGroupId`.
+- Duplicates: eliminated — exactly-once processing, with a 5-minute deduplication window.
+- Use for financial transactions, ordering systems, state machines.
+
+Two identifiers steer a FIFO queue. `MessageGroupId` lets several independent "streams" live inside one queue, each keeping its own order. `DeduplicationId` is a hash of the message body, or an explicit id you supply for deduplication.
 
 ## Dead Letter Queue (DLQ)
 
-```txt
-Problem: a message repeatedly fails processing
-  → Consumer takes it → exception → Visibility Timeout expires
-  → Becomes visible again → Consumer takes it again → exception...
-  → Infinite loop, blocking the queue
+A DLQ is where messages go when they will never succeed. Without one, a single bad message loops forever and blocks everything behind it.
 
-DLQ solution:
-  After N attempts (maxReceiveCount) → message moves to DLQ
-  DLQ is a regular SQS queue, separate from the main one
+**The problem: a message that repeatedly fails processing**
 
-What to do with DLQ messages:
-  - CloudWatch alarm → team gets notified
-  - Analyze messages: what went wrong?
-  - Replay: after fixing the bug → move back to the main queue
-```
+1. A consumer takes it and throws an exception.
+2. The Visibility Timeout expires and the message becomes visible again.
+3. Another consumer takes it and throws again.
+4. The loop is infinite, and it blocks the queue.
+
+**The DLQ solution**
+
+After N attempts, counted by `maxReceiveCount`, the message is moved to the DLQ. The DLQ is an ordinary SQS queue, separate from the main one.
+
+**What to do with the messages that land there**
+
+- Raise a CloudWatch alarm, so the team gets notified.
+- Analyze the messages: what went wrong?
+- Replay them — after the bug is fixed, move them back to the main queue.
 
 ## Lambda + SQS — event source mapping
+
+Event source mapping makes Lambda poll the queue for you, so no `ReceiveMessage` loop appears in your code. The first snippet is the producer and the consumer; the second wires a queue, a DLQ and the function together in CDK (Cloud Development Kit).
 
 ```typescript
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
@@ -152,6 +151,8 @@ emailProcessor.addEventSource(new lambdaEventSources.SqsEventSource(emailQueue, 
 
 ## Idempotency — a mandatory requirement
 
+Because SQS can deliver the same message twice, a handler that is not idempotent sends two welcome emails. The fix is to record the `messageId` of everything already processed and skip the repeats.
+
 ```typescript
 // Problem: SQS may deliver a message twice
 // Without idempotency: user receives 2 welcome emails
@@ -163,7 +164,10 @@ async function sendWelcomeEmail(userId: string): Promise<void> {
 }
 
 // Good: idempotent via DB flag
-async function sendWelcomeEmailIdempotent(userId: string, messageId: string): Promise<void> {
+async function sendWelcomeEmailIdempotent(
+  userId: string,
+  messageId: string,
+): Promise<void> {
   // Check if already processed (use SQS messageId as the key)
   const alreadyProcessed = await db.processedMessages.findOne({ messageId });
   if (alreadyProcessed) {
@@ -188,34 +192,39 @@ export async function handler(event: SQSEvent) {
 
 ## Event-Driven Architecture
 
-```txt
-Traditional (synchronous / tight coupling):
-  Order Service → HTTP → Payment Service → HTTP → Inventory → HTTP → Email
-  Downside: one fails → the whole chain fails
-  Downside: adding a new consumer requires changing Order Service
+The difference between the two styles is who has to know about whom. In a synchronous chain every service knows its successor by name. In the event-driven version the publisher knows none of its subscribers.
 
-Event-Driven (asynchronous / loose coupling):
-  Order Service → publish "OrderCreated" event → SQS/SNS/EventBridge
-                                                     ↓
-                                          Payment Lambda (subscribe)
-                                          Inventory Lambda (subscribe)
-                                          Email Lambda (subscribe)
-                                          Analytics Lambda (subscribe)
+**Traditional: synchronous, tight coupling**
 
-Benefits:
-  → Services are independent: one fails → the rest keep running
-  → Add a new consumer → no changes to Order Service
-  → Scale independently
-  → Retry and DLQ are built in
+`Order Service → HTTP → Payment Service → HTTP → Inventory → HTTP → Email`
 
-Real-world flow example:
-  POST /orders
-  → Order Service saves to DB, publishes "OrderCreated" to SNS
-  → SNS fan-out → SQS_Payment + SQS_Email + SQS_Analytics
-  → Lambda_Payment processes payment (retry 3x, then DLQ)
-  → Lambda_Email sends confirmation (idempotent)
-  → Lambda_Analytics records metric (idempotent)
-```
+- One service fails and the whole chain fails.
+- Adding a new consumer requires changing Order Service.
+
+**Event-driven: asynchronous, loose coupling**
+
+Order Service publishes an `OrderCreated` event to SQS, SNS (Simple Notification Service) or EventBridge, and independent consumers subscribe to it:
+
+- Payment Lambda.
+- Inventory Lambda.
+- Email Lambda.
+- Analytics Lambda.
+
+What that buys you:
+
+- Services are independent: one fails, the rest keep running.
+- A new consumer is added with no changes to Order Service.
+- Each consumer scales independently.
+- Retry and DLQ are built in.
+
+**A real-world flow, end to end**
+
+1. `POST /orders` arrives.
+2. Order Service saves the order to the database and publishes `OrderCreated` to SNS.
+3. SNS fans out to `SQS_Payment`, `SQS_Email` and `SQS_Analytics`.
+4. `Lambda_Payment` processes the payment, retrying 3 times and then falling through to the DLQ.
+5. `Lambda_Email` sends the confirmation, idempotently.
+6. `Lambda_Analytics` records a metric, idempotently.
 
 ## Common interview mistakes
 
