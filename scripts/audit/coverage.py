@@ -87,6 +87,8 @@ PASSED = {
     'quiz:web-performance': '00cad51',
     'bank:git': '52c22a5',
     'quiz:git': '52c22a5',
+    'article:rabbitmq': '4dc6e04',
+    'article:kafka': '4dc6e04',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
