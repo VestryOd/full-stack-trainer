@@ -4,58 +4,40 @@
 
 Caching is the only optimization that can reduce load time **to zero**: a cached resource requires not a single byte of network traffic.
 
-```txt
-Without cache (every request):
-  DNS → TCP → TLS → Request → Server → Response
-  = 200–800ms even for small resources
+Every uncached request pays the full setup cost first: a domain-name lookup, a new connection, an encryption handshake. Only then comes the round trip to the server. That is 200–800ms even for a tiny file. A cached request skips all of it:
 
-With cache (memory cache):
-  = 0ms (< 1ms from RAM)
+| Where the response comes from | Cost |
+|---|---|
+| Memory cache | effectively 0ms — under 1ms from memory |
+| Disk cache | 2–10ms for the disk read |
+| The CDN (content delivery network) node nearest the user | 10–50ms, one network round trip |
 
-With cache (disk cache):
-  = 2–10ms (disk read)
+The browser looks in those places in a fixed order, fastest first:
 
-With cache (CDN edge, nearest server):
-  = 10–50ms (network RTT to the nearest node)
-
-Browser cache priority (fastest to slowest):
-  1. Memory cache (tab still open)
-  2. Service Worker cache
-  3. HTTP disk cache
-  4. Push cache (HTTP/2, short-lived)
-  → Network (if nothing found)
-```
+1. Memory cache, while the tab is still open.
+2. Service Worker cache.
+3. HTTP disk cache.
+4. Push cache, which comes from HTTP/2 and is short-lived.
+5. The network, if nothing was found anywhere else.
 
 ## HTTP Cache-Control — the foundation
 
-`Cache-Control` is the primary header. Its directives determine: who can cache, for how long, and whether validation is required.
+`Cache-Control` is the primary header. Its directives decide who may cache the response, for how long, and whether it has to be validated first.
 
 ### Cache-Control directives
 
-```txt
-max-age=N         — cache for N seconds (from response time)
-s-maxage=N        — same, but only for shared caches (CDN, proxies)
-                    overrides max-age for CDN
-
-no-cache          — CAN be cached, but MUST validate before
-                    each use (does NOT mean "don't cache"!)
-
-no-store          — MUST NOT cache at all (sensitive data)
-
-public            — can be stored in a shared cache (CDN)
-private           — only in the user's browser (not CDN)
-
-immutable         — resource will NEVER change; don't validate
-                    even on an explicit refresh (F5)
-
-must-revalidate   — after max-age expires, MUST revalidate
-                    (don't serve stale even on server error)
-
-stale-while-revalidate=N  — serve stale for up to N seconds,
-                            revalidating in the background
-
-stale-if-error=N  — serve stale if server is unavailable (up to N seconds)
-```
+| Directive | What it means |
+|---|---|
+| `max-age=N` | Cache for N seconds, counted from the time of the response. |
+| `s-maxage=N` | The same, but only for shared caches such as a CDN or a proxy. It overrides `max-age` there. |
+| `no-cache` | The response **may** be cached, but it **must** be validated before every use. It does not mean "do not cache". |
+| `no-store` | Do not cache at all. This is the directive for sensitive data. |
+| `public` | May be stored in a shared cache. |
+| `private` | Only in the user's own browser, never in a shared cache. |
+| `immutable` | The resource will never change, so do not validate it even on an explicit page refresh. |
+| `must-revalidate` | Once `max-age` has expired, validate before serving. Do not serve stale even when the server errors. |
+| `stale-while-revalidate=N` | Serve stale for up to N more seconds while revalidating in the background. |
+| `stale-if-error=N` | Serve stale for up to N seconds if the server is unavailable. |
 
 ### Caching strategies by resource type
 
@@ -133,12 +115,9 @@ revalidateTag('products'); // regenerates all pages with this tag
 
 ## ETag and conditional requests
 
-```txt
-ETag — a "fingerprint" of the resource version (content hash).
-The browser stores the ETag and sends it on the next request.
-The server compares: match → 304 Not Modified (no body),
-no match → 200 with new content.
+An ETag is a fingerprint of one version of a resource, usually a hash of its content. The browser stores it and sends it back on the next request. If the fingerprint on the server still matches, the server answers `304 Not Modified` with no body at all. If it does not match, the answer is `200` with the new content.
 
+```txt
 First request:
   Client → GET /api/articles
   Server → 200 OK
@@ -190,17 +169,9 @@ app.use(express.static('public')); // Last-Modified from fs.stat()
 
 `stale-while-revalidate` answers the question "how to get fresh data without waiting for it":
 
-```txt
-Regular no-cache:
-  Request → wait for server → receive → display
-  = delay EVERY TIME
+With a plain `no-cache`, the browser sends the request, waits for the server, gets the answer and only then shows it. That delay happens **every single time**.
 
-stale-while-revalidate:
-  Request → immediately serve from cache (stale data)
-           → simultaneously fetch from server
-           → update cache
-  = 0ms delay, fresh data on the next request
-```
+With `stale-while-revalidate` the order changes. The cached copy is shown immediately, stale as it is. At the same time the browser fetches a fresh copy and updates the cache. The user waits 0ms, and the next request already gets fresh data.
 
 ```ts
 // HTTP header: stale-while-revalidate
@@ -261,17 +232,12 @@ await queryClient.invalidateQueries({ queryKey: ['articles'] });
 
 ### How CDN solves the caching problem
 
-```txt
-Without CDN:
-  User (Tokyo) → Server (Virginia) = 150ms RTT × 2 = 300ms
+Without a CDN, a user in Tokyo talks to a server in Virginia. That is about 150ms for the round trip alone, before the connection and encryption handshakes described above are added on top.
 
-With CDN (Cloudflare, CloudFront, Fastly):
-  User (Tokyo) → CDN Edge (Tokyo) = 5–10ms RTT
-  CDN Edge checks its cache:
-    Hit  → responds immediately (5–10ms)
-    Miss → fetches from Origin server (300ms), caches response
-           subsequent requests → hit again (5–10ms)
-```
+With a CDN such as Cloudflare, CloudFront or Fastly, the same user talks to an edge node in Tokyo, 5–10ms away. The edge node checks its own cache:
+
+- **Hit** — it answers immediately, within those 5–10ms.
+- **Miss** — it fetches from the origin server once, paying the 300ms, and caches the response. Every later request is a hit again.
 
 ```ts
 // s-maxage — for CDN (overrides max-age for shared caches)
@@ -335,22 +301,13 @@ async function purgeCloudflareCache(urls: string[]) {
 
 ### Cache Stampede (thundering herd) — and how to handle it
 
-```txt
-Problem: cache expires → 10,000 users simultaneously
-request the resource → 10,000 requests to origin → origin crashes
+The problem is a chain reaction. A cache entry expires, and 10,000 users ask for the resource at the same moment. That is 10,000 requests hitting the origin at once, and the origin falls over.
 
-Solutions:
+Three ways out:
 
-1. stale-while-revalidate — only one background request,
-   everyone else gets stale
-
-2. Probabilistic Early Expiration (PER):
-   Start revalidating early, randomly, before the cache expires
-   (XFetch algorithm)
-
-3. Lock/mutex: the first request "acquires a lock,"
-   others wait or get stale
-```
+1. **`stale-while-revalidate`** — only one background request goes to the origin, and everyone else is served stale.
+2. **Probabilistic Early Expiration (PER)** — start revalidating early and at random, before the entry actually expires. The XFetch algorithm does exactly this.
+3. **A lock or mutex** — the first request takes the lock, and the others either wait or get stale data.
 
 ```ts
 // Simple Redis mutex to prevent stampede
@@ -530,25 +487,11 @@ registerRoute(
 
 ## Cache-busting strategy on deploy
 
-```txt
-The deploy problem:
-  You deploy a new version of HTML + JS.
-  HTML updated (no-cache → browser re-fetched it).
-  JS is old (max-age=1year, browser doesn't know it changed).
-  Result: new HTML with a new API contract +
-          old JS → runtime errors.
+The deploy problem looks like this. You ship a new version of the HTML and the JS. The HTML is served with `no-cache`, so the browser fetches it again. The JS still carries `max-age=1 year`, and the browser has no idea it changed. The result is new HTML talking to an old JS bundle over a new API contract, and runtime errors.
 
-Solution — content-addressable filenames:
-  The filename contains a hash of the content.
-  Content changed → filename changed → cache miss.
-  Content unchanged → filename unchanged → cache hit.
+The fix is content-addressable filenames. The name carries a hash of the file's content, so `main.abc123.js` becomes `main.def456.js` when the content changes. Changed content means a changed name, which means a cache miss. Unchanged content keeps its name and stays a cache hit.
 
-  main.abc123.js → main.def456.js (new version)
-
-Webpack/Vite/Next.js do this automatically.
-Your job: ensure HTML is not cached aggressively
-(no-cache or a short max-age).
-```
+Webpack, Vite and Next.js all do this for you. Your part is making sure the HTML itself is not cached aggressively — `no-cache`, or a short `max-age`.
 
 ```ts
 // Vite — content hash in filenames
@@ -567,63 +510,45 @@ export default defineConfig({
 
 ## DevTools workflow for caching
 
-```txt
-Chrome DevTools → Network tab:
+In the Chrome DevTools **Network** tab, the `Status` column tells you where each response came from:
 
-  "Status" column:
-    200          — fresh response from server
-    304          — Not Modified (conditional request, cache valid)
-    "(disk cache)"   — from HTTP disk cache
-    "(memory cache)" — from memory cache
+- `200` — a fresh response from the server.
+- `304` — Not Modified, so the conditional request confirmed the cache is still valid.
+- `(disk cache)` — served from the HTTP disk cache.
+- `(memory cache)` — served from the memory cache.
 
-  Important: when testing caching, ALWAYS
-  uncheck "Disable cache" in DevTools!
-  (it sends Cache-Control: no-cache on every request)
+One thing trips everyone up: when you are testing caching, **uncheck** `Disable cache` in DevTools. While it is checked, every request goes out with `Cache-Control: no-cache`.
 
-  Right-click → Copy → Copy as fetch:
-  → copies the request with real headers for reproduction
+Right-click a request and choose Copy → Copy as fetch to reproduce it with its real headers.
 
-Chrome DevTools → Application tab:
-  → Storage → Cache Storage: Service Worker cache contents
-  → Service Workers: SW status, unregister, bypass for network
+In the **Application** tab, Storage → Cache Storage shows what the Service Worker has cached. The Service Workers section shows its status and lets you unregister the worker or bypass it for the network. `Update on reload` there forces an update on every page reload, which is what you want during development.
 
-  "Update on reload" in Service Workers:
-  → forces SW update on page reload (for development)
+For header diagnostics with no browser behaviour in the way, use `curl`:
 
-curl for header diagnostics (no browser effects):
-  curl -I https://example.com/api/articles
-  curl -I -H 'If-None-Match: "abc123"' https://example.com/api/articles
+```bash
+curl -I https://example.com/api/articles
+curl -I -H 'If-None-Match: "abc123"' https://example.com/api/articles
 ```
 
 ## Connection to other topics
 
-```txt
-[Performance Metrics]     — CDN cache directly reduces TTFB;
-                            Service Worker cache = instant FCP
-                            on repeat visits
-[Core Web Vitals]         — repeat-visit LCP depends on image
-                            and JS cache; Cache-Control strategy
-                            for HTML affects LCP
-[Resource Loading]        — prefetch saves to HTTP cache;
-                            Service Worker cache intercepts
-                            prefetched resources
-[JavaScript Performance]  — vendor chunk cached separately from
-                            app chunk; content hash = effective
-                            cache busting without manual invalidation
-```
+- [Performance Metrics](./02-performance-metrics.md) — a CDN cache directly reduces TTFB (time to first byte). A Service Worker cache gives an instant FCP (First Contentful Paint) on repeat visits.
+- [Core Web Vitals](./01-core-web-vitals.md) — LCP (Largest Contentful Paint) on a repeat visit depends on the image and JS cache. The `Cache-Control` strategy for HTML affects it too.
+- [Resource Loading](./03-resource-loading.md) — `prefetch` writes into the HTTP cache, and a Service Worker cache intercepts prefetched resources.
+- [JavaScript Performance](./04-javascript-performance.md) — the vendor chunk is cached separately from the app chunk, and a content hash gives effective cache busting with no manual invalidation.
 
 ## Common interview traps
 
-- **"no-cache means don't cache"** — a critical misconception. `no-cache` means "you may cache it, but you must validate before using it." If the ETag matches, the browser serves from cache (304). The directive that means "don't cache at all" is `no-store`.
+- **"no-cache means don't cache"** — a critical misconception. The directive actually says: you may cache this, but you must validate it before every use. If the ETag matches, the browser serves the copy it already has, with a 304. The directive that really means "do not cache at all" is `no-store`.
 
 - **"max-age=31536000 for everything — maximum performance"** — not for HTML documents. After a deploy, users would see the old version for a full year. The rule: large `max-age` only for resources with a content hash in their filename.
 
-- **"Service Worker cache is the same as HTTP cache"** — they're different mechanisms. HTTP cache (disk cache) is controlled by the browser via headers. Service Worker Cache API is controlled by your code. SW cache lives longer, is more programmable, but requires explicit management of stale versions.
+- **"Service Worker cache is the same as HTTP cache"** — they're different mechanisms. HTTP cache (disk cache) is controlled by the browser via headers. Service Worker Cache API is controlled by your code. The Service Worker cache lives longer and is more programmable, but you have to manage stale versions yourself.
 
 - **"CDN caching works automatically"** — not without the right `Cache-Control`. If the server responds with `Cache-Control: private` or `no-store`, the CDN caches nothing. `public, s-maxage=3600` is the right directive for CDN caching.
 
-- **"stale-while-revalidate is the same as max-age"** — different models. `max-age` says "cache is fresh until this point, then wait for the server." `stale-while-revalidate` says "after max-age, serve stale and revalidate in the background." The user doesn't wait — they get stale data instantly.
+- **"stale-while-revalidate is the same as max-age"** — they are different models. With `max-age` the cache is fresh until a point in time, and after that the browser waits for the server. With `stale-while-revalidate` the browser serves the stale copy past that point and revalidates in the background. The user never waits: stale data arrives instantly.
 
 - **"There are no caching problems if I use React Query"** — React Query caches data in memory (not in HTTP cache, not in Service Worker). Page refresh — all data is gone. HTTP Cache-Control headers and Service Workers are different layers of caching that work together, not as replacements for each other.
 
-- **"Cache invalidation is simple — just bump the version"** — this is one of the "two hard problems in CS." The challenges: when to invalidate (not too early, not too late), how to invalidate related resources (article changed → invalidate article list, article page, API response), how to avoid cache stampede when a popular resource is invalidated.
+- **"Cache invalidation is simple — just bump the version"** — it is famously one of the two hard problems in computer science. Three things make it hard. Knowing *when* to invalidate, neither too early nor too late. Knowing *what else* to invalidate: an article changed, so the article list, the article page and the API response all go stale. And avoiding a cache stampede when a popular resource is invalidated.

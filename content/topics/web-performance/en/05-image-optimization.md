@@ -2,58 +2,60 @@
 
 ## Why images are the first place to start
 
-Images account for **50–70% of a web page's total weight** on average. They directly affect three metrics at once: LCP (the main content), CLS (if dimensions are missing), and bandwidth costs (and CDN bills). Image optimization is also one of the few areas where you can see fast, measurable results without refactoring code.
+Images account for **50–70% of a web page's total weight** on average. Image optimization is also one of the few areas where results come fast, are measurable, and need no refactoring.
 
-```txt
-Typical before/after:
+Images push on three things at once:
 
-  hero.png  — 2.4 MB, TTFB + download = 3.2s on 4G
-  hero.webp — 380 KB, TTFB + download = 0.5s on 4G
-  hero.avif — 210 KB, TTFB + download = 0.3s on 4G
+- **LCP** — Largest Contentful Paint, the moment the largest visible element finishes rendering. On most pages that element is an image.
+- **CLS** — Cumulative Layout Shift, how much the page jumps around while it loads. An image without declared dimensions is the classic cause.
+- **Bandwidth**, which you pay for twice: on the bill from your CDN (content delivery network) and on the user's mobile plan.
 
-  Format conversion = −91% file size, −91% LCP impact (all else equal)
-  — without a single line of JavaScript
-```
+Here is one hero image in three formats, measured on a 4G connection. TTFB (time to first byte) is the wait before the first byte of the file arrives.
+
+| File | Size | TTFB + download |
+|---|---|---|
+| `hero.png` | 2.4 megabytes | 3.2 s |
+| `hero.webp` | 380 kilobytes | 0.5 s |
+| `hero.avif` | 210 kilobytes | 0.3 s |
+
+Converting the format alone removes 91% of the bytes. All else being equal, it removes the same 91% from the image's share of LCP, and it costs zero lines of JavaScript.
 
 ## Image formats — when to use what
 
 ### Format selection matrix
 
-```txt
-┌──────────┬──────────┬──────────────┬────────────┬──────────────────────┐
-│ Format   │ Compress │ Transparency │ Support    │ Best for             │
-├──────────┼──────────┼──────────────┼────────────┼──────────────────────┤
-│ JPEG     │ lossy    │ no           │ 100%       │ photos without transp│
-│ PNG      │ lossless │ yes          │ 100%       │ screenshots, icons   │
-│ WebP     │ both     │ yes          │ 97%+       │ JPEG/PNG replacement │
-│ AVIF     │ both     │ yes          │ 93%+       │ maximum compression  │
-│ SVG      │ vector   │ yes          │ 100%       │ icons, logos         │
-│ GIF      │ lossless │ yes (1-bit)  │ 100%       │ don't use            │
-└──────────┴──────────┴──────────────┴────────────┴──────────────────────┘
+Six formats matter in practice. JPEG (Joint Photographic Experts Group) and PNG (Portable Network Graphics) are the two every browser has always understood. Their modern replacements are WebP (Google's picture format for the web) and AVIF (a newer format with much stronger compression).
 
-GIF in 2025 — always replace with WebP animation
-or <video autoplay loop muted playsinline>
-```
+SVG (Scalable Vector Graphics) stores shapes instead of pixels, so it scales to any size without losing sharpness. GIF (Graphics Interchange Format) is the one row of the table to retire.
+
+| Format | Compression | Transparency | Support | Best for |
+|---|---|---|---|---|
+| JPEG | lossy | no | 100% | photos without transparency |
+| PNG | lossless | yes | 100% | screenshots, icons |
+| WebP | both | yes | 97%+ | replacing JPEG and PNG |
+| AVIF | both | yes | 93%+ | maximum compression |
+| SVG | vector | yes | 100% | icons, logos |
+| GIF | lossless | yes (1-bit) | 100% | nothing — replace it |
+
+Replace an animated GIF with a WebP animation, or with a muted autoplaying video: `<video autoplay loop muted playsinline>`. In 2025 both are smaller and smoother than the original.
 
 ### WebP vs AVIF — what's the difference
 
-```txt
-WebP (Google, 2010):
-  - 25–35% smaller than JPEG at the same visual quality
-  - Support: Chrome 23+, Firefox 65+, Safari 14+
-  - Fast encoding and decoding
-  - The safe production choice right now
+WebP came out of Google in 2010 and is the safe production default today:
 
-AVIF (Alliance for Open Media, 2019, AV1 codec):
-  - 40–60% smaller than JPEG (20–30% smaller than WebP)
-  - Support: Chrome 85+, Firefox 93+, Safari 16+
-  - Slower to encode (matters for on-demand server generation)
-  - Faster to decode on devices with hardware AV1 support
-  - Better at gradients and complex textures
+- 25–35% smaller than JPEG at the same visual quality.
+- Support: Chrome 23+, Firefox 65+, Safari 14+.
+- Fast to encode and fast to decode.
 
-Strategy:
-  AVIF → WebP → JPEG/PNG (via <picture> element)
-```
+AVIF is the AV1 Image File Format, published by the Alliance for Open Media in 2019. Inside it sits a single frame compressed by AV1 (a royalty-free video codec).
+
+- 40–60% smaller than JPEG, and 20–30% smaller than WebP.
+- Support: Chrome 85+, Firefox 93+, Safari 16+.
+- Slower to encode, which matters when the server generates images on demand.
+- Faster to decode on devices with hardware AV1 support.
+- Better at gradients and complex textures.
+
+Hence the strategy: offer AVIF first, WebP second, JPEG or PNG last, and let the `<picture>` element choose.
 
 ### <picture> — progressive enhancement by format
 
@@ -97,18 +99,9 @@ Strategy:
 
 ### Why a single image isn't enough
 
-```txt
-The problem:
-  375px screen (iPhone) → needs a 750px image (2x DPR)
-  1440px screen (desktop) → needs a 2880px image (2x DPR)
+A phone screen 375px wide at double pixel density needs a 750px image. Double density means a DPR (device pixel ratio) of 2 — the count of physical pixels per CSS pixel. A 1440px desktop screen at the same density needs 2880px, and one file cannot serve both cases well.
 
-  Serving everyone the 2880px image:
-  - Mobile downloads 2.4MB instead of 200KB
-  - Browser scales it down — pure bandwidth waste
-
-  Serving everyone the 750px image:
-  - Blurry on Retina desktop displays
-```
+Send everyone the 2880px file and the phone downloads 2.4 megabytes where 200 kilobytes would do. The browser scales it back down, and the extra bytes are pure waste. Send everyone the 750px file and the image is blurry on every Retina desktop display.
 
 ```html
 <!-- srcset: list of variants with their physical widths -->
@@ -131,24 +124,15 @@ The problem:
 />
 ```
 
-```txt
-How the browser picks from srcset:
+The browser picks a file from `srcset` in three steps:
 
-  1. Checks sizes: at window width 375px → "100vw" → 375px
-  2. Accounts for device DPR: 375px × 2 DPR = 750px
-  3. Picks the smallest file from srcset that is >= 750px
-     → /photo-800.webp (800w)
+1. It reads `sizes` and works out the slot width. At a window width of 375px the first rule matches, `100vw`, so the slot is 375px.
+2. It multiplies by the device pixel ratio: 375 × 2 = 750px.
+3. It takes the smallest file in `srcset` that is at least 750px wide — here `/photo-800.webp`.
 
-  At width 1440px, 1x DPR → 1440 × 1 = 1440px
-  → /photo-1600.webp (1600w)
+The same arithmetic on a desktop. At 1440px and density 1 the browser asks for 1440px and takes `/photo-1600.webp`. At 1440px and density 2 it asks for 2880px and takes the same `/photo-1600.webp`, because that is the largest file on offer.
 
-  At width 1440px, 2x DPR → 1440 × 2 = 2880px
-  → /photo-1600.webp (nearest available)
-
-  Important: the browser RESERVES THE RIGHT to choose a
-  different file (e.g. a smaller one on a slow connection).
-  It's the browser's decision, not yours.
-```
+Worth remembering: the browser **reserves the right** to take a different file. On a slow connection it may pick a smaller one than the arithmetic suggests. You supply the options, the browser makes the decision.
 
 ### Generating size variants — sharp
 
@@ -282,25 +266,19 @@ export default {
 
 ### How next/image works under the hood
 
-```txt
-Request: <Image src="/photo.jpg" width={800} height={600} />
+Take `<Image src="/photo.jpg" width={800} height={600} />`. Here is what happens:
 
-1. Next.js renders <img src="/_next/image?url=/photo.jpg&w=828&q=75">
-2. On first request, the /_next/image API route:
-   - Loads the original /photo.jpg
-   - Converts to WebP/AVIF (based on browser's Accept header)
-   - Resizes to the requested width
-   - Caches the result on disk
-3. Subsequent requests: served from cache
-4. CDN caches by URL (including w= and q= params)
+1. Next.js renders an `<img>` whose `src` points at its own route `/_next/image`, with the path, width and quality as query parameters.
+2. On the first request that route loads the original and converts it to WebP or AVIF. The format is chosen from the browser's `Accept` header.
+3. The image is then resized to the requested width, and the result is cached on disk.
+4. Every later request is served straight from that cache.
+5. A CDN in front caches by URL, so width and quality are part of the cache key.
 
-Downside: first request for a new size = cold start (generation)
-Upside: subsequent requests = instant from cache
-```
+The price shows up on the first hit: a size nobody has asked for before means a cold start while the file is generated. Every request after that is instant.
 
 ## Image CDN — for dynamic content
 
-When images are dynamic (user-generated, CMS content), use an Image CDN:
+When images are dynamic — uploaded by users, or coming from a CMS (content management system) — an image CDN does the work for you.
 
 ```ts
 // Cloudinary — transformations via URL
@@ -309,7 +287,8 @@ const getCloudinaryUrl = (
   options: { width: number; quality?: number; format?: 'auto' | 'webp' | 'avif' }
 ) => {
   const { width, quality = 'auto', format = 'auto' } = options;
-  return `https://res.cloudinary.com/your-cloud/image/upload/f_${format},q_${quality},w_${width}/${publicId}`;
+  const transform = `f_${format},q_${quality},w_${width}`;
+  return `https://res.cloudinary.com/your-cloud/image/upload/${transform}/${publicId}`;
 };
 
 // Usage in a component
@@ -346,19 +325,16 @@ const url = getImgixUrl('/hero.jpg', {
 
 ## LCP image optimization — checklist
 
-```txt
-For the image that is the LCP element:
+When the image is the LCP element, walk this list:
 
-  □ fetchpriority="high" on the <img>
-  □ loading="eager" (or simply no loading="lazy")
-  □ <link rel="preload" as="image"> in <head>
-  □ Format: AVIF with WebP fallback
-  □ Correct srcset + sizes (don't send 2MB to mobile)
-  □ Width and height specified (prevents CLS)
-  □ Image served from CDN (low TTFB)
-  □ Image is NOT a CSS background
-    (the preload scanner can't see background-image)
-```
+- `fetchpriority="high"` on the `<img>` tag.
+- `loading="eager"`, or simply no `loading="lazy"`.
+- A `<link rel="preload" as="image">` in the `<head>`.
+- Format AVIF with a WebP fallback.
+- Correct `srcset` and `sizes`, so a phone never gets a two-megabyte file.
+- Width and height on the tag itself, which removes the layout shift.
+- The file served from a CDN, for a low TTFB.
+- The image is **not** a CSS background: the preload scanner cannot see `background-image`.
 
 ```html
 <!-- ✅ The complete "ideal" LCP element -->
@@ -486,6 +462,11 @@ squoosh-cli --avif '{"cqLevel":33}' hero.jpg
 squoosh-cli --webp '{"quality":80}' hero.jpg
 ```
 
+```bash
+# imagemin — batch processing in the build
+npm install imagemin imagemin-webp imagemin-avif
+```
+
 ```ts
 // Image optimization script for CI/CD
 import imagemin from 'imagemin';
@@ -503,56 +484,37 @@ await imagemin(['public/images/**/*.{jpg,png}'], {
 
 ## DevTools workflow for images
 
-```txt
-Chrome DevTools → Network tab:
-  1. Filter "Img" → shows only images
-  2. "Size" column: actual downloaded size
-  3. "Type" column: verify format (image/webp? or image/jpeg?)
-  4. Hover over the Waterfall bar → Timing:
-     "Content Download" = how long the image took to download
+The **Network** panel: filter by `Img` to leave only images. The `Size` column shows what was actually downloaded, and the `Type` column shows what arrived — `image/webp`, or `image/jpeg` after all. Hovering a bar in the `Waterfall` column opens the timings, where `Content Download` is the image's own download time.
 
-Chrome DevTools → Lighthouse:
-  → "Serve images in next-gen formats" — no WebP/AVIF
-  → "Properly size images" — image larger than needed
-  → "Efficiently encode images" — insufficient compression
-  → "Defer offscreen images" — missing lazy loading
+**Lighthouse** has four audits about images. "Serve images in next-gen formats" means there is no WebP or AVIF. "Properly size images" means the file is bigger than the slot it fills. "Efficiently encode images" means the compression is too weak. "Defer offscreen images" means lazy loading is missing.
 
-Chrome DevTools → Performance:
-  → "Largest Contentful Paint" marker
-  → Click it → "Related Node" → which element is the LCP
-  → Look at when its download actually started
+The **Performance** panel: find the `Largest Contentful Paint` marker, click it and open `Related Node` to see which element the LCP turned out to be. Then look at when its download actually started.
 
-Console commands:
-  // Find the current LCP element
-  new PerformanceObserver(list => {
-    const entries = list.getEntries();
-    console.log('LCP element:', entries.at(-1));
-  }).observe({ type: 'largest-contentful-paint', buffered: true });
+To find the LCP element from the console:
+
+```js
+new PerformanceObserver(list => {
+  const entries = list.getEntries();
+  console.log('LCP element:', entries.at(-1));
+}).observe({ type: 'largest-contentful-paint', buffered: true });
 ```
 
 ## Connection to other topics
 
-```txt
-[Core Web Vitals]         — images are the primary LCP element;
-                            missing width/height → CLS
-[Resource Loading]        — preload for LCP image;
-                            fetchpriority; lazy loading
-[Performance Metrics]     — image size affects TTFB
-                            (if server-generated),
-                            download time → LCP
-[Caching Strategies]      — CDN caching for images;
-                            Cache-Control for static assets
-```
+- [Core Web Vitals](./01-core-web-vitals.md) — the image is usually the LCP element, and a missing width or height feeds CLS.
+- [Resource Loading](./03-resource-loading.md) — preloading the LCP image, `fetchpriority`, lazy loading.
+- [Performance Metrics](./02-performance-metrics.md) — file size affects TTFB when the server generates the image, and download time feeds LCP.
+- [Caching Strategies](./07-caching-strategies.md) — CDN caching for images, and `Cache-Control` for static assets.
 
 ## Common interview traps
 
 - **"WebP everywhere — solves all image problems"** — WebP beats JPEG, but it's not the maximum. AVIF delivers another 20–30% size reduction at the same quality. The right strategy is AVIF → WebP → JPEG via `<picture>`, not "switched to WebP and done."
 
-- **"next/image automatically optimizes everything"** — not quite. `priority={true}` must be added manually for the LCP image. `sizes` must be specified explicitly — otherwise Next.js generates oversized variants. `quality` defaults to 75 — sometimes needs to be higher for hero images.
+- **"next/image automatically optimizes everything"** — not quite. You still add `priority={true}` by hand for the LCP image. The `sizes` attribute is still yours to specify, or Next.js generates variants larger than needed. Default `quality` is 75, which is sometimes too low for a hero image.
 
 - **"srcset is just a list of different sizes"** — the browser decides which to use, factoring in the device's DPR, network speed, and user preferences. You provide the options; the final choice is the browser's. This matters because on a slow connection the browser may pick a smaller image even on a Retina display.
 
-- **"I set width/height — CLS is gone"** — not always. CSS can override the dimensions: `img { width: 100%; height: auto; }` without `aspect-ratio` or a fixed-size container will still cause CLS if the image hasn't loaded before the first render. You need both: HTML attributes AND matching CSS.
+- **"I set width and height — CLS is gone"** — not always. CSS can override the dimensions. Rules like `img { width: 100%; height: auto; }` still shift the layout without an `aspect-ratio` or a fixed-size container. You need both halves: the HTML attributes and CSS that agrees with them.
 
 - **"loading="lazy" on all images — saves bandwidth"** — `loading="lazy"` on the LCP image (first viewport) hurts LCP because the browser intentionally defers loading it. The opposite of what you want. Rule: lazy only below the fold.
 

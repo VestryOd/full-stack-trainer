@@ -2,7 +2,7 @@
 
 ## How to use this cheat sheet
 
-Each answer compresses the depth from the topic articles. Performance interviews at senior level always go deeper: "how would you measure that?", "what's the trade-off?", "show me the DevTools workflow." Each group ends with **"Typical follow-ups"** showing where the conversation usually goes.
+Each answer compresses the depth from the topic articles. Performance interviews at senior level always go one step deeper. Expect three questions after every answer: how would you measure that, what is the trade-off, and show me the DevTools workflow. Each group here ends with **"Typical follow-ups"**, showing where the conversation usually goes.
 
 ---
 
@@ -14,13 +14,17 @@ Each answer compresses the depth from the topic articles. Performance interviews
 
 **CLS (Cumulative Layout Shift):** the sum of all unexpected layout shifts during the page's lifetime, weighted by impact fraction × distance fraction. Measures *visual stability*. Good: ≤ 0.1.
 
-**INP (Interaction to Next Paint):** the 75th percentile of all interaction latencies (click, tap, keypress) observed during the page visit — from user input to the next frame painted. Replaced FID in March 2024. Measures *responsiveness*. Good: ≤ 200ms.
+**INP (Interaction to Next Paint):** how long the page takes to answer a user action. It is measured from the input — a click, a tap, a keypress — to the next frame painted. One page visit reports one value. For most pages that value is the slowest interaction of the visit. On pages with very many interactions, one highest interaction is ignored for every 50, so a single outlier cannot define the score.
+
+INP replaced FID (First Input Delay) in March 2024 and measures *responsiveness*. Good: ≤ 200 ms. That threshold is judged at the 75th percentile of page loads in field data. It is not a percentile over the interactions inside one visit.
 
 ---
 
 **2. Why did Google replace FID with INP, and what does INP reveal that FID didn't?**
 
-FID (First Input Delay) measured only the *delay before the browser could start processing* the first interaction — it excluded processing time and paint. A handler that blocked the main thread for 800ms after starting would show FID = 5ms but feel completely unresponsive. INP measures the *full duration* from input to next frame, across *all* interactions during the visit (taking the 75th percentile). A page with slow `onClick` handlers on dynamically loaded content would score fine on FID but fail INP.
+FID measured only the *delay before the browser could start processing* the first interaction. Processing time and paint were left out. A handler that blocked the main thread for 800 ms after starting would report FID = 5 ms, and still feel completely unresponsive.
+
+INP watches *all* interactions of the visit, not just the first one, and measures the *full duration* from input to next frame. It then reports the worst of them as the value for that visit. A page with slow `onClick` handlers on dynamically loaded content would score fine on FID but fail INP.
 
 ---
 
@@ -40,21 +44,28 @@ CLS is caused by elements shifting after initial layout. Common causes and fixes
 
 **Late-injected content:** ads, cookie banners, and dynamic widgets inserted above existing content push it down. Fix: reserve space for them with min-height or skeleton placeholders.
 
-**Web fonts causing FOUT/FOIT:** fallback font has different metrics, text reflows when custom font loads. Fix: `font-display: optional` (never reflows, may show fallback permanently) or `font-display: swap` + `size-adjust` / `ascent-override` to match fallback metrics.
+**Web fonts causing FOUT (flash of unstyled text) or FOIT (flash of invisible text):** the fallback font has different metrics. The text reflows the moment the custom font loads. Fix: `font-display: optional` (never reflows, may show fallback permanently) or `font-display: swap` + `size-adjust` / `ascent-override` to match fallback metrics.
 
 ---
 
 **4. What is LCP and what are the four elements that can be the LCP element?**
 
-LCP is the render timestamp of the largest *contentful* element visible in the viewport when the user first views the page. The four eligible element types: `<img>`, `<image>` inside SVG, `<video>` (poster image), and elements with a CSS background-image. Text blocks (`<p>`, `<h1>`, etc.) can also be LCP elements if they are the largest. Background images set via CSS are eligible only if they are fetched from a URL (not gradients).
+LCP is the render timestamp of the largest *contentful* element visible in the viewport when the user first views the page. Four element types are eligible:
+
+- `<img>`.
+- `<image>` inside an SVG (scalable vector graphics) document.
+- `<video>`, through its poster image.
+- An element with a CSS `background-image`.
+
+Text blocks such as `<p>` or `<h1>` can also be the LCP element if they are the largest. A background image set in CSS is eligible only if it is fetched from a URL, so gradients do not count.
 
 ---
 
 **5. Walk through the complete LCP optimization checklist.**
 
-LCP time = network latency + server TTFB + resource load time + render time. Attack each:
+LCP time = network latency + server TTFB (time to first byte) + resource load time + render time. Attack each part:
 
-**1. Reduce TTFB:** CDN, edge caching, fast origin server. TTFB > 600ms is the primary culprit for slow LCP.
+**1. Reduce TTFB:** put a CDN (content delivery network) in front, cache at the edge, keep the origin server fast. A TTFB above 600 ms is the primary cause of a slow LCP.
 
 **2. Eliminate render-blocking resources:** move non-critical CSS to `<link media="print">` or async load; defer non-critical JS.
 
@@ -65,37 +76,35 @@ LCP time = network latency + server TTFB + resource load time + render time. Att
       imagesizes="100vw">
 ```
 
-**4. Use modern image formats:** WebP saves ~30%, AVIF ~50% vs JPEG at same quality.
+**4. Use modern image formats:** WebP (the Web Picture format) is about 30% smaller than JPEG (Joint Photographic Experts Group) at the same visual quality. AVIF (a newer image format from the Alliance for Open Media) is about 50% smaller still.
 
 **5. Do not lazy-load the LCP image:** `loading="lazy"` on the hero image delays LCP by the scroll-observation delay. Use `fetchpriority="high"` instead.
 
-**6. Avoid client-side rendering for the LCP element:** if the LCP element is injected by JavaScript, the browser must download, parse, and execute JS before painting it. SSR or SSG puts the element in initial HTML.
+**6. Avoid client-side rendering for the LCP element:** if JavaScript injects the LCP element, the browser must download, parse and execute that JS first. Only then can it paint. Server-side rendering (SSR) or static site generation (SSG) puts the element straight into the initial HTML.
 
 ---
 
 ## Typical follow-ups (Group 1)
 
-```txt
-"How do you measure CWV in production, not just in DevTools?" →
-  field data: Chrome UX Report (CrUX) via PageSpeed Insights,
-  Search Console CWV report, or the web-vitals JS library sending
-  to your own analytics. Lab data (Lighthouse, DevTools) is synthetic
-  and doesn't capture real user conditions (slow Android devices,
-  3G, background tabs). Field data is what Google uses for ranking.
+**"How do you measure Core Web Vitals in production, not just in DevTools?"**
 
-"A page passes Lighthouse but fails CWV in Search Console — why?" →
-  Lighthouse is lab data on a simulated device. CrUX is field data
-  from real Chrome users at the 75th percentile. Real users have
-  slower devices, cache misses, background tabs, and extensions.
-  Also: Lighthouse measures a fresh cold load; CWV includes
-  soft navigations and repeat visits.
+Use field data, which means measurements taken from real users. Three sources are common:
 
-"What is TTFB and how does it relate to LCP?" →
-  TTFB (Time to First Byte) is the time from request to first byte
-  of the response. It is a sub-metric of LCP — a slow server
-  delays everything downstream. A TTFB > 600ms will almost certainly
-  push LCP past 2.5s even with perfect frontend optimization.
-```
+- The Chrome User Experience Report (CrUX) through PageSpeed Insights.
+- The Core Web Vitals report in Search Console.
+- The `web-vitals` JS library, sending values to your own analytics.
+
+Lab data from Lighthouse and DevTools is synthetic. It does not capture real user conditions: slow Android devices, 3G networks, background tabs. Field data is what Google uses for ranking.
+
+**"A page passes Lighthouse but fails Core Web Vitals in Search Console — why?"**
+
+Lighthouse is lab data measured on one simulated device. CrUX is field data from real Chrome users, reported at the 75th percentile. Real users have slower devices, cache misses, background tabs, and extensions.
+
+There is also a difference in scope. Lighthouse measures a fresh cold load, while the field report includes soft navigations and repeat visits.
+
+**"What is TTFB and how does it relate to LCP?"**
+
+TTFB (Time to First Byte) is the time from the request to the first byte of the response. It is a sub-metric of LCP, because a slow server delays everything downstream. A TTFB above 600 ms will almost certainly push LCP past 2.5 s, even with perfect frontend optimization.
 
 ---
 
@@ -103,9 +112,21 @@ LCP time = network latency + server TTFB + resource load time + render time. Att
 
 **6. What is the critical rendering path and which resources block it?**
 
-The critical rendering path is the sequence of steps the browser must complete before the first pixel is painted: DNS → TCP → TLS → HTTP request → HTML parse → DOM construction → CSSOM construction → Render Tree → Layout → Paint.
+The critical rendering path is the sequence of steps the browser must complete before the first pixel is painted:
 
-**Render-blocking resources:** CSS files in `<head>` (the browser won't paint until CSSOM is built), synchronous `<script>` tags without `defer` or `async` (pause HTML parsing), and `@import` in CSS (creates additional sequential fetches). Images, fonts, and async scripts do not block the initial render.
+```txt
+DNS → TCP → TLS → HTTP request → HTML parse →
+DOM construction → CSSOM construction →
+Render Tree → Layout → Paint
+```
+
+**Render-blocking resources** are three:
+
+- CSS files in `<head>`. The browser will not paint until the CSSOM is built.
+- Synchronous `<script>` tags without `defer` or `async`. They pause HTML parsing.
+- `@import` inside CSS, which creates additional sequential fetches.
+
+Images, fonts, and async scripts do not block the initial render.
 
 ---
 
@@ -125,15 +146,19 @@ The critical rendering path is the sequence of steps the browser must complete b
 <script type="module" src="main.js"></script>
 ```
 
-Rule: `defer` for scripts that need the DOM; `async` for independent scripts (analytics, ads) where order doesn't matter; `type="module"` for ESM bundles — they are deferred automatically.
+The rule of thumb:
+
+- `defer` for scripts that need the DOM (Document Object Model, the browser's live tree of page nodes).
+- `async` for independent scripts such as analytics and ads, where order does not matter.
+- `type="module"` for ESM (ECMAScript modules) bundles, which are deferred automatically.
 
 ---
 
 **8. What does `rel="preload"` do and when should you use it vs `rel="prefetch"`?**
 
-`preload`: tells the browser "you will need this resource soon — start fetching it now, at high priority." Used for resources the browser discovers late in the page load (hero image in CSS, font used in above-fold content, critical script). Does not execute the resource — just fetches and caches.
+The `preload` hint tells the browser: you will need this resource soon, start fetching it now, at high priority. Use it for resources the browser discovers late in the page load. Typical cases are a hero image referenced from CSS, a font used in above-fold content, and a critical script. Preload does not execute the resource — it only fetches and caches it.
 
-`prefetch`: tells the browser "the user might navigate to a page that needs this." Low-priority background fetch, stored in the HTTP cache. Used for next-page navigation resources.
+The `prefetch` hint tells the browser something weaker: the user might navigate to a page that needs this. It is a low-priority background fetch, stored in the HTTP cache, and it is meant for next-page navigation resources.
 
 ```html
 <!-- preload: fetch NOW, high priority, for current page -->
@@ -152,41 +177,42 @@ Misusing `preload` for non-critical resources wastes bandwidth and competes with
 
 A connection waterfall is a chain of sequential network requests where each request depends on the previous one completing before it can even begin. Classic example: HTML → JS bundle → API call → another API call. In DevTools Network panel, look for long horizontal bars with a staircase shape — each request starts only after the previous one's response.
 
-Fixes: (1) resource hints (`preconnect`, `preload`) to start fetches earlier; (2) colocating API calls on the server (BFF pattern); (3) HTTP/2 or HTTP/3 multiplexing — multiple requests on one connection; (4) inlining critical CSS to avoid a separate CSS fetch on the critical path.
+Four fixes, in the order you usually reach for them:
+
+- Resource hints (`preconnect`, `preload`) to start the fetches earlier.
+- Colocating the API calls on the server, the backend-for-frontend (BFF) pattern.
+- HTTP/2 or HTTP/3 multiplexing, so several requests share one connection.
+- Inlining the critical CSS, which removes a separate CSS fetch from the critical path.
 
 ---
 
 **10. What is HTTP/2 multiplexing and what performance problem does it solve?**
 
-HTTP/1.1 allows only one active request per TCP connection. Browsers compensate by opening 6 connections per domain — but each has TCP slow-start overhead. HTTP/2 sends multiple streams over a single connection simultaneously with no head-of-line blocking at the HTTP layer. This makes: domain sharding anti-pattern (splitting resources across `static1.cdn.com`, `static2.cdn.com` to open more connections), and bundling everything into one giant file less necessary — many small files is fine on HTTP/2. HTTP/3 adds connection-level HOL blocking fix via QUIC (UDP-based).
+HTTP/1.1 allows only one active request per TCP (transmission control protocol) connection. Browsers compensate by opening six connections per domain, but each one pays the cost of TCP slow start. HTTP/2 sends multiple streams over a single connection at the same time, with no head-of-line blocking at the HTTP layer.
+
+Two older habits lose their point because of that. Domain sharding — splitting resources across `static1.cdn.com` and `static2.cdn.com` just to open more connections — becomes an anti-pattern. Bundling everything into one giant file becomes less necessary, because many small files are fine on HTTP/2.
+
+HTTP/3 goes further and removes head-of-line blocking at the connection level too. It does so by running over QUIC, a transport built on top of UDP (user datagram protocol) instead of TCP.
 
 ---
 
 ## Typical follow-ups (Group 2)
 
-```txt
-"When does preloading a font HURT performance?" →
-  If the font is not used above the fold, preload competes with
-  LCP resources (hero image, critical CSS) for bandwidth. If the
-  font file is large (variable fonts can be 500KB+), preloading
-  the full file for a few characters wastes bandwidth.
-  Better: preload only the subset used above the fold,
-  use font subsetting tools (pyftsubset, Fonttools).
+**"When does preloading a font hurt performance?"**
 
-"What is resource hints priority order?" →
-  preconnect > preload > prefetch > dns-prefetch.
-  preconnect opens the TCP+TLS connection (not just DNS).
-  Only use preconnect for 2-3 critical origins — each kept-alive
-  connection consumes browser resources.
+There are two cases. The first is placement. If the font is not used above the fold, `preload` competes for bandwidth with the LCP resources: the hero image and the critical CSS. The second case is size. A variable font file can weigh 500 kilobytes or more, and preloading all of it for a handful of characters wastes that bandwidth.
 
-"Lighthouse says 'eliminate render-blocking resources.' The
-CSS is already in <head> — what do you do?" →
-  Split CSS: extract above-the-fold styles and inline them in
-  <style> in <head>. Load the rest with <link media="print">
-  which the browser fetches non-blocking, then switch to media="all"
-  via JS onload. Or use a CSS-in-JS solution that extracts
-  critical CSS per component automatically (Next.js does this).
-```
+Better: preload only the subset used above the fold, and cut the file down with a subsetting tool such as `pyftsubset` or Fonttools.
+
+**"What is the priority order of resource hints?"**
+
+The order is `preconnect`, then `preload`, then `prefetch`, then `dns-prefetch`. Note that `preconnect` opens the whole TCP and TLS (transport layer security) connection, not just the DNS (domain name system) lookup. Use it for two or three critical origins only, because each kept-alive connection consumes browser resources.
+
+**"Lighthouse says 'eliminate render-blocking resources', but the CSS is already in `<head>`. What do you do?"**
+
+Split the CSS. Extract the above-the-fold styles and inline them in a `<style>` tag inside `<head>`. Load the rest with `<link media="print">`, which the browser fetches without blocking, then switch it to `media="all"` in the `onload` handler.
+
+The other option is a CSS-in-JS solution that extracts the critical CSS per component automatically. Next.js does this out of the box.
 
 ---
 
@@ -199,22 +225,27 @@ Bytes → Characters → Tokens → Nodes → DOM
                                            ↘
 CSS Bytes → Characters → Tokens → Nodes → CSSOM
                                            ↙
-                              Render Tree (only visible nodes)
-                                    ↓
-                                 Layout (geometry — x, y, width, height)
-                                    ↓
-                                  Paint (fill pixels into layers)
-                                    ↓
-                               Composite (GPU merges layers → screen)
+                   Render Tree (only visible nodes)
+                                 ↓
+                   Layout (geometry — x, y, width, height)
+                                 ↓
+                   Paint (fill pixels into layers)
+                                 ↓
+                   Composite (GPU merges layers → screen)
 ```
 
-Key points: (1) JS blocks DOM construction when encountered (unless `defer`/`async`); (2) CSS blocks rendering (CSSOM must be built before Render Tree); (3) Layout and Paint are expensive — avoid triggering them in loops; (4) Composite is cheapest — only properties on GPU layers (`transform`, `opacity`) can animate without Layout/Paint.
+Four points to take from the diagram:
+
+- JS blocks DOM construction the moment the parser meets it, unless the tag carries `defer` or `async`.
+- CSS blocks rendering, because the CSSOM must be built before the Render Tree.
+- Layout and Paint are expensive. Avoid triggering them inside loops.
+- Composite is the cheapest stage. Only properties living on GPU (graphics processing unit) layers, `transform` and `opacity`, can animate without Layout and Paint.
 
 ---
 
 **12. What is layout thrashing and how do you fix it?**
 
-Layout thrashing (forced synchronous layout): reading a layout property (`offsetHeight`, `getBoundingClientRect()`) forces the browser to flush pending style changes and recalculate layout synchronously — before the next frame. Then writing a style forces another layout on the next read. In a loop, this causes N layout recalculations per frame instead of one.
+Layout thrashing is also called forced synchronous layout. Reading a layout property such as `offsetHeight` or `getBoundingClientRect()` forces the browser to flush pending style changes. It must then recalculate layout synchronously, before the next frame. Writing a style afterwards forces yet another layout on the next read. In a loop this costs N layout recalculations per frame instead of one.
 
 ```ts
 // ❌ Layout thrashing — read forces layout, write invalidates it, loop repeats
@@ -245,13 +276,17 @@ elements.forEach((el, i) => {
 - `width`, `height`, `margin`, `padding`, `top`, `left` — trigger Layout
 - `background-color`, `color`, `border-color`, `box-shadow` — trigger Paint
 
-Rule: animate `transform: translateX()` instead of `left`, `transform: scaleX()` instead of `width`. The GPU handles transform/opacity natively; Layout and Paint run on the CPU.
+Rule: animate `transform: translateX()` instead of `left`, `transform: scaleX()` instead of `width`. The GPU handles `transform` and `opacity` natively, while Layout and Paint run on the CPU (central processing unit).
 
 ---
 
 **14. What is `requestAnimationFrame` and when should you use it over `setTimeout`?**
 
-`requestAnimationFrame(cb)` schedules `cb` to run once before the browser's next repaint, synchronized to the display refresh rate (usually 60fps = ~16.7ms). Benefits: (1) never runs when the tab is hidden — saves CPU/battery; (2) synchronized to the display — no tearing or wasted frames; (3) the browser can combine it with other visual work in the same frame.
+The `requestAnimationFrame(cb)` call schedules `cb` to run once before the browser's next repaint. It is synchronized to the display refresh rate, usually 60 frames per second, or about every 16.7 ms. Three benefits follow from that:
+
+- It never runs while the tab is hidden, which saves battery and processor time.
+- It is synchronized to the display, so there is no tearing and no wasted frame.
+- The browser can combine it with other visual work in the same frame.
 
 `setTimeout(fn, 0)` can fire at any time — it may split across frames (visual stutter) or run during a layout phase. Use `requestAnimationFrame` for: all visual animations, DOM batch writes after reading layout properties, scroll-based updates. Use `setTimeout` for non-visual deferred work.
 
@@ -259,7 +294,7 @@ Rule: animate `transform: translateX()` instead of `left`, `transform: scaleX()`
 
 **15. What is the `will-change` property and what are the risks of overusing it?**
 
-`will-change` hints to the browser that an element will be animated, prompting it to promote the element to its own compositor layer *before* the animation starts (avoiding the cost of promotion during animation). For animations triggered on hover or via JS, this removes the jank of the first frame.
+The `will-change` property hints to the browser that an element is about to be animated. The browser then promotes that element to its own compositor layer *before* the animation starts, so promotion does not cost anything mid-animation. For animations triggered on hover or from JS, this removes the jank of the first frame.
 
 Risk: each composited layer consumes GPU memory. Using `will-change: transform` on hundreds of elements simultaneously can exhaust GPU memory, causing the browser to de-promote layers — worse than not using it at all. Apply it only to elements that will *actually* animate, and remove it after the animation ends:
 
@@ -272,32 +307,23 @@ el.addEventListener('animationend', () => { el.style.willChange = 'auto'; });
 
 ## Typical follow-ups (Group 3)
 
-```txt
-"What is paint flashing in DevTools and how do you enable it?" →
-  DevTools → Rendering panel → 'Paint flashing' checkbox. Areas
-  that are repainted in each frame flash green. Useful for
-  identifying components that repaint on scroll (should be zero
-  for a smooth scroll experience). If the entire page flashes on
-  scroll, something is causing a global repaint — often a fixed-
-  position element with a box-shadow or non-composited animation.
+**"What is paint flashing in DevTools and how do you enable it?"**
 
-"What is stacking context and why does it matter for performance?" →
-  A stacking context is a 3D space for z-index compositing.
-  Created by: position + z-index, opacity < 1, transform,
-  will-change, filter. Each stacking context is painted as a
-  unit. Too many nested stacking contexts prevent the browser
-  from optimizing layer merging. Unexpected stacking contexts
-  explain "why does this element appear above everything else?"
+Open DevTools, go to the Rendering panel, and tick the 'Paint flashing' checkbox. Areas that are repainted in each frame flash green. This is how you find components that repaint on scroll, and for a smooth scroll that count should be zero.
 
-"When does CSS animation outperform JS animation?" →
-  CSS animations on compositor-only properties (transform, opacity)
-  run on the compositor thread — the JS thread being blocked
-  (long task) doesn't drop their frames. JS animations via
-  requestAnimationFrame run on the main thread — a long task
-  drops both the animation and the frame. For fire-and-forget
-  animations on transform/opacity: CSS is safer. For complex
-  physics or interactive animations: JS + requestAnimationFrame.
-```
+If the whole page flashes on scroll, something is forcing a global repaint. Usually it is a fixed-position element with a `box-shadow`, or an animation that was never composited.
+
+**"What is a stacking context and why does it matter for performance?"**
+
+A stacking context is a 3D space in which `z-index` compositing happens. It is created by `position` together with `z-index`, by `opacity` below 1, and by `transform`, `will-change` or `filter`.
+
+Each stacking context is painted as a single unit. Too many nested contexts prevent the browser from optimizing layer merging. Unexpected contexts also explain the classic puzzle: why does this element appear above everything else?
+
+**"When does a CSS animation outperform a JS animation?"**
+
+CSS animations on compositor-only properties (`transform`, `opacity`) run on the compositor thread. A blocked JS thread — a long task — does not drop their frames. JS animations driven by `requestAnimationFrame` run on the main thread, so a long task drops both the animation and the frame.
+
+For fire-and-forget animations on `transform` or `opacity`, CSS is safer. For complex physics or interactive animations, use JS with `requestAnimationFrame`.
 
 ---
 
@@ -311,18 +337,23 @@ el.addEventListener('animationend', () => { el.style.willChange = 'auto'; });
 
 **`no-store`:** never store the response in any cache. Every request fetches fresh from the server. Used for sensitive data (banking session pages, personal health data).
 
-```txt
-Static assets with content hash:  Cache-Control: max-age=31536000, immutable
-HTML pages (must always revalidate): Cache-Control: no-cache
-Sensitive data:                     Cache-Control: no-store
-API responses (cache 1 min):       Cache-Control: max-age=60, s-maxage=300
-```
+| Kind of response | `Cache-Control` value |
+|---|---|
+| Static asset with a content hash | `max-age=31536000, immutable` |
+| HTML page (must always revalidate) | `no-cache` |
+| Sensitive data | `no-store` |
+| API response cached for a minute | `max-age=60, s-maxage=300` |
 
 ---
 
 **17. What is ETags and how does cache revalidation work?**
 
-ETag is a server-generated token (hash of the content). Flow: (1) first request — server sends `ETag: "abc123"` in response; (2) browser stores the response with its ETag; (3) next request (after max-age expires) — browser sends `If-None-Match: "abc123"`; (4) server compares ETag with current content: if unchanged → `304 Not Modified` (no body, saves bandwidth); if changed → `200` with new content and new ETag.
+An ETag is a server-generated token, normally a hash of the content. The flow has four steps:
+
+1. On the first request the server sends `ETag: "abc123"` in the response.
+2. The browser stores the response together with its ETag.
+3. On the next request, once `max-age` has expired, the browser sends `If-None-Match: "abc123"`.
+4. The server compares that ETag with the current content. If nothing changed it answers `304 Not Modified` with no body, which saves bandwidth. If the content changed it answers `200` with the new content and a new ETag.
 
 `Last-Modified` / `If-Modified-Since` is the older alternative using timestamps instead of content hashes. ETags are more reliable (timestamp precision, clock drift on multi-server setups).
 
@@ -363,10 +394,11 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 
 Stale-while-revalidate (SWR): serve the cached (stale) response immediately, while fetching a fresh version in the background for the next request. Zero-latency for the user; always eventually consistent.
 
-```
+```txt
 Cache-Control: max-age=60, stale-while-revalidate=3600
 ```
-Means: serve from cache for 60s (fresh); after 60s serve stale and revalidate in background; after 3660s must revalidate synchronously.
+
+That header means three things. Serve from cache for the first 60 seconds, while the response is still fresh. After those 60 seconds, serve the stale copy and revalidate in the background. After 3660 seconds in total, revalidation becomes synchronous.
 
 **Appropriate:** content that changes but not critically — blog posts, product listings, dashboard data. Small staleness is acceptable.
 
@@ -376,30 +408,23 @@ Means: serve from cache for 60s (fresh); after 60s serve stale and revalidate in
 
 ## Typical follow-ups (Group 4)
 
-```txt
-"What is the difference between the browser cache and the Service Worker cache?" →
-  Browser cache (HTTP cache): automatic, controlled by Cache-Control
-  headers, managed by the browser. You can't programmatically decide
-  to serve stale on network failure.
-  Service Worker cache (Cache API): programmatic, fully in your control.
-  You decide exactly what to cache, when to update, and what to serve
-  when offline. Service Worker can intercept requests the HTTP cache
-  would never see (cross-origin failures, timeout fallbacks).
+**"What is the difference between the browser cache and the Service Worker cache?"**
 
-"A user reports they're not seeing their latest data after you
-deployed. No hard refresh. Why?" →
-  A stale cache entry with a long max-age is serving the old asset.
-  Solutions: (1) content-based hashing in filenames — the URL changes
-  on deploy, busting the cache; (2) for HTML: max-age=0 or no-cache
-  so the entry point always revalidates; (3) Service Worker with
-  skipWaiting() + clients.claim() to activate immediately on update.
+The browser cache, also called the HTTP cache, is automatic. It is controlled by `Cache-Control` headers and managed by the browser. You cannot programmatically decide to serve a stale copy when the network fails.
 
-"What is CDN cache vs browser cache?" →
-  Browser cache: per-user, on their device. Cache-Control governs both.
-  CDN cache: shared across users, on the edge server. s-maxage overrides
-  max-age for CDN only. Vary: header tells the CDN to maintain separate
-  cache entries per header value (e.g., Vary: Accept-Encoding).
-```
+The Service Worker cache, reached through the Cache API, is programmatic and fully under your control. You decide exactly what to cache, when to update it, and what to serve when the user is offline. A Service Worker can also intercept requests the HTTP cache would never see, such as cross-origin failures and timeout fallbacks.
+
+**"A user is not seeing their latest data after a deploy, without a hard refresh. Why?"**
+
+A stale cache entry with a long `max-age` is still serving the old asset. Three solutions:
+
+- Content-based hashing in filenames. The URL changes on deploy, so the stale entry is never requested again.
+- For HTML: `max-age=0` or `no-cache`, so the entry point always revalidates.
+- A Service Worker that calls `skipWaiting()` and `clients.claim()` to activate immediately on update.
+
+**"What is the difference between a CDN cache and a browser cache?"**
+
+The browser cache is per-user and lives on their device. The CDN cache is shared across users and lives on the edge server. `Cache-Control` governs both, but `s-maxage` overrides `max-age` for the CDN only. The `Vary` header tells the CDN to keep separate cache entries per header value, for example `Vary: Accept-Encoding`.
 
 ---
 
@@ -452,9 +477,10 @@ Next.js does route-based code splitting automatically. The impact: reducing the 
 
 **22. What is tree shaking and what prevents it from working?**
 
-Tree shaking is the bundler's elimination of unused exports from ES modules. It relies on static analysis of `import`/`export` statements — the bundler can determine at build time which exports are never imported.
+Tree shaking is the bundler's elimination of unused exports from ECMAScript modules. It relies on static analysis of `import`/`export` statements — the bundler can determine at build time which exports are never imported.
 
 **What prevents tree shaking:**
+
 1. CommonJS (`require`) — dynamic, can't be statically analyzed
 2. Side-effectful imports: `import 'polyfill'` — bundler can't know if it's safe to remove
 3. Missing `"sideEffects": false` in `package.json` — bundler assumes all files have side effects
@@ -487,30 +513,23 @@ Rule: **debounce** for expensive operations triggered by the *end* of user activ
 
 ## Typical follow-ups (Group 5)
 
-```txt
-"You added React.lazy() everywhere and INP got worse. Why?" →
-  Lazy loading triggers a network request + parse + execute on
-  first navigation to that route. If the user clicks a button
-  that triggers a lazy load, the click handler is blocked
-  waiting for the bundle — high INP. Fix: prefetch likely-next
-  routes on idle (import(/* webpackPrefetch: true */ './Page'))
-  so the bundle is in cache before the user navigates.
+**"You added `React.lazy()` everywhere and INP got worse. Why?"**
 
-"What is the scheduler API and how does it improve INP?" →
-  scheduler.postTask() lets you schedule work at priorities:
-  'user-blocking' (input handling), 'user-visible' (rendering),
-  'background' (analytics, non-critical). Work can yield to higher-
-  priority tasks mid-execution. This breaks long tasks into smaller
-  chunks without manually inserting setTimeout(0) yields.
-  Available in Chrome 94+; polyfillable via MessageChannel.
+Lazy loading triggers a network request, then a parse, then an execute, on the first navigation to that route. If the user clicks a button that triggers a lazy load, the click handler sits blocked waiting for the bundle, and INP goes up.
 
-"How do you identify what's causing a long task?" →
-  DevTools Performance panel: record interaction → find long task
-  (red triangle) → expand call stack → identify the hot function.
-  Or use the LoAF (Long Animation Frame) API (Chrome 116+):
-  it reports not just duration but the full attribution — which
-  scripts contributed, which event handlers ran.
-```
+The fix is to prefetch the likely next routes while the browser is idle, with `import(/* webpackPrefetch: true */ './Page')`. Then the bundle is already in cache by the time the user navigates.
+
+**"What is the scheduler API and how does it improve INP?"**
+
+The `scheduler.postTask()` call lets you schedule work at an explicit priority. There are three: `user-blocking` for input handling, `user-visible` for rendering, and `background` for analytics and other non-critical work.
+
+Work can yield to higher-priority tasks mid-execution. That breaks long tasks into smaller chunks without manually inserting `setTimeout(0)` yields. It is available in Chrome 94 and later, and can be polyfilled with `MessageChannel`.
+
+**"How do you identify what is causing a long task?"**
+
+Record the interaction in the DevTools Performance panel, find the long task (the red triangle), expand its call stack, and identify the hot function.
+
+The other route is the LoAF (Long Animation Frame) API, available from Chrome 116. It reports not just the duration but the full attribution: which scripts contributed, and which event handlers ran.
 
 ---
 
@@ -526,7 +545,7 @@ Step-by-step:
 
 3. **Find the interaction in the timeline.** Look for a red rectangle (long task) or check the "Interactions" track. The bar shows start-to-paint duration.
 
-4. **Expand the call stack** under the long task. The widest bar at the bottom is the actual bottleneck — a React re-render, a sort, a deep clone, a synchronous XHR.
+4. **Expand the call stack** under the long task. The widest bar at the bottom is the actual bottleneck — a React re-render, a sort, a deep clone, a synchronous XHR (XMLHttpRequest) call.
 
 5. **Check "Layout" and "Paint" events.** If layout takes >20ms, find what triggered it (style recalculation → layout shift → forced synchronous layout).
 
@@ -536,9 +555,9 @@ Step-by-step:
 
 ---
 
-**25. What is the `web-vitals` library and how do you use it to send CWV to analytics?**
+**25. What is the `web-vitals` library and how do you use it to send Core Web Vitals to analytics?**
 
-The `web-vitals` library is Google's official JS library that measures CWV with the same logic Chrome uses for CrUX. It reports field data (real user measurements), not synthetic lab data.
+The `web-vitals` library is Google's official JS library. It measures the Core Web Vitals with the same logic Chrome uses for CrUX. It reports field data (real user measurements), not synthetic lab data.
 
 ```ts
 import { onCLS, onINP, onLCP, onFCP, onTTFB } from 'web-vitals';
@@ -568,29 +587,22 @@ Key detail: `onCLS` and `onINP` report the *final* value at page unload (or when
 
 ## Typical follow-ups (Group 6)
 
-```txt
-"What is the difference between lab data and field data?" →
-  Lab data: synthetic, controlled environment — Lighthouse, WebPageTest,
-  DevTools. Fast to run, reproducible, useful for development.
-  Does not reflect real user conditions (device spread, network variance,
-  cold vs warm cache, extensions). Field data: from real users — CrUX,
-  web-vitals library. Reflects actual experience. Slower to collect,
-  not reproducible, but what Google uses for ranking and what users feel.
-  Senior answer: always collect both; use lab to find issues, field to
-  confirm impact and verify fixes.
+**"What is the difference between lab data and field data?"**
 
-"How do you measure performance in CI/CD so regressions are caught?" →
-  Run Lighthouse CI on every PR: lhci autorun. Set budget thresholds
-  (LCP < 2.5s, bundle size < 200KB). Fail the PR if thresholds are
-  exceeded. Use a fixed test URL and warm server to reduce variance.
-  Also: bundlesize or size-limit packages to catch JS size regressions
-  independent of Lighthouse.
+Lab data comes from a synthetic, controlled environment: Lighthouse, WebPageTest, DevTools. It is fast to run, reproducible, and useful during development. It does not reflect real user conditions such as device spread, network variance, cold versus warm cache, and browser extensions.
 
-"A React app's INP is 800ms. What is your first hypothesis?" →
-  Heavy re-render on interaction. React re-renders a large subtree
-  on state change — the time between input and next paint includes
-  all that re-render work. Diagnosis: React DevTools Profiler →
-  record the interaction → find components that rendered unnecessarily.
-  Fix: React.memo, useMemo, useCallback on stable references,
-  or move state down to leaf components to reduce re-render scope.
-```
+Field data comes from real users, through CrUX or the `web-vitals` library. It reflects the actual experience. It is slower to collect and not reproducible, but it is what Google ranks on and what users feel.
+
+The senior answer is to collect both: lab data to find issues, field data to confirm impact and verify fixes.
+
+**"How do you measure performance in continuous integration so regressions are caught?"**
+
+Run Lighthouse CI, the continuous integration runner for Lighthouse, on every pull request with `lhci autorun`. Set budget thresholds: LCP under 2.5 s, bundle size under 200 kilobytes. Fail the pull request when a threshold is exceeded. Use a fixed test URL and a warm server to reduce variance.
+
+Add the `bundlesize` or `size-limit` package as well, to catch JS size regressions independently of Lighthouse.
+
+**"A React app has an INP of 800 ms. What is your first hypothesis?"**
+
+A heavy re-render on interaction. React re-renders a large subtree on a state change, and the time between input and next paint includes all of that work.
+
+To diagnose it, open the React DevTools Profiler, record the interaction, and find the components that rendered unnecessarily. The usual fixes are `React.memo`, `useMemo` and `useCallback` on stable references, or moving state down to leaf components to shrink the re-render scope.
