@@ -8,8 +8,8 @@ The most common entry point into message queues for fullstack engineers: offload
 
 ```txt
 HTTP Request → API Server → [Queue: jobs] → Worker Process
-                ↓
-         202 Accepted (instant)              (slow work happens here)
+                ↓                                 ↓
+         202 Accepted (instant)          (slow work happens here)
 ```
 
 ### Image processing pipeline
@@ -96,7 +96,7 @@ channel.consume('image-processing', async (msg) => {
 
 **Why this beats synchronous processing:**
 - HTTP request returns in milliseconds, not seconds
-- Worker can run on separate infrastructure (different CPU/memory profile)
+- Worker can run on separate infrastructure, with a different processor (CPU) and memory profile
 - Multiple workers can process different images in parallel
 - Spikes in upload traffic don't spike processing latency — they grow the queue
 
@@ -203,18 +203,20 @@ channel.consume('inventory', async (msg) => {
 });
 ```
 
-**Key insight:** The order service doesn't import or call inventory, billing, or email services. Adding a new downstream reaction (e.g., fraud detection) requires zero changes to the order service — just add a new queue binding to the fanout exchange.
+**Key insight:** The order service doesn't import or call inventory, billing, or email services. Adding a new downstream reaction, say fraud detection, requires zero changes to the order service. You just add a new queue binding to the fanout exchange.
 
 ---
 
 ## Use case 3 — Rate limiting downstream services
 
-**The problem:** An external API (payment gateway, SMS provider, email delivery) has rate limits. Your system can generate requests faster than the API allows. Without a queue, you either add complex client-side throttling or get 429s.
+**The problem:** An external API has rate limits — a payment gateway, an SMS (short message service) provider, an email delivery service. Your system can generate requests faster than the API allows. Without a queue, you either add complex client-side throttling or get 429s.
 
 ```txt
-User requests (burst) → [Queue: sms-outbox] → SMS Worker (controlled rate)
-                                                    ↓
-                                           External SMS API (rate limited)
+User requests (burst)
+        ↓
+[Queue: sms-outbox] → SMS Worker (controlled rate)
+                            ↓
+                External SMS API (rate limited)
 ```
 
 ```ts
@@ -263,10 +265,13 @@ Multiple types of events should trigger emails. Instead of each service calling 
 ```txt
 Exchange: 'notifications' (topic)
 
-order-service    ──[order.placed]────────► 
-payment-service  ──[payment.failed]──────► [Queue: email-notifications] → Email Worker
+order-service    ──[order.placed]────────►
+payment-service  ──[payment.failed]──────►
 auth-service     ──[user.registered]─────►
 billing-service  ──[subscription.renewed]►
+                                          │
+                                          ▼
+                        [Queue: email-notifications] → Email Worker
 ```
 
 ```ts
@@ -313,16 +318,28 @@ async function setupEmailConsumer(channel: Channel): Promise<void> {
 
 function getEmailTemplate(routingKey: string): EmailTemplate | null {
   const templates: Record<string, EmailTemplate> = {
-    'order.placed':          { subject: (e) => `Order #${e.orderId} confirmed`, render: renderOrderConfirmed },
-    'payment.failed':        { subject: () => 'Payment failed — action required', render: renderPaymentFailed },
-    'user.registered':       { subject: () => 'Welcome!', render: renderWelcome },
-    'subscription.renewed':  { subject: (e) => `Subscription renewed — $${e.amount}`, render: renderRenewal },
+    'order.placed': {
+      subject: (e) => `Order #${e.orderId} confirmed`,
+      render: renderOrderConfirmed,
+    },
+    'payment.failed': {
+      subject: () => 'Payment failed — action required',
+      render: renderPaymentFailed,
+    },
+    'user.registered': {
+      subject: () => 'Welcome!',
+      render: renderWelcome,
+    },
+    'subscription.renewed': {
+      subject: (e) => `Subscription renewed — $${e.amount}`,
+      render: renderRenewal,
+    },
   };
   return templates[routingKey] ?? null;
 }
 ```
 
-**Why topic exchange instead of direct API calls:** Adding a new notification type (e.g., `shipment.dispatched`) requires zero changes to the email service — just add a template. The topic exchange binding `#` catches everything automatically.
+**Why topic exchange instead of direct API calls:** Adding a new notification type, say `shipment.dispatched`, requires zero changes to the email service. You just add a template. The topic exchange binding `#` catches everything automatically.
 
 ---
 
@@ -331,36 +348,40 @@ function getEmailTemplate(routingKey: string): EmailTemplate | null {
 This is the architecture you'd sketch in a system design interview for an e-commerce platform. It ties together all the patterns from the previous articles.
 
 ```txt
-┌─────────────────── ORDER PIPELINE ───────────────────────────────────────────┐
-│                                                                               │
-│  [POST /orders]                                                               │
-│       │                                                                       │
-│       ▼                                                                       │
-│  [Order Service]  ──(outbox relay)──► Exchange: 'order-events' (topic)       │
-│       │                                    │                                  │
-│       ▼                               ┌────┴────────────────────┐             │
-│  [DB: orders]                         ▼                         ▼             │
-│  [DB: outbox]            ┌──[Queue: inventory]──►   ┌──[Queue: email]──►     │
-│                          │   Inventory Service  │   │   Email Service  │     │
-│                          └──────────────────────┘   └─────────────────-┘     │
-│                                    │                          │               │
-│                          ┌─────────┴──────┐       ┌──────────┴──────┐        │
-│                          ▼                ▼       ▼                  ▼        │
-│                   order.inventory  order.inven  order.confirmed    order.     │
-│                   -reserved        tory-failed                     failed     │
-│                          │                │                                   │
-│                          ▼                ▼                                   │
-│               [Queue: payment]    [Queue: order-updates]                      │
-│               Payment Service     Order Service (saga compensation)           │
-│                          │                                                    │
-│                          ▼                                                    │
-│                   payment.processed / payment.failed                          │
-│                          │                                                    │
-│                          ▼                                                    │
-│               [Queue: order-updates]                                          │
-│               Order Service updates status                                    │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
+ORDER PIPELINE
+
+[POST /orders]
+      │
+      ▼
+[Order Service] ──► [DB: orders] + [DB: outbox]   (one transaction)
+      │
+      │ outbox relay
+      ▼
+Exchange: 'order-events' (topic)
+      │
+      ├──► [Queue: email] ──► Email Service
+      │          │
+      │          └──► order.confirmed / order.failed
+      │
+      └──► [Queue: inventory] ──► Inventory Service
+                 │
+                 ├──► order.inventory-reserved
+                 │          │
+                 │          ▼
+                 │     [Queue: payment] ──► Payment Service
+                 │          │
+                 │          ▼
+                 │     payment.processed / payment.failed
+                 │          │
+                 │          ▼
+                 │     [Queue: order-updates]
+                 │     Order Service updates the order status
+                 │
+                 └──► order.inventory-failed
+                            │
+                            ▼
+                       [Queue: order-updates]
+                       Order Service (saga compensation)
 ```
 
 This is a **choreography-based saga** — each service reacts to events and publishes its own. There's no central coordinator; services talk through the message bus.
@@ -413,25 +434,27 @@ Failure scenario 1: Email Service is down
   → order.placed event sits in 'email' queue
   → Inventory and Payment proceed normally
   → When Email Service recovers, it processes the queued event
-  → Customer gets the email late, but the order is processed correctly
+  → Customer gets the email late; the order is processed correctly
 
 Failure scenario 2: Payment Service crashes mid-processing
   → payment.processed never published
   → Order stays in 'inventory_reserved' state
   → Timeout job (or admin action) can trigger compensation
-  → Alternatively: Payment Service reconnects, reprocesses in-flight message
+  → Or: Payment Service reconnects and reprocesses the message
 
-Failure scenario 3: Order Service crashes after publishing, before outbox ack
+Failure scenario 3: Order Service crashes after publishing,
+                    before the outbox row is marked published
   → Outbox relay re-publishes (at-least-once)
   → Downstream services receive duplicate event
-  → Idempotent consumers handle it (ON CONFLICT DO NOTHING on order ID)
+  → Idempotent consumers handle it
+     (ON CONFLICT (order_id) DO NOTHING)
 ```
 
 ---
 
 ## Use case 6 — Worker pool for CPU-intensive tasks
 
-When you have CPU-bound work (PDF generation, report compilation, data export), you want multiple workers to process tasks in parallel, with the queue as the buffer and load balancer.
+Some work is bound by the processor rather than by waiting: generating PDF (Portable Document Format) files, compiling reports, exporting data. For that work you want several workers processing tasks in parallel, with the queue acting as buffer and load balancer.
 
 ```ts
 // report-service/worker-pool.ts — run N instances of this
@@ -469,14 +492,14 @@ channel.consume('report-generation', async (msg) => {
 
 ## Common interview traps
 
-- **"I should use a queue for everything to be safe"** — queues add complexity: you need to handle message serialization, consumer lifecycle, idempotency, dead-letters, monitoring. For a simple CRUD API calling one other service, synchronous HTTP is simpler and easier to reason about. Use queues when you genuinely need the decoupling or resilience benefits.
+- **"I should use a queue for everything to be safe"** — queues add complexity: you need to handle message serialization, consumer lifecycle, idempotency, dead-letters, monitoring. For a simple CRUD (create, read, update, delete) API calling one other service, synchronous HTTP is simpler and easier to reason about. Use queues when you genuinely need the decoupling or resilience benefits.
 
 - **"The order pipeline above is a microservices anti-pattern because services are coupled through events"** — event coupling is loose coupling. Services share an event schema (a contract), not code or direct network calls. Adding, removing, or restarting a service doesn't require changes to others. The anti-pattern is sharing a database, not sharing an event bus.
 
-- **"Choreography-based sagas are hard to debug"** — true, it's harder to trace a request across multiple services and queues compared to a single monolithic transaction. The answer isn't to avoid choreography — it's to invest in distributed tracing (correlation IDs on every message, OpenTelemetry) so you can follow a specific order through the entire pipeline.
+- **"Choreography-based sagas are hard to debug"** — true, it's harder to trace a request across multiple services and queues compared to a single monolithic transaction. The answer isn't to avoid choreography. It's to invest in distributed tracing: correlation IDs on every message, plus a tool such as OpenTelemetry. Then you can follow one specific order through the entire pipeline.
 
-- **"Using a queue for rate limiting is a workaround — I should fix the API client instead"** — the queue IS the fix. A rate-limited external API is a constraint you can't change. The queue decouples your system's traffic from the external API's capacity, which is exactly what it's designed for.
+- **"Using a queue for rate limiting is a workaround — I should fix the API client instead"** — the queue **is** the fix. A rate-limited external API is a constraint you can't change. The queue decouples your system's traffic from the external API's capacity, which is exactly what it's designed for.
 
-- **"Background jobs don't need dead-letter queues because failures are rare"** — failures happen in production, especially for jobs interacting with external services. Without a DLQ, a failed job is silently dropped. With a DLQ, failed jobs are visible, alertable, and can be replayed after fixing the root cause.
+- **"Background jobs don't need dead-letter queues because failures are rare"** — failures happen in production, especially for jobs interacting with external services. Without a DLQ (dead letter queue), a failed job is silently dropped. With a DLQ, failed jobs are visible, alertable, and can be replayed after fixing the root cause.
 
 - **"Choreography vs orchestration — I need to know which is better"** — both are valid. Orchestration (a central saga coordinator calls each service in order) is easier to reason about and debug. Choreography (services react to events) scales better and has no single point of failure. The real answer on an interview: "it depends on team size, service count, and how often the process changes — and I've used both."

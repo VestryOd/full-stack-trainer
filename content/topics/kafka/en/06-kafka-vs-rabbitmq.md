@@ -2,25 +2,34 @@
 
 ## The Philosophical Difference: Log vs Queue
 
-This isn't a comparison of "which is faster" or "which is more reliable." Kafka and RabbitMQ solve fundamentally different problems because they're built on different data storage models.
+This is not a comparison of which one is faster or which one is more reliable. Kafka and RabbitMQ solve fundamentally different problems, because they are built on different storage models.
 
 ```txt
-RabbitMQ — queue model:                  Kafka — log model:
-┌────────────────────────────┐           ┌────────────────────────────────────┐
-│  Broker stores messages    │           │  Broker stores the log             │
-│  until they are read and   │           │  (append-only) until the           │
-│  acknowledged (ack).       │           │  retention period expires,         │
-│  After ack — message is    │           │  regardless of whether the         │
-│  deleted.                  │           │  message was read or not.          │
-└────────────────────────────┘           └────────────────────────────────────┘
+                RabbitMQ — the queue model
+┌───────────────────────────────────────────────────────┐
+│ The broker keeps a message until it has been read and │
+│ acknowledged (ack). After the ack it is deleted.      │
+│                                                       │
+│ Producer ──▶ [msg1][msg2][msg3]                       │
+│ a consumer reads msg1                                 │
+│          ──▶ [msg2][msg3]        msg1 is gone         │
+└───────────────────────────────────────────────────────┘
 
-  Producer ──► [msg1][msg2][msg3]           offset: 0     1     2     3     4
-  Consumer reads msg1 →                     [msg1][msg2][msg3][msg4][msg5]
-
-  ──► [msg2][msg3]                          Consumer A: offset=2 (read 0,1)
-  msg1 IS DELETED                           Consumer B: offset=0 (reading from start)
-                                            Consumer C: offset=4 (near real-time)
-                                            msg1,2,3,4,5 ALL STILL IN THE LOG
+                  Kafka — the log model
+┌───────────────────────────────────────────────────────┐
+│ The broker keeps the log (append-only) until the      │
+│ retention period expires — whether the message was    │
+│ read or not.                                          │
+│                                                       │
+│ offset:      0     1     2     3     4                │
+│           [msg1][msg2][msg3][msg4][msg5]              │
+│                                                       │
+│ Consumer A: offset=2  (has read 0 and 1)              │
+│ Consumer B: offset=0  (reading from the start)        │
+│ Consumer C: offset=4  (close to real time)            │
+│                                                       │
+│ msg1..msg5 are all still in the log                   │
+└───────────────────────────────────────────────────────┘
 ```
 
 Everything else follows from this difference: failure behavior, scaling, multi-consumer support, replay capability.
@@ -31,24 +40,25 @@ Everything else follows from this difference: failure behavior, scaling, multi-c
 RabbitMQ — event-driven retention:
   A message exists ONLY until it is consumed.
   Read + ack → deleted immediately.
-  No ack within N seconds → requeue (returned to queue for retry).
-  Optionally: Dead Letter Queue for failed messages.
+  No ack within N seconds → requeue (back to the queue).
+  Optionally: a dead letter queue for failed messages.
 
-  Problem: you can't "rewind." If an analytics service wasn't
-  reading the queue for 2 hours — those 2 hours of events are
+  Problem: you cannot rewind. If an analytics service was not
+  reading the queue for 2 hours, those 2 hours of events are
   gone forever.
 
 Kafka — time-based retention:
-  A message is stored for N days (retention.ms) or until volume M bytes
-  (retention.bytes), REGARDLESS of whether it was read.
+  A message is stored for N days (retention.ms) or up to
+  M bytes (retention.bytes), REGARDLESS of whether it was read.
 
   Default: 7 days. Configurable per topic:
     retention.ms=-1 → keep forever (compact topics)
     retention.ms=3600000 → 1 hour
-    retention.bytes=1073741824 → delete oldest when exceeding 1GB
+    retention.bytes=1073741824 → delete oldest when over 1GB
 
   Advantage: analytics service down for 2 hours → restarts from
-  last offset → catches up on everything it missed. No data loss.
+  its last offset → catches up on everything it missed.
+  No data loss.
 ```
 
 This isn't just a technical detail — it's Kafka's core architectural value. The log is the source of truth. A new service can subscribe and receive the entire history of events from the beginning. RabbitMQ offers no such capability.
@@ -57,33 +67,49 @@ This isn't just a technical detail — it's Kafka's core architectural value. Th
 
 ```txt
 RabbitMQ — push model:
-  Broker actively "pushes" messages to subscribers.
-  Broker manages backpressure via prefetch count.
-  Consumer has no direct control over receive rate.
+  The broker pushes messages to its subscribers.
+  The consumer limits the flow with a prefetch window,
+  which is how RabbitMQ does backpressure: basic.qos caps
+  how many unacknowledged messages the broker may hand
+  out at once.
 
-  Pro: low latency (sub-millisecond for simple tasks)
-  Con: consumer can receive more messages than it can process
+  Pro: low latency, sub-millisecond for simple tasks
+  Con: the window is chosen up front, so a wrong prefetch
+       value can still bury a slow consumer
 
 Kafka — pull model:
-  Consumer polls the broker itself (poll).
-  Consumer has full control over its processing rate.
-  Broker has no knowledge of consumer state (except offsets).
+  The consumer polls the broker itself (poll).
+  The consumer limits the flow per fetch:
+  max.poll.records and fetch.max.bytes cap how much
+  a single poll returns.
+  The broker knows nothing about consumer state, except
+  the committed offsets.
 
-  Pro: consumer is never overwhelmed; reads at its own pace
-  Con: slightly higher latency for real-time tasks (but typically <10ms)
+  Pro: the consumer is never overwhelmed and reads at its
+       own pace
+  Con: slightly higher latency for real-time tasks, though
+       usually under 10 ms
+
+Both sides can limit the flow. The difference is who starts
+the transfer, not who holds the control.
 ```
 
 ## Routing: Where Logic Lives
 
 ```txt
 RabbitMQ — smart routing in the broker:
-  ┌────────────────────────────────────────┐
-  │            RabbitMQ Broker             │
-  │                                        │
-  │ Producer ──► Exchange ──► Bindings ──► │            Queue A ──► Consumer A
-  │ (direct/fanout/                        │            Queue B ──► Consumer B
-  │  topic/headers)                        │            Queue C ──► Consumer C
-  └────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────┐
+  │ RabbitMQ broker                                │
+  │                                                │
+  │ Producer ──▶ Exchange ──▶ Bindings ──▶ Queue A │
+  │                                        Queue B │
+  │                                        Queue C │
+  │                                                │
+  │ Queue A ──▶ Consumer A                         │
+  │ Queue B ──▶ Consumer B                         │
+  │ Queue C ──▶ Consumer C                         │
+  └────────────────────────────────────────────────┘
 
   Exchange types:
   - direct:  exact routing key match
@@ -96,14 +122,15 @@ RabbitMQ — smart routing in the broker:
 
 Kafka — routing in client code:
   The broker just stores topics.
-  All logic of "which consumer reads what" lives in application code.
+  All logic of "which consumer reads what" lives in
+  application code.
 
   Need fanout? → multiple consumer groups read the same topic.
-  Need filtering? → consumer reads everything, filters itself.
-  Need routing? → producer writes to different topics conditionally.
+  Need filtering? → the consumer reads everything, filters itself.
+  Need routing? → the producer picks the topic by condition.
 
-  This is not a weakness — it's the deliberate simplicity of the
-  "dumb broker" philosophy.
+  This is not a weakness — it is the deliberate simplicity of
+  the "dumb broker" philosophy.
 ```
 
 ## When to Choose Kafka
@@ -170,44 +197,20 @@ Kafka — routing in client code:
 
 ## Honest Comparison by Parameter
 
-```txt
-┌───────────────────────┬──────────────────────────┬──────────────────────────┐
-│ Parameter             │ Kafka                    │ RabbitMQ                 │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Storage model         │ Log (append-only)        │ Queue (deleted after ack)│
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Retention             │ Time/size-based          │ Until read + ack         │
-│                       │ (independent of reads)   │                          │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Replay                │ Yes — rewind the offset  │ No                       │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Multiple consumers    │ Yes — consumer groups,   │ Limited — each queue     │
-│                       │ each group gets all      │ consumed by one set      │
-│                       │ messages                 │ of consumers             │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Throughput            │ Very high (millions/sec) │ Medium-high              │
-│                       │                          │ (thousands–hundreds of   │
-│                       │                          │ thousands/sec)           │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Latency               │ Milliseconds (pull)      │ Sub-millisecond (push)   │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Routing               │ In client code           │ In the broker            │
-│                       │ (dumb broker)            │ (smart broker, Exchange) │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Ordering              │ Guaranteed within        │ Guaranteed within        │
-│                       │ a partition              │ a single queue           │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Operational           │ Higher: brokers,         │ Lower: simpler to set up │
-│ complexity            │ partitions, replication, │ and manage               │
-│                       │ ZooKeeper/KRaft          │                          │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Dead Letter           │ DLT pattern via code     │ Built into broker (DLX)  │
-│                       │ (not broker-native)      │                          │
-├───────────────────────┼──────────────────────────┼──────────────────────────┤
-│ Message               │ Not supported            │ Priority queues          │
-│ prioritization        │                          │ (native)                 │
-└───────────────────────┴──────────────────────────┴──────────────────────────┘
-```
+| Parameter | Kafka | RabbitMQ |
+|---|---|---|
+| Storage model | Log (append-only) | Queue (deleted after ack) |
+| Retention | By time or size, independent of reads | Until read and acknowledged |
+| Replay | Yes — rewind the offset | No |
+| Multiple consumers | Yes — consumer groups, each group gets every message | Limited — each queue is consumed by one set of consumers |
+| Throughput | Very high: millions of messages per second | Tens of thousands per second per queue, roughly 50 thousand per node across several queues |
+| Latency | Milliseconds (pull) | Sub-millisecond (push) |
+| Flow control | Consumer pulls; `max.poll.records` and `fetch.max.bytes` cap a fetch | Broker pushes; `basic.qos` prefetch caps unacknowledged messages |
+| Routing | In client code (dumb broker) | In the broker (smart broker, exchanges) |
+| Ordering | Guaranteed within a partition | Guaranteed within a single queue |
+| Operational complexity | Higher: brokers, partitions, replication, ZooKeeper or KRaft | Lower: simpler to set up and manage |
+| Dead letter handling | Dead Letter Topic pattern written in code, not broker-native | Built into the broker: a dead letter exchange (DLX) |
+| Message prioritization | Not supported | Priority queues, natively |
 
 ## An Honest Note About Real-World Choices
 
@@ -218,12 +221,13 @@ The textbook answer to "Kafka or RabbitMQ?" is "look at your requirements: do yo
 ```txt
 AWS:
   → Amazon MSK (Managed Streaming for Kafka) — Kafka
-  → Amazon SQS — simple queue (not RabbitMQ, but analogous for task queues)
+  → Amazon SQS — a simple queue (not RabbitMQ, but an
+    analogue for task queues)
   → Amazon SNS — pub/sub on top of SQS
 
 GCP:
-  → Google Cloud Pub/Sub — managed messaging (semantics closer to Kafka,
-    but not Kafka)
+  → Google Cloud Pub/Sub — managed messaging
+    (semantics closer to Kafka, but not Kafka)
 
 Azure:
   → Azure Event Hubs — Kafka-compatible API (managed Kafka)
@@ -234,9 +238,9 @@ Confluent Cloud:
     (Schema Registry, ksqlDB, Kafka Connect)
 ```
 
-Choosing "Kafka" often means "MSK" or "Confluent Cloud," not running your own cluster. This reduces operational burden but adds vendor lock-in and cost.
+Choosing Kafka usually means Amazon MSK (Managed Streaming for Kafka) or Confluent Cloud, not running your own cluster. That reduces the operational burden, but it adds vendor lock-in and cost.
 
-**Another reality**: many startups begin with RabbitMQ (easier to spin up, less overhead) and migrate to Kafka as load grows or when replay/event sourcing becomes a requirement. Kafka is not automatically the better choice for every new project.
+**Another reality**: many startups begin with RabbitMQ, which is easier to set up and carries less overhead. They move to Kafka as the load grows, or when replay and event sourcing become a requirement. Kafka is not automatically the better choice for every new project.
 
 ## Scenario: Order Service — What to Choose?
 
@@ -246,14 +250,14 @@ To make the choice concrete, consider a specific scenario:
 
 ```txt
 Option A: RabbitMQ
-  Order Service
-    │── publish → "email" exchange → Email Queue → Email Worker
-    │── publish → "inventory" exchange → Inventory Queue → Inventory Worker
-    └── publish → "analytics" exchange → Analytics Queue → Analytics Worker
+  Order Service publishes three times:
+  │── "email" exchange → Email Queue → Email Worker
+  │── "inventory" exchange → Inventory Queue → Inventory Worker
+  └── "analytics" exchange → Analytics Queue → Analytics Worker
 
   Pros: simple, tasks are independent, each worker does one thing
   Cons: Order Service knows about three downstream systems;
-        a new consumer (e.g., recommendations) requires changes to
+        a new consumer (recommendations) means changing
         Order Service; no replay if analytics is down for 2 hours
 
 Option B: Kafka
@@ -272,26 +276,35 @@ Option B: Kafka
         fire-and-forget tasks with no replay
 ```
 
-**Decision rule**: if you have **one event → multiple independent consumers** and/or **need replay** — Kafka. If **one task → one worker** with no need to re-read — RabbitMQ (or SQS).
+**Decision rule**: if you have **one event → multiple independent consumers** and/or **need replay** — Kafka. If **one task → one worker** with no need to re-read — RabbitMQ, or Amazon SQS (Simple Queue Service).
 
 ## Common Interview Traps
 
 **"Kafka is faster than RabbitMQ — so you should always choose Kafka"**
 
-Wrong selection criterion. RabbitMQ has sub-millisecond latency and handles hundreds of thousands of messages per second — more than sufficient for most task-queue scenarios. Kafka is indeed faster at very high throughput (millions of messages/sec), but that's not an argument for "send 1000 emails per day."
+Wrong selection criterion. RabbitMQ has sub-millisecond latency and handles tens of thousands of messages per second per queue. Spread over several queues that is roughly 50 thousand per node, which is more than enough for most task-queue scenarios.
+
+Kafka is an order of magnitude higher, because it appends to a sequential log and batches the writes. But that is not an argument for sending 1000 emails a day.
 
 **"Kafka replaces RabbitMQ"**
 
-No. Kafka can't do what RabbitMQ does: message prioritization, built-in DLX, rich broker-level routing via Exchanges, RPC patterns with reply queues. These are different tools for different problems — not versions of the same thing.
+No. There are things RabbitMQ does that Kafka cannot:
+
+- message prioritization;
+- a built-in dead letter exchange (DLX);
+- rich broker-level routing through exchanges;
+- remote procedure call (RPC) patterns with reply queues.
+
+These are different tools for different problems, not versions of the same thing.
 
 **"RabbitMQ is legacy — everyone is moving to Kafka"**
 
-This is industry hype, not fact. RabbitMQ is actively developed (3.x → 4.x), runs in millions of production systems, and remains the right choice for task queues, simple messaging patterns, and environments with moderate throughput requirements.
+This is industry hype, not fact. RabbitMQ is actively developed, from the 3.x line into 4.x, and runs in millions of production systems. It remains the right choice for task queues, simple messaging patterns, and moderate throughput.
 
 **"Need pub/sub → need Kafka"**
 
-Not necessarily. RabbitMQ fanout exchanges implement pub/sub. Amazon SNS + SQS implements pub/sub without Kafka. Kafka is one way to implement pub/sub, not the only way. Choosing Kafka is justified when you also need replay, long-term retention, or very high throughput.
+Not necessarily. RabbitMQ fanout exchanges implement pub/sub. So does Amazon SNS (Simple Notification Service) together with SQS, without any Kafka. Kafka is one way to implement pub/sub, not the only way. Choosing Kafka is justified when you also need replay, long-term retention, or very high throughput.
 
 **"We're on AWS — so we should use SQS instead of Kafka"**
 
-SQS and Kafka are different tools. SQS is a managed task queue (closer to RabbitMQ in model). Amazon MSK is managed Kafka. The choice between them follows the same logic: need replay? → MSK. Simple task queues? → SQS.
+Amazon Web Services (AWS) offers both, and they are different tools. Amazon SQS is a managed task queue, closer to RabbitMQ in model. Amazon MSK is managed Kafka. The choice between them follows the same logic: need replay? → MSK. Simple task queues? → SQS.

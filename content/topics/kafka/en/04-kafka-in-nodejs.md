@@ -53,7 +53,7 @@ export async function stopProducer() {
 }
 ```
 
-`producer.connect()` establishes TCP connections to the brokers. Call it once at service startup — creating a producer per request is expensive.
+`producer.connect()` establishes TCP (transmission control protocol) connections to the brokers. Call it once at service startup — creating a producer per request is expensive.
 
 ### Sending Without a Key (Round-Robin)
 
@@ -100,9 +100,15 @@ export async function publishOrderEvent(
 }
 
 // Usage:
-await publishOrderEvent('order-101', { type: 'ORDER_PLACED', payload: { amount: 1500 } });
-await publishOrderEvent('order-101', { type: 'PAYMENT_COMPLETED', payload: { method: 'card' } });
-await publishOrderEvent('order-101', { type: 'ORDER_SHIPPED', payload: { trackingId: 'TRK-99' } });
+await publishOrderEvent('order-101', {
+  type: 'ORDER_PLACED', payload: { amount: 1500 },
+});
+await publishOrderEvent('order-101', {
+  type: 'PAYMENT_COMPLETED', payload: { method: 'card' },
+});
+await publishOrderEvent('order-101', {
+  type: 'ORDER_SHIPPED', payload: { trackingId: 'TRK-99' },
+});
 ```
 
 ### Batching: Sending Multiple Messages at Once
@@ -225,7 +231,8 @@ t=3s   Consumer receives msg[offset=13]
 t=4s   Consumer receives msg[offset=14]
 t=5s   AUTO COMMIT → offset=14 saved in Kafka
 t=5.5s Consumer receives msg[offset=15]
-t=5.8s AUTO COMMIT → offset=15 saved (committed BEFORE processing finishes!)
+t=5.8s AUTO COMMIT → offset=15 saved
+       (committed before processing finished!)
 t=6s   Consumer crashes mid-processing of offset=15
 
 → Consumer restarts, reads from offset=16 ✗ (offset=15 is LOST!)
@@ -306,7 +313,8 @@ await consumer.run({
 const consumer = kafka.consumer({
   groupId: 'order-processor',
 
-  sessionTimeout: 30000,          // ms: no heartbeat within this → consumer is dead (default: 30000)
+  // ms: no heartbeat inside this window → the consumer is dead
+  sessionTimeout: 30000,          // default: 30000
   heartbeatInterval: 3000,        // ms: how often to send heartbeat (default: 3000)
   maxBytesPerPartition: 1048576,  // bytes: max data per fetch from one partition (1MB)
   minBytes: 1,                    // wait for at least 1 byte before broker responds
@@ -374,7 +382,7 @@ console.log(lag);
 // [{ partition: 0, lag: 12 }, { partition: 1, lag: 0 }, { partition: 2, lag: 45 }]
 ```
 
-In production, lag is typically monitored via Prometheus + kafkajs built-in events, or external tools: Kafka UI, Redpanda Console, Burrow, Datadog.
+In production, lag is typically monitored via Prometheus + kafkajs built-in events, or external tools: Kafka UI (a web console for Kafka), Redpanda Console, Burrow, Datadog.
 
 ### Built-in kafkajs Events
 
@@ -439,7 +447,9 @@ export async function startOrderConsumer(): Promise<void> {
         event = JSON.parse(raw) as OrderEvent;
       } catch {
         // invalid JSON — log and skip (poison message)
-        console.error('Invalid JSON in message, skipping:', { topic, partition, offset: message.offset });
+        console.error('Invalid JSON in message, skipping:', {
+          topic, partition, offset: message.offset,
+        });
         await consumer.commitOffsets([{
           topic,
           partition,
@@ -493,7 +503,7 @@ main().catch(console.error);
 
 **"Auto commit is the same as at-least-once"**
 
-No. Auto commit by default gives **at-most-once**: if the commit fires before processing finishes and the consumer crashes, the message is lost. At-least-once requires manual commit AFTER successful processing.
+No. Auto commit by default gives **at-most-once**: if the commit fires before processing finishes and the consumer crashes, the message is lost. At-least-once requires a manual commit **after** processing has succeeded.
 
 **"Manual commit prevents duplicates"**
 

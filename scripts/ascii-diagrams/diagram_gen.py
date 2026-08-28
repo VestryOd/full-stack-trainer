@@ -727,6 +727,39 @@ def flame_chart(L):
     return build(L['root'])
 
 
+def kafka_queue_vs_log(L):
+    """Two stacked panels of equal width: RabbitMQ deletes, Kafka retains."""
+    inner = max(len(l) for l in L['queue_body'] + L['log_body'])
+    return vstack(
+        [
+            with_title_and_notes(box(L['queue_body'], min_width=inner),
+                                 L['queue_title'], []),
+            with_title_and_notes(box(L['log_body'], min_width=inner),
+                                 L['log_title'], []),
+        ],
+        gap=1,
+    )
+
+
+def kafka_broker_routing(L):
+    """One box: producer to exchange to bindings to queues, then consumers."""
+    return box(L['body'])
+
+
+def kafka_two_panels(L):
+    """Two stacked, equal-width titled panels (a before/after or A/B pair)."""
+    inner = max(len(l) for l in L['top_body'] + L['bottom_body'])
+    return vstack(
+        [
+            with_title_and_notes(box(L['top_body'], min_width=inner),
+                                 L['top_title'], []),
+            with_title_and_notes(box(L['bottom_body'], min_width=inner),
+                                 L['bottom_title'], []),
+        ],
+        gap=1,
+    )
+
+
 DIAGRAMS = {
     'stack-compare': stack_compare,
     'update-models': update_models,
@@ -877,9 +910,138 @@ DIAGRAMS = {
     'sd-event-fanout': event_fanout,
     'sd-shortener-architecture': fanout_pipeline,
     'react-flame-chart': flame_chart,
+    'kafka-queue-vs-log': kafka_queue_vs_log,
+    'kafka-broker-routing': kafka_broker_routing,
+    'kafka-consumer-group-patterns': kafka_two_panels,
 }
 
 LABELS = {
+    'kafka-consumer-group-patterns': {
+        'ru': {
+            'top_title': 'Очередь: одна группа, партиции поделены',
+            'top_body': [
+                'топик "orders", группа "sync"',
+                '',
+                '  партиция 0 ──▶ потребитель A',
+                '  партиция 1 ──▶ потребитель B',
+                '  партиция 2 ──▶ потребитель C',
+                '',
+                'каждое сообщение обрабатывает ровно один из них',
+            ],
+            'bottom_title': 'Pub/Sub: несколько групп, каждая читает всё',
+            'bottom_body': [
+                'топик "orders"',
+                '',
+                '  группа "search-service"    ──▶ все сообщения',
+                '  группа "analytics-service" ──▶ все сообщения',
+                '',
+                'у групп независимые оффсеты',
+            ],
+        },
+        'en': {
+            'top_title': 'Queue-like: one group, the partitions are split',
+            'top_body': [
+                'topic "orders", group "sync"',
+                '',
+                '  partition 0 ──▶ consumer A',
+                '  partition 1 ──▶ consumer B',
+                '  partition 2 ──▶ consumer C',
+                '',
+                'each message is handled by exactly one of them',
+            ],
+            'bottom_title': 'Pub/sub: several groups, each reads everything',
+            'bottom_body': [
+                'topic "orders"',
+                '',
+                '  group "search-service"    ──▶ every message',
+                '  group "analytics-service" ──▶ every message',
+                '',
+                'the groups keep independent offsets',
+            ],
+        },
+    },
+    'kafka-queue-vs-log': {
+        'ru': {
+            'queue_title': 'RabbitMQ — модель очереди',
+            'queue_body': [
+                'Брокер хранит сообщение, пока его не прочитают и не',
+                'подтвердят (ack). После ack сообщение удаляется.',
+                '',
+                'Producer ──▶ [msg1][msg2][msg3]',
+                'потребитель читает msg1',
+                '         ──▶ [msg2][msg3]        msg1 удалён',
+            ],
+            'log_title': 'Kafka — модель лога',
+            'log_body': [
+                'Брокер хранит лог (append-only) до истечения срока',
+                'хранения — независимо от того, прочитали сообщение',
+                'или нет.',
+                '',
+                'offset:      0     1     2     3     4',
+                '          [msg1][msg2][msg3][msg4][msg5]',
+                '',
+                'Потребитель A: offset=2  (прочитал 0 и 1)',
+                'Потребитель B: offset=0  (читает с начала)',
+                'Потребитель C: offset=4  (почти в реальном времени)',
+                '',
+                'msg1..msg5 по-прежнему все в логе',
+            ],
+        },
+        'en': {
+            'queue_title': 'RabbitMQ — the queue model',
+            'queue_body': [
+                'The broker keeps a message until it has been read and',
+                'acknowledged (ack). After the ack it is deleted.',
+                '',
+                'Producer ──▶ [msg1][msg2][msg3]',
+                'a consumer reads msg1',
+                '         ──▶ [msg2][msg3]        msg1 is gone',
+            ],
+            'log_title': 'Kafka — the log model',
+            'log_body': [
+                'The broker keeps the log (append-only) until the',
+                'retention period expires — whether the message was',
+                'read or not.',
+                '',
+                'offset:      0     1     2     3     4',
+                '          [msg1][msg2][msg3][msg4][msg5]',
+                '',
+                'Consumer A: offset=2  (has read 0 and 1)',
+                'Consumer B: offset=0  (reading from the start)',
+                'Consumer C: offset=4  (close to real time)',
+                '',
+                'msg1..msg5 are all still in the log',
+            ],
+        },
+    },
+    'kafka-broker-routing': {
+        'ru': {
+            'body': [
+                'Брокер RabbitMQ',
+                '',
+                'Producer ──▶ Exchange ──▶ Bindings ──▶ Очередь A',
+                '                                       Очередь B',
+                '                                       Очередь C',
+                '',
+                'Очередь A ──▶ Потребитель A',
+                'Очередь B ──▶ Потребитель B',
+                'Очередь C ──▶ Потребитель C',
+            ],
+        },
+        'en': {
+            'body': [
+                'RabbitMQ broker',
+                '',
+                'Producer ──▶ Exchange ──▶ Bindings ──▶ Queue A',
+                '                                       Queue B',
+                '                                       Queue C',
+                '',
+                'Queue A ──▶ Consumer A',
+                'Queue B ──▶ Consumer B',
+                'Queue C ──▶ Consumer C',
+            ],
+        },
+    },
     'polyrepo-vs-monorepo': {
         'ru': {
             'poly_title': 'POLYREPO: репозиторий на приложение',

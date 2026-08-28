@@ -8,7 +8,7 @@
 npm install kafkajs
 ```
 
-Объект `Kafka` — точка входа, из которой создаются продюсеры и консьюмеры. Его создают один раз и переиспользуют:
+Объект `Kafka` — точка входа, из которой создаются продюсеры и потребители. Его создают один раз и переиспользуют:
 
 ```ts
 // kafka/client.ts
@@ -53,7 +53,7 @@ export async function stopProducer() {
 }
 ```
 
-`producer.connect()` устанавливает TCP-соединение с брокерами. Вызывать при старте сервиса один раз — создавать продюсер на каждый запрос дорого.
+`producer.connect()` устанавливает TCP-соединения (transmission control protocol) с брокерами. Вызывать при старте сервиса один раз — создавать продюсер на каждый запрос дорого.
 
 ### Отправка без ключа (round-robin)
 
@@ -85,7 +85,7 @@ export async function publishOrderEvent(
     topic: 'order-events',
     messages: [
       {
-        key: orderId,          // все события одного заказа → один партишн
+        key: orderId,          // все события одного заказа → одна партиция
         value: JSON.stringify({
           ...event,
           occurredAt: new Date().toISOString(),
@@ -100,14 +100,20 @@ export async function publishOrderEvent(
 }
 
 // Использование:
-await publishOrderEvent('order-101', { type: 'ORDER_PLACED', payload: { amount: 1500 } });
-await publishOrderEvent('order-101', { type: 'PAYMENT_COMPLETED', payload: { method: 'card' } });
-await publishOrderEvent('order-101', { type: 'ORDER_SHIPPED', payload: { trackingId: 'TRK-99' } });
+await publishOrderEvent('order-101', {
+  type: 'ORDER_PLACED', payload: { amount: 1500 },
+});
+await publishOrderEvent('order-101', {
+  type: 'PAYMENT_COMPLETED', payload: { method: 'card' },
+});
+await publishOrderEvent('order-101', {
+  type: 'ORDER_SHIPPED', payload: { trackingId: 'TRK-99' },
+});
 ```
 
-### Батчинг: отправка нескольких сообщений за раз
+### Пакетная отправка: несколько сообщений за раз
 
-Один вызов `send` может содержать массив сообщений. Kafka отправляет их как один батч — это эффективнее, чем N отдельных вызовов:
+Один вызов `send` может содержать массив сообщений. Kafka отправляет их одним пакетом (batch), и это эффективнее, чем N отдельных вызовов:
 
 ```ts
 const events = orders.map((order) => ({
@@ -137,7 +143,7 @@ await producer.send({
 
 `acks: -1` в связке с `idempotent: true` (настройка брокера) даёт exactly-once семантику на стороне записи. Подробнее — в статье о гарантиях доставки.
 
-## Консьюмер: чтение сообщений
+## Потребитель: чтение сообщений
 
 ### Базовая инициализация
 
@@ -161,7 +167,7 @@ export async function stopConsumer() {
 }
 ```
 
-`fromBeginning` применяется только если для данной `groupId` ещё нет сохранённого offset'а. Если группа уже читала топик — Kafka возобновит с сохранённого offset'а независимо от этой настройки.
+`fromBeginning` применяется только если для данной `groupId` ещё нет сохранённого офсета. Если группа уже читала топик — Kafka возобновит с сохранённого офсета независимо от этой настройки.
 
 ### Обработка сообщений — базовый паттерн
 
@@ -233,10 +239,12 @@ t=6.5s Consumer УПАЛ в середине обработки offset=15
 t=0s   Consumer получил msg[offset=10..14]
 t=5s   AUTO COMMIT → offset=14 сохранён
 t=5.5s Consumer получил msg[offset=15]
-t=5.8s AUTO COMMIT → offset=15 сохранён (коммит ДО завершения обработки!)
-t=6s   Consumer упал в середине обработки offset=15
+t=5.8s AUTO COMMIT → offset=15 сохранён
+       (коммит прошёл до конца обработки!)
+t=6s   Потребитель упал в середине обработки offset=15
 
-→ Consumer перезапускается, читает с offset=16 ✗ (offset=15 потерян!)
+→ Он перезапускается и читает с offset=16 ✗
+  (offset=15 потерян!)
 ```
 
 Auto commit дает **at-most-once** семантику: сообщение может быть потеряно, если коммит произошёл до завершения обработки. Подходит для некритичных данных (аналитика, метрики), где небольшая потеря допустима.
@@ -297,11 +305,11 @@ await consumer.run({
       await handleOrderEvent(event);
 
       resolveOffset(message.offset);    // помечаем offset как обработанный
-      await heartbeat();                 // не даём брокеру считать consumer'а мёртвым
+      await heartbeat();                 // не даём брокеру считать потребителя мёртвым
                                          // при долгой обработке батча
     }
 
-    await commitOffsetsIfNecessary();   // коммитим все resolveOffset'd offset'ы
+    await commitOffsetsIfNecessary();   // коммитим все отмеченные resolveOffset офсеты
   },
 });
 ```
@@ -314,9 +322,11 @@ await consumer.run({
 const consumer = kafka.consumer({
   groupId: 'order-processor',
 
-  sessionTimeout: 30000,          // мс: если нет heartbeat — consumer мёртв (default: 30000)
+  // мс: если heartbeat не пришёл за это время — потребитель мёртв
+  sessionTimeout: 30000,          // по умолчанию 30000
   heartbeatInterval: 3000,        // мс: как часто слать heartbeat (default: 3000)
-  maxBytesPerPartition: 1048576,  // байт: макс размер данных за один fetch из одного партишна (1MB)
+  // байт: максимум данных за один fetch из одной партиции (1MB)
+  maxBytesPerPartition: 1048576,
   minBytes: 1,                    // ждать минимум 1 байт перед ответом брокера
   maxBytes: 10485760,             // общий лимит на fetch (10MB)
   maxWaitTimeInMs: 5000,          // ждать до 5 сек если данных меньше minBytes
@@ -327,15 +337,15 @@ const consumer = kafka.consumer({
 });
 ```
 
-Критически важный параметр — `sessionTimeout`. Если обработка одного сообщения (или батча) занимает больше `sessionTimeout` без вызова `heartbeat()` — брокер считает consumer'а мёртвым и инициирует rebalancing. В `eachBatch` вызывайте `heartbeat()` внутри цикла.
+Критически важный параметр — `sessionTimeout`. Если обработка одного сообщения (или батча) занимает больше `sessionTimeout` без вызова `heartbeat()` — брокер считает потребителя мёртвым и инициирует rebalancing. В `eachBatch` вызывайте `heartbeat()` внутри цикла.
 
 ## Consumer Lag — как отслеживать отставание
 
-**Consumer lag (лаг консьюмера)** — это разница между последним offset'ом в партишне (конец лога) и текущим offset'ом группы. Lag = 0 означает, что consumer успевает в реальном времени.
+**Consumer lag (отставание потребителя)** — это разница между последним офсетом в партиции (конец лога) и текущим офсетом группы. Lag = 0 означает, что consumer успевает в реальном времени.
 
 ```txt
 Topic "order-events", Partition 0:
-  Последний offset в партишне: 1050 (записано продюсером)
+  Последний offset в партиции: 1050 (записано продюсером)
   Текущий offset группы:        980 (до сюда обработано)
   
   Consumer Lag = 1050 - 980 = 70 сообщений
@@ -382,7 +392,7 @@ console.log(lag);
 // [{ partition: 0, lag: 12 }, { partition: 1, lag: 0 }, { partition: 2, lag: 45 }]
 ```
 
-В продакшне lag обычно мониторится через Prometheus + kafkajs встроенные метрики или внешние инструменты: Kafka UI, Redpanda Console, Burrow, Datadog.
+В эксплуатации за отставанием обычно следят через Prometheus и встроенные события kafkajs или внешние инструменты: Kafka UI (веб-консоль для Kafka), Redpanda Console, Burrow, Datadog.
 
 ### Встроенные метрики kafkajs
 
@@ -449,7 +459,9 @@ export async function startOrderConsumer(): Promise<void> {
         event = JSON.parse(raw) as OrderEvent;
       } catch {
         // невалидный JSON — логируем и пропускаем (poison message)
-        console.error('Invalid JSON in message, skipping:', { topic, partition, offset: message.offset });
+        console.error('Invalid JSON in message, skipping:', {
+          topic, partition, offset: message.offset,
+        });
         await consumer.commitOffsets([{
           topic,
           partition,
@@ -488,7 +500,7 @@ async function main() {
 
   const shutdown = async (signal: string) => {
     console.log(`Received ${signal}, shutting down gracefully...`);
-    await stopOrderConsumer();   // disconnect коммитит pending offset'ы
+    await stopOrderConsumer();   // disconnect коммитит незакоммиченные офсеты
     process.exit(0);
   };
 
@@ -503,15 +515,15 @@ main().catch(console.error);
 
 **"Auto commit — это то же самое, что at-least-once"**
 
-Нет. Auto commit по умолчанию даёт **at-most-once**: если коммит произошёл до завершения обработки, и consumer упал — сообщение потеряно. At-least-once требует ручного коммита ПОСЛЕ успешной обработки.
+Нет. Auto commit по умолчанию даёт **at-most-once**: если коммит произошёл до завершения обработки, и consumer упал — сообщение потеряно. At-least-once требует ручного коммита **после** успешной обработки.
 
 **"Manual commit предотвращает дублирование"**
 
-Нет. Manual commit даёт at-least-once — при сбое после обработки и ДО коммита сообщение будет перечитано. Дублирование возможно. Для exactly-once нужна идемпотентная обработка на стороне consumer'а (например, `ON CONFLICT DO NOTHING` в PostgreSQL) или транзакции Kafka (сложнее).
+Нет. Manual commit даёт at-least-once: при сбое после обработки, но **до** коммита, сообщение будет перечитано. Дублирование возможно. Для exactly-once нужна идемпотентная обработка на стороне потребителя (например, `ON CONFLICT DO NOTHING` в PostgreSQL) или транзакции Kafka (сложнее).
 
 **"commitOffsets([{ offset: message.offset }]) — правильный синтаксис"**
 
-Почти. Нужно offset + 1: `{ offset: (Number(message.offset) + 1).toString() }`. Коммит offset'а X означает "следующее сообщение для чтения — X", то есть X-1 уже обработан. Частая ошибка — коммитить текущий offset, из-за чего одно сообщение всегда перечитывается.
+Почти. Нужно offset + 1: `{ offset: (Number(message.offset) + 1).toString() }`. Коммит офсета X означает "следующее сообщение для чтения — X", то есть X-1 уже обработан. Частая ошибка — коммитить текущий offset, из-за чего одно сообщение всегда перечитывается.
 
 **"Можно создавать нового продюсера / consumer на каждый HTTP-запрос"**
 
@@ -519,4 +531,4 @@ main().catch(console.error);
 
 **"fromBeginning: true всегда читает с начала"**
 
-Нет. `fromBeginning` применяется только если для данной `groupId` нет сохранённого offset'а (новая группа или топик). Если offset уже есть — Kafka продолжит с него, игнорируя `fromBeginning`. Для принудительного replay нужно сбросить offset через Admin API.
+Нет. `fromBeginning` применяется только если для данной `groupId` нет сохранённого офсета (новая группа или топик). Если offset уже есть — Kafka продолжит с него, игнорируя `fromBeginning`. Для принудительного replay нужно сбросить offset через Admin API.

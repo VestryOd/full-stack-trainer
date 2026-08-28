@@ -2,7 +2,7 @@
 
 ## Setting up amqplib
 
-`amqplib` is the standard Node.js AMQP 0-9-1 client. It has two APIs: a callback-based one (`amqplib/callbacks`) and a Promise-based one (`amqplib`). Always use the Promise-based API with `async/await`.
+The `amqplib` package is the standard Node.js client for AMQP 0-9-1 (Advanced Message Queuing Protocol). It has two APIs: a callback-based one (`amqplib/callbacks`) and a Promise-based one (`amqplib`). Always use the Promise-based API with `async/await`.
 
 ```bash
 npm install amqplib
@@ -173,7 +173,7 @@ channel.reject(msg, true);   // requeue
 channel.reject(msg, false);  // dead-letter or discard
 ```
 
-`nack` with `requeue: true` is dangerous without a delay — the message immediately goes back to the front of the queue and gets redelivered, potentially thousands of times per second. The right pattern for retries with backoff is covered in article 04.
+Calling `nack` with `requeue: true` is dangerous without a delay. The message goes straight back to the front of the queue and gets redelivered, potentially thousands of times per second. The right pattern for retries with backoff is covered in article 04.
 
 ### noAck mode — when it's appropriate
 
@@ -189,7 +189,7 @@ channel.consume('analytics-events', (msg) => {
 
 ## Prefetch count — the most important tuning knob
 
-Without prefetch, RabbitMQ delivers all queued messages to the consumer as fast as possible. If the queue has 50,000 messages and the consumer processes them slowly, all 50,000 land in the consumer's memory at once — you've effectively moved the queue from RabbitMQ's managed storage to your application's heap.
+Without prefetch, RabbitMQ delivers all queued messages to the consumer as fast as possible. Say the queue holds 50,000 messages and the consumer processes them slowly. All 50,000 land in the consumer's memory at once. You have effectively moved the queue from RabbitMQ's managed storage into your application's heap.
 
 ```ts
 // Without prefetch: broker sends ALL messages at once
@@ -208,7 +208,7 @@ Prefetch = 1:
   ✓ Perfectly fair — each consumer processes one message at a time
   ✗ High latency: consumer must ack before getting the next message
   ✗ Low throughput: no pipeline parallelism
-  Good for: heavy, slow tasks where you want strict ordering per consumer
+  Good for: heavy, slow tasks needing strict order per consumer
 
 Prefetch = 10–50:
   ✓ Good balance for most workloads
@@ -416,14 +416,14 @@ async function startWithGracefulShutdown(): Promise<void> {
 
 ## Common interview traps
 
-- **`noAck: true` for everything because acks add overhead"** — this loses messages permanently when the consumer crashes mid-processing. The overhead of acknowledgements is negligible compared to your actual processing work. Only skip acks for truly disposable data.
+- **"`noAck: true` for everything, because acks add overhead"** — this loses messages permanently when the consumer crashes mid-processing. The overhead of acknowledgements is negligible compared to your actual processing work. Only skip acks for truly disposable data.
 
 - **"Prefetch doesn't matter, it's a minor optimization"** — it's not optional in production. Without it, a queue with a backlog delivers everything to the first consumer that connects, overwhelming it. Prefetch is what makes competing consumers actually share load fairly.
 
 - **"I should always `nack` with `requeue: true` on failure"** — this creates an infinite redelivery loop when the message itself is malformed (a "poison message"). The right pattern is: track retry count in headers, `nack` with requeue for transient errors up to a limit, then dead-letter it. Never blind-retry forever.
 
-- **"I can use one channel for publishing in multiple goroutines/async operations simultaneously"** — channels in amqplib are not concurrency-safe. Concurrent `channel.publish()` calls from multiple async operations can interleave, causing protocol errors. Use one channel per async context, or serialize access.
+- **"I can publish from several concurrent async operations on one channel"** — channels in amqplib are not concurrency-safe. Concurrent `channel.publish()` calls from multiple async operations can interleave, causing protocol errors. Use one channel per async context, or serialize access.
 
 - **"Dead letter queue is the same as retry queue"** — they serve different purposes. DLQ is a final destination for messages that have exhausted all processing attempts; a retry queue is a temporary stop with a delay before redelivery. Some retry patterns use both (retry queue → after N retries → DLQ).
 
-- **Not awaiting `channel.assertQueue` / `channel.assertExchange`** — these return Promises. If you don't `await` them, the queue might not exist yet when the first message is published, silently dropping it (or throwing an error that crashes the channel).
+- **Not awaiting `channel.assertQueue` / `channel.assertExchange`** — these return Promises. If you don't `await` them, the queue might not exist yet when the first message is published. The message is then dropped silently, or an error crashes the channel.

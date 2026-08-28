@@ -9,22 +9,22 @@ In Kafka (and distributed systems broadly), three delivery guarantee levels are 
 A message will be processed **zero or one time**. No duplicates, but loss is possible.
 
 ```txt
-Producer                Broker              Consumer
-   │                       │                    │
-   │── send(msg) ─────────►│                    │
-   │◄─ ack ───────────────│                    │
-   │                       │── deliver(msg) ───►│
-   │                       │                    │── processing...
-   │                       │                    │   CRASH 💥
-   │                       │                    │
-   │                       │                    │── restart
-   │                       │                    │   reads from offset AFTER msg
-   │                       │                    │   → msg is lost permanently
+Producer        Broker         Consumer
+   │               │               │
+   │── send(msg) ──▶               │
+   │◄─ ack ─────────               │
+   │               │── deliver(msg)▶
+   │               │               │── processing...
+   │               │               │   CRASH 💥
+   │               │               │
+   │               │               │── restart
+   │               │               │   reads the offset after msg
+   │               │               │   → msg is lost for good
 ```
 
 When this occurs in Kafka:
 - **Producer**: `acks: 0` — doesn't wait for broker acknowledgment
-- **Consumer**: `autoCommit: true` + commit fires BEFORE processing finishes
+- **Consumer**: `autoCommit: true` + commit fires **before** processing finishes
 - Consumer reads a message, advances the offset, then crashes — message unprocessed, offset already saved
 
 When appropriate: metrics, click analytics, high-volume logs — where small data loss is acceptable and retry latency is unacceptable.
@@ -34,16 +34,17 @@ When appropriate: metrics, click analytics, high-volume logs — where small dat
 A message will be processed **one or more times**. No loss, but duplicates are possible.
 
 ```txt
-Producer                Broker              Consumer
-   │                       │                    │
-   │── send(msg) ─────────►│                    │
-   │                       │── deliver(msg) ───►│
-   │                       │                    │── processing success ✓
-   │                       │                    │── commit(offset) → CRASH 💥
-   │                       │                    │
-   │                       │                    │── restart
-   │                       │                    │   reads from THE SAME offset
-   │                       │                    │── processing again ✓ (duplicate!)
+Producer        Broker         Consumer
+   │               │               │
+   │── send(msg) ──▶               │
+   │               │── deliver(msg)▶
+   │               │               │── processing ok ✓
+   │               │               │── commit(offset) → CRASH 💥
+   │               │               │
+   │               │               │── restart
+   │               │               │   reads the same offset again
+   │               │               │── processing again ✓
+   │               │               │   (a duplicate!)
 ```
 
 When this occurs in Kafka:
@@ -91,7 +92,8 @@ t=0  Producer (PID=42) sends msg[seq=5]
 t=1  Broker writes msg[PID=42, seq=5], sends ACK
 t=2  ACK lost
 t=3  Producer retry → sends msg[PID=42, seq=5] again
-t=4  Broker sees PID=42, seq=5 — already written → discards, sends ACK
+t=4  Broker sees PID=42, seq=5 — already written.
+     It discards the message and sends ACK.
      → no duplicate
 ```
 
@@ -109,7 +111,7 @@ const producer = kafka.producer({
 
 **What idempotent producer gives you**: exactly-once writes **to a single partition of a single topic**. Duplicates from retries are eliminated.
 
-**What it does NOT give you**: it doesn't protect against duplicates from consumer processing — that's only half the journey.
+**What it does not give you**: it doesn't protect against duplicates from consumer processing — that's only half the journey.
 
 ## Kafka Transactions — Exactly-Once Across Topics
 
@@ -127,9 +129,12 @@ All or nothing — if something goes wrong, the transaction is rolled back.
 Kafka Transactions — conceptually:
 
   beginTransaction()
-    ├── consume(topic: "orders", offset=10)     ← read the order
-    ├── produce(topic: "payments", msg=payReq)  ← create the payment request
-    └── commitTransaction()                      ← atomically finalize everything
+    ├── consume(topic: "orders", offset=10)
+    │     ← read the order
+    ├── produce(topic: "payments", msg=payReq)
+    │     ← create the payment request
+    └── commitTransaction()
+          ← atomically finalize everything
 
   If crash between produce and commit:
     → transaction is rolled back
@@ -170,7 +175,9 @@ try {
 }
 ```
 
-**An honest caveat**: Kafka Transactions work at the Kafka → Kafka level. If the result is written to a database or external service, the exactly-once guarantee breaks — the database is not part of the Kafka transaction. In most real-world systems, idempotent consumers are used instead of transactions.
+**An honest caveat**: Kafka Transactions only work inside Kafka, from Kafka to Kafka. The guarantee holds because the consumer offset is committed in the *same* transaction as the output topics.
+
+Write the result to a database or to an external service and the guarantee is gone. That system is not part of the Kafka transaction, and most external systems do not support two-phase commit. The documented way out is to keep the offset in the same place as the output. In most real-world systems, idempotent consumers are used instead of transactions.
 
 ## Idempotent Consumer — The Practical Solution
 
@@ -183,7 +190,9 @@ This is the most common approach in real-world systems because:
 
 ```ts
 // Idempotent handling via PostgreSQL
-async function handleOrderPlaced(event: { orderId: string; userId: string; amount: number }) {
+type OrderPlaced = { orderId: string; userId: string; amount: number };
+
+async function handleOrderPlaced(event: OrderPlaced) {
   // INSERT OR IGNORE — if orderId already exists, do nothing
   await db.query(`
     INSERT INTO orders (id, user_id, amount, status, created_at)
@@ -238,7 +247,7 @@ await processMessageIdempotently(messageId, () => handleOrderEvent(event));
 
 A **poison message** is a message the consumer cannot successfully process. Examples: invalid JSON, incompatible schema, an exception in business logic, a dependency on an unavailable service.
 
-**The problem is specific to Kafka**: unlike RabbitMQ, Kafka does not remove a message from the partition. If the consumer crashes during processing and doesn't commit the offset, it will receive the exact same message again on restart. An infinite loop.
+**The problem is specific to Kafka**: unlike RabbitMQ, Kafka does not remove a message from the partition. If the consumer crashes during processing and doesn't commit the offset, it will receive the exact same message again on restart. An infinite loop. Meanwhile the group's lag grows without limit — lag is the number of messages between the committed offset and the end of the partition.
 
 ```txt
 Without poison message handling:
@@ -266,9 +275,14 @@ Path for a poison message:
   [order-events] ──► Consumer ──► 3 attempts → failure
                                   │
                                   ▼
-                         [order-events.DLT] ──► separate consumer
-                                  │              (alerting, manual inspection,
-                         commit offset          reprocessing)
+                         [order-events.DLT]
+                                  │
+                         commit offset
+                                  │
+                                  ▼
+                         a separate consumer:
+                         alerting, manual inspection,
+                         reprocessing
 ```
 
 ```ts
@@ -336,7 +350,10 @@ await consumer.run({
 
     // All retries exhausted — send to DLT
     console.error('Sending message to DLT after all retries failed');
-    await sendToDeadLetterTopic(topic, message, lastError!, { partition, offset: message.offset });
+    await sendToDeadLetterTopic(topic, message, lastError!, {
+      partition,
+      offset: message.offset,
+    });
 
     // Commit offset — so we don't get stuck on this message forever
     await consumer.commitOffsets([{
@@ -376,32 +393,21 @@ await dltConsumer.run({
 
 ## Summary: Which Semantics to Use When
 
-```txt
-┌──────────────────┬───────────────┬─────────────┬──────────────────────────────────┐
-│ Semantics        │ Data Loss     │ Duplicates  │ How to achieve in Kafka          │
-├──────────────────┼───────────────┼─────────────┼──────────────────────────────────┤
-│ At-most-once     │ Possible      │ No          │ acks:0 or auto-commit            │
-│                  │               │             │ before processing                │
-├──────────────────┼───────────────┼─────────────┼──────────────────────────────────┤
-│ At-least-once    │ No            │ Possible    │ acks:-1 + manual commit          │
-│                  │               │             │ after processing (the standard)  │
-├──────────────────┼───────────────┼─────────────┼──────────────────────────────────┤
-│ Exactly-once     │ No            │ No          │ Idempotent producer +            │
-│                  │               │             │ Kafka Transactions (Kafka→Kafka) │
-│                  │               │             │ OR at-least-once +               │
-│                  │               │             │ idempotent consumer              │
-└──────────────────┴───────────────┴─────────────┴──────────────────────────────────┘
-```
+| Semantics | Data loss | Duplicates | How to get it in Kafka |
+|---|---|---|---|
+| At-most-once | Possible | No | `acks: 0`, or auto-commit before processing |
+| At-least-once | No | Possible | `acks: -1` plus a manual commit after processing. This is the standard |
+| Exactly-once | No | No | Idempotent producer plus Kafka Transactions, and only from Kafka to Kafka. Or at-least-once plus an idempotent consumer |
 
 ## Common Interview Traps
 
 **"Exactly-once is just enabling a flag in Kafka"**
 
-No. Exactly-once in Kafka requires a combination: idempotent producer (`idempotent: true`) + transactions (for Kafka→Kafka scenarios). But this only covers writes into Kafka. If the consumer writes results to a database or calls an external API, the database isn't part of the Kafka transaction, and exactly-once is no longer guaranteed. Most teams choose at-least-once + idempotent consumer over Kafka Transactions.
+No. Exactly-once in Kafka requires a combination: idempotent producer (`idempotent: true`) + transactions (for Kafka→Kafka scenarios). But this only covers writes into Kafka. If the consumer writes results to a database or calls an external API, that system is not part of the Kafka transaction. Exactly-once is no longer guaranteed there. Most teams choose at-least-once + idempotent consumer over Kafka Transactions.
 
 **"At-least-once is unacceptable in production"**
 
-No. At-least-once is the standard in most production systems. With a properly implemented idempotent consumer (ON CONFLICT DO NOTHING, versioning, processed_events table), duplicates don't cause problems. Kafka Transactions add complexity that's only justified in specific scenarios (financial processing, Kafka Streams streaming pipelines).
+No. At-least-once is the standard in most production systems. With a properly implemented idempotent consumer (`ON CONFLICT DO NOTHING`, versioning, a `processed_events` table), duplicates don't cause problems. Kafka Transactions add complexity that's only justified in specific scenarios (financial processing, Kafka Streams streaming pipelines).
 
 **"A poison message will just throw an exception and Kafka will handle it"**
 
