@@ -82,6 +82,9 @@ PASSED = {
     'article:strapi': 'b74d2cc',
     'bank:solid-grasp': 'ee46a79',
     'quiz:solid-grasp': 'ee46a79',
+    'article:web-performance': '00cad51',
+    'bank:web-performance': '00cad51',
+    'quiz:web-performance': '00cad51',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
