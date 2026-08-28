@@ -2,7 +2,10 @@
 
 ## Why vanilla Redux was painful — and what RTK fixes
 
-Redux without tooling required enormous boilerplate. Here is a typical async flow in vanilla Redux:
+Redux Toolkit (RTK) is the official package that removes most of the manual
+wiring from Redux; below it is shortened to RTK. Redux without such tooling
+required enormous boilerplate — code you retype almost word for word for
+every entity. Here is a typical async flow in vanilla Redux:
 
 ```ts
 // ❌ Vanilla Redux — action types, action creators, reducer, thunk — all manual
@@ -51,6 +54,7 @@ function userReducer(state = initialState, action: AnyAction): UserState {
 ```
 
 **Vanilla Redux problems:**
+
 1. Every async flow needs 3 action types + 3 action creators + reducer branches
 2. Immutable updates for nested objects — multi-line spread hell
 3. No async standard — redux-thunk, redux-saga, redux-observable — every team invented their own approach
@@ -260,7 +264,7 @@ useEffect(() => {
 
 ## RTK Query — caching and data fetching
 
-RTK Query is a built-in RTK tool for server-state. For most projects it replaces the need to write async thunks for CRUD:
+RTK Query is a built-in RTK tool for server state — data that lives on the server. For CRUD work (create, read, update, delete) it replaces hand-written async thunks:
 
 ```ts
 // store/api.ts
@@ -504,7 +508,7 @@ export const store = configureStore({
 });
 ```
 
-**Time-travel debugging in practice**: when a user reports a bug, you can export state from DevTools ("Export" button), send it to the developer, they import it — and see the application in exactly the state where the bug occurred. This is impossible with mutable state (MobX, Zustand without middleware).
+**Time-travel debugging in practice**: a user reports a bug and exports the state from DevTools with the "Export" button. The developer imports that file and sees the application in exactly the state where the bug occurred. This is impossible with mutable state (MobX, Zustand without middleware).
 
 ## When Redux is still the right choice
 
@@ -549,12 +553,12 @@ Redux is often considered "outdated" — that is a mistake. It remains the right
 
 - **"RTK is a new state management library"** — no. RTK is the official utility set on top of Redux. Architecturally it is the same Redux: unidirectional flow, immutable state, pure reducer. RTK eliminates boilerplate but does not change the principles.
 
-- **Not understanding that Immer makes state look mutable** — code like `state.items.push(...)` in a reducer looks like a mutation, but it is an Immer proxy. The actual Redux state is still immutable, and DevTools shows the correct diff. The mistake is thinking RTK "abandoned immutability."
+- **Not understanding that Immer makes state look mutable** — code like `state.items.push(...)` in a reducer looks like a mutation. It is not one: `state` there is an Immer proxy. The actual Redux state is still immutable, and DevTools shows the correct diff. The mistake is thinking RTK "abandoned immutability."
 
 - **Confusing `rejectWithValue` and `throw`** in `createAsyncThunk`: `throw` → `action.error.message` (standard Error structure, not typed); `rejectWithValue(data)` → `action.payload` (your data, typed). This is a signal question in interviews — shows whether the candidate has written real error flows.
 
-- **Not memoizing selectors** — `useSelector` compares results by reference. If a selector returns a new object/array on every call (e.g., via `.filter()`/`.map()`), the component re-renders on every Redux action, even unrelated ones. This is one of the most common performance problems in Redux projects.
+- **Not memoizing selectors** — `useSelector` compares results by reference. A selector built on `.filter()` or `.map()` returns a new array on every call. That makes the component re-render on every Redux action, even unrelated ones. This is one of the most common performance problems in Redux projects.
 
-- **"Redux DevTools is just a logger"** — a serious understatement. Time-travel (jumping to a past state), skip action, import/export state for bug reproduction — these are production tools that directly impact debugging speed in large teams. Knowing these capabilities distinguishes a candidate who has worked with Redux in production from one who only read the docs.
+- **"Redux DevTools is just a logger"** — a serious understatement. Time-travel jumps to a past state, skipping an action, import and export of state for bug reproduction. These are production tools, and they directly affect debugging speed in large teams. Knowing these capabilities distinguishes a candidate who has worked with Redux in production from one who only read the docs.
 
 - **Using RTK Query and redux thunks for the same data** — RTK Query manages its own cache in `state[api.reducerPath]`. If you also dispatch thunks that write the same data to a different slice — you end up with two sources of truth and desynchronization. Pick one: either RTK Query owns server-state, or thunks — not both.

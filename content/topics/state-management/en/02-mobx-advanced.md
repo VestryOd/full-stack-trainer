@@ -125,15 +125,13 @@ store.search('redux'); // start a new one
 
 **When to use which:**
 
-```txt
-runInAction  — when you need to quickly fix an existing async method
-               or the logic is simple (one request, one mutation block)
-
-flow         — the idiomatic MobX approach, preferred for:
-               - complex async scenarios with multiple awaits
-               - when cancellation is needed
-               - new stores (makes it clearer this is a "MobX async action")
-```
+- **`runInAction`** — when you need to quickly fix an existing async
+  method, or the logic is simple: one request, one mutation block.
+- **`flow`** — the idiomatic MobX approach. Prefer it for:
+  - complex async scenarios with multiple `await`s;
+  - cases where cancellation is needed;
+  - new stores, because it makes clearer that this is a "MobX async
+    action".
 
 ## reaction / autorun / when — when to use each
 
@@ -382,7 +380,7 @@ class CartStore {
 
 **Why MobX 6 moved to Proxy:**
 
-1. **Standard**: JavaScript decorators stayed in proposal-stage for years, and different implementations (Babel, TypeScript) had divergent behavior. Proxy is a stable part of ES2015+.
+1. **Standard**: JavaScript decorators stayed in proposal-stage for years, and different implementations (Babel, TypeScript) had divergent behavior. Proxy is a stable part of the language since ES2015 (the 2015 edition of the ECMAScript standard).
 
 2. **No code transformation**: The Proxy version works without Babel plugins or special tsconfig flags.
 
@@ -539,15 +537,15 @@ test('CartTotal re-renders when total changes', () => {
 
 ## Common interview traps
 
-- **"flow is just syntactic sugar over async/await"** — not quite. `flow` uses generators, which enables cancellation via `cancel()`. With async/await, cancellation requires AbortController or manual flags. This is a real technical difference that matters in UI (race conditions on fast input).
+- **"flow is just syntactic sugar over async/await"** — not quite. `flow` uses generators, which enables cancellation via `cancel()`. With async/await, cancellation requires AbortController or manual flags. This is a real technical difference, and it matters in the interface: it prevents race conditions on fast input.
 
-- **"You can just write async methods without flow/runInAction"** — works without strict mode, but breaks batching. Each assignment after `await` is a separate synchronous notification, meaning the component may re-render between `this.isLoading = false` and `this.user = user`, showing an intermediate state.
+- **"You can just write async methods without flow/runInAction"** — works without strict mode, but breaks batching. Each assignment after `await` is a separate synchronous notification. So the component may re-render between `this.isLoading = false` and `this.user = user`, showing an intermediate state.
 
 - **Not understanding the difference between autorun and reaction** — key distinction: `autorun` runs immediately, `reaction` does not. `reaction` receives the previous value, `autorun` does not. Interviewers frequently ask when to use which.
 
 - **Circular dependencies between stores via direct imports** — a classic scaling mistake. `UserStore` imports `CartStore`, `CartStore` imports `UserStore` → Node.js resolves one of them as `undefined` at startup. RootStore via `root` reference eliminates all cross-store imports.
 
-- **Not disposing reactions in components** — if `autorun`/`reaction` is created in `useEffect` without returning a disposer function, MobX keeps the component alive in memory after unmount and continues triggering re-renders (or React strict mode throws a warning):
+- **Not disposing reactions in components** — this leaks memory. Create an `autorun` or a `reaction` inside `useEffect` and return nothing, and MobX keeps a reference to the component after unmount. The component stays in memory, and MobX keeps triggering re-renders on it. React strict mode throws a warning about it:
   ```ts
   useEffect(() => {
     const dispose = autorun(() => {

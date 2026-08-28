@@ -348,7 +348,7 @@ export const useComplexStore = create<ComplexState>()(
 );
 ```
 
-**subscribeWithSelector** — расширенная подписка с selector'ом (встроена в middleware):
+**subscribeWithSelector** — расширенная подписка с селектором (встроена в middleware):
 
 ```ts
 import { subscribeWithSelector } from 'zustand/middleware';
@@ -372,9 +372,10 @@ const unsubscribe = useStore.subscribe(
 );
 ```
 
-## Async в Zustand — без ceremony
+## Асинхронность в Zustand — без лишних обёрток
 
-Zustand не нуждается в специальных обёртках для async — это обычные async-функции:
+Специальные обёртки здесь не нужны: асинхронное действие в Zustand — это
+обычная async-функция.
 
 ```ts
 export const useProductStore = create<ProductState>()((set, get) => ({
@@ -458,7 +459,7 @@ function CartBadge() {
   return <span>{count}</span>;
 }
 
-// Нет Provider'а — стор доступен из любого компонента в любом месте дерева
+// Нет провайдера — стор доступен из любого компонента в любом месте дерева
 // Нет boilerplate action types и dispatch
 // Гранулярные подписки из коробки
 ```
@@ -469,60 +470,36 @@ function CartBadge() {
 - Чисто UI-state: открыт ли modal, текущий шаг wizard — не нужно
   нигде кроме поддерева компонентов
 - Намеренная изоляция: отдельный состояние для каждого экземпляра
-  компонента (например, несколько независимых форм на одной странице)
+  компонента — например, несколько независимых форм
+  на одной странице
 - Нет клиентской навигации: SSR-страницы без React hydration, где
   глобальный стор не нужен
 ```
 
 ## Почему Zustand часто выигрывает у Redux и MobX в новых проектах
 
-```txt
-Сравнение по болевым точкам:
+Redux Toolkit (RTK) — официальный пакет Redux, дальше по тексту сокращаем его
+до RTK. Вот сравнение по болевым точкам:
 
-Boilerplate:
-  Redux/RTK   — createSlice + createAsyncThunk + selectors + Provider
-                + typed hooks — минимум 50 строк на один domain
-  MobX        — класс + makeAutoObservable + observer + Context/Provider
-                + хуки — 30-40 строк на domain
-  Zustand     — create() — 10-15 строк, всё в одном месте
+| Болевая точка | Redux/RTK | MobX | Zustand |
+|---|---|---|---|
+| Шаблонный код | `createSlice` + `createAsyncThunk` + селекторы + Provider + типизированные хуки. Минимум 50 строк на одну предметную область. | Класс + `makeAutoObservable` + `observer` + Context/Provider + хуки. 30-40 строк на область. | Только `create()`. 10-15 строк, всё в одном месте. |
+| Кривая освоения | Middleware pipeline, устройство Immer, жизненный цикл RTK Query, `createSelector`, action matching. 2-3 дня до уверенного использования. | Реактивная система, Proxy, классы, strict mode, `flow`. 1-2 дня. | `create` + `set` + `get`. 30 минут. |
+| TypeScript | Типизация хорошая, но нужны `AppDispatch`, `RootState`, `TypedUseSelectorHook`. Шаблонный код. | Классы и TypeScript работают естественно. Но генераторы `flow` теряют типизацию в месте `yield`. | `create<State>()` выводит всё сам. Ничего лишнего. |
+| Размер бандла (minified+gzip) | Redux + RTK — ~14KB. | MobX + mobx-react-lite — ~18KB. | ~1KB. |
+| Тестируемость | Редьюсеры — чистые функции, тестируются идеально. Async-санки требуют mock dispatch. | Классы тестируются без React. Для реакций нужен dispose. | `store.getState()` и `store.setState()` в тестах. Просто. |
 
-Кривая освоения:
-  Redux/RTK   — middleware pipeline, Immer internals, RTK Query lifecycle,
-                createSelector, action matching — 2-3 дня до уверенного use
-  MobX        — реактивная система, Proxy, классы, strict mode, flow —
-                1-2 дня
-  Zustand     — create + set + get — 30 минут
-
-TypeScript:
-  Redux/RTK   — RTK имеет хорошую типизацию, но требует AppDispatch,
-                RootState, TypedUseSelectorHook — шаблонный код
-  MobX        — классы + TypeScript работают естественно, но flow
-                генераторов теряют типизацию в месте yield
-  Zustand     — create<State>() — полный вывод типов, ничего лишнего
-
-Размер бандла (minified+gzip):
-  Redux + RTK              — ~14KB
-  MobX + mobx-react-lite  — ~18KB
-  Zustand                 — ~1KB
-
-Тестируемость:
-  Redux/RTK   — reducer'ы — чистые функции, тестируются идеально;
-                async thunks — требуют mock dispatch
-  MobX        — классы тестируются без React; нужен dispose для reactions
-  Zustand     — store.getState() и store.setState() в тестах — просто
-```
-
-**Главный аргумент за Zustand в новом проекте**: он не накладывает архитектурных ограничений. Если через полгода вы решите, что нужна более строгая структура — можно добавить devtools, immer, persist по одному, или перейти на RTK. Начинать с минимума и добавлять по необходимости — лучше, чем начинать с полной конфигурации Redux и не использовать 70% возможностей.
+**Главный аргумент за Zustand в новом проекте**: он не накладывает архитектурных ограничений. Если через полгода вы решите, что нужна более строгая структура, можно добавить devtools, immer или persist по одному — либо перейти на RTK. Начинать с минимума и добавлять по необходимости — лучше, чем начинать с полной конфигурации Redux и не использовать 70% возможностей.
 
 ## Типичные ошибки на интервью
 
-- **"Zustand — это просто useState для нескольких компонентов"** — принижение. Zustand имеет middleware-систему, интеграцию с DevTools, `subscribe` вне React, persist, поддержку slices, SSR. Ключевое отличие от `useState` — стор живёт вне React-дерева и не вызывает ре-рендер провайдера.
+- **"Zustand — это просто useState для нескольких компонентов"** — принижение. У Zustand есть middleware-система, интеграция с DevTools, `subscribe` вне React, persist, поддержка слайсов и серверного рендеринга (SSR). Ключевое отличие от `useState` — стор живёт вне React-дерева и не вызывает ре-рендер провайдера.
 
 - **Подписываться на весь стор вместо конкретных полей** — самая частая ошибка с производительностью:
   ```tsx
   // ❌
   const { items, discount, total, addItem } = useCartStore();
-  // ↑ ре-рендер при изменении ЛЮБОГО поля
+  // ↑ ре-рендер при изменении любого поля стора
 
   // ✅
   const items = useCartStore(state => state.items);
@@ -531,8 +508,8 @@ TypeScript:
 
 - **Не понимать, что actions в Zustand — стабильные ссылки** — функции, определённые внутри `create`, создаются один раз и не меняются при обновлении state. Это значит, что их безопасно передавать в `useEffect` без добавления в deps array и не нужно мемоизировать через `useCallback`.
 
-- **Использовать `set` с полной заменой state (`replace: true`) случайно** — при вызове `set({ count: 0 }, true)` второй аргумент `true` означает полную замену всего state, а не merge. Если забыть об этом — потеряешь все остальные поля стора без единой ошибки.
+- **Использовать `set` с полной заменой state (`replace: true`) случайно** — при вызове `set({ count: 0 }, true)` второй аргумент `true` означает полную замену всего state, а не merge. Если забыть об этом, вы потеряете все остальные поля стора без единой ошибки.
 
-- **"Zustand не подходит для больших приложений"** — неверно. Zustand используется в крупных проектах через slices pattern. Ограничение не в размере приложения, а в требованиях: если нужен строгий audit trail изменений или time-travel debugging на уровне Redux DevTools — Zustand даёт это только с devtools-middleware, но менее гибко, чем Redux.
+- **"Zustand не подходит для больших приложений"** — неверно. Zustand используется в крупных проектах через slices pattern. Ограничение не в размере приложения, а в требованиях. Допустим, нужен строгий журнал всех изменений (audit trail) или полноценный time-travel debugging уровня Redux DevTools. Zustand даёт это только через devtools-middleware и менее гибко, чем Redux.
 
-- **Сравнивать Zustand с MobX неправильно** — они решают разные проблемы по-разному: MobX строится на реактивном графе зависимостей (объявляешь данные, MobX сам находит подписчиков), Zustand — на явных подписках (ты сам выбираешь selector). Оба минимальны в boilerplate по сравнению с Redux, но их mental model принципиально отличается.
+- **Сравнивать Zustand с MobX неправильно** — они решают разные задачи разными способами. MobX строится на реактивном графе зависимостей: вы объявляете данные, а MobX сам находит подписчиков. Zustand строится на явных подписках: вы сами выбираете через селектор, на что подписаться. Оба минимальны в boilerplate по сравнению с Redux, но их mental model принципиально отличается.

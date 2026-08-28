@@ -49,8 +49,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Arguments passed to `docker run` **replace** CMD, they are not appended to it. So `CMD [\"python\", \"app.py\"]` is discarded and the final command is ENTRYPOINT plus the new arguments: `sh -c arg1 arg2`.\n\nWith `sh -c`, the first argument is the command string and the second becomes `$0`, so `arg1` runs as a shell command and `arg2` is its argument-zero. `python app.py` never executes.\n\nCMD is only used as default arguments to ENTRYPOINT when `docker run` is given **no** command. Run the image with no arguments and you do get `sh -c python app.py`.",
-      "ru": "Аргументы, переданные в `docker run`, **заменяют** CMD, а не добавляются к нему. Поэтому `CMD [\"python\", \"app.py\"]` отбрасывается, и итоговая команда — это ENTRYPOINT плюс новые аргументы: `sh -c arg1 arg2`.\n\nВ `sh -c` первый аргумент — это строка команды, а второй становится `$0`. Значит, `arg1` выполнится как команда оболочки, а `arg2` окажется её нулевым аргументом. `python app.py` не запустится вообще.\n\nCMD работает как аргументы по умолчанию для ENTRYPOINT только тогда, когда команда в `docker run` **не указана**. Запустите образ без аргументов — и получите `sh -c python app.py`."
+      "en": "Arguments passed to `docker run` **replace** CMD (short for command), they are not appended to it. So `CMD [\"python\", \"app.py\"]` is discarded and the final command is ENTRYPOINT plus the new arguments: `sh -c arg1 arg2`.\n\nWith `sh -c`, the first argument is the command string and the second becomes `$0`. So `arg1` runs as a shell command, and `arg2` becomes its argument zero. `python app.py` never executes.\n\nCMD is only used as default arguments to ENTRYPOINT when `docker run` is given **no** command. Run the image with no arguments and you do get `sh -c python app.py`.",
+      "ru": "Аргументы, переданные в `docker run`, **заменяют** CMD (сокращение от command), а не добавляются к нему. Поэтому `CMD [\"python\", \"app.py\"]` отбрасывается, и итоговая команда — это ENTRYPOINT плюс новые аргументы: `sh -c arg1 arg2`.\n\nВ `sh -c` первый аргумент — это строка команды, а второй становится `$0`. Значит, `arg1` выполнится как команда оболочки, а `arg2` окажется её нулевым аргументом. `python app.py` не запустится вообще.\n\nCMD работает как аргументы по умолчанию для ENTRYPOINT только тогда, когда команда в `docker run` **не указана**. Запустите образ без аргументов — и получите `sh -c python app.py`."
     }
   },
   {
@@ -112,26 +112,26 @@
     "topicId": "docker",
     "question": {
       "en": "In docker-compose, what is the difference between bind mount volumes and named volumes in terms of lifecycle and portability?",
-      "ru": "В docker-compose, в чем разница между привязанными монтами и именованными томами с точки зрения жизненного цикла и переносимости?"
+      "ru": "В docker-compose, в чём разница между bind mount и именованными томами с точки зрения жизненного цикла и переносимости?"
     },
     "options": {
       "en": [
         "Named volumes are managed by Docker and persist independently of containers, while bind mounts depend on a host path",
-        "Bind mounts are managed by Docker and survive container deletion, while named volumes are tied to the host filesystem path and are lost when the container is removed",
+        "Bind mounts are managed by Docker and outlive the container, while named volumes are tied to a host path and vanish with it",
         "Both bind mounts and named volumes are identical; docker-compose simply provides two different syntax options",
         "Named volumes cannot be used in docker-compose, only in Kubernetes deployments"
       ],
       "ru": [
-        "Именованные тома управляются Docker и живут независимо от контейнеров, а привязанные монты зависят от пути на хосте",
-        "Привязанные монты управляются Docker и сохраняются после удаления контейнера, в то время как именованные тома привязаны к пути файловой системы хоста и теряются при удалении контейнера",
-        "Привязанные монты и именованные тома идентичны; docker-compose просто предоставляет два различных варианта синтаксиса",
+        "Именованные тома управляются Docker и живут независимо от контейнеров, а bind mount зависит от пути на хосте",
+        "Bind mount управляется Docker и переживает удаление контейнера, а именованные тома привязаны к пути на хосте и теряются вместе с ним",
+        "Bind mount и именованные тома идентичны; docker-compose просто предоставляет два разных варианта синтаксиса",
         "Именованные тома нельзя использовать в docker-compose, только в развертываниях Kubernetes"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "Named volumes are created and managed by Docker in a dedicated location and persist even after containers are deleted, making them ideal for data that needs to outlive containers. Bind mounts link to a specific host filesystem path, which reduces portability since that path may not exist with the same structure on different machines. Named volumes are therefore more suitable for production and multi-machine setups.",
-      "ru": "Именованные тома создаются и управляются Docker в специальном месте и сохраняются даже после удаления контейнеров, что делает их идеальными для данных, которые должны пережить контейнеры. Привязанные монты ссылаются на определенный путь файловой системы хоста, что снижает переносимость, так как этот путь может не существовать с той же структурой на разных машинах. Поэтому именованные тома больше подходят для производства и многомашинных установок."
+      "en": "Named volumes are created and managed by Docker in a dedicated location, and they persist even after containers are deleted. That makes them ideal for data that must outlive containers.\n\nBind mounts link to a specific host filesystem path. That reduces portability, since the path may not exist with the same structure on another machine. Named volumes are therefore more suitable for production and multi-machine setups.",
+      "ru": "Именованные тома создаются и управляются Docker в отдельном месте и сохраняются даже после удаления контейнеров. Поэтому они идеальны для данных, которые должны пережить контейнеры.\n\nBind mount — это монтирование конкретного пути файловой системы хоста внутрь контейнера. Переносимость от этого падает: на другой машине такого пути с той же структурой может не быть. Поэтому для продакшна и многомашинных установок именованные тома подходят лучше."
     }
   },
   {
@@ -157,8 +157,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "Each RUN, COPY, ADD, and other layer-creating instructions generate a new layer. The first RUN (requests), second RUN (flask), and COPY (app.py) create 3 layers on top of the base image. The FROM instruction creates the base layer, not counted here.",
-      "ru": "Каждая инструкция RUN, COPY, ADD и другие инструкции создания слоёв генерируют новый слой. Первый RUN (requests), второй RUN (flask) и COPY (app.py) создают 3 слоя поверх базового образа. Инструкция FROM создает базовый слой, который здесь не считается."
+      "en": "Each layer-creating instruction adds one layer: RUN (runs a build command), COPY (copies files in) and ADD (the same, plus archives). The first `RUN` (requests), the second `RUN` (flask) and the `COPY` (app.py) create 3 layers on top of the base image. The `FROM` instruction creates the base layer, which is not counted here.",
+      "ru": "Каждая инструкция, создающая слой, добавляет один слой: RUN (выполняет команду при сборке), COPY (копирует файлы в образ) и ADD (то же плюс распаковка архивов). Первый `RUN` (requests), второй `RUN` (flask) и `COPY` (app.py) создают 3 слоя поверх базового образа. Инструкция `FROM` создаёт базовый слой, который здесь не считается."
     }
   },
   {
@@ -176,8 +176,8 @@
         "Anonymous volume"
       ],
       "ru": [
-        "Привязка монтирования (Bind mount)",
-        "tmpfs монтирование (tmpfs mount)",
+        "Bind mount (монтирование пути хоста)",
+        "tmpfs mount (монтирование в памяти)",
         "Именованный том (Named volume)",
         "Анонимный том (Anonymous volume)"
       ]
@@ -185,15 +185,15 @@
     "correctIndex": 2,
     "explanation": {
       "en": "Named volumes are managed by Docker, stored in a Docker-managed directory, and persist data independently of container lifecycle. Bind mounts depend on host paths, tmpfs is in-memory, and anonymous volumes are removed with the container by default.",
-      "ru": "Именованные тома управляются Docker, хранятся в управляемой Docker директории и сохраняют данные независимо от жизненного цикла контейнера. Привязки монтирования зависят от путей хоста, tmpfs находится в памяти, а анонимные тома удаляются вместе с контейнером по умолчанию."
+      "ru": "Именованные тома управляются Docker, хранятся в управляемой Docker директории и сохраняют данные независимо от жизненного цикла контейнера. Bind mount зависит от путей хоста, tmpfs находится в памяти, а анонимные тома удаляются вместе с контейнером по умолчанию."
     }
   },
   {
     "id": "docker-quiz-10",
     "topicId": "docker",
     "question": {
-      "en": "What is the key functional difference between CMD and ENTRYPOINT in a Dockerfile?",
-      "ru": "В чем заключается ключевое функциональное различие между CMD и ENTRYPOINT в Dockerfile?"
+      "en": "What is the key functional difference between CMD (short for command) and ENTRYPOINT in a Dockerfile?",
+      "ru": "В чём заключается ключевое функциональное различие между CMD (сокращение от command) и ENTRYPOINT в Dockerfile?"
     },
     "options": {
       "en": [
@@ -204,23 +204,23 @@
       ],
       "ru": [
         "CMD определяет основной исполняемый файл; ENTRYPOINT предоставляет аргументы по умолчанию, которые нельзя переопределить",
-        "Они идентичны; ENTRYPOINT просто старый alias для CMD",
+        "Они идентичны; ENTRYPOINT просто старое название для CMD",
         "ENTRYPOINT для переменных окружения; CMD для запуска процессов",
         "ENTRYPOINT определяет основной исполняемый файл; CMD задаёт аргументы по умолчанию, их можно переопределить"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "ENTRYPOINT specifies the command that will always execute (the container's main process), while CMD provides default arguments to ENTRYPOINT or a default command if ENTRYPOINT is not set. When you run `docker run myimage arg`, the arg overrides CMD but not ENTRYPOINT.",
-      "ru": "ENTRYPOINT определяет команду, которая всегда будет выполняться (основной процесс контейнера), а CMD предоставляет аргументы по умолчанию для ENTRYPOINT или команду по умолчанию, если ENTRYPOINT не установлен. Когда вы запускаете `docker run myimage arg`, аргумент переопределяет CMD, но не ENTRYPOINT."
+      "en": "ENTRYPOINT specifies the command that will always execute — the container's main process. CMD provides default arguments to ENTRYPOINT, or a default command if ENTRYPOINT is not set. When you run `docker run myimage arg`, the arg overrides CMD but not ENTRYPOINT.",
+      "ru": "ENTRYPOINT определяет команду, которая всегда будет выполняться, — основной процесс контейнера. CMD задаёт аргументы по умолчанию для ENTRYPOINT или команду по умолчанию, если ENTRYPOINT не установлен. Когда вы запускаете `docker run myimage arg`, аргумент переопределяет CMD, но не ENTRYPOINT."
     }
   },
   {
     "id": "docker-quiz-12",
     "topicId": "docker",
     "question": {
-      "en": "Consider a Dockerfile with multiple RUN, COPY, and FROM commands. How are layers created and what is their purpose in multi-stage builds?\n\n```dockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n```\n\nWhy would a developer use this pattern?",
-      "ru": "Рассмотрим Dockerfile с несколькими командами RUN, COPY и FROM. Как создаются слои и какова их цель в многоступенчатых сборках?\n\n```dockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n```\n\nПочему разработчик использует этот паттерн?"
+      "en": "Consider a Dockerfile with several kinds of instruction. RUN (runs a command at build time), COPY (copies files into the image) and FROM (starts a new stage) all appear below. How are layers created, and what is their purpose in multi-stage builds?\n\n```dockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n```\n\nWhy would a developer use this pattern?",
+      "ru": "Рассмотрим Dockerfile с несколькими видами инструкций. Ниже встречаются RUN (выполняет команду при сборке), COPY (копирует файлы в образ) и FROM (начинает новый этап). Как создаются слои и какова их роль в многоэтапных сборках?\n\n```dockerfile\nFROM node:18 AS builder\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM node:18-alpine\nCOPY --from=builder /app/dist ./dist\nCMD [\"node\", \"dist/index.js\"]\n```\n\nПочему разработчик использует этот паттерн?"
     },
     "options": {
       "en": [
@@ -239,7 +239,7 @@
     "correctIndex": 0,
     "explanation": {
       "en": "Multi-stage builds use multiple FROM statements to create intermediate stages. Dependencies and build tools are installed in the builder stage but not included in the final image — only the compiled artifacts are copied. This dramatically reduces the final image size. The builder stage's layers are discarded from the final image, keeping only what's needed at runtime.",
-      "ru": "Многоступенчатые сборки используют несколько команд FROM для создания промежуточных этапов. Зависимости и инструменты сборки устанавливаются на этапе builder, но не включаются в финальный образ — копируются только скомпилированные артефакты. Это значительно уменьшает размер финального образа. Слои этапа builder отбрасываются из финального образа, остаётся только необходимое для выполнения."
+      "ru": "Многоэтапные сборки используют несколько инструкций FROM для создания промежуточных этапов. Зависимости и инструменты сборки устанавливаются на этапе builder, но не попадают в финальный образ — копируются только скомпилированные артефакты. Это значительно уменьшает размер финального образа. Слои этапа builder отбрасываются, остаётся только необходимое для выполнения."
     }
   },
   {
@@ -265,8 +265,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "`CMD node server.js` is the shell form, so Docker actually runs `/bin/sh -c \"node server.js\"`. The shell becomes process 1 inside the container and node is only its child. `docker stop` sends SIGTERM, the polite \"please exit\" signal, to process 1 alone, and that shell does not forward it. After the grace period, ten seconds by default, Docker sends SIGKILL and node dies without running its handler.\n\nThe fix is the exec form `CMD [\"node\", \"server.js\"]`, which makes node itself process 1.\n\n`docker stop` does not begin with SIGKILL, Alpine handles signals like any other image, and the order of `WORKDIR` and `COPY` affects only the filesystem and the build cache.",
-      "ru": "Запись `CMD node server.js` — это shell-форма, поэтому Docker выполняет `/bin/sh -c \"node server.js\"`. Процессом 1 внутри контейнера становится оболочка, а node — лишь её дочерний процесс. Команда `docker stop` отправляет SIGTERM, вежливый сигнал «пожалуйста, завершись», только процессу 1, а оболочка его не пересылает. По истечении отсрочки, по умолчанию это десять секунд, Docker присылает SIGKILL, и node умирает, не выполнив свой обработчик.\n\nЛечится exec-формой `CMD [\"node\", \"server.js\"]`: тогда процессом 1 становится сам node.\n\nС SIGKILL команда `docker stop` не начинает, Alpine работает с сигналами как любой другой образ, а порядок `WORKDIR` и `COPY` влияет только на файлы и на кэш сборки."
+      "en": "`CMD node server.js` is the shell form, so Docker actually runs `/bin/sh -c \"node server.js\"`. The shell becomes process 1 inside the container, and node is only its child.\n\nThe command `docker stop` sends SIGTERM, the polite \"please exit\" signal, to process 1 alone. That shell does not forward it. After the grace period, ten seconds by default, Docker sends SIGKILL and node dies without running its handler.\n\nThe fix is the exec form `CMD [\"node\", \"server.js\"]`, which makes node itself process 1.\n\nThe other options don't hold up:\n\n- `docker stop` does not begin with SIGKILL.\n- Alpine handles signals like any other image.\n- The order of `WORKDIR` and `COPY` affects only the filesystem and the build cache.",
+      "ru": "Запись `CMD node server.js` — это shell-форма, поэтому Docker выполняет `/bin/sh -c \"node server.js\"`. Процессом 1 внутри контейнера становится оболочка, а node — лишь её дочерний процесс.\n\nКоманда `docker stop` отправляет SIGTERM, вежливый сигнал «пожалуйста, завершись», только процессу 1, а оболочка его не пересылает. По истечении отсрочки, по умолчанию это десять секунд, Docker присылает SIGKILL, и node умирает, не выполнив свой обработчик.\n\nЛечится exec-формой `CMD [\"node\", \"server.js\"]`: тогда процессом 1 становится сам node.\n\nОстальные варианты не выдерживают проверки:\n\n- С SIGKILL команда `docker stop` не начинает.\n- Alpine работает с сигналами как любой другой образ.\n- Порядок `WORKDIR` и `COPY` влияет только на файлы и на кэш сборки."
     }
   },
   {
@@ -286,14 +286,14 @@
       "ru": [
         "Анонимные тома, постоянные тома и тома оверлея — используйте постоянные тома, потому что они сохраняются после удаления контейнера",
         "Локальные тома, облачные тома и зашифрованные тома — используйте зашифрованные тома для безопасности",
-        "Именованные тома, монтирования привязки и tmpfs монтирования — для данных базы используйте именованные тома",
+        "Именованные тома, bind mount и tmpfs — для данных базы используйте именованные тома",
         "Тома хоста, тома гостя и сетевые тома — используйте сетевые тома для распределённых баз данных"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The three volume types are: named volumes (managed by Docker, persistent), bind mounts (host filesystem directories), and tmpfs mounts (in-memory). Named volumes are ideal for databases because Docker manages their lifecycle, they persist across container restarts and deletions, and they can be backed up and moved between hosts. Bind mounts expose host paths directly and tmpfs is temporary.",
-      "ru": "Три типа томов: именованные тома (управляемые Docker, постоянные), монтирования привязки (каталоги файловой системы хоста) и tmpfs монтирования (в памяти). Именованные тома идеальны для баз данных, потому что Docker управляет их жизненным циклом, они сохраняются при перезапуске и удалении контейнера, и их можно резервировать и перемещать между хостами. Монтирования привязки открывают пути хоста напрямую, а tmpfs является временным."
+      "en": "The three volume types are: named volumes (managed by Docker, persistent), bind mounts (host filesystem directories), and tmpfs mounts (in-memory).\n\nNamed volumes are ideal for databases: Docker manages their lifecycle, and they persist across container restarts and deletions. They can also be backed up and moved between hosts. Bind mounts expose host paths directly, and tmpfs is temporary.",
+      "ru": "Три типа томов: именованные тома (управляются Docker, постоянные), bind mount (каталоги файловой системы хоста) и tmpfs (монтирование в памяти).\n\nИменованные тома идеальны для баз данных: Docker управляет их жизненным циклом, и они переживают перезапуск и удаление контейнера. Их можно резервировать и перемещать между хостами. Bind mount открывает пути хоста напрямую, а tmpfs временный."
     }
   },
   {
@@ -305,13 +305,13 @@
     },
     "options": {
       "en": [
-        "Specifying networks enforces CPU and memory limits between services",
+        "Specifying networks enforces CPU (processor) and memory limits between services",
         "Networks allow services to run on different physical machines simultaneously",
         "The default network mode is host, which connects all services directly to the host network",
         "Services reach each other by service name, and the default network mode is bridge"
       ],
       "ru": [
-        "Указание сетей применяет ограничения на CPU и память между сервисами",
+        "Указание сетей применяет ограничения на CPU (процессор) и память между сервисами",
         "Сети позволяют сервисам одновременно запускаться на разных физических машинах",
         "Режим сети по умолчанию — host, который подключает все сервисы напрямую к сети хоста",
         "Сервисы обращаются друг к другу по имени сервиса, а режим сети по умолчанию — bridge"
@@ -319,8 +319,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Docker Compose's bridge network driver (default) enables automatic DNS service discovery — containers can reach each other using service names defined in the compose file. Services on the same network are isolated from other networks but can communicate internally. This is different from host mode, which bypasses network isolation, or overlay networks used for swarm mode.",
-      "ru": "Драйвер мостовой сети Docker Compose (по умолчанию) включает автоматическое обнаружение DNS-сервисов — контейнеры могут достигать друг друга, используя имена сервисов, определённые в файле compose. Сервисы в одной сети изолированы от других сетей, но могут взаимодействовать внутри. Это отличается от режима host, который обходит сетевую изоляцию, или наложенных сетей, используемых для режима swarm."
+      "en": "Docker Compose's bridge network driver (the default) enables automatic service discovery through DNS (domain name system). Containers can reach each other using the service names defined in the compose file.\n\nServices on the same network are isolated from other networks but can talk to each other internally. This is different from host mode, which bypasses network isolation, and from overlay networks, which are used for swarm mode.",
+      "ru": "Мостовой сетевой драйвер Docker Compose (он же используется по умолчанию) включает автоматическое обнаружение сервисов через DNS (domain name system). Контейнеры обращаются друг к другу по именам сервисов из compose-файла.\n\nСервисы в одной сети изолированы от других сетей, но внутри неё общаются свободно. Это отличается от режима host, который снимает сетевую изоляцию, и от overlay-сетей, которые используются в режиме swarm."
     }
   }
 ]

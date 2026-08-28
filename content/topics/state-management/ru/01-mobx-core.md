@@ -237,7 +237,12 @@ class BaseStore2 {
 }
 ```
 
-## observer HOC и useObserver — когда React-компонент ре-рендерится
+## observer и useLocalObservable — когда React-компонент ре-рендерится
+
+`observer` — это HOC (higher-order component, компонент высшего порядка):
+функция, которая принимает компонент и возвращает новый, обёрнутый.
+Именно обёртка заставляет компонент реагировать на прочитанные им
+observable-значения.
 
 ```tsx
 import { observer } from 'mobx-react-lite';
