@@ -7,30 +7,29 @@ Before optimizing, you need to understand what exactly happens when the browser 
 ```txt
 JavaScript / CSS Animations
           ↓
-    [Style]          — which CSS rules apply to each element
+      [Style]
           ↓
-    [Layout]         — the size and position of every element
-    (Reflow)           (the most expensive step)
+      [Layout] (Reflow)
           ↓
-    [Paint]          — filling pixels for each layer
+      [Paint]
           ↓
-    [Composite]      — combining layers and presenting on screen
-
-Core principle: the earlier in the pipeline you "exit,"
-the cheaper the change:
-
-  Composite-only (transform, opacity):
-    skips Layout AND Paint — GPU only
-    = 0.1ms, stable 60fps
-
-  Paint-only (color, background):
-    skips Layout — only pixel repaint
-    = a few ms, can cause jank
-
-  Layout (width, margin, font-size, DOM position):
-    full pipeline from scratch — the most expensive
-    = tens of ms, noticeable freezes
+    [Composite]
 ```
+
+Each stage does one job:
+
+- **Style** — works out which CSS rules apply to each element.
+- **Layout**, also called reflow — computes the size and position of every element. This is the most expensive step.
+- **Paint** — fills in the pixels of each layer.
+- **Composite** — combines the layers and puts the result on screen.
+
+The core principle is that the earlier in this pipeline a change lets you exit, the cheaper that change is.
+
+| What you change | How far it goes | Cost |
+|---|---|---|
+| `transform`, `opacity` | composite only, skips layout and paint | ~0.1ms, steady 60fps |
+| `color`, `background` | paint only, skips layout | a few ms, can cause jank |
+| `width`, `margin`, `font-size`, element position | the whole pipeline from scratch | tens of ms, visible freezes |
 
 ## Reflow (Layout) — the most expensive type of change
 
@@ -133,7 +132,7 @@ boxes.forEach(box => {
 
 ## Repaint — redrawing pixels
 
-Repaint occurs when visual properties change **without affecting geometry**. Cheaper than reflow, but still uses CPU.
+Repaint occurs when visual properties change **without affecting geometry**. It is cheaper than reflow, but it still costs CPU (central processing unit) time.
 
 ```ts
 // Repaint only (no reflow):
@@ -163,16 +162,14 @@ element.style.outline = '2px solid blue';
 
 ## Compositing — GPU only, no CPU
 
-Composite-only changes are the gold standard of rendering performance: the browser moves or changes the transparency of an **already-painted layer** on the GPU, without touching the CPU at all.
+Composite-only changes are the gold standard of rendering performance. The browser moves an **already-painted layer**, or changes its transparency, on the GPU (graphics processing unit). The CPU is not touched at all.
 
-```txt
-Only two CSS properties are guaranteed composite-only:
-  → transform (translate, scale, rotate, skew, matrix)
-  → opacity
+Only two CSS properties are guaranteed to be composite-only:
 
-  + filter (in modern browsers)
-  + backdrop-filter
-```
+- `transform` — including `translate`, `scale`, `rotate`, `skew` and `matrix`.
+- `opacity`.
+
+Modern browsers add `filter` and `backdrop-filter` to that set.
 
 ```css
 /* ❌ Animation via left/top — triggers reflow every frame */
@@ -272,50 +269,30 @@ element.addEventListener('transitionend', () => {
 });
 ```
 
-```txt
-Why you can't apply will-change everywhere:
+Every compositor layer costs GPU memory, roughly width × height × 4 bytes × 2 buffers. An 800×600 element takes about 3.7MB.
 
-  Each compositor layer consumes GPU memory
-  (roughly: width × height × 4 bytes × 2 buffers).
-
-  An 800×600 element = ~3.7MB of GPU memory
-
-  Mobile devices have limited GPU memory:
-  too many layers → browser starts evicting/reloading them
-  → animations become WORSE, not better.
-
-  Rule: be surgical about it.
-```
+Mobile devices have little GPU memory to spare. With too many layers the browser starts evicting and reloading them, so animations get **worse**, not better. Be surgical with `will-change`.
 
 ## GPU Acceleration — how it works
 
 ```txt
-The browser and GPU interact through the compositor thread:
-
-  Main Thread (CPU):
-    JavaScript → Style → Layout → Paint
-    Result: a set of paint layers (textures)
-                ↓ textures transferred
-  Compositor Thread (separate OS thread):
-    Composite — combining layers, transform/opacity
-    Result: a finished frame
-                ↓
-  GPU:
-    Final output to the screen
-
-  Key point: the compositor thread runs independently of
-  the main thread. If the main thread is blocked (Long Task),
-  CSS animations on compositor-only properties
-  (transform, opacity) continue to run smoothly.
-
-  This is why: a loading spinner using CSS animation
-  on transform/opacity will keep animating even when
-  the page appears "frozen" due to heavy JS.
+Main Thread (CPU)
+  JavaScript → Style → Layout → Paint
+              ↓ paint layers (textures)
+Compositor Thread
+  Composite — layers, transform, opacity
+              ↓ finished frame
+GPU
+  Output to the screen
 ```
+
+The compositor thread runs independently of the main thread. If the main thread is blocked by a Long Task, CSS animations on composite-only properties — `transform` and `opacity` — keep running smoothly.
+
+That is why a loading spinner animated with CSS on `transform` or `opacity` keeps spinning even when the page looks frozen under heavy JS.
 
 ## CSS Containment — isolating rendering
 
-`contain` lets the browser isolate a DOM subtree: changes inside don't affect the external tree.
+`contain` lets the browser isolate a subtree of the DOM (Document Object Model — the tree of page elements). Changes inside that subtree do not affect the tree outside it.
 
 ```css
 /* contain: layout — layout changes don't escape the element */
@@ -498,32 +475,20 @@ function VirtualizedList({ items }: { items: Item[] }) {
 
 ## DevTools workflow for rendering
 
-```txt
-Chrome DevTools → Rendering tab (⋮ → More tools → Rendering):
+In the Chrome DevTools **Rendering** tab (⋮ → More tools → Rendering), three switches matter:
 
-  ✅ "Paint flashing" — green rectangles on repaint
-     → shows what repaints on scroll/animation
-     → if everything flashes — something causes excess repaint
+- **Paint flashing** — green rectangles appear wherever the page repaints. If everything flashes on scroll, something is forcing an excess repaint.
+- **Layout Shift Regions** — blue rectangles show where shifts happen, which makes CLS (Cumulative Layout Shift) visible.
+- **FPS meter** — FPS is the number of frames per second. The counter shows it live, and during an animation it should stay near 60.
 
-  ✅ "Layout Shift Regions" — blue rectangles on CLS
-     → shows WHERE shifts happen
+In the **Performance** panel, record an animation:
 
-  ✅ "FPS meter" — real-time fps counter
-     → should stay near 60fps during animations
+1. Press record, play the animation, then stop.
+2. The `Summary` tab shows how much time went to `Rendering` and `Painting`.
+3. In the frames timeline, green is good and yellow or red is a problem.
+4. On the main thread track, long green `Paint` blocks mean an expensive repaint.
 
-Chrome DevTools → Performance panel → record animation:
-
-  1. ⏺ Record → play the animation → Stop
-  2. Summary tab: "Rendering" + "Painting" — time spent
-  3. Frames timeline: green = good, yellow/red = problem
-  4. Main thread: long green "Paint" blocks = expensive repaint
-
-Chrome DevTools → Layers panel (⋮ → More tools → Layers):
-  → Visualizes compositor layers
-  → Which elements got their own layer and why
-  → Memory usage of each layer
-  → "Reasons" column: why the layer was created (will-change, transform, etc.)
-```
+The **Layers** panel (⋮ → More tools → Layers) visualizes the compositor layers. It shows which elements got their own layer, how much memory each one uses, and a `Reasons` column explaining why the layer was created.
 
 ```ts
 // Programmatic approach: measuring render time
@@ -542,24 +507,16 @@ requestAnimationFrame(() => {
 
 ## Connection to other topics
 
-```txt
-[Core Web Vitals]         — reflow is the mechanism behind CLS;
-                            Long Paint Tasks → poor INP
-[JavaScript Performance]  — Long Tasks on the main thread block
-                            the compositor thread; layout thrashing
-                            creates Long Tasks
-[Performance Metrics]     — Rendering + Painting contribute to TBT
-                            when they exceed 50ms
-[CSS Containment]         — content-visibility: auto
-                            dramatically reduces initial layout
-                            cost for long pages
-```
+- [Core Web Vitals](./01-core-web-vitals.md) — reflow is the mechanism behind CLS, and long paint tasks make INP (Interaction to Next Paint) worse.
+- [JavaScript Performance](./04-javascript-performance.md) — Long Tasks on the main thread get in the way of the compositor thread, and layout thrashing creates Long Tasks.
+- [Performance Metrics](./02-performance-metrics.md) — rendering and painting count towards TBT (Total Blocking Time) once they pass 50ms.
+- **CSS Containment**, the section above — `content-visibility: auto` sharply reduces the initial layout cost of long pages.
 
 ## Common interview traps
 
 - **"GPU acceleration — add transform: translateZ(0) everywhere"** — this is a hack to force compositor layer creation that worked in older browsers. Today `will-change: transform` is sufficient. Applying `translateZ(0)` to everything has the same effect as `will-change: all`: excess layers, excess GPU memory consumption.
 
-- **"opacity: 0 and display: none are the same thing"** — no. `display: none` removes the element from document flow → reflow. `opacity: 0` preserves the space, only changes transparency → composite. The performance difference is significant, and `opacity: 0` elements still receive events (you need `pointer-events: none`).
+- **"opacity: 0 and display: none are the same thing"** — no. Setting `display: none` removes the element from document flow, which means reflow. Setting `opacity: 0` keeps the space and only changes transparency, which means composite. The difference is large, and an element at `opacity: 0` still receives events — add `pointer-events: none`.
 
 - **"will-change improves performance"** — not by itself. It signals the browser to create a layer upfront, which removes the delay at the start of an animation. But too many layers overflow GPU memory and performance drops. It's an optimization with potential negative consequences.
 
@@ -567,6 +524,6 @@ requestAnimationFrame(() => {
 
 - **"React.memo will fix my rendering performance"** — React.memo compares props by reference. If every parent render creates new objects/functions in props, React.memo is useless. You need the full combination: useCallback + useMemo in the parent + React.memo in the child.
 
-- **"Layout thrashing is when you have lots of DOM operations"** — imprecise. Layout thrashing is specifically about interleaving READS of layout properties with WRITES to styles. A thousand writes in a row = one batched reflow. Read → write → read → write in a loop = a thousand reflows.
+- **"Layout thrashing is when you have lots of DOM operations"** — imprecise. Layout thrashing is specifically about interleaving **reads** of layout properties with **writes** to styles. A thousand writes in a row = one batched reflow. Read → write → read → write in a loop = a thousand reflows.
 
-- **"content-visibility: auto is a magic pill for long pages"** — almost, but there are nuances: it only works for block elements with a known height; `contain-intrinsic-size` is required to prevent scrollbar jumping; Find-in-page (Ctrl+F) works, but the search may not immediately find hidden content (the browser renders it on demand).
+- **"content-visibility: auto is a magic pill for long pages"** — almost, but it comes with conditions. It only works for block elements whose height is known. You need `contain-intrinsic-size`, or the scrollbar jumps as content appears. Find-in-page (Ctrl+F) works, but the search may not reach hidden content immediately, because the browser renders it on demand.

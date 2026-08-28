@@ -2,9 +2,9 @@
 
 ## Different mental models — not different solutions to the same problem
 
-The key mistake when choosing between MobX, Redux, and Zustand is treating them as interchangeable. They solve a similar problem but from fundamentally different worldviews.
+The key mistake when choosing between MobX, Redux, and Zustand is treating them as interchangeable. They solve a similar problem but from fundamentally different worldviews. Redux below always means Redux plus Redux Toolkit (RTK), the official package that removes most of the manual wiring.
 
-### MobX — reactive graph: "declare data, the UI will follow"
+### MobX — reactive graph: "declare data, the interface will follow"
 
 ```ts
 // MobX: you describe DATA STRUCTURE and RELATIONSHIPS between values
@@ -29,7 +29,7 @@ class OrderStore {
 // and re-renders ONLY components that actually read the changed values
 ```
 
-**Paradigm**: imperative OOP. Data is objects with methods. Changes happen through mutations (inside actions). Reactivity is hidden infrastructure.
+**Paradigm**: imperative object-oriented programming (OOP). Data is objects with methods. Changes happen through mutations (inside actions). Reactivity is hidden infrastructure.
 
 ### Redux/RTK — state machine: "explicit event flow → deterministic state"
 
@@ -184,9 +184,10 @@ MobX:    Automatic granularity. Re-renders only when specific
          reactivity (destructuring outside observer, reading outside
          reactive context).
 
-Redux:   Explicit control through selectors. Re-renders when the
-         selector result changes. Requires memoization (createSelector)
-         for objects/arrays. Predictable but verbose.
+Redux:   Explicit control through selectors. Re-renders when
+         the selector result changes. Requires memoization
+         (createSelector) for objects and arrays. Predictable
+         but verbose.
 
 Zustand: Explicit control through inline selectors. Same as Redux
          but without a separate selector layer — write directly in
@@ -275,7 +276,7 @@ Total for a typical project:
   RTK + react-redux      ~17 KB
 ```
 
-The difference matters for mobile web. For enterprise SPAs — not really. Bundle size should not be the primary selection criterion.
+The difference matters for mobile web. For an enterprise single-page application it is not. Bundle size should not be the primary selection criterion.
 
 ---
 
@@ -458,63 +459,25 @@ Choose none of the three if:
 
 ## The big comparison table
 
-```txt
-┌───────────────────┬──────────────────┬─────────────────┬──────────────────┐
-│ Criterion         │ MobX             │ Redux/RTK       │ Zustand          │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Paradigm          │ Reactive OOP     │ Functional      │ Minimalist       │
-│                   │                  │ (event-driven)  │ (explicit subs)  │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Mutability        │ Mutable          │ Immutable       │ Immutable        │
-│                   │ (inside action)  │ (Immer in RTK)  │ (set returns     │
-│                   │                  │                 │ new object)      │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Re-renders        │ Automatic        │ Explicit via    │ Explicit via     │
-│                   │ (reactive graph) │ selector        │ selector         │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Derived data      │ computed (lazy,  │ createSelector  │ Functions in     │
-│                   │ cached, auto)    │ (manual, memo)  │ store (no cache) │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Async             │ flow / action +  │ createAsync-    │ async functions  │
-│                   │ runInAction      │ Thunk           │ (native)         │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Provider required │ Optional         │ Yes             │ No               │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Boilerplate       │ Medium           │ High (RTK       │ Minimal          │
-│                   │                  │ reduces it)     │                  │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Bundle (min+gz)   │ ~18 KB           │ ~17 KB          │ ~1 KB            │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ TypeScript        │ Good             │ Good            │ Excellent        │
-│                   │ (flow — worse)   │                 │                  │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ DevTools          │ MobX DevTools    │ Redux DevTools  │ Redux DevTools   │
-│                   │ (limited)        │ (time-travel,   │ (devtools        │
-│                   │                  │ export/import)  │ middleware)      │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Testing           │ Classes without  │ Reducer = pure  │ getState /       │
-│                   │ React (need      │ fn (perfect);   │ setState without │
-│                   │ dispose)         │ thunks harder   │ React            │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Learning curve    │ 1-2 days         │ 2-4 days (RTK)  │ 30 minutes       │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Server state      │ Custom impl.     │ RTK Query       │ React Query /    │
-│                   │ (no built-in)    │ (built-in)      │ SWR (external)   │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Inter-store       │ Via RootStore    │ getState() in   │ get() in store   │
-│ communication     │ (DI via root)    │ thunk           │ methods          │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ SSR support       │ Yes (with        │ Yes             │ Yes (out of      │
-│                   │ caveats)         │                 │ the box)         │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Enforcement       │ enforceActions   │ Enforced by     │ No built-in      │
-│                   │ (optional)       │ reducer pattern │ enforcement      │
-├───────────────────┼──────────────────┼─────────────────┼──────────────────┤
-│ Best fit for      │ Complex reactive │ Large teams,    │ New projects,    │
-│                   │ computations,    │ audit trail,    │ fast start,      │
-│                   │ OOP teams        │ legacy projects │ small teams      │
-└───────────────────┴──────────────────┴─────────────────┴──────────────────┘
-```
+| Criterion | MobX | Redux/RTK | Zustand |
+|---|---|---|---|
+| Paradigm | Reactive, object-oriented | Functional, event-driven | Minimalist, explicit subscriptions |
+| Mutability | Mutable, inside an action | Immutable, Immer in RTK | Immutable, `set` returns a new object |
+| Re-renders | Automatic, from the reactive graph | Explicit, through a selector | Explicit, through a selector |
+| Derived data | `computed` — lazy, cached, automatic | `createSelector` — manual, memoized | Functions in the store, no cache |
+| Async | `flow`, or an action plus `runInAction` | `createAsyncThunk` | Plain async functions |
+| Provider required | Optional | Yes | No |
+| Boilerplate | Medium | High, though RTK reduces it | Minimal |
+| Bundle size in kilobytes, minified and gzipped | ~18 | ~17 | ~1 |
+| TypeScript | Good; `flow` is worse | Good | Excellent |
+| DevTools | MobX DevTools, limited | Redux DevTools: time-travel, export/import | Redux DevTools through devtools middleware |
+| Testing | Classes without React; needs a dispose call | Reducer is a pure function, so perfect; thunks are harder | `getState` / `setState` without React |
+| Learning curve | 1-2 days | 2-4 days with RTK | 30 minutes |
+| Server state | Your own implementation, nothing built in | RTK Query, built in | React Query or SWR (stale-while-revalidate), external |
+| Inter-store communication | Through a RootStore injected at the root | `getState()` inside a thunk | `get()` inside store methods |
+| Server-side rendering (SSR) | Yes, with caveats | Yes | Yes, out of the box |
+| Enforcement | `enforceActions`, optional | Enforced by the reducer pattern | None built in |
+| Best fit for | Complex reactive computations, object-oriented teams | Large teams, audit trail, legacy projects | New projects, fast start, small teams |
 
 ---
 
@@ -524,10 +487,10 @@ Choose none of the three if:
 
 - **"Redux is outdated, everyone is moving to Zustand/MobX"** — incorrect. Redux (especially with RTK) is actively developed and remains the right choice for specific scenarios. Zustand and MobX solve certain problems better — but they do not replace Redux entirely.
 
-- **Not distinguishing client-state from server-state** — managing server state (loading, cache, refetch, mutations) is a separate concern. React Query, SWR, and RTK Query are purpose-built for this. Using MobX/Zustand to store API data without a caching strategy is reinventing the wheel. A strong candidate understands: MobX/Zustand/Redux — for client-state, React Query/RTK Query — for server-state, and often both are needed together.
+- **Not distinguishing client-state from server-state** — managing server state (loading, cache, refetch, mutations) is a separate concern. React Query, SWR and RTK Query are purpose-built for this. Using MobX/Zustand to store API data without a caching strategy is reinventing the wheel. A strong candidate understands: MobX/Zustand/Redux — for client-state, React Query/RTK Query — for server-state, and often both are needed together.
 
 - **Thinking MobX is "magic" and unpredictable** — the MobX reactive graph is predictable once you understand the mechanism. Problems arise only when you don't know when the reactive context breaks (destructuring, async without flow, reading outside observer). With strict mode, most mistakes surface during development.
 
 - **"Zustand is small, so it must be primitive"** — bundle size does not correlate with maturity or functionality. Zustand is deliberate minimalism, not limitation. Complexity in Zustand moves from infrastructure (Redux boilerplate) to explicit structures (slices, selectors in hooks).
 
-- **Not knowing about Server Components and the future of state management** — with React Server Components, most server-state is not needed on the client at all. Server data arrives as props of server components, without useEffect and without a store. A strong candidate understands that RSC shifts the distribution: "server state" is URL + server components, client-state is user interaction (forms, filters, UI). Zustand and MobX fit this world better (no Provider, no serialization issues), Redux requires adaptation.
+- **Not knowing about Server Components and the future of state management** — React Server Components (RSC) change the picture. Most server-state is not needed on the client at all. Server data arrives as props of server components, without useEffect and without a store. A strong candidate understands that RSC shifts the distribution: "server state" is URL + server components, client-state is user interaction: forms, filters, interface state. Zustand and MobX fit this world better (no Provider, no serialization issues), Redux requires adaptation.

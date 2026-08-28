@@ -2,16 +2,16 @@
 
 ## Why z-index is misunderstood — the mental model is wrong
 
-Most developers think of z-index as a global stack: "element with z-index: 100 always appears above element with z-index: 10." This model is wrong. z-index is local — it competes within the same **stacking context**, and different stacking contexts are ordered relative to each other as atomic units.
+Most developers picture z-index as one global stack, where an element with `z-index: 100` always appears above an element with `z-index: 10`. That model is wrong. The z-index property is local: it competes only inside one **stacking context**. Different stacking contexts are then ordered against each other as atomic units.
 
-The correct mental model: the browser renders a tree of stacking contexts, not a flat list of z-index values. An element with `z-index: 9999` inside a stacking context that is rendered below another stacking context will appear behind every element in that other context — including elements with `z-index: 1`.
+The correct mental model: the browser renders a tree of stacking contexts, not a flat list of z-index values. Put an element with `z-index: 9999` inside a stacking context that renders below another one. It appears behind every element of that other context, `z-index: 1` included.
 
 ## The paint order without stacking contexts
 
 Before introducing stacking contexts, understand the default paint order for a document without any positioned elements:
 
 1. Background and borders of the root element
-2. Block-level descendants in normal flow (in DOM order)
+2. Block-level descendants in normal flow, in DOM (Document Object Model) order
 3. Floating elements
 4. Inline-level descendants in normal flow (in DOM order)
 
@@ -31,42 +31,50 @@ Within a stacking context, the paint order is:
 6. Descendants with z-index: 0 or z-index: auto and positioned
 7. Descendants with positive z-index (lowest first)
 
-The critical constraint: **z-index values only compare elements within the same stacking context.** An element with `z-index: 1000` in stacking context A cannot be compared against an element with `z-index: 1` in stacking context B by their z-index values alone — it depends on the stacking order of contexts A and B themselves.
+The critical constraint: **z-index values only compare elements within the same stacking context.** You cannot compare `z-index: 1000` in context A with `z-index: 1` in context B by those numbers. What decides the outcome is the stacking order of contexts A and B themselves.
 
 ## The full list of stacking context triggers
 
 This is the list most developers don't have memorized — and it's the source of almost every "why doesn't my z-index work?" bug.
 
 **Positioning + z-index:**
+
 - `position: absolute`, `relative`, `fixed`, or `sticky` with a `z-index` value other than `auto`
 
 **Opacity:**
+
 - `opacity` less than `1`
 
 **Transforms:**
+
 - `transform` other than `none`
 - `translate`, `rotate`, `scale` (individual transform properties, not `none`)
 - `perspective` other than `none`
 - `transform-style: preserve-3d`
 
 **Filters and effects:**
+
 - `filter` other than `none`
 - `backdrop-filter` other than `none`
 - `clip-path` other than `none`
 - `mask` / `mask-image` / `mask-border` other than `none`
 
 **Compositing:**
+
 - `mix-blend-mode` other than `normal`
 - `isolation: isolate`
 
 **Layout containment:**
+
 - `contain: layout`, `contain: paint`, `contain: strict`, `contain: content`
 
 **Will-change:**
+
 - `will-change` set to any property that would create a stacking context on its own
   (e.g., `will-change: transform`, `will-change: opacity`)
 
 **Other:**
+
 - `position: fixed` or `position: sticky` (always, regardless of z-index value)
 
 ```css
@@ -127,7 +135,7 @@ The tooltip has `z-index: 9999`, but it lives inside the `.card` stacking contex
 
 The dropdown's `z-index: 1000` is irrelevant to this comparison. What matters is where `.sidebar`'s stacking context sits relative to `.page-header`'s, and that is decided by their own z-index values and DOM order.
 
-`.sidebar` has no z-index of its own, so its `transform` gives it a stacking context that stacks as if `z-index: 0`. `.page-header` has `z-index: 10`, which is higher, so the whole sidebar context — dropdown included — renders behind the header.
+`.sidebar` has no z-index of its own, so its `transform` gives it a stacking context that stacks as if `z-index: 0`. The header has `z-index: 10`, which is higher, so the whole sidebar context — dropdown included — renders behind it.
 
 The real fix: either remove the `transform` from `.sidebar`, or give `.sidebar` an explicit `z-index` higher than `.page-header`'s.
 
@@ -238,7 +246,7 @@ Negative z-index places an element behind its stacking context's background. Thi
 }
 ```
 
-For the child to appear between the parent's background and other content, the parent must create a stacking context (otherwise the child escapes to a grandparent stacking context):
+For the child to appear between the parent's background and other content, the parent must create a stacking context. Otherwise the child escapes to a grandparent stacking context:
 
 ```css
 /* This creates a decorative element behind a card's content but above its background */
@@ -256,7 +264,7 @@ For the child to appear between the parent's background and other content, the p
 }
 ```
 
-Without the stacking context on `.card`, the `::before` with `z-index: -1` would escape to the root stacking context and potentially appear behind the entire page background.
+Without the stacking context on `.card`, the `::before` with `z-index: -1` escapes to the root stacking context. From there it can end up behind the entire page background.
 
 ## Practical debugging approach
 
@@ -329,19 +337,31 @@ Chrome DevTools → Layers panel shows all compositing layers (which often corre
    to avoid being trapped inside a component's stacking context */
 ```
 
-The **portal pattern** is the correct architectural solution for UI overlays (modals, dropdowns, tooltips): render them as direct children of `<body>` (or a dedicated portal container at the root), not inside the component tree. This is why React Portal, Vue Teleport, and Angular CDK Overlay exist.
+The **portal pattern** is the correct architectural answer for overlays: modals, dropdowns, tooltips. Render them as direct children of `<body>`, or of a dedicated portal container at the root. Do not leave them inside the component tree. This is why React Portal, Vue Teleport and Angular CDK (Component Dev Kit) Overlay exist.
 
 ## Common interview traps
 
 **"Why doesn't `z-index: 9999` work?"**
 
-Almost always a stacking context issue. The element is inside a stacking context whose own z-index (relative to sibling contexts) is lower than the element it needs to appear above. z-index values only compete within the same stacking context. The fix is at the stacking context level, not on the inner element.
+Almost always a stacking context issue. The element sits inside a stacking context whose own z-index is lower than the context of the element it must appear above. Remember that z-index values only compete inside one stacking context. The fix belongs at the stacking context level, not on the inner element.
 
 ---
 
 **"What creates a stacking context?"**
 
-The answer interviewers want is more than just "position + z-index." The full list includes: `opacity < 1`, `transform` (any non-none value), `filter` (any non-none value), `will-change` pointing to compositing properties, `isolation: isolate`, `contain: layout/paint/strict/content`, `mix-blend-mode` (non-normal), `clip-path` (non-none), `mask`, `backdrop-filter`, and `position: fixed/sticky` (always, regardless of z-index).
+Interviewers want more than "position plus z-index". Here is the full list:
+
+- `opacity` below 1
+- `transform`, any value other than `none`
+- `filter`, any value other than `none`
+- `will-change` pointing at a compositing property
+- `isolation: isolate`
+- `contain: layout / paint / strict / content`
+- `mix-blend-mode`, any value other than `normal`
+- `clip-path`, any value other than `none`
+- `mask`
+- `backdrop-filter`
+- `position: fixed` and `position: sticky` — always, whatever the z-index
 
 ---
 
@@ -353,7 +373,13 @@ The answer interviewers want is more than just "position + z-index." The full li
 
 **"What does `isolation: isolate` do and when would you use it?"**
 
-Creates a stacking context with no visual side effects — the element itself is not transformed, filtered, or made partially transparent. Useful for: (1) containing z-index values within a component so they don't leak into the surrounding context; (2) preventing `mix-blend-mode` from blending with elements outside the component; (3) creating predictable z-index behavior for design system components that must work in any environment.
+Creates a stacking context with no visual side effects. The element itself is not transformed, filtered, or made partially transparent.
+
+Three uses:
+
+- Keeping z-index values inside a component, so they do not leak into the surrounding context.
+- Preventing `mix-blend-mode` from blending with elements outside the component.
+- Giving design system components predictable z-index behavior in any environment.
 
 ---
 
@@ -361,4 +387,4 @@ Creates a stacking context with no visual side effects — the element itself is
 
 1. Check the stacking context of the sticky header (it always creates one — `position: sticky` is enough). Find its z-index or DOM position.
 2. Check what stacking context the dropdown's parent is in. If the dropdown's parent stacking context has a lower z-index than the sticky header's context, the dropdown will always appear behind.
-3. Fix: give the dropdown's parent stacking context a z-index higher than the header's context, or render the dropdown in a portal outside the parent's stacking context.
+3. Fix it one of two ways. Give the dropdown's parent stacking context a z-index higher than the header's context. Or render the dropdown in a portal, outside the parent's stacking context.

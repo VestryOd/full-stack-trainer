@@ -4,26 +4,21 @@
 
 Before discussing resource hints, you need to understand what the browser does with resources by default — and why that's suboptimal.
 
-```txt
-The browser receives HTML and builds the Critical Rendering Path:
+The browser receives the HTML and builds the Critical Rendering Path out of it:
 
-  HTML → DOM
-  CSS  → CSSOM    } combined into Render Tree → Layout → Paint
-  JS   → blocks HTML parsing until it executes
+- HTML becomes the DOM (document object model).
+- CSS becomes the CSSOM (CSS object model).
+- The two are combined into a Render Tree, and then come Layout and Paint.
+- JS blocks HTML parsing until it has executed.
 
-The "waterfall" problem:
-  1. Browser starts parsing HTML
-  2. Encounters <link rel="stylesheet" href="style.css">
-     → STOP, downloading CSS
-  3. In the CSS: url('/fonts/inter.woff2')
-     → the browser DOESN'T KNOW about this font yet (still parsing CSS)
-  4. CSS downloaded → parsed → font discovered → download starts
-     → DELAY = CSS parse time + one RTT for the font request
+From that order follows the "waterfall" problem:
 
-Resource hints solve this: they tell the browser about resources
-UPFRONT, in <head>, before it encounters them in CSS/JS —
-or even before they exist on the current page at all.
-```
+1. The browser starts parsing the HTML.
+2. It encounters `<link rel="stylesheet" href="style.css">` and **stops** to download the CSS.
+3. Inside that CSS sits `url('/fonts/inter.woff2')`, but the browser **doesn't know about this font yet** — it is still parsing the CSS.
+4. The CSS finishes downloading, gets parsed, the font is discovered, and only then does its download start. The **delay** is the CSS parse time plus one extra round trip for the font request.
+
+Resource hints solve exactly this. They tell the browser about resources **upfront**, in `<head>`. That happens before the browser encounters them in CSS or JS, and even before they exist on the current page at all.
 
 ## preload — "this resource is needed right now"
 
@@ -75,10 +70,11 @@ or even before they exist on the current page at all.
 
 ### modulepreload — preload for ES modules
 
+The `modulepreload` hint is the preload variant for ES (ECMAScript) modules. A regular `preload` on a module downloads the file but does not process its dependencies. The `modulepreload` hint downloads the module **and** its transitive dependencies, and parses all of them.
+
 ```html
-<!-- A regular preload for a module doesn't process its
-     dependencies. modulepreload downloads the module AND
-     its transitive dependencies, and parses all of them. -->
+<!-- modulepreload takes the whole dependency subtree,
+     not just the entry file. -->
 <link rel="modulepreload" href="/app.js" />
 <link rel="modulepreload" href="/vendor.js" />
 
@@ -98,16 +94,13 @@ or even before they exist on the current page at all.
 <link rel="preload" href="/admin-panel.js" as="script" />
 ```
 
-```txt
-Rule: preload only for resources that:
-  1. Are needed on the CURRENT page
-  2. Are discovered LATE (not in the first-screen HTML)
-  3. Are critical for LCP or the first render
+Use `preload` only for resources that satisfy all three conditions:
 
-  Good candidates: LCP image, custom font,
-  critical CSS file, main JS bundle
-  Bad candidates: anything below the fold, widgets, analytics
-```
+1. They are needed on the **current** page.
+2. They are discovered **late**, not in the first-screen HTML.
+3. They are critical for LCP (largest contentful paint) or for the first render.
+
+Good candidates are the LCP image, a custom font, the critical CSS file and the main JS bundle. Bad candidates are anything below the fold, widgets and analytics.
 
 ## prefetch — "this resource will be needed later"
 
@@ -146,25 +139,22 @@ import Link from 'next/link';
 <Link href="/checkout">Proceed to checkout</Link>
 ```
 
-```txt
-preload vs prefetch — the fundamental difference:
+The difference between the two hints is fundamental, not a matter of degree:
 
-  preload:  CURRENT navigation, high priority,
-            resource is expected to be used immediately.
-            The browser will warn in the console if the
-            resource isn't used within ~3 seconds.
+| | `preload` | `prefetch` |
+|---|---|---|
+| Which navigation | The current one | A future one |
+| Priority | High | Low |
+| When it is used | Immediately | On the next navigation |
+| Browser may skip it | No | Yes, for example on a slow connection |
 
-  prefetch: FUTURE navigation, low priority,
-            the browser may defer or cancel
-            (e.g. on a slow connection).
-            Stored in the HTTP cache for subsequent requests.
-```
+If a preloaded resource isn't used within about three seconds, the browser warns about it in the console. A prefetched resource is kept in the HTTP cache for subsequent requests.
 
 ## preconnect and dns-prefetch
 
 ### preconnect — warming up connections
 
-Establishing a TCP + TLS connection takes 1–3 RTTs. `preconnect` does this upfront:
+Establishing a TCP (transmission control protocol) and TLS (transport layer security) connection takes one to three round trips. The `preconnect` hint does that work upfront:
 
 ```html
 <!-- ✅ preconnect for critical external domains —
@@ -177,23 +167,15 @@ Establishing a TCP + TLS connection takes 1–3 RTTs. `preconnect` does this upf
      CORS (fonts, fetch API) -->
 ```
 
-```txt
-What preconnect provides:
+Without `preconnect`, a font requested from CSS runs the whole chain **after** the CSS has been parsed. The chain is: name lookup (`DNS`), then TCP, then TLS, then the request, then the response.
 
-  Without preconnect (font request from CSS):
-  HTML → CSS discovered → DNS → TCP → TLS → Request → Response
-          ↑ all of this happens AFTER CSS is parsed
+With `preconnect` in `<head>` the name lookup and both handshakes start immediately, as soon as the HTML loads. By the time the CSS gets to requesting the font, the connection is already open.
 
-  With preconnect (in <head>):
-  DNS → TCP → TLS (starts immediately when HTML loads)
-  By the time CSS gets to requesting the font — connection is ready.
-
-  Savings: 100–500ms on slow DNS / high-latency connections
-```
+The saving is 100–500 ms on slow name resolution or on high-latency connections.
 
 ### dns-prefetch — the lighter alternative
 
-`dns-prefetch` does only DNS resolution (no TCP/TLS), consuming fewer resources:
+The `dns-prefetch` hint only resolves the domain name and stops there, opening no TCP or TLS connection, so it costs fewer resources:
 
 ```html
 <!-- For domains connected to later during the session
@@ -203,17 +185,13 @@ What preconnect provides:
 <link rel="dns-prefetch" href="https://cdn.intercom.io" />
 ```
 
-```html
-<!-- Decision rule:
-     Critical domain (needed at load)  → preconnect
-     Non-critical domain (needed later) → dns-prefetch
-     Too many domains for preconnect   → keep only 2–3
-       of the most important, others  → dns-prefetch
+How to choose between the two:
 
-     preconnect keeps a connection open for ~10 seconds,
-     consuming resources on both client and server.
-     Overusing preconnect is worse than not using it. -->
-```
+- A critical domain, needed at load time — use `preconnect`.
+- A non-critical domain, needed later — use `dns-prefetch`.
+- Too many domains for `preconnect` — keep the two or three most important ones and give the rest `dns-prefetch`.
+
+The `preconnect` hint keeps a connection open for about 10 seconds, consuming resources on both the client and the server. Overusing it is worse than not using it at all.
 
 ## Priority Hints — fetchpriority
 
@@ -351,89 +329,65 @@ function ProductRecommendations() {
 
 ## Resource priority strategy — the full picture
 
-```txt
-When the browser discovers resources, it assigns priorities:
+When the browser discovers resources, it assigns each one a priority.
 
-  Critical (immediate):
-    → CSS in <head>
-    → Synchronous <script> in <head>
-    → preload with fetchpriority="high"
+**Critical, fetched immediately:**
 
-  High:
-    → <img fetchpriority="high"> (or first in-viewport images)
-    → preload without fetchpriority
-    → <script defer> in document order
+- CSS in `<head>`;
+- synchronous `<script>` in `<head>`;
+- `preload` with `fetchpriority="high"`.
 
-  Medium:
-    → <img> without attributes (in viewport)
-    → <script async>
+**High:**
 
-  Low:
-    → <img loading="lazy">
-    → prefetch
-    → <img fetchpriority="low">
+- `<img fetchpriority="high">`, and the first images inside the viewport;
+- `preload` without `fetchpriority`;
+- `<script defer>`, in document order.
 
-  The browser preload scanner (speculative parser):
-    In parallel with DOM parsing, the browser scans the
-    raw HTML for resources (src, href) to start downloading
-    early — but it only sees static HTML, not CSS url()
-    values or JS-injected elements.
-    This is exactly why explicit preload is critical for
-    resources discovered through CSS or JavaScript.
-```
+**Medium:**
+
+- `<img>` without attributes, inside the viewport;
+- `<script async>`.
+
+**Low:**
+
+- `<img loading="lazy">`;
+- `prefetch`;
+- `<img fetchpriority="low">`.
+
+On top of that the browser runs a **preload scanner**, also called the speculative parser. In parallel with DOM parsing it scans the raw HTML for resource references such as `src` and `href`, so that downloads can start early.
+
+The scanner only sees static HTML. It does not see CSS `url()` values and it does not see JS-injected elements. That is exactly why an explicit `preload` is critical for resources discovered through CSS or JavaScript.
 
 ## Practical DevTools workflow
 
-```txt
-Chrome DevTools → Network tab:
-  1. Reload the page with Network open
-  2. Waterfall — visualizes order and parallelism of loading
-  3. Bar colors:
-     - blue   = HTML
-     - purple = CSS
-     - yellow = JS
-     - green  = images
-  4. Priority column (right-click header → Priority):
-     → "Highest"/"High" — correct for the LCP image?
-     → "Low" — correct for below-fold content?
+**Chrome DevTools, Network tab:**
 
-DevTools → Performance → record page load:
-  → "Initiator" — what triggered the resource to load
-  → Bar width = download time
-  → Bar start = when the browser learned about the resource
+1. Reload the page with the Network tab open.
+2. The Waterfall visualizes the order and the parallelism of loading.
+3. Bar colors: blue is HTML, purple is CSS, yellow is JS, green is images.
+4. Add the Priority column by right-clicking the table header. Check that the LCP image gets "Highest" or "High", and that below-the-fold content gets "Low".
 
-Typical diagnosis:
-  Font starts downloading 500ms after the page starts →
-  the browser learned about it late (from CSS) →
-  add <link rel="preload" as="font"> to <head>
-```
+**DevTools → Performance → record a page load.** The "Initiator" column tells you what triggered the resource to load. The width of a bar is the download time, and the start of a bar is the moment the browser learned about the resource.
+
+A typical diagnosis looks like this. A font starts downloading 500 ms after the page starts, which means the browser learned about it late, from the CSS. The fix is to add `<link rel="preload" as="font">` to `<head>`.
 
 ## Connection to other topics
 
-```txt
-[Core Web Vitals]         — preloading the LCP resource directly
-                            reduces LCP; fixing loading="lazy"
-                            on the LCP element is a common quick win
-[Performance Metrics]     — preconnect reduces TTFB for external
-                            resources; preload reduces FCP
-[JavaScript Performance]  — modulepreload speeds up ES module
-                            loading; prefetch implements
-                            route-based code splitting
-[Image Optimization]      — lazy loading + srcset + fetchpriority
-                            work together for optimal LCP
-                            and bandwidth savings
-```
+- [Core Web Vitals](./01-core-web-vitals.md) — preloading the LCP resource directly reduces LCP. Removing `loading="lazy"` from the LCP element is a common quick win.
+- [Performance Metrics](./02-performance-metrics.md) — `preconnect` reduces TTFB (time to first byte) for external resources, and `preload` reduces FCP (first contentful paint).
+- [JavaScript Performance](./04-javascript-performance.md) — `modulepreload` speeds up ES module loading, and `prefetch` implements route-based code splitting.
+- [Image Optimization](./05-image-optimization.md) — lazy loading, `srcset` and `fetchpriority` work together for an optimal LCP and for bandwidth savings.
 
 ## Common interview traps
 
-- **"preload and prefetch do the same thing, just at different priorities"** — no. preload is for the CURRENT page (high priority, used immediately). prefetch is for the NEXT navigation (low priority, cached for future use). Conflating them means understanding neither.
+- **"preload and prefetch do the same thing, just at different priorities"** — no. The `preload` hint is for the **current** page: high priority, used immediately. The `prefetch` hint is for the **next** navigation: low priority, cached for future use. Conflating them means understanding neither.
 
 - **"I added preload to everything — the site got faster"** — it can have the opposite effect. Every preload competes for bandwidth. If a preload for a non-critical resource displaces the LCP image, LCP gets worse. Lighthouse specifically warns about "unused preload."
 
-- **"You can add preconnect for all domains"** — no. preconnect opens and holds a TCP/TLS connection for ~10 seconds. With 10+ domains this loads down the client and can tie up connections needed for real requests. Rule: 2–3 most critical domains, everything else gets dns-prefetch.
+- **"You can add preconnect for all domains"** — no. `preconnect` opens and holds a TCP/TLS connection for about 10 seconds. With ten or more domains this loads down the client and can occupy connections needed for real requests. The rule: two or three most critical domains, everything else gets `dns-prefetch`.
 
-- **"loading="lazy" solves all image problems"** — no. It's one tool. Apply it to the LCP image and you directly hurt LCP. Without `width`/`height` it causes CLS. It doesn't help with format, compression, or srcset.
+- **"loading="lazy" solves all image problems"** — no. It's one tool. Apply it to the LCP image and you directly hurt LCP. Without `width`/`height` it causes CLS (cumulative layout shift). It doesn't help with format, compression, or `srcset`.
 
 - **"The preload scanner sees everything in the HTML"** — no. It only sees static `src`/`href` attributes in raw HTML. CSS `url()`, JS-injected elements, dynamic `import()` — it can't see those. That's exactly why explicit `<link rel="preload">` exists for those cases.
 
-- **"fetchpriority="high" is the same as preload"** — they're different things. `preload` says "download this resource now, regardless of whether you'll encounter it in the document." `fetchpriority` says "when you download this already-known resource, do it at this priority." `preload` changes when discovery happens; `fetchpriority` changes the priority of a resource the browser already knows about.
+- **"fetchpriority="high" is the same as preload"** — they're different things. The `preload` hint says: download this resource now, regardless of whether you'll encounter it in the document. The `fetchpriority` attribute says: when you download this already-known resource, do it at this priority. So `preload` changes when discovery happens, and `fetchpriority` changes the priority of a resource the browser already knows about.

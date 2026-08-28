@@ -6,24 +6,21 @@ A byte of JavaScript and a byte of an image of the same size cost the browser ve
 
 ```txt
 200 KB image:
-  Download → Decode → Paint
-  All of this happens off-main-thread (in separate threads)
+  Download → Decode → Paint     (all off the main thread)
 
 200 KB JavaScript:
   Download → Parse → Compile → Execute
                 ↑         ↑        ↑
            main thread, main thread, main thread
-
-  And "Execute" can take hundreds of milliseconds —
-  the main thread is blocked FOR ALL OF THAT TIME.
-  No response to clicks. No animations. Nothing.
 ```
+
+An image is handled off the main thread. JavaScript is not: parse, compile and execute all happen on it. **Execute alone can take hundreds of milliseconds, and the main thread is blocked for that whole time** — no response to clicks, no animations, nothing.
 
 This leads to the key principle: **less JS = faster**, even when it's minified and compressed. Network size is not the only cost. Parse and compile take time even after caching (though V8 does cache bytecode).
 
 ## Long Tasks — what they are and why they matter
 
-A Long Task is any task on the main thread lasting **more than 50ms**. Long Tasks are what TBT is made of, and they're what causes poor INP.
+A Long Task is any task on the main thread lasting **more than 50ms**. Long Tasks are what TBT (Total Blocking Time) is made of. They are also what makes INP (Interaction to Next Paint) bad.
 
 ```ts
 // Detecting Long Tasks in the browser (production monitoring)
@@ -41,25 +38,13 @@ const observer = new PerformanceObserver((list) => {
 observer.observe({ type: 'longtask', buffered: true });
 ```
 
-```txt
-Common sources of Long Tasks in real applications:
+Where Long Tasks come from in real applications:
 
-  1. SPA hydration (React/Vue/Angular) — parsing + executing
-     the entire JS bundle on first load. On a weak Android
-     device this can take 500ms+.
-
-  2. Heavy event handlers — synchronously processing a click
-     with filtering/sorting a large array of data.
-
-  3. Third-party scripts — analytics, chats, A/B testing.
-     Often outside your control, but you can delay their loading.
-
-  4. Large DOM renders — React re-renders a component with
-     thousands of nodes synchronously.
-
-  5. JSON.parse() of large payloads — a 1MB JSON ≈ 50–100ms
-     parse time on an average device.
-```
+1. **Hydration of an SPA** (single-page application) built on React, Vue or Angular. The whole JS bundle is parsed and executed on first load, and on a weak Android device that alone can take 500ms or more.
+2. **Heavy event handlers** — a click that synchronously filters or sorts a large array of data.
+3. **Third-party scripts** — analytics, chat widgets, A/B testing. Often outside your control, but you can delay when they load.
+4. **Large renders of the DOM** (Document Object Model — the tree of page elements). React re-renders a component with thousands of nodes, synchronously.
+5. **`JSON.parse()` of a large payload** — a one-megabyte JSON takes roughly 50–100ms to parse on an average device.
 
 ## Breaking up Long Tasks — yield techniques
 
@@ -129,7 +114,7 @@ async function handleUserClick(data: InputData) {
 
 ## Web Workers — the real solution for CPU-bound work
 
-`scheduler.yield()` splits a task over time, but JS still runs on the main thread. A **Web Worker** runs code in a separate OS thread — the main thread stays completely free.
+`scheduler.yield()` splits a task over time, but the JS still runs on the main thread. Some work is bound by the CPU (the central processing unit), not by waiting for the network. That work needs a different tool. A **Web Worker** runs code in a separate operating-system thread, and the main thread stays completely free.
 
 ```ts
 // worker.ts — runs in a separate thread
@@ -203,7 +188,7 @@ const result = await api.processData(largeDataset);
 
 ## Code Splitting — load only what's needed
 
-Code splitting breaks the bundle into parts loaded on demand. It's the primary tool for reducing TTI and TBT.
+Code splitting breaks the bundle into parts that load on demand. It is the primary tool for reducing TTI (Time to Interactive) and TBT.
 
 ### Route-based splitting (automatic in Next.js)
 
@@ -296,7 +281,7 @@ import { parseISO } from 'date-fns/parseISO';
 
 ## Tree Shaking — eliminating dead code
 
-Tree shaking is a bundler mechanism (webpack, Rollup, esbuild) for removing unused code from the bundle. It only works with ES modules (`import`/`export`).
+Tree shaking is a bundler mechanism (webpack, Rollup, esbuild) for removing unused code from the bundle. It only works with ES modules. ES is ECMAScript, the standard behind JavaScript, and its modules are the `import`/`export` syntax.
 
 ### Why tree shaking often doesn't work
 
@@ -412,22 +397,14 @@ export default defineConfig({
 });
 ```
 
-```txt
 What to look for in the bundle map:
 
-  1. Duplicates — the same library included multiple times
-     (different versions in node_modules, different entry points)
-
-  2. Unexpectedly large dependencies:
-     moment.js (300KB) → replace with date-fns
-     lodash (70KB) → replace with lodash-es + tree shaking
-     full Ant Design (1MB) → use only needed components
-
-  3. Code that shouldn't be in the bundle:
-     Node.js-only modules (fs, path) leaked into client code
-     Test utilities, mock data
-     Dev-only dependencies
-```
+1. **Duplicates** — the same library included several times, from different versions in `node_modules` or from different entry points.
+2. **Unexpectedly large dependencies.** Three of them show up again and again:
+   - `moment.js` at 300KB — replace it with `date-fns`.
+   - `lodash` at 70KB — replace it with `lodash-es` and let tree shaking work.
+   - The full Ant Design at 1MB — import only the components you use.
+3. **Code that should not be in the bundle at all.** Node.js-only modules such as `fs` and `path` leak into client code. So do test utilities, mock data and dev-only dependencies.
 
 ## Bundle optimization — chunk strategies
 
@@ -519,46 +496,25 @@ jobs:
 
 ## DevTools workflow for JS performance
 
-```txt
-Chrome DevTools → Performance panel:
+In the Chrome DevTools **Performance** panel:
 
-  1. ⏺ Record → interact with the page → Stop
-  2. Main thread track:
-     - Red flags above tasks = Long Tasks
-     - Click a task → Bottom-up: who's responsible?
-     - "Script Evaluation" → JS parsing/compilation
-     - "Parse HTML" interrupted by "Compile Script" → sync script
+1. Press record, interact with the page, then stop.
+2. On the main thread track, red flags above tasks mark Long Tasks. Click a task and open `Bottom-up` to see who is responsible. `Script Evaluation` is JS parsing and compilation, and `Parse HTML` interrupted by `Compile Script` means a synchronous script.
+3. Open the `Coverage` tab (⋮ → More tools → Coverage). After load it shows what share of the JS never ran. Red bars in a file mark code that did not run during load, and those files are good candidates for code splitting.
+4. Application → Storage → Clear storage, then reload to check first-visit behaviour without the V8 cache.
 
-  3. Coverage tab (DevTools → ⋮ → More tools → Coverage):
-     - After load: what % of JS was never executed?
-     - Red bars in files = code that didn't run during load
-     - Good candidates for code splitting
-
-  4. Application → Storage → Clear storage → check
-     first-visit behavior (no V8 cache)
-
-Lighthouse → "Reduce unused JavaScript":
-  → Shows specific files and how many bytes are unused
-  → A direct signal for code splitting or removing a dependency
-```
+In Lighthouse, "Reduce unused JavaScript" lists the specific files and how many bytes of each went unused. That is a direct signal to split the code or drop a dependency.
 
 ## Connection to other topics
 
-```txt
-[Performance Metrics]     — Long Tasks = TBT; code splitting
-                            directly reduces TTI
-[Core Web Vitals]         — Long Tasks are the main enemy of INP;
-                            hydration bundle size affects LCP
-[Resource Loading]        — dynamic import() + prefetch =
-                            route-based preloading
-[Rendering Performance]   — Heavy DOM renders create Long Tasks;
-                            React Concurrent Mode splits them
-                            automatically
-```
+- [Performance Metrics](./02-performance-metrics.md) — Long Tasks are what TBT measures, and code splitting directly reduces TTI.
+- [Core Web Vitals](./01-core-web-vitals.md) — Long Tasks are the main enemy of INP, and the size of the hydration bundle affects LCP (Largest Contentful Paint).
+- [Resource Loading](./03-resource-loading.md) — a dynamic `import()` plus `prefetch` gives route-based preloading.
+- [Rendering Performance](./06-rendering-performance.md) — heavy DOM renders create Long Tasks, and React Concurrent Mode splits them automatically.
 
 ## Common interview traps
 
-- **"Tree shaking works with any JS"** — only with ES modules. CommonJS (`require`) cannot be tree-shaken by definition because `require()` is a runtime call. If a library only ships CJS, tree shaking won't help.
+- **"Tree shaking works with any JS"** — only with ES modules. CommonJS (`require`) cannot be tree-shaken by definition because `require()` is a runtime call. If a library only ships CJS — the CommonJS format — tree shaking will not help.
 
 - **"I split the task with setTimeout — it no longer blocks"** — total CPU load is unchanged. You've only allowed the event loop to process other tasks between chunks. If the task is genuinely heavy, the correct solution is a Web Worker, not setTimeout.
 
@@ -566,7 +522,7 @@ Lighthouse → "Reduce unused JavaScript":
 
 - **"Barrel files are convenient and don't affect performance"** — they do. Webpack/bundlers may fail to tree-shake exports from a barrel if `sideEffects: false` isn't configured. The result: `import { one } from '@/utils'` pulls in all 120KB instead of the 1KB needed module.
 
-- **"I added sideEffects: false and that's it"** — `sideEffects: false` promises the bundler that any unused module can be discarded. If a file has a real side effect (CSS injection, window assignment, polyfill) — it must be explicitly listed in the `sideEffects` array, otherwise you'll break the app.
+- **"I added sideEffects: false and that's it"** — `sideEffects: false` promises the bundler that any unused module can be discarded. If a file has a real side effect — CSS injection, a window assignment, a polyfill — list it in the `sideEffects` array. Otherwise you break the app.
 
 - **"A Web Worker will fix my performance problem"** — only for CPU-bound tasks. A Worker won't help if the problem is a heavy React tree render (that still happens on the main thread). For rendering, you need other techniques: virtualization, React.memo, useDeferredValue.
 

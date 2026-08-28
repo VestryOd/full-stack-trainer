@@ -2,7 +2,7 @@
 
 ## What is OWASP Top 10
 
-OWASP (Open Worldwide Application Security Project) is a non-profit organization publishing the top 10 most critical web application vulnerabilities. Updated approximately every 3-4 years. Interviews don't require memorizing the whole list, but they expect deep understanding of the first 5-7 entries and the ability to cite specific examples and defenses.
+OWASP (Open Worldwide Application Security Project) is a non-profit organization publishing the top 10 most critical web application vulnerabilities. Updated approximately every 3-4 years. Interviews don't require memorizing the whole list. They do expect deep understanding of the first 5-7 entries, plus specific examples and defenses you can cite.
 
 ## A01: Broken Access Control
 
@@ -43,27 +43,33 @@ app.get('/api/orders/:id', authenticate, async (req, res) => {
 
 Formerly called "Sensitive Data Exposure". Covers incorrect use or absence of cryptography.
 
-```txt
 Typical scenarios:
-  - HTTP instead of HTTPS (data in plaintext)
-  - Passwords in plaintext or MD5/SHA-1 (deprecated)
-  - JWT with algorithm=none (signature not verified)
-  - PII data in logs (email, IP, credit card)
-  - Weak encryption keys (< 128 bit)
-  - ECB mode usage (deterministic → patterns visible)
-  - Secrets in git history
+
+- HTTP instead of HTTPS (Hypertext Transfer Protocol Secure), so data travels in plaintext.
+- Passwords in plaintext, or hashed with the deprecated MD5 (Message Digest 5) and SHA-1 (Secure Hash Algorithm 1).
+- JWT (JSON Web Token) with `algorithm=none`, so the signature is not verified.
+- Personally identifiable information (PII) in logs: email, IP (internet protocol) address, credit card.
+- Weak encryption keys, under 128 bit.
+- ECB (electronic codebook) mode usage, which is deterministic, so patterns stay visible.
+- Secrets in git history.
 
 Defenses:
-  - HTTPS everywhere (HSTS header)
-  - bcrypt/Argon2 for passwords
-  - AES-256-GCM for data at rest
-  - Explicit JWT algorithm check: jwt.verify(token, secret, { algorithms: ['HS256'] })
-  - Data classification: know what's sensitive and protect accordingly
-```
+
+- HTTPS everywhere, with the HSTS (HTTP Strict Transport Security) header.
+- bcrypt or Argon2 for passwords.
+- AES-256-GCM for data at rest, the Advanced Encryption Standard in Galois/Counter Mode.
+- Explicit JWT algorithm check: `jwt.verify(token, secret, { algorithms: ['HS256'] })`.
+- Data classification: know what's sensitive and protect accordingly.
 
 ## A03: Injection
 
-Includes SQL, NoSQL, LDAP, OS Command, SSTI injection.
+Injection is a family of vulnerabilities, not a single bug. Untrusted input reaches an interpreter that reads it as instructions:
+
+- SQL (Structured Query Language) injection, against a relational database.
+- NoSQL (non-relational database) injection, against stores such as MongoDB.
+- LDAP (Lightweight Directory Access Protocol) injection, against a directory server.
+- OS Command injection, where the input reaches the operating system shell.
+- SSTI (server-side template injection), where the input reaches a template engine.
 
 ```typescript
 // SQL Injection (see: [SQL Injection and Input Validation])
@@ -90,27 +96,29 @@ app.post('/api/convert', (req, res) => {
 
 Architectural vulnerabilities — ones that can't be fixed with just a code patch.
 
-```txt
 Examples:
-  - No rate limiting on login endpoint → brute force possible
-  - Password reset without MFA and without token expiry → account takeover
-  - No lockout after N attempts → enumeration attacks
-  - Critical operations without a second confirmation factor
-  - All data in one DB without isolation
-  - Public S3 bucket for private documents
 
-Threat Modeling (STRIDE): during design phase:
-  S — Spoofing identity
-  T — Tampering with data
-  R — Repudiation
-  I — Information disclosure
-  D — Denial of service
-  E — Elevation of privilege
+- No rate limiting on the login endpoint, so brute force is possible.
+- Password reset without MFA (multi-factor authentication) and without token expiry, which gives account takeover.
+- No lockout after N attempts, which opens the door to enumeration attacks.
+- Critical operations without a second confirmation factor.
+- All data in one database without isolation.
+- A public S3 (Amazon Simple Storage Service) bucket for private documents.
+
+Threat modeling belongs in the design phase, and its checklist is STRIDE — one letter per class of threat:
+
+- **S** — Spoofing identity.
+- **T** — Tampering with data.
+- **R** — Repudiation.
+- **I** — Information disclosure.
+- **D** — Denial of service.
+- **E** — Elevation of privilege.
 
 Every feature should pass through STRIDE before any code is written.
-```
 
 ## A05: Security Misconfiguration
+
+Misconfiguration is about defaults that nobody changed. The code below shows four such defaults next to the fix for each, starting with a wildcard CORS (cross-origin resource sharing) origin.
 
 ```typescript
 // Examples of misconfiguration:
@@ -126,7 +134,8 @@ app.use((err, req, res, next) => {
 // GOOD:
 app.use((err, req, res, next) => {
   logger.error({ err, requestId: req.id }); // log everything
-  res.status(500).json({ error: 'Internal server error', requestId: req.id }); // client gets minimum
+  // the client gets the minimum
+  res.status(500).json({ error: 'Internal server error', requestId: req.id });
 });
 
 // BAD: debug mode in production
@@ -142,6 +151,8 @@ app.use(helmet()); // adds security headers
 ```
 
 ## A06: Vulnerable and Outdated Components
+
+Vulnerable components are found by scanners, not by reading code. The commands below check dependencies and Docker images for known CVEs, the publicly catalogued common vulnerabilities and exposures.
 
 ```bash
 # Dependencies with known CVEs
@@ -164,6 +175,8 @@ trivy image myapp:latest  # CVE scanning
 ```
 
 ## A07: Identification and Authentication Failures
+
+Authentication fails in a handful of repeatable ways. The code below lists five: an unchecked JWT algorithm, no rate limiting on login, weak passwords, missing MFA, and predictable tokens.
 
 ```typescript
 // Typical vulnerabilities:
@@ -192,26 +205,25 @@ const { score } = zxcvbn(password); // 0-4, require >= 3
 
 Covers supply chain vulnerabilities and data integrity violations.
 
-```txt
-Supply Chain Attack: Log4Shell (2021), XZ Utils (2024)
-  - Attacker compromises a popular package (npm/pip/maven)
-  - All applications using the package are vulnerable
+A supply chain attack compromises a popular package instead of your code. Log4Shell (2021) and `XZ Utils` (2024) are the best-known cases. An attacker compromises a package on npm, pip, or maven, and every application using that package is vulnerable.
 
 Defenses:
-  - Subresource Integrity (SRI) for CDN scripts:
-    <script src="..." integrity="sha384-..." crossorigin="anonymous">
-  - npm lockfile (package-lock.json) with integrity hash verification
-  - Signed Docker images (Docker Content Trust)
-  - Package signature verification (npm provenance, PyPI sigstore)
-  - CI/CD pipeline: verify artifact checksums
 
-Deserialization vulnerabilities:
-  - Never deserialize user input into objects
-  - JSON.parse is safe, eval() is not
-  - Opaque tokens (not JWT with complex payload) for refresh tokens
-```
+- Subresource Integrity (SRI) for scripts served from a CDN (content delivery network): `<script src="..." integrity="sha384-..." crossorigin="anonymous">`.
+- npm lockfile (`package-lock.json`) with integrity hash verification.
+- Signed Docker images (Docker Content Trust).
+- Package signature verification: npm provenance, sigstore on the Python Package Index (PyPI).
+- Verify artifact checksums in the pipeline for continuous integration and continuous delivery (CI/CD).
+
+Deserialization is the other half of this category:
+
+- Never deserialize user input into objects.
+- `JSON.parse` is safe, `eval()` is not.
+- Opaque tokens for refresh tokens, not a JWT with a complex payload.
 
 ## A09: Security Logging and Monitoring Failures
+
+Logging here has two jobs: record enough to notice an attack, and never write a secret into the log. The code below does both.
 
 ```typescript
 // What to log (and how to do it safely):
@@ -243,7 +255,7 @@ function sanitizeForLog(obj: Record<string, unknown>): Record<string, unknown> {
 
 ## A10: Server-Side Request Forgery (SSRF)
 
-SSRF — a vulnerability where the server makes an HTTP request to an arbitrary URL as directed by an attacker.
+Server-Side Request Forgery, or SSRF, is a vulnerability where the server makes an HTTP request to an arbitrary URL as directed by an attacker.
 
 ```typescript
 // Vulnerable scenario: "download image by URL"
@@ -298,8 +310,8 @@ async function safeRequest(url: string): Promise<Response> {
 
 - **"A03 Injection = SQL Injection only"** — Injection covers SQL, NoSQL, OS Command, LDAP, SSTI (Server-Side Template Injection). Command Injection is often more critical because it gives RCE (Remote Code Execution).
 
-- **"SSRF is a rare edge case"** — SSRF has been in the Top 10 since 2021. In cloud environments (AWS/GCP), it's especially dangerous because of the Instance Metadata Service, which can expose IAM credentials.
+- **"SSRF is a rare edge case"** — SSRF has been in the Top 10 since 2021. In cloud environments it is especially dangerous. The Instance Metadata Service on AWS (Amazon Web Services) and GCP (Google Cloud Platform) can expose IAM (identity and access management) credentials.
 
-- **"Security Misconfiguration means only wrong file permissions"** — it covers a wide range: open S3 buckets, debug mode in production, X-Powered-By header exposing the stack, default credentials, overly permissive CORS settings.
+- **"Security Misconfiguration means only wrong file permissions"** — it covers a wide range. Open S3 buckets, debug mode in production, an X-Powered-By header exposing the stack, default credentials, and overly permissive CORS settings all belong here.
 
 - **"A08 Software Integrity is just about dependencies"** — it also covers pipeline integrity violations (CI/CD), unsigned updates, and deserialization of untrusted data.

@@ -2,7 +2,9 @@
 
 ## What Docker is (and what it is not)
 
-**Docker** is a platform for building, shipping, and running applications in isolated, reproducible environments called **containers**. The core problem it solves: "it works on my machine" — the application behaves differently in development, CI, staging, and production because each environment has different OS versions, runtimes, installed libraries, and system configuration.
+**Docker** is a platform for building, shipping, and running applications in isolated, reproducible environments called **containers**. The core problem it solves is the classic "it works on my machine" bug.
+
+The same application behaves differently in development, in CI (continuous integration), in staging and in production. Every environment has a different OS (operating system) version, runtime, set of installed libraries, and system configuration.
 
 Docker is **not** a virtual machine (VM). This distinction matters:
 
@@ -19,7 +21,7 @@ Virtual Machine (VM):
   │ │ └──────────────┘  └──────────────┘ │ │
   │ └────────────────────────────────────┘ │
   └────────────────────────────────────────┘
-  Each VM has its own full OS kernel — heavy, slow to start (minutes)
+  Each VM has its own full OS kernel — heavy, starts in minutes
 
 Docker Container:
   ┌──────────────────────────────────────────┐
@@ -34,19 +36,20 @@ Docker Container:
   │ │ └───────────────┘  └───────────────┘ │ │
   │ └──────────────────────────────────────┘ │
   └──────────────────────────────────────────┘
-  Containers share the host OS kernel — lightweight, start in milliseconds
+  Containers share the host OS kernel — light, start in ms
 ```
 
-Containers use Linux kernel features — **namespaces** (process isolation: each container has its own process tree, network stack, filesystem view) and **cgroups** (control groups: limits on CPU and memory usage) — to create the illusion of a separate machine without the overhead of a full OS.
+Containers use two Linux kernel features to create the illusion of a separate machine, without the overhead of a full OS. **Namespaces** isolate processes: each container gets its own process tree, network stack and filesystem view. **Cgroups** (control groups) cap how much CPU (processor time) and memory a container may use.
 
 ## Image vs Container
 
 This is the most fundamental distinction in Docker:
 
 ```txt
-Image      = a blueprint — a read-only, layered snapshot of a filesystem
-             with everything the application needs to run
-             (runtime, dependencies, config files, compiled code)
+Image      = a blueprint: a read-only, layered snapshot of a
+             filesystem with everything the application needs
+             to run (runtime, dependencies, config files,
+             compiled code)
 
 Container  = a running instance of an image
              = image + a writable layer on top + an isolated process
@@ -120,8 +123,9 @@ Every Dockerfile starts with `FROM`, which specifies the **base image** — the 
 ```txt
 node:20          — full Debian-based Node.js image (~350 MB)
 node:20-alpine   — Alpine Linux-based Node.js image (~50 MB)
-                   smaller and faster to pull, but uses musl libc instead of glibc
-                   (can cause issues with native addons that assume glibc)
+                   smaller and faster to pull, but its C library is
+                   musl, not the usual glibc (native addons that
+                   expect glibc can break)
 node:20-slim     — Debian-based but with many tools removed (~80 MB)
                    a middle ground between full and alpine
 ```
@@ -171,7 +175,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 ```
 
-The final `rm -rf /var/lib/apt/lists/*` removes the package manager cache — if it were in a separate `RUN`, the cache would still be baked into the earlier layer, making the image larger.
+The final `rm -rf /var/lib/apt/lists/*` removes the package manager cache. If it were in a separate `RUN`, the cache would still be baked into the earlier layer, and the image would be larger.
 
 ### `EXPOSE` — document a port
 
@@ -257,9 +261,10 @@ CMD ["node", "dist/server.js"]
 CMD node dist/server.js
 ```
 
-**Always use exec form for `CMD` and `ENTRYPOINT`.** Shell form wraps the command in `/bin/sh -c "..."`, which means your application runs as a child process of `sh`. This causes two problems:
-1. The process does not receive OS signals (`SIGTERM`) directly — `sh` does, and it may not forward them. This breaks graceful shutdown.
-2. The PID 1 problem: in a container, PID 1 has special responsibilities (reaping zombie processes). If your app runs as a child of `sh`, `sh` is PID 1 — and `sh` does not handle zombie reaping properly.
+**Always use exec form for `CMD` and `ENTRYPOINT`.** Shell form wraps the command in `/bin/sh -c "..."`, so your application runs as a child process of `sh`. This causes two problems:
+
+1. The process does not receive OS signals such as `SIGTERM` directly. `sh` receives them, and it may not forward them. This breaks graceful shutdown.
+2. The PID 1 problem. In a container, PID (process identifier) 1 has special responsibilities: it reaps zombie processes. If your app runs as a child of `sh`, then `sh` is PID 1, and `sh` does not reap zombies properly.
 
 ## Image layers and build cache
 
@@ -267,25 +272,26 @@ Every `RUN`, `COPY`, `ADD`, and `FROM` instruction in a Dockerfile creates a new
 
 ```txt
 Image "my-app:1.0"
-  Layer 5: COPY . .  +  RUN npm run build        ← changes often
-  Layer 4: RUN npm ci --only=production           ← changes when package-lock.json changes
-  Layer 3: COPY package.json package-lock.json ./ ← changes when deps change
-  Layer 2: WORKDIR /app                           ← stable
-  Layer 1: FROM node:20-alpine                    ← stable
+  Layer 5: COPY . . + RUN npm run build  ← changes often
+  Layer 4: RUN npm ci --only=production  ← changes with lockfile
+  Layer 3: COPY package.json, lockfile   ← changes with deps
+  Layer 2: WORKDIR /app                  ← stable
+  Layer 1: FROM node:20-alpine           ← stable
 ```
 
 **Build cache** — Docker caches each layer. When you rebuild the image, Docker reuses cached layers from the top down, stopping at the first layer that changed (or whose input changed):
 
 ```txt
 If you change a source file (src/server.ts):
-  Layer 1 (FROM)   — cache HIT (unchanged)
-  Layer 2 (WORKDIR)— cache HIT
-  Layer 3 (COPY package.json) — cache HIT (package.json didn't change)
-  Layer 4 (RUN npm ci) — cache HIT (package-lock.json didn't change)
-  Layer 5 (COPY . .) — cache MISS (source files changed) → rebuild from here
+  Layer 1 (FROM)              — cache HIT (unchanged)
+  Layer 2 (WORKDIR)           — cache HIT
+  Layer 3 (COPY package.json) — cache HIT (it did not change)
+  Layer 4 (RUN npm ci)        — cache HIT (lockfile unchanged)
+  Layer 5 (COPY . .)          — cache MISS (sources changed)
+                                → rebuild from here
 ```
 
-This is why **order matters in a Dockerfile**: put the things that change least frequently at the top, and the things that change most frequently at the bottom.
+This is why **order matters in a Dockerfile**. Put the things that change least often at the top, and the things that change most often at the bottom.
 
 ```dockerfile
 # ✅ Correct order — dependency installation is cached unless package-lock.json changes
@@ -348,7 +354,7 @@ The final image contains only: Node.js runtime + production npm packages + compi
 
 ```txt
 Without multi-stage:    ~400 MB (all tools + devDeps + source)
-With multi-stage:        ~80 MB (runtime + prodDeps + compiled output only)
+With multi-stage:        ~80 MB (runtime + prod deps + output)
 ```
 
 Multi-stage builds can also be used for running tests in CI without polluting the production image:
@@ -377,7 +383,7 @@ FROM node:20-alpine AS production
 
 ```txt
 # .dockerignore
-node_modules/          # never copy node_modules — always install fresh inside the image
+node_modules/          # never copy: install fresh inside the image
 .git/                  # git history has no place in an image
 .env                   # NEVER include .env — it may contain secrets
 dist/                  # will be rebuilt inside the image
@@ -388,17 +394,27 @@ README.md
 ```
 
 Why it matters:
-1. **Speed**: without `.dockerignore`, the entire `node_modules/` directory (potentially hundreds of MB) is sent to the Docker daemon on every `docker build`. This is slow and wastes network bandwidth in CI.
-2. **Security**: `.env` files, local credentials, and private keys should never end up in a Docker image. Even if a `COPY . .` is followed by `RUN rm .env`, the `.env` file exists in the intermediate layer and can be extracted from the image with `docker history`.
-3. **Correctness**: `COPY . .` without `.dockerignore` copies `node_modules/` from the host into the image, which may have been installed for a different OS (macOS native addons won't run on Linux).
+
+1. **Speed**: without `.dockerignore`, the entire `node_modules/` directory — potentially hundreds of megabytes — is sent to the Docker daemon on every `docker build`. This is slow and wastes network bandwidth in CI.
+2. **Security**: `.env` files, local credentials, and private keys should never end up in a Docker image. Even if a `COPY . .` is followed by `RUN rm .env`, the `.env` file still exists in the intermediate layer. It can be extracted from the image with `docker history`.
+3. **Correctness**: `COPY . .` without `.dockerignore` copies `node_modules/` from the host into the image. Those modules may have been installed for a different OS: native addons built on macOS will not run on Linux.
 
 ## Non-root user and rootless containers
 
-By default, processes inside a Docker container run as `root` (UID 0). This is a security risk: if an attacker exploits a vulnerability in your application and escapes the container, they do so as root — giving them maximum privileges on the host.
+By default, processes inside a Docker container run as `root`, the user with UID (user identifier) 0. This is a security risk. If an attacker exploits a vulnerability in your application and escapes the container, they do so as root. That gives them maximum privileges on the host.
 
 **Non-root user** means explicitly creating a user inside the container and switching to it:
 
 ```dockerfile
+# ── Stage 1: build ────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# ── Stage 2: production image ─────────────────────────────────────
 FROM node:20-alpine
 
 WORKDIR /app
@@ -425,16 +441,24 @@ The `node:20-alpine` base image already includes a `node` user (UID 1000). You c
 
 ```dockerfile
 # Simpler approach using the built-in node user
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
 FROM node:20-alpine
 WORKDIR /app
 COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --chown=node:node --from=builder /app/dist ./dist
-USER node                   # switch to the built-in node user
+# switch to the built-in node user
+USER node
 CMD ["node", "dist/server.js"]
 ```
 
-**Rootless containers** is a broader concept: running the entire Docker daemon itself as a non-root user on the host — so even if a container escapes, it escapes into the user space of the daemon's unprivileged user, not into root. This is a separate configuration of the Docker installation, not the Dockerfile.
+**Rootless containers** is a broader concept: the entire Docker daemon runs as a non-root user on the host. Then even if a container escapes, it lands in the user space of that unprivileged user, not in root. This is a separate configuration of the Docker installation, not the Dockerfile.
 
 ```txt
 In practice for a fullstack developer:
@@ -442,12 +466,12 @@ In practice for a fullstack developer:
   → Use --chown in COPY to set correct file ownership
   → Do not use --privileged in docker run (grants full host access)
   → Do not mount /var/run/docker.sock unless absolutely necessary
-     (access to the Docker socket = root-equivalent access to the host)
+     (access to the Docker socket = root access to the host)
 ```
 
 ## Docker Compose basics
 
-**Docker Compose** is a tool for defining and running multi-container applications. Instead of running multiple `docker run` commands with dozens of flags, you describe the entire application stack in a `docker-compose.yml` file and start it with one command.
+**Docker Compose** is a tool for defining and running multi-container applications. Instead of running multiple `docker run` commands with dozens of flags, you describe the entire application stack in a `docker-compose.yml` file. One command then starts it.
 
 ```yaml
 # docker-compose.yml
@@ -521,8 +545,9 @@ ports      → host:container port mapping
 environment→ env vars passed to the container
 volumes    → mount host paths or named volumes
 depends_on → define start-order dependencies between services
-networks   → by default, Compose creates one network and all services join it,
-             so "db" in DATABASE_URL resolves to the db service's container IP
+networks   → by default Compose creates one network and all
+             services join it, so "db" in DATABASE_URL resolves
+             to the container IP of the db service
 ```
 
 ### Senior nuance: `depends_on` does not mean "ready"
@@ -578,15 +603,15 @@ CMD ["node", "dist/server.js"]
 
 ## Common interview traps
 
-- **"Image and container are the same thing"** — an image is a read-only blueprint; a container is a running instance of that image with a writable layer. Many containers can run from the same image simultaneously.
+- **"Image and container are the same thing"** — an image is a read-only blueprint. A container is a running instance of that image, with a writable layer on top. Many containers can run from the same image simultaneously.
 
-- **Using shell form for `CMD`** — `CMD node server.js` wraps the command in `/bin/sh -c`, making `sh` the process that receives `SIGTERM` during `docker stop`. Node never sees the signal and is killed hard after the grace period. Always use exec form: `CMD ["node", "server.js"]`.
+- **Using shell form for `CMD`** — `CMD node server.js` wraps the command in `/bin/sh -c`. Then `sh` is the process that receives `SIGTERM` during `docker stop`. Node never sees the signal and is killed hard after the grace period. Always use exec form: `CMD ["node", "server.js"]`.
 
 - **Not understanding the difference between `CMD` and `ENTRYPOINT`** — a very common interview question. `CMD` provides defaults that are *replaced* when you pass arguments to `docker run`; `ENTRYPOINT` is the fixed executable that *receives* those arguments. They are designed to work together.
 
-- **Copying `node_modules` into the image** — if `.dockerignore` doesn't exclude `node_modules/`, `COPY . .` copies them from the build machine into the image. macOS-compiled native addons will crash on Linux. Always install fresh inside the container.
+- **Copying `node_modules` into the image** — if `.dockerignore` does not exclude `node_modules/`, `COPY . .` copies them from the build machine into the image. Native addons compiled on macOS will then crash on Linux. Always install fresh inside the container.
 
-- **Not using multi-stage builds for production images** — a production image with TypeScript compiler, test frameworks, and source `.ts` files included is a red flag in an interview. Multi-stage builds are the expected practice.
+- **Not using multi-stage builds** — a production image that ships the TypeScript compiler, test frameworks and source `.ts` files is a red flag in an interview. Multi-stage builds are the expected practice.
 
 - **Putting secrets in `ENV` in a Dockerfile** — `ENV DATABASE_URL=postgres://admin:secret@...` bakes the secret into every image layer permanently. Even if you later overwrite it with a `RUN` command, it is recoverable from earlier layers with `docker history`. Secrets must be passed at runtime (`docker run -e`) or via a secrets manager, never baked into the image.
 

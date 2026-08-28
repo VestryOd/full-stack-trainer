@@ -63,6 +63,37 @@ PASSED = {
     'article:architecture': '61ad2a3',
     'bank:architecture': '61ad2a3',
     'quiz:architecture': '61ad2a3',
+    'article:cicd-devops': '7e15fb8',
+    'bank:cicd-devops': '7e15fb8',
+    'article:microfrontends': '8ee72de',
+    'article:css-html': '8ee72de',
+    'bank:css-html': '8ee72de',
+    'quiz:css-html': '8ee72de',
+    'quiz:react': '8ee72de',
+    'quiz:nodejs': '8ee72de',
+    'article:build-tools': '6484f91',
+    'bank:bundlers': '6484f91',
+    'bank:algorithms': '6484f91',
+    'quiz:algorithms': '6484f91',
+    'article:aws': 'f13f14e',
+    'article:security': '41ef61b',
+    'bank:security': '41ef61b',
+    'quiz:security': '41ef61b',
+    'article:strapi': 'b74d2cc',
+    'bank:solid-grasp': 'ee46a79',
+    'quiz:solid-grasp': 'ee46a79',
+    'article:web-performance': '00cad51',
+    'bank:web-performance': '00cad51',
+    'quiz:web-performance': '00cad51',
+    'bank:git': '52c22a5',
+    'quiz:git': '52c22a5',
+    'article:rabbitmq': '4dc6e04',
+    'article:kafka': '4dc6e04',
+    'course:nx-monorepo': '8858a81',
+    'bank:nx': '8858a81',
+    'article:state-management': 'e9da501',
+    'bank:docker': 'e9da501',
+    'quiz:docker': 'e9da501',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
@@ -146,6 +177,24 @@ def main() -> int:
         print(f'| {tick(key)} | `{name}` | {n} | {thousands(words)} | {flags} | {wide} | '
               f'{PASSED.get(key, "—")} |')
 
+    print('\n## Курсы\n')
+    print('Курсы лежат в `content/courses` и до волны 15 не входили в учёт вовсе — сто файлов')
+    print('и 292 тысячи слов были невидимы для этой таблицы, хотя аудит их смотрел (шесть')
+    print('отчётов в `audit/readability/course-*.json`). Мерятся тем же способом, что статьи.\n')
+    print('| | Курс | Файлов | Слов | Флаги | Широкие | Закрыто |')
+    print('|---|---|---|---|---|---|---|')
+    courses = []
+    for course in sorted(os.listdir('content/courses')):
+        files = sorted(glob.glob(f'content/courses/{course}/*/*.md'))
+        if not files:
+            continue
+        flags, words = md_flags(files)
+        courses.append((f'course:{course}', course, len(files), words, flags,
+                        wide_lines(f'content/courses/{course}')))
+    for key, name, n, words, flags, wide in sorted(courses, key=lambda r: (r[0] not in PASSED, -r[4])):
+        print(f'| {tick(key)} | `{name}` | {n} | {thousands(words)} | {flags} | {wide} | '
+              f'{PASSED.get(key, "—")} |')
+
     print('\n## Банки вопросов\n')
     print('Флаги разделены по полям: проход правил **ответы**, текст вопросов не мерил никто.')
     print('Это записанный долг — 246 предложений сверх лимита в полях `question` по всем банкам.\n')
@@ -182,8 +231,9 @@ def main() -> int:
               f'{PASSED.get(key, "—")} |')
 
     done = sum(1 for r in rows if r[0] in PASSED) + \
+        sum(1 for c in courses if c[0] in PASSED) + \
         sum(1 for b in banks if b[0] in PASSED) + sum(1 for q in quizzes if q[0] in PASSED)
-    total = len(rows) + len(banks) + len(quizzes)
+    total = len(rows) + len(courses) + len(banks) + len(quizzes)
     print(f'\n**Итого закрыто {done} зон из {total}.**')
     return 0
 

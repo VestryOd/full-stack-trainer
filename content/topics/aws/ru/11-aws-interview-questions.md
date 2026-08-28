@@ -1,38 +1,42 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
-# AWS Interview Questions (Fullstack / Senior)
+# AWS — вопросы для собеседования (Fullstack / Senior)
 
-## Группа 1: Основы — Cloud, Regions, IAM
+## Группа 1: Основы — Cloud, Regions, IAM (Identity and Access Management)
 
 **Q: Что такое AWS и что отличает её от других облаков?**
 
-AWS (Amazon Web Services) — ведущая облачная платформа: 33 региона, 105 AZ, 200+ managed сервисов. Отличие от GCP/Azure: самая широкая экосистема сервисов, наибольшая доля рынка (~32%), лучшая зрелость сервисов для продакшена.
+AWS (Amazon Web Services) — ведущая облачная платформа: 33 региона, 105 зон доступности (AZ), 200+ управляемых сервисов. Отличие от Google Cloud и Azure: самая широкая экосистема сервисов, наибольшая доля рынка (~32%), лучшая зрелость сервисов для продакшена.
 
-Shared Responsibility Model: AWS = Security OF the cloud (datacenters, hardware, managed services). You = Security IN the cloud (IAM, data encryption, app-level security, network config).
+Модель разделённой ответственности (Shared Responsibility Model) делит безопасность надвое:
+
+- AWS отвечает за безопасность **самого облака**: датацентры, железо, управляемые сервисы.
+- Вы отвечаете за безопасность **внутри облака**: IAM (Identity and Access Management), шифрование данных, безопасность на уровне приложения, настройка сети.
 
 ---
 
 **Q: Что такое Region и Availability Zone? Зачем приложению несколько AZ?**
 
-Region — географическая зона (eu-west-1 = Ирландия). В регионе 3-6 AZ — изолированных датацентров с независимым питанием, охлаждением, сетью. Физически разделены (10+ км), соединены low-latency fiber.
+Region — географическая зона (eu-west-1 = Ирландия). В регионе 3-6 AZ — изолированных датацентров с независимым питанием, охлаждением, сетью. Физически разделены (10+ км), соединены оптикой с низкой задержкой.
 
 Зачем 2+ AZ в production:
-- RDS Multi-AZ: Primary в AZ-1, синхронная репликация в Standby AZ-2 → failover ~60-120 сек
-- ECS Fargate: Tasks распределены по AZ → если AZ недоступна, другие Tasks продолжают работу
-- ALB: route на tasks только в здоровых AZ
-- S3, DynamoDB, SQS, SNS — уже встроены 3+ AZ реплики
+
+- RDS (Relational Database Service) Multi-AZ: Primary в AZ-1, синхронная репликация в Standby AZ-2 → failover ~60-120 сек
+- ECS (Elastic Container Service) Fargate: Tasks распределены по AZ → если AZ недоступна, другие Tasks продолжают работу
+- ALB (Application Load Balancer): маршрутизирует только на задачи в здоровых AZ
+- S3 (Simple Storage Service), DynamoDB, SQS (Simple Queue Service) и SNS (Simple Notification Service) — 3+ реплики по AZ уже встроены
 
 ---
 
 **Q: Что такое IAM Role и почему она лучше Access Keys для сервисов?**
 
-IAM Role — набор permissions с Trust Policy (кто может принять роль). Lambda/EC2/ECS принимают роль через STS → получают временные credentials (AccessKeyId + SecretAccessKey + SessionToken, TTL 1-12ч).
+IAM Role — набор прав с Trust Policy, которая говорит, кто может принять роль. Lambda, EC2 (Elastic Compute Cloud) и ECS принимают роль через STS (Security Token Service). Взамен они получают временные учётные данные — AccessKeyId, SecretAccessKey, SessionToken — с TTL (time to live — временем жизни) от 1 до 12 часов.
 
-Access Keys (долгоживущие): если утекают в git/.env → полный доступ пока не отозвать вручную. Role: credentials автоматически ротируются, не хранятся в коде, scope = только нужные permissions.
+Access Keys (долгоживущие): если утекают в git/.env → полный доступ, пока не отозвать вручную. Role: учётные данные ротируются автоматически, не хранятся в коде, а область действия — только нужные права.
 
 Principle of Least Privilege: `bucket.grantRead(fn)` → только `s3:GetObject`, не `s3:*` или `AdministratorAccess`.
 
 Follow-up: Как Lambda получает credentials автоматически?
-Lambda Runtime → Instance Metadata Service (IMDS) → STS AssumeRole → env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`. SDK подхватывает автоматически — не нужно настраивать.
+Lambda Runtime → Instance Metadata Service (IMDS) → STS AssumeRole → env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`. AWS SDK (software development kit — комплект разработки) подхватывает их автоматически, настраивать ничего не нужно.
 
 ---
 
@@ -44,18 +48,21 @@ S3 — объектное хранилище: объект = key + data + metada
 
 Для private файлов — Pre-Signed URL:
 ```typescript
-const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket, Key }), { expiresIn: 3600 });
+const url = await getSignedUrl(
+  s3, new GetObjectCommand({ Bucket, Key }), { expiresIn: 3600 },
+);
 ```
-URL подписан HMAC-SHA256, работает без AWS credentials у клиента, истекает через TTL.
+Ссылка подписана через HMAC (hash-based message authentication code) поверх SHA256 (256-битный хеш). Учётные данные AWS на клиенте не нужны, а ссылка перестаёт работать, когда истекает её TTL.
 
-Три уровня безопасности: BlockPublicAccess (блокирует всё публичное) + Bucket Policy (resource-based: разрешить CloudFront через OAC) + IAM (identity-based: `bucket.grantRead(fn)`).
+Три уровня безопасности: BlockPublicAccess (блокирует всё публичное) + Bucket Policy (resource-based: разрешить CloudFront через OAC — Origin Access Control) + IAM (identity-based: `bucket.grantRead(fn)`).
 
 ---
 
 **Q: Как деплоить SPA на AWS? Почему нужен CloudFront?**
 
-S3 хранит статические файлы. CloudFront обязателен:
-1. S3 website endpoint не поддерживает HTTPS на custom domain
+S3 хранит статические файлы SPA (single-page application — одностраничного приложения). CloudFront обязателен:
+
+1. S3 website endpoint не поддерживает HTTPS (зашифрованный HTTP) на своём домене
 2. S3 не имеет edge caching (запросы идут в один регион)
 3. CloudFront: 250+ Edge Locations, HTTP→HTTPS redirect, Gzip/Brotli, custom headers
 
@@ -72,9 +79,9 @@ Pre-Signed PUT URL:
 2. Backend → SDK: `getSignedUrl(PutObjectCommand, { expiresIn: 300 })`
 3. Backend → Client: `{ url, key }`
 4. Client → S3: `PUT [url]` (Backend не участвует в передаче файла!)
-5. S3 trigger → SQS → Lambda (resize, virus scan, update DB)
+5. S3 trigger → SQS → Lambda (resize, virus scan, обновить запись в базе)
 
-Для ограничения размера: Presigned POST с `content-length-range` condition. Для downloads private файлов: GET Pre-Signed URL.
+Для ограничения размера: Presigned POST с условием `content-length-range`. Для скачивания приватных файлов: GET Pre-Signed URL.
 
 ---
 
@@ -85,22 +92,23 @@ Pre-Signed PUT URL:
 Cold Start: AWS создаёт новый execution environment (скачать package, запустить Node.js runtime, выполнить init code вне handler). Warm Start: уже существующий container — только вызов handler.
 
 Оптимизация:
+
 1. Минимизировать bundle: esbuild/tsup (tree shaking) vs webpack. Import `{ S3Client }` не весь `aws-sdk`
 2. Lazy initialization: `if (!db) db = await createPool()` внутри handler (не в модульном scope)
-3. Provisioned Concurrency: N environments всегда warm (платишь постоянно)
+3. Provisioned Concurrency: N environments всегда warm (платите постоянно)
 4. Избегать тяжёлых фреймворков: NestJS 2-5 сек cold start → лучше ECS Fargate
 
-Lambda в VPC добавляет +100-600ms к cold start (ENI provisioning). Mitigation: Hyperplane ENI (улучшено в 2019), RDS Proxy вместо прямого подключения к RDS.
+Lambda внутри VPC (Virtual Private Cloud) добавляет 100-600ms к холодному старту, потому что ей нужно поднять ENI (elastic network interface — сетевой интерфейс). Что помогает: Hyperplane ENI (улучшено в 2019), RDS Proxy вместо прямого подключения к RDS.
 
 ---
 
 **Q: Какие типы triggers есть у Lambda? Чем synchronous отличается от asynchronous?**
 
-Synchronous (caller ждёт ответа): API Gateway, ALB, CloudFront Functions. Errors возвращаются caller, retry — на стороне caller.
+Synchronous (вызывающая сторона ждёт ответа): API Gateway, ALB, CloudFront Functions. Ошибки возвращаются вызывающей стороне, повторы — на её стороне.
 
-Asynchronous (fire-and-forget): S3, SNS, EventBridge. Lambda retry: 2 раза с exponential backoff, потом DLQ. Caller не получает ошибку.
+Asynchronous (fire-and-forget): S3, SNS, EventBridge. Lambda повторяет 2 раза с экспоненциальной задержкой, потом отправляет событие в DLQ (dead-letter queue — очередь недоставленных). Вызывающая сторона ошибку не получает.
 
-Stream-based (Lambda polling): SQS (batch size 1-10000, reportBatchItemFailures), Kinesis (bisect batch on error), DynamoDB Streams. Lambda сама polling источника.
+Stream-based (Lambda polling): SQS (batch size 1-10000, `reportBatchItemFailures`), Kinesis (bisect batch on error), DynamoDB Streams. Здесь Lambda сама опрашивает источник.
 
 Важно для SQS: `batchItemFailures` — только упавшие items идут в retry/DLQ, остальные удаляются как успешные.
 
@@ -108,11 +116,11 @@ Stream-based (Lambda polling): SQS (batch size 1-10000, reportBatchItemFailures)
 
 **Q: Когда выбрать Lambda, когда ECS Fargate?**
 
-Lambda: event-driven (S3, SQS, SNS), sporadic трафик, simple HTTP API (<29 сек), background jobs, cron (EventBridge). Нет cold start → optimize bundle. DynamoDB лучше чем RDS (нет connection pool проблемы).
+Lambda: событийная работа (S3, SQS, SNS), нерегулярный трафик, простой HTTP API (<29 сек), фоновые задачи, cron (EventBridge). Минимизировать холодный старт → оптимизировать бандл. DynamoDB лучше, чем RDS: нет проблемы с пулом соединений.
 
-ECS Fargate: NestJS (2-5 сек cold start неприемлем), WebSocket, stateful (in-memory cache), постоянный high-throughput (>1000 RPS), процессы >15 мин.
+ECS Fargate: NestJS (2-5 сек холодного старта неприемлемы), WebSocket, состояние в памяти, постоянная высокая нагрузка (>1000 запросов в секунду), процессы >15 мин.
 
-Если CI/CD уже Docker-based: Fargate проще операционно. Если event-driven workload + pay-per-use критично: Lambda.
+Если сборка уже собирает образы Docker: Fargate проще в эксплуатации. Если важны событийная нагрузка и оплата по факту: Lambda.
 
 ---
 
@@ -120,9 +128,9 @@ ECS Fargate: NestJS (2-5 сек cold start неприемлем), WebSocket, sta
 
 **Q: REST API vs HTTP API в API Gateway — что выбрать?**
 
-HTTP API (v2): $1/million (71% дешевле), ниже latency, встроенный JWT Authorizer, рекомендуется по умолчанию.
+HTTP API (v2): $1/million (71% дешевле), ниже задержка, встроенный авторизатор JWT (JSON Web Token) — рекомендуется по умолчанию.
 
-REST API (v1): $3.50/million, response caching, API Keys + Usage Plans, request/response transformation. Нужно только если требуется один из этих features.
+REST (representational state transfer) API (v1): $3.50/million, кеширование ответов, API Keys + Usage Plans, преобразование запроса и ответа. Нужен, только если требуется одна из этих возможностей.
 
 Lambda Authorizer кэшируется (TTL 300 сек) → изменение роли пользователя: до 5 мин старый кэш действует. API Gateway timeout = 29 сек (даже если Lambda timeout больше).
 
@@ -130,16 +138,16 @@ Lambda Authorizer кэшируется (TTL 300 сек) → изменение �
 
 **Q: Как работает SQS? Что такое Visibility Timeout и почему нужна идемпотентность?**
 
-At-Least-Once Delivery: SQS гарантирует доставку минимум один раз. Одно сообщение может быть доставлено дважды (rare, но возможно).
+At-Least-Once Delivery: SQS гарантирует доставку минимум один раз. Одно сообщение может быть доставлено дважды — редко, но может.
 
-Visibility Timeout: consumer получил сообщение → оно invisible на 30 сек (по умолч.). Если consumer не вызвал DeleteMessage (упал или timeout) → сообщение снова visible → другой consumer берёт.
+Visibility Timeout: потребитель получил сообщение → оно невидимо 30 сек (по умолчанию). Если потребитель не вызвал DeleteMessage (упал или вышел за таймаут) → сообщение снова видимо → его берёт другой потребитель.
 
-→ Handlers ДОЛЖНЫ быть idempotent: сохранять messageId как ключ, проверять перед обработкой.
+Поэтому обработчики **должны** быть идемпотентными: сохранять `messageId` как ключ и проверять его перед обработкой.
 
 DLQ: после `maxReceiveCount` попыток → сообщение в DLQ. Без DLQ: poison message = бесконечный retry = блокирует очередь.
 
 Standard Queue: неограниченный throughput, нет гарантии порядка, возможны дубликаты.
-FIFO Queue: строгий порядок, exactly-once (5-мин окно дедупликации), throughput ограничен.
+FIFO Queue (first in, first out): строгий порядок, exactly-once (5-мин окно дедупликации), пропускная способность ограничена.
 
 ---
 
@@ -157,20 +165,21 @@ SNS fire-and-forget: сообщение не хранится. Если subscrib
 
 **Q: Как выбрать между RDS PostgreSQL и DynamoDB?**
 
-RDS PostgreSQL: relations (FK, JOIN), гибкие SQL запросы, ACID транзакции без ограничений, schema migrations. Когда: e-commerce, CRM, финансы, стандартный fullstack. Проблема с Lambda: connection pool exhaustion → RDS Proxy.
+RDS PostgreSQL: связи через внешние ключи и JOIN, гибкие SQL-запросы, транзакции ACID (атомарность, согласованность, изоляция, устойчивость) без ограничений, миграции схемы. Когда: e-commerce, CRM (управление отношениями с клиентами), финансы, стандартный fullstack. Проблема с Lambda: исчерпание пула соединений → RDS Proxy.
 
-DynamoDB: key-based access (GetItem = O(1)), single-digit ms latency, serverless, unlimited scale, no connection pool. Когда: IoT, gaming, session store, event log, Lambda backend. Требует Single Table Design: знать access patterns ДО проектирования схемы.
+DynamoDB: доступ по ключу (`GetItem` = O(1)), задержка в единицы миллисекунд, serverless, неограниченный масштаб, пула соединений нет. Когда: IoT (Internet of Things), gaming, session store, event log, бэкенд на Lambda. Требует Single Table Design: знать паттерны доступа **до** проектирования схемы.
 
-DynamoDB транзакции ограничены: 25 items, 5 таблиц, стоит 2x RCU/WCU. PostgreSQL: полноценные ACID, real FK constraints.
+Транзакции DynamoDB ограничены: 25 items, 5 таблиц, и стоят вдвое дороже — 2x RCU (read capacity units) и 2x WCU (write capacity units). PostgreSQL: полноценный ACID и настоящие ограничения по внешним ключам.
 
 ---
 
 **Q: Как устроен Single Table Design в DynamoDB?**
 
 Все сущности — одна таблица. `pk` + `sk` определяют тип и паттерн доступа:
-- USER#123 / PROFILE → user record
-- USER#123 / ORDER#456 → order
-- Query pk=USER#123, sk begins_with ORDER# → все заказы за один запрос
+
+- `USER#123` / `PROFILE` → user record
+- `USER#123` / `ORDER#456` → order
+- Query `pk=USER#123, sk begins_with ORDER#` → все заказы за один запрос
 
 GSI (Global Secondary Index): дополнительный паттерн доступа (например, поиск по email). Проекция: только нужные атрибуты, не весь item.
 
@@ -190,7 +199,7 @@ Route53 → ALB (HTTPS, health checks) → ECS Fargate Tasks (2+ AZs)
 
 Почему ECS Fargate, не Lambda: NestJS холодный старт 2-5 сек, WebSocket поддержка, нет 29 сек ограничения, persistent connection pool через RDS Proxy.
 
-Auto Scaling: CPU 70% → +1 task, CPU 30% → -1 task (cooldown 60/30 сек). Circuit Breaker CDK: `circuitBreaker: { rollback: true }` — если Tasks не поднимаются → rollback деплоя.
+Auto Scaling по загрузке CPU (процессора): 70% → +1 task, 30% → -1 task (cooldown 60/30 сек). Circuit Breaker CDK: `circuitBreaker: { rollback: true }` — если Tasks не поднимаются → rollback деплоя.
 
 ---
 
@@ -200,7 +209,7 @@ Auto Scaling: CPU 70% → +1 task, CPU 30% → -1 task (cooldown 60/30 сек). 
 
 ```txt
 POST /orders (sync, < 100ms):
-  → validate → save to DB → publish SNS "OrderCreated" → 202 Accepted
+→ validate → save to DB → publish SNS "OrderCreated" → 202 Accepted
 
 SNS fan-out → SQS_Payment → Lambda_Payment (Stripe, retry 3x, DLQ)
            → SQS_Email → Lambda_Email (confirmation, idempotent)
@@ -220,11 +229,12 @@ Follow-up: Как обеспечить idempotency payment Lambda?
 
 **Q: Монолит vs Microservices: когда переходить?**
 
-Монолит (NestJS на Fargate): один деплой, нет сетевых вызовов, простой дебаг, один DB connection pool. Правильный старт для большинства проектов.
+Монолит (NestJS на Fargate): один деплой, нет сетевых вызовов, простая отладка, один пул соединений с базой. Правильный старт для большинства проектов.
 
-Переходить к microservices когда:
+Переходить к microservices, когда:
+
 - Разные части системы масштабируются по-разному (Payment Service vs Email Service)
-- Независимые команды с разными release cycles
-- Разные технологические требования (Go для CPU-intensive, Node для I/O)
+- Независимые команды с разными циклами релизов
+- Разные технологические требования: Go для задач, упирающихся в процессор, Node для ввода-вывода
 
 Не переходить только потому что "так делают Netflix" — у Netflix другой масштаб и другие команды. Преждевременные microservices = distributed monolith = худший из миров.

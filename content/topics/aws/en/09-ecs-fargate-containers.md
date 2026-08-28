@@ -2,28 +2,32 @@
 
 ## Docker and containers — the foundation
 
-```txt
-Problem without Docker ("works on my machine"):
-  Dev:  Node.js 18, Ubuntu 22.04, libc 2.35, PostgreSQL 15
-  Prod: Node.js 16, CentOS 7,  libc 2.17, PostgreSQL 13
-  → different behavior, bugs in prod
+Docker closes the "works on my machine" gap by shipping the environment together with the code. Everything ECS (Elastic Container Service) runs is a container, so this is where the topic starts. Without Docker, the same app runs on two different stacks:
 
-Container = isolated process with its own filesystem:
-  Dockerfile → docker build → Image (layered FS)
-  docker run → Container (running Image)
+| | Dev | Prod |
+|---|---|---|
+| Node.js | 18 | 16 |
+| OS (operating system) | Ubuntu 22.04 | CentOS 7 |
+| libc | 2.35 | 2.17 |
+| PostgreSQL | 15 | 13 |
 
-What gets packaged:
-  Application code
-  Runtime (Node.js 20.x exact)
-  Dependencies (node_modules)
-  System libraries (specific version)
-  OS layer (minimal Alpine/Debian)
-  Config (env defaults)
+Different layers mean different behavior, and bugs that only show up in prod.
 
-VM vs Container:
-  VM:        Guest OS + Kernel + App (GBs, minutes to start)
-  Container: App + libs, shared Host Kernel (MBs, seconds to start)
-```
+A container is an isolated process with its own filesystem. The path is `Dockerfile → docker build → Image` (a layered filesystem), then `docker run → Container` (a running image).
+
+**What gets packaged into the image:**
+
+- Application code.
+- Runtime — Node.js 20.x, the exact version.
+- Dependencies (`node_modules`).
+- System libraries, a specific version.
+- An OS layer — a minimal Alpine or Debian.
+- Config, the environment defaults.
+
+**VM vs container:**
+
+- A VM (virtual machine) carries a guest OS, a kernel and the app: gigabytes in size, minutes to start.
+- A container carries the app and its libraries and shares the host kernel: megabytes in size, seconds to start.
 
 ```dockerfile
 # Typical Dockerfile for NestJS
@@ -47,7 +51,9 @@ CMD ["node", "dist/main.js"]
 
 ## ECS — Elastic Container Service
 
-ECS is an AWS container orchestrator. It manages: launch, updates, scaling, monitoring, and networking. The alternative is Kubernetes (EKS), but ECS is simpler and better integrated with the AWS ecosystem.
+ECS is a container orchestrator from AWS (Amazon Web Services). It manages launch, updates, scaling, monitoring, and networking. The alternative is Kubernetes, offered as EKS (Elastic Kubernetes Service), but ECS is simpler and better integrated with the AWS ecosystem.
+
+Four levels, each one managing the level below it:
 
 ```txt
 ECS hierarchy:
@@ -55,23 +61,27 @@ ECS hierarchy:
     ↳ Service (manages N copies of a Task Definition)
           ↳ Task (a running container or group of containers)
                 ↳ Container (Docker container)
-
-Task Definition — a JSON launch template:
-  Docker image (ECR URI)
-  CPU + Memory allocation
-  Environment variables
-  Port mappings
-  Secrets (from Secrets Manager)
-  Log configuration (CloudWatch Logs)
-  Health check
-
-Service — maintains the desired number of Tasks:
-  If a Task fails → Service automatically starts a new one
-  Rolling deployment: new Tasks come up before old ones are removed
-  Blue/Green deployment: via CodeDeploy
 ```
 
+**A Task Definition is a JSON launch template.** It holds:
+
+- The Docker image, given as an ECR (Elastic Container Registry) address.
+- Processor (CPU) and memory allocation.
+- Environment variables.
+- Port mappings.
+- Secrets, taken from Secrets Manager.
+- Log configuration, CloudWatch Logs.
+- Health check.
+
+**A Service maintains the desired number of Tasks:**
+
+- If a Task fails, the Service automatically starts a new one.
+- Rolling deployment: new Tasks come up before old ones are removed.
+- Blue/Green deployment: via CodeDeploy.
+
 ## ECR and deployment
+
+Deployment is two steps: push a new image to the registry, then tell the Service to redeploy. The image tag is the commit hash, so every deploy is traceable to one commit.
 
 ```bash
 # Typical CI/CD flow
@@ -96,27 +106,32 @@ aws ecs update-service \
 
 ## Fargate vs ECS on EC2
 
-```txt
-ECS on EC2:
-  You manage: EC2 instances (patching, capacity, AMI updates)
-  You pay for: EC2 instance continuously (whether a Task is running or not)
-  Advantage: cheaper at high utilization (EC2 Savings Plans)
-  Use when: large steady-state workloads, special instance types (GPU)
+Both run the same ECS Tasks. The question is who owns the servers underneath, and that decides both your operations work and your bill.
 
-ECS on Fargate (recommended):
-  AWS manages: servers, capacity, patching
-  You pay for: only CPU+Memory while a Task is running
-  Advantage: no operational overhead, scale to zero for ECS Scheduled Tasks
-  Use when: most backend APIs, batch jobs, dev teams without dedicated DevOps
+**ECS on EC2 (Elastic Compute Cloud)**
 
-Fargate pricing:
-  $0.04048/vCPU/hour
-  $0.004445/GB memory/hour
-  Example: 0.5 vCPU + 1GB, 1 Task 24/7 ≈ $18/month
-  vs ECS on EC2 t3.micro ($8.5/month, but the whole machine regardless of usage)
-```
+- You manage the EC2 instances: patching, capacity, AMI (Amazon Machine Image) updates.
+- You pay for the EC2 instance continuously, whether a Task is running or not.
+- Advantage: cheaper at high utilization, with EC2 Savings Plans.
+- Use when: large steady-state workloads, special instance types such as a GPU (graphics card).
+
+**ECS on Fargate (recommended)**
+
+- AWS manages servers, capacity and patching.
+- You pay only for processor and memory while a Task is running.
+- Advantage: no operational overhead, and scale to zero for ECS Scheduled Tasks.
+- Use when: most backend APIs, batch jobs, dev teams with no dedicated DevOps (development and operations) engineer.
+
+**Fargate pricing:**
+
+- $0.04048 per vCPU per hour.
+- $0.004445 per GB (gigabyte) of memory per hour.
+- Example: 0.5 vCPU + 1GB, one Task running 24/7 ≈ $18/month.
+- Against ECS on EC2 t3.micro at $8.5/month — but that is the whole machine, used or not.
 
 ## CDK: Fargate Service + ALB
+
+One CDK (Cloud Development Kit) construct, `ApplicationLoadBalancedFargateService`, creates the ALB (Application Load Balancer), the Fargate service and the wiring between them. The auto-scaling block after it keeps between 2 and 10 Tasks, targeting 70% processor utilization.
 
 ```typescript
 import * as ecs from 'aws-cdk-lib/aws-ecs';
@@ -132,7 +147,7 @@ const service = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'Api
   cluster,
   cpu: 512,              // 0.5 vCPU
   memoryLimitMiB: 1024,  // 1GB RAM
-  desiredCount: 2,       // 2 tasks (for HA)
+  desiredCount: 2,       // 2 tasks (for high availability)
 
   taskImageOptions: {
     image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
@@ -168,33 +183,36 @@ scaling.scaleOnCpuUtilization('CpuScaling', {
 
 ## Lambda vs ECS Fargate — full matrix
 
-```txt
-                      Lambda              ECS Fargate
-Max Duration:         15 min              Unlimited
-Cold Start:           50-3000ms           Minimal (0 for already-running task)
-Concurrent:           1000 (default)      Determined by number of Tasks
-Memory:               128MB - 10GB        8MB - 120GB per Task
-CPU:                  Linear with memory  0.25 - 16 vCPU
-Persistent conn:      No (ephemeral)      Yes (WebSocket, SSE)
-Stateful:             No                  Yes (in-memory cache)
-Cost pattern:         Per invocation      Per running hour
-Zero traffic cost:    $0.00               ≠ $0 (Tasks still running)
-Docker:               Optional (ZIP)      Required
+Eleven rows, and the deciding ones are usually duration, cold start and the bill at zero traffic:
 
-Choose Lambda:
-  ✓ Event-driven (S3, SQS, SNS triggers)
-  ✓ Sporadic traffic (pay-per-use)
-  ✓ Background jobs, cron tasks
-  ✓ Simple HTTP API (< 29 sec response)
+| | Lambda | ECS Fargate |
+|---|---|---|
+| Max duration | 15 min | Unlimited |
+| Cold start | 50-3000ms | Minimal, 0 for an already-running task |
+| Concurrency | 1000 by default | Determined by the number of Tasks |
+| Memory | 128MB - 10GB | 8MB - 120GB per Task |
+| Processor | Linear with memory | 0.25 - 16 vCPU |
+| Persistent connections | No, ephemeral | Yes: WebSocket, SSE (server-sent events) |
+| Stateful | No | Yes, in-memory cache |
+| Cost pattern | Per invocation | Per running hour |
+| Cost at zero traffic | $0.00 | Not $0 — Tasks keep running |
+| Docker | Optional — a `.zip` archive | Required |
 
-Choose ECS Fargate:
-  ✓ Long-running HTTP services (NestJS, Express)
-  ✓ WebSocket servers
-  ✓ High-traffic APIs (>1000 RPS continuously)
-  ✓ Stateful workloads (in-memory cache)
-  ✓ Processes > 15 minutes
-  ✓ Complex monoliths with many dependencies
-```
+**Choose Lambda when:**
+
+- The work is event-driven: triggers from S3 (Simple Storage Service), SQS (Simple Queue Service) or SNS (Simple Notification Service).
+- Traffic is sporadic, so pay-per-use wins.
+- You run background jobs or cron tasks.
+- It is a simple HTTP API that answers in under 29 sec.
+
+**Choose ECS Fargate when:**
+
+- Long-running HTTP services (NestJS, Express).
+- WebSocket servers.
+- High-traffic APIs, over 1000 RPS (requests per second) continuously.
+- Stateful workloads with an in-memory cache.
+- Processes longer than 15 minutes.
+- Complex monoliths with many dependencies.
 
 ## Common interview mistakes
 
@@ -206,4 +224,4 @@ Choose ECS Fargate:
 
 - **"Auto Scaling in ECS reacts instantly"** — starting a new Fargate Task takes 30-60 seconds (pull image + start container). That's why Scale-Out Cooldown = 30s (aggressive), Scale-In Cooldown = 60s (conservative, to avoid killing too soon). For traffic spikes: keep `minCapacity` with a buffer.
 
-- **"Lambda is better for NestJS"** — NestJS initialization (DI, decorator scanning) takes 2-5 seconds on cold start. This is unacceptable on every Lambda invocation. NestJS on Fargate: process is always warm, no cold start problem. Lambda is better for simple functions; Fargate is better for frameworks with heavy initialization.
+- **"Lambda is better for NestJS"** — NestJS initialization (dependency injection, decorator scanning) takes 2-5 seconds on cold start. This is unacceptable on every Lambda invocation. NestJS on Fargate: process is always warm, no cold start problem. Lambda is better for simple functions; Fargate is better for frameworks with heavy initialization.

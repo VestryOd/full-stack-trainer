@@ -2,7 +2,9 @@
 
 ## How to use this cheat sheet
 
-Each answer is a compressed version of what's covered in depth in the topic articles. In a senior interview, almost every question here is an opener, not the final question. The interviewer expects "why", "what are the trade-offs", and "show me a real scenario." Each group ends with **"Typical follow-ups"** to show where the conversation usually goes.
+Each answer is a compressed version of what's covered in depth in the topic articles. In a senior interview, almost every question here is an opener, not the final question. The interviewer expects three things: a "why", a list of trade-offs, and a real scenario.
+
+Each group ends with **"Typical follow-ups"** to show where the conversation usually goes. Throughout this file RTK is Redux Toolkit, the official Redux package.
 
 ---
 
@@ -10,13 +12,17 @@ Each answer is a compressed version of what's covered in depth in the topic arti
 
 **1. How does MobX know which component to re-render when an observable changes?**
 
-Runtime dependency tracking. When an `observer` component renders, MobX starts a "tracking context." Every read of an `observable` during that render is recorded as a dependency of this component. When any of those observables change, MobX schedules a re-render for exactly that component — and no other. This is why granularity is automatic: a component that only reads `store.total` will not re-render when `store.isLoading` changes, even if both are on the same store object.
+Runtime dependency tracking. When an `observer` component renders, MobX opens a tracking context. Every read of an `observable` during that render is recorded as a dependency of this component.
+
+When any of those observables change, MobX schedules a re-render for exactly that component — and no other. This is why granularity is automatic. A component that only reads `store.total` will not re-render when `store.isLoading` changes, even though both live on the same store object.
 
 ---
 
 **2. What is the difference between `makeObservable` and `makeAutoObservable`, and when does each fail?**
 
-`makeObservable` requires you to list every field and its annotation explicitly. `makeAutoObservable` infers by convention: fields → `observable`, getters → `computed`, methods → `action`. `makeAutoObservable` fails with class inheritance — it cannot safely walk the prototype chain to collect annotations, so subclassing a `makeAutoObservable` class throws at runtime. For inheritance, use `makeObservable` in each class explicitly.
+`makeObservable` requires you to list every field and its annotation explicitly. By contrast, `makeAutoObservable` infers them by convention: fields → `observable`, getters → `computed`, methods → `action`.
+
+Inheritance is where `makeAutoObservable` fails. It cannot safely walk the prototype chain to collect annotations, so subclassing a `makeAutoObservable` class throws at runtime. For inheritance, use `makeObservable` in each class explicitly.
 
 ---
 
@@ -39,9 +45,13 @@ const MyComponent = observer(({ store }: { store: CartStore }) => {
 
 ---
 
-**4. What is `computed` — how does it differ from a regular getter, and when does it NOT recompute?**
+**4. What is `computed` — how does it differ from a regular getter, and when does it *not* recompute?**
 
-A `computed` value is a memoized, lazily-evaluated derivation. It differs from a plain getter in three ways: (1) its result is cached until dependencies change; (2) if it has no observers (no component or reaction reads it), it goes "cold" and is not recomputed at all; (3) if its dependencies change but the *result* is the same value (e.g., a count that went from 3 to 3 after an add + remove), MobX does not notify observers — unlike a plain getter, which re-executes every time it is called.
+A `computed` value is a memoized, lazily-evaluated derivation. A plain getter runs its body every time you call it; a `computed` differs in three ways.
+
+1. **It caches.** The result is kept until a dependency changes.
+2. **It sleeps.** With no observers — no component and no reaction reads it — it is not recomputed at all.
+3. **It compares the result.** Dependencies may change while the value comes out the same — a count that went 3 → 4 → 3 after an add and a remove. In that case MobX does not notify observers.
 
 ---
 
@@ -54,13 +64,22 @@ A `computed` value is a memoized, lazily-evaluated derivation. It differs from a
 | Self-disposes | ❌ no | ❌ no | ✅ yes |
 | Returns Promise | ❌ no | ❌ no | ✅ yes |
 
-Rule: `autorun` for side effects that must fire once immediately and on every change (sync document.title, localStorage). `reaction` for analytics or debounced saves where you need the previous value and don't want an initial fire. `when` for one-shot conditions: "wait until user is loaded, then do X."
+Rule of thumb:
+
+- `autorun` — for side effects that must fire once immediately and then on every change, such as syncing `document.title` or `localStorage`.
+- `reaction` — for analytics or debounced saves, where you need the previous value and do not want an initial fire.
+- `when` — for one-shot conditions: wait until the user is loaded, then do X.
 
 ---
 
 **6. Why does `async/await` break MobX strict mode, and what are the two solutions?**
 
-`async/await` compiles to a state machine where code after `await` runs in a new microtask tick — outside the original `action` context. In `enforceActions: 'always'` mode, any observable mutation outside an action throws. Solutions: (1) `runInAction(() => { ... })` — wrap each post-`await` mutation block manually; (2) `flow` — uses a generator with `yield` instead of `await`, and MobX automatically wraps each step after `yield` in an action. `flow` is idiomatic; it also supports cancellation via the returned `cancel()` function.
+`async/await` compiles to a state machine where code after `await` runs in a new microtask tick — outside the original `action` context. In `enforceActions: 'always'` mode, any observable mutation outside an action throws. There are two solutions.
+
+1. `runInAction(() => { ... })` — wrap each post-`await` mutation block by hand.
+2. `flow` — a generator with `yield` in place of `await`. MobX automatically wraps every step after a `yield` in an action.
+
+The `flow` variant is the idiomatic one. It also supports cancellation through the `cancel()` function it returns.
 
 ---
 
@@ -68,39 +87,47 @@ Rule: `autorun` for side effects that must fire once immediately and on every ch
 
 ```txt
 "What happens if you call a computed outside any observer?" →
-  It calculates and returns a value — but without caching. It behaves
-  like a plain getter: no memoization, no subscription, no auto-update.
-  With computedRequiresReaction: true this throws, which catches bugs early.
+  It calculates and returns a value — but without caching. It
+  behaves like a plain getter: no memoization, no subscription, no
+  auto-update. With computedRequiresReaction: true this throws,
+  which catches bugs early.
 
 "If two observer components read the same computed, how many
 times does it recompute when the dependency changes?" →
-  Once. computed is global to the store, not per-component.
-  Both components receive the new cached value. This is a key
-  performance advantage over useMemo (which is per-component instance).
+  Once. computed is global to the store, not per-component. Both
+  components receive the new cached value. This is a key performance
+  advantage over useMemo (which is per-component instance).
 
 "What memory leak does forgetting dispose() cause?" →
-  MobX holds a reference from the observable's dependency list to the
-  reaction. After component unmount, if dispose() is not called, the
-  reaction keeps the component alive in the GC — it cannot be collected.
-  In React Strict Mode this manifests as "Can't perform a state update
-  on an unmounted component" warnings.
+  MobX holds a reference from the observable's dependency list to
+  the reaction. After component unmount, if dispose() is not called,
+  the reaction keeps the component alive in the GC — it cannot be
+  collected. In React Strict Mode this manifests as "Can't perform a
+  state update on an unmounted component" warnings.
 ```
 
 ---
 
 ## Group 2: Redux / RTK — Data Flow
 
-**7. Describe the complete Redux data flow from a button click to a DOM update.**
+**7. Describe the complete Redux data flow from a button click to a DOM (Document Object Model) update.**
 
 ```txt
 User clicks button
-  → dispatch(action)          dispatches a plain object
-  → Middleware chain          thunk, logger, etc. — each calls next(action)
-  → Reducer(state, action)    pure function → returns new state object
-  → Store.setState(newState)  store replaces its internal state reference
-  → useSelector re-runs       for every subscribed component
-  → React compares results    if selector result changed (by ===) → re-render
-  → Component re-renders      with new data from the store
+  → dispatch(action)
+        dispatches a plain object
+  → Middleware chain
+        thunk, logger, etc. — each calls next(action)
+  → Reducer(state, action)
+        pure function → returns new state object
+  → Store.setState(newState)
+        store replaces its internal state reference
+  → useSelector re-runs
+        for every subscribed component
+  → React compares results
+        if selector result changed (by ===) → re-render
+  → Component re-renders
+        with new data from the store
 ```
 
 Every step is synchronous (except middleware like thunk that adds async). This deterministic, traceable flow is why Redux DevTools can replay any sequence of actions.
@@ -109,7 +136,13 @@ Every step is synchronous (except middleware like thunk that adds async). This d
 
 **8. What does `createSlice` generate, and why does mutating `state` inside it work?**
 
-`createSlice` generates: (1) action type strings (`'cart/addItem'`); (2) action creator functions; (3) a reducer function. It wraps the reducer with Immer. Inside an Immer-wrapped reducer, `state` is a Proxy — any mutation you write (`state.items.push(item)`) is intercepted and produces a new immutable object. The actual Redux state object is never mutated. You can also return a new state value explicitly (for resets) — but not both mutate and return.
+`createSlice` generates three things:
+
+1. Action type strings, such as `'cart/addItem'`.
+2. Action creator functions.
+3. A reducer function, wrapped with Immer.
+
+Inside an Immer-wrapped reducer, `state` is a Proxy. Any mutation you write — `state.items.push(item)` — is intercepted and produces a new immutable object. The actual Redux state object is never mutated. You can also return a new state value explicitly, for resets, but you cannot both mutate and return.
 
 ---
 
@@ -144,7 +177,7 @@ const fetchUser = createAsyncThunk<User, string, { rejectValue: string }>(
 
 **10. Why do selectors without `createSelector` cause unnecessary re-renders?**
 
-`useSelector` compares the returned value with the previous by strict equality (`===`). If the selector creates a new object or array on every call (via `.filter()`, `.map()`, object literal), the reference is always different — the component re-renders on every Redux dispatch, even dispatches completely unrelated to its data.
+`useSelector` compares the returned value with the previous by strict equality (`===`). A selector built on `.filter()`, `.map()` or an object literal creates a new value on every call, so the reference is always different. The component then re-renders on every Redux dispatch, even on dispatches unrelated to its data.
 
 ```ts
 // ❌ New array on every call → re-renders on every dispatch
@@ -196,11 +229,12 @@ endpoints: (builder) => ({
   the state, so RTK replaces the entire state with a number.
 
 "When would you NOT use RTK Query?" →
-  When the backend uses WebSockets/SSE for real-time updates (RTK Query
-  has experimental WebSocket support but it's not first-class).
-  When you need fine-grained optimistic update logic that RTK Query's
-  onQueryStarted doesn't model well. When the project already uses
-  React Query and migration cost exceeds the benefit.
+  When the backend uses WebSockets/SSE for real-time updates (RTK
+  Query has experimental WebSocket support but it's not
+  first-class). When you need fine-grained optimistic update logic
+  that RTK Query's onQueryStarted doesn't model well. When the
+  project already uses React Query and migration cost exceeds the
+  benefit.
 ```
 
 ---
@@ -229,7 +263,7 @@ const CartSummary = () => {
 
 **13. Why are action functions in Zustand stable references, and why does this matter for React?**
 
-Functions defined inside the `create` callback are created once when the store is initialized and never re-created on state updates. This means they are safe to extract and pass as props or deps without `useCallback`, and they will not cause unnecessary re-renders in child components that receive them as props.
+Functions defined inside the `create` callback are created once when the store is initialized and never re-created on state updates. So they are safe to extract and pass as props or dependencies without `useCallback`. They will not cause unnecessary re-renders in the child components that receive them.
 
 ```tsx
 // ✅ addItem is stable — won't cause ProductCard to re-render
@@ -241,13 +275,21 @@ const addItem = useCartStore(state => state.addItem);
 
 **14. What is the slices pattern in Zustand and when should you use it?**
 
-The slices pattern splits a large store into `StateCreator` functions, each managing a domain slice, which are then spread into a single `create` call. It mirrors Redux's `combineReducers` without the boilerplate. Use it when: (1) the store exceeds ~5 actions/fields and becomes hard to navigate; (2) different team members own different domains; (3) cross-slice access is needed (each slice gets `get()` which reads the full store state). For small apps, a single flat `create` is simpler.
+The slices pattern splits a large store into `StateCreator` functions, each managing a domain slice, which are then spread into a single `create` call. It mirrors Redux's `combineReducers` without the boilerplate. Use it when:
+
+- the store exceeds about five actions or fields and becomes hard to navigate;
+- different team members own different domains;
+- cross-slice access is needed, since each slice gets a `get()` that reads the full store state.
+
+For small apps, a single flat `create` is simpler.
 
 ---
 
 **15. What does the `persist` middleware do, and what is `partialize` for?**
 
-`persist` wraps the store and synchronizes state with a storage backend (localStorage by default) on every update, and hydrates it on initialization. `partialize` is a function that selects *which* state fields to persist — it prevents sensitive data (auth tokens, passwords) or ephemeral UI state (isLoading, error) from being written to localStorage.
+`persist` wraps the store and keeps it in sync with a storage backend, localStorage by default. It writes on every state update. On startup it reads the saved value back and fills the store with it, and that read-back step is called hydration.
+
+`partialize` picks *which* fields get saved. Use it to keep sensitive data — auth tokens, passwords — and short-lived interface state such as `isLoading` or `error` out of localStorage.
 
 ```ts
 persist(
@@ -267,22 +309,25 @@ persist(
 ```txt
 "Can Zustand replace RTK Query?" →
   No — Zustand is client-state management (UI state, local data).
-  RTK Query is server-state management (cache, deduplication, background
-  refetch, invalidation). You can manage server data in Zustand
-  (fetch + set) but you re-implement caching, deduplication, and
-  invalidation manually. The right combo: Zustand + React Query/SWR.
+  RTK Query is server-state management (cache, deduplication,
+  background refetch, invalidation). You can manage server data in
+  Zustand (fetch + set) but you re-implement caching, deduplication,
+  and invalidation manually. The right combo: Zustand + React
+  Query/SWR.
 
 "How do you test a Zustand store?" →
-  Direct store API: const { getState, setState } = useMyStore.
-  Reset between tests: setState(initialState, true) (replace: true).
-  Test actions: getState().addItem(item); expect(getState().items).toHaveLength(1).
-  No React, no render — store is a plain object.
+  Direct store API: const { getState, setState } = useMyStore. Reset
+  between tests: setState(initialState, true) (replace: true). Test
+  actions: getState().addItem(item);
+  expect(getState().items).toHaveLength(1). No React, no render —
+  store is a plain object.
 
 "What does useShallow do and when is it needed?" →
-  When you return an object from a selector: useStore(s => ({ a: s.a, b: s.b })).
-  Without useShallow, a new object {} !== {} causes a re-render on every
-  state update. useShallow does a shallow comparison of the object's keys,
-  so re-render happens only when a or b actually changes.
+  When you return an object from a selector: useStore(s => ({ a:
+  s.a, b: s.b })). Without useShallow, a new object {} !== {} causes
+  a re-render on every state update. useShallow does a shallow
+  comparison of the object's keys, so re-render happens only when a
+  or b actually changes.
 ```
 
 ---
@@ -291,9 +336,9 @@ persist(
 
 **16. MobX uses mutable state. Redux uses immutable state. What are the practical consequences of each?**
 
-**Mutable (MobX):** you write natural object mutations (`this.items.push(item)`); no need to spread deeply nested structures; easier to reason about for OOP developers. Consequence: you must use `action` to get batching; without strict mode, mutations can sneak in anywhere; time-travel debugging is harder because past states are not preserved.
+**Mutable (MobX):** you write natural object mutations, such as `this.items.push(item)`. There is no need to spread deeply nested structures. It is easier to reason about for developers with an object-oriented programming (OOP) background. The consequences: you must use `action` to get batching. Without strict mode, mutations can sneak in anywhere. Time-travel debugging is harder, because past states are not preserved.
 
-**Immutable (Redux):** every change produces a new state object; the previous state is always preserved; time-travel is trivial (re-apply actions to initial state). Consequence: updating deeply nested objects requires spread chains or Immer; conceptually harder for developers from OOP backgrounds.
+**Immutable (Redux):** every change produces a new state object; the previous state is always preserved; time-travel is trivial (re-apply actions to initial state). The consequences: updating deeply nested objects requires spread chains or Immer. It is conceptually harder for developers from an OOP background.
 
 ---
 
@@ -309,13 +354,19 @@ persist(
 
 **18. A senior engineer says "we should use Redux for everything." How do you respond?**
 
-Acknowledge the strengths Redux brings: audit trail, time-travel debugging, explicit data flow, large ecosystem. Then ask: "What specifically are we trying to solve?" If the answer is "we need predictable state management" — that's valid. If it's "we have complex server data" — RTK Query addresses that, but React Query might be simpler. If the team is small and the domain is not complex, the overhead of Redux's boilerplate (even with RTK) is a real cost with no payoff. The right answer is not "Redux everywhere" or "Redux never" — it's "Redux for problems Redux solves well."
+Acknowledge the strengths Redux brings: audit trail, time-travel debugging, explicit data flow, large ecosystem. Then ask what specifically the team is trying to solve.
+
+- "We need predictable state management" is a valid answer.
+- "We have complex server data" points at RTK Query, though React Query might be simpler.
+- A small team with a simple domain gets no payoff for the boilerplate, even with RTK. That cost is real.
+
+The right answer is neither "Redux everywhere" nor "Redux never". It is Redux for the problems Redux solves well.
 
 ---
 
 **19. What is "server state" vs "client state" and why does it matter for choosing a library?**
 
-**Server state:** data that lives on the server, is fetched asynchronously, can become stale, needs caching, deduplication, and background refresh. Examples: user list, product catalog, order history. Best managed by React Query, SWR, or RTK Query — libraries purpose-built for this.
+**Server state:** data that lives on the server, is fetched asynchronously, can become stale, needs caching, deduplication, and background refresh. Examples: user list, product catalog, order history. Best managed by React Query, SWR (stale-while-revalidate) or RTK Query — libraries purpose-built for this.
 
 **Client state:** data that lives only in the browser and has no server representation. Examples: modal open/closed, active tab, form draft, shopping cart (if not persisted). Best managed by Zustand, MobX, or even `useState` for local state.
 
@@ -339,9 +390,10 @@ Most apps need both. The mistake is managing server data in MobX/Zustand without
 
 ```txt
 "Which library has the best TypeScript support?" →
-  Zustand — create<State>() infers everything from the type parameter.
-  RTK is close — createSlice and createAsyncThunk are well-typed.
-  MobX is good for classes but flow generators lose typing at yield.
+  Zustand — create<State>() infers everything from the type
+  parameter. RTK is close — createSlice and createAsyncThunk are
+  well-typed. MobX is good for classes but flow generators lose
+  typing at yield.
 
 "Can you use MobX and Redux in the same project?" →
   Technically yes. Practically: you've doubled the mental overhead
@@ -350,10 +402,11 @@ Most apps need both. The mistake is managing server data in MobX/Zustand without
 
 "React Context is built-in — why use any library at all?" →
   Context + useReducer works for small apps with infrequent updates.
-  It breaks down when: (1) many consumers re-render on unrelated changes
-  (no selector granularity); (2) you need middleware, persistence, or
-  DevTools; (3) the store needs to be accessed outside the React tree.
-  Libraries solve these without you re-implementing them.
+  It breaks down when: (1) many consumers re-render on unrelated
+  changes (no selector granularity); (2) you need middleware,
+  persistence, or DevTools; (3) the store needs to be accessed
+  outside the React tree. Libraries solve these without you
+  re-implementing them.
 ```
 
 ---
@@ -403,13 +456,13 @@ The core mechanism: maintain a history array of states (or commands) and a point
 
 **Zustand with Immer:** use the `temporal` middleware (`zundo` library) — wraps the store and automatically maintains undo/redo history. `useTemporalStore().undo()` and `.redo()`.
 
-**MobX:** MobX actions are not serializable by default — undo/redo requires explicit snapshots (`getSnapshot`/`applySnapshot` from `mobx-state-tree`) or manually maintaining an action history and re-applying them.
+**MobX:** MobX actions are not serializable by default. Undo and redo therefore need explicit snapshots — `getSnapshot` and `applySnapshot` from `mobx-state-tree` — or a hand-maintained action history that you re-apply.
 
 ---
 
 **24. What is the "stale closure" problem in Zustand, and how does `get()` solve it?**
 
-When an async action closes over `state` from the `set` callback, that `state` snapshot is stale by the time the async operation completes — other synchronous updates may have happened in between:
+An async action can close over `state` from the `set` callback. By the time the async operation completes, that snapshot is stale: other synchronous updates may have happened in between.
 
 ```ts
 // ❌ Stale closure — state captured at the time addItem was called
@@ -436,9 +489,20 @@ addItem: (item) => {
 
 **25. When is it worth migrating from one library to another, and what's the process?**
 
-Migration is worth it when: (1) the current library's limitations are causing real, measurable pain (not just "I prefer X"); (2) the team is growing and boilerplate becomes a coordination burden; (3) a new capability is genuinely needed (e.g., time-travel debugging, RTK Query's caching).
+Migration is worth it when:
 
-Process: (1) identify the pain point precisely; (2) run both libraries in parallel — new features in the new library, existing code untouched; (3) migrate domain by domain, not a big-bang rewrite; (4) remove the old library only when no references remain. The most dangerous migration mistake: rewriting working code for architectural reasons while also delivering features — context switches multiply risk.
+- the current library's limitations cause real, measurable pain, not just a preference;
+- the team is growing and boilerplate becomes a coordination burden;
+- a new capability is genuinely needed, such as time-travel debugging or RTK Query caching.
+
+The process:
+
+1. Identify the pain point precisely.
+2. Run both libraries in parallel: new features in the new library, existing code untouched.
+3. Migrate domain by domain, not as a big-bang rewrite.
+4. Remove the old library only when no references remain.
+
+The most dangerous migration mistake is rewriting working code for architectural reasons while also delivering features. Context switches multiply the risk.
 
 ---
 
@@ -447,17 +511,17 @@ Process: (1) identify the pain point precisely; (2) run both libraries in parall
 ```txt
 "React Server Components are becoming mainstream. How do they
 change state management?" →
-  RSC removes much of the server data fetching from the client.
-  Data that previously lived in Redux/Zustand (user, products) now
-  comes as props from the server component — no client store needed.
-  Client state becomes: UI interactions only (modal, form, animation).
-  Zustand/MobX fit RSC better than Redux — no Provider wrapper
-  needed, no hydration mismatch issues.
+  RSC removes much of the server data fetching from the client. Data
+  that previously lived in Redux/Zustand (user, products) now comes
+  as props from the server component — no client store needed.
+  Client state becomes: UI interactions only (modal, form,
+  animation). Zustand/MobX fit RSC better than Redux — no Provider
+  wrapper needed, no hydration mismatch issues.
 
 "Is Zustand production-ready for a large enterprise app?" →
   Yes — it's used in production by large companies. "Large" doesn't
   mean "needs Redux." The question is whether the team needs
   Redux-level audit trail and tooling. If not, Zustand with slices
-  scales fine. The misconception is equating bundle size or line count
-  with production readiness.
+  scales fine. The misconception is equating bundle size or line
+  count with production readiness.
 ```

@@ -5,10 +5,20 @@
 A **topic** is a named channel into which producers write messages and from which consumers read them. Think of it as a folder containing an event journal of a specific type.
 
 ```txt
-topic: "order-placed"       topic: "payment-completed"    topic: "user-registered"
-┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
-│ [order1][order2]...  │    │ [pay1][pay2][pay3]...│    │ [usr1][usr2]...      │
-└──────────────────────┘    └──────────────────────┘    └──────────────────────┘
+topic: "order-placed"
+┌──────────────────────┐
+│ [order1][order2]...  │
+└──────────────────────┘
+
+topic: "payment-completed"
+┌──────────────────────┐
+│ [pay1][pay2][pay3]...│
+└──────────────────────┘
+
+topic: "user-registered"
+┌──────────────────────┐
+│ [usr1][usr2]...      │
+└──────────────────────┘
 ```
 
 A topic is the logical unit of data organization. Physically, a topic is divided into **partitions**, which store the actual data.
@@ -28,8 +38,9 @@ Each topic is divided into N partitions (N ≥ 1). Partitions are what enables K
 ```txt
 Topic "order-placed" with 3 partitions:
 
-Partition 0:  [order-A] [order-B] [order-C] [order-D] ──► new messages appended here
+Partition 0:  [order-A] [order-B] [order-C] [order-D] ──►
               offset: 0    1         2         3
+              new messages are appended on the right
 
 Partition 1:  [order-E] [order-F] [order-G] ──► ...
               offset: 0    1         2
@@ -40,7 +51,7 @@ Partition 2:  [order-H] [order-I] ──► ...
 
 **Why do partitions exist?**
 
-A single log file means a single CPU thread for reads and writes — a bottleneck. Partitions break this constraint:
+A single log file means a single processor thread for reads and writes. That is a bottleneck. Partitions break this constraint:
 
 1. **Write parallelism**: a producer can write to partition 0, 1, and 2 simultaneously
 2. **Read parallelism**: each partition can be consumed by a separate consumer — 3 partitions = 3 parallel consumers in one group
@@ -70,7 +81,8 @@ Partition 0:
   offset 2: { key: "user-1", value: "order shipped" }
   offset 3: { key: "user-3", value: "order placed" }
               ↑
-        consumer reads from here → has read up to and including offset 2
+        consumer reads from here
+        → it has processed everything up to offset 2
 ```
 
 **Critical property**: offset is **per-partition**, not global across the topic. Offset 5 in partition 0 and offset 5 in partition 1 are completely different messages.
@@ -81,12 +93,14 @@ Additionally, Kafka stores offsets **per-consumer-group** (more on this below). 
 Topic "order-placed", Partition 0:
 [msg0][msg1][msg2][msg3][msg4][msg5]
 
-Consumer Group "search-service":   offset = 5 (fully caught up)
-Consumer Group "analytics":        offset = 3 (2 messages behind)
-Consumer Group "audit-log":        offset = 0 (just started, reading from the beginning)
+Consumer groups reading it:
+
+Group "search-service":  offset = 5  (fully caught up)
+Group "analytics":       offset = 3  (2 messages behind)
+Group "audit-log":       offset = 0  (starts from the beginning)
 ```
 
-A consumer **commits its offset** — saves it to Kafka's internal `__consumer_offsets` topic, signaling "I have processed up to this point." Commit strategies are covered in detail in the Kafka in Node.js article.
+A consumer **commits its offset**: it saves that offset into Kafka's internal `__consumer_offsets` topic. A commit says that everything up to this point is processed. Commit strategies are covered in detail in [Kafka in Node.js](./04-kafka-in-nodejs.md).
 
 ## Producer
 
@@ -98,12 +112,16 @@ The producer decides:
 3. **Which headers** to attach — metadata (schema version, trace ID, etc.)
 
 ```txt
-Producer → [topic: "order-placed", key: "user-123", value: { orderId: 42, ... }]
+Producer → [ topic: "order-placed",
+             key:   "user-123",
+             value: { orderId: 42, ... } ]
                 │
                 ▼
          Kafka selects a partition:
-         - key provided → hash(key) % numPartitions → always the same partition for the same key
-         - key = null → round-robin across partitions (even distribution)
+         - key provided → hash(key) % numPartitions
+           → the same key always goes to the same partition
+         - key = null → round-robin across partitions
+           → even distribution
 ```
 
 A key is not a unique message identifier. It's a tool for **controlling partitioning**: all messages with the same key are guaranteed to land in the same partition → their ordering is guaranteed.
@@ -144,8 +162,9 @@ Partition 0 ──► Consumer A  (processes one third of all orders)
 Partition 1 ──► Consumer B  (processes one third of all orders)
 Partition 2 ──► Consumer C  (processes one third of all orders)
 
-→ Horizontal scaling: add a consumer → add a partition → load is split
-→ Each message is processed by EXACTLY ONE consumer in the group
+→ Horizontal scaling: add a consumer and a partition,
+  and the load is split
+→ Each message is processed by exactly one consumer in the group
 ```
 
 This is the analogue of a classic queue with multiple workers. But with a key difference: if Consumer A crashes, its partitions are automatically redistributed to B and C (rebalance).
@@ -217,13 +236,13 @@ Minimal production cluster (3 brokers):
 
   ┌──────────┐    ┌─────────────┐    ┌──────────┐
   │ Broker 1 │◄──►│ Broker 2    │◄──►│ Broker 3 │
-  │          │    │ (Controller │    │          │
+  │          │    │ Controller  │    │          │
   └──────────┘    └─────────────┘    └──────────┘
-       │                 │                │
-       └─────────────────┴────────────────┘
-                   Replication
 
-3 brokers → cluster survives the failure of 1 broker (with replication factor = 3)
+  All three brokers replicate partitions to each other.
+
+3 brokers → the cluster survives the loss of 1 broker
+            (with replication factor = 3)
 ```
 
 Why at least 3? The quorum principle: a majority (2 of 3) is needed for agreement. With 2 brokers, the cluster can't survive the loss of one — there's no quorum.
@@ -246,10 +265,11 @@ Kafka with ZooKeeper (pre-Kafka 3.x):
   
   → Must run and maintain 2 separate clusters
   → ZooKeeper became a bottleneck at large scale
-  → Complex operations: config changes required ZooKeeper coordination
+  → Complex operations: a config change needed
+    ZooKeeper coordination
 ```
 
-**KRaft** (Kafka Raft, KIP-500) is Kafka's built-in consensus protocol, replacing ZooKeeper:
+**KRaft** (Kafka Raft) is Kafka's built-in consensus protocol, and it replaces ZooKeeper. It arrived with KIP-500, a Kafka Improvement Proposal:
 
 ```txt
 Kafka with KRaft (Kafka 3.3+, default since Kafka 4.0):
@@ -272,7 +292,7 @@ Kafka with KRaft (Kafka 3.3+, default since Kafka 4.0):
   → Support for millions of partitions (ZooKeeper scaled poorly)
 ```
 
-**In practice**: for any new project today, use KRaft. ZooKeeper mode is deprecated and removed in Kafka 4.x. Most managed services (Confluent Cloud, AWS MSK) have already migrated to KRaft transparently.
+**In practice**: for any new project today, use KRaft. ZooKeeper mode is deprecated and removed in Kafka 4.x. Most managed services have already migrated to KRaft without the user noticing — Confluent Cloud and Amazon Managed Streaming for Apache Kafka among them.
 
 ## All Concepts Together
 
@@ -287,7 +307,8 @@ Kafka with KRaft (Kafka 3.3+, default since Kafka 4.0):
 │ │ Partition 2 (Broker 3):  [off:0][off:1][off:2][off:3] │ │
 │ └───────────────────────────────────────────────────────┘ │
 │                                                           │
-└────────▲─────────────────────│────────────────────────────┘
+└───────────────────────────────────────────────────────────┘
+         ▲                     │
          │ write               │ read (poll)
          │                     ▼
      ┌──────────┐      Consumer Group "analytics" (separate offset)

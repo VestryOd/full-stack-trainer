@@ -1,10 +1,19 @@
 # Semantic HTML and Accessibility
 
-## Why semantic HTML matters — beyond SEO
+Four terms run through this article:
 
-The common explanation is "Google ranks semantic pages higher." That's true, but it's a side effect, not the reason semantics exist. The real reason is **the accessibility tree**.
+- **Screen reader** — software that speaks the page aloud for a blind or low-vision user.
+- **Accessibility tree** — the semantic model of the page that assistive software reads instead of the visual layout.
+- **Landmark** — an element such as `<nav>` or `<main>` that marks a page region, so a screen reader can jump straight to it.
+- **WCAG** (Web Content Accessibility Guidelines) — the standard accessibility requirements are quoted from.
 
-Every browser maintains two representations of a page: the DOM tree (structural) and the **accessibility tree** (semantic). Screen readers, braille displays, voice control software, and other assistive technologies read the accessibility tree — not the DOM, not the visual layout. The accessibility tree is built from semantic meaning: element roles, names, states, and properties.
+## Why semantic HTML matters — beyond search ranking
+
+The common explanation is that Google ranks semantic pages higher, so semantics look like an SEO (search engine optimization) trick. True, but that is a side effect, not the reason semantics exist. The real reason is **the accessibility tree**.
+
+Every browser maintains two representations of a page. One is the DOM (Document Object Model) tree, which is structural. The other is the **accessibility tree**, which is semantic.
+
+Screen readers, braille displays, voice control software, and other assistive technologies read the accessibility tree — not the DOM, not the visual layout. The accessibility tree is built from semantic meaning: element roles, names, states, and properties.
 
 ```html
 <!-- Both render visually identical — but the accessibility trees differ radically -->
@@ -34,7 +43,7 @@ This gap — **native HTML semantics vs a visually styled div** — is exactly w
 | `<nav>` | navigation | no | – | – |
 | `<main>` | main | no | – | – |
 
-Landmarks (`<nav>`, `<main>`, `<header>`, `<footer>`, `<aside>`, `<section>`) allow screen reader users to jump between page regions — the equivalent of a sighted user scanning a page visually. Without landmarks, screen reader users must listen to the entire page sequentially.
+Landmarks are the region elements: `<nav>`, `<main>`, `<header>`, `<footer>`, `<aside>` and `<section>`. A screen reader user jumps straight from one to the next, the way a sighted user scans a page visually. Without landmarks, they must listen to the whole page from the top.
 
 ## Heading hierarchy — the navigation skeleton
 
@@ -60,7 +69,7 @@ ARIA (Accessible Rich Internet Applications) is a set of HTML attributes that **
 
 The most important ARIA principle: **No ARIA is better than bad ARIA.**
 
-An incorrect `role` or `aria-*` attribute actively misleads assistive technologies. A screen reader encountering `role="button"` on a `<div>` will announce "button" — but if Enter/Space aren't handled in JavaScript, the announced affordance is a lie. Bad ARIA creates a broken experience worse than no ARIA at all.
+An incorrect `role` or `aria-*` attribute actively misleads assistive technologies. A screen reader that meets `role="button"` on a `<div>` announces it as a button. If Enter and Space are not handled in JavaScript, that announcement is a lie. Bad ARIA creates a broken experience worse than no ARIA at all.
 
 ### The ARIA use cases that are actually justified
 
@@ -124,7 +133,7 @@ Note: using `<button role="tab">` instead of `<div role="tab">` keeps native but
 </div>
 ```
 
-`aria-live="polite"` waits for the user to finish their current action before announcing. `aria-live="assertive"` (or `role="alert"`) interrupts immediately — use only for errors or urgent messages.
+The value `polite` waits for the user to finish their current action before announcing. The value `assertive` (and `role="alert"`) interrupts immediately. Use it only for errors and urgent messages.
 
 **4. Labelling elements that can't use `<label>`**
 
@@ -151,7 +160,7 @@ Note: using `<button role="tab">` instead of `<div role="tab">` keeps native but
 </div>
 ```
 
-`aria-hidden="true"` on the SVG prevents screen readers from reading raw SVG titles/paths. `focusable="false"` is required in IE/Edge legacy to prevent SVG from stealing tab focus.
+Here `aria-hidden="true"` on the SVG (scalable vector graphics) icon stops screen readers from reading raw title and path data. The `focusable="false"` attribute is needed in legacy Edge and Internet Explorer, where an SVG can otherwise steal tab focus.
 
 ### ARIA roles, states, and properties — the distinction
 
@@ -201,7 +210,7 @@ Tab order follows DOM order, not visual order. If CSS positions an element visua
 <button tabindex="3">Don't do this</button>
 ```
 
-`tabindex > 0` is almost never justified. It overrides the natural DOM order globally — one element with `tabindex="1"` makes it receive focus before every `tabindex="0"` element on the page, regardless of where it is in the DOM.
+A `tabindex` above zero is almost never justified, because it overrides the natural DOM order globally. Give one element `tabindex="1"` and it receives focus before every `tabindex="0"` element on the page. Its position in the DOM stops mattering.
 
 ### Focus trapping in dialogs
 
@@ -249,7 +258,7 @@ dialog.setAttribute('hidden', '');
 triggerButton.focus(); // return focus to the element that opened the dialog
 ```
 
-The `inert` attribute (now broadly supported) is a cleaner alternative: set `inert` on background content and all focusable elements inside it are removed from the tab order and pointer interaction automatically.
+The `inert` attribute is a cleaner alternative, and it is now broadly supported. Set `inert` on the background content. Every focusable element inside it drops out of the tab order and stops receiving pointer events.
 
 ```html
 <div id="page-content" inert>...</div>
@@ -323,7 +332,7 @@ The modern solution: `:focus-visible`. It applies only when the browser determin
 }
 ```
 
-The outline should have at least 3:1 contrast ratio against the adjacent background (WCAG 2.2 requirement). `outline-offset` separates the ring from the element boundary, improving visibility.
+The outline needs a contrast ratio of at least 3:1 against the adjacent background. That is a WCAG 2.2 requirement. The `outline-offset` property separates the ring from the element boundary, which makes it easier to see.
 
 ## Common accessibility mistakes
 
@@ -406,7 +415,7 @@ document.getElementById('result').textContent = 'Search returned 12 results';
 </span>
 ```
 
-`aria-invalid="true"` causes screen readers to announce "invalid" when the field is focused. `role="alert"` on the error message causes it to be announced immediately when injected.
+The attribute `aria-invalid="true"` makes screen readers announce the field as invalid when it receives focus. Putting `role="alert"` on the error message makes that message announced the moment it is inserted.
 
 ### 6. Missing `lang` attribute
 
@@ -427,28 +436,55 @@ Screen readers use `lang` to select the correct voice/pronunciation engine. With
 
 **"What's the difference between `aria-label` and `aria-labelledby`?"**
 
-`aria-label` provides an inline string as the accessible name. `aria-labelledby` references another element's content. `aria-labelledby` takes precedence over `aria-label` when both are present. Use `aria-labelledby` when the label text is already visible on screen (don't duplicate content). Use `aria-label` when there is no visible label text (icon buttons, landmark regions needing a name that isn't visually displayed).
+`aria-label` provides an inline string as the accessible name. `aria-labelledby` references another element's content. When both are present, `aria-labelledby` wins.
+
+Which one to reach for:
+
+- `aria-labelledby` — when the label text is already visible on screen, so you do not duplicate content.
+- `aria-label` — when there is no visible label text: icon buttons, or a landmark region that needs a name nobody sees.
 
 ---
 
 **"When would you use `role="presentation"` or `role="none"`?"**
 
-They are synonyms. Used to strip semantic meaning from an element that must exist in the DOM for layout reasons but should not appear in the accessibility tree. Classic use: `<table role="presentation">` for layout tables (pre-CSS-grid era). Also for wrapper `<div>` elements inside ARIA composite widgets where the extra container confuses AT. Never use on interactive elements — you would remove the role but keep the element focusable, which is incoherent.
+They are synonyms. Both strip semantic meaning from an element that must exist in the DOM for layout reasons but should not appear in the accessibility tree.
+
+Two classic uses:
+
+- `<table role="presentation">` for layout tables, from the era before CSS Grid.
+- Wrapper `<div>` elements inside composite ARIA widgets, where the extra container only confuses assistive technology.
+
+Never use it on an interactive element: you would remove the role and still leave the element focusable.
 
 ---
 
 **"Why doesn't `display: none` vs `visibility: hidden` vs `opacity: 0` behave the same way for accessibility?"**
 
-`display: none`: removes element from DOM layout AND from the accessibility tree. Screen readers ignore it entirely. `visibility: hidden`: removes from visual layout, also hides from accessibility tree (element exists in DOM but is inaccessible). `opacity: 0`: makes visually invisible but element remains in accessibility tree AND tab order. A screen reader will read an `opacity: 0` button, and Tab will focus it — even though the user cannot see it. This is a common cause of "ghost" focusable elements.
+Each of the three hides the element in a different layer.
+
+- `display: none` — removes the element from layout and from the accessibility tree. Screen readers ignore it entirely.
+- `visibility: hidden` — removes it from the visual layout and also hides it from the accessibility tree. The element exists in the DOM but is unreachable.
+- `opacity: 0` — makes the element invisible, but it stays in the accessibility tree and in the tab order.
+
+The third one is the trap. A screen reader reads an `opacity: 0` button and Tab focuses it, even though the user cannot see it. That is a common cause of "ghost" focusable elements.
 
 ---
 
 **"What does `aria-hidden="true"` do, and what's the danger?"**
 
-`aria-hidden="true"` removes the element from the accessibility tree. Assistive technologies skip it entirely. The danger: applying it to an element that contains focusable children. The element is hidden from the accessibility tree, but Tab still lands on the interactive children. Screen reader announces nothing when those elements are focused — a confusing black hole. Rule: never put `aria-hidden="true"` on an element that has or might have focusable descendants unless you also make them `tabindex="-1"` or `disabled`.
+`aria-hidden="true"` removes the element from the accessibility tree, and assistive technologies skip it entirely. The danger is applying it to an element that contains focusable children.
+
+The element disappears from the accessibility tree, but Tab still lands on the interactive children inside it. The screen reader announces nothing when they receive focus — a confusing black hole.
+
+The rule: never put `aria-hidden="true"` on an element that has, or might later have, focusable descendants. The exception is when you also give them `tabindex="-1"` or `disabled`.
 
 ---
 
 **"What is the `:focus-visible` pseudo-class and why was it introduced?"**
 
-`:focus-visible` applies when the browser determines that the focus indicator should be visible based on input modality. Mouse users clicking a button get focus on it (for keyboard events to work) but don't visually need a focus ring — `:focus-visible` doesn't apply. Keyboard users tabbing to a button do need the ring — `:focus-visible` applies. Before `:focus-visible`, developers used `outline: none` to suppress the ring for mouse clicks, which also suppressed it for keyboard navigation — an accessibility violation. `:focus-visible` solves this correctly without requiring JavaScript input-mode tracking.
+`:focus-visible` applies when the browser decides that the focus ring should be visible, based on how the user reached the element.
+
+- A mouse user clicking a button gets focus on it, so keyboard events work, but needs no ring. The pseudo-class does not apply.
+- A keyboard user tabbing to a button does need the ring. The pseudo-class applies.
+
+Before it existed, developers wrote `outline: none` to kill the ring for mouse clicks. That killed it for keyboard navigation too — an accessibility violation. The pseudo-class fixes that, and needs no JavaScript to track how the user is navigating.

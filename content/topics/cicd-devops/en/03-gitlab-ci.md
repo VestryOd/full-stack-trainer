@@ -2,13 +2,13 @@
 
 ## What GitLab CI is
 
-**GitLab CI** (GitLab Continuous Integration) is GitLab's built-in CI/CD platform. Like GitHub Actions, it requires no external service — you commit a file called `.gitlab-ci.yml` to the root of your repository, and GitLab automatically picks it up and runs pipelines based on it.
+**GitLab CI** (GitLab Continuous Integration) is GitLab's built-in platform for CI/CD (continuous integration and continuous delivery). Like GitHub Actions, it needs no external service. You commit a file called `.gitlab-ci.yml` to the root of your repository. GitLab picks it up automatically and runs pipelines from it.
 
 GitLab CI predates GitHub Actions by several years and is the dominant CI/CD solution in many enterprises that self-host their Git infrastructure. If you work with a company that runs its own GitLab instance (on-premises), you will almost certainly work with GitLab CI.
 
 ## `.gitlab-ci.yml` structure
 
-The configuration file lives at the **root of the repository** (not in `.gitlab/` — it is always `.gitlab-ci.yml` at the top level).
+The configuration file lives at the **root of the repository** (not in `.gitlab/` — it is always `.gitlab-ci.yml` at the top level). It is written in YAML (a plain-text format for configuration).
 
 ```yaml
 # .gitlab-ci.yml
@@ -135,14 +135,14 @@ build-go-service:
     - go build ./...
 ```
 
-This is a key difference from GitHub Actions: in GitLab CI, every job runs in a Docker container by default (with the Docker executor). In GitHub Actions, the runner has tools pre-installed on the host VM and you use `uses: actions/setup-node@v4` to configure them.
+This is a key difference from GitHub Actions: in GitLab CI, every job runs in a Docker container by default (with the Docker executor). In GitHub Actions, the runner has tools pre-installed on the host VM (virtual machine), and you use `uses: actions/setup-node@v4` to configure them.
 
 ## GitLab Runner
 
 A **GitLab Runner** is a separate open-source application (written in Go) that registers with a GitLab instance and executes the jobs from your pipelines. The relationship:
 
 ```txt
-  GitLab server                  GitLab Runner (separate process/machine)
+  GitLab server                  GitLab Runner (separate machine)
   ┌────────────────┐             ┌───────────────────────────────┐
   │ Reads          │             │                               │
   │ .gitlab-ci.yml │──job───────→│ Picks up the job              │
@@ -159,38 +159,40 @@ The **executor** determines how the runner actually runs each job:
 docker    → each job runs in a fresh Docker container (most common)
             requires Docker on the runner machine
 
-shell     → each job runs directly in the shell of the runner machine
+shell     → each job runs directly in the runner machine's shell
             no isolation — jobs share the machine's environment
 
 kubernetes → each job runs as a pod in a Kubernetes cluster
-              (K8s = Kubernetes — a container orchestration platform)
-              good for large-scale, cloud-native pipelines
+             (K8s = Kubernetes, a container orchestration platform)
+             good for large-scale, cloud-native pipelines
 
-docker+machine → auto-provisions new cloud VMs for each job
-                  (GitLab's equivalent of GitHub-hosted runners)
+docker+machine → provisions a new cloud VM for each job
+                 (GitLab's equivalent of GitHub-hosted runners)
 ```
 
 ### Types of runners
 
 ```txt
-Shared runners     → provided by GitLab.com for all projects; limited
-                     free minutes per month on free plans
+Shared runners     → provided by GitLab.com for all projects;
+                     limited free minutes per month on free plans
 
-Group runners      → registered to a GitLab group; available to all
-                     projects in that group
+Group runners      → registered to a GitLab group; available to
+                     all projects in that group
 
-Project runners    → registered to a specific project; available only to it
+Project runners    → registered to one project, available only
+                     to that project
 
-Self-hosted (any)  → a runner you install and manage yourself, anywhere
+Self-hosted (any)  → a runner you install and manage yourself
 ```
 
-For GitLab.com (the SaaS version), shared runners come pre-configured. For a self-hosted GitLab instance (common in enterprises), you must install and register your own runners.
+For GitLab.com (the SaaS version, software as a service), shared runners come pre-configured. For a self-hosted GitLab instance (common in enterprises), you must install and register your own runners.
 
 **Registering a self-hosted runner:**
 
 ```bash
 # Install the runner binary (Linux example)
-curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
+repo=https://packages.gitlab.com/install/repositories/runner/gitlab-runner
+curl -L "$repo/script.deb.sh" | sudo bash
 sudo apt-get install gitlab-runner
 
 # Register it with your GitLab instance
@@ -210,10 +212,10 @@ Variables in GitLab CI come from multiple sources, with a defined priority:
 Priority (highest → lowest):
   1. Trigger variables (passed when triggering via API)
   2. Scheduled pipeline variables
-  3. Manual pipeline variables (set when clicking "Run pipeline" in the UI)
+  3. Manual pipeline variables (set when clicking "Run pipeline")
   4. Project-level CI/CD variables (Settings → CI/CD → Variables)
   5. Group-level CI/CD variables
-  6. Instance-level variables (admin only, for self-hosted instances)
+  6. Instance-level variables (admin only, self-hosted)
   7. .gitlab-ci.yml variables (the `variables:` key in the file)
 ```
 
@@ -234,22 +236,22 @@ deploy:
 **Predefined CI/CD variables** — GitLab automatically injects many useful variables into every pipeline:
 
 ```txt
-$CI_COMMIT_SHA        — full SHA of the commit that triggered the pipeline
+$CI_COMMIT_SHA        — full SHA of the commit that started the run
 $CI_COMMIT_SHORT_SHA  — first 8 characters of the commit SHA
 $CI_COMMIT_BRANCH     — branch name (empty for tag pipelines)
 $CI_COMMIT_TAG        — tag name (empty for branch pipelines)
-$CI_COMMIT_REF_SLUG   — branch/tag name with special chars replaced by -
-                         (safe to use as a Docker image tag or cache key)
+$CI_COMMIT_REF_SLUG   — branch or tag name, special chars → -
+                        (safe as a Docker image tag or cache key)
 $CI_PIPELINE_ID       — unique numeric ID of the pipeline
 $CI_JOB_ID            — unique numeric ID of the job
 $CI_PROJECT_PATH      — namespace/project-name (e.g. "myorg/myapp")
 $CI_REGISTRY          — address of the GitLab Container Registry
-$CI_REGISTRY_IMAGE    — full image path for this project in the registry
+$CI_REGISTRY_IMAGE    — full image path for this project
 $CI_REGISTRY_USER     — username to log into the registry
-$CI_REGISTRY_PASSWORD — password to log into the registry (job token)
+$CI_REGISTRY_PASSWORD — password for the registry (job token)
 ```
 
-Real example — tagging and pushing a Docker image with the commit SHA:
+Real example — tagging and pushing a Docker image with the commit SHA (the hash that uniquely identifies the commit):
 
 ```yaml
 build-docker:
@@ -301,10 +303,11 @@ deploy-production:
 Available `when` values:
 
 ```txt
-on_success   → run if all previous jobs in earlier stages passed (default)
-on_failure   → run only if a previous job failed (useful for cleanup/notification jobs)
-always       → always run, regardless of previous job outcomes
-manual       → add the job to the pipeline but require a human to click "Run" in the UI
+on_success   → run if all jobs in earlier stages passed (default)
+on_failure   → run only if a previous job failed
+               (cleanup and notification jobs)
+always       → always run, whatever the previous jobs did
+manual       → add the job, but wait for a human to click "Run"
 never        → do not add this job to the pipeline at all
 delayed      → run after a delay (start_in: '10 minutes')
 ```
@@ -363,15 +366,18 @@ By default, a job automatically downloads the artifacts from all jobs in **earli
 GitLab CI supports a **DAG** (Directed Acyclic Graph — a graph structure where dependencies flow in one direction with no cycles) for pipeline execution. With `needs:`, you can make a job start as soon as its specific dependencies are done — without waiting for the entire preceding stage to finish.
 
 ```txt
-Without needs (stage-based — all of "test" must finish before any "build" starts):
-  lint ─────────────────────────────────┐
-  unit-tests ────────────────────────── stage "test" ─→ build (starts here)
-  integration-tests (slowest, 10 min) ─┘
+Without needs (stage-based): the whole "test" stage must
+finish before any "build" job starts.
 
-With needs (DAG — build starts as soon as lint passes):
-  lint ──────────────────────────────────────────→ build (starts immediately after lint)
-  unit-tests ─────────────────────────────────────→
-  integration-tests (10 min, doesn't block build) →
+  lint ─────────────────────────╮
+  unit-tests ───────────────────┤─→ build (starts here)
+  integration-tests (10 min) ───╯
+
+With needs (DAG): build starts as soon as lint passes.
+
+  lint ─────────────────────────────→ build (right after lint)
+  unit-tests ───────────────────────→
+  integration-tests (10 min) ───────→ (does not block build)
 ```
 
 ```yaml
@@ -388,47 +394,50 @@ build-fast:
 This is the most practically useful comparison for a fullstack developer who works with both platforms:
 
 ```txt
-Topic                    GitHub Actions                GitLab CI
-─────────────────────────────────────────────────────────────────────────────
-Config file location     .github/workflows/*.yml       .gitlab-ci.yml (root)
-                         (multiple files allowed)      (single file by default)
+Topic                 GitHub Actions         GitLab CI
+──────────────────────────────────────────────────────────────────
+Config location       .github/workflows/     .gitlab-ci.yml
+                      *.yml, several files   in the repo root,
+                                             one file by default
 
-Config file name         Any name, any number          Always .gitlab-ci.yml
+Config file name      any name, any number   always .gitlab-ci.yml
 
-Stages concept           No explicit stages;           Explicit stages: key
-                         use `needs:` for ordering     defines both names + order
+Stages                no explicit stages,    explicit `stages:` key:
+                      order comes from       names and order in
+                      `needs:`               one place
 
-Parallel jobs            Default (no needs = parallel) Default within a stage
+Parallel jobs         default when no        default inside one
+                      `needs:` is set        stage
 
-Job runner image         Set per step via              Set per job via `image:`
-                         `actions/setup-*`             (Docker-first approach)
-                         (host VM with tools)
+Job runner image      per step, through      per job, through
+                      `actions/setup-*`      `image:` (Docker-first)
+                      on a host VM
 
-Trigger keyword          `on:`                         `rules:` / `only:`
+Trigger keyword       `on:`                  `rules:` / `only:`
 
-PR/MR keyword            pull_request                  merge_request_event
+PR / MR keyword       pull_request           merge_request_event
 
-Secrets access           ${{ secrets.NAME }}           $VARIABLE_NAME
-                                                       (same as env vars)
+Secrets access        ${{ secrets.NAME }}    $VARIABLE_NAME, like
+                                             any other variable
 
-Manual trigger           `workflow_dispatch`           `when: manual` on a job
+Manual trigger        `workflow_dispatch`    `when: manual` on a job
 
-Caching syntax           actions/cache@v4              `cache:` key in job
+Caching syntax        actions/cache@v4       `cache:` key in the job
 
-Passing files between    upload-artifact /             `artifacts:` in job
-jobs                     download-artifact actions
+Passing files         upload-artifact and    `artifacts:` in the job
+between jobs          download-artifact
 
-Reusable pipelines       Reusable workflows +          `include:` to pull in
-                         composite actions             other YAML files;
-                                                       `extends:` to inherit
-                                                       from job templates
+Reusable pipelines    reusable workflows,    `include:` pulls in
+                      composite actions      other YAML files;
+                                             `extends:` inherits
+                                             from job templates
 
-Built-in container       GitHub Container Registry     GitLab Container Registry
-registry                 (ghcr.io)                     ($CI_REGISTRY)
+Built-in registry     GitHub Container       GitLab Container
+                      Registry (ghcr.io)     Registry ($CI_REGISTRY)
 
-Self-hosted runners      GitHub Actions runner         GitLab Runner (separate
-                         (same binary, different       binary, multiple executors)
-                         config)
+Self-hosted runners   GitHub Actions runner  GitLab Runner: its own
+                      (same binary, other    binary with several
+                      config)                executors
 ```
 
 ### Key differences to internalize
@@ -503,7 +512,7 @@ GitHub Actions achieves this through composite actions and reusable workflows �
 
 **4. Merge Request pipelines**
 
-GitLab has a first-class concept of **Merge Request (MR) pipelines** — pipelines that run in the context of an MR, with access to MR-specific variables (`$CI_MERGE_REQUEST_ID`, `$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME`, etc.):
+GitLab has a first-class concept of **Merge Request (MR) pipelines**. They run in the context of an MR and get MR-specific variables, such as `$CI_MERGE_REQUEST_ID` and `$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME`:
 
 ```yaml
 test:
@@ -521,10 +530,10 @@ GitHub Actions uses `pull_request` as the event trigger, which is conceptually i
 
 - **Using `only`/`except` in new pipelines** — this syntax is deprecated in favor of `rules:`. In an interview, showing awareness of this evolution signals that you've worked with GitLab CI recently, not just years ago.
 
-- **Confusing `artifacts` and `cache`** — artifacts pass files between jobs within a single pipeline run; cache persists files across multiple runs. Artifacts are stored by GitLab and can be downloaded from the UI; cache is stored on the runner.
+- **Confusing `artifacts` and `cache`** — artifacts pass files between jobs within a single pipeline run; cache persists files across multiple runs. Artifacts are stored by GitLab and can be downloaded from the web interface (UI). Cache is stored on the runner.
 
-- **Not knowing what `dind` means** — "Docker-in-Docker" (the `docker:dind` service) is needed to run `docker build` inside a GitLab CI job that itself runs in a Docker container. Without it, the `docker` CLI has no daemon to talk to. Interviewers who work with GitLab CI ask about this because it's a real operational pain point.
+- **Not knowing what `dind` means** — the letters stand for Docker-in-Docker. The `docker:dind` service is needed to run `docker build` inside a GitLab CI job that itself runs in a Docker container. Without it, the `docker` command-line tool (CLI) has no daemon to talk to. Interviewers who work with GitLab CI ask about this because it's a real operational pain point.
 
-- **Assuming `${{ secrets.NAME }}` syntax works in GitLab CI** — in GitLab CI, all variables (including secrets added in Settings → CI/CD → Variables) are accessed as plain shell variables `$VARIABLE_NAME`, not with the `${{ }}` expression syntax. The `${{ }}` syntax is specific to GitHub Actions.
+- **Assuming the `${{ secrets.NAME }}` syntax works in GitLab CI** — in GitLab CI every variable is a plain shell variable `$VARIABLE_NAME`. That includes the secrets you add in Settings → CI/CD → Variables. The `${{ }}` expression syntax is specific to GitHub Actions.
 
-- **Not knowing about `.pre` and `.post`** — these are special GitLab CI stage names that always run before and after all other stages, respectively, regardless of the `stages:` list. Useful for global setup and cleanup, and a common interview question for testing deep GitLab CI knowledge.
+- **Not knowing about `.pre` and `.post`** — these are special GitLab CI stage names. The stage `.pre` always runs before all other stages, and `.post` after them, whatever the `stages:` list says. They are useful for global setup and cleanup, and they are a common interview question.

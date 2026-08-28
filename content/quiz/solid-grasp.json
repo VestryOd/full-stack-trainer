@@ -3,8 +3,8 @@
     "id": "solid-grasp-quiz-1",
     "topicId": "solid-grasp",
     "question": {
-      "en": "A UserService class handles user authentication, database persistence, email notifications, and logging. Which SOLID principle is being violated, and what is the primary issue?\n```ts\nclass UserService {\n  authenticate(user: User): boolean { /* ... */ }\n  saveToDatabase(user: User): void { /* ... */ }\n  sendWelcomeEmail(user: User): void { /* ... */ }\n  logActivity(message: string): void { /* ... */ }\n}\n```",
-      "ru": "Класс UserService обрабатывает аутентификацию пользователя, сохранение в БД, отправку email-уведомлений и логирование. Какой принцип SOLID нарушается, и какова основная проблема?\n```ts\nclass UserService {\n  authenticate(user: User): boolean { /* ... */ }\n  saveToDatabase(user: User): void { /* ... */ }\n  sendWelcomeEmail(user: User): void { /* ... */ }\n  logActivity(message: string): void { /* ... */ }\n}\n```"
+      "en": "A UserService class handles user authentication, database persistence, email notifications, and logging. SOLID is a set of five design principles for classes and objects. Which one does this class break, and what is the core problem?\n```ts\nclass UserService {\n  authenticate(user: User): boolean { /* ... */ }\n  saveToDatabase(user: User): void { /* ... */ }\n  sendWelcomeEmail(user: User): void { /* ... */ }\n  logActivity(message: string): void { /* ... */ }\n}\n```",
+      "ru": "Класс UserService отвечает за аутентификацию пользователя, сохранение в базу данных, отправку писем и логирование. SOLID — это набор из пяти принципов проектирования классов и объектов. Какой из них здесь нарушен и в чём главная проблема?\n```ts\nclass UserService {\n  authenticate(user: User): boolean { /* ... */ }\n  saveToDatabase(user: User): void { /* ... */ }\n  sendWelcomeEmail(user: User): void { /* ... */ }\n  logActivity(message: string): void { /* ... */ }\n}\n```"
     },
     "options": {
       "en": [
@@ -14,51 +14,51 @@
         "Interface Segregation Principle — the class implements too many unrelated interfaces"
       ],
       "ru": [
-        "Принцип единственной ответственности — у класса четыре разные причины для изменения, его трудно тестировать",
+        "Принцип единственной ответственности — у класса четыре причины меняться, и его трудно тестировать",
         "Принцип открытости/закрытости — класс не открыт для расширения и не закрыт для модификации",
-        "Принцип подстановки Лисков — класс не может быть заменен на его родительский класс без нарушения поведения",
+        "Принцип подстановки Лисков — подкласс нельзя подставить вместо родительского класса без поломки поведения",
         "Принцип разделения интерфейса — класс реализует слишком много несвязанных интерфейсов"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "The UserService violates SRP because it has four distinct responsibilities: authentication, persistence, notifications, and logging. Each of these is a separate reason the class could change (e.g., if authentication logic changes, if the database switches, if email service changes). The correct refactoring would extract each responsibility into its own class and inject them as dependencies. The other options mischaracterize the violation — OCP is about extensibility, LSP is about inheritance contracts, and ISP is about interface segregation.",
-      "ru": "UserService нарушает принцип SRP, потому что имеет четыре различные ответственности: аутентификацию, сохранение, уведомления и логирование. Каждая из них — отдельная причина для изменения класса. Правильный рефакторинг — извлечь каждую ответственность в отдельный класс и внедрить их как зависимости. Другие варианты неправильно характеризуют нарушение — OCP касается расширяемости, LSP касается контрактов наследования, а ISP касается разделения интерфейсов."
+      "en": "The UserService breaks the Single Responsibility Principle. It carries four distinct responsibilities: authentication, persistence, notifications and logging.\n\nEach one is a separate reason the class could change — new authentication logic, a different database, another email provider. The fix is to extract each responsibility into its own class and inject those classes as dependencies. The other options name real principles, but nothing here is about extension, inheritance or interface size.",
+      "ru": "UserService нарушает принцип единственной ответственности. У класса четыре разные ответственности: аутентификация, сохранение, уведомления и логирование.\n\nКаждая из них — отдельная причина для изменения класса: новая логика входа, другая база данных, другой почтовый сервис. Правильный рефакторинг — вынести каждую ответственность в свой класс и внедрить эти классы как зависимости. Остальные варианты называют настоящие принципы, но здесь речь не о расширении, не о наследовании и не о размере интерфейса."
     }
   },
   {
     "id": "solid-grasp-quiz-2",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Consider a payment processing system. A Square payment handler extends PaymentProcessor. It works correctly for credit card payments, but when used as a substitute for PaymentProcessor in a refund scenario, it throws an exception because Square's API doesn't support refunds. Which principle is violated?\n```ts\nclass PaymentProcessor {\n  process(amount: number): void { }\n  refund(transactionId: string): void { }\n}\n\nclass SquarePaymentHandler extends PaymentProcessor {\n  process(amount: number): void { /* ... */ }\n  refund(transactionId: string): void {\n    throw new Error('Square API does not support refunds');\n  }\n}\n```",
-      "ru": "Рассмотрим систему обработки платежей. Обработчик Square платежей расширяет PaymentProcessor. Он корректно работает для платежей кредитными картами, но когда используется как замена для PaymentProcessor в сценарии возврата, выбрасывает исключение, потому что API Square не поддерживает возвраты. Какой принцип нарушается?\n```ts\nclass PaymentProcessor {\n  process(amount: number): void { }\n  refund(transactionId: string): void { }\n}\n\nclass SquarePaymentHandler extends PaymentProcessor {\n  process(amount: number): void { /* ... */ }\n  refund(transactionId: string): void {\n    throw new Error('Square API does not support refunds');\n  }\n}\n```"
+      "en": "Consider a payment processing system. A Square payment handler extends PaymentProcessor. It works correctly for credit card payments. But when it stands in for PaymentProcessor and a refund is requested, it throws an exception. The Square API does not support refunds. Which principle is violated?\n```ts\nclass PaymentProcessor {\n  process(amount: number): void { }\n  refund(transactionId: string): void { }\n}\n\nclass SquarePaymentHandler extends PaymentProcessor {\n  process(amount: number): void { /* ... */ }\n  refund(transactionId: string): void {\n    throw new Error('Square API does not support refunds');\n  }\n}\n```",
+      "ru": "Рассмотрим систему обработки платежей. Класс SquarePaymentHandler расширяет PaymentProcessor и корректно работает с оплатой картой. Но когда его подставляют вместо PaymentProcessor и просят возврат, он выбрасывает исключение. API Square не поддерживает возвраты. Какой принцип нарушается?\n```ts\nclass PaymentProcessor {\n  process(amount: number): void { }\n  refund(transactionId: string): void { }\n}\n\nclass SquarePaymentHandler extends PaymentProcessor {\n  process(amount: number): void { /* ... */ }\n  refund(transactionId: string): void {\n    throw new Error('Square API does not support refunds');\n  }\n}\n```"
     },
     "options": {
       "en": [
-        "Liskov Substitution Principle — a subclass should be substitutable for its parent without breaking expected behavior",
+        "Liskov Substitution Principle — a subclass should be substitutable for its parent without breaking behavior",
         "Interface Segregation Principle — PaymentProcessor includes operations not all handlers support",
         "Dependency Inversion Principle — the code depends on concrete PaymentProcessor instead of an abstraction",
         "Open/Closed Principle — the PaymentProcessor class is not open for extension via polymorphism"
       ],
       "ru": [
-        "Принцип подстановки Лисков — подкласс должен быть взаимозаменяем с родительским классом без нарушения ожидаемого поведения",
-        "Принцип разделения интерфейса — PaymentProcessor включает операции, которые поддерживают не все обработчики",
+        "Принцип подстановки Лисков — подкласс должен полноценно заменять родительский класс без нарушения поведения",
+        "Принцип разделения интерфейса — PaymentProcessor требует операций, которых нет у части обработчиков",
         "Принцип инверсии зависимостей — код зависит от конкретного PaymentProcessor вместо абстракции",
         "Принцип открытости/закрытости — класс PaymentProcessor не открыт для расширения через полиморфизм"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "This is primarily an ISP violation. The PaymentProcessor interface is too broad — not all payment handlers support refunds. The correct fix is to segregate the interface into two: one for processing payments and another for refunds, allowing Square handler to implement only what it supports. While LSP is technically also violated, ISP is the root cause — the interface shouldn't force implementations to support operations they can't perform. DIP and OCP are not the core issues here.",
-      "ru": "Это в первую очередь нарушение ISP. Интерфейс PaymentProcessor слишком широк — не все обработчики платежей поддерживают возвраты. Правильное решение — разделить интерфейс на два: один для обработки платежей, другой для возвратов, позволяя обработчику Square реализовать только то, что он поддерживает. Хотя LSP технически нарушается, ISP — коренная причина. DIP и OCP — не основные проблемы здесь."
+      "en": "This is primarily a violation of the Interface Segregation Principle (ISP). The PaymentProcessor interface is too broad, because not all payment handlers support refunds.\n\nThe correct fix is to split the interface in two: one for processing payments, one for refunds. The Square handler then implements only what it can actually do. The Liskov Substitution Principle is technically violated too, but ISP is the root cause. An interface should not force an implementation to support what it cannot do. Dependency inversion and open/closed are not the core issues here.",
+      "ru": "Это в первую очередь нарушение принципа разделения интерфейса (ISP). Интерфейс PaymentProcessor слишком широк: не все обработчики платежей поддерживают возвраты.\n\nПравильное решение — разделить интерфейс на два: один для обработки платежей, другой для возвратов. Тогда обработчик Square реализует только то, что действительно умеет. Принцип подстановки Лисков формально тоже нарушен, но корневая причина — ISP. Интерфейс не должен требовать от реализации того, чего она не умеет. Инверсия зависимостей и открытость/закрытость здесь не главное."
     }
   },
   {
     "id": "solid-grasp-quiz-3",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Which GRASP pattern is being applied when you create a ReportGenerator class that knows how to generate reports but delegates the actual file writing to a FileWriter dependency?\n```ts\nclass ReportGenerator {\n  constructor(private fileWriter: FileWriter) { }\n  \n  generate(data: Data): void {\n    const report = this.formatData(data);\n    this.fileWriter.write('report.txt', report);\n  }\n}\n```",
-      "ru": "Какой паттерн GRASP применяется, когда вы создаете класс ReportGenerator, который знает, как генерировать отчеты, но делегирует фактическую запись файлов зависимости FileWriter?\n```ts\nclass ReportGenerator {\n  constructor(private fileWriter: FileWriter) { }\n  \n  generate(data: Data): void {\n    const report = this.formatData(data);\n    this.fileWriter.write('report.txt', report);\n  }\n}\n```"
+      "en": "ReportGenerator knows how to build a report, but delegates the actual file writing to a FileWriter dependency. Which pattern from GRASP (general responsibility assignment software patterns) is being applied?\n```ts\nclass ReportGenerator {\n  constructor(private fileWriter: FileWriter) { }\n  \n  generate(data: Data): void {\n    const report = this.formatData(data);\n    this.fileWriter.write('report.txt', report);\n  }\n}\n```",
+      "ru": "ReportGenerator знает, как построить отчёт, но делегирует саму запись файлов зависимости FileWriter. Какой паттерн из GRASP (паттерны распределения ответственности) здесь применяется?\n```ts\nclass ReportGenerator {\n  constructor(private fileWriter: FileWriter) { }\n  \n  generate(data: Data): void {\n    const report = this.formatData(data);\n    this.fileWriter.write('report.txt', report);\n  }\n}\n```"
     },
     "options": {
       "en": [
@@ -76,16 +76,16 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The Expert pattern assigns responsibility to the class that has the most information needed to fulfill it. ReportGenerator is the Expert at generating reports (it knows the formatting logic), while FileWriter is the Expert at writing files. Each class is responsible for what it knows best, which is the essence of GRASP Expert. Creator is about object instantiation, Controller is about initial request handling, and Facade is about providing a unified interface to a subsystem.",
-      "ru": "Паттерн Expert назначает ответственность классу, у которого есть наибольше информации для её выполнения. ReportGenerator — Expert в генерации отчетов (знает логику форматирования), а FileWriter — Expert в записи файлов. Каждый класс отвечает за то, что он делает лучше всего, что является сущностью GRASP Expert. Creator касается создания объектов, Controller — обработки начальных запросов, а Facade — предоставления единого интерфейса к подсистеме."
+      "en": "The Expert pattern assigns a responsibility to the class that already holds the information needed to carry it out. ReportGenerator is the expert on reports, because it knows the formatting logic. FileWriter is the expert on writing files.\n\nEach class owns what it knows best. Creator is about who instantiates an object. Controller handles the first incoming request, and Facade gives a subsystem one unified interface.",
+      "ru": "Паттерн Expert назначает ответственность классу, у которого уже есть нужная для неё информация. ReportGenerator — эксперт по отчётам, потому что знает логику форматирования. FileWriter — эксперт по записи файлов.\n\nКаждый класс отвечает за то, что знает лучше всего. Creator отвечает на вопрос, кто создаёт объект. Controller обрабатывает первый входящий запрос, а Facade даёт подсистеме единый интерфейс."
     }
   },
   {
     "id": "solid-grasp-quiz-4",
     "topicId": "solid-grasp",
     "question": {
-      "en": "A notification system currently supports only email notifications. To add SMS and push notifications without modifying existing code, which principle should guide the refactoring?\n```ts\nclass NotificationService {\n  notify(user: User, message: string): void {\n    if (user.notificationType === 'email') {\n      this.sendEmail(user.email, message);\n    } else if (user.notificationType === 'sms') {\n      this.sendSms(user.phone, message);\n    }\n    // Adding push would require another if-else\n  }\n}\n```",
-      "ru": "Система уведомлений в настоящее время поддерживает только email-уведомления. Чтобы добавить SMS и push-уведомления без изменения существующего кода, какой принцип должен руководить рефакторингом?\n```ts\nclass NotificationService {\n  notify(user: User, message: string): void {\n    if (user.notificationType === 'email') {\n      this.sendEmail(user.email, message);\n    } else if (user.notificationType === 'sms') {\n      this.sendSms(user.phone, message);\n    }\n    // Adding push would require another if-else\n  }\n}\n```"
+      "en": "A notification system currently supports only email. You need to add text messages (SMS) and push notifications without changing the existing code. Which principle should guide the refactoring?\n```ts\nclass NotificationService {\n  notify(user: User, message: string): void {\n    if (user.notificationType === 'email') {\n      this.sendEmail(user.email, message);\n    } else if (user.notificationType === 'sms') {\n      this.sendSms(user.phone, message);\n    }\n    // Adding push would require another if-else\n  }\n}\n```",
+      "ru": "Система уведомлений сейчас поддерживает только письма. Нужно добавить текстовые сообщения (SMS) и push-уведомления, не меняя существующий код. Какой принцип должен руководить рефакторингом?\n```ts\nclass NotificationService {\n  notify(user: User, message: string): void {\n    if (user.notificationType === 'email') {\n      this.sendEmail(user.email, message);\n    } else if (user.notificationType === 'sms') {\n      this.sendSms(user.phone, message);\n    }\n    // Adding push would require another if-else\n  }\n}\n```"
     },
     "options": {
       "en": [
@@ -103,43 +103,43 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "This is a classic Open/Closed Principle scenario. Every time you add a new notification type, you must modify NotificationService by adding another if-else branch. The solution is to create a NotificationChannel abstraction (interface) and have concrete implementations (EmailChannel, SmsChannel, PushChannel). New channels can be added without modifying existing code. While DIP would also improve the design, OCP is the primary principle being violated — the class is not open for extension without modification.",
-      "ru": "Это классический сценарий нарушения принципа Open/Closed. Каждый раз, когда вы добавляете новый тип уведомлений, вы должны модифицировать NotificationService, добавляя еще одну ветвь if-else. Решение — создать абстракцию NotificationChannel (интерфейс) и иметь конкретные реализации (EmailChannel, SmsChannel, PushChannel). Новые каналы можно добавить без модификации существующего кода. Хотя DIP также улучшит дизайн, OCP — основной нарушаемый принцип — класс не открыт для расширения без модификации."
+      "en": "This is a classic Open/Closed Principle (OCP) case. Every new notification type forces you to modify NotificationService by adding another if-else branch.\n\nThe solution is a NotificationChannel interface with concrete implementations: EmailChannel, SmsChannel, PushChannel. New channels are then added without touching existing code. Dependency inversion would improve the design too, but the principle actually broken here is OCP: the class is not open for extension without modification.",
+      "ru": "Это классический случай принципа открытости/закрытости (OCP). Каждый новый тип уведомлений заставляет менять NotificationService, добавляя ещё одну ветку if-else.\n\nРешение — интерфейс NotificationChannel и конкретные реализации: EmailChannel, SmsChannel, PushChannel. Новые каналы добавляются, не трогая существующий код. Инверсия зависимостей тоже улучшила бы дизайн, но нарушен здесь именно OCP: класс не открыт для расширения без изменения."
     }
   },
   {
     "id": "solid-grasp-quiz-5",
     "topicId": "solid-grasp",
     "question": {
-      "en": "In a GRASP context, you need to decide which class should be responsible for creating User objects with all their dependencies (repository, logger, validator). Which pattern best guides this decision?\n```ts\nconst user = new User(\n  new UserRepository(),\n  new Logger(),\n  new UserValidator()\n);\n```",
-      "ru": "В контексте GRASP вам нужно решить, какой класс должен быть ответственен за создание объектов User со всеми их зависимостями (репозиторий, логгер, валидатор). Какой паттерн лучше всего руководит этим решением?\n```ts\nconst user = new User(\n  new UserRepository(),\n  new Logger(),\n  new UserValidator()\n);\n```"
+      "en": "You need to decide which class should be responsible for creating User objects together with their dependencies: repository, logger and validator. Which pattern from GRASP (general responsibility assignment software patterns) guides this decision?\n```ts\nconst user = new User(\n  new UserRepository(),\n  new Logger(),\n  new UserValidator()\n);\n```",
+      "ru": "Нужно решить, какой класс отвечает за создание объектов User вместе с их зависимостями: репозиторием, логгером и валидатором. Какой паттерн из GRASP (паттерны распределения ответственности) руководит этим решением?\n```ts\nconst user = new User(\n  new UserRepository(),\n  new Logger(),\n  new UserValidator()\n);\n```"
     },
     "options": {
       "en": [
         "Factory — use a dedicated factory class to encapsulate complex object creation logic",
-        "Creator — assign creation responsibility to the class that aggregates or uses User objects most closely",
+        "Creator — creation belongs to the class that contains or closely uses User objects",
         "Expert — User objects should create their own dependencies since they are the experts",
         "Singleton — ensure only one instance of User exists throughout the application"
       ],
       "ru": [
-        "Factory — использовать специальный класс factory для инкапсуляции сложной логики создания объектов",
-        "Creator — назначить ответственность создания классу, который агрегирует или наиболее тесно использует объекты User",
-        "Expert — объекты User должны создавать свои собственные зависимости, так как они являются экспертами",
-        "Singleton — убедиться, что только один экземпляр User существует во всем приложении"
+        "Factory — вынести сложную логику создания объектов в отдельный класс-фабрику",
+        "Creator — создание поручают классу, который содержит User или тесно его использует",
+        "Expert — объекты User должны создавать свои зависимости сами, ведь они эксперты",
+        "Singleton — гарантировать, что во всём приложении существует ровно один экземпляр User"
       ]
     },
-    "correctIndex": 0,
+    "correctIndex": 1,
     "explanation": {
-      "en": "While Creator pattern is foundational, this scenario with multiple complex dependencies is better served by a Factory pattern. A Factory (like UserFactory) encapsulates the knowledge of how to construct a User with all its dependencies, keeping construction logic separate from business logic. Creator would suggest the aggregating class handle it, but that violates SRP. Expert doesn't apply here — User shouldn't know how to construct itself or its dependencies. Singleton is unrelated to creation responsibility.",
-      "ru": "Хотя паттерн Creator является фундаментальным, этот сценарий с несколькими сложными зависимостями лучше обслуживается паттерном Factory. Factory (как UserFactory) инкапсулирует знание о том, как построить User со всеми его зависимостями, разделяя логику конструирования от бизнес-логики. Creator предполагал бы, что агрегирующий класс это обработает, но это нарушает SRP. Expert здесь не применяется — User не должен знать, как сконструировать себя или свои зависимости. Singleton не связан с ответственностью создания."
+      "en": "Creator is the GRASP answer to who creates an object. Its rule: give creation of object A to the class that aggregates A, contains A, records A, or closely uses A. Here that is the class which holds and works with User objects.\n\nFactory belongs to the Gang of Four catalogue, not to GRASP. The theory article puts it plainly. Factory is needed only when the \"contains or uses\" condition is not met and a separate creation point is required. So a dedicated factory is the fallback after Creator, not the first choice. Expert is about who owns the data. Singleton is about how many instances exist.",
+      "ru": "Creator — это ответ GRASP на вопрос, кто создаёт объект. Правило такое: создание объекта A поручают классу, который агрегирует A, содержит A, записывает A или тесно использует A. Здесь это класс, который хранит объекты User и работает с ними.\n\nFactory — паттерн из каталога «Банды четырёх», а не из GRASP. Статья по теме говорит об этом прямо: Factory нужна тогда, когда условие «содержит или использует» не выполняется и нужна выделенная точка создания. То есть отдельная фабрика — запасной вариант после Creator, а не первый выбор. Expert отвечает за то, кто владеет данными, а Singleton — за число экземпляров."
     }
   },
   {
     "id": "solid-grasp-quiz-6",
     "topicId": "solid-grasp",
     "question": {
-      "en": "You have a User class that handles user data, password hashing, database persistence, and email notifications. Which SOLID principle is being violated, and what is the primary issue?\n```js\nclass User {\n  constructor(name, email) {\n    this.name = name;\n    this.email = email;\n  }\n  \n  hashPassword(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n}\n```",
-      "ru": "У вас есть класс User, который обрабатывает данные пользователя, хеширование пароля, сохранение в БД и отправку email-уведомлений. Какой принцип SOLID нарушается и в чём основная проблема?\n```js\nclass User {\n  constructor(name, email) {\n    this.name = name;\n    this.email = email;\n  }\n  \n  hashPassword(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n}\n```"
+      "en": "A User class handles user data, password hashing, database persistence and email notifications. SOLID is the well-known set of five object-oriented design principles. Which of them is broken here, and what is the core problem?\n```js\nclass User {\n  constructor(name, email) {\n    this.name = name;\n    this.email = email;\n  }\n  \n  hashPassword(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n}\n```",
+      "ru": "Класс User обрабатывает данные пользователя, хеширование пароля, сохранение в базу данных и отправку писем. SOLID — это известный набор из пяти принципов объектного проектирования. Какой из них здесь нарушен и в чём главная проблема?\n```js\nclass User {\n  constructor(name, email) {\n    this.name = name;\n    this.email = email;\n  }\n  \n  hashPassword(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n}\n```"
     },
     "options": {
       "en": [
@@ -150,23 +150,23 @@
       ],
       "ru": [
         "Принцип открытости/закрытости (OCP) — User не открыт для расширения",
-        "Принцип единственной ответственности (SRP) — User имеет слишком много причин для изменения",
-        "Принцип подстановки Лискова (LSP) — User не может быть заменён подклассами",
-        "Принцип разделения интерфейса (ISP) — User реализует слишком много интерфейсов"
+        "Принцип единственной ответственности (SRP) — у User слишком много причин для изменения",
+        "Принцип подстановки Лисков (LSP) — User не может быть заменён подклассами",
+        "Принцип разделения интерфейса (ISP) — User реализует слишком много несвязанных интерфейсов"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "The User class violates SRP because it has multiple reasons to change: if business logic for passwords changes, if database schema changes, or if email delivery method changes. Each responsibility should be in a separate class (PasswordHasher, UserRepository, EmailService). The other principles are not directly violated in this scenario.",
-      "ru": "Класс User нарушает SRP, потому что у него есть несколько причин для изменения: если изменится логика паролей, если изменится схема БД или если изменится способ отправки email. Каждую ответственность должен иметь отдельный класс (PasswordHasher, UserRepository, EmailService). Остальные принципы в этом случае не нарушаются."
+      "en": "The User class breaks the Single Responsibility Principle. It has several reasons to change: new password rules, a new database schema, a different email delivery method. Each responsibility belongs in its own class — PasswordHasher, UserRepository, EmailService. The other three principles are not directly violated here.",
+      "ru": "Класс User нарушает принцип единственной ответственности. У него несколько причин для изменения: новые правила для паролей, новая схема базы данных, другой способ отправки писем. Каждую ответственность нужно вынести в свой класс — PasswordHasher, UserRepository, EmailService. Остальные три принципа здесь напрямую не нарушены."
     }
   },
   {
     "id": "solid-grasp-quiz-7",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Consider a payment processing system. You have a PaymentProcessor base class, with subclasses CreditCardPayment and CryptoPayment. The base class expects a 3-digit CVV, but CryptoPayment does not use CVV. What principle is violated when CryptoPayment throws an error for the missing CVV?\n```js\nclass PaymentProcessor {\n  process(amount, cvv) {\n    if (!cvv || cvv.length !== 3) throw new Error('Invalid CVV');\n  }\n}\n\nclass CryptoPayment extends PaymentProcessor {\n  process(amount, cvv) {\n    // CryptoPayment doesn't need CVV, but must accept it\n    super.process(amount, cvv); // Throws error!\n  }\n}\n```",
-      "ru": "Рассмотрите систему обработки платежей. У вас есть базовый класс PaymentProcessor с подклассами CreditCardPayment и CryptoPayment. Базовый класс требует CVV из 3 цифр, но CryptoPayment не использует CVV. Какой принцип нарушается, когда CryptoPayment выбрасывает ошибку за отсутствие CVV?\n```js\nclass PaymentProcessor {\n  process(amount, cvv) {\n    if (!cvv || cvv.length !== 3) throw new Error('Invalid CVV');\n  }\n}\n\nclass CryptoPayment extends PaymentProcessor {\n  process(amount, cvv) {\n    // CryptoPayment doesn't need CVV, but must accept it\n    super.process(amount, cvv); // Throws error!\n  }\n}\n```"
+      "en": "Consider a payment processing system. A PaymentProcessor base class has subclasses CreditCardPayment and CryptoPayment. The base class requires a CVV (card verification value, the three-digit code printed on a bank card), but CryptoPayment does not use one. What principle is violated when CryptoPayment throws an error for the missing CVV?\n```js\nclass PaymentProcessor {\n  process(amount, cvv) {\n    if (!cvv || cvv.length !== 3) throw new Error('Invalid CVV');\n  }\n}\n\nclass CryptoPayment extends PaymentProcessor {\n  process(amount, cvv) {\n    // CryptoPayment doesn't need CVV, but must accept it\n    super.process(amount, cvv); // Throws error!\n  }\n}\n```",
+      "ru": "Рассмотрим систему обработки платежей. Есть базовый класс PaymentProcessor и подклассы CreditCardPayment и CryptoPayment. Базовый класс требует CVV (card verification value — трёхзначный код на банковской карте), но CryptoPayment его не использует. Какой принцип нарушается, когда CryptoPayment выбрасывает ошибку из-за отсутствия CVV?\n```js\nclass PaymentProcessor {\n  process(amount, cvv) {\n    if (!cvv || cvv.length !== 3) throw new Error('Invalid CVV');\n  }\n}\n\nclass CryptoPayment extends PaymentProcessor {\n  process(amount, cvv) {\n    // CryptoPayment doesn't need CVV, but must accept it\n    super.process(amount, cvv); // Throws error!\n  }\n}\n```"
     },
     "options": {
       "en": [
@@ -176,51 +176,51 @@
         "Dependency Inversion Principle (DIP) — the subclass depends on the parent class implementation"
       ],
       "ru": [
-        "Принцип разделения интерфейса (ISP) — CryptoPayment вынужден зависеть от ненужных параметров",
+        "Принцип разделения интерфейса (ISP) — CryptoPayment вынужден зависеть от ненужных ему параметров",
         "Принцип открытости/закрытости (OCP) — базовый класс не открыт для расширения без изменения",
-        "Принцип подстановки Лискова (LSP) — подкласс не может нарушать контракт родительского класса",
+        "Принцип подстановки Лисков (LSP) — подкласс не может нарушать контракт родительского класса",
         "Принцип инверсии зависимостей (DIP) — подкласс зависит от реализации родительского класса"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "This violates LSP because CryptoPayment cannot be safely substituted for PaymentProcessor without breaking the contract. The parent expects CVV validation to pass, but the child breaks this expectation. The solution is to make PaymentProcessor more flexible (e.g., accept optional CVV) or separate payment methods into independent strategies without a shared base class that enforces CVV.",
-      "ru": "Это нарушает LSP, потому что CryptoPayment не может безопасно заменить PaymentProcessor без нарушения контракта. Родитель ожидает, что валидация CVV пройдёт, но потомок нарушает это ожидание. Решение — сделать PaymentProcessor более гибким (например, принимать опциональный CVV) или разделить методы платежа на независимые стратегии без общего базового класса, требующего CVV."
+      "en": "This violates the Liskov Substitution Principle, because CryptoPayment cannot safely stand in for PaymentProcessor. The parent expects CVV validation to pass, and the child breaks that expectation. The solution is to make PaymentProcessor more flexible, for example by accepting an optional CVV. Or split payment methods into independent strategies, with no shared base class that enforces CVV.",
+      "ru": "Это нарушает принцип подстановки Лисков: CryptoPayment не может безопасно заменить PaymentProcessor. Родитель ожидает, что проверка CVV пройдёт, а потомок это ожидание ломает. Решение — сделать PaymentProcessor гибче, например принимать необязательный CVV. Или развести способы оплаты по независимым стратегиям, без общего базового класса, который требует CVV."
     }
   },
   {
     "id": "solid-grasp-quiz-8",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Which GRASP pattern is most appropriate when you need to decide which concrete class to instantiate based on input parameters, without exposing the instantiation logic to the client?\n```js\n// Client code should not know about these constructors\nconst payment = new CreditCardPayment();\nconst payment = new PayPalPayment();\nconst payment = new CryptoPayment();\n```",
-      "ru": "Какой паттерн GRASP наиболее подходит, когда вам нужно решить, какой конкретный класс инстанцировать на основе входных параметров, не раскрывая логику создания клиенту?\n```js\n// Клиент не должен знать об этих конструкторах\nconst payment = new CreditCardPayment();\nconst payment = new PayPalPayment();\nconst payment = new CryptoPayment();\n```"
+      "en": "Which design pattern fits when you must pick the concrete class to instantiate from an input parameter, without showing that logic to the client?\n```js\n// Client code should not know about these constructors\nconst payment = new CreditCardPayment();\nconst payment = new PayPalPayment();\nconst payment = new CryptoPayment();\n```",
+      "ru": "Какой паттерн проектирования подходит, когда нужно выбрать конкретный класс для создания по входному параметру, не раскрывая эту логику клиенту?\n```js\n// Клиент не должен знать об этих конструкторах\nconst payment = new CreditCardPayment();\nconst payment = new PayPalPayment();\nconst payment = new CryptoPayment();\n```"
     },
     "options": {
       "en": [
         "Strategy — encapsulate different payment algorithms in separate classes",
         "Observer — notify clients when a new payment type is available",
         "Adapter — convert payment interfaces to a common format",
-        "Factory (Creator) — a dedicated object picks the class to instantiate"
+        "Factory Method — a dedicated method picks the class to instantiate"
       ],
       "ru": [
         "Strategy — инкапсулировать различные алгоритмы платежей в отдельные классы",
         "Observer — уведомлять клиентов, когда доступен новый тип платежа",
         "Adapter — преобразовать интерфейсы платежей в общий формат",
-        "Factory (Creator) — отдельный объект выбирает, какой класс создать"
+        "Factory Method — отдельный метод выбирает, какой класс создать"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "Factory (Creator) pattern is the GRASP solution for object creation. It centralizes instantiation logic and allows clients to request objects without knowing their concrete types. Strategy would be used after objects are created to swap algorithms. Observer and Adapter solve different problems unrelated to object creation.",
-      "ru": "Паттерн Factory (Creator) — это решение GRASP для создания объектов. Он централизует логику инстанцирования и позволяет клиентам запрашивать объекты, не зная их конкретных типов. Strategy используется после создания объектов для замены алгоритмов. Observer и Adapter решают другие проблемы, не связанные с созданием объектов."
+      "en": "Factory Method owns the decision of which concrete class to instantiate and moves it out of the calling code. The client asks for a payment and never names a constructor.\n\nFactory Method is a Gang of Four pattern, not a GRASP (general responsibility assignment software patterns) one. The GRASP pattern for creation is Creator: the class that contains or closely uses an object is the one that creates it. The theory article draws the line: Factory is needed when the \"contains or uses\" condition fails and a separate creation point is required.\n\nStrategy swaps algorithms after the objects exist. Observer and Adapter solve problems unrelated to object creation.",
+      "ru": "Factory Method берёт на себя решение, какой конкретный класс создавать, и уносит его из вызывающего кода. Клиент просит платёж и не называет ни одного конструктора.\n\nFactory Method — паттерн «Банды четырёх», а не GRASP (паттерны распределения ответственности). За создание в GRASP отвечает Creator: создаёт тот класс, который содержит объект или тесно его использует. Статья по теме проводит границу: Factory нужна тогда, когда условие «содержит или использует» не выполняется и нужна выделенная точка создания.\n\nStrategy подменяет алгоритмы уже после того, как объекты созданы. Observer и Adapter решают задачи, не связанные с созданием объектов."
     }
   },
   {
     "id": "solid-grasp-quiz-9",
     "topicId": "solid-grasp",
     "question": {
-      "en": "You have a ReportGenerator that depends directly on a DatabaseConnection. To follow DIP, what should ReportGenerator depend on instead?\n```js\nclass ReportGenerator {\n  constructor() {\n    this.db = new DatabaseConnection();\n  }\n  \n  generate() {\n    const data = this.db.query('SELECT * FROM users');\n    return this.formatData(data);\n  }\n}\n```",
-      "ru": "У вас есть ReportGenerator, который напрямую зависит от DatabaseConnection. Чтобы соблюдать DIP, от чего должен зависеть ReportGenerator?\n```js\nclass ReportGenerator {\n  constructor() {\n    this.db = new DatabaseConnection();\n  }\n  \n  generate() {\n    const data = this.db.query('SELECT * FROM users');\n    return this.formatData(data);\n  }\n}\n```"
+      "en": "ReportGenerator depends directly on a DatabaseConnection. To follow the dependency inversion principle (DIP), what should ReportGenerator depend on instead?\n```js\nclass ReportGenerator {\n  constructor() {\n    this.db = new DatabaseConnection();\n  }\n  \n  generate() {\n    const data = this.db.query('SELECT * FROM users');\n    return this.formatData(data);\n  }\n}\n```",
+      "ru": "ReportGenerator напрямую зависит от DatabaseConnection. Чтобы соблюсти принцип инверсии зависимостей (DIP), от чего он должен зависеть вместо этого?\n```js\nclass ReportGenerator {\n  constructor() {\n    this.db = new DatabaseConnection();\n  }\n  \n  generate() {\n    const data = this.db.query('SELECT * FROM users');\n    return this.formatData(data);\n  }\n}\n```"
     },
     "options": {
       "en": [
@@ -231,104 +231,104 @@
       ],
       "ru": [
         "Абстракция (интерфейс или базовый класс) как DataSource, внедряемая через конструктор",
-        "Статический фабричный метод, возвращающий конкретный экземпляр DatabaseConnection",
+        "Статический фабричный метод, который возвращает конкретный экземпляр DatabaseConnection",
         "Глобальный singleton-экземпляр DatabaseConnection, используемый во всём приложении",
-        "Сам класс DatabaseConnection, но с ленивой инстанцировкой в методе-getter"
+        "Сам класс DatabaseConnection, но с ленивой инициализацией в методе-геттере"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "DIP states that high-level modules (ReportGenerator) should depend on abstractions, not concrete implementations. By injecting an abstraction like DataSource interface, ReportGenerator becomes testable and decoupled from DatabaseConnection. Factory methods, singletons, and lazy instantiation still tightly couple the classes to the concrete implementation.",
-      "ru": "DIP указывает, что высокоуровневые модули (ReportGenerator) должны зависеть от абстракций, а не от конкретных реализаций. Внедрив абстракцию, как интерфейс DataSource, ReportGenerator становится тестируемым и независимым от DatabaseConnection. Фабричные методы, синглтоны и ленивая инстанцировка всё ещё связывают классы с конкретной реализацией."
+      "en": "DIP states that high-level modules such as ReportGenerator should depend on abstractions, not on concrete implementations. Inject an abstraction like a DataSource interface, and ReportGenerator becomes testable and decoupled from DatabaseConnection. Factory methods, singletons and lazy initialisation still tie the class to the concrete implementation.",
+      "ru": "DIP говорит, что высокоуровневые модули вроде ReportGenerator должны зависеть от абстракций, а не от конкретных реализаций. Внедрите абстракцию — например интерфейс DataSource — и ReportGenerator станет тестируемым и независимым от DatabaseConnection. Фабричные методы, синглтоны и ленивая инициализация всё ещё привязывают класс к конкретной реализации."
     }
   },
   {
     "id": "solid-grasp-quiz-10",
     "topicId": "solid-grasp",
     "question": {
-      "en": "A UserController accepts requests, validates input, queries the database, sends emails, and logs events. Which principle should guide refactoring, and what is the first step?\n```js\nclass UserController {\n  handleRegistration(request) {\n    // Validation, DB query, email, logging all mixed here\n  }\n}\n```",
-      "ru": "UserController принимает запросы, валидирует вход, запрашивает БД, отправляет email и логирует события. Какой принцип должен руководить рефакторингом, и что является первым шагом?\n```js\nclass UserController {\n  handleRegistration(request) {\n    // Validation, DB query, email, logging all mixed here\n  }\n}\n```"
+      "en": "A UserController accepts requests, validates input, queries the database, sends emails and logs events. Which principle should guide the refactoring, and what is the first step?\n```js\nclass UserController {\n  handleRegistration(request) {\n    // Validation, DB query, email, logging all mixed here\n  }\n}\n```",
+      "ru": "UserController принимает запросы, проверяет входные данные, обращается к базе данных, отправляет письма и пишет события в лог. Какой принцип должен руководить рефакторингом и каким будет первый шаг?\n```js\nclass UserController {\n  handleRegistration(request) {\n    // Validation, DB query, email, logging all mixed here\n  }\n}\n```"
     },
     "options": {
       "en": [
-        "OCP — make UserController open for extension by adding abstract methods for each responsibility",
-        "SRP — extract validation, persistence, email and logging into separate collaborator classes",
-        "ISP — split UserController into smaller interfaces so only necessary methods are exposed",
-        "DIP — inject all dependencies at construction so UserController depends on abstractions"
+        "Open/Closed Principle — add abstract methods for each responsibility to UserController",
+        "Single Responsibility Principle — extract validation, persistence, email and logging into helper classes",
+        "Interface Segregation Principle — split UserController into smaller, focused interfaces",
+        "Dependency Inversion Principle — inject every dependency at construction so UserController depends on abstractions"
       ],
       "ru": [
-        "OCP — сделать UserController открытым для расширения, добавив абстрактные методы для каждой ответственности",
-        "SRP — вынести проверку данных, сохранение, отправку писем и логирование в отдельные классы-помощники",
-        "ISP — разделить UserController на меньшие интерфейсы, так чтобы были доступны только необходимые методы",
-        "DIP — внедрить все зависимости при конструировании, чтобы UserController зависел от абстракций"
+        "Принцип открытости/закрытости — добавить абстрактные методы для каждой ответственности",
+        "Принцип единственной ответственности — вынести проверку, сохранение, письма и логирование в классы-помощники",
+        "Принцип разделения интерфейса — разделить UserController на меньшие целевые интерфейсы",
+        "Принцип инверсии зависимостей — внедрить все зависимости при конструировании, чтобы UserController зависел от абстракций"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "SRP is the primary principle to apply first because UserController has multiple reasons to change. The immediate refactoring is to identify and extract separate responsibilities into collaborator classes (Validator, UserRepository, EmailService, Logger). While DIP is also important, it follows naturally once responsibilities are separated. OCP and ISP are secondary concerns.",
-      "ru": "SRP — основной принцип для применения в первую очередь, потому что UserController имеет несколько причин для изменения. Немедленный рефакторинг — выделить отдельные ответственности в collaborators (Validator, UserRepository, EmailService, Logger). Хотя DIP также важен, он следует естественным образом после разделения ответственности. OCP и ISP — вторичные заботы."
+      "en": "The Single Responsibility Principle comes first, because UserController has several reasons to change. The immediate refactoring is to extract the separate responsibilities into helper classes: Validator, UserRepository, EmailService and Logger. Dependency inversion matters too, but it follows naturally once the responsibilities are separated. Open/closed and interface segregation are secondary here.",
+      "ru": "Принцип единственной ответственности применяют первым, потому что у UserController несколько причин для изменения. Ближайший шаг рефакторинга — выделить отдельные ответственности в классы-помощники: Validator, UserRepository, EmailService и Logger. Инверсия зависимостей тоже важна, но она приходит естественно, когда ответственности уже разделены. Открытость/закрытость и разделение интерфейса здесь второстепенны."
     }
   },
   {
     "id": "solid-grasp-quiz-11",
     "topicId": "solid-grasp",
     "question": {
-      "en": "You have a User class that handles user data, password hashing, email validation, database persistence, and audit logging. Which SOLID principle is being violated, and what is the primary issue?\n\n```java\nclass User {\n  void setPassword(String pwd) { /* hash and validate */ }\n  void validateEmail(String email) { /* regex check */ }\n  void saveToDatabase() { /* SQL insert */ }\n  void logAuditTrail(String action) { /* write to audit table */ }\n}\n```",
-      "ru": "У вас есть класс User, который обрабатывает данные пользователя, хеширование пароля, валидацию email, сохранение в БД и логирование аудита. Какой принцип SOLID нарушается и в чём основная проблема?\n\n```java\nclass User {\n  void setPassword(String pwd) { /* hash and validate */ }\n  void validateEmail(String email) { /* regex check */ }\n  void saveToDatabase() { /* SQL insert */ }\n  void logAuditTrail(String action) { /* write to audit table */ }\n}\n```"
+      "en": "A User class handles user data, password hashing, email validation, database persistence and audit logging. SOLID is the set of five object-oriented design principles. Which one is broken here, and what is the core problem?\n\n```java\nclass User {\n  void setPassword(String pwd) { /* hash and validate */ }\n  void validateEmail(String email) { /* regex check */ }\n  void saveToDatabase() { /* SQL insert */ }\n  void logAuditTrail(String action) { /* write to audit table */ }\n}\n```",
+      "ru": "Класс User обрабатывает данные пользователя, хеширование пароля, проверку адреса почты, сохранение в базу данных и запись аудита. SOLID — это набор из пяти принципов объектного проектирования. Какой из них здесь нарушен и в чём главная проблема?\n\n```java\nclass User {\n  void setPassword(String pwd) { /* hash and validate */ }\n  void validateEmail(String email) { /* regex check */ }\n  void saveToDatabase() { /* SQL insert */ }\n  void logAuditTrail(String action) { /* write to audit table */ }\n}\n```"
     },
     "options": {
       "en": [
         "Open/Closed Principle (OCP) — the class is not open for extension",
         "Liskov Substitution Principle (LSP) — the class cannot be substituted properly",
         "Single Responsibility Principle (SRP) — too many reasons for the class to change",
-        "Interface Segregation Principle (ISP) — the class implements too many interfaces"
+        "Interface Segregation Principle (ISP) — the class implements too many unrelated interfaces"
       ],
       "ru": [
         "Принцип открытости/закрытости (OCP) — класс не открыт для расширения",
         "Принцип подстановки Лисков (LSP) — класс не может быть корректно подставлен",
         "Принцип единственной ответственности (SRP) — слишком много причин меняться",
-        "Принцип разделения интерфейса (ISP) — класс реализует слишком много интерфейсов"
+        "Принцип разделения интерфейса (ISP) — класс реализует слишком много несвязанных интерфейсов"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The User class violates SRP because it has multiple responsibilities: validation logic, database operations, and audit logging. Each of these could change for different reasons. OCP, LSP, and ISP are not the primary issues here—the class doesn't lack extensibility, inheritance substitution, or interface segregation problems.",
-      "ru": "Класс User нарушает SRP, так как имеет несколько ответственностей: логику валидации, операции БД и логирование аудита. Каждое из них может меняться по разным причинам. OCP, LSP и ISP здесь не являются основной проблемой—класс не испытывает недостатка в расширяемости, подстановке наследования или разделении интерфейсов."
+      "en": "The User class breaks the Single Responsibility Principle: it holds validation logic, database operations and audit logging. Each of those can change for a different reason. The other three principles are not the issue here. Nothing in this class is about extension, about substituting a subclass, or about the size of an interface.",
+      "ru": "Класс User нарушает принцип единственной ответственности: он держит логику проверки, работу с базой данных и запись аудита. Каждая из этих частей может меняться по своей причине. Остальные три принципа здесь ни при чём. В этом классе нет ни расширения, ни подстановки подкласса, ни разговора о размере интерфейса."
     }
   },
   {
     "id": "solid-grasp-quiz-12",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Consider a payment processing system. A Rectangle class inherits from Shape. Rectangle correctly implements width and height. However, a Square subclass overrides the width and height setters to enforce width == height. What principle is violated?\n\n```java\nclass Shape { }\nclass Rectangle extends Shape {\n  void setWidth(int w) { this.width = w; }\n  void setHeight(int h) { this.height = h; }\n}\nclass Square extends Rectangle {\n  @Override void setWidth(int w) { this.width = w; this.height = w; }\n  @Override void setHeight(int h) { this.width = h; this.height = h; }\n}\n```",
-      "ru": "Рассмотрим систему обработки платежей. Класс Rectangle наследуется от Shape. Rectangle правильно реализует width и height. Однако подкласс Square переопределяет сеттеры width и height, чтобы обеспечить width == height. Какой принцип нарушается?\n\n```java\nclass Shape { }\nclass Rectangle extends Shape {\n  void setWidth(int w) { this.width = w; }\n  void setHeight(int h) { this.height = h; }\n}\nclass Square extends Rectangle {\n  @Override void setWidth(int w) { this.width = w; this.height = w; }\n  @Override void setHeight(int h) { this.width = h; this.height = h; }\n}\n```"
+      "en": "A Rectangle class inherits from Shape and correctly implements width and height. A Square subclass overrides the width and height setters to enforce width == height. What principle is violated?\n\n```java\nclass Shape { }\nclass Rectangle extends Shape {\n  void setWidth(int w) { this.width = w; }\n  void setHeight(int h) { this.height = h; }\n}\nclass Square extends Rectangle {\n  @Override void setWidth(int w) { this.width = w; this.height = w; }\n  @Override void setHeight(int h) { this.width = h; this.height = h; }\n}\n```",
+      "ru": "Класс Rectangle наследуется от Shape и правильно реализует width и height. Подкласс Square переопределяет сеттеры width и height так, чтобы width == height. Какой принцип нарушается?\n\n```java\nclass Shape { }\nclass Rectangle extends Shape {\n  void setWidth(int w) { this.width = w; }\n  void setHeight(int h) { this.height = h; }\n}\nclass Square extends Rectangle {\n  @Override void setWidth(int w) { this.width = w; this.height = w; }\n  @Override void setHeight(int h) { this.width = h; this.height = h; }\n}\n```"
     },
     "options": {
       "en": [
-        "Single Responsibility Principle (SRP) — the class hierarchy is too complex",
+        "Single Responsibility Principle (SRP) — the class hierarchy has grown too complex",
         "Dependency Inversion Principle (DIP) — the class depends on concrete types",
-        "GRASP Creator pattern — the object creation logic is misplaced",
+        "Creator pattern — the object creation logic is misplaced",
         "Liskov Substitution Principle (LSP) — the subclass breaks the parent contract"
       ],
       "ru": [
         "Принцип единственной ответственности (SRP) — иерархия класса слишком сложна",
         "Принцип инверсии зависимостей (DIP) — класс зависит от конкретных типов",
-        "Паттерн GRASP Creator — логика создания объекта находится в неправильном месте",
+        "Паттерн Creator — логика создания объекта находится в неправильном месте",
         "Принцип подстановки Лисков (LSP) — подкласс нарушает контракт родителя"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "This is a classic LSP violation. A client expecting a Rectangle should be able to call setWidth and setHeight independently; Square breaks this contract by forcing width == height. This breaks substitutability. SRP, DIP, and GRASP Creator are not relevant to this issue.",
-      "ru": "Это классическое нарушение LSP. Клиент, ожидающий Rectangle, должен иметь возможность независимо вызывать setWidth и setHeight; Square нарушает этот контракт, устанавливая width == height. Это нарушает заменяемость. SRP, DIP и GRASP Creator не связаны с этой проблемой."
+      "en": "This is a classic violation of the Liskov Substitution Principle. A client holding a Rectangle must be able to call setWidth and setHeight independently, and Square breaks that contract by forcing width == height. Substitutability is gone.\n\nThe other three options describe different problems: reasons to change, what a class depends on, and who creates an object. None of those breaks here.",
+      "ru": "Это классическое нарушение принципа подстановки Лисков. Клиент, который держит Rectangle, должен уметь вызывать setWidth и setHeight независимо, а Square ломает этот контракт, приравнивая width к height. Заменяемости больше нет.\n\nОстальные три варианта описывают другие проблемы: число причин для изменения, зависимости класса и то, кто создаёт объект. Здесь ломается не это."
     }
   },
   {
     "id": "solid-grasp-quiz-13",
     "topicId": "solid-grasp",
     "question": {
-      "en": "A reporting system has an IReporter interface used by ReportGenerator. IReporter includes methods for PDF export, Excel export, CSV export, and JSON export. However, some implementations only need PDF export. What principle should be applied to fix this design flaw?",
-      "ru": "Система отчётов имеет интерфейс IReporter, используемый ReportGenerator. IReporter включает методы для экспорта в PDF, Excel, CSV и JSON. Однако некоторые реализации нужны только для экспорта в PDF. Какой принцип следует применить, чтобы исправить этот недостаток проектирования?"
+      "en": "A reporting system has an IReporter interface used by ReportGenerator. IReporter includes methods for export to PDF (portable document format), Excel, CSV (comma-separated values) and JSON. However, some implementations only need PDF export. What principle should be applied to fix this design flaw?",
+      "ru": "В системе отчётов есть интерфейс IReporter, которым пользуется ReportGenerator. IReporter содержит методы экспорта в PDF (переносимый формат документов), Excel, CSV (значения, разделённые запятыми) и JSON. Но некоторым реализациям нужен только экспорт в PDF. Какой принцип исправит этот изъян проектирования?"
     },
     "options": {
       "en": [
@@ -346,8 +346,8 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "ISP states that clients should not be forced to depend on interfaces they don't use. Instead of one large IReporter interface, create IPdfExporter, IExcelExporter, ICsvExporter, etc. This way, implementations only depend on the methods they actually need. SRP, OCP, and DIP address different concerns and don't solve the interface bloat problem.",
-      "ru": "ISP гласит, что клиенты не должны быть вынуждены зависеть от интерфейсов, которые они не используют. Вместо одного большого интерфейса IReporter создайте IPdfExporter, IExcelExporter, ICsvExporter и т.д. Таким образом, реализации зависят только от методов, которые они фактически используют. SRP, OCP и DIP решают разные проблемы и не решают проблему переполнения интерфейса."
+      "en": "ISP says clients should not be forced to depend on interfaces they do not use. Instead of one large IReporter, create IPdfExporter, IExcelExporter and ICsvExporter. Each implementation then depends only on the methods it needs. The other three principles address different concerns and do not solve interface bloat.",
+      "ru": "ISP говорит, что клиента нельзя заставлять зависеть от интерфейсов, которыми он не пользуется. Вместо одного большого IReporter сделайте IPdfExporter, IExcelExporter и ICsvExporter. Тогда каждая реализация зависит только от нужных ей методов. Остальные три принципа решают другие задачи и не убирают раздутый интерфейс."
     }
   },
   {
@@ -362,27 +362,27 @@
         "Open/Closed Principle (OCP) — make OrderProcessor open for extension by overriding processOrder",
         "Dependency Inversion Principle (DIP) — introduce an IOrderRepository interface and inject it",
         "Single Responsibility Principle (SRP) — separate database logic into a different class",
-        "GRASP Expert pattern — assign responsibility to the class with the most information"
+        "Expert pattern — assign responsibility to the class with the most information"
       ],
       "ru": [
         "Принцип открытости/закрытости (OCP) — сделайте OrderProcessor открытым для расширения, переопределяя processOrder",
         "Принцип инверсии зависимостей (DIP) — введите интерфейс IOrderRepository и внедрите его",
-        "Принцип единственной ответственности (SRP) — отделите логику БД в отдельный класс",
-        "Паттерн GRASP Expert — назначьте ответственность классу с наибольшей информацией"
+        "Принцип единственной ответственности (SRP) — отделите работу с базой данных в отдельный класс",
+        "Паттерн Expert — назначьте ответственность классу с наибольшей информацией"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "DIP states that high-level modules should depend on abstractions, not low-level modules. Introduce an IOrderRepository interface, make MySqlDatabase implement it, and inject the repository into OrderProcessor. This decouples the order processor from a specific database implementation. OCP, SRP, and GRASP Expert don't solve the tight coupling issue.",
-      "ru": "DIP гласит, что высокоуровневые модули должны зависеть от абстракций, а не от низкоуровневых модулей. Введите интерфейс IOrderRepository, сделайте MySqlDatabase его реализацией и внедрите репозиторий в OrderProcessor. Это отделяет процессор заказа от конкретной реализации БД. OCP, SRP и GRASP Expert не решают проблему жёсткой связанности."
+      "en": "DIP says that high-level modules should depend on abstractions, not on low-level modules. Introduce an IOrderRepository interface, make MySqlDatabase implement it, and inject the repository into OrderProcessor. That decouples the order processor from one specific database. Open/closed, single responsibility and the Expert pattern do not solve tight coupling.",
+      "ru": "DIP говорит, что высокоуровневые модули должны зависеть от абстракций, а не от низкоуровневых модулей. Введите интерфейс IOrderRepository, сделайте MySqlDatabase его реализацией и внедрите репозиторий в OrderProcessor. Это отвязывает процессор заказов от одной конкретной базы данных. Открытость/закрытость, единственная ответственность и паттерн Expert жёсткую связанность не убирают."
     }
   },
   {
     "id": "solid-grasp-quiz-15",
     "topicId": "solid-grasp",
     "question": {
-      "en": "You are applying the GRASP Information Expert pattern to assign the calculateDiscount() responsibility. Which class should own this method?\n\n```java\nclass Customer {\n  int loyaltyPoints;\n  MembershipTier membershipTier;\n}\nclass Order {\n  List<Item> items;\n  Customer customer;\n}\nclass PromotionEngine {\n  // Has access to current promotions, seasonal discounts, etc.\n}\n```",
-      "ru": "Вы применяете паттерн GRASP Information Expert, чтобы назначить ответственность calculateDiscount(). Какой класс должен владеть этим методом?\n\n```java\nclass Customer {\n  int loyaltyPoints;\n  MembershipTier membershipTier;\n}\nclass Order {\n  List<Item> items;\n  Customer customer;\n}\nclass PromotionEngine {\n  // Has access to current promotions, seasonal discounts, etc.\n}\n```"
+      "en": "You are applying the Information Expert pattern from GRASP (general responsibility assignment software patterns) to assign the calculateDiscount() responsibility. Which class should own this method?\n\n```java\nclass Customer {\n  int loyaltyPoints;\n  MembershipTier membershipTier;\n}\nclass Order {\n  List<Item> items;\n  Customer customer;\n}\nclass PromotionEngine {\n  // Has access to current promotions, seasonal discounts, etc.\n}\n```",
+      "ru": "Вы применяете паттерн Information Expert из GRASP (паттерны распределения ответственности), чтобы назначить ответственность calculateDiscount(). Какой класс должен владеть этим методом?\n\n```java\nclass Customer {\n  int loyaltyPoints;\n  MembershipTier membershipTier;\n}\nclass Order {\n  List<Item> items;\n  Customer customer;\n}\nclass PromotionEngine {\n  // Has access to current promotions, seasonal discounts, etc.\n}\n```"
     },
     "options": {
       "en": [
@@ -400,16 +400,16 @@
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "The Information Expert pattern assigns responsibility to the class with the most relevant information to perform the task. PromotionEngine has access to promotion rules, seasonal discounts, and business logic. While Customer has loyalty data and Order has items, PromotionEngine is the true expert for calculating discounts based on complex business rules. SRP might favor a separate DiscountCalculator, but GRASP Expert focuses on information ownership.",
-      "ru": "Паттерн Information Expert назначает ответственность классу, обладающему наиболее релевантной информацией для выполнения задачи. PromotionEngine имеет доступ к правилам продвижений, сезонным скидкам и бизнес-логике. Хотя Customer имеет данные лояльности, а Order имеет товары, PromotionEngine является истинным экспертом для расчёта скидок на основе сложных бизнес-правил. SRP может потребовать отдельный DiscountCalculator, но GRASP Expert сосредоточен на владении информацией."
+      "en": "The Information Expert pattern gives a responsibility to the class that holds the most relevant information for the task. PromotionEngine has the promotion rules, the seasonal discounts and the business logic.\n\nCustomer only has loyalty data and Order only has items, so PromotionEngine is the real expert on discounts. A separate DiscountCalculator would please the single responsibility principle, but Expert asks who owns the information.",
+      "ru": "Паттерн Information Expert отдаёт ответственность классу, у которого больше всего нужной для задачи информации. У PromotionEngine есть правила акций, сезонные скидки и бизнес-логика.\n\nУ Customer только данные лояльности, у Order только товары, поэтому настоящий эксперт по скидкам — PromotionEngine. Отдельный DiscountCalculator порадовал бы принцип единственной ответственности, но Expert спрашивает, кто владеет информацией."
     }
   },
   {
     "id": "solid-grasp-quiz-16",
     "topicId": "solid-grasp",
     "question": {
-      "en": "A User class handles authentication, database persistence, email notifications, and report generation. Which SOLID principle is violated, and what is the primary issue?\n```js\nclass User {\n  authenticate(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n  generateReport() { /* ... */ }\n}\n```",
-      "ru": "Класс User обрабатывает аутентификацию, сохранение в БД, отправку email и создание отчётов. Какой принцип SOLID нарушен и в чём основная проблема?\n```js\nclass User {\n  authenticate(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n  generateReport() { /* ... */ }\n}\n```"
+      "en": "A User class handles authentication, database persistence, email notifications and report generation. SOLID is short for five design principles of object-oriented code. Which one is violated here, and what is the core problem?\n```js\nclass User {\n  authenticate(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n  generateReport() { /* ... */ }\n}\n```",
+      "ru": "Класс User обрабатывает аутентификацию, сохранение в базу данных, отправку писем и создание отчётов. SOLID — это короткое имя для пяти принципов объектного проектирования. Какой из них здесь нарушен и в чём главная проблема?\n```js\nclass User {\n  authenticate(password) { /* ... */ }\n  saveToDatabase() { /* ... */ }\n  sendWelcomeEmail() { /* ... */ }\n  generateReport() { /* ... */ }\n}\n```"
     },
     "options": {
       "en": [
@@ -419,16 +419,16 @@
         "Single Responsibility Principle — the class has multiple reasons to change"
       ],
       "ru": [
-        "Open/Closed Principle — класс не закрыт для модификации",
-        "Interface Segregation Principle — класс предоставляет слишком много публичных методов",
-        "Dependency Inversion Principle — класс зависит от конкретных реализаций",
-        "Single Responsibility Principle — класс имеет несколько причин для изменения"
+        "Принцип открытости/закрытости — класс не закрыт для модификации",
+        "Принцип разделения интерфейса — класс предоставляет слишком много публичных методов",
+        "Принцип инверсии зависимостей — класс зависит от конкретных реализаций",
+        "Принцип единственной ответственности — класс имеет несколько причин для изменения"
       ]
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "SRP is violated because the User class has four distinct reasons to change: authentication logic updates, database schema changes, email service modifications, and reporting requirements. Each responsibility should be separated into different classes (UserAuthenticator, UserRepository, EmailService, ReportGenerator). While ISP and OCP could be secondary concerns, the core violation is SRP.",
-      "ru": "SRP нарушен, так как класс User имеет четыре разные причины для изменения: обновления логики аутентификации, изменения схемы БД, модификации email-сервиса и требования отчётности. Каждая ответственность должна быть разделена на отдельные классы (UserAuthenticator, UserRepository, EmailService, ReportGenerator). Хотя ISP и OCP могут быть вторичными проблемами, основное нарушение — SRP."
+      "en": "The single responsibility principle is violated: the User class has four distinct reasons to change. Authentication logic, the database schema, the email service and reporting requirements all move independently. Split them into UserAuthenticator, UserRepository, EmailService and ReportGenerator. Interface segregation and open/closed are secondary here.",
+      "ru": "Нарушен принцип единственной ответственности: у класса User четыре разные причины для изменения. Логика аутентификации, схема базы данных, почтовый сервис и требования к отчётам меняются независимо друг от друга. Разнесите их по классам UserAuthenticator, UserRepository, EmailService и ReportGenerator. Разделение интерфейса и открытость/закрытость здесь второстепенны."
     }
   },
   {
@@ -446,16 +446,16 @@
         "Single Responsibility Principle — Animal class mixes too many concerns"
       ],
       "ru": [
-        "Liskov Substitution Principle — Penguin не может безопасно заменить Animal",
-        "Open/Closed Principle — класс Animal должен быть закрыт для модификации",
-        "Interface Segregation Principle — метод fly должен быть в отдельном интерфейсе",
-        "Single Responsibility Principle — класс Animal смешивает слишком много забот"
+        "Принцип подстановки Лисков — Penguin не может безопасно заменить Animal",
+        "Принцип открытости/закрытости — класс Animal должен быть закрыт для модификации",
+        "Принцип разделения интерфейса — метод fly должен быть в отдельном интерфейсе",
+        "Принцип единственной ответственности — класс Animal смешивает слишком много ролей"
       ]
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "LSP is violated because derived classes must be substitutable for their base class without breaking the contract. If code expects an Animal and receives a Penguin, calling fly() would throw an error instead of working correctly. The correct solution is to use composition (Penguin has no fly method) or separate interfaces (FlyingAnimal and NonFlyingAnimal).",
-      "ru": "LSP нарушен, потому что производные классы должны быть заменяемы на базовый класс без нарушения контракта. Если код ожидает Animal и получает Penguin, вызов fly() выбросит ошибку вместо корректной работы. Правильное решение — использовать композицию (Penguin не имеет метода fly) или отдельные интерфейсы (FlyingAnimal и NonFlyingAnimal)."
+      "en": "The Liskov Substitution Principle is violated, because a derived class must be usable wherever its base class is expected. If code holds an Animal and receives a Penguin, calling fly() throws instead of working. The fix is composition, where Penguin simply has no fly method, or separate interfaces such as FlyingAnimal and NonFlyingAnimal.",
+      "ru": "Нарушен принцип подстановки Лисков: производный класс должен работать везде, где ожидается базовый. Если код держит Animal и получает Penguin, вызов fly() выбросит ошибку вместо нормальной работы. Решение — композиция, при которой у Penguin просто нет метода fly, или отдельные интерфейсы FlyingAnimal и NonFlyingAnimal."
     }
   },
   {
@@ -463,7 +463,7 @@
     "topicId": "solid-grasp",
     "question": {
       "en": "A PaymentProcessor class depends on a specific CreditCardGateway concrete class. To test PaymentProcessor, you must instantiate a real CreditCardGateway. What principle should be applied to fix this design issue?",
-      "ru": "Класс PaymentProcessor зависит от конкретного класса CreditCardGateway. Чтобы протестировать PaymentProcessor, нужно инстанцировать реальный CreditCardGateway. Какой принцип следует применить, чтобы исправить эту проблему дизайна?"
+      "ru": "Класс PaymentProcessor зависит от конкретного класса CreditCardGateway. Чтобы протестировать PaymentProcessor, нужно создать настоящий CreditCardGateway. Какой принцип следует применить, чтобы исправить эту проблему проектирования?"
     },
     "options": {
       "en": [
@@ -473,51 +473,51 @@
         "Interface Segregation Principle — break CreditCardGateway into smaller interfaces"
       ],
       "ru": [
-        "Open/Closed Principle — расширить CreditCardGateway вместо его изменения",
-        "Dependency Inversion Principle — внедрять интерфейс, а не конкретный класс",
-        "Single Responsibility Principle — разбить PaymentProcessor на более мелкие классы",
-        "Interface Segregation Principle — разбить CreditCardGateway на более мелкие интерфейсы"
+        "Принцип открытости/закрытости — расширить CreditCardGateway вместо его изменения",
+        "Принцип инверсии зависимостей — внедрять интерфейс, а не конкретный класс",
+        "Принцип единственной ответственности — разбить PaymentProcessor на более мелкие классы",
+        "Принцип разделения интерфейса — разбить CreditCardGateway на более мелкие интерфейсы"
       ]
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "DIP solves this by requiring high-level modules to depend on abstractions, not concrete implementations. PaymentProcessor should depend on an IPaymentGateway interface, allowing you to inject a mock or stub for testing. This enables loose coupling and better testability without affecting production code.",
-      "ru": "DIP решает это, требуя, чтобы высокоуровневые модули зависели от абстракций, а не конкретных реализаций. PaymentProcessor должен зависеть от интерфейса IPaymentGateway, позволяя вам внедрять mock или stub для тестирования. Это обеспечивает слабую связанность и лучшую тестируемость без изменения production-кода."
+      "en": "The dependency inversion principle solves this. High-level modules must depend on abstractions, not on concrete implementations. PaymentProcessor should depend on an IPaymentGateway interface, so you can inject a mock or a stub in tests. That gives loose coupling and better testability without changing production code.",
+      "ru": "Это решает принцип инверсии зависимостей. Высокоуровневые модули должны зависеть от абстракций, а не от конкретных реализаций. PaymentProcessor должен зависеть от интерфейса IPaymentGateway, чтобы в тестах можно было подставить заглушку (mock или stub). Это даёт слабую связанность и лучшую тестируемость, а рабочий код менять не нужно."
     }
   },
   {
     "id": "solid-grasp-quiz-19",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Consider a DataProcessor that reads CSV and JSON files. The interface requires implementers to read(), parse(), and validate(). But JSON files don't need validation. A JSONProcessor implements the interface but leaves validate() empty. What principle is being violated?\n```js\nclass DataProcessor {\n  read() { }\n  parse() { }\n  validate() { }\n}\nclass JSONProcessor extends DataProcessor {\n  validate() { /* empty - not needed for JSON */ }\n}\n```",
-      "ru": "Рассмотрим DataProcessor, который читает CSV и JSON файлы. Интерфейс требует от реализаторов read(), parse() и validate(). Но JSON-файлы не требуют валидации. JSONProcessor реализует интерфейс, но оставляет validate() пустым. Какой принцип нарушается?\n```js\nclass DataProcessor {\n  read() { }\n  parse() { }\n  validate() { }\n}\nclass JSONProcessor extends DataProcessor {\n  validate() { /* empty - not needed for JSON */ }\n}\n```"
+      "en": "Consider a DataProcessor that reads CSV (comma-separated values) and JSON files. The interface requires implementers to read(), parse() and validate(). But JSON files don't need validation. A JSONProcessor implements the interface but leaves validate() empty. What principle is being violated?\n```js\nclass DataProcessor {\n  read() { }\n  parse() { }\n  validate() { }\n}\nclass JSONProcessor extends DataProcessor {\n  validate() { /* empty - not needed for JSON */ }\n}\n```",
+      "ru": "Рассмотрим DataProcessor, который читает файлы CSV (значения, разделённые запятыми) и JSON. Интерфейс требует от реализаций read(), parse() и validate(). Но файлам JSON проверка не нужна. JSONProcessor реализует интерфейс, но оставляет validate() пустым. Какой принцип нарушается?\n```js\nclass DataProcessor {\n  read() { }\n  parse() { }\n  validate() { }\n}\nclass JSONProcessor extends DataProcessor {\n  validate() { /* empty - not needed for JSON */ }\n}\n```"
     },
     "options": {
       "en": [
-        "Single Responsibility Principle — DataProcessor has too many reasons to change",
+        "Single Responsibility Principle — DataProcessor has too many separate reasons to change",
         "Liskov Substitution Principle — JSONProcessor breaks the validate contract",
         "Interface Segregation Principle — JSONProcessor must implement an unused method",
         "Open/Closed Principle — the class is not closed for modification"
       ],
       "ru": [
-        "Single Responsibility Principle — DataProcessor имеет слишком много причин для изменения",
-        "Liskov Substitution Principle — JSONProcessor нарушает контракт validate",
-        "Interface Segregation Principle — JSONProcessor обязан реализовать ненужный метод",
-        "Open/Closed Principle — класс не закрыт для модификации"
+        "Принцип единственной ответственности — у DataProcessor слишком много причин для изменения",
+        "Принцип подстановки Лисков — JSONProcessor нарушает контракт validate",
+        "Принцип разделения интерфейса — JSONProcessor обязан реализовать ненужный метод",
+        "Принцип открытости/закрытости — класс не закрыт для модификации"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "ISP is violated because JSONProcessor is forced to implement validate() even though it doesn't need it. The solution is to split the interface: create a Validatable interface separate from DataProcessor, and only processors that need validation should implement it. This prevents classes from depending on methods they don't use.",
-      "ru": "ISP нарушен, потому что JSONProcessor вынужден реализовать validate(), хотя это не требуется. Решение — разделить интерфейс: создать отдельный интерфейс Validatable отдельно от DataProcessor, и только процессоры, которым требуется валидация, должны его реализовать. Это предотвращает зависимость классов от методов, которые они не используют."
+      "en": "The interface segregation principle is violated, because JSONProcessor must implement validate() even though it does not need it. Split the interface: put validate() in a separate Validatable interface, and let only the processors that need validation implement it. Then no class depends on a method it never uses.",
+      "ru": "Нарушен принцип разделения интерфейса: JSONProcessor обязан реализовать validate(), хотя он ему не нужен. Разделите интерфейс — вынесите validate() в отдельный интерфейс Validatable, и пусть его реализуют только те процессоры, которым нужна проверка. Тогда ни один класс не зависит от метода, которым не пользуется."
     }
   },
   {
     "id": "solid-grasp-quiz-20",
     "topicId": "solid-grasp",
     "question": {
-      "en": "Which GRASP pattern is applied when you create a Mediator object to handle communication between multiple complex subsystems, reducing direct dependencies between them?",
-      "ru": "Какой GRASP-паттерн применяется, когда вы создаёте объект Mediator для управления коммуникацией между несколькими сложными подсистемами, уменьшая прямые зависимости между ними?"
+      "en": "You introduce a Mediator object to handle communication between several complex subsystems, so they stop depending on each other directly. Which pattern from GRASP (general responsibility assignment software patterns) does that apply?",
+      "ru": "Вы вводите объект Mediator, чтобы он вёл общение между несколькими сложными подсистемами и они перестали зависеть друг от друга напрямую. Какой паттерн из GRASP (паттерны распределения ответственности) при этом применяется?"
     },
     "options": {
       "en": [
@@ -533,10 +533,10 @@
         "Mediator — централизует логику управления и коммуникацию"
       ]
     },
-    "correctIndex": 3,
+    "correctIndex": 2,
     "explanation": {
-      "en": "The Mediator pattern (a GRASP pattern) encapsulates how a set of objects interact by introducing a mediator object that handles their communication. This reduces coupling between components and centralizes control logic. While Low Coupling is a principle and Expert and Creator are related GRASP patterns, Mediator is the specific pattern that addresses communication coordination between subsystems.",
-      "ru": "Паттерн Mediator (GRASP-паттерн) инкапсулирует взаимодействие набора объектов, вводя объект-посредник, управляющий их коммуникацией. Это снижает связанность между компонентами и централизует логику управления. Хотя Low Coupling — это принцип, а Expert и Creator — связанные GRASP-паттерны, Mediator — это специфический паттерн, решающий проблему координации коммуникации между подсистемами."
+      "en": "Low Coupling is the GRASP pattern at work here. It tells you to keep dependencies between classes minimal, so a change in one does not force changes in the others. A mediator does exactly that: each subsystem talks to it instead of referencing every other subsystem.\n\nMediator itself is a Gang of Four behavioural pattern, not a GRASP one. The theory article lists seven GRASP patterns: Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism and Pure Fabrication. Mediator is not among them. Creator answers who instantiates an object, and Expert answers who owns the data.",
+      "ru": "Здесь работает GRASP-паттерн Low Coupling. Он требует держать зависимости между классами минимальными, чтобы изменение одного не тянуло правки в остальных. Посредник делает ровно это: каждая подсистема говорит с ним, а не ссылается на все остальные.\n\nСам Mediator — поведенческий паттерн «Банды четырёх», а не GRASP. Статья по теме перечисляет семь GRASP-паттернов: Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism и Pure Fabrication. Mediator в этот список не входит. Creator отвечает на вопрос, кто создаёт объект, а Expert — кто владеет данными."
     }
   },
   {
@@ -562,16 +562,16 @@
     },
     "correctIndex": 0,
     "explanation": {
-      "en": "DIP is the key here: instead of PaymentProcessor depending on concrete payment types, it should depend on an abstraction (PaymentHandler interface). Each payment method (CreditCardHandler, PayPalHandler) implements this interface. This makes the system open for extension without modifying PaymentProcessor (also OCP). While SRP and ISP apply, DIP with Strategy directly addresses the if-else anti-pattern and hard-coded dependencies.",
-      "ru": "DIP здесь ключевой: вместо того, чтобы PaymentProcessor зависел от конкретных типов платежей, он должен зависеть от абстракции (интерфейс PaymentHandler). Каждый способ платежа (CreditCardHandler, PayPalHandler) реализует этот интерфейс. Это делает систему открытой для расширения без изменения PaymentProcessor (также OCP). Хотя SRP и ISP применимы, DIP со стратегией напрямую решает проблему if-else и жёсткие зависимости."
+      "en": "Dependency inversion is the key. Instead of depending on concrete payment types, PaymentProcessor should depend on a PaymentHandler interface. CreditCardHandler and PayPalHandler each implement it.\n\nThat also opens the system for extension without modifying PaymentProcessor. Single responsibility and interface segregation apply too, but dependency inversion with Strategy is what removes the if-else chain and the hard-coded dependencies.",
+      "ru": "Ключ здесь — инверсия зависимостей. Вместо того чтобы зависеть от конкретных типов платежей, PaymentProcessor должен зависеть от интерфейса PaymentHandler. Его реализуют CreditCardHandler и PayPalHandler.\n\nЭто заодно открывает систему для расширения без изменения PaymentProcessor. Единственная ответственность и разделение интерфейса тоже применимы, но именно инверсия зависимостей со Strategy убирает цепочку if-else и жёстко зашитые зависимости."
     }
   },
   {
     "id": "solid-grasp-quiz-23",
     "topicId": "solid-grasp",
     "question": {
-      "en": "You have a Rectangle class with width and height. A Square class inherits from Rectangle and overrides setWidth() and setHeight() to keep width equal to height. What SOLID principle is violated?\n\n```typescript\nclass Rectangle {\n  setWidth(w: number) { this.width = w; }\n  setHeight(h: number) { this.height = h; }\n  area(): number { return this.width * this.height; }\n}\nclass Square extends Rectangle {\n  setWidth(w: number) { this.width = w; this.height = w; }\n  setHeight(h: number) { this.width = h; this.height = h; }\n}\n```",
-      "ru": "У вас есть класс Rectangle с width и height. Square наследуется от Rectangle и переопределяет setWidth() и setHeight(), чтобы ширина равнялась высоте. Какой принцип SOLID нарушается?\n\n```typescript\nclass Rectangle {\n  setWidth(w: number) { this.width = w; }\n  setHeight(h: number) { this.height = h; }\n  area(): number { return this.width * this.height; }\n}\nclass Square extends Rectangle {\n  setWidth(w: number) { this.width = w; this.height = w; }\n  setHeight(h: number) { this.width = h; this.height = h; }\n}\n```"
+      "en": "A Rectangle class has width and height. A Square class inherits from Rectangle and overrides setWidth() and setHeight() to keep width equal to height. SOLID is the set of five object design principles. Which one is violated?\n\n```typescript\nclass Rectangle {\n  setWidth(w: number) { this.width = w; }\n  setHeight(h: number) { this.height = h; }\n  area(): number { return this.width * this.height; }\n}\nclass Square extends Rectangle {\n  setWidth(w: number) { this.width = w; this.height = w; }\n  setHeight(h: number) { this.width = h; this.height = h; }\n}\n```",
+      "ru": "У класса Rectangle есть width и height. Square наследуется от Rectangle и переопределяет setWidth() и setHeight(), чтобы ширина равнялась высоте. SOLID — это набор из пяти принципов объектного проектирования. Какой из них нарушается?\n\n```typescript\nclass Rectangle {\n  setWidth(w: number) { this.width = w; }\n  setHeight(h: number) { this.height = h; }\n  area(): number { return this.width * this.height; }\n}\nclass Square extends Rectangle {\n  setWidth(w: number) { this.width = w; this.height = w; }\n  setHeight(h: number) { this.width = h; this.height = h; }\n}\n```"
     },
     "options": {
       "en": [
@@ -589,8 +589,8 @@
     },
     "correctIndex": 1,
     "explanation": {
-      "en": "LSP is violated because Square breaks the contract of Rectangle: a caller expecting Rectangle behavior (setting width independently of height) will be surprised when Square changes both. A Square should not inherit from Rectangle; instead, both should inherit from a Shape interface or composition should be used. This is a classic LSP violation in OOP.",
-      "ru": "LSP нарушается потому, что Square нарушает контракт Rectangle: вызывающий код, ожидающий поведения Rectangle (независимое изменение ширины и высоты), будет удивлён, когда Square меняет оба значения. Square не должен наследоваться от Rectangle; вместо этого оба должны наследоваться от интерфейса Shape или использоваться композиция. Это классическое нарушение LSP в ООП."
+      "en": "The Liskov Substitution Principle is violated, because Square breaks the contract of Rectangle. A caller expects to set width independently of height, and Square silently changes both. Square should not inherit from Rectangle. Let both inherit from a Shape interface, or use composition instead. This is the classic example of the principle in object-oriented programming.",
+      "ru": "Нарушен принцип подстановки Лисков: Square ломает контракт Rectangle. Вызывающий код рассчитывает менять ширину независимо от высоты, а Square молча меняет обе. Square не должен наследоваться от Rectangle. Пусть оба наследуются от интерфейса Shape, либо используйте композицию. Это классический пример этого принципа в объектно-ориентированном программировании."
     }
   },
   {
@@ -609,15 +609,15 @@
       ],
       "ru": [
         "Паттерн Strategy — создать интерфейс ReportStrategy и менять реализации во время выполнения",
-        "Паттерн Factory — использовать фабрику для создания экземпляров БД вместо прямого создания",
+        "Паттерн Factory — использовать фабрику для создания экземпляров базы данных вместо прямого создания",
         "Принцип инверсии зависимостей — внедрять интерфейс Database через конструктор класса",
         "Паттерн Adapter — обернуть MySQLDatabase адаптером для изменения его интерфейса"
       ]
     },
     "correctIndex": 2,
     "explanation": {
-      "en": "DIP with constructor injection directly solves the problem: ReportGenerator should depend on a Database interface, not MySQLDatabase. Pass the database implementation via constructor. This decouples the classes, allows easy testing with mock objects, and supports switching databases without changing ReportGenerator. While Factory and Adapter have use cases, constructor injection is the most direct SOLID fix here.",
-      "ru": "DIP с внедрением конструктора напрямую решает проблему: ReportGenerator должен зависеть от интерфейса Database, а не от MySQLDatabase. Передавайте реализацию БД через конструктор. Это разделяет классы, позволяет легко тестировать с mock-объектами и поддерживает переключение БД без изменения ReportGenerator. Хотя Factory и Adapter имеют применение, внедрение конструктора — самое прямое SOLID решение."
+      "en": "The dependency inversion principle with constructor injection solves this directly. ReportGenerator should depend on a Database interface, not on MySQLDatabase. Pass the database implementation into the constructor.\n\nThat decouples the classes, makes testing with mock objects easy, and lets you switch databases without touching ReportGenerator. Factory and Adapter have their uses, but constructor injection is the most direct fix here.",
+      "ru": "Принцип инверсии зависимостей вместе с внедрением через конструктор решает это напрямую. ReportGenerator должен зависеть от интерфейса Database, а не от MySQLDatabase. Передавайте реализацию в конструктор.\n\nЭто разделяет классы, упрощает тесты с объектами-заглушками и позволяет менять базу данных, не трогая ReportGenerator. У Factory и Adapter есть свои применения, но внедрение через конструктор — самое прямое решение здесь."
     }
   },
   {
@@ -643,8 +643,8 @@
     },
     "correctIndex": 3,
     "explanation": {
-      "en": "ISP is violated: Robot is forced to implement an eat() method it doesn't need, leading to a nonsensical implementation (throwing an error). The fix is to segregate the interface into Workable { work() } and Eatable { eat() }. Robot implements only Workable, while Human implements both. This prevents clients from depending on methods they don't use and keeps interfaces focused.",
-      "ru": "ISP нарушается: Robot вынужден реализовать метод eat(), который ему не нужен, что приводит к бессмысленной реализации (выброс ошибки). Решение — разделить интерфейс на Workable { work() } и Eatable { eat() }. Robot реализует только Workable, а Human реализует оба. Это предотвращает зависимость клиентов от методов, которые они не используют, и сохраняет интерфейсы сфокусированными."
+      "en": "The interface segregation principle is violated: Robot must implement an eat() method it does not need. The result is a nonsensical implementation that just throws an error. Split the interface into Workable { work() } and Eatable { eat() }. Robot then implements only Workable, while Human implements both. No client ends up depending on a method it never calls.",
+      "ru": "Нарушен принцип разделения интерфейса: Robot обязан реализовать метод eat(), который ему не нужен. Получается бессмысленная реализация, которая просто выбрасывает ошибку. Разделите интерфейс на Workable { work() } и Eatable { eat() }. Тогда Robot реализует только Workable, а Human — оба. Ни один клиент не зависит от метода, который никогда не вызывает."
     }
   }
 ]

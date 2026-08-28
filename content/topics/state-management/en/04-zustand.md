@@ -476,53 +476,28 @@ function CartBadge() {
 
 ## Why Zustand often beats Redux and MobX in new projects
 
-```txt
-Comparison by pain points:
+Redux Toolkit (RTK) is the official Redux package, and below it is shortened
+to RTK. Here is the comparison by pain points:
 
-Boilerplate:
-  Redux/RTK   — createSlice + createAsyncThunk + selectors + Provider
-                + typed hooks — at least 50 lines per domain
-  MobX        — class + makeAutoObservable + observer + Context/Provider
-                + hooks — 30-40 lines per domain
-  Zustand     — create() — 10-15 lines, everything in one place
+| Pain point | Redux/RTK | MobX | Zustand |
+|---|---|---|---|
+| Boilerplate | `createSlice` + `createAsyncThunk` + selectors + Provider + typed hooks. At least 50 lines per domain. | Class + `makeAutoObservable` + `observer` + Context/Provider + hooks. 30-40 lines per domain. | Just `create()`. 10-15 lines, everything in one place. |
+| Learning curve | Middleware pipeline, Immer internals, RTK Query lifecycle, `createSelector`, action matching. 2-3 days to confident use. | Reactive system, Proxy, classes, strict mode, `flow`. 1-2 days. | `create` + `set` + `get`. 30 minutes. |
+| TypeScript | Types are good, but you need `AppDispatch`, `RootState`, `TypedUseSelectorHook`. Template code. | Classes and TypeScript work naturally. But `flow` generators lose typing at the `yield` point. | `create<State>()` infers everything. Nothing extra. |
+| Bundle size (minified+gzip) | Redux + RTK — ~14KB. | MobX + mobx-react-lite — ~18KB. | ~1KB. |
+| Testability | Reducers are pure functions and test perfectly. Async thunks need a mock dispatch. | Classes test without React. Reactions need dispose. | `store.getState()` and `store.setState()` in tests. Simple. |
 
-Learning curve:
-  Redux/RTK   — middleware pipeline, Immer internals, RTK Query lifecycle,
-                createSelector, action matching — 2-3 days to confident use
-  MobX        — reactive system, Proxy, classes, strict mode, flow —
-                1-2 days
-  Zustand     — create + set + get — 30 minutes
-
-TypeScript:
-  Redux/RTK   — RTK has good types, but needs AppDispatch,
-                RootState, TypedUseSelectorHook — template code
-  MobX        — classes + TypeScript work naturally, but flow
-                generators lose typing at the yield point
-  Zustand     — create<State>() — full type inference, nothing extra
-
-Bundle size (minified+gzip):
-  Redux + RTK              — ~14KB
-  MobX + mobx-react-lite  — ~18KB
-  Zustand                 — ~1KB
-
-Testability:
-  Redux/RTK   — reducers are pure functions, test perfectly;
-                async thunks need a mock dispatch
-  MobX        — classes test without React; reactions need dispose
-  Zustand     — store.getState() and store.setState() in tests — simple
-```
-
-**The main argument for Zustand in a new project**: it imposes no architectural constraints. If in six months you decide you need stricter structure — you can add devtools, immer, or persist one by one, or migrate to RTK. Starting minimal and adding as needed is better than starting with a full Redux configuration and not using 70% of it.
+**The main argument for Zustand in a new project**: it imposes no architectural constraints. If in six months you decide you need stricter structure, you can add devtools, immer or persist one by one — or migrate to RTK. Starting minimal and adding as needed is better than starting with a full Redux configuration and not using 70% of it.
 
 ## Common interview traps
 
-- **"Zustand is just useState for multiple components"** — an understatement. Zustand has a middleware system, DevTools integration, `subscribe` outside React, persist, slices support, and SSR. The key difference from `useState` — the store lives outside the React tree and does not cause a provider re-render.
+- **"Zustand is just useState for multiple components"** — an understatement. Zustand has a middleware system, DevTools integration, `subscribe` outside React, persist, slices support, and server-side rendering (SSR) support. The key difference from `useState` — the store lives outside the React tree and does not cause a provider re-render.
 
 - **Subscribing to the whole store instead of specific fields** — the most common performance mistake:
   ```tsx
   // ❌
   const { items, discount, total, addItem } = useCartStore();
-  // ↑ re-renders on ANY field change
+  // ↑ re-renders on any field of the store
 
   // ✅
   const items = useCartStore(state => state.items);
@@ -531,8 +506,8 @@ Testability:
 
 - **Not knowing that actions in Zustand are stable references** — functions defined inside `create` are created once and do not change when state updates. This means they are safe to pass to `useEffect` without adding to the deps array and do not need `useCallback` memoization.
 
-- **Accidentally using `set` with full state replacement (`replace: true`)** — calling `set({ count: 0 }, true)` the second argument `true` means full replacement of the entire state, not a merge. If you forget this — you lose all other store fields without a single error.
+- **Accidentally using `set` with full state replacement (`replace: true`)** — the second argument replaces the whole state instead of merging into it. That is exactly what `set({ count: 0 }, true)` does. If you forget this — you lose all other store fields without a single error.
 
-- **"Zustand doesn't scale to large apps"** — incorrect. Zustand is used in large projects via the slices pattern. The limitation is not app size but requirements: if you need a strict audit trail of changes or full time-travel debugging at the Redux DevTools level — Zustand provides this only with devtools middleware, but less flexibly than Redux.
+- **"Zustand doesn't scale to large apps"** — incorrect. Zustand is used in large projects via the slices pattern. The limitation is not app size but requirements. Say you need a strict audit trail of changes, or full time-travel debugging at the Redux DevTools level. Zustand gives you that only through devtools middleware, and less flexibly than Redux does.
 
-- **Comparing Zustand with MobX incorrectly** — they solve different problems differently: MobX is built on a reactive dependency graph (you declare data, MobX finds subscribers automatically), Zustand is built on explicit subscriptions (you choose the selector yourself). Both are minimal in boilerplate compared to Redux, but their mental models are fundamentally different.
+- **Comparing Zustand with MobX incorrectly** — they solve different problems in different ways. MobX is built on a reactive dependency graph: you declare the data, and MobX finds the subscribers itself. Zustand is built on explicit subscriptions: you choose what to subscribe to via a selector. Both are minimal in boilerplate compared to Redux, but their mental models are fundamentally different.

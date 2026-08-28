@@ -2,77 +2,48 @@
 
 ## Diagnostic metrics vs. user-experience metrics
 
-Core Web Vitals (LCP, CLS, INP) answer the question **"how does the page feel to the user?"** TTFB, FCP, TTI, and TBT are **diagnostic metrics**: they answer **"why"** LCP is bad, **"why"** the page feels slow.
+This article is about the four **diagnostic metrics**. TTFB (time to first byte) and FCP (first contentful paint) describe how fast something appears. TTI (time to interactive) and TBT (total blocking time) describe how long the page stays unresponsive.
 
-```txt
-Typical optimization workflow:
+Core Web Vitals answer a different question: how does the page feel to the user? Those three are LCP (largest contentful paint), CLS (cumulative layout shift) and INP (interaction to next paint). The diagnostic four answer the follow-up: *why* does it feel that way. Core Web Vitals tell you the page is slow; TTFB, FCP, TTI and TBT tell you where to dig.
 
-  Lighthouse → "LCP 5.2s — poor"
-                        ↓
-  Look at diagnostics:
-    TTFB = 2.1s → slow server
-    FCP = 2.8s  → waiting on TTFB + render-blocking resources
-    TBT = 850ms → heavy JS after load
-    TTI = 6.3s  → page not interactive because of TBT
-                        ↓
-  Priority: fix TTFB first (most expensive),
-  then render-blocking, then JS bundle
+A typical optimization session looks like this. Lighthouse reports an LCP of 5.2 seconds and calls it poor, so you open the diagnostics:
 
-Without these metrics you know *what* is slow.
-With them — you know *where to dig*.
-```
+- **TTFB = 2.1 s** — the server is slow.
+- **FCP = 2.8 s** — waiting on TTFB plus render-blocking resources.
+- **TBT = 850 ms** — heavy JS after load.
+- **TTI = 6.3 s** — the page isn't interactive because of TBT.
+
+The order of work follows from those numbers. Fix TTFB first, because it is the most expensive. Then the render-blocking resources, then the JS bundle.
 
 ## TTFB — Time to First Byte
 
 ### What exactly is measured
 
-TTFB is the time from the start of navigation (URL entered / link clicked) to receiving the **first byte of the HTTP response body** from the server.
+TTFB is the time from the start of navigation to the **first byte of the HTTP response body** arriving from the server. Navigation starts when the user enters a URL or clicks a link. That time is a sum of six parts:
 
-```txt
-What goes into TTFB:
+- redirect time;
+- the DNS (domain name system) lookup;
+- opening the TCP (transmission control protocol) connection;
+- the TLS (transport layer security) handshake;
+- request time, that is how long the request takes to reach the server;
+- server processing plus response start — the most "controllable" part, which covers page rendering, database queries and the rest.
 
-  [Redirect time]
-  + [DNS lookup]
-  + [TCP connection]
-  + [TLS handshake]
-  + [Request time]          ← time for the request to reach the server
-  + [Server processing]     ← the most "controllable" part: page
-  + [Response start]          rendering, DB queries, etc.
-  ________________________
-  = TTFB
+The same breakdown is visible in DevTools: Network → click the document → Timing tab.
 
-  Breakdown visible in:
-  DevTools → Network → click the document → Timing tab
-```
+| Rating | TTFB |
+|---|---|
+| ✅ Good | under 800 ms |
+| ⚠️ Needs improvement | 800 ms — 1800 ms |
+| ❌ Poor | over 1800 ms |
 
-```txt
-✅ Good:              < 800 ms
-⚠️  Needs improvement: 800 ms — 1800 ms
-❌ Poor:              > 1800 ms
-
-Important nuance: Lighthouse measures TTFB for the first
-HTML document. TTFB for API requests is a separate story
-(no redirect/DNS overhead on a keep-alive connection).
-```
+One nuance matters here. Lighthouse measures TTFB for the first HTML document. TTFB for API requests is a separate story, because a keep-alive connection carries no redirect or DNS overhead.
 
 ### Main causes of poor TTFB
 
-```txt
-1. No CDN → a user in Tokyo gets a response from a server
-   in Virginia: ~150ms just for RTT × 2–3 for TLS handshake
-   = 300–450ms before any server processing
-
-2. Slow server processing:
-   - ORM generates N+1 queries to the DB
-   - No result caching (Redis / in-memory)
-   - Cold starts on serverless functions (Lambda, Vercel Edge)
-
-3. Redirects: HTTP → HTTPS → www → 3 additional RTTs
-   before the browser receives real content
-
-4. No HTTP/2 → multiple parallel resources each need
-   their own TCP connection (head-of-line blocking)
-```
+1. **No CDN (content delivery network).** A user in Tokyo gets the response from a server in Virginia. That is about 150 ms of round-trip time alone, times two or three for the TLS handshake — 300–450 ms before any server processing.
+2. **Slow server processing.** Common shapes: an ORM (object-relational mapper) generating N+1 queries to the database. No caching of results in Redis or in memory. Cold starts on serverless functions such as Lambda or Vercel Edge.
+3. **Redirects.** The chain `HTTP → HTTPS → www` costs three extra round trips before the browser receives real content.
+4. **No HTTP/2.** Several parallel resources each need their own TCP connection, and head-of-line blocking sets in.
 
 ### Optimizing TTFB
 
@@ -129,41 +100,23 @@ async function getPageData(slug: string) {
 }
 ```
 
-```txt
-DevTools diagnosis for TTFB:
-
-  Network tab → click the main HTML document → Timing:
-    "Waiting for server response" = server processing time
-    "Initial connection" + "SSL" = network overhead
-
-  If "Waiting" > 500ms — the problem is server-side
-  If "Initial connection" > 200ms — no CDN or keep-alive
-```
+**Diagnosing TTFB in DevTools.** Open the Network tab, click the main HTML document, then go to Timing. The row `Waiting for server response` is the server processing time, while `Initial connection` plus `SSL` is the network overhead. If the waiting row is over 500 ms, the problem is server-side. If the initial connection is over 200 ms, there is no CDN and no keep-alive.
 
 ## FCP — First Contentful Paint
 
 ### What exactly is measured
 
-FCP records the moment when the browser renders **any** content from the DOM: text, an image, SVG, canvas — anything that isn't a blank white screen.
+FCP records the moment when the browser renders **any** content from the DOM (document object model). Text, an image, an SVG (scalable vector graphics) drawing, a canvas — anything that isn't a blank white screen counts.
 
-```txt
-FCP ≠ LCP:
-  FCP — "something, anything appeared on screen"
-  LCP — "the most important content has rendered"
+FCP is not LCP. FCP means that something, anything, appeared on screen; LCP means that the most important content has rendered. A loading spinner can be the FCP, while the actual content appears later and becomes the LCP.
 
-  Example: a loading spinner can be the FCP,
-  while the actual content appears later — that will be the LCP.
+That gap is what makes FCP useful for diagnosis. If FCP is fast but LCP is slow, the problem is the specific LCP resource: an image or a font. The overall speed of HTML delivery is fine.
 
-  FCP is useful for diagnosis: if FCP is fast but LCP is slow,
-  the problem is with loading the specific LCP resource
-  (image/font), not with the overall HTML delivery speed.
-```
-
-```txt
-✅ Good:              < 1.8 s
-⚠️  Needs improvement: 1.8 — 3.0 s
-❌ Poor:              > 3.0 s
-```
+| Rating | FCP |
+|---|---|
+| ✅ Good | under 1.8 s |
+| ⚠️ Needs improvement | 1.8 — 3.0 s |
+| ❌ Poor | over 3.0 s |
 
 ### What blocks FCP — render-blocking resources
 
@@ -213,68 +166,38 @@ onFCP((metric) => {
 });
 ```
 
-```txt
 Key FCP diagnostics in Lighthouse:
-  → "Eliminate render-blocking resources" — the main audit
-  → shows specific URLs and how many ms each costs
-  → "Minify CSS" / "Remove unused CSS" — also relevant
-     (large CSS downloads and parses more slowly)
-```
+
+- **Eliminate render-blocking resources** — the main audit. It lists the specific addresses and how many milliseconds each one costs.
+- **Minify CSS** and **Remove unused CSS** — also relevant, because a large stylesheet downloads and parses more slowly.
 
 ### FCP and Server-Side Rendering
 
-```txt
-FCP across different rendering strategies:
+**CSR (client-side rendering), as in Create React App.** Between TTFB and FCP the browser receives an empty HTML document plus `bundle.js`. Between FCP and LCP the JS executes and React renders the DOM. So the FCP is a blank screen or a minimal skeleton, and the gap between FCP and LCP is **long**.
 
-  CSR (Create React App):
-    TTFB → FCP: received empty HTML + bundle.js
-    FCP → LCP: JS executed, React rendered the DOM
-    ↳ FCP = blank screen or minimal skeleton
-      LONG gap between FCP and LCP
+**SSR (server-side rendering), as in `getServerSideProps`.** Between TTFB and FCP the browser receives ready-to-render HTML, so the FCP already shows real content. The trade-off is a higher TTFB, because the server pays the rendering cost.
 
-  SSR (Next.js getServerSideProps):
-    TTFB → FCP: received ready-to-render HTML
-    ↳ FCP already shows real content
-    ↳ But TTFB may be higher (server rendering cost)
-
-  SSG (Static Site Generation):
-    TTFB → FCP: HTML pre-built, CDN serves it instantly
-    ↳ Optimal TTFB AND FCP
-    ↳ Trade-off: no personalization without hydration
-```
+**SSG (static site generation).** The HTML is pre-built and the CDN serves it instantly, which gives an optimal TTFB **and** FCP. The trade-off is that there is no personalization without hydration.
 
 ## TTI — Time to Interactive
 
 ### What "interactive" means technically
 
-TTI is the point after which the page **reliably responds to interactions within 50ms**. Lighthouse's algorithm:
+TTI is the point after which the page **reliably responds to interactions within 50ms**. Lighthouse computes it like this, simplified:
 
-```txt
-TTI algorithm (simplified):
+1. Find FCP — that is where the search starts.
+2. Look for a "quiet window" five seconds long. Inside it there must be no Long Tasks, that is no tasks over 50 ms on the main thread. There must also be no more than two in-flight network requests.
+3. TTI is the beginning of that quiet window, that is the end of the last Long Task before the five-second window.
 
-  1. Find FCP (start of search)
-  2. Search for a "quiet window" 5 seconds long:
-     - no Long Tasks (tasks > 50ms) on the main thread
-     - no more than 2 in-flight network requests
-  3. TTI = the beginning of that quiet window
-       (i.e. the end of the last Long Task before the 5s window)
+Between FCP and TTI the page is **visible but not responsive**, and clicks are buffered or ignored.
 
-  FCP ←——————— TTI
-       this period = page is VISIBLE but NOT RESPONSIVE
-       (clicks are buffered or ignored)
-```
+| Rating | TTI |
+|---|---|
+| ✅ Good | under 3.8 s |
+| ⚠️ Needs improvement | 3.8 — 7.3 s |
+| ❌ Poor | over 7.3 s |
 
-```txt
-✅ Good:              < 3.8 s
-⚠️  Needs improvement: 3.8 — 7.3 s
-❌ Poor:              > 7.3 s
-
-Critical distinction TTI vs FCP:
-  The user SEES content (FCP), taps a button —
-  nothing happens, because JS is still executing
-  (TTI hasn't been reached yet). This is one of the most
-  frustrating patterns in mobile web.
-```
+The distinction between TTI and FCP is what bites in practice. The user **sees** content, which is FCP, taps a button, and nothing happens, because JS is still executing and TTI hasn't been reached. This is one of the most frustrating patterns on the mobile web.
 
 ### What widens the FCP → TTI gap
 
@@ -299,84 +222,56 @@ async function handleCheckoutClick() {
 }
 ```
 
-```txt
-Practical rule for TTI:
-  Total JS parsed/executed before TTI must be minimal.
+**A practical rule for TTI:** the total amount of JS parsed and executed before TTI must be minimal.
 
-  On mobile devices, JS parsing is roughly 3–4× slower
-  than desktop (weaker CPU):
-  - 100 KB JS on a MacBook Pro = ~50ms
-  - 100 KB JS on a mid-range Android = ~150–200ms
-  → This directly lengthens Long Tasks and pushes TTI out
-```
+On mobile devices JS parsing is roughly three to four times slower than on desktop, because the CPU (central processing unit) is weaker:
+
+- 100 kilobytes of JS on a MacBook Pro — about 50 ms.
+- 100 kilobytes of JS on a mid-range Android phone — about 150–200 ms.
+
+That difference directly lengthens Long Tasks and pushes TTI out.
 
 ## TBT — Total Blocking Time
 
 ### The formula and what it means
 
-TBT is a lab metric (measured in Lighthouse, not in real-user field data) that sums the **"excess" time** of all Long Tasks between FCP and TTI:
+TBT is a lab metric: it is measured in Lighthouse, not in real-user field data. It sums the **"excess" time** of all Long Tasks between FCP and TTI. A Long Task is any task on the main thread lasting longer than 50 ms.
 
 ```txt
-Long Task = any task on the main thread lasting > 50ms
-
 TBT = sum of (Long Task duration − 50ms)
       for every Long Task between FCP and TTI
-
-Example:
-  Long Task 1: 250ms → contribution = 250 − 50 = 200ms
-  Long Task 2: 90ms  → contribution =  90 − 50 =  40ms
-  Long Task 3: 180ms → contribution = 180 − 50 = 130ms
-  ——————————————————————————————————————————————————————
-  TBT = 370ms
-
-Why 50ms? That's the threshold at which an interaction
-feels immediate (<100ms). The first 50ms of a Long Task
-"don't count" — that's acceptable. Everything beyond
-is real blocking time.
 ```
 
-```txt
-✅ Good:              < 200 ms
-⚠️  Needs improvement: 200 — 600 ms
-❌ Poor:              > 600 ms
-```
+Worked example with three Long Tasks:
+
+- 250 ms contributes 250 − 50 = 200 ms.
+- 90 ms contributes 90 − 50 = 40 ms.
+- 180 ms contributes 180 − 50 = 130 ms.
+
+The total is a TBT of 370 ms. Why 50 ms? That is the threshold at which an interaction still feels immediate, under 100 ms. The first 50 ms of a Long Task "don't count" and are acceptable; everything beyond that is real blocking time.
+
+| Rating | TBT |
+|---|---|
+| ✅ Good | under 200 ms |
+| ⚠️ Needs improvement | 200 — 600 ms |
+| ❌ Poor | over 600 ms |
 
 ### TBT as a lab proxy for INP
 
-```txt
-The TBT ↔ INP relationship:
+INP is a **field** metric, measured on real users. TBT is a **lab** metric, produced by Lighthouse and reproducible on demand. The correlation between them is high, but not one to one. TBT shows the **potential** for a bad INP. If there are many Long Tasks, an interaction that lands on one of them will produce a poor INP.
 
-  INP — FIELD metric (real users)
-  TBT — LAB metric (Lighthouse, reproducible)
-
-  The correlation is high, but not 1:1:
-    TBT shows the POTENTIAL for a bad INP
-    (if there are many Long Tasks, an interaction
-    that lands on one will produce a poor INP)
-
-  In practice:
-    TBT > 600ms → INP > 500ms is very likely
-    TBT < 200ms → INP < 200ms is likely
-    But INP can be poor with a good TBT if a specific
-    event handler is heavy (TBT is page-wide;
-    INP is about specific interactions)
-```
+In practice, TBT above 600 ms makes an INP above 500 ms very likely. TBT below 200 ms makes an INP below 200 ms likely. But INP can be poor with a good TBT, if one specific event handler is heavy. TBT is page-wide, while INP is about specific interactions.
 
 ### Diagnosing TBT — where to find Long Tasks
 
-```txt
-Chrome DevTools → Performance → record page load:
+Open Chrome DevTools → Performance and record a page load. In the Main thread track, the red rectangles above tasks are the Long Tasks. Click one and open Bottom-up or Call Tree to see what is taking the time.
 
-  Main thread track:
-    Red rectangles above tasks = Long Tasks
-    Click → Bottom-up / Call Tree → see what's taking time
+Typical causes:
 
-  Typical culprits:
-    - JS parsing and compilation (Script Evaluation)
-    - React/Vue/Angular hydration
-    - Third-party scripts (chat widgets, analytics, A/B tests)
-    - Large DOM operations (rendering long lists)
-```
+- JS parsing and compilation, shown as Script Evaluation;
+- hydration in React, Vue or Angular;
+- third-party scripts: chat widgets, analytics, A/B tests;
+- large DOM operations, such as rendering long lists.
 
 ```ts
 // Detecting Long Tasks programmatically in the browser
@@ -438,42 +333,24 @@ Navigation starts
 
 ## DevTools workflow for diagnosis
 
-```txt
-Step 1: Lighthouse audit (tab or CLI)
-  → gives all four metrics + CWV
-  → points to specific problems (audit items)
-  → run in incognito mode (no extensions!)
+**Step 1. Lighthouse audit,** as a tab or as a command-line tool. It gives all four metrics plus the Core Web Vitals, and points at specific problems as audit items. Run it in incognito mode, so that extensions don't distort the numbers.
 
-Step 2: Performance panel for TTFB and Long Tasks
-  DevTools → Performance → ⏺ (Ctrl+Shift+E to reload with recording)
-  → Timings track: FCP, LCP, TBT markers
-  → Network track: any early render-blocker?
-  → Main track: where are the Long Tasks?
+**Step 2. The Performance panel, for TTFB and Long Tasks.** Open DevTools → Performance → ⏺, or press Ctrl+Shift+E to reload with recording on.
 
-Step 3: Network tab for TTFB
-  Hover over the waterfall bar for the document → Timing breakdown
-  "Waiting for server response" = real server time
-  Compare to CDN node TTFB: if close to the user and still slow
-  → it's the server, not the network
+- The Timings track holds the FCP, LCP and TBT markers.
+- The Network track shows whether anything blocks rendering early.
+- The Main track shows where the Long Tasks are.
 
-Step 4: Coverage tab
-  DevTools → ⋮ → More tools → Coverage → ⏺ → reload
-  → shows % of unused JS/CSS during load
-  → red bars = code that loaded but wasn't needed
-```
+**Step 3. The Network tab, for TTFB.** Hover over the waterfall bar of the document to get the Timing breakdown, where `Waiting for server response` is the real server time. Compare it with the TTFB measured from a CDN node. If that node is close to the user and the response is still slow, the problem is the server, not the network.
+
+**Step 4. The Coverage tab.** Open DevTools → ⋮ → More tools → Coverage → ⏺ and reload the page. It shows the share of unused JS and CSS during load, and the red bars mark code that loaded but wasn't needed.
 
 ## Connection to other topics
 
-```txt
-[Core Web Vitals]         — LCP, CLS, INP are user-facing metrics;
-                            TTFB/FCP/TBT/TTI are the tools
-                            for diagnosing why they're poor
-[Resource Loading]        — preload/prefetch and render-blocking
-                            directly affect FCP
-[JavaScript Performance]  — code splitting reduces TTI and TBT;
-                            Long Tasks are the foundation of TBT
-[Caching Strategies]      — browser cache and CDN cut TTFB
-```
+- [Core Web Vitals](./01-core-web-vitals.md) — LCP, CLS and INP are the user-facing metrics. TTFB, FCP, TBT and TTI are the tools for diagnosing why they're poor.
+- [Resource Loading](./03-resource-loading.md) — `preload`, `prefetch` and render-blocking resources directly affect FCP.
+- [JavaScript Performance](./04-javascript-performance.md) — code splitting reduces TTI and TBT, and Long Tasks are the foundation of TBT.
+- [Caching Strategies](./07-caching-strategies.md) — the browser cache and a CDN cut TTFB.
 
 ## Common interview traps
 
@@ -487,6 +364,6 @@ Step 4: Coverage tab
 
 - **Not knowing the thresholds** — interviews often ask "what counts as good TTFB?" TTFB: <800ms; FCP: <1.8s; TTI: <3.8s; TBT: <200ms. Memorizing exact numbers matters less than knowing the order of magnitude.
 
-- **"I added defer to all scripts — FCP is good now"** — `defer` helps FCP, but if the CSS itself is large or unoptimized, FCP will still be slow. You need to look at the whole picture: TTFB → render-blocking → critical CSS size.
+- **"I added defer to all scripts — FCP is good now"** — `defer` does help FCP. But if the CSS itself is large or unoptimized, FCP will still be slow. You need the whole picture: TTFB, then render-blocking resources, then the size of the critical CSS.
 
 - **Ignoring the mobile/desktop difference** — Lighthouse by default simulates a mobile device (4x CPU slowdown, slow network). TTI and TBT on mobile can be 3–5× worse than on desktop. Saying "our TTI is good" without specifying the device is an incomplete answer.

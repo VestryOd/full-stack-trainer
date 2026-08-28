@@ -6,9 +6,12 @@
 JWT (JSON Web Token) — это строка из трёх частей, разделённых точками: `header.payload.signature`. Каждая часть — base64url-encoded.
 
 ```txt
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9    ← Header (base64url)
-.eyJzdWIiOiIxMjMiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MTk5MzI4MDB9  ← Payload
-.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c   ← Signature
+Header (base64url):
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+Payload:
+.eyJzdWIiOiIxMjMiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MTk5MzI4MDB9
+Signature:
+.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 ```
 
 ```json
@@ -25,32 +28,29 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9    ← Header (base64url)
 }
 ```
 
-**Критически важно**: payload только подписан (Signature = HMAC(header + payload, secret)), но НЕ зашифрован. Любой может декодировать payload. Никогда не класть в JWT: пароли, секреты, полные PII данные.
+**Критически важно**: payload только подписан, но **не** зашифрован. Подпись — это HMAC (hash-based message authentication code), посчитанный по заголовку и payload с секретом. Любой может декодировать payload, поэтому никогда не кладите в JWT пароли, секреты и полные PII (personally identifiable information) данные.
 
 Signature верифицирует: payload не был изменён после выдачи. Подделать signature без secret невозможно.
 
 ## Access Token + Refresh Token — схема и зачем нужны оба
 
-```txt
-Проблема: если выдать один long-lived JWT (например, 30 дней) →
-при краже он валиден 30 дней. Отозвать нельзя (stateless).
+Наивный ответ — один долгоживущий JWT, скажем на 30 дней. Выдайте такой, и украденная копия остаётся валидной 30 дней, а отозвать её нельзя, потому что схема stateless. Решение — два токена с разными сроками жизни и разными местами хранения.
 
-Решение: два токена с разными TTL и местами хранения.
+**Access Token**
 
-Access Token:
-  TTL: 5-15 минут
-  Содержит: userId, role, permissions
-  Хранение: memory (JS variable) или HttpOnly Cookie
-  Использование: в Authorization header КАЖДОГО API запроса
-  При краже: валиден максимум 15 минут → риск минимален
+- TTL (time to live): 5-15 минут.
+- Содержит: `userId`, роль, разрешения.
+- Хранение: memory (переменная JS) или HttpOnly Cookie.
+- Использование: в заголовке `Authorization` **каждого** API-запроса.
+- При краже: валиден максимум 15 минут, поэтому риск минимален.
 
-Refresh Token:
-  TTL: 7-30 дней (или до явного logout)
-  Содержит: только jti (token ID) или userId + jti
-  Хранение: HttpOnly Secure Cookie (не доступен JavaScript)
-  Использование: ТОЛЬКО для получения нового Access Token
-  Хранится в БД: можно мгновенно отозвать удалив из БД
-```
+**Refresh Token**
+
+- TTL: 7-30 дней, или до явного logout.
+- Содержит: только `jti` (token ID), либо `userId` плюс `jti`.
+- Хранение: HttpOnly Secure Cookie, недоступный JavaScript.
+- Использование: **только** для получения нового access token.
+- Хранится в базе данных, поэтому удаление записи отзывает его мгновенно.
 
 ## Полный flow — от логина до refresh
 
@@ -117,7 +117,12 @@ app.post('/auth/refresh', async (req, res) => {
   );
 
   res
-    .cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'strict', path: '/auth' })
+    .cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      path: '/auth',
+    })
     .json({ accessToken });
 });
 
@@ -134,59 +139,48 @@ app.post('/auth/logout', authenticate, async (req, res) => {
 
 ## Где хранить токены — выбор с trade-offs
 
-```txt
-Access Token:
-  Memory (JS variable):
-    ✓ Недоступен XSS (не в DOM, не в storage)
-    ✗ Теряется при обновлении страницы → нужен silent refresh
-    Использование: SPA с aggressive refresh strategy
+Каждый вариант меняет одну угрозу на другую. XSS (cross-site scripting) читает всё, что доступно JavaScript, а CSRF (cross-site request forgery) едет на всём, что браузер отправляет автоматически.
 
-  HttpOnly Cookie:
-    ✓ Недоступен XSS
-    ✗ CSRF риск (отправляется автоматически) → нужен sameSite=strict/lax
-    Использование: традиционные web apps
+**Access Token в памяти, переменной JS:**
 
-  localStorage / sessionStorage:
-    ✗ НЕБЕЗОПАСНО: XSS script может прочитать и отправить токен
-    ✗ Никогда не используй для access token
+- ✓ Недоступен XSS: его нет ни в DOM (document object model), ни в хранилищах.
+- ✗ Теряется при обновлении страницы, поэтому нужен silent refresh.
+- Использование: SPA (single-page application) с агрессивной стратегией обновления.
 
-Refresh Token:
-  HttpOnly Secure Cookie + path=/auth:
-    ✓ Недоступен XSS
-    ✓ Отправляется только на /auth/* endpoints (path ограничение)
-    ✓ sameSite=strict защищает от CSRF
-    Это стандартная рекомендация
-```
+**Access Token в HttpOnly Cookie:**
+
+- ✓ Недоступен XSS.
+- ✗ Риск CSRF, потому что cookie отправляется автоматически: нужен `sameSite=strict` или `sameSite=lax`.
+- Использование: традиционные веб-приложения.
+
+**Access Token в localStorage или sessionStorage:**
+
+- ✗ **Небезопасно**: XSS-скрипт прочитает токен и отправит его атакующему.
+- ✗ Никогда не используйте это для access token.
+
+**Refresh Token в HttpOnly Secure Cookie с `path=/auth`:**
+
+- ✓ Недоступен XSS.
+- ✓ Отправляется только на эндпоинты `/auth/*` благодаря ограничению по пути.
+- ✓ `sameSite=strict` защищает от CSRF.
+- Это стандартная рекомендация.
 
 ## JWT Logout Problem — почему logout сложен и как решить
 
-Stateless природа JWT создаёт фундаментальную проблему: после COMMIT токена невозможно "забыть" его до истечения TTL.
+Stateless-природа JWT создаёт фундаментальную проблему: после выдачи токена невозможно "забыть" его до истечения TTL (time to live).
 
-```txt
-Проблемы, когда нужен instant revoke:
-  1. Пользователь нажал "Выйти со всех устройств"
-  2. Пользователь изменил пароль (старые токены должны стать невалидными)
-  3. Admin заблокировал аккаунт
-  4. Обнаружена кража токена
+**Когда нужен мгновенный revoke:**
 
-Решения:
+1. Пользователь нажал "Выйти со всех устройств".
+2. Пользователь изменил пароль, и старые токены должны стать невалидными.
+3. Администратор заблокировал аккаунт.
+4. Обнаружена кража токена.
 
-1. Короткий TTL (15 мин):
-   Простое решение. При logout просто удаляем refresh token.
-   Украденный access token валиден максимум 15 мин.
-   Ограничение: 15 минут всё равно могут быть критичны.
+**Решение 1 — короткий TTL в 15 минут.** Просто: при logout удаляем refresh token. Украденный access token тогда валиден максимум 15 минут. Ограничение: 15 минут всё равно могут быть критичны.
 
-2. Token Blacklist (Redis):
-   При logout/revoke: занести jti токена в Redis с TTL = оставшееся время жизни токена.
-   При каждом запросе: проверить jti не в blacklist.
-   Ограничение: появляется состояние (Redis), теряем чистый stateless.
-   Когда использовать: когда нужен instant revoke, есть Redis.
+**Решение 2 — token blacklist в Redis.** При logout или revoke заносим `jti` токена в Redis с TTL, равным оставшемуся времени жизни токена. На каждом запросе проверяем, что `jti` не в чёрном списке. Ограничение: появляется состояние (Redis), и чистый stateless теряется. Берите этот вариант, когда нужен мгновенный revoke и Redis уже есть.
 
-3. Refresh Token Rotation (рекомендуется):
-   Каждый refresh выдаёт НОВЫЙ refresh token и делает старый невалидным.
-   Обнаружение кражи: если refresh token уже использован → alert + revoke все токены.
-   Это не решает проблему украденного access token, только refresh.
-```
+**Решение 3 — refresh token rotation, рекомендуемый вариант.** Каждый refresh выдаёт **новый** refresh token и делает старый невалидным. Обнаружение кражи: если refresh token уже использован, поднимаем алерт и отзываем все токены. Это не решает проблему украденного access token, только украденного refresh token.
 
 ```typescript
 // Blacklist через Redis
@@ -210,21 +204,20 @@ if (payload.jti && await isRevoked(payload.jti)) {
 
 ## Алгоритмы подписи — HS256 vs RS256
 
-```txt
-HS256 (HMAC SHA-256):
-  Один симметричный ключ для подписи и верификации.
-  Кто подписывает → тот же кто верифицирует → нужен доступ к ключу.
-  Когда: монолит или microservices с общим secret (через secrets manager).
-  Риск: если secret утёк → подделка любых токенов.
+Оба имени говорят, как считается подпись. HS256 — это HMAC поверх SHA-256, то есть secure hash algorithm, с одним общим ключом. RS256 — это RSA (Rivest-Shamir-Adleman) поверх SHA-256, с парой ключей.
 
-RS256 (RSA SHA-256):
-  Асимметричная пара: private key (подписывает) + public key (верифицирует).
-  Auth service держит private key, все остальные сервисы используют public key.
-  Когда: microservices, когда нельзя раздавать secret всем сервисам.
-  Риск: если private key утёк → подделка токенов.
-  JWKS endpoint: Auth Server публикует public keys (/.well-known/jwks.json),
-  сервисы скачивают автоматически → rotation без деплоя.
-```
+**HS256 — один симметричный ключ и для подписи, и для верификации.**
+
+- Кто подписывает, тот же и верифицирует, поэтому доступ к ключу нужен всем сторонам.
+- Когда: монолит или микросервисы с общим secret через secrets manager.
+- Риск: если secret утёк, подделать можно любой токен.
+
+**RS256 — асимметричная пара: private key подписывает, public key верифицирует.**
+
+- Auth service держит private key, все остальные сервисы используют public key.
+- Когда: микросервисы, когда нельзя раздавать secret всем сервисам.
+- Риск: если private key утёк, токены можно подделать.
+- JWKS (JSON Web Key Set) endpoint: Auth Server публикует public keys по адресу `/.well-known/jwks.json`. Сервисы скачивают их автоматически, поэтому ключи ротируются без деплоя.
 
 ## Типичные ошибки на интервью
 
@@ -232,7 +225,7 @@ RS256 (RSA SHA-256):
 
 - **"Можно хранить access token в localStorage"** — это уязвимость. XSS-атака может прочитать localStorage и украсть токен. Используйте HttpOnly Cookie или memory.
 
-- **"Refresh token обязательно является JWT"** — нет. Refresh token — это opaque строка (случайный UUID), хранящаяся в БД. JWT-формат для refresh token добавляет риски (payload можно прочитать) без выгод (всё равно нужна БД для revoke).
+- **"Refresh token обязательно является JWT"** — нет. Refresh token — это непрозрачная строка, случайный UUID (universally unique identifier), хранящаяся в БД (базе данных). JWT-формат для refresh token добавляет риски (payload можно прочитать) без выгод (всё равно нужна БД для revoke).
 
 - **"Logout = удалить access token из localStorage"** — это не logout для stateful систем. Настоящий logout: удалить refresh token из БД (revoke), очистить cookie. Access token продолжит работать до истечения TTL — поэтому нужен короткий TTL или blacklist.
 

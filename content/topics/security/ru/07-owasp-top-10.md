@@ -44,27 +44,33 @@ app.get('/api/orders/:id', authenticate, async (req, res) => {
 
 Ранее называлась "Sensitive Data Exposure". Охватывает неправильное использование или отсутствие криптографии.
 
-```txt
 Типичные сценарии:
-  - HTTP вместо HTTPS (данные в открытом виде)
-  - Пароли в открытом виде или MD5/SHA-1 (устаревшие)
-  - JWT с algorithm=none (подпись не проверяется)
-  - PII данные в логах (email, IP, credit card)
-  - Слабые ключи шифрования (< 128 bit)
-  - Использование ECB режима (детерминированный → паттерны видны)
-  - Секреты в git-истории
+
+- HTTP вместо HTTPS (Hypertext Transfer Protocol Secure), и данные идут в открытом виде.
+- Пароли в открытом виде или под устаревшими MD5 (Message Digest 5) и SHA-1 (Secure Hash Algorithm 1).
+- JWT (JSON Web Token) с `algorithm=none`, то есть подпись не проверяется.
+- Персональные данные, PII (personally identifiable information), в логах: email, IP (адрес узла в сети), номер карты.
+- Слабые ключи шифрования, меньше 128 бит.
+- Использование режима ECB (electronic codebook): он детерминированный, поэтому паттерны видны.
+- Секреты в git-истории.
 
 Защита:
-  - HTTPS everywhere (HSTS header)
-  - bcrypt/Argon2 для паролей
-  - AES-256-GCM для данных at-rest
-  - Явная проверка алгоритма JWT: jwt.verify(token, secret, { algorithms: ['HS256'] })
-  - Data classification: знать что является sensitive и защищать соответственно
-```
+
+- HTTPS везде, с заголовком HSTS (HTTP Strict Transport Security).
+- bcrypt или Argon2 для паролей.
+- AES-256-GCM для данных at-rest, то есть Advanced Encryption Standard в режиме Galois/Counter Mode.
+- Явная проверка алгоритма JWT: `jwt.verify(token, secret, { algorithms: ['HS256'] })`.
+- Классификация данных: знать, какие данные чувствительные, и защищать их соответственно.
 
 ## A03: Injection
 
-Включает SQL, NoSQL, LDAP, OS Command, SSTI injection.
+Injection — это семейство уязвимостей, а не одна ошибка. Недоверенный ввод доходит до интерпретатора, который читает его как инструкции:
+
+- SQL (Structured Query Language) injection — против реляционной базы данных.
+- NoSQL (нереляционное хранилище) injection — против баз вроде MongoDB.
+- LDAP (Lightweight Directory Access Protocol) injection — против сервера каталогов.
+- OS (operating system) Command injection — ввод доходит до командной оболочки.
+- SSTI (server-side template injection) — ввод доходит до шаблонизатора.
 
 ```typescript
 // SQL Injection (подробнее: [SQL Injection and Input Validation])
@@ -91,27 +97,29 @@ app.post('/api/convert', (req, res) => {
 
 Архитектурные уязвимости — те, что нельзя исправить только патчем кода.
 
-```txt
 Примеры:
-  - Нет rate limiting на login endpoint → brute force возможен
-  - Password reset без MFA и без истечения токена → account takeover
-  - Нет lockout после N попыток → enumeration атаки
-  - Критические операции без второго фактора подтверждения
-  - Хранение всех данных в одной БД без изоляции
-  - Публичный S3 bucket для приватных документов
 
-Threat Modeling (STRIDE): на стадии дизайна:
-  S — Spoofing identity
-  T — Tampering with data
-  R — Repudiation
-  I — Information disclosure
-  D — Denial of service
-  E — Elevation of privilege
+- Нет rate limiting на login endpoint, и перебор паролей становится возможен.
+- Password reset без MFA (multi-factor authentication) и без истечения токена, отсюда account takeover.
+- Нет lockout после N попыток, отсюда enumeration-атаки.
+- Критические операции без второго фактора подтверждения.
+- Хранение всех данных в одной базе данных без изоляции.
+- Публичный S3 (Amazon Simple Storage Service) bucket для приватных документов.
 
-Каждый feature нужно пропускать через STRIDE до написания кода.
-```
+Моделирование угроз идёт на стадии дизайна, а чеклист для него — STRIDE — по букве на класс угрозы:
+
+- **S** — Spoofing identity.
+- **T** — Tampering with data.
+- **R** — Repudiation.
+- **I** — Information disclosure.
+- **D** — Denial of service.
+- **E** — Elevation of privilege.
+
+Каждую фичу нужно пропускать через STRIDE до написания кода.
 
 ## A05: Security Misconfiguration
+
+Неправильная конфигурация — это дефолты, которые никто не поменял. В коде ниже четыре таких дефолта и починка к каждому, начиная с CORS (cross-origin resource sharing), где разрешены любые origin.
 
 ```typescript
 // Примеры неправильной конфигурации:
@@ -127,7 +135,8 @@ app.use((err, req, res, next) => {
 // ХОРОШО:
 app.use((err, req, res, next) => {
   logger.error({ err, requestId: req.id }); // логируем всё
-  res.status(500).json({ error: 'Internal server error', requestId: req.id }); // клиенту — минимум
+  // клиенту — минимум
+  res.status(500).json({ error: 'Internal server error', requestId: req.id });
 });
 
 // ПЛОХО: Debug режим в production
@@ -143,6 +152,8 @@ app.use(helmet()); // добавляет security headers
 ```
 
 ## A06: Vulnerable and Outdated Components
+
+Уязвимые компоненты находят сканеры, а не чтение кода. Команды ниже проверяют зависимости и Docker-образы на известные CVE — публичный каталог common vulnerabilities and exposures.
 
 ```bash
 # Зависимости с известными CVE
@@ -165,6 +176,8 @@ trivy image myapp:latest  # сканирование на CVE
 ```
 
 ## A07: Identification and Authentication Failures
+
+Аутентификация ломается небольшим набором повторяющихся способов. В коде ниже их пять: непроверенный алгоритм JWT, отсутствие rate limiting на логине, слабые пароли, отсутствие MFA и предсказуемые токены.
 
 ```typescript
 // Типичные уязвимости:
@@ -193,26 +206,25 @@ const { score } = zxcvbn(password); // 0-4, требуем >= 3
 
 Включает уязвимости supply chain и нарушение целостности данных.
 
-```txt
-Supply Chain Attack: Log4Shell (2021), XZ Utils (2024)
-  - Злоумышленник компрометирует популярный пакет (npm/pip/maven)
-  - Все приложения, использующие пакет, уязвимы
+Атака на цепочку поставок компрометирует не ваш код, а популярный пакет. Log4Shell (2021) и `XZ Utils` (2024) — самые известные случаи. Злоумышленник компрометирует пакет в npm, pip или maven, и все приложения, использующие пакет, уязвимы.
 
 Защита:
-  - Subresource Integrity (SRI) для CDN скриптов:
-    <script src="..." integrity="sha384-..." crossorigin="anonymous">
-  - npm lockfile (package-lock.json) с проверкой integrity hash
-  - Подписанные Docker images (Docker Content Trust)
-  - Проверка подписи пакетов (npm provenance, PyPI sigstore)
-  - CI/CD pipeline: проверять checksums артефактов
 
-Deserialization уязвимости:
-  - Никогда не десериализовывать пользовательский ввод в объекты
-  - JSON.parse безопасен, но не eval()
-  - Opaque токены (не JWT с сложным payload) для refresh tokens
-```
+- Subresource Integrity (SRI) для скриптов с CDN (сеть доставки контента): `<script src="..." integrity="sha384-..." crossorigin="anonymous">`.
+- npm lockfile (`package-lock.json`) с проверкой integrity hash.
+- Подписанные Docker images (Docker Content Trust).
+- Проверка подписи пакетов: npm provenance, sigstore в Python Package Index (PyPI).
+- Проверять контрольные суммы артефактов в пайплайне CI (непрерывная интеграция) и CD (непрерывная доставка).
+
+Уязвимости десериализации — вторая половина этой категории:
+
+- Никогда не десериализовывать пользовательский ввод в объекты.
+- `JSON.parse` безопасен, а `eval()` — нет.
+- Opaque-токены для refresh tokens, а не JWT со сложным payload.
 
 ## A09: Security Logging and Monitoring Failures
+
+У логирования здесь две задачи: записать достаточно, чтобы заметить атаку, и не записать в лог ни одного секрета. Код ниже решает обе.
 
 ```typescript
 // Что нужно логировать (и как безопасно):
@@ -244,7 +256,7 @@ function sanitizeForLog(obj: Record<string, unknown>): Record<string, unknown> {
 
 ## A10: Server-Side Request Forgery (SSRF)
 
-SSRF — уязвимость при которой сервер выполняет HTTP-запрос к произвольному URL по указанию злоумышленника.
+Server-Side Request Forgery, или SSRF, — это уязвимость, при которой сервер выполняет HTTP-запрос к произвольному URL по указанию злоумышленника.
 
 ```typescript
 // Уязвимый сценарий: "загрузи изображение по URL"
@@ -299,7 +311,7 @@ async function safeRequest(url: string): Promise<Response> {
 
 - **"A03 Injection = только SQL Injection"** — Injection включает SQL, NoSQL, OS Command, LDAP, SSTI (Server-Side Template Injection). Command Injection часто более критична т.к. даёт RCE (Remote Code Execution).
 
-- **"SSRF — это редкая экзотика"** — SSRF входит в Top 10 с 2021 года. В облачных окружениях (AWS/GCP) особенно опасна из-за Instance Metadata Service, через который можно получить IAM credentials.
+- **"SSRF — это редкая экзотика"** — SSRF входит в Top 10 с 2021 года. В облачных окружениях особенно опасна. Instance Metadata Service в AWS (Amazon Web Services) и GCP (Google Cloud Platform) отдаёт IAM (identity and access management) credentials.
 
 - **"Security Misconfiguration — это только не те права на файлах"** — охватывает широкий спектр: открытые S3 buckets, debug режим в production, X-Powered-By header раскрывает stack, дефолтные credentials, избыточные CORS настройки.
 

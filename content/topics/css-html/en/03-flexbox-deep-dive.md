@@ -77,7 +77,10 @@ Sum all hypothetical main sizes plus gaps. Compare to the container's main size.
 
 ```
 Container: 600px
-Items: A (flex-grow: 1, flex-basis: 0), B (flex-grow: 2, flex-basis: 0), C (flex-grow: 1, flex-basis: 0)
+Items, all with flex-basis: 0
+  A: flex-grow: 1
+  B: flex-grow: 2
+  C: flex-grow: 1
 
 Total flex-grow: 1 + 2 + 1 = 4
 Free space: 600px (flex-basis is 0 for all)
@@ -96,14 +99,14 @@ B: flex-grow: 2, flex-basis: 100px
 C: flex-grow: 1, flex-basis: 100px
 
 Sum of flex-basis: 300px
-Free space: 600 - 300 = 300px (THIS is distributed, not the total width)
+Free space: 600 - 300 = 300px  (this is what gets distributed)
 
 A gets: 100 + 300 × (1/4) = 100 + 75 = 175px
 B gets: 100 + 300 × (2/4) = 100 + 150 = 250px
 C gets: 100 + 300 × (1/4) = 100 + 75 = 175px
 ```
 
-Key insight: `flex-grow` distributes **free space**, not total space. This is why `flex-grow: 1` on all items does NOT mean each item gets equal width — it does only if `flex-basis` is the same for all (including `flex-basis: 0`).
+Key insight: `flex-grow` distributes **free space**, not total space. This is why `flex-grow: 1` on all items does **not** give every item equal width. It does that only when `flex-basis` is the same for all of them, `flex-basis: 0` included.
 
 ### Stage 3b: Absorb overflow via `flex-shrink`
 
@@ -111,9 +114,9 @@ Key insight: `flex-grow` distributes **free space**, not total space. This is wh
 
 ```
 Container: 400px
-A: flex-shrink: 1, flex-basis: 200px  → weighted factor: 1 × 200 = 200
-B: flex-shrink: 2, flex-basis: 200px  → weighted factor: 2 × 200 = 400
-C: flex-shrink: 1, flex-basis: 200px  → weighted factor: 1 × 200 = 200
+A: flex-shrink: 1, flex-basis: 200px → weight: 1 × 200 = 200
+B: flex-shrink: 2, flex-basis: 200px → weight: 2 × 200 = 400
+C: flex-shrink: 1, flex-basis: 200px → weight: 1 × 200 = 200
 
 Total weighted factor: 800
 Overflow: (200 + 200 + 200) - 400 = 200px (to absorb)
@@ -123,7 +126,7 @@ B shrinks by: 200 × (400/800) = 100px → final: 100px
 C shrinks by: 200 × (200/800) = 50px → final: 150px
 ```
 
-This weighting means larger items shrink more (in absolute pixels) when `flex-shrink` values are equal — intentional design so that items don't disproportionately shrink relative to their size.
+This weighting means larger items shrink more in absolute pixels when `flex-shrink` values are equal. That is intentional: it keeps items from shrinking disproportionately to their own size.
 
 ### Stage 4: Apply min/max constraints
 
@@ -133,7 +136,7 @@ After growing/shrinking, the browser clamps each item to its `min-width`/`max-wi
 
 This is the most common flexbox bug and one of the most-asked flexbox interview questions.
 
-By default, flex items have `min-width: auto`. For most elements, `auto` resolves to `0`. But for elements with intrinsic content (text nodes, images, elements with explicit `width` on their content), `min-width: auto` resolves to the **minimum content size** — the smallest the element can be without content overflow.
+By default, flex items have `min-width: auto`. For most elements, `auto` resolves to `0`. But some elements have intrinsic content: text nodes, images, or elements with an explicit `width` inside. For those, `min-width: auto` resolves to the **minimum content size**, the smallest the element can be without content overflow.
 
 ```css
 .container {
@@ -214,17 +217,17 @@ Use `flex: auto` when content width should influence final sizes.
 
 ```
 Main axis (justify-*):
-  justify-content   → space distribution between/around items in the container
-  justify-items     → default justify-self for all items (rarely used in flex)
-  justify-self      → individual item alignment (NOT supported in flex — only grid)
+  justify-content  → space between/around items
+  justify-items    → default justify-self (rarely used in flex)
+  justify-self     → one item's alignment (grid only, not flex)
 
 Cross axis (align-*):
-  align-content     → space distribution between/around lines (multi-line only)
-  align-items       → default cross-axis alignment for all items
+  align-content    → space between/around lines (multi-line only)
+  align-items      → default cross-axis alignment for all items
   align-self        → override for an individual item
 ```
 
-`justify-self` does not work in flexbox — this is a common mistake. To align a single flex item to the end of the main axis, use `margin-auto`:
+`justify-self` does not work in flexbox — this is a common mistake. To align a single flex item to the end of the main axis, use `margin: auto`:
 
 ```css
 /* Navigation: logo left, links right */
@@ -400,13 +403,13 @@ It does — only if `flex-basis` is the same for all items. With `flex-basis: au
 
 **"An item with `flex-shrink: 1` is overflowing its container — why?"**
 
-`min-width: auto` on flex items. The browser computed the item's minimum content size (e.g., a long unbreakable word, an image) and won't shrink the item below that — regardless of `flex-shrink`. Fix: add `min-width: 0` to the item. Then add `overflow: hidden` (or `overflow: auto`) to contain the content.
+`min-width: auto` on flex items. The browser computed the item's minimum content size, for example a long unbreakable word or an image. It will not shrink the item below that, whatever `flex-shrink` says. Fix: add `min-width: 0` to the item. Then add `overflow: hidden` (or `overflow: auto`) to contain the content.
 
 ---
 
 **"What's the difference between `flex: 1` and `flex: 1 1 auto`?"**
 
-The `flex-basis` value. `flex: 1` resolves to `flex: 1 1 0%` — items start from zero and grow proportionally, resulting in equal sizes. `flex: 1 1 auto` uses each item's content width as the starting point, so larger-content items end up larger even when `flex-grow` values are equal.
+The `flex-basis` value. With `flex: 1`, which resolves to `flex: 1 1 0%`, items start from zero and grow proportionally, so they end up equal. With `flex: 1 1 auto`, each item starts from its own content width. Items with more content end up larger even when `flex-grow` values are equal.
 
 ---
 
@@ -424,4 +427,9 @@ The `flex-basis` value. `flex: 1` resolves to `flex: 1 1 0%` — items start fro
 
 **"Flex item contains long text, but `text-overflow: ellipsis` isn't working."**
 
-The flex item isn't shrinking enough to trigger truncation. Two fixes are needed: (1) `min-width: 0` on the flex item (overrides the `auto` default that prevents shrinking below content size), and (2) `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` on the text element. Without `min-width: 0`, the flex item grows to fit the untruncated text before truncation is even considered.
+The flex item isn't shrinking enough to trigger truncation. Two fixes are needed:
+
+1. `min-width: 0` on the flex item. This overrides the `auto` default that prevents shrinking below content size.
+2. `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` on the text element itself.
+
+Without `min-width: 0`, the flex item grows to fit the untruncated text before truncation is even considered.

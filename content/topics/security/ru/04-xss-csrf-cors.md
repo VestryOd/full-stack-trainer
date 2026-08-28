@@ -1,13 +1,15 @@
 <!-- verified: 2026-06-05, corrections: 0 -->
 # XSS, CSRF и CORS
 
+Три аббревиатуры, которые постоянно путают, и три разные вещи. XSS (cross-site scripting) — это внедрённый код. CSRF (cross-site request forgery) — это подделанный запрос. CORS (cross-origin resource sharing) — это политика браузера. Последний раздел показывает, как эти три вещи взаимодействуют.
+
 ## XSS — Cross-Site Scripting
 
 XSS — атака, при которой злоумышленник внедряет вредоносный JavaScript в страницы, просматриваемые другими пользователями. Браузер жертвы выполняет этот код в контексте вашего сайта.
 
 ### Три типа XSS
 
-**Stored XSS (самый опасный)**: вредоносный код сохраняется в БД и показывается всем пользователям.
+**Stored XSS (самый опасный)**: вредоносный код сохраняется в базе данных и показывается всем пользователям.
 
 ```typescript
 // Сценарий: сайт с комментариями, не экранирует ввод
@@ -30,7 +32,7 @@ GET /search?q=<script>alert(document.cookie)</script>
 // → браузер выполняет скрипт
 ```
 
-**DOM-based XSS**: уязвимость только в JavaScript на клиенте, сервер не участвует.
+**DOM-based XSS**: уязвимость живёт целиком в клиентском JavaScript, в DOM (document object model — объектная модель документа), которую строит страница. Сервер не участвует.
 
 ```javascript
 // УЯЗВИМО: прямая вставка URL-параметра в DOM
@@ -41,13 +43,13 @@ document.getElementById('greeting').innerHTML = `Hello, ${name}!`;
 
 ### Что может сделать XSS-атака
 
-```txt
-1. Украсть токены: localStorage.getItem('token'), document.cookie (не HttpOnly)
-2. Keylogger: перехват нажатий клавиш на форме
-3. Перехват форм: отправка credentials на evil.com
-4. Действия от имени пользователя: создать заказ, изменить email/пароль
-5. Распространение через BeEF framework: превратить браузер в бота
-```
+Внедрённый скрипт получает всё, что есть у самой страницы. Пять вещей, которые он делает на практике:
+
+1. Крадёт токены: `localStorage.getItem('token')` и `document.cookie`, когда cookie не HttpOnly.
+2. Keylogger: перехват нажатий клавиш на форме.
+3. Перехват форм: отправка учётных данных на evil.com.
+4. Действия от имени пользователя: создать заказ, изменить email или пароль.
+5. Захват браузера через инструмент BeEF (Browser Exploitation Framework): превратить браузер в бота.
 
 ### Защита от XSS
 
@@ -84,30 +86,31 @@ app.use(helmet.contentSecurityPolicy({
 res.cookie('session', token, { httpOnly: true });
 ```
 
-CSP + HttpOnly = XSS может выполниться, но не сможет ни украсть cookie, ни загрузить внешние скрипты.
+Content Security Policy (CSP) вместе с HttpOnly означает, что XSS может выполниться, но не сможет ни украсть cookie, ни загрузить внешние скрипты.
 
 ## CSRF — Cross-Site Request Forgery
 
 CSRF — атака, при которой злоумышленник заставляет браузер жертвы (уже аутентифицированной) отправить запрос к вашему серверу без ведома пользователя.
 
-```txt
-Механизм CSRF:
+Вся атака — шесть шагов, и пользователь ни на что не нажимает.
 
-1. Пользователь залогинен в bank.com (session cookie есть)
-2. Пользователь открывает evil.com
-3. evil.com содержит скрытую форму:
-   <form action="https://bank.com/api/transfer" method="POST">
-     <input type="hidden" name="amount" value="5000">
-     <input type="hidden" name="to" value="attacker-account">
-   </form>
-   <script>document.forms[0].submit();</script>
+1. Пользователь залогинен в bank.com, и у него есть session cookie.
+2. Пользователь открывает evil.com.
+3. evil.com содержит скрытую форму, которая отправляет себя сама.
 
-4. Браузер отправляет POST на bank.com
-5. Браузер АВТОМАТИЧЕСКИ прикладывает cookie для bank.com
-6. Сервер bank.com видит валидную сессию → выполняет перевод
+```html
+<form action="https://bank.com/api/transfer" method="POST">
+  <input type="hidden" name="amount" value="5000">
+  <input type="hidden" name="to" value="attacker-account">
+</form>
+<script>document.forms[0].submit();</script>
 ```
 
-**Почему JWT в Authorization header защищает от CSRF**: браузер автоматически отправляет cookies для домена, но НЕ отправляет кастомные заголовки (Authorization) на кросс-доменные запросы. Evil.com не имеет доступа к JWT из memory/localStorage (same-origin policy), поэтому не может поставить заголовок.
+4. Браузер отправляет POST на bank.com.
+5. Браузер **автоматически** прикладывает cookie для bank.com.
+6. Сервер bank.com видит валидную сессию и выполняет перевод.
+
+**Почему JWT (JSON Web Token) в заголовке Authorization защищает от CSRF**: cookies для домена уходят автоматически, а кастомные заголовки — нет. На кросс-доменном запросе заголовок `Authorization` просто не прикладывается. А evil.com не может прочитать JWT из памяти или из localStorage, потому что этому мешает same-origin policy, и поставить заголовок он тоже не может.
 
 ### Защита от CSRF
 
@@ -153,43 +156,43 @@ app.use((req, res, next) => {
 
 ## CORS — Cross-Origin Resource Sharing
 
-**Важно**: CORS — это НЕ механизм безопасности сервера. Это политика браузера, которая контролирует доступ к ресурсам с другого origin.
+**Важно**: CORS — это **не** механизм безопасности сервера. Это политика браузера, которая контролирует доступ к ресурсам с другого origin.
 
-```txt
-Origin = scheme + host + port:
-  http://localhost:3000  ≠  http://localhost:4000  (разные порты)
-  http://example.com     ≠  https://example.com    (разные scheme)
-  http://api.example.com ≠  http://example.com     (разные subdomain)
+Origin — это тройка «схема, хост, порт». Поменяйте любую из трёх частей, и это уже другой origin.
 
-Same-Origin Policy: браузер по умолчанию блокирует
-кросс-доменные запросы (fetch/XMLHttpRequest) если сервер
-не разрешил явно через CORS заголовки.
+| Один origin | Другой origin | Что отличается |
+|---|---|---|
+| `http://localhost:3000` | `http://localhost:4000` | порт |
+| `http://example.com` | `https://example.com` | схема |
+| `http://api.example.com` | `http://example.com` | поддомен |
 
-CORS защищает браузер, НЕ сервер:
-  curl / Postman / другой backend → CORS не применяется
-  Браузер пользователя → CORS проверяется браузером
-```
+Same-Origin Policy: по умолчанию браузер блокирует кросс-доменные запросы, сделанные через `fetch` или `XMLHttpRequest`, если сервер не разрешил их явно через заголовки CORS.
+
+CORS защищает браузер, а **не** сервер. Запросы из curl, из Postman или с другого бэкенда вообще не видят CORS. Проверяет его только браузер пользователя.
 
 ### Preflight Request — когда и зачем
 
-```txt
-Браузер отправляет OPTIONS preflight ПЕРЕД основным запросом если:
-  - Метод: DELETE, PUT, PATCH (не "простые" методы: GET, POST, HEAD)
-  - Заголовок: Authorization, Content-Type: application/json
-    (не "простые" заголовки)
-  - Любой кастомный заголовок: X-Request-ID
+Перед основным запросом браузер может спросить разрешение запросом OPTIONS — он называется preflight. Браузер делает это, если верно хотя бы одно из условий:
 
+- Метод — DELETE, PUT или PATCH, а не один из «простых» методов GET, POST и HEAD.
+- Заголовок — `Authorization` или `Content-Type: application/json`, а не один из «простых» заголовков.
+- Есть хотя бы один кастомный заголовок, например `X-Request-ID`.
+
+```http
 OPTIONS /api/users HTTP/1.1
 Origin: https://frontend.com
 Access-Control-Request-Method: DELETE
 Access-Control-Request-Headers: Authorization
+```
 
-Ответ сервера (разрешение):
+Сервер, который разрешает вызов, отвечает так. Последняя строка кэширует preflight на 24 часа, чтобы браузер его не повторял.
+
+```http
 HTTP/1.1 204 No Content
 Access-Control-Allow-Origin: https://frontend.com
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH
 Access-Control-Allow-Headers: Authorization, Content-Type
-Access-Control-Max-Age: 86400  ← кэш preflight на 24 часа
+Access-Control-Max-Age: 86400
 ```
 
 ```typescript
@@ -224,23 +227,19 @@ app.options('*', cors(corsOptions)); // preflight для всех роутов
 
 ## Взаимосвязь XSS, CSRF и CORS
 
-```txt
-XSS + CSRF связаны:
-  При XSS злоумышленник может делать запросы С ВАШЕГО ORIGIN
-  → Same-origin policy и CORS не помогают (запрос идёт с вашего домена)
-  → CSRF Token тоже не помогает (JS может прочитать его с DOM)
-  → Единственная защита: HttpOnly cookie (JS не читает), CSP (ограничивает то, что может сделать внедрённый скрипт)
+**XSS и CSRF связаны.** При XSS злоумышленник делает запросы **с вашего собственного origin**, и это снимает большинство обычных защит:
 
-CORS не защищает от CSRF:
-  Браузер проверяет CORS для fetch/XHR
-  Простая HTML form отправка НЕ проверяется CORS
-  Поэтому CSRF Token или SameSite Cookie всё равно нужны
+- Same-origin policy и CORS не помогают: запрос действительно идёт с вашего домена.
+- CSRF Token тоже не помогает: внедрённый скрипт читает его прямо из DOM.
+- Что остаётся: HttpOnly cookie, который JS не читает, и CSP, который ограничивает то, что может сделать внедрённый скрипт.
 
-JWT в header защищает от CSRF но не от XSS:
-  CSRF: браузер не отправляет Authorization header автоматически ✓
-  XSS: если JWT в localStorage → XSS его украдёт ✗
-  Решение: JWT в HttpOnly Cookie + SameSite=strict (защита и от XSS и от CSRF)
-```
+**CORS не защищает от CSRF.** Браузер проверяет CORS для `fetch` и `XMLHttpRequest`, но отправка простой HTML-формы **не** проверяется через CORS. Поэтому CSRF Token или SameSite Cookie всё равно нужны.
+
+**JWT в заголовке защищает от CSRF, но не от XSS.**
+
+- Против CSRF работает: браузер не отправляет заголовок `Authorization` автоматически.
+- Против XSS не работает: JWT в localStorage — ровно то, что украдёт внедрённый скрипт.
+- Решение, которое закрывает и то и другое: JWT в HttpOnly cookie с `SameSite=strict`.
 
 ## Типичные ошибки на интервью
 

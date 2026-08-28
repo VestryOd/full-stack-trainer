@@ -16,7 +16,7 @@ MobX model:
   components) → updates only those, nothing else
 ```
 
-This is not magic — it is **explicit runtime dependency tracking**. Every time a `computed` or an `observer` component reads an observable value, MobX registers: "this reader depends on this value." When the value changes — MobX knows exactly who to notify.
+This is not magic — it is **explicit runtime dependency tracking**. Every time a `computed` or an `observer` component reads an observable value, MobX registers one fact: this reader depends on this value. So when the value changes, MobX already knows exactly who to notify.
 
 ## The four reactivity primitives
 
@@ -40,7 +40,7 @@ class CartStore {
 
 `observable` makes a value "trackable." MobX wraps it in a Proxy (MobX 6+) that intercepts every read and every write. A read during a `computed` or `observer` execution registers a dependency. A write notifies all subscribers.
 
-**What becomes observable:** primitives (number, string, boolean) are tracked directly; arrays and objects are wrapped in a Proxy version that tracks mutations (push, pop, key assignment). Map and Set are supported via `observable.map()` and `observable.set()`.
+**What becomes observable:** primitives (number, string, boolean) are tracked directly. Arrays and objects are wrapped in a Proxy version that tracks mutations such as `push`, `pop` and key assignment. Map and Set are supported via `observable.map()` and `observable.set()`.
 
 ### computed — derived values
 
@@ -78,7 +78,7 @@ class CartStore {
 - Automatically **recomputes** only when its dependencies change.
 - If a `computed` has no observers — it "sleeps" and does not recompute at all.
 
-This is fundamentally different from `useMemo`: `useMemo` recomputes on every re-render if dependencies changed; `computed` recomputes globally, once, and stays cached until its next dependency change.
+This is fundamentally different from `useMemo`. A `useMemo` recomputes on every re-render whose dependencies changed. A `computed` recomputes globally, once, and stays cached until its next dependency change.
 
 ### action — state mutations
 
@@ -237,7 +237,11 @@ class BaseStore2 {
 }
 ```
 
-## observer HOC and useObserver — when a React component re-renders
+## observer and useLocalObservable — when a React component re-renders
+
+`observer` is a HOC (higher-order component): a function that takes a
+component and returns a new, wrapped one. The wrapper is what makes the
+component react to the observables it reads.
 
 ```tsx
 import { observer } from 'mobx-react-lite';
@@ -333,7 +337,7 @@ Strict mode helps catch patterns early that would lead to hard-to-debug issues i
 
 - **"MobX automatically makes the whole class reactive"** — no. Only what is explicitly declared via `makeObservable`/`makeAutoObservable`. Fields added dynamically after initialization are not observable (in Proxy-mode MobX 6 dynamic fields work only if originally observable via `observable.object`).
 
-- **Mutating observable outside an action** — the most common mistake. `store.items.push(item)` directly in a component works without strict mode, but breaks notification batching: each line triggers a separate reaction. This hurts both performance and debuggability.
+- **Mutating observable outside an action** — the most common mistake. `store.items.push(item)` directly in a component does work without strict mode. But it breaks notification batching: every such line triggers a separate reaction. This hurts both performance and debuggability.
 
 - **Not calling the disposer on reaction/autorun** — classic memory leak. MobX holds a reference to the reaction until explicit `dispose()`. If a reaction was created in a component, it keeps living after unmount and keeps reacting to changes.
 

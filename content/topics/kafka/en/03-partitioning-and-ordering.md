@@ -17,13 +17,15 @@ partition = murmur2(key) % numPartitions
 ```txt
 Topic "order-events" (4 partitions):
 
-Message { key: "order-101", value: "placed"   } → hash("order-101") % 4 = 2 → Partition 2
-Message { key: "order-101", value: "shipped"  } → hash("order-101") % 4 = 2 → Partition 2
-Message { key: "order-101", value: "delivered"} → hash("order-101") % 4 = 2 → Partition 2
-Message { key: "order-202", value: "placed"   } → hash("order-202") % 4 = 0 → Partition 0
+hash("order-101") % 4 = 2   and   hash("order-202") % 4 = 0
+
+{ key: "order-101", value: "placed"    } → Partition 2
+{ key: "order-101", value: "shipped"   } → Partition 2
+{ key: "order-101", value: "delivered" } → Partition 2
+{ key: "order-202", value: "placed"    } → Partition 0
 ```
 
-Result: all events for `order-101` are guaranteed to land in Partition 2 → their order is guaranteed, and they'll be processed by one consumer in the correct sequence.
+Result: every event for `order-101` lands in Partition 2. Their order is therefore guaranteed, and one consumer processes them in the correct sequence.
 
 ### Strategy 2: Round-Robin (No Key)
 
@@ -42,7 +44,7 @@ Message 5 → Partition 1
 
 Advantage: even load distribution. Disadvantage: no ordering guarantees — messages 1, 4, 7 (in partition 0) and 2, 5, 8 (in partition 1) are read in parallel by different consumers.
 
-> **Note on the sticky partitioner**: since Kafka 2.4, when key=null, the default is the sticky partitioner — the producer accumulates a batch in one partition, then switches. This reduces latency by cutting the number of broker requests. It doesn't affect ordering behavior.
+> **Note on the sticky partitioner**: since Kafka 2.4 the default for `key=null` is the sticky partitioner. The producer fills a whole batch in one partition, then switches to another. That cuts the number of broker requests, so latency drops. Ordering behaviour does not change.
 
 ### Strategy 3: Explicit Partition Assignment
 
@@ -66,9 +68,11 @@ This is the most common Kafka interview topic, and the answer needs to be unders
 A partition is a sequential, append-only file. Messages are written strictly one after another, with monotonically increasing offsets. They can only be read in the order they were written.
 
 ```txt
-Partition 2:  [off:0: "placed"] [off:1: "payment-ok"] [off:2: "shipped"] [off:3: "delivered"]
-              ──────────────────────────────────────────────────────────────────────────────►
-              Consumer reads strictly left to right: 0 → 1 → 2 → 3
+Partition 2:
+  [off:0 "placed"]  [off:1 "payment-ok"]
+  [off:2 "shipped"] [off:3 "delivered"]
+  ───────────────────────────────────────────────────►
+  Consumer reads strictly left to right: 0 → 1 → 2 → 3
 ```
 
 The consumer assigned to Partition 2 will receive these messages in exactly this order. The guarantee is absolute.
@@ -82,7 +86,8 @@ Topic "order-events" (3 partitions):
 
 Partition 0: [order-A: placed] [order-D: placed] [order-A: shipped]
 Partition 1: [order-B: placed] [order-B: payment-ok]
-Partition 2: [order-C: placed] [order-C: shipped] [order-D: payment-ok]
+Partition 2: [order-C: placed] [order-C: shipped]
+             [order-D: payment-ok]
 
 Consumer A reads Partition 0: placed→A, placed→D, shipped→A
 Consumer B reads Partition 1: placed→B, payment-ok→B
@@ -90,10 +95,11 @@ Consumer C reads Partition 2: placed→C, shipped→C, payment-ok→D
 
 Question: which happened first — "order-A shipped" (P0, offset 2)
           or "order-D payment-ok" (P2, offset 2)?
-Answer:   Kafka doesn't know. Offset 2 in P0 and offset 2 in P2 are independent counters.
+Answer:   Kafka doesn't know. Offset 2 in P0 and offset 2 in P2
+          are independent counters.
 ```
 
-Kafka has no global timestamp that would allow comparing messages across partitions (timestamps are recorded per message, but they don't guarantee ordering when multiple producers write concurrently).
+Kafka has no global timestamp for comparing messages across partitions. Every message does carry a timestamp, but it guarantees nothing about ordering when several producers write at the same time.
 
 ### Practical Takeaway: Use the Key to Isolate Ordering
 
@@ -101,9 +107,9 @@ If ordering matters for a specific entity (order, user, session), use its ID as 
 
 ```txt
 ✓ Correct — event ordering for an order is guaranteed:
-  key = "order-101" → all order-101 events land in the same partition
+  key = "order-101" → all its events land in the same partition
 
-✗ Incorrect — events for one order may end up in different partitions:
+✗ Incorrect — one order's events may land in different partitions:
   key = null (or key = a new random UUID each time)
 ```
 
@@ -118,7 +124,7 @@ The key should group messages whose relative order matters. Ask: "If these two e
 ```txt
 ✓ Good keys:
   - userId    (user events: registration → login → purchase)
-  - orderId   (order lifecycle: created → paid → shipped → delivered)
+  - orderId   (lifecycle: created → paid → shipped → delivered)
   - sessionId (session events)
   - deviceId  (device telemetry)
 
@@ -147,7 +153,7 @@ Other:   ██ (5%)                                → P3 idle
 
 ```txt
 ✓ High cardinality (many unique values):
-  - userId (millions of users → distributed evenly across partitions)
+  - userId (millions of users → spread evenly across partitions)
   - orderId
   - sessionId
 
@@ -173,7 +179,7 @@ new order-101 events are in Partition 5 →
 consumers read them independently → ordering is broken.
 ```
 
-**Takeaway**: plan partition count upfront with headroom. Increasing partitions is a painful operation when ordering matters.
+**Takeaway**: plan the partition count upfront, with room to grow. Increasing partitions is a painful operation when ordering matters.
 
 Practical rule of thumb: provision 2–4x more partitions than your planned consumer count at launch.
 
@@ -217,7 +223,8 @@ Eager Rebalancing (legacy protocol):
   After:  P0→C1, P1→C2, P2→C3, P3→C4 (if 4 partitions exist)
           or P0→C1, P1→C2, P2→C4     (if C3 left)
 
-  Problem: pause = revocation time + recalculation time for ALL partitions
+  Problem: the pause covers revoking and recalculating
+           every partition in the group
 ```
 
 Since Kafka 2.3+: Cooperative (Incremental) Rebalancing:
@@ -248,16 +255,21 @@ heartbeat.interval.ms (default: 3000ms)
   — should be significantly smaller than session.timeout.ms
 
 session.timeout.ms (default: 45000ms, min: 6000ms)
-  — if no heartbeat received within this window → consumer is considered dead
+  — no heartbeat within this window → the consumer is dead
   — broker initiates a rebalance
 
 max.poll.interval.ms (default: 300000ms = 5 minutes)
   — maximum time between two poll() calls
-  — if a consumer spends longer than this processing a message → considered stuck
-  — broker initiates a rebalance even if heartbeats are still arriving
+  — processing one message longer than this → consumer is stuck
+  — broker rebalances even if heartbeats still arrive
 ```
 
-A typical real-world problem: a consumer processes a heavy message for 6 minutes → exceeds `max.poll.interval.ms` (5 minutes) → broker removes it from the group → rebalance → another consumer starts processing the same message → duplicate processing.
+A typical real-world problem runs like this:
+
+1. A consumer spends 6 minutes on one heavy message.
+2. That exceeds `max.poll.interval.ms`, which defaults to 5 minutes.
+3. The broker drops the consumer from the group and starts a rebalance.
+4. Another consumer picks up the same message and processes it a second time.
 
 Fix: either increase `max.poll.interval.ms`, reduce `max.poll.records` (fetch fewer messages per poll), or speed up message processing.
 
@@ -266,20 +278,24 @@ Fix: either increase `max.poll.interval.ms`, reduce `max.poll.records` (fetch fe
 ```txt
 Producer sends order events:
 
-  { key: "ord-1", event: "placed"   } ──────┐
-  { key: "ord-2", event: "placed"   } ───┐  │   hash % 3
-  { key: "ord-1", event: "paid"     } ──────┤──► P0: [ord-2:placed][ord-2:paid]
-  { key: "ord-3", event: "placed"   } ──┐  │    P1: [ord-1:placed][ord-1:paid][ord-1:shipped]
-  { key: "ord-1", event: "shipped"  } ──────┘    P2: [ord-3:placed][ord-3:shipped]
-  { key: "ord-2", event: "paid"     } ───┘
-  { key: "ord-3", event: "shipped"  } ──┘
+  { key: "ord-1", event: "placed"  }
+  { key: "ord-2", event: "placed"  }
+  { key: "ord-1", event: "paid"    }
+  { key: "ord-3", event: "placed"  }        hash(key) % 3
+  { key: "ord-1", event: "shipped" }   ────────────────────►
+  { key: "ord-2", event: "paid"    }
+  { key: "ord-3", event: "shipped" }
+
+  P0: [ord-2:placed] [ord-2:paid]
+  P1: [ord-1:placed] [ord-1:paid] [ord-1:shipped]
+  P2: [ord-3:placed] [ord-3:shipped]
 
 Consumer Group (3 consumers):
   Consumer A reads P0 → ord-2 events in strict order ✓
   Consumer B reads P1 → ord-1 events in strict order ✓
   Consumer C reads P2 → ord-3 events in strict order ✓
 
-  Global ordering across ord-1, ord-2, ord-3 — NOT guaranteed ✗
+  Global ordering across ord-1, ord-2, ord-3 — not guaranteed ✗
   (but we don't need it: orders are independent)
 ```
 
@@ -295,7 +311,9 @@ No. After the increase, `hash(key) % newCount` maps the same keys to different p
 
 **"A hot partition is fine — one consumer will just be slower"**
 
-It's worse than it sounds. The consumer on the hot partition becomes a bottleneck for the whole group: consumer lag accumulates. You can't "help" it by adding another consumer to the same partition — one partition, one consumer per group. You need to either change the partition key or split the hot stream across multiple topics.
+It's worse than it sounds. The consumer on the hot partition becomes a bottleneck for the whole group, and its lag grows. Lag is the number of messages between the offset a consumer has committed and the end of the partition.
+
+You can't "help" it by adding another consumer to the same partition — one partition, one consumer per group. You need to either change the partition key or split the hot stream across multiple topics.
 
 **"Rebalancing is instantaneous"**
 

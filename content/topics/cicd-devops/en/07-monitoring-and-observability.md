@@ -10,7 +10,8 @@ These two terms are often used interchangeably, but they describe different thin
 
 ```txt
 Monitoring (known unknowns):
-  "Alert me when error rate > 1%" — you knew errors were a thing to watch
+  "Alert me when error rate > 1%"
+  — you already knew errors were worth watching
 
 Observability (unknown unknowns):
   "Why is the checkout flow 3× slower only for users in Germany
@@ -27,7 +28,7 @@ The three signals that together give you a complete picture of a distributed sys
 
 ### Pillar 1: Logs
 
-A **log** is a timestamped record of a discrete event that happened in the system — a request arrived, an error occurred, a user logged in, a database query ran.
+A **log** is a timestamped record of one discrete event in the system. Examples: a request arrived, an error occurred, a user logged in, a database query ran.
 
 ```txt
 Logs answer: "What happened, exactly, at this specific moment?"
@@ -64,31 +65,21 @@ logger.warn('login_failed', {
 });
 ```
 
-With structured logs, your log aggregation tool (Datadog, Grafana Loki, AWS CloudWatch, ELK Stack — Elasticsearch + Logstash + Kibana) can let you filter and aggregate:
+A log aggregation tool can filter and aggregate structured logs. Examples: Datadog, Grafana Loki, CloudWatch on AWS (Amazon Web Services), or the ELK Stack (Elasticsearch, Logstash, Kibana). You can ask it things like:
+
 - "Show all errors for userId = usr-456 in the last hour"
-- "Count login failures grouped by IP address"
+- "Count login failures grouped by IP (Internet Protocol) address"
 - "Alert when error count for service = payment-service > 50 in 5 minutes"
 
 **Log levels** (from least to most severe):
 
-```txt
-DEBUG   → fine-grained diagnostic info; enable only when debugging;
-           never log in production at DEBUG level (too noisy, performance cost)
+- `DEBUG` — fine-grained diagnostic info. Turn it on only while debugging. Never run production at this level: too noisy, and it costs performance.
+- `INFO` — normal, expected events: request received, user logged in, job completed. This is the default production level.
+- `WARN` — something unexpected happened, but the system handled it. Examples: a retry that succeeded, a deprecated API call, a rate limit getting close. Investigate during a quiet period.
+- `ERROR` — something failed and needs immediate attention: database unreachable, payment processing failed, unhandled exception.
+- `FATAL` — the application cannot continue; the process is about to exit.
 
-INFO    → normal, expected events (request received, user logged in,
-           job completed); the default production log level
-
-WARN    → something unexpected happened but the system handled it
-           (retry succeeded after first attempt, deprecated API used,
-           rate limit approaching); investigate during a quiet period
-
-ERROR   → something failed that needs immediate attention
-           (database unreachable, payment processing failed, unhandled exception)
-
-FATAL   → the application cannot continue; process is about to exit
-```
-
-**Senior nuance #1 — what NOT to log:**
+**Senior nuance #1 — what not to log:**
 
 ```ts
 // ❌ Never log credentials or PII (Personally Identifiable Information —
@@ -101,7 +92,13 @@ logger.info('user login', { userId, email: maskEmail(email) });
 logger.info('payment initiated', { userId, orderId, last4: card.last4 });
 ```
 
-Logging PII or credentials is a security/compliance violation (GDPR, PCI DSS, HIPAA — different regulatory frameworks, all require protecting user data). Many companies have been fined for logging emails or phone numbers.
+Logging credentials or PII breaks both security rules and the law. PII is personally identifiable information: a name, email, phone number or address. Several regimes require you to protect it:
+
+- **GDPR** — the European Union's General Data Protection Regulation.
+- **PCI DSS** — the Payment Card Industry Data Security Standard.
+- **HIPAA** — the United States Health Insurance Portability and Accountability Act, for health data.
+
+Many companies have been fined for logging emails or phone numbers.
 
 ### Pillar 2: Metrics
 
@@ -111,49 +108,31 @@ A **metric** is a numeric measurement of a system property, sampled over time. M
 Metrics answer: "How is the system performing overall, over time?"
 ```
 
-The four "golden signals" (coined by Google's SRE — Site Reliability Engineering — book):
+The four "golden signals", named in Google's SRE (Site Reliability Engineering) book:
 
-```txt
-1. Latency  — how long requests take to process
-              (p50, p95, p99 — percentiles; avg is usually misleading)
-
-2. Traffic  — how much demand the system is receiving
-              (requests per second, messages per second, concurrent connections)
-
-3. Errors   — the rate of failed requests
-              (5xx responses / total responses, exception rate, timeout rate)
-
-4. Saturation — how "full" the system is; how close to its capacity limit
-               (CPU %, memory %, disk %, queue depth, DB connection pool usage)
-```
+1. **Latency** — how long requests take to process. Track p50, p95 and p99 percentiles; the average is usually misleading.
+2. **Traffic** — how much demand the system is receiving: requests per second, messages per second, concurrent connections.
+3. **Errors** — the rate of failed requests: 5xx responses over total responses, exception rate, timeout rate.
+4. **Saturation** — how "full" the system is, how close to its capacity limit: processor, memory and disk usage, queue depth, database connection pool usage.
 
 **Percentiles vs averages** — a critical distinction:
 
 ```txt
-Imagine 100 requests, 99 take 10ms, 1 takes 10,000ms (10 seconds):
-  Average latency:  ~110ms  ← looks fine
-  p99 latency:    10,000ms  ← 1% of users wait 10 seconds — this is a crisis
+Imagine 100 requests: 99 take 10ms, 1 takes 10,000ms (10 seconds).
+  Average latency:  ~110ms   ← looks fine
+  p99 latency:    10,000ms   ← 1% wait 10 seconds — a crisis
 
-Average masks outliers. Always monitor percentiles (p95, p99) for latency.
+The average masks outliers. Always monitor p95 and p99 for latency.
 p99 = "99% of requests complete within this time"
-      (the worst 1% are excluded — they are your most frustrated users)
+      (the worst 1% are excluded — your most frustrated users)
 ```
 
 Common metric types:
 
-```txt
-Counter    → monotonically increasing number (total requests, total errors)
-             only goes up; useful for computing rates (errors/second)
-
-Gauge      → a value that can go up or down (current memory usage, queue depth,
-             number of active connections)
-
-Histogram  → distributes values into buckets; used for latency percentiles
-             (how many requests took 0-10ms? 10-50ms? 50-200ms? >200ms?)
-
-Summary    → similar to histogram but calculates percentiles on the client side;
-             less flexible for aggregation across multiple instances
-```
+- **Counter** — a number that only goes up: total requests, total errors. Useful for computing rates, such as errors per second.
+- **Gauge** — a value that can go up or down: current memory usage, queue depth, active connections.
+- **Histogram** — distributes values into buckets, which is how latency percentiles are computed. How many requests took 0-10ms? 10-50ms? 50-200ms? More than 200ms?
+- **Summary** — like a histogram, but percentiles are calculated on the client side. Less flexible for aggregation across many instances.
 
 Example — instrumenting a Node.js Express app with Prometheus metrics (Prometheus is an open-source metrics collection and alerting system):
 
@@ -200,7 +179,7 @@ app.get('/metrics', async (req, res) => {
 
 ### Pillar 3: Distributed Tracing
 
-A **trace** follows a single request as it travels through all the services and components of a distributed system, recording how much time was spent in each step.
+A **trace** follows one request as it travels through every service and component of a distributed system. It records how much time was spent at each step.
 
 ```txt
 Traces answer: "What is the full journey of this specific request,
@@ -230,7 +209,7 @@ Without tracing, you see that the dashboard loads in 245ms — slow. With tracin
 
 **How tracing works:**
 
-Each request is assigned a unique **trace ID** at the entry point (the API Gateway or first service). As the request passes through each service, it carries this ID in a header (`traceparent` in the W3C Trace Context standard). Each service creates a **span** — a named, timed unit of work within the trace.
+Each request is assigned a unique **trace ID** at the entry point (the API Gateway or first service). As the request passes through each service, it carries this ID in a header: `traceparent`, from the W3C (World Wide Web Consortium) Trace Context standard. Each service creates a **span** — a named, timed unit of work within the trace.
 
 ```txt
 Trace ID: abc-123
@@ -244,7 +223,7 @@ Trace ID: abc-123
       Span: "db-query"    [16ms ─────────────────────────── 241ms]
 ```
 
-The OpenTelemetry (OTel) standard has become the industry standard for instrumentation. It is a vendor-neutral SDK that instruments your code once and exports traces (and metrics and logs) to any backend — Jaeger, Zipkin, Datadog, Honeycomb, etc.
+The OpenTelemetry (OTel) standard has become the industry standard for instrumentation. It is a vendor-neutral SDK (software development kit). Instrument your code once, and it exports traces — plus metrics and logs — to any backend: Jaeger, Zipkin, Datadog, Honeycomb.
 
 ```ts
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -274,6 +253,7 @@ With this setup, every HTTP request, Express route handler, and database query i
 **APM** (Application Performance Monitoring) is a category of tools that combines metrics, traces, and sometimes logs into a unified view specifically focused on application-level performance.
 
 APM tools typically provide:
+
 - **Transaction tracing**: automatically trace every request through your app
 - **Code-level performance profiling**: identify which line of code / which function call is slow
 - **Error tracking**: group similar errors, show stack traces, count occurrences
@@ -282,68 +262,52 @@ APM tools typically provide:
 
 Popular APM tools:
 
-```txt
-Datadog APM     → SaaS; excellent auto-instrumentation; broad ecosystem;
-                   expensive at scale; "Datadog APM" = their tracing product
-                   (Datadog also does metrics and logs under the same platform)
-
-New Relic       → SaaS; one of the original APM tools; good for traditional
-                   monoliths; newer features for microservices
-
-Sentry          → primarily error tracking, but also adds performance monitoring;
-                   very popular in the frontend/fullstack world;
-                   open-source self-hostable version available
-
-Elastic APM     → part of the ELK Stack (Elasticsearch, Logstash, Kibana);
-                   open-source; good for teams already using Elasticsearch
-
-Grafana Stack   → open-source; Grafana (dashboards) + Prometheus (metrics) +
-(OSS option)      Loki (logs) + Tempo (traces); more setup work but fully free
-```
+- **Datadog APM** — SaaS (software as a service), excellent auto-instrumentation, broad ecosystem. Expensive at scale. "Datadog APM" is their tracing product; the same platform also does metrics and logs.
+- **New Relic** — SaaS, one of the original APM tools. Good for traditional monoliths, newer features for microservices.
+- **Sentry** — primarily error tracking, with performance monitoring added on top. Very popular in the frontend and fullstack world. An open-source self-hosted version exists.
+- **Elastic APM** — part of the ELK Stack (Elasticsearch, Logstash, Kibana). Open-source, a good fit for teams already running Elasticsearch.
+- **Grafana Stack** — the open-source option: Grafana for dashboards, Prometheus for metrics, Loki for logs, Tempo for traces. More setup work, but completely free.
 
 The difference between an APM tool and the individual pillars:
 
-```txt
-Logging tool (Grafana Loki, CloudWatch Logs)  → stores and queries logs
-Metrics tool (Prometheus, Datadog Metrics)     → stores and queries metrics
-Tracing tool (Jaeger, Zipkin, Tempo)           → stores and queries traces
-APM platform (Datadog, New Relic, Sentry)      → combines all three with a UI
-                                                  focused on application health
-```
+| Tool type | What it does |
+|---|---|
+| Logging (Grafana Loki, CloudWatch Logs) | Stores and queries logs |
+| Metrics (Prometheus, Datadog Metrics) | Stores and queries metrics |
+| Tracing (Jaeger, Zipkin, Tempo) | Stores and queries traces |
+| APM platform (Datadog, New Relic, Sentry) | Combines all three behind one interface focused on application health |
 
 ## Uptime monitoring
 
-**Uptime monitoring** is the simplest form of monitoring: periodically send a request to your service from an external location and alert if it doesn't respond correctly.
+**Uptime monitoring** is the simplest form of monitoring. On a schedule, send a request to your service from outside, and alert if the answer is wrong.
 
 ```txt
-Every 1 minute, from servers in 5 regions:
+Every minute, from servers in 5 regions:
   HTTP GET https://api.myapp.com/health
     → expect: HTTP 200 within 3 seconds
-    → if fails 2 consecutive times: alert via PagerDuty / Slack / email
+    → after 2 failures: alert via PagerDuty, Slack or email
 ```
 
-This is "external" monitoring — it simulates what a real user experiences when they try to reach your service. It is distinct from "internal" monitoring (metrics from inside the application). An application can be running and reporting healthy internally while being unreachable externally (firewall rule changed, DNS propagation issue, load balancer misconfiguration).
+This is "external" monitoring — it simulates what a real user experiences when they try to reach your service. It is distinct from "internal" monitoring (metrics from inside the application). An application can be healthy internally and still unreachable from outside. Causes: a changed firewall rule, DNS (Domain Name System) propagation, a misconfigured load balancer.
 
 Popular uptime monitoring services:
 
-```txt
-Pingdom         → SaaS; monitoring from 100+ locations; SMS + email alerts
-UptimeRobot     → free tier available (5-minute interval); popular for side projects
-Checkly         → monitors via synthetic scripts (not just pings — can simulate
-                   a user flow: login → add to cart → checkout)
-AWS CloudWatch  → built-in if you're on AWS; can create URL health checks
-StatusPage.io   → not monitoring itself, but a public status page service
-                   (what you see at status.stripe.com, githubstatus.com)
-```
+- **Pingdom** — SaaS, monitoring from 100+ locations, alerts by text message and email.
+- **UptimeRobot** — has a free tier with a 5-minute interval. Popular for side projects.
+- **Checkly** — monitors with synthetic scripts, not just pings. It can replay a user flow: log in, add to cart, check out.
+- **AWS CloudWatch** — built in if you are on AWS. It can create health checks by URL.
+- **StatusPage.io** — not monitoring itself, but a public status page service — what you see at status.stripe.com or githubstatus.com.
 
 ## Health check endpoints
 
-A **health check endpoint** is a dedicated API route in your application that reports whether the service is healthy and ready to accept traffic. It is not a user-facing feature — it is infrastructure plumbing.
+A **health check endpoint** is a dedicated API route that reports whether the service is healthy and ready to take traffic. It is not there for users but for the infrastructure: Kubernetes and the load balancer poll it.
 
 ```txt
-GET /health  →  200 OK  {"status": "ok"}
-              or
-              503 Service Unavailable  {"status": "degraded", "reason": "database unreachable"}
+GET /health
+  → 200 OK
+    {"status": "ok"}
+  → 503 Service Unavailable
+    {"status": "degraded", "reason": "database unreachable"}
 ```
 
 There are two distinct types of health checks, and confusing them causes problems:
@@ -361,7 +325,7 @@ app.get('/health/live', (_req, res) => {
 
 **Readiness probe** — "Is the service ready to receive traffic?"
 
-A readiness check fails if the application is running but not yet ready to serve requests (still warming up, database connection not yet established, cache not populated). The response to a failed readiness check is to **remove the pod from the load balancer** — but not restart it.
+A readiness check fails when the application is running but not yet able to serve requests. It may still be warming up, or the database connection or the cache may not be ready. The response to a failed readiness check is to **remove the pod from the load balancer** — but not restart it.
 
 ```ts
 // Readiness: check that all dependencies are reachable
@@ -436,141 +400,100 @@ app.get('/health/live', async (req, res) => {
 
 ## SLA, SLO, SLI — service level terminology
 
-These three acronyms describe how reliability commitments are defined, measured, and agreed upon. They are distinct layers:
+These three acronyms describe how reliability commitments are defined, measured and agreed. SLI is the service level indicator, SLO the service level objective, SLA the service level agreement. They are distinct layers:
 
-```txt
-SLI → what you measure
-SLO → what you commit to internally
-SLA → what you promise to customers (with consequences if broken)
-```
+| Acronym | What it is |
+|---|---|
+| SLI | What you measure |
+| SLO | What you commit to internally |
+| SLA | What you promise to customers, with consequences if you break it |
 
 ### SLI — Service Level Indicator
 
 An **SLI** (Service Level Indicator) is a specific, quantifiable metric that represents how well the service is performing for users. It is the raw measurement.
 
-```txt
-Examples of SLIs:
-  - Availability SLI:  (number of successful requests) / (total requests) × 100%
-  - Latency SLI:       percentage of requests completing in < 200ms
-  - Error rate SLI:    percentage of requests returning a 5xx status code
-  - Throughput SLI:    number of transactions processed per second
-```
+Examples:
+
+- **Availability** — successful requests divided by total requests, as a percentage.
+- **Latency** — the share of requests completing in under 200ms.
+- **Error rate** — the share of requests returning a 5xx status code.
+- **Throughput** — transactions processed per second.
 
 ### SLO — Service Level Objective
 
 An **SLO** (Service Level Objective) is an internal target for an SLI — the threshold below which you consider the service to be failing its users. It is a goal, not a promise to customers.
 
-```txt
-Examples of SLOs:
-  - "Availability ≥ 99.9% over a rolling 30-day window"
-  - "p99 latency ≤ 500ms for all API endpoints"
-  - "Error rate < 0.1% over any 5-minute window"
-```
+Examples:
 
-**Error budget** — the concept that makes SLOs actionable: the amount of unreliability you are allowed before your SLO is violated.
+- Availability at or above 99.9% over a rolling 30-day window.
+- A p99 latency at or below 500ms for every API endpoint.
+- An error rate under 0.1% in any 5-minute window.
+
+**Error budget** is the idea that makes an SLO actionable. It is how much unreliability you are allowed before the SLO is violated.
 
 ```txt
 SLO: 99.9% availability over 30 days
-  30 days = 43,200 minutes
-  0.1% of 43,200 minutes = 43.2 minutes of allowed downtime per month
+  30 days                = 43,200 minutes
+  0.1% of 43,200 minutes = 43.2 minutes of downtime per month
 
 Error budget = 43.2 minutes / month
-
-If you've used 40 minutes already this month → only 3.2 minutes of error budget left
-→ freeze risky deploys until the new month begins
-→ focus engineering effort on reliability improvements
-
-If error budget is consistently unused → you can afford to move faster,
-deploy more often, take more risks
 ```
 
-The error budget concept, from Google's SRE book, bridges the gap between product teams (who want to move fast) and ops teams (who want stability): it quantifies how much risk the system can afford, in units everyone understands.
+Suppose you have already used 40 minutes this month. Only 3.2 minutes are left, so you freeze risky deploys until the new month and put engineering effort into reliability instead. If the budget is consistently unused, you can move faster: deploy more often, take more risks.
+
+The error budget idea comes from Google's SRE book. It bridges the gap between product teams, who want to move fast, and ops teams, who want stability. It quantifies how much risk the system can afford, in units everyone understands.
 
 ### SLA — Service Level Agreement
 
-An **SLA** (Service Level Agreement) is a contractual commitment between a service provider and a customer that defines the expected level of service and the consequences (credits, refunds, termination rights) if that level is not met.
+An **SLA** (Service Level Agreement) is a contractual commitment between a service provider and a customer. It defines the expected level of service, and the consequences if that level is not met: credits, refunds, the right to terminate.
 
-```txt
-Examples of SLAs:
-  AWS S3 SLA:  99.9% monthly uptime; if uptime < 99%, customer gets 10% service credit
-               if uptime < 95%, customer gets 25% service credit
+Examples:
 
-  Stripe SLA:  99.99% API uptime; downtime is credited as service credits
-               (not actual money refunds — read the fine print)
-
-  Enterprise SaaS SLA: 99.9% uptime; < 99.9% → customer gets pro-rated refund;
-                       < 95% → customer has right to terminate contract
-```
+- **AWS S3 (Simple Storage Service)** — 99.9% monthly uptime. Below 99% the customer gets a 10% service credit; below 95%, a 25% credit.
+- **Stripe** — 99.99% API uptime. Downtime is compensated with service credits, not cash refunds. Read the fine print.
+- **A typical enterprise SaaS contract** — 99.9% uptime. Below that, a pro-rated refund; below 95%, the customer may terminate.
 
 The relationship between the three:
 
 ```txt
-SLI (measurement) → SLO (internal target) → SLA (external commitment)
-
-SLO is STRICTER than SLA:
-  If your SLA promises 99.9%, your internal SLO might be 99.95%.
-  The gap between SLO and SLA is your "safety margin" —
-  if you're falling toward your SLO, you catch and fix it
-  before you breach your SLA and face financial consequences.
+SLI (measurement) → SLO (internal target) → SLA (external promise)
 ```
+
+An SLO is **stricter** than an SLA. If your SLA promises 99.9%, your internal SLO might be 99.95%. The gap between them is your safety margin. Drift toward the SLO, and you catch and fix it before you breach the SLA and pay for it.
 
 **Nines of availability** — a common shorthand:
 
-```txt
-"Two nines"   = 99%    = 3.65 days of downtime/year   (87.6 hours)
-"Three nines" = 99.9%  = 8.76 hours of downtime/year
-"Four nines"  = 99.99% = 52.6 minutes of downtime/year
-"Five nines"  = 99.999%= 5.26 minutes of downtime/year
+| Shorthand | Availability | Downtime per year |
+|---|---|---|
+| Two nines | 99% | 3.65 days (87.6 hours) |
+| Three nines | 99.9% | 8.76 hours |
+| Four nines | 99.99% | 52.6 minutes |
+| Five nines | 99.999% | 5.26 minutes |
 
-Note: "five nines" is extremely difficult to achieve even for the largest
-companies. Most SaaS products target "three nines" or "four nines."
-Achieving "four nines" typically requires: multi-region redundancy,
-zero-downtime deployments, automated failover, extensive runbooks.
-```
+Five nines is extremely hard to reach, even for the largest companies. Most SaaS products target three or four nines. Four nines usually requires multi-region redundancy, zero-downtime deployments, automated failover and extensive runbooks.
 
 ## Putting it together: a practical observability setup
 
 For a Node.js + PostgreSQL application deployed on AWS:
 
-```txt
-Logs:
-  Application → structured JSON to stdout → CloudWatch Logs (or Datadog/Loki)
-  Retention: 30 days for INFO, 90 days for ERROR
-  Alerts: > 10 ERROR logs in 5 minutes → PagerDuty alert
-
-Metrics:
-  Application → Prometheus client library → /metrics endpoint
-  Prometheus scrapes /metrics every 15 seconds
-  Grafana dashboards: request rate, p95/p99 latency, error rate, DB pool size
-  Alerts: p99 latency > 1s for 5 minutes → Slack alert
-          error rate > 1% for 2 minutes → PagerDuty alert
-
-Traces:
-  Application → OpenTelemetry SDK → Jaeger / Tempo / Datadog APM
-  Sample rate: 100% in staging, 10% in production (full sampling is expensive)
-  Use for: debugging slow requests, understanding cross-service dependencies
-
-Uptime monitoring:
-  UptimeRobot / Checkly pings /health/live every 60 seconds from 3 regions
-  Alert if 2 consecutive failures: SMS + Slack
-
-Health checks:
-  Kubernetes liveness: /health/live (just process responsiveness)
-  Kubernetes readiness: /health/ready (checks DB + Redis connectivity)
-```
+- **Logs.** The application writes structured JSON to stdout; it goes to CloudWatch Logs, Datadog or Loki. Retention: 30 days for INFO, 90 days for ERROR. Alert via PagerDuty on more than 10 ERROR logs in 5 minutes.
+- **Metrics.** The Prometheus client library exposes a `/metrics` endpoint; Prometheus scrapes it every 15 seconds. Grafana dashboards show request rate, p95 and p99 latency, error rate and database pool size. Alert to Slack when p99 latency exceeds 1s for 5 minutes, to PagerDuty when the error rate exceeds 1% for 2 minutes.
+- **Traces.** The OpenTelemetry SDK exports to Jaeger, Tempo or Datadog APM. Sample rate: 100% in staging, 10% in production; full sampling is expensive. Use traces to debug slow requests and understand cross-service dependencies.
+- **Uptime monitoring.** UptimeRobot or Checkly pings `/health/live` every 60 seconds from 3 regions. Alert by text message and Slack after 2 consecutive failures.
+- **Health checks.** Kubernetes liveness on `/health/live`, which only checks that the process responds. Kubernetes readiness on `/health/ready`, which checks database and Redis connectivity.
 
 ## Common interview traps
 
-- **"Monitoring and observability are the same thing"** — monitoring is a practice of watching predefined metrics; observability is a property of the system that allows discovery of unknown failure modes. A system can be heavily monitored but poorly observable.
+- **"Monitoring and observability are the same thing"** — monitoring is the practice of watching predefined metrics. Observability is a property of the system that lets you discover unknown failure modes. A system can be heavily monitored but poorly observable.
 
-- **"We log everything with console.log"** — signals an unfamiliarity with production logging. The problems: console.log is synchronous (blocks the event loop briefly); it produces unstructured strings; it cannot be configured for level filtering; it doesn't include metadata (service name, request ID, user ID). Use a structured logger (winston, pino).
+- **"We log everything with console.log"** — signals an unfamiliarity with production logging. The problems: `console.log` is synchronous and briefly blocks the event loop. It produces unstructured strings. It cannot be filtered by level. It carries no metadata — no service name, request ID or user ID. Use a structured logger: winston, pino.
 
-- **Not knowing the difference between liveness and readiness probes** — a very common interview question. Confusing them leads to real operational problems: a readiness probe checking external dependencies that causes pod restarts when the database is down (instead of just removing the pod from the load balancer).
+- **Not knowing the difference between liveness and readiness probes** — a very common interview question. Confusing them causes real operational damage. A liveness probe that checks external dependencies will restart every pod when the database goes down. A readiness probe would just take those pods out of the load balancer.
 
 - **"Our SLA is 99.99%"** — interviewers will ask: "What's your error budget? How do you track it?" If you can't answer, it signals you don't actually operate at that level. Know the number of minutes of allowed downtime that corresponds to your SLA.
 
 - **Confusing SLI, SLO, and SLA** — a very common interview confusion, especially on senior/staff roles. Remember: SLI = measurement, SLO = internal target, SLA = customer contract. SLO is stricter than SLA to provide a safety buffer.
 
-- **"We use average latency as our metric"** — average masks outliers. p99 latency of 3 seconds means 1% of your users wait 3 seconds, but the average might look like 200ms because 99% of requests are fast. Always monitor percentiles.
+- **"We use average latency as our metric"** — the average masks outliers. A p99 latency of 3 seconds means 1% of your users wait 3 seconds. The average may still look like 200ms, because 99% of requests are fast. Always monitor percentiles.
 
 - **"We have a /health endpoint that just returns 200"** — fine for uptime monitoring, but not sufficient for Kubernetes liveness/readiness. A process can return 200 while being in a degraded state (database unreachable but returning cached data). The readiness probe should actually test dependency connectivity.

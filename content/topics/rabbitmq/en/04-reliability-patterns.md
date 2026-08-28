@@ -25,7 +25,10 @@ This happens in RabbitMQ when you use `noAck: true`. The broker removes the mess
 The broker delivers the message and waits for an ack. If the consumer crashes or nacks, the message is redelivered. The consumer may process the same message more than once.
 
 ```txt
-Producer ──► Broker ──► Consumer (processes successfully) ──► ack ──► Broker removes
+Producer ──► Broker ──► Consumer (processes it) ──► ack
+                                    │
+                          Broker removes the message
+
 Producer ──► Broker ──► Consumer (crashes mid-processing)
                               ↓
                     Broker redelivers to another consumer
@@ -45,7 +48,7 @@ True exactly-once requires:
   - Storage: writes must be idempotent or transactional with the ack
 ```
 
-**RabbitMQ does not provide exactly-once delivery natively.** Kafka transactions + exactly-once semantics (EOS) bring you closer, but even then, exactly-once is typically achieved at the application level through idempotent consumers — not as a guarantee from the broker itself.
+**RabbitMQ does not provide exactly-once delivery natively.** Kafka transactions plus exactly-once semantics (EOS) bring you closer. But even there, exactly-once is achieved at the application level, through idempotent consumers. It is not a guarantee from the broker itself.
 
 **Practical takeaway:** Design your systems for at-least-once and make your consumers idempotent. This gets you the safety of exactly-once without the complexity.
 
@@ -102,7 +105,7 @@ async function processOrderPlaced(
 }
 ```
 
-### Idempotency via upsert semantics in the DB
+### Idempotency via upsert semantics in the database
 
 For operations that write to a database, design the write itself to be idempotent:
 
@@ -135,15 +138,21 @@ The database's unique constraint becomes your deduplication mechanism — no Red
 
 `nack` with `requeue: true` retries immediately — the message goes back to the front of the queue and the consumer picks it up again milliseconds later. For transient errors (a downstream service temporarily down, a network blip), you want to wait before retrying.
 
-RabbitMQ doesn't have a built-in retry delay, but you can implement it with a **delayed queue pattern** using TTL + DLQ:
+RabbitMQ doesn't have a built-in retry delay. You build one with a **delayed queue pattern** made of TTL (time to live) and a DLQ (dead letter queue):
 
 ```txt
-Main Queue ──(failure)──► Retry Exchange ──► Retry Queue (TTL: 30s)
-                                                    │
-                                              (TTL expires)
-                                                    │
-                                                    ▼
-                                         Dead Letter → Main Exchange → Main Queue
+Main Queue ──(failure)──► Retry Exchange
+                                 │
+                                 ▼
+                    Retry Queue (TTL: 30s)
+                                 │
+                          (TTL expires)
+                                 │
+                                 ▼
+              Dead Letter ──► Main Exchange
+                                 │
+                                 ▼
+                           Main Queue
 ```
 
 ```ts
@@ -243,7 +252,7 @@ function getRetryQueueName(retryCount: number): string {
 
 ## Publisher confirms — knowing the broker received the message
 
-By default, `channel.publish()` is fire-and-forget at the TCP level — the broker might not have received the message if the connection drops before the buffer flushes. **Publisher confirms** (also called "confirm mode") make the channel wait for an explicit ack from the broker for each published message.
+By default, `channel.publish()` is fire-and-forget at the TCP (Transmission Control Protocol) level. If the connection drops before the buffer flushes, the broker may never have received the message. **Publisher confirms** (also called "confirm mode") make the channel wait for an explicit ack from the broker for each published message.
 
 ```ts
 async function publishWithConfirm(
@@ -291,7 +300,7 @@ async function batchPublishWithConfirm(
 
 ## The Transactional Outbox Pattern
 
-The most common reliability gap in event-driven systems: you save data to your DB and publish a message in two separate operations. If the process crashes between them, either the DB write happened without the message, or the message was published without the DB write.
+The most common reliability gap in event-driven systems: you save data to your database and publish a message in two separate operations. If the process crashes between them, either the database write happened without the message, or the message was published without the database write.
 
 ```ts
 // ❌ Classic race condition — these two operations are NOT atomic
@@ -301,7 +310,7 @@ async function placeOrder(orderData: OrderData): Promise<void> {
 }
 ```
 
-The **Transactional Outbox** solves this by writing the message to an `outbox` table in the same DB transaction as the business data. A separate relay process reads the outbox and publishes to RabbitMQ.
+The **Transactional Outbox** solves this by writing the message to an `outbox` table in the same database transaction as the business data. A separate relay process reads the outbox and publishes to RabbitMQ.
 
 ```sql
 -- Migration: create the outbox table
@@ -374,9 +383,9 @@ The Outbox pattern gives you **exactly-once publishing** (at-least-once to the b
 
 ## Poison messages — detecting and handling them
 
-A **poison message** is one that causes the consumer to crash every time it tries to process it — a malformed payload, an unexpected schema version, a bug triggered by specific data. Without a guard, the consumer enters an infinite crash-redeliver cycle.
+A **poison message** is one that crashes the consumer every single time it is processed. The cause is usually a malformed payload, an unexpected schema version, or a bug triggered by specific data. Without a guard, the consumer enters an infinite crash-and-redeliver cycle.
 
-Detection: `x-death` headers accumulate with each redelivery. When `count` exceeds your threshold, the message is a poison pill.
+Detection: `x-death` headers accumulate with each redelivery. When `count` exceeds your threshold, treat the message as poison.
 
 ```ts
 async function safeConsume(channel: Channel, msg: ConsumeMessage): Promise<void> {
@@ -406,7 +415,7 @@ async function safeConsume(channel: Channel, msg: ConsumeMessage): Promise<void>
 }
 
 async function quarantineMessage(msg: ConsumeMessage): Promise<void> {
-  // Store to DB for manual inspection
+  // Store to the database for manual inspection
   await db.query(
     `INSERT INTO quarantined_messages (message_id, queue, payload, headers, quarantined_at)
      VALUES ($1, $2, $3, $4, NOW())`,
@@ -427,11 +436,11 @@ async function quarantineMessage(msg: ConsumeMessage): Promise<void> {
 
 - **"RabbitMQ provides exactly-once delivery"** — it doesn't. RabbitMQ provides at-most-once (with `noAck`) or at-least-once (with acks and nack/requeue). Exactly-once is an application-level concern achieved through idempotent consumers.
 
-- **"I can make a consumer idempotent by checking `if processed then skip` before doing any work"** — the check and the work are two separate operations. If the consumer crashes between the check and the work, the check succeeds next time and the work is skipped. The check must be part of the same atomic operation as the write (DB unique constraint, Redis SET NX + cleanup on failure).
+- **"I can make a consumer idempotent by checking `if processed then skip` before doing any work"** — the check and the work are two separate operations. If the consumer crashes between the check and the work, the check succeeds next time and the work is skipped. The check must be part of the same atomic operation as the write: a database unique constraint, or Redis `SET NX` plus cleanup on failure.
 
 - **"`nack` with `requeue: true` is a safe retry mechanism"** — it retries immediately, with no delay, indefinitely. On a permanent error (bad payload, missing dependency) this creates a tight loop that can saturate the consumer and the broker. Always retry with delay and a maximum retry count.
 
-- **"The Transactional Outbox is overcomplicated — just use a try/catch around the publish"** — a try/catch around the publish doesn't help if the process crashes after the DB write and before the publish runs. The Outbox pattern is the only way to guarantee atomicity between a DB write and a message publish without distributed transactions.
+- **"The Transactional Outbox is overcomplicated — just use a try/catch around the publish"** — a try/catch does not help here. If the process crashes after the database write and before the publish runs, the catch block never runs either. The Outbox pattern is the only way to guarantee atomicity between a database write and a message publish, without distributed transactions.
 
 - **"Publisher confirms mean the consumer has processed the message"** — no. Publisher confirms mean the **broker** has received and stored the message. Whether the consumer has processed it is a completely separate concern (that's what consumer acks are for).
 

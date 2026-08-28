@@ -146,15 +146,15 @@ Beyond size, container queries can query **computed style values**:
 }
 ```
 
-Style queries are still experimental (partial support as of 2024) but show the direction: components that adapt to their semantic context, not just their physical dimensions.
+Style queries are still experimental, with partial support as of 2024. They show the direction of travel: components that adapt to their semantic context, not only to their physical dimensions.
 
-## Logical properties — why they matter for i18n
+## Logical properties — why they matter for i18n (internationalization)
 
 Physical properties (`margin-left`, `padding-right`, `border-top`) are tied to physical screen directions. Logical properties are tied to **writing mode and text direction** — they adapt automatically when the layout direction changes.
 
 ### The mapping
 
-| Physical | Logical | Maps to in LTR | Maps to in RTL |
+| Physical | Logical | Left-to-right (LTR) | Right-to-left (RTL) |
 |---|---|---|---|
 | `margin-left` | `margin-inline-start` | left | right |
 | `margin-right` | `margin-inline-end` | right | left |
@@ -254,7 +254,7 @@ inset-inline-start: 20px;
 
 - **Always**: new projects where you control the codebase, any project that might need RTL in the future
 - **Selectively**: existing projects where adopting fully logical properties would require extensive testing
-- **Avoid**: when you genuinely mean a physical direction regardless of writing mode (e.g., a decorative element pinned to the physical left edge of the viewport)
+- **Avoid**: when you genuinely mean a physical direction whatever the writing mode. An example is a decorative element pinned to the physical left edge of the viewport.
 
 ## `clamp()`, `min()`, `max()` — responsive values without media queries
 
@@ -352,7 +352,7 @@ h1 { font-size: var(--h1-size); }
 /* Column that's at least 200px wide (prevents too-narrow columns) */
 grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
 /* min(200px, 100%): on a 150px container, 100% < 200px → uses 100% */
-/* Prevents the column from overflowing when the container is narrower than minmax's minimum */
+/* Keeps the column from overflowing a container narrower than the minimum */
 
 /* Sidebar with a reasonable width range */
 .sidebar {
@@ -433,7 +433,7 @@ When the element has content, `aspect-ratio` is a *preference*, not a constraint
 
 ### Intrinsic aspect ratio for images and videos
 
-Images and videos have an intrinsic aspect ratio from their source dimensions. `aspect-ratio` can override it or be used to reserve space before the image loads (preventing layout shift):
+Images and videos carry an intrinsic aspect ratio from their source dimensions. The `aspect-ratio` property can override it. It can also reserve space before the image loads, which prevents layout shift:
 
 ```css
 img {
@@ -513,19 +513,28 @@ img {
 
 **"What's the difference between container queries and media queries?"**
 
-Media queries respond to the **viewport size** — they're useful for page-level layout decisions. Container queries respond to the **container's size** — they make components truly reusable because the component adapts to the space it actually occupies, not to a global screen measurement. A card component that appears in a 280px sidebar and a 600px main area at the same viewport width can only adapt correctly with container queries.
+Media queries respond to the **viewport size**, which is useful for page-level layout decisions. Container queries respond to the **container's size**, which makes components truly reusable. The component adapts to the space it actually occupies, not to a global screen measurement.
+
+Take a card that appears in a 280px sidebar and in a 600px main area at the same viewport width. Only container queries let it adapt correctly in both places.
 
 ---
 
 **"What is `container-type: inline-size` vs `container-type: size`?"**
 
-`inline-size`: enables querying the container's inline dimension (width in horizontal writing modes). The container's block size (height) remains untracked — the element doesn't need an explicit height to participate. `size`: enables querying both inline and block dimensions. Requires that the container's block size not depend on its content (must be explicitly set or constrained) — otherwise circular size computation. Use `inline-size` in most cases; `size` only when you need to query the container's height.
+The two values differ in what the container exposes:
+
+- `inline-size` — you can query the container's inline dimension, which is width in horizontal writing modes. The block size (height) stays untracked, so the element needs no explicit height to participate.
+- `size` — you can query both the inline and the block dimension. The container's block size must not depend on its content: set or constrain it explicitly, or the size computation becomes circular.
+
+Use `inline-size` in most cases. Reach for `size` only when you need to query the container's height.
 
 ---
 
 **"What's the difference between `margin-left` and `margin-inline-start`?"**
 
-`margin-left` is a physical property — always refers to the left side of the element regardless of writing direction. `margin-inline-start` is a logical property — refers to the start of the inline direction. In LTR layouts, both are identical. In RTL layouts (`dir="rtl"`), `margin-inline-start` maps to `margin-right`. In vertical writing modes, `margin-inline-start` maps to the top or bottom. Logical properties eliminate the need for `[dir="rtl"]` overrides.
+`margin-left` is a physical property. It always means the left side of the element, whatever the writing direction. The logical property `margin-inline-start` means the start of the inline direction instead.
+
+In left-to-right layouts, both are identical. In right-to-left layouts (`dir="rtl"`), `margin-inline-start` maps to `margin-right`. In vertical writing modes it maps to the top or the bottom. Logical properties remove the need for `[dir="rtl"]` overrides.
 
 ---
 
@@ -537,7 +546,9 @@ The value is `2.5vw`, clamped to a minimum of `1rem` and a maximum of `2rem`. At
 
 **"What problem does `aspect-ratio` solve over the padding-top hack?"**
 
-The padding-top hack (`padding-top: 56.25%`) exploits the fact that padding percentage is relative to element width — it creates a box with a fixed aspect ratio by making the height proportional to the width via padding. Problems: requires `height: 0`, requires `position: absolute` on children, breaks content flow. `aspect-ratio` is declarative, works with content flow, applies to any element type, and is readable. It's supported in all major browsers since 2021.
+The padding-top hack (`padding-top: 56.25%`) leans on one fact: a padding percentage is relative to the element's width. Padding then makes the height proportional to the width, which fixes the aspect ratio.
+
+It has three problems. It requires `height: 0`, it requires `position: absolute` on the children, and it breaks content flow. The `aspect-ratio` property is declarative, works with content flow, applies to any element type, and reads as what it means. All major browsers have supported it since 2021.
 
 ---
 

@@ -4,7 +4,7 @@
 
 "Kafka is a message queue like RabbitMQ, just faster, right?"
 
-**No.** This is the single most common misconception about Kafka, and it's precisely where interviews start going sideways. Kafka is a **distributed log**, not a message queue. This isn't a terminology quibble — it's an architectural difference that affects everything: how data is stored, who reads it and when, and what happens to messages after they're read.
+**No.** This is the single most common misconception about Kafka, and it is exactly where interviews start to go wrong. Kafka is a **distributed log**, not a message queue. This is not a small difference in wording. It is an architectural difference. It changes how data is stored, who reads it and when, and what happens to a message after it is read.
 
 To understand why Kafka exists, you first need to understand the problem it solves — and why RabbitMQ can't solve it.
 
@@ -16,21 +16,28 @@ Imagine LinkedIn in 2010. A user updates their profile. That event needs to:
 - Send behavioral analytics (background, within minutes)
 - Append to an audit log (long-term storage)
 
-With a traditional queue (RabbitMQ, SQS), this looks like:
+With a traditional queue — RabbitMQ, or Amazon Simple Queue Service — this looks like:
 
 ```txt
 [Profile Service]
      │
-     ├──► [Queue: search-index]    ──► [Search Consumer]     (reads, deletes)
-     ├──► [Queue: recommendations] ──► [Reco Consumer]       (reads, deletes)
-     ├──► [Queue: analytics]       ──► [Analytics Consumer]  (reads, deletes)
-     └──► [Queue: audit-log]       ──► [Audit Consumer]      (reads, deletes)
+     ├──► [Queue: search-index]    ──► [Search Consumer]
+     ├──► [Queue: recommendations] ──► [Reco Consumer]
+     ├──► [Queue: analytics]       ──► [Analytics Consumer]
+     └──► [Queue: audit-log]       ──► [Audit Consumer]
+
+Each consumer reads its message, and the queue then deletes it.
 ```
 
 Problems:
-1. **Consumer proliferation**: a new service appears (e.g., an ML ranking model) — you need a new queue, and Profile Service must know about it and write to it
-2. **No replay**: Analytics Service goes down for 2 hours → all events during that window are lost; they're gone from the queue (messages are deleted after acknowledgment)
-3. **No debugging or audit**: if a bug is discovered in Search Consumer tomorrow, there's no way to replay events from scratch — they've already left the queue
+
+1. **Consumer proliferation**: a new service appears, say a machine-learning ranking
+   model. You need a new queue for it, and Profile Service has to know about that
+   queue and write to it.
+2. **No replay**: Analytics Service goes down for 2 hours. Every event from that
+   window is lost, because a queue deletes a message once it is acknowledged.
+3. **No debugging or audit**: a bug turns up in Search Consumer tomorrow. There is
+   no way to replay the events, because they have already left the queue.
 
 This is the exact problem Kafka was built to solve.
 
@@ -39,16 +46,24 @@ This is the exact problem Kafka was built to solve.
 Kafka doesn't store messages in a queue that empties as it's consumed. It stores them in a **log** — a sequential, append-only, immutable file of records. A message stays in the log after being read. It remains there until a configured retention period expires (default: 7 days, configurable up to "keep forever").
 
 ```txt
-Queue (RabbitMQ, SQS):                Log (Kafka):
-┌──────────────────────────┐          ┌────────────────────────────────┐
-│ [msg1][msg2][msg3][msg4] │          │ [msg1][msg2][msg3][msg4][msg5] │
-└──────────────────────────┘          └────────────────────────────────┘
-Consumer reads msg1 →                 Consumer A reads msg1 (offset=0)
-                                      Consumer B reads msg1 (offset=0)
-┌────────────────────┐                Consumer A then reads msg3 (offset=2)
-│ [msg2][msg3][msg4] │                msg1 is STILL IN THE LOG
+Queue (RabbitMQ, Amazon SQS):
+┌──────────────────────────┐
+│ [msg1][msg2][msg3][msg4] │
+└──────────────────────────┘
+Consumer reads msg1, and then:
+┌────────────────────┐
+│ [msg2][msg3][msg4] │
 └────────────────────┘
-msg1 is DELETED from the queue
+msg1 is deleted from the queue
+
+Log (Kafka):
+┌────────────────────────────────┐
+│ [msg1][msg2][msg3][msg4][msg5] │
+└────────────────────────────────┘
+Consumer A reads msg1 (offset=0)
+Consumer B reads msg1 (offset=0)
+Consumer A then reads msg3 (offset=2)
+msg1 is still in the log
 ```
 
 This changes everything:
@@ -62,15 +77,15 @@ Kafka Topic "user-profile-updated":
   offset: 0        1        2        3        4
          [evt-A] [evt-B] [evt-C] [evt-D] [evt-E]
 
-  Search Consumer    ──────────────────────── reading offset 4 (near real-time)
-  Reco Consumer      ──────────────────  reading offset 3 (slightly behind)
-  Analytics Consumer ────────── reading offset 1 (crashed, recovering from offset=1)
-  New ML Service     ── reading offset 0 (just started, catching up to history)
+  Search Consumer     → offset 4  (near real-time)
+  Reco Consumer       → offset 3  (slightly behind)
+  Analytics Consumer  → offset 1  (crashed, recovering)
+  New ranking service → offset 0  (just started, reading history)
 ```
 
 ## "Dumb Broker, Smart Consumer" — The Core Philosophy
 
-In RabbitMQ, the broker is smart: it knows which consumer to deliver to, tracks acknowledgments (acks), manages routing through exchanges, and knows the state of every queue.
+In RabbitMQ the broker is smart. It knows which consumer to deliver to, it tracks acknowledgments (acks), and it routes messages through exchanges. It also knows the state of every queue.
 
 Kafka is architecturally opposite — this is called the **"dumb broker, smart consumer"** philosophy:
 
@@ -95,15 +110,16 @@ The **broker** is a Kafka node that accepts and stores data. It doesn't know whe
 
 The **consumer** tracks for itself how far it has read into the log. This number is called the **offset** — the sequence number of the next message to read. The consumer commits (saves) its offset independently, which is exactly what enables replay: just reset the offset back.
 
-The practical result of this philosophy: Kafka **scales horizontally** far better than traditional brokers, because brokers hold no per-consumer state — they simply write and read data sequentially from disk (which is extremely fast due to sequential I/O).
+The practical result of this philosophy is that Kafka **scales horizontally** far better than traditional brokers. A broker holds no state per consumer. It only writes and reads data sequentially from disk, and sequential access to disk is extremely fast.
 
 ## Why Kafka Is Fast: Sequential I/O
 
-Kafka writes all messages **sequentially to the end of a file**. Sequential writes to a standard HDD are 100–1000x faster than random writes. Kafka also leverages an OS mechanism called `sendfile` (zero-copy): data is transferred directly from the disk buffer to the network socket, bypassing a copy into userspace.
+Kafka writes all messages **sequentially to the end of a file**. Sequential writes to an ordinary spinning hard disk are 100–1000x faster than random writes. Kafka also uses an operating system mechanism called `sendfile`, also known as zero-copy. Data goes straight from the disk buffer into the network socket, with no copy into userspace.
 
 ```txt
 Traditional file read + network send:
-  Disk → kernel buffer → user buffer → kernel socket buffer → network
+  Disk → kernel buffer → user buffer
+       → kernel socket buffer → network
                          (copy into userspace — expensive)
 
 Kafka with zero-copy (sendfile):
@@ -119,19 +135,20 @@ Kafka solves a specific class of problems better than traditional queues:
 
 ```txt
 Kafka is well-suited for:
-  ✓ Event streaming — a stream of events multiple services need to read
-  ✓ Replay — replaying events (debugging, new services, disaster recovery)
+  ✓ Event streaming — one stream that many services read
+  ✓ Replay of events (debugging, new services, disaster recovery)
   ✓ High throughput — millions of messages per second
   ✓ Long-term event storage as a source of truth (event sourcing)
   ✓ Log aggregation — collecting logs from many services
   ✓ Change Data Capture (CDC) — streaming changes from a database
-  ✓ Real-time analytics — multiple consumers reading the same stream differently
+  ✓ Real-time analytics — many consumers reading the same
+    stream in different ways
 
 Kafka is a poor choice for:
   ✗ Simple task queues (send an email, resize an image)
   ✗ RPC-like patterns (request → response with a result)
   ✗ Content-based routing (route by message content)
-  ✗ Commands with immediate results ("process this and return a status")
+  ✗ Commands with an immediate result ("do this, return a status")
   ✗ Small commands where individual steps are transactionally linked
 ```
 
@@ -143,11 +160,11 @@ Wrong framing. These are different tools with different philosophies. RabbitMQ i
 
 **"Messages are deleted from Kafka after being read"**
 
-No. That is exactly what Kafka does NOT do — and it's the key difference from a queue. Messages are only removed when the retention period expires (`retention.ms`) or the storage limit is reached (`retention.bytes`). A consumer only advances its own offset; it doesn't delete data.
+No. That is exactly what Kafka does **not** do, and it is the key difference from a queue. Messages are only removed when the retention period expires (`retention.ms`) or the storage limit is reached (`retention.bytes`). A consumer only advances its own offset; it doesn't delete data.
 
 **"Kafka guarantees global message ordering"**
 
-Kafka guarantees ordering only within a single partition. If a topic has multiple partitions, global ordering is NOT guaranteed. This is the fundamental trade-off between ordering and parallelism — covered in detail in the partitioning article.
+Kafka guarantees ordering only within a single partition. If a topic has multiple partitions, global ordering is **not** guaranteed. This is the fundamental trade-off between ordering and parallelism, covered in detail in [Partitioning and Message Ordering](./03-partitioning-and-ordering.md).
 
 **"Offset is a global counter"**
 

@@ -2,19 +2,25 @@
 
 ## The comparison axis: who resolves what, and when
 
-Every micro-frontend integration approach answers the same underlying question differently: **at what point is it decided which code, at which version, ends up where — and who makes that decision?** This is the axis interviewers actually want you to compare approaches on — not "which is best," but "when does resolution happen":
+Every micro-frontend integration approach answers the same question differently. **At what point is it decided which code, at which version, ends up where? And who makes that decision?** That is the axis interviewers want you to compare approaches on. The question is not which approach is best, but when resolution happens:
 
 ```txt
-Build time                    Request time                  Runtime (browser)
-(on the host team's CI)        (on the server/edge per request) (as the user's JS executes)
-       │                              │                               │
-       ▼                              ▼                               ▼
-An npm package is compiled     The server/edge assembles       The browser fetches remoteEntry.js
-into the host's single bundle  HTML fragments into one page    or resolves an import map at the
-ahead of time, before deploy   on every incoming request       moment the user navigates
+Build time — on the host team's CI
+  An npm package is compiled into the host's single bundle
+  ahead of time, before deploy.
+    │
+    ▼
+Request time — on the server or edge, per request
+  The server assembles HTML fragments into one page on
+  every incoming request.
+    │
+    ▼
+Runtime — in the browser, as the user's JS executes
+  The browser fetches remoteEntry.js, or resolves an
+  import map, at the moment the user navigates.
 ```
 
-The further right on this axis, the later the decision is made — which means more flexibility (you can change a remote's version without rebuilding the host), but also more risk that resolution fails or duplicates exactly at the moment the user is looking at the screen.
+The further down this list, the later the decision is made. Later means more flexibility: you can change a remote's version without rebuilding the host. Later also means more risk. Resolution can fail, or load a dependency twice, exactly while the user is looking at the screen.
 
 ## 1. Build-time integration (npm packages)
 
@@ -43,13 +49,21 @@ export function App() {
 
 **Who resolves, and when:** the host's bundler, during the host's own `build`. No runtime magic — it's a plain import of a compiled package.
 
-**Strengths:** as simple as it gets, full type safety (ordinary `.d.ts`), tree-shaking works normally, no network requests at runtime, no risk of a React version mismatch in the user's browser — every dependency is pinned at the host's build step.
+**Strengths:**
 
-**Weaknesses — and here's where a common confusion lives:** the checkout team can publish a new version of their package whenever they want (that's independent development), but until the host bumps `package.json` and rebuilds/redeploys its own app, the user won't see the new version. Build-time integration gives you **independent development and versioning**, but not **independent deployment of the running application** — the host's deploy remains the bottleneck. If the organization's actual pain is waiting on the host's release window, this approach doesn't solve it.
+- As simple as it gets.
+- Full type safety through ordinary `.d.ts` files.
+- Tree-shaking works normally.
+- No network requests at runtime.
+- No risk of a React version mismatch in the user's browser: every dependency is pinned at the host's build step.
+
+**Weaknesses — and here's where a common confusion lives.** The checkout team can publish a new version of their package whenever they want, and that is independent development. But until the host bumps `package.json` and redeploys its own app, the user won't see the new version.
+
+Build-time integration gives you **independent development and versioning**. It does not give you **independent deployment of the running application** — the host's deploy remains the bottleneck. If the organization's actual pain is waiting on the host's release window, this approach doesn't solve it.
 
 ## 2. Server-side composition (Server-Side Includes / template composition)
 
-Composition happens **on the server or at the edge, on every incoming request**. A composition layer (a reverse proxy, an edge function, or a dedicated "compositor" service such as Tailor.js in the Node ecosystem) requests an HTML fragment from each micro-frontend's own server and stitches them into a single page before it reaches the browser.
+Composition happens **on the server or at the edge, on every incoming request**. The composition layer can be a reverse proxy, an edge function, or a dedicated "compositor" service such as Tailor.js in the Node ecosystem. It requests an HTML fragment from each micro-frontend's own server. It then stitches the fragments into a single page, before that page reaches the browser.
 
 ```txt
                     ┌──────────────────────────┐
@@ -67,7 +81,7 @@ Browser request ──► │ Compositor (edge/reverse │
                             │               │               │
                             ▼               ▼               ▼
                     The compositor stitches the fragments into one
-                    HTML document and returns ONE page to the browser
+                    HTML page and returns it to the browser
 ```
 
 ```nginx
@@ -86,15 +100,19 @@ location / {
 </body>
 ```
 
-**Who resolves, and when:** the compositor (server/edge), on every HTTP request. This means each fragment's version can be changed independently and instantly — no rebuild of the other parts required — because the decision is made fresh on every request rather than once at host-build time.
+**Who resolves, and when:** the compositor (server/edge), on every HTTP request. This means each fragment's version can be changed independently and instantly, with no rebuild of the other parts. The decision is made fresh on every request, not once at host-build time.
 
-**Strengths:** the page arrives at the browser already assembled — fast TTFB, works even with JS disabled on the client (progressively enhanceable), excellent for SEO and content critical to the first paint.
+**Strengths:** the page arrives at the browser already assembled. That gives a fast TTFB (time to first byte), and it works even with JS disabled on the client. It is excellent for search engine optimization (SEO) and for content critical to the first paint.
 
-**Weaknesses:** requires composition infrastructure (an edge layer or a dedicated service), interactivity inside a fragment (client JS, hydration) is each fragment's own concern, and coordinating behavior across fragments on the client is harder than with client-side composition.
+**Weaknesses:**
+
+- It requires composition infrastructure: an edge layer or a dedicated service.
+- Interactivity inside a fragment (client JS, hydration) is each fragment's own concern.
+- Coordinating behavior across fragments on the client is harder than with client-side composition.
 
 ## 3. Iframes — the "safe but bad" default
 
-An iframe is the only way to get true isolation of JS, CSS, and the DOM: each iframe is a separate browsing context with its own `window` global, its own DOM tree, its own styles. Nothing "leaks" between parent and iframe without an explicit `postMessage`.
+An iframe is the only way to get true isolation of JS, CSS and the DOM (document object model). Each iframe is a separate browsing context, with its own `window` global, its own DOM tree and its own styles. Nothing "leaks" between parent and iframe without an explicit `postMessage`.
 
 ```html
 <!-- host shell -->
@@ -111,15 +129,15 @@ window.addEventListener('message', (event) => {
 });
 ```
 
-**Who resolves, and when:** the browser, at the moment `<iframe src>` loads — a fully independent navigation context, with no dependency resolution between host and iframe happening at all (that's exactly what the isolation buys you).
+**Who resolves, and when:** the browser, at the moment `<iframe src>` loads. That is a fully independent navigation context. No dependency resolution between host and iframe happens at all, and that is exactly what the isolation buys you.
 
 **Why it's a "default, but a bad one":**
 
-- **The isolation tax.** The very thing that makes an iframe safe (a fully separate context) makes sharing common design-system CSS, fonts, and global styles nearly impossible without duplication — every iframe loads its own styles from scratch.
-- **The UX tax.** Nested scrollbars, resizing the iframe to fit its content is a known hack (`ResizeObserver` + `postMessage`), focus and tab navigation don't naturally flow "through" the boundary, printing the page often breaks.
-- **Routing and deep-linking pain.** The browser's address bar URL doesn't reflect state inside the iframe on its own — if the user is at step 3 of checkout inside an iframe and reloads the page or copies the link, state is lost unless you explicitly sync it via `history.pushState` and `postMessage`. The browser's back button doesn't behave the way the user expects by default.
+- **The isolation tax.** The very thing that makes an iframe safe is the fully separate context. That same separation makes sharing design-system CSS, fonts and global styles nearly impossible without duplication. Every iframe loads its own styles from scratch.
+- **The user-experience tax.** You get nested scrollbars. Resizing the iframe to fit its content is a known hack, built on `ResizeObserver` plus `postMessage`. Focus and tab navigation don't flow "through" the boundary naturally. Printing the page often breaks.
+- **Routing and deep-linking pain.** The browser's address bar doesn't reflect state inside the iframe on its own. Say the user is at step 3 of checkout inside an iframe, and then reloads the page or copies the link. That state is lost, unless you explicitly sync it via `history.pushState` and `postMessage`. The back button also doesn't behave the way the user expects by default.
 
-**When an iframe is the right call, not a compromise.** When isolation is a requirement, not a side effect: embedding a widget from an untrusted third-party vendor (a payment form, a chat widget, an ad), where you **deliberately** don't want that code to have access to the DOM and cookies of the rest of the page. In that case, an iframe's downsides are exactly the price you're willing to pay for a real sandbox.
+**When an iframe is the right call, not a compromise.** When isolation is a requirement, not a side effect. That is the case when you embed a widget from an untrusted third-party vendor: a payment form, a chat widget, an ad. You **deliberately** don't want that code to reach the DOM and cookies of the rest of the page. In that case, an iframe's downsides are exactly the price of a real sandbox.
 
 ## 4. Client-side runtime integration
 
@@ -127,7 +145,7 @@ Composition happens **in the user's browser, at JS execution time** — usually 
 
 ### Module Federation (Webpack 5 / Rspack)
 
-At runtime, the host fetches the remote application's `remoteEntry.js` and requests a specific exposed module from it. The full mechanics are covered in article 03 — what matters here is that **resolution happens in the browser, at the moment the module is requested**, including reconciling shared dependency versions (React, etc.) between host and remote.
+At runtime, the host fetches the remote application's `remoteEntry.js` and requests a specific exposed module from it. [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md) covers the full mechanics. What matters here is that **resolution happens in the browser, at the moment the module is requested**. That includes reconciling shared dependency versions, React among them, between host and remote.
 
 ```ts
 // host: dynamically loading a remote module during navigation
@@ -136,7 +154,7 @@ const CheckoutApp = React.lazy(() => import('checkout/CheckoutApp'));
 
 ### single-spa
 
-A framework-agnostic orchestrator: a root config registers a set of "applications," each with its own activity function (when this application should be mounted, usually based on the route), and each application is a separate bundle that single-spa mounts/unmounts through its own lifecycle. Applications can be built with different frameworks (React, Angular, Vue) simultaneously on the same page.
+A framework-agnostic orchestrator. A root config registers a set of named applications. Each one gets its own activity function, which decides when that application should be mounted — usually based on the route. Each application is a separate bundle, which single-spa mounts and unmounts through its own lifecycle. Applications can use different frameworks (React, Angular, Vue) at the same time on one page.
 
 ```ts
 // root-config.js
@@ -150,7 +168,7 @@ start();
 
 ### Native ESM + import maps
 
-No bundler-specific runtime at all: the browser natively resolves the import graph, and an **import map** lets you remap where a bare specifier (`"react"`) points — to a CDN URL with a specific version.
+No bundler-specific runtime at all. The browser natively resolves the import graph of ECMAScript modules (ESM). An **import map** lets you remap where a bare specifier (`"react"`) points — to a CDN (content delivery network) URL with a specific version.
 
 ```html
 <script type="importmap">
@@ -162,47 +180,34 @@ No bundler-specific runtime at all: the browser natively resolves the import gra
 }
 </script>
 <script type="module">
-  import { CheckoutWidget } from 'checkout-mfe'; // resolved by the browser via the import map
+  // resolved by the browser via the import map
+  import { CheckoutWidget } from 'checkout-mfe';
 </script>
 ```
 
-**What all three share:** resolution happens on the client, which means it can be changed without rebuilding the host (update the import map or the remote's manifest and everyone gets the new version on the next load) — but it can also break on the client, in front of a live user, with no single point where the error can be caught before it reaches production.
+**What all three share:** resolution happens on the client. That means it can be changed without rebuilding the host. Update the import map or the remote's manifest, and everyone gets the new version on the next load.
+
+It also means resolution can break on the client, in front of a live user. There is no single point where the error can be caught before it reaches production.
 
 ## Summary table
 
-```txt
-┌──────────────────┬───────────────┬─────────────────────┬────────────────────┬─────────────────────┐
-│                  │ Build-time    │ Server-side         │ Iframe             │ Client runtime      │
-│                  │ (npm package) │ (SSI/compositor)    │                    │ (MF/single-spa/ESM) │
-├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
-│ When resolved    │ Host's build  │ Every HTTP request  │ Iframe load        │ Browser runtime     │
-├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
-│ Isolation        │ None (shared  │ None on the client  │ Full (separate     │ Partial (shared     │
-│                  │ bundle)       │ (shared DOM)        │ browsing context)  │ DOM, JS realm)      │
-├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
-│ Real deploy      │ Development   │ Yes, per-request    │ Yes, fully         │ Yes, per-load       │
-│ independence     │ only          │                     │                    │                     │
-├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
-│ Shared CSS/fonts │ Trivial       │ Needs discipline    │ Practically        │ Needs discipline    │
-│                  │               │                     │ impossible without │ (article 06)        │
-│                  │               │                     │ duplication        │                     │
-├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
-│ SEO / no-JS      │ Same as host  │ Excellent           │ Poor               │ Poor without SSR    │
-├──────────────────┼───────────────┼─────────────────────┼────────────────────┼─────────────────────┤
-│ Typical use case │ Internal team │ Content-heavy       │ Untrusted          │ Many teams, SPA,    │
-│                  │ library       │ pages (media,       │ third-party widget │ mixed frameworks    │
-│                  │               │ e-commerce landing) │                    │                     │
-└──────────────────┴───────────────┴─────────────────────┴────────────────────┴─────────────────────┘
-```
+| | Build-time (npm package) | Server-side (SSI — server-side includes) | Iframe | Client runtime (Module Federation, single-spa, ESM) |
+|---|---|---|---|---|
+| **When resolved** | Host's build | Every HTTP request | Iframe load | Browser runtime |
+| **Isolation** | None (shared bundle) | None on the client (shared DOM) | Full (separate browsing context) | Partial (shared DOM, shared JS realm) |
+| **Real deploy independence** | Development only | Yes, per request | Yes, fully | Yes, per load |
+| **Shared CSS and fonts** | Trivial | Needs discipline | Practically impossible without duplication | Needs discipline, see [Styling and Isolation](./06-styling-and-isolation.md) |
+| **Search ranking / no-JS** | Same as host | Excellent | Poor | Poor without SSR (server-side rendering) |
+| **Typical use case** | Internal team library | Content-heavy pages: media, e-commerce landing | Untrusted third-party widget | Many teams, one single-page app, mixed frameworks |
 
 ## Common interview traps
 
 - **"Micro-frontends always mean Module Federation"** — Module Federation is just one of four real approaches, and not always the right one. Server-side composition is often better for content-heavy pages; iframes are the only sound choice for untrusted third-party code.
 
-- **"Iframes are always bad, modern approaches replaced them"** — an iframe remains the right choice precisely when you need real isolation from untrusted code (third-party widgets, embedded payment forms). The iframe's downsides (UX, routing) are the price of a real sandbox, not a sign of an outdated tool.
+- **"Iframes are always bad, modern approaches replaced them"** — an iframe remains the right choice when you need real isolation from untrusted code. Third-party widgets and embedded payment forms are the usual cases. The iframe's downsides in usability and routing are the price of a real sandbox, not a sign of an outdated tool.
 
-- **"A versioned npm package already gives you full micro-frontends"** — build-time integration gives you development independence but not deployment independence for the running application: the user won't see the new version until the host rebuilds and redeploys. This solves half of the organizational problem, not all of it.
+- **"A versioned npm package already gives you full micro-frontends"** — build-time integration gives you development independence, but not deployment independence for the running application. The user won't see the new version until the host rebuilds and redeploys. This solves half of the organizational problem, not all of it.
 
-- **"All approaches solve the shared-dependency problem equally"** — no: the later resolution happens (the closer to browser runtime), the sharper the question of reconciling React, design-system, and router versions across independently deployed parts becomes — a problem specific to client-side runtime integration, covered in depth in article 03.
+- **"All approaches solve the shared-dependency problem equally"** — no. The later resolution happens, the sharper the question of reconciling React, design-system and router versions across independently deployed parts. That problem is specific to client-side runtime integration, and [Module Federation: How It Actually Works Under the Hood](./03-module-federation-deep-dive.md) covers it in depth.
 
-- **"You pick one correct approach for the whole product"** — in practice, mature organizations combine approaches: server-side composition for content pages (SEO-critical), client-side runtime for interactive SPA sections, iframes selectively for third-party embeds. That's not a sign of an immature architecture — it's a deliberate choice matched to the different requirements of different parts of the product.
+- **"You pick one correct approach for the whole product"** — in practice, mature organizations combine them. Server-side composition goes to content pages, where search ranking matters. Client-side runtime goes to interactive single-page sections, and iframes are used selectively for third-party embeds. That is not a sign of an immature architecture. It is a deliberate choice, matched to the different requirements of different parts of the product.

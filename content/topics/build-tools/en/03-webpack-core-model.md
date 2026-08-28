@@ -2,9 +2,9 @@
 
 ## Why understand Webpack even if you write Vite
 
-Webpack set the vocabulary the whole industry uses: *module*, *chunk*, *loader*, *plugin*, *code splitting*, *hot module replacement*. Vite, Rspack and Turbopack describe themselves in those same terms — sometimes reusing them, sometimes deliberately rejecting them. So the Webpack model is not "how to configure one tool" but the base language for talking about builds, interviews included.
+Webpack set the vocabulary the whole industry uses: *module*, *chunk*, *loader*, *plugin*, *code splitting*, *hot module replacement* (HMR). Vite, Rspack and Turbopack describe themselves in those same terms — sometimes reusing them, sometimes deliberately rejecting them. So the Webpack model is not "how to configure one tool" but the base language for talking about builds, interviews included.
 
-The practical side has not gone anywhere either: Webpack 5 is actively developed, an enormous number of live projects build on it, and the published roadmap is preparing a sixth major version. "Webpack is legacy" is a debatable claim at best.
+The practical side has not gone anywhere either. Webpack 5 is actively developed, an enormous number of live projects build on it, and the published roadmap is preparing a sixth major version. "Webpack is legacy" is a debatable claim at best.
 
 ## The vocabulary: module → chunk → asset
 
@@ -30,13 +30,13 @@ These three words get conflated more than anything else, and the confusion makes
     one module can end up in several chunks at once
 ```
 
-- **Module** — a node of the graph from [The Module Graph and Resolution], but after transformation. Note that a module is not only JS: `Button.css` and `logo.svg` are modules too, because a loader turned them into something importable.
+- **Module** — a node of the graph from [The Module Graph and Resolution](./02-module-graph-and-resolution.md), but after transformation. Note that a module is not only JS: `Button.css` and `logo.svg` are modules too, because a loader turned them into something importable.
 - **Chunk** — a unit of the **bundler's decision**: "these modules ship together". Chunks arise from entry points, from every `import()`, and from `splitChunks` rules. A chunk exists inside the build; it has a name and an id, but it may not exist on disk as a single file.
 - **Asset** — what is actually written into `dist/`. One chunk usually produces several assets: JS, extracted CSS, a source map.
 
-The practical value of the distinction is in how you phrase questions. "My bundle is big" is useless. Useful: **"why did `chart-lib` end up in the `main` chunk rather than in `analytics`?"** That question has an answer; the first one does not. The analysis tools that show exactly this relationship are covered in [Tree Shaking and Optimization].
+The practical value of the distinction is in how you phrase questions. "My bundle is big" is useless. Useful: **"why did `chart-lib` end up in the `main` chunk rather than in `analytics`?"** That question has an answer; the first one does not. The analysis tools that show exactly this relationship are covered in [Tree Shaking and Optimization](./05-tree-shaking-and-optimization.md).
 
-Worth memorizing separately: the same module can land in **several chunks at once**. If `lib/api.ts` is imported from two lazy routes, without a shared group it is duplicated into both chunks — one of the main themes of [Code Splitting and Long-Term Caching].
+Worth memorizing separately: the same module can land in **several chunks at once**. If `lib/api.ts` is imported from two lazy routes, without a shared group it is duplicated into both chunks. That is one of the main themes of [Code Splitting and Long-Term Caching](./04-code-splitting-and-caching.md).
 
 ## The config: what it is made of
 
@@ -78,41 +78,30 @@ module.exports = {
 };
 ```
 
-Five sections, five distinct questions: **where** to start walking, **where** to write, **how** to search, **what** to transform with, **who** intervenes. Everything else in a config is `optimization` (the subject of [Code Splitting and Long-Term Caching] and [Tree Shaking and Optimization]) and `devServer` (the subject of [Dev Server and HMR]).
+Five sections, five distinct questions: **where** to start walking, **where** to write, **how** to search, **what** to transform with, **who** intervenes. Everything else in a config is `optimization` and `devServer`.
+
+The `optimization` section is the subject of [Code Splitting and Long-Term Caching](./04-code-splitting-and-caching.md) and [Tree Shaking and Optimization](./05-tree-shaking-and-optimization.md). The `devServer` section is the subject of [Dev Server and HMR](./07-dev-server-and-hmr.md).
 
 ### mode: one line that changes a dozen defaults
 
-```txt
-                  What a single mode line actually switches
-┌───────────────────────┬─────────────────────┬──────────────────────────────┐
-│ option                │ mode: 'development' │ mode: 'production'           │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ devtool               │ 'eval'              │ false                        │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ cache                 │ { type: 'memory' }  │ false — filesystem is opt-in │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ output.pathinfo       │ true                │ false                        │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ optimization.minimize │ false               │ true                         │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ moduleIds / chunkIds  │ 'named'             │ 'deterministic'              │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ usedExports           │ false               │ true                         │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ concatenateModules    │ false               │ true                         │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ realContentHash       │ false               │ true                         │
-├───────────────────────┼─────────────────────┼──────────────────────────────┤
-│ nodeEnv               │ 'development'       │ 'production'                 │
-└───────────────────────┴─────────────────────┴──────────────────────────────┘
-        mode is not a "speed switch" but a bundle of a dozen defaults,
-        half of which directly affect bundle size and cache stability
-```
+| option | `mode: 'development'` | `mode: 'production'` |
+|---|---|---|
+| `devtool` | `'eval'` | `false` |
+| `cache` | `{ type: 'memory' }` | `false` — filesystem is opt-in |
+| `output.pathinfo` | `true` | `false` |
+| `optimization.minimize` | `false` | `true` |
+| `moduleIds` / `chunkIds` | `'named'` | `'deterministic'` |
+| `usedExports` | `false` | `true` |
+| `concatenateModules` | `false` | `true` |
+| `realContentHash` | `false` | `true` |
+| `nodeEnv` | `'development'` | `'production'` |
+
+*`mode` is not a "speed switch" but a bundle of a dozen defaults. Half of them directly affect bundle size and cache stability.*
 
 Three consequences worth understanding:
 
-- **`moduleIds: 'named'` versus `'deterministic'`.** In dev a module gets a readable id (its file path), which helps while debugging. In prod it gets a short deterministic one that depends only on the module itself. This is exactly what decides whether your vendor chunk hash changes after you add one file to the application; details in [Code Splitting and Long-Term Caching].
-- **`nodeEnv` substitutes `process.env.NODE_ENV` through `DefinePlugin`.** Libraries write `if (process.env.NODE_ENV !== 'production') { warnAboutSomething() }`, the value is inlined as a literal, and the minifier drops the dead branch entirely. That is how React gets noticeably smaller in production. The mechanics are in [Tree Shaking and Optimization].
+- **`moduleIds: 'named'` versus `'deterministic'`.** In dev a module gets a readable id (its file path), which helps while debugging. In prod it gets a short deterministic one that depends only on the module itself. This is exactly what decides whether your vendor chunk hash changes after you add one file to the application. Details are in [Code Splitting and Long-Term Caching](./04-code-splitting-and-caching.md).
+- **`nodeEnv` substitutes `process.env.NODE_ENV` through `DefinePlugin`.** Libraries write `if (process.env.NODE_ENV !== 'production') { warnAboutSomething() }`, the value is inlined as a literal, and the minifier drops the dead branch entirely. That is how React gets noticeably smaller in production. The mechanics are in [Tree Shaking and Optimization](./05-tree-shaking-and-optimization.md).
 - **`cache` is off by default in production.** The filesystem cache is opt-in:
 
 ```js
@@ -120,12 +109,12 @@ Three consequences worth understanding:
 module.exports = {
   cache: {
     type: 'filesystem',
-    buildDependencies: { config: [__filename] },  // rebuild everything when the config changes
+    buildDependencies: { config: [__filename] },  // rebuild all if config changes
   },
 };
 ```
 
-This is what replaced the old way of speeding up rebuilds — `cache-loader` and `hard-source-webpack-plugin`. Both are unnecessary and unmaintained today: the built-in filesystem cache solves the same problem more reliably because it tracks the build's own dependencies, not just file contents. Seeing `cache-loader` in a 2026 config is a reliable sign that the config has not been revisited in years.
+This is what replaced the old way of speeding up rebuilds — `cache-loader` and `hard-source-webpack-plugin`. Both are unnecessary and unmaintained today. The built-in filesystem cache solves the same problem more reliably, because it tracks the build's own dependencies and not just file contents. Seeing `cache-loader` in a 2026 config is a reliable sign that the config has not been revisited in years.
 
 ## Loaders: a pipeline over one file
 
@@ -133,26 +122,28 @@ A loader is a function "file contents → file contents", applied to every file 
 
 ```txt
            A loader chain: a pipeline over ONE file
-┌───────────────────────────────────────────────────────────────────┐
-│ use: ['style-loader', 'css-loader', 'sass-loader']                │
-│                                 ↓                                 │
-│ the file ui/Button.scss is read — plain text                      │
-│                                 ↓                                 │
-│ sass-loader    SCSS → CSS                                         │
-│                                 ↓                                 │
-│ css-loader     CSS → a JS module, @import and url() → imports     │
-│                                 ↓                                 │
-│ style-loader   a JS module → code injecting <style> into the page │
-│                                 ↓                                 │
-│ the output is a valid JS module — a graph node                    │
-└───────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ use: ['style-loader', 'css-loader', 'sass-loader']              │
+│                                ↓                                │
+│ the file ui/Button.scss is read — plain text                    │
+│                                ↓                                │
+│ sass-loader    SCSS → CSS                                       │
+│                                ↓                                │
+│ css-loader     CSS → a JS module, @import and url() → imports   │
+│                                ↓                                │
+│ style-loader   a JS module → code that adds <style> to the page │
+│                                ↓                                │
+│ the output is a valid JS module — a graph node                  │
+└─────────────────────────────────────────────────────────────────┘
     the order is the reverse of how it is written: it is function
   composition — style(css(sass(file))), so the last entry runs first
 ```
 
-**Why the order is reversed.** Not a quirk, but a direct consequence of a chain being function composition. `use: [a, b, c]` reads as `a(b(c(file)))`: the innermost call first, the outermost last. The same principle as in mathematics and in `compose()` from functional programming. That is why in a CSS chain `sass-loader` — which turns SCSS into CSS — must be last in the array: it runs first.
+**Why the order is reversed.** It is not an oddity, but a direct consequence of a chain being function composition. The line `use: [a, b, c]` reads as `a(b(c(file)))`: the innermost call first, the outermost last. The same principle as in mathematics and in `compose()` from functional programming.
 
-A key requirement on the end of the chain: **the last loader applied must return valid JavaScript**. The module graph is made of JS nodes, so an image, a stylesheet or an SVG ultimately becomes a JS module too — one that either exports a URL or injects styles into the document.
+That is why `sass-loader` must be last in a CSS chain. It turns SCSS (Sassy CSS, the Sass dialect closest to plain CSS) into CSS, so it has to run first.
+
+A key requirement on the end of the chain: **the last loader applied must return valid JavaScript**. The module graph is made of JS nodes. So an image, a stylesheet or an SVG (scalable vector graphics) file becomes a JS module too. That module either exports a URL or injects styles into the document.
 
 The order can be shifted with `enforce`: rules split into three groups — `pre`, normal and `post` — and within each group the same right-to-left rule applies. The classic use of `pre` is a linter that must see the source before any transformation.
 
@@ -163,19 +154,19 @@ Webpack 5 introduced Asset Modules — built-in handling of binary and text asse
 ```js
 module: {
   rules: [
-    { test: /\.svg$/,  type: 'asset/resource' },   // a separate file + URL  (was file-loader)
-    { test: /\.png$/,  type: 'asset/inline' },     // a data URI             (was url-loader)
-    { test: /\.txt$/,  type: 'asset/source' },     // contents as a string   (was raw-loader)
+    { test: /\.svg$/,  type: 'asset/resource' },   // separate file + URL (was file-loader)
+    { test: /\.png$/,  type: 'asset/inline' },     // a data URI          (was url-loader)
+    { test: /\.txt$/,  type: 'asset/source' },     // contents as string  (was raw-loader)
     { test: /\.jpg$/,  type: 'asset' },            // chosen by size, 8 KB threshold
   ],
 }
 ```
 
-All three old loaders are legacy today. The same process continues: per the project roadmap, CSS (`experiments.css`, an experiment since version 5), HTML handling and TypeScript compilation are all moving into core. In other words, Webpack's direction of travel is to reduce the number of loaders and plugins a typical project needs.
+All three old loaders are legacy today. The same process continues. Per the project roadmap, three things are moving into core: CSS (`experiments.css`, an experiment since version 5), HTML handling and TypeScript compilation. In other words, Webpack's direction of travel is to reduce the number of loaders and plugins a typical project needs.
 
 ### The same job in Vite
 
-Vite has no "loader" concept at all. The typical transformations are built in: TypeScript, JSX, CSS, PostCSS, preprocessors and static assets are handled without configuration. Anything non-typical is done by a plugin with a `transform` hook.
+Vite has no "loader" concept at all. The typical transformations are built in: TypeScript, JSX (HTML-like tags inside JS), CSS, PostCSS, preprocessors and static assets are handled without configuration. Anything non-typical is done by a plugin with a `transform` hook.
 
 ```ts
 // vite.config.ts — the equivalent of the config above
@@ -192,7 +183,7 @@ export default defineConfig({
 });
 ```
 
-Read this comparison carefully. The Vite config is shorter **not because Vite is "better designed"**, but because its policy differs: typical cases are baked into the tool rather than expressed as configuration. The price is less control in atypical cases, and the moment you need that control you are writing a plugin. The other side of the same coin is in [The Vite Model].
+Read this comparison carefully. The Vite config is shorter, but **not because Vite is "better designed"**. Its policy simply differs: typical cases are baked into the tool rather than expressed as configuration. The price is less control in atypical cases, and the moment you need that control you are writing a plugin. The other side of the same coin is in [The Vite Model](./06-vite-model.md).
 
 ## Plugins: hooking into the build lifecycle
 
@@ -201,7 +192,9 @@ A plugin operates on a different level: it does not transform files, it interven
 - **compiler** — the object representing the whole Webpack run. It lives from start to finish (and in watch mode, for the entire session).
 - **compilation** — the object of one specific build. In watch mode there will be many: one per rebuild.
 
-Both expose sets of hooks — points you can attach to: "the graph is built", "chunks are assigned", "files are about to be written". A plugin is an object with an `apply(compiler)` method that subscribes to the hooks it needs. The internal mechanics of subscribing (the `tapable` library, sync and async hook flavours) are not needed for practical work — the model "there are stages, you can attach to them" is enough.
+Both expose sets of hooks — points you can attach to: "the graph is built", "chunks are assigned", "files are about to be written". A plugin is an object with an `apply(compiler)` method that subscribes to the hooks it needs.
+
+The internal mechanics of subscribing are not needed for practical work. That means the `tapable` library and the sync and async hook flavours. The model "there are stages, you can attach to them" is enough.
 
 A minimal plugin in full:
 
@@ -225,32 +218,26 @@ class BuildStampPlugin {
 }
 ```
 
-Notice what is missing: there is no "file contents" input. A plugin gets access to the build as a whole and decides for itself what to do with it — add an asset, modify an existing one, fail the build, write to the stats.
+Notice what is missing: there is no "file contents" input. A plugin gets access to the build as a whole and decides for itself what to do with it:
 
-```txt
-                     Loader versus plugin: different units of work
-┌────────────────────┬──────────────────────────────┬─────────────────────────────────┐
-│                    │ loader                       │ plugin                          │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ unit of work       │ a single file                │ the whole build                 │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ when it runs       │ when a file enters the graph │ on lifecycle hooks              │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ what it receives   │ the file contents            │ compiler and compilation        │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ what it returns    │ transformed contents         │ nothing — it mutates the build  │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ sees other modules │ no                           │ yes, the entire graph           │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ typical examples   │ ts-loader, sass-loader       │ HtmlWebpackPlugin, DefinePlugin │
-├────────────────────┼──────────────────────────────┼─────────────────────────────────┤
-│ the Vite analogue  │ a plugin's transform hook    │ the other hooks of that plugin  │
-└────────────────────┴──────────────────────────────┴─────────────────────────────────┘
-              Vite has no separate "loader" concept: both are hooks of one
-                  plugin, which makes its vocabulary one term shorter
-```
+- add an asset;
+- modify an existing one;
+- fail the build;
+- write to the stats.
 
-A test that separates the two cleanly: **if the job can be done by looking at one file, it is a loader; if it needs to know something about the build as a whole, it is a plugin.** Transpiling TypeScript is a loader. Generating an `index.html` that links to the final hashed assets is a plugin, because asset names are only known at the end of the build.
+| | loader | plugin |
+|---|---|---|
+| unit of work | a single file | the whole build |
+| when it runs | when a file enters the graph | on lifecycle hooks |
+| what it receives | the file contents | `compiler` and `compilation` |
+| what it returns | transformed contents | nothing — it mutates the build |
+| sees other modules | no | yes, the entire graph |
+| typical examples | `ts-loader`, `sass-loader` | `HtmlWebpackPlugin`, `DefinePlugin` |
+| the Vite analogue | a plugin's `transform` hook | the other hooks of that plugin |
+
+*Vite has no separate "loader" concept: both are hooks of one plugin, which makes its vocabulary one term shorter.*
+
+A test separates the two cleanly. **Can the job be done by looking at one file? Then it is a loader. Does it need to know something about the build as a whole? Then it is a plugin.** Transpiling TypeScript is a loader. Generating an `index.html` that links to the final hashed assets is a plugin. Asset names are only known at the end of the build.
 
 ### A plugin in Vite
 
@@ -274,7 +261,13 @@ export function buildStamp(): Plugin {
 }
 ```
 
-The differences are immediately visible: one concept instead of two, `enforce: 'pre' | 'post'` to control ordering relative to the built-in plugins, and `apply: 'build' | 'serve'` to pick a mode. Plus Vite-specific hooks layered on the Rollup interface: `config`, `configResolved`, `configureServer`, `transformIndexHtml`. The ecosystem consequence — compatibility with Rollup plugins — is covered in [The Vite Model].
+The differences are immediately visible:
+
+- one concept instead of two;
+- `enforce: 'pre' | 'post'` to control ordering relative to the built-in plugins;
+- `apply: 'build' | 'serve'` to pick a mode.
+
+On top of that Vite layers its own hooks on the Rollup interface: `config`, `configResolved`, `configureServer`, `transformIndexHtml`. The ecosystem consequence — compatibility with Rollup plugins — is covered in [The Vite Model](./06-vite-model.md).
 
 ## Why a Webpack config grows
 
@@ -288,7 +281,7 @@ The standard answer is composing configs per environment:
 
 ```txt
 config/
-├─ webpack.common.js    entry, resolve, loader rules — the shared part
+├─ webpack.common.js    entry, resolve, loader rules — shared part
 ├─ webpack.dev.js       devServer, devtool, mode: development
 └─ webpack.prod.js      contenthash, splitChunks, mode: production
 ```
@@ -320,41 +313,31 @@ module.exports = (env, argv) => ({
 });
 ```
 
-The criterion is simple: if the environments differ by two or three lines, the function reads better; if whole sections differ, `webpack-merge` is more honest, because it does not turn a config into a tree of ternaries.
+The criterion is simple. If the environments differ by two or three lines, the config function reads better. If whole sections differ, `webpack-merge` is more honest, because it does not turn a config into a tree of ternaries.
 
-A separate case is monorepos and frameworks with their own CLI. There the config is usually generated by the tool and must not be edited by hand: you extend the generated one instead. How that works is covered in the NX course (executors and build configuration) and in the Angular course (the build and deploy chapter).
+A separate case is monorepos and frameworks with their own CLI (command-line interface). There the config is usually generated by the tool and must not be edited by hand: you extend the generated one instead. How that works is covered in the Nx course (executors and build configuration) and in the Angular course (the build and deploy chapter).
 
 ## Relation to other topics
 
-```txt
-[The Module Graph and Resolution]   — where a module comes from: the graph
-                                       walk and the resolution algorithm
-[Code Splitting and Long-Term
- Caching]                            — where a chunk comes from: splitChunks,
-                                       runtimeChunk, contenthash in an asset
-[Tree Shaking and Optimization]     — what usedExports, concatenateModules
-                                       and the minifier actually do
-[Dev Server and HMR]                — the devServer section and how hot
-                                       reloading is built on the same model
-[The Vite Model]                    — a different answer to the same problems:
-                                       built-in transforms and one kind of
-                                       extension instead of two
-[Ecosystem and Choosing a Tool]     — Rspack as a Webpack replacement that
-                                       does not require rewriting the config
-NX course                            — building inside a monorepo
-Angular course                       — building an Angular application
-```
+- [The Module Graph and Resolution](./02-module-graph-and-resolution.md) — where a module comes from: the graph walk and the resolution algorithm.
+- [Code Splitting and Long-Term Caching](./04-code-splitting-and-caching.md) — where a chunk comes from: `splitChunks`, `runtimeChunk`, `contenthash` in an asset.
+- [Tree Shaking and Optimization](./05-tree-shaking-and-optimization.md) — what `usedExports`, `concatenateModules` and the minifier actually do.
+- [Dev Server and HMR](./07-dev-server-and-hmr.md) — the `devServer` section, and how hot reloading is built on the same model.
+- [The Vite Model](./06-vite-model.md) — a different answer to the same problems: built-in transforms and one kind of extension instead of two.
+- [Ecosystem and Choosing a Tool](./08-ecosystem-and-choosing.md) — Rspack as a Webpack replacement that does not require rewriting the config.
+- Nx course — building inside a monorepo.
+- Angular course — building an Angular application.
 
 ## Common interview traps
 
-- **Conflating module, chunk and asset.** The most common and most visible mistake. Someone who says "chunk" for a file in `dist/` and "bundle" for everything at once cannot explain module duplication across two chunks, nor why CSS is extracted into its own asset. A good answer separates three levels: the file after transformation, the bundler's grouping decision, the result on disk.
+- **Conflating module, chunk and asset.** The most common and most visible mistake. Someone who says "chunk" for a file in `dist/` and "bundle" for everything at once has two blind spots. They cannot explain module duplication across two chunks, and they cannot explain why CSS is extracted into its own asset. A good answer separates three levels: the file after transformation, the bundler's grouping decision, the result on disk.
 
-- **"A loader and a plugin are roughly the same, just wired differently"** — they are fundamentally different units of work. The interviewer's probe usually sounds like: *"you need to generate an `index.html` linking to hashed files — loader or plugin, and why?"* Answering "a plugin, because asset names are only known at the end of the build, while a loader only sees one file" shows model-level understanding rather than a memorized list.
+- **"A loader and a plugin are roughly the same, just wired differently"** — they are fundamentally different units of work. The interviewer's probe usually sounds like this: *loader or plugin for generating an `index.html` that links to hashed files, and why*. The strong answer is a plugin, and the reason matters. Asset names are only known at the end of the build, while a loader only sees one file. That shows model-level understanding rather than a memorized list.
 
 - **Not knowing why loaders apply right to left.** "Historical reasons" is a weak answer. "Because a chain is function composition: `use: [a, b, c]` means `a(b(c(file)))`" is a strong one, and it sticks forever.
 
-- **"`mode: 'production'` just turns on minification"** — that is about a tenth of the truth. Behind one line sits a dozen defaults, including `moduleIds: 'deterministic'` (which affects cache stability), `usedExports` and `concatenateModules` (tree shaking and module merging), and the `NODE_ENV` substitution through `DefinePlugin`.
+- **"`mode: 'production'` just turns on minification"** — that is about a tenth of the truth. Behind one line sits a dozen defaults. Three matter most: `moduleIds: 'deterministic'` affects cache stability, `usedExports` and `concatenateModules` give tree shaking and module merging, and `NODE_ENV` is substituted through `DefinePlugin`.
 
-- **Suggesting `cache-loader` or `hard-source-webpack-plugin` to speed up builds** — a marker of Webpack 4-era knowledge. Since version 5 the built-in `cache: { type: 'filesystem' }` covers that job and does it more reliably, because `buildDependencies` makes it aware of the build's own inputs. `file-loader`/`url-loader`/`raw-loader` instead of Asset Modules is the same tell.
+- **Suggesting `cache-loader` or `hard-source-webpack-plugin` to speed up builds** — a marker of Webpack 4-era knowledge. Since version 5 the built-in `cache: { type: 'filesystem' }` covers that job, and it does so more reliably. The `buildDependencies` option makes it aware of the build's own inputs. Using `file-loader`/`url-loader`/`raw-loader` instead of Asset Modules is the same signal.
 
-- **"The Vite config is shorter, therefore Vite is better"** — comparing the wrong things. A short config means the typical transformations are baked into the tool, not that there is less work to do. A strong answer frames it as a choice between "everything explicit and configurable" and "typical works by itself, atypical needs a plugin" — and names which projects justify which choice.
+- **"The Vite config is shorter, therefore Vite is better"** — comparing the wrong things. A short config means the typical transformations are baked into the tool, not that there is less work to do. A strong answer frames it as a choice between two policies, and names which projects justify which choice. One policy is "everything explicit and configurable", the other is "typical works by itself, atypical needs a plugin".

@@ -1,6 +1,6 @@
 # Module Federation: How It Actually Works Under the Hood
 
-This is the most technical article in the section. Where the previous two answered "what is an MFE" and "what integration approaches exist," this one covers the mechanics of Module Federation (Webpack 5 / Rspack) specifically — because its details are exactly what interviewers use to check whether you've actually run this in production, not just read the docs.
+This is the most technical article in the section. The previous two answered what a micro-frontend (MFE) is, and what integration approaches exist. This one covers the mechanics of Module Federation (Webpack 5 / Rspack). Its details are exactly what interviewers use to check whether you have run this in production, and not just read the docs.
 
 ## The host/remote model
 
@@ -14,7 +14,7 @@ A **host** is an application that, at runtime, loads and mounts code it doesn't 
                     │   checkout: 'checkout@       │
                     │   http://.../remoteEntry.js' │
                     │ }                            │
-                    └──────────────┬───────────────┘
+                    └──────────────────────────────┘
                                    │ runtime fetch
                                    ▼
                     ┌──────────────────────────────┐
@@ -46,7 +46,7 @@ window.checkout = {
 };
 ```
 
-The actual `CheckoutApp` code and everything it uses lives in **separate chunks** that `get()` lazily loads — `remoteEntry.js` itself is tiny, an entry point, not the whole application.
+The actual `CheckoutApp` code and everything it uses lives in **separate chunks** that `get()` lazily loads. The file `remoteEntry.js` itself is tiny: an entry point, not the whole application.
 
 ```js
 // webpack.config.js — remote "checkout"
@@ -110,7 +110,9 @@ import App from './App';
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 ```
 
-The reason isn't stylistic. Webpack needs to finish running the container's `init()` (shared-dependency negotiation) **before** any code actually imports `react`. A top-level static `import` executes synchronously as the script loads — before the runtime gets a chance to wait for `init()` from other containers. A dynamic `import()` creates an asynchronous boundary after which webpack is guaranteed to have reconciled the share scope. Without this pattern you get a runtime error like `Shared module is not available for eager consumption` — usually the first sign that someone on the team removed `bootstrap.ts` for the sake of "cleaner" code.
+The reason isn't stylistic. Webpack needs to finish running the container's `init()` — that is the shared-dependency negotiation — **before** any code actually imports `react`. A top-level static `import` executes synchronously as the script loads, before the runtime gets a chance to wait for `init()` from other containers.
+
+A dynamic `import()` creates an asynchronous boundary, after which webpack is guaranteed to have reconciled the share scope. Without this pattern you get a runtime error: `Shared module is not available for eager consumption`. That error is usually the first sign that someone on the team removed `bootstrap.ts` for the sake of "cleaner" code.
 
 ## Static vs dynamic remotes
 
@@ -122,7 +124,7 @@ remotes: {
 }
 ```
 
-Simple, but the URL can't change without rebuilding the host — the same trade-off as build-time integration from article 02, just one level deeper (the *reference* to the remote is fixed at build time, even though the remote's actual code still loads at runtime).
+Simple, but the URL can't change without rebuilding the host. That is the same trade-off as build-time integration in [Integration Approaches](./02-integration-approaches.md), just one level deeper. The *reference* to the remote is fixed at build time, even though the remote's actual code still loads at runtime.
 
 **Dynamic remote** — the URL is resolved at runtime, usually via a manifest the host fetches before it even knows where to get `remoteEntry.js`:
 
@@ -158,23 +160,29 @@ This lets you change the remote's version (for example, roll back during an inci
 
 ## The shared-dependency negotiation algorithm
 
-This is the section senior candidates get asked about Module Federation for — because this is exactly where the production bugs live that you can't debug without understanding the mechanics.
+This is the section senior candidates get asked about Module Federation for. The production bugs live exactly here, and you can't debug them without understanding the mechanics.
 
-Every container (the host and each remote) registers its shared-module versions into a common object at initialization — the **share scope**. When any module inside any container does `import React from 'react'`, the compiled code doesn't reach directly for its own local copy of `react` — it goes through a runtime resolution function against the share scope. The algorithm:
+Every container — the host and each remote — registers its shared-module versions into a common object at initialization. That object is the **share scope**. Now suppose a module inside a container does `import React from 'react'`. The compiled code doesn't reach for its own local copy of `react`. It goes through a runtime resolution function against the share scope.
+
+The algorithm:
 
 1. **Check the share scope.** Is there already a version of `react` registered there that satisfies this consumer's `requiredVersion`?
 2. **If yes, and `singleton: true`** — reuse the already-loaded instance. No new network request is made, no second copy of `react` is loaded into memory.
-3. **If no compatible version exists** (or the requirement isn't satisfied) — the container loads **its own fallback copy** of the dependency. This is exactly why every remote bundle actually contains its own fallback chunk with `react` inside — not because of a build mistake, but because Module Federation must have a fallback in case the share scope has nothing suitable.
-4. **`strictVersion: true`** — if the required version isn't satisfied, instead of quietly loading the fallback, the runtime throws an error. Useful in staging/CI to catch version drift explicitly, rather than silently ending up with a second copy of React in production.
-5. **`eager: true`** — the module is bundled directly into the main chunk instead of being lazily loaded asynchronously. Needed for the host's entry point (it physically has no time to wait for async resolution), but an `eager` module registers into the share scope immediately on execution, before other containers get a chance to negotiate — so `eager` outside the entry point can break the entire negotiation by registering a version too early.
+3. **If no compatible version exists**, or the requirement isn't satisfied, the container loads **its own fallback copy** of the dependency. That is exactly why every remote bundle contains its own fallback chunk with `react` inside. It isn't a build mistake: Module Federation must have a fallback in case the share scope has nothing suitable.
+4. **`strictVersion: true`** — if the required version isn't satisfied, instead of quietly loading the fallback, the runtime throws an error. Useful in staging and in CI (continuous integration): it catches version drift explicitly, instead of silently leaving a second copy of React in production.
+5. **`eager: true`** — the module is bundled directly into the main chunk instead of being loaded lazily and asynchronously. This is the **alternative** to the `import('./bootstrap')` async boundary above, not a companion to it. The webpack docs present the two as two ways out of the same error, and they recommend the async boundary. Use `eager` when the host's entry point has to consume shared modules synchronously. Be careful outside that entry point. An `eager` module registers into the share scope immediately on execution, before other containers get a chance to negotiate. That can break the whole negotiation by registering a version too early.
 
 ```js
 shared: {
   react: {
-    singleton: true,           // one instance for the whole app — mandatory for React
-    requiredVersion: '^18.2.0', // the semver range THIS container expects
-    strictVersion: true,        // throw instead of silently duplicating if the range isn't satisfied
-    eager: false,                // load lazily, asynchronously (except the host's entry point)
+    // one instance for the whole app — mandatory for React
+    singleton: true,
+    // the semver range this container expects
+    requiredVersion: '^18.2.0',
+    // throw instead of duplicating silently if the range is not satisfied
+    strictVersion: true,
+    // load lazily and asynchronously — the recommended default
+    eager: false,
   },
 }
 ```
@@ -183,32 +191,40 @@ shared: {
 
 This is the most infamous class of Module Federation production incident, and it almost always reduces to one of three scenarios.
 
-**Scenario 1 — an initialization race.** Share-scope negotiation depends on the **order** in which containers manage to call `init()`. In dev mode (webpack-dev-server, HMR, everything local, minimal and stable network latency), the order is nearly always the same. In production, the remote loads from a different CDN/origin with different latency, sometimes before the host has registered its own `react` version in the share scope. The remote finds no compatible version at the moment of its own initialization → loads its own fallback `react` → now the page has two React instances at once.
+**Scenario 1 — an initialization race.** Share-scope negotiation depends on the **order** in which containers manage to call `init()`. In dev mode that order is nearly always the same: webpack-dev-server, HMR (hot module replacement), everything local, and minimal stable network latency.
 
-**Scenario 2 — a genuine version mismatch.** The host is built against `react@18.2.0`; the remote, on its own independent release cycle, bumped to `react@18.3.0`, and `requiredVersion` was `^18.0.0` with no `strictVersion`. Semver formally allows it, but with `singleton: true` and no `strictVersion`, the runtime may pick a version the remote team never actually tested against — and it does so silently, somewhere deep in the component tree.
+In production the remote loads from a different CDN (content delivery network) or origin, with different latency. It can arrive before the host has registered its own `react` version in the share scope. The remote then finds no compatible version at its own initialization and loads its own fallback `react`. The page ends up with two React instances at once.
 
-**Scenario 3 — the symptom this is usually found by.** The classic `Invalid hook call. Hooks can only be called inside the body of a function component` error, even though hooks are, on inspection, used correctly. The cause: React stores its internal hook dispatcher as a module-level singleton. If two instances of the `react` module (or, more often, `react-dom`) are loaded in memory, a component rendered by one instance and the hooks called inside it end up referencing the dispatcher of the **other** instance — React literally doesn't recognize its own render.
+**Scenario 2 — a genuine version mismatch.** The host is built against `react@18.2.0`. The remote, on its own independent release cycle, bumped to `react@18.3.0`, while `requiredVersion` stayed at `^18.0.0` with no `strictVersion`. Semver formally allows that.
+
+But with `singleton: true` and no `strictVersion`, the runtime may pick a version the remote team never tested against. It does so silently, somewhere deep in the component tree.
+
+**Scenario 3 — the symptom this is usually found by.** The classic error is `Invalid hook call. Hooks can only be called inside the body of a function component`, even though hooks are, on inspection, used correctly.
+
+The cause: React stores its internal hook dispatcher as a module-level singleton. Suppose two instances of the `react` module — or, more often, of `react-dom` — are loaded in memory. A component rendered by one instance, and the hooks called inside it, end up referencing the dispatcher of the **other** instance. React literally doesn't recognize its own render.
 
 **How to actually debug it:**
 
 1. **The Network tab in DevTools.** Look for whether a `react`/`react-dom` chunk loads twice — from different origins, under different hashes. If so, that's your second copy.
-2. **`window.__webpack_share_scopes__.default` in the browser console** (the internal object's name can differ between webpack versions) — shows exactly which versions of each shared module are actually registered in the runtime right now.
-3. **Temporarily enable `strictVersion: true`** in staging for all shared dependencies. Instead of silent duplication, you get an explicit error naming exactly whose version fails to satisfy what — in staging, not in front of a live user.
-4. **Check for a stray `eager: true`** not on the host's entry point but somewhere deep in a remote — a typical reason negotiation gets "won" earlier than it should.
-5. **This is an organizational fix as much as a technical one.** The most reliable safeguard is a CI check (a lint rule or a simple script) that compares `react`/`react-dom` versions across every micro-frontend repo on each release, plus an explicit policy: `singleton` dependencies get bumped on an agreed schedule, not whenever an individual team feels like it.
+2. **`window.__webpack_share_scopes__.default` in the browser console.** It shows exactly which versions of each shared module are registered in the runtime right now. The internal object's name can differ between webpack versions.
+3. **Temporarily enable `strictVersion: true`** in staging for all shared dependencies. Instead of silent duplication, you get an explicit error. It names exactly whose version fails to satisfy what, in staging, and not in front of a live user.
+4. **Check for a stray `eager: true`** somewhere deep in a remote, rather than on the host's entry point. That is a typical reason negotiation gets "won" earlier than it should.
+5. **This is an organizational fix as much as a technical one.** The most reliable safeguard is a CI check: a lint rule or a simple script. It compares `react` and `react-dom` versions across every micro-frontend repo on each release. Add an explicit policy on top: `singleton` dependencies get bumped on an agreed schedule, not whenever an individual team feels like it.
 
 ## Bottom line
 
-Module Federation resolves dependencies in the user's browser, at the moment of navigation — which gives you flexibility (update a remote without rebuilding the host) but shifts version reconciliation from TypeScript's compile-time checking to runtime negotiation that can silently do the wrong thing. Understanding the `singleton`/`strictVersion`/`eager` algorithm is exactly the difference between "read the docs" and "fixed this in production at 2am" that the interview is actually testing for.
+Module Federation resolves dependencies in the user's browser, at the moment of navigation. That gives you flexibility: update a remote without rebuilding the host. It also shifts version reconciliation from TypeScript's compile-time checking to runtime negotiation, and that negotiation can silently do the wrong thing.
+
+Understanding the `singleton`, `strictVersion` and `eager` algorithm is what the interview is really testing. It separates "read the docs" from "fixed this in production at 2am".
 
 ## Common interview traps
 
-- **"Module Federation just loads a remote bundle like a regular `<script>` tag"** — no, the crucial part is shared-dependency negotiation through the share scope at container initialization, not merely fetching a file. That negotiation is where all the complexity actually lives.
+- **"Module Federation just loads a remote bundle like a regular `<script>` tag"** — no. The crucial part is shared-dependency negotiation through the share scope at container initialization, not merely fetching a file. That negotiation is where all the complexity lives.
 
 - **"`singleton: true` guarantees exactly one instance of React"** — it only guarantees an *attempt* to reuse the existing instance, if the version satisfies `requiredVersion`. Without `strictVersion`, an incompatibility results in a silently created fallback instead of a thrown error — singleton reduces the likelihood of duplication, it doesn't eliminate it.
 
-- **"The 'Invalid hook call' error is a bug in the component's code"** — in a Module Federation context this is almost always a symptom of two copies of `react`/`react-dom` at runtime, not a hooks-usage mistake. The first move should be checking the Network tab for duplicate chunks, not hunting for a bug in the component itself.
+- **"The 'Invalid hook call' error is a bug in the component's code"** — not in a Module Federation context. There it is almost always a symptom of two copies of `react` or `react-dom` at runtime, not a hooks-usage mistake. The first move is checking the Network tab for duplicate chunks, not hunting for a bug in the component.
 
-- **"The dynamic `import('./bootstrap')` is just a code-splitting style choice"** — it's a structural mechanism: without an async boundary before importing shared dependencies, webpack has no chance to reconcile the share scope before the code that uses those dependencies executes.
+- **"The dynamic `import('./bootstrap')` is just a code-splitting style choice"** — it is a structural mechanism. Without an async boundary before shared dependencies are imported, webpack has no chance to reconcile the share scope. The code that uses those dependencies would run first.
 
-- **"Dynamic remotes are only about flexibility; static remotes are technically simpler and always preferable"** — dynamic remotes solve a real operational problem (changing a remote's version/URL without rebuilding the host, fast rollback during an incident) that static remotes fundamentally cannot solve — it's not just a question of simplicity, but of who actually has the ability to manage each part's deployment independently.
+- **"Dynamic remotes are only about flexibility; static remotes are technically simpler and always preferable"** — dynamic remotes solve an operational problem that static remotes fundamentally cannot. You can change a remote's version or URL without rebuilding the host, and roll back fast during an incident. This is not a question of simplicity. It is a question of who actually has the ability to manage each part's deployment independently.
