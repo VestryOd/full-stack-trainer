@@ -85,6 +85,8 @@ PASSED = {
     'article:web-performance': '00cad51',
     'bank:web-performance': '00cad51',
     'quiz:web-performance': '00cad51',
+    'bank:git': '52c22a5',
+    'quiz:git': '52c22a5',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
