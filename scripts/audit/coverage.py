@@ -80,6 +80,8 @@ PASSED = {
     'bank:security': '41ef61b',
     'quiz:security': '41ef61b',
     'article:strapi': 'b74d2cc',
+    'bank:solid-grasp': 'ee46a79',
+    'quiz:solid-grasp': 'ee46a79',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
