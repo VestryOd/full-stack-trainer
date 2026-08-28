@@ -91,6 +91,9 @@ PASSED = {
     'article:kafka': '4dc6e04',
     'course:nx-monorepo': '8858a81',
     'bank:nx': '8858a81',
+    'article:state-management': 'e9da501',
+    'bank:docker': 'e9da501',
+    'quiz:docker': 'e9da501',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
