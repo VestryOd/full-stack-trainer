@@ -167,7 +167,13 @@ def table(rows):
 
 
 def type_matrix(L):
-    return table(L['rows'])
+    # Two stacked 2-column tables, not one 3-column table: at 3 columns the
+    # widest row is 89 chars and the third column scrolls off a phone screen.
+    rows = L['rows']
+    return vstack(
+        [table([(r[0], r[1]) for r in rows]), table([(r[0], r[2]) for r in rows])],
+        gap=1,
+    )
 
 
 def generator_flow(L):
@@ -203,12 +209,24 @@ def serve_topology(L):
     out.append(centered('▼', width))
     out.extend(bottom)
     out.append('')
-    out.append(centered(L['note'], width))
+    notes = L['note']
+    if isinstance(notes, str):
+        notes = [notes]
+    out.extend(centered(n, width) for n in notes)
     return out
 
 
 def mf_errors(L):
-    return table(L['rows'])
+    """One panel per incident: symptom, then its cause and first check.
+
+    A three-column table of these strings needs 97 columns; STYLE.md budgets 68
+    for a txt block, so the columns become rows inside one stacked box.
+    """
+    sections = [
+        [symptom, f"  {L['cause']}: {cause}", f"  {L['check']}: {check}"]
+        for symptom, cause, check in L['rows']
+    ]
+    return with_title_and_notes(layered(sections), L['title'], [])
 
 
 def ci_flow(L):
@@ -216,7 +234,13 @@ def ci_flow(L):
 
 
 def audit_map(L):
-    return table(L['rows'])
+    # Same reason as type_matrix: as one 3-column table the widest row is 95
+    # chars and the third column scrolls off a phone screen (STYLE.md: 68).
+    rows = L['rows']
+    return vstack(
+        [table([(r[0], r[1]) for r in rows]), table([(r[0], r[2]) for r in rows])],
+        gap=1,
+    )
 
 
 def objectid_layout(L):
@@ -1266,48 +1290,50 @@ LABELS = {
         'ru': {
             'step1': ['nx g @mini-shop/workspace-plugin:feature-lib cart'],
             'step2': ['schema.json: валидация опций,', 'x-prompt дособирает недостающие'],
-            'step3': ['implementation(tree, options):', 'все изменения — в ВИРТУАЛЬНОЙ ФС (Tree)'],
+            'step3': ['implementation(tree, options):', 'все изменения — в виртуальной ФС (Tree)'],
             'step4': ['--dry-run: напечатать diff Tree и выйти,', 'диск не тронут'],
             'step5': ['без dry-run: flush Tree на диск,', 'форматирование, установка пакетов'],
         },
         'en': {
             'step1': ['nx g @mini-shop/workspace-plugin:feature-lib cart'],
             'step2': ['schema.json: option validation,', 'x-prompt collects what is missing'],
-            'step3': ['implementation(tree, options):', 'every change goes to a VIRTUAL FS (Tree)'],
+            'step3': ['implementation(tree, options):', 'every change goes to the virtual FS (Tree)'],
             'step4': ['--dry-run: print the Tree diff and exit,', 'the disk is untouched'],
             'step5': ['without dry-run: flush the Tree to disk,', 'formatting, package installs'],
         },
     },
+    # Cells kept under 29/32 characters: the table is a txt block, and
+    # STYLE.md budgets 68 columns for those.
     'executor-choice': {
         'ru': {
             'rows': [
                 ('хватит nx:run-commands', 'нужен кастомный executor'),
-                ('обернуть готовый CLI одной командой', 'логика: условия, ретраи, вызовы API'),
-                ('несколько команд подряд/параллельно', 'типизированные опции со schema-валидацией'),
-                ('разовый скрипт конкретной репы', 'переиспользование в десятках проектов'),
-                ('вывод и exit code — достаточно', 'нужен context: граф, root, configuration'),
+                ('обернуть CLI одной командой', 'логика: условия, ретраи, API'),
+                ('команды: подряд/параллельно', 'типизированные опции со схемой'),
+                ('разовый скрипт этой репы', 'нужен в десятках проектов'),
+                ('вывод и exit code — достаточно', 'нужен context: граф/root/конфиг'),
             ],
         },
         'en': {
             'rows': [
                 ('nx:run-commands is enough', 'a custom executor is warranted'),
-                ('wrapping an existing CLI in one command', 'logic: conditions, retries, API calls'),
-                ('a few commands, serial or parallel', 'typed options with schema validation'),
-                ('a one-off script for this repo', 'reuse across dozens of projects'),
-                ('output and exit code suffice', 'context needed: graph, root, configuration'),
+                ('wrap one existing CLI command', 'logic: conditions, retries, API'),
+                ('commands: serial or parallel', 'typed, schema-validated options'),
+                ('one-off script for this repo', 'reuse across dozens of projects'),
+                ('output and exit code suffice', 'needs context: graph/root/config'),
             ],
         },
     },
     'mf-topology': {
         'ru': {
             'host': ['shell (host)', 'роутер, layout, auth,', 'адреса remoteEntry remote-ов'],
-            'edge': 'загружает В РАНТАЙМЕ, в браузере пользователя',
+            'edge': 'загружает в рантайме, в браузере пользователя',
             'remote1': ['catalog (remote)', 'exposes:', './CatalogPage'],
             'remote2': ['checkout (remote)', 'exposes:', './CheckoutPage'],
         },
         'en': {
             'host': ['shell (host)', 'router, layout, auth,', "the remotes' remoteEntry URLs"],
-            'edge': "loads AT RUNTIME, in the user's browser",
+            'edge': "loads at runtime, in the user's browser",
             'remote1': ['catalog (remote)', 'exposes:', './CatalogPage'],
             'remote2': ['checkout (remote)', 'exposes:', './CheckoutPage'],
         },
@@ -1317,7 +1343,7 @@ LABELS = {
             'step1': ['браузер грузит shell (host):', 'свой бандл + список адресов remoteEntry'],
             'step2': ['host скачивает remoteEntry.js каталога —', 'маленький манифест контейнера, не весь бандл'],
             'step3': ['container.init(sharedScope):', 'host и remote объявляют версии react, react-dom, ...'],
-            'step4': ['shared negotiation: на каждую зависимость', 'выбирается ОДИН совместимый экземпляр'],
+            'step4': ['shared negotiation: на каждую зависимость', 'выбирается один совместимый экземпляр'],
             'step5': ['container.get("./CatalogPage") →', 'догружаются чанки модуля каталога'],
             'step6': ['CatalogPage рендерится в дереве host-а', 'тем самым, согласованным, react-ом'],
         },
@@ -1325,7 +1351,7 @@ LABELS = {
             'step1': ['the browser loads shell (host):', 'its own bundle + the list of remoteEntry URLs'],
             'step2': ["host fetches the catalog's remoteEntry.js —", 'a small container manifest, not the whole bundle'],
             'step3': ['container.init(sharedScope):', 'host and remote declare their react, react-dom, ... versions'],
-            'step4': ['shared negotiation: for every dependency', 'ONE compatible instance is chosen'],
+            'step4': ['shared negotiation: for every dependency', 'one compatible instance is chosen'],
             'step5': ['container.get("./CatalogPage") →', "the catalog module's chunks are fetched"],
             'step6': ["CatalogPage renders inside the host's tree", 'using that one negotiated react'],
         },
@@ -1335,38 +1361,44 @@ LABELS = {
             'title': 'nx serve shell',
             'host': ['shell — полноценный dev-server', ':4200 · watch · HMR'],
             'edge': 'ждёт remotes на портах из конфига',
-            'remote1': ['catalog :4201', 'СТАТИКА: собран', 'один раз, без watch'],
-            'remote2': ['checkout :4202', 'СТАТИКА: собран', 'один раз, без watch'],
-            'note': 'nx serve shell --devRemotes=catalog → catalog тоже dev-server с HMR',
+            'remote1': ['catalog :4201', 'статика: собран', 'один раз, без watch'],
+            'remote2': ['checkout :4202', 'статика: собран', 'один раз, без watch'],
+            'note': ['nx serve shell --devRemotes=catalog',
+                     '→ catalog тоже dev-server с HMR'],
         },
         'en': {
             'title': 'nx serve shell',
             'host': ['shell — a full dev server', ':4200 · watch · HMR'],
             'edge': 'expects remotes on the configured ports',
-            'remote1': ['catalog :4201', 'STATIC: built once,', 'no watch'],
-            'remote2': ['checkout :4202', 'STATIC: built once,', 'no watch'],
-            'note': 'nx serve shell --devRemotes=catalog → catalog becomes a dev server with HMR too',
+            'remote1': ['catalog :4201', 'static: built once,', 'no watch'],
+            'remote2': ['checkout :4202', 'static: built once,', 'no watch'],
+            'note': ['nx serve shell --devRemotes=catalog',
+                     '→ catalog becomes a dev server with HMR too'],
         },
     },
     'mf-errors': {
         'ru': {
+            'title': 'инциденты федерации',
+            'cause': 'типичная причина',
+            'check': 'первая проверка',
             'rows': [
-                ('симптом', 'типичная причина', 'первая проверка'),
                 ('eager consumption error', 'нет async boundary', 'main.ts = import("./bootstrap")?'),
                 ('Invalid hook call', 'два экземпляра react', 'devtools: renderers.size > 1?'),
                 ('warning: unsatisfied version', 'разъехались версии shared', 'что декларирует каждый remoteEntry'),
-                ('404 / CORS на remoteEntry.js', 'адрес или деплой remote', 'curl адреса из конфига/манифеста'),
-                ('у remote чужой/старый UI', 'workspace-либа: first wins', 'когда деплоился каждый remote'),
+                ('404 или CORS (cross-origin) на remoteEntry.js', 'адрес или деплой remote', 'curl адреса из конфига/манифеста'),
+                ('у remote чужой, устаревший интерфейс', 'workspace-либа: first wins', 'когда деплоился каждый remote'),
             ],
         },
         'en': {
+            'title': 'federation incidents',
+            'cause': 'typical cause',
+            'check': 'first check',
             'rows': [
-                ('symptom', 'typical cause', 'first check'),
                 ('eager consumption error', 'missing async boundary', 'main.ts = import("./bootstrap")?'),
                 ('Invalid hook call', 'two react instances', 'devtools: renderers.size > 1?'),
                 ('warning: unsatisfied version', 'shared versions drifted', 'what each remoteEntry declares'),
-                ('404 / CORS on remoteEntry.js', "remote's address or deploy", 'curl the config/manifest URL'),
-                ("remote shows stale/foreign UI", 'workspace lib: first wins', 'when each remote was deployed'),
+                ('404 or CORS (cross-origin) on remoteEntry.js', "remote's address or deploy", 'curl the config/manifest URL'),
+                ('remote shows a stale, foreign interface', 'workspace lib: first wins', 'when each remote was deployed'),
             ],
         },
     },
@@ -1377,7 +1409,8 @@ LABELS = {
             'edge': 'import type: обе стороны компилируются против ОДНОГО контракта',
             'remote1': ['apps/api (Express)', 'GET /api/products', 'GET /api/products/:id'],
             'remote2': ['catalog-data-access', 'fetch + типизация', 'запросов и ответов'],
-            'note': 'в рантайме между ними обычный HTTP: типы проверил компилятор, данные — никто',
+            'note': ['в рантайме между ними обычный HTTP:',
+                     'типы проверил компилятор, данные — никто'],
         },
         'en': {
             'title': 'the contract as code',
@@ -1385,7 +1418,8 @@ LABELS = {
             'edge': 'import type: both sides compile against ONE contract',
             'remote1': ['apps/api (Express)', 'GET /api/products', 'GET /api/products/:id'],
             'remote2': ['catalog-data-access', 'fetch + typed', 'requests and responses'],
-            'note': 'at runtime it is plain HTTP: the compiler checked the types, nobody checked the data',
+            'note': ['at runtime it is plain HTTP: the compiler checked the types,',
+                     'nobody checked the data'],
         },
     },
     'ci-flow': {

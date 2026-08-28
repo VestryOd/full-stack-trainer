@@ -7,11 +7,11 @@
 The "polyrepo vs monorepo" debate is often a matter of taste, but underneath it sit three very concrete engineering problems with polyrepo:
 
 1. **Code sharing.** In a polyrepo, shared code (a ui-kit, API contract types, utilities) travels via npm publish: build → bump the version → publish → update every consumer. That is hours or days of delay per change, and at any given moment different apps sit on different versions of the same library.
-2. **Atomic changes across boundaries.** You change an API contract — the backend and every frontend consumer must be updated in sync. In a polyrepo that means several PRs in different repos which cannot merge atomically: between merges the system is in an inconsistent state, and no CI catches it.
+2. **Atomic changes across boundaries.** You change an API contract — the backend and every frontend consumer must be updated in sync. In a polyrepo that means several pull requests (PR) in different repos, and they cannot merge atomically. Between the merges the system is in an inconsistent state. No CI (continuous integration — the server that builds and tests every push) catches that.
 3. **Single dependency versions.** Five repos means five package.json files, five versions of React, five TypeScript configurations. Upgrading a dependency turns into a quarter-long campaign.
 
 ```
- POLYREPO: one repo per app             MONOREPO: a single repository
+ POLYREPO: one repo per app             MONOREPO: one repository
 ┌────────────┐ ┌───────────┐            ┌─────────────────────────┐
 │ shop-web   │ │ shop-api  │            │ mini-shop/              │
 │            │ │           │            │                         │
@@ -20,16 +20,17 @@ The "polyrepo vs monorepo" debate is often a matter of taste, but underneath it 
 └────────────┘ └───────────┘            │ libs/  shared/ui        │
 code is shared via npm publish;         │        shared/api-types │
 versions drift, one contract change     └─────────────────────────┘
-means several PRs and releases          one import graph, single dep versions,
-                                        atomic PRs across project boundaries
+means several PRs and releases          one import graph,
+                                        single dependency versions,
+                                        atomic PRs across projects
 ```
 
 A monorepo solves all three at the cost of two new problems, both about scale:
 
-- **Build and test time grows linearly with repo size.** A naive CI script of "build and test everything" across 50 projects means hours per PR, even when the PR touches one file in one library.
-- **Dependency chaos.** When all the code lives in one repo and anything can import anything, a year later you have a big ball of mud where every library depends on every other one.
+- **Build and test time grows linearly with repo size.** A naive CI script of "build and test everything" across 50 projects means hours per PR. That holds even when the PR touches one file in one library.
+- **Dependency chaos.** When all the code lives in one repo, anything can import anything. A year later you have a big ball of mud — a codebase with no visible structure, where every library depends on every other one.
 
-These two problems are exactly what Nx solves. Everything else (generators, migrations, plugins) is useful tooling around the edges, but the core value is **never rebuilding what didn't change** (computation caching + affected) and **keeping boundaries enforced** (project graph + module boundaries).
+These two problems are exactly what Nx solves. Everything else — generators, migrations, plugins — is useful tooling around the edges. The core value is two things: **never rebuilding what didn't change** (computation caching + affected) and **keeping boundaries enforced** (project graph + module boundaries).
 
 ### Where Nx sits among the alternatives
 
@@ -51,31 +52,43 @@ Think in layers. Package manager workspaces (npm/pnpm/yarn) solve dependency ins
 ```
 
 - **Lerna** — historically the first popular tool, focused on versioning and publishing packages. Since 2022 Lerna is maintained by the Nx team and delegates task running to Nx under the hood.
-- **Turborepo** — a task runner plus cache on top of a package-based monorepo. Conceptually close to the Nx core, but its graph is built from `package.json` dependencies (not from import analysis), and there is no layer of generators, plugins, or boundary rules.
-- **Nx** adds on top: a **project graph built by static import analysis** (chapter 02), **computation caching** with a precise inputs/outputs model (chapter 04), **affected** (chapter 05), **generators and migrations** (chapter 07), **module boundaries** via ESLint (chapter 06), and plugins that understand specific tools (webpack, vite, jest, playwright).
+- **Turborepo** — a task runner plus cache on top of a package-based monorepo. Conceptually it is close to the Nx core, but its graph is built from `package.json` dependencies, not from import analysis. There is no layer of generators, plugins, or boundary rules.
+- **Nx** adds several layers on top:
+  - a **project graph built by static import analysis** (chapter 02);
+  - **computation caching** with a precise inputs/outputs model (chapter 04);
+  - **affected** (chapter 05);
+  - **generators and migrations** (chapter 07);
+  - **module boundaries** via ESLint (chapter 06);
+  - plugins that understand specific tools: webpack, vite, jest, playwright.
 
-The key everyday difference between Nx and Turborepo: Nx sees the `shell → shared/ui` dependency even when it exists only as a TS import, with no package.json entry. That is more precise and doesn't rely on the discipline of "remember to declare the dependency".
+The key everyday difference between Nx and Turborepo is where the edges come from. Nx sees the `shell → shared/ui` dependency even when it exists only as a TS import, with no package.json entry. That is more precise, and it doesn't rely on the discipline of "remember to declare the dependency".
 
 ### Integrated vs package-based
 
 A classification from the Nx docs that you'll meet in articles and interviews:
 
-- **Package-based**: every project is a full npm package with its own `package.json` and its own dependencies; projects connect through package manager workspaces. Nx is only a task runner + cache here.
-- **Integrated**: a single root `package.json` (single version policy), projects wired together through aliases in `tsconfig.base.json` (`@mini-shop/shared-ui` → `libs/shared/ui/src/index.ts`), and Nx drives everything through plugins and generators.
+- **Package-based**: every project is a full npm package with its own `package.json` and its own dependencies. Projects connect through package manager workspaces. Nx is only a task runner + cache here.
+- **Integrated**: a single root `package.json` for the whole repo, a rule known as the single version policy. Projects are wired together through aliases in `tsconfig.base.json`: `@mini-shop/shared-ui` → `libs/shared/ui/src/index.ts`. Nx drives everything through plugins and generators.
 
-> **Versions.** In older versions (Nx 15–16) this was a hard fork right in the `create-nx-workspace` wizard: "package-based or integrated?". Since Nx 19–20 the line has blurred: project crystal (plugins infer targets from tool configs on their own — chapter 01) made the integrated mode as lightweight as package-based, and the new TS preset (Nx 20+) defaults to package manager workspaces + TypeScript project references instead of `tsconfig.base.json` aliases. In a real work project started on Nx 15–17 you will almost certainly see the classic integrated setup with `tsconfig.base.json`; in a freshly created one — possibly the new style. Being able to recognize both matters more than arguing which one is "correct".
+> **Versions.** In older versions (Nx 15–16) this was a hard fork right in the `create-nx-workspace` wizard: "package-based or integrated?". Since Nx 19–20 the line has blurred, for two reasons.
+
+> **Reason one — project crystal.** Plugins infer a project's targets from tool configs such as `vite.config.ts` on their own (chapter 01). That made the integrated mode as lightweight as package-based. **Reason two — the new TS preset** (Nx 20+): it wires projects through package manager workspaces and TypeScript project references instead of `tsconfig.base.json` aliases.
+
+> **Which one you will meet.** In a real work project started on Nx 15–17 you will almost certainly see the classic integrated setup with `tsconfig.base.json`. In a freshly created one you may well see the new style. Being able to recognize both matters more than arguing which one is "correct".
 
 ### What Nx is, technically
 
-No magic: `nx` is an ordinary npm package with a CLI, installed into devDependencies. `npx nx build shell` runs the local binary `node_modules/.bin/nx`, which reads `nx.json` plus the project configs, builds the graph, computes hashes and runs tasks. The cache is a plain folder `.nx/cache` on disk (before Nx 17 — `node_modules/.cache/nx`), the graph data lives in `.nx/workspace-data`. All of it can be inspected by hand — which we will do regularly.
+No magic: `nx` is an ordinary npm package with a CLI (command-line interface), installed into devDependencies. Running `npx nx build shell` invokes the local binary `node_modules/.bin/nx`. That binary reads `nx.json` plus the project configs, builds the graph, computes hashes and runs tasks.
+
+Everything Nx produces sits in plain files. The cache is a folder `.nx/cache` on disk (before Nx 17 — `node_modules/.cache/nx`), and the graph data lives in `.nx/workspace-data`. All of it can be inspected by hand, which we will do regularly.
 
 ## In a real-world monorepo
 
 How to recognize all of the above in an existing workspace you've just been added to:
 
 - `npx nx report` — the first command in an unfamiliar repo: the Nx version, the versions of all `@nx/*` plugins, the package manager. If the plugin versions don't match the nx version, the repo hasn't been migrated in a while (chapter 13).
-- `ls` at the root: `nx.json` present — the repo runs on Nx. `apps/` + `libs/` + a `tsconfig.base.json` with a `paths` block — classic integrated. `packages/` + a `workspaces` field in package.json (or `pnpm-workspace.yaml`) with no path aliases — package-based or the new TS preset.
-- `cat package.json | head -30` — a single root package.json with all the dependencies = single version policy; if every project has its own package.json with dependencies — package-based.
+- `ls` at the root. If `nx.json` is there, the repo runs on Nx. A repo with `apps/` + `libs/` + a `tsconfig.base.json` that has a `paths` block is classic integrated. A repo with `packages/` + a `workspaces` field in package.json (or `pnpm-workspace.yaml`) and no path aliases is package-based or the new TS preset.
+- `cat package.json | head -30`. A single root package.json with all the dependencies means single version policy. If every project has its own package.json with dependencies, the repo is package-based.
 - `npx nx graph` — opens the interactive graph in a browser: how many projects there are, whether there are islands, what sits in the middle. The first thing worth doing in a new repo right after `nx report`.
 - `git log --oneline --follow nx.json | tail -5` — when the repo moved to Nx and what it started from.
 
@@ -87,7 +100,7 @@ We're starting the course's end-to-end project: an empty `mini-shop` workspace t
 
 **Input:** a machine with Node 20+, an empty directory.
 
-**Task:** create a `mini-shop` workspace with `npx create-nx-workspace@latest` using the empty preset (`apps`), npm as the package manager, without connecting Nx Cloud or CI (that's chapter 13).
+**Task:** create a `mini-shop` workspace with `npx create-nx-workspace@latest`. Use the empty preset (`apps`) and npm as the package manager. Do not connect Nx Cloud or CI (that's chapter 13).
 
 **Output:** a git repository with the initial commit made by Nx itself, plus written answers to:
 
@@ -115,16 +128,17 @@ git log --oneline
 # abc1234 Initial commit  ← the commit was made by create-nx-workspace itself
 ```
 
-> **Versions.** The exact list of wizard questions has changed noticeably between majors: older versions asked "integrated vs package-based", newer ones ask for a stack (None/React/Vue/Node), a bundler, a CI provider. `--preset=apps` is the stable way to get an empty workspace; if your version doesn't support it, the closest equivalent is `--preset=ts`.
+> **Versions.** The exact list of wizard questions has changed noticeably between majors. Older versions asked "integrated vs package-based". Newer ones ask for a stack (None/React/Vue/Node), a bundler and a CI provider. The flag `--preset=apps` is the stable way to get an empty workspace. If your version doesn't support it, the closest equivalent is `--preset=ts`.
 
 What was generated (preset `apps`; the exact set may differ slightly between versions — compare with your own output):
 
 ```
 mini-shop/
-├── apps/            # applications will be generated here (empty for now)
+├── apps/            # applications are generated here (empty now)
 ├── nx.json          # configuration of Nx itself
 ├── package.json     # a SINGLE package.json — single version policy
-├── .gitignore       # node_modules, dist, .nx/cache, .nx/workspace-data
+├── .gitignore       # node_modules, dist,
+│                    # .nx/cache, .nx/workspace-data
 ├── .prettierrc      # in some versions — prettier out of the box
 └── README.md
 ```
@@ -147,8 +161,8 @@ mini-shop/
 
 Key decisions:
 
-- The `nx` and `@nx/*` versions are pinned **exactly, without `^`** — the generator writes them that way on purpose. The Nx core and its plugins must stay on strictly the same version: a minor-version drift between `nx` and `@nx/react` is a source of hard-to-trace breakage. Upgrades go only through `nx migrate` (chapter 13), which bumps everything in sync.
-- `scripts` is empty — and that's fine. In an Nx repo tasks run through `nx <target> <project>`, not npm scripts: an npm script would bypass the graph, the cache and the task pipeline.
+- The `nx` and `@nx/*` versions are pinned **exactly, without `^`** — the generator writes them that way on purpose. The Nx core and its plugins must stay on strictly the same version. A minor-version drift between `nx` and `@nx/react` is a source of hard-to-trace breakage. Upgrades go only through `nx migrate` (chapter 13), which bumps everything in sync.
+- `scripts` is empty — and that's fine. In an Nx repo tasks run through `nx <target> <project>`, not npm scripts. An npm script would bypass the graph, the cache and the task pipeline.
 
 `nx.json` right after generation is minimal:
 
@@ -159,7 +173,7 @@ Key decisions:
 }
 ```
 
-- `$schema` gives you IDE autocomplete — useful once we start adding `namedInputs` and `targetDefaults` (chapters 03–04).
+- `$schema` gives you autocomplete in the IDE (integrated development environment) — useful once we start adding `namedInputs` and `targetDefaults` (chapters 03–04).
 - `defaultBase` — the base branch for `nx affected` (chapter 05). In older versions the same setting lived deeper, in `affected.defaultBase`.
 
 Checking the tooling on the empty workspace:
@@ -183,11 +197,11 @@ npx nx graph
 Answers to the edge cases:
 
 - Inside an existing git repo, `create-nx-workspace` creates a **nested** directory with its own `.git` — almost never what you want. For an existing project there is `nx init`: it adds `nx` to devDependencies and generates `nx.json` without touching your structure.
-- A global `nx` install is acceptable as a convenience launcher (the global `nx` finds and invokes the **local** version from node_modules), but the source of truth is always the local one: the behaviour of `nx build` must depend on the repo, not on what happens to be installed on a particular developer's machine.
+- A global `nx` install is acceptable as a convenience launcher: the global `nx` finds and invokes the **local** version from node_modules. But the source of truth is always the local one. The behaviour of `nx build` must depend on the repo, not on what happens to be installed on a particular developer's machine.
 
 ## Check yourself
 
-1. Why does the CI of a naive monorepo ("build and test everything on every PR") degrade linearly as the repo grows, and which two Nx mechanisms break that dependency?
+1. Why does the CI of a naive monorepo ("build and test everything on every PR") degrade linearly as the repo grows? Which two Nx mechanisms break that dependency?
 2. How is the Nx project graph fundamentally different from what npm/pnpm workspaces know about dependencies? Why aren't symlinks enough to answer "what needs rebuilding?"
 3. Which files at the root of an unfamiliar repo let you tell a classic integrated workspace from a package-based one? Why has this dichotomy blurred in recent Nx versions?
 4. Why does the generator pin `nx` and `@nx/*` versions exactly, without `^`? What can break if `nx` gets a minor bump while the plugins don't?
@@ -196,16 +210,20 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. CI time = (number of projects) × (average build/test time), and the first factor grows with the repo while the size of a single PR's change does not. Nx breaks the dependency with two mechanisms: **affected** shrinks the task list to the projects touched by the change (via the graph), and **computation caching** turns re-runs of untouched work into instant cache hits. Together they make the cost of a PR proportional to the size of the *change*, not the size of the *repository*.
-2. Workspaces only know the declarations from `package.json` — "package A is installed and reachable". Nx builds its graph by **static analysis of source imports**: the real `shell → shared/ui` edge exists because the code contains `import ... from '@mini-shop/shared-ui'`, even without a package.json entry. Answering "what needs rebuilding" requires the actual code relationships, not installation declarations — a declared-but-unused dependency causes unnecessary rebuilds, while an undeclared-but-real one (in package-based tools) causes missed ones.
-3. Integrated: a single root `package.json` with all the dependencies + a `tsconfig.base.json` with a `paths` alias block + `apps/`/`libs/`. Package-based: `packages/`, each package with its own `package.json` and dependencies, a `workspaces` field (or `pnpm-workspace.yaml`) at the root. It blurred because project crystal removed the main "weight" of integrated (hand-written project.json files with executors), and the new TS preset of Nx 20+ itself uses workspaces + project references — so a modern integrated workspace half-resembles a package-based one.
-4. The core (`nx`) and the plugins (`@nx/*`) are one product released in lockstep: plugins call internal core APIs that carry no semver guarantees. With `^`, a routine `npm install` could bump `nx` by a minor while leaving the plugins behind — and `nx build` would start failing with errors deep inside node_modules that have nothing to do with your code. Exact versions + `nx migrate` guarantee the whole set upgrades consistently.
-5. Three things: the **cache** (the result won't be saved or reused — locally or in CI), the **task pipeline** (`dependsOn: ["^build"]` won't run — dependencies won't be built before the project), and the **graph/affected** (the run doesn't participate in the "what was touched" model). The tool itself will work, but the repo stops getting the main benefit of Nx; which executor Nx invokes under the hood of the same command is chapter 03.
+1. CI time = (number of projects) × (average build/test time). The first factor grows with the repo, while the size of a single PR's change does not. Nx breaks the dependency with two mechanisms. **Affected** shrinks the task list to the projects touched by the change, using the graph. **Computation caching** turns re-runs of untouched work into instant cache hits. Together they make the cost of a PR proportional to the size of the *change*, not the size of the *repository*.
+2. Workspaces only know the declarations from `package.json` — "package A is installed and reachable". Nx builds its graph by **static analysis of source imports**. The real `shell → shared/ui` edge exists because the code contains `import ... from '@mini-shop/shared-ui'`, even without a package.json entry. Answering "what needs rebuilding" requires the actual code relationships, not installation declarations. A declared-but-unused dependency causes unnecessary rebuilds, while an undeclared-but-real one (in package-based tools) causes missed ones.
+3. Integrated: a single root `package.json` with all the dependencies + a `tsconfig.base.json` with a `paths` alias block + `apps/`/`libs/`. Package-based: `packages/`, each package with its own `package.json` and dependencies, a `workspaces` field (or `pnpm-workspace.yaml`) at the root. It blurred for two reasons. Project crystal removed the main "weight" of integrated: hand-written project.json files with executors. The new TS preset of Nx 20+ itself uses workspaces + project references. As a result, a modern integrated workspace half-resembles a package-based one.
+4. The core (`nx`) and the plugins (`@nx/*`) are one product released in lockstep: plugins call internal core APIs that carry no semver guarantees. With `^`, a routine `npm install` could bump `nx` by a minor while leaving the plugins behind. Then `nx build` starts failing with errors deep inside node_modules that have nothing to do with your code. Exact versions + `nx migrate` guarantee the whole set upgrades consistently.
+5. Three things are lost. The **cache**: the result won't be saved or reused, locally or in CI. The **task pipeline**: `dependsOn: ["^build"]` won't run, so dependencies won't be built before the project. The **graph/affected**: the run doesn't participate in the "what was touched" model. The tool itself will work, but the repo stops getting the main benefit of Nx. Which executor Nx invokes under the hood of the same command is chapter 03.
 
 </details>
 
 ## Common mistake
 
-A developer coming from the single-app world brings the reflex "package.json is the project's control center": they add npm scripts like `"build:shell": "nx build shell"`, or worse, `"build": "cd apps/shell && vite build"`, and run everything through `npm run`. The first is a harmless but redundant layer (Nx commands are self-sufficient and parameterizable: `nx build shell --configuration=production`); the second is outright sabotage: calling the tool directly bypasses the cache, the task pipeline and affected, and in CI such a command honestly rebuilds everything from scratch every time, reducing the value of Nx to zero.
+A developer coming from the single-app world brings one reflex along: "package.json is the project's control center". They add npm scripts like `"build:shell": "nx build shell"`, or worse, `"build": "cd apps/shell && vite build"`, and run everything through `npm run`.
 
-The second reflex from the same place is `npm install <pkg>` inside an app's folder "to add a dependency just for it". In an integrated repo this creates a nested package.json and a second node_modules, breaking the single version policy and confusing both Nx and TypeScript. Dependencies in an integrated monorepo are installed at the root — a dependency's "ownership" by a project exists at the graph level (Nx itself sees who imports it), not at the level of a separate node_modules.
+The first is a harmless but redundant layer: Nx commands already take parameters on their own, e.g. `nx build shell --configuration=production`. The second is outright sabotage. Calling the tool directly bypasses the cache, the task pipeline and affected. In CI such a command rebuilds everything from scratch on every run, so Nx gives the repo nothing.
+
+The second reflex from the same place is `npm install <pkg>` inside an app's folder, "to add a dependency just for it". In an integrated repo this creates a nested package.json and a second node_modules. That breaks the single version policy and confuses both Nx and TypeScript.
+
+Dependencies in an integrated monorepo are installed at the root. A dependency's "ownership" by a project exists at the graph level, because Nx itself sees who imports it. It does not exist at the level of a separate node_modules.

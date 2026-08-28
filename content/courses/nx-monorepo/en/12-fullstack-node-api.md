@@ -4,7 +4,9 @@
 
 ### Why the backend belongs in the same repo
 
-So far the monorepo benefits worked inside the frontend. They reach full scale when the backend moves into the same repo — because the most fragile boundary in web development is not between libs but **between the frontend and the backend**: the API contract. In polyrepo land it's guarded manually: a swagger page, a versioned types package, "did you rename that field?" threads. In a monorepo the contract is code:
+So far the monorepo benefits worked inside the frontend. They reach full scale when the backend moves into the same repo. The reason: the most fragile boundary in web development is not between libs but **between the frontend and the backend**. That boundary is the API contract.
+
+In polyrepo land the contract is guarded manually: a swagger page, a versioned types package, "did you rename that field?" threads. In a monorepo the contract is code:
 
 ```
                   the contract as code
@@ -22,29 +24,38 @@ So far the monorepo benefits worked inside the frontend. They reach full scale w
 │ GET /api/products/:id │    │ requests and responses │
 └───────────────────────┘    └────────────────────────┘
 
-at runtime it is plain HTTP: the compiler checked the types, nobody checked the data
+at runtime it is plain HTTP: the compiler checked the types,
+                nobody checked the data
 ```
 
-Then the whole machinery of this course fires at once. Rename a field in `api-types` → tsc instantly goes red in **every** consumer on both sides of HTTP — before the commit, not a week later on a staging environment. `nx affected` (chapter 05) sees the contract lib change and decides on its own: test the api, the data-access, and everything above. Boundaries (chapter 06) keep the contract from growing foreign dependencies. This is the main practical monorepo payoff for a fullstack engineer — and the thing most worth demonstrating in an interview.
+Then the whole machinery of this course fires at once. Rename a field in `api-types`, and tsc instantly goes red in **every** consumer on both sides of HTTP. That happens before the commit, not a week later on a staging environment.
 
-An honest caveat: the shared-types payoff belongs to a TS backend. If the backend is Go/Java, the contract stays code via generation (an OpenAPI schema → generated types for both sides), and affected keeps working through implicit links; but the direct "one types lib" is gone.
+The `nx affected` command (chapter 05) sees the contract lib change and decides on its own: test the api, the data-access, and everything above. Boundaries (chapter 06) keep the contract from growing foreign dependencies. This is the main practical monorepo payoff for a fullstack engineer, and the thing most worth demonstrating in an interview.
+
+An honest caveat: the shared-types payoff belongs to a TS backend. If the backend is Go or Java, the contract stays code via generation: an OpenAPI schema produces types for both sides. Affected keeps working through implicit links, but the direct "one types lib" is gone.
 
 ### @nx/node: a third kind of application in the graph
 
-To Nx a backend is just another node: `nx g @nx/node:app` with a framework choice (express / fastify / none; for Nest there's a separate `@nx/nest` package with its own generators). The essential differences from frontend apps:
+To Nx a backend is just another node: `nx g @nx/node:app` with a framework choice — express, fastify or none. For Nest there is a separate `@nx/nest` package with its own generators. The essential differences from frontend apps:
 
-- **The build is esbuild** (the default in recent versions): it bundles main.ts together with all workspace libs into `dist/apps/api/main.js`, the same way vite/rspack bundle the frontend. Consequence: non-buildable libs work here too.
+- **The build is esbuild**, the default in recent versions. It bundles main.ts together with all workspace libs into `dist/apps/api/main.js`, the same way vite and rspack bundle the frontend. Consequence: non-buildable libs work here too.
 - **serve** — a watch-mode build + a Node process restart on changes.
 
-> **Versions.** Closing the chapter 06 promise — "the technical necessity of buildable libs, we'll see it in chapter 12" — honestly: with the esbuild bundler it **doesn't arise** — libs compile from sources through aliases, just like on the frontend. The necessity was real in older Node setups where the app compiled via `@nx/js:tsc` without bundling: there, every workspace lib needed its own compiled artifact with declarations, so they all became buildable. If you meet a forest of buildable libs around Node apps in a legacy repo — now you know where it came from.
+> **Versions.** Chapter 06 promised to show "the technical necessity of buildable libs" here, in chapter 12. The honest answer: with the esbuild bundler that necessity **doesn't arise**. Libs compile from sources through aliases, just like on the frontend.
+
+> The necessity was real in older Node setups where the app compiled via `@nx/js:tsc` without bundling. There, every workspace lib needed its own compiled artifact with declarations, so they all became buildable. If you meet a forest of buildable libs around Node apps in a legacy repo, now you know where it came from.
 
 ### The contract is a platform-neutral lib
 
-`shared/api-types` is an ordinary `@nx/js` lib tagged `scope:shared, type:util`, with one extra requirement: **no runtime code, no platform APIs**. It's imported by a browser bundle and by a Node process — so inside there are only types and, at most, isomorphic constants: no `fs`, no `window`, no side effects. Large repos formalize this as a third tag axis (`platform:web / platform:node / platform:agnostic`) with a "web doesn't import node" boundary rule — the very "third axis" mentioned in chapter 06.
+`shared/api-types` is an ordinary `@nx/js` lib tagged `scope:shared, type:util`, with one extra requirement: **no runtime code, no platform APIs**. It is imported by a browser bundle and by a Node process. So inside there are only types and, at most, isomorphic constants: no `fs`, no `window`, no side effects.
+
+Large repos formalize this as a third tag axis: `platform:web / platform:node / platform:agnostic`. A boundary rule then says that web does not import node. This is the very "third axis" mentioned in chapter 06.
 
 ### What the types do not guarantee
 
-The compiler verified that both sides are *written* against one contract. At runtime there's a network between them, and nobody verifies that the actual JSON matches `Product`: types are erased. While the api and the frontend deploy from one commit, divergence is impossible; but our deploys are independent (chapter 11 says hello): yesterday's frontend may receive a response from today's api. The survival rules are the same as for shared libs: backward-compatible API evolution (add fields, don't rename; deprecate instead of delete) — and, on boundaries with external or unstable sources, runtime validation (zod and friends), which turns "quietly wrong data" into an explicit error.
+The compiler verified that both sides are *written* against one contract. At runtime there is a network between them, and nobody verifies that the actual JSON matches `Product`: types are erased. While the api and the frontend deploy from one commit, divergence is impossible. But our deploys are independent (chapter 11 says hello), so yesterday's frontend may receive a response from today's api.
+
+The survival rules are the same as for shared libs. First, evolve the API backwards-compatibly: add fields, don't rename them, and deprecate instead of deleting. Second, on boundaries with external or unstable sources, add runtime validation with zod or a similar library. Validation turns "quietly wrong data" into an explicit error.
 
 ## In a real-world monorepo
 
@@ -56,7 +67,7 @@ The compiler verified that both sides are *written* against one contract. At run
 
 ## What we're adding to the project
 
-A real backend: an `api` app on Express with catalog endpoints, a contract lib `shared/api-types` — and `catalog-data-access` finally swaps the chapter 06 mocks for real HTTP. The "not a single consumer changes" promise from the comment in products.ts — we're about to test it.
+A real backend: an `api` app on Express with catalog endpoints, plus a contract lib `shared/api-types`. And `catalog-data-access` finally swaps the chapter 06 mocks for real HTTP. The "not a single consumer changes" promise from the comment in products.ts — we're about to test it.
 
 ## Practical exercise
 
@@ -67,10 +78,10 @@ A real backend: an `api` app on Express with catalog endpoints, a contract lib `
 1. Generate the contract lib `shared-api-types` (`libs/shared/api-types`, `scope:shared,type:util`, bundler none). Move the `Product` interface from catalog-data-access into it and add a list response type `ProductsResponse`.
 2. Generate the `api` app (`@nx/node`, framework express, `apps/api`, tags `scope:api,type:app`); add the scope rule to boundaries (api sees only shared).
 3. Endpoints: `GET /api/products` (the list, `ProductsResponse`) and `GET /api/products/:id` (a product or 404). Data — an in-memory array from the former mocks, typed `Product[]` from the contract lib.
-4. Enable CORS (the frontend dev ports are 4200–4202) and run `nx serve api`.
+4. Enable CORS (cross-origin resource sharing) for the frontend dev ports 4200–4202, and run `nx serve api`.
 5. Rewrite `catalog-data-access`: `getProducts()` and a new `getProduct(id)` go over HTTP with api-types types; network/status errors become exceptions. Verify that `catalog-feature` didn't change by a single line.
 6. The full stack locally: `nx serve api` + `nx serve shell --devRemotes=catalog` — the catalog renders backend data.
-7. **The contract experiment** (the core of the chapter): rename the `title` field to `name` in api-types. Record: (a) the `nx show projects --affected` list; (b) where and with what messages `typecheck`/`build` failed; (c) fix all sides and reach a green `nx affected -t lint,test,typecheck,build`.
+7. **The contract experiment** (the core of the chapter): rename the `title` field to `name` in api-types. Record two things: (a) the `nx show projects --affected` list; (b) where and with what messages `typecheck`/`build` failed. Then (c) fix all sides and reach a green `nx affected -t lint,test,typecheck,build`.
 
 **Requirements:** tags and boundaries green; api has a `typecheck` target; the frontend imports nothing from `apps/api` (check the graph).
 
@@ -110,7 +121,7 @@ export interface ProductsResponse {
 }
 ```
 
-Steps 3–4 — the backend (thin, per chapter 01 — for the course the logic sits in main.ts; in a real api it would move into `api/feature` libs):
+Steps 3–4 — the backend. It stays thin, per chapter 01: for the course the logic sits in main.ts. In a real api it would move into `api/feature` libs:
 
 ```ts
 // apps/api/src/main.ts
@@ -169,7 +180,7 @@ export function getProduct(id: string): Promise<Product> {
 export type { Product } from '@mini-shop/shared-api-types';
 ```
 
-The `Product` re-export in the last line is a deliberate decision (edge case 1): data-access consumers keep importing `Product` from it (the data-access layer stays their single API door, chapter 06 boundaries don't blur), but the **definition** lives only in api-types — a re-export is not a copy, there's nothing to drift.
+The `Product` re-export in the last line is a deliberate decision (edge case 1). Data-access consumers keep importing `Product` from it, so the data-access layer stays their single API door and chapter 06 boundaries don't blur. The **definition**, however, lives only in api-types. A re-export is not a copy, so there is nothing to drift.
 
 Step 7 — the contract experiment. After `title` → `name`:
 
@@ -189,34 +200,40 @@ npx nx affected -t typecheck --base=main
 #   Property 'title' does not exist on type 'Product'.
 ```
 
-There's the whole scene: **one contract edit — the compiler enumerated every spot on both sides of HTTP, and affected assembled the exact work list**. In polyrepo the same refactoring means publishing a types package, PRs into two repos and hoping nobody was forgotten. Fix the api and catalog-page, run `nx affected -t lint,test,typecheck,build` — green.
+There's the whole scene: **one contract edit — the compiler enumerated every spot on both sides of HTTP, and affected assembled the exact work list**. In polyrepo the same refactoring means publishing a types package, opening pull requests into two repos and hoping nobody was forgotten. Fix the api and catalog-page, run `nx affected -t lint,test,typecheck,build` — green.
 
 Answers to the remaining edge cases:
 
-- Deploying the new api under the old frontend is classic version skew: the frontend reads `product.title` and gets `undefined` (silent UI degradation, not an exception — which is what makes it insidious). The difference from chapter 11's first-wins: there it was a race for a singleton in the browser; here it's artifact drift across the network. The cure is shared: backward-compatible evolution (add `name`, mark `title` deprecated, remove after all consumers have shipped), plus the affected-driven "deploy these together" hint.
-- Zod belongs on the boundaries where TypeScript is powerless: api input (POST request bodies — user input validation), responses of external APIs, configs from env. Inside our "api ↔ frontend from one repo" pair, blanket runtime validation of every response is overhead: the contract is already compiler-checked, and skew is handled by compatibility; turn it on where the sides genuinely deploy far apart or the data source isn't yours.
+- Deploying the new api under the old frontend is classic version skew. The frontend reads `product.title` and gets `undefined`. That is a silent degradation of the interface, not an exception, which is what makes it insidious. The difference from chapter 11's first-wins: there it was a race for a singleton in the browser. Here it is artifact drift across the network. The cure is shared — backward-compatible evolution: add `name`, mark `title` deprecated, remove it after all consumers have shipped. On top of that comes the affected-driven hint about what to deploy together.
+- Zod belongs on the boundaries where TypeScript is powerless: api input (POST request bodies — user input validation), responses of external APIs, configs from env. Inside our "api ↔ frontend from one repo" pair, blanket runtime validation of every response is overhead. The contract is already compiler-checked, and skew is handled by compatibility. Turn validation on where the sides genuinely deploy far apart, or where the data source isn't yours.
 
 ## Check yourself
 
-1. Replay the "renamed a contract field" chain in a monorepo and in a polyrepo: what are the steps, where is the error caught, and how much time passes before detection in each case?
+1. Replay the "renamed a contract field" chain in a monorepo and in a polyrepo. What are the steps, where is the error caught, and how much time passes before detection in each case?
 2. Why must a contract lib be platform-neutral, and how is that expressed (and defended) in terms of tags and boundaries?
 3. What does a shared `api-types` guarantee, and what doesn't it? Where does the compiler's job end and the need for runtime validation begin?
 4. Why does a Node app with the esbuild bundler need no buildable libs, and in which setup were they needed?
-5. An edit to `shared/api-types` — describe what happens on `nx affected -t test,build` and why it works "across" an HTTP boundary that doesn't exist in the graph.
+5. You edit `shared/api-types`. Describe what happens on `nx affected -t test,build`, and why it works "across" an HTTP boundary that doesn't exist in the graph.
 
 <details>
 <summary>Answers</summary>
 
-1. Monorepo: the api-types edit → tsc fails in every consumer locally/in the PR → affected gathers their tests → everything is fixed in one atomic PR. Time to detection — seconds. Polyrepo: the types-package edit → publish a new version → every consumer repo must bump the version itself (eventually) → until then the frontend and backend compile against different contracts, and the first signal is often a runtime error on staging or in production. Time to detection — days, and it's non-deterministic.
-2. Two different runtimes import it: the browser bundle (no fs, no process) and Node (no window, no DOM). Any platform import breaks the opposite side's build — and not immediately, but when someone first touches the affected module. Expressed in tags: `type:util` already forbids downward dependencies; large repos add a `platform:*` axis with rules like "platform:web doesn't import platform:node", and the contract gets `platform:agnostic`.
-3. It guarantees: both sides are *written* against one data description, and any incompatible contract change breaks every consumer's compilation immediately. It doesn't guarantee: that the actual bytes in the HTTP response match the types — types are erased at runtime, and the sides may be deployed from different commits. The line: within one commit/deploy the compiler suffices; across independent deploys or external sources you need compatibility discipline and/or runtime validation at the boundary.
-4. esbuild bundles the app from sources: workspace libs resolve through tsconfig aliases and land in the final main.js just as they do in a frontend bundle — no per-lib artifact needed. Buildable libs were a necessity in setups where the Node app compiled via `@nx/js:tsc` without bundling: a tsc build of the app needs each dependency's ready d.ts/JS, so every lib grew its own build.
-5. api-types owns the changed files; the upward closure (chapter 05) collects everyone importing it: api, catalog-data-access, then catalog-feature, catalog, shell. Test/build tasks are created for them (cache rules apply). The HTTP boundary is irrelevant — the ordinary import graph does the work: both sides of the network *statically import one lib*, and that very edge makes the backend and the frontend neighbours in the graph.
+1. Monorepo: the api-types edit → tsc fails in every consumer, locally or in the pull request (PR). Then affected gathers their tests, and everything is fixed in one atomic PR. Time to detection — seconds. Polyrepo: the types-package edit → publish a new version → every consumer repo must bump the version itself, eventually. Until then the frontend and backend compile against different contracts, and the first signal is often a runtime error on staging or in production. Time to detection — days, and it is non-deterministic.
+2. Two different runtimes import it: the browser bundle (no fs, no process) and Node (no window, no DOM — the document object model). Any platform import breaks the opposite side's build, and not immediately: it breaks when someone first touches the affected module. Tags express this. The tag `type:util` already forbids downward dependencies. Large repos add a `platform:*` axis with a rule like `platform:web` must not import `platform:node`. The contract then gets `platform:agnostic`.
+3. It guarantees that both sides are *written* against one data description, and that any incompatible contract change breaks every consumer's compilation immediately. It does not guarantee that the actual bytes in the HTTP response match the types. Types are erased at runtime, and the sides may be deployed from different commits. Where is the line? Within one commit and deploy the compiler suffices. Across independent deploys or external sources you need compatibility discipline, runtime validation at the boundary, or both.
+4. esbuild bundles the app from sources. Workspace libs resolve through tsconfig aliases and land in the final main.js, just as they do in a frontend bundle. No per-lib artifact is needed. Buildable libs were a necessity in setups where the Node app compiled via `@nx/js:tsc` without bundling. A tsc build of the app needs each dependency's ready d.ts and JS, so every lib grew its own build.
+5. api-types owns the changed files, and the upward closure (chapter 05) collects everyone importing it: api, catalog-data-access, then catalog-feature, catalog, shell. Test and build tasks are created for them, with the usual cache rules. The HTTP boundary is irrelevant, because the ordinary import graph does the work. Both sides of the network *statically import one lib*, and that very edge makes the backend and the frontend neighbours in the graph.
 
 </details>
 
 ## Common mistake
 
-A developer from the single-app world is used to "API response types" being a `types.ts` file next to the fetch code. In the monorepo they do the same: the `Product` interface lives in a frontend lib, while the backend "knows" the contract as a similar interface written next to the route (or not written at all). A month later the fields drift apart — the frontend has `priceCents`, the backend already has `price` — and every tool in this course is helpless: **neither the compiler nor affected sees the drift of two copies, because there's no edge in the graph**. The rule is simple: the description of what travels over the network lives in exactly one place — the contract lib; the frontend and backend import it rather than retell it.
+A developer from the single-app world is used to "API response types" being a `types.ts` file next to the fetch code. In the monorepo they do the same. The `Product` interface lives in a frontend lib, while the backend "knows" the contract as a similar interface written next to the route. Sometimes it is not written down at all.
 
-The second mistake has the opposite sign: believing that a green tsc means the data is valid. Types are a compile-time illusion: they guarantee the consistency of the *code*, but at runtime untyped JSON travels the network from whatever artifact is actually deployed. While both sides ship from one commit, the illusion is safe; with independent deploys (which this whole course is about) a gap opens where the old frontend talks to the new api. The answer isn't schema paranoia on every call, but awareness: backward-compatible contract evolution as the norm, and runtime validation exactly where the sides genuinely diverge in time or the source isn't yours.
+A month later the fields drift apart: the frontend has `priceCents`, the backend already has `price`. Every tool in this course is helpless here. **Neither the compiler nor affected sees the drift of two copies, because there is no edge in the graph.**
+
+The rule is simple. The description of what travels over the network lives in exactly one place, the contract lib. The frontend and backend import it rather than retell it.
+
+The second mistake has the opposite sign: believing that a green tsc means the data is valid. Types are a compile-time illusion. They guarantee the consistency of the *code*, but at runtime untyped JSON travels the network from whatever artifact is actually deployed.
+
+While both sides ship from one commit, the illusion is safe. With independent deploys — which this whole course is about — a gap opens where the old frontend talks to the new api. The answer isn't schema paranoia on every call, but awareness. Make backward-compatible contract evolution the norm, and add runtime validation exactly where the sides genuinely diverge in time, or where the source isn't yours.
