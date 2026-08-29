@@ -95,6 +95,9 @@ PASSED = {
     'bank:docker': 'e9da501',
     'quiz:docker': 'e9da501',
     'course:python-fullstack': 'c8002fc',
+    'bank:python': '574ba8c',
+    'bank:testing': '574ba8c',
+    'quiz:testing': '574ba8c',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
