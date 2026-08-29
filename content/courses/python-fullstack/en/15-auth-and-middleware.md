@@ -2,7 +2,11 @@
 
 ## Theory
 
-**JWT — stateless authentication.** A JSON Web Token is `header.payload.signature`, three base64url parts, where the `payload` holds "claims" like `sub` (who the token belongs to — usually a username/id) and `exp` (when it expires), and `signature` is a cryptographic signature of the first two parts, keyed by the server's secret. The server keeps no session state — everything needed is already inside the token, and the signature guarantees the client hasn't tampered with the `payload` (changing `sub` to someone else's username without knowing the secret key is impossible — the signature stops matching). This is the exact same JWT you'd find in the Node ecosystem (`jsonwebtoken`) — the idea is identical; `PyJWT` in Python is just the same API in a different language:
+**JWT — stateless authentication.** A JSON Web Token is `header.payload.signature`: three base64url parts. The `payload` holds "claims" such as `sub` (who the token belongs to, usually a username or id) and `exp` (when it expires). The `signature` is a cryptographic signature of the first two parts, keyed by the server's secret.
+
+The server keeps no session state, because everything it needs is already inside the token. The signature guarantees the client hasn't tampered with the `payload`. Changing `sub` to someone else's username without knowing the secret key is impossible: the signature stops matching.
+
+This is the exact same JWT you'd find in the Node ecosystem (`jsonwebtoken`). The idea is identical, and `PyJWT` in Python is just the same API in a different language:
 
 ```python
 import jwt
@@ -17,7 +21,9 @@ decoded = jwt.decode(token, "secret-key", algorithms=["HS256"])
 jwt.decode(token, "WRONG-key", algorithms=["HS256"])  # jwt.InvalidSignatureError
 ```
 
-**`OAuth2PasswordBearer` — not full OAuth2, a narrow, specific contract.** The name is misleading: this class doesn't implement a redirect-based OAuth2 flow like "Sign in with Google" — it specifically models the **password grant** (logging in with a username+password directly against your own server, no third-party provider), and solves two narrow problems: (1) how a dependency extracts the value from the `Authorization: Bearer <token>` header, (2) what metadata ends up in the OpenAPI schema so Swagger UI shows an "Authorize" button with a login form:
+**`OAuth2PasswordBearer` — not full OAuth2, a narrow, specific contract.** The name is misleading. This class doesn't implement a redirect-based OAuth2 flow like "Sign in with Google". It models the **password grant**: logging in with a username and password directly against your own server, with no third-party provider.
+
+It solves exactly two narrow problems. The first is how a dependency extracts the value from the `Authorization: Bearer <token>` header. The second is what metadata ends up in the OpenAPI schema. That metadata makes Swagger UI — the user interface for the schema in the browser — show an "Authorize" button with a login form:
 
 ```python
 from fastapi.security import OAuth2PasswordBearer
@@ -28,9 +34,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     ...  # token -- already extracted as a string from the Authorization header
 ```
 
-`tokenUrl="auth/token"` isn't magic — it's just the path Swagger UI shows so it knows where to POST a login/password to get a token; you write the `/auth/token` endpoint itself by hand — `OAuth2PasswordBearer` doesn't create anything ready-made.
+`tokenUrl="auth/token"` isn't magic. It is just the path Swagger UI displays, so that it knows where to POST a login and password to get a token. You write the `/auth/token` endpoint itself by hand, because `OAuth2PasswordBearer` creates nothing ready-made.
 
-**Password hashing — a real, current-day detail: why not passlib.** Classic FastAPI authentication tutorials almost always recommend `passlib[bcrypt]`. In practice, as of 2025–2026, `passlib` is effectively unmaintained, and its integration with modern `bcrypt` releases (4.x+) breaks out of the box (`passlib` tries to read an internal version attribute that newer `bcrypt` no longer has). The working, current fix is to use the `bcrypt` package directly, without the `passlib` layer — its API is simple enough on its own:
+**Password hashing — a real, current-day detail: why not passlib.** Classic FastAPI authentication tutorials almost always recommend `passlib[bcrypt]`. In practice, as of 2025–2026, `passlib` is effectively unmaintained. Its integration with modern `bcrypt` releases (4.x+) breaks on a default install. The cause: `passlib` tries to read an internal version attribute that newer `bcrypt` no longer has.
+
+The working, current fix is to use the `bcrypt` package directly, without the `passlib` layer. Its API is simple enough on its own:
 
 ```python
 import bcrypt
@@ -42,7 +50,9 @@ def verify_password(password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
 ```
 
-**404, not 403 — a deliberate security decision.** When a different user tries to mark someone else's task done, the right HTTP status is `404 Not Found`, not `403 Forbidden`. `403` effectively confirms: "a task with that id exists, it's just not yours" — leaking information about the existence of someone else's data. `404` doesn't distinguish "no such task at all" from "exists, but not yours" — from an unrelated user's point of view, both cases should look identical. We get this for free: the database query already filters by `WHERE id = ? AND user_id = ?`, so someone else's task simply isn't found, and `TaskNotFoundError` is the exact same error as for an id that genuinely doesn't exist.
+**404, not 403 — a deliberate security decision.** When a different user tries to mark someone else's task done, the right HTTP status is `404 Not Found`, not `403 Forbidden`. A `403` effectively confirms that a task with that id exists and is simply not yours. That leaks information about the existence of someone else's data.
+
+A `404` does not distinguish "no such task at all" from "exists, but not yours". From an unrelated user's point of view, both cases should look identical. We get this for free. The database query already filters by `WHERE id = ? AND user_id = ?`, so someone else's task simply isn't found. `TaskNotFoundError` is then the exact same error as for an id that genuinely doesn't exist.
 
 **Dependency overrides for tests.** FastAPI provides `app.dependency_overrides`, a dict keyed by the original dependency function, whose value replaces it for every test request:
 
@@ -56,30 +66,32 @@ def fake_user() -> User:
 app.dependency_overrides[get_current_user] = fake_user
 ```
 
-This spares tests from having to walk the real login flow (register + POST to `/auth/token` + parse the token) just to check something entirely unrelated to authentication — say, that `GET /tasks` filters by status correctly. `TestClient` (a wrapper around `httpx`, synchronous on its own — no `pytest-asyncio`, no manual `asyncio.run()` needed for tests going through it) picks up the override automatically.
+This spares tests from having to walk the real login flow: register, POST to `/auth/token`, parse the token. All that just to check something unrelated to authentication — say, that `GET /tasks` filters by status correctly. `TestClient` picks up the override automatically. It is a wrapper around `httpx` and is synchronous on its own, so tests going through it need no `pytest-asyncio` and no manual `asyncio.run()`.
 
 ### Parallels with JS/TS/Node:
 
 - JWT is the same concept and the same format as Node's `jsonwebtoken`; `PyJWT` is just a different API for the same standard.
-- `OAuth2PasswordBearer` isn't a full OAuth2 provider (not "Sign in with Google") — it's specifically a password-grant contract plus metadata for Swagger UI; the closest counterpart in spirit is the plain login endpoint with JWT you'd write by hand in Express/Nest.js anyway, just with built-in integration into the auto-generated docs.
-- `app.dependency_overrides` ~ what Nest.js does by overriding providers in a test module (`overrideProvider`) — the idea of "swap one dependency for a fake, just for the test" is universal.
+- `OAuth2PasswordBearer` isn't a full OAuth2 provider, and not "Sign in with Google". It is a password-grant contract plus metadata for Swagger UI. The closest counterpart in spirit is the plain login endpoint with JWT you'd write by hand in Express or Nest.js. The difference is the built-in integration into the auto-generated docs.
+- `app.dependency_overrides` is the counterpart of overriding providers in a Nest.js test module (`overrideProvider`). The idea of "swap one dependency for a fake, just for the test" is universal.
 
 ## What we're adding to the project
 
-Tasks now belong to a specific user: the `tasks` table gets a `user_id` column, and `TaskStorage` gets a `user_id` parameter on every method that reads or writes tasks. A new `auth/` package appears (password hashing, JWT), along with `/auth/register`/`/auth/token` routes; all three existing task endpoints now require `Depends(get_current_user)`. The CLI, which never had and never will have a login concept, stays a single-user tool: on startup it creates (or reuses) one fixed local account and operates on its behalf — introducing full login into the CLI would be overkill for a tool that already runs on one machine for one person.
+Tasks now belong to a specific user. The `tasks` table gets a `user_id` column, and `TaskStorage` gets a `user_id` parameter on every method that reads or writes tasks. A new `auth/` package appears (password hashing, JWT), along with `/auth/register` and `/auth/token` routes. All three existing task endpoints now require `Depends(get_current_user)`.
+
+The CLI (command-line interface) never had a login concept and never will, so it stays a single-user tool. On startup it creates, or reuses, one fixed local account and operates on its behalf. Full login inside the CLI would be overkill for a tool that already runs on one machine for one person.
 
 ## Practical exercise
 
 1. Add `pyjwt`, `bcrypt`, `python-multipart` to `dependencies`.
 2. Create `models/user.py` with `@dataclass class User: id: int; username: str`. Add `user_id: int` to `Task` (no default — right after `id`, before the fields that have defaults).
-3. Create `storage/users_storage.py`: `init_users_table()`, `create_user(username, hashed_password) -> User`, `get_user_by_username(username) -> tuple[User, str] | None` (the second element is the password hash, for later verification).
-4. Update `storage/sqlite_storage.py`: the `tasks` schema gets `user_id INTEGER NOT NULL`; `add_task`/`find_task`/`get_task`/`mark_done`/`list_tasks` take `user_id` as their first parameter and filter by it in SQL (`WHERE ... AND user_id = ?`).
+3. Create `storage/users_storage.py` with three functions: `init_users_table()`, `create_user(username, hashed_password) -> User` and `get_user_by_username(username) -> tuple[User, str] | None`. In the last one, the second element of the tuple is the password hash, for later verification.
+4. Update `storage/sqlite_storage.py`. The `tasks` schema gets `user_id INTEGER NOT NULL`. The functions `add_task`, `find_task`, `get_task`, `mark_done` and `list_tasks` take `user_id` as their first parameter. They filter by it in SQL — the structured query language the database speaks — with `WHERE ... AND user_id = ?`.
 5. Update `storage/protocol.py` — add `user_id: int` to the relevant `TaskStorage` method signatures.
 6. Create `auth/security.py` (`hash_password`, `verify_password` via `bcrypt` directly — no `passlib`; `create_access_token`, `decode_access_token` via `PyJWT`) and `auth/dependencies.py` (`OAuth2PasswordBearer(tokenUrl="auth/token")`, `get_current_user`).
 7. Create `api/routes_auth.py`: `POST /auth/register` (body — JSON `UserCreate`) and `POST /auth/token` (body — `OAuth2PasswordRequestForm`, form-encoded, not JSON — a requirement of `OAuth2PasswordBearer`/Swagger itself).
 8. Update `api/routes.py`: every task endpoint gets `current_user: User = Depends(get_current_user)` and passes `current_user.id` into the storage-layer calls.
-9. Update `cli/app.py`: implement `ensure_cli_user()`, which creates (on first run) or finds a fixed local user `"cli"`, and thread its `id` into `args.user_id` before dispatching the command.
-10. Write `tests/test_api.py` with `TestClient` and `app.dependency_overrides[get_current_user] = fake_user`, checking: creating/listing tasks with no real login; `404` (not `403`) when trying to mark someone else's/a nonexistent task done; `401` on a protected route with no dependency override at all.
+9. Update `cli/app.py`: implement `ensure_cli_user()`, which creates on first run, or finds, a fixed local user `"cli"`. Thread its `id` into `args.user_id` before dispatching the command.
+10. Write `tests/test_api.py` with `TestClient` and `app.dependency_overrides[get_current_user] = fake_user`. Check that creating and listing tasks works with no real login. Check that marking someone else's or a nonexistent task done returns `404`, not `403`. Check that a protected route with no dependency override at all returns `401`.
 
 ## Worked solution
 
@@ -373,7 +385,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from ..models import User
-from ..storage import users as users_storage
+from ..storage import users_storage
 from .security import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
@@ -404,7 +416,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from ..auth import create_access_token, hash_password, verify_password
-from ..storage import users as users_storage
+from ..storage import users_storage
 from .schemas import TokenResponse, UserCreate, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -415,7 +427,9 @@ async def register(payload: UserCreate) -> UserRead:
     existing = await users_storage.get_user_by_username(payload.username)
     if existing is not None:
         raise HTTPException(status_code=400, detail="Username already registered")
-    user = await users_storage.create_user(payload.username, hash_password(payload.password))
+    user = await users_storage.create_user(
+        payload.username, hash_password(payload.password)
+    )
     return UserRead(id=user.id, username=user.username)
 
 
@@ -534,7 +548,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from ..models import TaskNotFoundError
-from ..storage import db, users as users_storage
+from ..storage import db, users_storage
 from .exceptions import task_not_found_handler
 from .middleware import log_requests
 from .routes import router
@@ -563,7 +577,7 @@ import secrets
 
 from ..auth import hash_password
 from ..models import User
-from ..storage import db, users as users_storage
+from ..storage import db, users_storage
 from .commands import COMMAND_HANDLERS
 from .parser import build_parser
 
@@ -578,7 +592,9 @@ async def ensure_cli_user() -> User:
     if existing is not None:
         user, _ = existing
         return user
-    return await users_storage.create_user(CLI_USERNAME, hash_password(secrets.token_hex(16)))
+    return await users_storage.create_user(
+        CLI_USERNAME, hash_password(secrets.token_hex(16))
+    )
 
 
 async def async_main() -> None:
@@ -596,7 +612,7 @@ def main() -> None:
     asyncio.run(async_main())
 ```
 
-`src/taskman/cli/commands.py` — the only change: every handler now passes `args.user_id` as the first argument to `db.add_task`/`db.list_tasks`/`db.mark_done` (everything else unchanged since chapter 12).
+`src/taskman/cli/commands.py` has one change. Every handler now passes `args.user_id` as the first argument to `db.add_task`, `db.list_tasks` and `db.mark_done`. Everything else is unchanged since chapter 12.
 
 `tests/test_api.py` (new file):
 
@@ -642,36 +658,44 @@ def test_protected_route_without_token_is_rejected(db):
         assert response.status_code == 401
 ```
 
-A real run confirms user isolation: Alice and Bob register, log in, each creates a task — `GET /tasks` shows each of them only their own; Bob trying to mark Alice's task done returns `{"detail":"Task with id 1 not found"}` with a `404` status, with no hint that the task exists but belongs to someone else.
+A real run confirms user isolation. Alice and Bob register, log in, and each creates a task. `GET /tasks` shows each of them only their own. Bob trying to mark Alice's task done gets `{"detail":"Task with id 1 not found"}` with a `404` status. There is no hint that the task exists but belongs to someone else.
 
 Key decisions:
 
-- Password hashing goes through `bcrypt` directly, not `passlib[bcrypt]`: pairing `passlib` with a modern `bcrypt` (4.x+) genuinely breaks trying to read an internal version attribute that no longer exists in newer `bcrypt` releases. `bcrypt` on its own gives everything needed (`hashpw`/`checkpw`) without that layer.
-- `find_task`/`get_task`/`mark_done` filter by `user_id` right in the SQL (`WHERE ... AND user_id = ?`), rather than checking ownership in Python after an unfiltered query — someone else's task simply isn't found at the database level, and `TaskNotFoundError` for "not found" and "found, but not yours" ends up being the exact same code path, with no risk of accidentally forgetting an ownership check somewhere else.
-- The CLI doesn't get a login — `ensure_cli_user()` creates (or reuses) one fixed account `"cli"` with a one-time, never-logged-in-with password; a deliberate decision not to drag full authentication into a tool that already has exactly one user on one machine.
-- `TestClient` is a synchronous wrapper — the tests in `test_api.py` need neither `pytest-asyncio` nor a manual `asyncio.run()` for the HTTP calls themselves (though the `db` fixture still uses `asyncio.run()` to set up the in-memory connection, as in chapters 09/12).
+- Password hashing goes through `bcrypt` directly, not `passlib[bcrypt]`. Pairing `passlib` with a modern `bcrypt` (4.x+) genuinely breaks. It tries to read an internal version attribute that no longer exists in newer `bcrypt` releases. On its own, `bcrypt` gives everything needed (`hashpw`/`checkpw`) without that layer.
+- `find_task`, `get_task` and `mark_done` filter by `user_id` right in the SQL (`WHERE ... AND user_id = ?`), rather than checking ownership in Python after an unfiltered query. Someone else's task simply isn't found at the database level. `TaskNotFoundError` for "not found" and for "found, but not yours" ends up being the exact same code path. There is no risk of forgetting an ownership check somewhere else.
+- The CLI doesn't get a login. The function `ensure_cli_user()` creates, or reuses, one fixed account `"cli"` with a one-time password that is never used to log in. This is a deliberate decision not to drag full authentication into a tool that already has exactly one user on one machine.
+- `TestClient` is a synchronous wrapper. The tests in `test_api.py` need neither `pytest-asyncio` nor a manual `asyncio.run()` for the HTTP calls themselves. The `db` fixture still uses `asyncio.run()` to set up the in-memory connection, as in chapters 09/12.
 
 ## Check yourself
 
-1. Why is it impossible to forge a JWT by changing `sub` in the payload to someone else's username without knowing the server's secret key, given that the payload itself is just plain (unencrypted) base64?
+1. The payload of a JWT is just plain, unencrypted base64. Why is it still impossible to forge a token by changing `sub` to someone else's username, without knowing the server's secret key?
 2. `OAuth2PasswordBearer` is named "OAuth2," but doesn't implement anything resembling "Sign in with Google." What does it actually do, and why is its name misleading?
 3. Why is the correct HTTP status `404`, not `403`, when one user tries to mark someone else's task done? What exactly "leaks" if you answer `403`?
-4. How does `app.dependency_overrides[get_current_user] = fake_user` spare a test from having to walk through real registration and login, and what happens to that override if `app.dependency_overrides.clear()` isn't called afterward?
+4. How does `app.dependency_overrides[get_current_user] = fake_user` spare a test from real registration and login? And what happens to that override if `app.dependency_overrides.clear()` isn't called afterward?
 5. Why didn't the CLI get its own login, opting instead for one fixed local account created on first run?
 
 <details>
 <summary>Answers</summary>
 
-1. A JWT's `signature` isn't encryption — it's a cryptographic function of `header + payload + a secret key` known only to the server. Anyone can change the `payload` (say, put in someone else's `sub`) — it's just base64-encoded text — but recomputing the **correct** signature for the modified payload without knowing the secret key is impossible. When decoding a token, the server recomputes the signature from the received `header + payload` using its own secret key and compares it against the one in the token — if they don't match (which they never will for a tampered payload without the secret), `jwt.decode` raises `InvalidSignatureError`.
-2. In practice, `OAuth2PasswordBearer` solves two narrow problems: it extracts the value from the `Authorization: Bearer <token>` header as a string that can be passed further down the `Depends` chain, and it adds metadata to the OpenAPI schema stating that the API uses an OAuth2 password flow with a given `tokenUrl` — that metadata is exactly what makes Swagger UI show an "Authorize" button with a login form. The name is misleading because "OAuth2" in popular usage is associated with redirecting to a third-party provider (Google, GitHub) — while the password grant this class models is a direct username/password login against your own server, with no third party involved at all.
-3. `403 Forbidden` means "I understood what you want, the resource exists, but you're not allowed to access it" — the mere fact of a `403` response confirms a task with that id exists, even if the requester has nothing to do with it. That's an information leak: an unrelated user, by probing ids and watching for `403` vs `404`, can learn which ids exist in the system at all, without ever accessing the actual data. `404 Not Found` doesn't distinguish "no such id exists" from "exists, but belongs to someone else" — from the point of view of anyone who isn't the owner, both cases should look exactly the same.
-4. `app.dependency_overrides` is a dict FastAPI checks **before** calling the real dependency function: if the original dependency (`get_current_user`) is among the dict's keys, the replacement function (`fake_user`) is called instead, and the real JWT/token check never happens at all — the test gets a ready-made, known-in-advance user with not a single real HTTP request to `/auth/token`. If `app.dependency_overrides.clear()` isn't called after the test, the override stays active for **every subsequent** test using the same `app` — including tests specifically checking that a protected route with no token responds `401`: such a test would unexpectedly start passing right past the real authorization check, turning it into a false green and masking a real problem if authentication itself ever breaks.
-5. Because the CLI is already, by its nature, a single-user tool — it runs on one machine on behalf of one person, and there's simply no scenario of "different users run the same process and need to be isolated from each other" (unlike an HTTP API, which different clients connect to simultaneously). Introducing full login into the CLI (storing a token, refreshing it, interactively prompting for a password) would add real complexity for a scenario this specific tool never actually encounters — a fixed local account delivers the exact same benefit (tasks tied to a concrete `user_id`, as the storage layer now requires) without that cost.
+1. A JWT's `signature` isn't encryption. It is a cryptographic function of `header + payload + a secret key` known only to the server. Anyone can change the `payload` — say, put in someone else's `sub` — because it is just base64-encoded text. But recomputing the **correct** signature for the modified payload without knowing the secret key is impossible. When decoding a token, the server recomputes the signature from the received `header + payload` using its own secret key. It compares that against the signature in the token. If they do not match, `jwt.decode` raises `InvalidSignatureError`, and for a tampered payload without the secret they never will.
+2. In practice, `OAuth2PasswordBearer` solves two narrow problems. It extracts the value from the `Authorization: Bearer <token>` header as a string that can be passed further down the `Depends` chain. And it adds metadata to the OpenAPI schema stating that the API uses an OAuth2 password flow with a given `tokenUrl`. That metadata is exactly what makes Swagger UI show an "Authorize" button with a login form. The name is misleading because "OAuth2" in popular usage is associated with redirecting to a third-party provider such as Google or GitHub. The password grant this class models is a direct username and password login against your own server, with no third party involved.
+3. `403 Forbidden` means "I understood what you want, the resource exists, but you're not allowed to access it". The mere fact of a `403` response confirms a task with that id exists, even if the requester has nothing to do with it. That is an information leak. An unrelated user can probe ids and watch for `403` versus `404`. That reveals which ids exist in the system at all, without ever accessing the actual data. `404 Not Found` does not distinguish "no such id exists" from "exists, but belongs to someone else". From the point of view of anyone who isn't the owner, both cases should look exactly the same.
+4. `app.dependency_overrides` is a dict FastAPI checks **before** calling the real dependency function. If the original dependency (`get_current_user`) is among the dict's keys, the replacement function (`fake_user`) is called instead. The real JWT and token check never happens at all. The test gets a ready-made, known-in-advance user, with not a single real HTTP request to `/auth/token`. If `app.dependency_overrides.clear()` isn't called after the test, the override stays active for **every subsequent** test using the same `app`. That includes tests specifically checking that a protected route with no token responds `401`. Such a test would start passing right past the real authorization check: a false green that masks a real problem if authentication itself ever breaks.
+5. Because the CLI is already, by its nature, a single-user tool. It runs on one machine on behalf of one person. There is simply no scenario where different users run the same process and need to be isolated from each other. An HTTP API is different: many clients connect to it at the same time. Full login inside the CLI would mean storing a token, refreshing it and prompting for a password interactively. That is real complexity for a scenario this specific tool never encounters. A fixed local account delivers the exact same benefit — tasks tied to a concrete `user_id`, as the storage layer now requires — without that cost.
 
 </details>
 
 ## Common mistake
 
-The most dangerous, and quietest, mistake in this chapter is leaving `SECRET_KEY` hardcoded right in the source code (as in the examples above, explicitly flagged "change me in production") and forgetting to replace it with something that genuinely never ends up in version control. The JWT secret key is the one thing standing between "anyone" and "signing themselves a token with any `sub` they want" — if it leaks (or is simply visible in a public repository), the entire authentication scheme stops proving anything at all: an attacker can issue a token for any user, with not a single real password. In a real project, the secret should come from an environment variable (or a secrets manager), be generated long enough (PyJWT already warns on a too-short key — `InsecureKeyLengthWarning`), and never be committed to git alongside the rest of the code — what's acceptable for a course project's simplicity in this chapter is a direct vulnerability in a real service.
+The most dangerous, and quietest, mistake in this chapter is leaving `SECRET_KEY` hardcoded right in the source code. The examples above do exactly that, with an explicit "change me in production" in the value itself. It is easy to forget to replace it with something that genuinely never ends up in version control.
 
-The second common mistake is seeing that data is now filtered by `user_id` in the storage layer and deciding that checking ownership once, in one place (say, `get_task_or_404`), is enough — leaving the rest of the database calls unfiltered by user, because "we already checked further up." Every storage function that reads or writes a specific task needs to filter by `user_id` itself — not because the calling code is bound to make a mistake, but because a function's contract needs to be safe on its own terms, regardless of what happens further up the call stack. If another endpoint or a background job later calls `mark_done` directly, bypassing `get_task_or_404` entirely, filtering by `user_id` inside `mark_done` itself remains the only thing standing between one user accidentally (or deliberately) modifying someone else's data.
+The JWT secret key is the one thing that stops anyone from signing themselves a token with any `sub` they want. If it leaks, or is simply visible in a public repository, the entire authentication scheme stops proving anything at all. An attacker can issue a token for any user, with not a single real password.
+
+In a real project the secret should come from an environment variable, or from a secrets manager. It should be long enough — `PyJWT` already warns on a too-short key with `InsecureKeyLengthWarning`. And it should never be committed to git alongside the rest of the code. What is acceptable for a course project's simplicity in this chapter is a direct vulnerability in a real service.
+
+The second common mistake is seeing that data is now filtered by `user_id` in the storage layer, and concluding that one ownership check is enough. Say the check lives in `get_task_or_404`, and the rest of the database calls stay unfiltered by user, because "we already checked further up".
+
+Every storage function that reads or writes a specific task needs to filter by `user_id` itself. Not because the calling code is bound to make a mistake. A function's contract needs to be safe on its own terms, regardless of what happens further up the call stack.
+
+If another endpoint or a background job later calls `mark_done` directly, bypassing `get_task_or_404` entirely, the filter inside `mark_done` is all that is left. It is the only thing between one user and someone else's data, accidental or deliberate.

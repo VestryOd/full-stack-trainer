@@ -2,16 +2,20 @@
 
 ## Theory
 
-Python is interpreted and dynamically typed — every value has a concrete type at runtime, you just don't declare it in a signature unless you add explicit type hints. The syntax difference that will bug you for the first week: blocks are defined by indentation, not `{}`. Indentation isn't a style choice here — it's syntax. Get it wrong and you get an `IndentationError`, not a linter warning.
+This chapter ends with a working command-line interface (CLI) skeleton. It starts with the two things that surprise a JS developer first: how Python is installed, and how it isolates dependencies.
 
-**Installing Python.** macOS/Linux almost always ship with some `python3` already, but don't rely on the system Python — it's often outdated and the OS itself depends on it. In practice: install a current Python separately, either via [pyenv](https://github.com/pyenv/pyenv) (think `nvm`, if that's familiar) or the official installer from python.org. This course needs **Python 3.11+**. Check the version:
+Python is interpreted and dynamically typed. Every value has a concrete type at runtime. You just don't declare that type in a signature unless you add explicit type hints. The syntax difference you keep hitting in the first week: blocks are defined by indentation, not `{}`. Indentation isn't a style choice here — it's syntax. Get it wrong and you get an `IndentationError`, not a linter warning.
+
+**Installing Python.** macOS/Linux almost always ship with some `python3` already. Don't rely on that system Python: it is often outdated, and the operating system itself depends on it. In practice, install a current Python separately, either via [pyenv](https://github.com/pyenv/pyenv) (think `nvm`, if that's familiar) or the official installer from python.org. This course needs **Python 3.11+**. Check the version:
 
 ```bash
 python3 --version
 # Python 3.12.3
 ```
 
-**venv — virtual environments.** This is the single most important difference from the Node ecosystem, and it's worth internalizing right away. In Node, every project is isolated by default: `npm install` puts packages in a local `node_modules`, so two projects requiring different versions of the same library never collide. Python has **no isolation by default** — `pip install requests` with no extra setup installs `requests` into the site-packages of *the interpreter itself*, globally. Two projects needing different Django versions on the same machine will step on each other.
+**venv — virtual environments.** This is the single most important difference from the Node ecosystem, and it's worth internalizing right away. In Node, every project is isolated by default: `npm install` puts packages into a local `node_modules`. Two projects that need different versions of the same library never collide.
+
+Python has **no isolation by default** — `pip install requests` with no extra setup installs `requests` into the site-packages of *the interpreter itself*, globally. Two projects needing different Django versions on the same machine will step on each other.
 
 `venv` fixes this by creating a copy/symlink of the interpreter plus a dedicated site-packages directory for that one project:
 
@@ -20,13 +24,13 @@ python3 -m venv .venv          # create the environment in .venv
 source .venv/bin/activate      # activate it (Linux/macOS)
 # .venv\Scripts\activate       # activate it (Windows)
 python --version               # "python" now resolves to the venv's 3.11+
-pip install requests           # installed ONLY into .venv, not globally
+pip install requests           # installed only into .venv, not globally
 deactivate                     # leave the environment
 ```
 
-After `activate`, `python` and `pip` in your shell point at the binaries inside `.venv/bin/`, not the system ones. venv is doing the job of `nvm` and `node_modules` combined — it pins both the interpreter version (whichever `python3` you created it with) and the set of installed packages.
+After `activate`, the `python` and `pip` commands in your shell point at the binaries inside `.venv/bin/`, not at the system ones. One venv does the job of `nvm` and `node_modules` at once. It pins the interpreter version (whichever `python3` you created it with) and the set of installed packages.
 
-**pip and pyproject.toml.** `pip` is npm/yarn, but historically without a built-in single lockfile (people used to hand-manage this with `pip freeze > requirements.txt`; real lockfiles — poetry, uv — come up in the modules-and-packaging chapter). The modern standard for project metadata is `pyproject.toml`, the direct counterpart of `package.json`:
+**pip and pyproject.toml.** `pip` is the npm/yarn of Python, but historically it had no built-in lockfile. People managed that by hand with `pip freeze > requirements.txt`. Real lockfiles — poetry, uv — come up in the modules-and-packaging chapter. The modern standard for project metadata is `pyproject.toml`, the direct counterpart of `package.json`:
 
 | package.json | pyproject.toml | Purpose |
 |---|---|---|
@@ -44,20 +48,22 @@ Running a script:
 python main.py add "Buy milk"
 ```
 
-The `if __name__ == "__main__":` idiom is Python's way of saying "run this code only if the file was executed directly, not imported as a module." `__name__` is a special module-level variable: it equals `"__main__"` only when the file is the process's entry point, and equals the module's own name (`"main"`, `"taskman.cli"`, etc.) when the file is imported from somewhere else.
+The `if __name__ == "__main__":` idiom means: run this code only if the file was executed directly, not imported as a module. Here `__name__` is a special module-level variable. It equals `"__main__"` only when the file is the process entry point. When the file is imported from somewhere else, it equals the module's own name — `"main"`, `"taskman.cli"` and so on.
 
-**argparse.** A built-in module (no `pip install` needed) for parsing CLI arguments — the direct counterpart of `commander`/`yargs`, just shipped in the standard library. The key concept for a CLI with subcommands (`add`, `list`, `done`, ...) is `subparsers`: one top-level parser plus a dedicated sub-parser per command, each with its own arguments.
+**argparse.** A built-in module (no `pip install` needed) for parsing CLI arguments — the direct counterpart of `commander`/`yargs`, just shipped in the standard library. The key concept for a CLI with subcommands — `add`, `list`, `done` and so on — is `subparsers`. You get one top-level parser plus a dedicated sub-parser per command, each with its own arguments.
 
 ### Parallels with JS/TS/Node:
 
 - **venv ≈ `nvm` + `node_modules` rolled into one mechanism.** Node isolates projects by default (a local `node_modules`); Python has no isolation until you explicitly create and activate a venv.
-- **pyproject.toml ≈ package.json**, except linter/type-checker config lives right inside it under `[tool.x]`, rather than in separate `.eslintrc`/`tsconfig.json`-style files (though many tools still support standalone config files too).
+- **pyproject.toml ≈ package.json**, except that linter and type-checker config lives inside it under `[tool.x]`, not in separate files like `.eslintrc` or `tsconfig.json`. Many tools still support standalone config files as well.
 - **argparse ≈ commander/yargs**, but nothing to install — it's part of the standard library, the way `readline` used to be built into Node.
 - **pip without venv ≈ `npm install -g`** — a global install that breaks the moment two projects want different versions. In Python, unfortunately, that's the *default* behavior, not an opt-in flag.
 
 ## What we're adding to the project
 
-We're bootstrapping the `taskman` CLI task-manager skeleton from scratch: a `pyproject.toml` with project metadata, and a single `main.py` with an `add <text>` command that stores a task in an **in-memory list** and prints a confirmation. Persistence (JSON, then SQLite) shows up in chapter 08 — the goal right now is just to live through the full "venv → pyproject.toml → argparse → run it" cycle with your own hands.
+We're building the `taskman` CLI task-manager skeleton from scratch. It is two files: a `pyproject.toml` with project metadata, and a single `main.py`. That `main.py` holds an `add <text>` command, which stores a task in an **in-memory list** and prints a confirmation.
+
+Persistence (JSON, then SQLite) shows up in chapter 08. The goal right now is only to live through the full cycle with your own hands: venv → pyproject.toml → argparse → run it.
 
 ## Practical exercise
 
@@ -128,31 +134,37 @@ if __name__ == "__main__":
 
 Key decisions:
 
-- `subparsers = parser.add_subparsers(dest="command", required=True)` — `dest="command"` puts the chosen subcommand's name into `args.command`; `required=True` makes argparse error out and exit if no subcommand is given (without it, missing a subcommand wasn't treated as an error in some Python versions).
-- `list[dict]` — since Python 3.9, built-in generic types (`list[int]`, `dict[str, int]`) don't require `from typing import List, Dict`; it's closer to writing `string[]` in TS than to pulling a generic in from a separate module.
-- `if __name__ == "__main__": main()` — guarantees that `python main.py` runs `main()`, but if `main.py` later becomes a module something else imports (tests, in chapter 09), the import won't trigger the CLI logic as a side effect.
+- `subparsers = parser.add_subparsers(dest="command", required=True)` — `dest="command"` puts the chosen subcommand's name into `args.command`. The `required=True` part makes argparse print an error and exit when no subcommand is given. Without it, a missing subcommand was not treated as an error in some Python versions.
+- `list[dict]` — since Python 3.9, the built-in generics `list[int]` and `dict[str, int]` do not require `from typing import List, Dict`. It is closer to writing `string[]` in TS than to importing a generic from a separate module.
+- `if __name__ == "__main__": main()` — guarantees that `python main.py` runs `main()`. Later `main.py` may become a module that something else imports, for example the tests in chapter 09. Then the import will not trigger the CLI logic as a side effect.
 
 ## Check yourself
 
-1. Why does `python3 -m venv .venv` create a whole structure (an interpreter copy/symlink plus its own site-packages), instead of just a list of installed packages — and how is that fundamentally different from how npm isolates dependencies through `node_modules`?
+1. `python3 -m venv .venv` creates a whole structure: an interpreter copy or symlink plus its own site-packages. Why not just a list of installed packages? And how is that different from the way npm isolates dependencies through `node_modules`?
 2. What happens if you run `pip install` without an activated venv, on a project where the system Python is already used by something else? Why does this lead to hard-to-track-down bugs in practice?
 3. Why do you need `if __name__ == "__main__":` at all, if you could just call `main()` as the last line of the file unconditionally? What changes if `main.py` gets imported from another file?
-4. How is the `[project]` section in `pyproject.toml` fundamentally different from `package.json` when it comes to managing dependency versions — what does `pyproject.toml` NOT solve out of the box (without extra tooling)?
+4. How is the `[project]` section of `pyproject.toml` different from `package.json` in managing dependency versions? What does `pyproject.toml` **not** solve on its own, without extra tooling?
 5. Why does `add_subparsers` require `required=True` as an explicit parameter, instead of treating a subcommand as required by default?
 
 <details>
 <summary>Answers</summary>
 
-1. Isolation in Python is about more than packages — it's also about which interpreter you're using at all. venv pins exactly which `python`/`pip` binaries you get, because a machine can have several Python versions installed side by side, and without an explicit environment, `pip install` lands in the site-packages of whichever interpreter happens to be first on `PATH`. Node already bakes package-version isolation into `node_modules` per project, while runtime-version management is a separate concern (`nvm`); venv in Python bundles both concerns into one mechanism.
-2. The package gets installed into the global site-packages of the system (or first-on-`PATH`) Python. If two different projects on the machine need different versions of the same library, the later install silently overwrites the earlier one — and the other project starts failing with no apparent cause in its own code, purely because someone ran `pip install` without a venv in a different terminal.
-3. Without `if __name__ == "__main__":`, calling `main()` unconditionally would fire on **every** import of the file — including when tests in chapter 09 want to import `add_task` or `build_parser` from `main.py` without running the CLI. `__name__` equals `"__main__"` only when the file is the process entry point; on import it equals the module's own name, so the code inside the `if` never runs.
-4. `pyproject.toml` describes metadata and the version ranges you're willing to accept, but on its own it doesn't produce a reproducible lockfile with exact pinned versions of the whole dependency tree (unlike `package-lock.json`/`yarn.lock`, which get generated automatically). Getting a real lockfile in Python means bringing in a separate tool on top (poetry, uv, pip-tools) — covered in the modules-and-packaging chapter.
-5. Historically argparse allowed subparsers to be optional, so you could build a CLI where having no subcommand is a valid case (e.g., falling through to show help). That behavior was kept as an explicit opt-in rather than the new default, to avoid breaking existing code across Python version upgrades — a typical example of how conservative the standard library is about changing default behavior between minor releases.
+1. Isolation in Python is about more than packages. It is also about which interpreter you are using at all. A venv pins exactly which `python` and `pip` binaries you get. A machine can hold several Python versions side by side. Without an explicit environment, `pip install` lands in the site-packages of whichever interpreter comes first on `PATH`. Node already bakes package-version isolation into `node_modules` per project, and runtime-version management is a separate concern there (`nvm`). A venv in Python bundles both concerns into one mechanism.
+2. The package gets installed into the global site-packages of the system (or first-on-`PATH`) Python. If two different projects on the machine need different versions of the same library, the later install silently overwrites the earlier one. The other project then starts failing with no apparent cause in its own code. The real cause is that someone ran `pip install` without a venv in a different terminal.
+3. Without `if __name__ == "__main__":`, an unconditional call to `main()` would fire on **every** import of the file. That includes chapter 09, where tests import `add_task` or `build_parser` from `main.py` without wanting to run the CLI. The variable `__name__` equals `"__main__"` only when the file is the process entry point. On import it equals the module's own name, so the code inside the `if` never runs.
+4. `pyproject.toml` describes metadata and the version ranges you are willing to accept. On its own it does not produce a reproducible lockfile with exact pinned versions of the whole dependency tree. Compare that with `package-lock.json` and `yarn.lock`, which are generated automatically and pin the whole tree. Getting a real lockfile in Python means bringing in a separate tool on top (poetry, uv, pip-tools) — covered in the modules-and-packaging chapter.
+5. Historically argparse allowed subparsers to be optional. That let you build a CLI where having no subcommand is a valid case, for example to show help instead. The behavior was kept as an explicit opt-in, not made the new default, so that existing code would not break on Python upgrades. It is a typical example of how conservative the standard library is about changing defaults between minor releases.
 
 </details>
 
 ## Common mistake
 
-A JS/TS developer used to dependencies always being local and isolated (`node_modules` gets created automatically on `npm install`, wherever you happen to be) will almost certainly forget to activate the venv before running `pip install` at least once. The difference is that in Node, a missing isolation step usually fails loudly and immediately (no `node_modules` — nothing works, "module not found" is obvious). In Python the package **installs successfully anyway** — just not where you thought. The script might even import it fine (if it happens to also exist in the system Python), creating a false sense that everything works, right up until you're on a different machine or in CI where that "accidental" global package doesn't exist.
+A JS/TS developer is used to dependencies being local and isolated: `node_modules` gets created automatically on `npm install`, wherever you happen to be. Such a developer will almost certainly forget to activate the venv before `pip install` at least once.
 
-The second common trip-up is confusing `python` and `python3` as binary names: on some systems (older Linux distros, or a fresh macOS with no Python explicitly installed), `python` may not exist at all, or may point at Python 2. Inside an activated venv this doesn't matter — `python` always points at the interpreter the venv was created with — but before activation, `python script.py` can unexpectedly blow up on a syntax error from f-strings or type hints that Python 2 simply doesn't understand.
+In Node, a missing isolation step usually fails loudly and immediately: with no `node_modules`, nothing works, and "module not found" is obvious. In Python the package **installs successfully anyway** — just not where you thought.
+
+The script might even import it fine, if that package also happens to exist in the system Python. This creates a false sense that everything works. It holds until you move to another machine, or to a continuous integration (CI) run where that "accidental" global package does not exist.
+
+The second common problem is confusing `python` and `python3` as binary names. On some systems `python` may not exist at all, or may point at Python 2. That happens on older Linux distributions, and on a fresh macOS with no Python explicitly installed.
+
+Inside an activated venv this doesn't matter: `python` always points at the interpreter the venv was created with. Before activation it can matter a lot. Running `python script.py` may fail with a syntax error on f-strings or type hints, which Python 2 simply does not understand.

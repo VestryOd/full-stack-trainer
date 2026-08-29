@@ -2,7 +2,7 @@
 
 ## Theory
 
-**Multi-stage Dockerfile.** The idea is the same as in multi-stage Node builds (`FROM node AS builder ... FROM node:alpine AS runtime COPY --from=builder ...`) — separate the "build stage" (needs compilers, dev headers) from the "runtime stage" (needs only the finished runtime and already-installed dependencies):
+**Multi-stage Dockerfile.** The idea is the same as in multi-stage Node builds. Separate the "build stage", which needs compilers and dev headers, from the "runtime stage", which needs only the finished runtime and the installed dependencies. In Node that looks like `FROM node AS builder ... FROM node:alpine AS runtime COPY --from=builder ...`:
 
 ```dockerfile
 # ---- builder: compile dependencies, including C-extension wheels like bcrypt ----
@@ -33,9 +33,15 @@ EXPOSE 8000
 CMD ["uvicorn", "taskman.api:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-`slim` (Debian-based, glibc) is almost always the safe default for Python with C extensions (`bcrypt`, `aiosqlite`): most packages ship prebuilt `manylinux` wheels for glibc. `alpine` (musl libc) gives a smaller image, but sometimes packages have no prebuilt `musllinux` wheels, and pip ends up compiling the extension from source right inside the container — meaning the image-size savings can turn into needing to drag the very same compilers into the `alpine` image that a multi-stage build was supposed to keep out of the final layer.
+The `slim` tag (Debian-based, glibc) is almost always the safe default for Python with C extensions such as `bcrypt` and `aiosqlite`. Most packages ship prebuilt `manylinux` wheels for glibc.
 
-**Environment variables via `pydantic-settings`.** In chapter 15, `SECRET_KEY` was explicitly hardcoded in the code, flagged "change me in production" — and explicitly called out as that chapter's common mistake, exactly what you can't leave that way in a real project. `pydantic-settings` is the direct, correct fix: `BaseSettings` is the same Pydantic model (chapter 13), just reading field values from environment variables (and optionally a `.env` file) instead of an HTTP request body, with the same validation and type coercion:
+The `alpine` tag (musl libc) gives a smaller image. But sometimes packages have no prebuilt `musllinux` wheels, and pip ends up compiling the extension from source right inside the container.
+
+The saving on image size then turns into dragging the very same compilers into the `alpine` image. Those are exactly the compilers a multi-stage build was supposed to keep out of the final layer.
+
+**Environment variables via `pydantic-settings`.** In chapter 15, `SECRET_KEY` was hardcoded in the code and flagged "change me in production". That chapter named it as its own common mistake: exactly what you cannot leave that way in a real project.
+
+The `pydantic-settings` package is the direct, correct fix. `BaseSettings` is the same Pydantic model as in chapter 13. It just reads field values from environment variables, and optionally from a `.env` file, instead of an HTTP request body. The validation and type coercion are the same:
 
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,9 +56,11 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
-With no default for `secret_key`, the app simply won't start if the environment variable isn't set — a `pydantic.ValidationError` right at module import time, rather than quietly running with an empty or predictable secret. That's deliberate: a secret that HAS a safe default can't, by definition, be a secret.
+With no default for `secret_key`, the app simply won't start if the environment variable isn't set. You get a `pydantic.ValidationError` right at module import time, rather than a quiet run with an empty or predictable secret. That is deliberate: a secret that **has** a safe default can't, by definition, be a secret.
 
-**A real, empirically-found nuance: mypy and `BaseSettings`.** `Settings()` is called with zero arguments — but `secret_key: str` with no default formally requires one. `mypy --strict` honestly complains: `Missing named argument "secret_key" for "Settings"`, because there's statically no way to know the value will come from the environment at runtime. The fix isn't loosening the types — it's enabling Pydantic's own mypy plugin, which understands this:
+**A real, empirically-found nuance: mypy and `BaseSettings`.** `Settings()` is called with zero arguments, but `secret_key: str` with no default formally requires one.
+
+Running `mypy --strict` honestly complains: `Missing named argument "secret_key" for "Settings"`. Statically there is no way to know the value will come from the environment at runtime. The fix is not to loosen the types. Enable Pydantic's own mypy plugin instead — it understands this case:
 
 ```toml
 [tool.mypy]
@@ -60,7 +68,9 @@ plugins = ["pydantic.mypy"]
 strict = true
 ```
 
-**Structured logging.** Up through the last chapter, API logs went through `print(...)` (chapter 14) — fine for development, not for production: logs need to be **machine-parseable** (log aggregation systems like ELK/CloudWatch/Datadog look for structured fields, not text sliced with regexes). The minimal structured format is one JSON string per event, via the standard `logging` module:
+**Structured logging.** Up through the last chapter, API logs went through `print(...)` (chapter 14). That is fine for development, but not for production: logs need to be **machine-parseable**.
+
+Log aggregation systems look for structured fields, not text sliced with regexes. Common ones are CloudWatch, Datadog and ELK — Elasticsearch, Logstash and Kibana used together. The minimal structured format is one JSON string per event, via the standard `logging` module:
 
 ```python
 import json
@@ -75,9 +85,9 @@ class JSONFormatter(logging.Formatter):
         })
 ```
 
-Extra fields (method, path, status, duration) are passed via `extra={...}` in the `logger.info(...)` call — they get attached as attributes on the `LogRecord` object, and the formatter pulls them out via `getattr(record, "field_name", None)`.
+Extra fields (method, path, status, duration) are passed via `extra={...}` in the `logger.info(...)` call. They get attached as attributes on the `LogRecord` object. The formatter pulls them out via `getattr(record, "field_name", None)`.
 
-**A healthcheck endpoint — not just "is the process alive."** `GET /health`, unconditionally returning `{"status": "ok"}`, is nearly useless: it can never signal a real failure, even if the database is unreachable. A real health check makes a trivial call against the thing the service actually depends on:
+**A healthcheck endpoint — not just "is the process alive".** A `GET /health` that unconditionally returns `{"status": "ok"}` is nearly useless. It can never signal a real failure, even if the database is unreachable. A real health check makes a trivial call against the thing the service actually depends on:
 
 ```python
 @router.get("/health")
@@ -86,18 +96,20 @@ async def health_check() -> dict[str, str]:
     return {"status": "ok"}
 ```
 
-If `ping()` raises (the database is down/corrupted), the endpoint naturally returns `500`, with no special `try/except` needed, and Docker's `HEALTHCHECK`/an orchestrator (Kubernetes liveness/readiness probes) will see that as "unhealthy."
+If `ping()` raises, because the database is down or corrupted, the endpoint naturally returns `500`. No special `try/except` is needed. Docker's own `HEALTHCHECK`, or an orchestrator such as Kubernetes with its liveness and readiness probes, will then see the service as "unhealthy".
 
 ### Parallels with JS/TS/Node:
 
 - A multi-stage Dockerfile is the same trick used in Node projects: a builder stage with compilers, a runtime stage with only the finished artifacts.
 - `pydantic-settings` ~ `dotenv` plus manually coercing types out of `process.env`, except validation and coercion happen automatically instead of by hand for every variable.
 - Structured JSON logging is the same principle as `pino`/`winston` with a JSON transport in Node: logs as data, not text meant for a human.
-- A healthcheck endpoint is the same concept as `/healthz`/`/readyz` in any Node service behind an orchestrator; the only difference is it's implemented by hand here, rather than by a library.
+- A healthcheck endpoint is the same concept as `/healthz` and `/readyz` in any Node service behind an orchestrator. The only difference: here it is implemented by hand, not by a library.
 
 ## What we're adding to the project
 
-We're fully dockerizing the service: a multi-stage `Dockerfile`, a `docker-compose.yml` with a named volume for the SQLite file (without the volume, the database would be recreated from scratch every time the container is recreated). `SECRET_KEY` and the database path move from hardcoded constants into a `pydantic-settings`-based `config.py`. Logging in the API layer (`middleware.py`) moves from `print()` to structured JSON via the standard `logging` module. A `GET /health` endpoint appears, one that genuinely checks the database connection instead of unconditionally saying "ok."
+We're fully dockerizing the service: a multi-stage `Dockerfile`, plus a `docker-compose.yml` with a named volume for the SQLite file. Without that volume, the database would be recreated from scratch every time the container is recreated.
+
+`SECRET_KEY` and the database path move from hardcoded constants into a `pydantic-settings`-based `config.py`. Logging in the API layer (`middleware.py`) moves from `print()` to structured JSON via the standard `logging` module. A `GET /health` endpoint appears, one that genuinely checks the database connection instead of unconditionally saying "ok".
 
 ## Practical exercise
 
@@ -110,7 +122,7 @@ We're fully dockerizing the service: a multi-stage `Dockerfile`, a `docker-compo
 7. Add `storage/sqlite_storage.py:ping()` (a trivial `SELECT 1`) and `api/routes_health.py` with `GET /health`, calling `db.ping()`.
 8. Write a multi-stage `Dockerfile` (builder + runtime), `.dockerignore`, `.env.example` (documenting the needed variables; `.env` itself isn't committed).
 9. Write `docker-compose.yml` with an `api` service and a named volume, mounted wherever `TASKMAN_DATABASE_PATH` points.
-10. Build the image, bring it up via `docker compose up`, create a user and a task via `curl`, then **fully remove and recreate the container** (`docker compose down && docker compose up`) — confirm the task is still there.
+10. Build the image and bring it up via `docker compose up`. Create a user and a task via `curl`. Then **fully remove and recreate the container** with `docker compose down && docker compose up`, and confirm the task is still there.
 
 ## Worked solution
 
@@ -186,7 +198,8 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(username: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    minutes = settings.access_token_expire_minutes
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
     payload = {"sub": username, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 
@@ -251,7 +264,11 @@ async def log_requests(
         duration_ms = (time.perf_counter() - start) * 1000
         logger.exception(
             "request failed",
-            extra={"method": request.method, "path": request.url.path, "duration_ms": duration_ms},
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "duration_ms": duration_ms,
+            },
         )
         raise
     duration_ms = (time.perf_counter() - start) * 1000
@@ -362,36 +379,46 @@ volumes:
   taskman-data:
 ```
 
-A real run (`docker compose up`, curl, `docker compose down`, `docker compose up` again) confirms: a task created before the container was recreated is still visible afterward — because it's stored in the named volume `taskman-data`, mounted at `/data`, not in the container's own filesystem, which gets destroyed along with it.
+A real run confirms it: `docker compose up`, curl, `docker compose down`, then `docker compose up` again. A task created before the container was recreated is still visible afterward. It is stored in the named volume `taskman-data`, mounted at `/data`, not in the container's own filesystem, which is destroyed together with it.
 
 Key decisions:
 
-- `TASKMAN_DATABASE_PATH=/data/taskman.db` in `docker-compose.yml` points at a path **inside the volume**, not the default path (`taskman.db` in the container's working directory) — leaving the default path in place means the database lives in the container's ordinary layer and vanishes when it's recreated, while the volume sits there mounted but unused.
-- `${TASKMAN_SECRET_KEY:?set TASKMAN_SECRET_KEY before starting}` in the compose file is the "required variable" syntax, not a substitution with a silent default: `docker compose up` without the environment variable set fails with a clear message, rather than starting the service with an empty or predictable secret.
-- `plugins = ["pydantic.mypy"]` — without this line, `mypy --strict` would require passing `secret_key` to `Settings()` as an explicit argument, even though the real value only arrives from the environment at runtime; the plugin teaches mypy this specific `BaseSettings` semantics, rather than loosening strictness for the rest of the codebase.
-- The test environment variable (`TASKMAN_SECRET_KEY`) is set at the very **top** of `conftest.py`, before a single `from taskman import ...` — because `settings = Settings()` in `config.py` runs once, at the moment that module is **imported**, not on every access to `settings`; if the variable isn't set before the first import of anything that transitively pulls in `config.py`, the app fails with a `ValidationError` before a single line of the test even runs.
+- The line `TASKMAN_DATABASE_PATH=/data/taskman.db` in `docker-compose.yml` points **inside the volume**, not at the default path. The default is `taskman.db` in the container's working directory. Leave the default path in place, and the database lives in the container's ordinary layer and vanishes when it is recreated. The volume then sits mounted but unused.
+- `${TASKMAN_SECRET_KEY:?set TASKMAN_SECRET_KEY before starting}` in the compose file is the "required variable" syntax, not a substitution with a silent default. Without the environment variable set, `docker compose up` fails with a clear message. It does not start the service with an empty or predictable secret.
+- `plugins = ["pydantic.mypy"]` matters. Without this line, `mypy --strict` would require passing `secret_key` to `Settings()` as an explicit argument. But the real value only arrives from the environment at runtime. The plugin teaches mypy this specific `BaseSettings` semantics, rather than loosening strictness for the rest of the codebase.
+- The test environment variable (`TASKMAN_SECRET_KEY`) is set at the very **top** of `conftest.py`, before a single `from taskman import ...`. The reason: `settings = Settings()` in `config.py` runs once, at the moment that module is **imported**, not on every access to `settings`. If the variable isn't set before the first import of anything that transitively pulls in `config.py`, the app fails with a `ValidationError`. That happens before a single line of the test even runs.
 
 ## Check yourself
 
 1. Why is `Settings()` with zero arguments deliberate, desired behavior, rather than an oversight, if `secret_key` has no default value?
 2. What exactly does a multi-stage Docker build protect against, and why doesn't installing `gcc` in the builder stage bloat the final image?
-3. Why does `os.environ.setdefault("TASKMAN_SECRET_KEY", ...)` need to sit physically before the rest of the imports in `conftest.py`, rather than just "somewhere in the file"?
-4. How does a health check calling `db.ping()` differ from one that unconditionally returns `{"status": "ok"}` — in what scenario does the difference actually show up in practice?
+3. Why must `os.environ.setdefault("TASKMAN_SECRET_KEY", ...)` sit physically before the rest of the imports in `conftest.py`? Why is "somewhere in the file" not enough?
+4. How does a health check calling `db.ping()` differ from one that unconditionally returns `{"status": "ok"}`? In what scenario does the difference actually show up in practice?
 5. Why does `docker-compose.yml` specify `TASKMAN_DATABASE_PATH=/data/taskman.db`, rather than just mounting the volume and leaving the database path at its default?
 
 <details>
 <summary>Answers</summary>
 
-1. Because `secret_key` is literally the one thing that makes JWT signatures verifiable and un-forgeable (chapter 15). If `Settings` had a safe default for the secret, that default couldn't, by definition, be a secret — it would be identical across every installation of the app, including anyone with a copy of the source code. `Settings()` with no arguments **has to** fail with a validation error if the environment variable isn't set — that's fail-fast, instead of quietly starting with a predictable value that's useless as a secret.
-2. A multi-stage build guarantees the final image contains only what's needed **to run** the application — installed Python packages and code — not the tools needed only **to build** those packages (the `gcc` compiler for C extensions like `bcrypt`). `gcc` gets installed in the `builder` stage, but `COPY --from=builder /install /usr/local` in the `runtime` stage only copies the directory holding the already-built, finished packages — `gcc` itself, and the apt layer it was installed into, never make it into the final image at all, because the final image is built from scratch starting at `FROM python:3.11-slim AS runtime`, not by inheriting `builder`'s layers.
-3. Because `Settings()` (and, with it, reading `TASKMAN_SECRET_KEY` from the environment) runs **once**, at the moment the `config.py` module is first imported — not fresh on every access to `settings.secret_key`. Any earlier `from taskman.something import ...` that transitively imports `config.py` (and almost everything does — `auth/security.py`, `storage/sqlite_storage.py`) locks in `settings` with whatever value (or absence of one) the environment had at that point. Setting the variable later doesn't help — `Settings()` has already either run successfully with a different/missing value, or already failed.
-4. A health check unconditionally returning `{"status": "ok"}` answers the question "is the process alive enough to accept an HTTP request" — and nothing more; it returns `200` even if the database file has been deleted, corrupted, or is unreachable due to permissions. A health check calling `db.ping()` answers the more useful question "can the service actually do its job right now" — the difference shows up exactly in the scenario where the process is alive (uvicorn responds to requests) but a dependency the service can't function without has failed: the first version tells the orchestrator "all good," the second honestly fails, giving the system a chance to restart the container or stop routing traffic to it.
-5. Because the default path (`taskman.db`, relative, inside the container's `/app` working directory) physically lives in the container's ordinary, short-lived filesystem layer — the very one destroyed on `docker compose down`/container recreation. A volume mounted at `/data` survives container recreation, but only if the database file genuinely lives **inside** that mounted path — explicitly setting `TASKMAN_DATABASE_PATH=/data/taskman.db` guarantees the application writes its file exactly there, rather than next to it, at the default path that has no connection to the volume at all.
+1. Because `secret_key` is literally the one thing that makes JWT (JSON Web Token) signatures verifiable and un-forgeable (chapter 15). If `Settings` had a safe default for the secret, that default couldn't, by definition, be a secret. It would be identical across every installation of the app, including any copy of the source code. So `Settings()` with no arguments **has to** fail with a validation error if the environment variable isn't set. That is fail-fast, instead of quietly starting with a predictable value that is useless as a secret.
+2. A multi-stage build guarantees the final image contains only what's needed **to run** the application: installed Python packages and code. It does not contain the tools needed only **to build** those packages, such as the `gcc` compiler for C extensions like `bcrypt`. The `gcc` package gets installed in the `builder` stage. But `COPY --from=builder /install /usr/local` in the `runtime` stage copies only the directory holding the already-built, finished packages. The `gcc` binary itself, and the apt layer it was installed into, never make it into the final image. The final image is built from scratch starting at `FROM python:3.11-slim AS runtime`, not by inheriting `builder`'s layers.
+3. Because `Settings()` — and with it, reading `TASKMAN_SECRET_KEY` from the environment — runs **once**, at the moment the `config.py` module is first imported. It does not run fresh on every access to `settings.secret_key`. Any earlier `from taskman.something import ...` that transitively imports `config.py` locks in `settings` with whatever the environment had at that point. That includes the case where nothing was set at all. Almost everything imports it: `auth/security.py`, `storage/sqlite_storage.py`. Setting the variable later doesn't help, because `Settings()` has already either run successfully with a different or missing value, or already failed.
+4. A health check unconditionally returning `{"status": "ok"}` answers only one question: is the process alive enough to accept an HTTP request. It returns `200` even if the database file has been deleted, corrupted, or made unreachable by permissions. A health check calling `db.ping()` answers the more useful question: can the service actually do its job right now. The difference shows up exactly when the process is alive — uvicorn responds to requests — but a dependency the service cannot work without has failed. The first version tells the orchestrator "all good". The second honestly fails, giving the system a chance to restart the container or stop routing traffic to it.
+5. Because the default path (`taskman.db`, relative, inside the container's `/app` working directory) physically lives in the container's ordinary, short-lived filesystem layer. That is the very layer destroyed on `docker compose down` or on container recreation. A volume mounted at `/data` survives container recreation, but only if the database file genuinely lives **inside** that mounted path. Setting `TASKMAN_DATABASE_PATH=/data/taskman.db` explicitly guarantees the application writes its file exactly there. Otherwise it writes next to it, at a default path that has no connection to the volume at all.
 
 </details>
 
 ## Common mistake
 
-The most common mistake when first dockerizing a stateful service is mounting a volume in `docker-compose.yml` but forgetting to change the path to the database file inside the application, leaving it pointed at its default path somewhere else in the container's filesystem. On the surface everything looks right: the volume is declared, mounted, `docker compose up` doesn't produce a single error — and yet data is lost every time the container is recreated, because the application never actually wrote to the mounted path at all. This mistake is treacherous precisely because it doesn't show up right away: as long as the container is merely restarted (`docker compose restart`) without being fully removed, the file in the ordinary container layer stays put, and everything appears to work — the data loss is only discovered once the container is genuinely recreated from scratch (a rebuild, `docker compose down && up`, deploying a new version) — exactly the moment persistence matters most.
+The most common mistake when first dockerizing a stateful service is about paths. You mount a volume in `docker-compose.yml`, but forget to change the path to the database file inside the application. It stays pointed at its default path, somewhere else in the container's filesystem.
 
-The second common mistake is reading environment variables (or constructing `Settings()`) not once at startup, but scattered as `os.getenv(...)` calls throughout the code, wherever a value happens to be needed. That gives up the one place where missing or invalid configuration could be caught **immediately**, at application startup — instead of failing honestly on launch with a clear "missing `TASKMAN_SECRET_KEY`" message, the app starts up normally, and the error (a `None` where a string was expected, or a variable that was simply skipped) only surfaces once that specific bit of code actually runs — sometimes days after deployment, on some rarely-hit request path.
+On the surface everything looks right: the volume is declared, it is mounted, and `docker compose up` doesn't produce a single error. And yet data is lost every time the container is recreated, because the application never actually wrote to the mounted path.
+
+This mistake is treacherous precisely because it doesn't show up right away. As long as the container is merely restarted (`docker compose restart`) without being fully removed, the file in the ordinary container layer stays put. Everything appears to work.
+
+The data loss is discovered only once the container is genuinely recreated from scratch: a rebuild, `docker compose down && up`, or a new deploy. That is exactly the moment persistence matters most.
+
+The second common mistake is reading environment variables in the wrong place. Instead of constructing `Settings()` once at startup, you scatter `os.getenv(...)` calls throughout the code, wherever a value happens to be needed.
+
+That gives up the one place where missing or invalid configuration could be caught **immediately**, at application startup. Instead of failing honestly on launch with a clear "missing `TASKMAN_SECRET_KEY`" message, the app starts up normally.
+
+The error then surfaces only once that specific bit of code actually runs. It might be a `None` where a string was expected, or a variable that was simply skipped. Sometimes that is days after the deployment, on a rarely-hit request path.

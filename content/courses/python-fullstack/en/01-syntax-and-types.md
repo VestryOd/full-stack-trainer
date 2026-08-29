@@ -2,7 +2,7 @@
 
 ## Theory
 
-**Indentation as syntax.** A block after `if`, `for`, `def`, `class`, etc. starts with a `:` and consists of lines sharing the same indentation — conventionally 4 spaces (PEP 8). Mixing tabs and spaces within one block isn't a warning, it's a `TabError`. There are no `{}`: there's no closing brace, the block ends when the indentation drops back.
+**Indentation as syntax.** A block after `if`, `for`, `def`, `class` and so on starts with a `:` and consists of lines sharing the same indentation. Four spaces is the convention, fixed by PEP 8 — one of the numbered Python Enhancement Proposal documents. Mixing tabs and spaces within one block isn't a warning, it's a `TabError`. There are no `{}`: there's no closing brace, the block ends when the indentation drops back.
 
 ```python
 if age >= 18:
@@ -28,9 +28,11 @@ print(x)  # 5 — still accessible here; with let in JS this would be a Referenc
 "3" + str(3)   # "33" — coercion only happens explicitly
 ```
 
-That's what "strict but dynamic" means: type checking happens at runtime (not at compile time, like TS), but the interpreter never tries to guess type compatibility on your behalf.
+That's what "strict but dynamic" means. Type checking happens at runtime, not at compile time like in TS. The interpreter never tries to guess type compatibility on your behalf.
 
-**Core types.** `int` (arbitrary precision — no overflow, no need for a `BigInt` equivalent), `float` (IEEE754 double, same as JS's `number`), `bool` (`True`/`False`, capitalized), `str`, `None`. Important: Python has **only one** "empty" value — `None`. There's no `null`/`undefined` split here: an uninitialized variable simply doesn't exist in Python (referencing it raises `NameError`), rather than holding an `undefined` value.
+**Core types.** `int` has arbitrary precision — no overflow, and no need for a `BigInt` equivalent. The `float` type is an IEEE754 double: the same 64-bit floating-point format that JS uses for `number`. Then come `bool` (`True`/`False`, capitalized), `str` and `None`.
+
+Important: Python has **only one** "empty" value — `None`. There's no `null`/`undefined` split here: an uninitialized variable simply doesn't exist in Python (referencing it raises `NameError`), rather than holding an `undefined` value.
 
 **f-strings.** The direct counterpart of template literals:
 
@@ -42,9 +44,15 @@ print(f"{3.14159:.2f}")                    # "3.14" — format spec after ":"
 print(f"{count=}")                         # "count=3" — debug shortcut, no JS equivalent
 ```
 
-**Operators.** `==` in Python compares **values** (calls `__eq__`) — there's no separate "strict" comparison operator like JS's `===`, because Python's `==` never does the implicit coercions that a strict variant would need to bypass. `is` compares object **identity** (same address in memory), not value; it's used almost exclusively for `x is None` (an idiom, not a style preference). There's no `++`/`--` — only `x += 1` ("explicit is better than implicit": the language designers decided pre/post-increment ambiguity wasn't worth the syntax). Chained comparisons work: `0 < x < 10` is equivalent to `0 < x and x < 10` — in JS, `0 < x < 10` also "works" but evaluates left-to-right through boolean-to-number coercion, giving wrong results for many values.
+**Operators.** `==` in Python compares **values** by calling `__eq__`. There is no separate "strict" comparison operator like JS's `===`. Python does not need one: `==` never does the implicit coercions that a strict variant would have to bypass.
 
-**Truthy/falsy — gotcha #1 coming from JS.** Python has a small, fixed set of falsy values: `False`, `None`, `0`, `0.0`, `""`, `[]`, `{}`, `set()`, `()` — meaning **every empty collection is falsy**. In JS, an empty array and empty object are always truthy (`Boolean([]) === true`, `Boolean({}) === true`); the only falsy values there are `0`, `""`, `null`, `undefined`, `NaN`, `false`. This is the exact opposite behavior for the single most common real-world check — `if tasks:`.
+The `is` operator compares object **identity** — the same address in memory, not the value. It is used almost exclusively for `x is None`, and that is an idiom rather than a style preference. There is no `++`/`--`, only `x += 1`. The language designers decided the pre/post-increment ambiguity wasn't worth the syntax: "explicit is better than implicit".
+
+Chained comparisons work: `0 < x < 10` is equivalent to `0 < x and x < 10`. In JS, `0 < x < 10` also "works", but it evaluates left to right through boolean-to-number coercion, and gives wrong results for many values.
+
+**Truthy/falsy — gotcha #1 coming from JS.** Python has a small, fixed set of falsy values: `False`, `None`, `0`, `0.0`, `""`, `[]`, `{}`, `set()`, `()`. That means **every empty collection is falsy**.
+
+In JS, an empty array and an empty object are always truthy: `Boolean([]) === true`, `Boolean({}) === true`. The only falsy values there are `0`, `""`, `null`, `undefined`, `NaN` and `false`. This is the exact opposite behavior for the single most common real-world check — `if tasks:`.
 
 ### Parallels with JS/TS/Node:
 
@@ -55,7 +63,7 @@ print(f"{count=}")                         # "count=3" — debug shortcut, no JS
 
 ## What we're adding to the project
 
-We're adding `list` (print all tasks with a done marker) and `done <id>` (mark a task as done). This is where searching an in-memory list and building meaningful formatted output with f-strings first show up — persistence is still far off, but the CLI is already genuinely useful within a single process run.
+We're adding `list` (print all tasks with a done marker) and `done <id>` (mark a task as done). This is where searching an in-memory list first shows up, together with formatted output built from f-strings. Persistence is still far off. Even so, the command-line interface (CLI) is already useful within a single process run.
 
 ## Practical exercise
 
@@ -143,15 +151,15 @@ if __name__ == "__main__":
 
 Key decisions:
 
-- `dict | None` (PEP 604, Python 3.10+) — a union type written directly with `|`, the counterpart of `dict | null` in TS, without needing `Optional[dict]`/`Union[dict, None]` from the old `typing` module.
+- `dict | None` (PEP 604, Python 3.10+) — a union type written directly with `|`. It is the counterpart of `dict | null` in TS. You no longer need `Optional[dict]` or `Union[dict, None]` from the old `typing` module.
 - `find_task` returns `None` when nothing matches — the usual "search and return Optional" idiom rather than raising. Exceptions for domain errors (`TaskNotFoundError`) show up in chapter 06, once there's a proper context for them (error hierarchy, context managers).
 - `if not tasks:` — relies directly on the falsiness of an empty list, more idiomatic than `if len(tasks) == 0:`.
-- `type=int` on `add_argument` — argparse validates and converts the string to `int` itself, and prints a clear error on invalid input; no need to catch `ValueError` by hand at this level.
+- `type=int` on `add_argument` — argparse validates the string and converts it to `int` itself. It also prints a clear error on invalid input, so there is no need to catch `ValueError` by hand at this level.
 
 ## Check yourself
 
 1. Why is `if []:` `False` in Python, while `if ([])` in JS is always `true`? What's the fundamental difference in truthy/falsy rules for collections between the two languages?
-2. What happens to a variable created inside an `if` block (not inside a function) after the block ends — and why is that fundamentally different from `let`/`const` in JS with their block scoping?
+2. What happens to a variable created inside an `if` block, not inside a function, after the block ends? Why is that different from `let`/`const` in JS with their block scoping?
 3. Why does `"3" + 3` raise a `TypeError` in Python, while `"3" + 3` in JS returns `"33"`? What does that tell you about the difference between Python's "dynamic but strict" typing and JS's typing?
 4. What's the difference between `==` and `is` in Python? Why is `x is None` idiomatic while `x == None` isn't (even though both technically work for `None`)?
 5. Why doesn't Python have `++`/`--`? What does that say about the language's philosophy compared to the C-like syntax JS inherited?
@@ -159,14 +167,20 @@ Key decisions:
 <details>
 <summary>Answers</summary>
 
-1. In Python, truthy/falsy for collections is based on **length**: any collection (list, dict, set, tuple, string) is falsy if empty and truthy if it has at least one element — implemented via `__bool__`/`__len__` under the hood. In JS, truthy/falsy for primitives vs. objects follows separate, historically fixed rules: falsy is only `0`, `""`, `null`, `undefined`, `NaN`, `false`, and any object (including an empty array/object) is truthy simply because it's an object, regardless of its contents.
-2. The variable stays accessible after the `if` block because Python's units of scope are only `function`/`module`/`class` (more precisely: `def`/`class`/comprehensions create a new scope; `if`/`for`/`while`/`with`/`try` do not). In JS, `let`/`const` are additionally confined to the nearest `{}`, so a variable declared inside `if { let x = 5 }` is inaccessible outside it and raises a `ReferenceError`.
-3. Python's `+` for `str` is implemented to require matching operand types (aside from numeric types among themselves) — attempting to add a `str` and an `int` is explicitly disallowed and raises, rather than the interpreter guessing intent. JS's `+` is historically overloaded so that if either operand is a `string`, both get coerced to strings and concatenated — a decision that dates back to the language's earliest versions and is behind many classic JS "wat" bugs.
-4. `==` compares values via `__eq__` (which a class can override); `is` compares identity — the same object in memory (equivalent to a pointer comparison). `is` is idiomatic for `None` because `None` is a singleton (exactly one `None` object exists at runtime), and comparing with `is` explicitly says "this exact single object," not "a value that equals None" — which matters if some class overrides `__eq__` such that `obj == None` returns `True` for a non-empty object.
-5. Increment/decrement via `++`/`--` in C-like languages carries ambiguous pre/post semantics (`x++` vs `++x`), which has historically been a source of confusion and bugs tied to expression evaluation order. Python follows "explicit is better than implicit" (from the Zen of Python) — `x += 1` leaves no question about exactly when the increment happens relative to the rest of the expression, at the cost of one extra character.
+1. In Python, truthy/falsy for collections is based on **length**. Any collection — list, dict, set, tuple, string — is falsy if empty and truthy if it holds at least one element. Under the hood that goes through `__bool__` and `__len__`. In JS the rules for primitives and for objects are separate, and historically fixed. Falsy there is only `0`, `""`, `null`, `undefined`, `NaN` and `false`. Any object is truthy simply because it is an object, and its contents do not matter — an empty array and an empty object included.
+2. The variable stays accessible after the `if` block. Python's units of scope are only function, module and class. More precisely: `def`, `class` and comprehensions create a new scope, while `if`, `for`, `while`, `with` and `try` do not. In JS, `let`/`const` are additionally confined to the nearest `{}`. A variable declared inside `if { let x = 5 }` is not accessible outside it, and reading it raises a `ReferenceError`.
+3. Python's `+` for `str` requires matching operand types, aside from numeric types among themselves. Adding a `str` and an `int` is explicitly disallowed and raises. The interpreter does not guess your intent. JS's `+` is historically overloaded: if either operand is a `string`, both get coerced to strings and concatenated. That decision dates back to the earliest versions of the language, and it is behind many classic JS "wat" bugs.
+4. `==` compares values via `__eq__`, which a class can override. The `is` operator compares identity — the same object in memory, equivalent to a pointer comparison. Using `is` is idiomatic for `None` because `None` is a singleton: exactly one `None` object exists at runtime. Comparing with `is` says "this exact single object", not "a value that equals None". That matters if some class overrides `__eq__` so that `obj == None` returns `True` for a non-empty object.
+5. Increment and decrement via `++`/`--` in C-like languages carry ambiguous pre/post semantics: `x++` against `++x`. That has historically been a source of confusion, and of bugs tied to expression evaluation order. Python follows "explicit is better than implicit", a line from the Zen of Python. With `x += 1` there is no question about when exactly the increment happens relative to the rest of the expression. The cost is one extra character.
 
 </details>
 
 ## Common mistake
 
-A JS developer whose mental model of `"5" == 5` says "true, because JS coerces types" usually expects Python to do one of two things: either behave the same way ("surely Python coerces too"), or raise at runtime ("Python is strict — so it must throw on comparing different types"). What actually happens is a third thing: `"5" == 5` in Python is simply `False`, with no warning at all. Different types with no shared comparison protocol are just considered "not equal," not an error and not a coercion candidate. This is especially sneaky in CLI code like this project: if `args.id` somehow ends up a string (say, a parsing bug where `type=int` got dropped), the comparison `task["id"] == args.id` will silently and always be `False` — the task "won't be found," and there's no traceback to flag it. The practical takeaway: rely on `type=int`/`type=str` in argparse and on type hints, not on the hope that Python will coerce types for you during comparison — it won't.
+A JS developer whose mental model of `"5" == 5` says "true, because JS coerces types" usually expects one of two things from Python. Either Python behaves the same way and coerces too. Or it raises at runtime, because "Python is strict, so it must throw on comparing different types".
+
+What actually happens is a third thing: `"5" == 5` in Python is simply `False`, with no warning at all. Different types with no shared comparison protocol are just considered "not equal" — not an error, and not a candidate for coercion.
+
+This is especially dangerous in CLI code like this project. Say `args.id` somehow ends up a string, through a parsing bug where `type=int` got dropped. Then the comparison `task["id"] == args.id` is silently always `False`. The task "won't be found", and there is no traceback to point at the cause.
+
+The practical takeaway: rely on `type=int`/`type=str` in argparse and on type hints. Do not rely on the hope that Python will coerce types for you during comparison, because it won't.

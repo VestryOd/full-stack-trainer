@@ -2,7 +2,9 @@
 
 ## Theory
 
-**The iterator protocol.** `for x in obj:` isn't a language primitive on its own — it's sugar over two methods: `iter(obj)` calls `obj.__iter__()` and gets back an **iterator** — an object with a `__next__()` method; `for` then calls `next(iterator)` repeatedly until it hits `StopIteration`, which it catches itself (it never surfaces to your code). You can implement the protocol by hand like this:
+**The iterator protocol.** `for x in obj:` isn't a language primitive on its own. It is sugar over two methods. First, `iter(obj)` calls `obj.__iter__()` and gets back an **iterator** — an object with a `__next__()` method. Then `for` calls `next(iterator)` again and again until it hits `StopIteration`. The loop catches that exception itself, so it never surfaces to your code.
+
+You can implement the protocol by hand like this:
 
 ```python
 class Countdown:
@@ -22,7 +24,7 @@ for n in Countdown(3):
     print(n)   # 3, 2, 1
 ```
 
-`__iter__` returning `self` is a typical pattern for objects meant to be consumed **once**: once `current` hits 0, `Countdown` is exhausted for good — a second `for` over the same object yields nothing (unlike `list`, whose `__iter__` creates a fresh, independent iterator every time, which is why you can loop over a list as many times as you like).
+`__iter__` returning `self` is a typical pattern for objects meant to be consumed **once**. As soon as `current` hits 0, `Countdown` is exhausted for good, and a second `for` over the same object yields nothing. A list behaves differently: its `__iter__` creates a fresh, independent iterator every time. That is why you can loop over a list as many times as you like.
 
 **Generators via `yield`.** Same idea, dramatically more compact:
 
@@ -37,26 +39,37 @@ for n in countdown(3):
     print(n)   # 3, 2, 1
 ```
 
-No manual `__iter__`/`__next__`/`StopIteration`/state tracking (`self.current`) — a function with `yield` doesn't run its body immediately when called (`countdown(3)`); it returns a generator object that already implements the iterator protocol itself. Each `next()` resumes execution exactly where the last `yield` left off, with every local variable exactly as it was — that's what "the function pauses" actually means. This is exactly the generator expression from chapter 02 (`(x for x in items)`), just written as a full function with an arbitrarily complex body instead of a one-line expression.
+No manual `__iter__`/`__next__`/`StopIteration`, and no state tracking through `self.current`. A function with `yield` doesn't run its body when you call it. The call `countdown(3)` returns a generator object that already implements the iterator protocol itself.
 
-**Comparison with JS generators.** In JS, `function*`/`yield` are mechanically similar — the same suspend/resume, `.next()` returning `{value, done}`. The difference is how often each language reaches for it. In Python, generators and laziness are baked into everyday code: `range()` isn't a list, it's a lazy sequence; `dict.keys()`/`.values()`/`.items()` are lazy views, not lists; `map()`/`filter()` in Python 3 are also lazy (unlike Python 2, where they returned lists); reading a file line by line (`for line in f:`) is an iterator too, not a list of lines held in memory. In JS, `function*` is a comparatively rare, specialized tool (custom iterables, some pre-`async/await` async patterns), not something you run into in ordinary everyday code.
+Each `next()` resumes execution exactly where the last `yield` left off, with every local variable as it was. That is what "the function pauses" actually means. This is the generator expression from chapter 02 (`(x for x in items)`), written as a full function. The body can be of any complexity, instead of a single one-line expression.
 
-One more difference worth calling out explicitly: JS has **two different** iteration mechanisms — `for...in` (iterates an object's **keys**, doesn't use the iterator protocol at all) and `for...of` (uses `Symbol.iterator`, the conceptual counterpart of Python's protocol). Mixing them up is a classic JS beginner mistake (`for...in` on an array iterates indices as strings and picks up inherited enumerable properties too). Python has no such fork: `for x in obj` always goes through the same `__iter__`/`__next__` protocol, for anything — a list, a dict, a file, a generator, your own class.
+**Comparison with JS generators.** In JS, `function*`/`yield` are mechanically similar — the same suspend and resume, `.next()` returning `{value, done}`. The difference is how often each language reaches for it. In Python, generators and laziness are baked into everyday code:
+
+- `range()` isn't a list, it's a lazy sequence.
+- `dict.keys()`, `.values()` and `.items()` are lazy views, not lists.
+- `map()` and `filter()` in Python 3 are lazy too. In Python 2 they returned lists.
+- Reading a file line by line (`for line in f:`) is an iterator, not a list of lines held in memory.
+
+In JS, `function*` is a comparatively rare, specialized tool: custom iterables, and some async patterns from before `async/await`. It is not something you run into in ordinary code.
+
+One more difference is worth calling out. JS has **two different** iteration mechanisms. The older `for...in` iterates an object's **keys** and doesn't use the iterator protocol at all. The newer `for...of` uses `Symbol.iterator`, the conceptual counterpart of Python's protocol.
+
+Mixing them up is a classic JS beginner mistake. Applied to an array, `for...in` iterates indices as strings and picks up inherited enumerable properties too. Python has no such fork. Every `for x in obj` goes through the same `__iter__`/`__next__` protocol — for a list, a dict, a file, a generator, or your own class.
 
 **`itertools`.** A module of building blocks for working with iterators lazily:
 
 ```python
 import itertools
 
-itertools.islice(iterable, start, stop)   # a lazy slice — works on ANY iterator,
-                                            # not just ones supporting [start:stop]
-itertools.chain(iter1, iter2)              # stitch several iterables into one, lazily
-itertools.count(10)                        # an infinite counter: 10, 11, 12, ...
+itertools.islice(iterable, start, stop)   # a lazy slice — works on any iterator,
+                                          # not just ones supporting [start:stop]
+itertools.chain(iter1, iter2)             # stitch several iterables into one, lazily
+itertools.count(10)                       # an infinite counter: 10, 11, 12, ...
 ```
 
-`islice` matters especially: an ordinary slice `seq[start:stop]` requires `seq` to support indexing (`__getitem__`) — a generator doesn't have that. `itertools.islice` works on any iterable at all, including infinite generators, consuming only what's actually needed and nothing more.
+`islice` matters especially. An ordinary slice `seq[start:stop]` requires `seq` to support indexing (`__getitem__`), and a generator doesn't have that. Meanwhile `itertools.islice` works on any iterable at all, including infinite generators. It consumes only what's actually needed and nothing more.
 
-One nuance that's easy to trip over: `itertools.groupby(iterable, key)` only groups **consecutive** elements sharing a key — it's not "SQL GROUP BY," it's closer to "collapse adjacent runs." If the input isn't pre-sorted by that key, equal keys scattered across different positions in the sequence end up in **separate** groups.
+One nuance is easy to trip over. `itertools.groupby(iterable, key)` only groups **consecutive** elements sharing a key. It is not the GROUP BY of SQL (structured query language — the language relational databases speak). It is closer to "collapse adjacent runs". If the input isn't pre-sorted by that key, equal keys scattered across different positions end up in **separate** groups.
 
 **`functools`.** Three specific tools:
 
@@ -72,13 +85,14 @@ total = reduce(lambda acc, x: acc + x, [1, 2, 3, 4], 0)
 `partial(func, *args, **kwargs)` — pre-binds part of the arguments, returning a new callable:
 
 ```python
+import sys
 from functools import partial
 
 print_err = partial(print, file=sys.stderr)
 print_err("oops")   # equivalent to print("oops", file=sys.stderr)
 ```
 
-The closest JS counterpart is `fn.bind(thisArg, ...args)`, but `.bind()` is primarily about fixing `this`, with argument binding as a secondary capability. In Python, `self` was never implicit to begin with (chapter 04), so `partial` is a clean, general-purpose "pin down some arguments" tool, with none of the call-context baggage.
+The closest JS counterpart is `fn.bind(thisArg, ...args)`, but `.bind()` is primarily about fixing `this`. Argument binding is its secondary capability. In Python, `self` was never implicit to begin with (chapter 04). So `partial` is a clean, general-purpose "pin down some arguments" tool, with none of the call-context baggage.
 
 `lru_cache` — a memoization decorator: caches a function's result keyed by its hashable arguments, so a repeat call with the same arguments skips re-running the body:
 
@@ -92,31 +106,38 @@ def fib(n: int) -> int:
     return fib(n - 1) + fib(n - 2)
 ```
 
-Two conditions, without which `lru_cache` is a bad idea: (1) every argument must be **hashable** (a list argument gets you `TypeError: unhashable type: 'list'`, a direct callback to chapter 02's discussion of `dict`-key hashability); (2) the function must be **pure** — its result should depend only on its arguments, not on external mutable state, or the cache will silently start returning stale data. That's exactly why `lru_cache` won't show up in this project's storage functions going forward — they take lists (unhashable) and/or read shared mutable state (`tasks`), either of which makes caching the result incorrect.
+Two conditions, without which `lru_cache` is a bad idea:
+
+1. Every argument must be **hashable**. A list argument gives you `TypeError: unhashable type: 'list'` — the same hashability rule as for `dict` keys in chapter 02.
+2. The function must be **pure**. Its result should depend only on its arguments, not on external mutable state. Otherwise the cache will silently start returning stale data.
+
+That's exactly why `lru_cache` won't show up in this project's storage functions going forward. They take lists, which are unhashable, and they read shared mutable state (`tasks`). Either one alone makes caching the result incorrect.
 
 ### Parallels with JS/TS/Node:
 
-- `for...of` in JS uses `Symbol.iterator` — the conceptual counterpart of `__iter__`/`__next__` — but JS also has a **different** `for...in` (iterates keys, not the iterator protocol) — a classic source of confusion; Python has exactly one iteration protocol, for everything.
-- Generators in JS (`function*`) are mechanically similar but stay a niche tool; in Python, laziness is part of everyday idioms (`range`, dict views, `map`/`filter`, reading files).
+- `for...of` in JS uses `Symbol.iterator`, the conceptual counterpart of `__iter__`/`__next__`. But JS also has a **different** `for...in`, which iterates keys and not the iterator protocol — a classic source of confusion. Python has exactly one iteration protocol, for everything.
+- Generators in JS (`function*`) are mechanically similar but stay a niche tool. In Python, laziness is part of everyday idioms: `range`, dict views, `map`/`filter`, reading files.
 - `functools.reduce` ~ `.reduce()` — finally, the direct equivalent promised back in chapter 02.
 - `functools.partial` ~ `.bind()`, but without the `this`-fixing baggage — there's nothing to fix in Python, since `self` was always explicit anyway.
 
 ## What we're adding to the project
 
-We're adding lazy paginated output to the `list` command: `--page`/`--page-size` flags, a `paginate` generator that lazily yields pages as needed, and `itertools.islice` on top of it to grab exactly the requested page without building all the others. Along the way, we tidy up the repeated `print(..., file=sys.stderr)` calls in `cli/commands.py` with `functools.partial`.
+We're adding lazy paginated output to the `list` command. Three pieces go in: the `--page`/`--page-size` flags, a `paginate` generator that lazily yields pages as needed, and `itertools.islice` on top of it. Together they grab exactly the requested page without building all the others.
+
+Along the way, we tidy up the repeated `print(..., file=sys.stderr)` calls in `cli/commands.py` with `functools.partial`.
 
 ## Practical exercise
 
-1. In `storage/memory.py`, write a generator `paginate(items: list[Task], page_size: int)` that uses `yield` to lazily produce successive pages (lists of up to `page_size` tasks each).
-2. Write `get_page(items, page, page_size)`, using `itertools.islice` on top of `paginate(...)` to pull out exactly the requested (1-based) page; if the page is out of range, return `[]`, using `next(iterator, default)` rather than `try/except StopIteration`.
+1. In `storage/memory.py`, write a generator `paginate(items: list[Task], page_size: int)`. It should use `yield` to lazily produce successive pages — lists of up to `page_size` tasks each.
+2. Write `get_page(items, page, page_size)`. Put `itertools.islice` on top of `paginate(...)` to pull out exactly the requested page, counted from 1. If the page is out of range, return `[]` — use `next(iterator, default)` rather than `try/except StopIteration`.
 3. Add `--page` (default 1) and `--page-size` (default 5) flags to the `list` subcommand.
-4. Update `handle_list` so it prints only the requested page, plus a `-- page X of Y --` footer (compute the total page count with integer division).
+4. Update `handle_list` so it prints only the requested page, plus a `-- page X of Y --` footer. Compute the total page count with integer division.
 5. In `cli/commands.py`, replace the repeated `print(..., file=sys.stderr)` calls with a module-level `print_err = functools.partial(print, file=sys.stderr)`.
 
 Things to think through:
 
 - Why can't `lru_cache` be safely applied to `get_page`/`sort_tasks`/any of the current storage functions, even though caching would in principle speed up repeated calls? Name both things working against it here.
-- If you call `get_page` on a 100-item list with `page_size=5`, requesting page 1 — how many items does the `for item in items:` loop inside `paginate` actually process? What about page 3? What about a nonexistent page 999?
+- Call `get_page` on a 100-item list with `page_size=5` and ask for page 1. How many items does the `for item in items:` loop inside `paginate` actually process? What about page 3? What about a nonexistent page 999?
 
 ## Worked solution
 
@@ -255,7 +276,8 @@ def handle_add(args: argparse.Namespace) -> None:
 
 @log_command
 def handle_list(args: argparse.Namespace) -> None:
-    result = memory.sort_tasks(memory.filter_by_status(memory.tasks, args.status), args.sort)
+    filtered = memory.filter_by_status(memory.tasks, args.status)
+    result = memory.sort_tasks(filtered, args.sort)
     if not result:
         print("No tasks yet.")
         return
@@ -288,33 +310,45 @@ COMMAND_HANDLERS = {
 
 Key decisions:
 
-- `paginate` is an ordinary generator function: it accumulates items into `page`, yields it once `page_size` items have piled up, resets, and keeps going; the last, partial page is yielded after the loop if anything's left in it.
-- `get_page` doesn't write its own "skip N pages" loop — `itertools.islice(paginate(...), page - 1, page)` pulls exactly one item at the right index out of the stream of pages, without ever materializing the full list of all pages.
-- `next(pages, [])` instead of `try/except StopIteration` — `next()` with a second, default argument handles "the iterator is empty" declaratively, with no exception involved at all; for a page beyond the available data, `islice` simply never finds an element at the requested index, and `next` returns `[]`.
-- `print_err = functools.partial(print, file=sys.stderr)` replaces every spot that used to write `print(..., file=sys.stderr)` directly — twice inside `log_command`, once in `handle_done`; `print` itself isn't overridden or manually wrapped, we just create a version of it with `file` already pinned.
-- `lru_cache` doesn't appear anywhere in this file — neither `get_page` nor `sort_tasks` are good candidates: both take `list[Task]` (an unhashable argument), and both implicitly depend on the contents of `tasks` possibly having changed between calls (the `done` flag, new tasks) — caching the result would simply be wrong.
+- `paginate` is an ordinary generator function. It accumulates items into `page`, yields that page once `page_size` items have piled up, resets, and keeps going. The last, partial page is yielded after the loop if anything is left in it.
+- `get_page` doesn't write its own "skip N pages" loop. Instead `itertools.islice(paginate(...), page - 1, page)` pulls exactly one item at the right index out of the stream of pages. The full list of pages is never built.
+- `next(pages, [])` replaces `try/except StopIteration`. A second, default argument makes `next()` handle "the iterator is empty" declaratively, with no exception involved at all. For a page beyond the available data, `islice` never finds an element at the requested index, so `next` returns `[]`.
+- `print_err = functools.partial(print, file=sys.stderr)` replaces every spot that used to write `print(..., file=sys.stderr)` directly: twice inside `log_command`, once in `handle_done`. The built-in `print` isn't overridden or manually wrapped. We just create a version of it with `file` already pinned.
+- `lru_cache` doesn't appear anywhere in this file. Neither `get_page` nor `sort_tasks` is a good candidate. Both take `list[Task]`, an unhashable argument. Both also depend on the contents of `tasks`, which may have changed between calls — the `done` flag, new tasks. Caching the result would simply be wrong.
 
 ## Check yourself
 
-1. Why is `Countdown.__iter__` returning `self` a fine pattern for a single-use iterator, but a poor choice for a class like `TaskList` that needs to support several independent passes at once (say, two nested `for` loops over the same task list)?
-2. What exactly does a generator "remember" between two `next()` calls — and why does `yield` remove the need to write `self.current = ...` by hand, the way the class-based iterator protocol does?
-3. How is `itertools.islice(iterable, start, stop)` fundamentally different from a plain slice `seq[start:stop]` — what makes the first work on a generator while the second doesn't?
+1. Why is `Countdown.__iter__` returning `self` a fine pattern for a single-use iterator? And why is it a poor choice for a class like `TaskList`, which must support several independent passes at once? Think of two nested `for` loops over the same task list.
+2. What exactly does a generator "remember" between two `next()` calls? And why does `yield` remove the need to write `self.current = ...` by hand, the way the class-based protocol does?
+3. How is `itertools.islice(iterable, start, stop)` fundamentally different from a plain slice `seq[start:stop]`? What makes the first work on a generator while the second doesn't?
 4. Given `next(some_iterator, "default")`: what happens if the iterator still has items left? What if it's already exhausted? Why is this better than wrapping `next(some_iterator)` in `try/except StopIteration` for the same result?
-5. Why does `functools.lru_cache`, applied to a function that takes a `list` as an argument, break before the first call with real data even happens — what error occurs exactly, and why?
+5. Applied to a function that takes a `list` argument, `functools.lru_cache` breaks before the first call with real data even happens. Why? What error occurs exactly?
 
 <details>
 <summary>Answers</summary>
 
-1. `__iter__` returning `self` means the object **is** its own iterator — it has exactly one "current position," shared by everyone iterating it. If two nested `for` loops iterate the same `Countdown` object at once, they'd be advancing the same shared counter, interfering with each other. `list.__iter__()` instead creates a **new** iterator object every time `iter()` is called, with its own independent position — which is why you can loop over the same list in several concurrent loops with no collision. For `TaskList`, if it needs to support several independent passes, `__iter__` should return a fresh helper iterator object each time (or use `yield` — a generator function also creates a new, independent generator object on every call).
-2. A generator remembers the function's entire execution frame at the moment of `yield` — the values of every local variable and the exact line where execution paused. `yield` is a capability built into the interpreter to suspend and later resume that specific function from that exact spot; reimplementing the same thing by hand with a class requires explicitly storing every variable that needs to "survive" between calls to `__next__` as a `self` attribute (`self.current` in `Countdown`), because an ordinary method has no automatic "freeze and thaw local variables" — and that's the entire chunk of work `yield` removes.
-3. `seq[start:stop]` requires `seq` to have a `__getitem__` method — random access by index — which a generator doesn't provide at all (it only offers "give me the next item," with no "give me item number N directly"). `itertools.islice` doesn't require indexing: it just calls `next()` the right number of times, skipping and discarding items up to `start`, then yielding items up to `stop`, and it works on anything implementing the iterator protocol — including infinite generators, where `seq[start:stop]` is fundamentally impossible (there's no way to know the length of, or index into, an infinite sequence).
-4. If the iterator still has items, `next(some_iterator, "default")` returns the next item as usual — the second argument simply goes unused in that case. If the iterator is exhausted, instead of raising `StopIteration`, the call quietly returns `"default"`. This beats `try/except StopIteration` precisely in cases where "the iterator is empty" isn't an error — it's a normal, expected outcome (like "there's no content beyond the last page") — the code reads as a single expression with an explicit fallback value, rather than as handling an exceptional situation that isn't actually exceptional.
-5. `lru_cache` caches results keyed by the call's arguments, and for that the arguments must be **hashable** — the cache is internally built like a dict, `{arguments: result}`, and as covered in chapter 02, a mutable object like a `list` can't be a dict key. The error doesn't show up when the function is defined (the decorator applies just fine) — it shows up on the very first **call** with a list argument: `TypeError: unhashable type: 'list'`, because that's exactly the moment `lru_cache` tries to use the passed-in list as part of the key for its own internal cache.
+1. `__iter__` returning `self` means the object **is** its own iterator. It has exactly one "current position", shared by everyone iterating it. If two nested `for` loops iterate the same `Countdown` object at once, they advance the same shared counter and interfere with each other. A list behaves differently: `list.__iter__()` creates a **new** iterator object every time `iter()` is called, with its own independent position. That is why you can loop over the same list in several concurrent loops with no collision. For `TaskList`, `__iter__` should return a fresh helper iterator object each time. Using `yield` works too: a generator function also creates a new, independent generator object on every call.
+2. A generator remembers the function's entire execution frame at the moment of `yield`: every local variable's value, and the exact line where execution paused. The interpreter has a built-in capability to suspend that specific function and later resume it from that exact spot. Reimplementing the same thing by hand with a class is more work. Every variable that has to "survive" between calls to `__next__` must be stored explicitly as a `self` attribute — `self.current` in `Countdown`. An ordinary method has no automatic "freeze and thaw local variables", and that is exactly the work `yield` removes.
+3. `seq[start:stop]` requires `seq` to have a `__getitem__` method, that is, random access by index. A generator doesn't provide that at all: it only offers "give me the next item", with no "give me item number N directly". By contrast, `itertools.islice` doesn't require indexing. It just calls `next()` the right number of times: it skips and discards items up to `start`, then yields items up to `stop`. It works on anything implementing the iterator protocol, including infinite generators. For an infinite sequence `seq[start:stop]` is impossible, because there is no way to know its length or index into it.
+4. If the iterator still has items, `next(some_iterator, "default")` returns the next item as usual, and the second argument simply goes unused. If the iterator is exhausted, the call quietly returns `"default"` instead of raising `StopIteration`. This beats `try/except StopIteration` in exactly one situation: when "the iterator is empty" is not an error but a normal, expected outcome. "No content beyond the last page" is such an outcome. The code then reads as a single expression with an explicit fallback value, not as handling an exception that is not really exceptional.
+5. `lru_cache` caches results keyed by the call's arguments, so those arguments must be **hashable**. The cache is internally built like a dict, `{arguments: result}`. As covered in chapter 02, a mutable object like a `list` can't be a dict key. The error doesn't show up when the function is defined — the decorator applies just fine. It shows up on the very first **call** with a list argument: `TypeError: unhashable type: 'list'`. That is exactly the moment when `lru_cache` tries to use the passed-in list as part of the key for its own internal cache.
 
 </details>
 
 ## Common mistake
 
-The most common mistake when first working with generators is trying to iterate the same generator twice, expecting the second pass to start over from the beginning, the way it would with a list. A developer used to writing `for x of arr` in JS ten times over the same array with no side effects at all carries that expectation into Python — but a generator, unlike a list, **is** a single-use iterator (see question 1 above): once it's exhausted (or once you've explicitly called `next()` all the way through), a repeat `for` over the same object runs zero times, with no error at all — it just silently prints nothing. In the context of `paginate`, this means: if you store the result of `paginate(tasks, 5)` in a variable and try to fetch page 2 first, then page 1 from the same object, the second request won't work, because the generator has already moved forward and can't "rewind." Every new page request needs a fresh call to `paginate(...)` — which is exactly what `get_page` does, creating a brand-new generator on every call.
+The most common mistake with generators is trying to iterate the same generator twice, expecting the second pass to start over from the beginning. Three lines make it undeniable:
 
-The second common mistake is using `itertools.groupby` as a "regular" group-by, expecting it to find and group every element sharing a key across the whole sequence, the way SQL's grouping or lodash's `_.groupBy` do. `groupby` only groups **adjacent** elements sharing a key; if the data isn't pre-sorted by that key, equal values that aren't next to each other end up in separate, distinct groups — the code doesn't crash or warn, it just produces more groups than you expected.
+```python
+gen = paginate(tasks, 5)
+list(gen)   # [[...], [...]]  — every page
+list(gen)   # []              — the second pass is empty, and nothing complains
+```
+
+A JS developer writes `for x of arr` ten times over the same array with no side effects at all. That expectation carries straight into Python. But a generator, unlike a list, **is** a single-use iterator (see question 1 above). Once it is exhausted, a repeat `for` over the same object runs zero times and raises no error. It just silently prints nothing.
+
+In the context of `paginate` this plays out as follows. Store the result of `paginate(tasks, 5)` in a variable, fetch page 2 from it, then ask the same object for page 1. The second request won't work, because the generator has already moved forward and can't rewind. Every new page request needs a fresh call to `paginate(...)`. That is exactly what `get_page` does: it creates a brand-new generator on every call.
+
+The second common mistake is using `itertools.groupby` as a "regular" group-by. The expectation is that it finds and groups every element sharing a key across the whole sequence. That is what grouping in SQL does, and what `_.groupBy` from lodash — a widely used JS utility library — does.
+
+In reality `groupby` only groups **adjacent** elements sharing a key. If the data isn't pre-sorted by that key, equal values that aren't next to each other end up in separate, distinct groups. The code doesn't crash or warn: it just produces more groups than you expected.

@@ -2,9 +2,11 @@
 
 ## Theory
 
-**Module vs package.** A module in Python is simply a single `.py` file; importing it (`import foo`) runs `foo.py`'s code once and caches the result in `sys.modules`, so a repeated import doesn't re-run the file. A package is a directory containing other modules/packages, marked with an `__init__.py` file (a "regular package"). Since Python 3.3 there are also namespace packages — packages with no `__init__.py` at all — but for an ordinary application project, an explicit `__init__.py` is the standard, and stays that way throughout this course.
+**Module vs package.** A module in Python is simply a single `.py` file. Importing it (`import foo`) runs the code of `foo.py` once and caches the result in `sys.modules`. A repeated import does not re-run the file.
 
-**Why `__init__.py` matters, even when it's empty.** It plays two roles: (1) historically and by convention, it marks "this is a package, not just a folder of scripts"; (2) practically, it's the place to curate a package's public API through re-exports:
+A package is a directory that holds other modules and packages, marked with an `__init__.py` file (a "regular package"). Since Python 3.3 there are also namespace packages — packages with no `__init__.py` at all. For an ordinary application project the explicit `__init__.py` is the standard, and it stays that way throughout this course.
+
+**Why `__init__.py` matters, even when it's empty.** It plays two roles. First, historically and by convention, it marks "this is a package, not just a folder of scripts". Second, in practice it is the place to curate a package's public API through re-exports:
 
 ```python
 # taskman/models/__init__.py
@@ -13,9 +15,13 @@ from .task import Priority, Task, PRIORITY_CHOICES
 __all__ = ["Priority", "Task", "PRIORITY_CHOICES"]
 ```
 
-This lets outside code write `from taskman.models import Task` without knowing that `Task` physically lives in `taskman/models/task.py` — exactly what an `index.js` barrel file does in a JS package, re-exporting the contents of internal files. The difference is fundamental: in JS, `index.js` is a **convention** that only works because the default module resolver happens to look for `index.js` when you import a directory. In Python, running `__init__.py` the first time any module from the package gets imported is a **language guarantee**, not a convention: `import taskman.models.task` will always execute `taskman/models/__init__.py` first, even if you imported the submodule directly rather than the package itself.
+This lets outside code write `from taskman.models import Task` without knowing that `Task` physically lives in `taskman/models/task.py`. A barrel file `index.js` in a JS package does exactly the same job: it re-exports the contents of internal files.
 
-`__all__` is a separate concern: it doesn't "hide" other names (`from module import _private_name` still works if you name it explicitly) — it only limits what `from module import *` pulls in, and serves as a hint for documentation/IDE tooling about the module's "official" public surface.
+The difference is fundamental. In JS, `index.js` is only a **convention**. It works because the default module resolver happens to look for `index.js` when you import a directory.
+
+In Python, running `__init__.py` on the first import of any module from the package is a **language guarantee**, not a convention. So `import taskman.models.task` always runs `taskman/models/__init__.py` first, even if you imported the submodule directly. The package itself never has to be imported by name.
+
+`__all__` is a separate concern, and it hides nothing. Naming a private name explicitly still works: `from module import _private_name` imports it. What `__all__` limits is `from module import *`, and nothing else. It also acts as a hint to documentation tools and to the IDE (integrated development environment) about the module's "official" public surface.
 
 **Relative imports.** `.` means the current package, `..` means one level up, and so on:
 
@@ -26,12 +32,36 @@ from ..models import Priority, Task   # up one level (into taskman/), then into 
 
 ```python
 # taskman/models/__init__.py
-from .task import Task                 # in the current package (models/), the task.py module
+from .task import Task                 # in this package (models/), the task.py module
 ```
 
-The key nuance: relative imports count levels of the **package hierarchy**, not literal filesystem steps, and they only work when the module is imported **as part of a package** — via `import` from somewhere else, or via `python -m package.module`. If you run the file directly as a script (`python taskman/cli/app.py`), the interpreter has no information about which package that file belongs to, and `from .commands import ...` fails with `ImportError: attempted relative import with no known parent package`. Absolute imports (`from taskman.models import Task`) don't have this problem — they always resolve from the root of `sys.path`/the installed package, regardless of how the current file was launched.
+Two trees overlap here, and the dots walk only one of them:
 
-**How this differs from ES modules.** ES module (and Node) imports are explicit **paths** (`./foo.js`, `../bar.js`) that literally mirror the filesystem; Python's relative imports are steps through the **package hierarchy**, which usually matches the directory structure but is conceptually a different thing (99% of the time they coincide, but the idea "number of dots = package levels," not "directory levels," becomes visible exactly at the edge cases, like running a file directly). Also: exports in JS/TS are explicit, per-symbol (`export function foo`) — you can only import what was explicitly exported. In Python, **everything** without a leading `_` is importable by default — `__all__`/the underscore convention is curation for the reader, not language-enforced privacy.
+```txt
+Inside src/taskman/storage/memory.py
+
+On disk:            src/ -> taskman/ -> storage/ -> memory.py
+Package hierarchy:  taskman -> storage -> memory
+
+"src" is a directory, not a package level. That is the gap.
+
+So "from ..models import Task", read inside this module:
+  .        = taskman.storage   (the package holding memory.py)
+  ..       = taskman           (one package level up)
+  ..models = taskman.models
+```
+
+The key nuance is what the dots count. Relative imports count levels of the **package hierarchy**, not literal filesystem steps. They also work only when the module is imported **as part of a package** — through `import` from elsewhere, or through `python -m package.module`.
+
+Run the file directly as a script (`python taskman/cli/app.py`), and the interpreter has no idea which package that file belongs to. Then `from .commands import ...` fails with `ImportError: attempted relative import with no known parent package`.
+
+Absolute imports (`from taskman.models import Task`) do not have this problem. They always resolve from the root of `sys.path`, or from the installed package, no matter how the current file was launched.
+
+**How this differs from ES modules.** ES (ECMAScript) is the standard that defines JavaScript. An ES module import, in Node too, is an explicit **path** (`./foo.js`, `../bar.js`) that literally mirrors the filesystem. A Python relative import is a step through the **package hierarchy**. That hierarchy usually matches the directory structure, but conceptually it is a different thing.
+
+The two coincide 99% of the time. The idea "number of dots = package levels", not "directory levels", becomes visible exactly at the edge cases, such as running a file directly.
+
+There is a second difference. Exports in JS/TS are explicit and per-symbol (`export function foo`), so you can import only what was exported. In Python **everything** without a leading `_` is importable by default. The `__all__` list and the underscore convention are curation for the reader, not privacy enforced by the language.
 
 **venv — going deeper.** Beyond `activate`/`deactivate` (chapter 00), a package with real structure benefits from:
 
@@ -43,20 +73,37 @@ pip list                # what's installed in the current venv
 pip show taskman        # metadata for one specific installed package
 ```
 
-An editable install isn't a copy of files into site-packages — it's a special "pointer" telling the interpreter: "look for this package's modules right here, on disk, at this path" — so changes to the source are visible immediately, with no re-running `pip install`.
+An editable install is not a copy of files into site-packages. It is a special "pointer" that tells the interpreter where to look for this package's modules: right here, on disk, at this path. Changes to the source are visible immediately, with no need to re-run `pip install`.
 
-**requirements.txt vs pyproject.toml + poetry/uv.** `requirements.txt` is a flat list of lines like `requests==2.31.0`, historically either hand-written or generated with `pip freeze > requirements.txt`. It has no notion of "direct dependency vs. transitive dependency," no hashes for integrity verification — it's just a snapshot of what happens to be installed right now, not a declaration of what should be installed. `pyproject.toml` (chapter 00) declares dependencies, but **on its own**, with just `pip`/`setuptools`, it doesn't produce a real lockfile with a resolved transitive dependency graph — a limitation already flagged back in chapter 00. Tools like **poetry** and **uv** add a proper lockfile on top of `pyproject.toml` (`poetry.lock`, `uv.lock`) with exact pinned versions and hashes for the whole tree — the direct counterpart of `package-lock.json`/`yarn.lock`/`pnpm-lock.yaml`. As of 2026, `uv` is by far the fastest and most commonly recommended path (written in Rust, replaces `pip` + `venv` + much of poetry's functionality at once), but this course deliberately sticks to plain `pip`/`venv` so you're not depending on a third-party tool before the fundamentals are solid.
+**requirements.txt vs pyproject.toml + poetry/uv.** `requirements.txt` is a flat list of lines like `requests==2.31.0`. Historically it was either hand-written or generated with `pip freeze > requirements.txt`. Two things it does not have:
+
+- Any notion of "direct dependency" versus "transitive dependency".
+- Hashes for integrity verification.
+
+So it is a snapshot of what happens to be installed right now, not a declaration of what should be installed.
+
+`pyproject.toml` (chapter 00) declares dependencies. But **on its own**, with just `pip` and `setuptools`, it does not produce a real lockfile with a resolved transitive dependency graph. Chapter 00 already flagged that limitation.
+
+Tools like **poetry** and **uv** add a proper lockfile on top of `pyproject.toml` — `poetry.lock` or `uv.lock`. It pins exact versions and hashes for the whole tree. That is the direct counterpart of `package-lock.json`, `yarn.lock` and `pnpm-lock.yaml`.
+
+As of 2026, `uv` is by far the fastest and most commonly recommended path. It is written in Rust and replaces `pip`, `venv` and much of poetry's functionality at once. This course deliberately sticks to plain `pip` and `venv`, so that you do not depend on a third-party tool before the fundamentals are solid.
 
 ### Parallels with JS/TS/Node:
 
-- A module ~ a file with ES-module semantics (the unit of import in both languages); a package is closest to an npm package with an `index.js` barrel — but executing `__init__.py` on submodule import is a language guarantee, not a resolver convention like `index.js`.
-- Explicit `export` in JS/TS vs. "everything public by default" in Python — `__all__`/the leading underscore is a curation convention for the reader and `import *`, not language-enforced privacy.
-- Dots in a relative import (`.`/`..`) are levels of the **package hierarchy**, not literal `./`/`../` filesystem steps like in Node; and relative imports simply don't work when the file is run directly as a script — only when imported as part of a package.
-- `requirements.txt` ~ an old, hand-maintained or `pip freeze`-produced list with no lock semantics; `pyproject.toml` + `poetry`/`uv` ~ `package.json` + `package-lock.json`/`uv.lock` with real dependency resolution.
+- A module ~ a file with ES-module semantics: the unit of import in both languages. A package is closest to an npm package with an `index.js` barrel file. But executing `__init__.py` on submodule import is a language guarantee, not a resolver convention like `index.js`.
+- Explicit `export` in JS/TS vs. "everything public by default" in Python. The `__all__` list and the leading underscore are a curation convention for the reader and for `import *`, not privacy enforced by the language.
+- Dots in a relative import (`.`/`..`) are levels of the **package hierarchy**, not literal `./`/`../` filesystem steps like in Node. Relative imports simply do not work when the file is run directly as a script. They work only when it is imported as part of a package.
+- `requirements.txt` ~ an old list with no lock semantics, hand-maintained or produced by `pip freeze`. The pair `pyproject.toml` + `poetry`/`uv` ~ `package.json` + `package-lock.json`/`uv.lock`, with real dependency resolution.
 
 ## What we're adding to the project
 
-We're splitting the monolithic `main.py` into a `taskman` package with three subpackages — `models/` (Priority, Task), `storage/` (the in-memory store), and `cli/` (argparse, command handlers, `main()`) — and moving to a **src layout** (`src/taskman/...`), the move promised back in chapter 00. `pyproject.toml` gets a build section (`[build-system]`, `[tool.setuptools.packages.find]`) and `[project.scripts]`, so that after `pip install -e .` the `taskman` command works as a real installed CLI tool, not just via `python main.py`.
+We're splitting the monolithic `main.py` into a `taskman` package with three subpackages:
+
+- `models/` — `Priority` and `Task`.
+- `storage/` — the in-memory store.
+- `cli/` — argparse, the command handlers and `main()`.
+
+At the same time the project moves to a **src layout** (`src/taskman/...`), the move promised back in chapter 00. Then `pyproject.toml` gets a build section (`[build-system]`, `[tool.setuptools.packages.find]`) and a `[project.scripts]` section. After `pip install -e .` the `taskman` command then works as a real installed command-line interface (CLI) tool, not only through `python main.py`.
 
 ## Practical exercise
 
@@ -82,10 +129,13 @@ We're splitting the monolithic `main.py` into a `taskman` package with three sub
    ```
 2. Move `Priority`/`Task`/`PRIORITY_CHOICES` into `models/task.py`, re-export them from `models/__init__.py` (with `__all__`).
 3. Move `tasks`/`add_task`/`find_task`/`mark_done`/`filter_by_status`/`sort_tasks` into `storage/memory.py`, importing `Priority`/`Task` with a **relative** import (`from ..models import Priority, Task`).
-4. Split the CLI layer into `cli/parser.py` (`build_parser`), `cli/commands.py` (`log_command`, the three handlers, `COMMAND_HANDLERS`), and `cli/app.py` (`main()`, wiring `parser` and `COMMAND_HANDLERS` together).
+4. Split the CLI layer into three modules:
+   - `cli/parser.py` — `build_parser`.
+   - `cli/commands.py` — `log_command`, the three handlers, `COMMAND_HANDLERS`.
+   - `cli/app.py` — `main()`, wiring `parser` and `COMMAND_HANDLERS` together.
 5. `__main__.py` should import `main` from `taskman.cli` and call it — this is exactly what makes `python -m taskman` possible.
 6. Update `pyproject.toml`: add `[build-system]` (`setuptools`), `[tool.setuptools.packages.find] where = ["src"]`, and `[project.scripts] taskman = "taskman.cli:main"`.
-7. Install the package in editable mode (`pip install -e .` inside an activated venv) and confirm **both** ways of running it work: `python -m taskman add "Buy milk"` and plain `taskman add "Buy milk"`.
+7. Install the package in editable mode: `pip install -e .` inside an activated venv. Then confirm that **both** ways of running it work: `python -m taskman add "Buy milk"` and plain `taskman add "Buy milk"`.
 8. Delete the old flat `main.py` — it's no longer needed, all its logic has moved into the package.
 
 Things to think through:
@@ -244,7 +294,8 @@ def handle_add(args: argparse.Namespace) -> None:
 
 @log_command
 def handle_list(args: argparse.Namespace) -> None:
-    result = memory.sort_tasks(memory.filter_by_status(memory.tasks, args.status), args.sort)
+    filtered = memory.filter_by_status(memory.tasks, args.status)
+    result = memory.sort_tasks(filtered, args.sort)
     if not result:
         print("No tasks yet.")
     else:
@@ -327,36 +378,42 @@ if __name__ == "__main__":
     main()
 ```
 
-`src/taskman/__init__.py` — left empty: the top-level package has nothing to re-export yet, since the entire public surface is already described inside `models/`, `storage/`, and `cli/`.
+`src/taskman/__init__.py` — left empty. The top-level package has nothing to re-export yet: the entire public surface is already described inside `models/`, `storage/` and `cli/`.
 
 Key decisions:
 
-- `from ..models import Priority, Task` in `storage/memory.py` — a relative import that goes up one level and back down into `models/`; it demonstrates that a relative import counts package levels (`taskman`), not literal filesystem steps.
-- `from ..storage import memory` (rather than `from ..storage.memory import add_task, tasks, ...`) in `cli/commands.py` — `memory` is imported as a namespace module, and calls read as `memory.add_task(...)`, `memory.tasks`. This is a deliberate choice for a module carrying mutable state (`tasks: list[Task]`): at the call site, it's immediately obvious that the state lives in `storage.memory`, rather than being scattered across implicitly imported individual names.
-- `[project.scripts] taskman = "taskman.cli:main"` — after `pip install -e .` in a venv, an executable `taskman` shows up (at `.venv/bin/taskman`), which simply imports `taskman.cli` and calls `main`; this is exactly what npm does with the `"bin"` field in `package.json`.
-- `[tool.setuptools.packages.find] where = ["src"]` — tells setuptools to look for packages under `src/`, not the project root; without this line, a src layout won't be auto-discovered (setuptools by default looks for packages right next to `pyproject.toml`).
+- `from ..models import Priority, Task` in `storage/memory.py` — a relative import that goes up one level and back down into `models/`. It demonstrates that a relative import counts package levels (`taskman`), not literal filesystem steps.
+- `from ..storage import memory` in `cli/commands.py`, rather than `from ..storage.memory import add_task, tasks, ...`. Here `memory` is imported as a namespace module, so calls read as `memory.add_task(...)` and `memory.tasks`. This is a deliberate choice for a module carrying mutable state (`tasks: list[Task]`). At the call site it is immediately obvious that the state lives in `storage.memory`, and not scattered across implicitly imported individual names.
+- `[project.scripts] taskman = "taskman.cli:main"` — after `pip install -e .` in a venv, an executable `taskman` shows up at `.venv/bin/taskman`. It simply imports `taskman.cli` and calls `main`. This is exactly what npm does with the `"bin"` field in `package.json`.
+- `[tool.setuptools.packages.find] where = ["src"]` — tells setuptools to look for packages under `src/`, not in the project root. Without this line a src layout is not auto-discovered: setuptools by default looks for packages right next to `pyproject.toml`.
 
 ## Check yourself
 
-1. Why does `__init__.py` always run when you import a submodule (`import taskman.models.task`), even if you never explicitly imported the `taskman.models` package itself? How is that different from how `index.js` works in a JS module?
-2. What do the dots in `from ..models import Task` actually count — what are they levels *of*, and why isn't that the same thing as `../` in a filesystem path?
-3. Why does `python src/taskman/cli/app.py`, run directly, fail with `ImportError: attempted relative import with no known parent package`, while `python -m taskman` works, even though both "run the Python code in this file" in some sense?
-4. How does `pip install -e .` differ from a plain `pip install .` when it comes to developing a package — what happens to source-code edits after each change?
+1. Why does `__init__.py` always run when you import a submodule, as in `import taskman.models.task`? You never explicitly imported the `taskman.models` package itself. How is that different from how `index.js` works in a JS module?
+2. What do the dots in `from ..models import Task` actually count? What are they levels *of*, and why is that not the same thing as `../` in a filesystem path?
+3. Run `python src/taskman/cli/app.py` directly and it fails with `ImportError: attempted relative import with no known parent package`. Yet `python -m taskman` works. Why, when both "run the Python code in this file" in some sense?
+4. How does `pip install -e .` differ from a plain `pip install .` while you develop a package? What happens to source-code edits after each change?
 5. Why isn't a `requirements.txt` generated via `pip freeze` a real lockfile in the sense that `package-lock.json` is one? What's fundamentally missing from it?
 
 <details>
 <summary>Answers</summary>
 
-1. A package in Python isn't just "a folder of files" — it's an object in `sys.modules`, and importing any submodule of a package **requires** first creating and initializing the package object itself — and initializing a package means running its `__init__.py`. This is a guarantee baked into the import machinery of the language itself (`importlib`), not a behavior you can opt out of. `index.js` in JS is just a file the module resolver looks for by convention when a directory is imported as a whole; if you import a specific file inside that directory directly (`import './foo/bar.js'`), `index.js` is never touched at all — in Python, the equivalent "bypass" is impossible: the package's `__init__.py` runs regardless.
-2. The dots count levels in the **package** tree (what's registered in `sys.modules` and defined by the `__init__.py` structure), not the directory tree on disk. In practice these two trees almost always line up exactly, which is why the difference is invisible 99% of the time — but conceptually, `from ..models import Task` means "go up one level from the package that contains **the current module**," not "go up one directory on disk"; the distinction becomes visible precisely when a module is run outside of its package context (see question 3) — in that situation, the file simply has no information about which package it "belongs to."
-3. Running `python file.py` directly loads that file as the `__main__` module **with no parent package** — it has no information that it physically lives inside `taskman/cli/`, because running a file by its direct path doesn't go through the package-import machinery at all. `from .commands import ...` needs to know "the current package to count the dot from" — and since there's no parent package, there's nothing to count from, hence the error. `python -m taskman` is a fundamentally different launch mechanism: it uses `runpy`, finds the `taskman` package through the normal import machinery, resolves `taskman.__main__` as the entry point, and executes it **as part of** the `taskman` package, with a fully and correctly initialized package hierarchy — which is why relative imports inside it work.
-4. `pip install .` copies the package's built files into the venv's site-packages — after that, edits to the project's source code have no effect on the installed copy until you reinstall the package. `pip install -e .` (editable mode) instead places a lightweight pointer in site-packages, referencing the source directory (`src/`), so that when `taskman` is imported, the interpreter literally reads the files from wherever you're editing them — changes are visible immediately, with no reinstall step.
-5. `pip freeze` prints a list of **everything currently installed** in the environment, with versions, but with no distinction between "what I explicitly asked for" and "what got pulled in as a transitive dependency," no dependency graph (what depends on what), and no cryptographic hashes confirming the integrity and origin of the downloaded files. A real lockfile (`package-lock.json`, `poetry.lock`, `uv.lock`) pins the entire resolved dependency tree, with hashes, generated by a deterministic version-resolution algorithm — it isn't a side effect of "whatever happened to be installed in this particular environment at the moment `freeze` ran."
+1. A package in Python isn't just "a folder of files". It is an object in `sys.modules`. Importing any submodule of a package **requires** first creating and initializing the package object itself, and initializing a package means running its `__init__.py`. This is a guarantee baked into the import machinery of the language itself (`importlib`), not a behavior you can opt out of. In JS, `index.js` is just a file the module resolver looks for by convention when a directory is imported as a whole. Import a specific file inside that directory directly (`import './foo/bar.js'`) and `index.js` is never touched at all. In Python the equivalent "bypass" is impossible: the package's `__init__.py` runs no matter what.
+2. The dots count levels in the **package** tree — what is registered in `sys.modules` and defined by the `__init__.py` structure. They do not count the directory tree on disk. In practice these two trees almost always line up exactly, which is why the difference is invisible 99% of the time. Conceptually they differ. `from ..models import Task` means "go up one level from the package that holds **the current module**". It does not mean "go up one directory on disk". The distinction becomes visible precisely when a module is run outside of its package context (see question 3). In that situation the file simply has no information about which package it belongs to.
+3. Running `python file.py` directly loads that file as the `__main__` module, **with no parent package**. The file has no information that it physically lives inside `taskman/cli/`. Running a file by its direct path does not go through the package-import machinery at all. And `from .commands import ...` needs to know the current package to count the dot from. There is no parent package, so there is nothing to count from, hence the error. The command `python -m taskman` is a fundamentally different launch mechanism. It uses `runpy`, finds the `taskman` package through the normal import machinery, and resolves `taskman.__main__` as the entry point. Then it executes that entry point **as part of** the `taskman` package, with a fully and correctly initialized package hierarchy. That is why relative imports inside it work.
+4. `pip install .` copies the package's built files into the venv's site-packages. After that, edits to the project's source code have no effect on the installed copy until you reinstall the package. Editable mode, `pip install -e .`, instead places a lightweight pointer in site-packages that references the source directory (`src/`). When `taskman` is imported, the interpreter literally reads the files from wherever you are editing them. Changes are visible immediately, with no reinstall step.
+5. `pip freeze` prints a list of **everything currently installed** in the environment, with versions. Three things are missing from that list. There is no distinction between "what I explicitly asked for" and "what got pulled in as a transitive dependency". There is no dependency graph, so you cannot tell what depends on what. And there are no cryptographic hashes confirming the integrity and origin of the downloaded files. A real lockfile — `package-lock.json`, `poetry.lock`, `uv.lock` — pins the entire resolved dependency tree, with hashes. A deterministic version-resolution algorithm generates it. It is not a side effect of whatever happened to be installed in this particular environment when `freeze` ran.
 
 </details>
 
 ## Common mistake
 
-The most common mistake at this stage is trying to run one of the package's files directly as a script while debugging (`python src/taskman/cli/app.py`, or even more commonly, hitting "Run" on a specific file in an IDE) and hitting `ImportError: attempted relative import with no known parent package`. A developer used to Node, where `node ./src/cli/app.js` works with no extra conditions (Node resolves `require`/`import` relative to wherever it was launched from), doesn't expect that *how* you launch a file in Python can change whether the imports inside it work at all. The right fix isn't to swap relative imports for absolute ones "just to make it run" — it's to run the package the way it's meant to be run: via `python -m taskman` (or, once installed, via the generated `taskman` command) — always as part of the package, never as a standalone file.
+The most common mistake at this stage is running one of the package's files directly as a script while debugging. That means `python src/taskman/cli/app.py`, or, even more often, hitting "Run" on a specific file in an IDE. The result is `ImportError: attempted relative import with no known parent package`.
 
-The second common trip-up is forgetting `[tool.setuptools.packages.find] where = ["src"]` when moving to a src layout, and ending up with an empty or incorrectly assembled package after `pip install -e .` (setuptools by default looks for packages right next to `pyproject.toml`, i.e. the project root, not inside `src/`). The symptom usually isn't obvious right away: the install "succeeds" with no errors, but `import taskman` either can't find the package at all, or finds the wrong thing — because setuptools' default package auto-discovery is built for a flat layout and doesn't look inside `src/` unless told to explicitly.
+A developer used to Node does not expect this. There `node ./src/cli/app.js` works with no extra conditions, because Node resolves `require`/`import` relative to wherever it was launched from. Nothing in that experience suggests that *how* you launch a file can change whether the imports inside it work at all.
+
+The right fix isn't to swap relative imports for absolute ones "just to make it run". Run the package the way it is meant to be run: through `python -m taskman`, or, once installed, through the generated `taskman` command. Always as part of the package, never as a standalone file.
+
+The second common trip-up is forgetting `[tool.setuptools.packages.find] where = ["src"]` when moving to a src layout. You then get an empty or incorrectly assembled package after `pip install -e .`. By default setuptools looks for packages right next to `pyproject.toml`, that is, in the project root, not inside `src/`.
+
+The symptom usually isn't obvious right away. The install "succeeds" with no errors, but `import taskman` either cannot find the package at all, or finds the wrong thing. The reason: setuptools' default package auto-discovery is built for a flat layout, and it does not look inside `src/` unless told to explicitly.

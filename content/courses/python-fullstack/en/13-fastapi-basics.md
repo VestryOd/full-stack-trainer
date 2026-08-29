@@ -2,7 +2,7 @@
 
 ## Theory
 
-**Routing.** FastAPI ties an HTTP method and a path to a function via a decorator, and pulls path/query parameters directly from the **function's signature**, matching by name and type — no manual `req.params.taskId` the way you'd do in Express:
+**Routing.** FastAPI ties an HTTP method and a path to a function through a decorator. Path and query parameters come straight from the **function's signature**, matched by name and by type. There is no manual `req.params.taskId` the way you would write it in Express:
 
 ```python
 from fastapi import FastAPI
@@ -10,17 +10,17 @@ from fastapi import FastAPI
 app = FastAPI()
 
 @app.get("/tasks/{task_id}")
-async def get_one(task_id: int):        # {task_id} from the path -> the task_id: int parameter
+async def get_one(task_id: int):        # {task_id} from the path -> task_id: int
     ...
 
 @app.get("/tasks")
-async def list_all(status: str = "all"):  # ?status=... from the query string, with a default
+async def list_all(status: str = "all"):  # ?status=... from the query string
     ...
 ```
 
-In spirit this is closer to Nest.js's decorator-based routing (`@Get()`, `@Post()` on controller methods) than to Express's `app.get(path, handler)` chains — except instead of DTO classes with `@Body()`/`@Param()`, FastAPI infers where a parameter comes from (path, query, body) straight from the signature and its types.
+In spirit this is closer to Nest.js decorator-based routing (`@Get()`, `@Post()` on controller methods) than to the `app.get(path, handler)` chains of Express. Nest.js declares parameters on DTO classes — data transfer objects — with `@Body()` and `@Param()`. FastAPI instead infers where each parameter comes from (path, query or body) straight from the signature and its types.
 
-**Pydantic models — validation baked into the framework more deeply than zod/yup in Express.** `BaseModel` looks syntactically like a dataclass (chapter 04) — fields declared via type hints — but unlike a dataclass, a Pydantic model **validates input data at runtime** on construction:
+**Pydantic models — validation baked into the framework more deeply than zod/yup in Express.** `BaseModel` looks syntactically like a dataclass (chapter 04), with fields declared via type hints. Unlike a dataclass, a Pydantic model **validates input data at runtime** when you construct it:
 
 ```python
 from pydantic import BaseModel
@@ -30,11 +30,16 @@ class TaskCreate(BaseModel):
     priority: str = "medium"
 ```
 
-The key difference from `TypedDict` (chapter 10): `TypedDict` is a purely static hint that checks nothing at runtime; a Pydantic model, by contrast, genuinely parses and validates data on every `model_validate(...)`, raising a structured validation error if the shape doesn't match — FastAPI catches that error itself and turns it into an HTTP 422 pinpointing exactly which field is wrong.
+The key difference from `TypedDict` (chapter 10) is what happens at runtime. `TypedDict` is a purely static hint and checks nothing. A Pydantic model genuinely parses and validates data on every `model_validate(...)`, and raises a structured validation error if the shape does not match. FastAPI catches that error itself and turns it into an HTTP 422 that names exactly which field is wrong.
 
-Comparing to zod/yup highlights a difference in the approach itself: zod/yup are **schema-first** (you write a separate schema, `z.object({...})`, and the TS type is derived from it via `z.infer<>`); Pydantic is **type-hint-first** (you write a class with typed fields, and that declaration *is* the schema and the type at the same time — there's nothing to derive from, because the schema and the type are literally the same thing). "Deeper framework integration" specifically means: the same Pydantic declaration is used by FastAPI for three things at once — validating the request body, serializing the response, and generating the OpenAPI schema — with no separate, manually-synchronized declarations for each.
+Comparing to zod/yup highlights a difference in the approach itself:
 
-**An important, non-obvious nuance: Pydantic doesn't call your `__str__`.** If a field is declared as `str`, and the data source is an object with a differently-typed field (say, our `Priority(IntEnum)` with an overridden `__str__` returning `"high"`), it's intuitive to assume Pydantic will call `str(value)` and get "high". In practice, that's not what happens:
+- zod/yup are **schema-first**. You write a separate schema, `z.object({...})`, and the TS type is derived from it via `z.infer<>`.
+- Pydantic is **type-hint-first**. You write a class with typed fields, and that declaration *is* the schema and the type at the same time. There is nothing to derive, because the schema and the type are literally the same object.
+
+"Deeper framework integration" means one concrete thing. FastAPI uses the same Pydantic declaration for three jobs at once: it validates the request body, serializes the response, and generates the OpenAPI schema. There are no separate declarations to keep in sync by hand.
+
+**An important, non-obvious nuance: Pydantic doesn't call your `__str__`.** Say a field is declared as `str`, and the data source is an object whose own field has a different type. Our `Priority(IntEnum)` is exactly that: it overrides `__str__` to return `"high"`. It is intuitive to assume Pydantic will call `str(value)` and get "high". In practice, that is not what happens:
 
 ```python
 class TaskRead(BaseModel):
@@ -44,9 +49,9 @@ TaskRead.model_validate(task, from_attributes=True).model_dump_json()
 # {"priority": "2", ...} -- the string form of the NUMERIC value, not "high"!
 ```
 
-Pydantic's internal type-coercion logic (implemented in pydantic-core, separate from the language's usual `__str__`/`__repr__` protocol) coerces an `IntEnum` into `str` via its numeric value, not via `str()`. The only reliable way to actually get "high" is to construct the Pydantic model explicitly, calling `str(task.priority)` yourself, rather than relying on automatic coercion via `from_attributes`.
+Type coercion inside Pydantic is implemented in pydantic-core, separate from the language's usual `__str__`/`__repr__` protocol. That is why an `IntEnum` is coerced into `str` through its numeric value, not through `str()`. The only reliable way to get "high" is to build the Pydantic model explicitly. Call `str(task.priority)` yourself instead of relying on automatic coercion via `from_attributes`.
 
-**`Depends` — dependency injection, but not the Nest.js kind.** In Nest.js, DI is usually constructor-based: services are registered in a module and injected into a controller's constructor. In FastAPI, DI happens at the level of a handler function's parameters:
+**`Depends` — dependency injection (DI), but not the Nest.js kind.** In Nest.js, DI is usually constructor-based: services are registered in a module and injected into a controller's constructor. In FastAPI, DI happens at the level of a handler function's parameters:
 
 ```python
 from fastapi import Depends, HTTPException
@@ -62,9 +67,14 @@ async def mark_done(task: Task = Depends(get_task_or_404)):
     ...
 ```
 
-FastAPI calls `get_task_or_404` itself (passing it `task_id` from the path — the same parameter-inference logic as the routes themselves), and substitutes the result into `task`. The dependency is resolved fresh on every request (unless explicitly told to cache), rather than being created once as a singleton at application startup, the way services usually work in Nest.js.
+FastAPI calls `get_task_or_404` itself and substitutes the result into `task`. It passes `task_id` from the path, using the same parameter-inference logic as the routes themselves. The dependency is resolved fresh on every request, unless you explicitly tell it to cache. It is not created once as a singleton at application startup, the way services usually work in Nest.js.
 
-**Automatic OpenAPI/Swagger generation.** `/docs` (Swagger UI) and `/redoc` appear automatically, with zero lines of configuration — FastAPI builds the OpenAPI schema straight from the route declarations and Pydantic models. In Express, this usually needs a separate tool (`swagger-jsdoc` and manual JSDoc annotations), or in Nest.js, `@nestjs/swagger` with explicit `@ApiProperty()` on every DTO field — FastAPI doesn't need that separate layer precisely because Pydantic models are already fully typed, and that's the only thing needed to build the schema.
+**Automatic OpenAPI/Swagger generation.** `/docs` and `/redoc` appear automatically, with zero lines of configuration. At `/docs` you get Swagger UI, a user interface for calling the API from a browser. FastAPI builds the OpenAPI schema straight from the route declarations and Pydantic models, and needs no annotation layer of its own for it.
+
+- In Express the same completeness usually needs a separate tool: `swagger-jsdoc` plus manual JSDoc annotations.
+- In Nest.js it needs `@nestjs/swagger` with an explicit `@ApiProperty()` on every DTO field.
+
+FastAPI gets away without that layer because Pydantic models are already fully typed, and full types are the only input the schema build takes.
 
 ### Parallels with JS/TS/Node:
 
@@ -75,13 +85,15 @@ FastAPI calls `get_task_or_404` itself (passing it `task_id` from the path — t
 
 ## What we're adding to the project
 
-We're wrapping `taskman` in a REST API on top of the **exact same** storage layer — neither `models/` nor `storage/` change by a single line; this is the direct payoff of chapter 10 (the `TaskStorage` protocol) and chapter 12 (the async storage layer). A new `api/` package (`schemas.py`, `routes.py`, `app.py`) adds three endpoints (`POST /tasks`, `GET /tasks`, `PATCH /tasks/{id}/done`), reusing `filter_by_status`/`sort_tasks`/`get_page` from the storage layer with zero changes — they took a `list[Task]` before, and they still do, regardless of who's calling: the CLI or an HTTP handler.
+We're wrapping `taskman` in a REST API on top of the **exact same** storage layer. REST — representational state transfer — is the usual style for HTTP APIs: a path names a resource, and the method names the action. Neither `models/` nor `storage/` change by a single line. That is the direct payoff of chapter 10 (the `TaskStorage` protocol) and chapter 12 (the async storage layer).
+
+A new `api/` package (`schemas.py`, `routes.py`, `app.py`) adds three endpoints: `POST /tasks`, `GET /tasks` and `PATCH /tasks/{id}/done`. It reuses `filter_by_status`, `sort_tasks` and `get_page` from the storage layer with zero changes. They took a `list[Task]` before and they still do, no matter who calls them — the command-line interface (CLI) or an HTTP handler.
 
 ## Practical exercise
 
 1. Install `fastapi` and `uvicorn[standard]`, add them to `dependencies` in `pyproject.toml`.
-2. Create `api/schemas.py`: `TaskCreate` (`text: str`, `priority: str = "medium"` with a validator confirming the value is one of `PRIORITY_CHOICES`) and `TaskRead` (`id`, `text`, `priority: str`, `done`) with a classmethod `from_task(task: Task) -> TaskRead` that explicitly calls `str(task.priority)`.
-3. Create `api/routes.py` with an `APIRouter`: `POST /tasks` (body — `TaskCreate`, status 201), `GET /tasks` (query params `status`/`sort`/`page`/`page_size`, mirroring the CLI's `list` flags), `PATCH /tasks/{task_id}/done` via a `Depends`-based dependency `get_task_or_404` that converts `TaskNotFoundError` into `HTTPException(404)`.
+2. Create `api/schemas.py` with two models. `TaskCreate` holds `text: str` and `priority: str = "medium"`, plus a validator confirming the value is one of `PRIORITY_CHOICES`. `TaskRead` holds `id`, `text`, `priority: str` and `done`, plus a classmethod `from_task(task: Task) -> TaskRead` that explicitly calls `str(task.priority)`.
+3. Create `api/routes.py` with an `APIRouter` and three routes. `POST /tasks` takes a `TaskCreate` body and returns status 201. `GET /tasks` takes the query params `status`/`sort`/`page`/`page_size`, mirroring the CLI's `list` flags. `PATCH /tasks/{task_id}/done` goes through a `Depends`-based dependency `get_task_or_404`, which converts `TaskNotFoundError` into `HTTPException(404)`.
 4. Create `api/app.py`: `FastAPI(...)` with a `lifespan` — an async generator-based context manager (`@asynccontextmanager`, chapters 06/12) that calls `await db.init_db()` before `yield`.
 5. Run the server (`uvicorn taskman.api:app --reload`), open `/docs`, create a task, list tasks, mark one done via curl or the Swagger UI.
 6. Before reading the worked solution — try creating a task with blank text (`{"text": "   "}`) through the API. Look at the response and status code. Then call `GET /tasks` again. Is the result what you'd expect?
@@ -226,7 +238,11 @@ from .app import app
 __all__ = ["app"]
 ```
 
-Now, about the question from exercise 6. A real run (`uvicorn taskman.api:app`, then `curl -X POST /tasks -d '{"text": "   "}'`) gives `500 Internal Server Error` — and that's expected: `Task.__post_init__` (chapter 04) raises `ValueError` for blank text, and nothing in the route catches it, so FastAPI hands back a generic 500. Proper, centralized conversion of domain exceptions into meaningful HTTP responses is next chapter's topic. But the next step — `GET /tasks` — on the unfixed code from chapter 08 **also** returned 500, and that's not about error handling anymore, it's a genuine bug:
+Now, about the question from exercise 6. Run `uvicorn taskman.api:app`, then `curl -X POST /tasks -d '{"text": "   "}'`. A real run gives `500 Internal Server Error`, and that is expected.
+
+`Task.__post_init__` (chapter 04) raises `ValueError` for blank text, nothing in the route catches it, so FastAPI hands back a generic 500. Proper, centralized conversion of domain exceptions into meaningful HTTP responses is next chapter's topic.
+
+But the next step, `GET /tasks`, **also** returned 500 on the unfixed code from chapter 08. That is not about error handling anymore. It is a genuine bug:
 
 ```python
 # BEFORE the fix -- as it was since chapter 08, in storage/sqlite_storage.py:
@@ -238,10 +254,13 @@ async def add_task(text: str, priority: Priority = Priority.MEDIUM) -> Task:
         )
         task_id = cursor.lastrowid
     assert task_id is not None
-    return Task(id=task_id, text=text, priority=priority, done=False)   # <- OUTSIDE the transaction!
+    # <- runs OUTSIDE the transaction, which has already committed:
+    return Task(id=task_id, text=text, priority=priority, done=False)
 ```
 
-`Task(...)` (and, therefore, the blank-text check in `__post_init__`) is called **after** `async with db_connection()` has already closed and committed the transaction. The blank-text row genuinely lands in the database, `ValueError` only fires afterward — and every subsequent `list_tasks()` call (from either the CLI or the API) then crashes trying to turn that "poisoned" row back into a `Task`. The bug has existed since chapter 08; no previous scenario ever happened to create a task with blank text through a real call.
+`Task(...)` — and therefore the blank-text check in `__post_init__` — is called **after** `async with db_connection()` has already closed and committed the transaction. The blank-text row genuinely lands in the database, and `ValueError` only fires afterward. Every later `list_tasks()` call then crashes trying to turn that "poisoned" row back into a `Task` — from the CLI and from the API alike.
+
+The bug has existed since chapter 08. No previous scenario ever happened to create a task with blank text through a real call.
 
 The fix isn't about error handling — it's about **where the transaction ends**:
 
@@ -257,36 +276,44 @@ async def add_task(text: str, priority: Priority = Priority.MEDIUM) -> Task:
         return Task(id=task_id, text=text, priority=priority, done=False)  # now INSIDE
 ```
 
-Moving `return Task(...)` inside the `async with` block isn't cosmetic: if `Task.__post_init__` raises `ValueError`, the exception now surfaces **inside** `db_connection`'s body, hits its own `except Exception: await conn.rollback(); raise` (chapter 08) — and the `INSERT` rolls back instead of committing. After this fix, `GET /tasks` never sees the "poisoned" row again, because it never makes it into the database at all.
+Moving `return Task(...)` inside the `async with` block isn't cosmetic. If `Task.__post_init__` raises `ValueError`, the exception now surfaces **inside** the body of `db_connection`. There it hits the generator's own `except Exception: await conn.rollback(); raise` (chapter 08), so the `INSERT` rolls back instead of committing.
+
+After this fix, `GET /tasks` never sees the "poisoned" row again, because the row never makes it into the database at all.
 
 Key decisions:
 
-- `TaskRead.from_task` explicitly calls `str(task.priority)`, rather than relying on `model_validate(task, from_attributes=True)` with a `priority: str` field — as shown in the theory, the automatic coercion would produce `"2"`, not `"high"`.
-- `TaskCreate.priority` is a plain string with a manual `field_validator`, not a field typed `Priority` — this way, a client's value naturally looks like `"high"`/`"medium"`/`"low"`, not a magic number, and sidesteps the same enum-coercion nuance.
-- `get_task_or_404` is the one and only place where `TaskNotFoundError` is explicitly turned into an HTTP response — that's enough for this chapter, but repeating this same `try/except` in every handler that needs a task by id doesn't scale — chapter 14 shows how to remove that repetition with a single, application-level exception handler.
-- `filter_by_status`/`sort_tasks`/`get_page` are called in `routes.py` exactly the way they're called in `cli/commands.py` — none of them knows, or needs to know, that they now have two callers (the CLI and HTTP) instead of one.
+- `TaskRead.from_task` explicitly calls `str(task.priority)`. It does not rely on `model_validate(task, from_attributes=True)` with a `priority: str` field. As the theory showed, automatic coercion would produce `"2"`, not `"high"`.
+- `TaskCreate.priority` is a plain string with a manual `field_validator`, not a field typed `Priority`. A client's value then looks natural — `"high"`, `"medium"` or `"low"` instead of a magic number — and the same enum-coercion nuance is sidestepped.
+- `get_task_or_404` is the one and only place where `TaskNotFoundError` is explicitly turned into an HTTP response. That is enough for this chapter. Repeating the same `try/except` in every handler that needs a task by id does not scale. Chapter 14 shows how to remove the repetition with a single application-level exception handler.
+- `filter_by_status`, `sort_tasks` and `get_page` are called in `routes.py` exactly the way they are called in `cli/commands.py`. None of them knows, or needs to know, that they now have two callers instead of one: the CLI and HTTP.
 
 ## Check yourself
 
 1. Why does `TaskRead.model_validate(task).model_dump_json()` for a `priority: str` field print `"2"`, not `"high"`, if `Priority.__str__` explicitly returns `"high"` for `Priority.HIGH`?
-2. How does a Pydantic `BaseModel` differ from `TypedDict` (chapter 10) in terms of what happens when you call `SomeModel.model_validate(data that doesn't match the schema)`?
+2. How does a Pydantic `BaseModel` differ from `TypedDict` (chapter 10)? Compare what happens when you call `SomeModel.model_validate(...)` on data that does not match the schema.
 3. Why did the blank-task-text bug surface specifically while testing through the API, even though the `add_task` code containing the mistake hadn't changed since chapter 08?
-4. Moving `return Task(...)` inside the `async with db_connection()` block in `add_task` — why does that change whether the `INSERT` commits or rolls back, if the `Task` constructor raises an exception?
+4. In `add_task`, move `return Task(...)` inside the `async with db_connection()` block. Why does that change whether the `INSERT` commits or rolls back, if the `Task` constructor raises an exception?
 5. How does `Depends(get_task_or_404)` in FastAPI differ from constructor-based DI in Nest.js — exactly when is the dependency called, and how often is it recreated?
 
 <details>
 <summary>Answers</summary>
 
-1. Because type coercion inside Pydantic (in pydantic-core) doesn't go through Python's usual `str()`/`__str__` protocol — for `IntEnum`-like values being coerced to a string field, it uses the numeric `.value`, not whatever `str(value)` would return in ordinary Python code. A custom `__str__` is entirely ignored by this coercion mechanism — the only way to actually get "high" is to call `str()` yourself, before the value ever reaches the Pydantic model.
-2. `TypedDict` is a purely static annotation: a `SomeTypedDict` at runtime is just a plain `dict`, and you can pass literally anything to a spot expecting one — nothing gets checked; only mypy flags the mismatch, statically. Pydantic's `BaseModel.model_validate(data)` genuinely runs a check at call time: if the data doesn't match the declared fields/types, it raises a `ValidationError` with a precise description of which field failed and why — this happens on every single call, at runtime, regardless of whether mypy was ever run over that code at all.
-3. Because previously (in the CLI, chapters 08–12), no test scenario ever passed a blank or whitespace-only text as a real argument to a task — every explicit call to `add_task`/`python -m taskman add ...` in earlier chapters used meaningful text. The API, accepting raw JSON from a client, is the first place in the project where it became genuinely easy and natural to try an edge case (`{"text": "   "}`) with no special setup — and that's exactly what finally drove execution into the line of code that had been wrong from the start.
-4. If `Task(...)` is called **after** exiting `async with db_connection()`, the `async with` block has already completed successfully with no exception — meaning the `db_connection` generator (chapter 08) has already run `await conn.commit()` before the exception from the `Task` constructor even happens. If `Task(...)` is called **inside** the block instead, the exception from `__post_init__` occurs before the `async with` body finishes normally — the `db_connection` generator catches it in its own `except Exception:`, calls `await conn.rollback()`, and re-raises, never reaching `await conn.commit()` at all.
-5. In Nest.js, DI is usually constructor-based: a service is registered in a module once and injected into a controller's constructor as an already-built, usually singleton object that lives for as long as the application does. `Depends(get_task_or_404)` in FastAPI is a function call, made fresh on **every HTTP request** (unless explicitly told to cache via `use_cache`), not a once-created object — the dependency itself gets its own parameters (here, `task_id`) through the same signature-inference logic as the route itself, and lives exactly within the scope of one request, not the whole process.
+1. Because type coercion inside Pydantic (in pydantic-core) does not go through Python's usual `str()`/`__str__` protocol. For `IntEnum`-like values coerced into a string field it uses the numeric `.value`, not whatever `str(value)` would return in ordinary Python code. A custom `__str__` is entirely ignored by this coercion mechanism. The only way to get "high" is to call `str()` yourself, before the value ever reaches the Pydantic model.
+2. `TypedDict` is a purely static annotation. At runtime a `SomeTypedDict` is just a plain `dict`, and you can pass literally anything to a spot that expects one. Nothing gets checked, and only mypy flags the mismatch, statically. Pydantic's `BaseModel.model_validate(data)` genuinely runs a check at call time. If the data does not match the declared fields and types, it raises a `ValidationError` naming which field failed and why. That happens on every single call, at runtime, whether or not mypy was ever run over that code.
+3. Because in the CLI, chapters 08–12, no test scenario ever passed a blank or whitespace-only text as a real argument to a task. Every explicit call to `add_task` or `python -m taskman add ...` in earlier chapters used meaningful text. The API accepts raw JSON from a client. It is the first place in the project where trying an edge case (`{"text": "   "}`) needs no special setup. That is what finally drove execution into the line of code that had been wrong from the start.
+4. If `Task(...)` is called **after** exiting `async with db_connection()`, the block has already completed successfully with no exception. That means the `db_connection` generator (chapter 08) has already run `await conn.commit()` before the exception from the `Task` constructor even happens. If `Task(...)` is called **inside** the block instead, the exception from `__post_init__` occurs before the body finishes normally. The `db_connection` generator catches it in its own `except Exception:`, calls `await conn.rollback()` and re-raises, never reaching `await conn.commit()` at all.
+5. In Nest.js, dependency injection is usually constructor-based. A service is registered in a module once. It is injected into a controller's constructor as an already-built, usually singleton object that lives as long as the application does. `Depends(get_task_or_404)` in FastAPI is a function call instead, made fresh on **every HTTP request** unless you explicitly cache it via `use_cache`. The dependency gets its own parameters (here, `task_id`) through the same signature-inference logic as the route itself. It lives exactly within the scope of one request, not the whole process.
 
 </details>
 
 ## Common mistake
 
-The most treacherous mistake in this chapter isn't about FastAPI syntax — it's silently trusting that Pydantic "just converts" an object into a model the way you'd intuitively expect, including respecting custom `__str__`/`__repr__`. A developer used to dataclasses (chapter 04), where `str(obj)` always calls exactly what you wrote in `__str__`, naturally expects the same from `model_validate(obj, from_attributes=True)` with a `str` field — and gets silently wrong data (`"2"` instead of `"high"`) with no error or warning at development time at all. This isn't caught while writing the code, and it isn't caught by "happy path" tests — it's only caught when someone actually looks at the real contents of the JSON response, which is exactly why this chapter was built around actually running the server and hitting it with `curl`, not just reading code.
+The most treacherous mistake in this chapter isn't about FastAPI syntax. It is silently trusting that Pydantic "just converts" an object into a model the way you would intuitively expect, custom `__str__`/`__repr__` included.
 
-The second mistake is taking "well, FastAPI is smart, it'll figure out domain exceptions somehow" on faith, without checking it in practice. `TaskNotFoundError`, if nothing explicitly catches it, doesn't turn into a clean `404` on its own — FastAPI hands it back as-is, as a generic `500 Internal Server Error`, exactly the way it would treat any other unhandled exception. `get_task_or_404` in this chapter is a deliberately local, one-off fix (one dependency, for the one route that needs it); the next chapter reveals that every new route working with a specific task would need this same `try/except` copy-pasted, unless the handling is centralized — which is exactly why that topic gets its own chapter, rather than being folded in here "while we're at it."
+A developer used to dataclasses (chapter 04) expects `str(obj)` to call exactly what was written in `__str__`. The same expectation applied to `model_validate(obj, from_attributes=True)` with a `str` field returns silently wrong data. You get `"2"` instead of `"high"`, with no error and no warning at development time.
+
+This is not caught while writing the code, and it is not caught by "happy path" tests. It is caught only when someone looks at the real contents of the JSON response. That is exactly why this chapter was built around running the server and hitting it with `curl`, not just reading code.
+
+The second mistake is taking "well, FastAPI is smart, it'll figure out domain exceptions somehow" on faith, without checking it in practice. If nothing explicitly catches `TaskNotFoundError`, it does not turn into a clean `404` on its own. FastAPI hands it back as-is, as a generic `500 Internal Server Error`, exactly the way it would treat any other unhandled exception.
+
+The `get_task_or_404` helper in this chapter is a deliberately local, one-off fix: one dependency, for the one route that needs it. The next chapter shows that every new route working with a specific task would need the same `try/except`, unless the handling is centralized. That is why the topic gets its own chapter instead of being folded in here.
