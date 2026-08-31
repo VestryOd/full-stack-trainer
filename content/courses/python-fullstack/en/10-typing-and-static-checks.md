@@ -11,9 +11,13 @@ def add(a: int, b: int) -> int:
 add("2", "2")  # runs with no error at all and returns "22" -- the hints aren't checked
 ```
 
-That sounds like "the typing isn't real" compared to TS, but the underlying model is nearly identical: TypeScript also fully erases types when compiling to JS (`tsc` is a separate step; types don't exist at the moment the compiled code actually runs). The difference isn't "Python doesn't check, TS does" — both erase types at runtime — it's **when and how mandatory** the check is: `tsc` is usually baked directly into the build (skip it and the project simply won't build), while `mypy` for Python is a separate, optional step you have to deliberately run (and one that, by default, is considerably more lenient — more on that below).
+That sounds like "the typing isn't real" compared to TS. The underlying model is nearly identical, though. TypeScript also erases types completely when it compiles to JS. The compiler `tsc` is a separate step, and types no longer exist at the moment the compiled code runs.
 
-**Optional/Union.** `Optional[X]` is exactly `Union[X, None]`; the modern syntax (PEP 604, Python 3.10+, already used throughout this course) is `X | None` and `A | B` instead of `Optional[X]`/`Union[A, B]`. The old syntax (`typing.Optional`, `typing.Union`) is still needed only for code targeting Python < 3.10, or codebases that haven't migrated off it yet.
+So the difference isn't "Python doesn't check, TS does" — both erase types at runtime. The difference is **when and how mandatory** the check is. In TS, `tsc` is usually baked directly into the build: skip it and the project simply won't build. In Python, `mypy` is a separate, optional step you have to run deliberately. It is also far more lenient by default, and we come back to that below.
+
+**Optional/Union.** `Optional[X]` is exactly `Union[X, None]`. The modern syntax writes `X | None` and `A | B` instead of `Optional[X]` and `Union[A, B]`. It arrived in Python 3.10 through PEP 604 (Python Enhancement Proposal — the numbered documents in which changes to the language are designed). This course uses it throughout.
+
+The old syntax (`typing.Optional`, `typing.Union`) is still needed in two cases only. One is code that must run on Python below 3.10. The other is a codebase that hasn't migrated off it yet.
 
 **TypedDict — typing a dict with a known shape.** The direct counterpart of a TS interface, specifically for the case "this is a `dict` with a fixed set of keys," not an arbitrary class:
 
@@ -28,16 +32,25 @@ class TaskDict(TypedDict):
 
 def load_from_json(raw: list[TaskDict]) -> list[Task]:
     return [
-        Task(id=t["id"], text=t["text"], priority=Priority[t["priority"].upper()], done=t["done"])
+        Task(
+            id=t["id"],
+            text=t["text"],
+            priority=Priority[t["priority"].upper()],
+            done=t["done"],
+        )
         for t in raw
     ]
 ```
 
-Important: `TypedDict` is a **purely static** construct, like everything else in this chapter. At runtime, a `TaskDict` is just a plain `dict` — nothing checks that it actually has all the required keys with the right types; only `mypy` statically confirms that code working with a `TaskDict` treats it consistently. (Chapter 13 introduces Pydantic models, which look similar but, unlike `TypedDict`, **actually validate data at runtime** — a fundamental difference we'll come back to.)
+Important: `TypedDict` is a **purely static** construct, like everything else in this chapter. At runtime a `TaskDict` is just a plain `dict`. Nothing checks that it actually has all the required keys with the right types. Only `mypy` statically confirms that code working with a `TaskDict` treats it consistently.
 
-On the subject of where `TypedDict` fits in this course: `Task` in this project has deliberately been a dataclass, not a dict, since chapter 04 — precisely to get `__eq__`/`__lt__`/validation via `__post_init__` for free. So there's no natural spot for `TypedDict` inside `taskman` itself — but the optional chapter 08 exercise (the JSON-file version, `storage/json_file.py`) genuinely worked with `list[dict]`-shaped data before converting it into `Task` objects. If you kept that file around, `TaskDict` is exactly the place to apply this chapter's material in practice.
+Chapter 13 introduces Pydantic models. They look similar, but unlike `TypedDict` they **actually validate data at runtime**. That is a fundamental difference, and we come back to it.
 
-**Protocol — the structural typing promised in chapter 04.** Chapter 4 covered `ABC` as **nominal** typing: a class must explicitly inherit, or it doesn't count as a subtype, even with identically matching methods. `Protocol` is the direct structural counterpart of TS's `interface`: an object satisfies the protocol if it has the right methods with the right signatures, **with no explicit inheritance at all**:
+Where does `TypedDict` fit in this course? Since chapter 04, `Task` in this project has deliberately been a dataclass, not a dict. That choice gives us `__eq__`, `__lt__` and validation via `__post_init__` for free.
+
+So there is no natural spot for `TypedDict` inside `taskman` itself. The optional chapter 08 exercise is a different matter. Its JSON-file version, `storage/json_file.py`, really did work with `list[dict]`-shaped data before converting it into `Task` objects. If you kept that file, `TaskDict` is exactly the place to apply this chapter in practice.
+
+**Protocol — the structural typing promised in chapter 04.** Chapter 4 covered `ABC` as **nominal** typing: a class must explicitly inherit, or it doesn't count as a subtype, even with identically matching methods. `Protocol` is the direct structural counterpart of TS's `interface`. An object satisfies the protocol if it has the right methods with the right signatures, **with no explicit inheritance at all**:
 
 ```python
 from typing import Protocol
@@ -48,7 +61,9 @@ class TaskStorage(Protocol):
     def list_tasks(self) -> list[Task]: ...
 ```
 
-Any object (or, as we'll see in the project, even a **module** — it's just an object with attributes too) with `add_task`/`find_task`/`list_tasks` methods of the right shape satisfies `TaskStorage`, even though nowhere does it say `class X(TaskStorage):`. That's exactly the difference between "ABC — a commitment declared up front" and "Protocol — a shape verified after the fact."
+Any object with `add_task`, `find_task` and `list_tasks` methods of the right shape satisfies `TaskStorage`. Nowhere does it have to say `class X(TaskStorage):`. In the project we will see that even a **module** qualifies, because a module is also just an object with attributes.
+
+That's exactly the difference between "ABC — a commitment declared up front" and "Protocol — a shape verified after the fact."
 
 **Generics (TypeVar).** A function that works with any type, but ties its input and output to the same specific type on each individual call:
 
@@ -64,9 +79,11 @@ first([1, 2, 3])        # T = int, returns an int
 first(["a", "b"])        # T = str, returns a str
 ```
 
-A direct counterpart of `function first<T>(items: T[]): T` in TS — the idea itself isn't new, only the declaration syntax differs. Python 3.12+ introduced modern syntax (PEP 695): `def first[T](items: list[T]) -> T:`, with no separate `T = TypeVar("T")` declaration — noticeably closer to TS's `<T>` directly. This course targets 3.11+, so we use the classic explicit-`TypeVar` form throughout, but it's worth knowing this alternative exists on newer versions.
+This is a direct counterpart of `function first<T>(items: T[]): T` in TS. The idea itself isn't new; only the declaration syntax differs.
 
-**`ParamSpec` — a specialized generic for decorators.** A separate tool for the specific case "write a decorator that preserves the EXACT signature of whatever it wraps":
+Python 3.12+ introduced a modern syntax, PEP 695: `def first[T](items: list[T]) -> T:`. There is no separate `T = TypeVar("T")` declaration, which is noticeably closer to TS's own `<T>`. This course targets 3.11+, so we use the classic explicit `TypeVar` form throughout. It is still worth knowing the alternative exists on newer versions.
+
+**`ParamSpec` — a specialized generic for decorators.** A separate tool for the specific case "write a decorator that preserves the **exact** signature of whatever it wraps":
 
 ```python
 from typing import Callable, ParamSpec, TypeVar
@@ -82,32 +99,46 @@ def shout(func: Callable[P, R]) -> Callable[P, R]:
     return wrapper
 ```
 
-This is a legitimate, genuinely useful tool — but, as the worked solution below shows, it only belongs in a decorator that *genuinely* knows nothing about the contents of its arguments. Our own `log_command` (chapter 03) turns out not to fit that description — and `mypy` is exactly what caught it.
+This is a legitimate, genuinely useful tool. As the worked solution below shows, though, it only belongs in a decorator that *genuinely* knows nothing about the contents of its arguments. Our own `log_command` from chapter 03 turns out not to fit that description, and `mypy` is exactly what caught it.
 
-**mypy and "gradual typing".** mypy checks types statically, in a separate run (`mypy src/`), not as part of executing the code. By default, mypy is **lenient**: a function with zero type annotations isn't strictly checked at all (its body is effectively treated as containing values of an implicit "accept anything" type). This is fundamentally different from TS, where even a `.ts` file with no explicit annotations gets meaningful checking from `tsc`'s type inference. To get Python checking comparable to an ordinary `.ts` file, you need to explicitly turn on `strict = true` in the config (`[tool.mypy]` in `pyproject.toml`) — this flips on a whole bundle of flags at once (`disallow_untyped_defs`, `warn_return_any`, and others) that require annotating essentially everything. This is the deliberate "gradual typing" trade-off: you can type a project incrementally, file by file, without turning on strictness for everything at once — but if you want TS-like rigor, you have to explicitly ask for it, not get it by default.
+**mypy and "gradual typing".** mypy checks types statically, in a separate run (`mypy src/`), not as part of executing the code.
+
+By default mypy is **lenient**. A function with zero type annotations isn't strictly checked at all: inside it, mypy treats every value as having an unknown type that accepts anything. This is fundamentally different from TS, where even a `.ts` file with no explicit annotations gets meaningful checking from `tsc`'s type inference.
+
+To get Python checking comparable to an ordinary `.ts` file, turn on `strict = true` in the config (`[tool.mypy]` in `pyproject.toml`). That one line flips on a whole bundle of flags at once — `disallow_untyped_defs`, `warn_return_any` and others — and together they require annotating essentially everything.
+
+This is the deliberate "gradual typing" trade-off. You can type a project incrementally, file by file, without turning on strictness for everything at once. But if you want TS-like rigor, you have to ask for it explicitly instead of getting it by default.
 
 ### Parallels with JS/TS/Node:
 
-- Python's and TS's type-erasure models are actually quite similar — neither checks anything at runtime on its own; the difference is that `tsc` is usually mandatory for a build, while `mypy` is a separate, optional step.
-- `TypedDict` is the counterpart of a TS `interface` specifically for dict-shaped data; unlike chapter 13's Pydantic models (and, to some extent, JS runtime validators like zod), `TypedDict` checks nothing at runtime at all.
+- Python's and TS's type-erasure models are actually quite similar: neither checks anything at runtime on its own. The difference is that `tsc` is usually mandatory for a build, while `mypy` is a separate, optional step.
+- `TypedDict` is the counterpart of a TS `interface`, specifically for dict-shaped data. Unlike the Pydantic models of chapter 13 (and, to some extent, JS runtime validators like zod), `TypedDict` checks nothing at runtime at all.
 - `Protocol` is structural typing, the direct counterpart of `interface` in TS (shape-based compatibility); `ABC` from chapter 04 is nominal (compatibility via explicit inheritance).
-- `TypeVar`/generics is the same idea as `<T>` in TS, just a different declaration syntax; PEP 695 (Python 3.12+) brings the syntax noticeably closer to TS's own.
+- `TypeVar` and generics are the same idea as `<T>` in TS, just a different declaration syntax. PEP 695 (Python 3.12+) brings the syntax noticeably closer to TS's own.
 - mypy by default is considerably more lenient than `tsc`'s default — strictness has to be turned on explicitly (`strict = true`), not received for free.
 
 ## What we're adding to the project
 
-We're fully typing the storage layer and the models, adding `mypy` as a dev dependency with a strict config (`strict = true`), genericizing `paginate`/`get_page` via `TypeVar` (they were never really specific to `Task` to begin with), introducing a `Protocol TaskStorage` describing the shape of the storage layer (the promise from chapter 04, finally delivered on), and adding a CI stub — a minimal workflow file that actually runs `mypy` and `pytest` on every push. Along the way, `mypy --strict` turns up several genuine typing gaps left over from earlier chapters — we fix them as we go, with no invented examples needed.
+This chapter adds five things:
+
+- Full typing for the storage layer and the models.
+- `mypy` as a dev dependency, with a strict config (`strict = true`).
+- Generic `paginate` and `get_page` via `TypeVar`. They were never really specific to `Task` to begin with.
+- A `Protocol TaskStorage` describing the shape of the storage layer — the promise from chapter 04, finally delivered on.
+- A stub for CI (continuous integration): a minimal workflow file that really runs `mypy` and `pytest` on the server after every push.
+
+Along the way `mypy --strict` turns up several genuine typing gaps left over from earlier chapters. We fix them as we go, with no invented examples needed.
 
 ## Practical exercise
 
 1. Add `mypy` to `[project.optional-dependencies] dev` in `pyproject.toml`, add a `[tool.mypy]` section with `python_version = "3.11"` and `strict = true`.
-2. Run `mypy src` against the current state of the project (chapters 06–09) and look at the real list of errors — don't guess ahead of time what will be in it.
+2. Run `mypy src` against the current state of the project (chapters 06–09). Look at the real list of errors, and don't guess ahead of time what will be in it.
 3. Add the return type `Iterator[sqlite3.Connection]` to `db_connection`.
 4. Genericize `paginate`/`get_page` in `storage/sqlite_storage.py` via `TypeVar` — they take/return `list[Task]`, but their logic never touches anything specific to `Task`'s fields.
-5. Create `storage/protocol.py` with `class TaskStorage(Protocol)`, listing the methods `cli/` actually uses (check both `cli/commands.py` and `cli/app.py` so you don't miss any). In `storage/__init__.py`, add the annotation `db: TaskStorage = sqlite_storage`.
-6. Get to `cli/commands.py` and see what mypy says about `log_command`. Before fixing anything — think about it: `log_command` was written in chapter 03 with `*args, **kwargs` specifically to "not depend on the wrapped function's exact signature." Is that still true once you look inside `wrapper`?
-7. Add `.github/workflows/ci.yml` — a minimal workflow that installs the project (`pip install -e ".[dev]"`) and runs `mypy src` and `pytest` on every push/pull request.
-8. Get `mypy src tests` down to zero errors — for the test code, add a `[[tool.mypy.overrides]]` with relaxed requirements (tests don't need to be typed as strictly as application code).
+5. Create `storage/protocol.py` with `class TaskStorage(Protocol)`, listing the methods that `cli/` actually uses. Check both `cli/commands.py` and `cli/app.py` so you don't miss any. In `storage/__init__.py`, add the annotation `db: TaskStorage = sqlite_storage`.
+6. Get to `cli/commands.py` and see what mypy says about `log_command`. Before fixing anything, think about it. The decorator `log_command` was written in chapter 03 with `*args, **kwargs` for one stated reason: not to depend on the wrapped function's exact signature. Is that still true once you look inside `wrapper`?
+7. Add `.github/workflows/ci.yml`, a minimal workflow file. It installs the project with `pip install -e ".[dev]"`, then runs `mypy src` and `pytest` on every push and pull request.
+8. Get `mypy src tests` down to zero errors. For the test code, add a `[[tool.mypy.overrides]]` section with relaxed requirements: tests don't need to be typed as strictly as application code.
 
 ## Worked solution
 
@@ -346,7 +377,9 @@ def print_err(*args: Any, **kwargs: Any) -> None:
     print(*args, file=sys.stderr, **kwargs)
 
 
-def log_command(func: Callable[[argparse.Namespace], R]) -> Callable[[argparse.Namespace], R]:
+def log_command(
+    func: Callable[[argparse.Namespace], R],
+) -> Callable[[argparse.Namespace], R]:
     @functools.wraps(func)
     def wrapper(args: argparse.Namespace) -> R:
         print_err(f"[log] running: {args.command}")
@@ -423,37 +456,51 @@ jobs:
 
 Key decisions — and what `mypy --strict` actually found:
 
-- **`paginate`/`get_page` became generic (`TypeVar("T")`) with zero changes to the function bodies.** That's a clean signal that their `Task`-specificity was accidental to begin with — the code never touched any `Task` field, it only ever collected items into lists. Side benefit: these functions are now reusable for paginating anything, not just tasks.
+- **`paginate`/`get_page` became generic (`TypeVar("T")`) with zero changes to the function bodies.** That's a clean signal that their `Task`-specificity was accidental to begin with. The code never touched any `Task` field; it only ever collected items into lists. Side benefit: these functions are now reusable for paginating anything, not just tasks.
 
-- **`log_command` had to be retyped concretely, not via `ParamSpec`.** The first attempt was to type the decorator as generically as possible, via `Callable[P, R]`/`P.args`/`P.kwargs`, exactly like the theory example. `mypy --strict` immediately flagged: with `*args: P.args`, `args[0]` has type `object`, and `object` has no attribute `.command`. That's not a mypy shortcoming — mypy is honestly saying: "you're claiming this decorator knows nothing about the wrapped function's signature, but the code inside `wrapper` explicitly reads `.command` off the first argument — meaning it **does** know it's an `argparse.Namespace`." The `*args, **kwargs` in `log_command` since chapter 03 were never really about polymorphism — they were about not hardcoding a parameter name, while the function itself always assumed exactly one argument of a specific shape. The honest typing — `Callable[[argparse.Namespace], R] -> Callable[[argparse.Namespace], R]` — isn't a narrower claim than before, it's a more **truthful** one.
+- **`log_command` had to be retyped concretely, not via `ParamSpec`.** The first attempt was to type the decorator as generically as possible, via `Callable[P, R]`/`P.args`/`P.kwargs`, exactly like the theory example. Running `mypy --strict` flagged it immediately. With `*args: P.args`, `args[0]` has type `object`, and `object` has no attribute `.command`.
 
-- **`cursor.lastrowid` is typed in the `sqlite3` stubs as `int | None`**, because in general `lastrowid` can be `None` (if the last operation wasn't an `INSERT`). We know for certain that's impossible right after an `INSERT` — `assert task_id is not None` encodes that knowledge explicitly, both for mypy (narrowing the type to `int`) and for the reader.
+  That's not a mypy shortcoming. mypy is honestly saying that you contradict yourself. You claim the decorator knows nothing about the wrapped function's signature, yet the code inside `wrapper` reads `.command` off the first argument. So it **does** know the argument is an `argparse.Namespace`.
 
-- **`FileLock._file`** was implicitly typed as `None` (from its single assignment site in `__init__`) — an explicit `Optional[IO[str]]` annotation plus `assert self._file is not None` in `__exit__` tells both mypy and a human reader: "by the time `__exit__` runs, the file is guaranteed open, since `__enter__` always runs first."
+  The `*args, **kwargs` in `log_command` since chapter 03 were never really about polymorphism. They were about not hardcoding a parameter name, while the function itself always assumed exactly one argument of a specific shape. The honest typing is `Callable[[argparse.Namespace], R] -> Callable[[argparse.Namespace], R]`. That is not a narrower claim than before, it is a more **truthful** one.
 
-- **Tests get their own, more relaxed mypy profile** (`[[tool.mypy.overrides]] module = "tests.*"`). Demanding full type annotations on every test function and fixture is a trade-off that doesn't pay for itself in test readability; turning off `disallow_untyped_defs`/`disallow_untyped_calls` specifically for `tests.*` keeps the strictness where it earns its keep (application code) without penalizing test code for being less formal.
+- **`cursor.lastrowid` is typed in the `sqlite3` stubs as `int | None`**, because in general `lastrowid` can be `None` (if the last operation wasn't an `INSERT`). Right after an `INSERT` we know for certain that's impossible. The line `assert task_id is not None` encodes that knowledge explicitly, both for mypy (which narrows the type to `int`) and for the reader.
+
+- **`FileLock._file`** was implicitly typed as `None`, because `__init__` is its only assignment site. Two changes fix that: an explicit `Optional[IO[str]]` annotation, and `assert self._file is not None` in `__exit__`. Together they tell mypy and a human reader the same thing. By the time `__exit__` runs, the file is guaranteed open, because `__enter__` always runs first.
+
+- **Tests get their own, more relaxed mypy profile** (`[[tool.mypy.overrides]] module = "tests.*"`). Demanding full type annotations on every test function and fixture costs more in test readability than it returns. Turning off `disallow_untyped_defs` and `disallow_untyped_calls` for `tests.*` keeps the strictness where it is worth most, in application code. Test code is not punished for being less formal.
 
 ## Check yourself
 
 1. Why doesn't `add("2", "2")` from the first theory example raise or crash, even though both arguments are annotated as `int`? What exactly does — and doesn't — the type hint in that signature check?
 2. What's the difference between `TypedDict` and `Protocol`, if both are about "the shape of data"? What kind of data is each more naturally suited to?
-3. `db: TaskStorage = sqlite_storage` — but nowhere in `sqlite_storage.py` does it say anything like "this module implements `TaskStorage`." How does mypy check this line at all, and what happens if you remove one method from `TaskStorage` (say, `get_page`)?
-4. The first attempt at typing `log_command` via `ParamSpec`/`Callable[P, R]` produced an error on `namespace.command` inside `wrapper`. Explain in your own words why `P.args` gives mypy no information about the type of `args[0]`, and why that's not a shortcoming of `ParamSpec` but a deliberate limitation.
+3. The line `db: TaskStorage = sqlite_storage` works, but nowhere in `sqlite_storage.py` does it say anything like "this module implements `TaskStorage`". How does mypy check this line at all? And what happens if you remove one method from `TaskStorage`, say `get_page`?
+4. The first attempt at typing `log_command` via `ParamSpec`/`Callable[P, R]` produced an error on `namespace.command` inside `wrapper`. Why does `P.args` give mypy no information about the type of `args[0]`? Explain in your own words why that is a deliberate limitation, not a shortcoming of `ParamSpec`.
 5. What does "mypy is gradual typing by default" mean, and what exactly does the `strict = true` flag change? Why doesn't a function with zero type annotations trigger mypy errors by default, even if it contains obvious, type-related logic errors inside?
 
 <details>
 <summary>Answers</summary>
 
-1. Type hints in Python don't participate in code execution at all — the interpreter reads them (storing them in the function's `__annotations__`), but never checks that call arguments actually match. `int` in the signature is a statement of intent for the reader and a hint for an external tool like mypy, not a runtime contract Python itself enforces. Checking only happens if you **specifically run** it — statically, via `mypy`, separately from running the program.
-2. `TypedDict` describes the shape of a value that physically remains an ordinary `dict` at runtime — a natural fit for JSON-like data with no dedicated class: configs, external API responses, "raw" data before it's turned into something more structured. `Protocol` describes the shape of **behavior** — what methods an object must have, regardless of its actual class hierarchy — a natural fit when what matters is "what this object can do," not "how its data is laid out." They overlap little: `Protocol` almost never describes a dict's shape, and `TypedDict` never describes an object with methods.
-3. mypy checks the assignment `db: TaskStorage = sqlite_storage` by structurally comparing **the set of attributes on the object on the right** (here, a module, which — like any object — has attributes: the functions defined in it) against the set of methods declared on `TaskStorage`: for each protocol method, mypy looks for a same-named attribute on `sqlite_storage` with a compatible signature. No explicit "declaration" from `sqlite_storage.py` is required — that's the whole point of structural typing. Removing `get_page` from `TaskStorage` breaks nothing (the protocol simply stops requiring that method); removing `get_page` from `sqlite_storage.py` itself while leaving it in `TaskStorage`, on the other hand, makes the `db: TaskStorage = sqlite_storage` assignment fail type-checking with something like `Module has no attribute "get_page"` — exactly what happened in practice with several methods on the first, incomplete version of the protocol.
-4. `P.args` isn't "the type of each positional argument individually" — it's a special, deliberately opaque marker meaning "exactly whatever set of positional arguments the original function `func` accepts, whatever that turns out to be." `ParamSpec` exists for one specific job — guaranteeing that the call `func(*args, **kwargs)` inside the wrapper stays type-safe regardless of `func`'s signature — and nothing more. It deliberately won't let you reach inside `args` and rely on a specific element's concrete type — otherwise the decorator would stop being genuinely universal: it would only work for functions whose first argument really has the needed attribute, while declaring it via `ParamSpec` claims the opposite — "for absolutely any signature." If the code inside the wrapper relies on specific knowledge about the arguments' contents, that knowledge needs to be declared honestly, not smuggled through a tool specifically designed not to carry that information.
-5. "Gradual typing" means typing in Python isn't all-or-nothing: you can type only part of a codebase, leaving the rest with no annotations at all, and mypy by default won't demand more from the untyped parts — a function with zero type annotations isn't analyzed for internal type mismatches at all by default (its body is effectively treated as holding values of an implicit "accepts anything" type). `strict = true` turns on a whole bundle of individually stricter flags at once (`disallow_untyped_defs`, `warn_return_any`, and others) that together require: every function must be fully annotated, and its body gets genuine, meaningful type checking — flipping the posture from "don't get in untyped code's way" to "require typing almost everywhere," comparable in rigor to an ordinary `.ts` file under `tsc`.
+1. Type hints in Python don't participate in code execution at all. The interpreter reads them and stores them in the function's `__annotations__`, but never checks that call arguments actually match. The `int` in the signature is a statement of intent for the reader and a hint for an external tool like mypy. It is not a runtime contract that Python itself enforces. Checking happens only if you **specifically run** it: statically, via `mypy`, separately from running the program.
+2. `TypedDict` describes the shape of a value that physically remains an ordinary `dict` at runtime. That is a natural fit for JSON-like data with no dedicated class. Think of configs, external API responses, and "raw" data before it is turned into something more structured. `Protocol` describes the shape of **behavior**: what methods an object must have, regardless of its actual class hierarchy. It fits when what matters is what the object can do, not how its data is laid out. The two overlap little. `Protocol` almost never describes a dict's shape, and `TypedDict` never describes an object with methods.
+3. mypy checks the assignment `db: TaskStorage = sqlite_storage` structurally. It compares **the set of attributes on the object on the right** against the set of methods declared on `TaskStorage`. The object on the right is a module, and a module — like any object — has attributes: the functions defined in it. For each protocol method, mypy looks for a same-named attribute on `sqlite_storage` with a compatible signature. No explicit "declaration" from `sqlite_storage.py` is required, and that is the whole point of structural typing. Removing `get_page` from `TaskStorage` breaks nothing: the protocol simply stops requiring that method. The opposite case is more interesting. Remove `get_page` from `sqlite_storage.py` while leaving it in `TaskStorage`, and the assignment fails type-checking with something like `Module has no attribute "get_page"`. That is exactly what happened in practice with several methods on the first, incomplete version of the protocol.
+4. `P.args` isn't "the type of each positional argument individually". It is a special, deliberately opaque marker. It means "exactly whatever set of positional arguments the original function `func` accepts, whatever that turns out to be". `ParamSpec` exists for one specific job and nothing more: guaranteeing that the call `func(*args, **kwargs)` inside the wrapper stays type-safe regardless of `func`'s signature. So it deliberately won't let you reach inside `args` and rely on the concrete type of a specific element. Otherwise the decorator would stop being genuinely universal. It would work only for functions whose first argument really has the needed attribute, while the `ParamSpec` declaration claims the opposite: "for absolutely any signature". If the code inside the wrapper relies on specific knowledge about the arguments, that knowledge has to be declared honestly. Do not smuggle it through a tool designed not to carry that information.
+5. "Gradual typing" means typing in Python isn't all-or-nothing. You can type only part of a codebase and leave the rest with no annotations at all. By default mypy won't demand more from the untyped parts: a function with zero type annotations isn't analyzed for internal type mismatches at all. Inside such a function mypy treats every value as having an unknown type that accepts anything. The flag `strict = true` turns on a whole bundle of individually stricter flags at once — `disallow_untyped_defs`, `warn_return_any` and others. Together they require two things: every function must be fully annotated, and its body gets genuine, meaningful type checking. That flips the posture from "don't get in untyped code's way" to "require typing almost everywhere". The result is comparable in rigor to an ordinary `.ts` file under `tsc`.
 
 </details>
 
 ## Common mistake
 
-The most common and most dangerous mistake is assuming that once a function is annotated (`def handle(task_id: int) -> Task:`), Python itself will protect against calling it with the wrong argument type, the way you'd intuitively expect from a typed language. That's not the case, and the gap doesn't show up right away: code with type annotations **looks** like typed, disciplined code, but without a separate mypy run (and especially without `strict = true` and without wiring that run into CI, as we did in this chapter), the annotations are just comments with stricter syntax that nothing actually checks. In practice this means: if a developer added type hints but never ran `mypy` (or ran it without `strict`, where half the real errors are silently skipped for untyped code), a project can accumulate type mismatches for months, behaving no differently from a fully untyped one — right up until the first real strict-mypy run, which, as this chapter showed on our own code, finds things genuinely worth fixing (an `Optional[int]`/`int` mismatch, an untyped attribute, a decorator that was lying about its own generality).
+The most common and most dangerous mistake is to assume that an annotation protects you. Take a signature like `def handle(task_id: int) -> Task:`. It looks as if Python itself will reject a call with the wrong argument type, the way a typed language would. It won't, and the gap doesn't show up right away.
 
-The second common mistake runs in the opposite direction but is closely related: reacting to "I need to type some generic-looking code" with the reflex of reaching for the most powerful tool available (`ParamSpec`, deeply nested `TypeVar`s), without first checking whether the code is actually as generic as it looks. That's exactly what happened with `log_command`: typing it as "works with absolutely any signature" was technically possible (the code would have compiled), but mypy flagged a mismatch on the very first meaningful line inside the function body — because the decorator was never really generic; it always implicitly assumed `argparse.Namespace`. Typing isn't just about "making mypy stop complaining" — it's about making the declared type reflect what the code **actually** does, not what you'd like it to be.
+Code with type annotations **looks** like typed, disciplined code. Without a separate mypy run it isn't. That is doubly true without `strict = true`, and without wiring the run into CI as we did in this chapter. Until then the annotations are just comments with stricter syntax that nothing checks.
+
+In practice it goes like this. A developer adds type hints but never runs `mypy`, or runs it without `strict`, where half the real errors are silently skipped for untyped code. The project can then accumulate type mismatches for months and behave no differently from a fully untyped one.
+
+That lasts right up until the first real strict-mypy run. That run finds things genuinely worth fixing. The chapter showed three on our own code: an `Optional[int]`/`int` mismatch, an untyped attribute, and a decorator lying about its own generality.
+
+The second common mistake runs in the opposite direction, but it is closely related. You see generic-looking code and reach for the most powerful tool available: `ParamSpec`, or deeply nested `TypeVar`s. What you skip is the first check — is the code really as generic as it looks?
+
+That's exactly what happened with `log_command`. Typing it as "works with absolutely any signature" was technically possible, and the code would have compiled. But mypy flagged a mismatch on the very first meaningful line inside the function body, because the decorator was never really generic. It always implicitly assumed `argparse.Namespace`.
+
+Typing isn't just about making mypy stop complaining. It is about making the declared type reflect what the code **actually** does, not what you'd like it to be.

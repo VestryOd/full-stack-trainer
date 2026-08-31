@@ -2,14 +2,16 @@
 
 ## Theory
 
-**`pytest-asyncio` — finally, no more workaround.** Since chapter 12, async code has been tested with the trick "an ordinary synchronous `def test_...():`, with a nested `async def scenario(): ...` inside plus `asyncio.run(scenario())`" — deliberately, to avoid pulling in an extra dependency too early. Now that there are noticeably more tests and a real async HTTP client in the mix, the trick gets heavy, and `pytest-asyncio` earns its keep:
+**`pytest-asyncio` — finally, no more workaround.** Since chapter 12, async code has been tested with a trick. The test itself stayed an ordinary synchronous `def test_...():`. The async part lived in a nested `async def scenario()`, which the test ran via `asyncio.run(scenario())`.
+
+That was deliberate: it avoided pulling in an extra dependency too early. Now there are noticeably more tests, and a real async HTTP client in the mix. The trick has become heavy, and `pytest-asyncio` is worth adding:
 
 ```toml
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 ```
 
-With `asyncio_mode = "auto"`, test functions can be written directly as `async def test_...(): await ...` — pytest wraps them in an event loop itself, with no `@pytest.mark.asyncio` needed on every one.
+With `asyncio_mode = "auto"`, test functions can be written directly as `async def test_...(): await ...`. Pytest wraps each one in an event loop itself, so `@pytest.mark.asyncio` is no longer needed on every test.
 
 ```python
 async def test_add_task(db):
@@ -17,9 +19,15 @@ async def test_add_task(db):
     assert task.id == 1
 ```
 
-Fixtures can be async too — via `@pytest_asyncio.fixture` (not the plain `@pytest.fixture`) with `async def` and `yield` inside — the same generator mechanics as always (chapters 06/07/09), just now both the fixture and the test it feeds run in the exact same event loop, instead of "one function's loop" and "a different function's loop."
+Fixtures can be async too. You declare them with `@pytest_asyncio.fixture` (not the plain `@pytest.fixture`), using `async def` and a `yield` inside. That is the same generator mechanics as always (chapters 06/07/09).
 
-**`TestClient` vs `httpx.AsyncClient` — when to reach for which.** `TestClient` (chapter 15) is a synchronous wrapper, sufficient almost all the time. `httpx.AsyncClient` with `ASGITransport(app=app)` is needed when the test itself needs to stay a coroutine — for example, to genuinely verify concurrent handling of several requests via `asyncio.gather` (chapter 12), rather than calling endpoints strictly one after another:
+The gain is that the fixture and the test it feeds now run in the exact same event loop. Before, the fixture had one loop and the test had another.
+
+**`TestClient` vs `httpx.AsyncClient` — when to reach for which.** `TestClient` (chapter 15) is a synchronous wrapper, and it is enough almost all the time.
+
+ASGI (Asynchronous Server Gateway Interface) is the protocol between a Python web application and the server that runs it. `ASGITransport` speaks that protocol and hands requests straight to the app, with no network in between.
+
+Reach for `httpx.AsyncClient` with `ASGITransport(app=app)` when the test itself needs to stay a coroutine. Such a test can verify genuine concurrent handling of several requests via `asyncio.gather` (chapter 12), instead of calling endpoints one after another:
 
 ```python
 from httpx import ASGITransport, AsyncClient
@@ -32,9 +40,13 @@ async with AsyncClient(transport=transport, base_url="http://test") as client:
     )
 ```
 
-A non-obvious nuance: `ASGITransport` on its own does **not** trigger the app's `lifespan` (unlike `TestClient`, where `with TestClient(app) as client:` explicitly triggers `startup`/`shutdown`) — if a test genuinely needs the real lifespan, it has to be driven manually via `async with app.router.lifespan_context(app):`. In our case this isn't a problem: the `db` fixture creates the database schema directly, without relying on the app's lifespan at all.
+A non-obvious nuance: `ASGITransport` on its own does **not** trigger the app's `lifespan`. `TestClient` behaves differently — there, `with TestClient(app) as client:` explicitly triggers `startup` and `shutdown`.
 
-**Dependency overrides — two different tools for two different purposes.** `app.dependency_overrides[get_current_user] = fake_user` (chapter 15) is the right fit when authentication itself isn't the thing being tested — fast, with no real password or token involved. But testing authentication **itself** (registration, login, rejecting a wrong password) needs the opposite approach — a real user, a real JWT, no overrides at all:
+If a test genuinely needs the real lifespan, it has to be driven manually via `async with app.router.lifespan_context(app):`. In our case this isn't a problem: the `db` fixture creates the database schema directly, without relying on the app's lifespan at all.
+
+**Dependency overrides — two different tools for two different purposes.** Use `app.dependency_overrides[get_current_user] = fake_user` (chapter 15) when authentication itself isn't the thing being tested. It is fast, and no real password or token is involved.
+
+Testing authentication **itself** needs the opposite approach: a real user, a real JWT (JSON Web Token), and no overrides at all. That covers registration, login, and rejecting a wrong password:
 
 ```python
 @pytest_asyncio.fixture
@@ -45,30 +57,49 @@ async def authenticated_client(client, db):
     return client
 ```
 
-Both approaches are needed at once, for different parts of the test suite — an override for "I don't care who's logged in," a real token for "I'm testing exactly how login works."
+Both approaches are needed at once, for different parts of the test suite. An override covers "I don't care who's logged in". A real token covers "I'm testing exactly how login works".
 
 ### Parallels with JS/TS/Node:
 
-- `pytest-asyncio` with `asyncio_mode = "auto"` ~ what Jest/Vitest do out of the box — `test('...', async () => { await ... })` with no separate declaration that the test is async.
-- `httpx.AsyncClient` + `ASGITransport` ~ `supertest` in the Node ecosystem, except it requires explicitly driving lifespan hooks if you need them — unlike some JS testing tools where server hooks fire automatically when the test instance spins up.
+- `pytest-asyncio` with `asyncio_mode = "auto"` ~ what Jest/Vitest do out of the box. You write `test('...', async () => { await ... })`, with no separate declaration that the test is async.
+- `httpx.AsyncClient` + `ASGITransport` ~ `supertest` in the Node ecosystem. The difference: you have to drive the lifespan hooks explicitly if you need them. In some JS testing tools, server hooks fire automatically when the test instance starts.
 - Overriding one specific dependency (`dependency_overrides`) ~ mocking one specific provider/service in Nest.js tests, rather than mocking the entire HTTP layer.
 
 ## What we're adding to the project
 
-We're adding `pytest-asyncio` and rewriting the tests in its style — no more nested `async def scenario(): ...; asyncio.run(...)`. Fixtures in `conftest.py` also become async (`@pytest_asyncio.fixture`), and alongside the familiar `db` (one shared in-memory SQLite connection per test), we add `client` (an `httpx.AsyncClient` over `ASGITransport`) and `authenticated_client` (the same client, but with a real JWT for a real user). `tests/test_auth_api.py` and `tests/test_tasks_api.py` give us a full set of API tests: registration, login, access with no token, task isolation between users, `404` for someone else's/a nonexistent task, and a genuine concurrency test via `asyncio.gather`.
+We're adding `pytest-asyncio` and rewriting the tests in its style, with no more nested `async def scenario(): ...; asyncio.run(...)`. Fixtures in `conftest.py` also become async (`@pytest_asyncio.fixture`).
 
-Along the way, this more thorough test suite turns up a real, hidden bug in `storage/users_storage.py` — not hypothetical, one that genuinely breaks the tests on the very first run.
+Alongside the familiar `db` (one shared in-memory SQLite connection per test) we add two more fixtures. One is `client`, an `httpx.AsyncClient` over `ASGITransport`. The other is `authenticated_client` — the same client, but carrying a real JWT for a real user.
+
+Two new files, `tests/test_auth_api.py` and `tests/test_tasks_api.py`, give us a full set of API tests:
+
+- registration and login;
+- access with no token;
+- task isolation between users;
+- `404` for someone else's task and for a nonexistent one;
+- a genuine concurrency test via `asyncio.gather`.
+
+Along the way, this more thorough test suite turns up a real, hidden bug in `storage/users_storage.py`. It is not hypothetical: it genuinely breaks the tests on the very first run.
 
 ## Practical exercise
 
 1. Add `pytest-asyncio` to dev dependencies and `asyncio_mode = "auto"` to `[tool.pytest.ini_options]`.
-2. Rewrite the `db` fixture in `conftest.py` as `@pytest_asyncio.fixture` (`async def` + `yield`), removing the `asyncio.run(...)` wrappers — the fixture and the test's code should run in the same event loop.
+2. Rewrite the `db` fixture in `conftest.py` as `@pytest_asyncio.fixture` (`async def` + `yield`) and remove the `asyncio.run(...)` wrappers. The fixture and the test's code should run in the same event loop.
 3. Add a `client` fixture: an `httpx.AsyncClient` with `ASGITransport(app=app)`, depending on `db` (so the database schema is ready before the first request).
 4. Add an `authenticated_client` fixture: creates a real user via `users_storage.create_user`, a real token via `create_access_token`, and returns `client` with the `Authorization` header already set.
 5. Rewrite `tests/test_storage.py`/`tests/test_cli.py` from chapter 15 in pytest-asyncio style — drop `asyncio.run(...)`, make the test functions themselves `async def`.
-6. Write `tests/test_auth_api.py`: registration creates a user; registering the same username again gets `400`; logging in with the right password returns a token; logging in with the wrong password gets `401`.
-7. Write `tests/test_tasks_api.py`: a protected route with no token gets `401`; creating and listing tasks through `authenticated_client`; `404` (nothing else) for a nonexistent task; full isolation between two different users (the second sees none of the first's tasks); a concurrency test — three simultaneous `POST /tasks` via `asyncio.gather`, each getting its own unique `id`.
-8. Run the whole suite. If some test fails with a username-uniqueness violation before the test body has even run — don't rush to rename users in the tests to something different. Work out why the `db` fixture, which gives every test a fresh in-memory connection, doesn't save you from the collision.
+6. Write `tests/test_auth_api.py` with four tests:
+   - registration creates a user;
+   - registering the same username again gets `400`;
+   - logging in with the right password returns a token;
+   - logging in with the wrong password gets `401`.
+7. Write `tests/test_tasks_api.py` with five tests:
+   - a protected route with no token gets `401`;
+   - creating and listing tasks through `authenticated_client`;
+   - `404` (and nothing else) for a nonexistent task;
+   - full isolation between two users — the second sees none of the first's tasks;
+   - a concurrency test: three simultaneous `POST /tasks` via `asyncio.gather`, each getting its own unique `id`.
+8. Run the whole suite. Some test may fail with a username-uniqueness violation before its body has even run. Don't rush to rename users in the tests. Work out why the `db` fixture, which gives every test a fresh in-memory connection, doesn't save you from the collision.
 
 ## Worked solution
 
@@ -138,7 +169,7 @@ async def client(db: TaskStorage):
 
 @pytest_asyncio.fixture
 async def authenticated_client(client: AsyncClient, db: TaskStorage) -> AsyncClient:
-    """A client pre-authenticated as a real, freshly-created user (real JWT, no override)."""
+    """Client pre-authenticated as a real, freshly-created user (real JWT)."""
     user = await users_storage.create_user("alice", hash_password("secret123"))
     token = create_access_token(user.username)
     client.headers["Authorization"] = f"Bearer {token}"
@@ -240,7 +271,9 @@ async def test_concurrent_requests_are_handled_independently(authenticated_clien
     assert ids == [1, 2, 3]
 ```
 
-Now, about the question from exercise 8. The first real run of the full suite failed like this: `test_register_creates_a_user` (the very first test in the whole suite!) suddenly failed with `400` instead of `201`, as if `alice` already existed — even though every test gets its own, fresh in-memory connection via the `db` fixture. The cause turned out to be in `storage/users_storage.py`, written back in chapter 15:
+Now, about the question from exercise 8. The first real run of the full suite failed like this. The very first test in the whole suite, `test_register_creates_a_user`, suddenly failed with `400` instead of `201`, as if `alice` already existed.
+
+And yet every test gets its own, fresh in-memory connection via the `db` fixture. The cause turned out to be in `storage/users_storage.py`, written back in chapter 15:
 
 ```python
 # BEFORE the fix:
@@ -251,9 +284,13 @@ async def create_user(username: str, hashed_password: str) -> User:
         ...
 ```
 
-`monkeypatch.setattr(sqlite_storage, "db_connection", fake_db_connection)` replaces the `db_connection` attribute **on the `sqlite_storage` module itself** — but `users_storage.py` had imported the name `db_connection` directly (`from .sqlite_storage import db_connection`), creating a separate, independent binding to the original function in its own namespace, right at import time. Patching the attribute on the `sqlite_storage` module doesn't touch that local binding at all — `users_storage.create_user`/`get_user_by_username` kept reading and writing the **real** `taskman.db` file on disk, completely bypassing the in-memory fixture. That's exactly why `alice`, once created (even in an earlier, separate manual CLI or API run), stayed in the real file and got in the way of every subsequent test.
+The call `monkeypatch.setattr(sqlite_storage, "db_connection", fake_db_connection)` replaces the `db_connection` attribute **on the `sqlite_storage` module itself**. But `users_storage.py` had imported the name directly, as `from .sqlite_storage import db_connection`. That import created a separate, independent binding to the original function in its own namespace.
 
-This is exactly the "import a specific name instead of the module" trap chapter 05 warned about (which is also why `cli/commands.py` imports `storage` as a module rather than pulling functions out by name individually) — it just quietly slipped into `users_storage.py` and didn't show up until tests started genuinely, thoroughly hitting the database. The fix:
+Patching the attribute on the `sqlite_storage` module doesn't touch that local binding at all. So `users_storage.create_user` and `get_user_by_username` kept reading and writing the **real** `taskman.db` file on disk, completely bypassing the in-memory fixture.
+
+That is exactly why `alice` kept existing. She had been created once in an earlier manual run, through the command-line interface (CLI) or the API. That row stayed in the real file, and every subsequent test then hit it.
+
+This is exactly the "import a specific name instead of the module" trap that chapter 05 warned about. It is also why `cli/commands.py` imports `storage` as a module, rather than pulling functions out by name individually. Here the trap slipped in quietly, and it didn't show up until the tests started hitting the database thoroughly. The fix:
 
 ```python
 # AFTER the fix:
@@ -264,36 +301,46 @@ async def create_user(username: str, hashed_password: str) -> User:
         ...
 ```
 
-Calling `sqlite_storage.db_connection()` goes through the module's attribute afresh every time — and sees whatever version is currently set on `sqlite_storage`, whether that's the original or a fixture's patch.
+Calling `sqlite_storage.db_connection()` goes through the module's attribute afresh every time. It sees whatever version is currently set on `sqlite_storage` — the original, or a fixture's patch.
 
 Key decisions:
 
-- Async fixtures (`@pytest_asyncio.fixture`) guarantee that the fixture and the test run in the exact same event loop — no more guessing whether a connection object will survive the trip between separate `asyncio.run()` calls, as we had to since chapter 12.
-- `authenticated_client` is built on top of `client`, not a replacement for it — both approaches (override and a real token) coexist in the same test suite, each for its own category of checks.
-- `ASGITransport` doesn't run the app's lifespan on its own — the `db` fixture takes schema initialization on itself explicitly, which is exactly why the missing lifespan isn't a problem in tests.
-- The concurrency test (`asyncio.gather` over three parallel `POST`s) isn't just for show: it verifies that three simultaneous requests genuinely get three distinct, non-overlapping `id`s — that the storage layer (with its own connection per call, chapters 08/12) behaves correctly under real, not sequential, load.
+- Async fixtures (`@pytest_asyncio.fixture`) guarantee that the fixture and the test run in the exact same event loop. No more guessing whether a connection object survives the trip between separate `asyncio.run()` calls, as we had to since chapter 12.
+- `authenticated_client` is built on top of `client`; it is not a replacement for it. Both approaches — override and a real token — coexist in the same test suite, each for its own category of checks.
+- `ASGITransport` doesn't run the app's lifespan on its own. The `db` fixture takes schema initialization on itself explicitly, which is exactly why the missing lifespan isn't a problem in tests.
+- The concurrency test (`asyncio.gather` over three parallel `POST`s) isn't just for show. It verifies that three simultaneous requests genuinely get three distinct, non-overlapping `id`s. That means the storage layer, with its own connection per call (chapters 08/12), behaves correctly under real load, not sequential load.
 
 ## Check yourself
 
-1. How does `@pytest_asyncio.fixture` with `async def`/`yield` differ from the pattern "a synchronous fixture, with `asyncio.run(...)` inside creating the object we need" (chapters 12–15)? What specific risk did the second approach carry that the first one removes?
+1. How does `@pytest_asyncio.fixture` with `async def`/`yield` differ from the older pattern (chapters 12–15)? That pattern was a synchronous fixture with `asyncio.run(...)` inside, creating the object we need. What specific risk did it carry that the first approach removes?
 2. Why doesn't `ASGITransport(app=app)` on its own trigger the app's `lifespan`, and why doesn't that cause problems in this particular project?
-3. Describe in your own words why `from .sqlite_storage import db_connection` in `users_storage.py` makes `monkeypatch.setattr(sqlite_storage, "db_connection", ...)` useless specifically for that module, but not for `cli/commands.py`, which imports `storage` as a whole.
+3. In `users_storage.py`, the line `from .sqlite_storage import db_connection` makes `monkeypatch.setattr(sqlite_storage, "db_connection", ...)` useless for that module. Describe in your own words why. Then explain why the patch still works for `cli/commands.py`, which imports `storage` as a whole.
 4. When should you use `app.dependency_overrides[get_current_user] = fake_user`, and when `authenticated_client` with a real token? What does each approach actually verify, and what does it not?
 5. The concurrency test creates three tasks via `asyncio.gather` and checks that the resulting `id`s are `[1, 2, 3]`, with no repeats. What property of the storage layer does this actually test?
 
 <details>
 <summary>Answers</summary>
 
-1. `@pytest_asyncio.fixture` guarantees that setup (before `yield`), the test body, and teardown (after `yield`) all run in the literal same event loop, created and managed by `pytest-asyncio` itself. The "synchronous fixture + `asyncio.run(...)` inside" pattern technically worked (as verified empirically back in chapter 12), but relied on objects like `aiosqlite.Connection`, created inside one, already-closed `asyncio.run()` loop, remaining usable in a *different*, separate loop managing the test itself — that's a lucky accident of `aiosqlite`'s specific implementation, not a guarantee written down anywhere in `asyncio`'s own documentation. `pytest-asyncio` removes the need to rely on that luck at all.
-2. `ASGITransport` is just a transport that sends ASGI requests directly into the application as a function call, with none of the wrapper logic that usually handles starting/stopping a server (unlike `TestClient`, whose `with` block explicitly invokes the `lifespan` protocol). In this project that's not a problem, because the `db` fixture already creates the needed tables (`tasks`, `users`) directly, not through the app's `lifespan` — the equivalent setup happens, just through a different path.
-3. `from .sqlite_storage import db_connection` in `users_storage.py` creates a **separate, independent** binding of the name `db_connection` in `users_storage`'s own namespace, at import time — that binding points at whatever function object existed at that moment, and has no connection to later changes to the `db_connection` attribute on the `sqlite_storage` module itself. `cli/commands.py`, by contrast, imports `from ..storage import db` — the entire MODULE (more precisely, the `sqlite_storage` object that `db` points at), and calls its functions via `db.add_task(...)` — meaning it looks up the attribute on the module object fresh, every time it's called, rather than relying on a binding fixed once and for all at import time.
-4. `app.dependency_overrides[get_current_user] = fake_user` is the right fit when authentication itself isn't what's being tested — a test about filtering tasks by status shouldn't depend on whether login actually works. `authenticated_client` with a real, genuinely issued token is needed exactly when testing the authentication mechanism itself, or something that depends on it genuinely succeeding (say, that an expired or forged token is correctly rejected) — an override is useless there, because it bypasses entirely the code that needs verifying.
-5. This test verifies that when several `add_task` calls run concurrently, each through its own, independently opened connection (chapters 08/12: every call opens its own connection to SQLite), `id` assignment via `AUTOINCREMENT` stays correct and collision-free — that concurrent access to the same table doesn't result in two requests accidentally getting the same `id`, and doesn't drop any of the three requests. It's a direct, practical check that SQLite's theoretical guarantees (write serialization at the engine level) actually hold in combination with our specific way of opening a connection per call — not just in theory.
+1. `@pytest_asyncio.fixture` guarantees that setup (before `yield`), the test body and teardown (after `yield`) all run in the literal same event loop. That loop is created and managed by `pytest-asyncio` itself. The older "synchronous fixture + `asyncio.run(...)` inside" pattern technically worked, as verified empirically back in chapter 12. But it relied on luck. An `aiosqlite.Connection` was created inside one `asyncio.run()` loop, which then closed. The object then had to stay usable in a *different*, separate loop — the one managing the test itself. That is an accident of `aiosqlite`'s specific implementation, not a guarantee written down anywhere in `asyncio`'s own documentation. The `pytest-asyncio` plugin removes the need to rely on that luck at all.
+2. `ASGITransport` is just a transport. It sends ASGI requests straight into the application as a function call, with none of the wrapper logic that starts and stops a server. `TestClient` is different: its `with` block explicitly invokes the `lifespan` protocol. In this project the missing lifespan is not a problem, because the `db` fixture already creates the needed tables (`tasks`, `users`) directly. The equivalent setup happens, just through a different path.
+3. In `users_storage.py`, the line `from .sqlite_storage import db_connection` creates a **separate, independent** binding of the name `db_connection` in that module's namespace. The binding is made at import time, and it points at whatever function object existed at that moment. It has no connection to later changes to the `db_connection` attribute on the `sqlite_storage` module itself. By contrast, `cli/commands.py` writes `from ..storage import db` and imports the **whole module**. More precisely, it imports the `sqlite_storage` object that `db` points at. It then calls functions via `db.add_task(...)`, so it looks up the attribute on the module object fresh, at every call. It never relies on a binding fixed once and for all at import time.
+4. Use `app.dependency_overrides[get_current_user] = fake_user` when authentication itself isn't what's being tested. A test about filtering tasks by status shouldn't depend on whether login actually works. The `authenticated_client` fixture, with a real, genuinely issued token, is needed when you test the authentication mechanism itself. It is also needed for anything that depends on authentication genuinely succeeding — for example, checking that an expired or forged token is correctly rejected. An override is useless there, because it bypasses the very code that needs verifying.
+5. This test verifies that `id` assignment via `AUTOINCREMENT` stays correct and collision-free under concurrency. Several `add_task` calls run at the same time, each through its own connection (chapters 08/12: every call opens its own connection to SQLite). Concurrent access to the same table must not give two requests the same `id`, and must not drop any of the three requests. So this is a direct, practical check on SQLite's theoretical guarantee of write serialization at the engine level. The check is done in combination with our specific way of opening a connection per call, not in theory alone.
 
 </details>
 
 ## Common mistake
 
-The most valuable (and quietest) mistake in this chapter isn't hypothetical — it genuinely happened while building the full test suite: importing a specific function name from a module (`from .sqlite_storage import db_connection`) instead of the module itself, in code that would later need to be patched via `monkeypatch`. A developer who's already seen `monkeypatch.setattr(module, "name", fake)` in earlier chapters reasonably expects the patch to work for **any** code that eventually calls `name()` — but the patch only works for code that reaches `name` **through the module's attribute** (`module.name()`) at call time, not for code that fixed its own, local binding to the function back at import time. The mistake doesn't show up right away — the module works perfectly fine in the real application (there's no monkeypatch there at all, everything calls the real function) — and only surfaces once someone tries to test that code in isolation, and even then, not as an obvious import error but as unexplained state leaking between tests (in our case, a username-uniqueness violation exactly where the test's logic says the user should be created from scratch).
+The most valuable (and quietest) mistake in this chapter isn't hypothetical. It genuinely happened while building the full test suite. The mistake: importing a specific function name from a module, as in `from .sqlite_storage import db_connection`, instead of importing the module itself. That code would later need to be patched via `monkeypatch`.
 
-The second common mistake is setting up `httpx.AsyncClient` with `ASGITransport` and assuming that, since it "just works" for ordinary requests, the app's `lifespan` hooks (creating tables, connecting to external services on startup) must have run somewhere along the way too. Without an explicit `async with app.router.lifespan_context(app):`, that simply doesn't happen — if the test infrastructure doesn't handle state initialization some other way (as in this project, via the `db` fixture), the very first request in a test fails with something like "no such table," and the first instinct is "I must have gotten the SQL wrong," not "I forgot that `lifespan` doesn't run on its own in tests."
+A developer who has seen `monkeypatch.setattr(module, "name", fake)` in earlier chapters expects the patch to work for **any** code that calls `name()`. It doesn't. The patch only works for code that reaches `name` **through the module's attribute** (`module.name()`) at call time. Code that fixed its own local binding back at import time keeps calling the original.
+
+The mistake doesn't show up right away. The module works perfectly fine in the real application: there is no monkeypatch there at all, and everything calls the real function. It surfaces only when someone tries to test that code in isolation.
+
+Even then it does not surface as an obvious import error. It surfaces as unexplained state leaking between tests. In our case: a username-uniqueness violation, exactly where the test's logic says the user should be created from scratch.
+
+The second common mistake is about `lifespan`. You set up `httpx.AsyncClient` with `ASGITransport`, it "just works" for ordinary requests, and you assume the app's `lifespan` hooks ran too. Those hooks create tables and connect to external services on startup.
+
+Without an explicit `async with app.router.lifespan_context(app):`, that simply doesn't happen. If the test infrastructure doesn't initialize state some other way, the very first request in a test fails with something like "no such table". This project does initialize it another way, through the `db` fixture.
+
+The first instinct then is to blame your own SQL (Structured Query Language). The real cause is that `lifespan` doesn't run on its own in tests.

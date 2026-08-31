@@ -18,9 +18,9 @@ path.write_text(json.dumps(data, indent=2))
 data = json.loads(path.read_text()) if path.exists() else []
 ```
 
-`pathlib.Path` unifies what Node splits across two separate APIs: path manipulation (`path.join`, `path.resolve`) and file I/O (`fs.readFileSync`, `fs.writeFileSync`, `fs.existsSync`) — in Python these are all methods on the same object (`.read_text()`, `.write_text()`, `.exists()`, `.parent.mkdir(...)`).
+`pathlib.Path` unifies what Node splits across two separate APIs. One is path manipulation: `path.join`, `path.resolve`. The other is file input/output: `fs.readFileSync`, `fs.writeFileSync`, `fs.existsSync`. In Python these are all methods on the same object: `.read_text()`, `.write_text()`, `.exists()`, `.parent.mkdir(...)`.
 
-The naming in the `json` module isn't arbitrary: `dumps`/`loads` (with an "s" — "string") work with **strings**; `dump`/`load` (no "s") work directly with a **file object**, skipping the manual "read a string, then parse it" combination:
+The naming in the `json` module isn't arbitrary. The pair `dumps`/`loads` (with an "s", for "string") works with **strings**. The pair `dump`/`load` (no "s") works directly with a **file object**, skipping the manual "read a string, then parse it" combination:
 
 ```python
 with path.open("w") as f:
@@ -30,11 +30,15 @@ with path.open() as f:
     data = json.load(f)               # reads and parses straight from the file
 ```
 
-`JSON.stringify`/`JSON.parse` in JS are the direct counterpart of `dumps`/`loads` (string ↔ object); there's no built-in Node equivalent of `dump`/`load` (file ↔ object with no manual step) — there you'd always combine `fs.readFileSync` and `JSON.parse` by hand.
+`JSON.stringify`/`JSON.parse` in JS are the direct counterpart of `dumps`/`loads` — string to object and back. Node has no built-in equivalent of `dump`/`load`, which go from file to object with no manual step. There you'd always combine `fs.readFileSync` and `JSON.parse` by hand.
 
-**Limitations of a JSON file as storage.** Every change requires reading the **entire** file, mutating the data in memory, and rewriting the **entire** file — there's no such thing as a partial update to a single record. Filtering/search means "load everything into Python and filter there," with no way to delegate the query to the storage layer. And critically: a plain file write has no protection against concurrent writes from multiple processes — exactly the problem `FileLock` from chapter 06 was written to solve. JSON-based persistence would need the same treatment (or something even coarser — a full serialization lock on every operation, not just logging).
+**Limitations of a JSON file as storage.** Every change requires reading the **entire** file, mutating the data in memory, and rewriting the **entire** file. There is no such thing as a partial update to a single record. Filtering and search mean "load everything into Python and filter there", with no way to delegate the query to the storage layer.
 
-**SQLite: a database built into the stdlib.** `sqlite3` ships with the standard library — nothing extra to install. It's a file-based (not client-server) database engine — a single file on disk (`taskman.db`), with no separate server process to stand up and configure. For CLI tools, tests, embedded apps, it's exactly the right fit, with none of Postgres/MySQL's infrastructure overhead.
+And critically: a plain file write has no protection against concurrent writes from several processes. That is exactly the problem `FileLock` from chapter 06 was written to solve. JSON-based persistence would need the same treatment, or something even coarser — one serialization lock on every operation, not just on logging.
+
+**SQLite: a database built into the stdlib.** `sqlite3` ships with the standard library — nothing extra to install. It is a file-based, not client-server, database engine: a single file on disk (`taskman.db`), with no separate server process to stand up and configure.
+
+For a CLI (command-line interface) tool, for tests, for an embedded app it is exactly the right fit. None of the infrastructure overhead of Postgres or MySQL comes with it.
 
 ```python
 import sqlite3
@@ -53,7 +57,10 @@ conn.execute(
     """
 )
 
-cursor = conn.execute("INSERT INTO tasks (text, priority, done) VALUES (?, ?, ?)", ("Buy milk", 0, 0))
+cursor = conn.execute(
+    "INSERT INTO tasks (text, priority, done) VALUES (?, ?, ?)",
+    ("Buy milk", 0, 0),
+)
 conn.commit()
 new_id = cursor.lastrowid
 
@@ -61,9 +68,13 @@ rows = conn.execute("SELECT * FROM tasks WHERE done = ?", (0,)).fetchall()
 conn.close()
 ```
 
-A nuance specific to SQLite (not to SQL in general): SQLite doesn't enforce strict column typing — it uses "type affinity" instead, and in many cases will happily insert a string into an `INTEGER` column without raising. Postgres/MySQL are considerably stricter here — worth keeping in mind precisely because growing the project further (chapter 18, "where to grow next") typically means moving from SQLite to Postgres, where this kind of looseness gets caught much harder at `INSERT` time.
+One word in that schema deserves a note. `AUTOINCREMENT` tells SQLite never to reuse the `id` of a deleted row: every new row gets a number larger than any used before.
 
-**Parameterized queries and SQL injection.** This isn't a Python language feature — it's a universal rule for any SQL database in any language (the same is true of `pg`/`mysql2`/Prisma in Node): never build SQL text out of untrusted data via f-strings/concatenation:
+One nuance is specific to SQLite, not to SQL (structured query language) in general. SQLite doesn't enforce strict column typing. It uses "type affinity" instead, and in many cases will happily insert a string into an `INTEGER` column without raising. Postgres and MySQL are considerably stricter here.
+
+That is worth keeping in mind precisely because growing the project further (chapter 18, "where to grow next") usually means moving from SQLite to Postgres. There this kind of looseness gets caught much harder, at `INSERT` time.
+
+**Parameterized queries and SQL injection.** This isn't a Python language feature. It is a universal rule for any SQL database in any language, and `pg`, `mysql2` and Prisma in Node follow it too. Never build SQL text out of untrusted data with f-strings or concatenation:
 
 ```python
 # DANGEROUS — never do this:
@@ -78,12 +89,18 @@ cursor.execute("SELECT * FROM tasks WHERE text = ?", (user_input,))
 # it's never interpreted as part of the SQL syntax
 ```
 
-`?` is `sqlite3`'s positional placeholder (there's also a named form, `:name`, with a parameter dict). This is exactly the thing that comes up in interviews: "how do you prevent SQL injection" — the right answer is "parameterized queries / prepared statements," not "escape the quotes by hand."
+`?` is the positional placeholder of `sqlite3`. There is also a named form, `:name`, taking a dict of parameters. Interviews ask about this constantly: how do you prevent SQL injection? The right answer is "parameterized queries, or prepared statements" — not "escape the quotes by hand".
 
-**Transactions, and a non-obvious nuance about `Connection` as a context manager.** `sqlite3.Connection`, used as `with conn:`, commits the transaction on a clean exit and rolls it back on an exception — but it does **not close the connection**. This is a common trap even for experienced developers: `with conn:` only manages the transaction, not the connection's lifecycle. To get both — transactional behavior **and** guaranteed closing — it's convenient to write your own generator-based context manager (chapter 06 and chapter 07, in one place):
+**Transactions, and a non-obvious nuance about `Connection` as a context manager.** Used as `with conn:`, a `sqlite3.Connection` commits the transaction on a clean exit and rolls it back on an exception. But it does **not close the connection**. This is a common trap even for experienced developers: `with conn:` manages only the transaction, not the connection's lifecycle.
+
+To get both transactional behavior **and** guaranteed closing, it's convenient to write your own generator-based context manager. Chapter 06 and chapter 07 come together in one place here:
 
 ```python
+import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
+
+DB_PATH = Path("taskman.db")
 
 @contextmanager
 def db_connection():
@@ -99,34 +116,36 @@ def db_connection():
         conn.close()            # closes ALWAYS
 ```
 
-This is literally a generator function decorated with `@contextmanager` (chapter 07): the code before `yield` opens the connection (the `__enter__` counterpart), the code after `yield` commits/rolls back/closes (the `__exit__` counterpart), and the `try/except/finally` wrapped around `yield` is exactly what chapter 06 covered — just written as a generator instead of a class.
+This is literally a generator function decorated with `@contextmanager` (chapter 07). The code before `yield` opens the connection — the `__enter__` counterpart. The code after `yield` commits, rolls back and closes — the `__exit__` counterpart. The `try/except/finally` wrapped around `yield` is exactly what chapter 06 covered, just written as a generator instead of a class.
 
 ### Parallels with JS/TS/Node:
 
-- `pathlib.Path` unifies path manipulation and file I/O into one object; Node splits these across `path` and `fs`.
-- `json.dumps`/`json.loads` ~ `JSON.stringify`/`JSON.parse`; there's no direct Node equivalent of `json.dump`/`json.load` (working straight with a file object) — there it's always a manual `fs.readFileSync` + `JSON.parse` combination.
-- `sqlite3` is part of Python's stdlib, nothing to install; Node has no built-in SQL driver at all — `better-sqlite3`/`pg`/`mysql2`/Prisma, etc. are always external packages. Query parameterization (`$1`, `?`) follows the same principle as Python — this isn't Python-specific, it's a universal SQL rule.
-- SQLite's loose "type affinity" (unlike Postgres/MySQL's strict typing) is a SQLite-specific quirk, not a SQL-wide one — worth remembering for whenever the project eventually moves to a "real" database.
+- `pathlib.Path` unifies path manipulation and file input/output into one object. Node splits these across `path` and `fs`.
+- `json.dumps`/`json.loads` ~ `JSON.stringify`/`JSON.parse`. Node has no direct equivalent of `json.dump`/`json.load`, which work straight with a file object. There it's always a manual `fs.readFileSync` + `JSON.parse` combination.
+- `sqlite3` is part of Python's stdlib, with nothing to install. Node has no built-in SQL driver at all: `better-sqlite3`, `pg`, `mysql2`, Prisma and the rest are always external packages. Query parameterization (`$1`, `?`) follows the same principle as in Python — a universal SQL rule, not a Python one.
+- The loose "type affinity" of SQLite, unlike the strict typing of Postgres and MySQL, is a SQLite quirk and not a SQL-wide rule. Worth remembering for whenever the project moves to a "real" database.
 
 ## What we're adding to the project
 
-The storage layer moves from an in-memory list (`storage/memory.py`, chapters 02–07) to a file-based SQLite database (`storage/sqlite_storage.py`). Tasks now **survive a process restart** — something that's been missing since the very first chapter. The filtering/sorting/pagination logic (chapters 02 and 07) doesn't change at all: it accepted a plain `list[Task]` before, and it still does — that list is just loaded from the database each time now, instead of living as a module-level variable.
+The storage layer moves from an in-memory list (`storage/memory.py`, chapters 02–07) to a file-based SQLite database (`storage/sqlite_storage.py`). Tasks now **survive a process restart** — something that's been missing since the very first chapter.
+
+The filtering, sorting and pagination logic (chapters 02 and 07) doesn't change at all. It accepted a plain `list[Task]` before, and it still does. That list is simply loaded from the database each time now, instead of living as a module-level variable.
 
 ## Practical exercise
 
 Part A — practice on the simple version (doesn't stay in the final project):
 
-1. Write `storage/json_file.py` with the same public interface as `storage/memory.py` (`add_task`, `find_task`, `get_task`, `mark_done`, `list_tasks`), but store the data in `tasks.json` via `pathlib.Path` + `json.dumps`/`json.loads`. Every operation should: read the whole file (or start from an empty list if it doesn't exist), mutate the data in memory, rewrite the whole file.
+1. Write `storage/json_file.py` with the same public interface as `storage/memory.py`: `add_task`, `find_task`, `get_task`, `mark_done`, `list_tasks`. Store the data in `tasks.json` via `pathlib.Path` plus `json.dumps`/`json.loads`. Every operation reads the whole file, or starts from an empty list if there is no file. Then it mutates the data in memory and rewrites the whole file.
 2. Confirm tasks survive a process restart: `add`, then in a fresh call to `python -m taskman list` — the task should still be there.
 3. Leave this file as-is or delete it — it isn't needed going forward; it's purely an exercise in understanding the approach's limits.
 
 Part B — what actually stays in the project:
 
-1. Create `storage/sqlite_storage.py`. Define `DB_PATH = Path("taskman.db")` and a generator-based context manager `db_connection()` (via `@contextmanager`) that opens a connection, commits on success, rolls back on an exception, and **always** closes the connection.
+1. Create `storage/sqlite_storage.py`. Define `DB_PATH = Path("taskman.db")` and a generator-based context manager `db_connection()`, built with `@contextmanager`. It opens a connection, commits on success, rolls back on an exception, and **always** closes the connection.
 2. Write `init_db()`, creating the `tasks` table (`id`, `text`, `priority`, `done`) if it doesn't already exist.
-3. Rewrite `add_task`, `find_task`, `get_task`, `mark_done`, `list_tasks` to use parameterized SQL queries through `db_connection()`. `list_tasks()` replaces the old module-level `tasks` — it needs to hit the database every time, not cache a list in memory.
-4. `filter_by_status`/`sort_tasks` (chapters 02/07) and `paginate`/`get_page` (chapter 07) carry over unchanged — they already take a plain `list[Task]`; they don't care where it came from.
-5. Update `storage/__init__.py`, `cli/commands.py` (replace `memory` with `db`, and `memory.tasks` with a call to `db.list_tasks()`), and `cli/app.py` (call `db.init_db()` at the start of `main()`, before parsing arguments).
+3. Rewrite `add_task`, `find_task`, `get_task`, `mark_done`, `list_tasks` to use parameterized SQL queries through `db_connection()`. The new `list_tasks()` replaces the old module-level `tasks`. It must hit the database every time, not cache a list in memory.
+4. `filter_by_status`/`sort_tasks` (chapters 02/07) and `paginate`/`get_page` (chapter 07) carry over unchanged. They already take a plain `list[Task]` and don't care where it came from.
+5. Update three files. In `cli/commands.py` replace `memory` with `db`, and `memory.tasks` with a call to `db.list_tasks()`. In `cli/app.py` call `db.init_db()` at the start of `main()`, before parsing arguments. Update `storage/__init__.py` as well.
 6. Confirm tasks survive a process restart — same as in Part A, but through SQLite this time.
 
 Things to think through:
@@ -352,33 +371,41 @@ def main() -> None:
 
 Key decisions:
 
-- `int(priority)`/`Priority(row["priority"])` — round-tripping through a plain SQLite `INTEGER` column works with zero serialization logic precisely because chapter 04 chose `Priority` as an `IntEnum`, not a plain `Enum`: `int(Priority.HIGH) == 2`, and `Priority(2)` gives back `Priority.HIGH`.
-- Mapping a SQLite row to a `Task` (`_row_to_task`) lives in the storage layer, not on the `Task` class itself — the model knows nothing about `sqlite3.Row`; that's a concern specific to whichever storage backend is in use. The next time the storage backend changes (chapter 18: "where to grow next" — Postgres), `Task` won't need to change again.
-- `db.list_tasks()` replaces the old `memory.tasks` attribute access with a function call — the name itself signals that this isn't a free read of a variable, but a call out to external storage that costs something real (I/O, potentially network once we're on a "real" database).
-- `db.init_db()` is called explicitly at the start of `main()`, rather than as a side effect of importing the `sqlite_storage` module — the module stays "clean" on import (chapter 05: importing shouldn't have surprising side effects), and schema initialization happens somewhere it's visibly, explicitly triggered in the code.
-- `mark_done` does `get_task` and `UPDATE` as two separate steps, not one combined query — at this scale that's not a performance concern, it's a deliberate choice to reuse the already-written `get_task` (with its `TaskNotFoundError`) instead of duplicating the existence check inside SQL.
+- `int(priority)`/`Priority(row["priority"])` — the round trip through a plain SQLite `INTEGER` column works with zero serialization logic. That is precisely because chapter 04 chose `Priority` as an `IntEnum`, not a plain `Enum`. So `int(Priority.HIGH) == 2`, and `Priority(2)` gives back `Priority.HIGH`.
+- Mapping a SQLite row to a `Task` (`_row_to_task`) lives in the storage layer, not on the `Task` class itself. The model knows nothing about `sqlite3.Row`: that is a concern of whichever storage backend is in use. The next time the backend changes (chapter 18: "where to grow next" — Postgres), `Task` won't need to change again.
+- `db.list_tasks()` replaces the old `memory.tasks` attribute access with a function call. The name itself signals that this isn't a free read of a variable. It is a call out to external storage that costs something real: input/output, and potentially network once we're on a "real" database.
+- `db.init_db()` is called explicitly at the start of `main()`, not as a side effect of importing the `sqlite_storage` module. The module stays "clean" on import — chapter 05 asked that importing have no surprising side effects. Schema initialization then happens in a place where the code visibly triggers it.
+- `mark_done` does `get_task` and `UPDATE` as two separate steps, not one combined query. At this scale that is not a performance concern. It is a deliberate choice to reuse the already-written `get_task`, with its `TaskNotFoundError`, instead of duplicating the existence check inside SQL.
 
 ## Check yourself
 
 1. Why is `data = json.loads(path.read_text()) if path.exists() else []` a required check, not just paranoia? What happens without it on the very first CLI run, before `tasks.json` exists?
-2. How do `json.dumps`/`json.loads` differ from `json.dump`/`json.load` in signature and purpose — and how do you decode the trailing "s" so you don't mix them up?
-3. Walk through, step by step, what happens to the data in the database if an unhandled exception occurs inside `with db_connection() as conn:` right after a successful `INSERT`. Does the insert get committed? Why is the `try/except/finally` wrapped around `yield` set up exactly this way?
+2. How do `json.dumps`/`json.loads` differ from `json.dump`/`json.load` in signature and purpose? And how do you decode the trailing "s" so you don't mix them up?
+3. An unhandled exception occurs inside `with db_connection() as conn:`, right after a successful `INSERT`. Walk through step by step what happens to the data in the database. Does the insert get committed? Why is the `try/except/finally` around `yield` set up exactly this way?
 4. Why does a parameterized query (`conn.execute("... WHERE text = ?", (value,))`) protect against SQL injection while an f-string with the same value doesn't? Is it about escaping special characters, or something more fundamental?
-5. What exactly does "SQLite uses type affinity, not strict column typing" mean — and why is that a deliberate SQLite design choice rather than a bug, setting it apart from Postgres/MySQL?
+5. What exactly does "SQLite uses type affinity, not strict column typing" mean? And why is that a deliberate design choice rather than a bug, setting SQLite apart from Postgres and MySQL?
 
 <details>
 <summary>Answers</summary>
 
-1. Without the `path.exists()` check, calling `path.read_text()` on a file that doesn't exist raises `FileNotFoundError` — and on the very first CLI run (before any task has ever been saved), `tasks.json` genuinely doesn't exist yet. The check explicitly encodes the business rule "no file means no tasks yet, not an error," instead of relying on an exception as an implicit signal for that state.
-2. `dumps`/`loads` work with **strings** in memory: `dumps` turns a Python object into a JSON string, `loads` parses a JSON string back into a Python object — neither one knows anything about files. `dump`/`load` (no "s") do the same job but write to/read from a **file object** directly (something already opened via `open()` or `path.open()`), skipping the intermediate "read into a string first, then parse the string" step. Mnemonic: the trailing "s" stands for "string" — the "s" functions work with strings, the ones without work with files.
-3. If an exception occurs after the `INSERT` but before the `with db_connection() as conn:` block ends, then `yield conn` inside the `db_connection` generator doesn't complete normally — control jumps into that same generator's `except Exception:` block, which calls `conn.rollback()` and re-raises (`raise`) the exception onward, out to the calling code. `conn.commit()`, which sits right after `yield conn`, **never runs at all** in this case — it's on the same "line of execution" as the code inside the `with` block, and control simply never reaches it, because it has already jumped into `except`. That's exactly why the `INSERT` isn't committed: the whole transaction rolls back, and the database ends up as if nothing had been inserted.
-4. It isn't about escaping quotes — it's that a parameterized query physically keeps the **SQL command text** and the **data** as two separate, independent things, sent to the driver separately: the query's structure (`SELECT * FROM tasks WHERE text = ?`) is fixed and compiled once, and the parameter value is substituted in as data, not as text that then gets re-parsed together with the rest of the SQL. An f-string instead produces one single blob of text, where the user's value becomes part of what the SQL interpreter will parse as code — escaping quotes reduces the risk but doesn't eliminate the underlying architectural problem of "data and code mixed into the same text," and there's almost always a way around any specific escaping scheme.
-5. Type affinity means a column's declared type (`INTEGER`, `TEXT`, etc.) in SQLite is a **preference**, not a hard constraint: the engine tries to coerce an inserted value to the column's declared type, but if it can't do so unambiguously, it often just stores the value as-is instead of rejecting the insert with an error. This is a deliberate SQLite design choice, reflecting its origins as an embeddable, "flexible" database for small applications and config files — not an oversight; Postgres/MySQL are designed for strict schema-level data integrity, and will normally reject an `INSERT` with an incompatible type at the database level rather than quietly accepting it.
+1. Without the `path.exists()` check, calling `path.read_text()` on a file that doesn't exist raises `FileNotFoundError`. On the very first CLI run, before any task has ever been saved, `tasks.json` genuinely doesn't exist yet. The check explicitly encodes a business rule: no file means no tasks yet, and that is not an error. It does not lean on an exception as an implicit signal for that state.
+2. The pair `dumps`/`loads` works with **strings**. In memory `dumps` turns a Python object into a JSON string, and `loads` parses a JSON string back into a Python object. Neither one knows anything about files. The pair `dump`/`load` (no "s") does the same job. But it writes to and reads from a **file object** directly, something already opened via `open()` or `path.open()`. That skips the intermediate "read into a string first, then parse the string" step. Mnemonic: the trailing "s" stands for "string". The functions with "s" work with strings, the ones without work with files.
+3. Say an exception occurs after the `INSERT`, but before the `with db_connection() as conn:` block ends. Then `yield conn` inside the `db_connection` generator doesn't complete normally. Control jumps into that same generator's `except Exception:` block, which calls `conn.rollback()` and re-raises the exception out to the calling code. The `conn.commit()` line sits right after `yield conn`, and in this case it **never runs at all**. It is on the same "line of execution" as the code inside the `with` block. Control never reaches it, because it has already jumped into `except`. That is exactly why the `INSERT` isn't committed: the whole transaction rolls back, and the database ends up as if nothing had been inserted.
+4. It isn't about escaping quotes. A parameterized query physically keeps the **SQL command text** and the **data** as two separate, independent things, sent to the driver separately. The structure of the query (`SELECT * FROM tasks WHERE text = ?`) is fixed and compiled once. The parameter value is then substituted in as data, not as text that gets re-parsed together with the rest of the SQL. An f-string instead produces one single blob of text, where the user's value becomes part of what the SQL interpreter will parse as code. Escaping quotes reduces the risk, but it doesn't remove the underlying architectural problem of data and code mixed into one text. There is almost always a way around any specific escaping scheme.
+5. Type affinity means that a column's declared type in SQLite — `INTEGER`, `TEXT` and so on — is a **preference**, not a hard constraint. The engine tries to coerce an inserted value to the declared type. If it can't do so unambiguously, it often just stores the value as it is, instead of rejecting the insert with an error. This is a deliberate design choice, not an oversight. It reflects the origins of SQLite as an embeddable, "flexible" database for small applications and configuration files. Postgres and MySQL are designed for strict schema-level data integrity. They will normally reject an `INSERT` with an incompatible type at the database level, rather than quietly accepting it.
 
 </details>
 
 ## Common mistake
 
-The most common mistake with this material is assuming `with conn:` on a `sqlite3.Connection` closes the connection the same way it does for files (`with open(...) as f:`) or the `FileLock` from chapter 06. A developer who's already internalized "a context manager guarantees resource release" reasonably expects the same from `with conn:` — but `sqlite3.Connection`'s `__exit__` protocol is implemented **only** for transaction management (commit/rollback), not for closing the connection itself. In a small script that exits right after running, this won't show up as a visible problem — the OS closes file descriptors on exit regardless. But in something longer-lived (a web server, a worker, a test suite creating connections in a loop), connections quietly pile up until the process hits its open-file-descriptor limit — a failure that surfaces far away in both time and code from the spot where the "`with conn:` closes everything" assumption was made.
+The most common mistake here is assuming that `with conn:` on a `sqlite3.Connection` closes the connection. That is what happens with files (`with open(...) as f:`) and with the `FileLock` from chapter 06. A developer who has internalized "a context manager guarantees resource release" reasonably expects the same.
 
-The second common mistake, especially fresh off the strings/f-strings chapter (chapter 01), is reflexively building a SQL query with an f-string, because "it's just text, and f-strings are the most natural way to interpolate a value into text" in Python. The difference between `f"WHERE text = '{value}'"` and `"WHERE text = ?", (value,)` isn't visible in behavior on "normal" data — both work identically for ordinary text with no quotes inside it. The vulnerability only becomes visible once someone (not necessarily an attacker — sometimes just a user whose task text happens to contain an apostrophe, like "don't forget the milk") passes a value containing characters that break the query's intended structure — meaning the bug stays silent right up until it turns into a security incident, or just a baffling production error.
+But the `__exit__` protocol of `sqlite3.Connection` is implemented **only** for transaction management — commit and rollback — and not for closing the connection itself. In a small script that exits right after running, this won't show up as a visible problem. The operating system closes file descriptors on exit regardless.
+
+Something longer-lived is different: a web server, a worker, a test suite creating connections in a loop. There connections quietly pile up until the process hits its limit on open file descriptors. The failure then surfaces far away in both time and code from the spot where the assumption was made.
+
+The second common mistake is reflexively building a SQL query with an f-string. It comes easily right after the chapter on strings and f-strings (chapter 01). A query is just text, and f-strings are the most natural way to put a value into text in Python.
+
+The difference between `f"WHERE text = '{value}'"` and `"WHERE text = ?", (value,)` isn't visible in behavior on "normal" data. Both work identically for ordinary text with no quotes inside it.
+
+The vulnerability shows up only when someone passes a value with characters that break the intended structure of the query. Not necessarily an attacker: sometimes it is just a user who typed "don't forget the milk" and used an apostrophe. The bug therefore stays silent right up until it turns into a security incident, or just a baffling production error.
