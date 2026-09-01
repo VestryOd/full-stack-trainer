@@ -6,16 +6,18 @@ Reference material for articles 01-09 — no new concept explanations, just comp
 
 ### Choosing a grant type (article 01)
 
-| Client | Grant Type | Is there a user? | Can it hold a secret? |
-|---|---|---|---|
-| React SPA / mobile app | Authorization Code + PKCE | Yes | No (public client) |
-| A backend calling Keycloak on behalf of a user | Authorization Code + PKCE (PKCE not strictly required, but always recommended) | Yes | Yes (confidential) |
-| Service A → Service B (no user) | Client Credentials | No | Yes (confidential) |
-| A smart TV / CLI / device with poor input | Device Code | Yes (on a DIFFERENT device) | No |
-| ~~A login form inside the client~~ | ~~ROPC (password)~~ | Yes | Doesn't matter | ❌ deprecated |
+| Client | Grant Type | Is there a user? | Can it hold a secret? | Status |
+|---|---|---|---|---|
+| React SPA (single-page application) / mobile app | Authorization Code + PKCE (Proof Key for Code Exchange) | Yes | No (public client) | ✅ current |
+| A backend calling Keycloak on behalf of a user | Authorization Code + PKCE (not strictly required here, but always recommended) | Yes | Yes (confidential) | ✅ current |
+| Service A → Service B (no user) | Client Credentials | No | Yes (confidential) | ✅ current |
+| Any device with poor input: smart television, console, CLI (command-line interface) | Device Code | Yes (on a **different** device) | No | ✅ current |
+| ~~A login form inside the client~~ | ~~ROPC (Resource Owner Password Credentials)~~ | Yes | Doesn't matter | ❌ deprecated |
 | ~~A token in the URL fragment~~ | ~~Implicit~~ | Yes | No | ❌ deprecated |
 
 ### JWT claims in a Keycloak token (articles 01-03)
+
+JWT stands for JSON Web Token — the signed, self-describing token format Keycloak issues.
 
 | Claim | Meaning | Appears in |
 |---|---|---|
@@ -23,7 +25,7 @@ Reference material for articles 01-09 — no new concept explanations, just comp
 | `sub` | Subject — the unique ID of the user (or service account) | Access, ID |
 | `aud` | Audience — who the token is meant for | Access, ID |
 | `azp` | Authorized party — the client_id the token was issued to | Access, ID |
-| `exp` / `iat` | Expiry / issued-at (a UNIX timestamp) | Access, ID, Refresh |
+| `exp` / `iat` | Expiry / issued-at (a Unix timestamp) | Access, ID, Refresh |
 | `jti` | JWT ID — a unique token identifier (for revocation/blacklisting) | Access, ID |
 | `sid` | Session ID — ties the token to a Keycloak server-side session | Access, ID |
 | `acr` | Authentication Context Class Reference — the auth assurance level (article 08, step-up) | Access, ID |
@@ -43,7 +45,7 @@ Reference material for articles 01-09 — no new concept explanations, just comp
 | `keycloak.logout(options?)` | Redirect to Keycloak logout (front-channel) |
 | `keycloak.updateToken(minValidity)` | Refresh the token if fewer than minValidity seconds remain; makes no call if the token is already fresh |
 | `keycloak.token` / `keycloak.tokenParsed` | The current access token (raw JWT / parsed payload) |
-| `keycloak.loadUserProfile()` | Fetch the user profile (via Keycloak's Account REST API) |
+| `keycloak.loadUserProfile()` | Fetch the user profile (via Keycloak's Account API) |
 | `keycloak.hasRealmRole(role)` / `hasResourceRole(role, client)` | Check roles on the client (doesn't replace a backend check!) |
 | `keycloak.authenticated` | Boolean — whether the user is logged in after `init()` |
 
@@ -70,12 +72,14 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 
 ### NestJS — a minimal JWT guard via JWKS (articles 03-04)
 
+JWKS is the JSON Web Key Set: the public keys Keycloak publishes so that anyone can check a signature.
+
 ```typescript
 export class KeycloakJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      algorithms: ['RS256'], // ALWAYS hardcoded — see article 07, algorithm confusion
+      algorithms: ['RS256'], // always hardcoded — see article 07, algorithm confusion
       secretOrKeyProvider: passportJwtSecret({
         jwksUri: `${config.get('KEYCLOAK_ISSUER')}/protocol/openid-connect/certs`,
         cache: true,
@@ -92,27 +96,111 @@ export class KeycloakJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 ### BFF — the request flow in one diagram (article 06)
 
-```txt
-Browser ──(first-party session cookie)──► BFF
-BFF ──(Auth Code+PKCE, back-channel, client_secret lives HERE)──► Keycloak
-BFF ──(access/refresh tokens stored in Redis/a DB, keyed by sessionId)
-BFF ──(proxies the request, Authorization: Bearer <the real token>)──► Resource Server
+BFF stands for Backend-for-Frontend.
 
-The browser NEVER sees the access/refresh/ID token.
+```txt
+Browser  ──(first-party session cookie)──►  BFF
+
+BFF      ──(Auth Code + PKCE, back-channel)──►  Keycloak
+              the client_secret lives here
+
+BFF      ──(stores access/refresh tokens in Redis or a
+              database, keyed by sessionId)
+
+BFF      ──(proxies the request, header
+              Authorization: Bearer <real token>)──► Resource Server
+
+The browser never sees the access, refresh or ID token.
 ```
 
 ## Part 2: Comparison
 
-| | What it's for | What it does | Typical real-world use | Security posture | Operational cost |
-|---|---|---|---|---|---|
-| **Auth Code + PKCE** | Interactive user login | A code over the front-channel, exchanged for tokens over the back-channel + code_verifier verification | Any client with a browser/UI: SPA, mobile app, server-side web app | High — protected against code interception regardless of client type | Low — built into any decent OIDC library |
-| **Client Credentials** | Service-to-service, no user | A direct back-channel exchange of client_id+secret for a token | Internal microservices, cron jobs, integrations with no human involved | High, provided the client_secret is protected (a secret manager, not an env var in code) | Low — one HTTP call + a cached token |
-| **Device Code** | Limited-input devices | Polling for a token while the user logs in on a DIFFERENT device | Smart TVs, consoles, CLI tools | High — the password is never typed on the device itself | Medium — needs a polling mechanism and UX for showing the code |
-| **BFF Pattern** | Architecturally removing tokens from the browser | A server-side session + a proxy to the Resource Server carrying the real token | Fintech, healthcare, enterprise apps with high security stakes | Maximum for browser-based scenarios — XSS can't steal the token | High — an extra server-full component, latency, an extra critical attack target |
-| **Public client in the browser** | Direct SPA-to-API calls | The token lives in the browser (memory/cookie), attached to requests | MVPs, internal tools, low-stakes apps | Medium — a trade-off between XSS/CSRF/UX, covered in article 06 | Low — the SPA can be pure static hosting |
-| **Keycloak** | Self-hosted OIDC/OAuth2 Identity Provider | A full object model (realms, clients, roles, Authorization Services) | Companies with a dedicated platform team, strict compliance/data-residency requirements | As high as the team's operating discipline makes it | High — HA, patching, upgrades, monitoring (article 08) |
-| **Auth0** | Managed identity-as-a-service | A ready-made UI, Actions/Rules for customization, broad SDK coverage | Startups and products where speed to market matters | High, maintained by the provider | MAU billing — low at first, can spike sharply with scale |
-| **Okta** | Managed, historically strong in enterprise/workforce identity | Deep integration with corporate SSO systems | Enterprise B2E, companies with existing Okta infrastructure | High, maintained by the provider | MAU/seat billing, enterprise contracts |
-| **AWS Cognito** | Managed, deep integration with the AWS ecosystem | User Pools + Identity Pools, Lambda triggers for customization | Products already fully built on AWS | High, maintained by AWS | MAU billing, usually cheaper than Auth0/Okta at volume |
-| **Supabase Auth** | Managed/self-hostable, a simple start | GoTrue — simplified OIDC-like auth as part of the Supabase stack | MVPs, small-to-medium Supabase-based projects | Medium-high for standard scenarios, without Keycloak's enterprise depth | Low — minimal configuration |
-| **A home-grown auth system** | Full control, zero dependencies | Your own users table, your own JWT-issuing code, your own bcrypt | Rarely justified for a new project in 2024+ | Entirely on your team — MFA/rate-limiting/security best practices have to be built and maintained yourself | Hidden and constantly growing — every security feature Keycloak/Auth0 give you out of the box is written and maintained by hand here |
+Five facts per option: what it is for, what it does, where it is typically used, its security posture and its operational cost.
+
+### Auth Code + PKCE
+
+- **For:** interactive user login.
+- **Does:** sends a code over the front-channel, exchanges it for tokens over the back-channel, and verifies the `code_verifier`.
+- **Typical use:** any client with a browser or UI (user interface) — SPA, mobile app, server-side web app.
+- **Security:** high — protected against code interception regardless of client type.
+- **Operational cost:** low — built into any decent OIDC (OpenID Connect) library.
+
+### Client Credentials
+
+- **For:** service-to-service calls, with no user.
+- **Does:** a direct back-channel exchange of `client_id` plus secret for a token.
+- **Typical use:** internal microservices, cron jobs, integrations with no human involved.
+- **Security:** high, provided the `client_secret` is protected — a secret manager, not an env var in code.
+- **Operational cost:** low — one HTTP call plus a cached token.
+
+### Device Code
+
+- **For:** devices with limited input.
+- **Does:** polls for a token while the user logs in on a **different** device.
+- **Typical use:** smart televisions, consoles, CLI tools.
+- **Security:** high — the password is never typed on the device itself.
+- **Operational cost:** medium — needs a polling mechanism, and a UX (user experience) for showing the code.
+
+### BFF Pattern
+
+- **For:** removing tokens from the browser architecturally.
+- **Does:** keeps a server-side session and proxies to the Resource Server carrying the real token.
+- **Typical use:** fintech, healthcare, enterprise apps with high security stakes.
+- **Security:** the maximum available for browser-based scenarios — XSS (cross-site scripting) cannot steal the token.
+- **Operational cost:** high — an extra component to run on a server, extra latency, an extra critical attack target.
+
+### Public client in the browser
+
+- **For:** direct SPA-to-API calls.
+- **Does:** keeps the token in the browser (memory or cookie) and attaches it to requests.
+- **Typical use:** MVPs (minimum viable products), internal tools, low-stakes apps.
+- **Security:** medium — a trade-off between XSS, CSRF (Cross-Site Request Forgery) and UX, covered in article 06.
+- **Operational cost:** low — the SPA can be pure static hosting.
+
+### Keycloak
+
+- **For:** a self-hosted OIDC/OAuth2 Identity Provider.
+- **Does:** gives a full object model — realms, clients, roles, Authorization Services.
+- **Typical use:** companies with a dedicated platform team, and strict compliance or data-residency requirements.
+- **Security:** as high as the team's operating discipline makes it.
+- **Operational cost:** high — HA (high availability), patching, upgrades, monitoring (article 08).
+
+### Auth0
+
+- **For:** managed identity-as-a-service.
+- **Does:** gives a ready-made UI, Actions and Rules for customization, and broad SDK (software development kit) coverage.
+- **Typical use:** startups and products where speed to market matters.
+- **Security:** high, maintained by the provider.
+- **Operational cost:** MAU (monthly active users) billing — low at first, can spike sharply with scale.
+
+### Okta
+
+- **For:** managed identity, historically strong in enterprise and workforce identity.
+- **Does:** integrates deeply with corporate SSO (single sign-on) systems.
+- **Typical use:** enterprise B2E (business-to-employee), companies with existing Okta infrastructure.
+- **Security:** high, maintained by the provider.
+- **Operational cost:** MAU or seat billing, enterprise contracts.
+
+### AWS Cognito
+
+- **For:** managed identity, deeply integrated with the AWS (Amazon Web Services) ecosystem.
+- **Does:** User Pools plus Identity Pools, with Lambda triggers for customization.
+- **Typical use:** products already fully built on AWS.
+- **Security:** high, maintained by AWS.
+- **Operational cost:** MAU billing, usually cheaper than Auth0 or Okta at volume.
+
+### Supabase Auth
+
+- **For:** a managed or self-hostable simple start.
+- **Does:** GoTrue — simplified OIDC-like auth as part of the Supabase stack.
+- **Typical use:** MVPs, small-to-medium Supabase-based projects.
+- **Security:** medium-high for standard scenarios, without Keycloak's enterprise depth.
+- **Operational cost:** low — minimal configuration.
+
+### A home-grown auth system
+
+- **For:** full control and zero dependencies.
+- **Does:** your own users table, your own JWT-issuing code, your own bcrypt.
+- **Typical use:** rarely justified for a new project in 2024 or later.
+- **Security:** entirely on your team — MFA (multi-factor authentication), rate limiting and security best practices are built and maintained by hand.
+- **Operational cost:** hidden and constantly growing. Every security feature Keycloak or Auth0 give you out of the box is written and maintained by hand here.

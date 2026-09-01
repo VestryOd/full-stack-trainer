@@ -2,11 +2,13 @@
 
 ## From "we validate the token" to "a correctly designed API"
 
-Article 03 covered the mechanics: JWKS, `kid`, local validation vs introspection, who owns the refresh. This article is about how that turns into a concrete NestJS architecture: which Guard checks what, how Keycloak roles turn into `@Roles('admin')` decisions, what to do when a simple "has role / doesn't have role" isn't enough, and how services talk to each other with no user involved at all.
+This article turns the mechanics of article 03 into a concrete NestJS architecture. Article 03 covered JWKS (JSON Web Key Set), `kid`, local validation against introspection, and who owns the refresh.
+
+Four questions get answered here. Which Guard checks what? How do Keycloak roles turn into `@Roles('admin')` decisions? What do you do when a simple "has role / doesn't have role" isn't enough? And how do services talk to each other with no user involved?
 
 ## Manual approach vs adapter — a deliberate choice, not "whatever came up on Google"
 
-There are two realistic ways to wire NestJS to Keycloak, and picking between them is an architectural decision with concrete trade-offs, not a matter of taste.
+There are two realistic ways to wire NestJS to Keycloak. Picking between them is an architectural decision with concrete trade-offs, not a matter of taste.
 
 ```txt
 Manual approach (passport-jwt + jwks-rsa):
@@ -25,13 +27,14 @@ Manual approach (passport-jwt + jwks-rsa):
     catches it for you
 
 Adapter (nest-keycloak-connect / keycloak-connect):
-  An official (or community) NestJS module wrapping Keycloak-specific
-  Guards, decorators (@Roles, @Public, @AuthenticatedUser), and
-  out-of-the-box integration with Keycloak Authorization Services.
+  An official (or community) NestJS module wrapping
+  Keycloak-specific Guards, decorators (@Roles, @Public,
+  @AuthenticatedUser), and out-of-the-box integration with
+  Keycloak Authorization Services.
 
   ✓ Less code — Guards and decorators are already written and tested
-  ✓ Out-of-the-box support for resource-based authorization (Keycloak
-    Authorization Services), which takes longer to build by hand
+  ✓ Out-of-the-box support for resource-based authorization
+    (Keycloak Authorization Services), which takes longer by hand
   ✗ Less transparency — part of the validation logic is hidden
     inside the library, you need to read its source when debugging
   ✗ Tight coupling to Keycloak specifically — if the team decides to
@@ -41,11 +44,13 @@ Adapter (nest-keycloak-connect / keycloak-connect):
     official Red Hat/Keycloak module — check the repo's activity)
 ```
 
-Practical recommendation: **for a product that will clearly stay on Keycloak long-term and needs Authorization Services, the adapter pays off**. For an API where maximum transparency matters (fintech, anything under external security audit) or where the team wants to keep provider-switching optionality, go manual. Both approaches sit on the same protocol foundation from articles 01-03 — the only difference is who writes the Guard code: you or the library.
+Practical recommendation: **for a product that will clearly stay on Keycloak long-term and needs Authorization Services, the adapter pays off**.
+
+Go manual for an API where maximum transparency matters: fintech, or anything under external security audit. The same goes if the team wants to keep the option of switching providers. Both approaches sit on the same protocol foundation from articles 01-03. The only difference is who writes the Guard code: you or the library.
 
 ## Guards and decorators — mapping Keycloak roles onto NestJS authorization
 
-Regardless of approach (writing it yourself or using an adapter), the resulting architecture is the same: **a Guard validates the token and extracts roles, a decorator on the controller declares the requirement, a Reflector connects them**.
+Either way — writing it yourself or using an adapter — the resulting architecture is the same. **A Guard validates the token and extracts roles. A decorator on the controller declares the requirement. A Reflector connects the two.**
 
 ```typescript
 // roles.decorator.ts — metadata for required roles on a handler/controller
@@ -57,7 +62,9 @@ export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 ```typescript
 // roles.guard.ts — reads realm_access.roles from the payload, compares against metadata
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate, ExecutionContext, ForbiddenException, Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()
@@ -69,7 +76,8 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!requiredRoles?.length) return true; // no role required — open to any authenticated user
+    // no role required — open to any authenticated user
+    if (!requiredRoles?.length) return true;
 
     const { user } = context.switchToHttp().getRequest();
     const realmRoles: string[] = user?.realm_access?.roles ?? [];
@@ -101,29 +109,33 @@ export class InvoicesController {
 }
 ```
 
-A key architectural point that's easy to miss: **`AuthGuard('jwt')` (authentication — "who is this") and `RolesGuard` (authorization — "what are they allowed to do") are two separate Guards running SEQUENTIALLY**, not one fused Guard. The separation matters because it lets you reuse `RolesGuard` for other authentication methods (an API key for internal services, say) without duplicating the role-checking logic.
+A key architectural point that's easy to miss: **`AuthGuard('jwt')` and `RolesGuard` are two separate Guards, running one after the other.** They are not one fused Guard. `AuthGuard('jwt')` is authentication — "who is this". `RolesGuard` is authorization — "what are they allowed to do".
 
-For client roles (`resource_access.billing-service.roles`, see article 02), the decorator and Guard work the same way, just reading a different path in the payload — in practice it's convenient to build one general `@RequireRole(type: 'realm' | 'client', clientId?: string, role: string)`, but don't over-engineer this API if the project actually only ever uses realm roles, or only client roles of a single service.
+The separation matters: it lets you reuse `RolesGuard` for other authentication methods, an API key for internal services for example, without duplicating the role-checking logic.
+
+For client roles (`resource_access.billing-service.roles`, see article 02) the decorator and Guard work the same way. They just read a different path in the payload. In practice it is convenient to build one general `@RequireRole(type: 'realm' | 'client', clientId?: string, role: string)`. Don't over-engineer that API if the project only ever uses realm roles, or only client roles of a single service.
 
 ## When simple roles aren't enough — Keycloak Authorization Services
 
-Role-based checks ("has the admin role — can do everything, doesn't — can do nothing") work great as long as the rules are static. They stop working for rules like "a user can only edit THEIR OWN documents" or "access to a resource depends on the time of day and which department the user is in" — that's no longer authorization by role, it's authorization by **resource attributes and context**, and Keycloak has a separate layer for that — **Authorization Services** (a UMA-like model: User-Managed Access).
+Role-based checks ("has the admin role — can do everything, doesn't — can do nothing") work great as long as the rules are static. They stop working for rules like "a user can only edit **their own** documents". Or "access to a resource depends on the time of day and the user's department".
+
+That is no longer authorization by role. It is authorization by **resource attributes and context**, and Keycloak has a separate layer for it: **Authorization Services**, a UMA-like model (User-Managed Access).
 
 ```txt
 The Authorization Services object model:
 
   Resource   — a specific protected entity or type of entity
                ("Invoice", "Document:42", "/admin/*")
-  Scope      — an action on a resource ("view", "edit", "delete") —
-               do NOT confuse this with the OAuth2 scope from article
-               01, here it's just an action name inside Authorization
-               Services
+  Scope      — an action on a resource ("view", "edit", "delete").
+               Not the same as the OAuth2 scope from article 01:
+               here it is just an action name inside
+               Authorization Services
   Policy     — a decision rule: a role-based policy, a time-based
                policy, a JS-based policy (custom logic), a
                group-based policy, a client-based policy...
   Permission — ties a Resource + Scope to one or more Policies:
-               "The 'edit-invoice' Permission is granted if the
-               'owner-only' Policy OR the 'admin-role' Policy passes"
+               "the 'edit-invoice' Permission is granted if the
+               'owner-only' or the 'admin-role' Policy passes"
 ```
 
 ```txt
@@ -134,12 +146,12 @@ Policy Enforcement Point (PEP) — a pattern, not a Keycloak term:
   asks Keycloak (the Policy Decision Point): "can this user perform
   the 'edit' scope on the 'Invoice:42' resource?"
 
-  NestJS API                          Keycloak (PDP)
-  ────────────                        ──────────────
-  PUT /invoices/42          ──────►   UMA Permission Ticket /
-  (PEP: intercepts the         RPT     Token endpoint:
-   request, asks for            ◄──────  "invoice:42#edit" → RESOLVED
-   permission)                          (or DENIED)
+  NestJS API                     Keycloak (PDP)
+  ────────────                   ──────────────
+  PUT /invoices/42     ──────►   UMA Permission Ticket /
+  (PEP: intercepts the    RPT     Token endpoint:
+   request, asks for       ◄──────  "invoice:42#edit" → RESOLVED
+   permission)                     (or DENIED)
 ```
 
 ```bash
@@ -166,7 +178,10 @@ curl -X POST \
 // NestJS: a guard delegating the decision to Keycloak instead of a local role check
 @Injectable()
 export class UmaPermissionGuard implements CanActivate {
-  constructor(private keycloakAuth: KeycloakAuthorizationService) {}
+  constructor(
+    private reflector: Reflector,
+    private keycloakAuth: KeycloakAuthorizationService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
@@ -197,14 +212,16 @@ You need Authorization Services when:
   - Rules depend on a SPECIFIC resource instance (ownership,
     attributes of a DB record) or on context (time, IP, user
     attributes beyond roles)
-  - The business wants to manage access rules WITHOUT involving
-    developers (a non-technical security/compliance person configures
-    Policies through the Keycloak Admin Console)
+  - The business wants to manage access rules without involving
+    developers (a non-technical security or compliance person
+    configures Policies through the Keycloak Admin Console)
   - You need centralized auditing of "who could do what, when" —
     Keycloak logs permission requests in one place
 ```
 
-An honest caveat: Authorization Services add a network round-trip to every check (unless you cache the RPT) and cognitive overhead — the team needs to understand the Resource/Scope/Policy/Permission model instead of just reading `if (user.roles.includes(...))`. For most CRUD apps with a "my records vs someone else's" ownership model, checking `resource.ownerId === user.sub` directly in service code is often enough — not every ownership check needs to go through UMA, if the rule is simple and doesn't need a centralized policy editable without a deploy.
+An honest caveat: Authorization Services add a network round-trip to every check, unless you cache the RPT (Requesting Party Token). They also add cognitive overhead — the team needs to understand the Resource/Scope/Policy/Permission model instead of just reading `if (user.roles.includes(...))`.
+
+For most CRUD apps (create, read, update, delete) the ownership model is "my records vs someone else's". Checking `resource.ownerId === user.sub` directly in service code is often enough. Not every ownership check needs to go through UMA — only rules that are complex, or that need a central policy editable without a deploy.
 
 ## Monolith vs API Gateway — where exactly to validate the token in a microservices architecture
 
@@ -217,7 +234,7 @@ Option A — every service validates the token itself:
          → Service B (validates the JWT via JWKS)
          → Service C (validates the JWT via JWKS)
 
-  ✓ Each service is independent — can be tested/deployed in isolation
+  ✓ Each service is independent: tested and deployed in isolation
   ✓ Zero-trust by default: a service never trusts the caller without
     verifying, even inside the network perimeter
   ✗ Duplicated validation logic (or a shared library — but then its
@@ -243,11 +260,13 @@ Option B — the API Gateway validates once, then a trusted network:
     directly, bypassing the check entirely
 ```
 
-Practical recommendation: **Option A (every service validates itself) is the safer default**, especially in cloud/Kubernetes environments where network isolation itself isn't guaranteed (a neighboring pod in the same namespace can physically reach Service A). Option B pays off when the gateway is part of a deliberate zero-trust architecture with mTLS between the gateway and services, not just "we saved one JWKS call." JWKS validation is cheap (local, no network — see article 03), so "performance" is rarely a strong argument for Option B.
+Practical recommendation: **Option A (every service validates itself) is the safer default**. That is especially true in cloud or Kubernetes environments, where network isolation itself isn't guaranteed. A neighbouring pod in the same namespace can physically reach Service A.
+
+Option B pays off when the gateway is part of a deliberate zero-trust architecture with mTLS (mutual TLS) between the gateway and the services. It does not pay off just to save one JWKS call. JWKS validation is cheap, local and network-free (see article 03), so "performance" is rarely a strong argument for Option B.
 
 ## Client Credentials between internal services — authorization with no user
 
-When Service A calls Service B not on behalf of a user, but on its own behalf (a background job, a cron task, an internal RPC) — that's exactly the Client Credentials grant type from article 01, implemented as concrete NestJS code.
+Sometimes Service A calls Service B on its own behalf, not on behalf of a user. Think of a background job, a cron task, or an internal call between services. That is exactly the Client Credentials grant type from article 01, implemented as concrete NestJS code.
 
 ```typescript
 // service-a: obtaining a service-to-service token before calling Service B
@@ -292,11 +311,13 @@ async callServiceB() {
 }
 ```
 
-An important detail: **Service B validates this token with the SAME Guard used for user tokens** — from the Resource Server's point of view, the only difference is what's in the payload (a Client Credentials token has no `sub` pointing at a real user, and any roles it has, if assigned, belong to the `service-account-service-a` service account, not a human). If the business logic needs to distinguish "a request from a human" from "a request from a service" — check that explicitly (e.g. by the presence/absence of expected user-specific claims), rather than building a separate Guard that duplicates JWKS validation.
+An important detail: **Service B validates this token with the same Guard used for user tokens.** From the Resource Server's point of view the only difference is what's in the payload. A Client Credentials token has no `sub` pointing at a real user. Any roles it carries belong to the `service-account-service-a` service account, not to a human.
+
+Does the business logic need to tell "a request from a human" from "a request from a service"? Then check that explicitly. Look at the presence or absence of the user-specific claims you expect, rather than building a separate Guard that duplicates JWKS validation.
 
 ## "The backend should refresh the token" — busting the myth with actual code
 
-The misconception already mentioned in article 03 is worth nailing down with a concrete implementation: what exactly the Resource Server is supposed to return when a token has expired, and why trying to refresh it itself is an architectural mistake.
+The misconception already mentioned in article 03 deserves a concrete implementation. What exactly should the Resource Server return when a token has expired, and why is trying to refresh it itself an architectural mistake?
 
 ```typescript
 // Correct: a NestJS Exception Filter returning a structured 401 error
@@ -331,13 +352,17 @@ Why the backend should NOT refresh the token:
      because only the client knows the context of the original
      request (what to retry, with what data).
 
-  3. Blending the roles breaks the Resource Server's stateless model:
+  3. Blending the roles breaks the stateless model of the API:
      if the API starts managing tokens and deciding when to refresh
      them, it stops being a pure token consumer and becomes a
      hidden, undocumented auth client.
 ```
 
-The correct full cycle lives on the client side (React details in [React SPA Integration]): the client gets a 401 → tries `updateToken()` (or the equivalent) via the refresh token → if it succeeds, retries the original request with the new access token → if the refresh also fails (the refresh token expired/was revoked), the client triggers a full re-login (a redirect to Keycloak). The Resource Server is only involved in the first step of this whole chain — "say the token is no good" — and knows nothing about what happens next.
+The correct full cycle lives on the client side, in the SPA (single-page application). See [React SPA Integration](./05-react-spa-integration.md) for the React details.
+
+The client gets a 401. It tries `updateToken()`, or the equivalent, through the refresh token. If that succeeds, it retries the original request with the new access token. If the refresh also fails — the refresh token expired or was revoked — the client triggers a full re-login, a redirect to Keycloak.
+
+The Resource Server takes part only in the first step of this chain: saying the token is no good. It knows nothing about what happens next.
 
 ## Tying it together
 
@@ -345,10 +370,10 @@ The correct full cycle lives on the client side (React details in [React SPA Int
 [Manual vs adapter]            →  transparency and control vs
                                  development speed — the decision
                                  hinges on audit requirements and
-                                 the likelihood of switching providers
+                                 on how likely a provider switch is
 
 [Guards + decorators]           →  authentication and authorization
-                                 are two sequential, separate Guards,
+                                 are two separate Guards in a row,
                                  not one fused Guard
 
 [Authorization Services / UMA]  →  when roles aren't granular enough
@@ -357,9 +382,9 @@ The correct full cycle lives on the client side (React details in [React SPA Int
 
 [Monolith validation vs
  Gateway]                       →  where trust actually lives in a
-                                 microservices architecture — and why
-                                 "every service validates itself" is
-                                 the safer default
+                                 microservices architecture, and why
+                                 "every service validates itself"
+                                 is the safer default
 
 [Client Credentials
  service-to-service]            →  the same Guard used for users —
@@ -371,16 +396,16 @@ The correct full cycle lives on the client side (React details in [React SPA Int
                                  401 + a clear error body
 ```
 
-The next article — [React SPA Integration] — moves to the client side: how a React app walks through Authorization Code + PKCE, refreshes tokens via `updateToken()`, and what happens when the refresh fails.
+The next article, [React SPA Integration](./05-react-spa-integration.md), moves to the client side. It shows how a React app walks through Authorization Code + PKCE (Proof Key for Code Exchange). Then it covers refreshing tokens via `updateToken()`, and what happens when the refresh fails.
 
 ## Common interview traps
 
-- **"nest-keycloak-connect is the only correct way to wire Keycloak into NestJS"** — not necessarily: it's a deliberate trade-off of development speed against transparency and vendor independence. For projects with strict security-audit requirements, or a real possibility of switching IdPs, the manual passport-jwt approach is often preferable.
+- **"nest-keycloak-connect is the only correct way to wire Keycloak into NestJS"** — not necessarily. It's a deliberate trade-off of development speed against transparency and vendor independence. For projects with strict security-audit requirements, or a real possibility of switching identity providers (IdP), the manual `passport-jwt` approach is often preferable.
 
-- **"You can merge the authentication Guard and the role-check Guard into one, it's simpler"** — you can, but it hurts reusability: if you later need a different authentication method (an API key for services, say) with the same authorization rules, the fused Guard has to be duplicated wholesale instead of reusing RolesGuard.
+- **"You can merge the authentication Guard and the role-check Guard into one, it's simpler"** — you can, but it hurts reusability. Suppose you later need a different authentication method, an API key for services for example, with the same authorization rules. The fused Guard has to be duplicated wholesale instead of reusing `RolesGuard`.
 
-- **"Authorization Services are always needed, simple roles are never enough"** — an overreach. Simple roles are enough for rules that don't depend on a specific resource instance. Authorization Services pay off when a rule depends on ownership/context, OR when non-technical staff need to manage policy without involving developers — that's an architectural decision with a real cost (a round-trip, cognitive overhead), not a "best practice by default."
+- **"Authorization Services are always needed, simple roles are never enough"** — an overreach. Simple roles are enough for rules that don't depend on a specific resource instance. Authorization Services pay off when a rule depends on ownership or context, or when non-technical staff need to manage policy without involving developers. That is an architectural decision with a real cost — a round-trip, cognitive overhead — not a "best practice by default".
 
-- **"An API Gateway that validates the token once is always better for performance"** — JWKS validation is local and cheap (microseconds), so performance is a weak argument here. "Every service validates itself" is usually the safer default, especially without strict mTLS isolation between the gateway and the services.
+- **"An API Gateway that validates the token once is always better for performance"** — performance is a weak argument here. JWKS validation is local and cheap, on the order of microseconds. "Every service validates itself" is usually the safer default, especially without strict mTLS isolation between the gateway and the services.
 
-- **"The backend should refresh the access token when it notices it's expired"** — no, the Resource Server has no access to the client's refresh token (except in a BFF architecture, where that's a separate, deliberately designed role, not "any backend"). The correct API reaction to an expired token is a 401 with a clear error body; refreshing the token is the client's job.
+- **"The backend should refresh the access token when it notices it's expired"** — no, the Resource Server has no access to the client's refresh token. The one exception is a BFF (backend for frontend) architecture, where that is a separate, deliberately designed role, not "any backend". The correct API reaction to an expired token is a 401 with a clear error body; refreshing the token is the client's job.
