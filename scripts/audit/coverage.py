@@ -100,6 +100,9 @@ PASSED = {
     'quiz:testing': '574ba8c',
     'bank:angular': '78bda0a',
     'article:keycloak-auth': '3be5fee',
+    'bank:ddd': 'ed7942b',
+    'bank:tdd': 'ed7942b',
+    'bank:event-driven': 'ed7942b',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
