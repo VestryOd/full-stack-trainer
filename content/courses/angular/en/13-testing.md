@@ -6,78 +6,75 @@
 
 Since v21 the default test runner is **Vitest**: in the `unit-test` builder schema the `runner` option defaults to `vitest` and accepts `karma` for older projects. Tests run in Node with jsdom, or in a real browser if you specify `browsers`. Useful builder options: `setupFiles`, `providersFile` (a file exporting an array of providers for the whole test environment), `coverage`, `filter`, `ui`, `debug`, `isolate`.
 
-This brings one important limitation that breaks half of all older tests: **`fakeAsync`/`tick` do not work with Vitest** — zone.js is not patched for that runner, and the documentation states plainly that `fakeAsync` is no longer recommended. Use ordinary `async`/`await`, `await fixture.whenStable()`, and Vitest's own fake timers (`vi.useFakeTimers()`) instead.
+One limitation follows from that, and it breaks half of all older tests: **`fakeAsync`/`tick` do not work with Vitest**. The Vitest runner does not patch zone.js, and the documentation says plainly that `fakeAsync` is no longer recommended. Use ordinary `async`/`await`, `await fixture.whenStable()`, and Vitest's own fake timers (`vi.useFakeTimers()`) instead.
 
 ### What to test with what
 
-```
-                            What to test with what in an Angular app
-┌─────────────────────────────────┬───────────────────────────────┬───────────────────────────┐
-│ what you test                   │ the tool                      │ is TestBed needed         │
-├─────────────────────────────────┼───────────────────────────────┼───────────────────────────┤
-│ a signal store, its commands    │ a plain unit test             │ no: new Store() or inject │
-├─────────────────────────────────┼───────────────────────────────┼───────────────────────────┤
-│ a pure function, a pipe         │ a plain unit test             │ no                        │
-├─────────────────────────────────┼───────────────────────────────┼───────────────────────────┤
-│ a component and its template    │ TestBed + fixture             │ yes                       │
-├─────────────────────────────────┼───────────────────────────────┼───────────────────────────┤
-│ the HTTP layer and interceptors │ provideHttpClientTesting      │ yes                       │
-├─────────────────────────────────┼───────────────────────────────┼───────────────────────────┤
-│ a guard, a resolver             │ TestBed.runInInjectionContext │ yes                       │
-├─────────────────────────────────┼───────────────────────────────┼───────────────────────────┤
-│ a user journey                  │ Playwright / Cypress          │ no: a real browser        │
-└─────────────────────────────────┴───────────────────────────────┴───────────────────────────┘
-                      the less TestBed, the faster and steadier the suite:
-                   that is exactly why logic moves into services (chapter 05)
-```
+Pick the tool from what you are testing. Most rows below need no `TestBed` at all.
 
-The key idea: **a signal store is tested like an ordinary class**. No `TestBed`, no rendering — create it, call a command, read a signal, compare. That is a direct consequence of the architecture from chapter 05, and it is the main argument for moving logic out of components: the tests become fast and independent of markup.
+| what you test | the tool | is `TestBed` needed |
+|---|---|---|
+| a signal store, its commands | a plain unit test | no: `new Store()` or `inject` |
+| a pure function, a pipe | a plain unit test | no |
+| a component and its template | `TestBed` + `fixture` | yes |
+| the HTTP layer and interceptors | `provideHttpClientTesting` | yes |
+| a guard, a resolver | `TestBed.runInInjectionContext` | yes |
+| a user journey | Playwright / Cypress | no: a real browser |
+
+The less `TestBed`, the faster and steadier the suite. That is exactly why logic moves into services (chapter 05).
+
+The key idea: **a signal store is tested like an ordinary class**. No `TestBed`, no rendering — create it, call a command, read a signal, compare. That follows directly from the architecture of chapter 05. It is also the main argument for moving logic out of components: the tests become fast and independent of markup.
 
 ### TestBed and swapping dependencies
 
-`TestBed` is a configurable injector plus the ability to create a component. Swapping dependencies through DI is exactly what makes Angular tests worth liking: no module mocking is needed, a different provider is enough (chapter 04).
+`TestBed` is a configurable injector plus the ability to create a component. Swapping dependencies through dependency injection (DI) is exactly what makes Angular tests worth liking. No module mocking is needed: a different provider is enough (chapter 04).
 
 ```
-                   A component test: the order of steps
-┌────────────────────────────────────────────────────────────────────────┐
-│ TestBed.configureTestingModule({ providers: [...] })                   │
-│ dependencies are swapped here: useValue with a mock instead of the API │
-└────────────────────────────────────────────────────────────────────────┘
-                                     │  creation
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ const fixture = TestBed.createComponent(TicketList)                    │
-│ the instance exists, the template has not been checked yet             │
-└────────────────────────────────────────────────────────────────────────┘
-                                     │  inputs
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ fixture.componentRef.setInput('ticket', ticket)                        │
-│ setInput marks the component as changed (chapter 11)                   │
-└────────────────────────────────────────────────────────────────────────┘
-                                     │  sync
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ await fixture.whenStable()                                             │
-│ wait for the template check and microtasks                             │
-│ instead of a manual detectChanges()                                    │
-└────────────────────────────────────────────────────────────────────────┘
-                                     │  assert
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ expect(...) on the DOM, a harness or signals                           │
-│ httpTesting.verify() in afterEach                                      │
-└────────────────────────────────────────────────────────────────────────┘
-fakeAsync/tick do NOT work with the Vitest runner: zone.js is not patched there,
-           and the documentation no longer recommends fakeAsync
+           A component test: the order of steps
+┌────────────────────────────────────────────────────────┐
+│ TestBed.configureTestingModule({ providers: [...] })   │
+│ swap dependencies here: a mock instead of the real API │
+└────────────────────────────────────────────────────────┘
+                             │  creation
+                             ▼
+┌────────────────────────────────────────────────────────┐
+│ const fixture = TestBed.createComponent(TicketList)    │
+│ the instance exists, the template is not checked yet   │
+└────────────────────────────────────────────────────────┘
+                             │  inputs
+                             ▼
+┌────────────────────────────────────────────────────────┐
+│ fixture.componentRef.setInput('ticket', ticket)        │
+│ setInput marks the component as changed (chapter 11)   │
+└────────────────────────────────────────────────────────┘
+                             │  sync
+                             ▼
+┌────────────────────────────────────────────────────────┐
+│ await fixture.whenStable()                             │
+│ wait for the template check and microtasks             │
+│ instead of a manual detectChanges()                    │
+└────────────────────────────────────────────────────────┘
+                             │  assert
+                             ▼
+┌────────────────────────────────────────────────────────┐
+│ expect(...) on the DOM, a harness or signals           │
+│ httpTesting.verify() in afterEach                      │
+└────────────────────────────────────────────────────────┘
+fakeAsync/tick do not work with the Vitest runner: zone.js
+is not patched there, and fakeAsync is no longer recommended
 ```
 
 Two places where v22 tests differ from tests written three years ago:
 
-1. **`await fixture.whenStable()` instead of `fixture.detectChanges()`.** In zoneless tests a manual `detectChanges()` is a forced synchronization that can hide a genuine bug: a component that forgot to notify the framework "works" in the test but not in the application. `whenStable()` lets Angular schedule the check itself — so the test exercises exactly the behaviour production will have.
-2. **Inputs are set through `fixture.componentRef.setInput(...)`.** A direct `component.ticket = x` does not mark the component as changed (chapter 11), and with signal inputs it will not even compile: `input()` returns a read-only signal.
+1. **`await fixture.whenStable()` instead of `fixture.detectChanges()`.** In zoneless tests a manual `detectChanges()` is a forced synchronization, and it can hide a genuine bug. A component that forgot to notify the framework "works" in the test but not in the application. With `whenStable()` Angular schedules the check itself, so the test exercises exactly the behaviour production will have.
+2. **Inputs are set through `fixture.componentRef.setInput(...)`.** A direct `component.ticket = x` does not mark the component as changed (chapter 11). With signal inputs it will not even compile, because `input()` returns a read-only signal.
 
-Handy tools: `TestBed.inject(Token)` to fetch a dependency; `TestBed.overrideProvider(...)` to replace one after configuration; `TestBed.runInInjectionContext(fn)` to invoke a guard, a resolver or any function using `inject()`; `DeferBlockBehavior.Manual` to step through a `@defer` block's states (chapter 12).
+Handy tools:
+
+- `TestBed.inject(Token)` fetches a dependency.
+- `TestBed.overrideProvider(...)` replaces one after configuration.
+- `TestBed.runInInjectionContext(fn)` invokes a guard, a resolver or any function using `inject()`.
+- `DeferBlockBehavior.Manual` steps through the states of a `@defer` block (chapter 12).
 
 ### HTTP: HttpTestingController
 
@@ -106,39 +103,43 @@ The controller's API: `expectOne`, `expectNone`, `match` (several requests), `ve
 
 ### Harnesses: tests that survive markup changes
 
-`cdk/testing` puts a layer between the test and the DOM: a harness describes a component through its *behaviour* (click, read text, pick an option) while the test knows nothing about classes or nesting. It is loaded with `TestbedHarnessEnvironment.loader(fixture)`, then `getHarness(Predicate)` / `getAllHarnesses(...)`. Your own harness is a class extending `ComponentHarness` with locators (`this.locatorFor('.selector')`) and domain methods.
+`cdk/testing` puts a layer between the test and the DOM (document object model). A harness describes a component through its *behaviour*: click, read text, pick an option. The test itself knows nothing about classes or nesting.
+
+It is loaded with `TestbedHarnessEnvironment.loader(fixture)`, then `getHarness(Predicate)` / `getAllHarnesses(...)`. Your own harness is a class extending `ComponentHarness` with locators (`this.locatorFor('.selector')`) and domain methods.
 
 The point is simple: refactoring markup must not break tests. A test looking for `.ticket-card__title > span` breaks on any markup tweak; a harness with a `getTitle()` method does not.
 
 ### e2e — an overview
 
-Unit and component tests do not verify what the user cares about: whether the path "open the list → filter → create a ticket → see it in the list" works. That needs a real browser: **Playwright** (the de-facto standard today) or Cypress. The rules for sane e2e: keep them few (a handful of key journeys), do not use them as a substitute for unit tests, find elements by role/text/`data-testid` rather than by CSS classes, and do not mock the backend without a reason — otherwise the point is lost. Protractor, which Angular used to ship, was removed long ago.
+Unit and component tests do not verify what the user cares about. Does the whole path work: open the list, filter, create a ticket, see it in the list? That is what an end-to-end (e2e) test checks, and it needs a real browser: **Playwright** (the de-facto standard today) or Cypress.
+
+The rules for sane e2e:
+
+- Keep them few — a handful of key journeys.
+- Do not use them as a substitute for unit tests.
+- Find elements by role, text or `data-testid`, not by CSS classes.
+- Do not mock the backend without a reason, or the test loses its point.
+
+Protractor, which Angular used to ship, was removed long ago.
 
 ## React parallels
 
-```
-┌────────────────────┬──────────────────────────┬─────────────────────────────────────┐
-│ the task           │ React: Jest/Vitest + RTL │ Angular: TestBed                    │
-├────────────────────┼──────────────────────────┼─────────────────────────────────────┤
-│ swap a dependency  │ jest.mock on the module  │ a provider in TestBed               │
-├────────────────────┼──────────────────────────┼─────────────────────────────────────┤
-│ render a component │ render(<Cmp prop={x} />) │ createComponent + setInput          │
-├────────────────────┼──────────────────────────┼─────────────────────────────────────┤
-│ wait for an update │ await waitFor(...)       │ await fixture.whenStable()          │
-├────────────────────┼──────────────────────────┼─────────────────────────────────────┤
-│ find an element    │ screen.getByRole(...)    │ a harness or DebugElement           │
-├────────────────────┼──────────────────────────┼─────────────────────────────────────┤
-│ mock the network   │ msw / fetch-mock         │ provideHttpClientTesting            │
-├────────────────────┼──────────────────────────┼─────────────────────────────────────┤
-│ assert state       │ through the DOM          │ through the DOM or signals directly │
-└────────────────────┴──────────────────────────┴─────────────────────────────────────┘
-```
+The tasks map one to one; the tools do not.
 
-- **Swapping dependencies is Angular's main advantage.** `jest.mock('./api')` intercepts an import at the bundler level: you must know the path, remember hoisting, and type the mock yourself. In Angular a dependency is requested by token, so swapping it is the ordinary `{ provide: TicketApi, useValue: fake }` — typed and independent of file paths. This is what makes DI a tool rather than "an extra layer" (chapter 04).
-- **RTL's philosophy versus access to the instance.** RTL deliberately denies access to component state: assert what the user sees. In Angular you have `fixture.componentInstance`, and with signals you can read state directly. Convenient, but it slides easily into testing implementation: a sensible boundary is to assert state in service tests and test components through the DOM or a harness.
+| the task | React: Jest/Vitest + React Testing Library | Angular: `TestBed` |
+|---|---|---|
+| swap a dependency | `jest.mock` on the module | a provider in `TestBed` |
+| render a component | `render(<Cmp prop={x} />)` | `createComponent` + `setInput` |
+| wait for an update | `await waitFor(...)` | `await fixture.whenStable()` |
+| find an element | `screen.getByRole(...)` | a harness or `DebugElement` |
+| mock the network | `msw` / `fetch-mock` | `provideHttpClientTesting` |
+| assert state | through the DOM | through the DOM or signals directly |
+
+- **Swapping dependencies is Angular's main advantage.** With `jest.mock('./api')` you intercept an import at the bundler level: you must know the path, remember hoisting, and type the mock yourself. In Angular a dependency is requested by token, so swapping it is one ordinary entry: `{ provide: TicketApi, useValue: fake }`. It is typed and independent of file paths. That is what makes DI a tool rather than an extra layer (chapter 04).
+- **The React Testing Library philosophy versus access to the instance.** React Testing Library (RTL) deliberately denies access to component state: assert what the user sees. In Angular you have `fixture.componentInstance`, and with signals you can read state directly. Convenient, but it slides easily into testing implementation. A sensible boundary: assert state in service tests, and test components through the DOM or a harness.
 - **Waiting for updates.** RTL's `waitFor` polls the DOM until success; Angular's `whenStable()` waits until the framework has run its scheduled synchronization. The reliability differs: `whenStable()` knows about the scheduler rather than guessing with a timeout.
-- **Speed.** Service unit tests in Angular are exactly as fast as in React, but `TestBed` is heavier than RTL's `render()`: it boots the compiler and an injector. Hence a conclusion opposite to the React habit of "test everything through a render": in Angular it pays to keep logic in services and test it without `TestBed`.
-- **Where the habit breaks:** `component.input = value` instead of `setInput()`. In React props are set at render time, and the analogy suggests "just assign the field". In Angular that is a compile error with signal inputs and a silent failure with older ones: the component is not marked as changed, the template never updates, and the test fails on a baffling `expect`.
+- **Speed.** Service unit tests in Angular are exactly as fast as in React. But `TestBed` is heavier than RTL's `render()`, because it boots the compiler and an injector. The conclusion is the opposite of the React habit of testing everything through a render. In Angular it pays to keep logic in services and test it without `TestBed`.
+- **Where the habit breaks:** `component.input = value` instead of `setInput()`. In React props are set at render time, so the analogy suggests just assigning the field. In Angular that is a compile error with signal inputs, and a silent failure with older ones. The component is not marked as changed, the template never updates, and the test fails on a baffling `expect`.
 
 ## What you will see in legacy code
 
@@ -152,7 +153,11 @@ Unit and component tests do not verify what the user cares about: whether the pa
 
 ## What we add to the project
 
-Three sets of tests: unit tests for `TicketStore` (no `TestBed`), an HTTP-layer test with `HttpTestingController` (including the interceptor), and a list component test with the API swapped through a provider plus a harness for the ticket card. Plus one e2e journey as an example.
+Three sets of tests, plus one e2e journey as an example:
+
+- Unit tests for `TicketStore`, with no `TestBed`.
+- An HTTP-layer test with `HttpTestingController`, including the interceptor.
+- A list component test with the API swapped through a provider, plus a harness for the ticket card.
 
 ## Exercise
 
@@ -161,10 +166,14 @@ Three sets of tests: unit tests for `TicketStore` (no `TestBed`), an HTTP-layer 
 
 Requirements:
 
-1. Unit tests for `TicketStore` without `TestBed`: `add` prepends, `update` preserves order and leaves other objects untouched, `remove` with a missing id does not throw, and the `computed` counters recompute. Assert by reading the signals directly.
+1. Unit tests for `TicketStore` without `TestBed`. Assert by reading the signals directly:
+   - `add` prepends.
+   - `update` preserves order and leaves the other objects untouched.
+   - `remove` with a missing id does not throw.
+   - The `computed` counters recompute.
 2. HTTP-layer tests: `TicketApi.list()` builds the right URL and params; `create()` sends the body; a 500 leads to the expected behaviour. `verify()` goes in `afterEach`.
 3. An interceptor test: a request with a token gets the `Authorization` header, a request with `SKIP_AUTH` does not. Think about how to verify interceptor order.
-4. A `TicketList` component test: swap `TicketApi` for a stub through a provider, wait for `whenStable()`, and assert that the right number of cards rendered and that an empty response shows the empty state. No `fixture.detectChanges()` and no `fakeAsync`.
+4. A `TicketList` component test. Swap `TicketApi` for a stub through a provider and wait for `whenStable()`. Then assert that the right number of cards rendered, and that an empty response shows the empty state. No `fixture.detectChanges()` and no `fakeAsync`.
 5. An interaction test: clicking a card changes the selection. Set inputs through `componentRef.setInput()`.
 6. A harness: write `TicketCardHarness` with `getTitle()`, `getStatus()`, `isSelected()`, `click()`. Rewrite the test from step 5 on top of it and confirm that renaming a CSS class does not break it.
 7. A guard: test `adminMatchGuard` through `TestBed.runInInjectionContext()` with two different roles.
@@ -240,7 +249,10 @@ describe('TicketStore', () => {
 
 ```ts
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { provideAppConfig } from '../core/app-config';
@@ -325,7 +337,8 @@ describe('authInterceptor', () => {
 ```ts
 describe('TicketList', () => {
   const fakeApi = {
-    list: (params: TicketListParams) => of(TICKETS.filter((t) => !params.status || t.status === params.status)),
+    list: (params: TicketListParams) =>
+      of(TICKETS.filter((t) => !params.status || t.status === params.status)),
   };
 
   async function setup() {
@@ -408,7 +421,9 @@ it('selects a ticket on click', async () => {
   const fixture = await setup();
   const loader = TestbedHarnessEnvironment.loader(fixture);
 
-  const card = await loader.getHarness(TicketCardHarness.with({ title: 'Invoice PDF is empty' }));
+  const card = await loader.getHarness(
+    TicketCardHarness.with({ title: 'Invoice PDF is empty' }),
+  );
   expect(await card.isSelected()).toBe(false);
 
   await card.click();
@@ -455,10 +470,20 @@ test('an agent creates a ticket and sees it in the list', async ({ page }) => {
 
 Answers to the edge cases:
 
-- It means the component **does not notify** Angular of the change: a manual `detectChanges()` forces synchronization and hides the problem, while `whenStable()` waits for a scheduled check that nobody scheduled. The cause is usually a mutation instead of `set`, or a write to a plain field from an async callback (chapter 03). Such a component would not update in production either — so the test found a real bug rather than an API inconvenience.
-- Nothing special: `httpResource` subscribes itself, so `provideHttpClientTesting()`, an `expectOne` plus `flush()`, and then `await fixture.whenStable()` for the template to see the new value are enough. Keep in mind that the resource fires its request when the component is created, so `expectOne` comes **after** `createComponent`.
-- Three common causes: (1) polling or an `interval` in the component sent another request the test does not know about; (2) `httpResource` refetched because a signal it reads changed; (3) you awaited `whenStable()` after `flush()` and the next request in the chain went out in the meantime (a `reload()` after a mutation, say). To diagnose, call `httpTesting.match(() => true)` before `verify()` and inspect what is left.
-- Most likely the provider is not where the dependency is looked up: the component (or a child) declared `providers: [TicketApi]` of its own and the local provider shadowed the test one (chapter 04). The second option is that the service injects `HttpClient` directly rather than `TicketApi`, so the backend needed swapping (`provideHttpClientTesting`). The third is that you configured `TestBed` twice and the second call had no effect because the component already existed.
+- The component **does not notify** Angular of the change. A manual `detectChanges()` forces synchronization and hides that, while `whenStable()` waits for a scheduled check that nobody scheduled. The cause is usually a mutation instead of `set`, or a write to a plain field from an async callback (chapter 03). Such a component would not update in production either, so the test found a real bug rather than an API inconvenience.
+- Nothing special is needed, because `httpResource` subscribes itself. Add `provideHttpClientTesting()`, then an `expectOne` plus `flush()`, then `await fixture.whenStable()` so the template sees the new value. Keep in mind that the resource fires its request when the component is created, so `expectOne` comes **after** `createComponent`.
+- Three causes are the common ones:
+
+  - Polling or an `interval` in the component sent another request the test does not know about.
+  - The `httpResource` refetched, because a signal it reads changed.
+  - You awaited `whenStable()` after `flush()`, and the next request in the chain went out in the meantime — a `reload()` after a mutation, say.
+
+  To diagnose, call `httpTesting.match(() => true)` before `verify()` and inspect what is left.
+- Most likely the provider is not where the dependency is looked up. Three places to check:
+
+  - The component, or a child of it, declared `providers: [TicketApi]` of its own, and that local provider shadowed the test one (chapter 04).
+  - The service injects `HttpClient` directly rather than `TicketApi`, so the backend is what needed swapping (`provideHttpClientTesting`).
+  - You configured `TestBed` twice, and the second call had no effect because the component already existed.
 - Through `DeferBlockBehavior.Manual`: the block then does not load automatically and you drive its state explicitly after obtaining `fixture.getDeferBlocks()`. Without that mode the behaviour depends on the trigger and "the placeholder is shown" becomes a race.
 
 ## Check yourself
@@ -472,16 +497,20 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. `detectChanges()` is an order to "check the template now", executed regardless of whether anybody notified the framework of a change. `whenStable()` waits for a **scheduled** synchronization, i.e. it exercises the same chain that will happen in the application. The hidden class of bugs is "state changed but no notification was sent": mutating an array instead of `set`, writing to a plain field from a `setTimeout` or a third-party callback, calling a form's `setValue` without mirroring it into signals (chapters 03 and 10). With `detectChanges()` such a component passes and breaks in production; with `whenStable()` the test fails where a real defect exists.
-2. `fakeAsync`/`tick` are built on zone.js patches, and the Vitest runner (the default since v21) does not patch zone.js — so they simply do not work there, and the documentation no longer recommends `fakeAsync` at all. Replacements: plain `async`/`await` for promises, `await fixture.whenStable()` for Angular's synchronization, `vi.useFakeTimers()`/`vi.advanceTimersByTime()` for timers, and direct control of the source (`Subject.next()`) instead of virtual time for streams.
-3. `jest.mock('./api')` works at the module-system level: you must name the path (which breaks when files move), remember hoisting, and type the mock by hand so it drifts from the real API. A provider in `TestBed` works at the token level: `{ provide: TicketApi, useValue: fake }`. Consequences: (a) the test does not depend on file locations and survives structural refactoring; (b) the stub is checked by the compiler against the token, so changing the service's signature breaks the test's compilation rather than producing a falsely green run. And a third: the same mechanism swaps anything — config behind an `InjectionToken`, the `Router`, the HTTP backend.
-4. Because a signal store is an ordinary class with no template: state is read by calling a signal, commands are method calls, and `computed` values recompute themselves on read. Neither the template compiler nor change detection is involved (`TestBed` is only handy for assembling dependencies — otherwise you pass them in). The suite gains speed (no component creation) and stability: such tests do not break when markup changes and they assert behaviour rather than DOM. That is the practical reason for moving logic out of components into services (chapter 05).
-5. Because `querySelector('.ticket-card__title > span')` binds the test to the markup structure: renaming a class or adding a wrapper breaks tests unrelated to the change. A harness is the component's API for tests: `getTitle()`, `isSelected()`, `click()`. Selectors live in one place (inside the harness), so a markup change is fixed once. A harness also hides asynchronicity (all methods return promises and wait for stabilization themselves) and is reusable across unit and integration tests — and library components often ship harnesses of their own, so you never need to know their internal markup at all.
+1. `detectChanges()` is an order to check the template now, and it runs whether or not anybody notified the framework of a change. Then `whenStable()` waits for a **scheduled** synchronization, so it exercises the same chain that will happen in the application. The hidden class of bugs is state that changed with no notification sent. Typical causes: an array mutated instead of `set`, or a write to a plain field from a `setTimeout` or a third-party callback. Another is a form's `setValue` with no mirror into signals (chapters 03 and 10). With `detectChanges()` such a component passes and then breaks in production. With `whenStable()` the test fails where a real defect exists.
+2. `fakeAsync`/`tick` are built on zone.js patches, and the Vitest runner does not patch zone.js. Vitest is the default runner since v21, so those helpers simply do not work, and the documentation no longer recommends `fakeAsync` at all. The replacements are direct: plain `async`/`await` for promises, and `await fixture.whenStable()` for Angular's synchronization. For timers use `vi.useFakeTimers()`/`vi.advanceTimersByTime()`, and for streams control the source directly (`Subject.next()`) instead of virtual time.
+3. `jest.mock('./api')` works at the module-system level. You must name the path, which breaks when files move, and remember hoisting. The mock is typed by hand, so it drifts from the real API. A provider in `TestBed` works at the token level: `{ provide: TicketApi, useValue: fake }`. That has three consequences. The test does not depend on file locations, so it survives structural refactoring. The stub is checked by the compiler against the token, so changing the service's signature breaks the test's compilation instead of a falsely green run. And the same mechanism swaps anything else: config behind an `InjectionToken`, the `Router`, the HTTP backend.
+4. Because a signal store is an ordinary class with no template. State is read by calling a signal, commands are method calls, and `computed` values recompute themselves on read. Neither the template compiler nor change detection is involved; `TestBed` is only handy for assembling dependencies, and otherwise you pass them in. The suite gains speed, because no component is created. It also gains stability: such tests do not break when markup changes, and they assert behaviour rather than DOM. That is the practical reason for moving logic out of components into services (chapter 05).
+5. Because `querySelector('.ticket-card__title > span')` binds the test to the markup structure. Renaming a class or adding a wrapper then breaks tests unrelated to the change. A harness is the component's API for tests: `getTitle()`, `isSelected()`, `click()`. Selectors live in one place, inside the harness, so a markup change is fixed once. A harness also hides asynchronicity: all its methods return promises and wait for stabilization themselves. And it is reusable across unit and integration tests. Library components often ship harnesses of their own, so you never need to know their internal markup at all.
 
 </details>
 
 ## Common mistake
 
-The first is sprinkling `fixture.detectChanges()` after every line, copying tests from older articles. In the zone era it was a necessity; today it is actively harmful: a forced check hides exactly the defects the test should catch. A component that forgot to move state into a signal passes with `detectChanges()` and breaks in the browser; worse, the habit produces suites that are green precisely because synchronization was invoked by hand in the right places. The correct shape is `await fixture.whenStable()` where an update must be awaited, and nothing between actions. If a test fails without `detectChanges()`, that is a diagnosis of the code, not of the test.
+The first is sprinkling `fixture.detectChanges()` after every line, copying tests from older articles. In the zone era it was a necessity. Today it is actively harmful: a forced check hides exactly the defects the test should catch. A component that forgot to move state into a signal passes with `detectChanges()` and breaks in the browser.
 
-The second is assigning an input directly: `fixture.componentInstance.ticket = ticket`. With signal inputs that will not compile (`input()` returns a read-only signal), and with remaining `@Input()` fields it passes silently while leaving the component unmarked — the template never updates and `expect` fails on an empty DOM for no visible reason. React experience suggests "props are just values", but in Angular an input is part of a contract backed by a notification to the framework. The correct way: `fixture.componentRef.setInput('ticket', ticket)` followed by `await fixture.whenStable()`. The same principle as with dynamic components in chapter 11.
+Worse, the habit produces suites that are green precisely because synchronization was invoked by hand in the right places. The correct shape is `await fixture.whenStable()` where an update must be awaited, and nothing between actions. If a test fails without `detectChanges()`, that is a diagnosis of the code, not of the test.
+
+The second is assigning an input directly: `fixture.componentInstance.ticket = ticket`. With signal inputs that will not compile, because `input()` returns a read-only signal. With the remaining `@Input()` fields it passes silently and leaves the component unmarked. The template never updates, and `expect` fails on an empty DOM for no visible reason.
+
+React experience suggests that props are just values. But in Angular an input is part of a contract backed by a notification to the framework. The correct way is `fixture.componentRef.setInput('ticket', ticket)` followed by `await fixture.whenStable()`. The same principle as with dynamic components in chapter 11.

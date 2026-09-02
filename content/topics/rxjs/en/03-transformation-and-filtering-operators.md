@@ -45,21 +45,21 @@ export function searchQuery(minLength = 2) {
 input$.pipe(searchQuery(3)).subscribe(load);
 ```
 
-> **Legacy.** Before RxJS 5.5 operators were **prototype methods**: `source.map(fn).filter(pred)`. That "patch operator" syntax required imports like `import 'rxjs/add/operator/map'`, broke tree-shaking (the whole of RxJS ended up in the bundle) and caused conflicts when two library versions met in one project. It has since been removed; `.pipe()` with individual imports is the only norm, not "the new style".
+> **Legacy.** Before RxJS 5.5 operators were **prototype methods**: `source.map(fn).filter(pred)`. That "patch operator" syntax required imports like `import 'rxjs/add/operator/map'`. It broke tree-shaking, so the whole of RxJS ended up in the bundle. It also caused conflicts when two library versions met in one project. It has since been removed; `.pipe()` with individual imports is the only norm, not "the new style".
 
 ## How to read marble diagrams
 
 Marble notation is the language RxJS documentation and every timing explanation is written in. Five minutes spent learning to read it saves hours:
 
 ```
-                       How to read a marble diagram
+                  How to read a marble diagram
 source  --a---b-----c--|
           ^ value a arrived early
               ^ value b — later
                     ^ value c — later still
                        ^ complete: the stream is done
 
-        a dash = the passage of time (an abstract unit, not milliseconds)
+        a dash = the passage of time (an abstract unit, not ms)
 
 source  --a---b-----c--|
         map(x => x.toUpperCase())
@@ -72,7 +72,13 @@ result  --a---------c--|
         filter never shifts values in time, it only drops them
 ```
 
-Read it like this: the horizontal axis is time flowing left to right, symbols are values, `|` is `complete`, `X` is `error`. Dashes do not stand for a specific number of milliseconds: they show *relative* intervals. The main question you ask a diagram is: **did the values shift in time, and did their number change?** Operators split into groups along those two axes: `map` changes neither, `filter` changes the count, `debounceTime` changes both count and timing.
+Read it like this: the horizontal axis is time flowing left to right, symbols are values, `|` is `complete`, `X` is `error`. Dashes do not stand for a specific number of milliseconds: they show *relative* intervals.
+
+The main question you ask a diagram is: **did the values shift in time, and did their number change?** Operators split into groups along those two axes:
+
+- `map` changes neither;
+- `filter` changes the count;
+- `debounceTime` changes both count and timing.
 
 ## Transformation
 
@@ -103,7 +109,7 @@ of(1, 2, 3).pipe(reduce((acc, x) => acc + x, 0)).subscribe(console.log);
 // 6
 ```
 
-Hence the rule: `reduce` is useless on infinite streams (it waits for a `complete` that never comes), while `scan` is the primary tool for accumulating state:
+Hence the rule: on infinite streams `reduce` is useless, because it waits for a `complete` that never comes. For accumulating state, `scan` is the primary tool:
 
 ```ts
 // a click counter
@@ -120,30 +126,20 @@ That last example is what Redux-style stores are built on: a stream of actions p
 
 ## Filtering and bounding
 
-```
-                                       Filtering and bounding a stream
-┌────────────────────────┬───────────────────────────────────┬───────────────────────────────────────────────┐
-│ operator               │ what it does                      │ the nuance people ask about                   │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ filter(pred)           │ lets matching values through      │ the stream goes on, no complete               │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ take(n)                │ the first n values, then complete │ it completes and tears down for you           │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ takeWhile(pred)        │ while the predicate holds         │ inclusive: true also emits the stopper        │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ takeUntil(notifier$)   │ until notifier$ emits             │ the main teardown technique                   │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ first(pred?)           │ the first match, then complete    │ throws EmptyError when nothing came           │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ last(pred?)            │ the last match on complete        │ waits for complete — not for infinite streams │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ skip(n) / skipWhile    │ drops the start of the stream     │ values are lost, not buffered                 │
-├────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────┤
-│ distinctUntilChanged() │ drops consecutive duplicates      │ compares by reference; pass a comparator      │
-└────────────────────────┴───────────────────────────────────┴───────────────────────────────────────────────┘
-                   take(1) and first() differ on an empty stream: take(1) simply completes,
-                     first() throws EmptyError — which is sometimes exactly what you want
-```
+Filtering drops values, and bounding decides when the stream is allowed to end. Eight operators cover almost every case, and the third column holds the nuance people ask about at interviews.
+
+| operator | what it does | the nuance people ask about |
+|---|---|---|
+| `filter(pred)` | lets matching values through | the stream goes on, no complete |
+| `take(n)` | the first `n` values, then complete | it completes and tears down for you |
+| `takeWhile(pred)` | while the predicate holds | `inclusive: true` also emits the stopper |
+| `takeUntil(notifier$)` | until `notifier$` emits | the main teardown technique |
+| `first(pred?)` | the first match, then complete | throws `EmptyError` when nothing came |
+| `last(pred?)` | the last match on complete | waits for complete, so not for infinite streams |
+| `skip(n)` / `skipWhile` | drops the start of the stream | values are lost, not buffered |
+| `distinctUntilChanged()` | drops consecutive duplicates | compares by reference; pass a comparator |
+
+The first two rows hide one more difference. On an empty stream `take(1)` simply completes, while `first()` throws `EmptyError` — which is sometimes exactly what you want.
 
 Two places where mistakes happen regularly.
 
@@ -154,7 +150,7 @@ Two places where mistakes happen regularly.
 ```ts
 import { distinctUntilChanged, distinctUntilKeyChanged, map } from 'rxjs';
 
-// does NOT work for objects: every API response is a new object
+// does not work for objects: every API response is a new object
 state$.pipe(distinctUntilChanged());
 
 // Option 1: a comparator
@@ -172,22 +168,23 @@ The third option is usually preferable: comparing primitives is cheap and needs 
 ## Time operators: debounce, throttle, audit
 
 ```
-           debounceTime, throttleTime and auditTime on one burst
+       debounceTime, throttleTime and auditTime on one burst
 source           -a-b-c---------d-e-------|
 
 debounceTime(4)  ---------c---------e-----|
-                          ^ waits for a PAUSE, emits the burst's last value
+                          ^ waits for a pause, emits the last value
 
 throttleTime(4)  -a-------------d---------|
-                  ^ emits the FIRST one, then stays silent for the window
+                  ^ emits the first, then goes silent for the window
 
 auditTime(4)     -----c-------------e-----|
-                      ^ waits out the window, emits the LAST value of it
-search-as-you-type wants debounceTime; buttons and scroll want throttleTime;
-          "no more often, but always the freshest" wants auditTime
+                      ^ waits until the window ends,
+                        emits the last value from it
+ search as you type — debounceTime; buttons, scroll — throttleTime;
+        "no more often, but always the freshest" — auditTime
 ```
 
-Three operators solve the same problem — "reduce the rate" — with different semantics, and the choice comes down to "which value from the burst do I need".
+Three operators solve the same problem: "reduce the rate". Their semantics differ, so the choice comes down to one question — which value from the burst do you need?
 
 **`debounceTime(ms)`** waits for a pause of the given length and emits the last value. Ideal for typing: while the user types there are no requests; the moment they stop, one request goes out with the final text.
 
@@ -205,16 +202,20 @@ The flip side: under continuous typing the value may never be emitted at all. Fo
 
 ```ts
 scroll$.pipe(throttleTime(100), map(getScrollPosition));
-saveClicks$.pipe(throttleTime(1000)); // the first click fires, repeats within a second do not
+saveClicks$.pipe(throttleTime(1000)); // first click fires, repeats within 1s do not
 ```
 
 By default `throttleTime` uses `leading: true, trailing: false` — "the first yes, the last no". Configuration changes that: `throttleTime(1000, undefined, { leading: false, trailing: true })` gives behaviour close to `auditTime`.
 
-**`auditTime(ms)`** is throttle's mirror image: on receiving a value it waits out the window and emits the **last** value that arrived during it. The use case: "update the indicator no more than every 100 ms, but always show the current state".
+**`auditTime(ms)`** is throttle's mirror image. On receiving a value it waits until the window ends, then emits the **last** value that arrived during it. The use case: "update the indicator no more than every 100 ms, but always show the current state".
 
 Next to it sits **`sampleTime(ms)`** — "emit the latest value every ms on a timer", so the rate is fixed regardless of source activity. Useful for metrics and real-time charts.
 
-The practical criterion: you need the **last** value after quiet — `debounceTime`; you need an **immediate** reaction with a cap — `throttleTime`; you need the **freshest** value on a fixed rhythm — `auditTime` or `sampleTime`.
+The practical criterion is short:
+
+- you need the **last** value after quiet — `debounceTime`;
+- you need an **immediate** reaction with a cap — `throttleTime`;
+- you need the **freshest** value on a fixed rhythm — `auditTime` or `sampleTime`.
 
 ## tap: side effects and their abuse
 
@@ -247,7 +248,7 @@ request$.pipe(
 Abuse looks like this:
 
 ```ts
-// BAD: tap mutates state — the stream stops being a description of data
+// bad: tap mutates state — the stream stops being a description of data
 tickets$.pipe(
   tap((tickets) => (this.tickets = tickets)),          // writing to a field
   tap((tickets) => (this.count = tickets.length)),     // a derived value
@@ -255,7 +256,12 @@ tickets$.pipe(
 ).subscribe();
 ```
 
-What exactly is wrong: the chain's outcome lives in its side effects rather than in its value — such a chain cannot be reused and is hard to test; effect order depends on operator order; a second subscription runs every effect twice; and a bare `subscribe()` signals that the real result is "hidden" inside `tap`.
+Four things are wrong here:
+
+1. The chain's outcome lives in its side effects rather than in its value, so it cannot be reused and is hard to test.
+2. The order of the effects depends on the order of the operators.
+3. A second subscription runs every effect twice.
+4. A bare `subscribe()` signals that the real result is "hidden" inside `tap`.
 
 The right shape is to return data from the stream and handle it in one place:
 
@@ -272,17 +278,12 @@ A guiding rule: if removing every `tap` from a chain breaks it, `tap` was used f
 
 ## Relation to other topics
 
-```txt
-[Reactive Model and Observables]  — why an operator returns a NEW stream
-                                     and what the subscription contract is
-[Creating Streams and Subjects]   — the sources these operators apply to
-[Flattening Operators]            — what to do when map returns a stream
-                                     instead of a value
-[Combination Operators]           — joining several streams
-[Error Handling and Retries]      — why an error cannot be "filtered out"
-[Multicasting and Subscription
- Management]                       — takeUntil as the main teardown technique
-```
+- [Reactive Model and Observables](./01-reactive-model-and-observables.md) — why an operator returns a new stream, and what the subscription contract is.
+- [Creating Streams and Subjects](./02-creating-streams-and-subjects.md) — the sources these operators apply to.
+- [Flattening Operators](./04-flattening-operators.md) — what to do when `map` returns a stream instead of a value.
+- [Combination Operators](./05-combination-operators.md) — joining several streams.
+- [Error Handling and Retries](./06-error-handling-and-retries.md) — why an error cannot be "filtered out".
+- [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md) — `takeUntil` as the main teardown technique.
 
 ## Common interview traps
 
@@ -290,11 +291,11 @@ A guiding rule: if removing every `tap` from a chain breaks it, `tap` was used f
 
 - **Not distinguishing `scan` from `reduce`** — `scan` emits the intermediate result on every value, `reduce` only the total on `complete`. A probing question: "what does `reduce` emit on `interval(1000)`?" The right answer: nothing, the stream never completes and the subscriber never receives a value.
 
-- **Confusing `debounceTime` with `throttleTime`** — the most common pair at interviews. What is expected is not a definition but a criterion: need the last value after quiet (search) — `debounce`; need an immediate reaction with a rate cap (scroll, clicks) — `throttle`. Follow-up: "what if the user types nonstop for a minute?" — with `debounceTime` no request goes out at all.
+- **Confusing `debounceTime` with `throttleTime`** — the most common pair at interviews. What is expected is not a definition but a criterion. Need the last value after quiet, as in search? That is `debounce`. Need an immediate reaction with a rate cap, as on scroll and clicks? That is `throttle`. The follow-up question is "what if the user types nonstop for a minute?" With `debounceTime` no request goes out at all.
 
 - **`distinctUntilChanged()` on objects** — it compares by reference, so it is useless for API responses: every object is new. The expected answer is a comparator, `distinctUntilKeyChanged`, or a `map` down to a primitive first.
 
-- **Not knowing that `take(n)` completes the stream** — it is not "take and continue": after the n-th value `complete` arrives, the subscription is torn down and the teardown runs. That is exactly why `take(1)` is a legitimate way to avoid manual unsubscription.
+- **Not knowing that `take(n)` completes the stream** — it is not "take and continue". After the n-th value `complete` arrives, the subscription is torn down and the teardown runs. That is exactly why `take(1)` is a legitimate way to avoid manual unsubscription.
 
 - **`first()` instead of `take(1)` without knowing the difference** — on an empty stream `first()` throws `EmptyError` while `take(1)` completes quietly. The choice depends on whether "no value" is an error in your scenario.
 

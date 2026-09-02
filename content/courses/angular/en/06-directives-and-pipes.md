@@ -4,7 +4,7 @@
 
 ### A directive is a component without a template
 
-Technically a component *is* a directive that acquired a template. Everything else — the selector, `host`, `input()`/`output()`, DI, lifecycle hooks — is shared. Hence a simple rule of thumb: **need your own markup, write a component; need behaviour on an element that already exists, write a directive**.
+Technically a component *is* a directive that acquired a template. Everything else — the selector, `host`, `input()`/`output()`, DI (dependency injection), lifecycle hooks — is shared. Hence a simple rule of thumb: **need your own markup, write a component; need behaviour on an element that already exists, write a directive**.
 
 ```ts
 @Directive({
@@ -58,7 +58,9 @@ A selector can narrow applicability: `'button[appPrimary]'` only matches a `butt
 between: the blocks compile directly and are cheaper for it
 ```
 
-The asterisk is syntactic sugar: the compiler wraps the element in an `<ng-template>` and puts the directive on that. The directive receives a `TemplateRef` (what to render) and a `ViewContainerRef` (where), and then **decides for itself** whether to create a view, how many, and with what context. That is exactly how `*ngIf` and `*ngFor` worked: `*ngIf` called `createEmbeddedView()`/`clear()`, `*ngFor` created one view per item and reused them by `trackBy`.
+The asterisk is syntactic sugar: the compiler wraps the element in an `<ng-template>` and puts the directive on that. The directive receives two things — a `TemplateRef` (what to render) and a `ViewContainerRef` (where). From there it **decides for itself** whether to create a view, how many, and with what context.
+
+That is exactly how `*ngIf` and `*ngFor` worked. `*ngIf` called `createEmbeddedView()` and `clear()`. `*ngFor` created one view per item and reused them by `trackBy`.
 
 The context is passed as an object; the `$implicit` key becomes the default value for `let`:
 
@@ -67,9 +69,9 @@ this.vcr.createEmbeddedView(this.tpl, { $implicit: item, index: i });
 // in the template: *appRepeat="items; let item; let i = index"
 ```
 
-For typing the context there are `ngTemplateContextGuard` (describes the context type) and `ngTemplateGuard_<input>` (narrows a type by a condition) — without them `strictTemplates` cannot infer the types used inside the template.
+Two hooks type the context: `ngTemplateContextGuard` describes the context type, and `ngTemplateGuard_<input>` narrows a type by a condition. Without them `strictTemplates` cannot infer the types used inside the template.
 
-Do you still write custom structural directives? The official position: use built-in control flow for conditions and lists, and write a structural directive "when you need reusable rendering behavior that control flow doesn't cover". Real examples: rendering by permission (`*appHasRole="'admin'"`), lazy wrappers, delayed display, repetition with special semantics.
+Do you still write custom structural directives? The official position is narrow. Use built-in control flow for conditions and lists. Write a structural directive only "when you need reusable rendering behavior that control flow doesn't cover". Real examples: rendering by permission (`*appHasRole="'admin'"`), lazy wrappers, delayed display, repetition with special semantics.
 
 ### hostDirectives: composing behaviour
 
@@ -98,30 +100,20 @@ What matters here:
 - Host directive constructors, hooks and bindings run **before** the component itself, and a directive may apply `hostDirectives` to other directives, forming chains.
 - A component and its host directives can inject one another — that is the intended way for them to share state.
 
-The framework ships a ready-made example of this approach: `@angular/aria` (stable since v22), a set of directives covering ARIA attributes, keyboard navigation and focus management so that every project stops rewriting them.
+The framework ships a ready-made example of this approach: `@angular/aria`, stable since v22. It is a set of directives for ARIA (Accessible Rich Internet Applications) attributes, keyboard navigation and focus management. That is work every project used to redo by hand.
 
 ### Pipes: pure and impure
 
-```
-                        The cost of computing inside a template
-┌──────────────────────────────┬─────────────────────────────────────────────┬────────┐
-│ in the template              │ when it runs                                │ cached │
-├──────────────────────────────┼─────────────────────────────────────────────┼────────┤
-│ a pure pipe, primitive input │ when the value changes                      │ yes    │
-├──────────────────────────────┼─────────────────────────────────────────────┼────────┤
-│ a pure pipe, object input    │ when the REFERENCE changes, not on mutation │ yes    │
-├──────────────────────────────┼─────────────────────────────────────────────┼────────┤
-│ an impure pipe (pure: false) │ on every check of the template              │ no     │
-├──────────────────────────────┼─────────────────────────────────────────────┼────────┤
-│ async, keyValue, slice, json │ on every check (they are impure)            │ no     │
-├──────────────────────────────┼─────────────────────────────────────────────┼────────┤
-│ a class method {{ f(x) }}    │ on every check of the template              │ no     │
-├──────────────────────────────┼─────────────────────────────────────────────┼────────┤
-│ a computed in the class      │ when its dependencies change                │ yes    │
-└──────────────────────────────┴─────────────────────────────────────────────┴────────┘
-              the built-in date, currency, decimal and uppercase are pure;
-                  async additionally calls markForCheck on every emit
-```
+How much a computation in a template costs depends on where it lives:
+
+| in the template | when it runs | cached |
+|---|---|---|
+| a pure pipe, primitive input | when the value changes | yes |
+| a pure pipe, object input | when the **reference** changes, not on mutation | yes |
+| an impure pipe (`pure: false`) | on every check of the template | no |
+| `async`, `keyValue`, `slice`, `json` | on every check (they are impure) | no |
+| a class method `{{ f(x) }}` | on every check of the template | no |
+| a `computed` in the class | when its dependencies change | yes |
 
 A pipe is a class with a `transform` method and a name it is known by in templates. By default a pipe is **pure**: the result is cached and recomputed only when a primitive value or an object **reference** changes. Two consequences to accept immediately:
 
@@ -130,35 +122,30 @@ A pipe is a class with a `transform` method and a name it is known by in templat
 
 Among the built-ins, `async`, `keyValue`, `slice` and `json` are declared `pure: false`; `date`, `currency`, `decimal`, `percent` and `uppercase` are pure. `AsyncPipe` additionally calls `markForCheck()` on every emit — which is why older `| async` code survived the move to zoneless (chapter 03).
 
-Pipes take part in DI: `inject()` works inside `transform` (that is how `DatePipe` gets the locale). The reverse is discouraged by the documentation: do not inject a pipe class into a service to call its `transform` — if the logic is needed outside templates, it should be a plain function that the pipe merely wraps.
+Pipes take part in DI: `inject()` works inside `transform` (that is how `DatePipe` gets the locale). The reverse is discouraged by the documentation. Do not inject a pipe class into a service just to call its `transform`. If the logic is needed outside templates, it should be a plain function that the pipe merely wraps.
 
 ### Choosing the tool
 
-```
-┌────────────────────────────────────────┬────────────────────────┬──────────────────────────────┐
-│ what you need                          │ the tool               │ the deciding sign            │
-├────────────────────────────────────────┼────────────────────────┼──────────────────────────────┤
-│ own markup and own state               │ a component            │ it has a template            │
-├────────────────────────────────────────┼────────────────────────┼──────────────────────────────┤
-│ behaviour on someone else's element    │ an attribute directive │ no markup is added           │
-├────────────────────────────────────────┼────────────────────────┼──────────────────────────────┤
-│ decide whether and how often to render │ a structural directive │ you need a TemplateRef       │
-├────────────────────────────────────────┼────────────────────────┼──────────────────────────────┤
-│ reshape a value for display            │ a pipe                 │ a pure function of its input │
-├────────────────────────────────────────┼────────────────────────┼──────────────────────────────┤
-│ a derived value of a component         │ computed               │ it depends on signals        │
-├────────────────────────────────────────┼────────────────────────┼──────────────────────────────┤
-│ a bundle of behaviours on a component  │ hostDirectives         │ composition, not inheritance │
-└────────────────────────────────────────┴────────────────────────┴──────────────────────────────┘
-```
+The same decision, laid out in one place:
 
-The practical rule: **a pipe is for presentation, a `computed` is for data**. Date formatting, pluralization, units — a pipe: it does not depend on component state and can be reused anywhere. A filtered list, an aggregate, an "overdue" flag — a `computed`: it is tied to state and must be memoized by signals. A pipe that filters an array (`| filterBy`) is the classic anti-pattern: pure, it will not see mutations; impure, it runs on every check.
+| what you need | the tool | the deciding sign |
+|---|---|---|
+| own markup and own state | a component | it has a template |
+| behaviour on someone else's element | an attribute directive | no markup is added |
+| decide whether and how often to render | a structural directive | you need a `TemplateRef` |
+| reshape a value for display | a pipe | a pure function of its input |
+| a derived value of a component | `computed` | it depends on signals |
+| a bundle of behaviours on a component | `hostDirectives` | composition, not inheritance |
+
+The practical rule: **a pipe is for presentation, a `computed` is for data**. Date formatting, pluralization, units — a pipe: it does not depend on component state and can be reused anywhere. A filtered list, an aggregate, an "overdue" flag — a `computed`: it is tied to state and must be memoized by signals.
+
+A pipe that filters an array (`| filterBy`) is the classic anti-pattern. Pure, it will not see mutations. Impure, it runs on every check.
 
 ## React parallels
 
-- **Directives have no React equivalent.** In React, behaviour on someone else's element is expressed either as a hook (`useHover`, `useClickOutside`) returning props you must spread yourself, or as a wrapper component that adds a node to the DOM. A directive adds no nodes and attaches through an attribute — closer to "a mixin for an element" than to anything in React.
-- **`hostDirectives` versus HOCs and hook composition.** An HOC wraps the component in a new layer of the tree; hook composition requires a manual call in the body. `hostDirectives` attaches behaviour to the host element declaratively, with no extra nodes and no changes to the component body — and with inputs private by default, so the component's API is never widened by accident.
-- **A pipe versus a function in JSX.** In JSX you simply call `formatDate(x)`, and that is fine because the component body runs a bounded number of times. In Angular a function in a template runs on every check and is never cached; a pure pipe caches by its input. That is not a matter of style but of cost.
+- **Directives have no React equivalent.** React has two ways to put behaviour on someone else's element. One is a hook (`useHover`, `useClickOutside`) that returns props you must spread yourself. The other is a wrapper component, and it adds a node to the DOM (document object model — the browser's tree of page objects). A directive adds no nodes and attaches through an attribute, which is closer to "a mixin for an element" than to anything in React.
+- **`hostDirectives` versus HOCs and hook composition.** An HOC (higher-order component) wraps the component in a new layer of the tree. Hook composition requires a manual call in the body. With `hostDirectives` the behaviour attaches to the host element declaratively: no extra nodes, no changes to the component body. Inputs are private by default too, so the component's API is never widened by accident.
+- **A pipe versus a function in JSX.** JSX is a syntax extension for JavaScript: it lets you write markup inside code. In JSX you simply call `formatDate(x)`, and that is fine because the component body runs a bounded number of times. In Angular a function in a template runs on every check and is never cached. A pure pipe caches by its input, so this is not a matter of style but of cost.
 - **A structural directive versus conditional rendering.** `{cond && <X/>}` is an ordinary JS expression: React evaluates both sides as values and picks by the result. A structural directive receives a **template**, not a result: the body is not evaluated until the directive creates a view. Hence the ability to render it zero times, five times, or later — without rebuilding the expression itself.
 - **Where the habit breaks:** trying to port "a helper in JSX" into a pipe that filters a list. In React `{items.filter(f).map(...)}` is predictable; in Angular `| filterBy` forces a choice between "will not see mutations" (pure) and "runs always" (impure). The right answer is not to filter in the template at all: filtering belongs in a `computed` (chapter 02).
 
@@ -167,13 +154,13 @@ The practical rule: **a pipe is for presentation, a `computed` is for data**. Da
 - **`*ngIf` / `*ngFor` / `[ngSwitch]`** with `CommonModule` in `imports`. These are exactly the structural directives whose mechanics the diagram above describes; the new control flow does the same without an intermediary directive.
 - **`*ngIf="user$ | async as user; else loading"`** with `<ng-template #loading>` — the classic "impure pipe plus structural directive" combo, replaceable by `@if` over a signal.
 - **`@HostBinding('class.active')` and `@HostListener('mouseenter')`** inside directives instead of the `host` object (chapter 01). In directives this shows up even more often than in components.
-- **Behaviour through inheritance:** `export class TicketCard extends BaseHighlightComponent` — precisely what `hostDirectives` was introduced for. The tell: a base class carrying a `@Directive()` decorator with no selector that components extend.
+- **Behaviour through inheritance:** `export class TicketCard extends BaseHighlightComponent` — precisely what `hostDirectives` was introduced for. The sign: a base class carrying a `@Directive()` decorator with no selector that components extend.
 - **Filter pipes:** `*ngFor="let t of tickets | filterByStatus: status | orderBy: 'date'"` with `pure: false`. Such code is both slow and a source of new arrays on every check, which breaks `trackBy`.
 - **`constructor(private el: ElementRef, private renderer: Renderer2)`** with manual `renderer.addClass(...)` instead of host bindings — how directives were written before bindings became declarative.
 
 ## What we add to the project
 
-The ticket card gets a directive that highlights overdue tickets (a class and an attribute on the host element, with no markup changes) and an SLA pipe that turns hours into a human-readable "2h left" / "overdue by 3h". Plus `hostDirectives` — attaching the behaviour to the card without inheritance.
+The ticket card gets two new things. First, a directive that highlights overdue tickets: it sets a class and an attribute on the host element and changes no markup. Second, a pipe for the SLA (service level agreement — the response deadline promised for a ticket). It turns hours into a human-readable `2h left` or `overdue by 3h`. On top of that, `hostDirectives` attaches the behaviour to the card without inheritance.
 
 ## Exercise
 
@@ -182,11 +169,11 @@ The ticket card gets a directive that highlights overdue tickets (a class and an
 
 Requirements:
 
-1. An `slaRemaining` pipe: takes a ticket (or `createdAt` + `slaHours`) plus the current time and returns strings like `2h left`, `30m left`, `overdue by 3h`, `no SLA`. The pipe must be pure — work out how that is possible when the result depends on "now" (hint: "now" can be an input).
-2. An `appOverdue` directive: adds a class and an aria attribute to the element when the SLA is breached. No `ElementRef`/`Renderer2` — only the `host` object and signals. Take the input via `input.required()` with an alias so that `[appOverdue]="ticket"` works.
+1. An `slaRemaining` pipe. It takes a ticket (or `createdAt` + `slaHours`) plus the current time. The result is a string like `2h left`, `30m left`, `overdue by 3h` or `no SLA`. The pipe must be pure. Work out how that is possible when the result depends on "now" (hint: "now" can be an input).
+2. An `appOverdue` directive: adds a class and an `aria` attribute to the element when the SLA is breached. No `ElementRef`/`Renderer2` — only the `host` object and signals. Take the input via `input.required()` with an alias so that `[appOverdue]="ticket"` works.
 3. Attach the directive to the card in two ways: as an attribute in the list template, and via `hostDirectives` inside the card itself. Compare them: where each is appropriate, and what happens to inputs in the second case.
-4. A structural directive `*appHasRole="'admin'"`: renders its content only if the current user has the role (take the role from `APP_CONFIG` or a stub service for now — authorization arrives in chapter 07). Implement it with `TemplateRef` + `ViewContainerRef`, adding a template guard or context as needed.
-5. Measuring the cost: write a temporary impure pipe that logs on every call and observe how often it runs while you type in the search box. Then switch to a pure pipe and compare.
+4. A structural directive `*appHasRole="'admin'"`. It renders its content only if the current user has the role. Take the role from `APP_CONFIG` or a stub service for now: authorization arrives in chapter 07. Implement it with `TemplateRef` + `ViewContainerRef`, adding a template guard or context as needed.
+5. Measuring the cost. Write a temporary impure pipe that logs on every call. Watch how often it runs while you type in the search box, then switch to a pure pipe and compare.
 6. Constraint: no filtering or sorting inside pipes.
 
 Edge cases to think about:
@@ -243,7 +230,7 @@ import { Ticket } from './ticket';
     '[class.is-overdue]': 'isOverdue()',
     '[class.is-at-risk]': 'isAtRisk()',
     // an attribute, not a property: title does have a DOM property, but null
-    // here must REMOVE the attribute, and only [attr.] can do that (chapter 01)
+    // here must remove the attribute, and only [attr.] can do that (chapter 01)
     '[attr.data-sla-state]': 'state()',
   },
 })
@@ -320,7 +307,8 @@ export class TicketCard {
 `src/app/core/has-role-directive.ts` — the structural directive:
 
 ```ts
-import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
+import { Directive, TemplateRef, ViewContainerRef } from '@angular/core';
+import { effect, inject, input } from '@angular/core';
 import { CurrentUser } from './current-user';
 
 @Directive({ selector: '[appHasRole]' })
@@ -361,11 +349,11 @@ Usage:
 
 Answers to the edge cases:
 
-- `update(id, patch)` creates a **new** ticket object (`{ ...ticket, ...patch }`), so the reference changes and the pure pipe recomputes. Had the store mutated the object in place, the pipe would return its cached value — one of the reasons immutability in the store is not ideology but a precondition for the other mechanisms.
+- `update(id, patch)` creates a **new** ticket object (`{ ...ticket, ...patch }`), so the reference changes and the pure pipe recomputes. Had the store mutated the object in place, the pipe would return its cached value. That is one of the reasons immutability in the store is not ideology. It is a precondition for the other mechanisms.
 - The directive's constructor runs when the view is created — that is, when the `@if` first becomes true. Switching the condition to `false` destroys the embedded view along with the directive (`ngOnDestroy` and `DestroyRef.onDestroy` fire), and switching back creates a **new** instance. Directive state does not survive between those cycles.
-- You cannot pass one: unlisted inputs of a host directive are private and invisible from outside. That is deliberate, so attaching behaviour never widens a component's public API by accident: the component's author decides which inputs to expose and under what name (`'appOverdue: ticket'`).
-- One directive instance per list item — each with its own `TemplateRef` and its own embedded view. When the list changes, `@for` reuses views by `track`: directives survive for the items that remain, are destroyed for removed ones and created for new ones.
-- `date` is a pure pipe: the result is cached by its input value and recomputed only when that value changes. A class method has no cache at all and runs on every check of the template — and how many checks there are is decided by change detection, not by you (chapter 03). The two lines look alike, but the first means "compute once per new value" and the second means "compute always".
+- You cannot pass one: unlisted inputs of a host directive are private and invisible from outside. That is deliberate: attaching behaviour must never widen a component's public API by accident. The component's author decides which inputs to expose and under what name (`'appOverdue: ticket'`).
+- One directive instance per list item — each with its own `TemplateRef` and its own embedded view. When the list changes, `@for` reuses views by `track`. Directives survive for the items that remain, are destroyed for removed ones and created for new ones.
+- `date` is a pure pipe: the result is cached by its input value and recomputed only when that value changes. A class method has no cache at all and runs on every check of the template. How many checks there are is decided by change detection, not by you (chapter 03). The two lines look alike, but the first means "compute once per new value" and the second means "compute always".
 
 ## Check yourself
 
@@ -378,16 +366,24 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. A structural directive receives a `TemplateRef` — a "recipe" for markup that has not become DOM yet — plus a `ViewContainerRef`, the place it can be inserted into. The template body is not evaluated until the directive calls `createEmbeddedView()`. That grants three abilities an ordinary expression lacks: not rendering at all (and not paying for node creation), rendering several times with different contexts (`$implicit`, an index), and rendering later — on an event, a permission check, a load. The directive also controls destruction: `clear()` destroys the view together with every nested component and its state.
-2. A pure pipe recomputes only when a primitive value or an object **reference** changes. Mutating an array leaves the reference intact, so the input "did not change" and the cached value comes back. `pure: false` does address the symptom — the pipe will now always run — but at the price of losing caching entirely: it executes on every check of the template, for every place it is written, and the number of checks is decided by change detection. The correct fix is not to mutate: update data immutably and the pure pipe will see a new reference.
-3. Inheritance couples components rigidly: one chain, name collisions, no way to attach two behaviours at once, and a base class that accumulates logic for all descendants over time. `hostDirectives` is composition: several independent behaviours can be attached, each with its own state and lifecycle, without touching the component body and without adding DOM nodes. Inputs are private by default because attaching behaviour must not silently widen the component's public API: the author explicitly decides which inputs to expose and under what name — otherwise an internal implementation detail would become part of the contract.
-4. The criterion is what the transformation depends on. If it is a pure function of a value (date format, units, pluralization), it is unrelated to component state, reusable in any template, and fits a pipe with its input-keyed cache. If the result depends on state (filters, selection, aggregates over a list), it is a `computed`: memoized by its signal dependencies, recomputed exactly when they change, and testable without a template. The tell-tale sign of a mistake is a pipe that needs three or four state arguments — that is a `computed` in disguise.
-5. The `host` object is a declarative binding: Angular applies and removes the class as the expression changes, participates in change detection and behaves correctly when bindings collide. `ElementRef` + `Renderer2` is an imperative write: you must decide when to update, remove the class yourself when the condition flips, and manage the lifecycle by hand — and direct access to the native element additionally breaks portability (SSR and non-DOM platforms) and opens the door to XSS when working with content. The practical outcome: more code, less predictable behaviour on toggles, and tests that need a real DOM.
+1. A structural directive receives two things. The first is a `TemplateRef`: a "recipe" for markup that has not become DOM yet. The second is a `ViewContainerRef`, the place that recipe can be inserted into. The template body is not evaluated until the directive calls `createEmbeddedView()`. That grants three abilities an ordinary expression lacks. It can render nothing at all, and not pay for node creation. It can render several times with different contexts (`$implicit`, an index). And it can render later — on an event, a permission check, a load. The directive also controls destruction: `clear()` destroys the view together with every nested component and its state.
+2. A pure pipe recomputes only when a primitive value or an object **reference** changes. Mutating an array leaves the reference intact, so the input "did not change" and the cached value comes back. Setting `pure: false` does address the symptom, because the pipe will now always run. But it loses caching entirely. The pipe executes on every check of the template, for every place it is written, and change detection decides how many checks there are. The correct fix is not to mutate: update data immutably and the pure pipe will see a new reference.
+3. Inheritance couples components rigidly. There is one chain, names collide, two behaviours cannot be attached at once, and the base class accumulates logic for all descendants over time. Composition through `hostDirectives` has none of that. Several independent behaviours can be attached, each with its own state and lifecycle, without touching the component body and without adding DOM nodes. Inputs are private by default because attaching behaviour must not silently widen the component's public API. The author explicitly decides which inputs to expose and under what name; otherwise an internal implementation detail would become part of the contract.
+4. The criterion is what the transformation depends on. A pure function of a value (date format, units, pluralization) is unrelated to component state. It is reusable in any template, and it fits a pipe with its input-keyed cache. A result that depends on state (filters, selection, aggregates over a list) belongs in a `computed`. It is memoized by its signal dependencies, recomputed exactly when they change, and testable without a template. The sign of a mistake is a pipe that needs three or four state arguments: that is a `computed` in disguise.
+5. The `host` object is a declarative binding. Angular applies and removes the class as the expression changes, takes part in change detection, and behaves correctly when bindings collide. `ElementRef` + `Renderer2` is an imperative write instead. You must decide when to update, remove the class yourself when the condition flips, and manage the lifecycle by hand. Direct access to the native element also breaks portability: SSR (server-side rendering, drawing pages on the server) and other non-DOM platforms. And when you write content that way, it opens the door to XSS (cross-site scripting). The practical outcome: more code, less predictable behaviour on toggles, and tests that need a real DOM.
 
 </details>
 
 ## Common mistake
 
-The first one is a pipe instead of a `computed` for filtering and sorting. The temptation is understandable: in React `{items.filter(f)}` goes straight into the markup, and you want "the same thing, the Angular way". The result is `| filterBy: status | orderBy: 'date'`, which either misses changes (a pure pipe caches by reference) or becomes `pure: false` and starts running on every check of the template. Worse, such a pipe returns a **new array** on every call, so `@for` receives a new collection and has to re-match items by `track` — precisely the extra work `track` exists to prevent (chapter 01). The rule: a pipe formats one value; anything that filters, sorts or aggregates lives in a `computed`.
+The first one is a pipe instead of a `computed` for filtering and sorting. The temptation is understandable: in React `{items.filter(f)}` goes straight into the markup, and you want "the same thing, the Angular way".
 
-The second is a directive that reaches into the DOM by hand. A developer arriving from React reasons by analogy with `ref`, grabs an `ElementRef` and starts writing `nativeElement.classList.add(...)`, `nativeElement.style.color = ...`, and in the worst cases `innerHTML`. This works right up to the first change of the condition: the class has to be removed manually, and toggling branches leaves DOM state out of sync with data state. Direct access to `nativeElement` also breaks rendering outside the browser (SSR — chapter 15) and, with `innerHTML`, bypasses the built-in sanitizer. Practically everything a directive needs can be expressed declaratively: `[class.x]`, `[style.y]`, `[attr.z]` and `(event)` in the `host` object — and the rare exceptions (measurements, focus, integrating a third-party widget) belong in `afterRenderEffect` (chapter 03).
+The result is `| filterBy: status | orderBy: 'date'`. Such a pipe either misses changes, because a pure pipe caches by reference, or becomes `pure: false`. And then it runs on every check of the template.
+
+Worse, such a pipe returns a **new array** on every call. That gives `@for` a new collection, so it has to re-match items by `track`. That is precisely the extra work `track` exists to prevent (chapter 01). The rule: a pipe formats one value, and anything that filters, sorts or aggregates lives in a `computed`.
+
+The second is a directive that reaches into the DOM by hand. A developer arriving from React reasons by analogy with `ref`. They grab an `ElementRef` and start writing `nativeElement.classList.add(...)` and `nativeElement.style.color = ...`, and in the worst cases `innerHTML`.
+
+This works right up to the first change of the condition. The class has to be removed manually, and toggling branches leaves DOM state out of sync with data state. Direct access to `nativeElement` also breaks rendering outside the browser (SSR — chapter 15). With `innerHTML` it bypasses the built-in sanitizer as well.
+
+Practically everything a directive needs can be expressed declaratively: `[class.x]`, `[style.y]`, `[attr.z]` and `(event)` in the `host` object. The rare exceptions — measurements, focus, integrating a third-party widget — belong in `afterRenderEffect` (chapter 03).

@@ -2,21 +2,22 @@
 
 ## Higher-order Observables: a stream of streams
 
-`map` from [Transformation and Filtering Operators] turns a value into a value. But most of the time a value should **start new asynchronous work**: the user typed something, so a request must go out. And then `map` returns not data but another Observable:
+`map` from [Transformation and Filtering Operators](./03-transformation-and-filtering-operators.md) turns a value into a value. But most of the time a value should **start new asynchronous work**: the user typed something, so a request must go out. And then `map` returns not data but another Observable:
 
 ```
-                   Where a stream of streams comes from
+              Where a stream of streams comes from
 input   --a-------b-------|
-        map(q => api.search(q))     ← returned an Observable, not a value
+        map(q => api.search(q))  ← an Observable, not a value
 result  --O-------O-------|
           ^ O is an Observable object, not yet subscribed
 
         the subscriber receives two Observables instead of data:
         Observable { … }  Observable { … }
 
-        switchMap(q => api.search(q))  ← the operator subscribes for you
+        switchMap(q => api.search(q))  ← subscribes for you
 result  ------A-------B---|
-              ^ A is the request RESULT; the offset is the response time
+              ^ A is the request result;
+                the offset is the response time
 ```
 
 Such a stream is called a **higher-order Observable** — a stream whose values are other streams. Working with it directly is pointless: the subscriber receives `Observable` objects rather than data.
@@ -30,6 +31,7 @@ input$.pipe(map((q) => api.search(q))).subscribe((value) => {
 });
 
 // The fix: a flattening operator subscribes to the inner stream for you
+// (that is what "flattening" means: the stream of streams becomes one stream)
 input$.pipe(switchMap((q) => api.search(q))).subscribe((results) => {
   console.log(results); // Ticket[] — what you actually wanted
 });
@@ -42,24 +44,28 @@ Flattening answers one question: **what should happen to the previous inner work
 Take a single scenario: the user types into a search box, every value fires an HTTP request, and requests do not answer instantly.
 
 ```
-                        Four strategies on one source
-            the request for each value answers after 4 ticks: a→A, b→B, c→C
+                 Four strategies on one source
+            the request for each value answers after 4 ticks:
+            a→A, b→B, c→C
 
 source      --a--b--------c-----|
 
 switchMap   ---------B--------C-|
-                     ^ a's request was CANCELLED when b arrived: A never came
+                     ^ a's request was cancelled when b arrived:
+                       A never came
 
 mergeMap    ------A--B--------C-|
-                  ^ both ran in parallel, order follows response time
+                  ^ both ran in parallel, order by response time
 
 concatMap   ------A---B-------C-|
-                      ^ b WAITED for a to finish: order guaranteed, but later
+                      ^ b waited for a to finish:
+                        order guaranteed, but later
 
 exhaustMap  ------A-----------C-|
-                  ^ b was IGNORED: new values are dropped while a is in flight
-            legend: a b c — input values, A B C — request results,
-        | — complete. A cancelled or dropped request yields no result
+                  ^ b was ignored: new values are
+                    dropped while a is in flight
+     legend: a b c — input values, A B C — request results,
+  | — complete. A cancelled or dropped request gives no result
 ```
 
 Note the main point: **all four received identical input and produced different output**. This is not an optimization or a matter of style — it is different business logic expressed in one word.
@@ -99,7 +105,7 @@ const details$ = ids$.pipe(mergeMap((id) => api.getTicket(id)));
 const throttled$ = ids$.pipe(mergeMap((id) => api.getTicket(id), 4));
 ```
 
-The meaning: "every operation is needed, order does not matter." Fits independent loads, telemetry, parallel item processing. The key detail is that **result order is not guaranteed**: results arrive by response time, so a slow first request lands after a fast second one.
+The meaning: "every operation is needed, order does not matter." Fits independent loads, telemetry, parallel item processing. The key detail is that **result order is not guaranteed**. Results arrive by response time, so a slow first request lands after a fast second one.
 
 Always keep the second argument (`concurrent`) in mind: an unbounded `mergeMap` over a stream of a thousand values opens a thousand simultaneous requests.
 
@@ -112,7 +118,11 @@ import { concatMap } from 'rxjs';
 const saved$ = changes$.pipe(concatMap((change) => api.patch(change)));
 ```
 
-The meaning: "run them all, preserving order." It is `mergeMap` with `concurrent: 1`, and it is what **writes** need whenever operation order determines the final state: sequential `PATCH` calls, applying a queue of offline actions, uploading files one after another.
+The meaning: "run them all, preserving order." It is `mergeMap` with `concurrent: 1`. **Writes** need it whenever operation order determines the final state:
+
+- sequential `PATCH` calls;
+- applying a queue of offline actions;
+- uploading files one after another.
 
 The cost is latency: if the first operation hangs, the whole queue waits. And if the source emits faster than the queue drains, the queue grows without bound.
 
@@ -125,28 +135,22 @@ import { exhaustMap } from 'rxjs';
 const submitted$ = submitClicks$.pipe(exhaustMap((form) => api.create(form)));
 ```
 
-The meaning: "the current operation outranks new ones." The classic case is double-click protection: while a `POST` is in flight, repeated presses do not create a second entity. It is also used for a "refresh now" button in polling, so the button cannot spawn parallel refreshes.
+The meaning: "the current operation wins over new ones." The classic case is double-click protection. While a `POST` is in flight, repeated presses do not create a second entity. It is also used for a "refresh now" button in polling, so the button cannot spawn parallel refreshes.
 
-The flip side: values are dropped silently. If the user pressed "save" with a changed form while the previous save was running, their last action **will not happen** — and the UI must say so.
+The flip side: values are dropped silently. Suppose the user pressed "save" with a changed form while the previous save was still running. Their last action **will not happen**, and the interface must say so.
 
 ## The choice table
 
-```
-                                     The choice table and the cost of getting it wrong
-┌────────────┬──────────────────────────────┬──────────────────────────────────────────┬──────────────────────────────────┐
-│ operator   │ what it does to the previous │ scenario                                 │ if you pick wrong                │
-├────────────┼──────────────────────────────┼──────────────────────────────────────────┼──────────────────────────────────┤
-│ switchMap  │ cancels it                   │ search, autocomplete, filter change, :id │ lost writes on POST              │
-├────────────┼──────────────────────────────┼──────────────────────────────────────────┼──────────────────────────────────┤
-│ mergeMap   │ runs in parallel             │ independent loads, analytics             │ a race: interleaved responses    │
-├────────────┼──────────────────────────────┼──────────────────────────────────────────┼──────────────────────────────────┤
-│ concatMap  │ queues it                    │ sequential writes where order matters    │ the queue grows, lag accumulates │
-├────────────┼──────────────────────────────┼──────────────────────────────────────────┼──────────────────────────────────┤
-│ exhaustMap │ ignores new ones             │ double clicks, repeated submits          │ the user's actions are dropped   │
-└────────────┴──────────────────────────────┴──────────────────────────────────────────┴──────────────────────────────────┘
-                         default for READS is switchMap; for WRITES it is concatMap or exhaustMap:
-                               a cancelled POST may already have been executed on the server
-```
+All four operators sit in one table, together with the cost of picking the wrong one.
+
+| operator | what it does to the previous | scenario | if you pick wrong |
+|---|---|---|---|
+| `switchMap` | cancels it | search, autocomplete, filter change, `:id` | lost writes on `POST` |
+| `mergeMap` | runs in parallel | independent loads, analytics | a race: interleaved responses |
+| `concatMap` | queues it | sequential writes where order matters | the queue grows, lag accumulates |
+| `exhaustMap` | ignores new ones | double clicks, repeated submits | the user's actions are dropped |
+
+The default for **reads** is `switchMap`. For **writes** it is `concatMap` or `exhaustMap`, because a cancelled `POST` may already have been executed on the server.
 
 A practical selection algorithm — three questions:
 
@@ -159,11 +163,13 @@ A practical selection algorithm — three questions:
 ### switchMap on writes: lost data
 
 ```ts
-// DANGEROUS: the user quickly edits two fields
+// dangerous: the user quickly edits two fields
 formChanges$.pipe(switchMap((data) => api.patch(data))).subscribe();
 ```
 
-The first `PATCH` is cancelled by the second. Cancelling on the client **does not cancel processing the server already began**: the request may have arrived and applied, or it may have been cut off halfway. The result is non-deterministic state: sometimes everything saved, sometimes only the last change, sometimes part of it. That is unacceptable for writes; the right choice is `concatMap` (save all, in order) or `exhaustMap` (drop the extra clicks).
+The first `PATCH` is cancelled by the second. Cancelling on the client **does not cancel processing the server already began**. The request may have arrived and applied, or it may have been cut off halfway.
+
+The result is non-deterministic state: sometimes everything saved, sometimes only the last change, sometimes part of it. That is unacceptable for writes. The right choice is `concatMap` (save all, in order) or `exhaustMap` (drop the extra clicks).
 
 ### mergeMap where order matters: a race
 
@@ -172,7 +178,7 @@ The first `PATCH` is cancelled by the second. Cancelling on the client **does no
 filter$.pipe(mergeMap((f) => api.list(f))).subscribe((list) => this.render(list));
 ```
 
-The `"open"` request turned out slower — its response arrives **after** the `"closed"` one, and the screen ends up showing the list for a filter that is no longer selected. That is the classic UI race `switchMap` rules out by construction: the outdated request is cancelled and its response never renders.
+The `"open"` request turned out slower, so its response arrives **after** the `"closed"` one. The screen ends up showing the list for a filter that is no longer selected. That is the classic interface race `switchMap` rules out by construction: the outdated request is cancelled and its response never renders.
 
 ### concatMap on search: a growing queue
 
@@ -185,14 +191,14 @@ Ten characters mean ten requests executed one after another. The user watches re
 
 ### exhaustMap on search: silence
 
-With `exhaustMap` the first request runs and all further input during it is dropped — search shows results for the first few characters and then appears to freeze.
+With `exhaustMap` the first request runs and all further input during it is dropped. Search shows results for the first few characters and then appears to freeze.
 
 ## Nesting and how to avoid it
 
 The most common structural mistake is a subscription inside a subscription:
 
 ```ts
-// BAD: subscribe inside subscribe
+// bad: subscribe inside subscribe
 route.params.subscribe((params) => {
   api.getTicket(params.id).subscribe((ticket) => {
     api.getComments(ticket.id).subscribe((comments) => {
@@ -202,7 +208,12 @@ route.params.subscribe((params) => {
 });
 ```
 
-What is wrong: nobody closes the inner subscriptions (they pile up as `:id` changes quickly); previous requests are not cancelled, so a response for an old ticket may land on screen; an error at any level breaks the whole construct with no single place to handle it; and unsubscribing is impossible — the outer teardown does not stop the inner ones.
+Four things are wrong here, and these are the four an interviewer expects to hear:
+
+1. Nobody closes the inner subscriptions: they pile up as `:id` changes quickly.
+2. Previous requests are not cancelled, so a response for an old ticket may land on screen.
+3. An error at any level breaks the whole construct, with no single place to handle it.
+4. Unsubscribing is impossible: the outer teardown does not stop the inner ones.
 
 The flat version reads well and behaves predictably:
 
@@ -233,7 +244,7 @@ route$.pipe(switchMap((id) => api.getTicket(id), (id, ticket) => ({ id, ticket }
 route$.pipe(switchMap((id) => api.getTicket(id).pipe(map((ticket) => ({ id, ticket })))));
 ```
 
-And when the inner requests are independent, they should not be nested at all: parallel loading is expressed with `forkJoin`/`combineLatest`, see [Combination Operators].
+And when the inner requests are independent, they should not be nested at all: parallel loading is expressed with `forkJoin`/`combineLatest`, see [Combination Operators](./05-combination-operators.md).
 
 ```ts
 import { forkJoin, switchMap } from 'rxjs';
@@ -249,55 +260,53 @@ const page$ = route.params.pipe(
 );
 ```
 
-> **Angular context.** These are exactly the two most common RxJS spots in an Angular application: loading data by a route parameter (`route.params` + `switchMap`) and live search (`debounceTime` + `switchMap`). A detailed walkthrough with signals and `takeUntilDestroyed` lives in the Angular course, in the chapter on RxJS in Angular.
+> **Angular context.** Two spots in an Angular application account for most RxJS usage. One is loading data by a route parameter: `route.params` plus `switchMap`. The other is live search: `debounceTime` plus `switchMap`. A detailed walkthrough with signals and `takeUntilDestroyed` lives in the Angular course, in the chapter on RxJS in Angular.
 
 ## Error handling inside flattening
 
 One detail ties this article to the next one: **where you put `catchError` changes the behaviour**.
 
 ```ts
-// catchError OUTSIDE: one failed request kills the whole input stream —
+// catchError outside: one failed request kills the whole input stream —
 // search stops working forever
 input$.pipe(
   switchMap((q) => api.search(q)),
   catchError(() => of([])),
 );
 
-// catchError INSIDE: only the current request fails, the input stream lives
+// catchError inside: only the current request fails, the input stream lives
 input$.pipe(
   switchMap((q) => api.search(q).pipe(catchError(() => of([])))),
 );
 ```
 
-The reason is that an error terminates the stream it occurred in: outside that is the outer stream (`input$`), inside it is only the inner one. The full treatment is in [Error Handling and Retries].
+The reason is that an error terminates the stream it occurred in. Outside, that stream is the outer one (`input$`); inside, it is only the inner one. The full treatment is in [Error Handling and Retries](./06-error-handling-and-retries.md).
 
 ## Relation to other topics
 
-```txt
-[Reactive Model and Observables]  — why unsubscribing aborts an HTTP request:
-                                     all of switchMap's semantics rests on it
-[Transformation and Filtering
- Operators]                        — debounceTime and distinctUntilChanged,
-                                     without which switchMap on input is partial
-[Combination Operators]            — parallel independent requests:
-                                     forkJoin instead of nested subscriptions
-[Error Handling and Retries]       — why catchError inside and outside a
-                                     flattening operator behave differently
-[Multicasting and Subscription
- Management]                        — how not to create N requests instead of one
-```
+- [Reactive Model and Observables](./01-reactive-model-and-observables.md) — why unsubscribing aborts an HTTP request: all of `switchMap`'s semantics rests on it.
+- [Creating Streams and Subjects](./02-creating-streams-and-subjects.md) — the sources these operators start from.
+- [Transformation and Filtering Operators](./03-transformation-and-filtering-operators.md) — `debounceTime` and `distinctUntilChanged`, without which `switchMap` on input is only half the job.
+- [Combination Operators](./05-combination-operators.md) — parallel independent requests: `forkJoin` instead of nested subscriptions.
+- [Error Handling and Retries](./06-error-handling-and-retries.md) — why `catchError` inside and outside a flattening operator behave differently.
+- [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md) — how not to create many requests instead of one.
 
 ## Common interview traps
 
-- **"switchMap is `map` for async"** — a description that misses the essential part: cancelling the previous inner work. What is expected is the framing question "what should happen to the previous request": cancel it (`switchMap`), run in parallel (`mergeMap`), queue it (`concatMap`), ignore the new one (`exhaustMap`).
+- **"switchMap is `map` for async"** — a description that misses the essential part: cancelling the previous inner work. What is expected is the framing question: what should happen to the previous request? There are four answers: cancel it (`switchMap`), run in parallel (`mergeMap`), queue it (`concatMap`), ignore the new one (`exhaustMap`).
 
 - **`switchMap` for write operations** — the most expensive mistake by consequence. Cancelling on the client does not roll back what the server already started processing: the result is non-deterministic state. For `POST`/`PATCH` the expected answer is `concatMap` (all in order) or `exhaustMap` (drop extra presses).
 
 - **Not knowing about `mergeMap`'s `concurrent`** — an unbounded `mergeMap` on a large stream opens as many parallel requests as there are values. Follow-up: "what happens with a thousand ids?" — a thousand simultaneous requests, a server refusal, or the browser's connection limit.
 
-- **"`concatMap` is just a safe `mergeMap`"** — it is not: it serializes the work, so a slow first operation delays the entire queue, and a fast source makes the queue grow without bound. It is a deliberate trade-off for ordering, not "the more reliable option".
+- **"`concatMap` is just a safe `mergeMap`"** — it is not. It serializes the work, so a slow first operation delays the entire queue, and a fast source makes the queue grow without bound. It is a deliberate trade-off for ordering, not "the more reliable option".
 
-- **Subscribing inside a subscription** — a marker that the candidate has not internalized flattening. A good answer names four concrete consequences: unclosed inner subscriptions, no cancellation of outdated requests, no single place to handle errors, and an outer teardown that does not work.
+- **Subscribing inside a subscription** — a marker that the candidate has not internalized flattening. A good answer names four concrete consequences:
+
+  - unclosed inner subscriptions;
+  - no cancellation of outdated requests;
+  - no single place to handle errors;
+  - an outer teardown that does not work.
 
 - **`catchError` at the end of a chain over user events** — after the first error the stream is dead and the interface "stops responding". What is expected is the understanding that `catchError` goes **inside** `switchMap` to confine termination to the inner stream.
 

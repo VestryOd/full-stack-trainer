@@ -14,35 +14,36 @@ const ticks$ = interval(1000);                              // values on a timer
 const response$ = ajax.getJSON<User[]>('/api/users');       // one value, then complete
 ```
 
-All three are `Observable`s, and the same operators apply to any of them: filter, delay, combine with another stream, cancel. That unification — not "a replacement for promises" — is the main reason RxJS exists. As soon as a task is phrased as "when A happens, but no more than once per second, and only if B has already produced a value, and the previous request must be cancelled", imperative code turns into a pile of flags and timers while a stream describes it declaratively.
+All three are `Observable`s, and the same operators apply to any of them: filter, delay, combine with another stream, cancel. That unification — not "a replacement for promises" — is the main reason RxJS exists. The gain shows up as soon as one task carries several conditions at once:
 
-A naming convention: stream variables carry a `$` suffix (`clicks$`, `user$`). Not a language requirement, but it saves reading time — you can see at a glance that the value must be subscribed to rather than used directly.
+- react when A happens;
+- no more than once per second;
+- only if B has already produced a value;
+- and cancel the previous request.
+
+Imperative code turns that into a pile of flags and timers. A stream describes the same thing declaratively.
+
+A naming convention: stream variables carry a `$` suffix (`clicks$`, `user$`). Not a language requirement, but it saves reading time. At a glance you can see that the value must be subscribed to, not used directly.
 
 ## Observable versus Promise: four axes
 
-```
-                                Observable versus Promise: four axes
-┌──────────────────┬──────────────────────────────────────────┬───────────────────────────────────┐
-│ axis             │ Promise                                  │ Observable                        │
-├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────┤
-│ when work starts │ immediately on creation (eager)          │ on subscribe (lazy)               │
-├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────┤
-│ how many values  │ exactly one                              │ zero, one, many, infinite         │
-├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────┤
-│ cancellation     │ none: then is simply not called          │ unsubscribe aborts the work       │
-├──────────────────┼──────────────────────────────────────────┼───────────────────────────────────┤
-│ synchronicity    │ the callback always lands in a microtask │ may deliver a value synchronously │
-└──────────────────┴──────────────────────────────────────────┴───────────────────────────────────┘
-           the consequence of laziness: with no subscriber there is no request, no timer,
-               no event listener — a stream describes work rather than performing it
-```
+`Observable` and `Promise` differ on four axes at once, and each of them has practical consequences.
+
+| axis | Promise | Observable |
+|---|---|---|
+| when work starts | immediately on creation (eager) | on subscribe (lazy) |
+| how many values | exactly one | zero, one, many, infinite |
+| cancellation | none: `then` is simply not called | `unsubscribe` aborts the work |
+| synchronicity | the callback always lands in a microtask | may deliver a value synchronously |
+
+Laziness is the axis with the longest reach. With no subscriber there is no request, no timer and no event listener: a stream describes work rather than performing it.
 
 ### 1. Laziness
 
 A promise starts work the moment it is created — the constructor runs immediately:
 
 ```ts
-const promise = fetch('/api/users'); // the request has ALREADY gone out
+const promise = fetch('/api/users'); // the request has already gone out
 // even without .then(), the server received it
 ```
 
@@ -64,10 +65,10 @@ const users$ = new Observable<User[]>((subscriber) => {
 
 // nothing has happened here: not a single request
 users$.subscribe();                     // "request sent" — the first request
-users$.subscribe();                     // "request sent" — a SECOND request
+users$.subscribe();                     // "request sent" — a second request
 ```
 
-Two subscriptions mean two independent pieces of work. That is not a bug but a direct consequence of laziness, and simultaneously the source of the classic "why do I get two HTTP requests instead of one" — the mechanics and the fix are covered in [Multicasting and Subscription Management].
+Two subscriptions mean two independent pieces of work. That is not a bug: it is a direct consequence of laziness. It is also the source of the classic complaint "why do I get two HTTP requests instead of one". The mechanics and the fix are in [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md).
 
 ### 2. Number of values
 
@@ -85,7 +86,7 @@ The practical consequence: code working with a stream must answer "what if there
 
 ### 3. Cancellability
 
-A promise cannot be cancelled: you may ignore the result, but the work continues (the request reaches the server, the timer fires). Cancellation in promise-land exists only through an external mechanism — `AbortController` — which you must thread through by hand.
+A promise cannot be cancelled: you may ignore the result, but the work continues (the request reaches the server, the timer fires). With promises, cancellation exists only through an external mechanism: `AbortController`, which you have to pass through by hand.
 
 For an Observable, cancellation is built into the model: `unsubscribe()` does more than detach callbacks, it runs the **teardown logic** — the code that releases resources:
 
@@ -107,7 +108,7 @@ const sub = timer$.subscribe(console.log);
 setTimeout(() => sub.unsubscribe(), 3500); // "timer cleared", interval stopped
 ```
 
-The same principle applies to the network: Angular's `HttpClient` aborts the request on unsubscribe (through an `AbortController` under the hood), and the `switchMap` operator uses that to cancel outdated requests automatically — the central story of [Flattening Operators].
+The same principle applies to the network. Angular's `HttpClient` aborts the request on unsubscribe, through an `AbortController` internally. The `switchMap` operator uses that to cancel outdated requests automatically — the central story of [Flattening Operators](./04-flattening-operators.md).
 
 ### 4. Synchronicity
 
@@ -123,7 +124,7 @@ console.log('after');
 // output: before → value 1 → value 2 → after
 ```
 
-That property is useful (no artificial delay for data you already have) and dangerous at the same time: code that is "sometimes synchronous, sometimes not" leads to subtle ordering differences. The rule: do not rely on a particular stream being synchronous unless its construction guarantees it.
+That property is useful and dangerous at the same time. Useful, because data you already have arrives with no artificial delay. Dangerous, because code that is "sometimes synchronous, sometimes not" leads to subtle ordering differences. The rule: do not rely on a particular stream being synchronous unless its construction guarantees it.
 
 ## Anatomy of a subscription
 
@@ -135,12 +136,12 @@ success      --1--2--3--|
                         ^ complete: no more values ever,
                           teardown has run
 error        --1--2--X
-                     ^ error: the stream is TERMINATED,
+                     ^ error: the stream is terminated,
                        neither next nor complete will follow
 unsubscribe  --1--2--!
                      ^ unsubscribe: work aborted,
                        and this is neither error nor complete
-legend:  1 2 3 — values,  | — complete,  X — error,  ! — unsubscribe
+legend: 1 2 3 — values, | — complete, X — error, ! — unsubscribe
 ```
 
 ```ts
@@ -155,10 +156,10 @@ sub.unsubscribe(); // stops receiving values and runs the teardown
 
 What matters here:
 
-- **`error` terminates the stream.** This is the most common place where subscriptions to user events break: once an error travels through the chain, the click stream no longer works and the button "stopped responding". Handling strategies are in [Error Handling and Retries].
+- **`error` terminates the stream.** This is the most common place where subscriptions to user events break. Once an error travels through the chain, the click stream stops working: the button still looks alive but responds to nothing. Handling strategies are in [Error Handling and Retries](./06-error-handling-and-retries.md).
 - **`complete` and `error` are mutually exclusive**, and both run the teardown automatically: there is no need to unsubscribe afterwards.
 - **`unsubscribe` is not the same as `complete`.** Unsubscribing means "I am no longer interested", not "the data ran out": the `complete` callback is not invoked.
-- **`Subscription` composes**: `sub.add(otherSub)` ties one subscription's lifetime to another, and `unsubscribe()` on the parent closes the whole tree. In components that is the historical way to manage subscriptions — today `takeUntil`/`takeUntilDestroyed` is preferable, see [Multicasting and Subscription Management].
+- **`Subscription` composes**: `sub.add(otherSub)` ties one subscription's lifetime to another, and `unsubscribe()` on the parent closes the whole tree. In components that is the historical way to manage subscriptions — today `takeUntil`/`takeUntilDestroyed` is preferable, see [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md).
 
 ## When a Promise is honestly better
 
@@ -173,7 +174,14 @@ async function loadConfig(): Promise<AppConfig> {
 }
 ```
 
-Signs that an Observable would be overkill: exactly one value, no cancellation, no combination with other sources, and a linear sequence of steps that reads better through `await` than through a chain of operators. Forcing a stream onto such code makes it more complex for no gain.
+Signs that an Observable would be overkill:
+
+- exactly one value;
+- no cancellation;
+- no combination with other sources;
+- a linear sequence of steps that reads better through `await` than through a chain of operators.
+
+Forcing a stream onto such code makes it more complex for no gain.
 
 The bridge between the models works both ways:
 
@@ -185,36 +193,29 @@ const users = await firstValueFrom(users$);   // Observable → Promise (first v
 const total = await lastValueFrom(count$);    // Observable → Promise (last value)
 ```
 
-One important detail about `from(promise)`: the promise has already started work, so this Observable is **not lazy** — it merely wraps the result. To restore laziness you need `defer(() => from(fetch(...)))`, a technique covered in [Creating Streams and Subjects].
+One important detail about `from(promise)`: the promise has already started work, so this Observable is **not lazy** — it merely wraps the result. To restore laziness you need `defer(() => from(fetch(...)))`, a technique covered in [Creating Streams and Subjects](./02-creating-streams-and-subjects.md).
 
 A separate note on `toPromise()`: it is deprecated in RxJS 7 and removed in later versions. The reason is ambiguous semantics (what should it return for a stream with no values?). The replacement is `firstValueFrom`/`lastValueFrom`, with an explicit choice and defined behaviour for empty streams (they reject with `EmptyError`).
 
 ## Relation to other topics
 
-```txt
-[Creating Streams and Subjects]   — where streams come from: of/from/fromEvent,
-                                     defer and laziness, Subject as the bridge
-                                     from imperative code
-[Transformation and Filtering
- Operators]                        — what happens to a stream next and why
-                                     .pipe() is composition
-[Flattening Operators]             — cancellation in action: switchMap and family
-[Error Handling and Retries]       — what to do about error terminating a stream
-[Multicasting and Subscription
- Management]                        — why laziness gives you N requests instead
-                                     of one, and how to control it
-```
+- [Creating Streams and Subjects](./02-creating-streams-and-subjects.md) — where streams come from: `of`, `from`, `fromEvent`, `defer` and laziness, `Subject` as the bridge from imperative code.
+- [Transformation and Filtering Operators](./03-transformation-and-filtering-operators.md) — what happens to a stream next, and why `.pipe()` is composition.
+- [Flattening Operators](./04-flattening-operators.md) — cancellation in action: `switchMap` and family.
+- [Combination Operators](./05-combination-operators.md) — how several streams turn into one value.
+- [Error Handling and Retries](./06-error-handling-and-retries.md) — what to do about `error` terminating a stream.
+- [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md) — why laziness gives you many requests instead of one, and how to control it.
 
 ## Common interview traps
 
-- **"An Observable is a Promise that can return many values"** — that describes one axis out of four, and it usually comes with a missing grasp of laziness. Laziness matters more than multiplicity: it is what produces repeated requests on multiple subscriptions, what makes cancellation work, and what lets you describe a stream ahead of time without starting any work.
+- **"An Observable is a Promise that can return many values"** — that describes one axis out of four. It usually hides a missing grasp of laziness. Laziness matters more than multiplicity. It is what produces repeated requests on multiple subscriptions, what makes cancellation work, and what lets you describe a stream before any work starts.
 
 - **"An Observable is always asynchronous"** — no: `of(1)` and `from([1, 2])` deliver values synchronously, at subscribe time. The practical consequence: code assuming "the subscription will run later" may receive a value before the next line executes.
 
 - **Conflating `unsubscribe` and `complete`** — unsubscribing means "I no longer need this", completing means "there is no more data". The `complete` callback does not fire on unsubscribe, which breaks logic like "close the modal in complete". A common probing question: "does the teardown run on unsubscribe?" — yes, it does, and that is the one thing guaranteed to happen in both cases.
 
-- **Not knowing that `error` terminates the stream** — the most expensive mistake by consequence. A click stream whose chain once threw on an HTTP request is dead forever: the button still looks alive, but the handler never runs again. That is precisely why `catchError` goes *inside* a flattening operator rather than at the end of the chain — see [Error Handling and Retries].
+- **Not knowing that `error` terminates the stream** — the most expensive mistake by consequence. A click stream whose chain once threw on an HTTP request is dead forever: the button still looks alive, but the handler never runs again. That is precisely why `catchError` goes *inside* a flattening operator rather than at the end of the chain. A flattening operator, such as `switchMap`, subscribes to an inner stream for you. See [Error Handling and Retries](./06-error-handling-and-retries.md).
 
-- **Answering with `toPromise()`** — a marker of RxJS 6-era knowledge. It is deprecated in RxJS 7; the expected answer is `firstValueFrom`/`lastValueFrom`, ideally with the awareness that they reject with `EmptyError` when the stream completes without a value.
+- **Answering with `toPromise()`** — a marker of RxJS 6-era knowledge. It is deprecated in RxJS 7. The expected answer is `firstValueFrom`/`lastValueFrom`. Better still, add that they reject with `EmptyError` when the stream completes without a value.
 
-- **"RxJS is always better than async/await"** — senior interviews value the opposite: naming the cases where a stream is redundant (one value, no cancellation, no combining) and where `await` reads better. Answering "I use RxJS everywhere because this is Angular" shows the absence of a selection criterion.
+- **"RxJS is always better than async/await"** — senior interviews value the opposite. What counts is naming the cases where a stream is redundant (one value, no cancellation, no combining), and the cases where `await` reads better. Answering "I use RxJS everywhere because this is Angular" shows the absence of a selection criterion.

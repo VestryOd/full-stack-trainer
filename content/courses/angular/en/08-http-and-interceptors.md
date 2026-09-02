@@ -12,14 +12,21 @@ provideHttpClient(
 )
 ```
 
-One important change that is still described incorrectly all over the internet: **`withFetch()` is no longer needed** — `FetchBackend` is the default transport, and the flag itself is deprecated ("`withFetch` is not required anymore"). If you need the old transport, there is `withXhr()`. The other features: `withInterceptorsFromDi()` (class-based interceptors from legacy code), `withXsrfConfiguration()`/`withNoXsrfProtection()`, `withRequestsMadeViaParent()`. `withJsonpSupport()` is deprecated as of 22.1 for being an XSS vector.
+One important change is still described incorrectly all over the internet: **`withFetch()` is no longer needed**. `FetchBackend` is the default transport, and the flag itself is deprecated ("`withFetch` is not required anymore"). If you need the old transport, there is `withXhr()`.
+
+The other features of `provideHttpClient`:
+
+- `withInterceptorsFromDi()` — class-based interceptors from legacy code.
+- `withXsrfConfiguration()` and `withNoXsrfProtection()`.
+- `withRequestsMadeViaParent()`.
+- `withJsonpSupport()` — deprecated as of 22.1, because it is an XSS (cross-site scripting) vector.
 
 Requests are typed by the method's type parameter, not by `as`:
 
 ```ts
 private readonly http = inject(HttpClient);
 
-// The type describes the PARSED response body
+// The type describes the parsed response body
 readonly tickets$ = this.http.get<readonly Ticket[]>('/api/tickets', {
   params: { status: 'open', page: 1 },   // an object instead of manual string building
   headers: { 'X-Client': 'support-desk' },
@@ -27,7 +34,7 @@ readonly tickets$ = this.http.get<readonly Ticket[]>('/api/tickets', {
 });
 ```
 
-Besides `timeout`, a request accepts other modern fetch options: `keepalive`, `cache`, `priority`, `mode`, `redirect`, `credentials`, plus `transferCache` — for carrying an SSR response into the browser without repeating the request (chapter 15). And remember: `HttpClient` returns a **cold** Observable — without a subscription (or without `httpResource`) no request is sent.
+Besides `timeout`, a request accepts other modern fetch options: `keepalive`, `cache`, `priority`, `mode`, `redirect`, `credentials`. There is also `transferCache`. It carries an SSR (server-side rendering, drawing pages on the server) response into the browser without repeating the request (chapter 15). And remember: `HttpClient` returns a **cold** Observable. Without a subscription (or without `httpResource`) no request is sent.
 
 ### httpResource: fetching data as signals
 
@@ -48,27 +55,21 @@ readonly ticketsResource = httpResource<readonly Ticket[]>(
 // ticketsResource.reload()    — force a refresh
 ```
 
-The core idea: the request is described **reactively**. The URL function (or an `HttpResourceRequest` object) reads signals; when a signal changes, `httpResource` cancels the previous request and issues a new one. `loading`/`error` flags no longer need duplicating in every component — they are part of the resource.
+The core idea: the request is described **reactively**. The URL function (or an `HttpResourceRequest` object) reads signals. When a signal changes, `httpResource` cancels the previous request and issues a new one. The `loading` and `error` flags no longer need duplicating in every component, because they are part of the resource.
 
 Options: `defaultValue`, `parse` (validating/transforming the body, handy with zod), `map`, `equal`, `injector`. For non-JSON there are `httpResource.text()`, `.blob()` and `.arrayBuffer()`. The resource also exposes `headers()`, `statusCode()`, `progress()` and `hasValue()`.
 
-The more general `resource({ params, loader })` (also stable since v22) is not tied to HTTP: the `loader` receives `params`, `previous` and an `abortSignal`, so it fits any asynchronous source — a WebSocket request, IndexedDB, a third-party SDK. Both APIs are meant for **reads**: mutations (POST/PUT/DELETE) stay ordinary `HttpClient` calls.
+The more general `resource({ params, loader })` is also stable since v22, and it is not tied to HTTP. The `loader` receives `params`, `previous` and an `abortSignal`, so it fits any asynchronous source. Examples: a WebSocket request, IndexedDB, a third-party SDK (software development kit). Both APIs are meant for **reads**, and mutations (POST/PUT/DELETE) stay ordinary `HttpClient` calls.
 
-```
-┌──────────────────────────────┬──────────────────────────────────┬─────────────────────────────────────┐
-│ loading approach             │ what you get                     │ when to use it                      │
-├──────────────────────────────┼──────────────────────────────────┼─────────────────────────────────────┤
-│ httpResource(() => url)      │ value/isLoading/error as signals │ screen data — the default           │
-├──────────────────────────────┼──────────────────────────────────┼─────────────────────────────────────┤
-│ resource({ params, loader }) │ the same, any async loader       │ a non-HTTP source, custom fetch     │
-├──────────────────────────────┼──────────────────────────────────┼─────────────────────────────────────┤
-│ http.get<T>() + subscribe    │ manual control and teardown      │ commands: POST/PUT/DELETE           │
-├──────────────────────────────┼──────────────────────────────────┼─────────────────────────────────────┤
-│ http.get<T>() + toSignal     │ a signal from an Observable      │ an RxJS pipeline is needed (ch. 09) │
-├──────────────────────────────┼──────────────────────────────────┼─────────────────────────────────────┤
-│ ResolveFn on a route         │ data before render               │ pre-navigation checks (chapter 07)  │
-└──────────────────────────────┴──────────────────────────────────┴─────────────────────────────────────┘
-```
+Five loading approaches, and the first is the default for screen data:
+
+| loading approach | what you get | when to use it |
+|---|---|---|
+| `httpResource(() => url)` | `value`/`isLoading`/`error` as signals | screen data — the default |
+| `resource({ params, loader })` | the same, any async loader | a non-HTTP source, custom fetch |
+| `http.get<T>()` + `subscribe` | manual control and teardown | commands: `POST`/`PUT`/`DELETE` |
+| `http.get<T>()` + `toSignal` | a signal from an Observable | an RxJS pipeline is needed (ch. 09) |
+| `ResolveFn` on a route | data before render | pre-navigation checks (chapter 07) |
 
 ### Interceptors
 
@@ -103,7 +104,7 @@ The more general `resource({ params, loader })` (also stable since v22) is not t
                            ▼
 ┌────────────────────────────────────────────────────┐
 │ FetchBackend — the actual fetch()                  │
-│ the response travels back UP in reverse order      │
+│ the response travels back up in reverse order      │
 └────────────────────────────────────────────────────┘
 a request is immutable: change it only through req.clone();
    metadata for interceptors travels in req.context
@@ -122,7 +123,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ```
 
-The order in `withInterceptors([...])` is the order in which the **request** is processed; the response travels back in reverse. Hence a practical rule: an interceptor that needs to see the final request (logging, signing) goes later in the array, while the one deciding the fate of a response (error handling, retries) is placed so the error reaches it before anyone else.
+The order in `withInterceptors([...])` is the order in which the **request** is processed, and the response travels back in reverse. Hence a practical rule in two halves. An interceptor that needs to see the final request — logging, signing — goes later in the array. An interceptor that decides the fate of a response — error handling, retries — is placed so that the error reaches it before anyone else.
 
 Metadata for interceptors travels through `HttpContext` — not through headers and not through flags in a service:
 
@@ -138,28 +139,22 @@ if (req.context.get(SKIP_AUTH)) return next(req);
 
 ### Errors: what to handle where
 
-```
-                                 Where to handle which error
-┌───────────────────────────┬──────────────────────────────────────┬─────────────────────────┐
-│ situation                 │ where to handle it                   │ what the user sees      │
-├───────────────────────────┼──────────────────────────────────────┼─────────────────────────┤
-│ 401 Unauthorized          │ an interceptor                       │ redirect to sign-in     │
-├───────────────────────────┼──────────────────────────────────────┼─────────────────────────┤
-│ 403 Forbidden             │ an interceptor                       │ a "no access" page      │
-├───────────────────────────┼──────────────────────────────────────┼─────────────────────────┤
-│ 404 for a specific entity │ the screen or a resolver             │ "ticket not found"      │
-├───────────────────────────┼──────────────────────────────────────┼─────────────────────────┤
-│ 422 / validation errors   │ the form that sent it                │ messages next to fields │
-├───────────────────────────┼──────────────────────────────────────┼─────────────────────────┤
-│ 5xx                       │ an interceptor: retry, then a banner │ "try again later"       │
-├───────────────────────────┼──────────────────────────────────────┼─────────────────────────┤
-│ network down, timeout     │ an interceptor                       │ an offline state        │
-└───────────────────────────┴──────────────────────────────────────┴─────────────────────────┘
-        the rule: if the reaction is the same app-wide, it belongs in an interceptor;
-              if it depends on the screen, handle it where the request was made
-```
+Not every error belongs in the same place:
 
-An error arrives as an `HttpErrorResponse`. Two cases must be distinguished: `status === 0` (the request never arrived — network, CORS, cancellation) and `status >= 400` (the server responded with an error). Inside an interceptor errors are caught with `catchError`, and retries are done with `retry({ count, delay })`.
+| situation | where to handle it | what the user sees |
+|---|---|---|
+| 401 Unauthorized | an interceptor | redirect to sign-in |
+| 403 Forbidden | an interceptor | a "no access" page |
+| 404 for a specific entity | the screen or a resolver | "ticket not found" |
+| 422 / validation errors | the form that sent it | messages next to fields |
+| 5xx | an interceptor: retry, then a banner | "try again later" |
+| network down, timeout | an interceptor | an offline state |
+
+The rule: if the reaction is the same app-wide, it belongs in an interceptor. If it depends on the screen, handle it where the request was made.
+
+An error arrives as an `HttpErrorResponse`. Two cases must be distinguished. With `status === 0` the request never arrived. The cause is no network, a cancellation, or a block by CORS (cross-origin resource sharing — the browser's rules for cross-origin requests). With `status >= 400` the server responded with an error.
+
+Inside an interceptor errors are caught with `catchError`, and retries are done with `retry({ count, delay })`.
 
 ### Cancelling requests
 
@@ -171,24 +166,24 @@ Cancellation works through unsubscription: `HttpClient` aborts the request on un
 
 ## React parallels
 
-- **`httpResource` ≈ TanStack Query, not `fetch` in `useEffect`.** Both give you `data`/`isLoading`/`error` and refetch when a key changes. The differences: `httpResource` does not cache across components and does not deduplicate requests (there is no shared key-based cache), but it needs no provider and hands you signals directly. Invalidation is simpler and blunter too: `reload()` instead of `invalidateQueries`.
-- **Interceptors versus a wrapper around `fetch`.** In React you usually intercept with your own `apiFetch()` or an axios instance with interceptors — and any code calling bare `fetch` bypasses the logic. In Angular the interceptor is built into `HttpClient`: the only way around it is not to use `HttpClient` at all, which makes the auth layer genuinely single.
+- **`httpResource` ≈ TanStack Query, not `fetch` in `useEffect`.** Both give you `data`/`isLoading`/`error` and refetch when a key changes. The differences are two. `httpResource` does not cache across components and does not deduplicate requests, because there is no shared key-based cache. But it needs no provider and hands you signals directly. Invalidation is simpler and blunter too: `reload()` instead of `invalidateQueries`.
+- **Interceptors versus a wrapper around `fetch`.** In React you usually intercept with your own `apiFetch()` or an axios instance with interceptors — and any code calling bare `fetch` bypasses the logic. In Angular the interceptor is built into `HttpClient`. The only way around it is not to use `HttpClient` at all, which makes the auth layer genuinely single.
 - **Cancelling requests.** In React cancellation is manual work: an `AbortController` plus cleanup in `useEffect`. In Angular it follows from the model: unsubscribing aborts the request, `switchMap` does it automatically, and `httpResource` does it whenever dependencies change.
-- **Where `loading` and `error` live.** In React projects without a library those flags are usually declared by hand in every component. `httpResource` makes them part of the request object, so there is no need to duplicate `isLoading` in the component — and that is what separates modern Angular code from code written three years ago.
+- **Where `loading` and `error` live.** In React projects without a library those flags are usually declared by hand in every component. With `httpResource` they become part of the request object, so `isLoading` need not be duplicated in the component. That is what separates modern Angular code from code written three years ago.
 - **Where the habit breaks:** `http.get()` with no subscription. A React developer used to `fetch()` as a promise expects the call to have already sent the request. Nothing happens: the Observable is cold, and "the request never fires" is the single most common first problem in an Angular HTTP layer.
 
 ## What you will see in legacy code
 
-- **`HttpClientModule` in `imports`** instead of `provideHttpClient()` — the module era. You will not find `withFetch()` next to it: the transport was XHR.
-- **Class-based interceptors:** `@Injectable() export class AuthInterceptor implements HttpInterceptor` plus registration through a multi provider `{ provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }` (the `multi` example from chapter 04). For such interceptors to keep working alongside new ones you need `withInterceptorsFromDi()`.
-- **Manual `loading`/`error` in every component:** `loading = true` before the call, `subscribe({ next, error, complete })` with `loading = false` in two places, and a `cdr.markForCheck()` on top (chapter 03).
+- **`HttpClientModule` in `imports`** instead of `provideHttpClient()` — the module era. You will not find `withFetch()` next to it, because the transport was XHR (XMLHttpRequest, the browser API that predates `fetch`).
+- **Class-based interceptors:** `@Injectable() export class AuthInterceptor implements HttpInterceptor`. Registration goes through a multi provider: `{ provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }` (the `multi` example from chapter 04). For such interceptors to keep working alongside new ones you need `withInterceptorsFromDi()`.
+- **Manual `loading`/`error` in every component:** `loading = true` before the call. Then `subscribe({ next, error, complete })` with `loading = false` in two places. And a `cdr.markForCheck()` on top (chapter 03).
 - **`BehaviorSubject` plus the `async` pipe as a "cache":** the service stores the last response itself and hands it out through `state$`. Today that is `httpResource` or a signal store (chapter 05).
 - **`toPromise()`** (removed in RxJS 8; replaced by `firstValueFrom`/`lastValueFrom`) and `.subscribe()` without teardown in `ngOnInit`.
-- **URLs built by string concatenation:** `` `${env.apiUrl}/tickets?status=${status}&page=${page}` `` instead of `params`, which loses escaping. And `environment.ts` as the source of `apiUrl` instead of a DI token (chapter 04).
+- **URLs built by string concatenation:** `` `${env.apiUrl}/tickets?status=${status}&page=${page}` `` instead of `params`, which loses escaping. And `environment.ts` as the source of `apiUrl` instead of a DI (dependency injection) token (chapter 04).
 
 ## What we add to the project
 
-Support Desk gets a real HTTP layer: a `TicketApi` with typed requests, three interceptors (auth, logging, error handling with retries), a list loaded through `httpResource` with reactive parameters, and centralized reactions to 401/500.
+Support Desk gets a real HTTP layer. That is a `TicketApi` with typed requests and three interceptors: auth, logging, and error handling with retries. The list is loaded through `httpResource` with reactive parameters, and reactions to 401 and 500 are centralized.
 
 ## Exercise
 
@@ -197,11 +192,11 @@ Support Desk gets a real HTTP layer: a `TicketApi` with typed requests, three in
 
 Requirements:
 
-1. A mock backend: spin up anything (`json-server`, `msw` or a small Express app) with `GET /api/tickets` (supporting `status`, `q`, `page`), `GET /api/tickets/:id`, `POST /api/tickets`, `PATCH /api/tickets/:id`. The base URL comes from `APP_CONFIG` (chapter 04), not from a constant inside the service.
+1. A mock backend: spin up anything you like — `json-server`, `msw` or a small Express app. It needs four endpoints. Those are `GET /api/tickets` (with `status`, `q`, `page`), `GET /api/tickets/:id`, `POST /api/tickets` and `PATCH /api/tickets/:id`. The base URL comes from `APP_CONFIG` (chapter 04), not from a constant inside the service.
 2. `TicketApi`: typed methods `list(params)`, `byId(id)`, `create(dto)`, `patch(id, dto)`. Pass parameters through the `params` object rather than string concatenation. No `any` anywhere.
-3. The ticket list is loaded with `httpResource` whose parameters read from the filter signals: changing the status or the search string must issue a new request and cancel the previous one. Verify the cancellation in the Network tab.
+3. The ticket list is loaded with `httpResource`, and its parameters read from the filter signals. Changing the status or the search string must issue a new request and cancel the previous one. Verify the cancellation in the Network tab.
 4. `loading` and `error` in the template come from the resource, not from separate component signals. Distinguish an empty result from an error explicitly.
-5. Three interceptors: `authInterceptor` (adds the token; skips requests marked `SKIP_AUTH` via `HttpContext`), `loggingInterceptor` (method, URL, status, duration), `errorInterceptor` (retry for 5xx, redirect to `/login` on 401, mapping `HttpErrorResponse` into a domain error type). Decide on the order in the array and justify it.
+5. Three interceptors. The `authInterceptor` adds the token and skips requests marked `SKIP_AUTH` via `HttpContext`. The `loggingInterceptor` records the method, URL, status and duration. The `errorInterceptor` retries 5xx, redirects to `/login` on 401, and maps `HttpErrorResponse` into a domain error type. Decide on the order in the array and justify it.
 6. Mutations: creating a ticket is a plain `POST` through `HttpClient`, and the list refreshes on success. Decide how exactly — `reload()` on the resource or an optimistic store update — and justify the choice.
 
 Edge cases to think about:
@@ -306,7 +301,7 @@ export const loggingInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     tap({
-      // the request that reaches here is ALREADY modified: this interceptor
+      // the request that reaches here is already modified: this interceptor
       // sits after authInterceptor, so it sees the final headers
       next: (event) => {
         if (event.type !== 4 /* HttpEventType.Response */) return;
@@ -327,7 +322,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notifications = inject(Notifications);
 
   return next(req).pipe(
-    // Retry ONLY idempotent methods: a POST must not be retried, the server
+    // Retry only idempotent methods: a POST must not be retried, the server
     // may have created the entity while the response got lost on the way
     retry({
       count: req.method === 'GET' && !req.context.get(SKIP_RETRY) ? 2 : 0,
@@ -344,7 +339,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         void router.navigate(['/forbidden']);
       } else if (error.status === 0) {
         // status 0 — the request never arrived: network, CORS or cancellation.
-        // This is NOT a server error, and the wording must differ
+        // This is not a server error, and the wording must differ
         notifications.show('No connection to the server');
       } else if (error.status >= 500) {
         notifications.show('Something went wrong. Please try again later.');
@@ -365,10 +360,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
-    // withFetch() is NOT needed here: FetchBackend is the default transport
+    // withFetch() is not needed here: FetchBackend is the default transport
     // and the flag itself is deprecated
     provideHttpClient(
-      // The order is the order the REQUEST is processed in (responses go back
+      // The order is the order the request is processed in (responses go back
       // in reverse). auth first — so the others see the final headers;
       // error last — so an error reaches it before it reaches the caller
       withInterceptors([authInterceptor, loggingInterceptor, errorInterceptor]),
@@ -392,7 +387,7 @@ export class TicketBoardState {
   readonly search = this.searchQuery.asReadonly();
 
   // A reactive request: the function reads signals, so on a filter change
-  // httpResource cancels the previous request and issues a new one ITSELF
+  // httpResource cancels the previous request and issues a new one itself
   private readonly ticketsResource = httpResource<readonly Ticket[]>(
     () => ({
       url: `${this.config.apiUrl}/tickets`,
@@ -481,9 +476,9 @@ Answers to the edge cases:
 
 - `HttpClient` returns a **cold** Observable: the request goes out when you subscribe. Without `subscribe()`, `httpResource` or `firstValueFrom` nothing happens — the Network tab stays empty and the console is silent. That is exactly why the symptom sounds like "the method is called but there is no request".
 - While the new request is in flight, `value()` keeps the **previous value** (or `defaultValue` if there was none), `status()` becomes `'reloading'` and `isLoading()` becomes `true`. That is convenient: the list does not flash empty on a filter change. If you want the opposite, render a skeleton based on `isLoading()`.
-- Retrying a `POST` may create a second entity: the server could have processed the request and failed to deliver the response. That is why the solution enables `retry` for `GET` only; mutations are either not retried at all, or the server has to support an idempotency key.
-- `status === 0` means there was no HTTP response at all: no network, the request was blocked by CORS, or the subscription was cancelled. Showing "server error" is doubly wrong — the server may have been fine and the cause is on the client, and the user needs different advice ("check your connection") rather than "try again later".
-- Five parallel 401s with no protection produce five refresh requests, four of which will most likely fail (a refresh token is single-use) — and the user gets kicked out. The fix: keep one shared refresh Observable in the service and reuse it for all waiting requests (`shareReplay` plus a "refresh already in progress" flag), then retry the rest once it resolves.
+- Retrying a `POST` may create a second entity: the server could have processed the request and failed to deliver the response. That is why the solution enables `retry` for `GET` only. Mutations are either not retried at all, or the server has to support an idempotency key.
+- `status === 0` means there was no HTTP response at all: no network, the request was blocked by CORS, or the subscription was cancelled. Showing "server error" is doubly wrong. The server may have been fine, and the cause is on the client. The user also needs different advice — "check your connection" rather than "try again later".
+- Five parallel 401s with no protection produce five refresh requests. Four of them will most likely fail, because a refresh token is single-use, and the user gets signed out. The fix is one shared refresh Observable in the service, reused for all waiting requests. Implement it with `shareReplay` plus a "refresh already in progress" flag, and retry the rest once it resolves.
 
 ## Check yourself
 
@@ -496,16 +491,24 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. `HttpClient` returns a cold Observable: it describes the request but does not perform it. The request is sent on subscription, and each subscription sends a **new** one. Ways to activate it: `subscribe()` (usually for mutations), `httpResource`/`resource` (for screen data — they subscribe themselves and expose state as signals), and `firstValueFrom`/`lastValueFrom` (when a promise is genuinely needed, e.g. in an `async` guard). The flip side of coldness is free cancellation: unsubscribing aborts the request.
-2. `httpResource` is a reactive wrapper around a request: the URL or request object is a function reading signals, and the state is available as `value()`, `isLoading()`, `error()`, `status()`, plus `reload()`. The difference from the manual pair is that loading state stops being component code: no `loading = true` before the call and no resetting it in two branches, no remembering `markForCheck`. When a dependency changes, the resource cancels the previous request and issues a new one; `value()` keeps the previous value and `status()` becomes `'reloading'`, so the UI does not flash empty.
-3. The request flows in declaration order: `a → b → c → backend`. The response (and any error) travels back in reverse: `c → b → a`. The error handler logically goes last in the array: on the response path it then gets control **first** and can decide the error's fate (retry, turn it into a redirect, show a banner) before anyone else — including the caller — sees it. Interceptors that need the final request — logging, signing, metrics — go after those that modify it.
-4. `HttpContext` is a way to pass metadata about **one specific request** to the interceptors without sending anything over the network. A header does not fit: it would travel to the server and become part of the protocol (and sometimes trigger a preflight). Checking the URL inside the interceptor is a brittle coupling: the list of public paths lives far from the call site, breaks when API routes are refactored, and does not express intent. With an `HttpContextToken` the intent is visible where the call happens (`context.set(SKIP_AUTH, true)`), the value is typed and has a default, and the interceptor simply reads `req.context.get(...)`.
-5. The criterion is whether the reaction depends on the screen. If it is the same application-wide, handle it in an interceptor: 401 (sign out and redirect to login), 403 (an "access denied" page), 5xx (retry plus a generic banner), `status === 0` (an offline state). If the reaction depends on context, handle it where the request was made: a 404 for a specific entity (the screen shows "ticket not found" rather than a generic banner), a 422 with validation errors (messages must appear next to the fields of that particular form), a 409 version conflict (the screen offers to reload the data). The practical test: if producing the right message requires knowing which screen made the request, it is not the interceptor's job.
+1. `HttpClient` returns a cold Observable: it describes the request but does not perform it. The request is sent on subscription, and each subscription sends a **new** one. There are three ways to activate it. The first is `subscribe()`, usually for mutations. The second is `httpResource`/`resource` for screen data: they subscribe themselves and expose state as signals. The third is `firstValueFrom`/`lastValueFrom`, when a promise is genuinely needed — in an `async` guard, for example. The upside of coldness is free cancellation: unsubscribing aborts the request.
+2. `httpResource` is a reactive wrapper around a request. The URL or request object is a function that reads signals. The state is available as `value()`, `isLoading()`, `error()` and `status()`, plus `reload()`. The difference from the manual pair is that loading state stops being component code. There is no `loading = true` before the call, no resetting it in two branches, and nothing to remember about `markForCheck`. When a dependency changes, the resource cancels the previous request and issues a new one. Meanwhile `value()` keeps the previous value and `status()` becomes `'reloading'`, so the UI (user interface) does not flash empty.
+3. The request flows in declaration order: `a → b → c → backend`. The response (and any error) travels back in reverse: `c → b → a`. The error handler logically goes last in the array. On the response path it then gets control **first**, so it can decide the error's fate before anyone else sees it — including the caller. Deciding means retrying, turning the error into a redirect, or showing a banner. Interceptors that need the final request — logging, signing, metrics — go after those that modify it.
+4. `HttpContext` is a way to pass metadata about **one specific request** to the interceptors without sending anything over the network. A header does not fit: it would travel to the server and become part of the protocol (and sometimes trigger a preflight). Checking the URL inside the interceptor is a brittle coupling. The list of public paths lives far from the call site, breaks when API routes are refactored, and does not express intent. With an `HttpContextToken` the intent is visible where the call happens: `context.set(SKIP_AUTH, true)`. The value is typed and has a default, and the interceptor simply reads `req.context.get(...)`.
+5. The criterion is whether the reaction depends on the screen. If it is the same application-wide, handle it in an interceptor. That covers 401 (sign out and redirect to login) and 403 (an "access denied" page). It also covers 5xx (retry plus a generic banner) and `status === 0` (an offline state). If the reaction depends on context, handle it where the request was made. A 404 for a specific entity belongs to the screen, which shows "ticket not found" rather than a generic banner. A 422 with validation errors belongs to the form, because the messages must appear next to its fields. A 409 version conflict belongs to the screen too, which offers to reload the data. The practical test: if producing the right message requires knowing which screen made the request, it is not the interceptor's job.
 
 </details>
 
 ## Common mistake
 
-The first one is `http.get()` with no subscription. The code looks functional: the service method is called, the return type satisfies the compiler, there are no errors. But `HttpClient` returns a cold Observable, so nothing happens: the Network tab is empty and the console is silent. For a React developer this mistake is nearly inevitable, because `fetch()` is a promise that starts work immediately and `await` merely waits for the result. The symptom is easy to recognize: "the service is called, I put a `console.log` in the method and it prints, but there is no request". The cure: fetch screen data through `httpResource` (it subscribes itself), send mutations through `subscribe()`, and reserve `firstValueFrom` for the places that genuinely need a promise.
+The first one is `http.get()` with no subscription. The code looks functional: the service method is called, the return type satisfies the compiler, there are no errors. But `HttpClient` returns a cold Observable, so nothing happens: the Network tab is empty and the console is silent.
 
-The second is duplicating loading state. The component declares `loading = signal(false)` and `error = signal<string|null>(null)` while a resource sitting next to it already exposes `isLoading()` and `error()`. The two sets then drift apart: `loading` was never reset in the error branch, `error` was not cleared before the retry, and the user ends up with a spinner on top of an error message. The same goes for data: a copy of the response in the component's own signal lives its own life after `reload()`. The rule is the one from chapter 05: state that can be read is read rather than copied — `resource.value()`, `resource.isLoading()`, `resource.error()` — and everything derived is a `computed`.
+For a React developer this mistake is nearly inevitable, because `fetch()` is a promise that starts work immediately and `await` merely waits for the result. The symptom is easy to recognize. It sounds like this: "the service is called, I put a `console.log` in the method and it prints, but there is no request".
+
+The cure: fetch screen data through `httpResource` (it subscribes itself), send mutations through `subscribe()`, and reserve `firstValueFrom` for the places that genuinely need a promise.
+
+The second is duplicating loading state. The component declares `loading = signal(false)` and `error = signal<string|null>(null)` while a resource sitting next to it already exposes `isLoading()` and `error()`.
+
+The two sets then drift apart. Nobody reset `loading` in the error branch, and nobody cleared `error` before the retry. The user ends up with a spinner on top of an error message. The same goes for data: a copy of the response in the component's own signal lives its own life after `reload()`.
+
+The rule is the one from chapter 05. State that can be read is read rather than copied — `resource.value()`, `resource.isLoading()`, `resource.error()` — and everything derived is a `computed`.
