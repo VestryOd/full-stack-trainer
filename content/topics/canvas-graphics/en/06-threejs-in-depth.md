@@ -2,21 +2,37 @@
 
 ## From 2D to 3D: the same retained-mode model, plus a dimension of depth
 
-three.js solves the same architectural problem as Pixi (article 05) — a retained-mode scene on top of WebGL (article 04) — but adds what 2D doesn't need: a camera that projects three-dimensional space onto a flat screen, lighting that answers "what does this material look like under this light," and a depth buffer for correctly ordering objects that occlude each other in 3D.
+three.js is a retained-mode scene on top of WebGL (Web Graphics Library), plus everything 3D needs that 2D doesn't. The architectural problem is the same one Pixi solves in article 05, and the WebGL layer underneath is article 04.
+
+Three things are new:
+
+- A camera that projects three-dimensional space onto a flat screen.
+- Lighting that answers "what does this material look like under this light".
+- A depth buffer, for correctly ordering objects that occlude each other in 3D.
 
 ## The mental model: `Scene`, `Camera`, `Renderer`
 
 ```javascript
-const scene = new THREE.Scene();                                   // the scene tree — like Pixi's stage
-const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);  // WHERE and HOW we're looking
-const renderer = new THREE.WebGLRenderer({ antialias: true });      // a wrapper over raw WebGL (article 04)
+// the scene tree — like Pixi's stage
+const scene = new THREE.Scene();
+
+// where and how we're looking
+const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+
+// a wrapper over raw WebGL (article 04)
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-renderer.render(scene, camera); // on each call: walk the scene, issue draw calls for visible objects
+// on each call: walk the scene, issue draw calls for visible objects
+renderer.render(scene, camera);
 ```
 
-`Scene` is a tree of objects, conceptually identical to Pixi's `stage`/`Container`, just in three dimensions. `Camera` isn't "an object in the scene" — it's the definition of HOW three-dimensional coordinates turn into two-dimensional screen coordinates (the projection matrix). `Renderer` is a thin wrapper over the raw WebGL context (article 04) that generates the necessary draw calls for every visible object on each `render()` call.
+`Scene` is a tree of objects, conceptually identical to Pixi's `stage`/`Container`, just in three dimensions.
+
+`Camera` isn't "an object in the scene". It's the definition of **how** three-dimensional coordinates turn into two-dimensional screen coordinates, that is the projection matrix.
+
+`Renderer` is a thin wrapper over the raw WebGL context (article 04). On each `render()` call it generates the draw calls needed for every visible object.
 
 ## `PerspectiveCamera` vs. `OrthographicCamera`
 
@@ -29,28 +45,41 @@ const perspective = new THREE.PerspectiveCamera(
   1000,             // far — the far clipping plane
 );
 
-// Orthographic: NO size reduction with distance, parallel lines stay
-// parallel — CAD views, isometric games, 2D overlays inside a 3D scene
+// Orthographic: no size reduction with distance, parallel lines stay
+// parallel — CAD (computer-aided design) views, isometric games,
+// 2D overlays inside a 3D scene
 const orthographic = new THREE.OrthographicCamera(
   -width / 2, width / 2, height / 2, -height / 2, 0.1, 1000,
 );
 ```
 
-**`near`/`far` and z-fighting** aren't a formality — they're a real source of a visible bug. The depth buffer stores distance from the camera with precision distributed NON-LINEARLY: much more precision near `near`, considerably less near `far`. If `near` is set too small and `far` too large, two surfaces physically located at different, but close, depths can end up with ALMOST IDENTICAL values in the depth buffer — the renderer can't reliably decide which one is closer, and the result is the characteristic flicker of one surface poking through another with the slightest camera movement (z-fighting). The fix is setting `near`/`far` as tightly as possible around the scene's actual bounds, rather than "with margin just in case."
+**`near`/`far` and z-fighting** aren't a formality. They're a real source of a visible bug.
+
+The depth buffer stores distance from the camera with precision distributed **non-linearly**: much more precision near `near`, considerably less near `far`.
+
+Set `near` too small and `far` too large, and two surfaces at physically different but close depths can get almost identical depth-buffer values. The renderer then can't reliably decide which one is closer.
+
+The result is the characteristic flicker of one surface poking through another at the slightest camera movement. That is z-fighting. The fix is setting `near`/`far` as tightly as possible around the scene's actual bounds, rather than "with margin just in case".
 
 ## The Geometry + Material + Mesh triad
 
 ```javascript
-const geometry = new THREE.BoxGeometry(1, 1, 1); // WHAT shape (vertices)
-const material = new THREE.MeshStandardMaterial({ color: 0x3366ff }); // HOW it's shaded/lit
-const cube = new THREE.Mesh(geometry, material); // an object IN THE SCENE: geometry + material + transform
+const geometry = new THREE.BoxGeometry(1, 1, 1);  // what shape (vertices)
+
+// how it's shaded and lit
+const material = new THREE.MeshStandardMaterial({ color: 0x3366ff });
+
+// an object in the scene: geometry + material + transform
+const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
 cube.position.set(0, 1, 0);
 cube.rotation.y = Math.PI / 4;
 ```
 
-`Geometry` is responsible for the shape, `Material` for how that shape reacts to light and textures, and `Mesh` combines them and places them in the scene with its own transform — three different `Mesh` objects can reuse the SAME `Geometry`/`Material`, which ties directly into the draw-call optimizations below.
+`Geometry` is responsible for the shape. `Material` is responsible for how that shape reacts to light and textures. `Mesh` combines them and places them in the scene with its own transform.
+
+Three different `Mesh` objects can reuse the **same** `Geometry` and `Material`, which ties directly into the draw-call optimizations below.
 
 ## `BufferGeometry`: the same buffers and attributes from article 04
 
@@ -58,69 +87,61 @@ cube.rotation.y = Math.PI / 4;
 const geometry = new THREE.BufferGeometry();
 
 const positions = new Float32Array([ /* x,y,z for each vertex */ ]);
-geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); // 3 — components per vertex
+// 3 — components per vertex
+geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-const normals = new Float32Array([ /* nx,ny,nz — the "outward" direction, used for lighting */ ]);
+// nx,ny,nz — the "outward" direction, used for lighting
+const normals = new Float32Array([ /* ... */ ]);
 geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
 
-const uvs = new Float32Array([ /* u,v — texture-mapping coordinates */ ]);
+// u,v — texture-mapping coordinates
+const uvs = new Float32Array([ /* ... */ ]);
 geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 ```
 
-`BufferGeometry` isn't a separate concept — it's a direct wrapper over the GPU buffers and attributes from article 04: `position` is a required attribute (nothing to draw without it), `normal` is the surface direction at each vertex, critical for computing how light bounces off it (without normals, a lit model looks "flat" or renders incorrectly), `uv` is the coordinates used to stretch a texture over the surface.
+`BufferGeometry` isn't a separate concept. It's a direct wrapper over the GPU (graphics processing unit) buffers and attributes from article 04:
+
+- `position` is a required attribute — there is nothing to draw without it.
+- `normal` is the surface direction at each vertex, critical for computing how light bounces off it. Without normals, a lit model looks "flat" or renders incorrectly.
+- `uv` is the coordinates used to stretch a texture over the surface.
 
 ## A tour of materials: unlit → lit → PBR
 
-```txt
-MeshBasicMaterial      — NO reaction to light at all: just a flat
-                           color/texture, entirely ignoring every
-                           light source in the scene. The cheapest.
-                           Good for 3D UI elements, wireframes,
-                           deliberately "flat" stylized looks
+Materials differ in how they react to light. PBR below stands for physically based rendering.
 
-MeshLambertMaterial     — lit, but only diffuse (matte) reflection,
-                           computed PER VERTEX (cheaper, less
-                           accurate) — mostly legacy/simple cases
+| Material | How it reacts to light | Where it fits |
+|---|---|---|
+| `MeshBasicMaterial` | No reaction to light at all: a flat color or texture, ignoring every light source in the scene. The cheapest one. | 3D interface elements, wireframes, deliberately "flat" stylized looks. |
+| `MeshLambertMaterial` | Lit, but only diffuse (matte) reflection, computed per vertex. Cheaper and less accurate. | Mostly legacy and simple cases. |
+| `MeshPhongMaterial` | Lit, and adds specular highlights computed per pixel. More expensive than Lambert. | The classic "shiny plastic" look. |
+| `MeshStandardMaterial` and `MeshPhysicalMaterial` | Physically based rendering. The material is described by roughness and metalness, from an approximation of real-world light physics. That replaces an arbitrary "highlight formula" like Phong's. | Visually more realistic results that stay consistent across different lighting setups. `Physical` adds clearcoat, transmission (glass) and other advanced real-world effects. |
 
-MeshPhongMaterial       — lit, adds specular highlights, computed
-                           PER PIXEL — the classic "shiny plastic"
-                           look, more expensive than Lambert
-
-MeshStandardMaterial /
-MeshPhysicalMaterial     — PBR (Physically Based Rendering) — models
-                           a material via roughness and metalness
-                           parameters, based on an approximation of
-                           real-world light physics, rather than an
-                           arbitrary "highlight formula" like Phong's.
-                           Produces a visually more realistic and,
-                           importantly, CONSISTENT result across
-                           different lighting setups. Physical adds
-                           clearcoat, transmission (glass), and other
-                           advanced real-world material effects
-```
-
-The practical choice: `Standard`/`Physical` is the default for anything meant to look realistic (product viewers, architectural visualization); `Basic` for a cheap/stylized/unlit look; `Phong` only for legacy code or a specific stylized "shine" at a lower cost than full PBR.
+The practical choice: `Standard` or `Physical` is the default for anything meant to look realistic, such as product viewers and architectural visualization. `Basic` is for a cheap, stylized, unlit look. `Phong` is for legacy code, or for a specific stylized "shine" at a lower cost than full physically based rendering.
 
 ## Lights and shadows
 
 ```javascript
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));  // uniform light from EVERY direction,
-                                                     // no direction, no shadows — just a
-                                                     // "floor" of illumination so shadows
-                                                     // aren't pure black
+// uniform light from every direction, no direction, no shadows —
+// just a "floor" of illumination so shadows aren't pure black
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1); // parallel rays (like the sun)
+// parallel rays (like the sun)
+const dirLight = new THREE.DirectionalLight(0xffffff, 1);
 dirLight.position.set(5, 10, 5);
 dirLight.castShadow = true;
 scene.add(dirLight);
 
-const pointLight = new THREE.PointLight(0xffaa00, 1, 50); // radiates in all directions from
-                                                            // a point (like a bulb), fades with distance
+// radiates in all directions from a point (like a bulb),
+// fades with distance
+const pointLight = new THREE.PointLight(0xffaa00, 1, 50);
 
-const spotLight = new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 6); // a cone with an angle
+// a cone with an angle
+const spotLight = new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 6);
 ```
 
-**How a shadow map works:** the scene gets rendered an EXTRA TIME, FROM THE LIGHT'S POINT OF VIEW, into a depth texture (that's a second render pass, on top of the main one from the camera's viewpoint) — then in the main pass, each pixel's distance from the light is compared against the value stored in that texture: if the stored value is smaller, the pixel is in shadow (something closer to the light is blocking it).
+**How a shadow map works.** The scene gets rendered an extra time, from the light's point of view, into a depth texture. That is a second render pass, on top of the main one from the camera's viewpoint.
+
+Then, in the main pass, each pixel's distance from the light is compared against the value stored in that texture. If the stored value is smaller, the pixel is in shadow: something closer to the light is blocking it.
 
 ```javascript
 renderer.shadowMap.enabled = true;
@@ -133,7 +154,9 @@ dirLight.shadow.mapSize.height = 2048; // crisper shadow edges, but more
                                           // time this extra pass takes
 ```
 
-Shadow cost isn't an abstraction: EVERY light with `castShadow: true` needs its own EXTRA render pass per frame, and `mapSize` resolution is a direct trade-off between "sharp shadow edges" and "memory + render time" — on mobile devices, this is one of the first things cut when performance runs short.
+Shadow cost isn't an abstraction. Every light with `castShadow: true` needs its own extra render pass per frame.
+
+And `mapSize` resolution is a direct trade-off between "sharp shadow edges" and "memory plus render time". On mobile devices this is one of the first things cut when performance runs short.
 
 ## The render loop and resize handling
 
@@ -147,7 +170,7 @@ animate();
 
 ```javascript
 // ❌ A stretched/distorted image after resize — aspect changed,
-// but the PROJECTION MATRIX didn't
+// but the projection matrix didn't
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -156,11 +179,11 @@ window.addEventListener('resize', () => {
 
 ```javascript
 // ✅ camera.aspect (or any other camera property: fov, near, far)
-// does NOT automatically recompute the projection matrix — that
+// does not automatically recompute the projection matrix — that
 // needs an explicit call after every such change
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix(); // REQUIRED after changing aspect/fov/near/far
+  camera.updateProjectionMatrix(); // required after changing aspect/fov/near/far
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 ```
@@ -171,7 +194,8 @@ window.addEventListener('resize', () => {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // inertia while orbiting — requires calling .update() every frame
+// inertia while orbiting — requires calling .update() every frame
+controls.enableDamping = true;
 
 function animate() {
   requestAnimationFrame(animate);
@@ -180,7 +204,9 @@ function animate() {
 }
 ```
 
-**Why glTF is the standard format:** glTF is designed specifically as a "runtime format," not an editing one — compact, with native support for PBR materials, skeletal animation, and morph targets, and broad export tooling support (Blender and essentially the rest of the 3D toolchain). Older formats (`.obj`, with no animation or PBR support; `.fbx`, heavier and less open) don't offer this set of features out of the box.
+**Why glTF is the standard format.** glTF is designed specifically as a "runtime format", not an editing one. It is compact, with native support for physically based materials, skeletal animation and morph targets. Export tooling support is broad too: Blender and essentially the rest of the 3D toolchain.
+
+Older formats don't offer this set of features out of the box. The `.obj` format has no animation and no physically based rendering support. And `.fbx` is heavier and less open.
 
 ```javascript
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -197,15 +223,17 @@ loader.load('/model.glb', (gltf) => {
 });
 ```
 
-**Draco** is a geometry compression extension for glTF: it noticeably shrinks file size for complex meshes, at the cost of needing client-side decoding (`DRACOLoader`) — worth it for production scenes with complex geometry distributed over the network, especially on mobile connections.
+**Draco** is a geometry compression extension for glTF. It noticeably shrinks file size for complex meshes, at the cost of needing decoding in the browser through `DRACOLoader`. It is worth doing for production scenes with complex geometry sent over the network, especially on mobile connections.
 
 ## Textures and color space: why "the model looks washed out"
 
-Texture images are typically stored in sRGB color space (gamma-encoded, optimized for how displays render for human perception), but a renderer's lighting math is only correct in LINEAR space. three.js needs to know which space each texture is encoded in, and which space the final color needs to be output in for the screen:
+Texture images are typically stored in sRGB color space. That means gamma-encoded, optimized for how displays render for human perception. A renderer's lighting math, though, is only correct in linear space.
+
+So three.js needs to know two things. Which color space each texture is encoded in, and which space the final color must be output in for the screen:
 
 ```javascript
 const texture = new THREE.TextureLoader().load('/albedo.jpg');
-texture.colorSpace = THREE.SRGBColorSpace; // REQUIRED for color (albedo/diffuse)
+texture.colorSpace = THREE.SRGBColorSpace; // required for color (albedo/diffuse)
                                               // textures — without it, you get
                                               // either double sRGB decoding, or none at all
 
@@ -213,7 +241,11 @@ renderer.outputColorSpace = THREE.SRGBColorSpace; // correctly outputs the
                                                      // final color to the screen
 ```
 
-The symptom of getting this wrong is the classic "the model looks washed out/flat," or, in the opposite case, unnaturally contrasty — this isn't a problem with the model or the lighting itself, it's a mismatch between the color spaces on the input side (the texture) and the output side (the renderer). `GLTFLoader` sets this up correctly and automatically for a model's own textures; with MANUAL texture loading via `TextureLoader` (say, a custom canvas texture), you have to set it explicitly yourself.
+The symptom of getting this wrong is the classic "the model looks washed out and flat". In the opposite case it looks unnaturally high in contrast.
+
+Neither is a problem with the model or the lighting itself. It's a mismatch between the color spaces on the input side, the texture, and the output side, the renderer.
+
+`GLTFLoader` sets this up correctly and automatically for a model's own textures. With manual texture loading via `TextureLoader` — say, a custom canvas texture — you have to set it explicitly yourself.
 
 ## Raycasting: hit-testing 3D objects with the cursor
 
@@ -226,28 +258,34 @@ window.addEventListener('click', (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-  raycaster.setFromCamera(mouse, camera); // a ray FROM the camera THROUGH this screen point
-  const hits = raycaster.intersectObjects(scene.children, true); // true — recurse into children
+  // a ray from the camera through this screen point
+  raycaster.setFromCamera(mouse, camera);
+
+  // true — recurse into children
+  const hits = raycaster.intersectObjects(scene.children, true);
 
   if (hits.length > 0) {
-    console.log('Clicked:', hits[0].object); // hits[0] — the CLOSEST intersection
+    console.log('Clicked:', hits[0].object); // hits[0] — the closest hit
   }
 });
 ```
 
-This is the 3D analog of hit detection from article 02 (math checks on canvas) and `hitArea` in Pixi (article 05) — instead of 2D geometry, this computes a ray's intersection with a mesh's triangles in three-dimensional space, with results sorted by distance from the camera.
+This is the 3D analog of hit detection from article 02, the math checks on canvas, and of `hitArea` in Pixi (article 05). Instead of 2D geometry, it computes a ray's intersection with a mesh's triangles in three-dimensional space, with results sorted by distance from the camera.
 
 ## Animation: `AnimationMixer` vs. manually transforming in the loop
 
 ```javascript
-// For AUTHORED animation (skeletal animation, morph targets),
+// For authored animation (skeletal animation, morph targets),
 // exported from Blender/Maya along with the model
 const mixer = new THREE.AnimationMixer(gltf.scene);
 const action = mixer.clipAction(gltf.animations[0]);
 action.play();
 
+// deltaTime here is seconds since the previous frame. A bare
+// requestAnimationFrame callback receives a timestamp, not a delta —
+// derive it yourself, or take it from THREE.Clock().getDelta()
 function animate(deltaTime) {
-  mixer.update(deltaTime); // MUST be called every frame with the real dt
+  mixer.update(deltaTime); // must be called every frame with the real dt
   renderer.render(scene, camera);
 }
 ```
@@ -256,32 +294,34 @@ function animate(deltaTime) {
 // For simple procedural motion (a spinning product in a viewer) —
 // AnimationMixer is overkill; an ordinary transform mutation in the
 // loop is simpler
-function animate(deltaTime) {
+function animate(deltaTime) { // deltaTime in seconds, as above
   productMesh.rotation.y += deltaTime * 0.5;
   renderer.render(scene, camera);
 }
 ```
 
-The rule: `AnimationMixer` is for playing back REAL animation clips created by an animator and exported with the model; for your own, code-written procedural animation (rotation, bobbing, following the cursor), directly mutating `position`/`rotation`/`scale` in the render loop is entirely sufficient and needs no `AnimationMixer` at all.
+The rule: `AnimationMixer` is for playing back real animation clips, created by an animator and exported with the model.
+
+For your own procedural animation written in code — rotation, bobbing, following the cursor — mutate `position`/`rotation`/`scale` directly in the render loop. That is entirely sufficient, and needs no `AnimationMixer` at all.
 
 ## Performance: reducing draw call count
 
-Article 04: real-world GPU rendering cost in most scenes is driven by the NUMBER of draw calls, not raw triangle count. three.js gives you two direct tools for this:
+Article 04 established that real-world GPU rendering cost in most scenes is driven by the **number** of draw calls, not raw triangle count. There are two direct tools for this in three.js:
 
 ```javascript
-// InstancedMesh — thousands of copies of ONE geometry+material in ONE draw call
+// InstancedMesh — thousands of copies of one geometry+material in one draw call
 const instancedMesh = new THREE.InstancedMesh(treeGeometry, treeMaterial, 5000);
 const matrix = new THREE.Matrix4();
 
 for (let i = 0; i < 5000; i++) {
   matrix.setPosition(Math.random() * 100 - 50, 0, Math.random() * 100 - 50);
-  instancedMesh.setMatrixAt(i, matrix); // its own transform PER INSTANCE
+  instancedMesh.setMatrixAt(i, matrix); // its own transform per instance
 }
-scene.add(instancedMesh); // a "forest" of 5000 trees — ONE draw call instead of 5000
+scene.add(instancedMesh); // a "forest" of 5000 trees — one draw call instead of 5000
 ```
 
 ```javascript
-// Merging geometries for DIFFERENT static objects sharing a material
+// Merging geometries for different static objects sharing a material
 // that don't need an independent runtime transform
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 const merged = mergeGeometries([rockGeometry1, rockGeometry2, rockGeometry3]);
@@ -297,13 +337,14 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 ## `dispose()`: the leak almost everyone ships to production
 
-Just like Pixi (article 05), three.js's GPU resources (geometry, materials, textures) aren't released automatically by JS garbage collection — the wrapper JS object can be collected while the GPU memory allocated for it stays held:
+Just like Pixi (article 05), three.js GPU resources — geometry, materials, textures — aren't released automatically by JS garbage collection. The wrapper JS object can be collected while the GPU memory allocated for it stays held:
 
 ```javascript
 // ❌ The classic leak: loading a new model on a route change
-// WITHOUT releasing the previous scene's resources
+// without releasing the previous scene's resources
 function loadNewModel(url) {
-  scene.clear(); // removes objects from the scene, but does NOT release their GPU resources
+  // removes objects from the scene, but does not release their GPU resources
+  scene.clear();
   loader.load(url, (gltf) => scene.add(gltf.scene));
 }
 ```
@@ -314,7 +355,9 @@ function disposeSceneContents(scene) {
   scene.traverse((object) => {
     if (object.geometry) object.geometry.dispose();
     if (object.material) {
-      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : [object.material];
       materials.forEach((material) => {
         Object.values(material).forEach((value) => {
           if (value?.isTexture) value.dispose(); // textures embedded in the material
@@ -332,7 +375,7 @@ function loadNewModel(url) {
 }
 ```
 
-This is an especially common bug in product configurators and viewers, where a user switches models/variants many times per session — without explicit `dispose()`, GPU memory grows with every switch until the tab crashes.
+This is an especially common bug in product configurators and viewers, where a user switches models or variants many times per session. Without an explicit `dispose()`, GPU memory grows with every switch until the tab crashes.
 
 ## Ecosystem: react-three-fiber + drei
 
@@ -357,11 +400,17 @@ function ProductViewer() {
 }
 ```
 
-`react-three-fiber` is a declarative React renderer for a three.js scene: JSX components (`<mesh>`, `<ambientLight>`) map directly onto three.js objects, and mounting/unmounting/cleanup are handled by React's lifecycle automatically — what article 05 (Pixi + React) and article 08 (canvas + React) do by hand via `useEffect`, here is abstracted at the library level. `drei` is a collection of ready-made helpers on top of this (an `OrbitControls` wrapper, a `useGLTF` hook with caching, ready-made lighting/environment presets). Prefer this pairing for React apps where component composition matters more than manual micro-control over every scene detail (product configurators, interactive 3D UI); drop down to raw three.js when you need very fine-grained control, or integration entirely outside React.
+`react-three-fiber` is a declarative React renderer for a three.js scene. JSX (a syntax extension for JavaScript) components such as `<mesh>` and `<ambientLight>` map directly onto three.js objects. Mounting, unmounting and cleanup are handled by React's lifecycle automatically.
+
+What article 05 (Pixi + React) and article 08 (canvas + React) do by hand via `useEffect` is abstracted here at the library level.
+
+`drei` is a collection of ready-made helpers on top of this: an `OrbitControls` wrapper, a `useGLTF` hook with caching, ready-made lighting and environment presets.
+
+Prefer this pairing for React apps where component composition matters more than manual micro-control over every scene detail. Product configurators and interactive 3D interfaces are the typical case. Use raw three.js when you need very fine-grained control, or integration entirely outside React.
 
 ## The shader escape hatch: `ShaderMaterial`
 
-When built-in materials can't express the effect you need, `ShaderMaterial` gives direct access to article 04's GLSL model:
+When built-in materials can't express the effect you need, `ShaderMaterial` gives direct access to the GLSL (OpenGL Shading Language) model from article 04:
 
 ```javascript
 const material = new THREE.ShaderMaterial({
@@ -382,44 +431,34 @@ const material = new THREE.ShaderMaterial({
   `,
 });
 
-function animate(deltaTime) {
+function animate(deltaTime) { // deltaTime in seconds, as above
   material.uniforms.uTime.value += deltaTime; // the uniform is updated manually from JS
   renderer.render(scene, camera);
 }
 ```
 
-This is a direct application of `attribute`/`uniform`/`varying` from article 04 — three.js supplies the built-in variables (`position`, `uv`, `projectionMatrix`, `modelViewMatrix`) automatically, leaving you to write only the meaningful part of the shader.
+This is a direct application of `attribute`/`uniform`/`varying` from article 04. The built-in variables are supplied automatically — `position`, `uv`, `projectionMatrix`, `modelViewMatrix` — leaving you to write only the meaningful part of the shader.
 
 ## Connection to other articles
 
-```txt
-[WebGL and GPU Fundamentals]          — buffer/attribute/uniform/draw
-                                         call — the foundation that
-                                         BufferGeometry, Material, and
-                                         InstancedMesh wrap
-[Pixi.js in Depth]                    — the same retained-mode model
-                                         and the same draw-call economics,
-                                         just in 2D
-[Architecture and Performance for
- Canvas Apps]                          — the dispose() discipline and
-                                         React integration from this
-                                         article generalize to a whole application
-```
+- [WebGL and GPU Fundamentals](./04-webgl-and-gpu-fundamentals.md) — buffer, attribute, uniform and draw call: the foundation that `BufferGeometry`, `Material` and `InstancedMesh` wrap.
+- [Pixi.js in Depth](./05-pixijs-in-depth.md) — the same retained-mode model and the same draw-call economics, just in 2D.
+- [Architecture and Performance for Canvas Apps](./08-architecture-and-performance-for-canvas-apps.md) — the `dispose()` discipline and React integration from this article generalize to a whole application.
 
 ## Common interview traps
 
-- **Forgetting `updateProjectionMatrix()` after a resize** — knowing you need to change `camera.aspect`, but not knowing that alone doesn't recompute the projection matrix, producing a stretched image.
+- **Forgetting `updateProjectionMatrix()` after a resize** — knowing you need to change `camera.aspect`, but not knowing that this alone doesn't recompute the projection matrix. The result is a stretched image.
 
 - **Being unable to explain z-fighting** — not connecting flickering overlapping surfaces to the depth buffer's non-linear precision distribution and a too-wide `near`/`far` range.
 
-- **Confusing materials by purpose** — being unable to explain the difference between unlit (`Basic`), lit non-PBR (`Lambert`/`Phong`), and PBR (`Standard`/`Physical`), and when each is justified.
+- **Confusing materials by purpose** — being unable to explain the difference between unlit (`Basic`), lit but not physically based (`Lambert`/`Phong`), and physically based (`Standard`/`Physical`). And not knowing when each is justified.
 
-- **Not knowing shadows' cost** — not understanding that every shadow-casting light is an extra render pass, and that shadow map resolution is a direct quality/performance trade-off.
+- **Not knowing shadows' cost** — not understanding that every shadow-casting light is an extra render pass. Shadow map resolution is a direct quality-versus-performance trade-off.
 
-- **Not knowing about sRGB/color spaces** — blaming "the model looks washed out" on "bad lighting" or "a bad model," without checking `texture.colorSpace`/`renderer.outputColorSpace`.
+- **Not knowing about sRGB and color spaces** — blaming "the model looks washed out" on bad lighting or a bad model. What goes unchecked is `texture.colorSpace` and `renderer.outputColorSpace`.
 
-- **Not calling `dispose()` when swapping scenes/models** — not knowing that geometry/materials/textures aren't automatically collected by the JS garbage collector, leading to growing GPU memory on repeated model loads.
+- **Not calling `dispose()` when swapping scenes or models** — not knowing that geometry, materials and textures aren't collected automatically by the JS garbage collector. GPU memory then grows on repeated model loads.
 
-- **Not knowing about `InstancedMesh`** — trying to draw thousands of identical objects as ordinary `Mesh` instances, unaware that's thousands of separate draw calls instead of one.
+- **Not knowing about `InstancedMesh`** — trying to draw thousands of identical objects as ordinary `Mesh` instances. That is thousands of separate draw calls instead of one.
 
-- **Having no opinion on react-three-fiber vs. raw three.js** — being unable to explain what `react-three-fiber` abstracts (lifecycle, declarativeness) and when direct control through the raw API is the better call.
+- **Having no opinion on react-three-fiber versus raw three.js** — being unable to explain what `react-three-fiber` abstracts, namely lifecycle and declarativeness. And not knowing when direct control through the raw API is the better call.
