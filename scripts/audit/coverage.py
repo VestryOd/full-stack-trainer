@@ -104,6 +104,8 @@ PASSED = {
     'bank:tdd': 'ed7942b',
     'bank:event-driven': 'ed7942b',
     'article:agile-scrum': '3200ef7',
+    'course:angular': '4300b36',
+    'article:rxjs': '4300b36',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
