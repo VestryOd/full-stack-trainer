@@ -145,7 +145,7 @@
 
 - **`ChangeDetectionStrategy.OnPush` явно в каждом компоненте** — до v22 это была осознанная оптимизация, теперь дефолт. Соседний маркер — `ChangeDetectionStrategy.Default`/`Eager`, оставленный миграцией.
 - **`trackBy: trackById`** — метод класса с сигнатурой `(index, item)` рядом с `*ngFor`; в новом control flow это выражение `track item.id`.
-- **`runOutsideAngular`** вокруг анимаций, скролл-обработчиков и `requestAnimationFrame` (глава 03): в zone-модели так глушили лишние проверки. В zoneless этого делать не нужно — и `NgZone` там не работает.
+- **`runOutsideAngular`** вокруг анимаций, скролл-обработчиков и `requestAnimationFrame` (глава 03): в zone-модели так глушили лишние проверки. В zoneless этого делать не нужно: `runOutsideAngular` по-прежнему выполняет колбэк, просто это больше ничего не значит.
 - **`webpack-bundle-analyzer`** в devDependencies и скрипт `analyze` с `--stats-json` для webpack. С application-билдером тот же `stats.json` читается на esbuild-analyze.
 - **Ручной lazy-loading картинок:** `IntersectionObserver` в директиве, `loading="lazy"` руками, свои плейсхолдеры — до `NgOptimizedImage`.
 - **`ChangeDetectorRef.detach()`/`reattach()`** как способ «выключить» тяжёлый компонент из проверок — работает, но означает, что причину не нашли.

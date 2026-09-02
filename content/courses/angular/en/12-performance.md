@@ -145,7 +145,7 @@ Past a few hundred rows, `@for` stops being the answer: DOM nodes cost memory an
 
 - **An explicit `ChangeDetectionStrategy.OnPush` in every component** — before v22 that was a deliberate optimization, now it is the default. Its neighbour marker is a `ChangeDetectionStrategy.Default`/`Eager` left behind by a migration.
 - **`trackBy: trackById`** — a class method with the signature `(index, item)` next to `*ngFor`; in the new control flow that is the expression `track item.id`.
-- **`runOutsideAngular`** around animations, scroll handlers and `requestAnimationFrame` (chapter 03): in the zone model that was how extra checks were silenced. In zoneless it is unnecessary — and `NgZone` does not work there anyway.
+- **`runOutsideAngular`** around animations, scroll handlers and `requestAnimationFrame` (chapter 03): in the zone model that was how extra checks were silenced. In zoneless it is unnecessary: `runOutsideAngular` still runs the callback, it just no longer means anything.
 - **`webpack-bundle-analyzer`** in devDependencies with an `analyze` script using webpack's `--stats-json`. With the application builder the same `stats.json` is read by esbuild-analyze.
 - **Hand-rolled image lazy-loading:** an `IntersectionObserver` in a directive, a manual `loading="lazy"`, custom placeholders — all pre-`NgOptimizedImage`.
 - **`ChangeDetectorRef.detach()`/`reattach()`** as a way to "switch off" a heavy component — it works, but it means the cause was never found.
