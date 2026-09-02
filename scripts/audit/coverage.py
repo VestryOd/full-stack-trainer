@@ -107,6 +107,7 @@ PASSED = {
     'course:angular': '4300b36',
     'article:rxjs': '4300b36',
     'article:browser-animation': 'b3273ba',
+    'article:canvas-graphics': '6e35341',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
