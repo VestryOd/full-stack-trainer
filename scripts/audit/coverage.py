@@ -98,6 +98,8 @@ PASSED = {
     'bank:python': '574ba8c',
     'bank:testing': '574ba8c',
     'quiz:testing': '574ba8c',
+    'bank:angular': '78bda0a',
+    'article:keycloak-auth': '3be5fee',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
