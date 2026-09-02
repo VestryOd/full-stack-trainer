@@ -106,6 +106,7 @@ PASSED = {
     'article:agile-scrum': '3200ef7',
     'course:angular': '4300b36',
     'article:rxjs': '4300b36',
+    'article:browser-animation': 'b3273ba',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
