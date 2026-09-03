@@ -113,6 +113,7 @@ PASSED = {
     'tasks:algorithms': 'wave 25',
     'tasks:react': 'wave 25',
     'tasks:typescript': 'wave 25',
+    'tasks:nodejs': 'wave 25',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
