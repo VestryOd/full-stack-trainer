@@ -75,6 +75,15 @@ def lines_of(path: Path):
                 text = value.get(locale)
                 if isinstance(text, str):
                     yield f"{item['id']}.{field}.{locale}", text
+        # `starterCode` and `solution` in content/tasks are plain strings, one per
+        # task rather than one per locale, so the loop above skips them — a second
+        # false zero of the same shape as the missing field names. They are rendered
+        # by `CodeBlock` into the same scrolling <pre> as a fence, so the code budget
+        # applies. Wrapped in a synthetic fence so `check_text` measures them at 92.
+        for field in ("starterCode", "solution"):
+            value = item.get(field)
+            if isinstance(value, str) and value.strip():
+                yield f"{item['id']}.{field}", f"```typescript\n{value}\n```"
 
 
 def check_text(text: str) -> list[tuple[int, int, str, str]]:
