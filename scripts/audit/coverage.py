@@ -244,10 +244,34 @@ def main() -> int:
         print(f'| {tick(key)} | `{name}` | {n} | {thousands(words)} | {flags} | '
               f'{PASSED.get(key, "—")} |')
 
+    print('\n## Задачи\n')
+    print('Задачи лежат в `content/tasks` и до сентября 2026 не входили в учёт вовсе —')
+    print('восемь файлов и 243 задачи были невидимы для этой таблицы, и отчётов аудита')
+    print('по ним не существует: рубрика в аудит не входила. Флаги считаются по полям')
+    print('`title`, `description` и `solutionExplanation`; `starterCode` и `solution` —')
+    print('код, и это единая строка на обе локали, а не пара локалей.\n')
+    print('`title` рендерится **обычным текстом** (`TaskView.tsx` кладёт `{t(task.title)}`')
+    print('в `h1`), поэтому бэктики и `**` там печатаются буквально. Флаги в нём')
+    print('вынесены отдельной колонкой: их мало, но каждый виден читателю дословно.\n')
+    print('| | Задачи | Задач | Слов | Флаги в объяснениях | В описаниях | В названиях | Широкие | Закрыто |')
+    print('|---|---|---|---|---|---|---|---|---|')
+    tasks = []
+    for path in sorted(glob.glob('content/tasks/*.json')):
+        name = os.path.basename(path)[:-5]
+        per_field, words = json_flags(path, ('title', 'description', 'solutionExplanation'))
+        n = len(json.loads(Path(path).read_text(encoding='utf-8')))
+        tasks.append((f'tasks:{name}', name, n, words, per_field['solutionExplanation'],
+                      per_field['description'], per_field['title'], wide_lines(path)))
+    for key, name, n, words, expl, desc, ttl, wide in sorted(
+            tasks, key=lambda r: (r[0] not in PASSED, -(r[4] + r[5] + r[6]))):
+        print(f'| {tick(key)} | `{name}` | {n} | {thousands(words)} | {expl} | {desc} | '
+              f'{ttl} | {wide} | {PASSED.get(key, "—")} |')
+
     done = sum(1 for r in rows if r[0] in PASSED) + \
         sum(1 for c in courses if c[0] in PASSED) + \
-        sum(1 for b in banks if b[0] in PASSED) + sum(1 for q in quizzes if q[0] in PASSED)
-    total = len(rows) + len(courses) + len(banks) + len(quizzes)
+        sum(1 for b in banks if b[0] in PASSED) + sum(1 for q in quizzes if q[0] in PASSED) + \
+        sum(1 for t in tasks if t[0] in PASSED)
+    total = len(rows) + len(courses) + len(banks) + len(quizzes) + len(tasks)
     print(f'\n**Итого закрыто {done} зон из {total}.**')
     return 0
 
