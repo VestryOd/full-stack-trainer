@@ -68,6 +68,7 @@ export default async function TaskPage({ params }: Props) {
       solutionExplanationHtml={{ en: explanationEn, ru: explanationRu }}
       starterCodeBlock={task.starterCode ? <CodeBlock code={task.starterCode} lang={codeLang} /> : null}
       solutionCodeBlock={<CodeBlock code={task.solution} lang={codeLang} />}
+      topicTaskIds={getTasksByTopic(params.topicId).map((t) => t.id)}
     />
   );
 }

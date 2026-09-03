@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { TOPICS } from '@/constants/topics';
-import { getAllTasks } from '@/lib/tasks';
+import { getAllTasks, getTaskIndex } from '@/lib/tasks';
 import { TasksTopicsGrid } from '@/components/tasks/TasksTopicsGrid';
 
 export const metadata: Metadata = { title: 'Coding Tasks' };
@@ -17,7 +17,11 @@ export default function TasksPage() {
 
   return (
     <div className="container py-8">
-      <TasksTopicsGrid topicsWithTasks={topicsWithTasks} totalTasks={allTasks.length} />
+      <TasksTopicsGrid
+        topicsWithTasks={topicsWithTasks}
+        totalTasks={allTasks.length}
+        taskIndex={getTaskIndex()}
+      />
     </div>
   );
 }
