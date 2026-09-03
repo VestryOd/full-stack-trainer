@@ -109,6 +109,8 @@ PASSED = {
     'article:browser-animation': 'b3273ba',
     'article:canvas-graphics': '6e35341',
     'tasks:graphql': 'wave 25',
+    'tasks:javascript': 'wave 25',
+    'tasks:algorithms': 'wave 25',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
