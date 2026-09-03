@@ -12,8 +12,14 @@ Patch shape:
 `question` is optional. Both locales must be present in any field that appears, so
 a wholesale field replace cannot drop a locale.
 
+Task files (`content/tasks/*.json`) carry different fields, so the merged set is
+picked from the target path: `title`, `description`, `solutionExplanation` there,
+`question`/`answer` everywhere else. `starterCode` and `solution` are plain strings
+in that rubric, not locale maps, and are never merged — patch them separately.
+
 Usage:
   python3 scripts/audit/merge_patch.py content/questions/nodejs.json /tmp/p2.json /tmp/p3.json
+  python3 scripts/audit/merge_patch.py content/tasks/nodejs.json /tmp/p2.json /tmp/p3.json
 """
 
 from __future__ import annotations
@@ -31,6 +37,12 @@ def main() -> int:
     target = Path(sys.argv[1])
     patches = sys.argv[2:]
 
+    fields = (
+        ("title", "description", "solutionExplanation")
+        if "tasks" in target.parts
+        else ("question", "answer")
+    )
+
     raw = target.read_text(encoding="utf-8")
     trailing = raw.endswith("\n")
     data = json.loads(raw)
@@ -41,7 +53,7 @@ def main() -> int:
         patch = json.loads(Path(patch_file).read_text(encoding="utf-8"))
         for qid, fields in patch.items():
             assert qid in by_id, f"{patch_file}: unknown id {qid}"
-            for field in ("question", "answer"):
+            for field in fields:
                 if field not in fields:
                     continue
                 for locale in ("en", "ru"):
