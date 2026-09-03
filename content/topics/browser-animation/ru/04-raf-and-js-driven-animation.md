@@ -321,12 +321,16 @@ function flipReorder(container, reorderFn) {
 `requestIdleCallback` (rIC) планирует выполнение колбэка в свободное время браузера между кадрами. То есть тогда, когда до следующего кадра ещё есть запас, а главный поток не занят ничем срочным:
 
 ```javascript
-requestIdleCallback((deadline) => {
+function drainQueue(deadline) {
   while (deadline.timeRemaining() > 0 && tasksQueue.length > 0) {
     processTask(tasksQueue.shift());
   }
-  if (tasksQueue.length > 0) requestIdleCallback(arguments.callee);
-});
+  // именованная функция: у стрелочной нет `arguments`, а
+  // `arguments.callee` запрещён в strict mode и в модулях
+  if (tasksQueue.length > 0) requestIdleCallback(drainQueue);
+}
+
+requestIdleCallback(drainQueue);
 ```
 
 Ключевая ошибка — пытаться использовать `rIC` для анимации. У него **нет гарантии частоты и таймингов**: колбэк может быть отложен на неопределённое время, если главный поток постоянно занят. И он никак не синхронизирован с частотой обновления дисплея.

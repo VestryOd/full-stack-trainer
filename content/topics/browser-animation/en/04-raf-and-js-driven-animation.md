@@ -321,12 +321,16 @@ Understanding FLIP step by step is what separates two answers. One is "I use a l
 `requestIdleCallback` (rIC) schedules a callback to run during the browser's spare time between frames. That means: there is slack before the next frame is due, and the main thread isn't busy with anything urgent:
 
 ```javascript
-requestIdleCallback((deadline) => {
+function drainQueue(deadline) {
   while (deadline.timeRemaining() > 0 && tasksQueue.length > 0) {
     processTask(tasksQueue.shift());
   }
-  if (tasksQueue.length > 0) requestIdleCallback(arguments.callee);
-});
+  // a named function, because an arrow has no `arguments` and
+  // `arguments.callee` throws in strict mode and in modules
+  if (tasksQueue.length > 0) requestIdleCallback(drainQueue);
+}
+
+requestIdleCallback(drainQueue);
 ```
 
 The key mistake is trying to use `rIC` for animation. It has **no guarantee about frequency or timing**: the callback can be deferred indefinitely if the main thread stays busy. It also has no connection to the display's refresh rate at all.
