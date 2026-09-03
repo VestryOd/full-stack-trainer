@@ -18,6 +18,8 @@ MobX model:
 
 This is not magic — it is **explicit runtime dependency tracking**. Every time a `computed` or an `observer` component reads an observable value, MobX registers one fact: this reader depends on this value. So when the value changes, MobX already knows exactly who to notify.
 
+**Server data in this topic is loaded into the store by hand, to keep the mechanics visible.** In production a server-state library takes over: React Query (now TanStack Query) or RTK Query from Redux Toolkit (RTK). It owns caching, request deduplication and background refresh; the trade-offs are compared in [State Management Comparison](./05-comparison.md).
+
 ## The four reactivity primitives
 
 ### observable — observable state

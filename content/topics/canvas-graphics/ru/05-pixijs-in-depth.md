@@ -195,7 +195,7 @@ sprite.filters = [colorMatrix];
 
 ```javascript
 // Минимальный кастомный фильтр — grayscale через собственный fragment shader
-import { Filter, GlProgram } from 'pixi.js';
+import { Filter } from 'pixi.js';
 
 const grayscaleFragment = `
   precision mediump float;
@@ -210,9 +210,9 @@ const grayscaleFragment = `
   }
 `;
 
-const customGrayscale = new Filter({
-  glProgram: new GlProgram({ fragment: grayscaleFragment, vertex: defaultVertexShader }),
-});
+// Передаём только фрагментный шейдер: вершинный Filter.from подставит
+// свой, он отвечает за позиционирование
+const customGrayscale = Filter.from({ gl: { fragment: grayscaleFragment } });
 sprite.filters = [customGrayscale];
 ```
 

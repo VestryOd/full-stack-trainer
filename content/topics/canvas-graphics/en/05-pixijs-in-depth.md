@@ -193,7 +193,7 @@ That is exactly why filters "break batching", as described above. It's an extra,
 
 ```javascript
 // A minimal custom filter — grayscale via a custom fragment shader
-import { Filter, GlProgram } from 'pixi.js';
+import { Filter } from 'pixi.js';
 
 const grayscaleFragment = `
   precision mediump float;
@@ -209,9 +209,9 @@ const grayscaleFragment = `
   }
 `;
 
-const customGrayscale = new Filter({
-  glProgram: new GlProgram({ fragment: grayscaleFragment, vertex: defaultVertexShader }),
-});
+// Only the fragment shader is passed: Filter.from supplies the default
+// vertex shader, which handles positioning
+const customGrayscale = Filter.from({ gl: { fragment: grayscaleFragment } });
 sprite.filters = [customGrayscale];
 ```
 
