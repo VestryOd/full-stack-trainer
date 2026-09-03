@@ -36,6 +36,36 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 
 `tokenUrl="auth/token"` isn't magic. It is just the path Swagger UI displays, so that it knows where to POST a login and password to get a token. You write the `/auth/token` endpoint itself by hand, because `OAuth2PasswordBearer` creates nothing ready-made.
 
+**Where authentication lives: a dependency, not a middleware.** Chapter 14 added a request-logging middleware, and a middleware sees every incoming request too. Authentication still belongs in a dependency. The reason is where each of the two sits in the stack.
+
+Starlette assembles the application as nested layers, and your own middleware wraps the router. So a middleware runs **before** route matching. At that point there is no matched route, no path parameters and no resolved dependencies. A middleware would have to re-derive from the raw path which requests need a token, then pass the user onward through `request.state`.
+
+The same stack, from the outside in:
+
+```txt
+┌──────────────────────────────────────────────────────────┐
+│ your middleware (chapter 14): sees the final status      │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ Starlette: turns HTTPException into a response       │ │
+│ │ ┌──────────────────────────────────────────────────┐ │ │
+│ │ │ router: matches the request to a route           │ │ │
+│ │ │ ┌──────────────────────────────────────────────┐ │ │ │
+│ │ │ │ Depends(get_current_user) -> User            │ │ │ │
+│ │ │ │ route handler: current_user is already typed │ │ │ │
+│ │ │ └──────────────────────────────────────────────┘ │ │ │
+│ │ └──────────────────────────────────────────────────┘ │ │
+│ └──────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────┘
+```
+
+A dependency runs inside the matched route instead. It returns a typed `User` straight into the handler signature. And `OAuth2PasswordBearer` registers the scheme in the OpenAPI schema, which is what gives Swagger UI its "Authorize" button. A middleware contributes nothing to that schema.
+
+Even "protect the whole application" is a dependency in FastAPI, not a middleware. You pass it once at the top, as `FastAPI(dependencies=[Depends(get_current_user)])`. For one group of routes it is `APIRouter(dependencies=[...])`. This project keeps `Depends(get_current_user)` on each task endpoint, because `/auth/register` and `/auth/token` have to stay open.
+
+The middleware from chapter 14 stays exactly as it was, and authentication changes what it logs. A request with a missing or invalid token never reaches the route, because `get_current_user` raises `HTTPException`.
+
+The Starlette layer that turns that into a response sits **inside** your middleware. So the log line shows an ordinary `401`, in the same form chapter 14 used. The status is already converted by the time the response passes back through your code.
+
 **Password hashing — a real, current-day detail: why not passlib.** Classic FastAPI authentication tutorials almost always recommend `passlib[bcrypt]`. In practice, as of 2025–2026, `passlib` is effectively unmaintained. Its integration with modern `bcrypt` releases (4.x+) breaks on a default install. The cause: `passlib` tries to read an internal version attribute that newer `bcrypt` no longer has.
 
 The working, current fix is to use the `bcrypt` package directly, without the `passlib` layer. Its API is simple enough on its own:
@@ -43,12 +73,45 @@ The working, current fix is to use the `bcrypt` package directly, without the `p
 ```python
 import bcrypt
 
+# the bare API -- still incomplete: see the 72-byte limit right below
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 def verify_password(password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
 ```
+
+One limit of that API is easy to miss, and it is a real authorization hole. The `bcrypt` algorithm reads at most **72 bytes** of a password. Everything past byte 72 is ignored. So two different long passwords that share their first 72 bytes end up interchangeable. Each of them passes verification against the other one's hash.
+
+Note that 72 counts **bytes**, not characters. A password made of Cyrillic letters or emoji hits the limit far sooner than a Latin one. In `utf-8` one such character takes two to four bytes.
+
+Library versions differ in how loudly they say this. Up to and including `bcrypt` 4.3.0 the password was truncated silently, matching the original OpenBSD implementation. Version 5.0.0, released in September 2025, raises `ValueError` instead. Silent truncation is the dangerous variant, so never rely on the installed version to catch this for you.
+
+The fix documented by the library itself is to pre-hash the password before `bcrypt` sees it. Hash it with `sha256`, then base64-encode the digest. The base64 step matters, because it removes zero bytes. On a zero byte `bcrypt` would stop reading the password early. A `sha256` digest is 32 bytes and its base64 form is 44, so the result always fits:
+
+```python
+import base64
+import hashlib
+
+import bcrypt
+
+
+def _prepare(password: str) -> bytes:
+    """sha256 first, then base64: bcrypt reads 72 bytes and stops at a zero byte."""
+    digest = hashlib.sha256(password.encode("utf-8")).digest()
+    return base64.b64encode(digest)   # 44 bytes -- always under the 72-byte limit
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(_prepare(password), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(_prepare(password), hashed_password.encode("utf-8"))
+```
+
+Pre-hashing has to be applied on both sides. Forget it in `verify_password` and no long password verifies any more.
 
 **404, not 403 — a deliberate security decision.** When a different user tries to mark someone else's task done, the right HTTP status is `404 Not Found`, not `403 Forbidden`. A `403` effectively confirms that a task with that id exists and is simply not yours. That leaks information about the existence of someone else's data.
 
@@ -73,6 +136,7 @@ This spares tests from having to walk the real login flow: register, POST to `/a
 - JWT is the same concept and the same format as Node's `jsonwebtoken`; `PyJWT` is just a different API for the same standard.
 - `OAuth2PasswordBearer` isn't a full OAuth2 provider, and not "Sign in with Google". It is a password-grant contract plus metadata for Swagger UI. The closest counterpart in spirit is the plain login endpoint with JWT you'd write by hand in Express or Nest.js. The difference is the built-in integration into the auto-generated docs.
 - `app.dependency_overrides` is the counterpart of overriding providers in a Nest.js test module (`overrideProvider`). The idea of "swap one dependency for a fake, just for the test" is universal.
+- Express protects routes with a middleware, `app.use(requireAuth)` or a per-route handler, and hangs the user on `req.user`. FastAPI uses a dependency instead, and the user arrives as a typed argument. Nest.js is closer to FastAPI here, because it puts authentication in a guard rather than in middleware.
 
 ## What we're adding to the project
 
@@ -82,12 +146,12 @@ The CLI (command-line interface) never had a login concept and never will, so it
 
 ## Practical exercise
 
-1. Add `pyjwt`, `bcrypt`, `python-multipart` to `dependencies`.
+1. Add `pyjwt`, `bcrypt` and `python-multipart>=0.0.18` to `dependencies`. That lower bound is not cosmetic. Versions below 0.0.18 carry a denial-of-service advisory, `CVE-2024-53981`, in the multipart parsing that `/auth/token` relies on.
 2. Create `models/user.py` with `@dataclass class User: id: int; username: str`. Add `user_id: int` to `Task` (no default — right after `id`, before the fields that have defaults).
 3. Create `storage/users_storage.py` with three functions: `init_users_table()`, `create_user(username, hashed_password) -> User` and `get_user_by_username(username) -> tuple[User, str] | None`. In the last one, the second element of the tuple is the password hash, for later verification.
 4. Update `storage/sqlite_storage.py`. The `tasks` schema gets `user_id INTEGER NOT NULL`. The functions `add_task`, `find_task`, `get_task`, `mark_done` and `list_tasks` take `user_id` as their first parameter. They filter by it in SQL — the structured query language the database speaks — with `WHERE ... AND user_id = ?`.
 5. Update `storage/protocol.py` — add `user_id: int` to the relevant `TaskStorage` method signatures.
-6. Create `auth/security.py` (`hash_password`, `verify_password` via `bcrypt` directly — no `passlib`; `create_access_token`, `decode_access_token` via `PyJWT`) and `auth/dependencies.py` (`OAuth2PasswordBearer(tokenUrl="auth/token")`, `get_current_user`).
+6. Create `auth/security.py` (`hash_password`, `verify_password` via `bcrypt` directly — no `passlib`; `create_access_token`, `decode_access_token` via `PyJWT`) and `auth/dependencies.py` (`OAuth2PasswordBearer(tokenUrl="auth/token")`, `get_current_user`). In both hashing functions, pre-hash the password with `sha256` plus base64, so the 72-byte `bcrypt` limit cannot truncate it. Add `auth/__init__.py` too, re-exporting the five public names of the package through `__all__`.
 7. Create `api/routes_auth.py`: `POST /auth/register` (body — JSON `UserCreate`) and `POST /auth/token` (body — `OAuth2PasswordRequestForm`, form-encoded, not JSON — a requirement of `OAuth2PasswordBearer`/Swagger itself).
 8. Update `api/routes.py`: every task endpoint gets `current_user: User = Depends(get_current_user)` and passes `current_user.id` into the storage-layer calls.
 9. Update `cli/app.py`: implement `ensure_cli_user()`, which creates on first run, or finds, a fixed local user `"cli"`. Thread its `id` into `args.user_id` before dispatching the command.
@@ -345,6 +409,8 @@ class TaskStorage(Protocol):
 `src/taskman/auth/security.py` (new file):
 
 ```python
+import base64
+import hashlib
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -355,13 +421,19 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
+def _prepare(password: str) -> bytes:
+    """sha256 first, then base64: bcrypt reads 72 bytes and stops at a zero byte."""
+    digest = hashlib.sha256(password.encode("utf-8")).digest()
+    return base64.b64encode(digest)   # 44 bytes -- always under the 72-byte limit
+
+
 def hash_password(password: str) -> str:
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    hashed = bcrypt.hashpw(_prepare(password), bcrypt.gensalt())
     return hashed.decode("utf-8")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+    return bcrypt.checkpw(_prepare(password), hashed_password.encode("utf-8"))
 
 
 def create_access_token(username: str) -> str:
@@ -407,6 +479,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise credentials_error
     user, _ = result
     return user
+```
+
+`src/taskman/auth/__init__.py` (new file):
+
+```python
+from .dependencies import get_current_user
+from .security import (
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
+
+__all__ = [
+    "create_access_token",
+    "decode_access_token",
+    "get_current_user",
+    "hash_password",
+    "verify_password",
+]
 ```
 
 `src/taskman/api/routes_auth.py` (new file):
@@ -663,8 +755,10 @@ A real run confirms user isolation. Alice and Bob register, log in, and each cre
 Key decisions:
 
 - Password hashing goes through `bcrypt` directly, not `passlib[bcrypt]`. Pairing `passlib` with a modern `bcrypt` (4.x+) genuinely breaks. It tries to read an internal version attribute that no longer exists in newer `bcrypt` releases. On its own, `bcrypt` gives everything needed (`hashpw`/`checkpw`) without that layer.
+- The password is pre-hashed with `sha256` and base64 before `bcrypt` sees it. Without that step `bcrypt` reads only the first 72 bytes of the password. Two different long passwords sharing those bytes would then accept each other's hash. Newer `bcrypt` raises `ValueError` here, older 4.x truncated silently, and the same code stays safe on both.
 - `find_task`, `get_task` and `mark_done` filter by `user_id` right in the SQL (`WHERE ... AND user_id = ?`), rather than checking ownership in Python after an unfiltered query. Someone else's task simply isn't found at the database level. `TaskNotFoundError` for "not found" and for "found, but not yours" ends up being the exact same code path. There is no risk of forgetting an ownership check somewhere else.
 - The CLI doesn't get a login. The function `ensure_cli_user()` creates, or reuses, one fixed account `"cli"` with a one-time password that is never used to log in. This is a deliberate decision not to drag full authentication into a tool that already has exactly one user on one machine.
+- The `auth/` package gets an `__init__.py` that re-exports its five public names. That is why the rest of the project writes `from ..auth import get_current_user`, and never `from ..auth.dependencies import get_current_user`. Callers do not have to know which submodule holds a name, and `security.py` could be split later without touching them. The `__all__` list is also what makes the re-export explicit for `mypy --strict`, as chapter 05 described. The `oauth2_scheme` object stays out of `__all__` on purpose: nothing outside `auth/` needs it.
 - `TestClient` is a synchronous wrapper. The tests in `test_api.py` need neither `pytest-asyncio` nor a manual `asyncio.run()` for the HTTP calls themselves. The `db` fixture still uses `asyncio.run()` to set up the in-memory connection, as in chapters 09/12.
 
 ## Check yourself
@@ -674,6 +768,7 @@ Key decisions:
 3. Why is the correct HTTP status `404`, not `403`, when one user tries to mark someone else's task done? What exactly "leaks" if you answer `403`?
 4. How does `app.dependency_overrides[get_current_user] = fake_user` spare a test from real registration and login? And what happens to that override if `app.dependency_overrides.clear()` isn't called afterward?
 5. Why didn't the CLI get its own login, opting instead for one fixed local account created on first run?
+6. A middleware also sees every incoming request, yet `get_current_user` is a dependency. What does a dependency have access to that a middleware does not?
 
 <details>
 <summary>Answers</summary>
@@ -683,6 +778,7 @@ Key decisions:
 3. `403 Forbidden` means "I understood what you want, the resource exists, but you're not allowed to access it". The mere fact of a `403` response confirms a task with that id exists, even if the requester has nothing to do with it. That is an information leak. An unrelated user can probe ids and watch for `403` versus `404`. That reveals which ids exist in the system at all, without ever accessing the actual data. `404 Not Found` does not distinguish "no such id exists" from "exists, but belongs to someone else". From the point of view of anyone who isn't the owner, both cases should look exactly the same.
 4. `app.dependency_overrides` is a dict FastAPI checks **before** calling the real dependency function. If the original dependency (`get_current_user`) is among the dict's keys, the replacement function (`fake_user`) is called instead. The real JWT and token check never happens at all. The test gets a ready-made, known-in-advance user, with not a single real HTTP request to `/auth/token`. If `app.dependency_overrides.clear()` isn't called after the test, the override stays active for **every subsequent** test using the same `app`. That includes tests specifically checking that a protected route with no token responds `401`. Such a test would start passing right past the real authorization check: a false green that masks a real problem if authentication itself ever breaks.
 5. Because the CLI is already, by its nature, a single-user tool. It runs on one machine on behalf of one person. There is simply no scenario where different users run the same process and need to be isolated from each other. An HTTP API is different: many clients connect to it at the same time. Full login inside the CLI would mean storing a token, refreshing it and prompting for a password interactively. That is real complexity for a scenario this specific tool never encounters. A fixed local account delivers the exact same benefit — tasks tied to a concrete `user_id`, as the storage layer now requires — without that cost.
+6. A dependency runs inside the matched route, and a middleware runs outside it. Starlette wraps the router in your own middleware, so the middleware executes before route matching happens. It therefore has no matched route, no path parameters and no resolved dependencies to work with. A dependency has all three. It also returns a typed `User` into the handler signature. And it feeds the OpenAPI schema, which is what puts the "Authorize" button into Swagger UI. A middleware could still read the `Authorization` header and decode the token by hand. What it would have to reinvent is the mapping from a raw path to the answer: does this request need a token? A middleware would also need a way to hand the user object onward. That mapping is exactly what `Depends` already knows.
 
 </details>
 

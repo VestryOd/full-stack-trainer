@@ -33,6 +33,27 @@ except Exception as e:                  # a broader type — must come AFTER the
 
 Order matters. `except` clauses are checked top to bottom, and the first one matching via `isinstance` catches the exception. Write a broad `except Exception:` before a specific `except ValueError:` and the second block never fires. That is unreachable code, and the interpreter gives no warning about it.
 
+**Exception groups and `except*`.** Python 3.11 added a way to raise several exceptions at once. An `ExceptionGroup` wraps a list of exceptions, and the new `except*` clause matches them by type inside the group.
+
+```python
+try:
+    raise ExceptionGroup("two failures", [ValueError("bad id"), TypeError("bad type")])
+except* ValueError as eg:
+    print(f"value errors: {eg.exceptions}")   # (ValueError('bad id'),)
+except* TypeError as eg:
+    print(f"type errors: {eg.exceptions}")    # (TypeError('bad type'),)
+```
+
+Both `except*` blocks run here, and that is the point. A plain `except` picks exactly one branch, while `except*` handles every matching subgroup of the same group. A group exposes its contents as the tuple `.exceptions`, plus the methods `.subgroup(condition)` and `.split(condition)` for taking it apart by hand.
+
+The `BaseException` split from above repeats here, one level up. `ExceptionGroup` extends `Exception`, so `except Exception:` catches it. `BaseExceptionGroup` extends `BaseException` and can wrap anything at all, including a `KeyboardInterrupt`. So `except Exception:` does not catch that one, and this is the whole reason there are two classes.
+
+Choosing between them is usually not your job. The `BaseExceptionGroup` constructor returns an `ExceptionGroup` when every wrapped exception is an `Exception` instance. The `ExceptionGroup` constructor is the strict one, and raises `TypeError` if any contained exception is not an `Exception` subclass.
+
+In practice you meet groups through `asyncio.TaskGroup`, also new in 3.11. When several tasks in one group fail, their exceptions are combined into a group and raised together. One task failing no longer hides the others. There is one exception to that. A `KeyboardInterrupt` or a `SystemExit` inside a task is re-raised as itself, not wrapped in a group.
+
+This course uses `asyncio.gather` (chapter 12) rather than `TaskGroup`. The `gather` function predates groups. It raises the first exception, or collects them into an ordinary list with `return_exceptions=True`.
+
 **Custom exceptions.** These inherit from `Exception` (or a more specific built-in where appropriate) and, like any class, can carry extra data:
 
 ```python
@@ -78,6 +99,12 @@ with FileLock("taskman.log") as log_file:
     log_file.write("hello\n")
 ```
 
+**`fcntl` is Unix-only.** The standard library documents `fcntl` as available on Unix, so `import fcntl` fails on Windows with `ModuleNotFoundError`. Windows has its own call in the standard library: `msvcrt.locking(fd, mode, nbytes)`. Pass `msvcrt.LK_LOCK` for a blocking lock, and `msvcrt.LK_UNLCK` to release it.
+
+The two calls are not interchangeable. The `flock` call locks the whole file, while `msvcrt.locking` locks a byte range from the current file position.
+
+If you are on Windows, there are two workable paths. Run the exercise inside Windows Subsystem for Linux, or in a Linux container, which is what the rest of the course assumes anyway. Or replace the two `fcntl` calls with the `portalocker` package, a third-party wrapper that hides this platform split behind one API.
+
 The `with` statement calls `__enter__()` and binds its return value to `name`. When the block exits, normally or through an exception, `__exit__(exc_type, exc_value, traceback)` is called. That happens **always**, exactly like `finally`.
 
 An important nuance: if `__exit__` returns a truthy value, an exception raised inside the `with` block gets **suppressed** and never reaches the caller. That is a deliberate capability of the protocol, not a side effect. By default, when `__exit__` returns `None` or nothing at all, the exception keeps propagating once `__exit__` has finished.
@@ -115,6 +142,7 @@ The difference is mostly historical. The `with` statement has existed in Python 
 - JS's `catch` catches everything, with no type-based filtering at the syntax level. Telling error types apart means manual `instanceof` checks. In Python `except SpecificError:` gives you type filtering built into the language.
 - In JS you can throw any value (`throw 42`); in Python, `raise` requires a `BaseException` subclass instance — enforced at runtime.
 - `with`/`__enter__`/`__exit__` ~ the newer `using`/`Symbol.dispose` in JS/TS, from the TC39 Explicit Resource Management proposal. Same idea, but Python has had this for two decades longer and uses it far more pervasively.
+- `ExceptionGroup` plus `except*` (Python 3.11) ~ `AggregateError` in JS, which `Promise.any()` rejects with once every promise has rejected. Both carry a list of errors instead of a single one. JS has no syntax comparable to `except*`, so you loop over `error.errors` by hand.
 
 ## What we're adding to the project
 
@@ -127,7 +155,7 @@ On top of that, `log_command` now also appends a line to `taskman.log`, not just
 1. In `models/errors.py`, define `TaskManError(Exception)` (the base class for all domain errors) and `TaskNotFoundError(TaskManError)`, storing `task_id` and a human-readable message. Re-export both from `models/__init__.py`.
 2. In `storage/memory.py`, add `get_task(task_id) -> Task`. It uses the existing `find_task`, which is unchanged and still returns `Task | None`, and raises `TaskNotFoundError` if the task isn't found. Change `mark_done` to use `get_task` instead of a manual `None` check, so it now either returns a `Task` or lets `TaskNotFoundError` propagate.
 3. In `cli/commands.py`, change `handle_done`. Wrap the call to `memory.mark_done(args.id)` in `try/except TaskNotFoundError`. Print a clean error message to `sys.stderr` instead of checking `if task is None`.
-4. Create `logging_utils.py` with two things. One is a `FileLock` class implementing `__enter__`/`__exit__` around `fcntl.flock`, an exclusive write lock. The other is an `append_log(message: str) -> None` function that uses `FileLock` via `with`.
+4. Create `logging_utils.py` with two things. One is a `FileLock` class implementing `__enter__`/`__exit__` around `fcntl.flock`, an exclusive write lock. The other is an `append_log(message: str) -> None` function that uses `FileLock` via `with`. On Windows, use `msvcrt.locking` or `portalocker` in place of `fcntl`, as the theory section describes.
 5. Call `append_log(...)` from `log_command` (alongside the existing `print(..., file=sys.stderr)` calls), so every command run leaves a trace in `taskman.log`.
 
 Things to think through:
@@ -335,6 +363,7 @@ Key decisions:
 3. What happens if the code has `except Exception as e:` first, followed by `except ValueError as e:`? Why does the second block never run, and why doesn't the interpreter warn about it while parsing the code?
 4. Describe in your own words what `with expr as name:` actually does "under the hood". Which two methods get called, and exactly when? And what happens if the code inside the block raises an exception?
 5. If `__exit__` returns `True`, what happens to an exception raised inside the `with` block? Why is that sometimes useful, and sometimes a dangerous trap?
+6. Python 3.11 added both `ExceptionGroup` and `BaseExceptionGroup`. Why two classes instead of one, and which of the two does `except Exception:` catch?
 
 <details>
 <summary>Answers</summary>
@@ -344,6 +373,7 @@ Key decisions:
 3. The second block (`except ValueError as e:`) really never runs. `ValueError` is a subclass of `Exception`, so any `ValueError` is already caught by the first, broader `except Exception as e:`. The interpreter never gets to the second block: `except` clauses are checked in order, top to bottom, and the first match wins. There is no warning at parse time either. Syntactically, `except Exception:` and `except ValueError:` are just two independent conditional blocks. Proving that they are mutually unreachable would in general require full type analysis, and CPython does not do that at this stage. A static analyzer such as mypy could catch it in principle. In practice most linters do not check for it out of the box.
 4. `with expr as name:` first evaluates `expr`, then calls `__enter__()` on the result. Whatever that call returns gets bound to `name`. Then the body of the `with` block runs. When the block ends, normally or through an exception, `__exit__(exc_type, exc_value, traceback)` is called on that same object. If there was no exception, all three arguments are `None`. If there was one, the type, the exception itself and the traceback are passed in. The call to `__exit__` is **guaranteed**, even if the block was left through an exception or a `return`/`break`/`continue`. It is every bit as reliable as `finally`.
 5. If `__exit__` returns `True`, or any truthy value, an exception raised inside the `with` block gets **suppressed**. Code after the `with` continues as if no exception happened at all. This is useful when the context manager itself knows how to handle a specific class of error. An example is a context manager built to ignore one expected, known exception type, which is exactly how `contextlib.suppress` works. The danger sits in the default. When `__exit__` does not explicitly return anything, it returns `None` and the exception keeps propagating. A developer might carelessly write `return True` "for symmetry", or copy code from elsewhere without understanding why the `True` is there. That risks silently swallowing real errors that were supposed to reach the calling code.
+6. `except Exception:` catches an `ExceptionGroup` and does not catch a `BaseExceptionGroup`. That is the entire reason for having two classes. `ExceptionGroup` extends `Exception`, while `BaseExceptionGroup` extends `BaseException`. The split repeats the logic of question 2 one level up. A group wrapping a `KeyboardInterrupt` must not be swallowed by a broad `except Exception:`, exactly as a bare `KeyboardInterrupt` must not be. Only `BaseExceptionGroup` is allowed to wrap something that is not an `Exception` at all. The `ExceptionGroup` constructor raises `TypeError` on such an attempt. In the other direction the choice is made for you. The `BaseExceptionGroup` constructor hands back an `ExceptionGroup` whenever everything it wraps is an `Exception` instance.
 
 </details>
 

@@ -21,7 +21,11 @@ The difference is fundamental. In JS, `index.js` is only a **convention**. It wo
 
 In Python, running `__init__.py` on the first import of any module from the package is a **language guarantee**, not a convention. So `import taskman.models.task` always runs `taskman/models/__init__.py` first, even if you imported the submodule directly. The package itself never has to be imported by name.
 
-`__all__` is a separate concern, and it hides nothing. Naming a private name explicitly still works: `from module import _private_name` imports it. What `__all__` limits is `from module import *`, and nothing else. It also acts as a hint to documentation tools and to the IDE (integrated development environment) about the module's "official" public surface.
+`__all__` is a separate concern, and it hides nothing. Naming a private name explicitly still works: `from module import _private_name` imports it. At runtime what `__all__` limits is `from module import *`, and nothing else. It also acts as a hint to documentation tools and to the IDE (integrated development environment) about the module's "official" public surface.
+
+For a type checker, though, `__all__` in an `__init__.py` carries real weight. A line like `from .task import Task` inside `__init__.py` is an **implicit** re-export. Under `no_implicit_reexport`, a flag that `mypy --strict` turns on, that import from the package stops type-checking. The message is `Module "taskman.models" does not explicitly export attribute "Task"`, under the error code `attr-defined`.
+
+Two forms make a re-export explicit. List the name in `__all__`, as the snippet above does. Or write the redundant-looking `from .task import Task as Task`. This course puts an `__all__` list in every `__init__.py`. That is why the strict mypy run in chapter 10 has nothing to say about these imports.
 
 **Relative imports.** `.` means the current package, `..` means one level up, and so on:
 
@@ -91,7 +95,7 @@ As of 2026, `uv` is by far the fastest and most commonly recommended path. It is
 ### Parallels with JS/TS/Node:
 
 - A module ~ a file with ES-module semantics: the unit of import in both languages. A package is closest to an npm package with an `index.js` barrel file. But executing `__init__.py` on submodule import is a language guarantee, not a resolver convention like `index.js`.
-- Explicit `export` in JS/TS vs. "everything public by default" in Python. The `__all__` list and the leading underscore are a curation convention for the reader and for `import *`, not privacy enforced by the language.
+- Explicit `export` in JS/TS vs. "everything public by default" in Python. The `__all__` list and the leading underscore are a curation convention for the reader and for `import *`, not privacy enforced by the language. Under `mypy --strict` that same `__all__` also decides what a package re-exports, which brings it closer to a real `export` list.
 - Dots in a relative import (`.`/`..`) are levels of the **package hierarchy**, not literal `./`/`../` filesystem steps like in Node. Relative imports simply do not work when the file is run directly as a script. They work only when it is imported as part of a package.
 - `requirements.txt` ~ an old list with no lock semantics, hand-maintained or produced by `pip freeze`. The pair `pyproject.toml` + `poetry`/`uv` ~ `package.json` + `package-lock.json`/`uv.lock`, with real dependency resolution.
 

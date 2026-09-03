@@ -178,6 +178,8 @@ def configure_logging() -> None:
 `src/taskman/auth/security.py` (updated — reads settings, not constants):
 
 ```python
+import base64
+import hashlib
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -188,13 +190,19 @@ from ..config import settings
 ALGORITHM = "HS256"
 
 
+def _prepare(password: str) -> bytes:
+    """sha256 first, then base64: bcrypt reads 72 bytes and stops at a zero byte."""
+    digest = hashlib.sha256(password.encode("utf-8")).digest()
+    return base64.b64encode(digest)   # 44 bytes -- always under the 72-byte limit
+
+
 def hash_password(password: str) -> str:
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    hashed = bcrypt.hashpw(_prepare(password), bcrypt.gensalt())
     return hashed.decode("utf-8")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+    return bcrypt.checkpw(_prepare(password), hashed_password.encode("utf-8"))
 
 
 def create_access_token(username: str) -> str:
@@ -328,7 +336,7 @@ dependencies = [
     "uvicorn[standard]>=0.29",
     "pyjwt>=2.8",
     "bcrypt>=4.0",
-    "python-multipart>=0.0.9",
+    "python-multipart>=0.0.18",
     "pydantic-settings>=2.4",
 ]
 
