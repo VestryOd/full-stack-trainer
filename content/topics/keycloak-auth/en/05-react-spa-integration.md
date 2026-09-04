@@ -12,6 +12,19 @@ A React SPA (single-page application) is a **public client** by the definition f
 
 The only protocol-correct flow for such a client is Authorization Code + PKCE (Proof Key for Code Exchange); the full sequence is in article 01. No `client_secret` is needed at all, and `code_verifier` protects against authorization code interception without any secret.
 
+```txt
+       A React SPA is a public client
+┌──────────────────────────────────────────┐
+│ All the code runs in the user's browser  │
+│ Any "secret" in the JS bundle is visible │
+│ in DevTools → Sources                    │
+├──────────────────────────────────────────┤
+│ So: no client_secret at all              │
+│ Instead: code_verifier protects against  │
+│ authorization code interception          │
+└──────────────────────────────────────────┘
+```
+
 The Implicit Grant was historically used for exactly this kind of app. Article 01 explains why it is ruled out: the token travels through the URL fragment, in the clear, into browser history. Today no modern adapter offers Implicit as a default option, `keycloak-js` included.
 
 ## keycloak-js — the main adapter, step by step

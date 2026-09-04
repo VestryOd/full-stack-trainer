@@ -25,6 +25,19 @@ In-memory storage and an httpOnly cookie both close off XSS-based token reading.
 
 localStorage is the only option in the table that beats the others on nothing. On the XSS axis it loses to both, and it gives nothing back for that loss. So the industry consensus — "never store a token in localStorage" — is not dogma. It is a direct reading of this comparison.
 
+```txt
+  Which vector you accept, not secure vs insecure
+┌─────────────────┬─────────────┬─────────────────┐
+│ storage         │ closes      │ opens           │
+├─────────────────┼─────────────┼─────────────────┤
+│ in-memory       │ XSS reading │ lost on refresh │
+├─────────────────┼─────────────┼─────────────────┤
+│ localStorage    │ nothing     │ XSS reading     │
+├─────────────────┼─────────────┼─────────────────┤
+│ httpOnly cookie │ XSS reading │ CSRF            │
+└─────────────────┴─────────────┴─────────────────┘
+```
+
 ## "httpOnly cookie" isn't a free win
 
 A common mistake when first learning this space is to hear "httpOnly cookies protect against XSS", stop there, and treat the question as settled.
@@ -32,6 +45,30 @@ A common mistake when first learning this space is to hear "httpOnly cookies pro
 httpOnly solves exactly one problem: JS can't read the cookie. It also creates exactly one new one. **The browser sends that cookie automatically on every request to the domain, no matter who started the request.** That includes a request started by a malicious page the user opened in another tab.
 
 This is the CSRF attack. Its general mechanism is covered in the security topic; here the focus is narrow — what CSRF means for an auth cookie.
+
+```txt
+              What httpOnly does not close
+┌─────────────────────────────────────────────────────┐
+│ A malicious page the user opened in another tab     │
+└─────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────┐
+│ It starts a request to your domain                  │
+└─────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────┐
+│ The browser attaches the httpOnly cookie by itself, │
+│ whoever started the request                         │
+└─────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────┐
+│ Your API sees an authenticated request:             │
+│ this is CSRF                                        │
+└─────────────────────────────────────────────────────┘
+```
 
 **The mandatory minimum protection for an auth cookie** — not an optional "for later":
 

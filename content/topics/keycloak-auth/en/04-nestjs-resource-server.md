@@ -115,6 +115,32 @@ The separation matters: it lets you reuse `RolesGuard` for other authentication 
 
 For client roles (`resource_access.billing-service.roles`, see article 02) the decorator and Guard work the same way. They just read a different path in the payload. In practice it is convenient to build one general `@RequireRole(type: 'realm' | 'client', clientId?: string, role: string)`. Don't over-engineer that API if the project only ever uses realm roles, or only client roles of a single service.
 
+```txt
+   Two Guards, running one after the other
+┌────────────────────────────────────────────┐
+│ Request with Authorization: Bearer <token> │
+└────────────────────────────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ AuthGuard('jwt')  —  authentication        │
+│ answers "who is this"                      │
+└────────────────────────────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ RolesGuard        —  authorization         │
+│ answers "what are they allowed to do"      │
+└────────────────────────────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ @Roles(...) matched: the controller runs   │
+└────────────────────────────────────────────┘
+  RolesGuard is reusable: swap AuthGuard for
+  an API-key guard and the role logic stays
+```
+
 ## When simple roles aren't enough — Keycloak Authorization Services
 
 Role-based checks ("has the admin role — can do everything, doesn't — can do nothing") work great as long as the rules are static. They stop working for rules like "a user can only edit **their own** documents". Or "access to a resource depends on the time of day and the user's department".

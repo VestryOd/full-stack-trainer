@@ -52,6 +52,22 @@ The `code_verifier` **never travels over the network before step 4**. It lives o
 
 The attacker also can't compute the `code_verifier` from the `code_challenge`. SHA256 is a one-way function, and reversing it is cryptographically infeasible.
 
+```txt
+           An intercepted code is half of a pair
+┌───────────────┬────────────────────┬────────────────────┐
+│ value         │ where it travels   │ what it is worth   │
+├───────────────┼────────────────────┼────────────────────┤
+│ code          │ front-channel      │ nothing on its own │
+├───────────────┼────────────────────┼────────────────────┤
+│ code_verifier │ client memory only │ the other half     │
+└───────────────┴────────────────────┴────────────────────┘
+
+┌────────────────────────────────────────────────┐
+│ SHA256 is one-way: the code_verifier cannot be │
+│ computed back from the code_challenge          │
+└────────────────────────────────────────────────┘
+```
+
 **Why PKCE matters even for confidential clients.** This is a common interview question, already raised in article 01; here is the mechanics.
 
 A confidential client is protected by `client_secret` against **somebody else** impersonating it at the code→token exchange step. But `client_secret` does not cover a different scenario. An attacker intercepts a `code` meant for **this specific** client, then exchanges it through **that same** confidential client before the legitimate user does. It is a race on the intercepted code, run ahead of the legitimate request.
@@ -268,6 +284,17 @@ An attacker who knows only the victim's email, and no password, deliberately ent
 Keycloak's login page is a particularly sensitive clickjacking target. Here is how the attack looks.
 
 The attacker embeds the login page in an invisible `<iframe>` on their own page, laid underneath something like a "Play the game" button. On top of the login form they put their own UI (user interface) as a transparent layer.
+
+```txt
+  What the user clicks, and what receives the click
+┌───────────────────────────────────────────────────┐
+│ The attacker's own page, on top:                  │
+│ a transparent layer with a "Play the game" button │
+├───────────────────────────────────────────────────┤
+│ An invisible <iframe> underneath:                 │
+│ the real Keycloak login form                      │
+└───────────────────────────────────────────────────┘
+```
 
 The user types real credentials while believing they are interacting with something else. The data really does travel through a form that belongs to Keycloak — just embedded by the attacker in their own context.
 
