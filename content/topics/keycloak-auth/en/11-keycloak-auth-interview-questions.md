@@ -302,12 +302,6 @@ A Protocol Mapper is a rule inside a Client Scope, and a custom one is a Java pl
 
 Built-in mappers are enough when the data already exists as a user attribute, a role or a group.
 
-A custom Protocol Mapper SPI is needed in two cases:
-
-- The claim requires data that physically does not live in Keycloak, say "current subscription tier" from an external billing service.
-- The logic is more complex than declarative mapping.
-
-Either way it carries a real ongoing maintenance cost: the extension has to be versioned against the Keycloak version it runs on.
 
 ```txt
                 Where the line runs
@@ -322,9 +316,7 @@ Either way it carries a real ongoing maintenance cost: the extension has to be v
 └─────────────────────────────────────────────────┘
 ```
 
-Built-in mappers are enough when the data already exists as a user attribute, a role or a group.
-
-A custom Protocol Mapper SPI (Service Provider Interface, written in Java) is needed in two cases:
+A custom Protocol Mapper SPI is needed in two cases:
 
 - The claim requires data that physically does not live in Keycloak, say "current subscription tier" from an external billing service.
 - The logic is more complex than declarative mapping.
