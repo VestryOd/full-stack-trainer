@@ -36,6 +36,22 @@ On environment configuration there is a position worth taking. The `fileReplacem
 
 The modern approach is a config delivered through a DI (dependency injection) token. It is filled from `define`, from a server response, or from `index.html` (chapter 04). Config is then swappable in tests, and it needs no rebuild when the environment changes.
 
+**Localization is a build-level decision too.** Angular's built-in internationalization (i18n) works at compile time. You mark the text in templates, extract it, translate it, and the build emits one bundle per locale.
+
+```bash
+ng extract-i18n            # collects the marked strings into messages.xlf
+ng build --localize        # one output directory per configured locale
+```
+
+Compile time brings four consequences:
+
+- The runtime cost is zero. Translations are baked into the bundle, and no dictionary is downloaded at startup.
+- There are as many artifacts and deployments as locales. The server picks one, by URL prefix or by the `Accept-Language` header.
+- `LOCALE_ID` is fixed at build time. A language switch inside the app is therefore not supported by this model: it is a page load, not a state change.
+- Plurals and grammatical gender are described by ICU expressions. ICU (International Components for Unicode) is the message format standard here. Slavic languages genuinely need it: three plural forms cannot be covered by an `if`.
+
+The alternative is a runtime library such as `ngx-translate` or `transloco`. It loads JSON dictionaries and switches instantly, but pays with a lookup on every binding.
+
 ### SSR and hydration — an overview
 
 SSR (server-side rendering — rendering the page on the server) means the server returns ready HTML. The mode is chosen **per route**, not per application, and there are three of them:
@@ -93,6 +109,58 @@ What SSR buys you: faster first content, working SEO, better loading metrics. Wh
 
 The practical rule: adopt SSR when there are public pages that must be indexed or open instantly. For an internal admin panel behind a login the benefit is close to zero while the complexity is very real.
 
+**Hydration breaks in predictable ways.** There are four symptoms, and all of them come from one fact: the code now runs in two different environments.
+
+| symptom | cause | the fix |
+|---|---|---|
+| a crash on the server | `window`, `localStorage`, `navigator` | `afterNextRender`, the `DOCUMENT` token |
+| the markup did not match | invalid HTML the browser quietly repairs | repair the markup, do not silence the warning |
+| different results on each side | `Math.random()`, `Date.now()`, locale, timezone | compute once and transfer the value |
+| the `NG0506` error code | the app never became stable | `PendingTasks` around the async work |
+
+The last row deserves detail. The server renders and waits for the app to become stable, and it waits **ten seconds**. After that it reports NG0506 — "Application remains unstable" and falls back to client rendering.
+
+The fallback is enough for the page to open, so the defect is easy to miss. It looks like a slow server rather than an error. The cause is usually async work the framework knows nothing about: a bare `fetch`, an unstopped `setInterval`, a third-party library call.
+
+Angular has to be told about such work explicitly, through `PendingTasks` (chapter 03):
+
+```ts
+// a service fragment: config and api are its own fields.
+// The server serializes the HTML only after the task is closed
+private readonly pendingTasks = inject(PendingTasks);
+
+async loadConfig(): Promise<void> {
+  const done = this.pendingTasks.add();
+  try {
+    this.config.set(await this.api.fetchConfig());
+  } finally {
+    done();   // without finally the task hangs forever and the server reports NG0506
+  }
+}
+```
+
+There is also `ngSkipHydration`, an attribute that turns hydration off for a component's subtree. It is legitimate on a wrapper around a non-Angular widget that manages its own DOM.
+
+Everywhere else it just removes the warning. The price is exactly what SSR was adopted to avoid: the subtree's DOM is destroyed and rendered again.
+
+The incremental hydration triggers live in the same `@defer` blocks as the ordinary ones (chapter 12):
+
+```html
+@defer (hydrate on viewport) {
+  <app-comment-thread [ticketId]="ticketId()" />
+}
+
+@defer (hydrate on interaction) {
+  <app-rich-editor />
+}
+
+@defer (hydrate never) {
+  <app-static-footer />
+}
+```
+
+The most interesting of the three is `hydrate never`. The server renders the block, but it sends no JavaScript for it: a static footer has nothing to hydrate. Note also that `withIncrementalHydration()` enables event replay by itself: a block that is not hydrated yet needs somewhere to buffer interactions.
+
 ### Deploying static output
 
 If no server runtime is needed, use `outputMode: 'static'`. The build emits ready HTML files you drop onto any static host. That can be Amazon S3 (Simple Storage Service) behind a CDN (content delivery network), Netlify, GitHub Pages or nginx. Two mandatory details:
@@ -126,6 +194,14 @@ CSP: there are three ways to supply a nonce.
 - The `CSP_NONCE` token.
 
 There is one hard requirement: the nonce must be unique per request and unpredictable. For SSR there are also `security.allowedHosts` and `trustProxyHeaders`. They protect against SSRF (server-side request forgery). An attacker spoofs the `Host` header; the server then renders the page and goes for data to an address it did not choose.
+
+**Trusted Types** is a second layer of the same protection, and it lives in the browser rather than in Angular. The policy makes DOM sinks reject raw strings, and it is switched on by a directive:
+
+```txt
+Content-Security-Policy: require-trusted-types-for 'script'
+```
+
+It pairs well with the sanitizer. Angular covers `[innerHTML]` in the template, while the policy catches assignments that bypass the framework — the `nativeElement.innerHTML` from the table above. Not every browser supports Trusted Types, so this strengthens sanitization rather than replacing it.
 
 ## React parallels
 
@@ -169,7 +245,7 @@ Requirements:
 4. Static deployment: configure the `index.html` fallback — an nginx config, a `netlify.toml` or equivalent. Verify that a direct visit to `/tickets/101` works rather than returning 404.
 5. Caching: describe the headers for `index.html` and for hashed files. Explain why the scheme is safe.
 6. Security: enable `security.autoCsp` in the build configuration, run the app and fix whatever breaks. Separately, find every place where data reaches `[innerHTML]` or `[src]` and confirm none of them is built from user input.
-7. Optional SSR: add `@angular/ssr`, make the landing page `RenderMode.Prerender`, the list `RenderMode.Server` and the admin section `RenderMode.Client`. Find and fix the first thing that breaks on the server.
+7. Optional SSR: add `@angular/ssr`, make the landing page `RenderMode.Prerender`, the list `RenderMode.Server` and the admin section `RenderMode.Client`. Find and fix the first thing that breaks on the server. Then enable `withEventReplay()` and `withIncrementalHydration()`, and find a block that suits `hydrate never`.
 8. Capstone: walk through the senior-polish checklist below and write the project `README` — what it demonstrates and which decisions were deliberate.
 
 Edge cases to think about:
@@ -179,6 +255,8 @@ Edge cases to think about:
 - The app is deployed into a subdirectory with no `--base-href`. How does that show up?
 - A service reads `localStorage` in a class field. What happens when SSR is enabled, and how do you fix it?
 - Hashed files are cached for a year, yet the user still sees an old version. Where do you look?
+- SSR is on and the page opens, but the server answers after ten seconds. What do you look for in the logs, and what is the usual cause?
+- A language switch changes the strings, yet dates and plurals stay in the build's locale. Why?
 
 ## Solution walkthrough
 
@@ -336,7 +414,17 @@ Over fifteen chapters Support Desk accumulated the full set of Angular mechanism
 - **Data and navigation** (07–09): routes with `canMatch`, inputs from parameters, `httpResource`, three interceptors, live search and polling on RxJS.
 - **Forms** (10): a typed form, cross-field validation, an async validator, `ControlValueAccessor`, a look at Signal Forms.
 - **Quality** (12–14): profiling, `@defer`, budgets, tests without `fakeAsync` and with harnesses, a feature-based structure with checkable boundaries.
-- **Production** (15): configurations, static deployment, CSP, an SSR overview.
+- **Production** (15): configurations, static deployment, CSP, localization, an overview of SSR with hydration.
+
+**A revision of the earlier chapters.** The list above says what was built; it does not check that you remember it. Walk through seven short checks on the finished project:
+
+1. Remove `OnPush` from the ticket card and take a DevTools profile (chapters 03 and 12). How many checks happen now, and why?
+2. Replace one `computed` with an `effect` that writes to a signal (chapter 02). What gets worse, beyond the extra code?
+3. Move screen state out of the route-level store into the app-level one (chapter 05). Explain what breaks when you leave the screen and come back.
+4. Turn off the error interceptor (chapter 08). Which class of errors is no longer handled, and on which screen does that show?
+5. Open an admin route without the required role (chapter 07). Confirm that `canMatch` fires rather than `canActivate`, and explain the difference.
+6. Enter a value that breaks cross-field validation in the form (chapter 10). Check that the error lives on the group, not on the field.
+7. Delete one `await fixture.whenStable()` and run the tests (chapter 13). The test must fail. If it passed, it was not checking anything.
 
 The senior-polish checklist is the last thing to walk through — what people actually look at:
 
@@ -372,6 +460,7 @@ Directions, each a topic of its own, and none mandatory for confident work:
 3. How does `RenderMode.Prerender` differ from `RenderMode.Server` in terms of infrastructure and data?
 4. What does Angular sanitize automatically and what does it not, and why can a resource URL not be cleaned?
 5. The caching scheme "hashed files forever, `index.html` uncached" — why is it safe, and what breaks it?
+6. The server answers after ten seconds and the logs show `NG0506`. What does that mean, where do you look for the cause, and why does `ngSkipHydration` not help?
 
 <details>
 <summary>Answers</summary>
@@ -381,6 +470,7 @@ Directions, each a topic of its own, and none mandatory for confident work:
 3. `Prerender` is SSG (static site generation), and it runs **at build time**. The output is static HTML files: no server runtime is needed, and it deploys to any static host. The data inside is whatever existed when the build ran. For parameterized routes the list of values comes from `getPrerenderParams`. `Server` (SSR) runs **per request**. A live Node runtime is required, and personalized data, headers and status codes become possible. But every request costs server time and needs scaling. The practical choice is short. Content that is identical for everyone and changes rarely goes to `Prerender`. Personalized or frequently changing content goes to `Server`. Anything behind a login, where SEO is irrelevant, goes to `Client`.
 4. Automatically sanitized are the HTML context (`[innerHTML]`) and the URL context (`[href]`, `[src]` on images and links). Dangerous markup and schemes such as `javascript:` are stripped. Not sanitized is the **resource URL** — anything that specifies the source of executable code, such as `<script src>` or `<iframe src>`. The content at such an address is arbitrary code, so it cannot be cleaned. Any "safe-looking" URL may return anything. That is why Angular demands an explicit `bypassSecurityTrustResourceUrl` for such values: it forces the author to take responsibility. Separately: bypassing sanitization through `nativeElement.innerHTML` skips the mechanism entirely, with no checks at all.
 5. It is safe because a hashed file's name is a function of its content. Content changes, so the name changes. An old file is therefore never served in place of a new one, and it can be cached indefinitely (`immutable`). The only entry point referring to the current names is `index.html`. That is precisely what is not cached, so the browser always receives a fresh list of links. Three things break the scheme. The first is `outputHashing` disabled or limited: names stay stable, and the old file keeps being served. The second is `index.html` caught by a CDN cache or a service worker. The third is an intermediate proxy caching it by its own rules and ignoring the headers. Hence the practice of checking response headers on the real environment rather than only the config.
+6. `NG0506` means the application never became stable. The server waits for stability before serializing the HTML, waits ten seconds, then falls back to client rendering. Look for async work the framework knows nothing about: a bare `fetch`, a `setInterval` nobody stops, a third-party library call. The fix is registering that work through `PendingTasks`, with `done()` called in a `finally` block. Without `finally` a task on the error branch hangs forever, and the timeout then fires on every request to that route. The `ngSkipHydration` attribute does not help at all: it disables hydration for a subtree and solves a different problem, a markup mismatch. It changes nothing about application stability.
 
 </details>
 
