@@ -1,0 +1,542 @@
+[
+  {
+    "id": "nx-quiz-1",
+    "topicId": "nx",
+    "question": {
+      "en": "A naive monorepo pipeline costs (number of projects) times (average task time), so it grows with the repository. Which two Nx mechanisms make the cost of a pull request proportional to the size of the *change*?",
+      "ru": "Наивный конвейер монорепо стоит число проектов, умноженное на среднее время задачи, и первый множитель растёт вместе с репозиторием. Какие два механизма Nx делают цену пул-реквеста (pull request) пропорциональной размеру *изменения*?"
+    },
+    "options": {
+      "en": [
+        "Generators and migrations, which scaffold and upgrade projects uniformly",
+        "Module boundaries with tags, which stop libraries importing freely",
+        "Computation caching plus affected: the hash level and the project level",
+        "Package manager workspaces and symlinks, which install dependencies once"
+      ],
+      "ru": [
+        "Генераторы и миграции: они единообразно создают и обновляют проекты",
+        "Границы модулей и теги: они не дают либам импортировать что угодно",
+        "Кеширование вычислений и affected: уровень хешей и уровень проектов",
+        "Workspaces пакетного менеджера и симлинки: зависимости ставятся один раз"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Affected narrows *what to run*. It maps the git diff onto projects, then closes upward over the graph, so only touched projects get tasks at all.\n\nComputation caching narrows *what to execute*. A task whose input hash was already seen replays from `.nx/cache` in milliseconds instead of running.\n\nThey compose because they act on different levels: affected is the coarse filter over projects, the cache is the precise one over hashes. Editing a spec file makes the project affected, so `shell:build` is created — and then instantly replayed, because the hash did not move.\n\nThe other three options are real Nx features that do not shorten a pipeline. Generators scaffold, boundaries constrain imports, and workspaces only install dependencies.",
+      "ru": "Affected сужает вопрос *что запускать*. Он раскладывает git diff по проектам и замыкает граф вверх, поэтому задачи создаются только для затронутых проектов.\n\nКеширование вычислений сужает вопрос *что выполнять*. Задача с уже виденным хешем входов не запускается: результат воспроизводится из `.nx/cache` за миллисекунды.\n\nМеханизмы складываются, потому что работают на разных уровнях: affected — грубый фильтр по проектам, кеш — точный по хешам. Правка спека делает проект затронутым, задача `shell:build` создаётся, но сразу отдаётся из кеша: хеш не изменился.\n\nОстальные три варианта — настоящие возможности Nx, но конвейер они не укорачивают. Генераторы создают проекты, границы ограничивают импорты, а workspaces только ставят зависимости."
+    }
+  },
+  {
+    "id": "nx-quiz-2",
+    "topicId": "nx",
+    "question": {
+      "en": "A generated Nx workspace pins `nx` and every `@nx/*` plugin to an exact version in `package.json`, with no caret. Why does the generator write it that way on purpose?",
+      "ru": "В сгенерированном рабочем пространстве Nx версии `nx` и всех плагинов `@nx/*` в `package.json` зафиксированы точно, без каретки. Почему генератор делает так намеренно?"
+    },
+    "options": {
+      "en": [
+        "The core and its plugins ship together, and plugins call core internals",
+        "Exact versions let the project graph skip resolving the whole dependency tree",
+        "Nx follows no versioning scheme, so a range would resolve unpredictably",
+        "A caret would break the cache, since dependency versions enter the hash"
+      ],
+      "ru": [
+        "Ядро и плагины выходят вместе, и плагины зовут внутренности ядра",
+        "Точные версии позволяют графу проектов не разрешать дерево зависимостей",
+        "Nx не следует никакой схеме версий, поэтому диапазон разрешится случайно",
+        "Каретка сломает кеш: версии зависимостей входят в хеш задачи"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The Nx core and the `@nx/*` plugins are one product released in lockstep. Plugins call internal core functions that carry no compatibility promise, so the two halves must stay on the same version.\n\nWith a caret, a routine `npm install` could bump `nx` by a minor and leave the plugins behind. Then `nx build` fails with errors deep inside `node_modules` that have nothing to do with your code.\n\nUpgrades therefore go through `nx migrate`, which moves the whole set together and generates the codemods for the new config formats.\n\nDependency versions really do enter the task hash, but that is about invalidation, not about pinning. And the graph resolves imports, not the dependency tree.",
+      "ru": "Ядро Nx и плагины `@nx/*` — один продукт, который выпускают одновременно. Плагины зовут внутренние функции ядра без обещаний совместимости, поэтому обе половины обязаны стоять на одной версии.\n\nС кареткой обычный `npm install` мог бы поднять `nx` на минорную версию, оставив плагины на прежней. И тогда `nx build` падает с ошибками в глубине `node_modules`, никак не связанными с вашим кодом.\n\nПоэтому обновление идёт только через `nx migrate`: он поднимает весь набор сразу и готовит кодмоды под новые форматы конфигов.\n\nВерсии зависимостей действительно входят в хеш задачи, но это про инвалидацию, а не про фиксацию. Граф же разрешает импорты, а не дерево зависимостей."
+    }
+  },
+  {
+    "id": "nx-quiz-3",
+    "topicId": "nx",
+    "question": {
+      "en": "`apps/shell/project.json` declares a name, a project type and tags — and zero targets. Yet `nx build shell` runs, and `nx show project shell` prints five targets. Where do they come from?",
+      "ru": "В `apps/shell/project.json` объявлены имя, тип проекта и теги — и ни одного target. При этом `nx build shell` работает, а `nx show project shell` печатает пять target. Откуда они взялись?"
+    },
+    "options": {
+      "en": [
+        "Nx copies targetDefaults from nx.json into any project that declares none",
+        "From a hidden project.json that Nx keeps for every project in .nx",
+        "From the root package.json scripts, which Nx imports as project targets",
+        "A plugin listed in nx.json read vite.config.ts and inferred the targets"
+      ],
+      "ru": [
+        "Nx копирует targetDefaults из nx.json в каждый проект без своих target",
+        "Из скрытого project.json, который Nx держит для проекта в папке .nx",
+        "Из скриптов корневого package.json: Nx заносит их как target проекта",
+        "Плагин из nx.json прочитал vite.config.ts и вывел эти target сам"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "While the graph is being built, `@nx/vite/plugin` scans the repo with its `createNodes` hook. It finds `apps/shell/vite.config.ts`, reads it, and infers `build`, `serve`, `preview` and `test` with the options already filled in. The `@nx/eslint` plugin adds `lint` the same way.\n\nThat is project crystal: the tool's own config is the source of truth, and the target lives only in the in-memory graph. Editing `vite.config.ts` changes what `nx build` does without one line in `project.json`.\n\nThe final configuration merges three layers, weakest first: inferred targets, then `targetDefaults` from nx.json, then the project's own overrides. So `targetDefaults` layers defaults onto same-named targets across the repo — it is not the source of these five.\n\nThe command that shows both the result and the origin of every option is `nx show project shell --web`.",
+      "ru": "Пока строится граф, плагин `@nx/vite/plugin` сканирует репу своим хуком `createNodes`. Он находит `apps/shell/vite.config.ts`, читает его и выводит target `build`, `serve`, `preview` и `test` с уже заполненными опциями. Плагин `@nx/eslint` тем же способом добавляет `lint`.\n\nЭто и есть project crystal: источник правды — конфиг самого инструмента, а target существует только в графе в памяти. Правка `vite.config.ts` меняет поведение `nx build` без единой строки в `project.json`.\n\nИтоговая конфигурация складывается из трёх слоёв, от слабого к сильному: выведенные target, затем `targetDefaults` из nx.json, затем точечные переопределения проекта. Значит, `targetDefaults` кладёт дефолты на одноимённые target по всей репе, но эти пять создал не он.\n\nПоказать и результат, и источник каждой опции умеет `nx show project shell --web`."
+    }
+  },
+  {
+    "id": "nx-quiz-4",
+    "topicId": "nx",
+    "question": {
+      "en": "In the shell you replace `import { Button }` with `import type { ButtonProps }`. A type import leaves no trace in the bundle. What happens to the `shell → shared-ui` edge in the project graph?",
+      "ru": "В shell вы заменили `import { Button }` на `import type { ButtonProps }`. Импорт типа не оставляет следа в бандле. Что произойдёт с ребром `shell → shared-ui` в графе проектов?"
+    },
+    "options": {
+      "en": [
+        "It becomes implicit, since nothing from the library remains at runtime",
+        "It stays: a change to that type can break the consumer's compilation",
+        "It disappears, because the graph records only runtime dependencies",
+        "It disappears, and returns only if you declare implicitDependencies"
+      ],
+      "ru": [
+        "Станет неявным, ведь во время выполнения от либы ничего не остаётся",
+        "Останется: правка типа всё равно сломает компиляцию потребителя",
+        "Исчезнет, потому что граф хранит только зависимости времени выполнения",
+        "Исчезнет и вернётся, только если объявить implicitDependencies"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "A graph edge answers \"whose change affects me\", not \"what lands in the bundle\". Renaming `ButtonProps` can break the shell's typecheck without changing a single runtime byte, so the shell has to be rechecked.\n\nThat is why Nx treats `import type` as an import like any other. It walks the file's syntax tree and collects `import`, `export ... from`, `require(...)` and dynamic `import(...)`.\n\nDrop type imports from the graph and affected stops seeing the shell. The pipeline then stays green on a repository that does not compile — the exact failure the graph exists to prevent.\n\nAn implicit edge is a manual entry in project.json. It covers relationships that no import expresses, such as an end-to-end project that only knows the application's address. It adds edges; it never removes them.",
+      "ru": "Ребро графа отвечает на вопрос «чьё изменение меня касается», а не «что попадёт в бандл». Переименование `ButtonProps` способно сломать типизацию shell, не изменив ни одного байта во время выполнения, — значит, shell надо перепроверить.\n\nПоэтому Nx считает `import type` таким же импортом, как остальные. Он обходит синтаксическое дерево файла и собирает `import`, `export ... from`, `require(...)` и динамический `import(...)`.\n\nУберите импорты типов из графа — и affected перестанет видеть shell. Конвейер останется зелёным на репе, которая не компилируется, а ровно от этого граф и защищает.\n\nНеявное ребро — это ручная запись в project.json для связей, которых нет в импортах: например, проект сквозных тестов знает только адрес приложения. Оно добавляет ребро, но никогда не убирает."
+    }
+  },
+  {
+    "id": "nx-quiz-5",
+    "topicId": "nx",
+    "question": {
+      "en": "You deleted an import, but `nx graph` still draws the old edge. What is the first move?",
+      "ru": "Вы удалили импорт, а `nx graph` всё ещё рисует старое ребро. С чего начать?"
+    },
+    "options": {
+      "en": [
+        "Run nx reset: it kills the daemon and wipes the derived graph data",
+        "Add the library to implicitDependencies so the graph matches the code",
+        "Remove that library's entry from the paths block of tsconfig.base.json",
+        "Rebuild with --skip-nx-cache, which recomputes the graph from sources"
+      ],
+      "ru": [
+        "Выполнить nx reset: он убьёт демон и производные данные графа",
+        "Добавить либу в implicitDependencies, чтобы граф совпал с кодом",
+        "Убрать запись про эту либу из блока paths файла tsconfig.base.json",
+        "Собрать с --skip-nx-cache: граф пересчитается из исходников заново"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Nx does not recompute the graph on every command. A background daemon watches the file system and updates the graph incrementally, and the serialized state sits in `.nx/workspace-data`. A graph that \"lies\" is almost always a stale daemon or stale derived data.\n\n`nx reset` kills the daemon and wipes everything derived, so the next command rebuilds the graph from the current sources.\n\n```bash\nnpx nx reset\nnpx nx graph --file=graph.json\n```\n\nThe other options work on the wrong layer. An implicitDependencies entry only adds edges. The paths block in tsconfig.base.json is how an import resolves to a library, not a dependency declaration — deleting it breaks compilation. And `--skip-nx-cache` bypasses the task cache, which is a different cache entirely.",
+      "ru": "Nx не пересчитывает граф на каждую команду. Фоновый демон следит за файловой системой и обновляет граф инкрементально, а сериализованное состояние лежит в `.nx/workspace-data`. Если граф «врёт», почти всегда виноват устаревший демон или устаревшие производные данные.\n\nКоманда `nx reset` убивает демон и стирает всё производное, поэтому следующая команда строит граф заново по текущим исходникам.\n\n```bash\nnpx nx reset\nnpx nx graph --file=graph.json\n```\n\nОстальные варианты работают не на том слое. Запись implicitDependencies умеет только добавлять ребро. Блок paths в tsconfig.base.json — это способ разрешить импорт в либу, а не объявление зависимости: удалив запись, вы сломаете компиляцию. А флаг `--skip-nx-cache` обходит кеш задач, то есть совсем другой кеш."
+    }
+  },
+  {
+    "id": "nx-quiz-6",
+    "topicId": "nx",
+    "question": {
+      "en": "In nx.json the `build` target carries `\"dependsOn\": [\"^build\"]`. The shell depends on shared-ui, a non-buildable library with no `build` target at all. What happens on `nx build shell`?",
+      "ru": "В nx.json у target `build` стоит `\"dependsOn\": [\"^build\"]`. Shell зависит от shared-ui — несобираемой либы, у которой target `build` нет вовсе. Что произойдёт при `nx build shell`?"
+    },
+    "options": {
+      "en": [
+        "The run fails: the pipeline cannot satisfy a declared prerequisite",
+        "Nx runs the library's test target instead, to keep the order deterministic",
+        "Nx creates a build task for the library, and it fails on a missing executor",
+        "No task is created for the library, and the run proceeds without an error"
+      ],
+      "ru": [
+        "Запуск упадёт: конвейер не может выполнить объявленное предусловие",
+        "Nx вместо этого запустит у либы target test, чтобы порядок был определён",
+        "Nx создаст для либы задачу build, и она упадёт из-за отсутствия executor",
+        "Задача для либы не создаётся, и запуск идёт дальше без ошибки"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The `^build` rule reads as \"before this target, run the `build` target of every project the current one depends on\". Nx looks through the shell's dependencies, finds no such target on shared-ui, and simply creates no task. That is not an error.\n\nThis is exactly why non-buildable libraries live happily in the pipeline. Building the shell, vite compiles the library sources directly through the alias in tsconfig.base.json, so there is nothing separate to build.\n\nYou can see the plan without executing it:\n\n```bash\nnpx nx build shell --graph   # one node: shell:build\n```\n\nA task appears for the library only when someone gives it a `build` target. The reasons are narrow: incremental builds, publishing, or a tool that genuinely needs a ready artifact.",
+      "ru": "Правило `^build` читается так: «перед этим target сначала отрабатывает `build` у всех проектов, от которых текущий зависит». Nx просматривает зависимости shell, не находит такого target у shared-ui и просто не создаёт задачу. Это не ошибка.\n\nРовно поэтому несобираемые либы спокойно живут в конвейере. Собирая shell, vite компилирует исходники либы напрямую через алиас из tsconfig.base.json, и отдельно собирать нечего.\n\nПлан можно посмотреть, ничего не запуская:\n\n```bash\nnpx nx build shell --graph   # один узел: shell:build\n```\n\nЗадача для либы появится только тогда, когда ей заведут свой `build`: ради инкрементальных сборок, публикации или потому, что инструменту действительно нужен готовый артефакт."
+    }
+  },
+  {
+    "id": "nx-quiz-7",
+    "topicId": "nx",
+    "question": {
+      "en": "How does the task graph differ from the project graph?",
+      "ru": "Чем граф задач отличается от графа проектов?"
+    },
+    "options": {
+      "en": [
+        "It is the same graph, drawn per target instead of per project",
+        "Its nodes are project:target tasks, and it is derived per run from dependsOn",
+        "It is the project graph with the npm package nodes removed",
+        "It is the subgraph of projects that affected picked for this run"
+      ],
+      "ru": [
+        "Это тот же граф, только нарисованный по target, а не по проектам",
+        "Его узлы — задачи вида project:target, и он строится под запуск из dependsOn",
+        "Это граф проектов, из которого убрали узлы npm-пакетов",
+        "Это подграф проектов, который affected выбрал для этого запуска"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The project graph is a static map of who depends on whom: nodes are projects, edges are imports. It does not change from command to command.\n\nThe task graph is the plan of one concrete run. Its nodes are `project:target` tasks, and Nx derives it by taking the requested tasks and expanding the `dependsOn` rules down the project graph.\n\nOne project graph therefore yields many task graphs. The command `nx build shell` produces one plan, `nx run-many -t test` a completely different one.\n\nTwo practical consequences. A cycle in the task graph is a run-time error. That is one more reason an import cycle between a library and an application is not viable. And the plan is inspectable without executing anything, through `nx build shell --graph`.",
+      "ru": "Граф проектов — статическая карта «кто от кого зависит»: узлы это проекты, рёбра это импорты. От команды к команде он не меняется.\n\nГраф задач — план одного конкретного запуска. Его узлы это задачи вида `project:target`, и Nx получает их так: берёт запрошенные задачи и раскрывает правила `dependsOn` вниз по графу проектов.\n\nПоэтому из одного графа проектов получается много графов задач. У `nx build shell` один план, у `nx run-many -t test` — совсем другой.\n\nОтсюда два практических следствия. Цикл в графе задач — ошибка во время запуска, и это ещё одна причина, почему цикл импортов между либой и приложением нежизнеспособен. А сам план можно посмотреть, ничего не выполняя: `nx build shell --graph`."
+    }
+  },
+  {
+    "id": "nx-quiz-8",
+    "topicId": "nx",
+    "question": {
+      "en": "You run the build with `SHOP_BANNER=\"Sale\"`, then again with `SHOP_BANNER=\"Black Friday\"`. Nx prints `[local cache]`, and the artifact still holds the old banner. What happened?",
+      "ru": "Вы собрали с `SHOP_BANNER=\"Sale\"`, потом ещё раз с `SHOP_BANNER=\"Black Friday\"`. Nx печатает `[local cache]`, а в артефакте остался старый баннер. Что произошло?"
+    },
+    "options": {
+      "en": [
+        "The cache keyed the entry by the artifact content instead of the inputs",
+        "A stale daemon served old file contents, so the build read the wrong source",
+        "Environment variables enter the hash only when declared as an input",
+        "The banner is substituted at serve time, not at build time"
+      ],
+      "ru": [
+        "Кеш взял ключом содержимое артефакта, а не входы задачи",
+        "Устаревший демон отдал старое содержимое файлов, и сборка взяла не тот код",
+        "Переменные окружения входят в хеш только после объявления во входах",
+        "Баннер подставляется при serve, поэтому сборка его вообще не видит"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "File contents did not change, the target configuration did not change, and environment variables do not enter the hash by default. To Nx it is the same task, so it faithfully replayed the saved result.\n\nThat makes it a broken contract, not a bug: the task read something that is not among its declared inputs. Declaring it repairs the contract.\n\n```json\n{ \"targetDefaults\": { \"build\": {\n    \"inputs\": [\"production\", \"^production\", { \"env\": \"SHOP_BANNER\" }]\n} } }\n```\n\nThe `inputs` array is replaced wholesale, so the base sets have to be repeated. There are also runtime inputs, such as `{ \"runtime\": \"node --version\" }`, for cases where the artifact depends on the tool version.\n\nThe general rule: everything a task reads that changes its result must be a hash input. Turning caching off for the target hides the hole instead of closing it.",
+      "ru": "Содержимое файлов не изменилось, конфигурация target тоже, а переменные окружения по умолчанию в хеш не входят. Для Nx это та же задача, и он честно воспроизвёл сохранённый результат.\n\nЗначит, это не сбой, а нарушенный контракт: задача прочитала то, чего нет в её объявленных входах. Контракт лечится объявлением.\n\n```json\n{ \"targetDefaults\": { \"build\": {\n    \"inputs\": [\"production\", \"^production\", { \"env\": \"SHOP_BANNER\" }]\n} } }\n```\n\nМассив `inputs` заменяется целиком, поэтому базовые наборы приходится повторить. Есть и входы времени запуска, например `{ \"runtime\": \"node --version\" }`, — на случай, когда артефакт зависит от версии инструмента.\n\nОбщее правило: всё, что задача читает и что влияет на результат, обязано быть входом хеша. Отключить кеш у target — значит спрятать дырку, а не закрыть её."
+    }
+  },
+  {
+    "id": "nx-quiz-9",
+    "topicId": "nx",
+    "question": {
+      "en": "In nx.json `build.inputs` is `[\"production\", \"^production\"]`, `test.inputs` is `[\"default\", \"^production\"]`, and `production` is `default` minus the `*.spec.tsx` glob. You edit only `app.spec.tsx` and run both targets. What happens?",
+      "ru": "В nx.json `build.inputs` равны `[\"production\", \"^production\"]`, `test.inputs` — `[\"default\", \"^production\"]`, а `production` это `default` минус глоб `*.spec.tsx`. Вы правите только `app.spec.tsx` и запускаете оба target. Что будет?"
+    },
+    "options": {
+      "en": [
+        "Test misses the cache, build replays from it",
+        "Both miss the cache, because the spec belongs to the same project",
+        "Both replay from the cache, because a spec never affects any artifact",
+        "Test replays from the cache and build misses, since production is wider"
+      ],
+      "ru": [
+        "У test будет промах, а build отдастся из кеша",
+        "Оба промахнутся: спек принадлежит тому же проекту, что и сборка",
+        "Оба отдадутся из кеша: спек никогда не влияет ни на какой артефакт",
+        "Test отдастся из кеша, а build промахнётся: production набор шире"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A spec file takes no part in the production artifact, so editing it must not move the build hash. The `production` set is `default` minus the spec globs, and build reads only `production` sets. The spec stays inside `default`, which test reads, so only the test hash changes.\n\nRead the neighbouring cases the same way:\n\n- edit `button.tsx` inside shared-ui — both `shell:build` and `shell:test` miss, through `^production`;\n- edit a spec inside shared-ui — neither is touched, because the rule is `^production`, not `^default`;\n- run `touch` on any file without changing bytes — both hit, because the hash is built from content, not from timestamps.\n\nWithout a configured `production` set, every commit to tests rebuilds the whole repository. Defining it is the cheapest pipeline win available.",
+      "ru": "Спек не участвует в продакшн-артефакте, поэтому его правка не должна двигать хеш сборки. Набор `production` — это `default` минус глобы спеков, а build читает только наборы `production`. Спек остаётся внутри `default`, который читает test, — значит, меняется только хеш тестов.\n\nСоседние случаи читаются так же:\n\n- правка `button.tsx` внутри shared-ui — промахнутся и `shell:build`, и `shell:test`, через `^production`;\n- правка спека внутри shared-ui — не тронет ни одну задачу, потому что правило `^production`, а не `^default`;\n- `touch` по файлу без изменения байтов — обе задачи попадут в кеш, ведь хеш считается по содержимому, а не по датам.\n\nБез настроенного набора `production` каждый коммит в тесты пересобирает всю репу. Описать его — самая дешёвая оптимизация конвейера, какая бывает."
+    }
+  },
+  {
+    "id": "nx-quiz-10",
+    "topicId": "nx",
+    "question": {
+      "en": "Your branch changes one line in `nx.json` and nothing else. What does `nx show projects --affected` print?",
+      "ru": "Ваша ветка меняет одну строку в `nx.json` и больше ничего. Что напечатает `nx show projects --affected`?"
+    },
+    "options": {
+      "en": [
+        "Nothing at all, because a configuration file owns no source files",
+        "Only the projects whose targets the block you edited actually mentions",
+        "Only projects that have a project.json of their own on disk",
+        "Every project in the repository, since the change counts as global"
+      ],
+      "ru": [
+        "Ничего: у конфигурационного файла нет своих файлов исходников",
+        "Только те проекты, чьи target упомянуты в блоке, который вы правили",
+        "Только проекты, у которых есть собственный project.json на диске",
+        "Все проекты репозитория: такая правка считается глобальной"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "Nx maps every changed file to its owning project by `projectRoot`. The file `nx.json` lies outside every project root, so it has no owner, and Nx conservatively marks the whole repository as affected. The root `package.json` and the lock file behave the same way.\n\nThat is deliberate rather than sloppy. A change to pipeline rules or to dependency versions can honestly break anything, and a tool that guessed otherwise would let regressions through.\n\nThe practical consequence is a habit. Bulk dependency updates and config edits travel in their own pull requests, separate from features. Mix them and every small feature that grazes nx.json pays for a full run of the repository.\n\nThe cache softens the price: many of those tasks are replays. It does not remove it, because a long task list is still a long list.",
+      "ru": "Nx сопоставляет каждый изменённый файл с проектом-владельцем по `projectRoot`. Файл `nx.json` лежит вне корня любого проекта, владельца у него нет — и Nx осторожно помечает затронутой всю репу. Корневой `package.json` и файл блокировки ведут себя так же.\n\nЭто осознанное решение, а не небрежность. Правка правил конвейера или версий зависимостей действительно способна сломать что угодно, и инструмент, который решил бы иначе, пропускал бы регрессии.\n\nПрактическое следствие — привычка. Массовые обновления зависимостей и правки конфигов уезжают отдельными пул-реквестами, не вместе с фичами. Иначе любая мелкая фича, задевшая nx.json, платит за полный прогон репы.\n\nКеш смягчает цену: многие из этих задач окажутся повторами. Но не убирает её, потому что длинный список задач остаётся длинным."
+    }
+  },
+  {
+    "id": "nx-quiz-11",
+    "topicId": "nx",
+    "question": {
+      "en": "You cut a branch from `main` a week ago. Since then a teammate merged a large refactoring into `main`. Does that inflate your branch's affected set?",
+      "ru": "Вы отвели ветку от `main` неделю назад. За это время коллега влил в `main` крупный рефакторинг. Раздует ли это набор affected у вашей ветки?"
+    },
+    "options": {
+      "en": [
+        "Yes: affected always compares head with the current tip of main",
+        "No: the comparison starts from the merge-base, the branching point",
+        "Yes, unless defaultBase in nx.json is set to your branch name",
+        "No, because affected looks only at your uncommitted local changes"
+      ],
+      "ru": [
+        "Да: affected всегда сравнивает head с текущей вершиной main",
+        "Нет: сравнение идёт от merge-base, то есть от точки ветвления",
+        "Да, если в nx.json не выставить defaultBase на имя вашей ветки",
+        "Нет, потому что affected смотрит только незакоммиченные правки"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Nx compares head not with the base branch itself but with `git merge-base`, the common ancestor of your branch and main. The refactoring landed after you branched, so it lies outside that range and cannot enter the diff. Only your own changes are compared.\n\nTwo honest caveats. Rebase onto fresh main and the affected set will grow — correctly, if the refactoring touched your dependencies. And affected also accounts for uncommitted and untracked files, so it works locally before you commit anything.\n\nIn a pipeline the base is the harder half. A hardcoded `--base=HEAD~1` on a push to main loses changes. Three scenarios do it: a squash merge of five commits, a skipped run, a force push. Each one leaves commits that no diff ever covered.\n\nThe base has to be the last state the pipeline verified successfully. The ecosystem solves it with the `nrwl/nx-set-shas` action, which reads that commit from the run history.",
+      "ru": "Nx сравнивает head не с самой базовой ветвью, а с `git merge-base` — общим предком вашей ветки и main. Рефакторинг влили уже после ветвления, поэтому он лежит вне этого диапазона и в diff не попадает. Сравниваются только ваши изменения.\n\nДве честные оговорки. После ребейза на свежий main набор affected вырастет — и правильно, если рефакторинг задел ваши зависимости. А ещё affected учитывает незакоммиченные и неотслеживаемые файлы, поэтому локально работает до коммита.\n\nВ конвейере сложнее всего именно база. Прописанный руками `--base=HEAD~1` при пуше в main теряет изменения. Сценариев три: squash-merge из пяти коммитов, пропущенный прогон, force-push. Каждый оставляет коммиты, которых не было ни в одном diff.\n\nБаза обязана быть последним состоянием, которое конвейер успешно проверил. Экосистема решает это действием `nrwl/nx-set-shas`: оно берёт нужный коммит из истории прогонов."
+    }
+  },
+  {
+    "id": "nx-quiz-12",
+    "topicId": "nx",
+    "question": {
+      "en": "The boundaries matrix lets a `type:ui` library depend only on `type:ui` and `type:util`. Why is `type:data-access` closed to it?",
+      "ru": "Матрица границ разрешает либе с тегом `type:ui` зависеть только от `type:ui` и `type:util`. Почему `type:data-access` для неё закрыт?"
+    },
+    "options": {
+      "en": [
+        "A ui library has no build of its own, so it cannot bundle a client",
+        "The lint rule cannot resolve a data-access import inside a ui project",
+        "A component that fetches its own data cannot be reused elsewhere",
+        "Data-access libraries are always buildable, and ui libraries never are"
+      ],
+      "ru": [
+        "У ui-либы нет своей сборки, поэтому клиент в неё не упакуется",
+        "Правило линтера не умеет разрешать импорт data-access внутри ui-либы",
+        "Компонент, который сам грузит данные, нельзя переиспользовать",
+        "Либы data-access всегда собираемые, а ui-либы не бывают такими"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A product card that calls `getProducts()` from inside is wired to one data source. You cannot drop it into checkout with a list of already-purchased items, and you cannot render it in Storybook without network mocks.\n\nThe rule pushes the decision one layer up. A ui component receives everything through props, and *where the data comes from* is chosen by the feature layer. As a bonus, tests of a ui library then need neither request mocks nor state providers.\n\nThe check itself is mechanical. The linter resolves the import to a target project through the project graph, reads the `tags` from that project's config, and matches them against `depConstraints`.\n\nRules combine with a logical **and**: an import is legal only if it passes every rule whose `sourceTag` the source project carries. So `catalog-feature` may import `shared-ui` because it passes both axes — scope and type.",
+      "ru": "Карточка товара, которая внутри себя зовёт `getProducts()`, приварена к одному источнику данных. Её нельзя вставить в checkout со списком уже купленного и нельзя отрисовать в Storybook без моков сети.\n\nПравило поднимает решение на слой выше. Компонент ui получает всё через пропсы, а *откуда данные* решает слой feature. Бонусом тестам ui-либы не нужны ни моки запросов, ни провайдеры состояния.\n\nСама проверка механическая. Линтер разрешает импорт до проекта-цели через граф проектов, читает `tags` из конфига этого проекта и сверяет их с `depConstraints`.\n\nПравила складываются логическим **и**: импорт законен, только если проходит каждое правило, чей `sourceTag` есть у проекта-источника. Поэтому `catalog-feature` может импортировать `shared-ui`: он проходит обе оси — и scope, и type."
+    }
+  },
+  {
+    "id": "nx-quiz-13",
+    "topicId": "nx",
+    "question": {
+      "en": "A freshly generated eslint config carries `{ sourceTag: '*', onlyDependOnLibsWithTags: ['*'] }` inside the `@nx/enforce-module-boundaries` rule. What does that state mean?",
+      "ru": "В свежесгенерированном конфиге eslint внутри правила `@nx/enforce-module-boundaries` стоит `{ sourceTag: '*', onlyDependOnLibsWithTags: ['*'] }`. Что это значит?"
+    },
+    "options": {
+      "en": [
+        "The rule runs, but its tag check permits every dependency between projects",
+        "The rule stays off until at least one project is given a tag",
+        "The rule downgrades itself to a warning while no real constraint is set",
+        "The rule blocks every cross-project import until exceptions are listed"
+      ],
+      "ru": [
+        "Правило работает, но проверка тегов разрешает любую связь проектов",
+        "Правило выключено, пока хотя бы одному проекту не выдали тег",
+        "Правило само понижается до предупреждения, пока нет настоящих ограничений",
+        "Правило запрещает любой импорт между проектами, пока не описаны исключения"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The placeholder reads as \"a project with any tag may depend on projects with any tag\". The tag axis therefore constrains nothing. The rule is registered and its severity is `error`, but on that axis it has nothing to enforce.\n\nSo a repository has real boundaries only when two things are true. Someone replaced the placeholder with actual `depConstraints`, and lint with that rule blocks merges. A rule that does not run does not exist.\n\nAn honest detail: even with the placeholder, the same rule still forbids relative imports across project boundaries and deep imports past a library's `index.ts`. That is useful, but it is not layering.\n\nIntroducing constraints into a repository with a hundred existing violations has a working pattern. Enable them as `warn`, list the violations in a backlog, burn them down in batches, and flip to `error` at zero.",
+      "ru": "Заглушка читается так: «проект с любым тегом может зависеть от проектов с любыми тегами». Значит, ось тегов не ограничивает ничего. Правило зарегистрировано, уровень у него `error`, но принуждать на этой оси нечего.\n\nПоэтому настоящие границы у репы есть только при двух условиях. Заглушку заменили реальными `depConstraints`, и линт с этим правилом блокирует мерж. Правило, которое не запускается, не существует.\n\nЧестная деталь: даже с заглушкой то же правило продолжает запрещать относительные импорты через границы проектов и глубокие импорты мимо `index.ts` либы. Это полезно, но это не слои.\n\nВводить ограничения в репу с сотней уже существующих нарушений стоит по рабочему шаблону. Включить как `warn`, выписать нарушения в бэклог, гасить их партиями и на нуле переключить на `error`."
+    }
+  },
+  {
+    "id": "nx-quiz-14",
+    "topicId": "nx",
+    "question": {
+      "en": "Your local generator creates a feature library. Why should it call `libraryGenerator` from `@nx/react` instead of writing `project.json`, the vite config and the tsconfig alias by hand?",
+      "ru": "Ваш локальный генератор создаёт feature-либу. Почему он должен звать `libraryGenerator` из `@nx/react`, а не писать `project.json`, конфиг vite и алиас tsconfig руками?"
+    },
+    "options": {
+      "en": [
+        "A Tree can only modify existing files, so new ones need a built-in generator",
+        "The built-in generator stays correct after every Nx upgrade",
+        "Only a built-in generator is allowed to run with the --dry-run flag",
+        "Composition is the only way to unit-test a generator without a disk"
+      ],
+      "ru": [
+        "Tree умеет только менять существующие файлы, новые создаёт встроенный",
+        "Встроенный генератор остаётся верным после каждого обновления Nx",
+        "Только встроенному генератору разрешён запуск с флагом --dry-run",
+        "Композиция — единственный способ протестировать генератор без диска"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The Nx team maintains `libraryGenerator`. After every upgrade it keeps producing the structure that the current Nx version expects:\n\n- the project config, with the project properly registered;\n- the alias in `tsconfig.base.json`;\n- the eslint and vitest configs.\n\nYour code then owns only the delta — domain templates, validations and pinned options. That is the whole point of composition.\n\nThe price is honest. You depend on the `libraryGenerator` signature, and its options are effectively the neighbouring major's internal interface. After `nx migrate` that call is the usual casualty. That is why the generator's unit test is mandatory rather than optional: it fails first and shows what to fix.\n\nThe three wrong options are worth naming. A `Tree` reads from disk and accumulates writes in memory, and it creates files perfectly well. The `--dry-run` flag works for any generator. Dry-run and a real run execute the same code, and they differ only in the final flush to disk. And diskless tests come from the Tree, not from composition.",
+      "ru": "Команда Nx поддерживает `libraryGenerator`. После каждого обновления он продолжает создавать ту структуру, которую ждёт текущая версия Nx:\n\n- конфиг проекта и корректную регистрацию проекта;\n- алиас в `tsconfig.base.json`;\n- конфиги eslint и vitest.\n\nВаш код тогда отвечает только за дельту — шаблоны домена, проверки и зафиксированные опции. В этом и весь смысл композиции.\n\nЦена честная. Вы зависите от подписи `libraryGenerator`, а её опции — по сути внутренний интерфейс соседнего мажора. После `nx migrate` этот вызов обычно и ломается, поэтому юнит-тест генератора обязателен, а не желателен: он падает первым и показывает, что править.\n\nТри неверных варианта стоит назвать. Tree читает с диска, а записи накапливает в памяти — и новые файлы создаёт прекрасно. Флаг `--dry-run` работает у любого генератора: пробный и настоящий запуск выполняют один код и различаются только сбросом на диск. А тесты без диска дают Tree, а не композиция."
+    }
+  },
+  {
+    "id": "nx-quiz-15",
+    "topicId": "nx",
+    "question": {
+      "en": "The `deploy` target in your repository is an `nx:run-commands` entry whose command is a long bash string with `&&`, `||` and error handling. What does the executor ladder say?",
+      "ru": "Target `deploy` в вашей репе — это запись `nx:run-commands`, где команда стала длинной строкой bash с `&&`, `||` и обработкой ошибок. Что говорит лестница executor?"
+    },
+    "options": {
+      "en": [
+        "Split it into a commands array and set parallel to false",
+        "Add forwardAllArgs so the flags reach every command in the chain",
+        "Turn caching off for the target, since a shell chain is not a pure function",
+        "Once a command grows conditions and error handling, it is a program"
+      ],
+      "ru": [
+        "Разбить на массив commands и выставить parallel в false",
+        "Добавить forwardAllArgs, чтобы флаги доходили до каждой команды цепочки",
+        "Отключить кеш у target: цепочка команд оболочки не чистая функция",
+        "Появились условия и обработка ошибок — значит, это уже программа"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "That is the threshold on the ladder. A program belongs in a file, not in a configuration string. The first step up is a typed script invoked through run-commands, for example `\"command\": \"tsx tools/scripts/deploy.ts\"`.\n\nA custom executor is warranted one step later, when you need schema-validated options per project and access to the Nx context. Context is what a shell command fundamentally lacks: `projectName`, the workspace root, and every project's configuration. One executor then serves any project in the repo with no hardcoded paths.\n\nThe bash rope is bad on its own terms. It is untyped and untestable, and it behaves differently across shells. A failure halfway through leaves a half-deploy with no diagnosis. An executor returns `{ success: false }` with a logged cause instead of a scrap of terminal output.\n\nThe opposite extreme is executor mania — a custom executor for every trifle where `\"command\": \"rimraf dist\"` would do. The ladder in order: command, then commands, then a script, then an executor. A task climbs only when it is genuinely cramped.",
+      "ru": "Это и есть порог на лестнице. Программа должна лежать в файле, а не в строке конфига. Первая ступень выше — типизированный скрипт, запускаемый через run-commands, например `\"command\": \"tsx tools/scripts/deploy.ts\"`.\n\nСвой executor оправдан ступенью позже: когда нужны проверенные схемой опции на каждый проект и доступ к контексту Nx. Именно контекста у команды оболочки нет: `projectName`, корень рабочего пространства, конфигурация всех проектов. Тогда один executor обслуживает любой проект репы без прописанных путей.\n\nЧем плоха верёвка из bash сама по себе: она без типов и без тестов, ведёт себя по-разному в разных оболочках, а падение на середине оставляет полудеплой без диагноза. Executor вернёт `{ success: false }` с записанной причиной вместо обрывка вывода.\n\nОбратная крайность — мания executor: свой executor на каждую мелочь, где хватило бы `\"command\": \"rimraf dist\"`. Порядок лестницы: command, потом commands, потом скрипт, потом executor. Задача поднимается на ступень, только когда ей тесно."
+    }
+  },
+  {
+    "id": "nx-quiz-16",
+    "topicId": "nx",
+    "question": {
+      "en": "The host generator creates two files: `main.ts` holding only `import('./bootstrap')`, and `bootstrap.tsx` with the real `createRoot().render()`. Why the split?",
+      "ru": "Генератор хоста создаёт два файла: `main.ts`, где только `import('./bootstrap')`, и `bootstrap.tsx` с настоящим `createRoot().render()`. Зачем это разделение?"
+    },
+    "options": {
+      "en": [
+        "So the bundler can emit the remote entry file as a separate small chunk",
+        "So the router keeps a mount point across remote reloads",
+        "It is the async boundary where shared negotiation runs before app code",
+        "So the host bundle stays outside the shared scope of every remote"
+      ],
+      "ru": [
+        "Чтобы сборщик выдал точку входа ремоута отдельным маленьким чанком",
+        "Чтобы у роутера была точка монтирования, живущая между перезагрузками",
+        "Это асинхронная граница: согласование shared идёт до кода приложения",
+        "Чтобы бандл хоста остался вне общей области видимости ремоутов"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The dynamic `import()` gives the bundler a point where it can stop. There Module Federation initializes the containers and negotiates the shared dependencies. That is where each side learns which React copy it gets. Only then does the code that consumes them run.\n\nGlue the two files back together, and `createRoot` plus the compiled markup execute in the synchronous startup chunk. At that moment the shared React is not in the scope yet. The result is the classic error:\n\n```\nUncaught Error: Shared module is not available for\n  eager consumption: sharing/consume/default/react/react\n```\n\nThe cure is to restore the two-file pair. For a host's genuinely startup-critical dependencies there is a second cure, `eager: true`: the module ships inside the initial bundle and waits for nothing.\n\nThe remote entry file is small for a different reason. It is a container manifest: the list of exposed modules and the shared declarations, not the code itself.",
+      "ru": "Динамический `import()` даёт сборщику точку, где он может остановиться. В этой точке Module Federation поднимает контейнеры и согласует общие зависимости — какую копию React получит каждая сторона — и только потом запускает код, который их использует.\n\nСклейте два файла обратно, и `createRoot` вместе со скомпилированной разметкой выполнятся в синхронном стартовом чанке, до того как общий React появится в области видимости. Результат — классическая ошибка:\n\n```\nUncaught Error: Shared module is not available for\n  eager consumption: sharing/consume/default/react/react\n```\n\nЛечится восстановлением пары файлов. Для действительно критичных при старте зависимостей хоста есть второе лекарство, `eager: true`: модуль уезжает в стартовый бандл и ничего не ждёт.\n\nФайл точки входа ремоута мал по другой причине — это манифест контейнера: список отдаваемых модулей и объявления shared, а не сам код."
+    }
+  },
+  {
+    "id": "nx-quiz-17",
+    "topicId": "nx",
+    "question": {
+      "en": "In `module-federation.config.ts` the host declares `remotes: ['catalog', 'checkout']`. When is it worth switching to dynamic remotes instead?",
+      "ru": "В `module-federation.config.ts` хост объявляет `remotes: ['catalog', 'checkout']`. Когда стоит перейти на динамические ремоуты?"
+    },
+    "options": {
+      "en": [
+        "When remote addresses change independently of host releases",
+        "When a remote exposes more than one module to the host",
+        "When the host and the remotes are built with different bundlers",
+        "When remotes have to share a singleton such as the router"
+      ],
+      "ru": [
+        "Когда адреса ремоутов меняются независимо от хоста",
+        "Когда ремоут отдаёт хосту больше одного модуля",
+        "Когда хост и ремоуты собираются разными сборщиками модулей",
+        "Когда ремоутам нужно делить синглтон вроде роутера"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "With static remotes the list and the addresses are fixed at host build time. On dev those are ports; in production a tuple or an environment substitution. Moving a remote to another address means rebuilding the host.\n\nDynamic remotes read the addresses at runtime from a manifest file, so the host build no longer depends on them. Three cases where that pays off:\n\n- canary rollouts of one remote;\n- environments served from different content delivery networks;\n- a domain migration that should not require a host release.\n\nThe working rule is to start static, because it is simpler and errors surface earlier. Go dynamic when addresses genuinely move on their own schedule.\n\nThe other options are unrelated knobs. Exposure count is a granularity decision, webpack and rspack configs are semantically identical, and singletons are governed by the `shared` settings.",
+      "ru": "У статических ремоутов список и адреса зафиксированы на сборке хоста: порты в разработке, кортеж или подстановка из окружения в продакшене. Переезд ремоута на другой адрес означает пересборку хоста.\n\nДинамические ремоуты читают адреса во время работы из файла манифеста, и сборка хоста от них больше не зависит. Три случая, когда это окупается:\n\n- канареечная раскатка одного ремоута;\n- окружения, которые раздаются с разных сетей доставки контента;\n- переезд домена, ради которого не хочется выпускать хост.\n\nРабочее правило — начинать со статических: так проще, и ошибки видны раньше. Переходить на динамические стоит тогда, когда адреса действительно живут своим расписанием.\n\nОстальные варианты — про другие настройки. Число отдаваемых модулей это вопрос гранулярности, конфиги webpack и rspack семантически одинаковы, а синглтоны задаются настройками `shared`."
+    }
+  },
+  {
+    "id": "nx-quiz-18",
+    "topicId": "nx",
+    "question": {
+      "en": "The host was built with React 18.3, a remote requires `^19`, and React is shared with `singleton: true` and no `strictVersion`. What happens in the browser?",
+      "ru": "Хост собран с React 18.3, ремоут требует `^19`, а React отдан в shared с `singleton: true` и без `strictVersion`. Что произойдёт в браузере?"
+    },
+    "options": {
+      "en": [
+        "The remote fails to load, and the error boundary renders its fallback",
+        "One instance stays in the scope, the first loaded wins, plus a warning",
+        "Both instances load, and each side keeps using the version it was built with",
+        "Negotiation picks the higher version, so the remote receives React 19"
+      ],
+      "ru": [
+        "Ремоут не загрузится, и граница ошибок покажет свою заглушку",
+        "В области видимости останется один экземпляр — победит первый",
+        "Загрузятся оба экземпляра, и каждая сторона останется на своей версии",
+        "Согласование выберет версию выше, и ремоут получит React 19"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The `singleton` flag means only one instance may exist, even when the declared ranges do not agree. Negotiation logs a warning about an unsatisfied version of a shared singleton module, keeps the copy already initialized in the scope, and carries on.\n\nThe remote, compiled against the React 19 interface, then executes on 18.3. It may work, or it may break the first time it touches something 18.3 does not have. Console warnings in production are not noise here — they are drift telemetry.\n\nSetting `strictVersion: true` turns that warning into a remote-load error. Harsher, but the failure lands at the boundary, where the host's error boundary shows a fallback, instead of deep inside a render.\n\nNothing here simply \"picks the higher version\" either. With a singleton the instance that reached the scope first wins, and two live copies is exactly the state the flag exists to prevent.",
+      "ru": "Флаг `singleton` означает, что экземпляр может быть только один — даже когда объявленные диапазоны не сходятся. Согласование пишет предупреждение о неудовлетворённой версии общего модуля-синглтона, оставляет копию, которая уже попала в область видимости, и идёт дальше.\n\nРемоут, собранный под интерфейс React 19, выполняется на 18.3. Может обойтись, а может сломаться на первом же обращении к тому, чего в 18.3 нет. Предупреждения в консоли продакшена здесь не шум — это телеметрия расхождения версий.\n\nФлаг `strictVersion: true` превращает предупреждение в ошибку загрузки ремоута. Жёстче, зато отказ приходит на границу, где граница ошибок хоста покажет заглушку, а не в глубину отрисовки.\n\nИ «версию выше» здесь никто просто так не выбирает. При синглтоне побеждает экземпляр, попавший в область видимости первым, а две живые копии — ровно то состояние, от которого флаг и защищает."
+    }
+  },
+  {
+    "id": "nx-quiz-19",
+    "topicId": "nx",
+    "question": {
+      "en": "`libs/shared/api-types` holds the `Product` interface. Both the Express api and `catalog-data-access` import it. You rename the `title` field. Why does `nx affected` reach both sides of the network?",
+      "ru": "В `libs/shared/api-types` лежит интерфейс `Product`. Его импортируют и api на Express, и `catalog-data-access`. Вы переименовали поле `title`. Почему `nx affected` достаёт обе стороны сети?"
+    },
+    "options": {
+      "en": [
+        "Nx parses the route handlers and matches them against the fetch calls",
+        "The api project declares implicitDependencies on the frontend projects",
+        "Any change inside a library tagged type:util marks the whole repo affected",
+        "Both sides statically import the same library, and that edge links them"
+      ],
+      "ru": [
+        "Nx разбирает обработчики маршрутов и сверяет их с вызовами fetch",
+        "Проект api объявляет implicitDependencies на фронтовые проекты",
+        "Любая правка внутри либы с тегом type:util помечает затронутой всю репу",
+        "Обе стороны статически импортируют одну либу, и это ребро их связывает"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The contract is described in exactly one place, and both the backend and the frontend import it. That single edge makes them neighbours in the ordinary project graph.\n\nThe upward closure then collects api, catalog-data-access, catalog-feature, the catalog remote and the shell. The network between the halves is irrelevant, because plain imports did the work.\n\nThe compiler enumerates every spot at once:\n\n```\napps/api/src/main.ts:8:15 - error TS2561:\n  'title' does not exist in type 'Product'. Did you mean 'name'?\nlibs/catalog/feature/src/lib/catalog-page.tsx:24 - error TS2339:\n  Property 'title' does not exist on type 'Product'.\n```\n\nTwo honest limits. Types are erased at runtime, so nobody checks that the actual JSON matches `Product`, and the sides may be deployed from different commits. Contracts therefore evolve by addition: add `name`, mark `title` deprecated, drop it once every consumer has shipped.\n\nAnd the payoff disappears entirely if the backend keeps its own similar interface instead of importing the contract. With no edge in the graph, neither the compiler nor affected sees the drift.",
+      "ru": "Контракт описан ровно в одном месте, и его импортируют и бэкенд, и фронтенд. Это единственное ребро делает их соседями в обычном графе проектов.\n\nЗамыкание вверх дальше собирает api, catalog-data-access, catalog-feature, ремоут catalog и shell. Сеть между половинами тут ни при чём: работу сделали обычные импорты.\n\nКомпилятор перечисляет все места сразу:\n\n```\napps/api/src/main.ts:8:15 - error TS2561:\n  'title' does not exist in type 'Product'. Did you mean 'name'?\nlibs/catalog/feature/src/lib/catalog-page.tsx:24 - error TS2339:\n  Property 'title' does not exist on type 'Product'.\n```\n\nДва честных предела. Типы стираются во время работы, поэтому никто не проверяет, что настоящий JSON совпадает с `Product`, а стороны могут быть задеплоены из разных коммитов. Поэтому контракт развивают добавлением: заводят `name`, помечают `title` устаревшим и убирают, когда все потребители уехали.\n\nА выгода исчезает совсем, если бэкенд держит свой похожий интерфейс вместо импорта контракта. Ребра в графе нет — и расхождения не видят ни компилятор, ни affected."
+    }
+  },
+  {
+    "id": "nx-quiz-20",
+    "topicId": "nx",
+    "question": {
+      "en": "You audit an unfamiliar workspace. There is a `module-federation.config.ts` in a host and in two remotes, and the pipeline builds and ships all three in one job. Which finding is that?",
+      "ru": "Вы проводите аудит незнакомого рабочего пространства. `module-federation.config.ts` есть у хоста и двух ремоутов, а конвейер собирает и отправляет все три одной задачей. Что это за находка?"
+    },
+    "options": {
+      "en": [
+        "A double source of truth: the configs shadow the inferred targets",
+        "Decorative boundaries: the tag rule is enabled but constrains nothing",
+        "The team pays every price of federation and gets none of its benefit",
+        "A dead target: the deploy step stopped being reachable long ago"
+      ],
+      "ru": [
+        "Двойной источник правды: конфиги перекрывают выведенные target",
+        "Декоративные границы: правило тегов включено, но ничего не ограничивает",
+        "Команда платит всю цену федерации и не получает её единственной выгоды",
+        "Мёртвый target: шаг деплоя давно перестал быть достижимым"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The only real reason for microfrontends is independent deployment by independent teams. When the pipeline builds and ships everything in one job, the release stays collective, so that benefit never materializes.\n\nEvery cost, meanwhile, is paid in full:\n\n- integration errors move from the compiler to runtime;\n- shared dependency versions become a permanent operational concern;\n- routing, auth and the design system turn into cross-cutting work;\n- the infrastructure carries several artifacts and a compatibility matrix.\n\nThere are two honest ways out. Finish building independent deploys: `nx affected -t deploy` on main, canary rollouts, and a written strategy for shared workspace libraries. Or roll back to build-time composition, where the federation goes away and the applications stay in the monorepo.\n\nNote the audit principle at work. The pipeline config answers whether remotes deploy separately; people answer what someone once intended. And a finding is not a verdict: it records the state and its price, while fixing it is a separate conversation about risk.",
+      "ru": "Единственная настоящая причина микрофронтендов — независимый деплой независимыми командами. Если конвейер собирает и отправляет всё одной задачей, релиз остаётся коллективным, и эта выгода не появляется никогда.\n\nЦена при этом платится полностью:\n\n- ошибки интеграции переезжают из компилятора во время выполнения;\n- версии общих зависимостей становятся постоянной операционной заботой;\n- роутинг, авторизация и дизайн-система превращаются в сквозную работу;\n- инфраструктура тащит несколько артефактов и матрицу совместимости.\n\nВыходов честных два. Довести независимые деплои: `nx affected -t deploy` на main, канареечные раскатки и записанная стратегия для общих либ рабочего пространства. Либо откатиться к сборочной композиции: федерация уходит, приложения остаются в монорепе.\n\nОбратите внимание на сам принцип аудита. Конфиг конвейера отвечает, деплоятся ли ремоуты по отдельности; люди отвечают, как кто-то когда-то задумывал. И находка — не приговор: она фиксирует состояние и цену, а чинить или нет — отдельный разговор про риски."
+    }
+  }
+]

@@ -1,0 +1,812 @@
+[
+  {
+    "id": "angular-quiz-1",
+    "topicId": "angular",
+    "question": {
+      "en": "A component is imported in the TypeScript file, but its class is missing from the `imports` array of the component whose template uses the tag. What happens?",
+      "ru": "Компонент импортирован в TypeScript-файле, но его класс не добавлен в массив `imports` того компонента, чей шаблон использует тег. Что произойдёт?"
+    },
+    "options": {
+      "en": [
+        "The build fails: the tag is not a known element in that template",
+        "The application starts and renders the tag as an empty element",
+        "The tag works, because the TypeScript import already registers the class",
+        "The tag works if the class is registered anywhere in the application"
+      ],
+      "ru": [
+        "Сборка упадёт: тег не распознан в области видимости этого шаблона",
+        "Приложение запустится, а тег отрендерится как пустой элемент",
+        "Тег будет работать: TypeScript-импорт уже регистрирует класс",
+        "Тег будет работать, если класс зарегистрирован где-то в приложении"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "An Angular template is compiled, and every component has its own template scope: the list in `imports`. The compiler matches each tag against the selectors from that list.\n\nAn unknown hyphenated tag cannot be a valid HTML element, so this is a diagnosable compile error:\n\n```txt\nNG8001: 'app-ticket-list' is not a known element\n```\n\nThe TypeScript import only makes the class available as a value for the `imports` array. Registering a component once for the whole application was an `NgModule` rule, and standalone components do not work that way.",
+      "ru": "Шаблон Angular компилируется, и у каждого компонента своя область видимости шаблона — список из `imports`. Компилятор сопоставляет каждый тег с селекторами из этого списка.\n\nНезнакомый тег с дефисом не может быть валидным HTML-элементом, поэтому это диагностируемая ошибка компиляции:\n\n```txt\nNG8001: 'app-ticket-list' is not a known element\n```\n\nTS-импорт лишь делает класс доступным как значение для массива `imports`. Регистрация компонента один раз на всё приложение — правило `NgModule`, а standalone-компоненты работают иначе."
+    }
+  },
+  {
+    "id": "angular-quiz-2",
+    "topicId": "angular",
+    "question": {
+      "en": "A template contains `<button [attr.disabled]=\"false\">Save</button>`. How does that button behave?",
+      "ru": "В шаблоне написано `<button [attr.disabled]=\"false\">Save</button>`. Как поведёт себя такая кнопка?"
+    },
+    "options": {
+      "en": [
+        "It stays disabled, because the attribute is present in the markup",
+        "It is enabled, exactly as with a binding to the disabled property",
+        "The build fails: a boolean value cannot be bound to an attribute at all",
+        "It is enabled, and Angular drops the attribute at the next check"
+      ],
+      "ru": [
+        "Кнопка останется отключённой: атрибут присутствует в разметке",
+        "Будет активна — так же, как при биндинге в свойство disabled",
+        "Сборка упадёт: булево значение нельзя привязать к атрибуту",
+        "Будет активна, а Angular снимет атрибут при следующей проверке"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `disabled` attribute acts by its mere presence, and the value is irrelevant. An `[attr.]` binding writes the string `\"false\"` into the markup, so the button stays disabled. Only `null` removes an attribute.\n\nA property binding is the right tool here, because the DOM property (document object model — the page's live tree of elements) accepts `false` correctly:\n\n```html\n<button [disabled]=\"false\">Save</button>\n```\n\nThe mirror case is `aria-label`, `data-*` and `colspan`. Those have no DOM property at all, so there `[attr.]` is the only option.",
+      "ru": "Атрибут `disabled` действует самим фактом присутствия, и значение здесь ни при чём. Биндинг через `[attr.]` запишет в разметку строку `\"false\"`, поэтому кнопка останется отключённой. Снимает атрибут только `null`.\n\nНужен биндинг в свойство: свойство DOM (document object model — живое дерево элементов страницы) корректно принимает `false`:\n\n```html\n<button [disabled]=\"false\">Save</button>\n```\n\nОбратный случай — `aria-label`, `data-*` и `colspan`. У них DOM-свойства нет вообще, и там `[attr.]` — единственный вариант."
+    }
+  },
+  {
+    "id": "angular-quiz-3",
+    "topicId": "angular",
+    "question": {
+      "en": "A list of 200 cards is rendered with `@for (t of tickets(); track $index)`. The user sorts the list. What does Angular do?",
+      "ru": "Список из 200 карточек отрендерен через `@for (t of tickets(); track $index)`. Пользователь сортирует список. Что сделает Angular?"
+    },
+    "options": {
+      "en": [
+        "It moves the existing nodes and runs no extra template updates at all",
+        "It rewrites the content of every node: identity became the position",
+        "It throws a duplicate-key error, because indexes repeat after sorting",
+        "It recreates all 200 nodes from scratch with their components"
+      ],
+      "ru": [
+        "Переставит существующие узлы и не выполнит лишних обновлений шаблона",
+        "Перепишет содержимое каждого узла: идентичностью стала позиция",
+        "Упадёт с ошибкой дубликата ключа: после сортировки индексы повторяются",
+        "Пересоздаст все 200 узлов вместе с компонентами внутри"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The `track` expression defines identity: it tells Angular which node belongs to which data item. With `track $index` identity becomes the position, so after sorting the node at position 0 is treated as the same item.\n\nAngular therefore rewrites the content of every node instead of reordering nodes. Two hundred templates run, together with every nested component.\n\nThe side effects are what users notice: lost focus, a scroll position that jumps and broken transitions. A stable key removes all of it:\n\n```html\n@for (t of tickets(); track t.id) { … }\n```",
+      "ru": "Выражение `track` задаёт идентичность: оно говорит Angular, какой узел какому элементу данных соответствует. При `track $index` идентичностью становится позиция, и после сортировки узел на позиции 0 считается тем же элементом.\n\nПоэтому Angular перезаписывает содержимое каждого узла вместо перестановки узлов. Выполнится 200 шаблонов, а вместе с ними и все вложенные компоненты.\n\nПользователь замечает побочные эффекты: потерянный фокус, съехавший скролл, испорченные анимации. Стабильный ключ снимает всё это:\n\n```html\n@for (t of tickets(); track t.id) { … }\n```"
+    }
+  },
+  {
+    "id": "angular-quiz-4",
+    "topicId": "angular",
+    "question": {
+      "en": "A component stylesheet declares `.badge { color: blue }`. Why does that rule not reach a child component that renders its own `.badge` element?",
+      "ru": "В стилях компонента написано `.badge { color: blue }`. Почему это правило не действует на дочерний компонент, который тоже рендерит элемент `.badge`?"
+    },
+    "options": {
+      "en": [
+        "The compiler adds an attribute unique to this component to the selector",
+        "A child component loads its own styles later, so they win by cascade order",
+        "Angular scopes styles by file name, and the two file names differ",
+        "The parent's styles apply to its host element only, never any deeper"
+      ],
+      "ru": [
+        "Компилятор дописывает к селектору атрибут, уникальный для этого компонента",
+        "Дочерний компонент грузит свои стили позже, поэтому они побеждают по каскаду",
+        "Angular ограничивает стили по имени файла, а имена файлов разные",
+        "Стили родителя действуют только на его хост-элемент и не глубже"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Emulated encapsulation is the default, and it works through attributes. The compiler marks the nodes of a template with `_ngcontent-<id>` and the host element with `_nghost-<id>`. It then appends that attribute to every selector from `styleUrl`.\n\nSo the rule becomes `.badge[_ngcontent-abc]`, and the child's nodes carry a different component's attribute. There is nothing for the selector to match.\n\nIsolation is one-way: global styles are not rewritten, which is why a rule in `styles.css` does reach inside. To customise a child, use an input, a CSS variable or a class on its host element rather than `::ng-deep`.",
+      "ru": "По умолчанию работает эмулируемая изоляция, и держится она на атрибутах. Компилятор помечает узлы шаблона атрибутом `_ngcontent-<id>`, хост-элемент — `_nghost-<id>`, и дописывает этот атрибут ко всем селекторам из `styleUrl`.\n\nПравило превращается в `.badge[_ngcontent-abc]`, а у узлов дочернего компонента атрибут другого компонента. Селектору просто не с чем совпасть.\n\nИзоляция односторонняя: глобальные стили не переписываются, поэтому правило из `styles.css` внутрь проникает. Настраивать дочерний компонент стоит входом, CSS-переменной или классом на его хосте, а не через `::ng-deep`."
+    }
+  },
+  {
+    "id": "angular-quiz-5",
+    "topicId": "angular",
+    "question": {
+      "en": "A store keeps `tickets = signal<Ticket[]>([])` and a method calls `this.tickets().push(newTicket)`. The debugger shows the new item, the screen shows the old list. Why?",
+      "ru": "Стор держит `tickets = signal<Ticket[]>([])`, а метод вызывает `this.tickets().push(newTicket)`. Отладчик показывает новый элемент, на экране — прежний список. Почему?"
+    },
+    "options": {
+      "en": [
+        "Object.is compared the same array reference, so no reader was notified",
+        "The template caches the array until the next full change detection pass",
+        "A signal notifies readers only from set, and here update was required",
+        "Arrays inside a signal are frozen, so push silently does nothing here"
+      ],
+      "ru": [
+        "Object.is сравнил ту же ссылку, и читателей никто не оповестил",
+        "Шаблон кеширует массив до следующего полного цикла проверки изменений",
+        "Сигнал оповещает читателей только из set, а нужен был update",
+        "Массивы внутри сигнала заморожены, поэтому push молча ничего не делает"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A signal compares values, and for arrays the default comparison is by reference. Mutation leaves the reference intact, so the signal concludes that nothing changed and marks no consumer.\n\nThe data in memory really did change, which is why the debugger looks right and only the screen is stale. Replace the array instead of mutating it:\n\n```ts\nthis.tickets.update((tickets) => [newTicket, ...tickets]);\n```\n\nThe cheap defence is the type. Declaring the state as `readonly Ticket[]` makes the compiler reject `push`, `sort` and `splice` for you.",
+      "ru": "Сигнал сравнивает значения, а для массивов сравнение по умолчанию идёт по ссылке. Мутация оставляет ссылку прежней, поэтому сигнал считает, что изменения не было, и никого не помечает.\n\nДанные в памяти при этом действительно новые — отсюда и ощущение, что отладчик прав, а устарел только экран. Массив надо заменять, а не менять:\n\n```ts\nthis.tickets.update((tickets) => [newTicket, ...tickets]);\n```\n\nДешёвая защита — тип. Состояние, объявленное как `readonly Ticket[]`, заставит компилятор запретить `push`, `sort` и `splice`."
+    }
+  },
+  {
+    "id": "angular-quiz-6",
+    "topicId": "angular",
+    "question": {
+      "en": "The selected row must reset when the filtered list changes, and the user must still be able to pick a row by hand. Which tool fits?",
+      "ru": "Выбранная строка должна сбрасываться при смене отфильтрованного списка, но пользователь всё ещё может выбрать строку сам. Какой инструмент подходит?"
+    },
+    "options": {
+      "en": [
+        "computed over the filtered list",
+        "linkedSignal with the filtered list as its source",
+        "a plain signal plus an effect that overwrites it when the list changes",
+        "a signal written from ngOnChanges of the list input"
+      ],
+      "ru": [
+        "computed от отфильтрованного списка",
+        "linkedSignal, у которого source — отфильтрованный список",
+        "обычный сигнал плюс effect, который перезаписывает его при смене списка",
+        "сигнал, в который пишет ngOnChanges входа со списком"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "This is derived state that must also accept a manual write, and `linkedSignal` is exactly that. It recomputes when its source changes and still takes `set` and `update`:\n\n```ts\nreadonly selectedId = linkedSignal<readonly Ticket[], number | null>({\n  source: this.filtered,\n  computation: (tickets, previous) => {\n    const id = previous?.value ?? null;\n    return tickets.some((t) => t.id === id) ? id : null;   // keep or reset\n  },\n});\n```\n\nA `computed` cannot be written at all. The pair of a signal and an effect does the same job worse. The state is updated in a separate run, so source and value disagree for a moment. Effect order is not guaranteed either.",
+      "ru": "Это производное состояние, которое ещё и принимает ручную запись, — ровно то, для чего есть `linkedSignal`. Он пересчитывается при изменении источника и при этом принимает `set` и `update`:\n\n```ts\nreadonly selectedId = linkedSignal<readonly Ticket[], number | null>({\n  source: this.filtered,\n  computation: (tickets, previous) => {\n    const id = previous?.value ?? null;\n    return tickets.some((t) => t.id === id) ? id : null;   // сохранить или сбросить\n  },\n});\n```\n\nВ `computed` записать нельзя вообще. Пара «сигнал плюс эффект» решает ту же задачу хуже: состояние обновляется отдельным прогоном, поэтому источник и значение на миг рассогласованы, а порядок эффектов не гарантирован."
+    }
+  },
+  {
+    "id": "angular-quiz-7",
+    "topicId": "angular",
+    "question": {
+      "en": "A filter signal gets `set('open')` twice in a row. The block that renders `filtered()` is hidden by `@if`, so no template reads it. How many times does `filtered` recompute?",
+      "ru": "Сигнал фильтра дважды подряд получает `set('open')`. Блок, который рендерит `filtered()`, скрыт через `@if`, и ни один шаблон его не читает. Сколько раз пересчитается `filtered`?"
+    },
+    "options": {
+      "en": [
+        "Twice: each set recomputes everything that depends on the signal",
+        "Once, during the next synchronization after the second set",
+        "Zero: the marking is a push, and the computation happens on a read",
+        "Once, because the first set changed the value from its previous one"
+      ],
+      "ru": [
+        "Дважды: каждый вызов set пересчитывает всё, что от него зависит",
+        "Один раз — при следующей синхронизации после второго set",
+        "Ноль: пометка это push, а вычисление происходит при чтении",
+        "Один раз, потому что первый set изменил значение на новое"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A change to a signal only marks dependent graph nodes as stale, and the computation runs on the first read. Nothing reads `filtered()` here, so its body never runs.\n\nThe second `set('open')` does not even mark anything. The value equals the previous one under `Object.is`, so consumers are left alone.\n\nThat split between a push notification and a pull computation is what makes `computed` lazy and memoized. Repeated reads while dependencies are unchanged return the cached value, which is why reading `filtered()` five times in a template is free.",
+      "ru": "Изменение сигнала только помечает зависимые узлы графа устаревшими, а вычисление происходит при первом чтении. Здесь `filtered()` никто не читает, поэтому тело так и не выполнится.\n\nВторой `set('open')` вообще ничего не помечает: значение равно прежнему по `Object.is`, и потребителей это не трогает.\n\nРазделение push-оповещения и pull-вычисления и делает `computed` ленивым и мемоизированным. Пока зависимости не менялись, повторные чтения отдают закешированное значение — поэтому прочитать `filtered()` пять раз в шаблоне ничего не стоит."
+    }
+  },
+  {
+    "id": "angular-quiz-8",
+    "topicId": "angular",
+    "question": {
+      "en": "A service increments a plain class field from `setInterval`, and a template reads that field. In a project created on Angular 22 the number changes only after you click something. Why?",
+      "ru": "Сервис увеличивает обычное поле класса из `setInterval`, а шаблон это поле читает. В проекте, созданном на Angular 22, число меняется только после клика по чему-нибудь. Почему?"
+    },
+    "options": {
+      "en": [
+        "The default check strategy waits until one of the component's inputs changes",
+        "The service lives in the root injector, and root services skip checks",
+        "setInterval callbacks run outside the task queue that Angular watches",
+        "Without zone.js the timer notifies nobody, so no template gets checked"
+      ],
+      "ru": [
+        "Стратегия проверки по умолчанию ждёт изменения входа компонента",
+        "Сервис живёт в root-инжекторе, а такие сервисы проверок не получают",
+        "Колбэки setInterval выполняются вне очереди задач, за которой следит Angular",
+        "Без zone.js таймер никого не уведомляет, и шаблон не проверяется"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "Zoneless change detection is the default for new projects since v21, so a fresh workspace has no `zone.js` at all. Nothing patches `setTimeout` and `setInterval` any more, and a plain field cannot announce its own change.\n\nThe next click anywhere causes a traversal, and the value catches up. Hence the recognizable symptom: it updates only when you press something.\n\nThe fix is not to hunt for a place to call `markForCheck()`. Ask why this state is not a signal — a signal notifies every template that read it:\n\n```ts\nprivate readonly newCount = signal(0);\nreadonly count = this.newCount.asReadonly();\n// in the callback: this.newCount.update((n) => n + 1);\n```",
+      "ru": "Zoneless — режим по умолчанию для новых проектов с v21, поэтому в свежем workspace `zone.js` нет вообще. Никто больше не патчит `setTimeout` и `setInterval`, а обычное поле сообщить о своём изменении не может.\n\nСледующий клик в любом месте даёт обход дерева, и значение догоняет. Отсюда узнаваемый симптом: обновляется, только если куда-нибудь нажать.\n\nЛечится это не поиском места для `markForCheck()`. Спросите, почему это состояние не сигнал: сигнал уведомляет все шаблоны, где его читали.\n\n```ts\nprivate readonly newCount = signal(0);\nreadonly count = this.newCount.asReadonly();\n// в колбэке: this.newCount.update((n) => n + 1);\n```"
+    }
+  },
+  {
+    "id": "angular-quiz-9",
+    "topicId": "angular",
+    "question": {
+      "en": "A component deep in the tree calls `markForCheck()` on its own `ChangeDetectorRef`. What does Angular check at the next synchronization?",
+      "ru": "Компонент в глубине дерева вызывает `markForCheck()` на своём `ChangeDetectorRef`. Что Angular проверит при следующей синхронизации?"
+    },
+    "options": {
+      "en": [
+        "Every component of the application, because a traversal starts at the root",
+        "This component, plus every component on the path from the root to it",
+        "This component alone, and none of its parents or children",
+        "This component and its whole subtree, but no ancestor above it"
+      ],
+      "ru": [
+        "Все компоненты приложения, ведь обход всегда начинается от корня",
+        "Сам компонент и все компоненты на пути от корня вниз до него",
+        "Только сам компонент и биндинги его собственного шаблона",
+        "Сам компонент и всё его поддерево, но ни одного предка выше"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The call marks its own view dirty and marks every ancestor as needing traversal. That builds one route from the root down to the component, and Angular walks exactly that route.\n\nBranches the marking never touched are not visited at all, including neighbouring components that sit next to the marked one. That is why the operation is cheap: it adds a path rather than a full tree check.\n\nA signal is the better tool in most cases. It marks all of its readers wherever they are, while `markForCheck()` needs a reference to one specific component.",
+      "ru": "Вызов помечает своё представление грязным и помечает всех предков как требующих обхода. Так строится один маршрут от корня до компонента, и Angular спускается ровно по нему.\n\nВетви, которых пометка не коснулась, не посещаются вообще — включая соседние компоненты рядом с помеченным. Именно поэтому операция дешёвая: она добавляет маршрут, а не проверку всего дерева.\n\nВ большинстве случаев сигнал удобнее. Он помечает всех своих читателей, где бы они ни были, а `markForCheck()` требует ссылки на один конкретный компонент."
+    }
+  },
+  {
+    "id": "angular-quiz-10",
+    "topicId": "angular",
+    "question": {
+      "en": "A developer copies `providers: [TicketStore]` into a component decorator. That store holds the application's ticket list. What is the result?",
+      "ru": "Разработчик скопировал `providers: [TicketStore]` в декоратор компонента. Этот стор держит список тикетов всего приложения. Что получится?"
+    },
+    "options": {
+      "en": [
+        "Angular reports a duplicate provider for the store and will not start",
+        "The component takes the same root instance, so the line changes nothing",
+        "Each instance of the component gets its own store, and the state splits",
+        "The store is destroyed and created again on every check of the component"
+      ],
+      "ru": [
+        "Angular сообщит о дублирующем провайдере для стора и не запустится",
+        "Компонент возьмёт тот же корневой экземпляр, и строка ничего не изменит",
+        "Каждый экземпляр компонента получит свой стор, и состояние разъедется",
+        "Стор будет уничтожаться и создаваться заново при каждой проверке"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A provider on a component lives in the element injector created for that element, so there is one instance per instance of the component. State stops being shared.\n\nThere is neither an exception nor a warning. A ticket added on one screen is simply invisible on another, and the counter in the header does not move.\n\nSo read the line as a statement of intent. Shared state belongs in the root injector, through `@Service()` or `providedIn: 'root'`. A component provider is right for local state: a draft, a store for one form, accordion state.",
+      "ru": "Провайдер на компоненте живёт в элементном инжекторе, созданном для этого элемента, поэтому экземпляр появляется на каждый экземпляр компонента. Состояние перестаёт быть общим.\n\nНи исключения, ни предупреждения не будет. Тикет, добавленный на одном экране, просто не виден на другом, а счётчик в шапке не двигается.\n\nПоэтому такую строку стоит читать как заявление о намерении. Общее состояние живёт в корневом инжекторе — через `@Service()` или `providedIn: 'root'`. Провайдер на компоненте уместен для локального состояния: черновик, стор одной формы, состояние аккордеона."
+    }
+  },
+  {
+    "id": "angular-quiz-11",
+    "topicId": "angular",
+    "question": {
+      "en": "A click handler inside a component method calls `inject(TicketStore)`. What happens, and what is the fix?",
+      "ru": "Обработчик клика внутри метода компонента вызывает `inject(TicketStore)`. Что произойдёт и как это лечится?"
+    },
+    "options": {
+      "en": [
+        "It works, but returns a new store instance on each click of the button",
+        "It works only if the component declares the store in its own providers",
+        "It fails, and the fix is to make the handler asynchronous",
+        "It fails: inject() needs an injection context, so use a class field"
+      ],
+      "ru": [
+        "Сработает, но при каждом клике вернёт новый экземпляр стора",
+        "Сработает только если компонент объявил стор в своих providers",
+        "Упадёт, и лечится это переводом обработчика в асинхронный метод",
+        "Упадёт: inject() нужен контекст инъекции — берите поле класса"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The `inject()` function works only inside an injection context: class field initializers, the constructor, and provider or token factories. An event handler is none of those, so Angular throws `NG0203`.\n\nThe normal style is also the fix. Declare every dependency as a class field:\n\n```ts\nprivate readonly store = inject(TicketStore);\nonClick(): void { this.store.reset(); }\n```\n\nWhen the dependency genuinely appears later, as with a lazy import, capture an `Injector` up front and call `runInInjectionContext(injector, fn)`. The `await` case is the nastiest one: code before `await` is still in the context and code after it is not.",
+      "ru": "Функция `inject()` работает только внутри контекста инъекции: инициализаторы полей класса, конструктор, фабрики провайдеров и токенов. Обработчик события к ним не относится, поэтому Angular бросает `NG0203`.\n\nЛечение совпадает с обычным стилем: объявляйте все зависимости полями класса.\n\n```ts\nprivate readonly store = inject(TicketStore);\nonClick(): void { this.store.reset(); }\n```\n\nЕсли зависимость правда появляется позже — например, при ленивом импорте, — сохраните `Injector` заранее и вызовите `runInInjectionContext(injector, fn)`. Самый коварный случай — `await`: код до него ещё в контексте, а код после уже нет."
+    }
+  },
+  {
+    "id": "angular-quiz-12",
+    "topicId": "angular",
+    "question": {
+      "en": "An application config is described by a TypeScript interface. Why can that interface not serve as a token for dependency injection?",
+      "ru": "Конфигурация приложения описана интерфейсом TypeScript. Почему этот интерфейс нельзя использовать как токен для внедрения зависимостей?"
+    },
+    "options": {
+      "en": [
+        "A token must be a runtime value, and an interface is only a type",
+        "An interface can be a token only when it is the module's default export",
+        "Interfaces work as tokens, but they lose type safety",
+        "A token must be a class, so the config has to be rewritten as a class"
+      ],
+      "ru": [
+        "Токен должен быть значением в рантайме, а интерфейс — только тип",
+        "Интерфейс годится в токены только при экспорте по умолчанию",
+        "Интерфейсы работают токенами, но теряют типизацию",
+        "Токеном может быть только класс, поэтому конфиг придётся переписать классом"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A token is the key a dependency is requested by, so it has to be a unique object that exists while the application runs. An interface is a type-system construct and nothing of it survives compilation.\n\nA class qualifies as a token because it is a real runtime value. For everything else there is `InjectionToken`, and a factory gives it a default value plus tree shaking:\n\n```ts\nexport const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG', {\n  providedIn: 'root',\n  factory: () => ({ apiUrl: '/api', pageSize: 20 }),\n});\n```\n\nThe description string does not affect identity. Two tokens created with the same text remain two different tokens.",
+      "ru": "Токен — это ключ, по которому запрашивают зависимость, поэтому он обязан быть уникальным объектом, существующим во время работы приложения. Интерфейс живёт только в системе типов, и после компиляции от него не остаётся ничего.\n\nКласс токеном быть может: он реальное значение в рантайме. Для всего остального есть `InjectionToken`, а фабрика даёт ему значение по умолчанию и tree shaking:\n\n```ts\nexport const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG', {\n  providedIn: 'root',\n  factory: () => ({ apiUrl: '/api', pageSize: 20 }),\n});\n```\n\nСтрока-описание на идентичность не влияет. Два токена с одинаковым текстом остаются двумя разными токенами."
+    }
+  },
+  {
+    "id": "angular-quiz-13",
+    "topicId": "angular",
+    "question": {
+      "en": "A store exposes its state as `readonly tickets = this.state.asReadonly()`. What does that protect, and what does it leave open?",
+      "ru": "Стор отдаёт состояние наружу как `readonly tickets = this.state.asReadonly()`. Что это защищает, а что оставляет открытым?"
+    },
+    "options": {
+      "en": [
+        "It blocks every change of state, including the fields of each ticket",
+        "It blocks set and update on the signal, but not mutation of the items",
+        "It blocks writes from other services, but a component can still write",
+        "It only hides the setter by name, and set is still callable at runtime"
+      ],
+      "ru": [
+        "Запрещает любое изменение состояния, включая поля тикетов",
+        "Запрещает set и update у сигнала, но не мутацию объектов внутри",
+        "Запрещает запись из других сервисов, но компонент писать всё же может",
+        "Только скрывает сеттер по имени: вызвать set в рантайме по-прежнему можно"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The call changes the type from `WritableSignal<T>` to `Signal<T>`, so no consumer can call `set` or `update`. Every change then goes through the store's commands, where the accompanying rules live.\n\nThe data inside stays as mutable as it was. Without help from the types, `store.tickets()[0].title = 'x'` is still possible:\n\n```ts\nexport interface Ticket {\n  readonly id: number;\n  readonly title: string;   // readonly fields plus readonly Ticket[]\n}\n```\n\nSo the second half of the protection is the type. The compiler then rejects both a field assignment and a `push` on the array.",
+      "ru": "Вызов меняет тип с `WritableSignal<T>` на `Signal<T>`, поэтому ни один потребитель не может позвать `set` или `update`. Все изменения идут через команды стора, где и живут сопутствующие правила.\n\nА данные внутри остаются такими же изменяемыми. Без помощи типов `store.tickets()[0].title = 'x'` всё ещё возможно:\n\n```ts\nexport interface Ticket {\n  readonly id: number;\n  readonly title: string;   // поля readonly плюс readonly Ticket[]\n}\n```\n\nПоэтому вторая половина защиты — тип. Компилятор тогда запретит и присваивание поля, и `push` по массиву."
+    }
+  },
+  {
+    "id": "angular-quiz-14",
+    "topicId": "angular",
+    "question": {
+      "en": "A pure pipe formats a ticket. The store updates that ticket with `{ ...ticket, ...patch }`. Does the pipe recompute?",
+      "ru": "Чистый пайп форматирует тикет. Стор обновляет этот тикет через `{ ...ticket, ...patch }`. Пересчитается ли пайп?"
+    },
+    "options": {
+      "en": [
+        "No: a pure pipe computes once per template instance and caches forever",
+        "No: to see any change at all the pipe needs pure set to false",
+        "Yes: the reference changed, and a pure pipe caches by its input",
+        "Yes, but only because a pure pipe runs on every check of the template"
+      ],
+      "ru": [
+        "Нет: чистый пайп считает один раз на экземпляр шаблона и кеширует навсегда",
+        "Нет: чтобы увидеть изменение, пайпу нужен pure со значением false",
+        "Да: ссылка изменилась, а чистый пайп кешируется по входному значению",
+        "Да, но лишь потому, что чистый пайп выполняется при каждой проверке шаблона"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A pure pipe is cached by its input and recomputes when a primitive value or an object reference changes. The spread creates a new object, so the input is new and the pipe runs again.\n\nHad the store mutated the ticket in place, the pipe would have returned its cached value. That is one reason immutability in a store is a precondition rather than ideology.\n\nSetting `pure: false` treats the symptom and loses the cache. The pipe then runs on every check of the template, and change detection decides how many checks happen.",
+      "ru": "Чистый пайп кешируется по входу и пересчитывается, когда меняется примитивное значение или ссылка на объект. Расширение через spread создаёт новый объект, поэтому вход новый и пайп выполнится заново.\n\nЕсли бы стор мутировал тикет на месте, пайп отдал бы закешированное значение. Это одна из причин, по которой иммутабельность в сторе — не идеология, а условие работы остальных механизмов.\n\nЗначение `pure: false` лечит симптом и убивает кеш: пайп начнёт выполняться при каждой проверке шаблона, а сколько их будет, решает обнаружение изменений."
+    }
+  },
+  {
+    "id": "angular-quiz-15",
+    "topicId": "angular",
+    "question": {
+      "en": "The template says `<li *appHasRole=\"'admin'\">Reset</li>`. What does the compiler hand to the directive?",
+      "ru": "В шаблоне написано `<li *appHasRole=\"'admin'\">Reset</li>`. Что компилятор передаст директиве?"
+    },
+    "options": {
+      "en": [
+        "The already rendered element, so the directive can remove it from the page",
+        "A boolean result of the expression and a reference to the host element",
+        "A callback that returns markup, like a render prop in React",
+        "A TemplateRef with the markup and a ViewContainerRef to insert it into"
+      ],
+      "ru": [
+        "Уже отрендеренный элемент, чтобы директива могла убрать его со страницы",
+        "Булев результат выражения и ссылку на хост-элемент",
+        "Колбэк, возвращающий разметку, — аналог render prop из React",
+        "TemplateRef с разметкой и ViewContainerRef, куда её можно вставить"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The asterisk is sugar. The compiler wraps the element in an `<ng-template>` and puts the directive on that template:\n\n```html\n<ng-template appHasRole [appHasRole]=\"'admin'\">\n  <li>Reset</li>\n</ng-template>\n```\n\nThe directive then receives two dependencies. A `TemplateRef` is the recipe for markup that is not yet in the page, and a `ViewContainerRef` is the place it can be inserted into.\n\nThat is why the directive decides whether to render at all, how many times, and with what context. The body is not evaluated until `createEmbeddedView()` is called.",
+      "ru": "Звёздочка — это сахар. Компилятор оборачивает элемент в `<ng-template>` и ставит директиву на этот шаблон:\n\n```html\n<ng-template appHasRole [appHasRole]=\"'admin'\">\n  <li>Reset</li>\n</ng-template>\n```\n\nДальше директива получает две зависимости. `TemplateRef` — это рецепт разметки, которая ещё не попала на страницу, а `ViewContainerRef` — место, куда её можно вставить.\n\nПоэтому директива сама решает, рендерить ли вообще, сколько раз и с каким контекстом. Тело не вычисляется, пока не вызван `createEmbeddedView()`."
+    }
+  },
+  {
+    "id": "angular-quiz-16",
+    "topicId": "angular",
+    "question": {
+      "en": "A modal wraps its `<ng-content>` in `@if (isOpen())`. The dialog is closed, yet the network tab shows requests made by the form inside it. Why?",
+      "ru": "Модальное окно обернуло свой `<ng-content>` в `@if (isOpen())`. Диалог закрыт, но во вкладке Network видны запросы формы, лежащей внутри. Почему?"
+    },
+    "options": {
+      "en": [
+        "The requests come from a prefetch Angular runs for hidden blocks",
+        "Projected content is always created, and the condition only hides it",
+        "The @if block creates the content twice: once per check and once again",
+        "The form was created because the modal read it through a viewChild query"
+      ],
+      "ru": [
+        "Запросы идут от предзагрузки, которую Angular делает для скрытых блоков",
+        "Проецируемый контент создаётся всегда, а условие лишь скрывает его",
+        "Блок @if создаёт содержимое дважды: на проверку и на отображение",
+        "Форма создалась потому, что модальное окно прочитало её через viewChild"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The `<ng-content>` element is not a node you can create or skip. It is a compiler instruction about where to place content that the consumer already wrote. The documentation is explicit: such content is always instantiated, even when the placeholder is hidden.\n\nSo the form's constructor, its effects and its requests have already run. The condition only hides the result.\n\nFor genuine laziness the content is passed as an `ng-template` and inserted when the dialog opens:\n\n```html\n<div class=\"modal__body\">\n  <ng-container [ngTemplateOutlet]=\"body()\" />\n</div>\n```\n\nWhen the goal is deferring the code itself rather than the creation, that is `@defer`.",
+      "ru": "Элемент `<ng-content>` — не узел, который можно создать или пропустить. Это инструкция компилятору о том, куда поставить контент, уже написанный потребителем, и документация прямо говорит: такой контент создаётся всегда, даже когда место для него скрыто.\n\nЗначит, конструктор формы, её эффекты и её запросы уже выполнились. Условие лишь скрывает результат.\n\nДля настоящей ленивости контент передают как `ng-template` и вставляют при открытии диалога:\n\n```html\n<div class=\"modal__body\">\n  <ng-container [ngTemplateOutlet]=\"body()\" />\n</div>\n```\n\nА если отложить нужно сам код, а не создание, для этого есть `@defer`."
+    }
+  },
+  {
+    "id": "angular-quiz-17",
+    "topicId": "angular",
+    "question": {
+      "en": "A lazy admin section is protected with `canActivate`. A user without the admin role opens `/admin`. What does the browser download?",
+      "ru": "Ленивый раздел админки защищён через `canActivate`. Пользователь без роли администратора открывает `/admin`. Что скачает браузер?"
+    },
+    "options": {
+      "en": [
+        "Nothing: a failed guard cancels the navigation before any loading",
+        "Only the guard's own code, which Angular splits into a separate chunk",
+        "The admin chunk, because the route matched before the guard ran",
+        "The admin chunk plus every other lazy chunk of the application"
+      ],
+      "ru": [
+        "Ничего: неуспешный гард отменяет навигацию до загрузки",
+        "Только код самого гарда, который Angular выносит в отдельный чанк",
+        "Чанк админки: маршрут был выбран раньше, чем сработал гард",
+        "Чанк админки и заодно все остальные ленивые чанки приложения"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The order of the navigation pipeline decides this. Routes are matched first, then the lazy code is loaded, and only after that does `canActivate` run. So the user fetches code they are never allowed to see.\n\nThe guard that runs during matching is `canMatch`. Returning `false` there marks the route as not applicable, the router keeps looking, and the chunk is never requested:\n\n```ts\n{ path: 'admin', canMatch: [adminMatchGuard], loadChildren: … }\n```\n\nThe trade-off is the outcome: `canMatch` leads to a 404 page rather than a redirect. Neither guard is a security boundary, because the server must authorise every request itself.",
+      "ru": "Всё решает порядок шагов навигации. Сначала сопоставляются маршруты, потом загружается ленивый код, и только затем выполняется `canActivate`. Поэтому пользователь скачивает код, который ему видеть не разрешено.\n\nГард, который работает на этапе сопоставления, — это `canMatch`. Значение `false` помечает маршрут как неподходящий, роутер продолжает поиск, и чанк не запрашивается вовсе:\n\n```ts\n{ path: 'admin', canMatch: [adminMatchGuard], loadChildren: … }\n```\n\nПлата — результат: с `canMatch` пользователь попадёт на страницу 404, а не на редирект. Границей безопасности не служит ни один из гардов: сервер обязан авторизовать каждый запрос сам."
+    }
+  },
+  {
+    "id": "angular-quiz-18",
+    "topicId": "angular",
+    "question": {
+      "en": "A detail screen reads its id from `route.snapshot.paramMap` inside `ngOnInit`. The user navigates from `/tickets/101` to `/tickets/102`. What happens?",
+      "ru": "Экран деталей читает свой id из `route.snapshot.paramMap` внутри `ngOnInit`. Пользователь переходит с `/tickets/101` на `/tickets/102`. Что произойдёт?"
+    },
+    "options": {
+      "en": [
+        "The screen updates, since the snapshot is refreshed on every navigation",
+        "The component is destroyed and created again, so data is correct",
+        "Angular throws, because a snapshot cannot be read outside a resolver",
+        "The screen keeps showing ticket 101, because the instance was reused"
+      ],
+      "ru": [
+        "Экран обновится, ведь snapshot перечитывается при каждой навигации",
+        "Компонент будет уничтожен и создан заново, поэтому данные верные",
+        "Angular упадёт: snapshot нельзя читать вне резолвера маршрута",
+        "Экран продолжит показывать тикет 101: инстанс был переиспользован"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The router reuses the component instance when the route is the same and only the parameter changed. Nothing is destroyed, so neither the constructor nor `ngOnInit` runs again and the snapshot stays as it was.\n\nThe address bar shows the new address while the screen shows the old ticket. A page reload appears to fix it, which is what makes the bug feel mysterious.\n\nThe reaction has to be a dependency rather than a hook. Take the parameter as an input and derive the rest from it:\n\n```ts\nreadonly id = input.required({ transform: numberAttribute });\nprotected readonly ticket = computed(() =>\n  this.store.tickets().find((t) => t.id === this.id()) ?? null,\n);\n```",
+      "ru": "Роутер переиспользует инстанс компонента, когда маршрут тот же и изменился только параметр. Ничего не уничтожается, поэтому ни конструктор, ни `ngOnInit` не выполняются заново, а `snapshot` остаётся прежним.\n\nВ адресной строке новый адрес, на экране прежний тикет. Перезагрузка страницы «исправляет» это, и потому ошибка кажется загадочной.\n\nРеакцией должна быть зависимость, а не хук. Возьмите параметр входом и выведите остальное из него:\n\n```ts\nreadonly id = input.required({ transform: numberAttribute });\nprotected readonly ticket = computed(() =>\n  this.store.tickets().find((t) => t.id === this.id()) ?? null,\n);\n```"
+    }
+  },
+  {
+    "id": "angular-quiz-19",
+    "topicId": "angular",
+    "question": {
+      "en": "The route table declares `tickets/:id` before `tickets/new`. The user opens `/tickets/new`. What does the router do?",
+      "ru": "В таблице маршрутов `tickets/:id` объявлен раньше, чем `tickets/new`. Пользователь открывает `/tickets/new`. Что сделает роутер?"
+    },
+    "options": {
+      "en": [
+        "It matches the static route, because a static segment always wins",
+        "It matches the parameterized route, and the id becomes the string new",
+        "It reports an ambiguous route configuration at build time",
+        "It matches both routes and renders the two components in the same outlet"
+      ],
+      "ru": [
+        "Совпадёт статический маршрут: статический сегмент всегда важнее",
+        "Совпадёт параметризованный маршрут, и в id попадёт строка new",
+        "Сообщит о неоднозначных маршрутах на этапе сборки",
+        "Совпадут оба маршрута, и в один outlet отрендерятся два компонента"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Routes are matched top-down, and the first match wins. A parameter accepts any segment, so `tickets/:id` swallows `/tickets/new` and the id arrives as the string `new`.\n\nWith `transform: numberAttribute` on the input that becomes `NaN`, no ticket is found, and the screen says \"not found\". The bug is reported as \"the create form does not open\".\n\nThe rule is short: declare static segments before parameterized ones, and keep the catch-all route `'**'` last.",
+      "ru": "Маршруты сопоставляются сверху вниз, и побеждает первое совпадение. Параметр принимает любой сегмент, поэтому `tickets/:id` съедает `/tickets/new`, а в id приходит строка `new`.\n\nС `transform: numberAttribute` на входе это превратится в `NaN`, тикет не найдётся, и экран покажет «не найдено». А сообщат об этом как «не открывается форма создания».\n\nПравило короткое: статические сегменты объявляются раньше параметризованных, а маршрут-перехватчик `'**'` стоит последним."
+    }
+  },
+  {
+    "id": "angular-quiz-20",
+    "topicId": "angular",
+    "question": {
+      "en": "A service method calls `this.http.get<Ticket[]>('/api/tickets')` and does nothing else with the result. The method runs, but the network tab stays empty. Why?",
+      "ru": "Метод сервиса вызывает `this.http.get<Ticket[]>('/api/tickets')` и больше ничего с результатом не делает. Метод выполняется, но вкладка Network пуста. Почему?"
+    },
+    "options": {
+      "en": [
+        "The request waits until the next change detection cycle completes",
+        "The generic parameter has no default value, so the call is skipped",
+        "HttpClient returns a cold Observable, so the request starts on subscribe",
+        "HttpClient needs withFetch provided before it can send any request at all"
+      ],
+      "ru": [
+        "Запрос ждёт завершения следующего цикла обнаружения изменений",
+        "У параметра-типа нет значения по умолчанию, и поэтому вызов пропускается",
+        "HttpClient возвращает холодный Observable: запрос уходит при подписке",
+        "HttpClient требует withFetch, иначе ни один запрос не отправляется"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "An Observable from `HttpClient` describes the request without performing it. The request goes out on subscription, and each subscription sends a new one.\n\nThere are three ways to activate it. Screen data goes through `httpResource`, which subscribes itself and exposes `value`, `isLoading` and `error` as signals. Mutations go through `subscribe()`. A promise comes from `firstValueFrom`.\n\nThe upside of that coldness is free cancellation: unsubscribing aborts the request. And `withFetch()` is not the answer here — the fetch backend is the default transport, and the flag itself is deprecated.",
+      "ru": "Observable из `HttpClient` описывает запрос, но не выполняет его. Запрос уходит при подписке, и каждая подписка отправляет новый.\n\nСпособов активировать три. Данные экрана грузят через `httpResource`: он подписывается сам и отдаёт `value`, `isLoading` и `error` сигналами. Мутации отправляют через `subscribe()`. А промис даёт `firstValueFrom`.\n\nПлюс такой «холодности» — бесплатная отмена: отписка прерывает запрос. И `withFetch()` здесь ни при чём: транспорт на fetch уже стоит по умолчанию, а сам флаг помечен устаревшим."
+    }
+  },
+  {
+    "id": "angular-quiz-21",
+    "topicId": "angular",
+    "question": {
+      "en": "A screen loads its list through `httpResource` with a reactive request. The user changes the status filter. What does `value()` return while the new request is in flight?",
+      "ru": "Экран грузит список через `httpResource` с реактивным запросом. Пользователь меняет фильтр по статусу. Что вернёт `value()`, пока новый запрос в пути?"
+    },
+    "options": {
+      "en": [
+        "The previous value, and status() reports reloading meanwhile",
+        "undefined, until the new response arrives from the server",
+        "An empty array, because the resource resets before every request",
+        "The previous value, but only when keepPrevious is set explicitly"
+      ],
+      "ru": [
+        "Прежнее значение, а status() при этом сообщает reloading",
+        "undefined, пока с сервера не придёт новый ответ",
+        "Пустой массив: ресурс сбрасывает значение перед каждым запросом",
+        "Прежнее значение, но только если явно задан keepPrevious"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The resource keeps the last resolved value during a refetch, so the list does not flash empty when a filter changes. Its `isLoading()` becomes `true` and `status()` moves to `'reloading'`.\n\nThe request itself is described reactively. The function reads signals, and on a change the resource cancels the previous request and issues a new one:\n\n```ts\nreadonly ticketsResource = httpResource<readonly Ticket[]>(\n  () => ({ url: '/api/tickets', params: { status: this.status() ?? '' } }),\n  { defaultValue: [] },\n);\n```\n\nIf you want a skeleton instead of stale rows, render it from `isLoading()`. Before the first response there is no previous value, and `defaultValue` fills that gap.",
+      "ru": "Ресурс сохраняет последнее успешное значение во время перезагрузки, поэтому при смене фильтра список не мигает пустотой. При этом `isLoading()` становится `true`, а `status()` переходит в `'reloading'`.\n\nСам запрос описан реактивно. Функция читает сигналы, и при изменении ресурс отменяет предыдущий запрос и отправляет новый:\n\n```ts\nreadonly ticketsResource = httpResource<readonly Ticket[]>(\n  () => ({ url: '/api/tickets', params: { status: this.status() ?? '' } }),\n  { defaultValue: [] },\n);\n```\n\nЕсли вместо устаревших строк нужен скелетон, рисуйте его по `isLoading()`. До первого ответа прежнего значения нет, и эту дырку закрывает `defaultValue`."
+    }
+  },
+  {
+    "id": "angular-quiz-22",
+    "topicId": "angular",
+    "question": {
+      "en": "Interceptors are registered as `withInterceptors([auth, logging, error])`. In what order does a failed response reach them?",
+      "ru": "Интерсепторы зарегистрированы как `withInterceptors([auth, logging, error])`. В каком порядке до них дойдёт неудачный ответ?"
+    },
+    "options": {
+      "en": [
+        "auth, then logging, then error — exactly as they are declared",
+        "Only the error interceptor sees it, because the others handle requests",
+        "The order is not defined, so any interceptor may see it first",
+        "error, then logging, then auth — the response goes back in reverse"
+      ],
+      "ru": [
+        "auth, потом logging, потом error — ровно в порядке объявления",
+        "Его увидит только error, потому что остальные обрабатывают запросы",
+        "Порядок не определён, поэтому первым может увидеть любой интерсептор",
+        "error, потом logging, потом auth: ответ идёт в обратном порядке"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The array order is the order the request travels in, and the response travels back the other way. So a request goes `auth`, `logging`, `error`, then the backend, and both a response and an error return in reverse.\n\nThat is why an error handler is placed last in the array. On the way back it gets control first, so it decides the error's fate before anyone else sees it. Deciding means a retry, a redirect or a banner.\n\nThe mirror rule applies to interceptors that need the final request. Logging, signing and metrics go after whoever modifies it, so they observe the headers that will actually be sent.",
+      "ru": "Порядок в массиве — это порядок, в котором идёт запрос, а ответ возвращается обратной дорогой. Запрос проходит `auth`, `logging`, `error`, потом уходит на бэкенд, а ответ и ошибка идут назад в обратном порядке.\n\nПоэтому обработчик ошибок ставят последним в массиве. На обратном пути он получает управление первым и может решить судьбу ошибки раньше всех: повторить запрос, превратить её в редирект или показать баннер.\n\nЗеркальное правило — для тех, кому нужен итоговый запрос. Логирование, подпись и метрики идут после тех, кто запрос меняет, и видят заголовки, которые реально уйдут на сервер."
+    }
+  },
+  {
+    "id": "angular-quiz-23",
+    "topicId": "angular",
+    "question": {
+      "en": "A save button sends a POST request, and the user double-clicks it. Which RxJS operator ignores the second click while the first request is still in flight?",
+      "ru": "Кнопка сохранения отправляет POST-запрос, и пользователь нажимает её дважды. Какой оператор RxJS проигнорирует второй клик, пока первый запрос ещё в пути?"
+    },
+    "options": {
+      "en": [
+        "switchMap, which cancels the request already sent to the server",
+        "exhaustMap, which ignores new values while one is in flight",
+        "mergeMap, which runs both requests in parallel",
+        "concatMap, which queues the second request after the first"
+      ],
+      "ru": [
+        "switchMap — отменяет запрос, который уже ушёл на сервер, и шлёт новый",
+        "exhaustMap — игнорирует новые значения, пока одно в работе",
+        "mergeMap — выполняет оба запроса параллельно",
+        "concatMap — ставит второй запрос в очередь за первым"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Choosing an operator means choosing a policy towards the operation already running. Here the policy is \"ignore new events until this one finishes\", and that is `exhaustMap`:\n\n```ts\nthis.submit$.pipe(\n  exhaustMap((dto) => this.api.create(dto)),\n  takeUntilDestroyed(),\n).subscribe(() => void this.router.navigate(['/tickets']));\n```\n\nUsing `switchMap` here is actively harmful. It aborts a request that has already left. The server may have created the entity anyway, and the client never learns about it.\n\nFor search the same `switchMap` is exactly right: results of an outdated query are useless. If every request must run and the order matters, that is `concatMap`.",
+      "ru": "Выбор оператора — это выбор политики по отношению к уже запущенной операции. Здесь политика такая: игнорировать новые события, пока не закончилось текущее. Это `exhaustMap`:\n\n```ts\nthis.submit$.pipe(\n  exhaustMap((dto) => this.api.create(dto)),\n  takeUntilDestroyed(),\n).subscribe(() => void this.router.navigate(['/tickets']));\n```\n\nА `switchMap` здесь прямо вреден. Он прерывает запрос, который уже ушёл, а сервер мог его выполнить — и клиент об этом не узнает.\n\nДля поиска тот же `switchMap` как раз правильный: результаты устаревшего запроса никому не нужны. Если же выполниться должны все запросы и важен порядок, это `concatMap`."
+    }
+  },
+  {
+    "id": "angular-quiz-24",
+    "topicId": "angular",
+    "question": {
+      "en": "A required title field turns red the moment the form opens. Which condition should drive the error message instead?",
+      "ru": "Обязательное поле заголовка краснеет сразу при открытии формы. По какому условию нужно показывать сообщение об ошибке?"
+    },
+    "options": {
+      "en": [
+        "invalid on its own, which is what the control reports",
+        "dirty on its own: it means the user typed something",
+        "invalid, plus touched or an attempt to submit the form",
+        "invalid together with pending, so async checks finish first"
+      ],
+      "ru": [
+        "только invalid — именно это сообщает контрол",
+        "только dirty: значит, пользователь что-то ввёл",
+        "invalid плюс touched или попытка отправки формы",
+        "invalid вместе с pending, чтобы асинхронные проверки успели"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "An empty required field is `invalid` from the moment the form is created, before the user has seen it. So validity alone cannot be the trigger — what you need is a sign that the user already dealt with this field or tried to submit.\n\nThe `touched` flag comes from the control itself when it loses focus. A `FormGroup` has no submitted flag, so that half is your own signal:\n\n```ts\nprotected showError(name: keyof typeof this.form.controls): boolean {\n  const control = this.form.controls[name];\n  return control.invalid && (control.touched || this.submitted());\n}\n```\n\nOn a submit of an invalid form, call `markAllAsTouched()` as well, so every error appears at once.",
+      "ru": "Пустое обязательное поле имеет `invalid` с момента создания формы, ещё до того, как пользователь его увидел. Поэтому одна валидность триггером быть не может: нужен признак того, что человек уже работал с полем или пробовал отправить форму.\n\nФлаг `touched` ставит сам контрол при потере фокуса. У `FormGroup` флага «отправляли» нет, поэтому вторая половина — ваш собственный сигнал:\n\n```ts\nprotected showError(name: keyof typeof this.form.controls): boolean {\n  const control = this.form.controls[name];\n  return control.invalid && (control.touched || this.submitted());\n}\n```\n\nПри отправке невалидной формы позовите ещё и `markAllAsTouched()`, чтобы все ошибки показались сразу."
+    }
+  },
+  {
+    "id": "angular-quiz-25",
+    "topicId": "angular",
+    "question": {
+      "en": "An async validator pipes a value through `switchMap` into a request. The control stays `pending` forever and the submit button never enables. What is missing?",
+      "ru": "Асинхронный валидатор прогоняет значение через `switchMap` в запрос. Контрол навсегда остаётся в `pending`, и кнопка отправки не включается. Чего не хватает?"
+    },
+    "options": {
+      "en": [
+        "The validator must be listed in validators, not in asyncValidators at all",
+        "The control needs updateOn set to blur before validation can finish",
+        "The validator must return a Promise; Angular ignores Observables here",
+        "The stream never completes, and it needs first() or take(1) at the end"
+      ],
+      "ru": [
+        "Валидатор надо перечислить в validators, а не в asyncValidators",
+        "Контролу нужен updateOn со значением blur, иначе проверка не закончится",
+        "Валидатор обязан вернуть Promise, а не Observable",
+        "Поток никогда не завершается: в конце нужен first() или take(1)"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "An async validator has to complete its stream. Until it does, the control keeps the `pending` status, `form.valid` stays `false`, and nothing appears in the console:\n\n```ts\nprivate uniqueTitle() {\n  return (control: AbstractControl) =>\n    of(control.value as string).pipe(\n      debounceTime(300),\n      switchMap((title) => this.api.list({ q: title })),\n      map((tickets) => (tickets.length > 0 ? { titleTaken: true } : null)),\n      first(),        // without this the control stays pending forever\n    );\n}\n```\n\nAn Observable is a perfectly valid return value, and `updateOn: 'blur'` solves a different problem — a request on every keystroke. The submit handler should also check `form.pending` rather than validity alone.",
+      "ru": "Асинхронный валидатор обязан завершить свой поток. Пока этого не произошло, контрол держит статус `pending`, `form.valid` остаётся `false`, и в консоли ничего не появляется:\n\n```ts\nprivate uniqueTitle() {\n  return (control: AbstractControl) =>\n    of(control.value as string).pipe(\n      debounceTime(300),\n      switchMap((title) => this.api.list({ q: title })),\n      map((tickets) => (tickets.length > 0 ? { titleTaken: true } : null)),\n      first(),        // без этого контрол навсегда останется pending\n    );\n}\n```\n\nObservable здесь совершенно допустим, а `updateOn: 'blur'` решает другую задачу — запрос на каждое нажатие клавиши. В обработчике отправки стоит проверять ещё и `form.pending`, а не только валидность."
+    }
+  },
+  {
+    "id": "angular-quiz-26",
+    "topicId": "angular",
+    "question": {
+      "en": "A business rule disables one control of a form. The request built from `form.value` reaches the server without that field. What is the fix?",
+      "ru": "Бизнес-правило отключает один контрол формы. Запрос, собранный из `form.value`, уходит на сервер без этого поля. Как это починить?"
+    },
+    "options": {
+      "en": [
+        "Enable the control right before submitting and disable it again",
+        "Add the field to the request by hand from the component state",
+        "Read form.getRawValue(): it includes the disabled controls too",
+        "Replace disable() with a readonly attribute on the input element"
+      ],
+      "ru": [
+        "Включать контрол перед отправкой и снова его отключать после",
+        "Дописать поле в запрос руками из состояния компонента",
+        "Читать form.getRawValue() — он берёт и отключённые контролы",
+        "Заменить disable() на атрибут readonly у элемента input"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A disabled control drops out of `form.value` by design. The type reflects that: for a group with disabled controls the value is typed `Partial<...>`. The full state, disabled fields included, comes from `getRawValue()`:\n\n```ts\nthis.api.create(this.form.getRawValue()).subscribe(/* … */);\n```\n\nThe other three options fight the symptom. Toggling `enable()` around a submit emits extra events and re-runs validation. A hand-written field duplicates the form's state. And a `readonly` attribute changes the meaning: the control stays enabled and keeps validating.\n\nThe practical rule: `value` for what the user can edit, `getRawValue()` for what the server needs.",
+      "ru": "Отключённый контрол выпадает из `form.value` по замыслу, и тип это показывает: у группы с отключёнными контролами значение типизировано как `Partial<...>`. Полное состояние вместе с отключёнными полями отдаёт `getRawValue()`:\n\n```ts\nthis.api.create(this.form.getRawValue()).subscribe(/* … */);\n```\n\nОстальные три варианта борются с симптомом. Переключение `enable()` вокруг отправки порождает лишние события и перезапускает валидацию, поле, дописанное руками, дублирует состояние формы, а атрибут `readonly` меняет смысл: контрол остаётся включённым и продолжает валидироваться.\n\nПрактическое правило: `value` — то, что пользователь может править, `getRawValue()` — то, что нужно серверу."
+    }
+  },
+  {
+    "id": "angular-quiz-27",
+    "topicId": "angular",
+    "question": {
+      "en": "A chart component is wrapped in `@defer`, but the initial bundle did not get smaller. What is the most likely cause?",
+      "ru": "Компонент графика обёрнут в `@defer`, но начальный бандл не уменьшился. Какая причина самая вероятная?"
+    },
+    "options": {
+      "en": [
+        "The component is listed in imports or used outside the block",
+        "The block has no @placeholder, so it stays eager",
+        "Deferred chunks stay inlined unless outputHashing is set to all",
+        "The trigger is on idle, and idle triggers never split the code"
+      ],
+      "ru": [
+        "Компонент указан в imports или используется вне блока",
+        "У блока нет @placeholder, поэтому он остался жадным",
+        "Ленивые чанки встраиваются, пока outputHashing не выставлен в all",
+        "Триггер on idle: такие триггеры код не разделяют"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "A deferred block moves its content into a separate chunk only while nothing else references that content directly. The compiler collects the block's dependencies itself. An entry in `imports`, or a second use in ordinary markup, makes the component a static dependency again.\n\nA reference from the class does the same, through `viewChild` or an import used to instantiate a type. Only standalone dependencies can be deferred at all.\n\nCheck it by measurement rather than by reading:\n\n```bash\nng build --stats-json\n# upload dist/<app>/stats.json to https://esbuild.github.io/analyze/\n```\n\nIf there is no separate chunk, the compiler could not split the code, and `@defer` only deferred the rendering.",
+      "ru": "Отложенный блок выносит своё содержимое в отдельный чанк только пока на это содержимое нет прямых ссылок. Зависимости блока компилятор собирает сам, поэтому запись в `imports` или второе использование в обычной разметке снова делает компонент статической зависимостью.\n\nСсылка из класса работает так же — через `viewChild` или импорт типа, который вы создаёте. И отложить можно только standalone-зависимости.\n\nПроверяется это замером, а не чтением кода:\n\n```bash\nng build --stats-json\n# загрузите dist/<app>/stats.json на https://esbuild.github.io/analyze/\n```\n\nЕсли отдельного чанка нет, компилятор не смог разделить код, и `@defer` отложил только рендеринг."
+    }
+  },
+  {
+    "id": "angular-quiz-28",
+    "topicId": "angular",
+    "question": {
+      "en": "A component test passes with `fixture.detectChanges()` and fails with `await fixture.whenStable()`. What does that tell you?",
+      "ru": "Тест компонента проходит с `fixture.detectChanges()` и падает с `await fixture.whenStable()`. О чём это говорит?"
+    },
+    "options": {
+      "en": [
+        "The test needs both calls, in that order, to synchronize the view",
+        "whenStable() only works for components that make HTTP requests",
+        "The component never notified Angular, so no check was scheduled",
+        "The Vitest runner cannot await promises inside a component test"
+      ],
+      "ru": [
+        "Тесту нужны оба вызова именно в таком порядке, чтобы обновить разметку",
+        "whenStable() работает только для компонентов, делающих HTTP-запросы",
+        "Компонент не уведомил Angular, поэтому проверка не была запланирована",
+        "Ранер Vitest не умеет ждать промисы внутри теста компонента"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The `detectChanges()` call is an order to check the template right now, and it runs whether or not anything announced a change. The `whenStable()` call waits for a scheduled synchronization, so it exercises the same chain that will happen in the browser.\n\nThe hidden defect is state that changed without a notification. The usual suspects:\n\n- an array mutated instead of replaced;\n- a plain field written from a timer or a third-party callback;\n- a form's `setValue` with no mirror into signals.\n\nSuch a component would not update in production either. So the failing test found a real bug, and the fix belongs in the component rather than in the test.",
+      "ru": "Вызов `detectChanges()` — это приказ проверить шаблон немедленно, и он срабатывает независимо от того, сообщал ли кто-нибудь об изменении. А `whenStable()` ждёт запланированной синхронизации, то есть проверяет ту же цепочку, что случится в браузере.\n\nСкрытый дефект — состояние, изменившееся без уведомления. Обычные подозреваемые:\n\n- мутация массива вместо замены;\n- запись в обычное поле из таймера или колбэка сторонней библиотеки;\n- `setValue` формы без отражения состояния в сигналы.\n\nТакой компонент не обновился бы и в продакшене. Значит, упавший тест нашёл настоящую ошибку, и править надо компонент, а не тест."
+    }
+  },
+  {
+    "id": "angular-quiz-29",
+    "topicId": "angular",
+    "question": {
+      "en": "After a barrel `index.ts` was added to a feature folder, the application fails with a no-provider error for `undefined`. What is going on?",
+      "ru": "После того как в папку фичи добавили barrel-файл `index.ts`, приложение падает с ошибкой «нет провайдера» для `undefined`. Что происходит?"
+    },
+    "options": {
+      "en": [
+        "The barrel must list providers explicitly, or they are not registered",
+        "A barrel breaks tree shaking, and the provider was dropped from the bundle",
+        "The token was declared twice, and the second shadowed the first",
+        "An import cycle through the barrel left the class still uninitialized"
+      ],
+      "ru": [
+        "В barrel нужно перечислить провайдеры, иначе они не регистрируются",
+        "Barrel ломает tree shaking, и провайдер выбросило из бандла",
+        "Токен объявлен дважды, и второй перекрыл первый",
+        "Цикл импортов через barrel оставил класс неинициализированным"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "A barrel re-exports files that import each other through that same barrel, so the cycle closes unnoticed. At the moment the provider is evaluated, one of the two classes is not initialized yet and the provider receives `undefined`.\n\nHence the shape of the message. Instead of a sensible complaint about imports you get `NG0201: No provider for undefined`. Sometimes it is a crash mentioning `ɵprov`, in a file unrelated to the cycle.\n\nThe cure is mechanical. Import by direct paths inside the application, and keep a barrel only where a feature is really a library with a public entry point.",
+      "ru": "Barrel-файл реэкспортирует файлы, которые импортируют друг друга через него же, и цикл замыкается незаметно. К моменту вычисления провайдера один из двух классов ещё не инициализирован, и провайдер получает `undefined`.\n\nОтсюда и вид сообщения. Вместо внятной жалобы на импорты вы получаете `NG0201: No provider for undefined` или падение с упоминанием `ɵprov` — в файле, не имеющем к циклу отношения.\n\nЛечение механическое: внутри приложения импортировать по прямым путям, а barrel оставить только там, где фича действительно библиотека с публичной точкой входа."
+    }
+  },
+  {
+    "id": "angular-quiz-30",
+    "topicId": "angular",
+    "question": {
+      "en": "A static build is deployed to a static host. Links inside the application work, but opening `/tickets/101` directly returns 404. What is missing on the host?",
+      "ru": "Статическая сборка выложена на статический хостинг. Ссылки внутри приложения работают, а прямое открытие `/tickets/101` отдаёт 404. Чего не хватает на хостинге?"
+    },
+    "options": {
+      "en": [
+        "A base href, which the router needs for deep links",
+        "A fallback that serves index.html for any unknown path",
+        "Server-side rendering, without which deep links cannot work",
+        "Hash based URLs, the only option a static host supports"
+      ],
+      "ru": [
+        "Базовый путь base href — без него роутер не найдёт ссылку",
+        "Отдача index.html в ответ на любой неизвестный путь запроса",
+        "Серверный рендеринг, без которого глубокие ссылки не работают",
+        "URL с хешем — единственный вариант для статического хостинга"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "There is no physical file at `/tickets/101` in the static output. That route exists only inside the application, and the application boots from `index.html`.\n\nWhile the user follows links, the router changes the address through the History API and asks the server for nothing. So the problem shows up only on a direct visit, a reload or an inbound external link.\n\nServing `index.html` for any unknown path hands routing back to Angular:\n\n```nginx\nlocation / {\n  try_files $uri $uri/ /index.html;\n}\n```\n\nThe same setting exists as an error document on object storage and as a rewrite rule on hosting platforms.",
+      "ru": "Файла по пути `/tickets/101` в статической сборке физически нет. Этот маршрут существует только внутри приложения, а приложение стартует из `index.html`.\n\nПока пользователь идёт по ссылкам, роутер меняет адрес через History API и сервер ни о чём не спрашивает. Поэтому проблема видна только при прямом заходе, перезагрузке или переходе по внешней ссылке.\n\nОтдача `index.html` на любой неизвестный путь возвращает маршрутизацию Angular:\n\n```nginx\nlocation / {\n  try_files $uri $uri/ /index.html;\n}\n```\n\nТа же настройка называется error document в объектном хранилище и rewrite-правилом на хостинг-платформах."
+    }
+  }
+]

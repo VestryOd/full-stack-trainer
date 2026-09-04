@@ -784,6 +784,18 @@ def kafka_two_panels(L):
     )
 
 
+def phase_cycle(L):
+    """Phases as a vchain, with the loop-back stated in the caption.
+
+    A drawn return line is not an option: diagram_check treats a `└` outside a box
+    as an orphan corner, so `└──►` under the last box fails. The cycle is closed by
+    the note line instead.
+    """
+    return with_title_and_notes(
+        vchain(L['phases'], L['labels']), L['title'], L['notes'],
+    )
+
+
 DIAGRAMS = {
     'stack-compare': stack_compare,
     'update-models': update_models,
@@ -937,6 +949,7 @@ DIAGRAMS = {
     'kafka-queue-vs-log': kafka_queue_vs_log,
     'kafka-broker-routing': kafka_broker_routing,
     'kafka-consumer-group-patterns': kafka_two_panels,
+    'tdd-red-green-refactor': phase_cycle,
 }
 
 LABELS = {
@@ -6820,6 +6833,28 @@ LABELS = {
                     },
                 ],
             },
+        },
+    },
+    'tdd-red-green-refactor': {
+        'ru': {
+            'title': 'Цикл red-green-refactor',
+            'phases': [
+                ['RED — тест на новое поведение', 'падает: реализации ещё нет'],
+                ['GREEN — минимальный код', 'цель одна: тест зелёный'],
+                ['REFACTOR — чистим реализацию', 'поведение не меняется'],
+            ],
+            'labels': ['API продуман заранее', 'зелёный тест — страховка'],
+            'notes': ['и снова RED — на следующее поведение'],
+        },
+        'en': {
+            'title': 'The red-green-refactor cycle',
+            'phases': [
+                ['RED - a test for new behaviour', 'it fails: no implementation yet'],
+                ['GREEN - the minimum code', 'one goal: the test passes'],
+                ['REFACTOR - clean it up', 'behaviour stays the same'],
+            ],
+            'labels': ['the API is thought through first', 'a passing test is the safety net'],
+            'notes': ['and back to RED, for the next behaviour'],
         },
     },
     'sd-shortener-architecture': {
