@@ -116,6 +116,9 @@ PASSED = {
     'tasks:nodejs': 'wave 25',
     'tasks:testing': 'wave 25',
     'tasks:css-html': 'wave 25',
+    'quiz:python': 'generation backlog, item 5',
+    'quiz:angular': 'generation backlog, item 5',
+    'quiz:nx': 'generation backlog, item 5',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '

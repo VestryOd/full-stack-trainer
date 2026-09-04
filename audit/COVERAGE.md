@@ -29,7 +29,7 @@
 | [x] | `http-rest` | 18 | 18 096 | 0 | 0 | 28f1fb1, d4dbf18 |
 | [x] | `javascript` | 26 | 24 323 | 0 | 0 | 3f2bb28, e07165c |
 | [x] | `kafka` | 16 | 20 184 | 0 | 0 | 4dc6e04 |
-| [x] | `keycloak-auth` | 22 | 35 200 | 0 | 0 | 3be5fee |
+| [x] | `keycloak-auth` | 22 | 35 114 | 0 | 0 | 3be5fee |
 | [x] | `microfrontends` | 16 | 23 204 | 0 | 0 | 8ee72de |
 | [x] | `mongodb-mongoose` | 18 | 29 320 | 0 | 102 | 525f8a2, 237f2b2 |
 | [x] | `nestjs` | 20 | 15 528 | 0 | 0 | 4d92284, 219814b |
@@ -55,7 +55,7 @@
 
 | | Курс | Файлов | Слов | Флаги | Широкие | Закрыто |
 |---|---|---|---|---|---|---|
-| [x] | `angular` | 32 | 92 346 | 0 | 0 | 4300b36 |
+| [x] | `angular` | 32 | 94 123 | 0 | 0 | 4300b36 |
 | [x] | `nx-monorepo` | 30 | 62 608 | 0 | 0 | 8858a81 |
 | [x] | `python-fullstack` | 38 | 87 043 | 0 | 0 | c8002fc |
 
@@ -128,8 +128,11 @@
 | [x] | `css-html` | 30 | 6 676 | 4 | 8ee72de |
 | [x] | `nestjs` | 28 | 5 972 | 2 | 3036c4a |
 | [x] | `javascript` | 47 | 8 762 | 1 | edcb48f |
+| [x] | `angular` | 30 | 8 297 | 0 | generation backlog, item 5 |
 | [x] | `git` | 20 | 5 178 | 0 | 52c22a5 |
 | [x] | `nextjs` | 30 | 7 720 | 0 | 3f2bb28 |
+| [x] | `nx` | 20 | 7 642 | 0 | generation backlog, item 5 |
+| [x] | `python` | 28 | 7 421 | 0 | generation backlog, item 5 |
 
 ## Задачи
 
@@ -162,4 +165,4 @@
 | [x] | `testing` | 28 | 28 596 | 0 | 0 | 0 | 0 | 76 | wave 25 |
 | [x] | `typescript` | 31 | 27 366 | 0 | 0 | 0 | 0 | 8 | wave 25 |
 
-**Итого закрыто 92 зон из 92.**
+**Итого закрыто 95 зон из 95.**
