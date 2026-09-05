@@ -1,0 +1,758 @@
+[
+  {
+    "id": "python-quiz-1",
+    "topicId": "python",
+    "question": {
+      "en": "What does this script print?\n\n```python\ntasks = []\n\nif tasks:\n    print(\"has tasks\")\nelse:\n    print(\"no tasks\")\n```",
+      "ru": "Что напечатает этот скрипт?\n\n```python\ntasks = []\n\nif tasks:\n    print(\"has tasks\")\nelse:\n    print(\"no tasks\")\n```"
+    },
+    "options": {
+      "en": [
+        "has tasks: any list object counts as true",
+        "Nothing at all: an empty list makes the condition invalid",
+        "no tasks, because an empty list counts as false",
+        "It raises a TypeError: a list is not a boolean value"
+      ],
+      "ru": [
+        "has tasks: список как объект всегда истинный",
+        "Ничего: пустой список делает условие некорректным",
+        "no tasks: пустой список считается ложью",
+        "Упадёт с TypeError: список — не логическое значение"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "An empty list is falsy in Python. Truthiness of a collection comes from its length, so `[]`, `{}`, `set()` and `\"\"` are all false inside a condition.\n\n```python\nbool([])    # False\nbool([0])   # True -- one element is enough\n```\n\nThis is the exact opposite of JS. There `Boolean([])` is `true`, and every object is truthy no matter what it holds.\n\nThat is why the idiomatic Python check for \"the list is not empty\" is `if tasks:` and not `if len(tasks) > 0:`. Nothing raises here: Python asks `__bool__` first, then falls back to `__len__`.",
+      "ru": "Пустой список в Python ложен. Истинность коллекции берётся из её длины, поэтому `[]`, `{}`, `set()` и `\"\"` внутри условия дают ложь.\n\n```python\nbool([])    # False\nbool([0])   # True -- одного элемента достаточно\n```\n\nВ JS всё наоборот: `Boolean([])` даёт `true`, и любой объект истинный независимо от содержимого.\n\nПоэтому идиоматичная проверка «список не пуст» в Python — это `if tasks:`, а не `if len(tasks) > 0:`. Ошибки здесь не будет: Python сначала спрашивает `__bool__`, потом опирается на `__len__`."
+    }
+  },
+  {
+    "id": "python-quiz-2",
+    "topicId": "python",
+    "question": {
+      "en": "What happens when this line runs?\n\n```python\nprint(\"5\" == 5)\n```",
+      "ru": "Что произойдёт при выполнении этой строки?\n\n```python\nprint(\"5\" == 5)\n```"
+    },
+    "options": {
+      "en": [
+        "It prints False: values of unrelated types are not equal",
+        "It prints True: Python reads the string as a number",
+        "It raises a TypeError: comparing a string with a number is banned",
+        "It prints nothing and warns about the mixed types"
+      ],
+      "ru": [
+        "Напечатает False: значения несвязанных типов не равны",
+        "Напечатает True: Python читает строку как число",
+        "Упадёт с TypeError: сравнивать строку с числом запрещено",
+        "Ничего не напечатает и предупредит о разных типах"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Equality goes through `__eq__`, and `str` has no rule for comparing itself with `int`. When neither side knows how to compare, the answer is `False`.\n\n```python\nprint(\"5\" == 5)   # False\nprint(\"5\" + 5)    # TypeError: can only concatenate str (not \"int\") to str\n```\n\nThe `+` operator is the one that raises, because concatenation needs both operands to be strings. Equality never raises for unrelated types, and it never coerces them either.\n\nThis matters in code where a numeric id arrives as a string. The check `task.id == args.id` is then silently `False` forever, and no traceback points at the cause.",
+      "ru": "Равенство идёт через `__eq__`, а у `str` нет правила сравнения с `int`. Когда ни одна сторона не знает, как сравнивать, ответ — `False`.\n\n```python\nprint(\"5\" == 5)   # False\nprint(\"5\" + 5)    # TypeError: can only concatenate str (not \"int\") to str\n```\n\nПадает именно `+`: для склейки нужны две строки. Равенство на несвязанных типах не падает и не приводит их друг к другу.\n\nЭто важно там, где числовой id пришёл строкой. Тогда проверка `task.id == args.id` навсегда молча даёт `False`, и трейсбек не покажет причину."
+    }
+  },
+  {
+    "id": "python-quiz-3",
+    "topicId": "python",
+    "question": {
+      "en": "What are `a`, `b` and `c` after this line?\n\n```python\na, *b, c = [1, 2, 3, 4, 5]\n```",
+      "ru": "Чему равны `a`, `b` и `c` после этой строки?\n\n```python\na, *b, c = [1, 2, 3, 4, 5]\n```"
+    },
+    "options": {
+      "en": [
+        "a is 1, b is 2, and c is the list [3, 4, 5]",
+        "a is 1, b is the list [2, 3, 4], and c is 5",
+        "It is a SyntaxError: a starred name has to come last",
+        "a is the list [1, 2, 3], b is 4, and c is 5"
+      ],
+      "ru": [
+        "a равно 1, b равно 2, c — список [3, 4, 5]",
+        "a равно 1, b — список [2, 3, 4], c равно 5",
+        "Это SyntaxError: имя со звёздочкой обязано стоять последним",
+        "a — список [1, 2, 3], b равно 4, c равно 5"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The interpreter reserves one element for each plain name first, and gives everything left over to the starred one. Here `a` takes the first element, `c` takes the last, and `b` collects the middle.\n\n```python\na, *b, c = [1, 2, 3, 4, 5]\nprint(a, b, c)   # 1 [2, 3, 4] 5\n```\n\nThe starred name always ends up a list, even when there is nothing to collect: `a, *b = [1]` leaves `b` as `[]`.\n\nPython lets the star sit anywhere in the target, and that is where it differs from JS. There the rest element has to be last, so `const [a, ...rest, z] = arr` is rejected while parsing.",
+      "ru": "Интерпретатор сначала резервирует по одному элементу на каждое обычное имя, а остаток целиком отдаёт имени со звёздочкой. Здесь `a` берёт первый элемент, `c` — последний, а `b` собирает середину.\n\n```python\na, *b, c = [1, 2, 3, 4, 5]\nprint(a, b, c)   # 1 [2, 3, 4] 5\n```\n\nИмя со звёздочкой всегда получает список, даже когда собирать нечего: после `a, *b = [1]` в `b` лежит `[]`.\n\nЗвёздочка в Python может стоять в любом месте цели — и здесь он расходится с JS. Там rest-элемент обязан быть последним, поэтому `const [a, ...rest, z] = arr` отвергается на разборе."
+    }
+  },
+  {
+    "id": "python-quiz-4",
+    "topicId": "python",
+    "question": {
+      "en": "What type does `x` get, and what does the second line do?\n\n```python\nx = {}\nx.add(1)\n```",
+      "ru": "Какой тип получит `x` и что сделает вторая строка?\n\n```python\nx = {}\nx.add(1)\n```"
+    },
+    "options": {
+      "en": [
+        "It is a set, and the second line adds the number 1",
+        "It is a dict, and the second line stores 1 under the key 1",
+        "It is a set, because braces without a colon mean a set",
+        "It is a dict, and the second line raises AttributeError"
+      ],
+      "ru": [
+        "Это множество, вторая строка добавит в него число 1",
+        "Это словарь, вторая строка положит 1 по ключу 1",
+        "Это множество: фигурные скобки без двоеточия дают set",
+        "Это словарь, и вторая строка упадёт с AttributeError"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "Braces were claimed by `dict` long before `set` got a literal of its own, so `{}` always builds an empty dictionary. A `dict` has no `add` method, and the second line fails:\n\n```python\nx = {}\nx.add(1)\n# AttributeError: 'dict' object has no attribute 'add'\n```\n\nAn empty set has exactly one spelling, the call `set()`. Non-empty literals are unambiguous, because the colon inside `{\"a\": 1}` tells a dict and a set apart while parsing.\n\nThe failure is easy to miss. It surfaces at the first method call, which can be far away from the line that picked the wrong type.",
+      "ru": "Фигурные скобки достались `dict` задолго до того, как у `set` появился свой литерал, поэтому `{}` всегда создаёт пустой словарь. У словаря нет метода `add`, и вторая строка падает:\n\n```python\nx = {}\nx.add(1)\n# AttributeError: 'dict' object has no attribute 'add'\n```\n\nПустое множество записывается ровно одним способом — вызовом `set()`. С непустыми литералами двусмысленности нет: двоеточие внутри `{\"a\": 1}` разводит словарь и множество ещё на разборе.\n\nПромах легко не заметить. Он всплывает на первом вызове метода, а это может быть далеко от строки, где выбрали не тот тип."
+    }
+  },
+  {
+    "id": "python-quiz-5",
+    "topicId": "python",
+    "question": {
+      "en": "What does this script print?\n\n```python\ndef add_item(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(add_item(1))\nprint(add_item(2))\n```",
+      "ru": "Что напечатает этот скрипт?\n\n```python\ndef add_item(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nprint(add_item(1))\nprint(add_item(2))\n```"
+    },
+    "options": {
+      "en": [
+        "First [1], then [2]: every call starts from a fresh list",
+        "First [1], then [1]: the default list cannot be changed",
+        "First [1], then [1, 2]: both calls share one list",
+        "First [1], then a TypeError raised by the second call"
+      ],
+      "ru": [
+        "Сначала [1], потом [2]: каждый вызов берёт новый список",
+        "Сначала [1], потом [1]: список по умолчанию менять нельзя",
+        "Сначала [1], потом [1, 2]: оба вызова делят один список",
+        "Сначала [1], потом TypeError на втором вызове"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A default value is evaluated once, while the `def` line itself runs, and that one object is reused by every later call. So both calls append to the same list:\n\n```python\nprint(add_item(1))   # [1]\nprint(add_item(2))   # [1, 2] -- the same list as the first call\n```\n\nJS behaves the other way round. There `function f(items = []) {}` builds a new array on every call that omits the argument, which is why this trap catches JS developers so reliably.\n\nThe idiomatic fix is `None` as the default, with a fresh list created inside the body when the caller passed nothing.",
+      "ru": "Значение по умолчанию вычисляется один раз, в момент выполнения строки `def`, и дальше каждый вызов переиспользует этот же объект. Поэтому оба вызова дописывают в один список:\n\n```python\nprint(add_item(1))   # [1]\nprint(add_item(2))   # [1, 2] -- тот же список, что и в первом вызове\n```\n\nВ JS всё наоборот: `function f(items = []) {}` создаёт новый массив на каждом вызове без аргумента. Именно поэтому ловушка так надёжно срабатывает на JS-разработчиках.\n\nИдиоматичное лечение — `None` по умолчанию, а новый список создавать внутри тела, если вызывающий ничего не передал."
+    }
+  },
+  {
+    "id": "python-quiz-6",
+    "topicId": "python",
+    "question": {
+      "en": "What happens when `increment()` is called?\n\n```python\ncounter = 0\n\ndef increment():\n    counter += 1\n    return counter\n\nincrement()\n```",
+      "ru": "Что произойдёт при вызове `increment()`?\n\n```python\ncounter = 0\n\ndef increment():\n    counter += 1\n    return counter\n\nincrement()\n```"
+    },
+    "options": {
+      "en": [
+        "It returns 1: the module-level name is read and then written",
+        "It raises UnboundLocalError: counter is local here",
+        "It returns 1, but the module-level counter stays at zero",
+        "It raises NameError: counter was never declared"
+      ],
+      "ru": [
+        "Вернёт 1: имя уровня модуля читается, а потом пишется",
+        "Упадёт с UnboundLocalError: counter здесь локальный",
+        "Вернёт 1, но counter уровня модуля останется нулём",
+        "Упадёт с NameError: counter не объявляли"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Python works out that a name is local by scanning the whole function body before it runs, and `counter += 1` is an assignment. So `counter` is local from the function's first line, and `+=` tries to read a local that does not exist yet.\n\n```python\nincrement()\n# UnboundLocalError: local variable 'counter' referenced before assignment\n```\n\nTo say which outer name you mean, declare it. Use `global counter` for a module-level variable, or `nonlocal counter` for one that belongs to an enclosing function.\n\nJS never faces this question. A variable there is declared explicitly once with `let` or `const`, so a later assignment can only mean that declaration.",
+      "ru": "Python определяет локальность имени, просматривая всё тело функции до запуска, а `counter += 1` — это присваивание. Значит, `counter` локален с первой строки функции, и `+=` пытается прочитать локальную переменную, которой ещё нет.\n\n```python\nincrement()\n# UnboundLocalError: local variable 'counter' referenced before assignment\n```\n\nЧтобы указать внешнее имя, его надо объявить: `global counter` для переменной уровня модуля и `nonlocal counter` для переменной объемлющей функции.\n\nВ JS такого вопроса не возникает. Переменная там объявляется явно и однажды через `let` или `const`, поэтому позднее присваивание может означать только это объявление."
+    }
+  },
+  {
+    "id": "python-quiz-7",
+    "topicId": "python",
+    "question": {
+      "en": "What does the last line show?\n\n```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass Task:\n    id: int\n    text: str\n\nprint(Task(1, \"Buy milk\"))\n```",
+      "ru": "Что покажет последняя строка?\n\n```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass Task:\n    id: int\n    text: str\n\nprint(Task(1, \"Buy milk\"))\n```"
+    },
+    "options": {
+      "en": [
+        "Task(id=1, text='Buy milk'), the generated repr",
+        "1 Buy milk, a readable generated format",
+        "An address in memory, because no representation is defined",
+        "It raises a TypeError: printing needs an explicit str method"
+      ],
+      "ru": [
+        "Task(id=1, text='Buy milk') — сгенерированный repr",
+        "1 Buy milk — читаемый сгенерированный формат",
+        "Адрес в памяти, потому что представление не задано",
+        "Упадёт с TypeError: для печати нужен явный метод str"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The decorator generates `__init__`, `__repr__` and `__eq__`, and `print` falls back to `__repr__` when the class has no `__str__`. So you see the technical form:\n\n```python\nprint(Task(1, \"Buy milk\"))\n# Task(id=1, text='Buy milk')\n```\n\nThe `__repr__` method is built for debugging, logs and the interactive prompt. The `__str__` method is the form a user sees, and `@dataclass` never generates it. You write it yourself when `print` should look different.\n\nOrdering is opt-in the same way. Without `order=True`, and without a hand-written `__lt__`, `sorted()` over these objects raises a `TypeError`.",
+      "ru": "Декоратор генерирует `__init__`, `__repr__` и `__eq__`, а `print` опирается на `__repr__`, когда у класса нет `__str__`. Поэтому вы видите техническую форму:\n\n```python\nprint(Task(1, \"Buy milk\"))\n# Task(id=1, text='Buy milk')\n```\n\nМетод `__repr__` сделан для отладки, логов и интерактивной консоли. Метод `__str__` — это форма для пользователя, и `@dataclass` его не генерирует. Его пишут руками, когда `print` должен выглядеть иначе.\n\nПорядок сравнения включается так же, по запросу. Без `order=True` и без своего `__lt__` вызов `sorted()` на этих объектах падает с `TypeError`."
+    }
+  },
+  {
+    "id": "python-quiz-8",
+    "topicId": "python",
+    "question": {
+      "en": "What do the two comparisons print?\n\n```python\nfrom dataclasses import dataclass\n\n\nclass Plain:\n    def __init__(self, text: str) -> None:\n        self.text = text\n\n\n@dataclass\nclass Boxed:\n    text: str\n\n\nprint(Plain(\"a\") == Plain(\"a\"))\nprint(Boxed(\"a\") == Boxed(\"a\"))\n```",
+      "ru": "Что напечатают эти два сравнения?\n\n```python\nfrom dataclasses import dataclass\n\n\nclass Plain:\n    def __init__(self, text: str) -> None:\n        self.text = text\n\n\n@dataclass\nclass Boxed:\n    text: str\n\n\nprint(Plain(\"a\") == Plain(\"a\"))\nprint(Boxed(\"a\") == Boxed(\"a\"))\n```"
+    },
+    "options": {
+      "en": [
+        "True and then True: Python compares the fields in both cases",
+        "False and then False: separate objects are never equal",
+        "True and then False: only the plain class compares by value",
+        "False and then True: only the dataclass compares by value"
+      ],
+      "ru": [
+        "Сначала True, потом True: поля сравниваются в обоих случаях",
+        "Сначала False, потом False: разные объекты не равны",
+        "Сначала True, потом False: по значению сравнивает обычный класс",
+        "Сначала False, потом True: по значению сравнивает dataclass"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "A plain class inherits `__eq__` from `object`, and that one compares identity: the same object in memory. Two separately built instances are different objects, so the first line is `False`.\n\n```python\nprint(Plain(\"a\") == Plain(\"a\"))   # False\nprint(Boxed(\"a\") == Boxed(\"a\"))   # True\n```\n\nThe `@dataclass` decorator generates an `__eq__` that compares every field as a tuple, in declaration order. It also requires both sides to be the same class, so one dataclass never equals another with matching fields.\n\nOverride `__eq__` by hand and override `__hash__` with it. A class with a custom `__eq__` and the inherited `__hash__` misbehaves as a `dict` key or a `set` member.",
+      "ru": "Обычный класс наследует `__eq__` от `object`, а тот сравнивает тождество: один и тот же объект в памяти. Два отдельно созданных экземпляра — разные объекты, поэтому первая строка даёт `False`.\n\n```python\nprint(Plain(\"a\") == Plain(\"a\"))   # False\nprint(Boxed(\"a\") == Boxed(\"a\"))   # True\n```\n\nДекоратор `@dataclass` генерирует `__eq__`, который сравнивает все поля как кортеж, в порядке объявления. Он ещё и требует, чтобы обе стороны были одного класса, поэтому один dataclass никогда не равен другому с такими же полями.\n\nПереопределяете `__eq__` руками — переопределяйте вместе с ним и `__hash__`. Класс со своим `__eq__` и унаследованным `__hash__` ведёт себя неверно как ключ словаря или элемент множества."
+    }
+  },
+  {
+    "id": "python-quiz-9",
+    "topicId": "python",
+    "question": {
+      "en": "The file `src/taskman/cli/app.py` starts with `from .commands import COMMAND_HANDLERS`. Which way of launching it resolves that import?",
+      "ru": "Файл `src/taskman/cli/app.py` начинается со строки `from .commands import COMMAND_HANDLERS`. Какой способ запуска разрешит этот импорт?"
+    },
+    "options": {
+      "en": [
+        "Running the file by its path from the project root directory",
+        "The command python -m taskman, which loads it inside its package",
+        "Any of them: a relative import resolves from the current directory",
+        "None: a relative import needs the full path to the module spelled out"
+      ],
+      "ru": [
+        "Запуск файла по пути из корневого каталога проекта",
+        "Команда python -m taskman: файл грузится внутри пакета",
+        "Любой: относительный импорт считается от текущего каталога",
+        "Никакой: относительному импорту нужен полный путь до модуля"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "A relative import counts levels of the package hierarchy, so the interpreter has to know which package the current module belongs to. The command `python -m taskman` goes through the normal import machinery, and the file is loaded as part of `taskman`.\n\nLaunching the file by its path loads it as `__main__`, with no parent package. The leading dot then has nothing to count from:\n\n```txt\npython src/taskman/cli/app.py\nImportError: attempted relative import with no known parent package\n```\n\nThe dots are package levels, not directory steps, and that is where Python parts ways with a Node import path. The two trees usually match, so the difference only shows up at this edge.\n\nThe fix is to launch the package the way it is meant to be launched, through `python -m taskman` or the installed command.",
+      "ru": "Относительный импорт считает уровни иерархии пакетов, поэтому интерпретатору нужно знать, какому пакету принадлежит текущий модуль. Команда `python -m taskman` идёт через обычный механизм импорта, и файл грузится как часть `taskman`.\n\nЗапуск файла по пути загружает его как `__main__`, без родительского пакета. Ведущей точке тогда не от чего считать:\n\n```txt\npython src/taskman/cli/app.py\nImportError: attempted relative import with no known parent package\n```\n\nТочки — это уровни пакетов, а не шаги по каталогам, и здесь Python расходится с путём импорта в Node. Обычно два дерева совпадают, поэтому разница видна только на этом краю.\n\nЛечение — запускать пакет так, как он задуман: через `python -m taskman` или через установленную команду."
+    }
+  },
+  {
+    "id": "python-quiz-10",
+    "topicId": "python",
+    "question": {
+      "en": "The file `taskman/models/__init__.py` prints a line whenever it runs. Does that line appear here?\n\n```python\nimport taskman.models.task\n```",
+      "ru": "Файл `taskman/models/__init__.py` печатает строку при каждом запуске. Появится ли эта строка здесь?\n\n```python\nimport taskman.models.task\n```"
+    },
+    "options": {
+      "en": [
+        "No: only importing taskman.models by name runs that file",
+        "Only under a star import, which pulls the whole package in",
+        "Yes: a package is always initialised before its submodule",
+        "No: the file runs lazily, on the first attribute you read"
+      ],
+      "ru": [
+        "Нет: файл выполнится только при импорте taskman.models по имени",
+        "Только при звёздочном импорте, который тянет весь пакет",
+        "Да: пакет всегда инициализируется раньше своего подмодуля",
+        "Нет: файл выполнится лениво, при первом обращении к атрибуту"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "Importing any submodule requires the package object to exist in `sys.modules` first, and initialising a package means running its `__init__.py`. That order is a guarantee of the import machinery, not a convention you can step around.\n\n```python\nimport taskman.models.task\n# models/__init__.py runs first, then task.py\n```\n\nA barrel file in JS works differently. The file `index.js` is only what the resolver looks for when a whole directory is imported. A direct import of `./models/task.js` never touches it.\n\nThat guarantee is why `__init__.py` is the natural place to curate a package's public names. You write `from .task import Task` there, with an `__all__` list beside it.",
+      "ru": "Импорт любого подмодуля требует, чтобы объект пакета сначала появился в `sys.modules`, а инициализация пакета — это выполнение его `__init__.py`. Такой порядок гарантирован механизмом импорта, а не соглашением, которое можно обойти.\n\n```python\nimport taskman.models.task\n# сначала выполнится models/__init__.py, потом task.py\n```\n\nВ JS файл-«бочка» работает иначе. Файл `index.js` — это лишь то, что резолвер ищет при импорте каталога целиком, поэтому `import './models/task.js'` его не тронет.\n\nИз-за этой гарантии `__init__.py` и есть естественное место, где собирают публичные имена пакета: `from .task import Task` и список `__all__` рядом."
+    }
+  },
+  {
+    "id": "python-quiz-11",
+    "topicId": "python",
+    "question": {
+      "en": "Which lines run when `compute()` returns a value?\n\n```python\ntry:\n    result = compute()\nexcept ValueError:\n    result = None\nelse:\n    print(\"computed\")\nfinally:\n    print(\"cleanup\")\n```",
+      "ru": "Какие строки выполнятся, если `compute()` вернёт значение?\n\n```python\ntry:\n    result = compute()\nexcept ValueError:\n    result = None\nelse:\n    print(\"computed\")\nfinally:\n    print(\"cleanup\")\n```"
+    },
+    "options": {
+      "en": [
+        "First computed, then cleanup",
+        "Only cleanup, since the else branch belongs to the except block",
+        "Only computed, since the finally branch waits for an exception",
+        "First cleanup, then computed, in that order"
+      ],
+      "ru": [
+        "Сначала computed, потом cleanup",
+        "Только cleanup: ветка else относится к блоку except",
+        "Только computed: ветка finally ждёт исключения",
+        "Сначала cleanup, потом computed, в таком порядке"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `else` branch runs only when `try` finished with no exception, and `finally` runs in every case. A successful `compute()` therefore prints both lines, with `else` going first.\n\n```python\n# compute() raises ValueError -> \"cleanup\" only\n# compute() returns a value    -> \"computed\", then \"cleanup\"\n```\n\nThe `else` branch does not mean \"otherwise we caught something\". It holds code that needs a successful `try` but must not be guarded by the same `except`.\n\nMoving that `print` to the last line of `try` is a different thing. Whatever it raises would then be caught by `except ValueError`, although it belongs to handling the result rather than computing it.",
+      "ru": "Ветка `else` выполняется только тогда, когда `try` завершился без исключения, а `finally` — в любом случае. Поэтому удачный `compute()` печатает обе строки, и `else` идёт первым.\n\n```python\n# compute() бросил ValueError -> только \"cleanup\"\n# compute() вернул значение   -> \"computed\", потом \"cleanup\"\n```\n\nВетка `else` означает не «иначе мы что-то поймали». В ней лежит код, которому нужен удачный `try`, но который не должен попадать под тот же `except`.\n\nПеренести этот `print` в последнюю строку `try` — уже другое дело. Тогда всё, что он бросит, поймает `except ValueError`, хотя это относится к обработке результата, а не к вычислению."
+    }
+  },
+  {
+    "id": "python-quiz-12",
+    "topicId": "python",
+    "question": {
+      "en": "What does this script print?\n\n```python\nclass Quiet:\n    def __enter__(self):\n        return self\n\n    def __exit__(self, exc_type, exc_value, traceback):\n        return True\n\n\nwith Quiet():\n    raise ValueError(\"boom\")\n\nprint(\"after\")\n```",
+      "ru": "Что напечатает этот скрипт?\n\n```python\nclass Quiet:\n    def __enter__(self):\n        return self\n\n    def __exit__(self, exc_type, exc_value, traceback):\n        return True\n\n\nwith Quiet():\n    raise ValueError(\"boom\")\n\nprint(\"after\")\n```"
+    },
+    "options": {
+      "en": [
+        "Nothing at all: the exception escapes before the last line",
+        "First boom, then after, because the error is logged on the way out",
+        "It re-raises ValueError right after the with block",
+        "It prints after: the exit method suppressed the error"
+      ],
+      "ru": [
+        "Ничего: исключение вырвется раньше последней строки",
+        "Сначала boom, потом after: ошибка логируется на выходе",
+        "Заново бросит ValueError сразу после блока with",
+        "Напечатает after: метод выхода погасил ошибку"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "A truthy return from `__exit__` tells Python that the exception has been handled, so it never reaches the caller. Execution simply continues after the `with` block:\n\n```python\nwith Quiet():\n    raise ValueError(\"boom\")\n\nprint(\"after\")   # after\n```\n\nSuppression is a deliberate capability of the protocol, and `contextlib.suppress` is built on it. The default is the opposite: a method that returns nothing returns `None`, which is falsy, so the exception keeps propagating once `__exit__` has finished.\n\nThe trap is writing `return True` for symmetry, or copying it from somewhere else. A context manager that swallows everything hides the real bugs that were supposed to reach the calling code.",
+      "ru": "Истинное значение из `__exit__` сообщает Python, что исключение обработано, и до вызывающего кода оно не доходит. Выполнение просто продолжается после блока `with`:\n\n```python\nwith Quiet():\n    raise ValueError(\"boom\")\n\nprint(\"after\")   # after\n```\n\nПодавление — сознательная возможность протокола, на ней построен `contextlib.suppress`. По умолчанию всё наоборот: метод, который ничего не возвращает, возвращает `None`, а это ложь, поэтому исключение летит дальше сразу после `__exit__`.\n\nЛовушка — написать `return True` ради симметрии или скопировать откуда-то. Контекстный менеджер, который глотает всё, прячет настоящие ошибки, обязанные дойти до вызывающего кода."
+    }
+  },
+  {
+    "id": "python-quiz-13",
+    "topicId": "python",
+    "question": {
+      "en": "What does the second `print` show?\n\n```python\ndef pages(items, size):\n    for start in range(0, len(items), size):\n        yield items[start:start + size]\n\n\ngen = pages([1, 2, 3, 4], 2)\nprint(list(gen))\nprint(list(gen))\n```",
+      "ru": "Что покажет второй `print`?\n\n```python\ndef pages(items, size):\n    for start in range(0, len(items), size):\n        yield items[start:start + size]\n\n\ngen = pages([1, 2, 3, 4], 2)\nprint(list(gen))\nprint(list(gen))\n```"
+    },
+    "options": {
+      "en": [
+        "The same pages again, because a generator starts over",
+        "It raises StopIteration on the second call to list",
+        "An empty list: the generator is already exhausted",
+        "Only the second page, because one page was consumed"
+      ],
+      "ru": [
+        "Те же страницы снова: генератор начинает заново",
+        "Упадёт с StopIteration на втором вызове list",
+        "Пустой список: генератор уже исчерпан",
+        "Только вторую страницу: одну уже забрали"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "A generator is a single-use iterator. It keeps one position, and after a full pass there is nothing left to yield. The second `list()` therefore gets an empty list, and raises nothing.\n\n```python\nprint(list(gen))   # [[1, 2], [3, 4]]\nprint(list(gen))   # []\n```\n\nExhaustion is silent because the loop catches `StopIteration` itself. That is the trap for a JS developer used to walking the same array ten times with no side effects.\n\nNeed more than one pass, or a length? Build a list. A generator pays off when the data is consumed exactly once, one value at a time.",
+      "ru": "Генератор — одноразовый итератор. У него одна позиция, и после полного прохода отдавать больше нечего, поэтому второй `list()` получает пустой список и ничего не бросает.\n\n```python\nprint(list(gen))   # [[1, 2], [3, 4]]\nprint(list(gen))   # []\n```\n\nИсчерпание проходит молча, потому что цикл сам ловит `StopIteration`. Это и есть ловушка для тех, кто привык из JS обходить один массив десять раз без последствий.\n\nНужен второй проход или длина? Собирайте список. Генератор выгоден там, где данные читают ровно один раз, по одному значению."
+    }
+  },
+  {
+    "id": "python-quiz-14",
+    "topicId": "python",
+    "question": {
+      "en": "What does this print?\n\n```python\nimport itertools\n\nnames = [\"a\", \"b\", \"a\"]\nprint([key for key, _ in itertools.groupby(names)])\n```",
+      "ru": "Что это напечатает?\n\n```python\nimport itertools\n\nnames = [\"a\", \"b\", \"a\"]\nprint([key for key, _ in itertools.groupby(names)])\n```"
+    },
+    "options": {
+      "en": [
+        "Three keys: only neighbouring equal values are grouped",
+        "Two keys: equal values are collected across the whole input",
+        "Two keys, because the input is sorted by the key beforehand",
+        "It raises a ValueError: the input must be sorted"
+      ],
+      "ru": [
+        "Три ключа: группируются только соседние равные значения",
+        "Два ключа: равные значения собираются по всему входному списку",
+        "Два ключа: вход заранее сортируется по ключу",
+        "Упадёт с ValueError: вход обязан быть отсортирован"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The function `itertools.groupby` collapses runs of neighbours that share a key, and nothing more. The two `\"a\"` values sit on either side of `\"b\"`, so they land in separate groups:\n\n```python\nprint([key for key, _ in itertools.groupby([\"a\", \"b\", \"a\"])])\n# ['a', 'b', 'a']\n```\n\nThis is not the grouping of SQL, the language relational databases speak, and not the `groupBy` of a JS utility library. Those collect equal keys wherever they appear in the input.\n\nSort the input by the same key first, and `groupby` behaves the way you expected. Skip that step and the code neither crashes nor warns. It just hands back more groups than you counted on.",
+      "ru": "Функция `itertools.groupby` склеивает только соседние элементы с одинаковым ключом, и больше ничего. Два значения `\"a\"` стоят по разные стороны от `\"b\"`, поэтому попадают в разные группы:\n\n```python\nprint([key for key, _ in itertools.groupby([\"a\", \"b\", \"a\"])])\n# ['a', 'b', 'a']\n```\n\nЭто не группировка SQL — языка запросов к реляционным базам данных — и не `groupBy` из служебной библиотеки JS. Те собирают равные ключи, где бы они во входе ни стояли.\n\nОтсортируйте вход по тому же ключу, и `groupby` поведёт себя как вы ждали. Без этого шага код не упадёт и не предупредит: он просто вернёт больше групп, чем вы рассчитывали."
+    }
+  },
+  {
+    "id": "python-quiz-15",
+    "topicId": "python",
+    "question": {
+      "en": "What happens when this code runs?\n\n```python\ndef add(a: int, b: int) -> int:\n    return a + b\n\n\nprint(add(\"2\", \"2\"))\n```",
+      "ru": "Что произойдёт при выполнении этого кода?\n\n```python\ndef add(a: int, b: int) -> int:\n    return a + b\n\n\nprint(add(\"2\", \"2\"))\n```"
+    },
+    "options": {
+      "en": [
+        "It raises a TypeError: the annotations are checked on the call",
+        "It prints 22: annotations are not checked while code runs",
+        "It prints 4: both strings are converted to numbers",
+        "It prints 22 and writes a warning about the argument types"
+      ],
+      "ru": [
+        "Упадёт с TypeError: аннотации проверяются в момент вызова",
+        "Напечатает 22: аннотации при выполнении не проверяются",
+        "Напечатает 4: обе строки превратятся в числа",
+        "Напечатает 22 и предупредит о типах аргументов"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "Annotations are metadata and nothing more. The interpreter keeps them in `__annotations__` and never verifies that the arguments match, so the body runs plain string concatenation.\n\n```python\nprint(add(\"2\", \"2\"))   # 22\n```\n\nTypeScript erases types at compile time in much the same way, so the underlying model is close. The difference is how mandatory the check is: `tsc` is usually part of the build, while `mypy` is a separate run you ask for.\n\nBy default `mypy` is lenient too. A function with no annotations at all is barely analysed, and `strict = true` in the config is what turns the posture into \"annotate almost everything\".",
+      "ru": "Аннотации — это метаданные и ничего больше. Интерпретатор держит их в `__annotations__` и не проверяет соответствие аргументов, поэтому в теле выполняется обычная склейка строк.\n\n```python\nprint(add(\"2\", \"2\"))   # 22\n```\n\nTypeScript стирает типы при компиляции примерно так же, поэтому модель у языков близкая. Разница в обязательности проверки: `tsc` обычно часть сборки, а `mypy` — отдельный запуск, о котором надо попросить.\n\nПо умолчанию `mypy` тоже снисходителен. Функцию совсем без аннотаций он почти не разбирает, а `strict = true` в конфиге переводит его в режим «аннотировать почти всё»."
+    }
+  },
+  {
+    "id": "python-quiz-16",
+    "topicId": "python",
+    "question": {
+      "en": "The module `sqlite_storage` never mentions `TaskStorage`. Why does `mypy` accept the last line?\n\n```python\nfrom typing import Protocol\n\nfrom ..models import Task\nfrom . import sqlite_storage\n\n\nclass TaskStorage(Protocol):\n    async def list_tasks(self) -> list[Task]: ...\n\n\ndb: TaskStorage = sqlite_storage\n```",
+      "ru": "Модуль `sqlite_storage` нигде не упоминает `TaskStorage`. Почему `mypy` принимает последнюю строку?\n\n```python\nfrom typing import Protocol\n\nfrom ..models import Task\nfrom . import sqlite_storage\n\n\nclass TaskStorage(Protocol):\n    async def list_tasks(self) -> list[Task]: ...\n\n\ndb: TaskStorage = sqlite_storage\n```"
+    },
+    "options": {
+      "en": [
+        "A protocol accepts any value at all, the way an untyped name does",
+        "Modules are exempt from protocol checks, unlike ordinary classes",
+        "The checker registers the module as a subclass",
+        "The module has attributes with matching signatures"
+      ],
+      "ru": [
+        "Протокол принимает любое значение, как имя вообще без типа",
+        "Модули освобождены от проверки протоколов, в отличие от классов",
+        "Проверяющий регистрирует модуль как подкласс",
+        "У модуля есть атрибуты с подходящими сигнатурами"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "A `Protocol` is structural typing: compatibility comes from shape, not from a declared parent. The checker compares the attributes of the object on the right against the methods the protocol declares, and a module is an object with attributes.\n\n```python\ndb: TaskStorage = sqlite_storage\n# no error: sqlite_storage.list_tasks matches the declared method\n```\n\nThe check runs in one direction only. Drop `list_tasks` from the module while leaving it in the protocol, and the assignment fails with `Module has no attribute \"list_tasks\"`.\n\nAn abstract base class from the `abc` module is the opposite. That kind is nominal: a class has to inherit from it explicitly, and having identical methods is not enough.",
+      "ru": "`Protocol` — это структурная типизация: совместимость определяется формой, а не объявленным родителем. Проверяющий сравнивает атрибуты объекта справа с методами, которые объявляет протокол, а модуль — тоже объект с атрибутами.\n\n```python\ndb: TaskStorage = sqlite_storage\n# ошибки нет: sqlite_storage.list_tasks совпадает с методом\n```\n\nПроверка идёт только в одну сторону. Уберите `list_tasks` из модуля, оставив его в протоколе, и присваивание упадёт с `Module has no attribute \"list_tasks\"`.\n\nАбстрактный базовый класс из модуля `abc` работает наоборот. Он номинальный: класс обязан наследоваться от него явно, и совпадающих методов недостаточно."
+    }
+  },
+  {
+    "id": "python-quiz-17",
+    "topicId": "python",
+    "question": {
+      "en": "When does the teardown line run?\n\n```python\nimport pytest\n\n\n@pytest.fixture\ndef sample():\n    print(\"setup\")\n    yield [1, 2, 3]\n    print(\"teardown\")\n\n\ndef test_length(sample):\n    assert len(sample) == 3\n```",
+      "ru": "Когда выполнится строка с teardown?\n\n```python\nimport pytest\n\n\n@pytest.fixture\ndef sample():\n    print(\"setup\")\n    yield [1, 2, 3]\n    print(\"teardown\")\n\n\ndef test_length(sample):\n    assert len(sample) == 3\n```"
+    },
+    "options": {
+      "en": [
+        "After the test, whether it passed or failed",
+        "Only after a passing test, since a failure skips the rest",
+        "Before the test, right after the setup line",
+        "At the very end of the run, once for the whole session"
+      ],
+      "ru": [
+        "После теста, независимо от того, прошёл он или упал",
+        "Только после успешного теста: падение остаток пропускает",
+        "До теста, сразу за строкой setup",
+        "В самом конце прогона, один раз на всю сессию"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The `yield` splits a fixture into setup and teardown, and pytest runs the part after it once the test is over, whatever the outcome. A failing assertion still triggers the cleanup.\n\n```txt\nsetup\nteardown\n```\n\nThe value handed over by `yield` becomes the parameter the test asked for by name. That is the second difference from Jest, where `beforeEach` applies to every test in the block implicitly.\n\nScope is configurable. The default is a fresh instance per test, while `scope=\"module\"` or `scope=\"session\"` reuses one instance across a file or a whole run.",
+      "ru": "`yield` делит фикстуру на подготовку и уборку, и pytest выполняет часть после него, когда тест закончился, — с любым исходом. Упавшая проверка тоже запускает уборку.\n\n```txt\nsetup\nteardown\n```\n\nЗначение, отданное через `yield`, становится тем параметром, который тест запросил по имени. Это и есть вторая разница с Jest, где `beforeEach` неявно применяется к каждому тесту блока.\n\nОбласть видимости настраивается. По умолчанию на каждый тест создаётся новый экземпляр, а `scope=\"module\"` или `scope=\"session\"` переиспользуют один на файл или на весь прогон."
+    }
+  },
+  {
+    "id": "python-quiz-18",
+    "topicId": "python",
+    "question": {
+      "en": "This test fails on the assertion, yet the pytest report clearly shows the text under captured standard error. Why?\n\n```python\nimport functools\nimport sys\n\nprint_err = functools.partial(print, file=sys.stderr)\n\n\ndef report():\n    print_err(\"not found\")\n\n\ndef test_report(capsys):\n    report()\n    assert \"not found\" in capsys.readouterr().err\n```",
+      "ru": "Тест падает на проверке, хотя отчёт pytest показывает этот текст в перехваченном потоке ошибок. Почему?\n\n```python\nimport functools\nimport sys\n\nprint_err = functools.partial(print, file=sys.stderr)\n\n\ndef report():\n    print_err(\"not found\")\n\n\ndef test_report(capsys):\n    report()\n    assert \"not found\" in capsys.readouterr().err\n```"
+    },
+    "options": {
+      "en": [
+        "The fixture captures standard output only, never the error stream",
+        "The assertion runs before the error stream has been flushed",
+        "The partial object captured the stream at import time",
+        "Capturing is switched off inside a partial object"
+      ],
+      "ru": [
+        "Фикстура перехватывает только вывод, но не поток ошибок",
+        "Проверка выполняется раньше, чем поток ошибок сброшен",
+        "Объект partial запомнил объект потока при импорте",
+        "Внутри объекта partial перехват отключается"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The call `functools.partial(print, file=sys.stderr)` evaluates `sys.stderr` once, at import time, and stores that exact object for every later call. The `capsys` fixture instead rebinds the name `sys.stderr` to an interceptor for the duration of the test.\n\nThe prepared call keeps writing to the object it captured earlier, so the interceptor never sees the text.\n\n```python\ndef print_err(*args, **kwargs):\n    print(*args, file=sys.stderr, **kwargs)\n```\n\nA small wrapper reads `sys.stderr` by name on every call, so it sees whatever the fixture put there. That is the right fix, rather than switching to lower-level capture to make the symptom disappear.\n\nThe same benefit shows up outside tests, anywhere the error stream is legitimately redirected while the program runs.",
+      "ru": "Вызов `functools.partial(print, file=sys.stderr)` вычисляет `sys.stderr` один раз, при импорте, и хранит именно этот объект для всех последующих вызовов. А фикстура `capsys` на время теста переназначает имя `sys.stderr` на перехватчик.\n\nЗаготовленный вызов продолжает писать в объект, запомненный раньше, поэтому перехватчик текста не видит.\n\n```python\ndef print_err(*args, **kwargs):\n    print(*args, file=sys.stderr, **kwargs)\n```\n\nМаленькая обёртка читает `sys.stderr` по имени на каждом вызове, поэтому видит то, что положила фикстура. Это и есть верное лечение, а не переход на перехват уровнем ниже, чтобы симптом исчез.\n\nТа же выгода видна и вне тестов — везде, где поток ошибок законно перенаправляют по ходу работы программы."
+    }
+  },
+  {
+    "id": "python-quiz-19",
+    "topicId": "python",
+    "question": {
+      "en": "A pure Python loop takes three seconds. The same work is split across two `threading.Thread` objects on a machine with free cores. What happens to the total time?",
+      "ru": "Цикл на чистом Python считает три секунды. Ту же работу раскладывают на два объекта `threading.Thread` на машине со свободными ядрами. Что будет с общим временем?"
+    },
+    "options": {
+      "en": [
+        "It drops roughly twofold, because the threads take two cores",
+        "It stays about the same: one thread runs bytecode at a time",
+        "The run fails: two threads cannot share one counter safely",
+        "It doubles, because the lock is taken and released per line"
+      ],
+      "ru": [
+        "Сократится примерно вдвое: потоки займут два ядра",
+        "Останется примерно тем же: байт-код исполняет один поток",
+        "Прогон упадёт: двум потокам нельзя делить один счётчик",
+        "Вырастет вдвое: блокировку берут и отдают на каждой строке"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "The Global Interpreter Lock lets exactly one thread execute Python bytecode at any instant, no matter how many cores are free. Two threads simply take short turns, so the amount of computation to do does not shrink.\n\nA measurement from the course, on an eleven-core machine:\n\n```txt\nsequential (2x, one thread):  6.17s\ntwo threads (same work):      5.66s\n```\n\nThe small difference left is scheduler noise, not parallelism.\n\nReal parallelism for computation comes from `multiprocessing.Process`. Each process carries its own interpreter and its own lock, and the very same measurement then drops from 6.31s to 3.26s.",
+      "ru": "Глобальная блокировка интерпретатора разрешает исполнять байт-код Python ровно одному потоку в каждый момент, сколько бы ядер ни было свободно. Два потока просто получают короткие отрезки времени по очереди, и объём вычислений от этого не уменьшается.\n\nЗамер из курса, машина на одиннадцать ядер:\n\n```txt\nsequential (2x, one thread):  6.17s\ntwo threads (same work):      5.66s\n```\n\nОставшаяся разница — шум планировщика, а не параллелизм.\n\nНастоящий параллелизм для вычислений даёт `multiprocessing.Process`. У каждого процесса свой интерпретатор и своя блокировка, и тот же замер падает с 6.31s до 3.26s."
+    }
+  },
+  {
+    "id": "python-quiz-20",
+    "topicId": "python",
+    "question": {
+      "en": "Two threads each call `time.sleep(1)`. Why does the pair finish in about one second instead of two?",
+      "ru": "Два потока вызывают `time.sleep(1)` каждый. Почему пара завершается примерно за секунду, а не за две?"
+    },
+    "options": {
+      "en": [
+        "Because two sleeping threads are merged into one timer",
+        "Because both threads share the wait through one file handle",
+        "Because the interpreter hands the lock over on a five-millisecond timer",
+        "Because a blocking call releases the interpreter lock while it waits"
+      ],
+      "ru": [
+        "Потому что два спящих потока сводятся к одному таймеру",
+        "Потому что оба потока делят ожидание через один дескриптор",
+        "Потому что интерпретатор передаёт блокировку другому потоку по таймеру в пять миллисекунд",
+        "Потому что блокирующий вызов отдаёт блокировку интерпретатора на время ожидания"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "A blocking call hands control to the operating system, and the thread has no bytecode to run while it waits. So the interpreter gives its lock up for the whole wait, and the other thread picks it straight up.\n\n```txt\nsequential (2x, one thread): 2.01s\ntwo threads (same work):     1.01s\n```\n\nThe two waits overlap almost perfectly, so the total approaches a single wait rather than the sum.\n\nThis is why threads are a real tool for work that waits on the network, the disk or a database. They are not a tool for computation. The switch timer of about five milliseconds exists as well, but it only shares out time. It creates no parallelism.",
+      "ru": "Блокирующий вызов передаёт управление операционной системе, и потоку нечего исполнять, пока он ждёт. Поэтому интерпретатор отдаёт блокировку на всё время ожидания, а другой поток сразу её подхватывает.\n\n```txt\nsequential (2x, one thread): 2.01s\ntwo threads (same work):     1.01s\n```\n\nДва ожидания накладываются почти идеально, поэтому итог приближается к одному ожиданию, а не к сумме.\n\nИменно поэтому потоки — рабочий инструмент там, где код ждёт сеть, диск или базу, и не инструмент для вычислений. Таймер переключения примерно в пять миллисекунд тоже есть, но он только делит время. Параллелизма он не создаёт."
+    }
+  },
+  {
+    "id": "python-quiz-21",
+    "topicId": "python",
+    "question": {
+      "en": "What does this script print?\n\n```python\nasync def fetch():\n    print(\"started\")\n    return 42\n\n\ncoro = fetch()\n```",
+      "ru": "Что напечатает этот скрипт?\n\n```python\nasync def fetch():\n    print(\"started\")\n    return 42\n\n\ncoro = fetch()\n```"
+    },
+    "options": {
+      "en": [
+        "Nothing: the body waits for an await or for a task",
+        "It prints started, because the call schedules the work at once",
+        "It prints started, and then warns about the discarded result",
+        "It raises a RuntimeError: no loop is running"
+      ],
+      "ru": [
+        "Ничего: тело ждёт await или задачу",
+        "Напечатает started: вызов сразу планирует работу",
+        "Напечатает started, а потом предупредит о брошенном результате",
+        "Упадёт с RuntimeError: цикл событий не запущен"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "Calling an `async def` function builds a coroutine object and runs not a single line of the body. It is the same mechanic as a generator, where `yield` turns the call into an object rather than an execution.\n\nThe body starts on one of three events: `await coro`, `asyncio.create_task(coro)` or `asyncio.run(coro)`.\n\n```python\ncoro = fetch()\n# RuntimeWarning: coroutine 'fetch' was never awaited\n```\n\nJS behaves the other way round. There `someAsyncFn()` starts the promise immediately, and the caller merely chooses not to wait for the result.\n\nSo a forgotten `await` in Python is not a syntax error. It is a silent no-op, and the warning above is its only trace.",
+      "ru": "Вызов функции `async def` создаёт объект-корутину и не выполняет ни одной строки тела. Механика та же, что у генератора: `yield` превращает вызов в объект, а не в выполнение.\n\nТело стартует по одному из трёх событий: `await coro`, `asyncio.create_task(coro)` или `asyncio.run(coro)`.\n\n```python\ncoro = fetch()\n# RuntimeWarning: coroutine 'fetch' was never awaited\n```\n\nВ JS всё наоборот: `someAsyncFn()` запускает промис сразу, а вызывающий код просто решает не ждать результата.\n\nПоэтому забытый `await` в Python — не синтаксическая ошибка. Это молчаливое бездействие, и предупреждение выше — его единственный след."
+    }
+  },
+  {
+    "id": "python-quiz-22",
+    "topicId": "python",
+    "question": {
+      "en": "Worker B fails after 0.1 seconds, while A and C are still waiting. What does this print?\n\n```python\nimport asyncio\n\n\nasync def worker(name, delay, fail=False):\n    await asyncio.sleep(delay)\n    if fail:\n        raise ValueError(f\"{name} failed\")\n    print(f\"{name}: done\")\n\n\nasync def main():\n    try:\n        await asyncio.gather(\n            worker(\"A\", 0.3), worker(\"B\", 0.1, fail=True), worker(\"C\", 0.5)\n        )\n    except ValueError as error:\n        print(\"gather raised:\", error)\n    await asyncio.sleep(0.6)\n\n\nasyncio.run(main())\n```",
+      "ru": "Работник B падает через 0.1 секунды, а A и C ещё ждут. Что это напечатает?\n\n```python\nimport asyncio\n\n\nasync def worker(name, delay, fail=False):\n    await asyncio.sleep(delay)\n    if fail:\n        raise ValueError(f\"{name} failed\")\n    print(f\"{name}: done\")\n\n\nasync def main():\n    try:\n        await asyncio.gather(\n            worker(\"A\", 0.3), worker(\"B\", 0.1, fail=True), worker(\"C\", 0.5)\n        )\n    except ValueError as error:\n        print(\"gather raised:\", error)\n    await asyncio.sleep(0.6)\n\n\nasyncio.run(main())\n```"
+    },
+    "options": {
+      "en": [
+        "Only the raised line: the other two are cancelled at once",
+        "Only the raised line, and then a warning about pending work",
+        "The raised line first, then done from A and from C",
+        "The lines from A and C first, then the raised line last"
+      ],
+      "ru": [
+        "Только строку про падение: остальные две сразу отменяются",
+        "Только строку про падение, а затем предупреждение о брошенной работе",
+        "Сначала строку про падение, потом done от A и от C",
+        "Сначала строки от A и C, а строку про падение последней"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "By default `gather` re-raises the first exception to the caller and does not cancel the others. The tasks it created for `A` and `C` stay on the event loop and finish in the background.\n\n```txt\ngather raised: B failed\nA: done\nC: done\n```\n\nNobody collects those two results any more. The calling code already received the exception and moved on.\n\nThere are two ways to change this. Pass `return_exceptions=True`, and the exception lands in the result list at its own slot instead of being raised. Or switch to `asyncio.TaskGroup`, which cancels the remaining tasks and reports the failures as a group.",
+      "ru": "По умолчанию `gather` перебрасывает первое исключение вызывающему коду и не отменяет остальные. Задачи, созданные им для `A` и `C`, остаются в цикле событий и досчитывают в фоне.\n\n```txt\ngather raised: B failed\nA: done\nC: done\n```\n\nЭти два результата уже никто не забирает. Вызывающий код получил исключение и пошёл дальше.\n\nПоведение меняют двумя способами. Передать `return_exceptions=True` — и исключение окажется в списке результатов на своём месте, а не будет брошено. Либо перейти на `asyncio.TaskGroup`, который отменяет оставшиеся задачи и отдаёт падения группой."
+    }
+  },
+  {
+    "id": "python-quiz-23",
+    "topicId": "python",
+    "question": {
+      "en": "The storage layer went async, and this pure transformation was marked `async def` for consistency. What did that change?\n\n```python\nasync def sort_tasks(items, sort_by):\n    return sorted(items, key=lambda t: t.id)\n```",
+      "ru": "Слой хранения стал асинхронным, и это чистое преобразование пометили `async def` для единообразия. Что изменилось?\n\n```python\nasync def sort_tasks(items, sort_by):\n    return sorted(items, key=lambda t: t.id)\n```"
+    },
+    "options": {
+      "en": [
+        "The event loop can now interleave other work inside the sort",
+        "Only the call site: it now has to await the result",
+        "The sort moves to a worker thread",
+        "Long lists get faster, because the work is split into chunks"
+      ],
+      "ru": [
+        "Цикл событий теперь может вклинить другую работу внутрь сортировки",
+        "Только место вызова: теперь ему нужен await",
+        "Сортировка уходит в отдельный поток",
+        "Длинные списки станут быстрее: работа разбивается на куски"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "A coroutine hands control back to the event loop only at an `await`, and this body has none. So it runs from start to finish in one go, exactly as the synchronous version did.\n\n```python\nresult = await sort_tasks(items, \"id\")   # the extra await buys nothing\n```\n\nThe cost is real, though. Every caller now has to write `await`, and the reader is told the function waits on something external, which is untrue.\n\nMarking a function `async def` out of habit also hides the honest split. In this project the database calls became `async def`, while filtering, sorting and pagination stayed synchronous, because they only transform a list already in memory.",
+      "ru": "Корутина возвращает управление циклу событий только на `await`, а в этом теле его нет. Значит, функция выполняется от начала до конца за один раз — ровно как её синхронная версия.\n\n```python\nresult = await sort_tasks(items, \"id\")   # лишний await ничего не даёт\n```\n\nПри этом цена вполне реальна. Каждому вызывающему теперь нужен `await`, а читателю сообщают, что функция чего-то ждёт снаружи, — и это неправда.\n\nПометка `async def` по привычке ещё и прячет честное разделение. В этом проекте асинхронными стали обращения к базе, а фильтрация, сортировка и разбивка на страницы остались синхронными: они только преобразуют список, уже лежащий в памяти."
+    }
+  },
+  {
+    "id": "python-quiz-24",
+    "topicId": "python",
+    "question": {
+      "en": "The class `Priority` is an `IntEnum` whose `__str__` returns `high` for `Priority.HIGH`. What ends up in the response body?\n\n```python\nclass TaskRead(BaseModel):\n    priority: str\n\n\ntask.priority = Priority.HIGH\nTaskRead.model_validate(task, from_attributes=True).model_dump_json()\n```",
+      "ru": "Класс `Priority` — это `IntEnum`, у которого `__str__` возвращает `high` для `Priority.HIGH`. Что попадёт в тело ответа?\n\n```python\nclass TaskRead(BaseModel):\n    priority: str\n\n\ntask.priority = Priority.HIGH\nTaskRead.model_validate(task, from_attributes=True).model_dump_json()\n```"
+    },
+    "options": {
+      "en": [
+        "The word high, because the model applies the string conversion",
+        "The number 2, unquoted, since the member stays an integer",
+        "Nothing: validation fails, because an enum member is not a string",
+        "The text 2 in quotes, the string form of the number"
+      ],
+      "ru": [
+        "Слово high: модель применит преобразование в строку",
+        "Число 2 без кавычек: элемент останется целым",
+        "Ничего: проверка упадёт, ведь элемент перечисления — не строка",
+        "Текст 2 в кавычках — строковая запись числа"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "Type coercion in Pydantic happens inside `pydantic-core`, separately from the language's own `__str__` protocol. An `IntEnum` member coerced into a `str` field goes through its numeric value, so the field ends up holding one character.\n\n```python\nTaskRead.model_validate(task, from_attributes=True).model_dump_json()\n# {\"priority\": \"2\", ...} -- not \"high\"\n```\n\nA custom `__str__` is simply ignored on that path. Nothing raises, and no warning appears while you write the code.\n\nThe reliable fix is to build the model explicitly and call `str(task.priority)` yourself. That is why the course adds a `from_task` classmethod instead of leaning on `from_attributes`.",
+      "ru": "Приведение типов в Pydantic происходит внутри `pydantic-core`, отдельно от языкового протокола `__str__`. Элемент `IntEnum`, приводимый к полю типа `str`, проходит через своё числовое значение, поэтому в поле оказывается один символ.\n\n```python\nTaskRead.model_validate(task, from_attributes=True).model_dump_json()\n# {\"priority\": \"2\", ...} -- а не \"high\"\n```\n\nСвой `__str__` на этом пути просто игнорируется. Ошибки нет, и предупреждения при написании кода тоже.\n\nНадёжное лечение — собрать модель явно и самому вызвать `str(task.priority)`. Поэтому в курсе появляется метод класса `from_task`, а не опора на `from_attributes`."
+    }
+  },
+  {
+    "id": "python-quiz-25",
+    "topicId": "python",
+    "question": {
+      "en": "The text is blank, so `Task.__post_init__` raises `ValueError`. The helper `db_connection` commits on a clean exit and rolls back on an exception. What is left in the database?\n\n```python\nasync def add_task(text, priority):\n    async with db_connection() as conn:\n        cursor = await conn.execute(\n            \"INSERT INTO tasks (text, priority, done) VALUES (?, ?, ?)\",\n            (text, int(priority), 0),\n        )\n        task_id = cursor.lastrowid\n    return Task(id=task_id, text=text, priority=priority, done=False)\n```",
+      "ru": "Текст пустой, поэтому `Task.__post_init__` бросает `ValueError`. Помощник `db_connection` фиксирует транзакцию при чистом выходе и откатывает её при исключении. Что останется в базе?\n\n```python\nasync def add_task(text, priority):\n    async with db_connection() as conn:\n        cursor = await conn.execute(\n            \"INSERT INTO tasks (text, priority, done) VALUES (?, ?, ?)\",\n            (text, int(priority), 0),\n        )\n        task_id = cursor.lastrowid\n    return Task(id=task_id, text=text, priority=priority, done=False)\n```"
+    },
+    "options": {
+      "en": [
+        "Nothing: the constructor runs before the insert reaches the base",
+        "Nothing: the failed request rolls the whole transaction back",
+        "The blank row, because the commit has already happened",
+        "The blank row, plus a second one on retry"
+      ],
+      "ru": [
+        "Ничего: конструктор выполнится раньше, чем вставка дойдёт до базы",
+        "Ничего: упавший запрос откатит транзакцию целиком",
+        "Пустая строка: фиксация уже произошла",
+        "Пустая строка и ещё одна при повторе"
+      ]
+    },
+    "correctIndex": 2,
+    "explanation": {
+      "en": "The `return` sits outside the `async with` block, so the context manager has already committed by the time the constructor runs. The insert lands, and only after that does `ValueError` surface.\n\n```python\n        task_id = cursor.lastrowid\n        return Task(id=task_id, text=text, priority=priority, done=False)\n```\n\nMoving the `return` inside the block is not cosmetic. The exception then happens in the body of `db_connection`, hits its own rollback branch, and the insert is undone.\n\nThe damage is worse than one failed request. Every later read crashes while turning that poisoned row back into a `Task`, from the command-line tool and from the web handlers alike.",
+      "ru": "Строка `return` стоит вне блока `async with`, поэтому к моменту работы конструктора контекстный менеджер уже зафиксировал транзакцию. Вставка проходит, и только после этого всплывает `ValueError`.\n\n```python\n        task_id = cursor.lastrowid\n        return Task(id=task_id, text=text, priority=priority, done=False)\n```\n\nПеренести `return` внутрь блока — не косметика. Тогда исключение случается в теле `db_connection`, попадает в его ветку отката, и вставка отменяется.\n\nУщерб больше, чем один упавший запрос. Каждое следующее чтение падает, пытаясь превратить эту испорченную строку обратно в `Task`, — и из консольной утилиты, и из веб-обработчиков."
+    }
+  },
+  {
+    "id": "python-quiz-26",
+    "topicId": "python",
+    "question": {
+      "en": "A route raises an exception, and no handler is registered for that type. What happens in this middleware?\n\n```python\n@app.middleware(\"http\")\nasync def log_requests(request, call_next):\n    start = time.perf_counter()\n    response = await call_next(request)\n    duration = time.perf_counter() - start\n    print(request.url.path, response.status_code, duration)\n    return response\n```",
+      "ru": "Обработчик маршрута бросает исключение, и для его типа не зарегистрирован обработчик. Что произойдёт в этом middleware?\n\n```python\n@app.middleware(\"http\")\nasync def log_requests(request, call_next):\n    start = time.perf_counter()\n    response = await call_next(request)\n    duration = time.perf_counter() - start\n    print(request.url.path, response.status_code, duration)\n    return response\n```"
+    },
+    "options": {
+      "en": [
+        "The client still gets a 500, and this request leaves no log line",
+        "The client gets a 500, and the line is logged with that status",
+        "The client gets no response at all, because the chain is broken",
+        "The line is logged, but the status field holds the exception itself"
+      ],
+      "ru": [
+        "Клиент всё равно получит 500, а строки в логе не будет",
+        "Клиент получит 500, и строка запишется с этим статусом",
+        "Клиент не получит ответа вообще: цепочка оборвалась",
+        "Строка запишется, но в поле статуса окажется само исключение"
+      ]
+    },
+    "correctIndex": 0,
+    "explanation": {
+      "en": "The exception flies straight through the middleware function, so nothing after `await call_next(request)` runs. The duration is never computed and the line is never printed.\n\nThe client still receives a standard 500, because an outer built-in layer of Starlette produces it. What goes missing is your own logging.\n\n```python\n    try:\n        response = await call_next(request)\n    except Exception:\n        print(request.url.path, \"unhandled\")\n        raise\n```\n\nWrapping the call is what makes the log complete. Without it the logs cover the happy path and the neatly handled errors, and stay empty exactly during a genuine crash.\n\nA registered exception handler changes the picture. Starlette turns the error into a response before it travels back out, so the middleware sees an ordinary status such as 404.",
+      "ru": "Исключение пролетает прямо сквозь функцию middleware, поэтому всё после `await call_next(request)` не выполняется. Длительность не считается, строка не печатается.\n\nКлиент всё равно получит стандартный 500: его выдаёт внешний встроенный слой Starlette. Пропадает именно ваше логирование.\n\n```python\n    try:\n        response = await call_next(request)\n    except Exception:\n        print(request.url.path, \"unhandled\")\n        raise\n```\n\nПолным лог делает именно обёртка вокруг вызова. Без неё в логах остаются удачные запросы и аккуратно обработанные ошибки, а на настоящем падении лог пуст.\n\nЗарегистрированный обработчик исключения меняет картину. Starlette превращает ошибку в ответ ещё до пути наружу, поэтому middleware видит обычный статус — например, 404."
+    }
+  },
+  {
+    "id": "python-quiz-27",
+    "topicId": "python",
+    "question": {
+      "en": "One user asks to mark a task that belongs to another user done. Why is 404 the right answer here, and not 403?",
+      "ru": "Один пользователь просит закрыть задачу, которая принадлежит другому. Почему правильный ответ здесь 404, а не 403?"
+    },
+    "options": {
+      "en": [
+        "Because 403 is reserved for a missing or an expired token",
+        "Because 403 would confirm that a task with that id exists",
+        "Because the route cannot tell the two cases apart at all",
+        "Because 404 is the only status the registered handler returns"
+      ],
+      "ru": [
+        "Потому что 403 отведён под отсутствующий или истёкший токен",
+        "Потому что 403 подтвердит, что задача с таким id существует",
+        "Потому что маршрут вообще не различает эти два случая",
+        "Потому что 404 — единственный статус зарегистрированного обработчика"
+      ]
+    },
+    "correctIndex": 1,
+    "explanation": {
+      "en": "An answer of 403 means \"this exists, and you may not have it\", so it confirms the id is real. Someone can then probe ids and watch which ones answer 403 instead of 404, learning what exists without touching any data.\n\nAn answer of 404 does not separate the two cases: no such task, and exists but not yours. Both look identical to anyone who is not the owner.\n\n```python\n\"SELECT * FROM tasks WHERE id = ? AND user_id = ?\"\n```\n\nFiltering by owner inside the query gives this for free. Someone else's task is simply not found, so one not-found error covers both cases and no ownership check is left to forget.",
+      "ru": "Ответ 403 означает «объект есть, но вам его нельзя», то есть подтверждает, что id настоящий. Дальше можно перебирать id и смотреть, какие отвечают 403 вместо 404, — и узнать, что вообще существует, не касаясь данных.\n\nОтвет 404 не разделяет два случая: задачи нет и задача есть, но чужая. Для любого, кто не владелец, они выглядят одинаково.\n\n```python\n\"SELECT * FROM tasks WHERE id = ? AND user_id = ?\"\n```\n\nФильтр по владельцу внутри запроса даёт это бесплатно. Чужая задача просто не находится, поэтому одна ошибка «не найдено» покрывает оба случая, и забыть проверку владельца уже негде."
+    }
+  },
+  {
+    "id": "python-quiz-28",
+    "topicId": "python",
+    "question": {
+      "en": "The fixture patches `db_connection` on the `sqlite_storage` module, yet `users_storage` keeps writing to the real database file. Why?\n\n```python\n# users_storage.py\nfrom .sqlite_storage import db_connection\n\n\nasync def create_user(username, hashed_password):\n    async with db_connection() as conn:\n        ...\n```",
+      "ru": "Фикстура подменяет `db_connection` на модуле `sqlite_storage`, а `users_storage` всё равно пишет в настоящий файл базы. Почему?\n\n```python\n# users_storage.py\nfrom .sqlite_storage import db_connection\n\n\nasync def create_user(username, hashed_password):\n    async with db_connection() as conn:\n        ...\n```"
+    },
+    "options": {
+      "en": [
+        "Because the patch is undone as soon as the fixture yields control",
+        "Because a context manager cannot be replaced once it is created",
+        "Because the patched module was imported later",
+        "Because the import bound the name once, in this module"
+      ],
+      "ru": [
+        "Потому что подмена откатывается, едва фикстура отдаёт управление",
+        "Потому что созданный контекстный менеджер заменить уже нельзя",
+        "Потому что подменённый модуль импортировали позже",
+        "Потому что импорт привязал имя один раз, в этом модуле"
+      ]
+    },
+    "correctIndex": 3,
+    "explanation": {
+      "en": "The line `from .sqlite_storage import db_connection` creates a separate binding of that name inside `users_storage`, fixed at import time. Patching the attribute on the other module leaves this binding pointing at the original function.\n\n```python\nfrom . import sqlite_storage\n\n\nasync def create_user(username, hashed_password):\n    async with sqlite_storage.db_connection() as conn:\n        ...\n```\n\nImporting the module and reaching the function through an attribute looks the name up afresh on every call, so the patch takes effect.\n\nThe symptom is indirect. The module behaves perfectly in the real application. In tests it shows up as state leaking between them, such as a duplicate username where the test creates the user from scratch.",
+      "ru": "Строка `from .sqlite_storage import db_connection` создаёт внутри `users_storage` отдельную привязку этого имени, закреплённую в момент импорта. Подмена атрибута на другом модуле оставляет эту привязку на исходной функции.\n\n```python\nfrom . import sqlite_storage\n\n\nasync def create_user(username, hashed_password):\n    async with sqlite_storage.db_connection() as conn:\n        ...\n```\n\nИмпорт модуля и обращение к функции через атрибут заново ищут имя на каждом вызове, поэтому подмена срабатывает.\n\nСимптом здесь косвенный. В настоящем приложении модуль работает безупречно, а в тестах это выглядит как утечка состояния между ними: дубль имени пользователя там, где по логике теста его создают с нуля."
+    }
+  }
+]

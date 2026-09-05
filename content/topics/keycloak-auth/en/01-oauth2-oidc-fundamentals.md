@@ -1,44 +1,48 @@
 # OAuth2 / OIDC — Protocol Fundamentals
 
-## Why you can't write secure auth code without this
-
-A developer who can drop `keycloak-js` into a React app and watch the login work, but can't explain why the request includes a `code_challenge`, or why the backend shouldn't "refresh the token" itself, is working from a tutorial, not from an understanding of the protocol. That's fine as long as everything follows the happy path — it breaks unpredictably the moment something non-standard shows up: a mobile app, a service with no user behind it, a redirect that looks suspiciously like a legitimate one.
-
-Everything in the rest of this topic — a specific Keycloak configuration, a specific NestJS guard, a specific `keycloak-js` wiring in React — is a concrete implementation of the roles and flows described here. Once you actually understand this article, most of the "weird" Keycloak behavior you'll run into in production stops being weird — you can see exactly which role is obligated to do what by spec.
+This article fixes the vocabulary the whole topic runs on: four OAuth2 roles, three kinds of token, and the grant types that issue them. It also explains what OpenID Connect (OIDC) adds on top of OAuth2. Everything later in this topic — a Keycloak configuration, a NestJS guard, a `keycloak-js` wiring in React — is one concrete implementation of what you read here.
 
 ## Protocol roles — the vocabulary everything else depends on
 
-OAuth2 (RFC 6749) doesn't describe "how to log in to a site" — it describes a more general problem: how a **Client** gets limited access to a resource owned by a **Resource Owner**, without ever seeing the owner's password. The spec fixes four roles:
+OAuth2 is defined by RFC 6749, one of the numbered Request for Comments documents that define internet protocols. It does not describe how to log in to a site. It describes a general problem: how a **Client** gets limited access to a resource owned by a **Resource Owner**, without ever seeing the owner's password. The spec fixes four roles:
 
 ```txt
-┌──────────────────┐                  ┌──────────────────────┐
-│ Resource Owner   │ login + consent  │ Authorization Server │
-│ (the user, owner │◄────────────────►│ (Keycloak: issues    │
-│ of the data)     │                  │ and signs tokens)    │
-└──────────────────┘                  └──────────────────────┘
-                                        │ issues a token
-                                        │
-                                        │
-┌───────────────────────┐                     ┌────────────────────┐
-│ Client                │◄──────────────┘     │ Resource Server    │
-│ (React SPA, mobile    │ presents the token  │ (NestJS API,       │
-│ app, backend service) │────────────────────►│ owns the protected │
-└───────────────────────┘                     │ resource)          │
-                                              └────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ Resource Owner — the user who owns the data     │
+└─────────────────────────────────────────────────┘
+                         │  logs in and gives consent
+                         ▼
+┌─────────────────────────────────────────────────┐
+│ Authorization Server (Keycloak) —               │
+│ authenticates the user, issues and signs tokens │
+└─────────────────────────────────────────────────┘
+                         │  issues a token
+                         ▼
+┌─────────────────────────────────────────────────┐
+│ Client — React SPA, mobile app, backend service │
+└─────────────────────────────────────────────────┘
+                         │  presents the token
+                         ▼
+┌─────────────────────────────────────────────────┐
+│ Resource Server — NestJS API that owns          │
+│ the protected data                              │
+└─────────────────────────────────────────────────┘
 ```
 
 - **Resource Owner** — the user who owns the data (or, in a service-to-service scenario with no human involved, the resource itself).
-- **Client** — the application that WANTS access to the resource on behalf of the Resource Owner. This does NOT have to be a server: a React SPA, a mobile app, and a backend service are all "clients" in OAuth2 terms — they just differ in their properties (see public vs confidential in [Keycloak Core Concepts]).
+- **Client** — the application that **wants** access to the resource on behalf of the Resource Owner. A client does **not** have to be a server. A React SPA (single-page application), a mobile app and a backend service are all clients in OAuth2 terms. They differ only in their properties — see public vs confidential in [Keycloak Core Concepts](./02-keycloak-core-concepts.md).
 - **Authorization Server** (Keycloak, in our stack) — the service that authenticates the Resource Owner, obtains consent, and issues tokens to the Client. It's the only role that ever sees the user's password and owns the token-issuing logic.
 - **Resource Server** — the API that owns the protected data (the NestJS backend, in our stack) and decides "let in / reject" based on the presented token.
 
-An important consequence that's easy to miss: **Client and Resource Server are different roles even when the same team writes both**. In a "React SPA + NestJS API" setup, the NestJS backend is the Resource Server. But that same NestJS backend, when it calls another internal service on its own behalf (no user involved), is now acting as a Client (see Client Credentials Grant below). Confusing "who is who" in a specific architecture is behind half the wrong decisions about where to store a token and who should refresh it.
+An important consequence that's easy to miss: **Client and Resource Server are different roles even when the same team writes both**. In a "React SPA + NestJS API" setup, the NestJS backend is the Resource Server.
+
+But that same backend becomes a Client when it calls another internal service on its own behalf, with no user involved. That case is the Client Credentials Grant, described below. Confusing "who is who" in a specific architecture is behind half the wrong decisions about where to store a token and who should refresh it.
 
 ## "OAuth2 is authorization, not authentication" — what this actually means
 
-This is the most-quoted line in this space, and it's worth treating as a technical constraint of the spec, not a slogan.
+OAuth2 answers one question: **what is this client allowed to do?** It issues an **access token** that tells the Resource Server which scopes the holder of that token has. OAuth2 by itself **does not guarantee** the Client anything about who the resource owner is. The spec defines no standard way to learn the user's identity. The most-quoted line in this space is a technical constraint, not a slogan.
 
-OAuth2 answers the question **"what is this client allowed to do?"** — it issues an **access token** that tells the Resource Server "whoever holds this token has these scopes." OAuth2 by itself **does not guarantee** the Client anything about who the resource owner is: the spec doesn't define a standardized way to learn the identity of the user. Historically this led developers to **abuse the access token as proof of identity** ("if I have a valid access token, I must know who's logged in") — this is the well-known ["OAuth as authentication" antipattern], which OpenID Connect fixed in 2014.
+Historically this led developers to **abuse the access token as proof of identity**. The reasoning was: if I hold a valid access token, I must know who is logged in. That is the well-known "OAuth as authentication" antipattern, which OpenID Connect fixed in 2014.
 
 ```txt
 Plain OAuth2 answers:
@@ -46,15 +50,15 @@ Plain OAuth2 answers:
                         ↓
                        YES / NO
 
-Plain OAuth2 does NOT directly answer:
+Plain OAuth2 does not directly answer:
   "Who exactly is logged in, and what's their name?"
 ```
 
-**OpenID Connect (OIDC)** is a thin, standardized identity layer built ON TOP of OAuth2 (same endpoints, same grant types, same redirect flow). OIDC adds exactly three things that were missing:
+**OpenID Connect (OIDC)** is a thin, standardized identity layer built **on top of** OAuth2: the same endpoints, the same grant types, the same redirect flow. OIDC adds exactly three things that plain OAuth2 was missing:
 
-1. **ID Token** — a new kind of token (always a JWT — that's an OIDC requirement, unlike the access token, whose format OAuth2 never dictates) that carries claims about the user's identity: `sub` (a unique identifier), `email`, `name`, authentication time, etc. The ID Token is meant for the **client** — it must be verified and **must never be sent to other APIs** as if it were an access token.
-2. **UserInfo endpoint** (`/protocol/openid-connect/userinfo` in Keycloak) — a standardized REST endpoint the client can call with an access token to get the user's current profile (useful when the ID Token is already stale but the profile might have changed).
-3. **Discovery document** (`/.well-known/openid-configuration`) — a JSON document the Authorization Server publishes, describing ALL of its endpoints and capabilities, so the client never has to hardcode URLs.
+1. **ID Token** — a token that carries claims about the user's identity: `sub` (a unique identifier), `email`, `name`, authentication time and so on. An ID Token is always a JSON Web Token (JWT) — that is an OIDC requirement, while OAuth2 never dictates the format of the access token. The ID Token is meant for the **client**. It must be verified, and it **must never be sent to other APIs** as if it were an access token.
+2. **UserInfo endpoint** (`/protocol/openid-connect/userinfo` in Keycloak) — a standardized HTTP endpoint the client can call with an access token. It returns the user's current profile, which helps when the ID Token is already stale but the profile might have changed.
+3. **Discovery document** (`/.well-known/openid-configuration`) — a JSON document the Authorization Server publishes. It describes **all** of the server's endpoints and capabilities, so the client never has to hardcode URLs.
 
 ```bash
 curl https://keycloak.example.com/realms/myrealm/.well-known/openid-configuration
@@ -62,153 +66,188 @@ curl https://keycloak.example.com/realms/myrealm/.well-known/openid-configuratio
 
 ```json
 {
-  "issuer": "https://keycloak.example.com/realms/myrealm",
-  "authorization_endpoint": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/auth",
-  "token_endpoint": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/token",
-  "userinfo_endpoint": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/userinfo",
-  "jwks_uri": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs",
-  "end_session_endpoint": "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/logout",
-  "grant_types_supported": ["authorization_code", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+  "issuer":
+    "https://keycloak.example.com/realms/myrealm",
+  "authorization_endpoint":
+    "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/auth",
+  "token_endpoint":
+    "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/token",
+  "userinfo_endpoint":
+    "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/userinfo",
+  "jwks_uri":
+    "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs",
+  "end_session_endpoint":
+    "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/logout",
+  "grant_types_supported": [
+    "authorization_code",
+    "client_credentials",
+    "refresh_token",
+    "urn:ietf:params:oauth:grant-type:device_code"
+  ],
   "response_types_supported": ["code", "none"],
   "code_challenge_methods_supported": ["plain", "S256"]
 }
 ```
 
-Practical consequence for real engineering work: **any decent library (keycloak-js, oidc-client-ts, passport-jwt with an OIDC strategy) should be configured with an issuer URL and pull this document itself**, rather than hardcoding paths to every endpoint. That's the difference between a config that "works on my dev box" and one that survives a Keycloak upgrade, where paths under `/protocol/openid-connect/*` could in theory change.
+Practical consequence: **a decent library should be configured with an issuer URL and pull this document itself**, rather than hardcoding a path to every endpoint. Libraries like `keycloak-js`, `oidc-client-ts` and `passport-jwt` with an OIDC strategy all support that.
+
+It is the difference between a config that works on your dev box and one that survives a Keycloak upgrade. Under `/protocol/openid-connect/*` the paths could in theory change.
 
 ## Front-channel vs back-channel — a recurring concept in every article ahead
 
-This distinction isn't a detail of one specific flow — it's a lens you should use to analyze ANY data exchange in OAuth2/OIDC:
+This distinction isn't a detail of one specific flow. It's a lens for **any** data exchange in OAuth2/OIDC:
 
 ```txt
 Front-channel:
-  Data travels through the user's BROWSER — redirects, query params,
-  the URL fragment (#), postMessage. Visible in the address bar,
-  potentially visible to third-party code on the page, can leak
-  through browser history, the Referer header, proxy logs.
-  Example: a redirect to /authorize with parameters in the query string.
+  Data travels through the user's browser — redirects, query
+  params, the URL fragment (#), postMessage. Visible in the
+  address bar, potentially visible to third-party code on the
+  page, and able to leak through browser history, the Referer
+  header or proxy logs.
+  Example: a redirect to /authorize with parameters in the
+  query string.
 
 Back-channel:
-  Data travels SERVER-TO-SERVER, directly, bypassing the user's
-  browser entirely. A TLS connection between the Client (or Resource
-  Server) and the Authorization Server. Never visible to the user,
-  never touches browser history.
-  Example: exchanging an authorization code for tokens — a direct
-  POST to /token from the backend (or, for a public client, straight
-  from JS code in the browser, but NOT through a redirect).
+  Data travels server to server, directly, bypassing the user's
+  browser entirely. A TLS connection between the Client (or the
+  Resource Server) and the Authorization Server. Never visible
+  to the user, never stored in browser history.
+  Example: exchanging an authorization code for tokens — a
+  direct POST to /token from the backend, or straight from JS
+  code in the browser for a public client, but never through
+  a redirect.
 ```
 
-Why it matters: **anything that needs to stay secret (a client secret, the tokens themselves) should travel over the back-channel wherever possible**. This is exactly why the Implicit Grant (passing the access token through the URL fragment — front-channel) is considered insecure (more below), while the Authorization Code Grant (only a one-time-use `code` over the front-channel, with the actual token exchange over the back-channel) became the standard. This pair of terms will keep showing up without redefinition from here on — if a flow passes something through a redirect, that's front-channel; if it's a direct HTTP request between servers, that's back-channel.
+Why it matters: **anything that must stay secret — a client secret, the tokens themselves — should travel over the back-channel wherever possible**.
+
+That is why the Implicit Grant is considered insecure: it passes the access token through the URL fragment, over the front-channel (more on this below). The Authorization Code Grant became the standard instead. It sends only a one-time `code` over the front-channel and exchanges that code for tokens over the back-channel.
+
+From here on this pair of terms is used without redefinition. If a flow passes something through a redirect, that's front-channel. If it's a direct HTTP request between servers, that's back-channel.
 
 ## Access Token, ID Token, Refresh Token — three artifacts, three purposes
 
-This is the #1 source of confusion for developers new to this space: all three are "some kind of token" issued in the same response, and it's tempting to start treating them interchangeably. That's a mistake with real consequences.
+This is the number one source of confusion for developers new to this space. All three are "some kind of token", issued in the same response, so it's tempting to treat them interchangeably. That's a mistake with real consequences.
 
-```txt
-┌──────────────┬──────────────────────┬────────────────────┬──────────────────────────┐
-│              │ Access Token         │ ID Token           │ Refresh Token            │
-├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
-│ Intended for │ Resource Server      │ Client (only!)     │ Authorization Server     │
-│              │ (the API)            │ never send it to   │ (only it accepts it —    │
-│              │                      │ another API        │ only at /token)          │
-├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
-│ Format       │ Opaque by OAuth2     │ Always a JWT       │ Opaque by spec (in       │
-│              │ spec; Keycloak makes │ (an OIDC           │ practice Keycloak also   │
-│              │ it a JWT in practice │ requirement)       │ makes it a JWT, but      │
-│              │                      │                    │ that's an implementation │
-│              │                      │                    │ detail)                  │
-├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
-│ Contains     │ scope, roles,        │ Identity claims:   │ Usually the minimum      │
-│              │ permissions —        │ sub, email, name,  │ data the Authorization   │
-│              │ "what's allowed"     │ auth_time —        │ Server needs to find     │
-│              │                      │ "who this is"      │ the session              │
-├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
-│ TTL          │ Short (minutes)      │ Same as access     │ Long (hours/days) or     │
-│              │                      │ token              │ until logout             │
-├──────────────┼──────────────────────┼────────────────────┼──────────────────────────┤
-│ Used by      │ Resource server, on  │ Client app — to    │ Client — ONLY to get a   │
-│              │ every API call       │ show "Hi, Name" in │ new token pair from the  │
-│              │ (Authorization:      │ the UI             │ /token endpoint          │
-│              │ Bearer <token>)      │                    │                          │
-└──────────────┴──────────────────────┴────────────────────┴──────────────────────────┘
-```
+|  | Access Token | ID Token | Refresh Token |
+|---|---|---|---|
+| Intended for | Resource Server (the API), in an `Authorization: Bearer` header | Client only — never send it to another API | Authorization Server, and only at `/token` |
+| Format | Opaque per OAuth2 spec; a JWT in Keycloak | Always a JWT (an OIDC requirement) | Opaque per spec; a JWT in Keycloak, an implementation detail |
+| Contains | scope, roles, permissions — "what's allowed" | Identity claims: `sub`, `email`, `name`, `auth_time` — "who this is" | The minimum the Authorization Server needs to find the session |
+| Lifetime | Short (minutes) | Same as the access token | Long (hours or days), or until logout |
+| Used by | Resource Server, on every API call | Client app, to show "Hi, Name" on screen | Client, only to get a new token pair |
 
-The physical format of the access token and validation details (JWKS, `kid`, local validation vs introspection) are covered separately in [Tokens, Sessions, and Validation] — the point here is the semantic boundary between the three artifacts, not the wire format. JWT's general structure (header.payload.signature) is already covered in [JWT, Access Token and Refresh Token] — we don't repeat that here; the focus of this article is each token's protocol role, not its physical shape.
+The physical format of the access token and the details of validating it are covered separately in [Tokens, Sessions, and Validation](./03-tokens-sessions-and-validation.md). That article explains JWKS (JSON Web Key Set), the `kid` header, and local validation versus introspection. The point here is the semantic boundary between the three artifacts, not the wire format.
 
-A common real-world mistake: a React app decodes the ID Token and sends it as `Authorization: Bearer <idToken>` on requests to its own NestJS API. This can technically even work, if the backend is careless enough to accept any JWT from the same issuer — but it violates the contract: the ID Token isn't meant for a Resource Server, it has a different `aud` (audience — the recipient the token declares itself for), and nothing guarantees it even carries the claims authorization needs (roles, scope).
+The general structure of a JWT (header.payload.signature) is covered in the JWT, Access Token and Refresh Token topic. This article focuses on each token's protocol role, not its physical shape.
+
+A common real-world mistake: a React app decodes the ID Token and sends it as `Authorization: Bearer <idToken>` on requests to its own NestJS API. This can technically even work, if the backend is careless enough to accept any JWT from the same issuer. But it violates the contract.
+
+The ID Token isn't meant for a Resource Server. It has a different `aud` — the audience claim, naming the recipient the token was issued for. Nothing guarantees it even carries the claims authorization needs, such as roles and scope.
 
 ## Scopes vs Claims — the pair everyone mixes up
 
-- **Scope** — a request for access. The client specifies scopes in the `/authorize` request (`scope=openid profile email`), effectively saying "I need access to this category of data/actions." Scope is what the client asks FOR.
-- **Claim** — a concrete fact about the user or the token, inside the issued JWT (`email`, `sub`, `realm_access.roles`). A claim is what the client actually GOT.
+- **Scope** — a request for access. The client specifies scopes in the `/authorize` request (`scope=openid profile email`), effectively saying that it needs access to this category of data and actions. Scope is what the client asks **for**.
+- **Claim** — a concrete fact about the user or the token, inside the issued JWT (`email`, `sub`, `realm_access.roles`). A claim is what the client actually **got**.
 
 ```txt
-Requested scope       →  Authorization Server decides which claims to grant
-"scope=openid profile email"
-                       →  ID Token contains: sub, name, preferred_username,
-                          email, email_verified ...
+Requested scope:  "scope=openid profile email"
+        ↓
+The Authorization Server decides which claims to grant
+        ↓
+ID Token contains: sub, name, preferred_username, email,
+                   email_verified ...
 ```
 
-The mapping between scopes and the actual set of claims in Keycloak is configured through **Client Scopes** and **Protocol Mappers** — a Keycloak-specific mechanism covered in [Keycloak Core Concepts]. The protocol-level principle to take away here: scope is the request, claim is the result, and one scope usually "bundles" several claims at once (the `profile` scope isn't a single claim — it's a group: `name`, `family_name`, `given_name`, `picture`, and so on).
+In Keycloak, the mapping between scopes and the actual set of claims is configured through **Client Scopes** and **Protocol Mappers**. That mechanism is Keycloak-specific and is covered in [Keycloak Core Concepts](./02-keycloak-core-concepts.md).
+
+The protocol-level principle to take away: scope is the request, claim is the result. One scope usually bundles several claims at once. The `profile` scope isn't a single claim — it's a group of `name`, `family_name`, `given_name`, `picture` and so on.
 
 ## Grant Types — how a client actually gets a token
 
-A grant type (sometimes called a "flow") is a concrete protocol scenario: which messages travel between the Client, the Authorization Server, and (sometimes) the user's browser, ending with the client holding tokens. Picking a grant type isn't a matter of taste — it's a direct consequence of what the client actually IS: does it have a user in front of a screen, can it safely hold a secret, what kind of input interface does it have.
+A grant type (sometimes called a flow) is a concrete protocol scenario. It fixes which messages travel between the Client, the Authorization Server and — sometimes — the user's browser, ending with the client holding tokens.
+
+Picking a grant type isn't a matter of taste. It follows directly from what the client **is**:
+
+- Is there a user in front of a screen?
+- Can the client safely hold a secret?
+- What kind of input interface does it have?
+
+| Grant type | Who it's for | Status |
+|---|---|---|
+| Authorization Code + PKCE (Proof Key for Code Exchange) | A user with a browser; public or confidential client | The default today |
+| Client Credentials | A service acting for itself, with no user | Standard for service-to-service calls |
+| Device Code | A device with no keyboard or browser | Niche but standard |
+| Resource Owner Password (ROPC) | Legacy clients that collect the password themselves | Deprecated |
+| Implicit | Browser apps, from before PKCE existed | Deprecated |
 
 ### Authorization Code + PKCE — the modern default
 
-This is the only correct choice for an interactive user login today — for both confidential clients (a backend with a client secret) and, more importantly, public clients (SPAs, mobile apps), which physically cannot hold a secret.
+This is the only correct choice for an interactive user login today. It fits confidential clients, meaning a backend with a client secret. More importantly, it fits public clients — single-page apps and mobile apps, which physically cannot hold a secret.
 
-**PKCE** (Proof Key for Code Exchange, pronounced "pixy," RFC 7636) was originally designed for mobile apps, but today Keycloak and most modern guidance recommend it for ALL clients, confidential ones included — because it defends against a specific class of attack (authorization code interception) that's relevant regardless of client type, not "the absence of a secret." The full PKCE mechanism (what `code_verifier`/`code_challenge` actually are, why they defend against interception) is covered in detail in [Security Hardening and Attack Vectors] — here we're fixing the protocol sequence.
+**PKCE** is pronounced "pixy" and is defined in RFC 7636. It was originally designed for mobile apps. Today Keycloak and most modern guidance recommend it for **all** clients, confidential ones included.
+
+The reason is not the missing client secret. PKCE defends against a specific class of attack — authorization code interception — and that attack is relevant regardless of client type.
+
+The full PKCE mechanism — what `code_verifier` and `code_challenge` are, and why they stop interception — is covered in [Security Hardening and Attack Vectors](./07-security-hardening-and-attack-vectors.md). Here we only fix the protocol sequence.
 
 ```txt
-Participants: User's browser, React SPA (Client), Keycloak (AS), NestJS API (RS)
+Participants: the user's browser, React SPA (Client), Keycloak
+  (Authorization Server), NestJS API (Resource Server)
 
-1. [Client, locally]      Generate a random code_verifier,
-                            compute code_challenge = SHA256(code_verifier)
+1. [Client, locally]
+   Generate a random code_verifier, then compute
+   code_challenge = SHA256(code_verifier)
 
-2. [front-channel]        The browser is redirected to:
-                            GET /authorize?
-                              response_type=code
-                              &client_id=spa-client
-                              &redirect_uri=https://app.example.com/callback
-                              &scope=openid profile email
-                              &state=<random value — CSRF protection>
-                              &code_challenge=<computed in step 1>
-                              &code_challenge_method=S256
+2. [front-channel]
+   The browser is redirected to:
+     GET /authorize?
+       response_type=code
+       &client_id=spa-client
+       &redirect_uri=https://app.example.com/callback
+       &scope=openid profile email
+       &state=<random value — CSRF protection>
+       &code_challenge=<computed in step 1>
+       &code_challenge_method=S256
 
-3. [on Keycloak's side]   The user sees Keycloak's login form (NOT the
-                            client's own form!), enters their credentials,
-                            Keycloak authenticates them and stores the
-                            code_challenge alongside the authorization code
+3. [on Keycloak's side]
+   The user sees Keycloak's login form — not the client's own
+   form — and enters their credentials. Keycloak authenticates
+   them and stores the code_challenge alongside the
+   authorization code.
 
-4. [front-channel]        Keycloak redirects the browser back:
-                            GET https://app.example.com/callback?
-                              code=<one-time-use authorization code>
-                              &state=<the same value sent in step 2>
+4. [front-channel]
+   Keycloak redirects the browser back:
+     GET https://app.example.com/callback?
+       code=<one-time-use authorization code>
+       &state=<the same value sent in step 2>
 
-5. [Client]                Verify state matches what was sent
-                            (protects against CSRF/replay on the redirect)
+5. [Client]
+   Verify that state matches what was sent
+   (protects against CSRF/replay on the redirect)
 
-6. [back-channel]          Client makes a direct POST (not through
-                            a browser redirect) to /token:
-                              grant_type=authorization_code
-                              &code=<code from step 4>
-                              &redirect_uri=<same one as in step 2>
-                              &code_verifier=<original from step 1>
-                              &client_id=spa-client
+6. [back-channel]
+   The Client makes a direct POST to /token, not through
+   a browser redirect:
+     grant_type=authorization_code
+     &code=<code from step 4>
+     &redirect_uri=<same one as in step 2>
+     &code_verifier=<original from step 1>
+     &client_id=spa-client
 
-7. [Keycloak, back-channel] Checks: SHA256(code_verifier) ==
-                            code_challenge stored in step 3.
-                            If it matches → issues access_token,
-                            id_token, refresh_token in the JSON response
+7. [Keycloak, back-channel]
+   Checks that SHA256(code_verifier) equals the code_challenge
+   stored in step 3. If it matches, Keycloak issues
+   access_token, id_token and refresh_token in the JSON
+   response.
 ```
 
-A detail worth stating explicitly: the `code` from step 4 is **useless by itself without the `code_verifier`** — even if an attacker intercepts it (say, through a proxy log leak, or a malicious app registered on the same custom URL scheme on a mobile OS), they can't exchange it for tokens, because they don't know the `code_verifier`, which never left the legitimate client's memory.
+A detail worth stating explicitly: the `code` from step 4 is **useless by itself without the `code_verifier`**. Even if an attacker intercepts the code, they cannot exchange it for tokens, because they don't know the `code_verifier`. That value never left the legitimate client's memory.
+
+Interception is realistic: a leak in proxy logs, or a malicious app registered on the same custom URL scheme in a mobile operating system.
 
 ### Client Credentials Grant — service-to-service, no user at all
 
-Used when it's not a user requesting a token, but a service itself — for example, NestJS service A calls NestJS service B over an internal API, and there's no "logged-in human" anywhere in this interaction.
+Used when a service requests a token for itself, not for a user. For example, NestJS service A calls NestJS service B over an internal API. There is no logged-in human anywhere in that interaction.
 
 ```txt
 Participants: Service A (Client, confidential), Keycloak (AS)
@@ -236,33 +275,38 @@ The key difference from Authorization Code: there's no front-channel step at all
 
 ### Device Code Grant — limited-input devices
 
-A niche but real scenario: an app running on a device with no convenient keyboard/browser (a smart TV, a console, a CLI tool) where typing a username/password directly is awkward.
+A niche but real scenario: an app runs on a device with no keyboard or browser. Think of a smart TV, a game console, a command-line tool. Typing a username and password there is awkward.
 
 ```txt
-1. [Device → AS, back-channel]
-   POST /auth/device — the device requests a "device code"
+1. [Device → Authorization Server, back-channel]
+   POST /auth/device — the device requests a "device code".
    ← gets back: device_code (for the device itself),
                 user_code (short, for a human — "ABCD-1234"),
-                verification_uri ("https://keycloak.example.com/device")
+                verification_uri
+                  ("https://keycloak.example.com/device")
 
-2. [Device]  Shows the user on screen:
-   "Go to keycloak.example.com/device and enter code ABCD-1234"
+2. [Device]
+   Shows on screen: "Go to keycloak.example.com/device
+   and enter code ABCD-1234"
 
-3. [User, on a DIFFERENT device — phone/laptop]
+3. [User, on a different device — phone or laptop]
    Opens verification_uri, logs in normally (an Authorization
-   Code-like flow happens internally), enters the user_code, confirms
+   Code-like flow happens internally), enters the user_code,
+   confirms.
 
-4. [Device, meanwhile]  Polls /token with the device_code every N seconds:
+4. [Device, meanwhile]
+   Polls /token with the device_code every N seconds:
    grant_type=urn:ietf:params:oauth:grant-type:device_code
-   Until the user confirms — Keycloak replies "authorization_pending".
-   Once confirmed — tokens are returned.
+   Until the user confirms, Keycloak replies
+   "authorization_pending". Once confirmed, tokens are
+   returned.
 ```
 
-The core idea worth calling out: the device with the poor input interface never sees the username/password at all — all authentication happens on a separate, convenient device, and the original device just gets the result via polling.
+The core idea: the device with the poor input interface never sees the username or password. Authentication happens on a separate, convenient device. The original device only receives the result, by polling.
 
 ### Why Resource Owner Password Credentials (ROPC) is deprecated
 
-ROPC (the `password` grant) looks tempting: the client collects the username/password in its own form and exchanges them for a token in one request, no redirects involved.
+ROPC, the `password` grant, looks tempting. The client collects the username and password in its own form, then exchanges them for a token in one request, with no redirects.
 
 ```txt
 POST /token
@@ -274,70 +318,76 @@ POST /token
 
 The problem isn't that "it's old" — it's specific architectural losses:
 
-- **The client physically holds the user's password in memory.** This directly contradicts OAuth2's founding goal — "grant access without exposing the password to a third party." If the client (or a library it uses) has a vulnerability, the password itself is compromised, not just a token.
-- **MFA/step-up becomes hard to bolt on.** The Authorization Server never sees or controls the login form — so it can't insert an SMS code, a WebAuthn prompt, a redirect to an external IdP (see Identity Brokering in [Keycloak Core Concepts]) — all of that second-factor logic would have to be reinvented inside every client.
-- **SSO becomes impossible.** The user logs in again separately in EVERY client — because authentication happens inside each app's own form, not on a shared Authorization Server.
+- **The client physically holds the user's password in memory.** That directly contradicts OAuth2's founding goal: grant access without exposing the password to a third party. If the client, or a library it uses, has a vulnerability, the password itself is compromised — not just a token.
+- **Multi-factor authentication (MFA) and step-up become hard to add.** The Authorization Server never sees or controls the login form. So it cannot insert a text-message code, a WebAuthn prompt, or a redirect to an external identity provider (IdP). All of that second-factor logic would have to be reinvented inside every client. Identity Brokering, described in [Keycloak Core Concepts](./02-keycloak-core-concepts.md), is the mechanism for that.
+- **Single sign-on (SSO) becomes impossible.** The user logs in again separately in **every** client, because authentication happens inside each app's own form rather than on a shared Authorization Server.
 
 Keycloak disables Direct Access Grants (Keycloak's internal name for ROPC) by default for new clients — that's a deliberate decision, not a forgotten checkbox.
 
 ### Why Implicit Grant is deprecated
 
-The Implicit Grant (`response_type=token`) was designed for SPAs before CORS and PKCE were widely available — the idea was to hand back the access token directly in the redirect, skipping a separate back-channel exchange, because browsers back then couldn't reliably make a cross-origin POST to swap a code for a token.
+The Implicit Grant (`response_type=token`) was designed for SPAs before CORS (cross-origin resource sharing) and PKCE were widely available. The idea was to hand the access token back directly in the redirect, with no separate back-channel exchange. Browsers back then couldn't reliably make a cross-origin POST to swap a code for a token.
 
 ```txt
 GET /authorize?response_type=token&client_id=spa&redirect_uri=...
-                        ↓
-Redirect: https://app.example.com/callback#access_token=eyJhbGci...&expires_in=300
-                                            ▲
-                                    token in the URL FRAGMENT
+        ↓
+Redirect to:
+  https://app.example.com/callback
+    #access_token=eyJhbGci...&expires_in=300
+     ▲
+     the token sits in the URL fragment
 ```
 
 Concrete, not abstract, reasons this is considered insecure today (the OAuth 2.0 Security Best Current Practice explicitly recommends against Implicit):
 
-- **The token travels over the front-channel in the clear** — the whole point of splitting "code over front-channel, token over back-channel" in the Authorization Code Grant disappears: the access token itself ends up in the address bar, in browser history, in the Referer header when navigating away to an external link from that page, in the logs of any intermediate proxy that logs full URLs.
-- **No client verification at token issuance** — in the Authorization Code Grant, the code→token exchange in step 6 (back-channel) gives the Authorization Server one more chance to confirm the request comes from a legitimate client (via PKCE's `code_verifier`, or a client secret for confidential clients). In Implicit, the token is handed out right on the redirect — with no such extra check.
-- **The token can't be silently refreshed** — Implicit doesn't provide a refresh token (that would be unsafe too — a refresh token over the front-channel), so the only way to extend a session was an invisible iframe redirect with `prompt=none`, which is inherently fragile (see the silent-check-sso problem in [React SPA Integration]).
+- **The token travels over the front-channel in the clear.** The whole point of splitting "code over front-channel, token over back-channel" in the Authorization Code Grant disappears. The access token itself ends up in the address bar and in browser history. It also reaches the `Referer` header on the next external link, and the logs of any proxy that records full URLs.
+- **No client verification at token issuance.** In the Authorization Code Grant, the code→token exchange in step 6 runs over the back-channel. That gives the Authorization Server one more chance to confirm the request comes from a legitimate client, through PKCE's `code_verifier` or a client secret. In Implicit, the token is handed out right on the redirect, with no such check.
+- **The token can't be silently refreshed.** Implicit doesn't provide a refresh token, and a refresh token over the front-channel would be unsafe too. The only way to extend a session was an invisible iframe redirect with `prompt=none`, which is inherently fragile. See the `silent-check-sso` problem in [React SPA Integration](./05-react-spa-integration.md).
 
-Today both Keycloak and every modern library (`keycloak-js`, `oidc-client-ts`) default to Authorization Code + PKCE even for a pure browser-only SPA — Implicit survives only as historical context, useful for understanding WHY the modern flow is shaped the way it is.
+Today both Keycloak and every modern library — `keycloak-js`, `oidc-client-ts` — default to Authorization Code + PKCE, even for a browser-only SPA. Implicit survives only as historical context, useful for understanding **why** the modern flow is shaped the way it is.
 
 ## Tying it together
 
 ```txt
-[OAuth2 Roles]                →  Client / Resource Owner / Authorization
-                                  Server / Resource Server — the vocabulary
-                                  for every reasoning that follows
+[OAuth2 roles]            →  Client / Resource Owner /
+                             Authorization Server / Resource
+                             Server — the vocabulary for every
+                             reasoning that follows
 
-[OIDC on top of OAuth2]        →  ID Token + UserInfo + Discovery Document
-                                  add standardized identity
+[OIDC on top of OAuth2]   →  ID Token + UserInfo + Discovery
+                             Document add standardized identity
 
-[Front-channel/back-channel]   →  the recurring lens: what's safe to hand
-                                  to a browser redirect vs what only ever
-                                  travels over a direct server connection
+[Front-channel /          →  the recurring lens: what is safe
+ back-channel]               to hand to a browser redirect, and
+                             what only ever travels over a
+                             direct server connection
 
-[Access / ID / Refresh]        →  three artifacts with different
-                                  recipients and different purposes —
-                                  mixing them up is an architectural
-                                  mistake, not a minor imprecision
+[Access / ID / Refresh]   →  three artifacts with different
+                             recipients and different purposes
+                             — mixing them up is an
+                             architectural mistake, not a minor
+                             imprecision
 
-[Grant Types]                  →  the choice follows from what kind of
-                                  client you have: a user with a browser
-                                  (Auth Code + PKCE), a service with no
-                                  user (Client Credentials), a device
-                                  with poor input (Device Code)
+[Grant types]             →  the choice follows from the kind
+                             of client you have: a user with a
+                             browser (Auth Code + PKCE), a
+                             service with no user (Client
+                             Credentials), a device with poor
+                             input (Device Code)
 ```
 
-The next article — [Keycloak Core Concepts] — moves from protocol theory to how Keycloak physically models Realms, Clients, roles, and claims, so everything described here becomes something you can actually configure.
+The next article, [Keycloak Core Concepts](./02-keycloak-core-concepts.md), moves from protocol theory to the Keycloak object model. It shows how Keycloak models Realms, Clients, roles and claims, so everything described here becomes something you can configure.
 
 ## Common interview traps
 
-- **"OAuth2 and OIDC are the same thing, just different names"** — wrong. OIDC is an identity layer built ON TOP of OAuth2, reusing the same mechanics (same endpoints, same grant types), but adding something plain OAuth2 doesn't and can't have by spec: an ID Token, a UserInfo endpoint, a standardized way to find out who the user is.
+- **"OAuth2 and OIDC are the same thing, just different names"** — wrong. OIDC is an identity layer built **on top of** OAuth2, reusing the same endpoints and the same grant types. It adds what plain OAuth2 cannot have by spec: an ID Token, a UserInfo endpoint, and a standard way to learn who the user is.
 
-- **"The access token tells you who's logged in"** — no, that's the ID Token's job. The access token says WHAT the token holder is allowed to do (scope/roles), not WHO they are. Confusing the two means using the wrong artifact for the job, not a minor terminology slip.
+- **"The access token tells you who's logged in"** — no, that's the ID Token's job. The access token says **what** the token holder is allowed to do (scope and roles), not **who** they are. Confusing the two means using the wrong artifact for the job, not a minor terminology slip.
 
-- **"PKCE only matters because SPAs don't have a client secret"** — an incomplete answer. PKCE defends against authorization code interception regardless of whether a secret exists, which is why modern guidance (and Keycloak) recommends PKCE even for confidential clients. A good answer explains the MECHANISM (code_verifier/code_challenge), not just "for public clients."
+- **"PKCE only matters because SPAs don't have a client secret"** — an incomplete answer. PKCE defends against authorization code interception regardless of whether a secret exists, which is why modern guidance and Keycloak recommend PKCE even for confidential clients. A good answer explains the **mechanism** — `code_verifier` and `code_challenge` — not just that public clients need it.
 
-- **"Implicit Grant is deprecated because it's an old spec version"** — doesn't explain WHY. The real answer: the token travels over the front-channel (the URL fragment) — in the clear, in browser history, in the Referer header, in proxy logs — with no additional client verification at issuance, unlike Authorization Code, where the code→token exchange happens over the back-channel with a PKCE check.
+- **"Implicit Grant is deprecated because it's an old spec version"** — that doesn't explain **why**. The real answer: the token travels over the front-channel, in the URL fragment. It is exposed in the clear — in browser history, in the `Referer` header, in proxy logs. There is also no extra client verification at issuance, unlike Authorization Code, where the code→token exchange happens over the back-channel with a PKCE check.
 
-- **"The refresh token has to be a JWT too, just like the access token"** — no, the spec dictates nothing about the format of either the access or the refresh token (except the ID Token, which must be a JWT per OIDC). Keycloak makes the access token a JWT by default for convenient local validation, but that's an implementation detail, not a protocol requirement.
+- **"The refresh token has to be a JWT too, just like the access token"** — no. The spec dictates nothing about the format of the access token or the refresh token. Only the ID Token must be a JWT, per OIDC. Keycloak makes the access token a JWT by default for convenient local validation, but that's an implementation detail, not a protocol requirement.
 
-- **"Client Credentials Grant is basically logging in as a service account"** — not quite: Client Credentials has no user, no ID Token, no notion of identity at all — it's the client itself being authorized as a subject, not impersonating a human. Blurring this leads to bad service-to-service authorization designs (e.g., trying to pull a specific user's roles out of a client-credentials token, where there's nowhere for them to come from).
+- **"Client Credentials Grant is basically logging in as a service account"** — not quite. Client Credentials has no user, no ID Token, and no notion of identity at all. The client itself is authorized as a subject; it is not impersonating a human. Blurring this leads to bad service-to-service authorization designs. A typical one: trying to read a specific user's roles out of a client-credentials token, where those roles cannot exist.

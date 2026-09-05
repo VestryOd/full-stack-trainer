@@ -2,43 +2,32 @@
 
 ## Where streams come from
 
-```
-                                                 How to create a stream
-┌─────────────────────────┬────────────────────────────────────────────────┬──────────────────────────────────────────┐
-│ function                │ what it emits                                  │ when to use it                           │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ of(a, b, c)             │ the values as-is, synchronously, then complete │ constants, tests, a default value        │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ from(source)            │ an array, promise, iterable or async iterable  │ a bridge from existing structures        │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ fromEvent(target, name) │ a value per event, never completes             │ DOM events, an EventEmitter              │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ timer(delay, period?)   │ one value after delay, then every period       │ a delayed start, polling                 │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ interval(period)        │ a counter every period, never completes        │ timers, ticks                            │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ defer(() => stream)     │ rebuilds the source on every subscribe         │ laziness on top of eager code            │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ EMPTY / NEVER           │ completes at once / never emits                │ a neutral element, a stub                │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ throwError(() => err)   │ errors immediately                             │ the error branch in catchError/switchMap │
-├─────────────────────────┼────────────────────────────────────────────────┼──────────────────────────────────────────┤
-│ new Observable(fn)      │ anything, plus teardown                        │ wrapping a foreign API                   │
-└─────────────────────────┴────────────────────────────────────────────────┴──────────────────────────────────────────┘
-                             throwError takes a FACTORY: throwError(() => new Error(...)) —
-                                     passing a ready value is deprecated in RxJS 7
-```
+Almost every source of values already has its own creation function in RxJS, so you pick by what you have in hand. One acronym appears below: DOM (Document Object Model) is the browser's tree of page elements.
+
+| function | what it emits | when to use it |
+|---|---|---|
+| `of(a, b, c)` | the values as-is, synchronously, then complete | constants, tests, a default value |
+| `from(source)` | an array, promise, iterable or async iterable | a bridge from existing structures |
+| `fromEvent(target, name)` | a value per event, never completes | DOM events, an `EventEmitter` |
+| `timer(delay, period?)` | one value after `delay`, then every `period` | a delayed start, polling |
+| `interval(period)` | a counter every `period`, never completes | timers, ticks |
+| `defer(() => stream)` | rebuilds the source on every subscribe | laziness on top of eager code |
+| `EMPTY` / `NEVER` | completes at once / never emits | a neutral element, a stub |
+| `throwError(() => err)` | errors immediately | the error branch in `catchError`/`switchMap` |
+| `new Observable(fn)` | anything, plus teardown | wrapping a foreign API |
+
+One row needs a footnote. `throwError` takes a **factory**, as in `throwError(() => new Error(...))`. Passing a ready value is deprecated in RxJS 7.
 
 ### of and from: different things that look alike
 
 ```ts
 import { of, from } from 'rxjs';
 
-of([1, 2, 3]).subscribe(console.log);    // [1, 2, 3] — ONE array value
+of([1, 2, 3]).subscribe(console.log);    // [1, 2, 3] — one array value
 from([1, 2, 3]).subscribe(console.log);  // 1, then 2, then 3 — three values
 ```
 
-`of` emits its arguments as-is, `from` unrolls anything iterable. That is the first beginner trap: `of(array)` where a stream of elements was intended.
+`of` emits its arguments as-is, while `from` expands any iterable into separate values. That is the first beginner trap: `of(array)` where a stream of elements was intended.
 
 `from` accepts promises, iterables and async iterables, which makes it a universal bridge:
 
@@ -50,15 +39,15 @@ from(asyncGenerator());             // AsyncIterable — values as they arrive
 
 ### defer: laziness on top of eager code
 
-The problem with `from(promise)` is that the promise has already started work (see [Reactive Model and Observables]): such a stream is not lazy, and a second subscription replays the same result instead of issuing a new request. `defer` fixes that by postponing source creation until subscribe time:
+The problem with `from(promise)` is that the promise has already started work. Such a stream is not lazy: a second subscription replays the same result instead of issuing a new request. Laziness and the subscription contract are covered in [Reactive Model and Observables](./01-reactive-model-and-observables.md). `defer` fixes the problem by postponing source creation until subscribe time:
 
 ```ts
 import { defer, from } from 'rxjs';
 
-// NOT lazy: fetch runs once, at creation
+// not lazy: fetch runs once, at creation
 const eager$ = from(fetch('/api/time'));
 
-// Lazy: fetch runs on EVERY subscription
+// lazy: fetch runs on every subscription
 const lazy$ = defer(() => from(fetch('/api/time')));
 
 lazy$.subscribe(console.log);  // request #1
@@ -85,9 +74,9 @@ timer(1000, 5000);        // the first after a second, then every 5 seconds
 interval(5000);           // the first after 5 seconds (nothing immediately!), then every 5
 ```
 
-The practical difference: `interval(5000)` makes you wait out the first interval, so polling usually uses `timer(0, 5000)` — "now and then every 5 seconds". Neither completes on its own: stopping happens through `take`, `takeUntil` or unsubscribing (see [Transformation and Filtering Operators]).
+The practical difference: `interval(5000)` stays silent for the first interval, so polling usually uses `timer(0, 5000)` — "now, and then every 5 seconds". Neither completes on its own. Stopping happens through `take`, `takeUntil` or unsubscribing, all covered in [Transformation and Filtering Operators](./03-transformation-and-filtering-operators.md).
 
-### EMPTY, NEVER, throwError
+### `EMPTY`, `NEVER`, `throwError`
 
 Three "degenerate" streams you constantly need in branches:
 
@@ -133,7 +122,13 @@ function fromWebSocket<T>(url: string): Observable<T> {
 }
 ```
 
-Three rules for custom Observables: honour the contract (`next` many times, then one `error` or `complete`), always return a teardown, and remember the subscriber function runs anew per subscription — so every subscriber gets **its own** WebSocket. If that is not what you want, the stream must be shared — see [Multicasting and Subscription Management].
+Three rules for custom Observables:
+
+- honour the contract: `next` many times, then one `error` or `complete`;
+- always return a teardown;
+- remember that the subscriber function runs anew per subscription.
+
+The third rule is the one that surprises people: every subscriber gets **its own** WebSocket. If that is not what you want, the stream must be shared — see [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md).
 
 ## Subject: the bridge from imperative code
 
@@ -156,8 +151,8 @@ The key difference from a plain Observable: a Subject is **hot** and multicast. 
 ### Four kinds, and what a late subscriber sees
 
 ```
-                            What a late subscriber sees
-                    the source emits 1, 2, 3; subscriber B arrives between 2 and 3
+                    What a late subscriber sees
+                    source emits 1, 2, 3; B arrives between 2 and 3
 
 Subject             --1--2--3--
   A from the start  --1--2--3--
@@ -167,15 +162,17 @@ Subject             --1--2--3--
 BehaviorSubject(0)  0-1--2--3--
   A from the start  0-1--2--3--
   B late            ------2-3--
-                          ^ received the CURRENT value (2) at once, then the stream
+                          ^ received the current value (2) at once,
+                            then the stream
 
 ReplaySubject(2)    --1--2--3--
   B late            ------12-3--
-                          ^ caught up on a buffer of the last two values
+                          ^ caught up on the last two values
 
 AsyncSubject        --1--2--3--|
   any subscriber    -----------3|
-                               ^ only the last value, and only on complete
+                               ^ only the last value,
+                                 and only on complete
 ```
 
 - **`Subject`** — no memory. Subscribe later and the earlier values are gone. Fits events ("the user pressed save") where history is irrelevant.
@@ -228,7 +225,7 @@ Three details make this pattern correct:
 The most common anti-pattern is a Subject where a plain Observable would do.
 
 ```ts
-// BAD: a Subject repackaging a ready-made stream
+// bad: a Subject repackaging a ready-made stream
 export class UserService {
   private readonly users = new Subject<User[]>();
   readonly users$ = this.users.asObservable();
@@ -239,10 +236,15 @@ export class UserService {
 }
 ```
 
-What is wrong here: a subscription nobody closes; an HTTP error terminates `users` forever (see [Error Handling and Retries]); a late subscriber never sees data that was already loaded; and above all, a stream has been "converted" into imperative code for no benefit.
+Four things are wrong here:
+
+1. Nobody closes the subscription.
+2. An HTTP error terminates `users` forever — see [Error Handling and Retries](./06-error-handling-and-retries.md).
+3. A late subscriber never sees data that was already loaded.
+4. Above all, a stream has been "converted" into imperative code for no benefit.
 
 ```ts
-// GOOD: the stream stays a stream
+// good: the stream stays a stream
 export class UserService {
   readonly users$ = this.http.get<User[]>('/api/users');
   // subscription happens where the data is needed;
@@ -261,33 +263,27 @@ And the rule worth memorizing: **never expose a Subject**. The public type is al
 
 ## Relation to other topics
 
-```txt
-[Reactive Model and Observables]  — laziness, the subscription contract and
-                                     teardown, which everything here rests on
-[Transformation and Filtering
- Operators]                        — how to bound an infinite interval and
-                                     what to do with values next
-[Combination Operators]            — how to join several created streams
-[Error Handling and Retries]       — why an error in a Subject kills it for good
-[Multicasting and Subscription
- Management]                        — the Subject behind share/shareReplay
-                                     and the difference between hot and cold
-```
+- [Reactive Model and Observables](./01-reactive-model-and-observables.md) — laziness, the subscription contract and teardown, which everything here rests on.
+- [Transformation and Filtering Operators](./03-transformation-and-filtering-operators.md) — how to bound an infinite `interval`, and what to do with values next.
+- [Flattening Operators](./04-flattening-operators.md) — what happens when a `Subject` triggers a request.
+- [Combination Operators](./05-combination-operators.md) — how to join several created streams.
+- [Error Handling and Retries](./06-error-handling-and-retries.md) — why an error in a `Subject` kills it for good.
+- [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md) — the `Subject` behind `share`/`shareReplay`, and the difference between hot and cold.
 
 ## Common interview traps
 
 - **Confusing `of(array)` with `from(array)`** — `of([1,2,3])` emits one item (the array itself), `from([1,2,3])` emits three values. A simple knowledge check, but it also exposes a missing grasp of the fact that a stream may carry values of any type, arrays included.
 
-- **"`from(promise)` makes the stream lazy"** — it does not: the promise already started work at creation. Laziness comes back with `defer(() => from(fetch(...)))`. The usual follow-up people stumble on: "what if you subscribe twice to `from(promise)`?" — both subscribers get the same result and no second request is made.
+- **"`from(promise)` makes the stream lazy"** — it does not: the promise already started work at creation. Laziness comes back with `defer(() => from(fetch(...)))`. The usual follow-up question is "what if you subscribe twice to `from(promise)`?" Both subscribers get the same result, and no second request is made.
 
 - **`interval(5000)` for "poll every 5 seconds starting now"** — `interval` stays silent through the first interval. You want `timer(0, 5000)`. A small detail that in practice becomes "the data shows up late when the screen opens".
 
 - **Exposing a `Subject` from a public API** — any consumer can then call `next()` or `complete()` on your state. The expected answer: a private Subject plus a public `asObservable()`; in the Angular context, a private `signal` plus a public `asReadonly()`.
 
-- **Not knowing why state wants `BehaviorSubject` over `Subject`** — the key is that state always has a "right now" value: a new subscriber must receive it, and code needs synchronous access via `getValue()`. With a plain `Subject`, a component subscribing after the last `next` sees an empty screen until the next update.
+- **Not knowing why state wants `BehaviorSubject` over `Subject`** — the key is that state always has a "right now" value. A new subscriber must receive that value, and code needs synchronous access to it via `getValue()`. With a plain `Subject`, a component subscribing after the last `next` sees an empty screen until the next update.
 
 - **`ReplaySubject` with an unbounded buffer** — `new ReplaySubject()` keeps **every** value forever. On an event stream that is a memory leak growing linearly with uptime. A good answer mentions `bufferSize` and `windowTime`.
 
-- **`throwError(new Error(...))` instead of a factory** — the RxJS 6 shape. In version 7 passing a value is deprecated: the expected form is `throwError(() => new Error(...))`, with the explanation that the error is created when it actually occurs, so the stack trace is meaningful.
+- **`throwError(new Error(...))` instead of a factory** — the RxJS 6 shape. In version 7 passing a value is deprecated. The expected form is `throwError(() => new Error(...))`. The reason to give: the error is created when it actually occurs, so the stack trace is meaningful.
 
 - **A Subject "repackaging" an HTTP request** — the most common architectural anti-pattern: `subscribe` inside a service plus `next` into a Subject. A good answer names three concrete consequences: an unclosed subscription, the Subject terminating on a request error, and lost data for a late subscriber.

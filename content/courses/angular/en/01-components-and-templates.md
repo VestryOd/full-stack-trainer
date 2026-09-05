@@ -9,7 +9,7 @@
 ```ts
 @Component({
   selector: 'app-ticket-card',   // how the component is called from a template
-  imports: [TicketBadge],        // the template scope of THIS component
+  imports: [TicketBadge],        // the template scope of this component
   templateUrl: './ticket-card.html',
   styleUrl: './ticket-card.css', // singular; styleUrls is the older form
   host: { class: 'ticket-card' }, // bindings on the host element
@@ -61,37 +61,28 @@ An Angular template is not JSX. JSX is syntactic sugar over function calls: it t
 
 Three practical consequences follow:
 
-1. **Template errors are caught at build time.** A typo in a property name, a wrong type in a binding, an unregistered tag (`NG8001`) — all of it is compiler diagnostics rather than a blank spot in the browser. In v22 the compiler additionally catches invalid `@for` blocks, an element matched by two components, and two inputs sharing one alias.
+1. **Template errors are caught at build time.** A typo in a property name, a wrong type in a binding, an unregistered tag (`NG8001`): all of it is compiler diagnostics. Not a blank spot in the browser. In v22 the compiler additionally catches invalid `@for` blocks, an element matched by two components, and two inputs sharing one alias.
 2. **Expressions are a restricted subset.** No `new`, no destructuring, no bitwise operators, no comma operator. Assignments are allowed in event handlers only. On the other hand you do get `?.`, `!`, `$any(...)`, pipes (`| date`), spread in literals and calls, and — since v21.2 — arrow functions in event handlers.
-3. **The create/update split *is* Angular's update model.** Nodes are not rebuilt: a check re-evaluates the binding expressions only, and the DOM is touched where a value actually changed.
+3. **The create/update split *is* Angular's update model.** Nodes are not rebuilt: a check re-evaluates the binding expressions only. The DOM (document object model — the page's live tree of elements) is touched where a value actually changed.
 
 One more thing: `update` runs on every check of that template. So a template expression must be cheap — this is not "once per render" as in React, it is "an unknown number of times".
 
 ### Binding syntax
 
-```
-┌──────────────────┬───────────────────────────────────────────────────┬───────────────┐
-│ in a template    │ what Angular does                                 │ in React      │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ {{ expr }}       │ a text node, refreshed on every check             │ {expr}        │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ [prop]="expr"    │ a PROPERTY of the element or a component input    │ prop={expr}   │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ [attr.x]="expr"  │ an attribute via setAttribute/removeAttribute     │ x={expr}      │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ (event)="stmt"   │ an event listener; stmt receives $event           │ onEvent={fn}  │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ [(x)]="expr"     │ sugar for [x]="expr" + (xChange)="expr = $event"  │ no equivalent │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ [class.x]="cond" │ toggles exactly one class                         │ className=... │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ [style.w.px]="n" │ one style property, with units spelled out        │ style={{...}} │
-├──────────────────┼───────────────────────────────────────────────────┼───────────────┤
-│ prop="text"      │ a static string — the expression is NOT evaluated │ prop="text"   │
-└──────────────────┴───────────────────────────────────────────────────┴───────────────┘
-```
+| In a template | What Angular does | In React |
+|---|---|---|
+| `{{ expr }}` | a text node, refreshed on every check | `{expr}` |
+| `[prop]="expr"` | a **property** of the element, or a component input | `prop={expr}` |
+| `[attr.x]="expr"` | an attribute via `setAttribute`/`removeAttribute` | `x={expr}` |
+| `(event)="stmt"` | an event listener; `stmt` receives `$event` | `onEvent={fn}` |
+| `[(x)]="expr"` | sugar for `[x]="expr"` plus `(xChange)="expr = $event"` | no equivalent |
+| `[class.x]="cond"` | toggles exactly one class | `className=...` |
+| `[style.w.px]="n"` | one style property, with units spelled out | `style={{...}}` |
+| `prop="text"` | a static string — the expression is **not** evaluated | `prop="text"` |
 
-The distinction people trip over: **`[x]` writes a property, not an attribute**. `[value]="text"` assigns `input.value`, while `[attr.value]="text"` calls `setAttribute('value', ...)`. For most HTML properties the difference is invisible, but it becomes decisive wherever no property exists: `aria-*`, `data-*`, SVG attributes, `colspan` — those need `[attr.]`. The mirror case is `disabled`: the attribute `disabled="false"` still disables a button (presence is what counts, not the value), whereas `[disabled]="false"` does not.
+The distinction people trip over: **`[x]` writes a property, not an attribute**. `[value]="text"` assigns `input.value`, while `[attr.value]="text"` calls `setAttribute('value', ...)`.
+
+For most HTML properties the difference is invisible. It becomes decisive wherever no property exists: `aria-*`, `data-*`, SVG (scalable vector graphics) attributes, `colspan`. Those need `[attr.]`. The mirror case is `disabled`: the attribute `disabled="false"` still disables a button, because presence is what counts and not the value. With `[disabled]="false"` the button stays enabled.
 
 Two-way binding `[(x)]="expr"` is neither magic nor object watching: it is literally the pair `[x]` + `(xChange)`. Your own component joins that syntax if it has an input `x` and an output `xChange` — or, more modern, a `model()` (chapter 02).
 
@@ -145,51 +136,47 @@ The host element is that `<app-ticket-card>` in the parent's markup. Bindings on
 })
 ```
 
-On collisions: a static binding of the component loses to the consumer's binding, a dynamic value beats a static one, and between two dynamic ones the component's host binding wins. The `@HostBinding`/`@HostListener` decorators do the same thing and exist purely for backwards compatibility — the documentation explicitly recommends `host`.
+On collisions there are three rules. A static binding of the component loses to the consumer's binding. A dynamic value beats a static one. Between two dynamic ones the component's host binding wins. The `@HostBinding`/`@HostListener` decorators do the same thing and exist purely for backwards compatibility — the documentation explicitly recommends `host`.
 
 ### Styles and view encapsulation
 
-```
-                     ViewEncapsulation: what happens to component styles
-┌────────────────────┬──────────────────────────────────────────────────────┬────────────────┐
-│ mode               │ mechanics                                            │ when to use    │
-├────────────────────┼──────────────────────────────────────────────────────┼────────────────┤
-│ Emulated (default) │ _nghost/_ngcontent attributes + rewritten selectors  │ almost always  │
-├────────────────────┼──────────────────────────────────────────────────────┼────────────────┤
-│ ShadowDom          │ a native shadow root: styles neither enter nor leave │ hard isolation │
-├────────────────────┼──────────────────────────────────────────────────────┼────────────────┤
-│ None               │ styles land in the document as global ones           │ themes, resets │
-└────────────────────┴──────────────────────────────────────────────────────┴────────────────┘
-           :host is the host element itself; ::ng-deep pierces isolation downwards
-                         but is kept for backwards compatibility only
-```
+**`ViewEncapsulation`: what happens to component styles**
+
+| Mode | Mechanics | When to use |
+|---|---|---|
+| `Emulated` (default) | `_nghost`/`_ngcontent` attributes plus rewritten selectors | almost always |
+| `ShadowDom` | a native shadow root: styles neither enter nor leave | hard isolation |
+| `None` | styles land in the document as global ones | themes, resets |
+
+The `:host` selector is the host element itself. The `::ng-deep` selector pierces
+isolation downwards, but it is kept for backwards compatibility only.
 
 In Emulated mode the compiler appends a component-unique attribute to every selector from `styleUrl`, and the matching attribute to the elements of the template. Hence the two perennial questions:
 
-- "Why doesn't my `.badge` from this component affect a child component?" — because the child's nodes carry a different attribute. Styling the internals of someone else's component from the outside is impossible by design; the right path is an input, a CSS variable or a class on the host — not `::ng-deep`.
+- "Why doesn't my `.badge` from this component affect a child component?" — because the child's nodes carry a different attribute. Styling the internals of someone else's component from the outside is impossible by design. The right path is an input, a CSS variable or a class on the host — not `::ng-deep`.
 - "Why does the global `styles.css` work everywhere?" — global styles are not rewritten. Isolation is one-way: styles get in from the outside, they do not get out from the inside.
 
-`:host` in a component's CSS is its host element (`:host(.ticket-card--urgent)` — when the class is present). `:host-context()` exists but relies on a mechanism considered deprecated in modern browsers.
+`:host` in a component's CSS is its host element (`:host(.ticket-card--urgent)` — when the class is present). There is also `:host-context()`, but it relies on a mechanism considered deprecated in modern browsers.
 
 ## React parallels
 
-- **JSX is JS, a template is a DSL.** JSX gives you the whole language, so the cost of a mistake is a runtime bug. An Angular template is compiled and type-checked (`strictTemplates`), so most markup mistakes become build errors. The price is a restricted expression subset: no `items.reduce(...)` with an inline callback, no `new Date()`. Logic moves into the class — not as a style preference but as a requirement of the template language.
-- **`prop={expr}` versus `[prop]="expr"` and `prop="text"`.** In JSX, braces are the only way to pass a non-string, and forgetting them is hard. In Angular, `prop="t"` is valid markup that simply passes the string `"t"`; with `strictTemplates` the compiler usually catches it on a type mismatch, but with a `string` input the mistake slips through silently.
-- **`key` versus `track`.** Both are about element identity, but `key` in React is an optional prop with a console warning, whereas `track` in Angular is a mandatory part of the `@for` syntax. The consequences are the same: a wrong key or `track $index` while sorting means recreated or shuffled nodes and lost DOM state (focus, scroll position, the value of an uncontrolled input).
+- **JSX is JS, a template is a DSL — a domain-specific language.** JSX gives you the whole language, so the cost of a mistake is a runtime bug. An Angular template is compiled and type-checked (`strictTemplates`), so most markup mistakes become build errors. The price is a restricted expression subset: no `items.reduce(...)` with an inline callback, no `new Date()`. Logic moves into the class — not as a style preference but as a requirement of the template language.
+- **`prop={expr}` versus `[prop]="expr"` and `prop="text"`.** In JSX, braces are the only way to pass a non-string, and forgetting them is hard. In Angular, `prop="t"` is valid markup that simply passes the string `"t"`. With `strictTemplates` the compiler usually catches it on a type mismatch. But with a `string` input the mistake slips through silently.
+- **`key` versus `track`.** Both are about element identity. But `key` in React is an optional prop with a console warning, whereas `track` in Angular is a mandatory part of the `@for` syntax. The consequences are the same. A wrong key, or `track $index` while sorting, means recreated or shuffled nodes. DOM state goes with them: focus, scroll position, the value of an uncontrolled input.
 - **Two-way binding is sugar, not observation.** In React, form state is always "controlled": `value` + `onChange`. `[(x)]` in Angular is the same pattern written as a single token: `[x]` + `(xChange)`. There is no mutation tracking of objects, unlike old AngularJS or Vue.
-- **Where the habit breaks:** in React you happily write `{items.filter(f).map(m)}` right in the markup — the component function runs a bounded number of times and the cost is predictable. In Angular the same expression lands in the `update` function and runs on every check of the template; worse, `filter`/`map` return a **new array each time**, so `@for` sees a new reference and does extra matching work. Derived data in Angular is computed in `computed` (chapter 02), not in the template.
+- **Where the habit breaks:** in React you happily write `{items.filter(f).map(m)}` right in the markup. The component function runs a bounded number of times, so the cost is predictable. In Angular the same expression lands in the `update` function and runs on every check of the template. Worse, `filter`/`map` return a **new array each time**, so `@for` sees a new reference and does extra matching work. Derived data in Angular is computed in `computed` (chapter 02), not in the template.
 
 ## What you will see in legacy code
 
-- **Structural directives instead of blocks:** `*ngIf="cond"`, `*ngIf="cond; else other"` with `<ng-template #other>`, `*ngFor="let t of tickets; trackBy: trackById"` (where `trackBy` is a class method with the signature `(index, item)`), `[ngSwitch]` + `*ngSwitchCase`. They still work, but the new control flow is not an alternative style — it is the replacement: faster and needing no imports.
+- **Structural directives instead of blocks:** `*ngIf="cond"`, `*ngIf="cond; else other"` with `<ng-template #other>`, `*ngFor="let t of tickets; trackBy: trackById"`, `[ngSwitch]` plus `*ngSwitchCase`. In that `*ngFor` form `trackBy` is a class method with the signature `(index, item)`. These still work, but the new control flow is not an alternative style. It is the replacement: faster and needing no imports.
 - **`CommonModule` in `imports`** — the mandatory companion of `*ngIf`/`*ngFor` and pipes such as `date`, `currency`. Seeing it in a standalone component means that component still runs on the old directives.
 - **`[ngClass]="{active: isActive}"` and `[ngStyle]="{width: w + 'px'}"`** instead of `[class.active]`/`[style.width.px]`. The directives are still there, but targeted bindings are cheaper and type better.
 - **`@HostBinding('class.active') isActive = false;` and `@HostListener('click', ['$event'])`** instead of the `host` object — the most reliable marker of code written before v17.
-- **`styleUrls: ['./x.component.css']`** (an array), `encapsulation: ViewEncapsulation.None` "so the styles just work", `::ng-deep`/`/deep/`/`>>>` to pierce isolation, and template references `#input` combined with `@ViewChild('input')` instead of signal queries (chapter 02).
+- **`styleUrls: ['./x.component.css']`** — an array instead of the singular `styleUrl`. Nearby you will find `encapsulation: ViewEncapsulation.None` "so the styles just work", plus `::ng-deep`/`/deep/`/`>>>` to pierce isolation. And template references `#input` combined with `@ViewChild('input')` instead of signal queries (chapter 02).
 
 ## What we add to the project
 
-Support Desk gets a typed ticket model, a list of static data rendered with `@for`/`@empty`, and a card component: the status badge through `@switch`, the priority class through a host binding, and isolated styles.
+Support Desk gets a typed ticket model and a list of static data rendered with `@for`/`@empty`. It also gets a card component: the status badge through `@switch`, the priority class through a host binding, and isolated styles.
 
 ## Exercise
 
@@ -198,11 +185,11 @@ Support Desk gets a typed ticket model, a list of static data rendered with `@fo
 
 Requirements:
 
-1. Put the ticket model in its own file: `id` (number), `title`, `status` (`'new' | 'open' | 'pending' | 'closed'`), `priority` (`'low' | 'medium' | 'high' | 'urgent'`), `assignee` (string or `null`), `createdAt`, `slaHours` (number, optional). Status and priority must be unions, not `string`.
-2. In `TicketList`, a static array of 6–8 tickets; among them at least one unassigned (`assignee: null`), one with status `closed` and one with priority `urgent`.
-3. The `TicketCard` component shows the title, a human-readable status label, the priority, the assignee or "Unassigned", and the creation date. Build the status label in the template with `@switch` rather than a map in the class (the point of this chapter is the blocks; in chapter 06 the same thing becomes a pipe).
+1. Put the ticket model in its own file. Fields: `id` (number), `title`, `status` (`'new' | 'open' | 'pending' | 'closed'`), `priority` (`'low' | 'medium' | 'high' | 'urgent'`), `assignee` (string or `null`), `createdAt`, `slaHours` (number, optional). Status and priority must be unions, not `string`.
+2. In `TicketList`, a static array of 6–8 tickets. Among them at least one unassigned (`assignee: null`), one with status `closed` and one with priority `urgent`.
+3. The `TicketCard` component shows the title, a human-readable status label, the priority, the assignee or "Unassigned", and the creation date. Build the status label in the template with `@switch` rather than a map in the class. The point of this chapter is the blocks; in chapter 06 the same thing becomes a pipe.
 4. The card's host element: a static class, a conditional class for `urgent`, and an `aria-label` carrying the ticket number. All of it through the `host` object, no decorators.
-5. In `TicketList`: `@for` with a correct `track`, `@empty` with a message, `@if` around an "N tickets / N unassigned" line, and `@let` in at least one place where you would otherwise repeat an expression.
+5. In `TicketList`: `@for` with a correct `track`, `@empty` with a message, and `@if` around an "N tickets / N unassigned" line. Add `@let` in at least one place where you would otherwise repeat an expression.
 6. Card styles live in the card's own file; the badge must not leak into other components. Define the spacing between cards so that the list owns it, not the card.
 7. Constraint: no class method calls and no `filter`/`map` in templates.
 
@@ -242,7 +229,7 @@ import { Ticket } from './ticket';
 
 @Component({
   selector: 'app-ticket-card',
-  // the date pipe is used in THIS template, so it is imported here
+  // the date pipe is used in this template, so it is imported here
   imports: [DatePipe],
   templateUrl: './ticket-card.html',
   styleUrl: './ticket-card.css',
@@ -356,12 +343,36 @@ export class TicketList {
   // Static data for this chapter. In chapter 02 the array becomes a signal,
   // in chapter 05 it moves into a service, in chapter 08 it comes from HTTP
   protected readonly tickets: readonly Ticket[] = [
-    { id: 101, title: 'Cannot log in after password reset', status: 'new', priority: 'urgent', assignee: null, createdAt: '2026-08-10T09:12:00Z', slaHours: 4 },
-    { id: 102, title: 'Invoice PDF is empty', status: 'open', priority: 'high', assignee: 'Dana', createdAt: '2026-08-09T14:41:00Z', slaHours: 8 },
-    { id: 103, title: 'Export to CSV drops the last row', status: 'open', priority: 'medium', assignee: 'Ivan', createdAt: '2026-08-08T11:05:00Z' },
-    { id: 104, title: 'Feature request: dark theme', status: 'pending', priority: 'low', assignee: 'Dana', createdAt: '2026-08-05T16:20:00Z' },
-    { id: 105, title: 'Webhook retries are too aggressive', status: 'pending', priority: 'high', assignee: null, createdAt: '2026-08-04T08:00:00Z', slaHours: 24 },
-    { id: 106, title: 'Typo on the pricing page', status: 'closed', priority: 'low', assignee: 'Ivan', createdAt: '2026-07-29T10:30:00Z' },
+    {
+      id: 101, title: 'Cannot log in after password reset', status: 'new',
+      priority: 'urgent', assignee: null, slaHours: 4,
+      createdAt: '2026-08-10T09:12:00Z',
+    },
+    {
+      id: 102, title: 'Invoice PDF is empty', status: 'open',
+      priority: 'high', assignee: 'Dana', slaHours: 8,
+      createdAt: '2026-08-09T14:41:00Z',
+    },
+    {
+      id: 103, title: 'Export to CSV drops the last row', status: 'open',
+      priority: 'medium', assignee: 'Ivan',
+      createdAt: '2026-08-08T11:05:00Z',
+    },
+    {
+      id: 104, title: 'Feature request: dark theme', status: 'pending',
+      priority: 'low', assignee: 'Dana',
+      createdAt: '2026-08-05T16:20:00Z',
+    },
+    {
+      id: 105, title: 'Webhook retries are too aggressive', status: 'pending',
+      priority: 'high', assignee: null, slaHours: 24,
+      createdAt: '2026-08-04T08:00:00Z',
+    },
+    {
+      id: 106, title: 'Typo on the pricing page', status: 'closed',
+      priority: 'low', assignee: 'Ivan',
+      createdAt: '2026-07-29T10:30:00Z',
+    },
   ];
 }
 ```
@@ -412,15 +423,15 @@ export class TicketList {
 }
 ```
 
-Note two things in this code. First, `DatePipe` is listed in `imports` of `TicketCard`, where the template uses it, and absent from `TicketList` — template scopes are independent, "import it once at the top" does not exist here. Second, `tickets` is typed as `readonly Ticket[]`: the array does not change in this chapter, and once it does it will be a signal rather than an in-place mutation.
+Note two things in this code. First, `DatePipe` is listed in `imports` of `TicketCard`, where the template uses it, and absent from `TicketList`. Template scopes are independent: "import it once at the top" does not exist here. Second, `tickets` is typed as `readonly Ticket[]`. The array does not change in this chapter, and once it does it will be a signal rather than an in-place mutation.
 
 Answers to the edge cases:
 
-- A duplicate `id` under `track ticket.id` is a runtime error: Angular detects that one key maps to several items and throws about duplicated keys in `@for`. That is better than a silently shuffled DOM, and it is exactly why the key must be genuinely unique rather than "usually unique".
-- `aria-label` has no DOM property (unlike `id`, `value`, `disabled`), so there is nothing for `[ariaLabel]` to write to — `[attr.aria-label]` is required. A button, conversely, does have a `disabled` property, and a property binding handles `false` correctly; `[attr.disabled]="false"` would leave the attribute in the markup with the string `"false"` and the button would stay disabled.
+- A duplicate `id` under `track ticket.id` is a runtime error. Angular detects that one key maps to several items and throws about duplicated keys in `@for`. That is better than a silently shuffled DOM, and it is exactly why the key must be genuinely unique rather than "usually unique".
+- `aria-label` has no DOM property (unlike `id`, `value`, `disabled`), so there is nothing for `[ariaLabel]` to write to — `[attr.aria-label]` is required. A button, conversely, does have a `disabled` property, and a property binding handles `false` correctly. Writing `[attr.disabled]="false"` would leave the attribute in the markup with the string `"false"`, and the button would stay disabled.
 - `null` instead of an array: `@for` over `null` is a type error under `strictTemplates`, so the build fails. If the type does allow `null`, write `@for (t of tickets ?? []; track t.id)` — and then `@empty` behaves exactly as for an empty array.
-- The component's `.badge` wins, not because Angular prioritizes it but by ordinary CSS rules: the compiler appends an attribute, so the selector becomes `.badge[_ngcontent-abc]` — more specific than a global `.badge`. Do not treat that as "isolation from global styles" though: `!important` or a more specific global selector still wins.
-- `track $index` ties nodes to positions. After sorting, the item at index 0 is still the same DOM node with rewritten content — so instead of moving nodes around, Angular rewrites all of them. On an unchanging list this is invisible (positions and data line up), so the bug lives in the code until the first sort, prepend or removal, and then shows up as lost focus, jumped scroll position and stuttering animations.
+- The component's `.badge` wins, not because Angular prioritizes it but by ordinary CSS rules. The compiler appends an attribute, so the selector becomes `.badge[_ngcontent-abc]` — more specific than a global `.badge`. Do not treat that as "isolation from global styles" though: `!important` or a more specific global selector still wins.
+- `track $index` ties nodes to positions. After sorting, the item at index 0 is still the same DOM node with rewritten content. So instead of moving nodes around, Angular rewrites all of them. On an unchanging list this is invisible, because positions and data line up. The bug therefore lives in the code until the first sort, prepend or removal. Then it shows up as lost focus, jumped scroll position and stuttering animations.
 
 ## Check yourself
 
@@ -433,16 +444,22 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. `[value]` assigns a **property** on the DOM object (`el.value = text`); `[attr.value]` calls `setAttribute`. They diverge wherever no property exists, or where property and attribute live separate lives. First case: `aria-*`/`data-*`/SVG attributes/`colspan` — no properties at all, only `[attr.]` works. Second: `input.value` — the property reflects the current field value while the `value` attribute only carries the initial one, so binding the attribute will not update text the user has already typed. Third classic: `disabled` — the attribute acts by its mere presence, so `[attr.disabled]="false"` keeps the button disabled while `[disabled]="false"` does not.
-2. `track` defines the identity rule: which value tells Angular "this is the same data item as before", so it can reuse the DOM node created for it along with that node's state. With `track $index`, identity becomes the position. After sorting, position 0 holds a different data object, but Angular treats it as "the same item" and rewrites the node's content instead of moving the node — and so on down the list. The result is a full update of every node instead of a reorder: lost focus, reset scroll, broken animations, and in lists of components, redundant work in their templates.
+1. `[value]` assigns a **property** on the DOM object (`el.value = text`); `[attr.value]` calls `setAttribute`. They diverge wherever no property exists, or where property and attribute live separate lives. First case: `aria-*`/`data-*`/SVG attributes/`colspan` — no properties at all, only `[attr.]` works. Second: `input.value`. The property reflects the current field value, while the `value` attribute only carries the initial one. So binding the attribute will not update text the user has already typed. Third classic: `disabled` — the attribute acts by its mere presence, so `[attr.disabled]="false"` keeps the button disabled while `[disabled]="false"` does not.
+2. `track` defines the identity rule. It says which value tells Angular "this is the same data item as before". Angular can then reuse the DOM node created for that item, along with the node's state. With `track $index`, identity becomes the position. After sorting, position 0 holds a different data object. Angular still treats it as "the same item" and rewrites the node's content instead of moving the node, and so on down the list. The result is a full update of every node instead of a reorder. That means lost focus, reset scroll and broken animations — plus, in lists of components, redundant work in their templates.
 3. It expands into `[size]="value"` + `(sizeChange)="value = $event"`. So the component needs an input `size` and an output named exactly `sizeChange` (`<input name>Change`). The modern way to get both at once is `model<T>()`, which creates a writable signal input and the paired output automatically (chapter 02).
-4. In React the component function body runs a bounded number of times, and a call inside the markup costs the same as any other render code. In Angular the expression lands in the template's `update` function and is evaluated on **every** check of that template — and you do not control how many there are. On top of that the result cannot be cached: Angular has no idea what the method depends on. The right options are a `computed` in the class (memoized by its signal dependencies), a pure pipe (cached by its input value), or data prepared in advance.
-5. The compiler gives every component a unique attribute: `_ngcontent-<id>` on the nodes of its template, `_nghost-<id>` on the host element, and appends that attribute to every selector from `styleUrl`. A parent's selector therefore cannot match a child component's nodes — they carry a different component's attribute. That is the isolation, and it is one-way: global styles are not rewritten and do reach inside. Instead of `::ng-deep` (kept for backwards compatibility and discouraged), the child component should expose customization points of its own: an input that drives its classes, CSS variables it reads, or a class on its host element that the consumer sets from outside.
+4. In React the component function body runs a bounded number of times. A call inside the markup costs the same as any other render code. In Angular the expression lands in the template's `update` function. It is evaluated on **every** check of that template, and you do not control how many checks there are. On top of that the result cannot be cached: Angular has no idea what the method depends on. There are three right options. A `computed` in the class, memoized by its signal dependencies. A pure pipe, cached by its input value. Or data prepared in advance.
+5. The compiler gives every component a unique attribute: `_ngcontent-<id>` on the nodes of its template and `_nghost-<id>` on the host element. It then appends that attribute to every selector from `styleUrl`. A parent's selector therefore cannot match a child component's nodes — they carry a different component's attribute. That is the isolation, and it is one-way: global styles are not rewritten and do reach inside. The `::ng-deep` selector is kept for backwards compatibility and discouraged. Instead, the child component should expose customization points of its own. Options: an input that drives its classes, CSS variables it reads, or a class on its host element that the consumer sets from outside.
 
 </details>
 
 ## Common mistake
 
-The most common mechanical mistake is forgetting the square brackets: `<app-ticket-card ticket="ticket" />`. In JSX, omitting braces passes a string and you notice at once; in Angular the line looks like a valid HTML attribute because it *is* one — the component receives the string `"ticket"`, not an object. `strictTemplates` saves you here: the input is typed as `Ticket`, a string does not fit, and the build fails on a type mismatch. But when the input is typed `string` (a title, an id-as-string, an icon name), the mistake passes silently and turns into "why do all the cards show the same text". The rule: anything that is not a literal string from the markup goes through `[ ]`.
+The most common mechanical mistake is forgetting the square brackets: `<app-ticket-card ticket="ticket" />`. In JSX, omitting braces passes a string and you notice at once. In Angular the line looks like a valid HTML attribute, because it *is* one. The component receives the string `"ticket"`, not an object.
 
-The second mistake is importing the React habit of computing data inside the markup: `@for (t of tickets.filter(x => x.status !== 'closed'); track t.id)`. There are two independent penalties. First, the expression runs on every check of the template rather than once. Second, and more insidious, `filter` returns a **new array** on every call, so `@for` receives a different collection reference each time and has to re-match items by `track` — precisely the extra work `track` was supposed to prevent. Filtering, sorting and aggregates belong in a `computed` in the class (chapter 02); the template only reads the finished value.
+Here `strictTemplates` saves you: the input is typed as `Ticket`, a string does not fit, and the build fails on a type mismatch. But when the input is typed `string` — a title, an id-as-string, an icon name — the mistake passes silently. It turns into "why do all the cards show the same text". The rule: anything that is not a literal string from the markup goes through `[ ]`.
+
+The second mistake is the React habit of computing data inside the markup: `@for (t of tickets.filter(x => x.status !== 'closed'); track t.id)`. There are two independent penalties.
+
+First, the expression runs on every check of the template rather than once. Second, and more insidious, `filter` returns a **new array** on every call. So `@for` receives a different collection reference each time and has to re-match items by `track` — precisely the extra work `track` was supposed to prevent.
+
+Filtering, sorting and aggregates belong in a `computed` in the class (chapter 02). The template only reads the finished value.

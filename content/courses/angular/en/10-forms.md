@@ -4,7 +4,7 @@
 
 ### Reactive Forms: the form as an object
 
-The primary tool for forms in Angular is Reactive Forms: the form is described in the class as a tree of objects, and the template merely binds to it.
+The primary tool for forms in Angular is Reactive Forms. The form is described in the class as a tree of objects, and the template merely binds to it.
 
 ```ts
 private readonly fb = inject(FormBuilder);
@@ -32,26 +32,17 @@ Three classes make up a form: `FormControl` (one value), `FormGroup` (an object 
 
 ### Control states and error UX
 
-```
-                     Control states: what error UX is built on
-┌──────────┬───────────────────────────────┬───────────────────────────────────────┐
-│ state    │ becomes true when             │ what to do with it                    │
-├──────────┼───────────────────────────────┼───────────────────────────────────────┤
-│ touched  │ the field lost focus          │ the main trigger for showing errors   │
-├──────────┼───────────────────────────────┼───────────────────────────────────────┤
-│ dirty    │ the user changed the value    │ the unsaved-changes warning           │
-├──────────┼───────────────────────────────┼───────────────────────────────────────┤
-│ pending  │ async validation is running   │ a spinner on the field, block submit  │
-├──────────┼───────────────────────────────┼───────────────────────────────────────┤
-│ invalid  │ a validator returned an error │ the error exists, but do not show yet │
-├──────────┼───────────────────────────────┼───────────────────────────────────────┤
-│ disabled │ control.disable()             │ the value drops out of form.value     │
-└──────────┴───────────────────────────────┴───────────────────────────────────────┘
-        show an error when invalid AND (touched OR the form was submitted):
-            otherwise fields turn red before the user has typed anything
-```
+Error UX (user experience — what the user actually sees and feels) rests on five control flags. Show an error when `invalid` **and** (`touched` **or** the form was submitted): otherwise fields turn red before the user has typed anything.
 
-The main point: **`invalid` is not a reason to show an error**. An empty required field is invalid from the very start, but it must not turn red as the form loads. The standard formula is `invalid && (touched || submitted)`, where `submitted` is a signal of your own set when submission is attempted (a `FormGroup` has no "submitted" flag; the `ngForm` directive does, but it is rarely used with Reactive Forms).
+| state | becomes true when | what to do with it |
+|---|---|---|
+| `touched` | the field lost focus | the main trigger for showing errors |
+| `dirty` | the user changed the value | the unsaved-changes warning |
+| `pending` | async validation is running | a spinner on the field, block submit |
+| `invalid` | a validator returned an error | the error exists, but do not show yet |
+| `disabled` | `control.disable()` | the value drops out of `form.value` |
+
+The main point: **`invalid` is not a reason to show an error**. An empty required field is invalid from the very start, but it must not turn red as the form loads. The standard formula is `invalid && (touched || submitted)`, where `submitted` is a signal of your own, set when submission is attempted. A `FormGroup` has no "submitted" flag: the `ngForm` directive does, but it is rarely used with Reactive Forms.
 
 ### Validators
 
@@ -66,30 +57,27 @@ export function slaWithinPriority(group: AbstractControl): ValidationErrors | nu
 }
 ```
 
-The error then lives on the group rather than on a field, so you have to deliberately surface it next to the relevant control — a classic source of "the validation exists but the user never sees it".
+The error then lives on the group rather than on a field. So you have to deliberately surface it next to the relevant control. This is a classic source of "the validation exists but the user never sees it".
 
 ### Writing values
 
-```
-                                Writing values in Reactive Forms
-┌──────────────────────┬───────────────────────────────────┬───────────────────────────────────┐
-│ call                 │ what it does                      │ the gotcha                        │
-├──────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ setValue(v)          │ requires EVERY field of the group │ a missing field throws at runtime │
-├──────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ patchValue(v)        │ updates only what you passed      │ a typo in a key goes unnoticed    │
-├──────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ reset(v)             │ value plus touched/dirty reset    │ it resets validation statuses too │
-├──────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ { emitEvent: false } │ does not emit valueChanges        │ dependent logic never runs        │
-├──────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ form.value           │ excludes disabled fields          │ you need getRawValue()            │
-└──────────────────────┴───────────────────────────────────┴───────────────────────────────────┘
-               in zoneless, setValue/patchValue do NOT schedule a template check:
-                      mirror form state into signals or call markForCheck
-```
+A value can be written into the form in several ways, and each one has its own gotcha.
 
-That last line is what chapter 03 warned about, and one of the few things that genuinely break when moving to zoneless. `setValue`/`patchValue` change form state and emit their Observables, but they do not schedule a template check. As long as values are read by the directives (`formControlName`), you never notice — the binding machinery updates them. But if the template reads `form.valid`, `control.errors` or `form.value` directly, the markup may stay stale after a programmatic write. The practical fix is not to read form state in the template directly but to mirror it into signals:
+| call | what it does | the gotcha |
+|---|---|---|
+| `setValue(v)` | requires every field of the group | a missing field throws at runtime |
+| `patchValue(v)` | updates only what you passed | a typo in a key goes unnoticed |
+| `reset(v)` | value plus `touched`/`dirty` reset | it resets validation statuses too |
+| `{ emitEvent: false }` | does not emit `valueChanges` | dependent logic never runs |
+| `form.value` | excludes disabled fields | you need `getRawValue()` |
+
+One thing to note about zoneless: `setValue`/`patchValue` do **not** schedule a template check themselves. Mirror form state into signals or call `markForCheck`. This is what chapter 03 warned about, and one of the few things that genuinely break when moving to zoneless.
+
+Here is the machinery. `setValue`/`patchValue` change form state and emit their Observables, but they do not schedule a template check. As long as values are read by the directives (`formControlName`), you never notice — the binding machinery updates them.
+
+But if the template reads `form.valid`, `control.errors` or `form.value` directly, the markup may stay stale after a programmatic write.
+
+The practical fix is not to read form state in the template directly but to mirror it into signals:
 
 ```ts
 // events (v18+) provides one stream of value, status and touched changes
@@ -112,7 +100,11 @@ For a component of yours to work inside Reactive Forms (`formControlName`, valid
   providers: [
     // NG_VALUE_ACCESSOR is a multi token (chapter 04): this is how forms find
     // the control. forwardRef is needed because the class is not defined yet
-    { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => PriorityPicker), multi: true },
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => PriorityPicker),
+      multi: true,
+    },
   ],
   template: `…`,
 })
@@ -147,10 +139,22 @@ Forgetting `onTouched()` is the most common bug in custom controls: the value ar
 Since v22 Angular ships a second, signal-based forms API (`@angular/forms/signals`, `@publicApi 22.0`). The idea is fundamentally different: **the source of truth is your data signal**, and the form merely wraps it in a tree of fields.
 
 ```ts
-import { form, schema, submit, required, minLength, min, validate } from '@angular/forms/signals';
+import {
+  form,
+  schema,
+  submit,
+  required,
+  minLength,
+  min,
+  validate,
+} from '@angular/forms/signals';
 
 // 1. the model is an ordinary signal
-private readonly model = signal({ title: '', priority: 'medium' as TicketPriority, slaHours: 4 });
+private readonly model = signal({
+  title: '',
+  priority: 'medium' as TicketPriority,
+  slaHours: 4,
+});
 
 // 2. rules are described by a schema over the model
 private readonly rules = schema<TicketDraft>((path) => {
@@ -185,45 +189,52 @@ protected async save(): Promise<void> {
 </form>
 ```
 
-What matters here: the data is never copied into the form (`form()` writes straight into your signal), rules are separated from structure and reusable through `schema()`, and field state (`value`, `errors`, `touched`, `disabled`, `pending`) consists of signals. There are ready-made rules `required`, `min`/`max`, `minLength`/`maxLength`, `email`, `pattern`, `validate`, `validateAsync`, `validateHttp`, `validateTree`, integration with Standard Schema (zod, valibot), plus `disabled`, `hidden`, `readonly` and `debounce`. Structural helpers are `apply`, `applyEach`, `applyWhen`, `applyWhenValue`. A custom control implements the **interface** `FormValueControl<T>` (or `FormCheckboxControl`) — so `ControlValueAccessor` with its four methods is no longer needed.
+What matters here:
 
-```
-┌──────────────────┬──────────────────────────────────┬───────────────────────────────────┐
-│ the task         │ Reactive Forms                   │ Signal Forms (v22)                │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ source of truth  │ the FormGroup itself             │ your data signal                  │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ creation         │ new FormGroup({...})             │ form(model)                       │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ template binding │ [formGroup] + formControlName    │ [formRoot] + [formField]          │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ a validator      │ Validators.required on a control │ required(path) in a schema        │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ reading errors   │ control.errors?.[key]            │ field().errors()                  │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ a custom control │ ControlValueAccessor             │ the FormValueControl<T> interface │
-├──────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ submitting       │ form.valid + your own submit     │ submit(form, { action })          │
-└──────────────────┴──────────────────────────────────┴───────────────────────────────────┘
-```
+- the data is never copied into the form: `form()` writes straight into your signal;
+- rules are separated from structure and reusable through `schema()`;
+- field state (`value`, `errors`, `touched`, `disabled`, `pending`) consists of signals.
 
-The course's practical stance: **the project uses Reactive Forms**. The reasons are pragmatic — they are what you will meet in existing projects and what interviews ask about, every UI component library is built around them, and they are battle-tested. Signal Forms are worth knowing and trying: the API is stable, the direction is obvious, and migration one form at a time is possible thanks to the compatibility layer in the package.
+There are many ready-made rules: `required`, `min`/`max`, `minLength`/`maxLength`, `email`, `pattern`, `validate`, `validateAsync`, `validateHttp`, `validateTree`. There is integration with Standard Schema (zod, valibot), plus `disabled`, `hidden`, `readonly` and `debounce`. Structural helpers are `apply`, `applyEach`, `applyWhen`, `applyWhenValue`.
+
+A custom control implements the **interface** `FormValueControl<T>` (or `FormCheckboxControl`). So `ControlValueAccessor` with its four methods is no longer needed.
+
+The two approaches side by side, row by row:
+
+| the task | Reactive Forms | Signal Forms (v22) |
+|---|---|---|
+| source of truth | the `FormGroup` itself | your data signal |
+| creation | `new FormGroup({...})` | `form(model)` |
+| template binding | `[formGroup]` + `formControlName` | `[formRoot]` + `[formField]` |
+| a validator | `Validators.required` on a control | `required(path)` in a schema |
+| reading errors | `control.errors?.[key]` | `field().errors()` |
+| a custom control | `ControlValueAccessor` | the `FormValueControl<T>` interface |
+| submitting | `form.valid` + your own submit | `submit(form, { action })` |
+
+The course's practical stance: **the project uses Reactive Forms**. The reasons are pragmatic. They are what you will meet in existing projects and what interviews ask about. Every component library is built around them, and years of use have proved them.
+
+Signal Forms are worth knowing and trying. The API is stable, the direction is obvious, and migration one form at a time is possible thanks to the compatibility layer in the package.
 
 ### Template-driven — an overview
 
-The third option: `[(ngModel)]` plus `name` inside a `<form>`, where the `ngForm` directive assembles the form and validators are attributes (`required`, `minlength`). The upside is minimal code for trivial forms. The downsides, which keep it from being the main tool: the form's structure is implicit (it is not in the class), typing is weak, programmatic control is awkward, and async or cross-field validation takes ingenuity. Rare in new code — but not extinct, so `#form="ngForm"` and `form.controls['title'].errors` are worth recognizing.
+The third option: `[(ngModel)]` plus `name` inside a `<form>`, where the `ngForm` directive assembles the form and validators are attributes (`required`, `minlength`). The upside is minimal code for trivial forms.
 
-## What we add to the project
+The downsides, which keep it from being the main tool:
 
-The create/edit ticket form: a typed `FormGroup` with validators, a cross-field rule "urgent requires SLA ≤ 4h", an async uniqueness check on the title, a `FormArray` for tags and a custom priority control on `ControlValueAccessor`. Plus the same screen sketched with Signal Forms, for comparison.
+- the form's structure is implicit — it is not in the class;
+- typing is weak;
+- programmatic control is awkward;
+- async and cross-field validation take ingenuity.
+
+Rare in new code — but not extinct, so `#form="ngForm"` and `form.controls['title'].errors` are worth recognizing.
 
 ## React parallels
 
-- **Who owns the state.** In React form state almost always lives in the component: `useState`, or `react-hook-form` with its `register`. In Reactive Forms the owner is the `FormGroup` object itself — it has its own tree, its own statuses and its own validation; the component only holds a reference. Hence the feeling that "Angular forms are heavier": it is a separate model with its own API rather than a state variable.
-- **react-hook-form is closer to Signal Forms.** RHF keeps data outside the render and registers fields through `register`; Signal Forms does the same, except the source is a signal and the fields are a tree over it. Even validation is similar: a schema (zod) over the model instead of validators scattered across fields.
-- **Showing errors.** In React you usually decide for yourself: `formState.errors` plus `isSubmitted`. Angular hands you ready flags on every control (`touched`, `dirty`, `pending`), but the display rule is still yours: `invalid` alone does not mean "show the error".
+- **Who owns the state.** In React form state almost always lives in the component: `useState`, or `react-hook-form` with its `register`. In Reactive Forms the owner is the `FormGroup` object itself. It has its own tree, its own statuses and its own validation, and the component only holds a reference. Hence the feeling that "Angular forms are heavier": it is a separate model with its own API rather than a state variable.
+- **react-hook-form is closer to Signal Forms.** React Hook Form keeps data outside the render and registers fields through `register`. Signal Forms does the same, except the source is a signal and the fields are a tree over it. Even validation is similar: a schema (zod) over the model instead of validators scattered across fields.
+- **Showing errors.** In React you usually decide for yourself: `formState.errors` plus `isSubmitted`. Angular hands you ready flags on every control: `touched`, `dirty`, `pending`. But the display rule is still yours, because `invalid` alone does not mean "show the error".
 - **A custom control.** In React it is a component with `value`/`onChange` props — that is all. In Angular it needs a contract: `ControlValueAccessor` with four methods and an `NG_VALUE_ACCESSOR` provider. More ceremony, but the control inherits the whole forms infrastructure — validation, statuses, `disabled`, integration with `formControlName`. Signal Forms cut the ceremony: implementing an interface is enough.
-- **Where the habit breaks:** trying to keep form values in separate signals and "synchronize" them with the `FormGroup`. That creates two sources of truth and endless drift. The correct direction is the opposite: the `FormGroup` is the source, and what the template needs (validity, errors) is mirrored into signals via `form.events` and `toSignal`.
+- **Where the habit breaks:** trying to keep form values in separate signals and "synchronize" them with the `FormGroup`. That creates two sources of truth and endless drift. The correct direction is the opposite. The `FormGroup` is the source, and what the template needs (validity, errors) is mirrored into signals via `form.events` and `toSignal`.
 
 ## What you will see in legacy code
 
@@ -234,6 +245,20 @@ The create/edit ticket form: a typed `FormGroup` with validators, a cross-field 
 - **`markAsTouched()` in a loop over all controls** before submitting, often through a home-made recursive `markAllAsTouched` — `AbstractControl` has had a built-in `markAllAsTouched()` for a while.
 - **`Validators.compose([...])`** and validator classes (`@Directive` with `NG_VALIDATORS`) where a plain function would do.
 
+## What we add to the project
+
+The create/edit ticket form. SLA (service level agreement) here means the response time the team is committed to. It is the `slaHours` field of the ticket model.
+
+Inside the form:
+
+- a typed `FormGroup` with validators;
+- the cross-field rule "urgent requires SLA ≤ 4h";
+- an async uniqueness check on the title;
+- a `FormArray` for tags;
+- a custom priority control on `ControlValueAccessor`.
+
+Plus the same screen sketched with Signal Forms, for comparison.
+
 ## Exercise
 
 **Input:** the project from chapter 09 (the HTTP layer, search, polling).
@@ -241,9 +266,9 @@ The create/edit ticket form: a typed `FormGroup` with validators, a cross-field 
 
 Requirements:
 
-1. A typed form: `title` (required, 5–120 characters), `priority` (a union type), `assignee` (string or `null`), `slaHours` (number, 1–72), `tags` (a `FormArray` of strings with add/remove). No `UntypedFormGroup`, no `any`, and `null` only where it is meaningful.
+1. A typed form with five fields: `title` (required, 5–120 characters), `priority` (a union type), `assignee` (string or `null`), `slaHours` (number, 1–72). Plus `tags`, a `FormArray` of strings with add and remove. No `UntypedFormGroup`, no `any`, and `null` only where it is meaningful.
 2. Cross-field validation on the group: if `priority === 'urgent'` then `slaHours ≤ 4`. The error must appear next to the SLA field even though it lives on the group — work out how.
-3. An async validator: the title must not duplicate an existing ticket (a request to `/api/tickets?q=`). Account for `pending` in the UI and do not fire a request on every keystroke.
+3. An async validator: the title must not duplicate an existing ticket (a request to `/api/tickets?q=`). Account for `pending` in the interface and do not fire a request on every keystroke.
 4. Error UX: an error appears only when `invalid && (touched || submitted)`. The submit button is disabled while `invalid` or `pending`, but the first attempt to submit an invalid form must mark every field as `touched`.
 5. A custom `PriorityPicker` control on `ControlValueAccessor`: works through `formControlName`, supports `disabled`, and marks `touched` correctly.
 6. Edit mode: the same component is filled with an existing ticket's data. Decide between `setValue` and `patchValue` and justify it. Do not forget `tags` — the array has to be rebuilt.
@@ -292,7 +317,11 @@ export class TicketForm {
   protected readonly form = this.fb.nonNullable.group(
     {
       title: this.fb.nonNullable.control('', {
-        validators: [Validators.required, Validators.minLength(5), Validators.maxLength(120)],
+        validators: [
+          Validators.required,
+          Validators.minLength(5),
+          Validators.maxLength(120),
+        ],
         asyncValidators: [this.uniqueTitle()],
         // validate on blur: otherwise the async validator fires per keystroke
         updateOn: 'blur',
@@ -304,7 +333,7 @@ export class TicketForm {
       }),
       tags: this.fb.nonNullable.array<FormControl<string>>([]),
     },
-    // the cross-field validator lives on the GROUP: it needs two values
+    // the cross-field validator lives on the group: it needs two values
     { validators: [slaWithinPriority] },
   );
 
@@ -349,7 +378,7 @@ export class TicketForm {
 
     if (this.form.pending) return;           // wait for async validation
     if (this.form.invalid) {
-      // without this the user cannot see WHAT is wrong
+      // without this the user cannot see what exactly is wrong
       this.form.markAllAsTouched();
       return;
     }
@@ -365,7 +394,7 @@ export class TicketForm {
         debounceTime(300),
         switchMap((title) => this.api.list({ q: title })),
         map((tickets) => (tickets.length > 0 ? { titleTaken: true } : null)),
-        // a validator MUST complete, or the control stays pending forever
+        // a validator must complete, or the control stays pending forever
         first(),
       );
   }
@@ -464,7 +493,11 @@ constructor() {
   selector: 'app-priority-picker',
   providers: [
     // a multi token: this is how ReactiveFormsModule finds the implementation
-    { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => PriorityPicker), multi: true },
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => PriorityPicker),
+      multi: true,
+    },
   ],
   template: `
     @for (option of options; track option) {
@@ -480,7 +513,9 @@ constructor() {
   `,
 })
 export class PriorityPicker implements ControlValueAccessor {
-  protected readonly options: readonly TicketPriority[] = ['low', 'medium', 'high', 'urgent'];
+  protected readonly options: readonly TicketPriority[] = [
+    'low', 'medium', 'high', 'urgent',
+  ];
   protected readonly value = signal<TicketPriority>('medium');
   protected readonly isDisabled = signal(false);
 
@@ -498,7 +533,8 @@ export class PriorityPicker implements ControlValueAccessor {
     this.value.set(priority);
     this.onChange(priority);
     // Without onTouched() the control never becomes touched — and errors
-    // tied to touched never show. The most common CVA bug
+    // tied to touched never show. The most common bug
+    // in ControlValueAccessor implementations
     this.onTouched();
   }
 }
@@ -507,7 +543,16 @@ export class PriorityPicker implements ControlValueAccessor {
 The same screen with Signal Forms, for comparison:
 
 ```ts
-import { form, schema, submit, required, minLength, min, max, validate } from '@angular/forms/signals';
+import {
+  form,
+  schema,
+  submit,
+  required,
+  minLength,
+  min,
+  max,
+  validate,
+} from '@angular/forms/signals';
 
 @Component({
   selector: 'app-ticket-form-signals',
@@ -549,15 +594,15 @@ export class TicketFormSignals {
 }
 ```
 
-The difference in volume is noticeable: no `FormBuilder`, no `getRawValue()`, no separate `submitted`, and since field state consists of signals already, the `form.events`/`toSignal` layer is unnecessary.
+The difference in volume is noticeable: no `FormBuilder`, no `getRawValue()`, no separate `submitted`. And since field state consists of signals already, the `form.events`/`toSignal` layer is unnecessary.
 
 Answers to the edge cases:
 
-- `setValue` requires a value for **every** control in the group: an incomplete object throws at runtime (`Must supply a value for form control with name: …`). For partial updates there is `patchValue` — but it carries the opposite danger: an unknown or misspelled key is silently ignored, and "why is this field empty" has to be found by eye.
+- `setValue` requires a value for **every** control in the group: an incomplete object throws at runtime (`Must supply a value for form control with name: …`). For partial updates there is `patchValue`, but it carries the opposite danger. An unknown or misspelled key is silently ignored, so "why is this field empty" has to be found by eye.
 - `form.value` excludes disabled controls and is typed `Partial`. The full value (including disabled fields) comes from `form.getRawValue()`. That is exactly why `save()` uses `getRawValue()`: otherwise a field disabled by a business rule would simply never reach the server.
-- While the async validator runs, the control's status is `pending` and `form.valid` is **`false`** (validity is not known yet). So checking `if (form.invalid)` is not enough: `pending` needs its own handling — either disable the button, or wait for completion (`form.statusChanges` until the first non-`pending` status) and only then submit.
+- While the async validator runs, the control's status is `pending` and `form.valid` is **`false`** (validity is not known yet). So checking `if (form.invalid)` is not enough, because `pending` needs its own handling. Either disable the button, or wait for completion — `form.statusChanges` until the first non-`pending` status — and only then submit.
 - `reset()` returns values to their initial (or supplied) state, clears `touched`/`dirty` and re-runs validation: the form becomes "untouched" again. The user sees a clean form without red highlights — which is correct after a successful save. But calling `reset()` on a server error would also wipe the data the user typed: there, keep the values and show a message instead.
-- Because `setValue`/`patchValue` do not schedule a template check in zoneless. As long as the value is read by the `formControlName` directive, the binding machinery handles the update. But the expression `form.controls.title.errors` in a template is only evaluated when that template is checked — and if nobody requested a check, the markup stays as it was. Hence the approach in the walkthrough: form state is mirrored into signals via `form.events` + `toSignal`, and the template depends on the signals rather than on the form object directly.
+- Because `setValue`/`patchValue` do not schedule a template check in zoneless. As long as the value is read by the `formControlName` directive, the binding machinery handles the update. But the expression `form.controls.title.errors` in a template is only evaluated when that template is checked. If nobody requested a check, the markup stays as it was. Hence the approach in the walkthrough: form state is mirrored into signals via `form.events` + `toSignal`. The template then depends on the signals rather than on the form object directly.
 
 ## Check yourself
 
@@ -570,16 +615,24 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. `invalid` is true from the moment the form is created: an empty required field is invalid before the user has even seen it. Showing errors then is bad UX (the form greets the user in red). What you need is a sign that "the user has already dealt with this field or tried to submit": `invalid && (touched || submitted)`, where `touched` comes from the control itself on blur and `submitted` is your own signal, because a `FormGroup` has no such flag. When submitting an invalid form you additionally call `markAllAsTouched()` so every error appears at once.
-2. `setValue` replaces the value wholesale and requires **all** controls of the group: a missing field throws at runtime. `patchValue` updates only the fields you passed. The dangers mirror each other: `setValue` breaks when the form's structure changes (add a field and every call breaks), while `patchValue` **silently ignores** unknown keys, so a typo in a field name produces neither an error nor a warning — the field simply stays empty. In practice: `patchValue` for partial updates and filling from an API, `setValue` when you deliberately set the entire form state.
-3. A cross-field rule depends on several controls by definition, while a validator receives only the control it is attached to. So it goes on the common parent — the group — where both values are reachable. The markup problem: the result lands in `group.errors` rather than in a specific field's `errors`, and the usual "show this control's errors" template never sees it. The fix is to surface the group error deliberately next to the field the user must correct (as `slaError()` does in the walkthrough), or to mirror it onto the field with a separate validator.
-4. `ControlValueAccessor` is the contract between your component and the forms machinery, with four methods: `writeValue` (form → component), `registerOnChange` (the component reports a new value to the form), `registerOnTouched` (the component reports interaction), and `setDisabledState`. If `onTouched()` is never called, the control never becomes `touched` — and since error display is usually tied to `touched`, the user sees no errors for that field even though `invalid` is true. The symptom is recognizable: "errors show up in every field except my custom one".
-5. In Reactive Forms the source of truth is the `FormGroup` object itself: the data lives inside the form and the component reaches it through the controls' API. In Signal Forms the source of truth is **your model signal**, and `form(model)` only builds a tree of fields and rules over it; writing to a field writes straight into the signal, and no copy of the data exists. That is also why a custom control needs no `ControlValueAccessor`-style intermediary with `onChange`/`onTouched` callbacks: the control implements the `FormValueControl<T>` interface, where value and state are signals and the connection is two-way by construction.
+1. `invalid` is true from the moment the form is created: an empty required field is invalid before the user has even seen it. Showing errors then is bad UX (the form greets the user in red). What you need is a sign that "the user has already dealt with this field or tried to submit". The formula is `invalid && (touched || submitted)`. The `touched` flag comes from the control itself on blur, and `submitted` is your own signal, because a `FormGroup` has no such flag. When submitting an invalid form you additionally call `markAllAsTouched()` so every error appears at once.
+2. `setValue` replaces the value wholesale and requires **all** controls of the group: a missing field throws at runtime. `patchValue` updates only the fields you passed. The dangers mirror each other. `setValue` breaks when the form's structure changes: add a field and every call breaks. And `patchValue` **silently ignores** unknown keys, so a typo in a field name produces neither an error nor a warning. The field simply stays empty. In practice: `patchValue` for partial updates and filling from an API, `setValue` when you deliberately set the entire form state.
+3. A cross-field rule depends on several controls by definition, while a validator receives only the control it is attached to. So it goes on the common parent — the group — where both values are reachable. The markup problem: the result lands in `group.errors` rather than in a specific field's `errors`. The usual "show this control's errors" template never sees it. There are two fixes. Surface the group error deliberately next to the field the user must correct, as `slaError()` does in the walkthrough. Or mirror it onto the field with a separate validator.
+4. `ControlValueAccessor` is the contract between your component and the forms machinery, and it has four methods. The method `writeValue` goes form → component. Then `registerOnChange` lets the component report a new value to the form. Next, `registerOnTouched` reports interaction. And the fourth is `setDisabledState`. If `onTouched()` is never called, the control never becomes `touched`. Error display is usually tied to `touched`, so the user sees no errors for that field even though `invalid` is true. The symptom is recognizable: "errors show up in every field except my custom one".
+5. In Reactive Forms the source of truth is the `FormGroup` object itself. The data lives inside the form, and the component reaches it through the controls' API. In Signal Forms the source of truth is **your model signal**, and `form(model)` only builds a tree of fields and rules over it. Writing to a field writes straight into the signal, and no copy of the data exists. That is also why a custom control needs no `ControlValueAccessor`-style intermediary with `onChange`/`onTouched` callbacks. The control implements the `FormValueControl<T>` interface, where value and state are signals and the connection is two-way by construction.
 
 </details>
 
 ## Common mistake
 
-The first is duplicating form state in signals. The reasoning is tempting: "chapter 05 said state belongs in signals, so form fields should too". Out come `title = signal('')` and `priority = signal('medium')` next to a `FormGroup`, with two-way synchronization through `valueChanges` and `patchValue`. The result is predictable: two sources of truth, cyclic updates, "the field resets while I type fast". The correct boundary: while you use Reactive Forms, **the form is the state**; only what the template needs for display (validity, errors, `pending`) is mirrored into signals via `form.events` + `toSignal`. If you want a signal to be the source of truth, that is Signal Forms — and then there should be no `FormGroup` in the component at all.
+The first is duplicating form state in signals. The reasoning is tempting: "chapter 05 said state belongs in signals, so form fields should too". Out come `title = signal('')` and `priority = signal('medium')` next to a `FormGroup`, with two-way synchronization through `valueChanges` and `patchValue`.
 
-The second is an async validator that never completes. You wrote a `switchMap` over `HttpClient` and forgot that a validator must **complete** its stream: the control stays `pending` forever, `form.valid` is `false`, the submit button is disabled, and nothing appears in the console. The same trap applies to a validator built over `valueChanges`: it subscribes to an infinite stream. The cure is `first()`/`take(1)` at the end of the pipeline (as in the walkthrough) plus a `form.pending` check in the submit handler. A neighbouring bug of the same family: an async validator without `updateOn: 'blur'` or `debounceTime` fires a request on every keystroke, so the server receives a dozen uniqueness checks for one word.
+The result is predictable: two sources of truth, cyclic updates, "the field resets while I type fast".
+
+Here is the correct boundary. While you use Reactive Forms, **the form is the state**. Only what the template needs for display — validity, errors, `pending` — is mirrored into signals via `form.events` + `toSignal`. And if you want a signal to be the source of truth, that is Signal Forms. There should then be no `FormGroup` in the component at all.
+
+The second is an async validator that never completes. You wrote a `switchMap` over `HttpClient` and forgot that a validator must **complete** its stream. The consequences: the control stays `pending` forever, `form.valid` is `false`, the submit button is disabled, and nothing appears in the console.
+
+The same trap applies to a validator built over `valueChanges`: it subscribes to an infinite stream. The cure is `first()`/`take(1)` at the end of the pipeline (as in the walkthrough) plus a `form.pending` check in the submit handler.
+
+A neighbouring bug of the same family is an async validator without `updateOn: 'blur'` or `debounceTime`. It fires a request on every keystroke, so the server receives a dozen uniqueness checks for one word.

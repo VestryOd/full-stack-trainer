@@ -2,12 +2,12 @@
 
 ## An error terminates the stream
 
-The subscription contract from [Reactive Model and Observables] is strict: `next` many times, then **exactly one** of `complete` or `error`. That means an error is not "one bad value among good ones" but the end of the stream:
+The subscription contract from [Reactive Model and Observables](./01-reactive-model-and-observables.md) is strict: `next` many times, then **exactly one** of `complete` or `error`. That means an error is not "one bad value among good ones" but the end of the stream:
 
 ```ts
 import { fromEvent, map } from 'rxjs';
 
-// The very first parsing error kills the click stream FOREVER
+// the very first parsing error kills the click stream forever
 fromEvent(button, 'click')
   .pipe(map((event) => JSON.parse((event.target as HTMLElement).dataset['payload']!)))
   .subscribe({
@@ -16,15 +16,17 @@ fromEvent(button, 'click')
   });
 ```
 
-The practical consequence worth memorizing verbatim: **the button still looks alive while the handler is dead**. There are no other signs beyond one console entry: the DOM listener was removed because the stream completed, and subsequent clicks go nowhere. This class of failure is what makes error handling in RxJS not "good practice" but a condition for working software.
+The practical consequence worth memorizing verbatim: **the button still looks alive while the handler is dead**. There is no other sign beyond one console entry. The DOM (Document Object Model) listener was removed because the stream terminated, so later clicks go nowhere.
+
+This class of failure is what makes error handling in RxJS not "good practice" but a condition for working software.
 
 Two kinds of errors are worth distinguishing:
 
 ```ts
 source$.pipe(
-  map((x) => risky(x)),      // an error HERE travels the stream → catchError sees it
+  map((x) => risky(x)),      // an error here travels the stream → catchError sees it
 ).subscribe({
-  next: (value) => risky(value), // an error HERE is outside the stream → catchError cannot
+  next: (value) => risky(value), // an error here is outside the stream → catchError cannot
 });
 ```
 
@@ -66,47 +68,51 @@ metrics.send(event).pipe(catchError(() => EMPTY));
 socket$.pipe(catchError((err, caught) => caught));
 ```
 
-It works but it is dangerous: with no delay and no limit this is an endless resubscription loop that, against an unavailable server, turns into a DDoS of your own backend. For retries there is `retry` with configuration — see below.
+It works, but it is dangerous. With no delay and no limit this is an endless resubscription loop. Against a server that is already down, your own client keeps sending requests with no pause and makes the outage worse. For retries there is `retry` with configuration — see below.
 
 ## Where to put catchError: inside or outside
 
 ```
-          Where catchError sits decides whether the stream survives
+   Where catchError sits decides whether the stream survives
          clicks: the 1st and 3rd requests succeed, the 2nd fails
 
 clicks$  --c--c-------c--|
 
-         switchMap(req) with catchError OUTSIDE:
+         switchMap(req) with catchError outside:
 result   ----A--X
-                ^ the stream is TERMINATED: the third click is never handled,
-                  the button still looks alive but the handler is dead
+                ^ the stream is terminated: the third
+                  click is never handled; the button
+                  looks alive but the handler is dead
 
-         switchMap(req.pipe(catchError)) with catchError INSIDE:
+         switchMap(req.pipe(catchError)) — inside:
 result   ----A--E-------A|
-                ^ E is a fallback value instead of the error;
-                  the outer click stream lives, the third click is handled
-                an error terminates THE stream it occurred in:
- inside a flattening operator only the inner one, outside the whole pipeline
+                ^ E is a fallback value instead of the
+                  error; the outer click stream lives,
+                  and the third click is handled
+    an error terminates the stream it occurred in: inside a
+ flattening operator only the inner one, outside the whole pipe
 ```
 
 This is the article's main practical takeaway. The code differs by one pair of parentheses; the behaviour differs fundamentally:
 
 ```ts
-// OUTSIDE: one failed request kills the click stream
+// outside: one failed request kills the click stream
 clicks$.pipe(
   switchMap((id) => api.load(id)),
   catchError(() => of(fallback)),   // fires once, then the stream is dead
 );
 
-// INSIDE: only that particular request fails, the click stream lives
+// inside: only that particular request fails, the click stream lives
 clicks$.pipe(
   switchMap((id) => api.load(id).pipe(catchError(() => of(fallback)))),
 );
 ```
 
-The reason is that an error terminates **the stream it occurred in**. Inside `switchMap` the error occurs in the inner stream (`api.load(id)`), and a `catchError` there turns it into a value before it can reach the outer one. Outside, the error has already passed through `switchMap` and become an error of the outer stream — and the outer stream here *is* the source of user events.
+The reason is that an error terminates **the stream it occurred in**. Inside `switchMap` the error occurs in the inner stream (`api.load(id)`). A `catchError` there turns it into a value before it can reach the outer one.
 
-The rule for choosing a place:
+Outside, the error has already passed through `switchMap` and become an error of the outer stream. And the outer stream here *is* the source of user events.
+
+A flattening operator here means `switchMap` or `mergeMap` — an operator that subscribes to the inner stream itself. The rule for choosing a place:
 
 - the source is **long-lived** (events, `interval`, a `Subject`, route params) → `catchError` **inside** the flattening operator;
 - the source is **one-shot** (a single HTTP request, a `forkJoin` at screen start) → `catchError` outside is fine: there is nothing to terminate;
@@ -114,14 +120,15 @@ The rule for choosing a place:
 
 ## retry: repeating with a delay
 
-`retry` resubscribes to the source on error. Configuration is the crux, because `retry(3)` without a delay repeats instantly:
+`retry` resubscribes to the source on error. The configuration is what matters, because `retry(3)` without a delay repeats instantly:
 
 ```
-                       retry with exponential backoff
+             retry with exponential backoff
 source     --X
              ^ the first attempt failed
 
-           retry({ count: 3, delay: (_, n) => timer(500 * 2 ** (n - 1)) })
+           retry({ count: 3, delay: (_, n) =>
+                    timer(500 * 2 ** (n - 1)) })
 
 attempt 1  --X
 attempt 2  -----X
@@ -129,9 +136,9 @@ attempt 2  -----X
 attempt 3  ----------X
                      ^ after 1000 ms
 attempt 4  --------------------V--|
-                               ^ after 2000 ms — success, the value arrives
- without delay, retry repeats instantly and finishes off a failing server;
-      resetOnSuccess: true clears the counter after a successful value
+                               ^ after 2000 ms — success
+without a delay, retry repeats instantly and floods the server;
+resetOnSuccess: true clears the counter after a successful value
 ```
 
 ```ts
@@ -157,12 +164,12 @@ api.load().pipe(
 Three things separate a working `retry` from a dangerous one:
 
 1. **A count limit.** `retry()` without `count` repeats forever.
-2. **A delay, preferably growing.** Instant repeats against a downed service are a way to finish it off and earn a rate-limit ban.
+2. **A delay, preferably growing.** Instant repeats against a service that is already down make the outage worse, and they get your client blocked by rate limiting.
 3. **A filter by error type.** Retrying a `401` or `422` is pointless: the result will not change. Retrying `5xx`, timeouts and `status === 0` (no network) makes sense.
 
 About `resetOnSuccess`: it matters for long-lived streams such as a WebSocket. Without it, three disconnects over a week of uptime exhaust the limit; with it the counter resets after every successful value.
 
-> **Legacy.** Retries with a delay used to be written as `retryWhen(errors => errors.pipe(delay(1000)))`. In RxJS 7 `retryWhen` is deprecated with the replacement stated in the message: `retry({ delay })`. The reason is that `retryWhen` required treating "a stream of errors" as a separate concept, while `retry`'s configuration expresses the same thing explicitly. The hand-rolled backoff via `scan` inside `retryWhen` is obsolete for the same reason.
+> **Legacy.** Retries with a delay used to be written as `retryWhen(errors => errors.pipe(delay(1000)))`. In RxJS 7 `retryWhen` is deprecated, and the message names the replacement: `retry({ delay })`. The reason: `retryWhen` made you treat "a stream of errors" as a separate concept, while `retry` says the same thing directly. Writing the backoff by hand with `scan` is obsolete too.
 
 ## timeout: an error instead of silence
 
@@ -172,7 +179,7 @@ A request that never answers is not an error as far as the stream is concerned: 
 import { timeout, TimeoutError, catchError, of, throwError } from 'rxjs';
 
 api.load().pipe(
-  // first — how long to wait for the FIRST value; each — the maximum gap BETWEEN values
+  // first — how long to wait for the first value; each — the maximum gap between values
   timeout({ first: 5000 }),
   catchError((err) =>
     err instanceof TimeoutError
@@ -187,34 +194,24 @@ socket$.pipe(timeout({ each: 30_000 })); // silent for over 30 seconds → error
 
 There is also `timeout({ with: () => fallback$ })` — switch to a fallback stream instead of erroring. Useful when a timeout means "show the cache" rather than "show an error".
 
+## The error-handling toolbox
+
+Every tool from this article in one table, before the last of them gets its own section.
+
+| operator | what it does | typical use |
+|---|---|---|
+| `catchError(() => of(x))` | substitutes a value for the error | an empty list, a default value |
+| `catchError(() => other$)` | switches to a fallback stream | cache instead of network, an API mirror |
+| `catchError(e => throwError(…))` | maps the error and rethrows | `HttpErrorResponse` to a domain error |
+| `catchError((e, caught) => caught)` | resubscribes to the source | infinite retry (careful!) |
+| `retry({ count, delay })` | resubscribes after an error | flaky network, `5xx` |
+| `timeout({ each, first })` | throws `TimeoutError` on silence | a hung request, a slow socket |
+| `finalize(fn)` | runs on any ending | hide a spinner, release a resource |
+| `EMPTY` in `catchError` | completes without values | "silently nothing", no error branch |
+
 ## finalize: guaranteed cleanup
 
-```
-                                             The error-handling toolbox
-┌───────────────────────────────────┬───────────────────────────────────┬─────────────────────────────────────────┐
-│ operator                          │ what it does                      │ typical use                             │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ catchError(() => of(x))           │ substitutes a value for the error │ an empty list, a default value          │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ catchError(() => other$)          │ switches to a fallback stream     │ cache instead of network, an API mirror │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ catchError(e => throwError(…))    │ maps the error and rethrows       │ HttpErrorResponse → a domain error      │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ catchError((e, caught) => caught) │ resubscribes to the source        │ infinite retry (careful!)               │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ retry({ count, delay })           │ resubscribes after an error       │ flaky network, 5xx                      │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ timeout({ each, first })          │ throws TimeoutError on silence    │ a hung request, a slow socket           │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ finalize(fn)                      │ runs on any ending                │ hide a spinner, release a resource      │
-├───────────────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────┤
-│ EMPTY in catchError               │ completes without values          │ "silently nothing", no error branch     │
-└───────────────────────────────────┴───────────────────────────────────┴─────────────────────────────────────────┘
-                          finalize fires on complete, on error and on unsubscribe alike —
-                           it is the only place to put cleanup that is guaranteed to run
-```
-
-`finalize` is the only operator that runs on **any** ending: `complete`, `error` and `unsubscribe`. That makes it the right place to release resources:
+`finalize` is the only operator that runs on **any** ending: `complete`, `error` and `unsubscribe`. That makes it the right place to release resources, and the only place where cleanup is guaranteed to run:
 
 ```ts
 import { finalize } from 'rxjs';
@@ -225,13 +222,13 @@ api.load().pipe(
 ).subscribe({ next: render, error: showError });
 ```
 
-Compare that with doing the same in `subscribe`: you would duplicate `loading.set(false)` across `next`/`error`/`complete` and still miss the unsubscribe case (leaving the screen, for example). That is why "hide the spinner" almost always lives in `finalize`.
+Compare that with doing the same in `subscribe`. You would duplicate `loading.set(false)` across `next`, `error` and `complete`, and still miss the unsubscribe case — the user leaving the screen. That is why "hide the spinner" almost always lives in `finalize`.
 
-An important ordering note: put `finalize` **after** `catchError` when the cleanup must also run for handled errors; and note that `finalize` does not swallow the error — it only performs a side effect.
+An important ordering note: put `finalize` **after** `catchError` when the cleanup must also run for handled errors. And `finalize` never swallows the error. It only performs a side effect.
 
 ## A practical example: a resilient request
 
-Putting it together — a request that survives a flaky network, never hangs forever, surfaces a meaningful error and always closes the spinner:
+Putting it together — a request that survives a flaky network, never hangs forever, reports a meaningful error and always closes the spinner:
 
 ```ts
 import {
@@ -281,42 +278,39 @@ function loadTickets(api: TicketApi, ui: LoadingUi) {
 }
 ```
 
-The operator order is not accidental: `timeout` before `retry` (otherwise the timeout would apply to all attempts combined), `retry` before `catchError` (otherwise the mapped error would not be recognized as retryable), `finalize` last.
+The operator order is not accidental:
 
-> **Angular context.** In Angular this logic usually lives in an HTTP interceptor rather than a service: retries and error mapping apply to every request at once, and the "show a banner" branch is separated from the "show a field error" branch. A code walkthrough is in the Angular course, in the chapter on HTTP and interceptors.
+- `timeout` before `retry`, otherwise the timeout would apply to all attempts combined;
+- `retry` before `catchError`, otherwise the mapped error would not be recognized as retryable;
+- `finalize` last.
+
+> **Angular context.** In Angular this logic usually lives in an HTTP interceptor rather than a service. Retries and error mapping then apply to every request at once. The "show a banner" branch stays separate from the "show a field error" branch. A code walkthrough is in the Angular course, in the chapter on HTTP and interceptors.
 
 ## Relation to other topics
 
-```txt
-[Reactive Model and Observables]  — the next/error/complete contract that makes
-                                     stream termination inevitable
-[Creating Streams and Subjects]   — throwError as a factory, and why a Subject
-                                     that received an error is dead forever
-[Flattening Operators]            — why catchError's position relative to
-                                     switchMap changes the behaviour
-[Combination Operators]           — why one error breaks a whole forkJoin
-                                     and how to get a partial result
-[Multicasting and Subscription
- Management]                        — how an error inside shareReplay affects
-                                     every subscriber
-```
+- [Reactive Model and Observables](./01-reactive-model-and-observables.md) — the `next`/`error`/`complete` contract that makes stream termination inevitable.
+- [Creating Streams and Subjects](./02-creating-streams-and-subjects.md) — `throwError` as a factory, and why a `Subject` that received an error is dead forever.
+- [Transformation and Filtering Operators](./03-transformation-and-filtering-operators.md) — why an error cannot simply be filtered out.
+- [Flattening Operators](./04-flattening-operators.md) — why `catchError`'s position relative to `switchMap` changes the behaviour.
+- [Combination Operators](./05-combination-operators.md) — why one error breaks a whole `forkJoin`, and how to get a partial result.
+- [Multicasting and Subscription Management](./07-multicasting-and-subscription-management.md) — how an error inside `shareReplay` affects every subscriber.
 
 ## Common interview traps
 
-- **"An error is just another notification in the stream"** — no: after `error` the stream is dead, `next` and `complete` will not follow, and the teardown has run. The expected illustration is a stream of user events that "stopped working" after one failed operation.
+- **"An error is just another notification in the stream"** — no. After `error` the stream is dead: `next` and `complete` will not follow, and the teardown has already run. The expected illustration is a stream of user events that "stopped working" after one failed operation.
 
 - **`catchError` at the end of a chain over a long-lived source** — the most consequential mistake. After the first error a click stream or `route.params` is terminated and the interface stops responding with no visible sign. What is expected is placing `catchError` **inside** the flattening operator, plus the reason: an error terminates the stream it occurred in.
 
-- **A `catchError` that returns nothing** — the operator must return an Observable. Returning `undefined` or merely logging without a `return` is a type error and, semantically, an attempt to swallow the error — which is what `EMPTY` is for.
+- **A `catchError` that returns nothing** — the operator must return an Observable. Returning `undefined`, or logging without a `return`, is a type error. Semantically it is an attempt to swallow the error, and swallowing is what `EMPTY` is for.
 
-- **`retry` with no delay and no limit** — `retry()` repeats forever and instantly: a downed service gets a flood of requests and the client earns a rate-limit ban. The expected answer is `retry({ count, delay })` with a growing delay and a filter: retrying `4xx` is pointless.
+- **`retry` with no delay and no limit** — `retry()` repeats forever and instantly. A service that is already down gets a flood of requests, and the client gets blocked by rate limiting. The expected answer is `retry({ count, delay })` with a growing delay and a filter: retrying `4xx` is pointless.
 
 - **Not distinguishing retryable from non-retryable errors** — retrying `422 Unprocessable Entity` or `401` will not change the outcome. A good answer names the criterion: retry `5xx`, timeouts and `status === 0`.
 
 - **Answering with `retryWhen`** — deprecated in RxJS 7 with the direct replacement `retry({ delay })`. Knowing this shows the candidate has worked with a current version rather than importing recipes from 2018 articles.
 
-- **Hiding the spinner in `subscribe` instead of `finalize`** — then `loading = false` is duplicated across three callbacks and still misses the unsubscribe case (leaving the screen mid-load). `finalize` is the only place that runs on `complete`, `error` and `unsubscribe` alike.
+- **Hiding the spinner in `subscribe` instead of `finalize`** — then `loading = false` is duplicated across three callbacks. It also misses the unsubscribe case, when the user leaves the screen mid-load. And `finalize` is the only place that runs on `complete`, `error` and `unsubscribe` alike.
 
-- **Not knowing about `timeout`** — "the request hung and the spinner is eternal" is solved not by a timer in the component but by `timeout({ first })`, which converts silence into a `TimeoutError` and folds it into ordinary error handling.
+- **Not knowing about `timeout`** — "the request hung and the spinner is eternal" is not solved by a timer in the component. The tool is `timeout({ first })`. It converts silence into a `TimeoutError`, which then goes through ordinary error handling.
 
-- **Confusing a stream error with an error in the subscriber** — an exception thrown inside `subscribe`'s `next` callback does not pass through `catchError`: it goes to the global handler. That is the argument for keeping logic in operators rather than in `subscribe`.
+- **Confusing a stream error with an error in the subscriber** — an exception thrown inside `subscribe`'s `next` callback does not pass through `catchError`. It goes to the global handler instead. That is the argument for keeping logic in operators rather than in `subscribe`.

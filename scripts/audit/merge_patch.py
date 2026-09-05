@@ -12,8 +12,14 @@ Patch shape:
 `question` is optional. Both locales must be present in any field that appears, so
 a wholesale field replace cannot drop a locale.
 
+Task files (`content/tasks/*.json`) carry different fields, so the merged set is
+picked from the target path: `title`, `description`, `solutionExplanation` there,
+`question`/`answer` everywhere else. `starterCode` and `solution` are plain strings
+in that rubric, not locale maps, and are never merged — patch them separately.
+
 Usage:
   python3 scripts/audit/merge_patch.py content/questions/nodejs.json /tmp/p2.json /tmp/p3.json
+  python3 scripts/audit/merge_patch.py content/tasks/nodejs.json /tmp/p2.json /tmp/p3.json
 """
 
 from __future__ import annotations
@@ -31,6 +37,16 @@ def main() -> int:
     target = Path(sys.argv[1])
     patches = sys.argv[2:]
 
+    # Named MERGEABLE, not `fields`: the loop below binds `fields` to each patch
+    # entry, and an earlier version of this let that shadow the whitelist, so
+    # `if field not in fields` compared a field against the patch and was always
+    # false. Any field in a patch would have been written straight into the content.
+    mergeable = (
+        ("title", "description", "solutionExplanation")
+        if "tasks" in target.parts
+        else ("question", "answer")
+    )
+
     raw = target.read_text(encoding="utf-8")
     trailing = raw.endswith("\n")
     data = json.loads(raw)
@@ -39,15 +55,17 @@ def main() -> int:
     applied = 0
     for patch_file in patches:
         patch = json.loads(Path(patch_file).read_text(encoding="utf-8"))
-        for qid, fields in patch.items():
+        for qid, entry in patch.items():
             assert qid in by_id, f"{patch_file}: unknown id {qid}"
-            for field in ("question", "answer"):
-                if field not in fields:
+            unknown = set(entry) - set(mergeable)
+            assert not unknown, f"{qid}: patch carries non-mergeable field(s) {sorted(unknown)}"
+            for field in mergeable:
+                if field not in entry:
                     continue
                 for locale in ("en", "ru"):
-                    assert locale in fields[field], f"{qid}.{field}: locale {locale} missing"
-                    assert fields[field][locale].strip(), f"{qid}.{field}.{locale} is empty"
-                by_id[qid][field] = fields[field]
+                    assert locale in entry[field], f"{qid}.{field}: locale {locale} missing"
+                    assert entry[field][locale].strip(), f"{qid}.{field}.{locale} is empty"
+                by_id[qid][field] = entry[field]
             applied += 1
         print(f"  {patch_file}: {len(patch)} entries")
 

@@ -2,19 +2,29 @@
 
 ## Pixi: a retained-mode scene on top of WebGL
 
-Articles 01-03 covered immediate-mode Canvas 2D: you draw pixels, nothing about them is remembered, and next frame you redraw from scratch (article 01). Pixi flips this model: you create scene objects ONCE, and from then on just **mutate their properties** (`sprite.x = 150`, `sprite.rotation += 0.02`) — Pixi figures out what and how to redraw, and assembles those changes into the smallest possible number of WebGL draw calls (article 04) through its built-in batch renderer.
+Pixi keeps your scene as a tree of long-lived objects on top of WebGL (Web Graphics Library), and redraws it for you. You create scene objects **once**, and from then on you just **mutate their properties**: `sprite.x = 150`, `sprite.rotation += 0.02`. Pixi figures out what and how to redraw. It assembles those changes into the smallest possible number of draw calls, through its built-in batch renderer (article 04).
+
+That is the opposite of the immediate-mode Canvas 2D model of articles 01-03. There you draw pixels, nothing about them is remembered, and next frame you redraw from scratch (article 01).
 
 ```txt
-Canvas 2D (immediate mode, articles 01-03):   Pixi (retained mode):
-  every frame:                                  once:
-    ctx.clearRect(...)                            const sprite = new Sprite(texture);
-    ctx.drawImage(sprite, x, y)                   stage.addChild(sprite);
-    // you're responsible for EVERY frame          every frame:
-                                                     sprite.x += 1; // just a mutation
-                                                     // Pixi knows what to redraw
+Canvas 2D (immediate mode, articles 01-03)
+  every frame:
+    ctx.clearRect(...)
+    ctx.drawImage(sprite, x, y)
+    // you are responsible for every frame
+
+Pixi (retained mode)
+  once:
+    const sprite = new Sprite(texture);
+    stage.addChild(sprite);
+  every frame:
+    sprite.x += 1;   // just a mutation
+    // Pixi knows what to redraw
 ```
 
-This isn't "Pixi eliminates immediate mode as a concept" — under the hood, Pixi still draws through WebGL draw calls every frame (fully immediate-mode rendering at the GPU level, article 04); but from the perspective of YOUR code, the model becomes retained: you work with a tree of long-lived objects instead of one-shot drawing commands.
+This isn't "Pixi eliminates immediate mode as a concept". Under the hood Pixi still draws through WebGL draw calls every frame. Rendering stays fully immediate-mode at the GPU (graphics processing unit) level (article 04).
+
+From the perspective of **your** code, though, the model becomes retained. You work with a tree of long-lived objects instead of one-shot drawing commands.
 
 ## `Application`, `stage`, and the `Container` hierarchy
 
@@ -30,28 +40,23 @@ const sprite = new Sprite(texture);
 group.addChild(sprite);
 
 group.rotation = 0.1; // a Container's transform automatically applies
-                       // to ALL its children — plain canvas has no
+                       // to all its children — plain canvas has no
                        // equivalent to this without manual
                        // save()/translate()/rotate() around every
                        // child draw call (article 01)
 ```
 
-`app.stage` is the scene's root `Container`. Any `Container` is a tree node holding both a list of children and its own transform (position, rotation, scale, alpha); a parent's transform automatically composes with its descendants' transforms at render time — something plain Canvas 2D would require you to manage by hand via `save()`/`translate()`/`rotate()` around every single draw (article 01), but which is built directly into the scene structure here.
+`app.stage` is the scene's root `Container`. Any `Container` is a tree node holding both a list of children and its own transform: position, rotation, scale, alpha.
+
+A parent's transform automatically composes with its descendants' transforms at render time. Plain Canvas 2D would require you to manage that by hand, with `save()`/`translate()`/`rotate()` around every single draw (article 01). Here it is built directly into the scene structure.
 
 ## `Sprite`, `Texture`, and `BaseTexture`
 
-```txt
-BaseTexture — the actual pixels UPLOADED TO GPU MEMORY (one GPU
-               texture); the "heaviest" unit — this is what actually
-               costs graphics memory
-
-Texture      — a "window" into a region of a BaseTexture (an x, y,
-               width, height rectangle inside it); MANY Textures can
-               point to ONE BaseTexture without re-uploading it
-
-Sprite       — a display object that draws a specific Texture at a
-               given position/rotation/scale
-```
+| Concept | What it is |
+|---|---|
+| `BaseTexture` | The actual pixels **uploaded to GPU memory**, one GPU texture. The heaviest unit: this is what actually costs graphics memory. |
+| `Texture` | A "window" into a region of a `BaseTexture`: an x, y, width, height rectangle inside it. Many `Texture` objects can point to **one** `BaseTexture` without re-uploading it. |
+| `Sprite` | A display object that draws a specific `Texture` at a given position, rotation and scale. |
 
 ```javascript
 const sprite = new Sprite(texture);
@@ -60,11 +65,13 @@ sprite.anchor.set(0.5); // anchor point (0.5, 0.5) = center —
                           // instead of the default (0,0) corner
 ```
 
-The Texture/BaseTexture split is exactly what makes sprite atlases possible: one large PNG (one `BaseTexture`, one GPU upload) gets sliced into dozens of `Texture` objects, each pointing to its own rectangle inside the shared image — with no extra GPU upload per sprite.
+The `Texture`/`BaseTexture` split is exactly what makes sprite atlases possible. One large PNG (portable network graphics) file is one `BaseTexture` and one GPU upload. It gets sliced into dozens of `Texture` objects, each pointing to its own rectangle inside the shared image, with no extra GPU upload per sprite.
 
 ## Sprite atlases: why they enable batching
 
-Pixi's batch renderer can combine drawing many sprites into ONE draw call, as long as all the sprites involved share a common `BaseTexture` — the GPU doesn't need to swap "texture units" between drawing neighboring sprites if they're reading pixels from the same uploaded image (article 04: a draw call's cost is mostly state-change overhead, including texture swaps).
+Pixi's batch renderer can combine drawing many sprites into a single draw call. The condition is that all the sprites involved share a common `BaseTexture`.
+
+The reason: the GPU doesn't need to swap "texture units" between neighboring sprites if they read pixels from the same uploaded image. A draw call's cost is mostly state-change overhead, and texture swaps are part of it (article 04).
 
 ```txt
 ❌ 200 separate PNG files, each its own BaseTexture:
@@ -72,12 +79,14 @@ Pixi's batch renderer can combine drawing many sprites into ONE draw call, as lo
    matching textures) — driver overhead grows linearly
 
 ✅ One 2048×2048px atlas, 200 sprites — 200 Textures, each pointing
-   into a different rectangle of the SAME BaseTexture:
-   the same 200 sprites render in JUST A FEW (ideally one) draw
+   into a different rectangle of the same BaseTexture:
+   the same 200 sprites render in just a few (ideally one) draw
    calls, regardless of the count
 ```
 
-The practical takeaway: for scenes with hundreds or thousands of similar sprites (particles, UI icons, map tiles), packing images into an atlas isn't a micro-optimization — it's an architectural decision determining whether the scene hits a performance ceiling at real-world object counts.
+The practical takeaway concerns scenes with hundreds or thousands of similar sprites: particles, interface icons, map tiles. There, packing images into an atlas isn't a micro-optimization.
+
+It is an architectural decision, and it determines whether the scene hits a performance ceiling at real-world object counts.
 
 ## The batch renderer: what breaks it
 
@@ -85,19 +94,23 @@ The practical takeaway: for scenes with hundreds or thousands of similar sprites
 What breaks a batch (forces a separate draw call):
   - A BaseTexture change between sprites adjacent in draw order
     (if they aren't from the same atlas)
-  - A Filter on ANY object in the middle of the draw order — a
-    filter requires rendering into a TEMPORARY render texture and
-    back, which fundamentally interrupts batching before and after it
+  - A filter on any object in the middle of the draw order. A
+    filter renders into a temporary render texture and back, which
+    interrupts batching before and after it
   - A blend mode change between adjacent objects
   - A custom shader on a single object, different from the rest of
     the batch
 ```
 
-The practical architectural consequences: group sprites sharing a texture next to each other in draw order wherever visual z-order allows it; limit the number of DISTINCT filters in a scene (not "a filter on every tenth sprite, mixed with plain ones," but either applied to a whole visual layer or not at all); for truly massive counts of uniform, simple sprites (thousands of particles), use `ParticleContainer` — a specialized container that trades away some flexibility (a simplified transform model, limited per-child filter support) for maximum batching throughput in exactly this scenario.
+Three practical architectural consequences follow:
+
+- Group sprites that share a texture next to each other in draw order, wherever visual z-order allows it.
+- Limit the number of **distinct** filters in a scene. Not "a filter on every tenth sprite, mixed with plain ones", but either applied to a whole visual layer or not at all.
+- For truly massive counts of uniform, simple sprites — thousands of particles — use `ParticleContainer`. It is a specialized container tuned for maximum batching throughput in exactly this scenario. What it trades away: a simplified transform model and limited per-child filter support.
 
 ## `Graphics`: vector shapes — but not free every frame
 
-`Graphics` is the API for drawing vector shapes (the analog of `fillRect`/`arc`/paths from article 01), but the result is WebGL geometry, not canvas pixels:
+`Graphics` is the API for drawing vector shapes, the analog of `fillRect`/`arc`/paths from article 01. The result is WebGL geometry, not canvas pixels:
 
 ```javascript
 const graphics = new Graphics();
@@ -106,7 +119,9 @@ graphics.circle(150, 50, 40).fill(0x33ccff);
 stage.addChild(graphics);
 ```
 
-The key difference from `Sprite`: moving/rotating/scaling a `Sprite` every frame is cheap — it's just changing the transform matrix over geometry and a texture that already exist. `Graphics`, when you call `clear()` and draw again, **rebuilds its geometry** (regenerates the vertex buffer) — an operation noticeably more expensive than a plain transform change.
+The key difference from `Sprite` is cost. Moving, rotating or scaling a `Sprite` every frame is cheap: it only changes the transform matrix over geometry and a texture that already exist.
+
+`Graphics` behaves differently. When you call `clear()` and draw again, it **rebuilds its geometry**, regenerating the vertex buffer. That is noticeably more expensive than a plain transform change.
 
 ```javascript
 // ❌ Expensive: Graphics geometry is rebuilt 60 times a second
@@ -125,23 +140,25 @@ app.ticker.add(() => {
 });
 ```
 
-The rule: use `Graphics` for static or infrequently-changing vector shapes; for shapes that genuinely need to redraw every frame in large numbers, use either a `Sprite` with a pre-baked texture, or cache the `Graphics` result into a `RenderTexture`/`cacheAsTexture` once, instead of rebuilding geometry every tick.
+The rule: use `Graphics` for static or infrequently-changing vector shapes. For shapes that genuinely need to redraw every frame in large numbers, use a `Sprite` with a pre-baked texture. The other option is caching the `Graphics` result once into a `RenderTexture` or via `cacheAsTexture`, instead of rebuilding geometry every tick.
 
 ## `Text` vs. `BitmapText`
 
 ```javascript
 const text = new Text({ text: 'Score: 0', style: { fontSize: 24, fill: 0xffffff } });
 // Internally, Text renders the string via canvas 2D (measuring,
-// rasterizing glyphs) and uploads the result as an ORDINARY
-// texture — expensive on EVERY text/style change, fine as a static label
+// rasterizing glyphs) and uploads the result as an ordinary
+// texture — expensive on every text/style change, fine as a static label
 
 const bitmapText = new BitmapText({ text: 'Score: 0', style: { fontFamily: 'game-font' } });
-// BitmapText assembles a string from PRE-BUILT glyph sprites of a
+// BitmapText assembles a string from pre-built glyph sprites of a
 // pre-generated bitmap font (a character sprite atlas) — updating
-// the text does NOT require re-rasterizing via canvas, cheap every frame
+// the text does not require re-rasterizing via canvas, cheap every frame
 ```
 
-The practical choice: a score counter that updates once a second or less — `Text` is fine; an FPS counter or timer updating every frame — `BitmapText`, because canvas rasterization on every frame for `Text` creates real, noticeable overhead that `BitmapText` avoids entirely, at the cost of needing a pre-built bitmap font.
+The practical choice depends on how often the string changes. A score counter that updates once a second or less: `Text` is fine. A frames-per-second counter or a timer that updates every frame: `BitmapText`.
+
+The reason is that canvas rasterization on every frame for `Text` creates real, noticeable overhead. `BitmapText` avoids it entirely, at the cost of needing a pre-built bitmap font.
 
 ## Interaction: pointer events on scene objects
 
@@ -156,7 +173,7 @@ sprite.hitArea = new Rectangle(0, 0, 200, 50); // an explicit hit region,
 // small icon's clickable area, or shrinking it to fit an irregular shape
 ```
 
-Conceptually, this is the same problem as hit detection on plain canvas (article 02: math checks/`isPointInPath`/color-picking), but Pixi handles it for you through the scene graph: hit testing runs automatically across the `Container` hierarchy, accounting for parent transforms, with no manual coordinate math needed.
+Conceptually this is the same problem as hit detection on plain canvas: math checks, `isPointInPath`, or color-picking (article 02). Pixi handles it for you through the scene graph. Hit testing runs automatically across the `Container` hierarchy, accounts for parent transforms, and needs no manual coordinate math.
 
 ## Filters: built-in, and a custom fragment shader
 
@@ -170,11 +187,13 @@ colorMatrix.grayscale(0.8);
 sprite.filters = [colorMatrix];
 ```
 
-A filter is applied by rendering the object (and sometimes some area around it) into a temporary render texture, running a fragment shader (article 04) over it, and inserting the result back into the scene — exactly why filters "break batching" (see above): it's an extra, isolated render pass, not part of the ordinary drawing flow.
+A filter is applied in three steps. The object, and sometimes some area around it, is rendered into a temporary render texture. A fragment shader (article 04) runs over that texture. The result is inserted back into the scene.
+
+That is exactly why filters "break batching", as described above. It's an extra, isolated render pass, not part of the ordinary drawing flow.
 
 ```javascript
 // A minimal custom filter — grayscale via a custom fragment shader
-import { Filter, GlProgram } from 'pixi.js';
+import { Filter } from 'pixi.js';
 
 const grayscaleFragment = `
   precision mediump float;
@@ -190,13 +209,13 @@ const grayscaleFragment = `
   }
 `;
 
-const customGrayscale = new Filter({
-  glProgram: new GlProgram({ fragment: grayscaleFragment, vertex: defaultVertexShader }),
-});
+// Only the fragment shader is passed: Filter.from supplies the default
+// vertex shader, which handles positioning
+const customGrayscale = Filter.from({ gl: { fragment: grayscaleFragment } });
 sprite.filters = [customGrayscale];
 ```
 
-This is a direct application of article 04's GLSL model — Pixi supplies `vTextureCoord` (a rasterization-interpolated varying) and `uTexture` (a uniform sampler), sparing you from manually setting up buffers/attributes for a full-screen pass.
+This is a direct application of the GLSL (OpenGL Shading Language) model from article 04. Pixi supplies `vTextureCoord`, a rasterization-interpolated varying, and `uTexture`, a uniform sampler. That spares you from setting up buffers and attributes by hand for a full-screen pass.
 
 ## `Ticker`: the built-in update loop
 
@@ -212,7 +231,9 @@ app.ticker.add((ticker) => {
 });
 ```
 
-Pixi already runs its own rAF render loop inside `Application` — you don't need (and shouldn't add) a separate `requestAnimationFrame` alongside it; your own game logic hooks in via `app.ticker.add()`, getting `deltaTime` (in "frames at a target 60fps") or `deltaMS` (in milliseconds) for its own calculations.
+Pixi already runs its own rAF (`requestAnimationFrame`) render loop inside `Application`. You don't need a separate `requestAnimationFrame` alongside it, and you shouldn't add one.
+
+Your own game logic hooks in via `app.ticker.add()`. It receives `deltaTime`, counted in frames at a target 60fps, or `deltaMS`, counted in milliseconds.
 
 ## Asset loading: `Assets`
 
@@ -230,7 +251,7 @@ await Assets.load([
 
 ## Memory management: `destroy()` and the "new texture every frame" leak
 
-GPU resources (textures, buffers) aren't released by JS's automatic garbage collection the same way ordinary objects are — the JS wrapper object can be collected, but the GPU memory allocated for it stays occupied until `destroy()` is explicitly called.
+GPU resources such as textures and buffers aren't released by JS garbage collection the way ordinary objects are. The JS wrapper object can be collected, but the GPU memory allocated for it stays occupied until `destroy()` is called explicitly.
 
 ```javascript
 sprite.destroy();                       // destroys the display object
@@ -261,26 +282,20 @@ app.ticker.add(() => {
 });
 ```
 
-This leak pattern is especially dangerous on mobile devices with limited GPU memory: the app runs fine for a few minutes, then the tab crashes or the browser forcibly reclaims the context — a typical production bug that's hard to catch in quick local testing on a powerful desktop.
+This leak pattern is especially dangerous on mobile devices with limited GPU memory. The app runs fine for a few minutes, then the tab crashes or the browser forcibly reclaims the context. It's a typical production bug, and hard to catch in quick local testing on a powerful desktop.
 
 ## When Pixi over plain Canvas 2D, and when it's overkill
 
-```txt
-Pixi earns its place:
-  - Hundreds to thousands of sprites/particles at once (batching
-    solves what plain Canvas 2D hits a CPU ceiling on when drawing
-    every drawImage call individually)
-  - Compositions with several filters, blend modes, complex
-    interactivity across many objects
-  - A project that will grow in complexity (many layers, nested
-    object hierarchies, texture reuse)
+**When Pixi is worth it:**
 
-Overkill:
-  - A handful of simple shapes/icons, a one-off simple animation —
-    the library's weight and API surface aren't justified relative
-    to the task; plain Canvas 2D (articles 01-03) is simpler and
-    entirely sufficient
-```
+- Hundreds to thousands of sprites or particles at once. Batching solves what plain Canvas 2D hits a CPU (central processing unit) ceiling on, when every `drawImage` call is drawn individually.
+- Compositions with several filters, blend modes, and complex interactivity across many objects.
+- A project that will grow in complexity: many layers, nested object hierarchies, texture reuse.
+
+**When it's overkill:**
+
+- A handful of simple shapes or icons, or a one-off simple animation. The library's weight and API surface aren't justified relative to the task.
+- Plain Canvas 2D (articles 01-03) is simpler and entirely sufficient for that.
 
 ## Pixi with React: an imperative core inside a declarative shell
 
@@ -301,7 +316,7 @@ function PixiCanvas() {
 
     return () => {
       cancelled = true;
-      app.destroy(true, { children: true, texture: true }); // REQUIRED cleanup —
+      app.destroy(true, { children: true, texture: true }); // required cleanup —
                                                                 // without it, every
                                                                 // remount (a route
                                                                 // change, React
@@ -314,39 +329,28 @@ function PixiCanvas() {
 }
 ```
 
-This is the same "canvas as an escape hatch from React's render model" principle (article 08 covers it in depth for plain canvas) — a Pixi `Application` lives inside `useEffect`, outside React's render cycle, and must be explicitly destroyed in the cleanup function. For a more declarative style, `@pixi/react` exists (a wrapper letting you describe a scene with JSX components like `<pixiSprite>`), but it remains a thin layer over the same imperative Pixi model, not a replacement for it.
+This is the same principle as "canvas as an escape hatch from React's render model", which article 08 covers in depth for plain canvas. A Pixi `Application` lives inside `useEffect`, outside React's render cycle, and must be explicitly destroyed in the cleanup function.
+
+For a more declarative style there is `@pixi/react`. It's a wrapper that lets you describe a scene with JSX (a syntax extension for JavaScript) components like `<pixiSprite>`. It remains a thin layer over the same imperative Pixi model, not a replacement for it.
 
 ## Connection to other articles
 
-```txt
-[WebGL and GPU Fundamentals]          — draw calls, batching, shaders,
-                                         textures — the foundation Pixi's
-                                         entire batch renderer is built on
-[Canvas 2D Fundamentals] /
-[Canvas Animation and Game Loop]      — the immediate-mode model that
-                                         retained-mode Pixi contrasts
-                                         with; the hit detection from
-                                         article 02 that Pixi handles
-                                         for you through the scene graph
-[Architecture and Performance for
- Canvas Apps]                          — the React integration and
-                                         memory-management patterns from
-                                         this article generalize to a
-                                         whole application
-```
+- [WebGL and GPU Fundamentals](./04-webgl-and-gpu-fundamentals.md) — draw calls, batching, shaders and textures: the foundation Pixi's entire batch renderer is built on.
+- [Canvas 2D Fundamentals](./01-canvas-2d-fundamentals.md) and [Canvas Animation and Game Loop](./02-canvas-animation-and-game-loop.md) — the immediate-mode model that retained-mode Pixi contrasts with. Article 02 also covers the hit detection that Pixi handles for you through the scene graph.
+- [Architecture and Performance for Canvas Apps](./08-architecture-and-performance-for-canvas-apps.md) — the React integration and memory-management patterns from this article generalize to a whole application.
 
 ## Common interview traps
 
-- **Being unable to explain how Pixi differs from plain canvas at a model level** — conflating "Pixi uses WebGL" with "Pixi is retained mode" — both are true, but they're two DIFFERENT facts: WebGL rendering stays immediate at the GPU level; retained mode is about how YOUR code is organized on top of it.
+- **Being unable to explain how Pixi differs from plain canvas at a model level** — conflating "Pixi uses WebGL" with "Pixi is retained mode". Both are true, but they are two **different** facts. WebGL rendering stays immediate at the GPU level, while retained mode is about how **your** code is organized on top of it.
 
-- **Confusing Texture and BaseTexture** — not knowing that many Textures can point to one BaseTexture without a re-upload to the GPU, and that this is exactly what makes sprite atlases a batching mechanism, not just "convenient file packaging."
+- **Confusing `Texture` and `BaseTexture`** — not knowing that many `Texture` objects can point to one `BaseTexture` without a re-upload to the GPU. That is exactly what makes sprite atlases a batching mechanism, not just convenient file packaging.
 
-- **Not knowing what breaks batching** — being unable to name concrete causes (a texture swap, a filter mid-draw-order, a blend mode change) and propose architectural fixes (an atlas, grouping by texture, limiting the number of filters).
+- **Not knowing what breaks batching** — being unable to name concrete causes: a texture swap, a filter mid-draw-order, a blend mode change. And being unable to propose architectural fixes: an atlas, grouping by texture, limiting the number of filters.
 
-- **Assuming `Graphics` is as cheap as `Sprite` every frame** — not knowing that redrawing `Graphics` rebuilds its geometry, whereas moving a `Sprite` is just a transform-matrix change over data that already exists.
+- **Assuming `Graphics` is as cheap as `Sprite` every frame** — not knowing that redrawing `Graphics` rebuilds its geometry. Moving a `Sprite` is just a transform-matrix change over data that already exists.
 
-- **Not knowing the cost difference between `Text` and `BitmapText`** — proposing `Text` for a counter that updates every frame, unaware of the canvas rasterization pass on every change.
+- **Not knowing the cost difference between `Text` and `BitmapText`** — proposing `Text` for a counter that updates every frame. That misses the canvas rasterization pass on every change.
 
-- **Not calling `destroy()`** — creating new textures/render textures inside the render loop without releasing the old ones, leading to a GPU memory leak, especially noticeable on mobile devices.
+- **Not calling `destroy()`** — creating new textures or render textures inside the render loop without releasing the old ones. The result is a GPU memory leak, especially noticeable on mobile devices.
 
-- **Not cleaning up a Pixi `Application` on React unmount** — forgetting `app.destroy()` in a `useEffect` cleanup function, accumulating leaks on every remount (route changes, React StrictMode in development).
+- **Not cleaning up a Pixi `Application` on React unmount** — forgetting `app.destroy()` in a `useEffect` cleanup function. Leaks then accumulate on every remount: route changes, React StrictMode in development.

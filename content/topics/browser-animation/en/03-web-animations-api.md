@@ -2,7 +2,13 @@
 
 ## What WAAPI actually is — and why it isn't "an alternative to CSS"
 
-A common misconception treats the Web Animations API (WAAPI) as a third, separate way to animate elements, alongside CSS transitions and `requestAnimationFrame`. In reality, WAAPI is **the exact same engine** that runs `transition` and `@keyframes` (see [CSS Transitions and Keyframes]) — just with a programmatic JS interface on top of it. When you call `element.animate(...)`, the browser creates precisely the same internal `KeyframeEffect` it would from a `@keyframes` rule in CSS, with the same properties: interpolation based on value type, the ability to run on the compositor thread for `transform`/`opacity` (see [Rendering Pipeline and Frame Budget]), the same timing model.
+A common misconception treats the Web Animations API (WAAPI) as a third, separate way to animate elements, alongside CSS transitions and `requestAnimationFrame` (rAF). In reality, WAAPI is **the exact same engine** that runs `transition` and `@keyframes` (see [CSS Transitions and Keyframes](./02-css-transitions-and-keyframes.md)). It just adds a programmatic JS interface on top.
+
+When you call `element.animate(...)`, the browser creates precisely the same internal `KeyframeEffect` it would build from a `@keyframes` rule in CSS. The properties are the same:
+
+- interpolation based on value type;
+- the ability to run on the compositor thread for `transform`/`opacity` (see [Rendering Pipeline and Frame Budget](./01-rendering-pipeline-and-frame-budget.md));
+- the same timing model.
 
 The difference isn't "CSS is fast, JS is slow" — it's about **where the values come from and who controls them**. CSS works well when keyframe values are known ahead of time, while you're writing styles. WAAPI is what you need when:
 
@@ -10,7 +16,7 @@ The difference isn't "CSS is fast, JS is slow" — it's about **where the values
 - the animation needs programmatic control: pause, reverse, slow down, await completion via a promise
 - you need to combine several independent animations on the same property without rewriting CSS classes
 
-That's why building an animation by toggling CSS classes "for every dynamic value" is an anti-pattern that WAAPI solves directly, with no loss of the CSS engine's performance characteristics.
+That's why building an animation by toggling CSS classes "for every dynamic value" is an anti-pattern. WAAPI solves it directly, with no loss of the CSS engine's performance characteristics.
 
 ## `element.animate()`: syntax and keyframe formats
 
@@ -42,7 +48,7 @@ element.animate(
 );
 ```
 
-The second format is more convenient for dynamically generated keyframes — for example, when a list of intermediate values is assembled from data in a loop — because you don't have to compute `offset` for each point by hand.
+The second format is more convenient for dynamically generated keyframes. Say a list of intermediate values is assembled from data in a loop. You don't have to compute `offset` for each point yourself.
 
 `options` mirrors the CSS `animation-*` properties, just as a camelCase object:
 
@@ -74,7 +80,7 @@ anim.pause();                 // pause at the current position
 anim.play();                  // resume
 anim.reverse();               // play backward from the current position
 anim.finish();                // instantly jump to the end state
-anim.cancel();                // stop and REVERT to the pre-animation state
+anim.cancel();                // stop and revert to the pre-animation state
                                // (unlike finish — cancel drops any fill effect)
 
 anim.playbackRate = 2;        // speed up 2x on the fly, no restart
@@ -88,7 +94,7 @@ anim.currentTime = 200;         // "seek" manually — useful for scrubbing
 console.log(anim.playState);    // 'idle' | 'running' | 'paused' | 'finished'
 ```
 
-A practical example: an animation synced to a drag-scrub slider — something that's simply impossible with a CSS `transition`, since it has no way to programmatically pin progress to an arbitrary point:
+A practical example: an animation driven by a slider. Dragging the slider scrubs the animation, that is, moves it to any point in time. That is simply impossible with a CSS `transition`, which has no way to set progress to an arbitrary point programmatically:
 
 ```javascript
 const timeline = element.animate(
@@ -105,7 +111,13 @@ slider.addEventListener('input', (e) => {
 
 ## `animation.finished`: promises instead of `setTimeout` guesswork
 
-Before WAAPI, the only way to know an animation had actually finished was either listening for `transitionend`/`animationend` (with well-known pitfalls — it may not fire on `display: none`, may fire multiple times when several properties transition, may not fire at all if the element is removed from the DOM too early) or a `setTimeout` set to the presumed duration — fragile, since it ignores changes to `playbackRate` or pauses.
+Before WAAPI, there were only two ways to know an animation had actually finished. The first was listening for `transitionend` or `animationend`, which has well-known pitfalls:
+
+- it may not fire on `display: none`;
+- it may fire several times when several properties transition;
+- it may not fire at all if the element is removed from the DOM too early. The DOM is the document object model, the browser's tree of page objects.
+
+The second was a `setTimeout` set to the presumed duration. That is fragile, because it ignores changes to `playbackRate` and pauses.
 
 `Animation.finished` is a promise that resolves when the animation ends naturally, and **rejects** if it was stopped via `cancel()`:
 
@@ -118,24 +130,25 @@ async function animateOutAndRemove(element) {
 
   try {
     await anim.finished;       // wait for actual completion, no time guessing
-    element.remove();          // remove the DOM node ONLY once the animation truly finished playing
+    // remove the DOM node only once the animation has truly finished playing
+    element.remove();
   } catch {
     // the animation was cancelled (e.g. the element got reused) — do nothing
   }
 }
 ```
 
-This solves the classic exit-animation problem in component frameworks (see also `AnimatePresence` in article 05): React unmounts a DOM node synchronously the moment `setState` runs, and any CSS animation on it simply gets cut off along with the node. `animation.finished` gives you a reliable point at which to defer the actual removal until the animation has really finished.
+This solves the classic exit-animation problem in component frameworks (see also `AnimatePresence` in article 05). React unmounts a DOM node synchronously the moment `setState` runs, and any CSS animation on it is cut off along with the node. The `animation.finished` promise gives you a reliable point at which to defer the actual removal until the animation has really finished.
 
 ## Composite modes: `replace`, `add`, `accumulate`
 
-The composite mode determines how the animation's value **combines** with the existing (underlying) value of the property — either from a previous animation or from ordinary CSS.
+The composite mode determines how the animation's value **combines** with the existing, underlying value of the property. That value comes either from a previous animation or from ordinary CSS.
 
 ```txt
-replace     (default) — the animation's value FULLY replaces
+replace     (default) — the animation's value fully replaces
               the underlying value. Behaves like an ordinary
               CSS transition/animation.
-add         — the animation's value is ADDED to the underlying
+add         — the animation's value is added to the underlying
               value (for transform — matrices are multiplied
               together, not swapped out)
 accumulate  — similar to add, but specific to repeated iterations
@@ -153,7 +166,7 @@ element.animate(
   { duration: 2000, iterations: Infinity, easing: 'ease-in-out' },
 );
 
-// On click — ADD a short "bounce" on top of the current bob,
+// On click, add a short "bounce" on top of the current bob,
 // without interrupting or manually recomputing the base animation
 button.addEventListener('click', () => {
   element.animate(
@@ -161,19 +174,21 @@ button.addEventListener('click', () => {
     { duration: 300, composite: 'add' },
   );
 });
-// The resulting transform at any point in time is a COMBINATION
+// The resulting transform at any point in time is a combination
 // of both animations (the browser multiplies the matrices itself),
 // not one overriding the other
 ```
 
-Without `composite: 'add'`, the second animation with `composite: 'replace'` (the default) would simply override the first one for the duration of its playback, and once it finished, the element would "snap" back to the first animation's state — a visibly jarring jump that many people try to fix by hand-computing a combined transform in JS. `add` removes that work from the developer entirely.
+Without `composite: 'add'`, the second animation uses `composite: 'replace'`, the default. It would simply override the first one for the duration of its playback. Once it finished, the element would "snap" back to the first animation's state.
+
+That is a visibly jarring jump. Many people try to fix it by computing a combined transform in JS themselves. `composite: 'add'` removes that work from the developer entirely.
 
 ## `getAnimations()`: orchestrating a set of animations
 
-`Element.prototype.getAnimations()` and `Document.prototype.getAnimations()` return the list of all active (and recently finished, until garbage-collected) `Animation` objects on an element or across the whole document:
+`Element.prototype.getAnimations()` returns the `Animation` objects on one element, and `Document.prototype.getAnimations()` returns them for the whole document. The list covers active animations, plus recently finished ones until they are garbage-collected:
 
 ```javascript
-// Cancel ALL of an element's current animations before starting a new one —
+// Cancel all of an element's current animations before starting a new one —
 // a common pattern for avoiding "animation buildup" when a user
 // interacts rapidly and repeatedly (e.g. clicking fast)
 function animateExclusive(element, keyframes, options) {
@@ -183,7 +198,7 @@ function animateExclusive(element, keyframes, options) {
 ```
 
 ```javascript
-// Wait for ALL animations on the page to finish before, say,
+// Wait for all animations on the page to finish before, say,
 // taking a screenshot or moving on to the next step in a test
 async function waitForAllAnimations() {
   const animations = document.getAnimations();
@@ -191,7 +206,7 @@ async function waitForAllAnimations() {
 }
 ```
 
-This is something a purely CSS-based model simply didn't offer: previously the only way to know "something on the page is currently animating" was to manually track state in JS, or attach `transitionend` handlers to every element up front.
+This is something a purely CSS-based model simply didn't offer. To know that "something on the page is currently animating", you previously had two options. You could track state in JS by hand, or attach `transitionend` handlers to every element in advance.
 
 ## Why WAAPI beats manually toggling CSS classes for dynamic values
 
@@ -200,9 +215,10 @@ This is something a purely CSS-based model simply didn't offer: previously the o
 // CSS on the fly or defining a class for every possible case,
 // and breaks on re-trigger without a forced-reflow hack
 function highlightProgress(bar, percent) {
-  bar.className = `progress progress--${percent}`; // a class like progress--73 doesn't exist
+  // a class like progress--73 doesn't exist
+  bar.className = `progress progress--${percent}`;
   // The alternative — inline style — then needs a forced-reflow trick
-  // to RESTART the transition on the same target value:
+  // to restart the transition on the same target value:
   bar.style.transition = 'none';
   bar.style.width = '0%';
   void bar.offsetWidth; // forced synchronous layout — see article 01
@@ -222,45 +238,50 @@ function highlightProgress(bar, percent) {
 }
 ```
 
-The second example isn't ideal performance-wise (`width` is a layout-triggering property, more expensive than `transform` — see article 01), but it illustrates the main point: WAAPI accepts an arbitrary JS value directly, with no intermediate "first turn it into CSS" step. For `transform`/`opacity` animations with runtime-computed values — dragging, sortable lists, cursor-physics-driven motion — this is the only clean way to avoid hand-rolling class or inline-style generation.
+The second example isn't ideal performance-wise: `width` is a layout-triggering property, more expensive than `transform` (see article 01). But it illustrates the main point. WAAPI accepts an arbitrary JS value directly, with no intermediate "first turn it into CSS" step.
+
+Think of dragging, sortable lists, or motion driven by cursor physics. For `transform`/`opacity` animations with runtime-computed values, this is the only clean way to avoid generating classes or inline styles by hand.
 
 ## Performance: the same engine as CSS — not an rAF loop
 
-An important distinction that's often muddled in interviews: WAAPI is NOT the same thing as "writing a `requestAnimationFrame` loop in JS" (article 04). Both are JS-driven, but they have fundamentally different execution models:
+An important distinction that's often muddled in interviews: WAAPI is **not** the same thing as "writing a `requestAnimationFrame` loop in JS" (article 04). Both are JS-driven, but they have fundamentally different execution models:
 
 ```txt
 Manual rAF loop:
-  Every frame → JS callback runs on the MAIN thread →
+  Every frame → JS callback runs on the main thread →
   computes a new value → writes a style →
   the browser recomputes Style/(Layout)/Paint/Composite
-  If the main thread is busy, the callback runs late and a frame can drop
+  If the main thread is busy, the callback runs late
+  and a frame can drop
 
 WAAPI (element.animate):
-  The browser gets the FULL animation description ONCE →
+  The browser gets the full animation description once →
   subsequent playback for transform/opacity/filter
-  can run ON THE COMPOSITOR, with no per-frame trip back
+  can run on the compositor, with no per-frame trip back
   to the main thread — same as with CSS transitions
 ```
 
-That means a WAAPI animation on `transform` keeps running smoothly even while the main thread is busy with heavy JS — the same property CSS transitions/keyframes have, because it's literally the same engine. A hand-rolled rAF loop can't have that property by definition — it IS main-thread work.
+That means a WAAPI animation on `transform` keeps running smoothly even while the main thread is busy with heavy JS. CSS transitions and keyframes have the same property, because it's literally the same engine. A manual rAF loop can't have that property by definition: it **is** main-thread work.
 
 ## Scroll-driven animations: `ScrollTimeline` and `ViewTimeline`
 
-Before this feature existed, "animation progress tied to scroll" always meant a JS `scroll` event handler manually computing progress and updating a style on every scroll event (which can fire dozens of times per second), with the constant risk of layout thrashing and always running on the main thread. Scroll-driven animations move that relationship into a declarative model that's independent of the main thread.
+Before this feature existed, "animation progress tied to scroll" always meant a JS `scroll` event handler. That handler computed progress and updated a style on every scroll event, and a scroll event can fire dozens of times per second. It carried a constant risk of layout thrashing, and it always ran on the main thread.
+
+Scroll-driven animations move that relationship into a declarative model that's independent of the main thread.
 
 There's an important distinction worth stating clearly in an interview:
 
 ```txt
-Scroll-LINKED (what ScrollTimeline/ViewTimeline actually do):
-  Animation progress is DIRECTLY equal to scroll position.
+Scroll-linked (what ScrollTimeline/ViewTimeline actually do):
+  Animation progress is directly equal to scroll position.
   There's no independent clock — the animation's currentTime
   is a function of scrollTop/viewport intersection. Scroll
   back up, and the animation runs backward too, synchronously,
   with no time-based interpolation involved.
 
-Scroll-TRIGGERED (what GSAP ScrollTrigger typically does in
+Scroll-triggered (what GSAP ScrollTrigger typically does in
   "play once" mode, or an IntersectionObserver + CSS class):
-  Scroll only TRIGGERS an ordinary time-based animation
+  Scroll only triggers an ordinary time-based animation
   (with its own duration and easing), which then runs
   independently of further scrolling, on its own clock.
 ```
@@ -283,7 +304,7 @@ The CSS form — `animation-timeline`:
 
 ```css
 /* Scroll-linked via ViewTimeline: an element reveals as it enters
-   the viewport and un-reveals as it exits — with NO
+   the viewport and un-reveals as it exits, with no
    IntersectionObserver involved */
 @keyframes reveal {
   from { opacity: 0; transform: translateY(24px); }
@@ -310,11 +331,13 @@ document.querySelector('.reveal-card').animate(
 );
 ```
 
-The practical payoff for production work: parallax effects, reading-progress bars, reveal-on-scroll cards — all things that used to require a `scroll` listener wrapped in throttling/rAF (article 06 covers why a naive scroll handler is a jank source) — now run declaratively on the compositor, with zero JS in the scroll path at all.
+The practical payoff for production work is a list of familiar effects: parallax, reading-progress bars, reveal-on-scroll cards. All of them used to require a `scroll` listener wrapped in throttling or rAF. Article 06 covers why a naive scroll handler is a source of jank. Now they run declaratively on the compositor, with zero JS in the scroll path at all.
 
 ## View Transitions API: an "old vs. new" snapshot without hand-rolled cross-fading
 
-A classic problem: when a state changes — a modal opens, a tab switches, a list's layout changes — you often want a nice transition where "the old state smoothly turns into the new one." But the old and new DOM states never physically coexist, so this used to be done by hand: clone the old node, overlay it on top of the new one, cross-fade via `opacity`, and manually clean up the clone afterward.
+A classic problem shows up when a state changes: a modal opens, a tab switches, a list's layout changes. You often want a nice transition where "the old state smoothly turns into the new one".
+
+But the old and new DOM states never physically coexist. So this used to be done by hand: clone the old node, overlay it on top of the new one, cross-fade via `opacity`. Then clean up the clone afterward.
 
 `document.startViewTransition()` handles this natively:
 
@@ -338,7 +361,7 @@ The mechanics, step by step:
 2. The provided callback runs — this is where the actual
    DOM/class/state change happens (it can be synchronous,
    or return a promise for async updates)
-3. The browser takes a screenshot of the NEW DOM state
+3. The browser takes a screenshot of the new DOM state
 4. Between the two screenshots, the browser plays a smooth
    cross-fade by default — controllable via the
    ::view-transition-old(root) and ::view-transition-new(root)
@@ -356,7 +379,7 @@ Customizing the transition is just CSS on those pseudo-elements:
 }
 ```
 
-For individual elements that need a "shared element" effect — a card in a list smoothly morphing into a hero image on a detail page, the "magic" transition that used to require the FLIP technique by hand (see article 04) — you just assign a named `view-transition-name`:
+Some individual elements need a "shared element" effect. A card in a list morphs smoothly into a hero image on a detail page. That "magic" transition used to require the FLIP technique (First / Last / Invert / Play) by hand, see article 04. Now you just assign a named `view-transition-name`:
 
 ```css
 .product-card__image {
@@ -365,37 +388,29 @@ For individual elements that need a "shared element" effect — a card in a list
 }
 ```
 
-An important scope note for this topic: what's covered here is the same-document form (transitions within an SPA/single-document state change). Cross-document View Transitions (transitions between full navigations — between separate HTML pages, with a real page load) extend the same idea to MPA navigation, with their own configuration nuances via `@view-transition` in CSS; for this topic, it's worth knowing it exists, but the details fall outside single-document DOM/CSS/JS animation.
+An important scope note for this topic. What's covered here is the same-document form: transitions inside a single-page application (SPA), where the document stays the same and only its state changes.
+
+Cross-document View Transitions extend the same idea to navigation in a multi-page application (MPA), where each navigation loads a separate HTML page. They have their own configuration nuances, set through `@view-transition` in CSS. For this topic it's worth knowing they exist, but the details fall outside single-document DOM, CSS and JS animation.
 
 ## Connection to other articles
 
-```txt
-[CSS Transitions and Keyframes]         — the same keyframe/timing engine
-                                           that WAAPI uses under the hood
-[rAF and JS-Driven Animation]           — the FLIP technique, which View
-                                           Transitions largely replace for
-                                           shared-element transitions
-[Performance Debugging and Jank
- Hunting]                                — why a naive scroll listener was
-                                           a problem that scroll-driven
-                                           animations solve
-[Animation Libraries and Ecosystem]     — Motion (Framer Motion) uses
-                                           WAAPI under the hood wherever
-                                           it can
-```
+- [CSS Transitions and Keyframes](./02-css-transitions-and-keyframes.md) — the same keyframe and timing engine that WAAPI uses under the hood.
+- [requestAnimationFrame and JS-Driven Animation](./04-raf-and-js-driven-animation.md) — the FLIP technique, which View Transitions largely replace for shared-element transitions.
+- [Performance Debugging and Jank Hunting](./06-performance-debugging-and-jank-hunting.md) — why a naive scroll listener was a problem that scroll-driven animations solve.
+- [Animation Libraries and the Ecosystem](./05-animation-libraries-and-ecosystem.md) — Motion (Framer Motion) uses WAAPI under the hood wherever it can.
 
 ## Common interview traps
 
-- **"WAAPI is like rAF, just different syntax"** — fundamentally wrong. WAAPI uses the same engine as CSS transitions/keyframes and can run on the compositor; an rAF loop is always main-thread JS, re-run every single frame.
+- **"WAAPI is like rAF, just different syntax"** — fundamentally wrong. WAAPI uses the same engine as CSS transitions and keyframes, and it can run on the compositor. An rAF loop is always main-thread JS, re-run every single frame.
 
-- **Confusing `cancel()` and `finish()`** — `finish()` instantly plays the animation to its end and keeps any fill effect (if set); `cancel()` stops the animation and FULLY reverts the element to its pre-animation state, ignoring `fill`.
+- **Confusing `cancel()` and `finish()`** — `finish()` instantly plays the animation to its end and keeps any fill effect, if set. By contrast, `cancel()` stops the animation and **fully** reverts the element to its pre-animation state, ignoring `fill`.
 
-- **Not knowing `animation.finished` rejects on `cancel()`** — code doing `await anim.finished` without a `try/catch` can produce an unhandled promise rejection if the animation gets cancelled (e.g. a user double-clicking quickly).
+- **Not knowing `animation.finished` rejects on `cancel()`** — code doing `await anim.finished` without a `try/catch` can produce an unhandled promise rejection. That happens if the animation gets cancelled, for example by a user double-clicking quickly.
 
-- **Not understanding composite modes** — trying to manually compute a "combined" transform in JS for two simultaneous animations on the same element, unaware that `composite: 'add'` solves this natively.
+- **Not understanding composite modes** — trying to compute a "combined" transform in JS by hand, for two simultaneous animations on the same element. The `composite: 'add'` mode solves this natively.
 
-- **Confusing scroll-linked and scroll-triggered** — being unable to explain the difference between ScrollTimeline/ViewTimeline (progress is a function of scroll, no independent clock) and, say, GSAP ScrollTrigger in play-once mode (scroll only kicks off an independent time-based animation).
+- **Confusing scroll-linked and scroll-triggered** — being unable to explain the difference. With ScrollTimeline and ViewTimeline, progress is a function of scroll and there is no independent clock. With GSAP (GreenSock Animation Platform) ScrollTrigger in play-once mode, scroll only starts an independent time-based animation.
 
-- **Not knowing about the View Transitions API** — proposing to manually clone DOM nodes and cross-fade via `opacity` in a situation where `document.startViewTransition()` solves the exact same problem declaratively with far less code.
+- **Not knowing about the View Transitions API** — proposing to clone DOM nodes by hand and cross-fade via `opacity`. In that situation `document.startViewTransition()` solves the exact same problem declaratively, with far less code.
 
-- **Not feature-checking `startViewTransition` before calling it** — calling the API without a fallback, breaking the app in unsupported browsers instead of simply applying the change without animation.
+- **Not feature-checking `startViewTransition` before calling it** — calling the API without a fallback. That breaks the app in unsupported browsers, instead of simply applying the change without animation.

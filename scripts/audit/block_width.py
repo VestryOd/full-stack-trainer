@@ -47,6 +47,12 @@ def lines_of(path: Path):
     code fences inside `answer` and `explanation` were never measured. They are
     rendered by the same component as an article body, in the same scrolling
     <pre>, so they get the same budget.
+
+    `description` and `solutionExplanation` are the task rubric's two markdown
+    fields, and they were invisible for the same reason: the field list did not
+    name them, so `content/tasks` measured a clean zero while holding fences
+    over budget. Found by an agent in wave 25, after the zero had been reported
+    several times.
     """
     if path.suffix == ".md":
         yield "", path.read_text(encoding="utf-8")
@@ -60,7 +66,8 @@ def lines_of(path: Path):
     for item in items:
         if not isinstance(item, dict) or "id" not in item:
             continue
-        for field in ("question", "answer", "explanation"):
+        for field in ("question", "answer", "explanation",
+                      "description", "solutionExplanation"):
             value = item.get(field)
             if not isinstance(value, dict):
                 continue
@@ -68,6 +75,15 @@ def lines_of(path: Path):
                 text = value.get(locale)
                 if isinstance(text, str):
                     yield f"{item['id']}.{field}.{locale}", text
+        # `starterCode` and `solution` in content/tasks are plain strings, one per
+        # task rather than one per locale, so the loop above skips them — a second
+        # false zero of the same shape as the missing field names. They are rendered
+        # by `CodeBlock` into the same scrolling <pre> as a fence, so the code budget
+        # applies. Wrapped in a synthetic fence so `check_text` measures them at 92.
+        for field in ("starterCode", "solution"):
+            value = item.get(field)
+            if isinstance(value, str) and value.strip():
+                yield f"{item['id']}.{field}", f"```typescript\n{value}\n```"
 
 
 def check_text(text: str) -> list[tuple[int, int, str, str]]:

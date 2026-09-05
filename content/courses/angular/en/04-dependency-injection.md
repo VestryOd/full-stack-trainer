@@ -4,13 +4,17 @@
 
 ### Injector, token, provider
 
-DI in Angular is not a pattern from a book but a working container inside the framework. Three concepts:
+DI (dependency injection) in Angular is not a pattern from a book but a working container inside the framework. Three concepts:
 
 - **Token** — the key a dependency is requested by. Usually a class (`TicketService`), but it can be an `InjectionToken<T>` for anything that is not a class.
 - **Provider** — the recipe for producing a value for a token.
 - **Injector** — the container that holds providers, creates values on first request and caches them.
 
-It is worth exactly as much as it costs: DI gives you **substitutability** (a mock replaces the HTTP service in tests — no module mocking), **lifetime** (one instance per application, per route or per component — decided by configuration, not by the service's code) and **configurability** (environment values are handed out through tokens rather than imported directly).
+DI is worth the complexity it adds. It buys three things:
+
+- **Substitutability.** In tests a mock replaces the HTTP service, and no module mocking is needed.
+- **Lifetime.** One instance per application, per route or per component. Configuration decides that, not the code of the service.
+- **Configurability.** Environment values are handed out through tokens instead of being imported directly.
 
 ### Declaring a service
 
@@ -21,7 +25,7 @@ The modern way is the `@Service()` decorator (stable since v22, marked `@publicA
 export class TicketService { /* … */ }
 ```
 
-It is an ergonomic shorthand for `@Injectable({ providedIn: 'root' })`: the class becomes an application-wide singleton and stays tree-shakable — if nobody injects it, the bundler drops it. The decorator takes two useful options:
+It is an ergonomic shorthand for `@Injectable({ providedIn: 'root' })`. The class becomes an application-wide singleton and stays tree-shakable. If nobody injects it, the bundler drops it. The decorator takes two useful options:
 
 ```ts
 @Service({ autoProvided: false })         // don't register it automatically:
@@ -32,7 +36,12 @@ export class DraftStore {}                // provide it by hand where needed
 export class Analytics {}
 ```
 
-`@Injectable` has not gone anywhere and is required wherever **constructor injection** is used: `@Service` only works with `inject()`. `@Injectable` also supports `providedIn: 'platform'` (one instance across all applications on the page) and `'any'` (a separate instance in every lazy environment injector) — both rarely needed and always deliberately.
+The `@Injectable` decorator has not gone anywhere. It is required wherever **constructor injection** is used, because `@Service` only works with `inject()`. It also supports two scopes that `@Service` does not:
+
+- The `'platform'` scope gives one instance across all applications on the page.
+- The `'any'` scope gives a separate instance in every lazy environment injector.
+
+Both are rarely needed, and always chosen deliberately.
 
 The key point about tree-shaking: `@Service`/`providedIn` describes the relationship **from the service's side**, so an unused service is removed from the bundle. Listing it in a `providers` array points the other way (the application references the service), and such a service always stays in the bundle.
 
@@ -97,10 +106,10 @@ For that same scenario v22 added `injectAsync()` — lazy injection with code sp
 │ NG0201: No provider for TOKEN                     │
 └───────────────────────────────────────────────────┘
 the first match wins: a component provider shadows root
-and creates ITS OWN instance per instance of that component
+and creates its own instance per instance of that component
 ```
 
-There are in fact two hierarchies, searched in exactly this order: first the **ElementInjector** chain — up the DOM elements from the requesting component — then the **EnvironmentInjector** chain: route, root, platform, `NullInjector`.
+There are in fact two hierarchies, and they are searched in exactly this order. First comes the **ElementInjector** chain. It walks up the DOM (document object model — the browser's tree of page objects), element by element, from the requesting component. Then comes the **EnvironmentInjector** chain: route, root, platform, `NullInjector`.
 
 A component has two arrays:
 
@@ -109,41 +118,25 @@ A component has two arrays:
 
 Lookup modifiers are options of `inject()`:
 
-```
-┌───────────────────────────────┬───────────────────────────────────┬───────────────────────────────────┐
-│ call                          │ how it changes the lookup         │ when you need it                  │
-├───────────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ inject(T)                     │ the normal bottom-up lookup       │ the default                       │
-├───────────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ inject(T, { optional: true }) │ returns null instead of NG0201    │ an optional dependency            │
-├───────────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ inject(T, { self: true })     │ this ElementInjector only         │ demanding a local provider        │
-├───────────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ inject(T, { skipSelf: true }) │ start at the parent               │ decorating the parent instance    │
-├───────────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ inject(T, { host: true })     │ no higher than the host component │ a directive inside a foreign host │
-└───────────────────────────────┴───────────────────────────────────┴───────────────────────────────────┘
-```
+| call | how it changes the lookup | when you need it |
+|---|---|---|
+| `inject(T)` | the normal bottom-up lookup | the default |
+| `inject(T, { optional: true })` | returns `null` instead of `NG0201` | an optional dependency |
+| `inject(T, { self: true })` | this `ElementInjector` only | demanding a local provider |
+| `inject(T, { skipSelf: true })` | start at the parent | decorating the parent instance |
+| `inject(T, { host: true })` | no higher than the host component | a directive inside a foreign host |
 
 ### Provider recipes and InjectionToken
 
-```
-┌────────────────────┬──────────────────────────────────────┬─────────────────────────────────┐
-│ recipe             │ what it supplies                     │ typical use                     │
-├────────────────────┼──────────────────────────────────────┼─────────────────────────────────┤
-│ useClass: Impl     │ a new instance of Impl               │ swapping an implementation      │
-├────────────────────┼──────────────────────────────────────┼─────────────────────────────────┤
-│ useValue: obj      │ a ready value as-is                  │ config, constants, a mock       │
-├────────────────────┼──────────────────────────────────────┼─────────────────────────────────┤
-│ useFactory: fn     │ the result of calling fn             │ choosing an impl at runtime     │
-├────────────────────┼──────────────────────────────────────┼─────────────────────────────────┤
-│ useExisting: Other │ the very instance of Other           │ a narrow interface to a service │
-├────────────────────┼──────────────────────────────────────┼─────────────────────────────────┤
-│ multi: true        │ an array of all values for the token │ rule sets, interceptors         │
-└────────────────────┴──────────────────────────────────────┴─────────────────────────────────┘
-```
+| recipe | what it supplies | typical use |
+|---|---|---|
+| `useClass: Impl` | a new instance of `Impl` | swapping an implementation |
+| `useValue: obj` | a ready value as-is | config, constants, a mock |
+| `useFactory: fn` | the result of calling `fn` | choosing an implementation at runtime |
+| `useExisting: Other` | the very instance of `Other` | a narrow interface to a service |
+| `multi: true` | an array of all values for the token | rule sets, interceptors |
 
-An interface, a configuration object, a URL string — none of them are classes, so none can serve as a token: nothing of an interface survives into runtime. `InjectionToken` exists for those:
+An interface, a configuration object, a URL string — none of them are classes, so none can serve as a token. Nothing of an interface survives into runtime. `InjectionToken` exists for those:
 
 ```ts
 export interface AppConfig {
@@ -174,11 +167,11 @@ Its neighbour is `NG0203: inject() must be called from an injection context` —
 
 ## React parallels
 
-- **DI versus context.** `useContext` follows the render tree and requires a `<Provider>` wrapper around a subtree; the Angular injector follows the component tree, but a dependency can be obtained from **any** class — a service, a guard, an interceptor — not just from a component. No wrappers are needed: `@Service()` already makes the service reachable everywhere.
+- **DI versus context.** `useContext` follows the render tree and requires a `<Provider>` wrapper around a subtree. The Angular injector follows the component tree. And a dependency can be obtained from **any** class, not only from a component: a service, a guard, an interceptor. No wrappers are needed, because `@Service()` already makes the service reachable everywhere.
 - **Passing dependencies down.** In React, an object needed three levels down is either drilled through props or put in a context. In Angular, `inject()` solves both, and depth is not a factor: all that matters is which injector holds the provider.
 - **Substitution in tests — the main difference.** In React a dependency is usually imported directly, so replacing it requires `jest.mock` or a manual provider wrapper. In Angular substitution is a first-class operation: `TestBed.configureTestingModule({ providers: [{ provide: TicketApi, useValue: fake }] })`, with no bundler involvement (chapter 13). This is what makes DI worth its weight rather than "an extra layer".
-- **Singletons.** A module singleton in React (`export const store = createStore()`) is just a module value: hard to substitute in a test, and on the server it is shared by all requests. `providedIn: 'root'` gives a singleton **per injector**, so under SSR each request gets its own.
-- **Where the habit breaks:** in React you add a provider deliberately, around a specific subtree. In Angular a component provider looks like the harmless line `providers: [TicketService]` — while in fact it creates one instance per component instance, and "shared" state quietly splits into N independent copies. It is the most common architectural mistake newcomers make.
+- **Singletons.** A module singleton in React (`export const store = createStore()`) is just a module value. It is hard to substitute in a test, and on the server it is shared by all requests. By contrast, `providedIn: 'root'` gives a singleton **per injector**. Under SSR (server-side rendering — rendering the page on the server) each request gets its own.
+- **Where the habit breaks:** in React you add a provider deliberately, around a specific subtree. In Angular a component provider looks like the harmless line `providers: [TicketService]` in a decorator. In fact it creates one instance per component instance, and shared state quietly splits into N independent copies. It is the most common architectural mistake newcomers make.
 
 ## What you will see in legacy code
 
@@ -191,7 +184,11 @@ Its neighbour is `NG0203: inject() must be called from an injection context` —
 
 ## What we add to the project
 
-Ticket state moves out of the component and into `TicketService` (the groundwork for chapter 05), application configuration is handed out through `APP_CONFIG` and a `provideAppConfig()` function, and ticket warnings are collected through a multi token — a set that can be extended without touching the service.
+Three changes, and all three are about DI:
+
+- Ticket state moves out of the component and into `TicketService`. That is the groundwork for chapter 05.
+- Application configuration is handed out through `APP_CONFIG` and a `provideAppConfig()` function.
+- Ticket warnings are collected through a multi token, so the set can be extended without touching the service.
 
 ## Exercise
 
@@ -202,7 +199,7 @@ Requirements:
 
 1. Create `TicketService` with `@Service()`: a private signal holding the list, public `readonly` signals, and `add()`/`reset()` methods. `TicketList` no longer holds the array, it only reads the service. Filters stay in the component for now (they belong to the screen, not to the data) — argue why that is a sensible boundary.
 2. Introduce `APP_CONFIG: InjectionToken<AppConfig>` with a default factory (`apiUrl`, `pageSize`, `slaWarningHours`) and a `provideAppConfig(overrides)` function returning providers. Wire it into `app.config.ts` and read the config inside the service.
-3. Build a multi token `TICKET_RULES`, where a rule is a function `(ticket: Ticket) => string | null`. Register at least two rules (SLA at risk; `urgent` with no assignee) and collect them in the service via `inject(TICKET_RULES)`. The component shows the warnings on the card.
+3. Build a multi token `TICKET_RULES`, where a rule is a function `(ticket: Ticket) => string | null`. Register at least two rules. The first fires when the SLA (service level agreement — the response deadline promised for a ticket) is at risk. The second fires when an `urgent` ticket has no assignee. Collect the rules in the service via `inject(TICKET_RULES)`. The component shows the warnings on the card.
 4. Component provider: write a small `DraftStore` (a note draft for a ticket) and declare it in the card component's `providers`. Verify that two cards have independent drafts. Explain in a comment why `TicketService` must not be declared this way.
 5. Diagnostics: deliberately produce `NG0201` (drop the token's factory and provide nothing) and `NG0203` (call `inject()` inside a click handler). Read the messages and fix them — the second one in two ways: by moving the call, and via a stored `Injector`.
 6. Constraint: no `@Injectable` unless genuinely required, and no constructor injection — `inject()` only.
@@ -268,7 +265,7 @@ export function provideTicketRules(): Provider[] {
   return [
     {
       provide: TICKET_RULES,
-      multi: true, // each provider contributes ONE ELEMENT to the array
+      multi: true, // each provider contributes one element to the array
       // the factory itself runs in an injection context — inject() is fine here
       useFactory: (): TicketRule => {
         const { slaWarningHours } = inject(APP_CONFIG);
@@ -354,7 +351,7 @@ export class DraftStore {
 
 @Component({
   selector: 'app-ticket-card',
-  // A component provider: EVERY card gets its own DraftStore,
+  // A component provider: every card gets its own DraftStore,
   // which is exactly what a draft needs.
   // TicketService must never be declared this way: the ticket list is one
   // per application, and here we would get one copy of state per card
@@ -373,7 +370,7 @@ The `NG0203` walkthrough from step 5 — a call in the wrong place and two fixes
 export class TicketList {
   private readonly injector = inject(Injector); // capture the context up front
 
-  // WRONG: an event handler is not an injection context
+  // Wrong: an event handler is not an injection context
   onClickBad(): void {
     const service = inject(TicketService); // NG0203
   }
@@ -396,9 +393,9 @@ export class TicketList {
 
 Answers to the edge cases:
 
-- `@Service()` does not record metadata about constructor parameter types, so constructor injection is impossible with it — `inject()` only. You will go back to `@Injectable` in three cases: you need `providedIn: 'platform'`/`'any'`, the class is extended by existing code that uses constructor injection, or you are writing a library consumed by projects on the older style.
-- `providers` are visible both in the component's template and in content projected through `<ng-content>`; `viewProviders` only in its own template. The difference shows when content comes from the parent: that content "belongs" to the parent, and if you do not want foreign content latching onto your internal service, declare it in `viewProviders`.
-- It returns `null` instead of throwing. That beats try/catch because optionality becomes part of the dependency's signature rather than error-handling behaviour: the type is `AppConfig | null`, and the compiler forces you to handle the absence. A try/catch around `inject()` would also swallow genuine factory errors.
+- The `@Service()` decorator does not record metadata about constructor parameter types, so constructor injection is impossible with it. You will go back to `@Injectable` in three cases. First, you need `providedIn: 'platform'` or `'any'`. Second, the class is extended by existing code that uses constructor injection. Third, you are writing a library consumed by projects on the older style.
+- A component's `providers` are visible both in its template and in content projected through `<ng-content>`. The `viewProviders` array is visible in its own template only. The difference shows when content comes from the parent. That content belongs to the parent, so declare the service in `viewProviders` if you do not want foreign content to reach it.
+- It returns `null` instead of throwing. That beats try/catch because optionality becomes part of the signature of the dependency, not of the error handling. The type is `AppConfig | null`, and the compiler forces you to handle the absence. A try/catch around `inject()` would also swallow genuine factory errors.
 - With `providedIn: 'root'` there is one instance per application, no matter how many lazy routes ask for it. With `'any'` there is one per environment injector: one in root plus one in each lazy one. That is exactly why `'any'` is almost never what you want: "shared" state falls apart along lazy boundaries.
 - `deps` is needed when the factory is a plain function called outside an injection context, receiving its dependencies positionally. If the factory calls `inject()` inside itself, `deps` is unnecessary: Angular runs provider factories inside an injection context. The modern style is the latter — it is type-safe, whereas `deps` is an array whose order the compiler never checks.
 
@@ -413,16 +410,24 @@ Answers to the edge cases:
 <details>
 <summary>Answers</summary>
 
-1. The direction of the reference. With `@Service()`/`providedIn`, the service itself declares which injector it lives in: the application does not reference it, the reference only appears where it is injected. If no such place exists, the bundler sees an unreachable class and removes it. A `providers` array is the reverse reference: the application (or module) configuration statically mentions the class, so it is reachable from the entry point and ships in the bundle even if no component ever asks for it.
-2. One instance per instance of that component: the provider lives in the ElementInjector created for the element. Whatever state the service holds stops being shared — each copy of the component gets its own. If it is a form draft or a local store, that is the desired behaviour; if it is the ticket list or authentication, you get N unsynchronized copies with no error at all — just "the data doesn't match between screens".
-3. First the component's own ElementInjector (its `providers`/`viewProviders`), then the ElementInjectors of ancestor elements up the tree, then the EnvironmentInjectors: the route one (if the component was opened through a route with `providers`), root, platform. The first match wins. If none of them knows the token, the search reaches the `NullInjector`, which always throws — that is `NG0201: No provider for TOKEN`.
-4. A token must exist at runtime and be a unique object. A class qualifies: it exists at runtime and is unique. An interface is a type-system construct only: nothing of it survives compilation, so it cannot be referenced at runtime. `InjectionToken` is a runtime object created specifically to be a key, with a type parameter for typing the injected value. A string is a poor token too: two identical strings from different places would collide by accident, while the description in `new InjectionToken('...')` does not affect identity — two tokens with the same text remain different tokens.
-5. `NG0203` means `inject()` was called outside an injection context: the context exists during class field initialization, in the constructor, and in provider/token factories, but not in event handlers, timer callbacks, `.then()` or arbitrary methods. Two fixes: move the call where a context exists (usually into a class field, which is the normal style anyway), or capture an `Injector` via `inject(Injector)` up front and run the code inside `runInInjectionContext(injector, fn)`; for lazy imports, v22 offers `injectAsync()`.
+1. The direction of the reference. With `@Service()`/`providedIn`, the service itself declares which injector it lives in. The application does not reference it: the reference only appears where the service is injected. If no such place exists, the bundler sees an unreachable class and removes it. A `providers` array is the reverse reference, because the application configuration statically mentions the class. The class is therefore reachable from the entry point and ships in the bundle, even if no component ever asks for it.
+2. One instance per instance of that component: the provider lives in the ElementInjector created for the element. Whatever state the service holds stops being shared, because each copy of the component gets its own. If it is a form draft or a local store, that is the desired behaviour. If it is the ticket list or authentication, you get N unsynchronized copies. There is no error at all — just data that does not match between screens.
+3. First the component's own ElementInjector, that is, its `providers` and `viewProviders`. Then the ElementInjectors of ancestor elements up the tree. After that come the EnvironmentInjectors: the route one, then root, then platform. The route injector only takes part if the component was opened through a route with `providers`. The first match wins. If none of them knows the token, the search reaches the `NullInjector`, which always throws. That is `NG0201: No provider for TOKEN`.
+4. A token must exist at runtime and be a unique object. A class qualifies: it exists at runtime and is unique. An interface is a type-system construct only: nothing of it survives compilation, so it cannot be referenced at runtime. `InjectionToken` is a runtime object created specifically to be a key, with a type parameter for typing the injected value. A string is a poor token too: two identical strings from different places would collide by accident. And the description in `new InjectionToken('...')` does not affect identity — two tokens with the same text remain different tokens.
+5. Error `NG0203` means `inject()` was called outside an injection context. The context exists during class field initialization, in the constructor, and in provider and token factories. It does not exist in event handlers, timer callbacks, `.then()` or arbitrary methods. There are two fixes. The first is to move the call where a context exists, usually into a class field, which is the normal style anyway. The second is to capture an `Injector` up front and run the code inside `runInInjectionContext(injector, fn)`. For lazy imports, v22 offers `injectAsync()`.
 
 </details>
 
 ## Common mistake
 
-Classic number one: a component-level provider where root was needed. It goes like this — a developer writes a state service, sees the line `providers: [TicketService]` in a component decorator in some article, copies it, and ends up with one instance of the service per component instance. The mistake produces neither an exception nor a warning: the application runs, it is just that a ticket added on one screen is invisible on another, and the header counter does not move after an action in the table. It is quick to diagnose if you remember the rule: **`providers` on a component is a statement that "I want my own instance"**. Shared state belongs in `@Service()` (that is, root); local state (a draft, a store for one specific form, accordion state) belongs in a component provider — and then it is a deliberate decision rather than copy-paste.
+Classic number one: a component-level provider where root was needed. It goes like this. A developer writes a state service and sees the line `providers: [TicketService]` in a component decorator in some article. They copy it, and end up with one instance of the service per component instance.
 
-The second mistake is calling `inject()` in the wrong place. React experience says "a hook can be called anywhere inside a component", so the hand types `inject(TicketService)` inside a click handler or in a `.then()` after an `await`. The result is `NG0203: inject() must be called from an injection context`. The `await` case is particularly nasty: code before the `await` is still in the context and code after it is not, so the error appears intermittently and reads like a race condition. The cure is simple and also happens to be the right style: declare all dependencies as class fields at instance creation time, and when a dependency really is needed later (a lazily loaded module), capture the `Injector` in advance and use `runInInjectionContext`.
+The mistake produces neither an exception nor a warning. The application runs. A ticket added on one screen is simply invisible on another, and the header counter does not move after an action in the table.
+
+It is quick to diagnose if you remember the rule: **`providers` on a component is a statement that you want your own instance**. Shared state belongs in `@Service()`, that is, in root. Local state belongs in a component provider: a draft, a store for one specific form, accordion state. Then it is a deliberate decision rather than copy-paste.
+
+The second mistake is calling `inject()` in the wrong place. React experience says a hook can be called anywhere inside a component. So people write `inject(TicketService)` inside a click handler, or in a `.then()` after an `await`. The result is `NG0203: inject() must be called from an injection context`.
+
+The `await` case is particularly nasty. Code before the `await` is still in the context, and code after it is not. The error therefore appears intermittently and looks like a race condition.
+
+The cure is simple, and it is also the right style. Declare all dependencies as class fields at instance creation time. And when a dependency really is needed later, for example a lazily loaded module, capture the `Injector` in advance and use `runInInjectionContext`.

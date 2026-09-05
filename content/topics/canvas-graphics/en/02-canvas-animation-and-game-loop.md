@@ -2,9 +2,11 @@
 
 ## From a static drawing to a living canvas
 
-Article 01 covered why canvas is immediate-mode: the pixels it draws remember nothing about themselves. The direct consequence is that canvas animation can't work like "change a property, the browser repaints it" (the way CSS/WAAPI does — see [rAF and JS-Driven Animation]). The only way to show motion is to **erase the previous frame and draw a new one from scratch**, many times a second.
+Canvas animation means **erasing the previous frame and drawing a new one from scratch**, many times a second. That follows from the immediate-mode model of article 01: the pixels canvas draws remember nothing about themselves.
 
-The canonical delta-time loop built on `requestAnimationFrame` was already covered in [rAF and JS-Driven Animation] — there, it exists to move a SINGLE value independent of display refresh rate. Here, the same loop becomes a **game loop**: instead of a single value, you have an entire world's state (positions, velocities, score, collisions), and instead of "animate a transition," you're "simulate and render the current moment of that simulation."
+So canvas animation can't work like "change a property, the browser repaints it". CSS and the Web Animations API (WAAPI) do work that way, and the article rAF and JS-Driven Animation covers them. Canvas does not.
+
+The loop here is a **game loop**: it owns an entire world's state, not one animated value. The canonical delta-time loop on `requestAnimationFrame` was covered in rAF and JS-Driven Animation, where it moves one value independently of the display refresh rate. Here the state is positions, velocities, score and collisions. Instead of animating a transition, you simulate a moment and render it.
 
 ```javascript
 let previousTimestamp;
@@ -22,28 +24,17 @@ function loop(timestamp) {
 requestAnimationFrame(loop);
 ```
 
-Separating `update` from `draw` isn't a stylistic preference: `update` is pure logic (numbers, physics, game rules) that has no idea `ctx` even exists, and can be tested with an ordinary unit test with no canvas involved at all (article 08 covers this in more depth); `draw` is the only place that touches `ctx`, and it contains no decision-making logic — just rendering whatever state has already been computed.
+Separating `update` from `draw` isn't a stylistic preference. `update` is pure logic — numbers, physics, game rules — and has no idea `ctx` even exists. That makes it testable with an ordinary unit test, no canvas involved; article 08 goes deeper. The `draw` function is the only place that touches `ctx`. It makes no decisions, and only renders whatever state has already been computed.
 
 ## Fixed timestep vs. variable timestep
 
 An ordinary delta-time loop (like the one above) is a **variable timestep**: `dt` is different every frame, driven by the actual frame rate. That's fine for animating a single visual value. For **physics and game logic**, it's a source of real problems:
 
-```txt
-The problem with variable timestep for physics:
-  - On a spike in dt (a lag stutter, a tab switch, weak hardware), a
-    fast-moving object can "skip through" an obstacle in one large
-    step — the collision simply never gets noticed (the "tunneling"
-    effect)
-  - The exact same game level physically behaves DIFFERENTLY across
-    devices, even with identical code — because the velocity
-    integration step is different at different dt values (numerical
-    integration error accumulates differently depending on step size)
-  - Reproducibility (replays, deterministic tests) becomes impossible
-    — the simulation's result depends on exactly HOW frames happened
-    to be distributed over time
-```
+- A spike in `dt` (a lag stutter, a tab switch, weak hardware) lets a fast-moving object skip through an obstacle in one large step. The collision is never noticed. This is the "tunneling" effect.
+- The same game level behaves **differently** across devices, even with identical code. The velocity integration step differs at different `dt` values, so numerical error accumulates differently.
+- Reproducibility (replays, deterministic tests) becomes impossible. The result depends on exactly **how** frames happened to be distributed over time.
 
-The fix is **fixed timestep with an accumulator**: physics always steps forward in identical, small chunks of time, regardless of the actual frame rate; whatever leftover time accumulates between physics steps is used to interpolate the visual position between the last two physics states:
+The fix is a **fixed timestep with an accumulator**. Physics always steps forward in identical, small chunks of time, regardless of the actual frame rate. Whatever leftover time accumulates between physics steps is used to interpolate the visual position between the last two physics states:
 
 ```javascript
 const FIXED_DT = 1 / 60; // physics always steps by 1/60 of a second
@@ -57,7 +48,7 @@ function loop(timestamp) {
   previousTimestamp = timestamp;
 
   frameTime = Math.min(frameTime, 0.25); // guard against the "spiral of death" —
-                                          // if a frame was ABNORMALLY long
+                                          // if a frame was abnormally long
                                           // (the tab was backgrounded), don't try
                                           // to catch up hundreds of physics steps at once
 
@@ -65,7 +56,7 @@ function loop(timestamp) {
 
   while (accumulator >= FIXED_DT) {
     previousState = { ...currentState };
-    updatePhysics(currentState, FIXED_DT); // ALWAYS the same step size
+    updatePhysics(currentState, FIXED_DT); // always the same step size
     accumulator -= FIXED_DT;
   }
 
@@ -73,13 +64,15 @@ function loop(timestamp) {
   const renderState = interpolate(previousState, currentState, alpha);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  draw(ctx, renderState); // draw the INTERMEDIATE, smoothed state
+  draw(ctx, renderState); // draw the intermediate, smoothed state
 
   requestAnimationFrame(loop);
 }
 ```
 
-The practical payoff: physics becomes deterministic and identical across devices, and interpolation (`alpha`) removes the visual "stepping" that would otherwise show up if rendering happened exactly on physics steps (`FIXED_DT` may not line up with the display's refresh rate). For casual browser games and most demo effects, an honest variable timestep is entirely sufficient — fixed timestep earns its place when there's real collision physics, competitive game logic, or reproducibility is a hard requirement.
+The practical payoff: physics becomes deterministic and identical across devices. Interpolation (`alpha`) also removes the visual "stepping". Without it, stepping shows up whenever rendering lands exactly on physics steps, and `FIXED_DT` may not line up with the display's refresh rate.
+
+For casual browser games and most demo effects, an honest variable timestep is entirely sufficient. Fixed timestep is worth its cost when you have real collision physics, competitive game logic, or a hard requirement for reproducibility.
 
 ## The entity pattern: minimal architecture
 
@@ -111,11 +104,11 @@ function update(dt) { entities.forEach((e) => e.update(dt)); }
 function draw(ctx) { entities.forEach((e) => e.draw(ctx)); }
 ```
 
-This is NOT a retained-mode scene like Pixi or three.js (articles 05-06) — the entity array isn't a structure canvas itself "knows about" and can selectively repaint; these are just ordinary JS objects that you iterate over and redraw every single frame, entirely relying on article 01's immediate-mode model.
+This is **not** a retained-mode scene like Pixi or three.js (articles 05-06). The entity array isn't a structure canvas itself "knows about" and can selectively repaint. These are ordinary JS objects that you iterate over and redraw every single frame, entirely on top of article 01's immediate-mode model.
 
 ## Layered canvases: the cheapest big optimization
 
-If part of a scene is static (a background, decorative elements, a UI frame) and doesn't change every frame, redrawing it alongside dynamic content is pure wasted CPU. The fix is stacking several `<canvas>` elements on top of each other via CSS:
+If part of a scene is static and doesn't change every frame, redrawing it alongside dynamic content wastes CPU (central processing unit) time. Static here means a background, decorative elements, or a UI (user interface) frame. The fix is stacking several `<canvas>` elements on top of each other via CSS:
 
 ```html
 <div style="position: relative; width: 800px; height: 600px;">
@@ -125,31 +118,32 @@ If part of a scene is static (a background, decorative elements, a UI frame) and
 ```
 
 ```javascript
-// The background is drawn ONCE, outside the game loop
+// The background is drawn once, outside the game loop
 const bgCtx = document.getElementById('background').getContext('2d');
 drawStaticBackground(bgCtx); // gradient, stars, decoration — computed once
 
 // The game loop only touches the foreground
-const fgCtx = document.getElementById('foreground').getContext('2d');
+const fgCanvas = document.getElementById('foreground');
+const fgCtx = fgCanvas.getContext('2d');
 function loop(timestamp) {
   // ...
-  fgCtx.clearRect(0, 0, canvas.width, canvas.height);
+  fgCtx.clearRect(0, 0, fgCanvas.width, fgCanvas.height);
   draw(fgCtx); // dynamic entities only
   requestAnimationFrame(loop);
 }
 ```
 
-The effect is especially noticeable when the static background is itself expensive to draw (a complex gradient, hundreds of decorative elements) — without splitting into layers, that cost gets paid EVERY frame for nothing, even though it only genuinely needs to be computed once.
+The effect is especially noticeable when the static background is itself expensive to draw: a complex gradient, hundreds of decorative elements. Without layers, that cost is paid **every** frame for nothing, even though it only genuinely needs to be computed once.
 
 ## Sprite sheets and `drawImage`'s 9-argument form
 
-A sprite sheet is a single image containing several animation frames laid out in a grid. `drawImage`'s full form lets you crop an arbitrary rectangle FROM the source image and paste it at an arbitrary position AND size on the canvas:
+A sprite sheet is a single image containing several animation frames laid out in a grid. The full form of `drawImage` crops an arbitrary rectangle from the source image. It then pastes that crop onto the canvas at an arbitrary position, and at an arbitrary size:
 
 ```javascript
 ctx.drawImage(
   image,
-  sx, sy, sWidth, sHeight, // where to crop FROM the source image
-  dx, dy, dWidth, dHeight, // where to paste it, and at what size, ON THE CANVAS
+  sx, sy, sWidth, sHeight, // where to crop from in the source image
+  dx, dy, dWidth, dHeight, // where to paste it on the canvas, and at what size
 );
 ```
 
@@ -173,16 +167,16 @@ function draw(ctx) {
   ctx.drawImage(
     spriteSheet,
     currentFrame * FRAME_WIDTH, 0, FRAME_WIDTH, FRAME_HEIGHT, // crop the i-th frame
-    playerX, playerY, FRAME_WIDTH, FRAME_HEIGHT,               // paste at the player's position
+    playerX, playerY, FRAME_WIDTH, FRAME_HEIGHT, // paste at the player's position
   );
 }
 ```
 
-One sprite sheet plus a computed `sx` from a frame index is the standard 2D game pattern, avoiding a separate `<img>`/load for every animation frame.
+One sprite sheet plus an `sx` computed from the frame index is the standard 2D game pattern. It avoids a separate `<img>` and a separate load for every animation frame.
 
 ## Hit detection: three approaches
 
-**Math-based (AABB/circle)** — the cheapest and by far the most common in real code:
+**Math-based (AABB or circle)** — the cheapest and by far the most common in real code. AABB stands for axis-aligned bounding box, a rectangle whose sides stay parallel to the axes:
 
 ```javascript
 function pointInRect(px, py, rect) {
@@ -201,19 +195,19 @@ function pointInCircle(px, py, circle) {
 ```javascript
 ctx.beginPath();
 ctx.arc(150, 100, 50, 0, Math.PI * 2);
-// WITHOUT calling fill()/stroke() — just a hit test against the path
+// without calling fill()/stroke() — just a hit test against the path
 const isHit = ctx.isPointInPath(clickX, clickY);
 ```
 
 Convenient for irregular/complex shapes that are already described as a canvas path and that you'd rather not duplicate with a separate math model.
 
-**Color-picking on a hidden canvas** — solves hit-testing for COMPLEX, overlapping, arbitrarily irregular shapes exactly, with no math at all: every interactive object is drawn onto an invisible offscreen canvas in a solid, unique color (no anti-aliasing!), and clicking reads the pixel color under the cursor:
+**Color-picking on a hidden canvas** — solves hit-testing exactly for complex, overlapping, arbitrarily irregular shapes, with no math at all. Every interactive object is drawn onto an invisible offscreen canvas in a solid, unique color, with anti-aliasing switched off. A click then reads the pixel color under the cursor:
 
 ```javascript
 const hitCanvas = document.createElement('canvas');
 hitCanvas.width = canvas.width; hitCanvas.height = canvas.height;
 const hitCtx = hitCanvas.getContext('2d', { willReadFrequently: true });
-hitCtx.imageSmoothingEnabled = false; // REQUIRED: anti-aliasing would blend colors at edges
+hitCtx.imageSmoothingEnabled = false; // required: anti-aliasing blends colors at edges
 
 const colorToEntity = new Map();
 entities.forEach((entity, i) => {
@@ -230,11 +224,13 @@ canvas.addEventListener('click', (e) => {
 });
 ```
 
-This works exactly, for any shape (stars, arbitrary polygons, objects overlapping each other), at the cost of an extra offscreen render pass on every scene change — the details of working with pixels (`getImageData`, its cost) are covered in article 03.
+This works exactly, for any shape: stars, arbitrary polygons, objects overlapping each other. The cost is an extra offscreen render pass on every scene change. Article 03 covers the details of working with pixels, including `getImageData` and what it costs.
 
 ## Pausing when the tab is backgrounded
 
-The browser already throttles/suspends `requestAnimationFrame` in background tabs (see [rAF and JS-Driven Animation]), but that alone isn't enough for game logic: if only rendering is paused while a physics accumulator keeps piling up `dt` (or reads `Date.now()` directly), `frameTime` will be enormous when the tab comes back — without a clamp (`Math.min(frameTime, 0.25)` from the fixed-timestep example above), the simulation will try to catch up hours or even days of skipped time in a single frame.
+The browser already throttles or suspends `requestAnimationFrame` in background tabs, as rAF and JS-Driven Animation explains. That alone isn't enough for game logic. Rendering may pause while a physics accumulator keeps piling up `dt`, or reads `Date.now()` directly. Then `frameTime` is enormous when the tab comes back.
+
+Without a clamp, the simulation will try to catch up hours or even days of skipped time in a single frame. The clamp is `Math.min(frameTime, 0.25)`, from the fixed-timestep example above.
 
 ```javascript
 let isPaused = false;
@@ -313,37 +309,25 @@ function loop(timestamp) {
 requestAnimationFrame(loop);
 ```
 
-This example is deliberately small, but it brings together every piece covered in this article: separating `update`/`draw`, the delta-time loop, an entity-like data structure (`ball`, `paddle` as plain objects), math-based hit detection (AABB for the paddle) — exactly what any browser game or interactive canvas feature actually starts from.
+This example is deliberately small, but it brings together every piece covered in the article. It separates `update` and `draw`, runs a delta-time loop, and keeps an entity-like data structure: `ball` and `paddle` as plain objects. Hit detection is math-based, an AABB check for the paddle. That is exactly what any browser game or interactive canvas feature starts from.
 
 ## Connection to other articles
 
-```txt
-[Canvas 2D Fundamentals]                — the immediate-mode model that
-                                           makes the explicit clear→
-                                           update→draw cycle mandatory
-[rAF and JS-Driven Animation]           — the base delta-time rAF loop,
-                                           extended here into a full
-                                           stateful game loop
-[Pixels, Images, and Effects]           — the pixel-level work behind
-                                           the color-picking hit
-                                           detection approach
-[Architecture and Performance for
- Canvas Apps]                            — object pooling, dirty
-                                           rectangles, and other
-                                           optimizations built on top of
-                                           this loop in a real production app
-```
+- [Canvas 2D Fundamentals](./01-canvas-2d-fundamentals.md) — the immediate-mode model that makes the explicit clear → update → draw cycle mandatory.
+- rAF and JS-Driven Animation — the base delta-time `requestAnimationFrame` loop, extended here into a full stateful game loop.
+- [Pixels, Images, and Effects](./03-pixels-images-and-effects.md) — the pixel-level work behind the color-picking approach to hit detection.
+- [Architecture and Performance for Canvas Apps](./08-architecture-and-performance-for-canvas-apps.md) — object pooling, dirty rectangles, and other optimizations built on top of this loop.
 
 ## Common interview traps
 
-- **Not separating `update` and `draw`** — writing a single function that both mutates state and draws, making the logic untestable without a canvas and making it harder to add fixed timestep later.
+- **Not separating `update` and `draw`.** Writing a single function that both mutates state and draws. The logic becomes untestable without a canvas, and adding fixed timestep later gets harder.
 
-- **Not knowing the difference between fixed and variable timestep** — being unable to explain why physics under variable timestep can behave differently across devices, or what "tunneling" means when `dt` spikes.
+- **Not knowing the difference between fixed and variable timestep.** Being unable to explain why physics under variable timestep behaves differently across devices, or what "tunneling" means when `dt` spikes.
 
-- **Not clamping `dt` after a lag spike or a backgrounded tab** — failing to anticipate the "spiral of death": if the real `frameTime` isn't capped, the simulation tries to catch up an enormous span of time in a single frame after returning to the tab, making the lag worse instead of better.
+- **Not clamping `dt` after a lag spike or a backgrounded tab.** This is the "spiral of death" scenario. Return to the tab with `frameTime` uncapped, and the simulation tries to catch up an enormous span of time in one frame. That makes the lag worse, not better.
 
-- **Redrawing a static background every frame** — not knowing about layered canvases as the cheapest optimization, and instead trying to "optimize" the static background's own drawing code.
+- **Redrawing a static background every frame.** Not knowing about layered canvases as the cheapest optimization, and trying to "optimize" the static background's own drawing code instead.
 
-- **Using only math-based hit detection where shapes are complex and overlapping** — not knowing about color-picking on a hidden canvas as an exact alternative to hand-writing intersection geometry for arbitrary polygons.
+- **Using only math-based hit detection where shapes are complex and overlapping.** Not knowing about color-picking on a hidden canvas as an exact alternative. The manual route is writing intersection geometry for arbitrary polygons by hand.
 
-- **Relying only on the browser's background rAF throttling** — not realizing that pausing GAME logic (timers, physics) needs to be handled explicitly via `visibilitychange`, rather than assuming the browser slowing down rendering is enough on its own.
+- **Relying only on the browser's background rAF throttling.** Pausing **game** logic (timers, physics) has to be handled explicitly, via `visibilitychange`. Assuming that slower rendering by the browser is enough on its own does not work.

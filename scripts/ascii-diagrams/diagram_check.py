@@ -18,8 +18,10 @@ Usage:
 Exit code 0 = every block PASS, 1 = at least one FAIL.
 """
 
+import json
 import os
 import sys
+from pathlib import Path
 
 BOX_CHARS = set('┌┐└┘─│├┤┬┴┼')
 
@@ -83,6 +85,52 @@ def check_block(lines):
     return errors
 
 
+def _blocks_in_text(lines, label_prefix=''):
+    """Yield (label, block_lines) for fenced blocks containing box chars."""
+    in_fence = False
+    block, start = [], 0
+    for i, line in enumerate(lines, 1):
+        if line.lstrip().startswith('```'):
+            if in_fence:
+                if any('\u250c' in l for l in block):
+                    yield f'{label_prefix}{start}', block
+                in_fence = False
+            else:
+                in_fence = True
+                block, start = [], i + 1
+            continue
+        if in_fence:
+            block.append(line)
+
+
+# Locale-mapped markdown fields of the JSON rubrics. Diagrams live in the answer /
+# explanation / description bodies, never in a question stem or a quiz option.
+JSON_FIELDS = ('answer', 'explanation', 'description', 'solutionExplanation')
+
+
+def iter_json_diagram_blocks(json_path):
+    """Same, for content/questions, content/quiz and content/tasks."""
+    try:
+        items = json.loads(Path(json_path).read_text(encoding='utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return
+    if not isinstance(items, list):
+        return
+    for item in items:
+        if not isinstance(item, dict) or 'id' not in item:
+            continue
+        for field in JSON_FIELDS:
+            value = item.get(field)
+            if not isinstance(value, dict):
+                continue
+            for locale in ('en', 'ru'):
+                text = value.get(locale)
+                if not isinstance(text, str):
+                    continue
+                prefix = f"{item['id']}.{field}.{locale}:"
+                yield from _blocks_in_text(text.splitlines(), prefix)
+
+
 def iter_diagram_blocks(md_path):
     """Yield (start_line, block_lines) for fenced blocks containing box chars."""
     with open(md_path, encoding='utf-8') as f:
@@ -110,15 +158,33 @@ def main():
         return 1
 
     md_files = []
+    json_files = []
     for t in targets:
         if os.path.isdir(t):
             for root, _, files in os.walk(t):
-                md_files.extend(os.path.join(root, f) for f in sorted(files) if f.endswith('.md'))
+                for f in sorted(files):
+                    if f.endswith('.md'):
+                        md_files.append(os.path.join(root, f))
+                    elif f.endswith('.json'):
+                        json_files.append(os.path.join(root, f))
+        elif t.endswith('.json'):
+            json_files.append(t)
         else:
             md_files.append(t)
 
     failed = 0
     total = 0
+    for path in json_files:
+        for label, block in iter_json_diagram_blocks(path):
+            total += 1
+            errors = check_block(block)
+            if errors:
+                failed += 1
+                print(f'FAIL  {path} {label}')
+                for e in errors:
+                    print(f'      {e}')
+            else:
+                print(f'PASS  {path} {label}')
     for path in md_files:
         for start, block in iter_diagram_blocks(path):
             total += 1

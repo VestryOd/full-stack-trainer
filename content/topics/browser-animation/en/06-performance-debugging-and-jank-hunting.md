@@ -1,8 +1,10 @@
 # Performance Debugging and Jank Hunting
 
-## From theory to "why is THIS animation janky HERE, specifically"
+## From theory to "why is this animation janky in this exact place"
 
-Articles 01-05 gave you the vocabulary and the tools: the rendering pipeline, cheap versus expensive properties, WAAPI, rAF, libraries. This article is about the senior engineer's actual workflow when the tech lead sends a screen recording captioned "the landing page is choppy while scrolling on an iPhone SE," with no other detail attached. Diagnosing jank isn't "stare at the code and guess" — it's a specific sequence of DevTools tools, each answering a different question.
+Articles 01-05 gave you the vocabulary and the tools: the rendering pipeline, cheap versus expensive properties, WAAPI (Web Animations API), `requestAnimationFrame` (rAF), and libraries.
+
+This article is about the senior engineer's actual workflow. The tech lead sends a screen recording with no other detail attached. The caption: "the landing page is choppy while scrolling on an iPhone SE" (SE — Special Edition). Jank is, physically, a missed frame (article 01). Diagnosing it isn't "stare at the code and guess". It is a specific sequence of DevTools tools, each answering a different question.
 
 ## The Performance panel: where time is physically being lost
 
@@ -12,9 +14,10 @@ Recording (Record → replay the problematic interaction → Stop) gives you a m
 How to read the flame chart:
 ┌───────────────────────────────────────────────────────────┐
 │ Main                                                      │
-│ ▓▓▓▓░░░▓▓▓▓▓▓▓▓▓▓▓▓░░░▓▓▓░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░       │ ← time axis
+│ ▓▓▓▓░░░▓▓▓▓▓▓▓▓▓▓▓▓░░░▓▓▓░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░       │
 │  JS   Style Layout  Paint    JS (rAF callback)  Composite │
 └───────────────────────────────────────────────────────────┘
+  The horizontal axis is time.
   Block color = category of work:
   yellow  = Scripting (your JS)
   purple  = Rendering (Style/Layout)
@@ -22,21 +25,27 @@ How to read the flame chart:
   blue    = Loading
 ```
 
-What to look for specifically:
+Three signals are worth looking for specifically:
 
-**Long Tasks** — any continuous block of main-thread JS longer than 50 ms gets flagged with a red triangle in the corner of the block. That's an empirically derived threshold: tasks shorter than 50 ms don't register as a response delay to a user; longer ones block the main thread long enough to be noticeable (this is the same threshold that underlies the INP metric, covered below).
+| Signal in the flame chart | What it means |
+|---|---|
+| Main-thread JS block over 50 ms, red triangle | A Long Task. The user feels the delay. |
+| Purple Layout block, "Forced reflow" | A geometry read right after a style write. |
+| Layout → Paint → Composite every tick | A layout property is animated, not `transform`. |
 
-**Forced reflow** — a warning (a purple Layout block flagged "Forced reflow" with a yellow exclamation mark) means exactly what article 01 covered: JS read geometry (`offsetHeight` and similar) right after writing a style, and the browser was forced to compute layout synchronously, outside its normal batching. Clicking the warning in DevTools expands a **stack trace** — the exact line of code that caused it. This is the fastest way to find layout thrashing in a real application without reading through the whole codebase line by line.
+- **Long Tasks.** Any continuous block of main-thread JS longer than 50 ms gets flagged with a red triangle in the corner of the block. That is an empirically derived threshold. Tasks shorter than 50 ms don't register as a response delay to a user. Longer ones block the main thread long enough to be noticeable. The same threshold underlies INP (Interaction to Next Paint), a metric covered below.
 
-**A repeating Layout → Paint → Composite pattern on every animation frame** — if an animation's flame chart shows all three blocks on every tick, a layout-triggering property is being animated (`top`, `width`, etc. — see the table in article 01), not `transform`/`opacity`. A healthy compositor-only animation ideally shows only thin Composite blocks, with nothing in between.
+- **Forced reflow.** A purple Layout block flagged "Forced reflow", with a yellow exclamation mark. It means exactly what article 01 covered. JS read geometry (`offsetHeight` and similar) right after writing a style. So the browser had to compute layout synchronously, outside its normal batching. Clicking the warning in DevTools expands a **stack trace** — the exact line of code that caused it. That is the fastest way to find layout thrashing in a real application, without reading the whole codebase line by line.
+
+- **A repeating Layout → Paint → Composite pattern on every animation frame.** If an animation's flame chart shows all three blocks on every tick, a layout-triggering property is being animated, not `transform`/`opacity`. Examples are `top` and `width`; the full table is in article 01. A healthy compositor-only animation ideally shows only thin Composite blocks, with nothing in between.
 
 ## The Layers panel: why there are more layers than expected
 
-`DevTools → More tools → Layers` gives a 3D visualization of every composited layer on the page — it literally "peels apart" the page along the Z axis, showing exactly what became its own layer and why.
+`DevTools → More tools → Layers` gives a 3D visualization of every composited layer on the page. It splits the page along the Z axis and shows exactly what became its own layer, and why.
 
 ```txt
 For each layer, the panel shows:
-  - Compositing Reasons — the EXACT reason it was promoted
+  - Compositing Reasons — the exact reason it was promoted
     ("has a will-change: transform", "is animated", etc.) —
     no need to guess what triggered the layer
   - Memory estimate — how much GPU memory the layer occupies
@@ -44,15 +53,17 @@ For each layer, the panel shows:
     from article 01)
 ```
 
-**Layer explosion** is diagnosed here directly: if the panel shows dozens to hundreds of layers where you expected 3-5 (the elements actually being animated), the cause is almost always `will-change` left on static elements "just in case" (the anti-pattern from article 01), or a CSS filter/3D transform on a component that renders in bulk (say, every card in a list of a hundred got a `filter` for its shadow, and EACH ONE became its own layer).
+**Layer explosion** is diagnosed here directly. If the panel shows dozens to hundreds of layers where you expected 3-5 — the elements actually being animated — something is promoting layers for you.
+
+The cause is almost always `will-change` left on static elements "just in case", the anti-pattern from article 01. The other common cause is a CSS filter or 3D transform on a component that renders in bulk. Say every card in a list of a hundred got a `filter` for its shadow: each one became its own layer.
 
 ## Paint flashing and the paint profiler: what's repainting when it shouldn't
 
-`DevTools → Rendering tab → Paint flashing` highlights (usually with a green rectangle) any screen area that gets repainted, in real time, while you interact with the page.
+`DevTools → Rendering tab → Paint flashing` highlights any screen area that gets repainted, usually with a green rectangle. It does this in real time, while you interact with the page.
 
 ```txt
 Diagnostic scenario: scrolling a news feed flashes green across
-the ENTIRE visible height on every scroll frame — even though
+the entire visible height on every scroll frame — even though
 only the list should be scrolling, while the header and sidebar
 are supposed to stay static.
 
@@ -68,13 +79,23 @@ so paint only touches its own pixels, not the whole overlap
 with its neighbors.
 ```
 
-Separately, `box-shadow`/`filter: blur()` — a noticeable "hot zone" in paint flashing on an element that looks static almost always means the shadow/blur is being repainted from scratch every frame (for example, `box-shadow` is being animated directly instead of a pre-rendered shadow's transform) — rasterizing a large blur radius on CPU/GPU is noticeably more expensive than a plain fill.
+Watch `box-shadow` and `filter: blur()` separately. A noticeable "hot zone" in paint flashing on an element that looks static almost always means one thing. The shadow or blur is being repainted from scratch every frame.
+
+For example, `box-shadow` is animated directly, instead of the transform of a pre-rendered shadow. Rasterizing a large blur radius on the CPU (central processor) or GPU (graphics processor) is noticeably more expensive than a plain fill.
 
 ## FPS meter and frame rendering stats: a quick sanity check
 
-`DevTools → Rendering tab → Frame Rendering Stats` turns on an overlay right on top of the page showing live FPS, GPU memory usage, and a dropped-frame counter — not a recording, a live monitor for a quick gut check ("did this change I just made regress anything?") without going through a full Performance-panel recording.
+`DevTools → Rendering tab → Frame Rendering Stats` turns on an overlay right on top of the page. It shows live FPS (frames per second), GPU memory usage and a dropped-frame counter. This is not a recording but a live monitor, for a quick check of the kind "did the change I just made regress anything?". You get the answer without going through a full Performance-panel recording.
 
 ## Common causes of jank — and concrete fixes
+
+| Cause | Diagnosis | Fix |
+|---|---|---|
+| Layout thrashing | "Forced reflow" warning | Split reads from writes |
+| Animating layout properties | Layout+Paint every frame | Use `transform`/`opacity` |
+| Too many or oversized layers | Layers panel, Memory estimate | Don't promote decoration |
+| `box-shadow`/`filter` animated | Hot zone in paint flashing | Animate a pseudo-element |
+| Scroll handler reads geometry | Forced reflow on every scroll | `{ passive: true }` |
 
 ### Layout thrashing
 
@@ -90,7 +111,7 @@ Diagnosis: a repeating Layout+Paint on every animation frame in the flame chart 
 Symptom: a full-screen background video or gradient image is
 promoted to its own full-screen layer — unnoticeable on desktop,
 but on a budget Android device with memory shared between CPU
-and GPU, it causes noticeable lag across the WHOLE page, not
+and GPU, it causes noticeable lag across the whole page, not
 just the area of that element.
 
 Diagnosis: Layers panel → the Memory estimate for that layer.
@@ -162,11 +183,13 @@ const observer = new IntersectionObserver(
 observer.observe(sentinelElement);
 ```
 
-`{ passive: true }` isn't a micro-optimization: without it, the browser MUST synchronously wait for the JS handler to finish on every scroll event before committing the visual scroll, because in principle the handler could call `preventDefault()` and cancel it. This is the only reliable way (alongside dropping the `scroll` listener entirely in favor of `IntersectionObserver`) to guarantee your JS never blocks native scrolling.
+`{ passive: true }` isn't a micro-optimization. Without it the browser **must** synchronously wait for the JS handler to finish on every scroll event, before committing the visual scroll. The reason: in principle the handler could call `preventDefault()` and cancel that scroll.
+
+There are two reliable ways to guarantee your JS never blocks native scrolling. One is `{ passive: true }`. The other is dropping the `scroll` listener entirely in favour of `IntersectionObserver`.
 
 ## `content-visibility` and CSS containment: don't render what isn't visible
 
-On long pages with many sections (docs, feeds, catalogs), the browser by default computes Style/Layout/Paint for the ENTIRE document, including content far outside the current viewport. `content-visibility: auto` explicitly lets the browser skip rendering work for content that isn't currently visible:
+On long pages with many sections — docs, feeds, catalogs — the browser by default computes Style/Layout/Paint for the **entire** document. That includes content far outside the current viewport. The `content-visibility: auto` declaration explicitly lets the browser skip rendering work for content that isn't currently visible:
 
 ```css
 .article-section {
@@ -188,7 +211,7 @@ the difference in initial render time and scroll responsiveness
 is genuinely noticeable.
 ```
 
-`contain` (without `content-visibility`) is a finer-grained, manual tool: it explicitly tells the browser that changes INSIDE an element shouldn't require recomputing layout/paint OUTSIDE it:
+The `contain` property, used without `content-visibility`, is a finer-grained and manual tool. It explicitly tells the browser that changes **inside** an element shouldn't require recomputing layout or paint **outside** it:
 
 ```css
 .independent-widget {
@@ -198,13 +221,42 @@ is genuinely noticeable.
 }
 ```
 
-This scopes layout thrashing inside the widget to just the widget, not the whole document — useful for complex widgets (a data grid, a canvas wrapper, a chat with frequently updating messages) that often change their internal markup.
+This scopes layout thrashing inside the widget to the widget itself, not the whole document. It is useful for complex widgets that often change their internal markup: a data grid, a canvas wrapper, a chat with frequently updating messages.
 
 ## `OffscreenCanvas` — when DOM animation simply stops scaling
 
-There's a point past which DOM/CSS animation is physically the wrong tool: thousands of independently animated particles, a complex physics simulation, frame-by-frame rendering where every element is its own DOM node. Every DOM node carries overhead with it (its own composited layer when animated, its own entry in the style tree, its own hit-testing) — and at a scale of thousands of elements, that overhead starts to dominate over the useful work itself.
+There is a point past which DOM (document object model — the browser's tree of page elements) animation is physically the wrong tool. Three examples: thousands of independently animated particles, a complex physics simulation, and frame-by-frame rendering where every element is its own DOM node.
 
-The signal to switch isn't "it got a bit slower" — it's qualitative: if the profiler shows Style/Layout time growing linearly with the number of animated DOM nodes, rather than with the complexity of the animation itself, that's an architectural ceiling, not a case for one more optimization pass. `OffscreenCanvas` at that point lets you do raster rendering (Canvas 2D/WebGL) in a separate Worker thread, entirely off the main thread and the DOM tree. Actually drawing on Canvas/WebGL is its own topic ([Canvas & Graphics]); what matters here is just recognizing the moment DOM/CSS animation has hit its architectural ceiling.
+Every DOM node carries overhead with it: its own composited layer when animated, its own entry in the style tree, its own hit-testing. Hit-testing is the check of which element a pointer event landed on. At a scale of thousands of elements, that overhead starts to dominate over the useful work itself.
+
+```txt
+┌────────────────────────────────────────────┐
+│ Thousands of animated DOM nodes            │
+└────────────────────────────────────────────┘
+                       │  measure
+                       ▼
+┌────────────────────────────────────────────┐
+│ Profiler: Style/Layout time grows with the │
+│ number of nodes, not with the complexity   │
+│ of the animation                           │
+└────────────────────────────────────────────┘
+                       │  read the shape
+                       ▼
+┌────────────────────────────────────────────┐
+│ An architectural ceiling, not a missing    │
+│ optimization pass                          │
+└────────────────────────────────────────────┘
+                       │  switch tool
+                       ▼
+┌────────────────────────────────────────────┐
+│ OffscreenCanvas: raster rendering in a     │
+│ Worker, off the main thread and the DOM    │
+└────────────────────────────────────────────┘
+```
+
+The signal to switch isn't "it got a bit slower". It is qualitative. Watch the shape of the growth in the profiler. Style/Layout time may grow linearly with the number of animated DOM nodes, rather than with the complexity of the animation itself. That is an architectural ceiling, not a case for one more optimization pass.
+
+At that point `OffscreenCanvas` lets you do raster rendering in a separate Worker thread, using Canvas 2D or WebGL (3D graphics in the browser). That is entirely off the main thread and off the DOM tree. Actually drawing on Canvas and WebGL is its own topic, Canvas & Graphics. What matters here is recognizing the moment DOM/CSS animation has hit its ceiling.
 
 ## Measuring in production: Long Animation Frames and INP
 
@@ -219,56 +271,44 @@ new PerformanceObserver((list) => {
       duration: entry.duration,               // the "heavy" frame's total duration
       renderStart: entry.renderStart,          // when rendering began within the frame
       styleAndLayoutStart: entry.styleAndLayoutStart,
-      scripts: entry.scripts.map((s) => ({     // WHICH script is actually responsible
+      scripts: entry.scripts.map((s) => ({     // which script is responsible
         name: s.name,
         duration: s.duration,
-        invoker: s.invoker,                    // e.g. a specific event listener or rAF callback
+        // e.g. a specific event listener or rAF callback
+        invoker: s.invoker,
       })),
     });
   }
 }).observe({ type: 'long-animation-frame', buffered: true });
 ```
 
-Unlike the plain Long Tasks API (which just reports "something took over 50 ms"), LoAF breaks a "heavy" frame down into phases (how much went to script, how much to Style/Layout) and points at the specific culprit script — on real user devices, this gives you the same information as a stack trace in the Performance panel, without needing to reproduce the issue locally.
+The plain Long Tasks API just reports "something took over 50 ms". LoAF goes further. It breaks a "heavy" frame down into phases: how much went to script, how much to Style/Layout. It also points at the specific script responsible. On real user devices this gives you the same information as a stack trace in the Performance panel, without reproducing the issue locally.
 
-**INP (Interaction to Next Paint)** is a Core Web Vitals metric that measures the delay between a user's action (a click, a tap, a keypress) and the moment the browser physically shows the next updated frame in response. This ties directly back to this article's subject: if an rAF callback or JS-driven animation holds the main thread longer than the frame budget (article 01) at the exact moment a user interacts with the page, the response frame — say, a button's visual "pressed" state — gets delayed, and that directly hurts INP, in exactly the same way it hurts the animation's own perceived smoothness. For teams already optimizing LCP/CLS, it's worth internalizing: heavy, poorly budgeted animation isn't just an "aesthetic" problem — it's a measurable factor in the same Web Vitals report, with real SEO and product-metric consequences.
+**INP (Interaction to Next Paint)** is a Core Web Vitals metric. It measures the delay between a user's action and the moment the browser physically shows the next updated frame in response. The action can be a click, a tap or a keypress.
+
+This ties directly back to this article's subject. Suppose an rAF callback or a JS-driven animation holds the main thread longer than the frame budget (article 01). Now suppose that happens exactly when a user interacts with the page. Then the response frame is delayed: a button's visual "pressed" state, for example. That hurts INP directly, in exactly the same way it hurts the animation's own perceived smoothness.
+
+Many teams already optimize LCP (Largest Contentful Paint) and CLS (Cumulative Layout Shift). For them the point is worth making plainly. Heavy, poorly budgeted animation isn't just an "aesthetic" problem. It is a measurable factor in the same Web Vitals report, with real consequences for SEO (search engine optimization) and product metrics.
 
 ## Connection to other articles
 
-```txt
-[Rendering Pipeline and Frame Budget]  — the foundation: what layout
-                                          thrashing, GPU layers, and
-                                          frame budget actually are —
-                                          here those concepts become
-                                          diagnostic tools
-[rAF and JS-Driven Animation]          — a typical source of Long
-                                          Tasks in animation — a heavy
-                                          rAF callback with no regard
-                                          for the frame budget
-[Animation Libraries and Ecosystem]    — the diagnostics in this
-                                          article apply equally to
-                                          hand-written code and to
-                                          animation driven by a library
-[Motion Design Patterns and
- Accessibility]                         — what to actually do with a
-                                          diagnosed problem at the
-                                          product level (simplify,
-                                          remove, replace with a
-                                          reduced-motion variant)
-```
+- [Rendering Pipeline and Frame Budget](./01-rendering-pipeline-and-frame-budget.md) — the foundation: what layout thrashing, GPU layers and the frame budget actually are. Here those concepts become diagnostic tools.
+- [requestAnimationFrame and JS-Driven Animation](./04-raf-and-js-driven-animation.md) — a typical source of Long Tasks in animation: a heavy rAF callback with no regard for the frame budget.
+- [Animation Libraries and the Ecosystem](./05-animation-libraries-and-ecosystem.md) — the diagnostics in this article apply equally to code you wrote yourself and to animation driven by a library.
+- [Motion Design Patterns and Accessibility](./07-motion-design-patterns-and-accessibility.md) — what to actually do with a diagnosed problem at the product level. Simplify it, remove it, or replace it with a reduced-motion variant.
 
 ## Common interview traps
 
-- **Not knowing what a "forced reflow" looks like in DevTools** — being unable to describe that the Performance panel flags these cases explicitly, with a purple block and a warning, and provides a stack trace pointing to the exact line of code.
+- **Not knowing what a "forced reflow" looks like in DevTools.** Being unable to describe that the Performance panel flags these cases explicitly, with a purple block and a warning. And that it provides a stack trace pointing to the exact line of code.
 
-- **Confusing paint flashing with the FPS meter** — not distinguishing the tools by purpose: paint flashing shows WHICH AREAS are repainting, the FPS meter only shows an aggregate frame rate, with no way to localize the cause.
+- **Confusing paint flashing with the FPS meter.** Not distinguishing the tools by purpose. Paint flashing shows **which areas** are repainting. The FPS meter only shows an aggregate frame rate, with no way to localize the cause.
 
-- **Not knowing about `{ passive: true }`** — not understanding that a non-passive scroll/touch listener forces the browser to synchronously wait for the JS handler to finish before it can visually commit the scroll itself — this isn't about "the JS running a bit faster," it's about blocking the scroll itself.
+- **Not knowing about `{ passive: true }`.** A non-passive scroll or touch listener forces the browser to synchronously wait for the JS handler to finish. Only then can it visually commit the scroll. This isn't about "the JS running a bit faster". It is about blocking the scroll itself.
 
-- **Not knowing about `content-visibility`** — proposing list virtualization (react-window and similar) as the only fix for long-page performance, without knowing about the simpler CSS alternative for cases where the content can't be virtualized (an ordinary long document, say, rather than a list of identical items).
+- **Not knowing about `content-visibility`.** Proposing list virtualization, such as `react-window`, as the only fix for long-page performance. Not knowing about the simpler CSS alternative for content that can't be virtualized — an ordinary long document, say, rather than a list of identical items.
 
-- **Assuming the local DevTools Performance panel is representative of production** — not knowing about the Long Animation Frames API/`PerformanceObserver` as a way to get the same kind of data from actual user devices in the field.
+- **Assuming the local DevTools Performance panel is representative of production.** Not knowing about the Long Animation Frames API and `PerformanceObserver` as a way to get the same kind of data from actual user devices.
 
-- **Not connecting animation performance to INP** — treating animation jank as a purely "visual" concern, without understanding that it directly affects a measurable Core Web Vitals metric, and therefore SEO and product-level outcomes.
+- **Not connecting animation performance to INP.** Treating animation jank as a purely "visual" concern. Not understanding that it directly affects a measurable Core Web Vitals metric, and therefore SEO and product-level outcomes.
 
-- **Not recognizing when DOM/CSS animation physically stops scaling** — trying to optimize thousands of animated DOM nodes with point fixes instead of recognizing the architectural ceiling and moving to Canvas/WebGL.
+- **Not recognizing when DOM/CSS animation physically stops scaling.** Trying to optimize thousands of animated DOM nodes with point fixes, instead of recognizing the architectural ceiling and moving to Canvas or WebGL.

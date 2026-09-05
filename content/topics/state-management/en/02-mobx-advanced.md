@@ -53,6 +53,8 @@ class UserStore {
 }
 ```
 
+**Here we load server data into the store by hand, so the mechanics stay visible.** In production a server-state library does this work: React Query (now TanStack Query) or RTK Query from Redux Toolkit (RTK). It caches responses, deduplicates requests and refreshes them in the background; the trade-offs are compared in [State Management Comparison](./05-comparison.md).
+
 ### flow — the idiomatic MobX solution for async
 
 `flow` uses generators instead of async/await. Inside it, `yield` does the same as `await`, but MobX automatically wraps each "step" after yield in an action:

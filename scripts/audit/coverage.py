@@ -98,6 +98,27 @@ PASSED = {
     'bank:python': '574ba8c',
     'bank:testing': '574ba8c',
     'quiz:testing': '574ba8c',
+    'bank:angular': '78bda0a',
+    'article:keycloak-auth': '3be5fee',
+    'bank:ddd': 'ed7942b',
+    'bank:tdd': 'ed7942b',
+    'bank:event-driven': 'ed7942b',
+    'article:agile-scrum': '3200ef7',
+    'course:angular': '4300b36',
+    'article:rxjs': '4300b36',
+    'article:browser-animation': 'b3273ba',
+    'article:canvas-graphics': '6e35341',
+    'tasks:graphql': 'wave 25',
+    'tasks:javascript': 'wave 25',
+    'tasks:algorithms': 'wave 25',
+    'tasks:react': 'wave 25',
+    'tasks:typescript': 'wave 25',
+    'tasks:nodejs': 'wave 25',
+    'tasks:testing': 'wave 25',
+    'tasks:css-html': 'wave 25',
+    'quiz:python': 'generation backlog, item 5',
+    'quiz:angular': 'generation backlog, item 5',
+    'quiz:nx': 'generation backlog, item 5',
 }
 
 MEASURE = ('unexpanded abbreviations, over-limit sentences, '
@@ -145,6 +166,23 @@ def wide_lines(path: str) -> int:
         capture_output=True, text=True).stdout
     match = re.search(r'(\d+) lines over budget', out)
     return int(match.group(1)) if match else 0
+
+
+def task_code_wide_lines(path: str) -> int:
+    """Over-budget lines in `starterCode`/`solution` alone.
+
+    Split out from the prose count so the tick stays honest: those two fields are
+    code, the language pass does not touch them, and their 220 over-budget lines
+    across the rubric are a separate debt from the text ones.
+    """
+    total = 0
+    for item in json.loads(Path(path).read_text(encoding='utf-8')):
+        for field in ('starterCode', 'solution'):
+            value = item.get(field)
+            if not isinstance(value, str):
+                continue
+            total += sum(1 for line in value.split('\n') if len(line) > 92)
+    return total
 
 
 def thousands(n: int) -> str:
@@ -234,10 +272,43 @@ def main() -> int:
         print(f'| {tick(key)} | `{name}` | {n} | {thousands(words)} | {flags} | '
               f'{PASSED.get(key, "—")} |')
 
+    print('\n## Задачи\n')
+    print('Задачи лежат в `content/tasks` и до сентября 2026 не входили в учёт вовсе —')
+    print('восемь файлов и 243 задачи были невидимы для этой таблицы, и отчётов аудита')
+    print('по ним не существует: рубрика в аудит не входила. Флаги считаются по полям')
+    print('`title`, `description` и `solutionExplanation`; `starterCode` и `solution` —')
+    print('код, и это единая строка на обе локали, а не пара локалей.\n')
+    print('`title` рендерится **обычным текстом** (`TaskView.tsx` кладёт `{t(task.title)}`')
+    print('в `h1`), поэтому бэктики и `**` там печатаются буквально. Флаги в нём')
+    print('вынесены отдельной колонкой: их мало, но каждый виден читателю дословно.\n')
+    print('«Широкие» — строки сверх бюджета в фенсах `description` и')
+    print('`solutionExplanation`, то есть в тексте. «В коде» — то же самое в')
+    print('`starterCode` и `solution`. Колонки разведены, потому что галочка')
+    print('означает языковой проход, а он этих двух полей не касается: они код,')
+    print('единый на обе локали. 220 длинных строк в них — **отдельный записанный')
+    print('долг**, найденный волной 25 после того, как `block_width.py` научили')
+    print('видеть сначала поля задач, а потом и эти два.\n')
+    print('| | Задачи | Задач | Слов | Флаги в объяснениях | В описаниях | В названиях | Широкие | В коде | Закрыто |')
+    print('|---|---|---|---|---|---|---|---|---|---|')
+    tasks = []
+    for path in sorted(glob.glob('content/tasks/*.json')):
+        name = os.path.basename(path)[:-5]
+        per_field, words = json_flags(path, ('title', 'description', 'solutionExplanation'))
+        n = len(json.loads(Path(path).read_text(encoding='utf-8')))
+        code_wide = task_code_wide_lines(path)
+        tasks.append((f'tasks:{name}', name, n, words, per_field['solutionExplanation'],
+                      per_field['description'], per_field['title'],
+                      wide_lines(path) - code_wide, code_wide))
+    for key, name, n, words, expl, desc, ttl, wide, code_wide in sorted(
+            tasks, key=lambda r: (r[0] not in PASSED, -(r[4] + r[5] + r[6]))):
+        print(f'| {tick(key)} | `{name}` | {n} | {thousands(words)} | {expl} | {desc} | '
+              f'{ttl} | {wide} | {code_wide} | {PASSED.get(key, "—")} |')
+
     done = sum(1 for r in rows if r[0] in PASSED) + \
         sum(1 for c in courses if c[0] in PASSED) + \
-        sum(1 for b in banks if b[0] in PASSED) + sum(1 for q in quizzes if q[0] in PASSED)
-    total = len(rows) + len(courses) + len(banks) + len(quizzes)
+        sum(1 for b in banks if b[0] in PASSED) + sum(1 for q in quizzes if q[0] in PASSED) + \
+        sum(1 for t in tasks if t[0] in PASSED)
+    total = len(rows) + len(courses) + len(banks) + len(quizzes) + len(tasks)
     print(f'\n**Итого закрыто {done} зон из {total}.**')
     return 0
 
