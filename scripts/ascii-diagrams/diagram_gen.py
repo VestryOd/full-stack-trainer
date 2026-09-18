@@ -858,7 +858,26 @@ def pw_ci_environment(L):
     )
 
 
+def wa_access_levels(L):
+    """Capability tiers: each layer adds one more condition to unlock."""
+    return with_title_and_notes(layered(L['sections']), L['title'], L['notes'])
+
+
+def wa_observer_timing(L):
+    """When each observer's callback actually fires, stage by stage."""
+    return with_title_and_notes(vchain(L['stages'], L['edges']), L['title'], L['notes'])
+
+
 DIAGRAMS = {
+    'wa-access-levels': wa_access_levels,
+    'wa-observer-timing': wa_observer_timing,
+    'wa-worker-messaging': wa_observer_timing,
+    'wa-sw-lifecycle': wa_observer_timing,
+    'wa-storage-eviction': wa_access_levels,
+    'wa-leader-election': wa_observer_timing,
+    'wa-fsa-handle': wa_observer_timing,
+    'wa-import-pipeline': wa_observer_timing,
+    'wa-page-states': wa_observer_timing,
     'stack-compare': stack_compare,
     'pw-connection': pw_connection,
     'pw-isolation': pw_isolation,
@@ -1026,6 +1045,226 @@ DIAGRAMS = {
 }
 
 LABELS = {
+    'wa-access-levels': {
+        'ru': {
+            'sections': [
+                ['Всегда: window, navigator, DOM'],
+                ['+ безопасный контекст (HTTPS)',
+                 'Service Worker, Web Locks, Clipboard API'],
+                ['+ жест пользователя',
+                 'полноэкранный режим, запись в буфер обмена'],
+                ['+ разрешение пользователя',
+                 'уведомления, камера, точная геолокация'],
+            ],
+            'title': 'От самого открытого уровня к самому закрытому',
+            'notes': ['каждый уровень добавляет своё условие к предыдущему'],
+        },
+        'en': {
+            'sections': [
+                ['Always available: window, navigator, DOM'],
+                ['+ secure context (HTTPS)',
+                 'Service Worker, Web Locks, Clipboard API'],
+                ['+ user gesture',
+                 'fullscreen mode, clipboard write'],
+                ['+ user permission',
+                 'notifications, camera, precise geolocation'],
+            ],
+            'title': 'From the most open tier to the most locked one',
+            'notes': ['each tier adds its own condition on top of the last'],
+        },
+    },
+    'wa-observer-timing': {
+        'ru': {
+            'stages': [
+                ['Ваш синхронный код'],
+                ['Микрозадачи: колбэк MutationObserver'],
+                ['Layout, затем ResizeObserver'],
+                ['IntersectionObserver, затем кадр (rAF)'],
+                ['Отрисовка на экране'],
+            ],
+            'edges': ['', '', '', ''],
+            'title': 'Когда браузер вызывает колбэк наблюдателя',
+            'notes': ['ни один колбэк не выполняется внутри вашего кода'],
+        },
+        'en': {
+            'stages': [
+                ['Your synchronous code'],
+                ['Microtasks: the MutationObserver callback'],
+                ['Layout, then ResizeObserver'],
+                ['IntersectionObserver, then the frame (rAF)'],
+                ['The frame is painted on screen'],
+            ],
+            'edges': ['', '', '', ''],
+            'title': "When the browser calls an observer's callback",
+            'notes': ["no callback ever runs inside your own code"],
+        },
+    },
+    'wa-worker-messaging': {
+        'ru': {
+            'stages': [
+                ['Главный поток вызывает postMessage(data)'],
+                ['Без transfer: данные клонирует structuredClone'],
+                ['С transfer: buf меняет владельца, копии нет'],
+                ['Воркер получает данные в self.onmessage'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Два пути от главного потока к воркеру',
+            'notes': ['выбор — за вторым аргументом postMessage'],
+        },
+        'en': {
+            'stages': [
+                ['The main thread calls postMessage(data)'],
+                ['No transfer: structuredClone copies the data'],
+                ['With transfer: buf changes owner, no copy made'],
+                ['The worker gets it in self.onmessage'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Two routes from the main thread to a worker',
+            'notes': ["the choice is postMessage's second argument"],
+        },
+    },
+    'wa-sw-lifecycle': {
+        'ru': {
+            'stages': [
+                ['installing: выполняется обработчик install'],
+                ['installed / waiting: ждёт закрытия старых вкладок'],
+                ['activating: выполняется обработчик activate'],
+                ['activated: перехватывает запросы новых вкладок'],
+            ],
+            'edges': ['', 'skipWaiting() пропускает ожидание', ''],
+            'title': 'Пять состояний одного сервис-воркера',
+            'notes': ['waiting возникает, только если есть старый активный воркер'],
+        },
+        'en': {
+            'stages': [
+                ['installing: the install handler runs'],
+                ['installed / waiting: old tabs must close first'],
+                ['activating: the activate handler runs'],
+                ["activated: intercepts new tabs' requests"],
+            ],
+            'edges': ['', 'skipWaiting() skips the wait', ''],
+            'title': 'Five states of one service worker',
+            'notes': ['waiting only happens if an old worker is still active'],
+        },
+    },
+    'wa-storage-eviction': {
+        'ru': {
+            'sections': [
+                ['Best-effort — режим по умолчанию',
+                 'место кончилось — браузер вытесняет данные'],
+                ['Persistent — после navigator.storage.persist()',
+                 'браузер обычно не трогает данные'],
+            ],
+            'title': 'Два режима хранения: обычный и защищённый',
+            'notes': ['решение браузер принимает сам — это эвристика, не гарантия'],
+        },
+        'en': {
+            'sections': [
+                ['Best-effort — the default mode',
+                 'space runs low — the browser evicts data'],
+                ['Persistent — after navigator.storage.persist()',
+                 'the browser usually leaves data alone'],
+            ],
+            'title': 'Two storage modes: default and protected',
+            'notes': ["the browser decides on its own — a heuristic, not a guarantee"],
+        },
+    },
+    'wa-leader-election': {
+        'ru': {
+            'stages': [
+                ['Вкладки A, B, C просят navigator.locks.request'],
+                ['Вкладка A получает блокировку первой — лидер'],
+                ['Лидер опрашивает сервер, находит новые заметки'],
+                ['BroadcastChannel сообщает B и C: список изменился'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Кто станет лидером и как об этом узнают остальные',
+            'notes': ['лидер меняется сам: он держит блокировку, пока открыта вкладка'],
+        },
+        'en': {
+            'stages': [
+                ['Tabs A, B, C all call navigator.locks.request'],
+                ['Tab A gets the lock first — it becomes the leader'],
+                ['The leader polls the server, finds new notes'],
+                ['BroadcastChannel tells B and C: the list changed'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Who becomes the leader, and how the rest find out',
+            'notes': ['leadership shifts on its own: the lock lives as long as the tab'],
+        },
+    },
+    'wa-fsa-handle': {
+        'ru': {
+            'stages': [
+                ['Пользователь открывает showOpenFilePicker()'],
+                ['Приложение получает FileSystemFileHandle'],
+                ['Ручку сохраняют в IndexedDB на будущее'],
+                ['В новой сессии: handle.queryPermission() перед чтением'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Ручка переживает сессию, обычный File — нет',
+            'notes': ['доступ к файлу приложение просит снова, а не выбирает заново'],
+        },
+        'en': {
+            'stages': [
+                ['The user opens showOpenFilePicker()'],
+                ['The app gets a FileSystemFileHandle'],
+                ['The handle is saved in IndexedDB for later'],
+                ['Next session: handle.queryPermission() before reading'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'A handle outlives the session; a plain File does not',
+            'notes': ['the app asks for access again, instead of picking the file again'],
+        },
+    },
+    'wa-import-pipeline': {
+        'ru': {
+            'stages': [
+                ['Архив заметок: file.stream() отдаёт байты'],
+                ['TextDecoderStream: байты становятся текстом'],
+                ['TransformStream: текст режется на заметки'],
+                ['Каждая заметка сразу пишется в IndexedDB'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Импорт архива идёт конвейером, а не одним куском',
+            'notes': ['AbortSignal обрывает конвейер на любом из этих шагов'],
+        },
+        'en': {
+            'stages': [
+                ['The archive: file.stream() hands out bytes'],
+                ['TextDecoderStream: bytes become text'],
+                ['TransformStream: text is cut into notes'],
+                ['Each note is written to IndexedDB right away'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Importing the archive runs as a pipeline, not one chunk',
+            'notes': ['an AbortSignal can cut the pipeline at any of these steps'],
+        },
+    },
+    'wa-page-states': {
+        'ru': {
+            'stages': [
+                ['visible: вкладка на экране, всё как обычно'],
+                ['hidden: document.visibilityState стал hidden'],
+                ['frozen: браузер поставил фоновую вкладку на паузу'],
+                ['terminated, или страница жива в bfcache'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Состояния страницы, которые вы не запрашивали',
+            'notes': ['со шага hidden страница может вернуться в visible в любой момент'],
+        },
+        'en': {
+            'stages': [
+                ['visible: the tab is on screen, business as usual'],
+                ['hidden: document.visibilityState becomes hidden'],
+                ['frozen: the browser pauses a background tab'],
+                ['terminated, or the page survives in bfcache'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Page states you never asked for',
+            'notes': ['from hidden onward, the page can return to visible at any time'],
+        },
+    },
     'pw-ci-environment': {
         'ru': {
             'title': 'Один и тот же тест на двух машинах',

@@ -25,6 +25,7 @@ export const TOPICS: readonly Topic[] = [
   { id: 'canvas-graphics', label: 'Canvas & Graphics',      level: 'deep' },
   { id: 'web-performance', label: 'Web Performance',        level: 'medium' },
   { id: 'browser-runtime', label: 'Browser / JS Runtime',  level: 'medium' },
+  { id: 'web-api',         label: 'Web Platform APIs',      level: 'medium' },
   { id: 'http-rest',       label: 'HTTP / REST',            level: 'medium' },
   { id: 'testing',         label: 'Testing',                level: 'medium' },
   { id: 'playwright',      label: 'Playwright E2E',         level: 'medium' },
