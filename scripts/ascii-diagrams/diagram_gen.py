@@ -796,8 +796,100 @@ def phase_cycle(L):
     )
 
 
+def pw_connection(L):
+    """Playwright articles: who talks to whom, runner -> browser -> app."""
+    return with_title_and_notes(vchain(L['nodes'], L['edges']), L['title'], L['notes'])
+
+
+def pw_isolation(L):
+    """Nested boxes: one browser process holding one context per test."""
+    body = [L['browser_head'], ''] + hstack([box(c) for c in L['contexts']], gap=1)
+    return with_title_and_notes(box(body), L['title'], L['notes'])
+
+
+def pw_click_pipeline(L):
+    """What happens between locator.click() and a real click."""
+    return with_title_and_notes(vchain(L['steps'], L['edges']), L['title'], L['notes'])
+
+
+def pw_locator_chain(L):
+    """Chaining narrows the description: each step is a smaller area."""
+    return with_title_and_notes(vchain(L['scopes'], L['calls']), L['title'], L['notes'])
+
+
+def pw_assert_retry(L):
+    """Two columns: a retrying assertion next to a one-shot one."""
+    return with_title_and_notes(
+        hstack([box(L['left']), box(L['right'])], gap=2), L['title'], L['notes'],
+    )
+
+
+def pw_fixture_lifecycle(L):
+    """Worker scope outlives tests; test scope is rebuilt for every test."""
+    return with_title_and_notes(layered(L['sections']), L['title'], L['notes'])
+
+
+def pw_route_order(L):
+    """A request walks the handlers in reverse registration order."""
+    return with_title_and_notes(vchain(L['stops'], L['edges']), L['title'], L['notes'])
+
+
+def pw_auth_state(L):
+    """Where the signed-in state lives between the setup project and a test."""
+    return with_title_and_notes(vchain(L['stages'], L['edges']), L['title'], L['notes'])
+
+
+def pw_trace_anatomy(L):
+    """What the trace archive holds, section by section."""
+    return with_title_and_notes(layered(L['sections']), L['title'], L['notes'])
+
+
+def pw_parallel_modes(L):
+    """Workers split one machine; shards split the machines."""
+    return with_title_and_notes(
+        hstack([box(L['left']), box(L['right'])], gap=2), L['title'], L['notes'],
+    )
+
+
+def pw_ci_environment(L):
+    """What a test inherits from the machine when nothing is pinned."""
+    return with_title_and_notes(
+        hstack([box(L['left']), box(L['right'])], gap=2), L['title'], L['notes'],
+    )
+
+
+def wa_access_levels(L):
+    """Capability tiers: each layer adds one more condition to unlock."""
+    return with_title_and_notes(layered(L['sections']), L['title'], L['notes'])
+
+
+def wa_observer_timing(L):
+    """When each observer's callback actually fires, stage by stage."""
+    return with_title_and_notes(vchain(L['stages'], L['edges']), L['title'], L['notes'])
+
+
 DIAGRAMS = {
+    'wa-access-levels': wa_access_levels,
+    'wa-observer-timing': wa_observer_timing,
+    'wa-worker-messaging': wa_observer_timing,
+    'wa-sw-lifecycle': wa_observer_timing,
+    'wa-storage-eviction': wa_access_levels,
+    'wa-leader-election': wa_observer_timing,
+    'wa-fsa-handle': wa_observer_timing,
+    'wa-import-pipeline': wa_observer_timing,
+    'wa-page-states': wa_observer_timing,
     'stack-compare': stack_compare,
+    'pw-connection': pw_connection,
+    'pw-isolation': pw_isolation,
+    'pw-click-pipeline': pw_click_pipeline,
+    'pw-locator-chain': pw_locator_chain,
+    'pw-assert-retry': pw_assert_retry,
+    'pw-fixture-lifecycle': pw_fixture_lifecycle,
+    'pw-route-order': pw_route_order,
+    'pw-auth-state': pw_auth_state,
+    'pw-trace-anatomy': pw_trace_anatomy,
+    'pw-parallel-modes': pw_parallel_modes,
+    'pw-ci-environment': pw_ci_environment,
     'update-models': update_models,
     'binding-syntax': binding_syntax,
     'template-compile': template_compile,
@@ -953,6 +1045,728 @@ DIAGRAMS = {
 }
 
 LABELS = {
+    'wa-access-levels': {
+        'ru': {
+            'sections': [
+                ['Всегда: window, navigator, DOM'],
+                ['+ безопасный контекст (HTTPS)',
+                 'Service Worker, Web Locks, Clipboard API'],
+                ['+ жест пользователя',
+                 'полноэкранный режим, запись в буфер обмена'],
+                ['+ разрешение пользователя',
+                 'уведомления, камера, точная геолокация'],
+            ],
+            'title': 'От самого открытого уровня к самому закрытому',
+            'notes': ['каждый уровень добавляет своё условие к предыдущему'],
+        },
+        'en': {
+            'sections': [
+                ['Always available: window, navigator, DOM'],
+                ['+ secure context (HTTPS)',
+                 'Service Worker, Web Locks, Clipboard API'],
+                ['+ user gesture',
+                 'fullscreen mode, clipboard write'],
+                ['+ user permission',
+                 'notifications, camera, precise geolocation'],
+            ],
+            'title': 'From the most open tier to the most locked one',
+            'notes': ['each tier adds its own condition on top of the last'],
+        },
+    },
+    'wa-observer-timing': {
+        'ru': {
+            'stages': [
+                ['Ваш синхронный код'],
+                ['Микрозадачи: колбэк MutationObserver'],
+                ['Layout, затем ResizeObserver'],
+                ['IntersectionObserver, затем кадр (rAF)'],
+                ['Отрисовка на экране'],
+            ],
+            'edges': ['', '', '', ''],
+            'title': 'Когда браузер вызывает колбэк наблюдателя',
+            'notes': ['ни один колбэк не выполняется внутри вашего кода'],
+        },
+        'en': {
+            'stages': [
+                ['Your synchronous code'],
+                ['Microtasks: the MutationObserver callback'],
+                ['Layout, then ResizeObserver'],
+                ['IntersectionObserver, then the frame (rAF)'],
+                ['The frame is painted on screen'],
+            ],
+            'edges': ['', '', '', ''],
+            'title': "When the browser calls an observer's callback",
+            'notes': ["no callback ever runs inside your own code"],
+        },
+    },
+    'wa-worker-messaging': {
+        'ru': {
+            'stages': [
+                ['Главный поток вызывает postMessage(data)'],
+                ['Без transfer: данные клонирует structuredClone'],
+                ['С transfer: buf меняет владельца, копии нет'],
+                ['Фоновый поток получает данные в self.onmessage'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Два пути от главного потока к фоновому потоку',
+            'notes': ['выбор — за вторым аргументом postMessage'],
+        },
+        'en': {
+            'stages': [
+                ['The main thread calls postMessage(data)'],
+                ['No transfer: structuredClone copies the data'],
+                ['With transfer: buf changes owner, no copy made'],
+                ['The worker gets it in self.onmessage'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Two routes from the main thread to a worker',
+            'notes': ["the choice is postMessage's second argument"],
+        },
+    },
+    'wa-sw-lifecycle': {
+        'ru': {
+            'stages': [
+                ['installing: выполняется обработчик install'],
+                ['installed / waiting: ждёт закрытия старых вкладок'],
+                ['activating: выполняется обработчик activate'],
+                ['activated: перехватывает запросы новых вкладок'],
+            ],
+            'edges': ['', 'skipWaiting() пропускает ожидание', ''],
+            'title': 'Пять состояний одного сервис-воркера',
+            'notes': ['waiting возникает, только если есть старый активный сервис-воркер'],
+        },
+        'en': {
+            'stages': [
+                ['installing: the install handler runs'],
+                ['installed / waiting: old tabs must close first'],
+                ['activating: the activate handler runs'],
+                ["activated: intercepts new tabs' requests"],
+            ],
+            'edges': ['', 'skipWaiting() skips the wait', ''],
+            'title': 'Five states of one service worker',
+            'notes': ['waiting only happens if an old worker is still active'],
+        },
+    },
+    'wa-storage-eviction': {
+        'ru': {
+            'sections': [
+                ['Best-effort — режим по умолчанию',
+                 'место кончилось — браузер вытесняет данные'],
+                ['Persistent — после navigator.storage.persist()',
+                 'браузер обычно не трогает данные'],
+            ],
+            'title': 'Два режима хранения: обычный и защищённый',
+            'notes': ['решение браузер принимает сам — это эвристика, не гарантия'],
+        },
+        'en': {
+            'sections': [
+                ['Best-effort — the default mode',
+                 'space runs low — the browser evicts data'],
+                ['Persistent — after navigator.storage.persist()',
+                 'the browser usually leaves data alone'],
+            ],
+            'title': 'Two storage modes: default and protected',
+            'notes': ["the browser decides on its own — a heuristic, not a guarantee"],
+        },
+    },
+    'wa-leader-election': {
+        'ru': {
+            'stages': [
+                ['Вкладки A, B, C просят navigator.locks.request'],
+                ['Вкладка A получает блокировку первой — лидер'],
+                ['Лидер опрашивает сервер, находит новые заметки'],
+                ['BroadcastChannel сообщает B и C: список изменился'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Кто станет лидером и как об этом узнают остальные',
+            'notes': ['лидер меняется сам: он держит блокировку, пока открыта вкладка'],
+        },
+        'en': {
+            'stages': [
+                ['Tabs A, B, C all call navigator.locks.request'],
+                ['Tab A gets the lock first — it becomes the leader'],
+                ['The leader polls the server, finds new notes'],
+                ['BroadcastChannel tells B and C: the list changed'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Who becomes the leader, and how the rest find out',
+            'notes': ['leadership shifts on its own: the lock lives as long as the tab'],
+        },
+    },
+    'wa-fsa-handle': {
+        'ru': {
+            'stages': [
+                ['Пользователь открывает showOpenFilePicker()'],
+                ['Приложение получает FileSystemFileHandle'],
+                ['Ручку сохраняют в IndexedDB на будущее'],
+                ['В новой сессии: handle.queryPermission() перед чтением'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Ручка переживает сессию, обычный File — нет',
+            'notes': ['доступ к файлу приложение просит снова, а не выбирает заново'],
+        },
+        'en': {
+            'stages': [
+                ['The user opens showOpenFilePicker()'],
+                ['The app gets a FileSystemFileHandle'],
+                ['The handle is saved in IndexedDB for later'],
+                ['Next session: handle.queryPermission() before reading'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'A handle outlives the session; a plain File does not',
+            'notes': ['the app asks for access again, instead of picking the file again'],
+        },
+    },
+    'wa-import-pipeline': {
+        'ru': {
+            'stages': [
+                ['Архив заметок: file.stream() отдаёт байты'],
+                ['TextDecoderStream: байты становятся текстом'],
+                ['TransformStream: текст режется на заметки'],
+                ['Каждая заметка сразу пишется в IndexedDB'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Импорт архива идёт конвейером, а не одним куском',
+            'notes': ['AbortSignal обрывает конвейер на любом из этих шагов'],
+        },
+        'en': {
+            'stages': [
+                ['The archive: file.stream() hands out bytes'],
+                ['TextDecoderStream: bytes become text'],
+                ['TransformStream: text is cut into notes'],
+                ['Each note is written to IndexedDB right away'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Importing the archive runs as a pipeline, not one chunk',
+            'notes': ['an AbortSignal can cut the pipeline at any of these steps'],
+        },
+    },
+    'wa-page-states': {
+        'ru': {
+            'stages': [
+                ['visible: вкладка на экране, всё как обычно'],
+                ['hidden: document.visibilityState стал hidden'],
+                ['frozen: браузер поставил фоновую вкладку на паузу'],
+                ['terminated, или страница жива в bfcache'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Состояния страницы, которые вы не запрашивали',
+            'notes': ['со шага hidden страница может вернуться в visible в любой момент'],
+        },
+        'en': {
+            'stages': [
+                ['visible: the tab is on screen, business as usual'],
+                ['hidden: document.visibilityState becomes hidden'],
+                ['frozen: the browser pauses a background tab'],
+                ['terminated, or the page survives in bfcache'],
+            ],
+            'edges': ['', '', ''],
+            'title': 'Page states you never asked for',
+            'notes': ['from hidden onward, the page can return to visible at any time'],
+        },
+    },
+    'pw-ci-environment': {
+        'ru': {
+            'title': 'Один и тот же тест на двух машинах',
+            'left': [
+                'Ноутбук разработчика',
+                '',
+                'система: macOS',
+                'шрифты: системные',
+                'экран: ретина, x2',
+                'пояс: Europe/Bratislava',
+                'язык: en-US',
+                'ядер: 11',
+            ],
+            'right': [
+                'Машина сборки',
+                '',
+                'система: Linux в контейнере',
+                'шрифты: те, что положили',
+                'экран: без экрана вовсе',
+                'пояс: UTC',
+                'язык: C или en-US',
+                'ядер: 2',
+            ],
+            'notes': [
+                'всё, что не задано в конфиге, приезжает из машины:',
+                'дата, формат чисел, размер окна и даже начертание шрифта',
+            ],
+        },
+        'en': {
+            'title': 'The same test on two machines',
+            'left': [
+                'A developer laptop',
+                '',
+                'system: macOS',
+                'fonts: the system ones',
+                'screen: retina, x2',
+                'zone: Europe/Bratislava',
+                'language: en-US',
+                'cores: 11',
+            ],
+            'right': [
+                'A build machine',
+                '',
+                'system: Linux in a container',
+                'fonts: whatever was installed',
+                'screen: none at all',
+                'zone: UTC',
+                'language: C or en-US',
+                'cores: 2',
+            ],
+            'notes': [
+                'anything the config does not pin comes from the machine:',
+                'the date, number formats, window size, even font shapes',
+            ],
+        },
+    },
+    'pw-parallel-modes': {
+        'ru': {
+            'title': 'Восемь файлов тестов: два способа ускорить прогон',
+            'left': [
+                'Воркеры: одна машина',
+                '',
+                '--workers=4',
+                '',
+                'процесс 1: файлы 1, 5',
+                'процесс 2: файлы 2, 6',
+                'процесс 3: файлы 3, 7',
+                'процесс 4: файлы 4, 8',
+                '',
+                'один отчёт сразу',
+            ],
+            'right': [
+                'Шардирование: четыре машины',
+                '',
+                '--shard=1/4 … 4/4',
+                '',
+                'машина 1: файлы 1, 2',
+                'машина 2: файлы 3, 4',
+                'машина 3: файлы 5, 6',
+                'машина 4: файлы 7, 8',
+                '',
+                'отчёты потом объединяют',
+            ],
+            'notes': [
+                'обе схемы делят работу по файлам, а не по отдельным тестам:',
+                'тесты одного файла разъедутся только при явном разрешении',
+            ],
+        },
+        'en': {
+            'title': 'Eight test files: two ways to speed the run up',
+            'left': [
+                'Workers: one machine',
+                '',
+                '--workers=4',
+                '',
+                'process 1: files 1, 5',
+                'process 2: files 2, 6',
+                'process 3: files 3, 7',
+                'process 4: files 4, 8',
+                '',
+                'one report right away',
+            ],
+            'right': [
+                'Shards: four machines',
+                '',
+                '--shard=1/4 … 4/4',
+                '',
+                'machine 1: files 1, 2',
+                'machine 2: files 3, 4',
+                'machine 3: files 5, 6',
+                'machine 4: files 7, 8',
+                '',
+                'reports merged afterwards',
+            ],
+            'notes': [
+                'both split the work by file rather than by single test:',
+                'tests of one file move apart only when you allow it',
+            ],
+        },
+    },
+    'pw-trace-anatomy': {
+        'ru': {
+            'title': 'Что лежит внутри trace.zip',
+            'sections': [
+                ['Действия и шаги теста', 'test.trace, 1-trace.trace'],
+                ['Кадры экрана на каждое действие', 'screencast/*.jpeg'],
+                ['Снимки страницы до и после действия', 'resources/*.html и *.json'],
+                ['Сетевой обмен прогона', '1-trace.network'],
+                ['Исходник теста и стеки вызовов', 'src/*.ts, *-trace.stacks'],
+            ],
+            'notes': [
+                'всё это снято на стороне браузера и теста:',
+                'логов сервера и состояния базы данных в архиве нет',
+            ],
+        },
+        'en': {
+            'title': 'What sits inside trace.zip',
+            'sections': [
+                ['Test actions and steps', 'test.trace, 1-trace.trace'],
+                ['Screen frames for every action', 'screencast/*.jpeg'],
+                ['Page snapshots before and after', 'resources/*.html and *.json'],
+                ['Network traffic of the run', '1-trace.network'],
+                ['Test source and call stacks', 'src/*.ts, *-trace.stacks'],
+            ],
+            'notes': [
+                'all of it is captured on the browser and test side:',
+                'server logs and database state are not in the archive',
+            ],
+        },
+    },
+    'pw-auth-state': {
+        'ru': {
+            'title': 'Где живёт состояние входа',
+            'stages': [
+                ['Проект setup', 'вход через форму, один раз на прогон'],
+                ['Файл .auth/maria.json', 'cookies и localStorage по origin'],
+                ['Контекст теста', 'создаётся уже заполненным из файла'],
+                ['Страница теста', 'открывается сразу под пользователем'],
+            ],
+            'edges': [
+                'context.storageState({ path })',
+                'use: { storageState } в проекте',
+                'фикстура page как обычно',
+            ],
+            'notes': [
+                'sessionStorage в файл не попадает, а срок жизни токена',
+                'живёт внутри значения: файл стареет вместе с ним',
+            ],
+        },
+        'en': {
+            'title': 'Where the signed-in state lives',
+            'stages': [
+                ['The setup project', 'signs in once per run'],
+                ['The .auth/maria.json file', 'cookies and localStorage per origin'],
+                ['The test context', 'created already filled from the file'],
+                ['The test page', 'opens as the user right away'],
+            ],
+            'edges': [
+                'context.storageState({ path })',
+                'use: { storageState } in the project',
+                'the page fixture as usual',
+            ],
+            'notes': [
+                'sessionStorage never reaches the file, and a token carries',
+                'its own lifetime: the file ages together with it',
+            ],
+        },
+    },
+    'pw-route-order': {
+        'ru': {
+            'title': 'Путь запроса GET /api/tasks через обработчики',
+            'stops': [
+                ['Страница шлёт запрос', 'fetch внутри приложения'],
+                ['page.route, объявлен вторым', 'его очередь первая'],
+                ['page.route, объявлен первым', 'его очередь вторая'],
+                ['context.route', 'очередь после всех page.route'],
+                ['Настоящая сеть', 'запрос дошёл до сервера'],
+            ],
+            'edges': [
+                'перехват до выхода в сеть',
+                'обработчик вызвал fallback()',
+                'снова fallback()',
+                'снова fallback() или continue()',
+            ],
+            'notes': [
+                'fulfill() и abort() обрывают цепочку на месте,',
+                'continue() уходит в сеть мимо оставшихся обработчиков',
+            ],
+        },
+        'en': {
+            'title': 'How GET /api/tasks walks through the handlers',
+            'stops': [
+                ['The page sends a request', 'a fetch inside the app'],
+                ['page.route declared second', 'it goes first'],
+                ['page.route declared first', 'it goes second'],
+                ['context.route', 'after every page.route'],
+                ['The real network', 'the request reached the server'],
+            ],
+            'edges': [
+                'intercepted before the network',
+                'the handler called fallback()',
+                'fallback() again',
+                'fallback() or continue()',
+            ],
+            'notes': [
+                'fulfill() and abort() end the chain where they are,',
+                'continue() goes to the network past the remaining handlers',
+            ],
+        },
+    },
+    'pw-fixture-lifecycle': {
+        'ru': {
+            'title': 'Жизненный цикл фикстур внутри одного воркера',
+            'sections': [
+                ['Воркер запускается',
+                 'создаются worker-фикстуры: browser, свой account'],
+                ['Тест 1',
+                 'создаются: context → page → boardPage',
+                 'тело теста',
+                 'разбираются: boardPage → page → context'],
+                ['Тест 2',
+                 'браузер и account те же, context и page новые',
+                 'тело теста',
+                 'разбираются в обратном порядке'],
+                ['Воркер завершается',
+                 'разбираются worker-фикстуры: account → browser'],
+            ],
+            'notes': [
+                'создание идёт от зависимостей к зависимым, разбор — наоборот:',
+                'между тестами переживает только то, что объявлено на воркер',
+            ],
+        },
+        'en': {
+            'title': 'The fixture lifecycle inside one worker',
+            'sections': [
+                ['The worker starts',
+                 'worker fixtures are built: browser, its own account'],
+                ['Test 1',
+                 'built: context -> page -> boardPage',
+                 'the test body',
+                 'torn down: boardPage -> page -> context'],
+                ['Test 2',
+                 'same browser and account, new context and page',
+                 'the test body',
+                 'torn down in reverse order'],
+                ['The worker finishes',
+                 'worker fixtures are torn down: account -> browser'],
+            ],
+            'notes': [
+                'setup runs from dependencies outwards, teardown runs backwards:',
+                'only worker-scoped things survive between two tests',
+            ],
+        },
+    },
+    'pw-assert-retry': {
+        'ru': {
+            'title': 'Один признак, два способа его проверить',
+            'left': [
+                'expect(локатор)',
+                'на входе описание',
+                '',
+                'проверить',
+                'не сошлось: ещё раз',
+                'не сошлось: ещё раз',
+                'сошлось: успех',
+                '',
+                'иначе таймаут 5000 мс',
+            ],
+            'right': [
+                'expect(значение)',
+                'на входе готовое число',
+                '',
+                'сравнить один раз',
+                '',
+                '',
+                'вердикт сразу',
+                '',
+                'таймаута нет вовсе',
+            ],
+            'notes': [
+                'правый столбец отвечает по состоянию, которое уже устарело:',
+                'страница живёт дальше, а число было снято до сравнения',
+            ],
+        },
+        'en': {
+            'title': 'One trait, two ways to check it',
+            'left': [
+                'expect(locator)',
+                'takes a description',
+                '',
+                'check',
+                'no match: again',
+                'no match: again',
+                'match: pass',
+                '',
+                'or a 5000 ms timeout',
+            ],
+            'right': [
+                'expect(value)',
+                'takes a plain number',
+                '',
+                'compare once',
+                '',
+                '',
+                'verdict at once',
+                '',
+                'no timeout at all',
+            ],
+            'notes': [
+                'the right column answers from a state that is already stale:',
+                'the page moved on, the number was taken before the compare',
+            ],
+        },
+    },
+    'pw-click-pipeline': {
+        'ru': {
+            'title': 'Что происходит между click() и настоящим кликом',
+            'steps': [
+                ['1. Вызов click()', 'локатор пока только описание'],
+                ['2. Поиск по описанию', 'заново на каждой попытке'],
+                ['3. Проверки готовности', 'виден, устойчив, принимает', 'события, включён'],
+                ['4. Прокрутка к элементу', 'если он вне экрана'],
+                ['5. Клик мышью в центр', 'и ожидание начатых переходов'],
+            ],
+            'edges': [
+                'поиска ещё не было',
+                'элемент найден',
+                'все проверки прошли',
+                'элемент в зоне видимости',
+            ],
+            'notes': [
+                'пока элемент не найден или проверка не прошла,',
+                'шаги 2 и 3 повторяются до истечения таймаута действия',
+            ],
+        },
+        'en': {
+            'title': 'What happens between click() and a real click',
+            'steps': [
+                ['1. click() is called', 'the locator is still a description'],
+                ['2. Find by description', 'from scratch on every attempt'],
+                ['3. Readiness checks', 'visible, stable, receives events,', 'enabled'],
+                ['4. Scroll to element', 'if it is off screen'],
+                ['5. Mouse click in the centre', 'then wait for navigations'],
+            ],
+            'edges': [
+                'no search has happened yet',
+                'the element is found',
+                'every check passed',
+                'the element is on screen',
+            ],
+            'notes': [
+                'while the element is missing or a check keeps failing,',
+                'steps 2 and 3 repeat until the action timeout runs out',
+            ],
+        },
+    },
+    'pw-locator-chain': {
+        'ru': {
+            'title': 'Цепочка сужает описание, а не ищет заново',
+            'scopes': [
+                ['Вся страница', 'page'],
+                ['Список задач', 'role=list'],
+                ['Строки списка', 'role=listitem, их 20'],
+                ['Строка про отчёт', 'ровно одна'],
+            ],
+            'calls': [
+                ".getByRole('list')",
+                ".getByRole('listitem')",
+                ".filter({ hasText: 'отчёт' })",
+            ],
+            'notes': [
+                'поиск происходит один раз, в момент действия или ассершена:',
+                'промежуточные локаторы ничего не ищут и ничего не держат',
+            ],
+        },
+        'en': {
+            'title': 'Chaining narrows the description, it does not re-search',
+            'scopes': [
+                ['The whole page', 'page'],
+                ['The task list', 'role=list'],
+                ['List rows', 'role=listitem, 20 of them'],
+                ['The report row', 'exactly one'],
+            ],
+            'calls': [
+                ".getByRole('list')",
+                ".getByRole('listitem')",
+                ".filter({ hasText: 'report' })",
+            ],
+            'notes': [
+                'the search runs once, at the action or the assertion:',
+                'intermediate locators search for nothing and hold nothing',
+            ],
+        },
+    },
+    'pw-connection': {
+        'ru': {
+            'title': 'Кто с кем разговаривает во время теста',
+            'nodes': [
+                ['Ваш тест', 'процесс Node.js: прогонщик тестов'],
+                ['Браузер', 'сборка Chromium, Firefox или WebKit'],
+                ['Страница приложения', 'ваш фронтенд на localhost:3000'],
+            ],
+            'edges': [
+                'команды по протоколу, одно соединение',
+                'настоящий ввод: клик, набор текста',
+            ],
+            'notes': [
+                'драйвера-посредника между тестом и браузером нет:',
+                'сборку браузера Playwright ставит и версионирует сам',
+            ],
+        },
+        'en': {
+            'title': 'Who talks to whom while a test runs',
+            'nodes': [
+                ['Your test', 'a Node.js process: the test runner'],
+                ['Browser', 'a Chromium, Firefox or WebKit build'],
+                ['App page', 'your frontend on localhost:3000'],
+            ],
+            'edges': [
+                'commands over a protocol, one connection',
+                'real input: a click, typed text',
+            ],
+            'notes': [
+                'there is no driver process between test and browser:',
+                'Playwright installs and versions the browser build itself',
+            ],
+        },
+    },
+    'pw-isolation': {
+        'ru': {
+            'title': 'Один воркер: браузер один, контекст на каждый тест',
+            'browser_head': 'Браузер: запускается один раз на воркер',
+            'contexts': [
+                [
+                    'Контекст теста 1',
+                    'свои cookies',
+                    'свой localStorage',
+                    'свой кэш',
+                    '',
+                    'Страница (вкладка)',
+                ],
+                [
+                    'Контекст теста 2',
+                    'пустые cookies',
+                    'пустой localStorage',
+                    'пустой кэш',
+                    '',
+                    'Страница (вкладка)',
+                ],
+            ],
+            'notes': [
+                'контексты не видят данных друг друга, хотя процесс общий:',
+                'поэтому порядок тестов внутри воркера ничего не решает',
+            ],
+        },
+        'en': {
+            'title': 'One worker: one browser, one context per test',
+            'browser_head': 'Browser: launched once per worker',
+            'contexts': [
+                [
+                    'Test 1 context',
+                    'own cookies',
+                    'own localStorage',
+                    'own cache',
+                    '',
+                    'Page (a tab)',
+                ],
+                [
+                    'Test 2 context',
+                    'empty cookies',
+                    'empty localStorage',
+                    'empty cache',
+                    '',
+                    'Page (a tab)',
+                ],
+            ],
+            'notes': [
+                'contexts cannot see each other data, one process or not:',
+                'so the order of tests inside a worker changes nothing',
+            ],
+        },
+    },
     'kafka-consumer-group-patterns': {
         'ru': {
             'top_title': 'Очередь: одна группа, партиции поделены',
