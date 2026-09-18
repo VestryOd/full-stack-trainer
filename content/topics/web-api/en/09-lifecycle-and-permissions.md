@@ -51,8 +51,8 @@ early as `hidden`, without waiting for `frozen`.
 
 The `unload` event carries no guarantee that it will fire at all: a
 mobile browser can close a tab without waiting for it, and merely
-subscribing to `unload` turns off the back-forward cache for that
-page.
+subscribing to `unload` turns off the back-forward cache — bfcache,
+for short — for that page.
 
 ```ts
 // How a draft used to be saved — unreliable, and it also costs
@@ -77,9 +77,9 @@ ends up in bfcache.
 
 ## The back-forward cache keeps a page alive instead of reloading it
 
-The back-forward cache, or bfcache, is a snapshot of the whole tab in
-memory: scripts never restart, and the JavaScript state stays exactly
-as it was the moment the person left.
+The idea behind bfcache is simple: it's a snapshot of the whole tab
+in memory, where scripts never restart and the JavaScript state stays
+exactly as it was the moment the person left.
 
 ```ts
 // pageshow reports where the page came from
